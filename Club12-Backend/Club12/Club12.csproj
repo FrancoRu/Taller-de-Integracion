@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Club12-Solution\Club12.Entities\Club12.Entities.csproj" />
     <ProjectReference Include="..\club12.client\Club12.Client.esproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
