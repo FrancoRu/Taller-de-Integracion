@@ -15,8 +15,9 @@ function App (): JSX.Element {
       <Router>
         <div style={{ flex: 1 }}>
           <Routes>
-            <Route path="/" element={<Nav />}>
+            <Route path="/" element={ <Nav />}>
               <Route index element={<Home/>} />
+              <Route path="home" element={<Home/>} />
               <Route path="login" element={<Login />} />
             </Route>
           </Routes>

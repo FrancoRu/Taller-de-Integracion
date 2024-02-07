@@ -1,5 +1,6 @@
 import { Box, Typography } from '@mui/material'
 import Searcher from './Searcher'
+import GridContainers from './GridContainers'
 
 const Home: React.FC = () => {
   return (
@@ -11,6 +12,9 @@ const Home: React.FC = () => {
         </Box>
 
         <Searcher text='Torneos' />
+
+        <GridContainers></GridContainers>
+
     </>
   )
 }

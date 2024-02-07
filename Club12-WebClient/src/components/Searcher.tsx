@@ -8,7 +8,7 @@ interface SearcherProps {
 const Searcher: React.FC<SearcherProps> = ({ text }) => {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    // Agrega lógica de búsqueda si es necesario
+    // Add search logic if necessary
   }
 
   return (
@@ -19,29 +19,32 @@ const Searcher: React.FC<SearcherProps> = ({ text }) => {
         bgcolor: 'background.paper',
         color: 'text.primary',
         maxWidth: '450px',
-        width: '100%'
-      }}>
+        width: '100%',
+        margin: 'auto',
+        marginTop: '50px'
+      }}
+    >
       <form onSubmit={handleSubmit}>
-      <Grid container spacing={3}>
-      <Grid item xs={2} >
-            <Typography >
-            {text}
-            </Typography>
-        </Grid>
-        <Grid item xs={6} >
-            <TextField
-                type="text"
-                id="texto-buscar"
-                variant="outlined"
-                required
-            />
+        <Grid container spacing={3} justifyContent="center">
+          <Grid item xs={2} textAlign="center">
+            <Typography>{text}</Typography>
           </Grid>
-          <Grid item xs={4}>
-            <Button type="submit" variant="contained" color="primary">
-                Buscar
-            </Button>
+          <Grid item xs={6} textAlign="center">
+            <TextField type="text" id="texto-buscar" variant="outlined" required />
           </Grid>
-        </Grid>
+            <Grid item xs={4} textAlign="center">
+              <Button
+                type="submit"
+                variant="contained"
+                sx={{
+                  color: 'white', // Set text color to white
+                  backgroundColor: 'primary.main' // Set background color using MUI primary color
+                }}
+                >
+                  Buscar
+                </Button>
+            </Grid>
+          </Grid>
       </form>
     </Paper>
   )

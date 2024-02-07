@@ -1,10 +1,10 @@
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material'
+import { Toolbar, Typography, Button, Box } from '@mui/material'
 import { Outlet, Link as RouterLink } from 'react-router-dom'
 
 const Nav: React.FC = () => {
   return (
     <>
-      <AppBar
+      <Box
         position="static"
         sx={{
           background: 'white',
@@ -21,7 +21,7 @@ const Nav: React.FC = () => {
             </Button>
           </Box>
         </Toolbar>
-      </AppBar>
+      </Box>
       <Outlet />
     </>
   )
