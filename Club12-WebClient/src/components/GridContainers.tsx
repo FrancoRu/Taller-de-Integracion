@@ -12,7 +12,6 @@ const GridContainers: React.FC = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '300vh', // Set minimum height to fill the viewport
         m: 2,
         p: 'auto'
       }}

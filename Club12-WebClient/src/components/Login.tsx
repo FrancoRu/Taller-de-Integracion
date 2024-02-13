@@ -52,7 +52,8 @@ const Login: React.FC = () => {
         color: 'black',
         padding: '16px',
         borderRadius: '8px',
-        marginTop: '3rem'
+        marginTop: '3rem',
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.6)'
       }}
     >
       <Typography variant="h5">Login</Typography>
