@@ -12,6 +12,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));
 
+builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddScoped<IClub12DBContext, ApplicationDBContext>();
 
 string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -54,13 +55,19 @@ builder.Services.AddSwaggerGen(c =>
 
 WebApplication app = builder.Build();
 
+using (IServiceScope scope = app.Services.CreateScope())
+{
+    ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+    db.Database.Migrate();
+}
+
+app.UseSerilogRequestLogging();
+
 if (!builder.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseSerilogRequestLogging();
 
 app.UseCors();
 app.UseAuthorization();
@@ -72,11 +79,3 @@ Log.Information("----- Started     -----");
 Log.CloseAndFlush();
 
 app.Run();
-
-/// <summary>
-/// This class is part of the program and is used for tests.
-/// More information can be found at: https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-8.0
-/// </summary>
-#pragma warning disable S1118
-public partial class Program { }
-#pragma warning restore S1118
