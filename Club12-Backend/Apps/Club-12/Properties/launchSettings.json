@@ -1,12 +1,4 @@
 {
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:59691/",
-      "sslPort": 44349
-    }
-  },
   "profiles": {
     "http": {
       "commandName": "Project",
@@ -38,11 +30,12 @@
     },
     "Facundo": {
       "commandName": "Project",
-      "launchBrowser": false,
+      "launchBrowser": true,
       "launchUrl": "swagger",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Facundo"
-      }
+      },
+      "applicationUrl": "https://localhost:5001/"
     },
     "Franco": {
       "commandName": "Project",
@@ -50,7 +43,8 @@
       "launchUrl": "swagger",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Franco"
-      }
+      },
+      "applicationUrl": "https://localhost:5001/"
     },
     "Tomi": {
       "commandName": "Project",
@@ -58,7 +52,16 @@
       "launchUrl": "swagger",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Tomi"
-      }
+      },
+      "applicationUrl": "https://localhost:5001/"
+    }
+  },
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:59691/",
+      "sslPort": 44349
     }
   }
 }
