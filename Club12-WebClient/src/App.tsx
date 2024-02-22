@@ -1,35 +1,40 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '../../../vite.svg'
-import './App.css'
+import '@fontsource/roboto/300.css'
+import '@fontsource/roboto/400.css'
+import '@fontsource/roboto/500.css'
+import '@fontsource/roboto/700.css'
 
-function App (): JSX.Element {
-  const [count, setCount] = useState(0)
+import { DataTable } from './components/table/table'
 
-  return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank" rel="noreferrer">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank" rel="noreferrer">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => { setCount((count) => count + 1) }}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+const personas: Record<string, any>[] = [
+	{
+		id: 1,
+		nombre: 'Juan',
+		apellido: 'Pérez',
+		edad: 25,
+		ciudad: 'Ciudad A',
+	},
+	{
+		id: 2,
+		nombre: 'María',
+		apellido: 'Gómez',
+		edad: 30,
+		ciudad: 'Ciudad B',
+	},
+	{
+		id: 3,
+		nombre: 'Carlos',
+		apellido: 'López',
+		edad: 22,
+		ciudad: 'Ciudad C',
+	},
+]
+
+function App() {
+	return (
+		<>
+			<DataTable data={personas} />
+		</>
+	)
 }
 
 export default App
