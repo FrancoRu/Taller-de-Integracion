@@ -1,30 +1,40 @@
-import Login from './components/Login'
-import { ThemeProvider } from '@emotion/react'
-import './App.css'
-import theme from './styles/theme'
-import { Routes, Route, BrowserRouter as Router } from 'react-router-dom'
-import Home from './components/Home'
-import { CssBaseline } from '@mui/material/'
-import TournamentView from './components/TournamentView'
+import '@fontsource/roboto/300.css'
+import '@fontsource/roboto/400.css'
+import '@fontsource/roboto/500.css'
+import '@fontsource/roboto/700.css'
 
-function App (): JSX.Element {
-  return (
-    <>
-    <ThemeProvider theme={theme}>
-    <CssBaseline/>
-      <Router>
-        <div style={{ flex: 1 }}>
-          <Routes>
-              <Route path="/home" element={<Home/>} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/torneo" element={<TournamentView/>} />
+import { DataTable } from './components/table/table'
 
-          </Routes>
-        </div>
-        </Router>
-    </ThemeProvider>
-    </>
-  )
+const personas: Record<string, any>[] = [
+	{
+		id: 1,
+		nombre: 'Juan',
+		apellido: 'Pérez',
+		edad: 25,
+		ciudad: 'Ciudad A',
+	},
+	{
+		id: 2,
+		nombre: 'María',
+		apellido: 'Gómez',
+		edad: 30,
+		ciudad: 'Ciudad B',
+	},
+	{
+		id: 3,
+		nombre: 'Carlos',
+		apellido: 'López',
+		edad: 22,
+		ciudad: 'Ciudad C',
+	},
+]
+
+function App() {
+	return (
+		<>
+			<DataTable data={personas} />
+		</>
+	)
 }
 
 export default App
