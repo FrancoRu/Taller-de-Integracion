@@ -1,29 +1,29 @@
-import React, { useState } from 'react'
+import React, { useState } from "react";
 
-import formData from '../../data/readJSON.json'
+import formData from "../../data/readJSON.json";
 
-import { Button } from '../button/button'
-import { Select } from './Select'
-import { Input } from './Input'
-import { BaseInputJSON, InputTypesEnum } from '../../types/form/form'
+import { Button } from "../button/button";
+import { Select } from "./Select";
+import { Input } from "./Input";
+import { BaseInputJSON, InputTypesEnum } from "../../types/form/form.d";
 
 export const MyForm = ({
-	handleSubmit,
+  handleSubmit,
 }: {
-	handleSubmit: (event: React.FormEvent<HTMLFormElement>) => void
+  handleSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
 }) => {
-	const [data] = useState<BaseInputJSON[]>(formData.data)
+  const [data] = useState<BaseInputJSON[]>(formData.data);
 
-	return (
-		<form onSubmit={handleSubmit}>
-			{data.map((inputData: BaseInputJSON) =>
-				inputData.type === InputTypesEnum.Select ? (
-					<Select key={inputData.name} data={inputData} />
-				) : (
-					<Input key={inputData.name} data={inputData} />
-				)
-			)}
-			<Button variant="contained" value="send" type="submit" />
-		</form>
-	)
-}
+  return (
+    <form onSubmit={handleSubmit}>
+      {data.map((inputData: BaseInputJSON) =>
+        inputData.type === InputTypesEnum.Select ? (
+          <Select key={inputData.name} data={inputData} />
+        ) : (
+          <Input key={inputData.name} data={inputData} />
+        )
+      )}
+      <Button value="send" type="submit" />
+    </form>
+  );
+};
