@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "@types/node": "^20.11.24"
+  },
+  "dependencies": {
+    "form": "^0.2.4"
+  }
+}
