@@ -2,11 +2,20 @@
 
 namespace Club12.Viewmodels.User;
 
+/// <summary>
+/// Represents a request object for user login.
+/// </summary>
 public class UserLoginRequest
 {
-    [Required]
+    /// <summary>
+    /// The username for login.
+    /// </summary>
+    [Required(ErrorMessage = "The UserName field is required.")]
     public required string UserName { get; set; }
 
-    [Required]
+    /// <summary>
+    /// The password for login.
+    /// </summary>
+    [Required(ErrorMessage = "The Password field is required.")]
     public required string Password { get; set; }
 }

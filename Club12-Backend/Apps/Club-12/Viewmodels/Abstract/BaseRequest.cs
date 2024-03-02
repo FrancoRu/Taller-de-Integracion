@@ -2,6 +2,9 @@
 
 namespace Club12.Viewmodels.Abstract;
 
+/// <summary>
+/// Represents a base request object.
+/// </summary>
 public class BaseRequest
 {
     /// <summary>

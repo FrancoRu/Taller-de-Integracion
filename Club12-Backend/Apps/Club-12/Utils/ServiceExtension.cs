@@ -12,6 +12,8 @@ using Club12.Services.Teams;
 using Club12.Services.Teams.Implementation;
 using Club12.Services.Users;
 using Club12.Services.Users.Implementation;
+using Club12.Services.Utils;
+using Persistence;
 
 namespace Club12.Utils;
 
@@ -38,5 +40,29 @@ public static class ServiceExtension
         collection.AddScoped<IUserService, UserService>();
         collection.AddScoped<UserService>();
         collection.AddScoped<IGenericService<User>, GenericService<User>>();
+        EnsureAdminUserExists(collection.BuildServiceProvider());
+    }
+
+    private static void EnsureAdminUserExists(IServiceProvider serviceProvider)
+    {
+        using IServiceScope scope = serviceProvider.CreateScope();
+        ApplicationDBContext dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IUserService userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+
+        User? adminUser = userService.GetUserByUserName("admin");
+
+        if (adminUser is null)
+        {
+            User adminEntity = new()
+            {
+                UserName = "admin",
+                PasswordHashed = Encrypt.Hash("root"),
+                Role = "SuperAdmin",
+                DateCreated = DateTime.UtcNow,
+            };
+
+            dbContext.Users.Add(adminEntity);
+            dbContext.SaveChanges();
+        }
     }
 }
