@@ -1,14 +1,9 @@
-import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import { ITable } from "../../types/tables/ITable";
 
-interface ITableProps {
-  data: Array<Record<string, any>>;
-  style?: {
-    height?: string | number;
-    width?: string | number;
-  };
-}
 
-export const DataTable: React.FC<ITableProps> = ({ data, style }) => {
+
+export const DataTable: React.FC<ITable> = ({ data, style }) => {
   const headers = Object.keys(data[0]).filter((key) => key !== "id");
 
   const columns: GridColDef[] = headers.map((header) => ({

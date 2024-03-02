@@ -1,13 +1,7 @@
 import { Button as MUIButton } from "@mui/material";
+import { IButton } from "../../types/buttons/IButton";
 
-interface IButton {
-  type: "submit" | "reset" | "button";
-  value: string;
-  variant?: "text" | "outlined" | "contained";
-  color?: "secondary" | "error" | "success";
-  classname?: string;
-  handler?: (param?: string) => void;
-}
+
 
 export const Button: React.FC<IButton> = (props) => {
   return (

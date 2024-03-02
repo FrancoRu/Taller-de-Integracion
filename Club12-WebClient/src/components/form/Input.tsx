@@ -1,5 +1,5 @@
 import { TextField } from "@mui/material";
-import { BaseInputJSON } from "../../types/form/form.d";
+import { BaseInputJSON } from "../../types/forms/form.d";
 
 export const Input = ({ data }: { data: BaseInputJSON }) => {
   return (
@@ -13,6 +13,7 @@ export const Input = ({ data }: { data: BaseInputJSON }) => {
       required={data.input?.required ?? true}
       aria-readonly={data.input?.readonly ?? false}
       disabled={data.input?.disabled ?? false}
+      
     />
   );
 };
