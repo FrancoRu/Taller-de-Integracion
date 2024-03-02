@@ -1,6 +1,5 @@
-import { Box, Paper } from '@mui/material'
-import Nav from '../layouts/nav'
-import DataTable from './DataTable'
+import { Paper } from '@mui/material'
+import Nav from './layouts/nav'
 
 const TournamentView: React.FC = () => {
   return (
@@ -17,7 +16,6 @@ const TournamentView: React.FC = () => {
           p: 'auto'
         }}
         >
-        <DataTable></DataTable>
         </Paper>
     </>
   )
