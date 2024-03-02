@@ -20,4 +20,17 @@ public interface IDivisionService
     /// <param name="divisionId">The id of the division to retrieve.</param>
     /// <returns>The division with the specified id, or null if not found.</returns>
     Division? GetDivisionById(Guid divisionId);
+
+    /// <summary>
+    /// Deletes a division.
+    /// </summary>
+    /// <param name="division">The division to delete.</param>
+    void DeleteDivision(Division division);
+
+    /// <summary>
+    /// Updates a division asynchronously.
+    /// </summary>
+    /// <param name="division">The division to update.</param>
+    /// <returns>A boolean indicating whether the update was successful.</returns>
+    Task<bool> UpdateDivision(Division division);
 }

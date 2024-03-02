@@ -24,4 +24,22 @@ public class TeamService : ITeamService
     {
         return _genericTeamService.TryGet(teamId);
     }
+
+    public void DeleteTeam(Team teamEntity)
+    {
+        _genericTeamService.Delete(teamEntity);
+    }
+
+    public async Task<bool> UpdateTeam(Team teamEntity)
+    {
+        try
+        {
+            await _genericTeamService.UpdateAsync(teamEntity);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }
