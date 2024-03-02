@@ -9,7 +9,7 @@ namespace Club12.Controllers;
 /// <summary>
 /// Controller for managing divisions.
 /// </summary>
-[Route("api/[controller]")]
+[Route("api/")]
 [ApiController]
 public class DivisionController : ControllerBase
 {
@@ -37,7 +37,7 @@ public class DivisionController : ControllerBase
     /// <returns>The created division response.
     /// <para>Returns 200 (Ok) with the division response if the creation was succesful.</para>
     /// </returns>
-    [HttpPost("division")]
+    [HttpPost("divisions")]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(DivisionResponse))]
     public IActionResult CreateDivision(DivisionRequest divisionRequest)
     {
@@ -56,7 +56,7 @@ public class DivisionController : ControllerBase
     /// <para>Returns 200 (Ok) with the division response if it was found.</para>
     /// <para>Returns 400 (BadRequest) if the division with the provided id was not found.</para>
     /// </returns>
-    [HttpGet("division/{divisionId:guid}")]
+    [HttpGet("divisions/{divisionId:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DivisionResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public ActionResult<DivisionResponse> GetDivisionById(Guid divisionId)
@@ -70,5 +70,61 @@ public class DivisionController : ControllerBase
 
         DivisionResponse divisionResponse = _mapper.Map<DivisionResponse>(division);
         return Ok(divisionResponse);
+    }
+
+    /// <summary>
+    /// Deletes a division by its id.
+    /// </summary>
+    /// <param name="divisionId">The id of the division to delete.</param>
+    /// <returns>
+    /// Returns 200 (Ok) if the division was successfully deleted.
+    /// Returns 400 (BadRequest) if the division with the provided id was not found.
+    /// </returns>
+    [HttpDelete("divisions/{divisionId:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DivisionResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public IActionResult DeleteDivisionById(Guid divisionId)
+    {
+        Division? division = _divisionService.GetDivisionById(divisionId);
+
+        if (division is null)
+        {
+            return BadRequest($"Division with id {divisionId} not found.");
+        }
+
+        _divisionService.DeleteDivision(division);
+        return Ok();
+    }
+
+    /// <summary>
+    /// Updates a division by its id.
+    /// </summary>
+    /// <param name="divisionId">The id of the division to update.</param>
+    /// <param name="divisionRequest">The updated division information.</param>
+    /// <returns>
+    /// Returns 200 (Ok) with the updated division response if the update was successful.
+    /// Returns 400 (BadRequest) if the division with the provided id was not found.
+    /// </returns>
+    [HttpPut("divisions/{divisionId:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DivisionResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateDivisionById(Guid divisionId, DivisionRequest divisionRequest)
+    {
+        Division? existingDivision = _divisionService.GetDivisionById(divisionId);
+
+        if (existingDivision is null)
+        {
+            return BadRequest($"Division with id {divisionId} not found.");
+        }
+
+        _mapper.Map(divisionRequest, existingDivision);
+        bool updateResult = await _divisionService.UpdateDivision(existingDivision);
+
+        if (!updateResult)
+        {
+            return BadRequest("Failed to update the division.");
+        }
+
+        return Ok();
     }
 }

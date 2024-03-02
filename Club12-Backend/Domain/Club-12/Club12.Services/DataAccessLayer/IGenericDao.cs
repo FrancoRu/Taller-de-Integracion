@@ -103,12 +103,6 @@ public interface IGenericDao<TEntity> where TEntity : EntityBase
     Task InsertAsync(TEntity entity);
 
     /// <summary>
-    /// Inserts or updates an entity in the data store.
-    /// </summary>
-    /// <param name="entity">The entity to insert or update.</param>
-    void InsertOrUpdate(TEntity entity);
-
-    /// <summary>
     /// Saves changes to the data store.
     /// </summary>
     void Save();

@@ -1,9 +1,7 @@
 ﻿using Club12.Entities;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
-using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
-using System.Reflection;
 
 namespace Club12.Services.DataAccessLayer.Implementation;
 
@@ -23,7 +21,6 @@ public class GenericDao<TEntity> : IGenericDao<TEntity> where TEntity : EntityBa
     {
         try
         {
-            entity.DateCreated = DateTime.UtcNow;
             DbSet.Add(entity);
         }
         catch (Exception ex)
@@ -55,7 +52,6 @@ public class GenericDao<TEntity> : IGenericDao<TEntity> where TEntity : EntityBa
     {
         try
         {
-            entity.DateCreated = DateTime.UtcNow;
             await DbSet.AddAsync(entity);
         }
         catch (Exception ex)
@@ -64,46 +60,6 @@ public class GenericDao<TEntity> : IGenericDao<TEntity> where TEntity : EntityBa
             throw;
         }
     }
-
-    public void InsertOrUpdate(TEntity entity)
-    {
-        PropertyInfo[] properties = entity.GetType().GetProperties();
-        PropertyInfo? propertyId = null;
-
-        foreach (PropertyInfo item in properties)
-        {
-            if (item.GetCustomAttribute(typeof(KeyAttribute)) != null)
-            {
-                propertyId = item;
-                break;
-            }
-        }
-
-        if (propertyId == null || propertyId.GetMethod == null)
-        {
-            throw new InvalidOperationException("Entity does not have a KeyAttribute or the KeyAttribute does not have a getter method.");
-        }
-
-        object? idValue = propertyId.GetMethod.Invoke(entity, null);
-
-        if (idValue is int id)
-        {
-            if (id == 0)
-            {
-                entity.DateCreated = DateTime.Now;
-            }
-            else
-            {
-                entity.DateUpdated = DateTime.Now;
-                GetContext.Entry(entity).State = EntityState.Modified;
-            }
-        }
-        else
-        {
-            throw new InvalidOperationException("The value of the key property is null or not of type 'int'.");
-        }
-    }
-
     public void Delete(TEntity entity)
     {
         DbSet.Remove(entity);

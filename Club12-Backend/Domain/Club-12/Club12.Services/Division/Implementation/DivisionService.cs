@@ -20,6 +20,24 @@ public class DivisionService : IDivisionService
         return divisionEntity;
     }
 
+    public void DeleteDivision(Division divisionEntity)
+    {
+        _genericDivisionService.Delete(divisionEntity);
+    }
+
+    public async Task<bool> UpdateDivision(Division divisionEntity)
+    {
+        try
+        {
+            await _genericDivisionService.UpdateAsync(divisionEntity);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public Division? GetDivisionById(Guid divisionId)
     {
         return _genericDivisionService.TryGet(divisionId);

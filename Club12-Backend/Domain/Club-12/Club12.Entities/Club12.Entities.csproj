@@ -15,7 +15,6 @@
     <None Remove="Match\NewFile1.txt" />
     <None Remove="PlayerStatistic\NewFile1.txt" />
     <None Remove="StandingSummary\NewFile1.txt" />
-    <None Remove="PlayerTeam\NewFile1.txt" />
     <None Remove="SanctionPlayer\NewFile1.txt" />
     <None Remove="Sanction\NewFile1.txt" />
     <None Remove="Statistic\NewFile1.txt" />

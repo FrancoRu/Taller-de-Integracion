@@ -1,6 +1,7 @@
 using Club12.Entities;
 using Club12.Utils;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using Persistence;
 using Serilog;
 using System.Reflection;
@@ -15,7 +16,7 @@ builder.Host.UseSerilog((context, configuration) =>
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddScoped<IClub12DBContext, ApplicationDBContext>();
 
-string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+string? connectionString = builder.Configuration.GetConnectionString("DbConnection");
 
 if (connectionString is null)
 {
@@ -40,10 +41,9 @@ builder.Services.RegisterApplicationServices();
 builder.Services.AddControllers().AddJsonOptions(x =>
     x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
-builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = builder.Configuration["Swagger:Title"],
         Version = builder.Configuration["Swagger:Version"],
