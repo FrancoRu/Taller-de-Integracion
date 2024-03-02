@@ -6,7 +6,7 @@ import {
   MenuItem,
   type SelectChangeEvent,
 } from "@mui/material";
-import { type BaseInputJSON, type SelectOption } from "../../types/form/form.d";
+import { BaseInputJSON, SelectOption } from "../../types/forms/form.d";
 
 export const Select = ({ data }: { data: BaseInputJSON }) => {
   const [option, setOption] = useState<string>("");

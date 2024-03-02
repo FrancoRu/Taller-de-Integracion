@@ -17,7 +17,7 @@ namespace Persistance.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.1")
+                .HasAnnotation("ProductVersion", "8.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -113,10 +113,15 @@ namespace Persistance.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uuid");
+
                     b.Property<double>("Weight")
                         .HasColumnType("double precision");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TeamId");
 
                     b.ToTable("Players", "Club12");
                 });
@@ -156,41 +161,6 @@ namespace Persistance.Migrations
                     b.HasIndex("StatisticId");
 
                     b.ToTable("PlayersStatistics", "Club12");
-                });
-
-            modelBuilder.Entity("Club12.Entities.PlayersTeamsEntity.PlayerTeam", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("DateCreated");
-
-                    b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("DateUpdated");
-
-                    b.Property<int>("JerseyNumber")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("PlayerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("TeamId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PlayerId");
-
-                    b.HasIndex("TeamId");
-
-                    b.ToTable("PlayerTeams", "Club12");
                 });
 
             modelBuilder.Entity("Club12.Entities.SancitonEntity.Sanction", b =>
@@ -368,6 +338,40 @@ namespace Persistance.Migrations
                     b.ToTable("Tournaments", "Club12");
                 });
 
+            modelBuilder.Entity("Club12.Entities.UserEntity.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DateCreated");
+
+                    b.Property<DateTime?>("DateUpdated")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DateUpdated");
+
+                    b.Property<string>("PasswordHashed")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("character varying(25)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Users", "Club12");
+                });
+
             modelBuilder.Entity("Club12.Entities.MatchEntity.Match", b =>
                 {
                     b.HasOne("Club12.Entities.TeamEntity.Team", "HomeTeam")
@@ -395,6 +399,17 @@ namespace Persistance.Migrations
                     b.Navigation("WinningTeam");
                 });
 
+            modelBuilder.Entity("Club12.Entities.PlayerEntity.Player", b =>
+                {
+                    b.HasOne("Club12.Entities.TeamEntity.Team", "Team")
+                        .WithMany("Players")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Team");
+                });
+
             modelBuilder.Entity("Club12.Entities.PlayersStatisticEntity.PlayerStatistic", b =>
                 {
                     b.HasOne("Club12.Entities.MatchEntity.Match", "Match")
@@ -420,25 +435,6 @@ namespace Persistance.Migrations
                     b.Navigation("Player");
 
                     b.Navigation("Statistic");
-                });
-
-            modelBuilder.Entity("Club12.Entities.PlayersTeamsEntity.PlayerTeam", b =>
-                {
-                    b.HasOne("Club12.Entities.PlayerEntity.Player", "Player")
-                        .WithMany()
-                        .HasForeignKey("PlayerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Club12.Entities.TeamEntity.Team", "Team")
-                        .WithMany()
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Player");
-
-                    b.Navigation("Team");
                 });
 
             modelBuilder.Entity("Club12.Entities.SanctionPlayerEntity.SanctionPlayer", b =>
@@ -488,6 +484,11 @@ namespace Persistance.Migrations
                         .IsRequired();
 
                     b.Navigation("Division");
+                });
+
+            modelBuilder.Entity("Club12.Entities.TeamEntity.Team", b =>
+                {
+                    b.Navigation("Players");
                 });
 #pragma warning restore 612, 618
         }
