@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Club12.Entities.TeamEntity;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Club12.Entities.PlayerEntity;
@@ -32,4 +33,16 @@ public class Player : EntityBase
     /// </summary>
     [Required]
     public required double Weight { get; set; }
+
+    /// <summary>
+    /// The team the player belongs to.
+    /// </summary>
+    [Column("TeamId")]
+    [Required]
+    public required Team Team { get; set; }
+
+    /// <summary>
+    /// The Id of the team the player belongs to.
+    /// </summary>
+    public Guid TeamId { get; set; }
 }

@@ -99,12 +99,6 @@ public interface IGenericService<TEntity> where TEntity : EntityBase
     Task InsertAsync(ICollection<TEntity> entities);
 
     /// <summary>
-    /// Inserts or updates an entity.
-    /// </summary>
-    /// <param name="entity">The entity to insert or update.</param>
-    void InsertOrUpdate(TEntity entity);
-
-    /// <summary>
     /// Updates an entity in the data store.
     /// </summary>
     /// <param name="entity">The entity to update.</param>

@@ -15,8 +15,8 @@ public class GenericService<TEntity> : IGenericService<TEntity> where TEntity : 
 
     public virtual void Insert(TEntity entity)
     {
-        entity.DateCreated = DateTime.Now;
-        entity.DateUpdated = DateTime.Now;
+        entity.DateCreated = DateTime.UtcNow;
+        entity.DateUpdated = DateTime.UtcNow;
         genericDao.Insert(entity);
         genericDao.Save();
     }
@@ -52,12 +52,6 @@ public class GenericService<TEntity> : IGenericService<TEntity> where TEntity : 
 
         await genericDao.InsertAsync(entities);
         await genericDao.SaveAsync();
-    }
-
-    public virtual void InsertOrUpdate(TEntity entity)
-    {
-        genericDao.InsertOrUpdate(entity);
-        genericDao.Save();
     }
 
     public virtual void Delete(TEntity entity)

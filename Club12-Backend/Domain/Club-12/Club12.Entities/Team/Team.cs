@@ -1,4 +1,5 @@
 ﻿using Club12.Entities.DivisionEntity;
+using Club12.Entities.PlayerEntity;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -33,4 +34,9 @@ public class Team : EntityBase
     /// The ID of the division that the team belongs to.
     /// </summary>
     public Guid DivisionId { get; set; }
+
+    /// <summary>
+    /// The players belonging to the team.
+    /// </summary>
+    public virtual required ICollection<Player> Players { get; set; }
 }

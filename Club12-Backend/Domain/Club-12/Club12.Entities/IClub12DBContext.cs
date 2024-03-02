@@ -2,13 +2,13 @@
 using Club12.Entities.MatchEntity;
 using Club12.Entities.PlayerEntity;
 using Club12.Entities.PlayersStatisticEntity;
-using Club12.Entities.PlayersTeamsEntity;
 using Club12.Entities.SancitonEntity;
 using Club12.Entities.SanctionPlayerEntity;
 using Club12.Entities.StandingSummaryEntity;
 using Club12.Entities.StatisticEntity;
 using Club12.Entities.TeamEntity;
 using Club12.Entities.TournamentEntity;
+using Club12.Entities.UserEntity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Club12.Entities;
@@ -27,8 +27,6 @@ public interface IClub12DBContext
 
     DbSet<PlayerStatistic> PlayersStatistics { get; }
 
-    DbSet<PlayerTeam> PlayersTeams { get; }
-
     DbSet<Statistic> Statistics { get; }
 
     DbSet<Sanction> Sanctions { get; }
@@ -36,4 +34,6 @@ public interface IClub12DBContext
     DbSet<SanctionPlayer> SanctionsPlayers { get; }
 
     DbSet<StandingSummary> StandingSummaries { get; }
+
+    DbSet<User> Users { get; set; }
 }
