@@ -9,7 +9,7 @@ namespace Club12.Services.Utils;
 /// <summary>
 /// Utility class for encryption operations.
 /// </summary>
-public class Encrypt
+public static class Encrypt
 {
     /// <summary>
     /// Encrypts a given string using the SHA-256 algorithm.
@@ -62,5 +62,45 @@ public class Encrypt
 
         SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
+    }
+
+    public static UserClaims? DecodeJWTToken(string jwtToken, string jwtSecret)
+    {
+        try
+        {
+            JwtSecurityTokenHandler tokenHandler = new();
+            byte[] key = Encoding.ASCII.GetBytes(jwtSecret);
+
+            tokenHandler.ValidateToken(jwtToken, new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ClockSkew = TimeSpan.Zero
+            }, out SecurityToken validatedToken);
+
+            JwtSecurityToken jwtTokenClaims = (JwtSecurityToken)validatedToken;
+
+            string? userName = jwtTokenClaims.Claims.FirstOrDefault(claim => claim.Type == "unique_name")?.Value;
+            string? role = jwtTokenClaims.Claims.FirstOrDefault(claim => claim.Type == "role")?.Value;
+
+            if (jwtTokenClaims.ValidTo < DateTime.UtcNow)
+            {
+                return null;
+            }
+
+            return userName is null || role is null ? null : new UserClaims { UserName = userName, Role = role };
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    public class UserClaims
+    {
+        public required string UserName { get; set; }
+        public required string Role { get; set; }
     }
 }

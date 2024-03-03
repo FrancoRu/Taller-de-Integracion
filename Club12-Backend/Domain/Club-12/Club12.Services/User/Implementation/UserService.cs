@@ -50,10 +50,16 @@ public class UserService : IUserService
         }
     }
 
-    public bool IsSuperAdmin(Guid userId)
+    public bool IsSuperAdmin(string jwtToken)
     {
-        User? userEntity = _userGenericService.TryGet(userId);
-        return userEntity is not null && string.Equals(userEntity.Role, "SuperAdmin", StringComparison.OrdinalIgnoreCase);
+        Encrypt.UserClaims? userClaims = Encrypt.DecodeJWTToken(jwtToken, _jwtSecret);
+        return userClaims?.Role == "SuperAdmin";
+    }
+
+    public bool IsAuthenticated(string jwtToken)
+    {
+        Encrypt.UserClaims? userClaims = Encrypt.DecodeJWTToken(jwtToken, _jwtSecret);
+        return userClaims?.Role == "SuperAdmin" || userClaims?.Role == "Admin";
     }
 
     public bool ValidateCredentials(User userEntity, string plainTextPassword)
