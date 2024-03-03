@@ -82,10 +82,15 @@ public static class Encrypt
 
             JwtSecurityToken jwtTokenClaims = (JwtSecurityToken)validatedToken;
 
-            string userName = jwtTokenClaims.Claims.First(claim => claim.Type == ClaimTypes.Name).Value;
-            string role = jwtTokenClaims.Claims.First(claim => claim.Type == ClaimTypes.Role).Value;
+            string? userName = jwtTokenClaims.Claims.FirstOrDefault(claim => claim.Type == "unique_name")?.Value;
+            string? role = jwtTokenClaims.Claims.FirstOrDefault(claim => claim.Type == "role")?.Value;
 
-            return new UserClaims { UserName = userName, Role = role };
+            if (jwtTokenClaims.ValidTo < DateTime.UtcNow)
+            {
+                return null;
+            }
+
+            return userName is null || role is null ? null : new UserClaims { UserName = userName, Role = role };
         }
         catch (Exception)
         {
