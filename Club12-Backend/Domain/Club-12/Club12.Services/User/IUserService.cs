@@ -18,7 +18,6 @@ public interface IUserService
     /// <returns>The user response with the specified username, or null if not found.</returns>
     User? GetUserById(Guid userId);
 
-
     /// <summary>
     /// Gets the user by its user name.
     /// </summary>
@@ -49,9 +48,16 @@ public interface IUserService
     /// <summary>
     /// Checks if the user has SuperAdmin role.
     /// </summary>
-    /// <param name="userEntity"></param>
+    /// <param name="jwtToken"></param>
     /// <returns></returns>
-    public bool IsSuperAdmin(Guid userId);
+    bool IsSuperAdmin(string jwtToken);
+
+    /// <summary>
+    /// Checks if the user has SuperAdmin or Admin role.
+    /// </summary>
+    /// <param name="jwtToken"></param>
+    /// <returns></returns>
+    bool IsAuthenticated(string jwtToken);
 
     /// <summary>
     /// Validates user credentials.

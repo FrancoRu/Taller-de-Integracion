@@ -2,6 +2,8 @@
 using Club12.Entities.PlayerEntity;
 using Club12.Entities.TeamEntity;
 using Club12.Entities.UserEntity;
+using Club12.Services.Auth;
+using Club12.Services.Auth.Implementation;
 using Club12.Services.DataAccessLayer;
 using Club12.Services.DataAccessLayer.Implementation;
 using Club12.Services.Divisions;
@@ -40,10 +42,16 @@ public static class ServiceExtension
         collection.AddScoped<IUserService, UserService>();
         collection.AddScoped<UserService>();
         collection.AddScoped<IGenericService<User>, GenericService<User>>();
-        EnsureAdminUserExists(collection.BuildServiceProvider());
+        collection.AddScoped<IAuthService, AuthService>();
+        collection.AddScoped<AuthService>();
+        collection.AddScoped<IHttpContextAccessor, HttpContextAccessor>();
     }
 
-    private static void EnsureAdminUserExists(IServiceProvider serviceProvider)
+    /// <summary>
+    /// Ensures that an admin user exists in the database. If no admin user is found, it creates one with default credentials.
+    /// </summary>
+    /// <param name="serviceProvider">The <see cref="IServiceProvider"/> instance.</param>
+    public static void EnsureAdminUserExists(this IServiceProvider serviceProvider)
     {
         using IServiceScope scope = serviceProvider.CreateScope();
         ApplicationDBContext dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
