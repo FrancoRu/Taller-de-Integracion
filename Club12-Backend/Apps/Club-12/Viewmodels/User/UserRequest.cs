@@ -1,12 +1,11 @@
-﻿using Club12.Viewmodels.Abstract;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Club12.Viewmodels.User;
 
 /// <summary>
 /// Represents a request object for creating or updating a user.
 /// </summary>
-public class UserRequest : BaseRequest
+public class UserRequest
 {
     /// <summary>
     /// The username of the user.
