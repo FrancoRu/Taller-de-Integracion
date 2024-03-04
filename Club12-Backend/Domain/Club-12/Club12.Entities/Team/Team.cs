@@ -1,0 +1,42 @@
+﻿using Club12.Entities.DivisionEntity;
+using Club12.Entities.PlayerEntity;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Club12.Entities.TeamEntity;
+
+/// <summary>
+/// Represents a team in the Club12 application.
+/// </summary>
+[Table("Teams", Schema = "Club12")]
+public class Team : EntityBase
+{
+    /// <summary>
+    /// The name of the team.
+    /// </summary>
+    [Required]
+    public required string Name { get; set; }
+
+    /// <summary>
+    /// The three-letter code of the team.
+    /// </summary>
+    [Required]
+    public required string ThreeLetterCode { get; set; }
+
+    /// <summary>
+    /// The division that the team belongs to.
+    /// </summary>
+    [Required]
+    [Column("DivisionId")]
+    public required Division Division { get; set; }
+
+    /// <summary>
+    /// The ID of the division that the team belongs to.
+    /// </summary>
+    public Guid DivisionId { get; set; }
+
+    /// <summary>
+    /// The players belonging to the team.
+    /// </summary>
+    public virtual required ICollection<Player> Players { get; set; }
+}

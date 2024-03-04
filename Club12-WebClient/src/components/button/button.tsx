@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Button as MUIButton } from '@mui/material'
 
 interface IButton {
@@ -22,3 +23,23 @@ export const Button: React.FC<IButton> = (props) => {
 		</MUIButton>
 	)
 }
+=======
+import { Button as MUIButton } from "@mui/material";
+import { IButton } from "../../types/buttons/IButton";
+
+
+
+export const Button: React.FC<IButton> = (props) => {
+  return (
+    <MUIButton
+      variant={props.variant ?? "contained"}
+      type={props.type}
+      color={props.color ?? "secondary"}
+      onClick={() => props.handler?.()}
+      className={props.classname}
+    >
+      {props.value}
+    </MUIButton>
+  );
+};
+>>>>>>> d9fb9ed5dde741cf4cabae97290f56c8eaab95b3

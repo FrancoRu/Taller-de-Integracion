@@ -398,3 +398,10 @@ FodyWeavers.xsd
 
 src/**/obj
 src/**/bin
+
+.idea/
+
+# Appsettings for each developer
+appsettings.Facundo.json
+appsettings.Franco.json
+appsettings.Tomi.json
