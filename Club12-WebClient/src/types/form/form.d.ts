@@ -1,3 +1,5 @@
+import React from 'react'
+
 export enum InputTypesEnum {
 	Text = 'text',
 	Password = 'password',
@@ -9,7 +11,7 @@ export enum InputTypesEnum {
 	Hidden = 'hidden',
 	Number = 'number',
 	Radio = 'radio',
-	Select = 'select',
+	Select = 'select'
 }
 
 export interface BaseInputJSON {
@@ -40,4 +42,14 @@ interface inputJSON {
 
 export interface ReadJSON {
 	data: BaseInputJSON[]
+}
+
+export interface IForm {
+	handleSubmit: (event: React.FormEvent<HTMLFormElement>) => void
+	data: BaseInputJSON[]
+	value: string
+}
+
+export interface IInput {
+	data: BaseInputJSON
 }

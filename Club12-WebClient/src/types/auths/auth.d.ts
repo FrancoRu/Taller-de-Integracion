@@ -1,13 +1,24 @@
 export interface IUser {
-  id: string
-  username: string
-  email: string
+	id: string
+	username: string
+	email: string
 }
-  
-export interface IBaseDivisionAuthContextProps {
-  signup: (value: object) => Promise<void>
-  sigIn: (value: object) => Promise<void>
-  logOut: () => Promise<void>
-  user: User | null
-  isAuthenticated: boolean
+
+interface authSignUp extends authSignIn {
+	name: string
+	confirmPassword: string
+	role: number
+}
+
+interface authSignIn {
+	email: string
+	password: string
+}
+
+export interface IAuthContextProps {
+	signUp: (value: authSignUp) => Promise<void>
+	signIn: (value: authSignIn) => Promise<void>
+	logOut: () => Promise<void>
+	user: IUser | null
+	isAuthenticated: boolean
 }

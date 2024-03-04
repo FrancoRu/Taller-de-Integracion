@@ -1,23 +1,19 @@
 import React from 'react'
-import ReactDOM from 'react-dom'
-import App from './App'
+import ReactDOM from 'react-dom/client'
 import './index.css'
+import App from './App'
+import { AuthProvider } from './context/auth/auth.context'
+import { ErrorProvider } from './context/error/error.context'
 import { BrowserRouter } from 'react-router-dom'
-<<<<<<< HEAD
-import { MyForm } from './components/form/form'
-ReactDOM.createRoot(document.getElementById('root')!).render(
-	<React.StrictMode>
-		{/* // <BrowserRouter> */}
-		<App />
-		{/* // </BrowserRouter> */}
-	</React.StrictMode>
-=======
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </React.StrictMode>
->>>>>>> d9fb9ed5dde741cf4cabae97290f56c8eaab95b3
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+	<React.StrictMode>
+		<BrowserRouter>
+			<ErrorProvider>
+				<AuthProvider>
+					<App />
+				</AuthProvider>
+			</ErrorProvider>
+		</BrowserRouter>
+	</React.StrictMode>
 )
