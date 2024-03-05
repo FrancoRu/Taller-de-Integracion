@@ -1,0 +1,14 @@
+.home {
+	background-color: white;
+	border-radius: 1em;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.truncate-cell {
+	white-space: nowrap; /* Evita el salto de línea */
+	overflow: hidden; /* Oculta el contenido que no cabe */
+	text-overflow: ellipsis; /* Muestra tres puntos suspensivos para indicar contenido truncado */
+}

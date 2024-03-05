@@ -2,26 +2,28 @@ import '@fontsource/roboto/300.css'
 import '@fontsource/roboto/400.css'
 import '@fontsource/roboto/500.css'
 import '@fontsource/roboto/700.css'
+import './styles/main.css'
 
 import { Route, Routes } from 'react-router-dom'
 
 import { ThemeProvider } from '@emotion/react'
 import { CssBaseline } from '@mui/material/'
 import theme from './styles/theme'
-import './styles/main.css'
-import { SignIn } from './views/access/SignIn'
-import { SignUp } from './views/access/SignUp'
-// import SignUp from './views/SignUp'
-// import { SignIn } from './views/access/signIn'
+import { NavBarPage } from './views/navbar/NavbarPage'
+import { Home } from './views/home/home'
 
 function App() {
 	return (
 		<ThemeProvider theme={theme}>
 			<CssBaseline />
-			<Routes>
-				<Route path='/' element={<SignIn />} />
-				<Route path='/register' element={<SignUp />} />
-			</Routes>
+			<div id='container'>
+				<div id='blur'>
+					<NavBarPage />
+					<Routes>
+						<Route path='/' element={<Home />} />
+					</Routes>
+				</div>
+			</div>
 		</ThemeProvider>
 	)
 }

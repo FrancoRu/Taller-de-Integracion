@@ -130,5 +130,31 @@
 				}
 			]
 		}
+	],
+	"tabla-preba": [
+		{
+			"id": 1,
+			"team1": "Equipo A",
+			"team2": "Equipo B",
+			"scoreTeam1": 3,
+			"scoreTeam2": 1,
+			"date": "2022-03-01T18:00:00Z"
+		},
+		{
+			"id": 2,
+			"team1": "Equipo C",
+			"team2": "Equipo D",
+			"scoreTeam1": 2,
+			"scoreTeam2": 2,
+			"date": "2022-03-02T19:30:00Z"
+		},
+		{
+			"id": 3,
+			"team1": "Equipo E",
+			"team2": "Equipo F",
+			"scoreTeam1": 1,
+			"scoreTeam2": 4,
+			"date": "2022-03-03T20:45:00Z"
+		}
 	]
 }

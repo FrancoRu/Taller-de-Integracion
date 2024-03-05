@@ -8,6 +8,7 @@ import {
 	authSignIn,
 	authSignUp
 } from '../../types/auths/auth'
+import { checkToken } from '../../hooks/auth/useAuth'
 
 export const AuthContext = createContext<IAuthContextProps | undefined>(
 	undefined
@@ -16,7 +17,6 @@ export const AuthContext = createContext<IAuthContextProps | undefined>(
 export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
 	const [user, setUser] = useState<IUser | null>(null)
 
-	const service = authService
 	const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
 	const { setError } = useError()
 
@@ -25,42 +25,25 @@ export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
 	}, [user])
 
 	useEffect(() => {
-		const checkToken = async () => {
-			const cookies = Cookies.get()
-			if (cookies.token) {
-				try {
-					const res = await service.verifyTokenRequest()
-					/**
-					 * TODO
-					 * Se debe implementar el verificar token todavia esto es un ejemplo
-					 * {
-						data: {
-							_id: 'GUID',
-							username: 'example',
-							email: 'example@example.com'
-						}
-					 * 
-					*/
-
-					if (!res.data) setIsAuthenticated(false)
-					setIsAuthenticated(true)
-					setUser({
-						id: res.data._id,
-						username: res.data.username,
-						email: res.data.email
-					})
-				} catch (error) {
+		checkToken()
+			.then((res) => {
+				if (!res) {
 					setIsAuthenticated(false)
 					setUser(null)
+				} else {
+					setIsAuthenticated(true)
+					setUser(res)
 				}
-			}
-		}
-		checkToken()
+			})
+			.catch((error) => {
+				setUser(null)
+				setError(error)
+			})
 	}, [])
 
 	const signUp = async (user: authSignUp) => {
 		try {
-			const res = await service.registerRequest(user)
+			const res = await authService.registerRequest(user)
 			const { _id, username, email } = res.data.user
 			const userData: IUser = { id: _id, username: username, email: email }
 			setUser(userData)
@@ -71,7 +54,7 @@ export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
 
 	const signIn = async (user: authSignIn) => {
 		try {
-			const res = await service.loginRequest(user)
+			const res = await authService.loginRequest(user)
 			const { _id, username, email } = res.data.user
 			const userData: IUser = { id: _id, username: username, email: email }
 			setUser(userData)
@@ -82,7 +65,7 @@ export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
 
 	const logOut = async () => {
 		try {
-			await service.logoutRequest() //--> Cambiar al endpoint que elimine desde el back la sesion y desautorice el token
+			await authService.logoutRequest() //--> Cambiar al endpoint que elimine desde el back la sesion y desautorice el token
 			Cookies.remove('token')
 			setIsAuthenticated(false)
 			setUser(null)

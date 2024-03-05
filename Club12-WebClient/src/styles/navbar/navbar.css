@@ -1,0 +1,52 @@
+.container-header {
+	width: 100%;
+}
+
+.ul-navbar {
+	height: 50px;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	justify-content: space-around;
+}
+
+.ul-navbar li {
+	position: relative;
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	width: 100%;
+	height: 100%;
+	list-style: none;
+}
+
+.ul-navbar li a {
+	width: 100%;
+	text-align: center;
+	text-decoration: none;
+	color: white;
+	position: relative;
+	z-index: 1;
+}
+
+.nav-navbar {
+	background-color: orange;
+}
+
+.ul-navbar li:hover::before {
+	content: '';
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	background: radial-gradient(circle, transparent 20%, white 70%);
+	transform: scale(0);
+	transform-origin: center;
+	animation: ripple 2s ease-out infinite;
+}
+
+@keyframes ripple {
+	to {
+		transform: scale(4);
+		opacity: 0;
+	}
+}
