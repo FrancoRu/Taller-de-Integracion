@@ -23,13 +23,13 @@ export const registerToken = (newToken: string, expirationDate: Date) => {
 	jsCookie.set(TOKEN_KEY, newToken, {
 		expires: expirationDate,
 		sameSite: 'lax',
-		path: '/',
+		path: '/'
 	})
 }
 
 export const unregisterToken = (): void => {
 	jsCookie.remove(TOKEN_KEY, {
-		path: '/',
+		path: '/'
 	})
 }
 
@@ -45,7 +45,7 @@ const buildResponse = (axiosResult: AxiosResponse): any => {
 
 const getDefaultHeaders = (): headersContent => {
 	const headers: headersContent = {
-		'Content-Type': 'application/json; charset=utf-8',
+		'Content-Type': 'application/json; charset=utf-8'
 	}
 
 	if (tokenIsSet()) {
@@ -61,7 +61,7 @@ const getHeaders = (configOverride?: ConfigOverride): headersContent => {
 	if (configOverride && configOverride.headers) {
 		headers = {
 			...headers,
-			...configOverride.headers,
+			...configOverride.headers
 		}
 	}
 
@@ -92,7 +92,7 @@ const sendRequest = async (
 			method,
 			url,
 			headers,
-			data: body,
+			data: body
 		})
 		response = result
 		return buildResponse(result)

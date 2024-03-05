@@ -1,5 +1,5 @@
 export interface ITournament {
-	id:string
+	id: string
 	description: string
 	year: number
 }

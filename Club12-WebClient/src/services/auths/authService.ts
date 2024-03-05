@@ -1,15 +1,17 @@
-import { IUser } from "../../types/auths/auth.d"
-import { sendPost } from "../../utils/utils"
+import { authSignIn, authSignUp } from '../../types/auths/auth.d'
+import { sendGet, sendPost } from '../../utils/utils'
 const authServiceResource = '/api/auths'
 
-
 export const authService = {
-    registerRequest : async (user: IUser) => sendPost(authServiceResource, user),
+	registerRequest: async (user: authSignUp) =>
+		sendPost(authServiceResource, user),
 
-    loginRequest : (user: IUser) => sendPost(authServiceResource, user),
+	loginRequest: (user: authSignIn) => sendPost(authServiceResource, user),
 
-    // verifyTokenRequest : () => axios.get(`api/verifyToken`),
+	logoutRequest: () => sendGet(`${authServiceResource}/logout`),
 
-    // GetLogOutRequest : () => axios.get('api/logout'),
+	verifyTokenRequest: () => sendGet(`${authServiceResource}/verifyToken`)
+	// verifyTokenRequest : () => axios.get(`api/verifyToken`),
+
+	// GetLogOutRequest : () => axios.get('api/logout'),
 }
-
