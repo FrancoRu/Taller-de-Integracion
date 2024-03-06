@@ -1,6 +1,5 @@
-import { DataGrid, GridColDef, GridToolbar } from '@mui/x-data-grid'
+import { DataGrid, GridColDef } from '@mui/x-data-grid'
 import { ITable } from '../../types/tables/ITable'
-import { Button } from '@mui/material'
 
 export const DataTable: React.FC<ITable> = ({ data, style }) => {
 	const headers = Object.keys(data[0]).filter((key) => key !== 'id')
@@ -23,14 +22,6 @@ export const DataTable: React.FC<ITable> = ({ data, style }) => {
 	return (
 		<div style={style ? { ...style } : undefined}>
 			<DataGrid
-				slots={{
-					toolbar: GridToolbar
-				}}
-				slotProps={{
-					baseCheckbox: {
-						disabled: true
-					}
-				}}
 				rows={rows}
 				columns={columns}
 				initialState={{
@@ -41,7 +32,6 @@ export const DataTable: React.FC<ITable> = ({ data, style }) => {
 						}
 					}
 				}}
-				checkboxSelection
 			/>
 		</div>
 	)

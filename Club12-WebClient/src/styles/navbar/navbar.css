@@ -30,7 +30,10 @@
 }
 
 .nav-navbar {
-	background-color: orange;
+	background: #ff5000;
+	background: linear-gradient(90deg, #ff5000 0%, #ffa500 80%);
+	background: -webkit-linear-gradient(90deg, #ff5000 0%, #ffa500 80%);
+	background: -moz-linear-gradient(90deg, #ff5000 0%, #ffa500 80%);
 }
 
 .ul-navbar li:hover::before {

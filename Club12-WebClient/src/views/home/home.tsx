@@ -1,10 +1,9 @@
-import { DataTable } from '../../components/table/table'
-import data from '../../data/readJSON.json'
 import '../../styles/home/home.css'
+import { Tournament } from '../tournaments/tournament'
 export const Home = () => {
 	return (
 		<div className='home'>
-			<DataTable data={data['tabla-preba']} />
+			<Tournament />
 		</div>
 	)
 }

@@ -5,22 +5,22 @@ import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
- plugins: [react()],
- build: {
-  outDir: 'build',
-  assetsDir: 'assets',
-  sourcemap: true,
-  minify: 'terser',
- },
- optimizeDeps: {
-  include: ['react', 'react-dom'],
- },
- server: {
-  port: 3000,
- },
- resolve: {
-  alias: {
-   '@': path.resolve(__dirname, 'src'), // Ajusta la ruta según la estructura de tu proyecto
-  },
- },
+	plugins: [react()],
+	build: {
+		outDir: 'build',
+		assetsDir: 'assets',
+		sourcemap: true,
+		minify: 'terser'
+	},
+	optimizeDeps: {
+		include: ['react', 'react-dom']
+	},
+	server: {
+		port: 5173
+	},
+	resolve: {
+		alias: {
+			'@': path.resolve(__dirname, 'src') // Ajusta la ruta según la estructura de tu proyecto
+		}
+	}
 })
