@@ -8,6 +8,9 @@ using Serilog;
 using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
+using DotNetEnv;
+
+DotNetEnv.Env.Load();
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -18,16 +21,23 @@ builder.Host.UseSerilog((context, configuration) =>
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddScoped<IClub12DBContext, ApplicationDBContext>();
 
-string? connectionString = builder.Configuration.GetConnectionString("DbConnection");
-string jwtSecret = "6hZVY3wu6vmxNHJ0k89NCDf3r0f7jTijAGIh4iOKr9w=";
-
-if (connectionString is null)
+try
 {
-    Log.Fatal("Connection string is missing. Using default or fallback connection string.");
-    throw new ArgumentException("The connection string should be initialized already.");
+    string? connectionString = builder.Configuration.GetConnectionString("DbConnection");
+
+    if (connectionString is null)
+    {
+        Log.Fatal("Connection string is missing. Using default or fallback connection string.");
+        throw new ArgumentException("The connection string should be initialized already.");
+    }
+    builder.Services.AddDbContext<ApplicationDBContext>(options => options.UseNpgsql(connectionString));
+}
+catch (ArgumentException e) {
+    Log.Fatal(e.Message);
 }
 
-builder.Services.AddDbContext<ApplicationDBContext>(options => options.UseNpgsql(connectionString));
+
+
 
 builder.Services.AddCors(options =>
 {
@@ -41,20 +51,28 @@ builder.Services.AddCors(options =>
 
 builder.Services.RegisterApplicationServices();
 
-builder.Services.AddAuthentication(options =>
+try
 {
-    options.DefaultScheme = "Bearer";
-}).AddJwtBearer("Bearer", options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+    string jwtSecret = Environment.GetEnvironmentVariable("JWT_TOKEN_KEY") ?? throw new InvalidOperationException("La variable de entorno JWT_TOKEN_KEY no está configurada.");
+    builder.Services.AddAuthentication(options =>
     {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret)),
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        ClockSkew = TimeSpan.Zero
-    };
-});
+        options.DefaultScheme = "Bearer";
+    }).AddJwtBearer("Bearer", options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret)),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+}
+catch (InvalidOperationException e) {
+    Log.Fatal(e.Message);
+}
 
 builder.Services.AddControllers().AddJsonOptions(x =>
     x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);

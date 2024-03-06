@@ -44,7 +44,7 @@ public static class Encrypt
         return string.Equals(hashedInput, hashedPassword, StringComparison.OrdinalIgnoreCase);
     }
 
-    public static string GenerateJWTToken(string jwtSecret, string userName, string role)
+    public static string GenerateJWTToken(string jwtSecret, string userName, string role, Guid id)
     {
         JwtSecurityTokenHandler tokenHandler = new();
         byte[] key = Encoding.ASCII.GetBytes(jwtSecret);
@@ -53,6 +53,7 @@ public static class Encrypt
         {
             Subject = new ClaimsIdentity(new[]
             {
+                    new Claim(ClaimTypes.Sid, id.ToString()),
                     new Claim(ClaimTypes.Name, userName),
                     new Claim(ClaimTypes.Role, role)
                 }),
@@ -84,13 +85,14 @@ public static class Encrypt
 
             string? userName = jwtTokenClaims.Claims.FirstOrDefault(claim => claim.Type == "unique_name")?.Value;
             string? role = jwtTokenClaims.Claims.FirstOrDefault(claim => claim.Type == "role")?.Value;
-
+            string? id = jwtTokenClaims.Claims.FirstOrDefault(claim => claim.Type == "Sid")?.Value; 
+            
             if (jwtTokenClaims.ValidTo < DateTime.UtcNow)
             {
                 return null;
             }
 
-            return userName is null || role is null ? null : new UserClaims { UserName = userName, Role = role };
+            return userName is null || role is null || id is null ? null : new UserClaims { UserName = userName, Role = role, Id = Guid.Parse(id) };
         }
         catch (Exception)
         {
@@ -102,5 +104,6 @@ public static class Encrypt
     {
         public required string UserName { get; set; }
         public required string Role { get; set; }
+        public required Guid Id { get; set; }
     }
 }

@@ -50,6 +50,10 @@ public class UserController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult CreateUser(UserRequest userRequest)
     {
+        if (!_authService.IsTokenValid()) {
+            return Forbid("Invalid Token.");
+        }
+
         if (!_authService.IsSuperAdmin())
         {
             return Forbid("Only SuperAdmin can create users.");
@@ -107,6 +111,10 @@ public class UserController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> UpdateUser(Guid userId, UserRequest userRequest)
     {
+        if (!_authService.IsTokenValid())
+        {
+            return Forbid("Invalid Token.");
+        }
 
         if (!_authService.IsSuperAdmin())
         {
@@ -141,6 +149,11 @@ public class UserController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult DeleteUserById(Guid userId)
     {
+        if (!_authService.IsTokenValid())
+        {
+            return Forbid("Invalid Token.");
+        }
+
         if (!_authService.IsSuperAdmin())
         {
             return Forbid("Only SuperAdmin can delete users.");
@@ -155,5 +168,20 @@ public class UserController : ControllerBase
 
         _userService.DeleteUser(user);
         return Ok();
+    }
+
+    ///<summary>
+    ///Check if the token sent is correct and belongs to a user in the DB
+    /// </summary>
+    /// <returns>
+    /// Returns 200 (OK) if the token is valid.
+    /// Returns 403 (Forbidden) if the user is not SuperAdmin.
+    /// </returns>
+    [HttpGet("users/verifyToken")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public IActionResult VerifyToken() {
+        if (_authService.IsTokenValid()) return Ok();
+        return Forbid("Invalid token");
     }
 }

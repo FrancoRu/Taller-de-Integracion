@@ -66,4 +66,11 @@ public interface IUserService
     /// <param name="plainTextPassword">The user request password.</param>
     /// <returns>True if the credentials are valid, otherwise false.</returns>
     bool ValidateCredentials(User userEntity, string plainTextPassword);
+
+    /// <summary>
+    /// Validates user token.
+    /// </summary>
+    /// <param name="jwtToken">The token of the user who makes a request.</param>
+    /// <returns>True if the token contains the id of a user that is registered in the database.</returns>
+    bool ValidateToken(string jwtToken);
 }
