@@ -67,32 +67,6 @@ public class UserController : ControllerBase
     }
 
     /// <summary>
-    /// Logs in a user and generates a JWT token.
-    /// </summary>
-    /// <param name="userLoginRequest">The user login request.</param>
-    /// <returns>
-    /// Returns 200 (Ok) with the generated JWT token if the login is successful.
-    /// Returns 401 (Unauthorized) if the credentials are invalid.
-    /// </returns>
-    [AllowAnonymous]
-    [HttpPost("login")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public IActionResult Login(UserLoginRequest userLoginRequest)
-    {
-        User? user = _userService.GetUserByUserName(userLoginRequest.UserName);
-
-        if (user == null || !_userService.ValidateCredentials(user, userLoginRequest.Password))
-        {
-            return Unauthorized("Invalid credentials");
-        }
-
-        TokenResponse token = _authService.GenerateJwtToken(user);
-
-        return Ok(token);
-    }
-
-    /// <summary>
     /// Updates a user by its id.
     /// </summary>
     /// <param name="userId">The id of the user to update.</param>
@@ -145,5 +119,31 @@ public class UserController : ControllerBase
 
         _userService.DeleteUser(user);
         return Ok();
+    }
+
+    /// <summary>
+    /// Logs in a user and generates a JWT token.
+    /// </summary>
+    /// <param name="userLoginRequest">The user login request.</param>
+    /// <returns>
+    /// Returns 200 (Ok) with the generated JWT token if the login is successful.
+    /// Returns 401 (Unauthorized) if the credentials are invalid.
+    /// </returns>
+    [AllowAnonymous]
+    [HttpPost("login")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public IActionResult Login(UserLoginRequest userLoginRequest)
+    {
+        User? user = _userService.GetUserByUserName(userLoginRequest.UserName);
+
+        if (user == null || !_userService.ValidateCredentials(user, userLoginRequest.Password))
+        {
+            return Unauthorized("Invalid credentials");
+        }
+
+        TokenResponse token = _authService.GenerateJwtToken(user);
+
+        return Ok(token);
     }
 }

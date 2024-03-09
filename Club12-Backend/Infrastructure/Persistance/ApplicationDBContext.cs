@@ -31,6 +31,12 @@ public class ApplicationDBContext : DbContext, IDomainDBContexts
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Match>()
+        .Property(match => match.Type)
+        .HasConversion(
+            value => value.ToString(),
+            value => (MatchType)Enum.Parse(typeof(MatchType), value));
+
         modelBuilder.Entity<Team>()
             .HasMany(team => team.Players)
             .WithOne(player => player.Team)

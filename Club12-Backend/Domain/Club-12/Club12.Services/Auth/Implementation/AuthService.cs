@@ -34,8 +34,9 @@ public class AuthService : IAuthService
             Subject = new ClaimsIdentity(new[]
             {
                 new Claim(ClaimTypes.Name, userEntity.UserName),
-                new Claim(ClaimTypes.Role, userEntity.Role)
-            }),
+                new Claim(ClaimTypes.Role, userEntity.Role),
+                new Claim("userId", userEntity.Id.ToString())
+             }),
             Expires = DateTime.UtcNow.AddSeconds(60),
             Issuer = _issuer,
             Audience = _audience,

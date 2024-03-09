@@ -12,17 +12,17 @@ public interface IUserService
     User CreateUser(User userEntity);
 
     /// <summary>
-    /// Retrieves a user by their username.
+    /// Retrieves a user by their id.
     /// </summary>
     /// <param name="userId">The id of the user to retrieve.</param>
-    /// <returns>The user response with the specified username, or null if not found.</returns>
+    /// <returns>The user response with the specified id, or null if not found.</returns>
     User? GetUserById(Guid userId);
 
     /// <summary>
     /// Gets the user by its user name.
     /// </summary>
     /// <param name="userName"></param>
-    /// <returns>The user entity if found, otherwhise null.</returns>
+    /// <returns>The user entity if found, otherwise null.</returns>
     User? GetUserByUserName(string userName);
 
     /// <summary>
@@ -33,9 +33,9 @@ public interface IUserService
     Task<bool> UpdateUser(User userEntity);
 
     /// <summary>
-    /// Deletes a user by their username.
+    /// Deletes a user by their id.
     /// </summary>
-    /// <param name="userEntity">The username of the user to delete.</param>
+    /// <param name="userEntity">The user to delete.</param>
     void DeleteUser(User userEntity);
 
     /// <summary>

@@ -3,6 +3,7 @@ using Club12.Entities.DivisionEntity;
 using Club12.Entities.TeamEntity;
 using Club12.Services.Divisions;
 using Club12.Services.Teams;
+using Club12.Utils.Controller;
 using Club12.Viewmodels.Team;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,6 +20,7 @@ public class TeamController : ControllerBase
 {
     private readonly ITeamService _teamService;
     private readonly IDivisionService _divisionService;
+    private readonly IControllerUtils _controllerUtils;
     private readonly IMapper _mapper;
 
     /// <summary>
@@ -26,15 +28,18 @@ public class TeamController : ControllerBase
     /// </summary>
     /// <param name="teamService">The team service.</param>
     /// <param name="divisionService">The division service.</param>
+    /// <param name="controllerUtils">Controller utils that allow us to get user data from requests.</param>
     /// <param name="mapper">The AutoMapper instance.</param>
     public TeamController(
         ITeamService teamService,
         IDivisionService divisionService,
+        IControllerUtils controllerUtils,
         IMapper mapper
     )
     {
         _teamService = teamService;
         _divisionService = divisionService;
+        _controllerUtils = controllerUtils;
         _mapper = mapper;
     }
 
@@ -61,8 +66,9 @@ public class TeamController : ControllerBase
             return BadRequest($"There is no division with id: {teamId}.");
         }
 
+        Guid userIdRequested = _controllerUtils.GetUserId();
         Team mappedTeam = _mapper.Map<Team>(teamRequest);
-        Team createdTeam = _teamService.CreateTeam(mappedTeam);
+        Team createdTeam = _teamService.CreateTeam(mappedTeam, userIdRequested);
         TeamResponse teamResponse = _mapper.Map<TeamResponse>(createdTeam);
 
         return new ObjectResult(teamResponse) { StatusCode = StatusCodes.Status201Created };
@@ -116,8 +122,9 @@ public class TeamController : ControllerBase
             return BadRequest($"Team with id {teamId} not found.");
         }
 
+        Guid userIdRequested = _controllerUtils.GetUserId();
         _mapper.Map(teamRequest, existingTeam);
-        bool updateResult = await _teamService.UpdateTeam(existingTeam);
+        bool updateResult = await _teamService.UpdateTeam(existingTeam, userIdRequested);
 
         return !updateResult ? BadRequest("Failed to update the team.") : Ok();
     }

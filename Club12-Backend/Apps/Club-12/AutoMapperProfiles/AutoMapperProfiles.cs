@@ -37,6 +37,6 @@ public class Club12MapperProfile : Profile
         _ = CreateMap<PlayerRequest, Player>();
 
         _ = CreateMap<UserRequest, User>()
-            .ForMember(dest => dest.PasswordHashed, opt => opt.MapFrom(src => Encrypt.Hash(src.Password)));
+            .ForMember(dest => dest.Password, opt => opt.MapFrom(src => Encrypt.Hash(src.Password)));
     }
 }

@@ -3,6 +3,7 @@ using Club12.Entities.PlayerEntity;
 using Club12.Entities.TeamEntity;
 using Club12.Services.Players;
 using Club12.Services.Teams;
+using Club12.Utils.Controller;
 using Club12.Viewmodels.Player;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,6 +20,7 @@ public class PlayerController : ControllerBase
 {
     private readonly IPlayerService _playerService;
     private readonly ITeamService _teamService;
+    private readonly IControllerUtils _controllerUtils;
     private readonly IMapper _mapper;
 
     /// <summary>
@@ -26,15 +28,18 @@ public class PlayerController : ControllerBase
     /// </summary>
     /// <param name="playerService">The Player service.</param>
     /// <param name="teamService">The Team service.</param>
+    /// <param name="controllerUtils">Controller utils that allow us to get user data from requests.</param>
     /// <param name="mapper">The AutoMapper instance.</param>
     public PlayerController(
         IPlayerService playerService,
         ITeamService teamService,
+        IControllerUtils controllerUtils,
         IMapper mapper
     )
     {
         _playerService = playerService;
         _teamService = teamService;
+        _controllerUtils = controllerUtils;
         _mapper = mapper;
     }
 
@@ -61,8 +66,9 @@ public class PlayerController : ControllerBase
             return BadRequest($"There is no Team with id: {TeamId}.");
         }
 
+        Guid userIdRequested = _controllerUtils.GetUserId();
         Player mappedPlayer = _mapper.Map<Player>(playerRequest);
-        Player createdPlayer = _playerService.CreatePlayer(mappedPlayer);
+        Player createdPlayer = _playerService.CreatePlayer(mappedPlayer, userIdRequested);
         PlayerResponse playerResponse = _mapper.Map<PlayerResponse>(createdPlayer);
 
         return new ObjectResult(playerResponse) { StatusCode = StatusCodes.Status201Created };
@@ -116,8 +122,9 @@ public class PlayerController : ControllerBase
             return BadRequest($"Player with id {playerId} not found.");
         }
 
+        Guid userIdRequested = _controllerUtils.GetUserId();
         _mapper.Map(playerRequest, existingPlayer);
-        bool updateResult = await _playerService.UpdatePlayer(existingPlayer);
+        bool updateResult = await _playerService.UpdatePlayer(existingPlayer, userIdRequested);
 
         return !updateResult ? BadRequest("Failed to update the player.") : Ok();
     }

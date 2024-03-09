@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Club12.Entities.UserEntity;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Club12.Entities;
@@ -8,14 +9,6 @@ namespace Club12.Entities;
 /// </summary>
 public abstract class EntityBase
 {
-    /// <summary>
-    /// Initializes a new instance of the EntityBase class.
-    /// </summary>
-    protected EntityBase()
-    {
-        Id = Guid.NewGuid();
-    }
-
     /// <summary>
     /// The unique identifier of the entity.
     /// </summary>
@@ -34,4 +27,26 @@ public abstract class EntityBase
     /// </summary>
     [Column("DateUpdated")]
     public DateTime? DateUpdated { get; set; }
+
+    /// <summary>
+    /// The user who created the entity.
+    /// </summary>
+    [Column("UserCreatedId")]
+    public User? UserCreated { get; set; }
+
+    /// <summary>
+    /// The ID of the user who created the entity.
+    /// </summary>
+    public Guid? UserCreatedId { get; set; }
+
+    /// <summary>
+    /// The user who last updated the entity.
+    /// </summary>
+    [Column("UserUpdatedId")]
+    public User? UserUpdated { get; set; }
+
+    /// <summary>
+    /// The ID of the user who last updated the entity.
+    /// </summary>
+    public Guid? UserUpdatedId { get; set; }
 }

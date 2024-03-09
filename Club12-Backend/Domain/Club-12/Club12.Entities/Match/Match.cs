@@ -17,14 +17,10 @@ public class Match : EntityBase
     public required DateTime MatchDate { get; set; }
 
     /// <summary>
-    /// Represents the home team's score.
+    /// Represents the type of the match (e.g., regular or playoff).
     /// </summary>
-    public int? HomeScore { get; set; }
-
-    /// <summary>
-    /// Represents the visitor team's score.
-    /// </summary>
-    public int? VisitorScore { get; set; }
+    [Required]
+    public MatchType Type { get; set; }
 
     /// <summary>
     /// Represents the home team in the match.
@@ -49,6 +45,16 @@ public class Match : EntityBase
     /// Represents the ID of the visitor team.
     /// </summary>
     public Guid VisitorTeamId { get; set; }
+
+    /// <summary>
+    /// Represents the home team's score.
+    /// </summary>
+    public int? HomeScore { get; set; }
+
+    /// <summary>
+    /// Represents the visitor team's score.
+    /// </summary>
+    public int? VisitorScore { get; set; }
 
     /// <summary>
     /// Represents the winning team in the match.

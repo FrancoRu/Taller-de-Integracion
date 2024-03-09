@@ -47,18 +47,15 @@ builder.Services.AddCors(options =>
 
 builder.Services.RegisterApplicationServices();
 
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("SuperAdmin", policy =>
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("SuperAdmin", policy =>
     {
         policy.RequireRole("SuperAdmin");
-    });
-
-    options.AddPolicy("Admin", policy =>
+    })
+    .AddPolicy("Admin", policy =>
     {
         policy.RequireRole("Admin");
     });
-});
 
 builder.Services.AddAuthentication(options =>
 {
