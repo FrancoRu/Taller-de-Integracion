@@ -7,7 +7,6 @@ namespace Club12.Services.Users.Implementation;
 public class UserService : IUserService
 {
     private readonly IGenericService<User> _userGenericService;
-    private readonly string _jwtSecret = "6hZVY3wu6vmxNHJ0k89NCDf3r0f7jTijAGIh4iOKr9w=";
 
     public UserService(
         IGenericService<User> userGenericService
@@ -27,11 +26,6 @@ public class UserService : IUserService
         _userGenericService.Delete(userEntity);
     }
 
-    public string GenerateJwtToken(User userEntity)
-    {
-        return Encrypt.GenerateJWTToken(_jwtSecret, userEntity.UserName, userEntity.Role);
-    }
-
     public User? GetUserById(Guid userId)
     {
         return _userGenericService.TryGet(userId);
@@ -48,18 +42,6 @@ public class UserService : IUserService
         {
             return false;
         }
-    }
-
-    public bool IsSuperAdmin(string jwtToken)
-    {
-        Encrypt.UserClaims? userClaims = Encrypt.DecodeJWTToken(jwtToken, _jwtSecret);
-        return userClaims?.Role == "SuperAdmin";
-    }
-
-    public bool IsAuthenticated(string jwtToken)
-    {
-        Encrypt.UserClaims? userClaims = Encrypt.DecodeJWTToken(jwtToken, _jwtSecret);
-        return userClaims?.Role == "SuperAdmin" || userClaims?.Role == "Admin";
     }
 
     public bool ValidateCredentials(User userEntity, string plainTextPassword)

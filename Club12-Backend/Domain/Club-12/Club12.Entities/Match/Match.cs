@@ -19,14 +19,12 @@ public class Match : EntityBase
     /// <summary>
     /// Represents the home team's score.
     /// </summary>
-    [Required]
-    public required int HomeScore { get; set; }
+    public int? HomeScore { get; set; }
 
     /// <summary>
     /// Represents the visitor team's score.
     /// </summary>
-    [Required]
-    public required int VisitorScore { get; set; }
+    public int? VisitorScore { get; set; }
 
     /// <summary>
     /// Represents the home team in the match.
@@ -55,12 +53,11 @@ public class Match : EntityBase
     /// <summary>
     /// Represents the winning team in the match.
     /// </summary>
-    [Required]
     [Column("WinningTeamId")]
-    public required Team WinningTeam { get; set; }
+    public Team? WinningTeam { get; set; }
 
     /// <summary>
     /// Represents the ID of the winning team.
     /// </summary>
-    public Guid WinningTeamId { get; set; }
+    public Guid? WinningTeamId { get; set; }
 }

@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
+using Club12.Entities.TokenResponse;
 using Club12.Entities.UserEntity;
 using Club12.Services.Auth;
 using Club12.Services.Users;
 using Club12.Viewmodels.User;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Club12.Controllers;
@@ -10,6 +12,7 @@ namespace Club12.Controllers;
 /// <summary>
 /// Controller for managing users.
 /// </summary>
+[Authorize(Roles = "SuperAdmin")]
 [ApiController]
 [Route("api/")]
 public class UserController : ControllerBase
@@ -50,12 +53,9 @@ public class UserController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult CreateUser(UserRequest userRequest)
     {
-        if (!_authService.IsSuperAdmin())
-        {
-            return Forbid("Only SuperAdmin can create users.");
-        }
+        User? existingUser = _userService.GetUserByUserName(userRequest.UserName);
 
-        if (_userService.GetUserByUserName(userRequest.UserName) is not null)
+        if (existingUser is not null)
         {
             return BadRequest($"Username already exists.");
         }
@@ -74,6 +74,7 @@ public class UserController : ControllerBase
     /// Returns 200 (Ok) with the generated JWT token if the login is successful.
     /// Returns 401 (Unauthorized) if the credentials are invalid.
     /// </returns>
+    [AllowAnonymous]
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -86,7 +87,7 @@ public class UserController : ControllerBase
             return Unauthorized("Invalid credentials");
         }
 
-        string token = _userService.GenerateJwtToken(user);
+        TokenResponse token = _authService.GenerateJwtToken(user);
 
         return Ok(token);
     }
@@ -107,12 +108,6 @@ public class UserController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> UpdateUser(Guid userId, UserRequest userRequest)
     {
-
-        if (!_authService.IsSuperAdmin())
-        {
-            return Forbid("Only SuperAdmin can update users.");
-        }
-
         User? existingUser = _userService.GetUserById(userId);
 
         if (existingUser is null)
@@ -141,11 +136,6 @@ public class UserController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult DeleteUserById(Guid userId)
     {
-        if (!_authService.IsSuperAdmin())
-        {
-            return Forbid("Only SuperAdmin can delete users.");
-        }
-
         User? user = _userService.GetUserById(userId);
 
         if (user is null)

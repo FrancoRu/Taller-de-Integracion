@@ -39,27 +39,6 @@ public interface IUserService
     void DeleteUser(User userEntity);
 
     /// <summary>
-    /// Generates a JWT token for a user based on their credentials.
-    /// </summary>
-    /// <param name="userEntity">The user request containing login credentials.</param>
-    /// <returns>The generated JWT token.</returns>
-    string GenerateJwtToken(User userEntity);
-
-    /// <summary>
-    /// Checks if the user has SuperAdmin role.
-    /// </summary>
-    /// <param name="jwtToken"></param>
-    /// <returns></returns>
-    bool IsSuperAdmin(string jwtToken);
-
-    /// <summary>
-    /// Checks if the user has SuperAdmin or Admin role.
-    /// </summary>
-    /// <param name="jwtToken"></param>
-    /// <returns></returns>
-    bool IsAuthenticated(string jwtToken);
-
-    /// <summary>
     /// Validates user credentials.
     /// </summary>
     /// <param name="userEntity">The user request containing login credentials.</param>

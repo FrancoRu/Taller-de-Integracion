@@ -17,5 +17,4 @@ public class User : EntityBase
     [Required]
     [MaxLength(10)]
     public required string Role { get; set; }
-
 }

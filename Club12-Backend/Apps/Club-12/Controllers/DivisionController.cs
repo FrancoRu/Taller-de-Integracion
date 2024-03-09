@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using Club12.Entities.DivisionEntity;
-using Club12.Services.Auth;
 using Club12.Services.Divisions;
 using Club12.Viewmodels.Division;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Club12.Controllers;
@@ -10,12 +10,12 @@ namespace Club12.Controllers;
 /// <summary>
 /// Controller for managing divisions.
 /// </summary>
+[Authorize(Roles = "SuperAdmin, Admin")]
 [Route("api/")]
 [ApiController]
 public class DivisionController : ControllerBase
 {
     private readonly IDivisionService _divisionService;
-    private readonly IAuthService _authService;
     private readonly IMapper _mapper;
 
     /// <summary>
@@ -23,16 +23,13 @@ public class DivisionController : ControllerBase
     /// </summary>
     /// <param name="divisionService">The division service.</param>
     /// <param name="mapper">The AutoMapper instance.</param>
-    /// <param name="authService">The authorization service.</param>
     public DivisionController(
         IDivisionService divisionService,
-        IAuthService authService,
         IMapper mapper
     )
     {
         _divisionService = divisionService;
         _mapper = mapper;
-        _authService = authService;
     }
 
     /// <summary>
@@ -48,11 +45,6 @@ public class DivisionController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult CreateDivision(DivisionRequest divisionRequest)
     {
-        if (!_authService.IsUserAuthorized())
-        {
-            return Forbid();
-        }
-
         Division mappedDivision = _mapper.Map<Division>(divisionRequest);
         Division createdDivision = _divisionService.CreateDivision(mappedDivision);
         DivisionResponse divisionResponse = _mapper.Map<DivisionResponse>(createdDivision);
@@ -68,6 +60,7 @@ public class DivisionController : ControllerBase
     /// <para>Returns 200 (Ok) with the division response if it was found.</para>
     /// <para>Returns 400 (Bad Request) if the division with the provided id was not found.</para>
     /// </returns>
+    [AllowAnonymous]
     [HttpGet("divisions/{divisionId:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DivisionResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -99,11 +92,6 @@ public class DivisionController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult DeleteDivisionById(Guid divisionId)
     {
-        if (!_authService.IsUserAuthorized())
-        {
-            return Forbid();
-        }
-
         Division? division = _divisionService.GetDivisionById(divisionId);
 
         if (division is null)
@@ -131,11 +119,6 @@ public class DivisionController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> UpdateDivisionById(Guid divisionId, DivisionRequest divisionRequest)
     {
-        if (!_authService.IsUserAuthorized())
-        {
-            return Forbid();
-        }
-
         Division? existingDivision = _divisionService.GetDivisionById(divisionId);
 
         if (existingDivision is null)
