@@ -10,7 +10,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using DotNetEnv;
 
-DotNetEnv.Env.Load();
+Env.Load();
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -35,7 +35,6 @@ try
 catch (ArgumentException e) {
     Log.Fatal(e.Message);
 }
-
 
 
 
