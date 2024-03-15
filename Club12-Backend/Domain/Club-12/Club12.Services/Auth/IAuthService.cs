@@ -5,6 +5,4 @@ public interface IAuthService
     public bool IsUserAuthorized();
 
     public bool IsSuperAdmin();
-
-    public bool IsTokenValid();
 }

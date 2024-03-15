@@ -29,12 +29,6 @@ public class AuthService : IAuthService
         return _userService.IsSuperAdmin(jwtToken);
     }
 
-    public bool IsTokenValid()
-    {
-        string jwtToken = GetJwtToken();
-        return _userService.ValidateToken(jwtToken);
-    }
-
     private string GetJwtToken()
     {
         string jwtToken = _httpContextAccessor.HttpContext.Request.Headers["Authorization"].ToString();

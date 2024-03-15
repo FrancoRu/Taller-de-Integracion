@@ -56,10 +56,6 @@ public class TeamController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public ActionResult<TeamResponse> CreateTeam(TeamRequest teamRequest)
     {
-        if (!_authService.IsTokenValid())
-        {
-            return Forbid("Invalid Token.");
-        }
         if (!_authService.IsUserAuthorized())
         {
             return Forbid();
@@ -120,10 +116,6 @@ public class TeamController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> UpdateTeam(Guid teamId, TeamRequest teamRequest)
     {
-        if (!_authService.IsTokenValid())
-        {
-            return Forbid("Invalid Token.");
-        }
         if (!_authService.IsUserAuthorized())
         {
             return Forbid();
@@ -157,10 +149,6 @@ public class TeamController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult DeleteTeamById(Guid id)
     {
-        if (!_authService.IsTokenValid())
-        {
-            return Forbid("Invalid Token.");
-        }
         if (!_authService.IsUserAuthorized())
         {
             return Forbid();

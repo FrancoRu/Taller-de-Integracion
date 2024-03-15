@@ -48,11 +48,6 @@ public class DivisionController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult CreateDivision(DivisionRequest divisionRequest)
     {
-        if (!_authService.IsTokenValid())
-        {
-            return Forbid("Invalid Token.");
-        }
-
         if (!_authService.IsUserAuthorized())
         {
             return Forbid();
@@ -104,11 +99,6 @@ public class DivisionController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult DeleteDivisionById(Guid divisionId)
     {
-        if (!_authService.IsTokenValid())
-        {
-            return Forbid("Invalid Token.");
-        }
-
         if (!_authService.IsUserAuthorized())
         {
             return Forbid();
@@ -141,11 +131,6 @@ public class DivisionController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> UpdateDivisionById(Guid divisionId, DivisionRequest divisionRequest)
     {
-        if (!_authService.IsTokenValid())
-        {
-            return Forbid("Invalid Token.");
-        }
-
         if (!_authService.IsUserAuthorized())
         {
             return Forbid();

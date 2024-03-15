@@ -56,10 +56,6 @@ public class PlayerController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public ActionResult<PlayerResponse> CreatePlayer(PlayerRequest playerRequest)
     {
-        if (!_authService.IsTokenValid())
-        {
-            return Forbid("Invalid Token.");
-        }
         if (!_authService.IsUserAuthorized())
         {
             return Forbid();
@@ -120,10 +116,6 @@ public class PlayerController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> UpdatePlayer(Guid playerId, PlayerRequest playerRequest)
     {
-        if (!_authService.IsTokenValid())
-        {
-            return Forbid("Invalid Token.");
-        }
         if (!_authService.IsUserAuthorized())
         {
             return Forbid();
@@ -157,10 +149,6 @@ public class PlayerController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult DeletePlayerById(Guid id)
     {
-        if (!_authService.IsTokenValid())
-        {
-            return Forbid("Invalid Token.");
-        }
         if (!_authService.IsUserAuthorized())
         {
             return Forbid();

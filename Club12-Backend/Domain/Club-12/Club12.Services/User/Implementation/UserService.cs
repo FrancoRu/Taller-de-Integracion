@@ -1,14 +1,13 @@
 ﻿using Club12.Entities.UserEntity;
 using Club12.Services.DataAccessLayer;
 using Club12.Services.Utils;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Club12.Services.Users.Implementation;
 
 public class UserService : IUserService
 {
     private readonly IGenericService<User> _userGenericService;
-    private readonly string _jwtSecret = Environment.GetEnvironmentVariable("JWT_TOKEN_KEY") ?? throw new InvalidOperationException("La variable de entorno JWT_TOKEN_KEY no está configurada.");
+    private readonly string _jwtSecret = "6hZVY3wu6vmxNHJ0k89NCDf3r0f7jTijAGIh4iOKr9w=";
 
     public UserService(
         IGenericService<User> userGenericService
@@ -30,7 +29,7 @@ public class UserService : IUserService
 
     public string GenerateJwtToken(User userEntity)
     {
-        return Encrypt.GenerateJWTToken(_jwtSecret, userEntity.UserName, userEntity.Role, userEntity.Id);
+        return Encrypt.GenerateJWTToken(_jwtSecret, userEntity.UserName, userEntity.Role);
     }
 
     public User? GetUserById(Guid userId)
@@ -61,20 +60,6 @@ public class UserService : IUserService
     {
         Encrypt.UserClaims? userClaims = Encrypt.DecodeJWTToken(jwtToken, _jwtSecret);
         return userClaims?.Role == "SuperAdmin" || userClaims?.Role == "Admin";
-    }
-
-    public bool ValidateToken(string jwtToken)
-    {
-        Encrypt.UserClaims? userClaims = Encrypt.DecodeJWTToken(jwtToken, _jwtSecret);
-        
-        if (userClaims is null || string.IsNullOrEmpty(userClaims.Id.ToString()))
-        {
-            return false;
-        }
-
-        var user = GetUserById(userClaims.Id);
-
-        return user != null;
     }
 
     public bool ValidateCredentials(User userEntity, string plainTextPassword)
