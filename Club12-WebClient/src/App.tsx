@@ -19,6 +19,7 @@ function App() {
 			<div id='container'>
 				<div id='blur'>
 					<NavBarPage />
+
 					<Routes>
 						<Route path='/' element={<Home />} />
 					</Routes>

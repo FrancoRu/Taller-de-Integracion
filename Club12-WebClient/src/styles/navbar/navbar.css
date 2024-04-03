@@ -20,7 +20,9 @@
 	list-style: none;
 }
 
-.ul-navbar li a {
+.ul-navbar .li-navbar p,
+.ul-navbar .li-navbar span,
+.ul-navbar .li-navbar a {
 	width: 100%;
 	text-align: center;
 	text-decoration: none;
@@ -36,7 +38,7 @@
 	background: -moz-linear-gradient(90deg, #ff5000 0%, #ffa500 80%);
 }
 
-.ul-navbar li:hover::before {
+.ul-navbar .li-navbar:hover::before {
 	content: '';
 	position: absolute;
 	width: 100%;
