@@ -1,7 +1,7 @@
 import { UserLoginRequest, authSignUp } from '../../types/auths/auth.d'
 import { sendGet, sendPost } from '../../utils/utils'
 
-const authServiceResource = '/api'
+const authServiceResource = ''
 
 export const authService = {
 	registerRequest: async (user: authSignUp) =>

@@ -1,7 +1,9 @@
 ﻿using Club12.Entities.TokenResponse;
 using Club12.Entities.UserEntity;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;

@@ -1,7 +1,11 @@
+export interface ITokenResponse{
+	accessToken: string
+	expiresIn: Date
+}
+
 export interface IUser {
-	id: string
-	username: string
-	email: string
+	userName: string
+	accessToken: ITokenResponse
 }
 
 interface authSignUp extends UserLoginRequest {
@@ -16,7 +20,6 @@ interface UserLoginRequest {
 }
 
 export interface IAuthContextProps {
-	signUp: (value: authSignUp) => Promise<void>
 	signIn: (value: authSignIn) => Promise<void>
 	logOut: () => Promise<void>
 	user: IUser | null
