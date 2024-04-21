@@ -58,12 +58,12 @@ public class TeamController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public ActionResult<TeamResponse> CreateTeam(TeamRequest teamRequest)
     {
-        Guid teamId = teamRequest.DivisionId;
-        Division? existingDivision = _divisionService.GetDivisionById(teamId);
+        Guid divisionId = teamRequest.DivisionId;
+        Division? existingDivision = _divisionService.GetDivisionById(divisionId);
 
         if (existingDivision is null)
         {
-            return BadRequest($"There is no division with id: {teamId}.");
+            return BadRequest($"There is no division with id: {divisionId}.");
         }
 
         Guid userIdRequested = _controllerUtils.GetUserId();

@@ -16,7 +16,8 @@ namespace Club12.Viewmodels.Team
         /// <summary>
         /// The three-letter code of the team.
         /// </summary>
-        [Required(ErrorMessage = "The ThreeLetterCode field is required.")]
+        [Required(ErrorMessage = "The Three-letter code field is required.")]
+        [MaxLength(3)]
         public required string ThreeLetterCode { get; set; }
 
         /// <summary>

@@ -51,7 +51,7 @@ public class UserController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public IActionResult CreateUser(UserRequest userRequest)
+    public IActionResult CreateUser(CreateUserRequest userRequest)
     {
         User? existingUser = _userService.GetUserByUserName(userRequest.UserName);
 
@@ -80,7 +80,7 @@ public class UserController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> UpdateUser(Guid userId, UserRequest userRequest)
+    public async Task<ActionResult> UpdateUser(Guid userId, CreateUserRequest userRequest)
     {
         User? existingUser = _userService.GetUserById(userId);
 
@@ -133,7 +133,7 @@ public class UserController : ControllerBase
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public IActionResult Login(UserLoginRequest userLoginRequest)
+    public IActionResult Login(LogInUserRequest userLoginRequest)
     {
         User? user = _userService.GetUserByUserName(userLoginRequest.UserName);
 

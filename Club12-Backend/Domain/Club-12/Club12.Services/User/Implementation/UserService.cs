@@ -44,8 +44,7 @@ public class UserService : IUserService
 
     public bool ValidateCredentials(User userEntity, string plainTextPassword)
     {
-        bool isValid = Encrypt.CheckHash(plainTextPassword, userEntity.Password);
-        return isValid;
+        return Encrypt.CheckHash(plainTextPassword, userEntity.Password);
     }
 
     public User? GetUserByUserName(string userName)
