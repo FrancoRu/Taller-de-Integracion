@@ -1,10 +1,11 @@
 ﻿using AutoMapper;
 using Club12.Entities.DivisionEntity;
 using Club12.Entities.TeamEntity;
-using Club12.Services.Auth;
 using Club12.Services.Divisions;
 using Club12.Services.Teams;
+using Club12.Utils.Controller;
 using Club12.Viewmodels.Team;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Club12.Controllers;
@@ -12,13 +13,14 @@ namespace Club12.Controllers;
 /// <summary>
 /// Controller for managing teams.
 /// </summary>
+[Authorize(Roles = "SuperAdmin, Admin")]
 [Route("api/")]
 [ApiController]
 public class TeamController : ControllerBase
 {
     private readonly ITeamService _teamService;
     private readonly IDivisionService _divisionService;
-    private readonly IAuthService _authService;
+    private readonly IControllerUtils _controllerUtils;
     private readonly IMapper _mapper;
 
     /// <summary>
@@ -26,19 +28,19 @@ public class TeamController : ControllerBase
     /// </summary>
     /// <param name="teamService">The team service.</param>
     /// <param name="divisionService">The division service.</param>
-    /// /// <param name="authService">The authorization service.</param>
+    /// <param name="controllerUtils">Controller utils that allow us to get user data from requests.</param>
     /// <param name="mapper">The AutoMapper instance.</param>
     public TeamController(
         ITeamService teamService,
         IDivisionService divisionService,
-        IAuthService authService,
+        IControllerUtils controllerUtils,
         IMapper mapper
     )
     {
         _teamService = teamService;
         _divisionService = divisionService;
+        _controllerUtils = controllerUtils;
         _mapper = mapper;
-        _authService = authService;
     }
 
     /// <summary>
@@ -56,21 +58,17 @@ public class TeamController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public ActionResult<TeamResponse> CreateTeam(TeamRequest teamRequest)
     {
-        if (!_authService.IsUserAuthorized())
-        {
-            return Forbid();
-        }
-
-        Guid teamId = teamRequest.DivisionId;
-        Division? existingDivision = _divisionService.GetDivisionById(teamId);
+        Guid divisionId = teamRequest.DivisionId;
+        Division? existingDivision = _divisionService.GetDivisionById(divisionId);
 
         if (existingDivision is null)
         {
-            return BadRequest($"There is no division with id: {teamId}.");
+            return BadRequest($"There is no division with id: {divisionId}.");
         }
 
+        Guid userIdRequested = _controllerUtils.GetUserId();
         Team mappedTeam = _mapper.Map<Team>(teamRequest);
-        Team createdTeam = _teamService.CreateTeam(mappedTeam);
+        Team createdTeam = _teamService.CreateTeam(mappedTeam, userIdRequested);
         TeamResponse teamResponse = _mapper.Map<TeamResponse>(createdTeam);
 
         return new ObjectResult(teamResponse) { StatusCode = StatusCodes.Status201Created };
@@ -84,6 +82,7 @@ public class TeamController : ControllerBase
     /// <para>Returns 200 (OK) with the team response if it was found.</para>
     /// <para>Returns 400 (Bad Request) if the team with the provided id was not found.</para>
     /// </returns>
+    [AllowAnonymous]
     [HttpGet("teams/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TeamResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -116,11 +115,6 @@ public class TeamController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> UpdateTeam(Guid teamId, TeamRequest teamRequest)
     {
-        if (!_authService.IsUserAuthorized())
-        {
-            return Forbid();
-        }
-
         Team? existingTeam = _teamService.GetTeamById(teamId);
 
         if (existingTeam is null)
@@ -128,8 +122,9 @@ public class TeamController : ControllerBase
             return BadRequest($"Team with id {teamId} not found.");
         }
 
+        Guid userIdRequested = _controllerUtils.GetUserId();
         _mapper.Map(teamRequest, existingTeam);
-        bool updateResult = await _teamService.UpdateTeam(existingTeam);
+        bool updateResult = await _teamService.UpdateTeam(existingTeam, userIdRequested);
 
         return !updateResult ? BadRequest("Failed to update the team.") : Ok();
     }
@@ -149,11 +144,6 @@ public class TeamController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult DeleteTeamById(Guid id)
     {
-        if (!_authService.IsUserAuthorized())
-        {
-            return Forbid();
-        }
-
         Team? team = _teamService.GetTeamById(id);
 
         if (team is null)

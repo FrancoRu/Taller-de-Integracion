@@ -19,7 +19,13 @@ builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddScoped<IClub12DBContext, ApplicationDBContext>();
 
 string? connectionString = builder.Configuration.GetConnectionString("DbConnection");
-string jwtSecret = "6hZVY3wu6vmxNHJ0k89NCDf3r0f7jTijAGIh4iOKr9w=";
+string? jwtSecret = builder.Configuration.GetSection("JWT:Key").Value;
+
+if (jwtSecret is null)
+{
+    Log.Fatal("There wasn't a JWT Key in the appsettings.");
+    throw new ArgumentException("The JWT Key should be initialized already.");
+}
 
 if (connectionString is null)
 {
@@ -41,6 +47,16 @@ builder.Services.AddCors(options =>
 
 builder.Services.RegisterApplicationServices();
 
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("SuperAdmin", policy =>
+    {
+        policy.RequireRole("SuperAdmin");
+    })
+    .AddPolicy("Admin", policy =>
+    {
+        policy.RequireRole("Admin");
+    });
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = "Bearer";
@@ -48,11 +64,13 @@ builder.Services.AddAuthentication(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret)),
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        ClockSkew = TimeSpan.Zero
+        ValidIssuer = builder.Configuration.GetSection("JWT:Issuer").Value,
+        ValidAudience = builder.Configuration.GetSection("JWT:Audience").Value,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
     };
 });
 

@@ -1,7 +1,4 @@
-﻿using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 
 namespace Club12.Services.Utils;
@@ -42,65 +39,5 @@ public static class Encrypt
     {
         string hashedInput = Hash(plainTextPassword);
         return string.Equals(hashedInput, hashedPassword, StringComparison.OrdinalIgnoreCase);
-    }
-
-    public static string GenerateJWTToken(string jwtSecret, string userName, string role)
-    {
-        JwtSecurityTokenHandler tokenHandler = new();
-        byte[] key = Encoding.ASCII.GetBytes(jwtSecret);
-
-        SecurityTokenDescriptor tokenDescriptor = new()
-        {
-            Subject = new ClaimsIdentity(new[]
-            {
-                    new Claim(ClaimTypes.Name, userName),
-                    new Claim(ClaimTypes.Role, role)
-                }),
-            Expires = DateTime.UtcNow.AddHours(1),
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-        };
-
-        SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
-    }
-
-    public static UserClaims? DecodeJWTToken(string jwtToken, string jwtSecret)
-    {
-        try
-        {
-            JwtSecurityTokenHandler tokenHandler = new();
-            byte[] key = Encoding.ASCII.GetBytes(jwtSecret);
-
-            tokenHandler.ValidateToken(jwtToken, new TokenValidationParameters
-            {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
-                ValidateIssuer = false,
-                ValidateAudience = false,
-                ClockSkew = TimeSpan.Zero
-            }, out SecurityToken validatedToken);
-
-            JwtSecurityToken jwtTokenClaims = (JwtSecurityToken)validatedToken;
-
-            string? userName = jwtTokenClaims.Claims.FirstOrDefault(claim => claim.Type == "unique_name")?.Value;
-            string? role = jwtTokenClaims.Claims.FirstOrDefault(claim => claim.Type == "role")?.Value;
-
-            if (jwtTokenClaims.ValidTo < DateTime.UtcNow)
-            {
-                return null;
-            }
-
-            return userName is null || role is null ? null : new UserClaims { UserName = userName, Role = role };
-        }
-        catch (Exception)
-        {
-            return null;
-        }
-    }
-
-    public class UserClaims
-    {
-        public required string UserName { get; set; }
-        public required string Role { get; set; }
     }
 }

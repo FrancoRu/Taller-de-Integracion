@@ -1,5 +1,5 @@
 ﻿using Club12.Entities.TeamEntity;
-using Club12.Services.DataAccessLayer;
+using Club12.Services.DataAccessLayer.GenericEntity;
 
 namespace Club12.Services.Teams.Implementation;
 
@@ -14,9 +14,9 @@ public class TeamService : ITeamService
         _genericTeamService = genericTeamService;
     }
 
-    public Team CreateTeam(Team teamEntity)
+    public Team CreateTeam(Team teamEntity, Guid userId)
     {
-        _genericTeamService.Insert(teamEntity);
+        _genericTeamService.Insert(teamEntity, userId);
         return teamEntity;
     }
 
@@ -30,11 +30,11 @@ public class TeamService : ITeamService
         _genericTeamService.Delete(teamEntity);
     }
 
-    public async Task<bool> UpdateTeam(Team teamEntity)
+    public async Task<bool> UpdateTeam(Team teamEntity, Guid userId)
     {
         try
         {
-            await _genericTeamService.UpdateAsync(teamEntity);
+            await _genericTeamService.UpdateAsync(teamEntity, userId);
             return true;
         }
         catch

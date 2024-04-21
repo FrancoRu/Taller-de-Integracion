@@ -1,4 +1,4 @@
-﻿using Club12.Entities.MatchEntity; // Assuming you have a MatchEntity defined
+﻿using Club12.Entities.MatchEntity;
 using Club12.Entities.PlayerEntity;
 using Club12.Entities.StatisticEntity;
 using System.ComponentModel.DataAnnotations;

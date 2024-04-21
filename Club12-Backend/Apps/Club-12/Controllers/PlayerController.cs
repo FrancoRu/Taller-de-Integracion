@@ -1,10 +1,11 @@
 ﻿using AutoMapper;
 using Club12.Entities.PlayerEntity;
 using Club12.Entities.TeamEntity;
-using Club12.Services.Auth;
 using Club12.Services.Players;
 using Club12.Services.Teams;
+using Club12.Utils.Controller;
 using Club12.Viewmodels.Player;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Club12.Controllers;
@@ -12,32 +13,33 @@ namespace Club12.Controllers;
 /// <summary>
 /// Controller for managing Players.
 /// </summary>
+[Authorize(Roles = "SuperAdmin, Admin")]
 [Route("api/")]
 [ApiController]
 public class PlayerController : ControllerBase
 {
     private readonly IPlayerService _playerService;
     private readonly ITeamService _teamService;
+    private readonly IControllerUtils _controllerUtils;
     private readonly IMapper _mapper;
-    private readonly IAuthService _authService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PlayerController"/> class.
     /// </summary>
     /// <param name="playerService">The Player service.</param>
     /// <param name="teamService">The Team service.</param>
-    /// <param name="authService">The authorization service.</param>
+    /// <param name="controllerUtils">Controller utils that allow us to get user data from requests.</param>
     /// <param name="mapper">The AutoMapper instance.</param>
     public PlayerController(
         IPlayerService playerService,
         ITeamService teamService,
-        IAuthService authService,
+        IControllerUtils controllerUtils,
         IMapper mapper
     )
     {
         _playerService = playerService;
         _teamService = teamService;
-        _authService = authService;
+        _controllerUtils = controllerUtils;
         _mapper = mapper;
     }
 
@@ -56,11 +58,6 @@ public class PlayerController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public ActionResult<PlayerResponse> CreatePlayer(PlayerRequest playerRequest)
     {
-        if (!_authService.IsUserAuthorized())
-        {
-            return Forbid();
-        }
-
         Guid TeamId = playerRequest.TeamId;
         Team? existingTeam = _teamService.GetTeamById(TeamId);
 
@@ -69,8 +66,9 @@ public class PlayerController : ControllerBase
             return BadRequest($"There is no Team with id: {TeamId}.");
         }
 
+        Guid userIdRequested = _controllerUtils.GetUserId();
         Player mappedPlayer = _mapper.Map<Player>(playerRequest);
-        Player createdPlayer = _playerService.CreatePlayer(mappedPlayer);
+        Player createdPlayer = _playerService.CreatePlayer(mappedPlayer, userIdRequested);
         PlayerResponse playerResponse = _mapper.Map<PlayerResponse>(createdPlayer);
 
         return new ObjectResult(playerResponse) { StatusCode = StatusCodes.Status201Created };
@@ -84,6 +82,7 @@ public class PlayerController : ControllerBase
     /// <para>Returns 200 (OK) with the Player response if it was found.</para>
     /// <para>Returns 400 (Bad Request) if the Player with the provided id was not found.</para>
     /// </returns>
+    [AllowAnonymous]
     [HttpGet("players/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -116,11 +115,6 @@ public class PlayerController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> UpdatePlayer(Guid playerId, PlayerRequest playerRequest)
     {
-        if (!_authService.IsUserAuthorized())
-        {
-            return Forbid();
-        }
-
         Player? existingPlayer = _playerService.GetPlayerById(playerId);
 
         if (existingPlayer is null)
@@ -128,8 +122,9 @@ public class PlayerController : ControllerBase
             return BadRequest($"Player with id {playerId} not found.");
         }
 
+        Guid userIdRequested = _controllerUtils.GetUserId();
         _mapper.Map(playerRequest, existingPlayer);
-        bool updateResult = await _playerService.UpdatePlayer(existingPlayer);
+        bool updateResult = await _playerService.UpdatePlayer(existingPlayer, userIdRequested);
 
         return !updateResult ? BadRequest("Failed to update the player.") : Ok();
     }
@@ -149,11 +144,6 @@ public class PlayerController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult DeletePlayerById(Guid id)
     {
-        if (!_authService.IsUserAuthorized())
-        {
-            return Forbid();
-        }
-
         Player? player = _playerService.GetPlayerById(id);
 
         if (player is null)

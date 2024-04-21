@@ -1,37 +1,53 @@
-﻿using Club12.Services.Users;
-using Microsoft.AspNetCore.Http;
+﻿using Club12.Entities.TokenResponse;
+using Club12.Entities.UserEntity;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace Club12.Services.Auth.Implementation;
 
+/// <summary>
+/// Service responsible for generating JWT tokens.
+/// </summary>
 public class AuthService : IAuthService
 {
-    private readonly IUserService _userService;
-    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly string _jwtSecret;
+    private readonly string _issuer;
+    private readonly string _audience;
 
-    public AuthService(
-        IUserService userService,
-        IHttpContextAccessor httpContextAccessor
-    )
+    public AuthService(IConfiguration configuration)
     {
-        _userService = userService;
-        _httpContextAccessor = httpContextAccessor;
+        _jwtSecret = configuration.GetSection("JWT:Key").Value ?? throw new ArgumentNullException(nameof(configuration), "The JWT Key should be initialized");
+        _issuer = configuration.GetSection("JWT:Issuer").Value ?? throw new ArgumentNullException(nameof(configuration), "The JWT Issuer should be initialized");
+        _audience = configuration.GetSection("JWT:Audience").Value ?? throw new ArgumentNullException(nameof(configuration), "The JWT Audience should be initialized");
     }
 
-    public bool IsUserAuthorized()
+    public TokenResponse GenerateJwtToken(User userEntity)
     {
-        string jwtToken = GetJwtToken();
-        return _userService.IsAuthenticated(jwtToken);
-    }
+        JwtSecurityTokenHandler tokenHandler = new();
+        byte[] key = Encoding.ASCII.GetBytes(_jwtSecret);
 
-    public bool IsSuperAdmin()
-    {
-        string jwtToken = GetJwtToken();
-        return _userService.IsSuperAdmin(jwtToken);
-    }
+        SecurityTokenDescriptor tokenDescriptor = new()
+        {
+            Subject = new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.Name, userEntity.UserName),
+                new Claim(ClaimTypes.Role, userEntity.Role),
+                new Claim("userId", userEntity.Id.ToString())
+             }),
+            Expires = DateTime.UtcNow.AddSeconds(60),
+            Issuer = _issuer,
+            Audience = _audience,
+            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+        };
 
-    private string GetJwtToken()
-    {
-        string jwtToken = _httpContextAccessor.HttpContext.Request.Headers["Authorization"].ToString();
-        return jwtToken.Replace("Bearer ", "");
+        SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
+        string accessToken = tokenHandler.WriteToken(token);
+
+        TimeSpan expiresIn = TimeSpan.FromSeconds(60);
+
+        return new TokenResponse(accessToken, expiresIn);
     }
 }

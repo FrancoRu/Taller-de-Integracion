@@ -1,8 +1,14 @@
-﻿namespace Club12.Services.Auth;
+﻿using Club12.Entities.TokenResponse;
+using Club12.Entities.UserEntity;
+
+namespace Club12.Services.Auth;
 
 public interface IAuthService
 {
-    public bool IsUserAuthorized();
-
-    public bool IsSuperAdmin();
+    /// <summary>
+    /// Generates a JWT token for a user based on their credentials.
+    /// </summary>
+    /// <param name="userEntity">The user request containing login credentials.</param>
+    /// <returns>The generated JWT token.</returns>
+    TokenResponse GenerateJwtToken(User userEntity);
 }

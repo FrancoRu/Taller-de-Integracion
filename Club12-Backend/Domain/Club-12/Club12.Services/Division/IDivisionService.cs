@@ -11,8 +11,9 @@ public interface IDivisionService
     /// Creates a new division.
     /// </summary>
     /// <param name="divisionEntity">The division entity to create.</param>
+    /// <param name="userId">The ID of the user creating the division.</param>
     /// <returns>The created division.</returns>
-    Division CreateDivision(Division divisionEntity);
+    Division CreateDivision(Division divisionEntity, Guid userId);
 
     /// <summary>
     /// Retrieves a division by its id.
@@ -24,13 +25,14 @@ public interface IDivisionService
     /// <summary>
     /// Deletes a division.
     /// </summary>
-    /// <param name="division">The division to delete.</param>
-    void DeleteDivision(Division division);
+    /// <param name="divisionEntity">The division to delete.</param>
+    void DeleteDivision(Division divisionEntity);
 
     /// <summary>
     /// Updates a division asynchronously.
     /// </summary>
-    /// <param name="division">The division to update.</param>
+    /// <param name="divisionEntity">The division to update.</param>
+    /// <param name="userId">The ID of the user updating the division.</param>
     /// <returns>A boolean indicating whether the update was successful.</returns>
-    Task<bool> UpdateDivision(Division division);
+    Task<bool> UpdateDivision(Division divisionEntity, Guid userId);
 }
