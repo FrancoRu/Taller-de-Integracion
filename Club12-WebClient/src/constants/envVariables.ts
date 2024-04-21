@@ -1,5 +1,5 @@
 const envVariables = {
-	apiUrl: 'http://localhost',
+	apiUrl: 'http://localhost'
 }
 
 export default envVariables

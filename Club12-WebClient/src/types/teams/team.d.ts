@@ -1,5 +1,5 @@
 export interface ITeam {
-	id:string
+	id: string
 	name: string
 	threeLetterCode: string
 	divisionId: string
@@ -10,4 +10,3 @@ export interface IBaseTeam {
 	threeLetterCode?: string
 	divisionId?: string
 }
-

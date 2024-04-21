@@ -1,3 +1,3 @@
 interface ProviderProps {
-    children: ReactNode
+	children: ReactNode
 }

@@ -1,8 +1,8 @@
 export interface IBaseStatistic {
-    name?: string,
+	name?: string
 }
 
-export interface IStatistic{
-    id:string,
-    name:string
+export interface IStatistic {
+	id: string
+	name: string
 }
