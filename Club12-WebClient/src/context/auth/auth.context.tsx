@@ -5,7 +5,7 @@ import { authService } from '../../services/auths/authService'
 import {
 	IAuthContextProps,
 	IUser,
-	authSignIn,
+	UserLoginRequest,
 	authSignUp
 } from '../../types/auths/auth'
 
@@ -69,7 +69,7 @@ export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
 		}
 	}
 
-	const signIn = async (user: authSignIn) => {
+	const signIn = async (user: UserLoginRequest) => {
 		try {
 			const res = await service.loginRequest(user)
 			const { _id, username, email } = res.data.user

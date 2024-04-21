@@ -4,14 +4,14 @@ export interface IUser {
 	email: string
 }
 
-interface authSignUp extends authSignIn {
+interface authSignUp extends UserLoginRequest {
 	name: string
 	confirmPassword: string
 	role: number
 }
 
-interface authSignIn {
-	email: string
+interface UserLoginRequest {
+	userName: string
 	password: string
 }
 

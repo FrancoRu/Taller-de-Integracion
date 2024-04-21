@@ -10,9 +10,7 @@ import { CssBaseline } from '@mui/material/'
 import theme from './styles/theme'
 import './styles/main.css'
 import { SignIn } from './views/access/SignIn'
-import { SignUp } from './views/access/SignUp'
-// import SignUp from './views/SignUp'
-// import { SignIn } from './views/access/signIn'
+
 
 function App() {
 	return (
@@ -20,7 +18,6 @@ function App() {
 			<CssBaseline />
 			<Routes>
 				<Route path='/' element={<SignIn />} />
-				<Route path='/register' element={<SignUp />} />
 			</Routes>
 		</ThemeProvider>
 	)

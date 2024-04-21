@@ -7,7 +7,7 @@ import formDataLogin from '../../data/readJSON.json'
 import { Form } from '../../components/form/form'
 import { BaseInputJSON } from '../../types/form/form'
 import { handleFields } from '../../utils/formUtils'
-import { authSignIn } from '../../types/auths/auth'
+import { UserLoginRequest } from '../../types/auths/auth'
 import { useAuth } from '../../hooks/auth/useAuth'
 
 export const SignIn: React.FC = () => {
@@ -16,8 +16,8 @@ export const SignIn: React.FC = () => {
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
 		const data = handleFields(event)
-		const user: authSignIn = {
-			email: data.email as string,
+		const user: UserLoginRequest = {
+			userName: data.userName as string,
 			password: data.password as string
 		}
 		signIn(user)
