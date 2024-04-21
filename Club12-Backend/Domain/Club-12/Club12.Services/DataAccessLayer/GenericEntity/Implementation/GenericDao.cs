@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Persistence;
 using System.Linq.Expressions;
 
-namespace Club12.Services.DataAccessLayer.Implementation;
+namespace Club12.Services.DataAccessLayer.GenericEntity.Implementation;
 
 public class GenericDao<TEntity> : IGenericDao<TEntity> where TEntity : EntityBase
 {
@@ -79,7 +79,6 @@ public class GenericDao<TEntity> : IGenericDao<TEntity> where TEntity : EntityBa
     public void Update(TEntity entity)
     {
         GetContext.Entry(entity).State = EntityState.Modified;
-        entity.DateUpdated = DateTime.UtcNow;
     }
 
     public virtual TEntity Get(params object[] keyValues)

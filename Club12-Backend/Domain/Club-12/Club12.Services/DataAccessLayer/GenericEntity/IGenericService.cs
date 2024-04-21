@@ -1,7 +1,7 @@
 ﻿using Club12.Entities;
 using System.Linq.Expressions;
 
-namespace Club12.Services.DataAccessLayer;
+namespace Club12.Services.DataAccessLayer.GenericEntity;
 
 /// <summary>
 /// Generic data access Interface for entities.
@@ -35,7 +35,7 @@ public interface IGenericService<TEntity> where TEntity : EntityBase
     Task DeleteWhereAsync(Expression<Func<TEntity, bool>> expression);
 
     /// <summary>
-    /// Deletes an entity from asynchronously.
+    /// Deletes an entity asynchronously.
     /// </summary>
     /// <param name="entity">The entity to delete.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
@@ -76,40 +76,46 @@ public interface IGenericService<TEntity> where TEntity : EntityBase
     /// Inserts an entity.
     /// </summary>
     /// <param name="entity">The entity to insert.</param>
-    void Insert(TEntity entity);
+    /// <param name="userId">The ID of the user performing the insert operation.</param>
+    void Insert(TEntity entity, Guid userId);
 
     /// <summary>
     /// Inserts a collection of entities.
     /// </summary>
     /// <param name="entities">The collection of entities to be inserted.</param>
-    void Insert(ICollection<TEntity> entities);
+    /// <param name="userId">The ID of the user performing the insert operation.</param>
+    void Insert(ICollection<TEntity> entities, Guid userId);
 
     /// <summary>
     /// Inserts an entity asynchronously.
     /// </summary>
     /// <param name="entity">The entity to insert.</param>
+    /// <param name="userId">The ID of the user performing the insert operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task InsertAsync(TEntity entity);
+    Task InsertAsync(TEntity entity, Guid userId);
 
     /// <summary>
     /// Asynchronously inserts a collection of entities.
     /// </summary>
     /// <param name="entities">The collection of entities to be inserted asynchronously.</param>
+    /// <param name="userId">The ID of the user performing the insert operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task InsertAsync(ICollection<TEntity> entities);
+    Task InsertAsync(ICollection<TEntity> entities, Guid userId);
 
     /// <summary>
     /// Updates an entity in the data store.
     /// </summary>
     /// <param name="entity">The entity to update.</param>
-    void Update(TEntity entity);
+    /// <param name="userId">The ID of the user performing the update operation.</param>
+    void Update(TEntity entity, Guid userId);
 
     /// <summary>
     /// Asynchronously updates an entity.
     /// </summary>
     /// <param name="entity">The entity to be updated.</param>
+    /// <param name="userId">The ID of the user performing the update operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task UpdateAsync(TEntity entity);
+    Task UpdateAsync(TEntity entity, Guid userId);
 
     /// <summary>
     /// Filters entities based on the specified expression.

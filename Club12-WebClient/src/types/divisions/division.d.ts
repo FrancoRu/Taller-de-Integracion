@@ -1,8 +1,8 @@
 export interface IBaseDivision {
-    name?: string,
+	name?: string
 }
 
-export interface IDivision{
-    id:string,
-    name:string
+export interface IDivision {
+	id: string
+	name: string
 }

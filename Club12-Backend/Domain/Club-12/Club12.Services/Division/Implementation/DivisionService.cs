@@ -1,5 +1,5 @@
 ﻿using Club12.Entities.DivisionEntity;
-using Club12.Services.DataAccessLayer;
+using Club12.Services.DataAccessLayer.GenericEntity;
 
 namespace Club12.Services.Divisions.Implementation;
 
@@ -7,16 +7,14 @@ public class DivisionService : IDivisionService
 {
     private readonly IGenericService<Division> _genericDivisionService;
 
-    public DivisionService(
-        IGenericService<Division> genericDivisionService
-    )
+    public DivisionService(IGenericService<Division> genericDivisionService)
     {
         _genericDivisionService = genericDivisionService;
     }
 
-    public Division CreateDivision(Division divisionEntity)
+    public Division CreateDivision(Division divisionEntity, Guid userId)
     {
-        _genericDivisionService.Insert(divisionEntity);
+        _genericDivisionService.Insert(divisionEntity, userId);
         return divisionEntity;
     }
 
@@ -25,11 +23,11 @@ public class DivisionService : IDivisionService
         _genericDivisionService.Delete(divisionEntity);
     }
 
-    public async Task<bool> UpdateDivision(Division divisionEntity)
+    public async Task<bool> UpdateDivision(Division divisionEntity, Guid userId)
     {
         try
         {
-            await _genericDivisionService.UpdateAsync(divisionEntity);
+            await _genericDivisionService.UpdateAsync(divisionEntity, userId);
             return true;
         }
         catch

@@ -1,7 +1,4 @@
-﻿using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 
 namespace Club12.Services.Utils;
@@ -9,7 +6,7 @@ namespace Club12.Services.Utils;
 /// <summary>
 /// Utility class for encryption operations.
 /// </summary>
-public class Encrypt
+public static class Encrypt
 {
     /// <summary>
     /// Encrypts a given string using the SHA-256 algorithm.
@@ -42,25 +39,5 @@ public class Encrypt
     {
         string hashedInput = Hash(plainTextPassword);
         return string.Equals(hashedInput, hashedPassword, StringComparison.OrdinalIgnoreCase);
-    }
-
-    public static string GenerateJWTToken(string jwtSecret, string userName, string role)
-    {
-        JwtSecurityTokenHandler tokenHandler = new();
-        byte[] key = Encoding.ASCII.GetBytes(jwtSecret);
-
-        SecurityTokenDescriptor tokenDescriptor = new()
-        {
-            Subject = new ClaimsIdentity(new[]
-            {
-                    new Claim(ClaimTypes.Name, userName),
-                    new Claim(ClaimTypes.Role, role)
-                }),
-            Expires = DateTime.UtcNow.AddHours(1),
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-        };
-
-        SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
     }
 }

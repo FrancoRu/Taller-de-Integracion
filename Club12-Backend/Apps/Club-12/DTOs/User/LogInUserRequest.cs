@@ -5,7 +5,7 @@ namespace Club12.Viewmodels.User;
 /// <summary>
 /// Represents a request object for user login.
 /// </summary>
-public class UserLoginRequest
+public class LogInUserRequest
 {
     /// <summary>
     /// The username for login.
