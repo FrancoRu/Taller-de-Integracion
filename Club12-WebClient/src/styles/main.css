@@ -1,3 +1,7 @@
 * {
 	overflow: hidden;
 }
+
+#root {
+	height: 100vh;
+}

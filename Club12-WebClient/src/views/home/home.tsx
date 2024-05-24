@@ -5,7 +5,7 @@ export const Home = () => {
   return (
     <>
       <h1>
-        Bienbenido culeador de{" "}
+        Bienvenido {" "}
         <strong>{isAuthenticated && user?.userName}</strong>
       </h1>
     </>

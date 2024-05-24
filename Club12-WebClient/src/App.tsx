@@ -1,17 +1,15 @@
-import "@fontsource/roboto/300.css";
-import "@fontsource/roboto/400.css";
-import "@fontsource/roboto/500.css";
-import "@fontsource/roboto/700.css";
-
-import { Navigate, Route, Routes } from "react-router-dom";
-
-import { ThemeProvider } from "@emotion/react";
-import { CssBaseline } from "@mui/material/";
-import theme from "./styles/theme";
-import "./styles/main.css";
-import { SignIn } from "./views/access/SignIn";
-import { Home } from "./views/dashboard/home";
-import { useAuth } from "./hooks/auth/useAuth";
+import React from 'react';
+import { ThemeProvider } from '@emotion/react';
+import { CssBaseline } from '@mui/material/';
+import { Route, Routes, Navigate } from 'react-router-dom';
+import theme from './styles/theme';
+import './styles/main.css';
+import { SignIn } from './views/access/SignIn';
+import { useAuth } from './hooks/auth/useAuth';
+import Layout from './views/layouts/Layout';
+import { Players } from './views/players/palyers';
+import { Teams } from './views/teams/teams';
+import { Home } from './views/home/home';
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -19,11 +17,17 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route
-          path="/login"
-          element={isAuthenticated ? <Navigate to="/" /> : <SignIn />}
-        />
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="players" element={<Players />} />
+          <Route path="teams" element={<Teams />} />
+          <Route path="*" element={<Home />} />
+          <Route
+            path="login"
+            element={isAuthenticated ? <Navigate to="/" /> : <SignIn />}
+          />
+        </Route>
+        
       </Routes>
     </ThemeProvider>
   );
