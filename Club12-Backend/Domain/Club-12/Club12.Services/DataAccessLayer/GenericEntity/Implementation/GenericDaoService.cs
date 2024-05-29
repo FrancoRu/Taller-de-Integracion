@@ -5,9 +5,9 @@ using System.Linq.Expressions;
 
 namespace Club12.Services.DataAccessLayer.GenericEntity.Implementation;
 
-public class GenericDao<TEntity> : IGenericDao<TEntity> where TEntity : EntityBase
+public class GenericDaoService<TEntity> : IGenericDaoService<TEntity> where TEntity : EntityBase
 {
-    public GenericDao(ApplicationDBContext context)
+    public GenericDaoService(ApplicationDBContext context)
     {
         GetContext = context;
         DbSet = GetContext.Set<TEntity>();

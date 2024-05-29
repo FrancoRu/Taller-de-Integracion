@@ -9,11 +9,11 @@ namespace Club12.Services.DataAccessLayer.GenericUser.Implementation;
 /// </summary>
 public class GenericUserService : IGenericUserService
 {
-    protected readonly GenericUserDao genericUserDao;
+    protected readonly GenericUserDaoService genericUserDao;
 
     public GenericUserService(ApplicationDBContext context)
     {
-        genericUserDao = new GenericUserDao(context);
+        genericUserDao = new GenericUserDaoService(context);
     }
 
     public virtual void Insert(User entity)

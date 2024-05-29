@@ -9,7 +9,7 @@ namespace Club12.Services.DataAccessLayer.GenericEntity;
 /// Generic data access interface implementation for entities.
 /// </summary>
 /// <typeparam name="TEntity">The entity type.</typeparam>
-public interface IGenericDao<TEntity> where TEntity : EntityBase
+public interface IGenericDaoService<TEntity> where TEntity : EntityBase
 {
     /// <summary>
     /// Gets the DbSet for entities of type TEntity in the database context.

@@ -6,11 +6,11 @@ namespace Club12.Services.DataAccessLayer.GenericEntity.Implementation;
 
 public class GenericService<TEntity> : IGenericService<TEntity> where TEntity : EntityBase
 {
-    protected GenericDao<TEntity> genericDao;
+    protected GenericDaoService<TEntity> genericDao;
 
     public GenericService(ApplicationDBContext context)
     {
-        genericDao = new GenericDao<TEntity>(context);
+        genericDao = new GenericDaoService<TEntity>(context);
     }
 
     public virtual void Insert(TEntity entity, Guid userId)

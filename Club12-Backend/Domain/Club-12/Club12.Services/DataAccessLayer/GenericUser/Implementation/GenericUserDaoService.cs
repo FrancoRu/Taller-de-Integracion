@@ -5,9 +5,9 @@ using System.Linq.Expressions;
 
 namespace Club12.Services.DataAccessLayer.GenericUser.Implementation;
 
-public class GenericUserDao : IGenericUserDao
+public class GenericUserDaoService : IGenericUserDaoService
 {
-    public GenericUserDao(ApplicationDBContext context)
+    public GenericUserDaoService(ApplicationDBContext context)
     {
         GetContext = context;
         DbSet = GetContext.Set<User>();
