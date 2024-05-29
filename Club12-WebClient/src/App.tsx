@@ -1,29 +1,32 @@
-import '@fontsource/roboto/300.css'
-import '@fontsource/roboto/400.css'
-import '@fontsource/roboto/500.css'
-import '@fontsource/roboto/700.css'
+import "@fontsource/roboto/300.css";
+import "@fontsource/roboto/400.css";
+import "@fontsource/roboto/500.css";
+import "@fontsource/roboto/700.css";
 
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from "react-router-dom";
 
-import { ThemeProvider } from '@emotion/react'
-import { CssBaseline } from '@mui/material/'
-import theme from './styles/theme'
-import './styles/main.css'
-import { SignIn } from './views/access/SignIn'
-import { SignUp } from './views/access/SignUp'
-// import SignUp from './views/SignUp'
-// import { SignIn } from './views/access/signIn'
+import { ThemeProvider } from "@emotion/react";
+import { CssBaseline } from "@mui/material/";
+import theme from "./styles/theme";
+import "./styles/main.css";
+import { SignIn } from "./views/access/SignIn";
+import { Home } from "./views/dashboard/home";
+import { useAuth } from "./hooks/auth/useAuth";
 
 function App() {
-	return (
-		<ThemeProvider theme={theme}>
-			<CssBaseline />
-			<Routes>
-				<Route path='/' element={<SignIn />} />
-				<Route path='/register' element={<SignUp />} />
-			</Routes>
-		</ThemeProvider>
-	)
+  const { isAuthenticated } = useAuth();
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route
+          path="/login"
+          element={isAuthenticated ? <Navigate to="/" /> : <SignIn />}
+        />
+      </Routes>
+    </ThemeProvider>
+  );
 }
 
-export default App
+export default App;

@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Persistance", "..\Infrastru
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Club12.Entities", "..\Domain\Club-12\Club12.Entities\Club12.Entities.csproj", "{4C155556-61C8-45C9-8814-8A183DB2512B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Club12.Services", "..\Domain\Club-12\Club12.Services\Club12.Services.csproj", "{145C6599-271E-4FCD-8493-0165AB4B0AAC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Club12.Services", "..\Domain\Club-12\Club12.Services\Club12.Services.csproj", "{145C6599-271E-4FCD-8493-0165AB4B0AAC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

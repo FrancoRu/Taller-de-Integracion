@@ -1,22 +1,25 @@
-export interface IUser {
-	id: string
-	username: string
-	email: string
+export interface ITokenResponse{
+	accessToken: string
+	expiresIn: Date
 }
 
-interface authSignUp extends authSignIn {
+export interface IUser {
+	userName: string
+	accessToken: ITokenResponse
+}
+
+interface authSignUp extends UserLoginRequest {
 	name: string
 	confirmPassword: string
 	role: number
 }
 
-interface authSignIn {
-	email: string
+interface UserLoginRequest {
+	userName: string
 	password: string
 }
 
 export interface IAuthContextProps {
-	signUp: (value: authSignUp) => Promise<void>
 	signIn: (value: authSignIn) => Promise<void>
 	logOut: () => Promise<void>
 	user: IUser | null
