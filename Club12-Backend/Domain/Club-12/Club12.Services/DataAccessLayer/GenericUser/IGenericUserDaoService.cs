@@ -8,7 +8,7 @@ namespace Club12.Services.DataAccessLayer.GenericUser;
 /// <summary>
 /// Generic data access interface implementation for user entities.
 /// </summary>
-public interface IGenericUserDao
+public interface IGenericUserDaoService
 {
     /// <summary>
     /// Gets the DbSet for user entities in the database context.

@@ -19,8 +19,12 @@ using Club12.Services.Users.Implementation;
 using Club12.Services.Utils;
 using Club12.Utils.Controller;
 using Club12.Utils.Controller.Implementation;
-
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Persistence;
+using System.Reflection;
+using System.Text;
+using System.Text.Json.Serialization;
 
 namespace Club12.Utils;
 
@@ -29,6 +33,12 @@ namespace Club12.Utils;
 /// </summary>
 public static class ServiceExtension
 {
+    private static readonly Dictionary<string, string> _roles = new()
+    {
+            { "SuperAdmin", "SuperAdmin" },
+            { "Admin", "Admin" }
+        };
+
     /// <summary>
     /// Registers application services in the dependency injection container.
     /// </summary>
@@ -52,6 +62,115 @@ public static class ServiceExtension
         collection.AddScoped<IHttpContextAccessor, HttpContextAccessor>();
         collection.AddScoped<IControllerUtils, ControllerUtils>();
         collection.AddScoped<ControllerUtils>();
+    }
+
+    /// <summary>
+    /// Adds custom authorization policies based on predefined roles.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
+    public static void AddCustomAuthorization(this IServiceCollection services)
+    {
+        services.AddAuthorization(options =>
+        {
+            _roles.ToList().ForEach(role =>
+            {
+                options.AddPolicy(role.Key, policy =>
+                {
+                    policy.RequireRole(role.Value);
+                });
+            });
+        });
+    }
+
+    /// <summary>
+    /// Adds custom authentication with JWT bearer token.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
+    public static void AddCustomAuthentication(this IServiceCollection services)
+    {
+        IConfiguration configuration = services.BuildServiceProvider().GetRequiredService<IConfiguration>();
+        string? jwtSecret = configuration.GetSection("JWT:Key")?.Value;
+
+        if (string.IsNullOrEmpty(jwtSecret))
+        {
+            throw new ArgumentException("The JWT is missing or empty in configuration.");
+        }
+
+        services.AddAuthentication(options =>
+        {
+            options.DefaultScheme = "Bearer";
+        }).AddJwtBearer("Bearer", options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = configuration["JWT:Issuer"],
+                ValidAudience = configuration["JWT:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
+            };
+        });
+    }
+
+    /// <summary>
+    /// Adds custom JSON serialization options.
+    /// </summary>
+    /// <param name="builder">The <see cref="IMvcBuilder"/> to configure JSON options.</param>
+    public static void AddCustomJsonOptions(this IMvcBuilder builder)
+    {
+        builder.AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        });
+    }
+
+    /// <summary>
+    /// Adds custom Swagger configuration.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
+    public static void AddCustomSwagger(this IServiceCollection services)
+    {
+        IConfiguration configuration = services.BuildServiceProvider().GetRequiredService<IConfiguration>();
+        services.AddSwaggerGen(c =>
+        {
+            c.SwaggerDoc("v1", new OpenApiInfo
+            {
+                Title = configuration["Swagger:Title"],
+                Version = configuration["Swagger:Version"],
+            });
+            string xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+            c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
+
+            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below.",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Scheme = "Bearer"
+            });
+
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            },
+                            Scheme = "oauth2",
+                            Name = "Bearer",
+                            In = ParameterLocation.Header
+                        },
+                        new List<string>()
+                    }
+                });
+        });
     }
 
     /// <summary>

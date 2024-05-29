@@ -1,13 +1,8 @@
 using Club12.Entities;
 using Club12.Utils;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 using Persistence;
 using Serilog;
-using System.Reflection;
-using System.Text;
-using System.Text.Json.Serialization;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -47,74 +42,14 @@ builder.Services.AddCors(options =>
 
 builder.Services.RegisterApplicationServices();
 
-builder.Services.AddAuthorizationBuilder()
-    .AddPolicy("SuperAdmin", policy =>
-    {
-        policy.RequireRole("SuperAdmin");
-    })
-    .AddPolicy("Admin", policy =>
-    {
-        policy.RequireRole("Admin");
-    });
+builder.Services.AddCustomAuthorization();
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultScheme = "Bearer";
-}).AddJwtBearer("Bearer", options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration.GetSection("JWT:Issuer").Value,
-        ValidAudience = builder.Configuration.GetSection("JWT:Audience").Value,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
-    };
-});
+builder.Services.AddCustomAuthentication();
 
-builder.Services.AddControllers().AddJsonOptions(x =>
-    x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+builder.Services.AddControllers().AddCustomJsonOptions();
 
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = builder.Configuration["Swagger:Title"],
-        Version = builder.Configuration["Swagger:Version"],
-    });
-    string xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
-    c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
+builder.Services.AddCustomSwagger();
 
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below.",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
-    });
-
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                },
-                Scheme = "oauth2",
-                Name = "Bearer",
-                In = ParameterLocation.Header
-            },
-            new List<string>()
-        }
-    });
-});
 
 WebApplication app = builder.Build();
 
@@ -140,7 +75,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 Log.Information("----- Starting up -----");
-Log.Information("                                                               \r\n  ####    ##       ##  ##   #####               ##      ####   \r\n ##  ##   ##       ##  ##   ##  ##             ###     ##  ##  \r\n ##       ##       ##  ##   #####               ##        ##   \r\n ##       ##       ##  ##   ##  ##              ##       ##    \r\n ##  ##   ##       ##  ##   ##  ##              ##      ##     \r\n  ####    ######   ######   #####             ######   ######  \r\n                                                               \r\n");
+//Log.Information("                                                               \r\n  ####    ##       ##  ##   #####               ##      ####   \r\n ##  ##   ##       ##  ##   ##  ##             ###     ##  ##  \r\n ##       ##       ##  ##   #####               ##        ##   \r\n ##       ##       ##  ##   ##  ##              ##       ##    \r\n ##  ##   ##       ##  ##   ##  ##              ##      ##     \r\n  ####    ######   ######   #####             ######   ######  \r\n                                                               \r\n");
+Log.Information("\r\n _______  _______          _________   _______  _______  _______ \r\n(  ____ \\(  ____ \\|\\     /|\\__   __/  (  ___  )(  ____ )(  ____ )\r\n| (    \\/| (    \\/( \\   / )   ) (     | (   ) || (    )|| (    )|\r\n| (__    | |       \\ (_) /    | |     | (___) || (____)|| (____)|\r\n|  __)   | |        \\   /     | |     |  ___  ||  _____)|  _____)\r\n| (      | |         ) (      | |     | (   ) || (      | (      \r\n| )      | (____/\\   | |      | |     | )   ( || )      | )      \r\n|/       (_______/   \\_/      )_(     |/     \\||/       |/       \r\n                                                                 \r\n");
 Log.Information("----- Started     -----");
 Log.CloseAndFlush();
 
