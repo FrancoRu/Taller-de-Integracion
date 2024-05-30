@@ -5,7 +5,7 @@ namespace Club12.Viewmodels.Player;
 /// <summary>
 /// Represents a response for a Player, inheriting from the base response.
 /// </summary>
-public class PlayerResponse : BaseResponse
+public class PlayerResponse : GenericEntity
 {
     /// <summary>
     /// The name of the Player.

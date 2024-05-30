@@ -1,4 +1,4 @@
-using Club12.Entities;
+﻿using Club12.Entities;
 using Club12.Utils;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
@@ -46,7 +46,10 @@ builder.Services.AddCustomAuthorization();
 
 builder.Services.AddCustomAuthentication();
 
-builder.Services.AddControllers().AddCustomJsonOptions();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ResponseWrapperFilter>();
+}).AddCustomJsonOptions();
 
 builder.Services.AddCustomSwagger();
 
@@ -76,7 +79,7 @@ app.MapControllers();
 
 Log.Information("----- Starting up -----");
 //Log.Information("                                                               \r\n  ####    ##       ##  ##   #####               ##      ####   \r\n ##  ##   ##       ##  ##   ##  ##             ###     ##  ##  \r\n ##       ##       ##  ##   #####               ##        ##   \r\n ##       ##       ##  ##   ##  ##              ##       ##    \r\n ##  ##   ##       ##  ##   ##  ##              ##      ##     \r\n  ####    ######   ######   #####             ######   ######  \r\n                                                               \r\n");
-Log.Information("\r\n _______  _______          _________   _______  _______  _______ \r\n(  ____ \\(  ____ \\|\\     /|\\__   __/  (  ___  )(  ____ )(  ____ )\r\n| (    \\/| (    \\/( \\   / )   ) (     | (   ) || (    )|| (    )|\r\n| (__    | |       \\ (_) /    | |     | (___) || (____)|| (____)|\r\n|  __)   | |        \\   /     | |     |  ___  ||  _____)|  _____)\r\n| (      | |         ) (      | |     | (   ) || (      | (      \r\n| )      | (____/\\   | |      | |     | )   ( || )      | )      \r\n|/       (_______/   \\_/      )_(     |/     \\||/       |/       \r\n                                                                 \r\n");
+Log.Information("\r\n░▒▓████████▓▒░  ░▒▓██████▓▒░  ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓████████▓▒░        ░▒▓██████▓▒░  ░▒▓███████▓▒░  ░▒▓███████▓▒░  \r\n░▒▓█▓▒░        ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░    ░▒▓█▓▒░           ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ \r\n░▒▓█▓▒░        ░▒▓█▓▒░        ░▒▓█▓▒░░▒▓█▓▒░    ░▒▓█▓▒░           ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ \r\n░▒▓██████▓▒░   ░▒▓█▓▒░         ░▒▓██████▓▒░     ░▒▓█▓▒░           ░▒▓████████▓▒░ ░▒▓███████▓▒░  ░▒▓███████▓▒░  \r\n░▒▓█▓▒░        ░▒▓█▓▒░           ░▒▓█▓▒░        ░▒▓█▓▒░           ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░        ░▒▓█▓▒░        \r\n░▒▓█▓▒░        ░▒▓█▓▒░░▒▓█▓▒░    ░▒▓█▓▒░        ░▒▓█▓▒░           ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░        ░▒▓█▓▒░        \r\n░▒▓█▓▒░         ░▒▓██████▓▒░     ░▒▓█▓▒░        ░▒▓█▓▒░           ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░        ░▒▓█▓▒░        \r\n                                                                                                               \r\n                                                                                                               \r\n");
 Log.Information("----- Started     -----");
 Log.CloseAndFlush();
 

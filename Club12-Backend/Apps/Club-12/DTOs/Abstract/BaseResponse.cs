@@ -1,22 +1,16 @@
-﻿namespace Club12.Viewmodels.Abstract;
+﻿using Club12.Viewmodels.Abstract;
 
-/// <summary>
-/// Base response class containing common properties for responses.
-/// </summary>
-public class BaseResponse
+public class BaseResponse<T> where T : GenericEntity
 {
-    /// <summary>
-    /// The unique identifier of the entity.
-    /// </summary>
-    public required string Id { get; set; }
+    public string? ErrorMessage { get; set; }
+    public int StatusCode { get; set; }
+    public T? Content { get; set; }
 
-    /// <summary>
-    /// The date and time when the entity was created.
-    /// </summary>
-    public required DateTime DateCreated { get; set; }
 
-    /// <summary>
-    /// The date and time when the entity was last updated.
-    /// </summary>
-    public required DateTime DateUpdated { get; set; }
+    public BaseResponse(int statusCode, T? content, string? errorMessage)
+    {
+        StatusCode = statusCode;
+        Content = content;
+        ErrorMessage = errorMessage;
+    }
 }

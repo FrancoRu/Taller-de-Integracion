@@ -5,7 +5,7 @@ namespace Club12.Viewmodels.Division;
 /// <summary>
 /// Represents a response for a division, inheriting from the base response.
 /// </summary>
-public class DivisionResponse : BaseResponse
+public class DivisionResponse : GenericEntity
 {
     /// <summary>
     /// The name of the division.
