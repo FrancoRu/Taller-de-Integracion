@@ -5,7 +5,7 @@ namespace Club12.Viewmodels.Team;
 /// <summary>
 /// Represents a response for a team, inheriting from the base response.
 /// </summary>
-public class TeamResponse : BaseResponse
+public class TeamResponse : GenericEntity
 {
     /// <summary>
     /// The name of the team.

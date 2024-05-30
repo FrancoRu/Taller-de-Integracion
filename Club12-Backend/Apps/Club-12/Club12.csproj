@@ -32,4 +32,8 @@
     <ProjectReference Include="..\..\Infrastructure\Persistance\Persistance.csproj" />    
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="DTOs\TokenResponse\" />
+  </ItemGroup>
+
 </Project>
