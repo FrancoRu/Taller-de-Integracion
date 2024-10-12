@@ -1,15 +1,15 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34309.116
+
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Club12", "..\Apps\Club-12\Club12.csproj", "{FEED98B6-1989-4AAD-9BFA-7436F7CDD19B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Persistance", "..\Infrastructure\Persistance\Persistance.csproj", "{2B6AF4ED-3989-4F95-8164-B2398E53EB31}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Club12.Entities", "..\Domain\Club-12\Club12.Entities\Club12.Entities.csproj", "{4C155556-61C8-45C9-8814-8A183DB2512B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Club12.Entities", "..\Domain\Club12.Entities\Club12.Entities.csproj", "{4C155556-61C8-45C9-8814-8A183DB2512B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Club12.Services", "..\Domain\Club-12\Club12.Services\Club12.Services.csproj", "{145C6599-271E-4FCD-8493-0165AB4B0AAC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Club12.Services", "..\Domain\Club12.Services\Club12.Services.csproj", "{145C6599-271E-4FCD-8493-0165AB4B0AAC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

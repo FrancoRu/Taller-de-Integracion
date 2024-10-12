@@ -1,5 +1,4 @@
 ﻿using Club12.Entities;
-using Persistence;
 using System.Linq.Expressions;
 
 namespace Club12.Services.DataAccessLayer.GenericEntity.Implementation;

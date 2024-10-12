@@ -92,7 +92,7 @@ public class UserController : ControllerBase
         _mapper.Map(userRequest, existingUser);
         bool updateResult = await _userService.UpdateUser(existingUser);
 
-        return !updateResult ? BadRequest("Failed to update the user.") : Ok();
+        return updateResult ? Ok() : BadRequest("Failed to update the user.");
     }
 
     /// <summary>
