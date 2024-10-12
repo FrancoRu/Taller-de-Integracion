@@ -1,23 +1,22 @@
-﻿using Club12.Entities.UserEntity;
+﻿using Club12.Entities;
 using Microsoft.EntityFrameworkCore;
-using Persistence;
 using System.Linq.Expressions;
 
-namespace Club12.Services.DataAccessLayer.GenericUser.Implementation;
+namespace Club12.Services.DataAccessLayer.GenericEntity.Implementation;
 
-public class GenericUserDaoService : IGenericUserDaoService
+public class GenericDaoService<TEntity> : IGenericDaoService<TEntity> where TEntity : EntityBase
 {
-    public GenericUserDaoService(ApplicationDBContext context)
+    public GenericDaoService(ApplicationDBContext context)
     {
         GetContext = context;
-        DbSet = GetContext.Set<User>();
+        DbSet = GetContext.Set<TEntity>();
     }
 
-    public DbSet<User> DbSet { get; }
+    public DbSet<TEntity> DbSet { get; }
 
     public ApplicationDBContext GetContext { get; }
 
-    public void Insert(User entity)
+    public void Insert(TEntity entity)
     {
         try
         {
@@ -30,7 +29,7 @@ public class GenericUserDaoService : IGenericUserDaoService
         }
     }
 
-    public void Insert(IEnumerable<User> entities)
+    public void Insert(IEnumerable<TEntity> entities)
     {
         try
         {
@@ -43,12 +42,12 @@ public class GenericUserDaoService : IGenericUserDaoService
         }
     }
 
-    public Task InsertAsync(IEnumerable<User> entities)
+    public Task InsertAsync(IEnumerable<TEntity> entities)
     {
         return DbSet.AddRangeAsync(entities);
     }
 
-    public async Task InsertAsync(User entity)
+    public async Task InsertAsync(TEntity entity)
     {
         try
         {
@@ -60,55 +59,55 @@ public class GenericUserDaoService : IGenericUserDaoService
             throw;
         }
     }
-    public void Delete(User entity)
+    public void Delete(TEntity entity)
     {
         DbSet.Remove(entity);
     }
 
-    public void Delete(IEnumerable<User> entities)
+    public void Delete(IEnumerable<TEntity> entities)
     {
         DbSet.RemoveRange(entities);
     }
 
-    public void DeleteUnattached(User entity)
+    public void DeleteUnattached(TEntity entity)
     {
         DbSet.Attach(entity);
         DbSet.Remove(entity);
     }
 
-    public void Update(User entity)
+    public void Update(TEntity entity)
     {
         GetContext.Entry(entity).State = EntityState.Modified;
     }
 
-    public virtual User Get(params object[] keyValues)
+    public virtual TEntity Get(params object[] keyValues)
     {
-        User? entity = DbSet.Find(keyValues);
+        TEntity? entity = DbSet.Find(keyValues);
 
         return entity ?? throw new InvalidOperationException("Entity not found.");
     }
 
-    public async Task<IEnumerable<User>> FindAllAsync()
+    public async Task<IEnumerable<TEntity>> FindAllAsync()
     {
         return await DbSet.ToListAsync();
     }
 
-    public IQueryable<User> FindAllQueryable()
+    public IQueryable<TEntity> FindAllQueryable()
     {
         return DbSet;
     }
 
-    public IEnumerable<User> FindAllEnumerable()
+    public IEnumerable<TEntity> FindAllEnumerable()
     {
         return DbSet.ToList();
     }
 
-    public virtual IQueryable<User> Include(Expression<Func<User, object>> expression)
+    public virtual IQueryable<TEntity> Include(Expression<Func<TEntity, object>> expression)
     {
         return DbSet.Include(expression);
     }
 
-    public virtual IQueryable<User> Where(Expression<Func<User, bool>> expression)
+    public virtual IQueryable<TEntity> Where(Expression<Func<TEntity, bool>> expression)
     {
         return DbSet.Where(expression);
     }

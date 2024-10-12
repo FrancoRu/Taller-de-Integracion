@@ -37,7 +37,7 @@ public static class ServiceExtension
     {
             { "SuperAdmin", "SuperAdmin" },
             { "Admin", "Admin" }
-        };
+    };
 
     /// <summary>
     /// Registers application services in the dependency injection container.
