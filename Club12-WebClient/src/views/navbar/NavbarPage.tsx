@@ -1,8 +1,7 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Link } from 'react-router-dom'
 import '../../styles/navbar/navbar.css'
-import { AuthenticatedNavbarPage } from './AuthenticatedNavbarPage'
-import { useAuth } from '../../hooks/auth/useAuth'
+import { Routes } from '../../types/types.d'
 /**
  *
  * @param prop
@@ -26,40 +25,25 @@ import { useAuth } from '../../hooks/auth/useAuth'
  * will show the home button for the relative path '/'
  */
 export const NavBarPage: React.FC = () => {
-	const { isAuthenticated } = useAuth()
-	const [showSubMenu, setShowSubMenu] = useState<boolean>(false)
-	const toggleSubMenu = () => {
-		setShowSubMenu(!showSubMenu)
-	}
 	return (
 		<div className='container-header'>
 			<header>
 				<nav className='nav-navbar'>
 					<ul className='ul-navbar'>
-						<li className='li-navbar' onClick={toggleSubMenu}>
-							{isAuthenticated ? (
-								<Link to={'/teams'}>Equipos</Link>
-							) : (
-								<>
-									<p>Equipos</p>
-									<span>{showSubMenu ? '▲' : '▼'}</span>
-									{showSubMenu && (
-										<AuthenticatedNavbarPage value='teams' text='Equipos' />
-									)}
-								</>
-							)}
+						<li className='li-navbar'>
+							<Link to={Routes.HOME}>Inicio</Link>
 						</li>
 						<li className='li-navbar'>
-							<Link to={'/players'}>Jugadores</Link>
+							<Link to={Routes.CAMPEONATO}>Campeonato</Link>
 						</li>
 						<li className='li-navbar'>
-							<Link to={'/matches'}>Partidos</Link>
+							<Link to={Routes.FEMENINO}>Femenino</Link>
 						</li>
 						<li className='li-navbar'>
-							<Link to={'/tournaments'}>Torneos</Link>
+							<Link to={Routes.LA_PREVIA}>La Previa</Link>
 						</li>
 						<li className='li-navbar'>
-							<Link to={'/statistics'}>Estadísticas</Link>
+							<Link to={Routes.COPA_12}>Copa 12</Link>
 						</li>
 					</ul>
 				</nav>

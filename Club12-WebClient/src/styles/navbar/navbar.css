@@ -37,21 +37,3 @@
 	background: -webkit-linear-gradient(90deg, #ff5000 0%, #ffa500 80%);
 	background: -moz-linear-gradient(90deg, #ff5000 0%, #ffa500 80%);
 }
-
-.ul-navbar .li-navbar:hover::before {
-	content: '';
-	position: absolute;
-	width: 100%;
-	height: 100%;
-	background: radial-gradient(circle, transparent 20%, white 70%);
-	transform: scale(0);
-	transform-origin: center;
-	animation: ripple 2s ease-out infinite;
-}
-
-@keyframes ripple {
-	to {
-		transform: scale(4);
-		opacity: 0;
-	}
-}
