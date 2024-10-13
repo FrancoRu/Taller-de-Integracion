@@ -1,9 +1,9 @@
-﻿namespace Club12.Viewmodels.Abstract;
+﻿namespace Club12.DTOs.Abstract;
 
 /// <summary>
 /// Base response class containing common properties for responses.
 /// </summary>
-public class GenericEntity
+public record GenericEntity
 {
     /// <summary>
     /// The unique identifier of the entity.

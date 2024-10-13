@@ -13,7 +13,7 @@ public interface ITeamService
     /// <param name="teamEntity">The team entity to create.</param>
     /// <param name="userId">The id of the user creating the team.</param>
     /// <returns>The created team.</returns>
-    Team CreateTeam(Team teamEntity, Guid userId);
+    Team CreateTeam(Team teamEntity);
 
     /// <summary>
     /// Retrieves a team by its id.
@@ -28,7 +28,7 @@ public interface ITeamService
     /// <param name="team">The team to update.</param>
     /// <param name="userId">The id of the user updating the team.</param>
     /// <returns>A boolean indicating whether the update was successful.</returns>
-    Task<bool> UpdateTeam(Team teamEntity, Guid userId);
+    Task<bool> UpdateTeam(Team teamEntity);
 
     /// <summary>
     /// Deletes a team.

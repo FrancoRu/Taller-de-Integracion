@@ -77,14 +77,14 @@ public interface IGenericService<TEntity> where TEntity : EntityBase
     /// </summary>
     /// <param name="entity">The entity to insert.</param>
     /// <param name="userId">The ID of the user performing the insert operation.</param>
-    void Insert(TEntity entity, Guid userId);
+    void Insert(TEntity entity);
 
     /// <summary>
     /// Inserts a collection of entities.
     /// </summary>
     /// <param name="entities">The collection of entities to be inserted.</param>
     /// <param name="userId">The ID of the user performing the insert operation.</param>
-    void Insert(ICollection<TEntity> entities, Guid userId);
+    void Insert(ICollection<TEntity> entities);
 
     /// <summary>
     /// Inserts an entity asynchronously.
@@ -92,7 +92,7 @@ public interface IGenericService<TEntity> where TEntity : EntityBase
     /// <param name="entity">The entity to insert.</param>
     /// <param name="userId">The ID of the user performing the insert operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task InsertAsync(TEntity entity, Guid userId);
+    Task InsertAsync(TEntity entity);
 
     /// <summary>
     /// Asynchronously inserts a collection of entities.
@@ -100,14 +100,14 @@ public interface IGenericService<TEntity> where TEntity : EntityBase
     /// <param name="entities">The collection of entities to be inserted asynchronously.</param>
     /// <param name="userId">The ID of the user performing the insert operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task InsertAsync(ICollection<TEntity> entities, Guid userId);
+    Task InsertAsync(ICollection<TEntity> entities);
 
     /// <summary>
     /// Updates an entity in the data store.
     /// </summary>
     /// <param name="entity">The entity to update.</param>
     /// <param name="userId">The ID of the user performing the update operation.</param>
-    void Update(TEntity entity, Guid userId);
+    void Update(TEntity entity);
 
     /// <summary>
     /// Asynchronously updates an entity.
@@ -115,7 +115,7 @@ public interface IGenericService<TEntity> where TEntity : EntityBase
     /// <param name="entity">The entity to be updated.</param>
     /// <param name="userId">The ID of the user performing the update operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task UpdateAsync(TEntity entity, Guid userId);
+    Task UpdateAsync(TEntity entity);
 
     /// <summary>
     /// Filters entities based on the specified expression.

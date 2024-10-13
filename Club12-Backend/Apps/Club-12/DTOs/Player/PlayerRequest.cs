@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Club12.Viewmodels.Player;
+namespace Club12.DTOs.Player;
 
 /// <summary>
 /// Represents a request to create a Player.

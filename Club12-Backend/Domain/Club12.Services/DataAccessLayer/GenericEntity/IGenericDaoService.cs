@@ -1,5 +1,6 @@
 ﻿using Club12.Entities;
 using Microsoft.EntityFrameworkCore;
+using Persistence;
 using System.Linq.Expressions;
 
 namespace Club12.Services.DataAccessLayer.GenericEntity;

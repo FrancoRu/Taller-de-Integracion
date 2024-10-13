@@ -1,4 +1,6 @@
-﻿using Club12.Viewmodels.Abstract;
+﻿using Club12.DTOs.Abstract;
+
+namespace Club12.Viewmodels.Abstract;
 
 public class BaseResponse<T> where T : GenericEntity
 {

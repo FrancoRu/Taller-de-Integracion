@@ -1,4 +1,5 @@
-﻿using Club12.Viewmodels.Abstract;
+﻿using Club12.DTOs.Abstract;
+using Club12.Viewmodels.Abstract;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System.Net;

@@ -12,9 +12,9 @@ public class DivisionService : IDivisionService
         _genericDivisionService = genericDivisionService;
     }
 
-    public Division CreateDivision(Division divisionEntity, Guid userId)
+    public Division CreateDivision(Division divisionEntity)
     {
-        _genericDivisionService.Insert(divisionEntity, userId);
+        _genericDivisionService.Insert(divisionEntity);
         return divisionEntity;
     }
 
@@ -23,11 +23,11 @@ public class DivisionService : IDivisionService
         _genericDivisionService.Delete(divisionEntity);
     }
 
-    public async Task<bool> UpdateDivision(Division divisionEntity, Guid userId)
+    public async Task<bool> UpdateDivision(Division divisionEntity)
     {
         try
         {
-            await _genericDivisionService.UpdateAsync(divisionEntity, userId);
+            await _genericDivisionService.UpdateAsync(divisionEntity);
             return true;
         }
         catch

@@ -1,10 +1,10 @@
 ﻿using AutoMapper;
+using Club12.DTOs.Player;
 using Club12.Entities.PlayerEntity;
 using Club12.Entities.TeamEntity;
 using Club12.Services.Players;
 using Club12.Services.Teams;
 using Club12.Utils.Controller;
-using Club12.Viewmodels.Player;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -66,9 +66,8 @@ public class PlayerController : ControllerBase
             return BadRequest($"There is no Team with id: {TeamId}.");
         }
 
-        Guid userIdRequested = _controllerUtils.GetUserId();
         Player mappedPlayer = _mapper.Map<Player>(playerRequest);
-        Player createdPlayer = _playerService.CreatePlayer(mappedPlayer, userIdRequested);
+        Player createdPlayer = _playerService.CreatePlayer(mappedPlayer);
         PlayerResponse playerResponse = _mapper.Map<PlayerResponse>(createdPlayer);
 
         return new ObjectResult(playerResponse) { StatusCode = StatusCodes.Status201Created };
@@ -122,9 +121,8 @@ public class PlayerController : ControllerBase
             return BadRequest($"Player with id {playerId} not found.");
         }
 
-        Guid userIdRequested = _controllerUtils.GetUserId();
         _mapper.Map(playerRequest, existingPlayer);
-        bool updateResult = await _playerService.UpdatePlayer(existingPlayer, userIdRequested);
+        bool updateResult = await _playerService.UpdatePlayer(existingPlayer);
 
         return !updateResult ? BadRequest("Failed to update the player.") : Ok();
     }

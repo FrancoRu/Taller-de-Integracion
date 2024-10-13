@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Club12.Viewmodels.User;
+namespace Club12.DTOs.User;
 
 /// <summary>
 /// Represents a request object for creating or updating a user.

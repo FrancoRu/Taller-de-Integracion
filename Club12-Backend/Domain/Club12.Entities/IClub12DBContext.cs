@@ -4,7 +4,6 @@ using Club12.Entities.PlayerEntity;
 using Club12.Entities.PlayersStatisticEntity;
 using Club12.Entities.SancitonEntity;
 using Club12.Entities.SanctionPlayerEntity;
-using Club12.Entities.StandingSummaryEntity;
 using Club12.Entities.StatisticEntity;
 using Club12.Entities.TeamEntity;
 using Club12.Entities.TournamentEntity;
@@ -32,8 +31,6 @@ public interface IClub12DBContext
     DbSet<Sanction> Sanctions { get; }
 
     DbSet<SanctionPlayer> SanctionsPlayers { get; }
-
-    DbSet<StandingSummary> StandingSummaries { get; }
 
     DbSet<User> Users { get; set; }
 }

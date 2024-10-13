@@ -1,4 +1,5 @@
 ﻿using Club12.Entities;
+using Persistence;
 using System.Linq.Expressions;
 
 namespace Club12.Services.DataAccessLayer.GenericEntity.Implementation;
@@ -12,20 +13,18 @@ public class GenericService<TEntity> : IGenericService<TEntity> where TEntity : 
         genericDao = new GenericDaoService<TEntity>(context);
     }
 
-    public virtual void Insert(TEntity entity, Guid userId)
+    public virtual void Insert(TEntity entity)
     {
-        entity.UserCreatedId = userId;
         entity.DateCreated = DateTime.UtcNow;
         entity.DateUpdated = DateTime.UtcNow;
         genericDao.Insert(entity);
         genericDao.Save();
     }
 
-    public virtual void Insert(ICollection<TEntity> entities, Guid userId)
+    public virtual void Insert(ICollection<TEntity> entities)
     {
         foreach (TEntity item in entities)
         {
-            item.UserCreatedId = userId;
             item.DateCreated = DateTime.UtcNow;
             item.DateUpdated = DateTime.UtcNow;
         }
@@ -38,20 +37,18 @@ public class GenericService<TEntity> : IGenericService<TEntity> where TEntity : 
         return genericDao.FindAllQueryable();
     }
 
-    public virtual async Task InsertAsync(TEntity entity, Guid userId)
+    public virtual async Task InsertAsync(TEntity entity)
     {
-        entity.UserCreatedId = userId;
         entity.DateCreated = DateTime.UtcNow;
         entity.DateUpdated = DateTime.UtcNow;
         await genericDao.InsertAsync(entity);
         await genericDao.SaveAsync();
     }
 
-    public virtual async Task InsertAsync(ICollection<TEntity> entities, Guid userId)
+    public virtual async Task InsertAsync(ICollection<TEntity> entities)
     {
         foreach (TEntity item in entities)
         {
-            item.UserCreatedId = userId;
             item.DateCreated = DateTime.UtcNow;
             item.DateUpdated = DateTime.UtcNow;
         }
@@ -94,17 +91,15 @@ public class GenericService<TEntity> : IGenericService<TEntity> where TEntity : 
         genericDao.Save();
     }
 
-    public virtual void Update(TEntity entity, Guid userId)
+    public virtual void Update(TEntity entity)
     {
-        entity.UserUpdatedId = userId;
         entity.DateUpdated = DateTime.UtcNow;
         genericDao.Update(entity);
         genericDao.Save();
     }
 
-    public virtual Task UpdateAsync(TEntity entity, Guid userId)
+    public virtual Task UpdateAsync(TEntity entity)
     {
-        entity.UserUpdatedId = userId;
         entity.DateUpdated = DateTime.UtcNow;
         genericDao.Update(entity);
         return genericDao.SaveAsync();

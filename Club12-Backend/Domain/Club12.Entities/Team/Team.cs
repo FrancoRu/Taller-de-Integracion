@@ -39,4 +39,9 @@ public class Team : EntityBase
     /// The players belonging to the team.
     /// </summary>
     public virtual required ICollection<Player> Players { get; set; }
+
+    /// <summary>
+    /// The URL of the team's logo.
+    /// </summary>
+    public required string LogoUrl { get; set; }
 }

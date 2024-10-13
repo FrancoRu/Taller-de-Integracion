@@ -14,9 +14,9 @@ public class TeamService : ITeamService
         _genericTeamService = genericTeamService;
     }
 
-    public Team CreateTeam(Team teamEntity, Guid userId)
+    public Team CreateTeam(Team teamEntity)
     {
-        _genericTeamService.Insert(teamEntity, userId);
+        _genericTeamService.Insert(teamEntity);
         return teamEntity;
     }
 
@@ -30,11 +30,11 @@ public class TeamService : ITeamService
         _genericTeamService.Delete(teamEntity);
     }
 
-    public async Task<bool> UpdateTeam(Team teamEntity, Guid userId)
+    public async Task<bool> UpdateTeam(Team teamEntity)
     {
         try
         {
-            await _genericTeamService.UpdateAsync(teamEntity, userId);
+            await _genericTeamService.UpdateAsync(teamEntity);
             return true;
         }
         catch

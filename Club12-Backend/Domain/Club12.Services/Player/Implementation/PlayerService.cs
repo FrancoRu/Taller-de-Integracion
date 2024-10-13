@@ -12,9 +12,9 @@ public class PlayerService : IPlayerService
         _genericPlayerService = genericPlayerService;
     }
 
-    public Player CreatePlayer(Player playerEntity, Guid userId)
+    public Player CreatePlayer(Player playerEntity)
     {
-        _genericPlayerService.Insert(playerEntity, userId);
+        _genericPlayerService.Insert(playerEntity);
         return playerEntity;
     }
 
@@ -28,11 +28,11 @@ public class PlayerService : IPlayerService
         _genericPlayerService.Delete(playerEntity);
     }
 
-    public async Task<bool> UpdatePlayer(Player playerEntity, Guid userId)
+    public async Task<bool> UpdatePlayer(Player playerEntity)
     {
         try
         {
-            await _genericPlayerService.UpdateAsync(playerEntity, userId);
+            await _genericPlayerService.UpdateAsync(playerEntity);
             return true;
         }
         catch

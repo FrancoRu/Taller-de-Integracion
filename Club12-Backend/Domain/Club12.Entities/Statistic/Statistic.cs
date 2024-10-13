@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Club12.Entities.StatisticEntity;
+
 /// <summary>
 /// Represents a Statistic in the Club12 application.
 /// </summary>

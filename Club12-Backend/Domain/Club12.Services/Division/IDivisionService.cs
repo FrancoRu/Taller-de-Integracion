@@ -13,7 +13,7 @@ public interface IDivisionService
     /// <param name="divisionEntity">The division entity to create.</param>
     /// <param name="userId">The ID of the user creating the division.</param>
     /// <returns>The created division.</returns>
-    Division CreateDivision(Division divisionEntity, Guid userId);
+    Division CreateDivision(Division divisionEntity);
 
     /// <summary>
     /// Retrieves a division by its id.
@@ -34,5 +34,5 @@ public interface IDivisionService
     /// <param name="divisionEntity">The division to update.</param>
     /// <param name="userId">The ID of the user updating the division.</param>
     /// <returns>A boolean indicating whether the update was successful.</returns>
-    Task<bool> UpdateDivision(Division divisionEntity, Guid userId);
+    Task<bool> UpdateDivision(Division divisionEntity);
 }

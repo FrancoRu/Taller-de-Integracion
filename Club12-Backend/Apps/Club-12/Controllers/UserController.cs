@@ -1,9 +1,9 @@
 ﻿using AutoMapper;
+using Club12.DTOs.User;
 using Club12.Entities.TokenResponse;
 using Club12.Entities.UserEntity;
 using Club12.Services.Auth;
 using Club12.Services.Users;
-using Club12.Viewmodels.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

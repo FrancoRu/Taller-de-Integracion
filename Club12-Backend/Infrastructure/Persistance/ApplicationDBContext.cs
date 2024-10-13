@@ -5,7 +5,6 @@ using Club12.Entities.PlayerEntity;
 using Club12.Entities.PlayersStatisticEntity;
 using Club12.Entities.SancitonEntity;
 using Club12.Entities.SanctionPlayerEntity;
-using Club12.Entities.StandingSummaryEntity;
 using Club12.Entities.StatisticEntity;
 using Club12.Entities.TeamEntity;
 using Club12.Entities.TournamentEntity;
@@ -63,8 +62,6 @@ public class ApplicationDBContext : DbContext, IDomainDBContexts
     public virtual DbSet<Sanction> Sanctions { get; set; }
 
     public virtual DbSet<SanctionPlayer> SanctionsPlayers { get; set; }
-
-    public virtual DbSet<StandingSummary> StandingSummaries { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
 }

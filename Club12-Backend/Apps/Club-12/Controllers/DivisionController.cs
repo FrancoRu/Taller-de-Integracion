@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Club12.DTOs.Division;
 using Club12.Entities.DivisionEntity;
 using Club12.Services.Divisions;
 using Club12.Utils.Controller;
@@ -50,9 +51,8 @@ public class DivisionController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult CreateDivision(DivisionRequest divisionRequest)
     {
-        Guid userIdRequested = _controllerUtils.GetUserId();
         Division mappedDivision = _mapper.Map<Division>(divisionRequest);
-        Division createdDivision = _divisionService.CreateDivision(mappedDivision, userIdRequested);
+        Division createdDivision = _divisionService.CreateDivision(mappedDivision);
         DivisionResponse divisionResponse = _mapper.Map<DivisionResponse>(createdDivision);
 
         return new ObjectResult(divisionResponse) { StatusCode = StatusCodes.Status201Created };
@@ -132,9 +132,8 @@ public class DivisionController : ControllerBase
             return BadRequest($"Division with id {divisionId} not found.");
         }
 
-        Guid userIdRequested = _controllerUtils.GetUserId();
         _mapper.Map(divisionRequest, existingDivision);
-        bool updateResult = await _divisionService.UpdateDivision(existingDivision, userIdRequested);
+        bool updateResult = await _divisionService.UpdateDivision(existingDivision);
 
         return !updateResult ? BadRequest("Failed to update the division.") : Ok();
     }
