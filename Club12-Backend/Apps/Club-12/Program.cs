@@ -46,10 +46,7 @@ builder.Services.AddCustomAuthorization();
 
 builder.Services.AddCustomAuthentication();
 
-builder.Services.AddControllers(options =>
-{
-    options.Filters.Add<ResponseWrapperFilter>();
-}).AddCustomJsonOptions();
+builder.Services.AddControllers().AddCustomJsonOptions();
 
 builder.Services.AddCustomSwagger();
 

@@ -5,7 +5,7 @@ namespace Club12.DTOs.Team;
 /// <summary>
 /// Represents a request to create a team.
 /// </summary>
-public record TeamRequest
+public record CreateTeamRequest
 {
     /// <summary>
     /// The name of the team.

@@ -5,7 +5,7 @@ namespace Club12.Viewmodels.Division;
 /// <summary>
 /// Represents a request to create a division.
 /// </summary>
-public class DivisionRequest
+public record DivisionRequest
 {
     /// <summary>
     /// The name of the division.

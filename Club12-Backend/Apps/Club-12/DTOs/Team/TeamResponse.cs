@@ -1,4 +1,5 @@
 ﻿using Club12.DTOs.Abstract;
+using Club12.DTOs.Player;
 
 namespace Club12.DTOs.Team;
 
@@ -20,10 +21,15 @@ public record TeamResponse : GenericEntity
     /// <summary>
     /// The unique identifier of the division to which the team belongs.
     /// </summary>
-    public required string DivisionId { get; set; }
+    public required Guid DivisionId { get; set; }
 
     /// <summary>
     /// The URL of the team's logo.
     /// </summary>
     public required string LogoUrl { get; set; }
+
+    /// <summary>
+    /// The list of players in the team.
+    /// </summary>
+    public required List<PlayerResponse> Players { get; set; } = [];
 }

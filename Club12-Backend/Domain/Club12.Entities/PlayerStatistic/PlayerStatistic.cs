@@ -1,6 +1,5 @@
 ﻿using Club12.Entities.MatchEntity;
 using Club12.Entities.PlayerEntity;
-using Club12.Entities.StatisticEntity;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -41,16 +40,4 @@ public class PlayerStatistic : EntityBase
     /// Represents the ID of the player associated with the player statistic.
     /// </summary>
     public Guid PlayerId { get; set; }
-
-    /// <summary>
-    /// Represents the statistic associated with the player statistic.
-    /// </summary>
-    [Required]
-    [Column("StatisticId")]
-    public required Statistic Statistic { get; set; }
-
-    /// <summary>
-    /// Represents the ID of the statistic associated with the player statistic.
-    /// </summary>
-    public Guid StatisticId { get; set; }
 }

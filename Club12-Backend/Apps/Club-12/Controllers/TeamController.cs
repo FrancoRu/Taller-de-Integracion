@@ -2,10 +2,10 @@
 using Club12.DTOs.Team;
 using Club12.Entities.DivisionEntity;
 using Club12.Entities.TeamEntity;
+using Club12.Extensions;
 using Club12.Services.Divisions;
 using Club12.Services.Teams;
 using Club12.Services.Utils.Cloudfare;
-using Club12.Utils.Controller;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,40 +14,16 @@ namespace Club12.Controllers;
 /// <summary>
 /// Controller for managing teams.
 /// </summary>
-[Authorize(Roles = "SuperAdmin, Admin")]
+[Authorize(Roles = "SuperAdmin")]
 [Route("api/")]
 [ApiController]
-public class TeamController : ControllerBase
+public class TeamController(
+    ITeamService teamService,
+    IDivisionService divisionService,
+    ICloudflareService cloudflareService,
+    IMapper mapper
+    ) : ControllerBase
 {
-    private readonly ITeamService _teamService;
-    private readonly IDivisionService _divisionService;
-    private readonly ICloudflareService _cloudflareService;
-    private readonly IControllerUtils _controllerUtils;
-    private readonly IMapper _mapper;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="TeamController"/> class.
-    /// </summary>
-    /// <param name="teamService">The team service.</param>
-    /// <param name="divisionService">The division service.</param>
-    /// <param name="controllerUtils">Controller utils that allow us to get user data from requests.</param>
-    /// <param name="cloudflareService">The Cloudflare service.</param>
-    /// <param name="mapper">The AutoMapper instance.</param>
-    public TeamController(
-        ITeamService teamService,
-        IDivisionService divisionService,
-        IControllerUtils controllerUtils,
-        ICloudflareService cloudflareService,
-        IMapper mapper
-    )
-    {
-        _teamService = teamService;
-        _divisionService = divisionService;
-        _controllerUtils = controllerUtils;
-        _cloudflareService = cloudflareService;
-        _mapper = mapper;
-    }
-
     /// <summary>
     /// Creates a new team.
     /// </summary>
@@ -56,26 +32,24 @@ public class TeamController : ControllerBase
     [HttpPost("teams")]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TeamResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<TeamResponse>> CreateTeam(TeamRequest teamRequest)
+    public async Task<ActionResult<TeamResponse>> CreateTeam(CreateTeamRequest teamRequest)
     {
-        if (!IsValidImageFile(teamRequest.LogoFile))
+        if (!teamRequest.LogoFile.IsValidImageFile())
         {
             return BadRequest("The logo file must be a valid JPEG/PNG image.");
         }
 
-        Division? division = _divisionService.GetDivisionById(teamRequest.DivisionId);
+        Division? division = divisionService.GetDivisionById(teamRequest.DivisionId);
         if (division is null)
         {
             return BadRequest($"Division with id {teamRequest.DivisionId} not found.");
         }
 
-        string logoUrl = await _cloudflareService.UploadLogoAsync(teamRequest.LogoFile.OpenReadStream(), teamRequest.LogoFile.FileName);
+        string logoUrl = await cloudflareService.UploadLogoAsync(teamRequest.LogoFile.OpenReadStream(), teamRequest.LogoFile.FileName);
 
-        Team team = _mapper.Map<Team>(teamRequest);
-        team.LogoUrl = logoUrl;
-
-        Team createdTeam = _teamService.CreateTeam(team);
-        TeamResponse teamResponse = _mapper.Map<TeamResponse>(createdTeam);
+        Team team = mapper.Map<Team>(teamRequest);
+        Team createdTeam = teamService.CreateTeam(team);
+        TeamResponse teamResponse = mapper.Map<TeamResponse>(createdTeam);
 
         return CreatedAtAction(nameof(GetTeamById), new { id = teamResponse.Id }, teamResponse);
     }
@@ -94,17 +68,17 @@ public class TeamController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TeamResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> UpdateTeam(Guid teamId, TeamRequest teamRequest)
+    public async Task<ActionResult> UpdateTeam(Guid teamId, UpdateTeamRequest teamRequest)
     {
-        Team? existingTeam = _teamService.GetTeamById(teamId);
+        Team? existingTeam = teamService.GetTeamById(teamId);
 
         if (existingTeam is null)
         {
             return BadRequest($"Team with id {teamId} not found.");
         }
 
-        _mapper.Map(teamRequest, existingTeam);
-        bool updateResult = await _teamService.UpdateTeam(existingTeam);
+        mapper.Map(teamRequest, existingTeam);
+        bool updateResult = await teamService.UpdateTeam(existingTeam);
 
         return !updateResult ? BadRequest("Failed to update the team.") : Ok();
     }
@@ -113,28 +87,28 @@ public class TeamController : ControllerBase
     /// Updates the logo of a team.
     /// </summary>
     /// <param name="teamId">The id of the team to update the logo.</param>
-    /// <param name="logoFile">The new logo file.</param>
+    /// <param name="logoRequest">The update team logo request.</param>
     /// <returns>Returns 200 (OK) if the logo was successfully updated.</returns>
     [HttpPut("teams/{teamId:guid}/logo")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> UpdateTeamLogo(Guid teamId, [FromForm] IFormFile logoFile)
+    public async Task<ActionResult> UpdateTeamLogo(Guid teamId, UpdateTeamLogoRequest logoRequest)
     {
-        if (logoFile is null || !IsValidImageFile(logoFile))
+        if (!logoRequest.LogoFile.IsValidImageFile())
         {
             return BadRequest("The logo file must be a valid JPEG/PNG image.");
         }
 
-        Team? team = _teamService.GetTeamById(teamId);
+        Team? team = teamService.GetTeamById(teamId);
         if (team is null)
         {
             return BadRequest($"Team with id {teamId} not found.");
         }
 
-        string logoUrl = await _cloudflareService.UploadLogoAsync(logoFile.OpenReadStream(), logoFile.FileName);
+        string logoUrl = await cloudflareService.UploadLogoAsync(logoRequest.LogoFile.OpenReadStream(), logoRequest.LogoFile.FileName);
         team.LogoUrl = logoUrl;
 
-        bool updateResult = await _teamService.UpdateTeam(team);
+        bool updateResult = await teamService.UpdateTeam(team);
         return !updateResult ? BadRequest("Failed to update the logo.") : Ok();
     }
 
@@ -152,14 +126,14 @@ public class TeamController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public ActionResult<TeamResponse> GetTeamById(Guid id)
     {
-        Team? team = _teamService.GetTeamById(id);
+        Team? team = teamService.GetTeamById(id);
 
         if (team is null)
         {
             return BadRequest($"Team with id {id} not found.");
         }
 
-        TeamResponse teamResponse = _mapper.Map<TeamResponse>(team);
+        TeamResponse teamResponse = mapper.Map<TeamResponse>(team);
         return Ok(teamResponse);
     }
 
@@ -178,27 +152,14 @@ public class TeamController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult DeleteTeamById(Guid id)
     {
-        Team? team = _teamService.GetTeamById(id);
+        Team? team = teamService.GetTeamById(id);
 
         if (team is null)
         {
             return BadRequest($"Team with id {id} not found.");
         }
 
-        _teamService.DeleteTeam(team);
+        teamService.DeleteTeam(team);
         return Ok();
-    }
-
-    /// <summary>
-    /// Checks if the provided file is a valid image (JPEG or PNG).
-    /// </summary>
-    /// <param name="file">The uploaded file to check.</param>
-    /// <returns>True if the file is a valid image, otherwise false.</returns>
-    private static bool IsValidImageFile(IFormFile file)
-    {
-        string[] validExtensions = { ".jpg", ".jpeg", ".png" };
-        string fileExtension = Path.GetExtension(file.FileName).ToLower();
-
-        return validExtensions.Contains(fileExtension);
     }
 }

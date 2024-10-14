@@ -7,33 +7,14 @@ namespace Club12.Entities.UserEntity;
 /// Represents a user entity in the system.
 /// </summary>
 [Table("Users", Schema = "Club12")]
-public class User
+public class User : EntityBase
 {
-    /// <summary>
-    /// The unique identifier of the entity.
-    /// </summary>
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public Guid Id { get; set; }
-
-    /// <summary>
-    /// The date when the entity was created.
-    /// </summary>
-    [Required]
-    [Column("DateCreated")]
-    public DateTime DateCreated { get; set; }
-
-    /// <summary>
-    /// The date when the entity was last updated.
-    /// </summary>
-    [Column("DateUpdated")]
-    public DateTime? DateUpdated { get; set; }
-
     /// <summary>
     /// The username of the user.
     /// </summary>
     [Required]
     [MaxLength(25)]
-    public required string UserName { get; set; }
+    public required string Username { get; set; }
 
     /// <summary>
     /// The hashed password of the user.

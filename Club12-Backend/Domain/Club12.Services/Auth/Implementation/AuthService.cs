@@ -13,18 +13,11 @@ namespace Club12.Services.Auth.Implementation;
 /// <summary>
 /// Service responsible for generating JWT tokens.
 /// </summary>
-public class AuthService : IAuthService
+public class AuthService(IConfiguration configuration) : IAuthService
 {
-    private readonly string _jwtSecret;
-    private readonly string _issuer;
-    private readonly string _audience;
-
-    public AuthService(IConfiguration configuration)
-    {
-        _jwtSecret = configuration.GetSection("JWT:Key").Value ?? throw new ArgumentNullException(nameof(configuration), "The JWT Key should be initialized");
-        _issuer = configuration.GetSection("JWT:Issuer").Value ?? throw new ArgumentNullException(nameof(configuration), "The JWT Issuer should be initialized");
-        _audience = configuration.GetSection("JWT:Audience").Value ?? throw new ArgumentNullException(nameof(configuration), "The JWT Audience should be initialized");
-    }
+    private readonly string _jwtSecret = configuration.GetSection("JWT:Key").Value ?? throw new ArgumentNullException(nameof(configuration), "The JWT Key should be initialized");
+    private readonly string _issuer = configuration.GetSection("JWT:Issuer").Value ?? throw new ArgumentNullException(nameof(configuration), "The JWT Issuer should be initialized");
+    private readonly string _audience = configuration.GetSection("JWT:Audience").Value ?? throw new ArgumentNullException(nameof(configuration), "The JWT Audience should be initialized");
 
     public TokenResponse GenerateJwtToken(User userEntity)
     {
@@ -35,7 +28,7 @@ public class AuthService : IAuthService
         {
             Subject = new ClaimsIdentity(new[]
             {
-                new Claim(ClaimTypes.Name, userEntity.UserName),
+                new Claim(ClaimTypes.Name, userEntity.Username),
                 new Claim(ClaimTypes.Role, userEntity.Role),
                 new Claim("userId", userEntity.Id.ToString())
              }),

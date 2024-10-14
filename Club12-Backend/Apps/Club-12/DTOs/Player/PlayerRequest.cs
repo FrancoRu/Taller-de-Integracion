@@ -5,7 +5,7 @@ namespace Club12.DTOs.Player;
 /// <summary>
 /// Represents a request to create a Player.
 /// </summary>
-public class PlayerRequest
+public record PlayerRequest
 {
     /// <summary>
     /// The name of the Player.

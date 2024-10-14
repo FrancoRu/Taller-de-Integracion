@@ -3,31 +3,24 @@ using Club12.Services.DataAccessLayer.GenericEntity;
 
 namespace Club12.Services.Divisions.Implementation;
 
-public class DivisionService : IDivisionService
+public class DivisionService(IGenericService<Division> genericDivisionService) : IDivisionService
 {
-    private readonly IGenericService<Division> _genericDivisionService;
-
-    public DivisionService(IGenericService<Division> genericDivisionService)
-    {
-        _genericDivisionService = genericDivisionService;
-    }
-
     public Division CreateDivision(Division divisionEntity)
     {
-        _genericDivisionService.Insert(divisionEntity);
+        genericDivisionService.Insert(divisionEntity);
         return divisionEntity;
     }
 
     public void DeleteDivision(Division divisionEntity)
     {
-        _genericDivisionService.Delete(divisionEntity);
+        genericDivisionService.Delete(divisionEntity);
     }
 
     public async Task<bool> UpdateDivision(Division divisionEntity)
     {
         try
         {
-            await _genericDivisionService.UpdateAsync(divisionEntity);
+            await genericDivisionService.UpdateAsync(divisionEntity);
             return true;
         }
         catch
@@ -38,6 +31,6 @@ public class DivisionService : IDivisionService
 
     public Division? GetDivisionById(Guid divisionId)
     {
-        return _genericDivisionService.TryGet(divisionId);
+        return genericDivisionService.TryGet(divisionId);
     }
 }

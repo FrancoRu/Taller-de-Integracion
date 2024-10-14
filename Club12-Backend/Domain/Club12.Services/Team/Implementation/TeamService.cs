@@ -3,38 +3,31 @@ using Club12.Services.DataAccessLayer.GenericEntity;
 
 namespace Club12.Services.Teams.Implementation;
 
-public class TeamService : ITeamService
+public class TeamService(
+    IGenericService<Team> genericTeamService
+    ) : ITeamService
 {
-    private readonly IGenericService<Team> _genericTeamService;
-
-    public TeamService(
-        IGenericService<Team> genericTeamService
-    )
-    {
-        _genericTeamService = genericTeamService;
-    }
-
     public Team CreateTeam(Team teamEntity)
     {
-        _genericTeamService.Insert(teamEntity);
+        genericTeamService.Insert(teamEntity);
         return teamEntity;
     }
 
     public Team? GetTeamById(Guid teamId)
     {
-        return _genericTeamService.TryGet(teamId);
+        return genericTeamService.TryGet(teamId);
     }
 
     public void DeleteTeam(Team teamEntity)
     {
-        _genericTeamService.Delete(teamEntity);
+        genericTeamService.Delete(teamEntity);
     }
 
     public async Task<bool> UpdateTeam(Team teamEntity)
     {
         try
         {
-            await _genericTeamService.UpdateAsync(teamEntity);
+            await genericTeamService.UpdateAsync(teamEntity);
             return true;
         }
         catch

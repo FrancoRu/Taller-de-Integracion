@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -29,55 +30,6 @@ namespace Persistance.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Players",
-                schema: "Club12",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    LastName = table.Column<string>(type: "text", nullable: false),
-                    Height = table.Column<double>(type: "double precision", nullable: false),
-                    Weight = table.Column<double>(type: "double precision", nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Players", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Sanctions",
-                schema: "Club12",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Sanctions", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Statistics",
-                schema: "Club12",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Statistics", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Tournaments",
                 schema: "Club12",
                 columns: table => new
@@ -94,6 +46,23 @@ namespace Persistance.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Users",
+                schema: "Club12",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Username = table.Column<string>(type: "character varying(25)", maxLength: 25, nullable: false),
+                    Password = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    Role = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Users", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Teams",
                 schema: "Club12",
                 columns: table => new
@@ -102,6 +71,7 @@ namespace Persistance.Migrations
                     Name = table.Column<string>(type: "text", nullable: false),
                     ThreeLetterCode = table.Column<string>(type: "text", nullable: false),
                     DivisionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    LogoUrl = table.Column<string>(type: "text", nullable: false),
                     DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -118,49 +88,18 @@ namespace Persistance.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "SanctionPlayers",
-                schema: "Club12",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Duration = table.Column<int>(type: "integer", nullable: false),
-                    IssuedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    PlayerId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SanctionId = table.Column<Guid>(type: "uuid", nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SanctionPlayers", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_SanctionPlayers_Players_PlayerId",
-                        column: x => x.PlayerId,
-                        principalSchema: "Club12",
-                        principalTable: "Players",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_SanctionPlayers_Sanctions_SanctionId",
-                        column: x => x.SanctionId,
-                        principalSchema: "Club12",
-                        principalTable: "Sanctions",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Matches",
                 schema: "Club12",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     MatchDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    HomeScore = table.Column<int>(type: "integer", nullable: false),
-                    VisitorScore = table.Column<int>(type: "integer", nullable: false),
+                    Type = table.Column<string>(type: "text", nullable: false),
                     HomeTeamId = table.Column<Guid>(type: "uuid", nullable: false),
                     VisitorTeamId = table.Column<Guid>(type: "uuid", nullable: false),
-                    WinningTeamId = table.Column<Guid>(type: "uuid", nullable: false),
+                    HomeScore = table.Column<int>(type: "integer", nullable: true),
+                    VisitorScore = table.Column<int>(type: "integer", nullable: true),
+                    WinningTeamId = table.Column<Guid>(type: "uuid", nullable: true),
                     DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -186,69 +125,30 @@ namespace Persistance.Migrations
                         column: x => x.WinningTeamId,
                         principalSchema: "Club12",
                         principalTable: "Teams",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
-                name: "PlayerTeams",
+                name: "Players",
                 schema: "Club12",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    JerseyNumber = table.Column<int>(type: "integer", nullable: false),
-                    StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    PlayerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    LastName = table.Column<string>(type: "text", nullable: false),
+                    DocumentNumber = table.Column<string>(type: "text", nullable: false),
                     TeamId = table.Column<Guid>(type: "uuid", nullable: false),
                     DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PlayerTeams", x => x.Id);
+                    table.PrimaryKey("PK_Players", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_PlayerTeams_Players_PlayerId",
-                        column: x => x.PlayerId,
-                        principalSchema: "Club12",
-                        principalTable: "Players",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_PlayerTeams_Teams_TeamId",
+                        name: "FK_Players_Teams_TeamId",
                         column: x => x.TeamId,
                         principalSchema: "Club12",
                         principalTable: "Teams",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "StandingsSummaries",
-                schema: "Club12",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Position = table.Column<int>(type: "integer", nullable: false),
-                    TournamentId = table.Column<Guid>(type: "uuid", nullable: false),
-                    TeamId = table.Column<Guid>(type: "uuid", nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_StandingsSummaries", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_StandingsSummaries_Teams_TeamId",
-                        column: x => x.TeamId,
-                        principalSchema: "Club12",
-                        principalTable: "Teams",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_StandingsSummaries_Tournaments_TournamentId",
-                        column: x => x.TournamentId,
-                        principalSchema: "Club12",
-                        principalTable: "Tournaments",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -262,7 +162,6 @@ namespace Persistance.Migrations
                     Value = table.Column<double>(type: "double precision", nullable: false),
                     MatchId = table.Column<Guid>(type: "uuid", nullable: false),
                     PlayerId = table.Column<Guid>(type: "uuid", nullable: false),
-                    StatisticId = table.Column<Guid>(type: "uuid", nullable: false),
                     DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -283,11 +182,28 @@ namespace Persistance.Migrations
                         principalTable: "Players",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SanctionPlayers",
+                schema: "Club12",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Duration = table.Column<int>(type: "integer", nullable: false),
+                    IssuedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    PlayerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SanctionPlayers", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_PlayersStatistics_Statistics_StatisticId",
-                        column: x => x.StatisticId,
+                        name: "FK_SanctionPlayers_Players_PlayerId",
+                        column: x => x.PlayerId,
                         principalSchema: "Club12",
-                        principalTable: "Statistics",
+                        principalTable: "Players",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -311,6 +227,12 @@ namespace Persistance.Migrations
                 column: "WinningTeamId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Players_TeamId",
+                schema: "Club12",
+                table: "Players",
+                column: "TeamId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PlayersStatistics_MatchId",
                 schema: "Club12",
                 table: "PlayersStatistics",
@@ -323,46 +245,10 @@ namespace Persistance.Migrations
                 column: "PlayerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PlayersStatistics_StatisticId",
-                schema: "Club12",
-                table: "PlayersStatistics",
-                column: "StatisticId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PlayerTeams_PlayerId",
-                schema: "Club12",
-                table: "PlayerTeams",
-                column: "PlayerId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PlayerTeams_TeamId",
-                schema: "Club12",
-                table: "PlayerTeams",
-                column: "TeamId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_SanctionPlayers_PlayerId",
                 schema: "Club12",
                 table: "SanctionPlayers",
                 column: "PlayerId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SanctionPlayers_SanctionId",
-                schema: "Club12",
-                table: "SanctionPlayers",
-                column: "SanctionId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_StandingsSummaries_TeamId",
-                schema: "Club12",
-                table: "StandingsSummaries",
-                column: "TeamId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_StandingsSummaries_TournamentId",
-                schema: "Club12",
-                table: "StandingsSummaries",
-                column: "TournamentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Teams_DivisionId",
@@ -379,15 +265,15 @@ namespace Persistance.Migrations
                 schema: "Club12");
 
             migrationBuilder.DropTable(
-                name: "PlayerTeams",
-                schema: "Club12");
-
-            migrationBuilder.DropTable(
                 name: "SanctionPlayers",
                 schema: "Club12");
 
             migrationBuilder.DropTable(
-                name: "StandingsSummaries",
+                name: "Tournaments",
+                schema: "Club12");
+
+            migrationBuilder.DropTable(
+                name: "Users",
                 schema: "Club12");
 
             migrationBuilder.DropTable(
@@ -395,19 +281,7 @@ namespace Persistance.Migrations
                 schema: "Club12");
 
             migrationBuilder.DropTable(
-                name: "Statistics",
-                schema: "Club12");
-
-            migrationBuilder.DropTable(
                 name: "Players",
-                schema: "Club12");
-
-            migrationBuilder.DropTable(
-                name: "Sanctions",
-                schema: "Club12");
-
-            migrationBuilder.DropTable(
-                name: "Tournaments",
                 schema: "Club12");
 
             migrationBuilder.DropTable(

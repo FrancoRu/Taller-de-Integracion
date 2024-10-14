@@ -23,16 +23,10 @@ public class Player : EntityBase
     public required string LastName { get; set; }
 
     /// <summary>
-    /// The height of the player.
+    /// The document number of the player.
     /// </summary>
     [Required]
-    public required double Height { get; set; }
-
-    /// <summary>
-    /// The weight of the player.
-    /// </summary>
-    [Required]
-    public required double Weight { get; set; }
+    public required string DocumentNumber { get; set; }
 
     /// <summary>
     /// The team the player belongs to.

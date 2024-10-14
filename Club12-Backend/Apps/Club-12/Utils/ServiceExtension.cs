@@ -6,8 +6,6 @@ using Club12.Services.Auth;
 using Club12.Services.Auth.Implementation;
 using Club12.Services.DataAccessLayer.GenericEntity;
 using Club12.Services.DataAccessLayer.GenericEntity.Implementation;
-using Club12.Services.DataAccessLayer.GenericUser;
-using Club12.Services.DataAccessLayer.GenericUser.Implementation;
 using Club12.Services.Divisions;
 using Club12.Services.Divisions.Implementation;
 using Club12.Services.Players;
@@ -17,8 +15,7 @@ using Club12.Services.Teams.Implementation;
 using Club12.Services.Users;
 using Club12.Services.Users.Implementation;
 using Club12.Services.Utils;
-using Club12.Utils.Controller;
-using Club12.Utils.Controller.Implementation;
+using Club12.Services.Utils.Cloudfare;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Persistence;
@@ -35,8 +32,7 @@ public static class ServiceExtension
 {
     private static readonly Dictionary<string, string> _roles = new()
     {
-            { "SuperAdmin", "SuperAdmin" },
-            { "Admin", "Admin" }
+            { "SuperAdmin", "SuperAdmin" }
     };
 
     /// <summary>
@@ -56,12 +52,11 @@ public static class ServiceExtension
         collection.AddScoped<IGenericService<Player>, GenericService<Player>>();
         collection.AddScoped<IUserService, UserService>();
         collection.AddScoped<UserService>();
-        collection.AddScoped<IGenericUserService, GenericUserService>();
+        collection.AddScoped<IGenericService<User>, GenericService<User>>();
         collection.AddScoped<IAuthService, AuthService>();
         collection.AddScoped<AuthService>();
-        collection.AddScoped<IHttpContextAccessor, HttpContextAccessor>();
-        collection.AddScoped<IControllerUtils, ControllerUtils>();
-        collection.AddScoped<ControllerUtils>();
+        collection.AddScoped<ICloudflareService, CloudflareService>();
+        collection.AddScoped<CloudflareService>();
     }
 
     /// <summary>
@@ -189,7 +184,7 @@ public static class ServiceExtension
         {
             User adminEntity = new()
             {
-                UserName = "admin",
+                Username = "admin",
                 Password = Encrypt.Hash("root"),
                 Role = "SuperAdmin",
                 DateCreated = DateTime.UtcNow,

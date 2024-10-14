@@ -17,16 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Sanction\Sancion.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Remove="Division\NewFile1.txt" />
     <None Remove="Match\NewFile1.txt" />
     <None Remove="PlayerStatistic\NewFile1.txt" />
     <None Remove="SanctionPlayer\NewFile1.txt" />
-    <None Remove="Sanction\NewFile1.txt" />
-    <None Remove="Statistic\NewFile1.txt" />
     <None Remove="Tournament\NewFile1.txt" />
   </ItemGroup>
 

@@ -2,7 +2,6 @@
 using Club12.DTOs.Division;
 using Club12.Entities.DivisionEntity;
 using Club12.Services.Divisions;
-using Club12.Utils.Controller;
 using Club12.Viewmodels.Division;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,31 +11,19 @@ namespace Club12.Controllers;
 /// <summary>
 /// Controller for managing divisions.
 /// </summary>
-[Authorize(Roles = "SuperAdmin, Admin")]
+/// <remarks>
+/// Initializes a new instance of the <see cref="DivisionController"/> class.
+/// </remarks>
+/// <param name="divisionService">The division service.</param>
+/// <param name="mapper">The AutoMapper instance.</param>
+[Authorize(Roles = "SuperAdmin")]
 [Route("api/")]
 [ApiController]
-public class DivisionController : ControllerBase
+public class DivisionController(
+    IDivisionService divisionService,
+    IMapper mapper
+    ) : ControllerBase
 {
-    private readonly IDivisionService _divisionService;
-    private readonly IControllerUtils _controllerUtils;
-    private readonly IMapper _mapper;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="DivisionController"/> class.
-    /// </summary>
-    /// <param name="divisionService">The division service.</param>
-    /// <param name="controllerUtils">Controller utils that allow us to get user data from requests.</param>
-    /// <param name="mapper">The AutoMapper instance.</param>
-    public DivisionController(
-        IDivisionService divisionService,
-        IControllerUtils controllerUtils,
-        IMapper mapper
-    )
-    {
-        _divisionService = divisionService;
-        _mapper = mapper;
-        _controllerUtils = controllerUtils;
-    }
 
     /// <summary>
     /// Creates a new division.
@@ -51,9 +38,9 @@ public class DivisionController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult CreateDivision(DivisionRequest divisionRequest)
     {
-        Division mappedDivision = _mapper.Map<Division>(divisionRequest);
-        Division createdDivision = _divisionService.CreateDivision(mappedDivision);
-        DivisionResponse divisionResponse = _mapper.Map<DivisionResponse>(createdDivision);
+        Division mappedDivision = mapper.Map<Division>(divisionRequest);
+        Division createdDivision = divisionService.CreateDivision(mappedDivision);
+        DivisionResponse divisionResponse = mapper.Map<DivisionResponse>(createdDivision);
 
         return new ObjectResult(divisionResponse) { StatusCode = StatusCodes.Status201Created };
     }
@@ -72,14 +59,14 @@ public class DivisionController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public ActionResult<DivisionResponse> GetDivisionById(Guid divisionId)
     {
-        Division? division = _divisionService.GetDivisionById(divisionId);
+        Division? division = divisionService.GetDivisionById(divisionId);
 
         if (division is null)
         {
             return BadRequest($"Division with id {divisionId} not found.");
         }
 
-        DivisionResponse divisionResponse = _mapper.Map<DivisionResponse>(division);
+        DivisionResponse divisionResponse = mapper.Map<DivisionResponse>(division);
         return Ok(divisionResponse);
     }
 
@@ -98,14 +85,14 @@ public class DivisionController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult DeleteDivisionById(Guid divisionId)
     {
-        Division? division = _divisionService.GetDivisionById(divisionId);
+        Division? division = divisionService.GetDivisionById(divisionId);
 
         if (division is null)
         {
             return BadRequest($"Division with id {divisionId} not found.");
         }
 
-        _divisionService.DeleteDivision(division);
+        divisionService.DeleteDivision(division);
         return Ok();
     }
 
@@ -125,15 +112,15 @@ public class DivisionController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> UpdateDivisionById(Guid divisionId, DivisionRequest divisionRequest)
     {
-        Division? existingDivision = _divisionService.GetDivisionById(divisionId);
+        Division? existingDivision = divisionService.GetDivisionById(divisionId);
 
         if (existingDivision is null)
         {
             return BadRequest($"Division with id {divisionId} not found.");
         }
 
-        _mapper.Map(divisionRequest, existingDivision);
-        bool updateResult = await _divisionService.UpdateDivision(existingDivision);
+        mapper.Map(divisionRequest, existingDivision);
+        bool updateResult = await divisionService.UpdateDivision(existingDivision);
 
         return !updateResult ? BadRequest("Failed to update the division.") : Ok();
     }

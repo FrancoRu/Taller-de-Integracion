@@ -4,7 +4,6 @@ using Club12.Entities.PlayerEntity;
 using Club12.Entities.TeamEntity;
 using Club12.Services.Players;
 using Club12.Services.Teams;
-using Club12.Utils.Controller;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,36 +12,21 @@ namespace Club12.Controllers;
 /// <summary>
 /// Controller for managing Players.
 /// </summary>
-[Authorize(Roles = "SuperAdmin, Admin")]
+/// <remarks>
+/// Initializes a new instance of the <see cref="PlayerController"/> class.
+/// </remarks>
+/// <param name="playerService">The Player service.</param>
+/// <param name="teamService">The Team service.</param>
+/// <param name="mapper">The AutoMapper instance.</param>
+[Authorize(Roles = "SuperAdmin")]
 [Route("api/")]
 [ApiController]
-public class PlayerController : ControllerBase
+public class PlayerController(
+    IPlayerService playerService,
+    ITeamService teamService,
+    IMapper mapper
+    ) : ControllerBase
 {
-    private readonly IPlayerService _playerService;
-    private readonly ITeamService _teamService;
-    private readonly IControllerUtils _controllerUtils;
-    private readonly IMapper _mapper;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="PlayerController"/> class.
-    /// </summary>
-    /// <param name="playerService">The Player service.</param>
-    /// <param name="teamService">The Team service.</param>
-    /// <param name="controllerUtils">Controller utils that allow us to get user data from requests.</param>
-    /// <param name="mapper">The AutoMapper instance.</param>
-    public PlayerController(
-        IPlayerService playerService,
-        ITeamService teamService,
-        IControllerUtils controllerUtils,
-        IMapper mapper
-    )
-    {
-        _playerService = playerService;
-        _teamService = teamService;
-        _controllerUtils = controllerUtils;
-        _mapper = mapper;
-    }
-
     /// <summary>
     /// Creates a new player.
     /// </summary>
@@ -59,16 +43,16 @@ public class PlayerController : ControllerBase
     public ActionResult<PlayerResponse> CreatePlayer(PlayerRequest playerRequest)
     {
         Guid TeamId = playerRequest.TeamId;
-        Team? existingTeam = _teamService.GetTeamById(TeamId);
+        Team? existingTeam = teamService.GetTeamById(TeamId);
 
         if (existingTeam is null)
         {
             return BadRequest($"There is no Team with id: {TeamId}.");
         }
 
-        Player mappedPlayer = _mapper.Map<Player>(playerRequest);
-        Player createdPlayer = _playerService.CreatePlayer(mappedPlayer);
-        PlayerResponse playerResponse = _mapper.Map<PlayerResponse>(createdPlayer);
+        Player mappedPlayer = mapper.Map<Player>(playerRequest);
+        Player createdPlayer = playerService.CreatePlayer(mappedPlayer);
+        PlayerResponse playerResponse = mapper.Map<PlayerResponse>(createdPlayer);
 
         return new ObjectResult(playerResponse) { StatusCode = StatusCodes.Status201Created };
     }
@@ -87,14 +71,14 @@ public class PlayerController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public ActionResult<PlayerResponse> GetPlayerById(Guid id)
     {
-        Player? player = _playerService.GetPlayerById(id);
+        Player? player = playerService.GetPlayerById(id);
 
         if (player is null)
         {
             return BadRequest($"Player with id {id} not found.");
         }
 
-        PlayerResponse playerResponse = _mapper.Map<PlayerResponse>(player);
+        PlayerResponse playerResponse = mapper.Map<PlayerResponse>(player);
         return Ok(playerResponse);
     }
 
@@ -114,15 +98,15 @@ public class PlayerController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> UpdatePlayer(Guid playerId, PlayerRequest playerRequest)
     {
-        Player? existingPlayer = _playerService.GetPlayerById(playerId);
+        Player? existingPlayer = playerService.GetPlayerById(playerId);
 
         if (existingPlayer is null)
         {
             return BadRequest($"Player with id {playerId} not found.");
         }
 
-        _mapper.Map(playerRequest, existingPlayer);
-        bool updateResult = await _playerService.UpdatePlayer(existingPlayer);
+        mapper.Map(playerRequest, existingPlayer);
+        bool updateResult = await playerService.UpdatePlayer(existingPlayer);
 
         return !updateResult ? BadRequest("Failed to update the player.") : Ok();
     }
@@ -142,14 +126,14 @@ public class PlayerController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult DeletePlayerById(Guid id)
     {
-        Player? player = _playerService.GetPlayerById(id);
+        Player? player = playerService.GetPlayerById(id);
 
         if (player is null)
         {
             return BadRequest($"Player with id {id} not found.");
         }
 
-        _playerService.DeletePlayer(player);
+        playerService.DeletePlayer(player);
         return Ok();
     }
 }

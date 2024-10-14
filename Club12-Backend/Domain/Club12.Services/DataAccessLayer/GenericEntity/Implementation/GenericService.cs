@@ -4,14 +4,9 @@ using System.Linq.Expressions;
 
 namespace Club12.Services.DataAccessLayer.GenericEntity.Implementation;
 
-public class GenericService<TEntity> : IGenericService<TEntity> where TEntity : EntityBase
+public class GenericService<TEntity>(ApplicationDBContext context) : IGenericService<TEntity> where TEntity : EntityBase
 {
-    protected GenericDaoService<TEntity> genericDao;
-
-    public GenericService(ApplicationDBContext context)
-    {
-        genericDao = new GenericDaoService<TEntity>(context);
-    }
+    protected GenericDaoService<TEntity> genericDao = new(context);
 
     public virtual void Insert(TEntity entity)
     {

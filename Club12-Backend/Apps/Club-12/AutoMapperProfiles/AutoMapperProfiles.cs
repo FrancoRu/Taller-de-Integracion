@@ -2,12 +2,9 @@
 using Club12.DTOs.Division;
 using Club12.DTOs.Player;
 using Club12.DTOs.Team;
-using Club12.DTOs.User;
 using Club12.Entities.DivisionEntity;
 using Club12.Entities.PlayerEntity;
 using Club12.Entities.TeamEntity;
-using Club12.Entities.UserEntity;
-using Club12.Services.Utils;
 using Club12.Viewmodels.Division;
 
 namespace Club12.AutoMapperProfiles;
@@ -25,7 +22,7 @@ public class Club12MapperProfile : Profile
         _ = CreateMap<Team, TeamResponse>()
             .ReverseMap();
 
-        _ = CreateMap<TeamRequest, Team>();
+        _ = CreateMap<CreateTeamRequest, Team>();
 
         _ = CreateMap<Division, DivisionResponse>()
             .ReverseMap();
@@ -36,9 +33,5 @@ public class Club12MapperProfile : Profile
             .ReverseMap();
 
         _ = CreateMap<PlayerRequest, Player>();
-
-        _ = CreateMap<CreateUserRequest, User>()
-            .ForMember(dest => dest.Password, opt => opt.MapFrom(src => Encrypt.Hash(src.Password)))
-            .ForMember(dest => dest.Role, opt => opt.MapFrom(src => "Admin"));
     }
 }
