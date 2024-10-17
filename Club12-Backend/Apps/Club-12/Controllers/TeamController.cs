@@ -1,10 +1,11 @@
 ﻿using AutoMapper;
-using Club12.DTOs.Team;
 using Club12.Entities.DivisionEntity;
 using Club12.Entities.TeamEntity;
 using Club12.Extensions;
-using Club12.Services.Divisions;
-using Club12.Services.Teams;
+using Club12.Services.DTOs.Abstract;
+using Club12.Services.DTOs.Team;
+using Club12.Services.Services.DivisionService;
+using Club12.Services.Services.TeamService;
 using Club12.Services.Utils.Cloudfare;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -161,5 +162,29 @@ public class TeamController(
 
         teamService.DeleteTeam(team);
         return Ok();
+    }
+
+    /// <summary>
+    /// Retrieves filtered teams with pagination.
+    /// </summary>
+    /// <param name="filterRequest">The filtering and pagination parameters.</param>
+    /// <returns>A paginated response containing the filtered teams.</returns>
+    [AllowAnonymous]
+    [HttpGet("teams")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<TeamResponse>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PaginatedResponse<TeamResponse>>> GetFilteredTeams([FromQuery] GetTeamsFilteredRequest filterRequest)
+    {
+        PaginatedResponse<Team> paginatedTeams = await teamService.GetTeamsAsync(filterRequest);
+
+        PaginatedResponse<TeamResponse> response = new()
+        {
+            Page = paginatedTeams.Page,
+            PageSize = paginatedTeams.PageSize,
+            TotalCount = paginatedTeams.TotalCount,
+            Items = mapper.Map<List<TeamResponse>>(paginatedTeams.Items)
+        };
+
+        return Ok(response);
     }
 }

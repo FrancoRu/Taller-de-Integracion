@@ -1,4 +1,5 @@
-﻿using Club12.Entities.TeamEntity;
+﻿using Club12.Entities.DivisionEntity;
+using Club12.Entities.TeamEntity;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -66,4 +67,16 @@ public class Match : EntityBase
     /// Represents the ID of the winning team.
     /// </summary>
     public Guid? WinningTeamId { get; set; }
+
+    /// <summary>
+    /// Represents the winning team in the match.
+    /// </summary>
+    [Column("DivisionId")]
+    public required Division Division { get; set; }
+
+    /// <summary>
+    /// Division Id the match belongs to.
+    /// </summary>
+    public Guid DivisionId { get; set; }
+
 }

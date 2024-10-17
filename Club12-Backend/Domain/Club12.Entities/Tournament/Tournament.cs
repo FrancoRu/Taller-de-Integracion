@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Club12.Entities.DivisionEntity;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Club12.Entities.TournamentEntity;
@@ -16,8 +17,13 @@ public class Tournament : EntityBase
     public required string Description { get; set; }
 
     /// <summary>
-    /// The year of the tournament.
+    /// The name of the tournament.
     /// </summary>
     [Required]
-    public required int Year { get; set; }
+    public required string Name { get; set; }
+
+    /// <summary>
+    /// The divisions associated with the tournament.
+    /// </summary>
+    public virtual required ICollection<Division> Divisions { get; set; }
 }

@@ -24,6 +24,11 @@ public class Team : EntityBase
     public required string ThreeLetterCode { get; set; }
 
     /// <summary>
+    /// The URL of the team's logo.
+    /// </summary>
+    public required string LogoUrl { get; set; }
+
+    /// <summary>
     /// The division that the team belongs to.
     /// </summary>
     [Required]
@@ -39,9 +44,4 @@ public class Team : EntityBase
     /// The players belonging to the team.
     /// </summary>
     public virtual required ICollection<Player> Players { get; set; }
-
-    /// <summary>
-    /// The URL of the team's logo.
-    /// </summary>
-    public required string LogoUrl { get; set; }
 }

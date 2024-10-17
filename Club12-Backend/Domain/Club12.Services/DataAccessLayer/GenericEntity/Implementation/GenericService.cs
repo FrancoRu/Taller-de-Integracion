@@ -1,4 +1,7 @@
 ﻿using Club12.Entities;
+using Club12.Services.DTOs.Abstract;
+using Club12.Services.Utils.OrderFiltering;
+using Microsoft.EntityFrameworkCore;
 using Persistence;
 using System.Linq.Expressions;
 
@@ -127,8 +130,18 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
         genericDao.GenericEntityDispose();
     }
 
-    public IQueryable<TEntity> FilterByExpression(Expression<Func<TEntity, bool>> expression)
+    public IQueryable<TEntity> FilterByExpressionWithPagination(Expression<Func<TEntity, bool>> expression, IPaginationRequest paginationRequest)
     {
-        return genericDao.Where(expression);
+        return genericDao.Where(expression).Paginate(paginationRequest.PageNumber, paginationRequest.PageSize);
+    }
+
+    public async Task<TEntity?> FilterByExpression(Expression<Func<TEntity, bool>> predicate)
+    {
+        return await genericDao.Where(predicate).FirstOrDefaultAsync();
+    }
+
+    public async Task<int> GetCountAsync(Expression<Func<TEntity, bool>> predicate)
+    {
+        return await genericDao.Where(predicate).AsNoTracking().CountAsync();
     }
 }

@@ -6,7 +6,7 @@ using Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-// Add serilog logging  
+// Add Serilog logging  
 builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));
 
@@ -41,15 +41,10 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.RegisterApplicationServices();
-
 builder.Services.AddCustomAuthorization();
-
-builder.Services.AddCustomAuthentication();
-
+builder.Services.AddCustomAuthentication(builder.Configuration);
 builder.Services.AddControllers().AddCustomJsonOptions();
-
-builder.Services.AddCustomSwagger();
-
+builder.Services.AddCustomSwagger(builder.Configuration);
 
 WebApplication app = builder.Build();
 
@@ -58,7 +53,7 @@ using (IServiceScope scope = app.Services.CreateScope())
     ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
     db.Database.Migrate();
 
-    app.Services.EnsureAdminUserExists();
+    await app.Services.EnsureAdminUserExists();
 }
 
 app.UseSerilogRequestLogging();
@@ -75,8 +70,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 Log.Information("----- Starting up -----");
-//Log.Information("                                                               \r\n  ####    ##       ##  ##   #####               ##      ####   \r\n ##  ##   ##       ##  ##   ##  ##             ###     ##  ##  \r\n ##       ##       ##  ##   #####               ##        ##   \r\n ##       ##       ##  ##   ##  ##              ##       ##    \r\n ##  ##   ##       ##  ##   ##  ##              ##      ##     \r\n  ####    ######   ######   #####             ######   ######  \r\n                                                               \r\n");
-Log.Information("\r\n░▒▓████████▓▒░  ░▒▓██████▓▒░  ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓████████▓▒░        ░▒▓██████▓▒░  ░▒▓███████▓▒░  ░▒▓███████▓▒░  \r\n░▒▓█▓▒░        ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░    ░▒▓█▓▒░           ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ \r\n░▒▓█▓▒░        ░▒▓█▓▒░        ░▒▓█▓▒░░▒▓█▓▒░    ░▒▓█▓▒░           ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ \r\n░▒▓██████▓▒░   ░▒▓█▓▒░         ░▒▓██████▓▒░     ░▒▓█▓▒░           ░▒▓████████▓▒░ ░▒▓███████▓▒░  ░▒▓███████▓▒░  \r\n░▒▓█▓▒░        ░▒▓█▓▒░           ░▒▓█▓▒░        ░▒▓█▓▒░           ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░        ░▒▓█▓▒░        \r\n░▒▓█▓▒░        ░▒▓█▓▒░░▒▓█▓▒░    ░▒▓█▓▒░        ░▒▓█▓▒░           ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░        ░▒▓█▓▒░        \r\n░▒▓█▓▒░         ░▒▓██████▓▒░     ░▒▓█▓▒░        ░▒▓█▓▒░           ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░        ░▒▓█▓▒░        \r\n                                                                                                               \r\n                                                                                                               \r\n");
+Log.Information("\r\n                                                                \r\n  ####    ##       ##  ##   #####               ##      ####   \r\n ##  ##   ##       ##  ##   ##  ##             ###     ##  ##  \r\n ##       ##       ##  ##   #####               ##        ##   \r\n ##       ##       ##  ##   ##  ##              ##       ##    \r\n ##  ##   ##       ##  ##   ##  ##              ##      ##     \r\n  ####    ######   ######   #####             ######   ######  \r\n                                                               \r\n");
 Log.Information("----- Started     -----");
 Log.CloseAndFlush();
 

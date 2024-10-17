@@ -4,16 +4,17 @@ using Club12.Entities.TeamEntity;
 using Club12.Entities.UserEntity;
 using Club12.Services.Auth;
 using Club12.Services.Auth.Implementation;
+using Club12.Services.BackgroundServices;
 using Club12.Services.DataAccessLayer.GenericEntity;
 using Club12.Services.DataAccessLayer.GenericEntity.Implementation;
-using Club12.Services.Divisions;
-using Club12.Services.Divisions.Implementation;
-using Club12.Services.Players;
-using Club12.Services.Players.Implementation;
-using Club12.Services.Teams;
-using Club12.Services.Teams.Implementation;
-using Club12.Services.Users;
-using Club12.Services.Users.Implementation;
+using Club12.Services.Services.DivisionService;
+using Club12.Services.Services.DivisionService.Implementation;
+using Club12.Services.Services.PlayerService;
+using Club12.Services.Services.PlayerService.Implementation;
+using Club12.Services.Services.TeamService;
+using Club12.Services.Services.TeamService.Implementation;
+using Club12.Services.Services.UserService;
+using Club12.Services.Services.UserService.Implementation;
 using Club12.Services.Utils;
 using Club12.Services.Utils.Cloudfare;
 using Microsoft.IdentityModel.Tokens;
@@ -32,7 +33,7 @@ public static class ServiceExtension
 {
     private static readonly Dictionary<string, string> _roles = new()
     {
-            { "SuperAdmin", "SuperAdmin" }
+        { "SuperAdmin", "SuperAdmin" }
     };
 
     /// <summary>
@@ -57,6 +58,7 @@ public static class ServiceExtension
         collection.AddScoped<AuthService>();
         collection.AddScoped<ICloudflareService, CloudflareService>();
         collection.AddScoped<CloudflareService>();
+        collection.AddHostedService<SanctionCleanupService>();
     }
 
     /// <summary>
@@ -81,9 +83,9 @@ public static class ServiceExtension
     /// Adds custom authentication with JWT bearer token.
     /// </summary>
     /// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
-    public static void AddCustomAuthentication(this IServiceCollection services)
+    /// <param name="configuration">The <see cref="IConfiguration"/> to access configuration settings.</param>
+    public static void AddCustomAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
-        IConfiguration configuration = services.BuildServiceProvider().GetRequiredService<IConfiguration>();
         string? jwtSecret = configuration.GetSection("JWT:Key")?.Value;
 
         if (string.IsNullOrEmpty(jwtSecret))
@@ -125,21 +127,23 @@ public static class ServiceExtension
     /// Adds custom Swagger configuration.
     /// </summary>
     /// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
-    public static void AddCustomSwagger(this IServiceCollection services)
+    /// <param name="configuration">The <see cref="IConfiguration"/> to access configuration settings.</param>
+    public static void AddCustomSwagger(this IServiceCollection services, IConfiguration configuration)
     {
-        IConfiguration configuration = services.BuildServiceProvider().GetRequiredService<IConfiguration>();
-        services.AddSwaggerGen(c =>
+        services.AddSwaggerGen(context =>
         {
-            c.SwaggerDoc("v1", new OpenApiInfo
+            context.SwaggerDoc("v1", new OpenApiInfo
             {
                 Title = configuration["Swagger:Title"],
                 Version = configuration["Swagger:Version"],
             });
-            string xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-            c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
-            c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
 
-            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            string xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            context.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+
+            context.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
+
+            context.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below.",
                 Name = "Authorization",
@@ -148,23 +152,26 @@ public static class ServiceExtension
                 Scheme = "Bearer"
             });
 
-            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+
+            context.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
                 {
+                    new OpenApiSecurityScheme
                     {
-                        new OpenApiSecurityScheme
+                        Reference = new OpenApiReference
                         {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
-                            },
-                            Scheme = "oauth2",
-                            Name = "Bearer",
-                            In = ParameterLocation.Header
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
                         },
-                        new List<string>()
-                    }
-                });
+                        Scheme = "oauth2",
+                        Name = "Bearer",
+                        In = ParameterLocation.Header
+                    },
+                    new List<string>()
+                }
+            });
+
+            context.SchemaFilter<DisplayEnumSchemaFilter>();
         });
     }
 
@@ -172,13 +179,13 @@ public static class ServiceExtension
     /// Ensures that an admin user exists in the database. If no admin user is found, it creates one with default credentials.
     /// </summary>
     /// <param name="serviceProvider">The <see cref="IServiceProvider"/> instance.</param>
-    public static void EnsureAdminUserExists(this IServiceProvider serviceProvider)
+    public static async Task EnsureAdminUserExists(this IServiceProvider serviceProvider)
     {
         using IServiceScope scope = serviceProvider.CreateScope();
         ApplicationDBContext dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
         IUserService userService = scope.ServiceProvider.GetRequiredService<IUserService>();
 
-        User? adminUser = userService.GetUserByUserName("admin");
+        User? adminUser = await userService.GetUserByUserNameAsync("admin");
 
         if (adminUser is null)
         {

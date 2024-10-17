@@ -1,8 +1,7 @@
 ﻿using AutoMapper;
-using Club12.DTOs.Division;
 using Club12.Entities.DivisionEntity;
-using Club12.Services.Divisions;
-using Club12.Viewmodels.Division;
+using Club12.Services.DTOs.Division;
+using Club12.Services.Services.DivisionService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

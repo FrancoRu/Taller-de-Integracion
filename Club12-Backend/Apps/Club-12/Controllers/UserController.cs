@@ -1,8 +1,8 @@
-﻿using Club12.DTOs.User;
-using Club12.Entities.TokenResponse;
+﻿using Club12.Entities.TokenResponse;
 using Club12.Entities.UserEntity;
 using Club12.Services.Auth;
-using Club12.Services.Users;
+using Club12.Services.DTOs.User;
+using Club12.Services.Services.UserService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -37,9 +37,9 @@ public class UserController(
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public IActionResult Login(LogInUserRequest userLoginRequest)
+    public async Task<ActionResult> Login(LogInUserRequest userLoginRequest)
     {
-        User? user = userService.GetUserByUserName(userLoginRequest.UserName);
+        User? user = await userService.GetUserByUserNameAsync(userLoginRequest.UserName);
 
         if (user == null || !userService.ValidateCredentials(user, userLoginRequest.Password))
         {

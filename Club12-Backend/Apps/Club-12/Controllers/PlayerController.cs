@@ -1,9 +1,9 @@
 ﻿using AutoMapper;
-using Club12.DTOs.Player;
 using Club12.Entities.PlayerEntity;
 using Club12.Entities.TeamEntity;
-using Club12.Services.Players;
-using Club12.Services.Teams;
+using Club12.Services.DTOs.Player;
+using Club12.Services.Services.PlayerService;
+using Club12.Services.Services.TeamService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -40,7 +40,7 @@ public class PlayerController(
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(PlayerResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public ActionResult<PlayerResponse> CreatePlayer(PlayerRequest playerRequest)
+    public ActionResult<PlayerResponse> CreatePlayer(CreatePlayerRequest playerRequest)
     {
         Guid TeamId = playerRequest.TeamId;
         Team? existingTeam = teamService.GetTeamById(TeamId);
@@ -96,7 +96,7 @@ public class PlayerController(
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> UpdatePlayer(Guid playerId, PlayerRequest playerRequest)
+    public async Task<ActionResult> UpdatePlayer(Guid playerId, CreatePlayerRequest playerRequest)
     {
         Player? existingPlayer = playerService.GetPlayerById(playerId);
 

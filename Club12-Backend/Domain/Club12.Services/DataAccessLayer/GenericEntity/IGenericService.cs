@@ -1,4 +1,5 @@
 ﻿using Club12.Entities;
+using Club12.Services.DTOs.Abstract;
 using System.Linq.Expressions;
 
 namespace Club12.Services.DataAccessLayer.GenericEntity;
@@ -118,9 +119,24 @@ public interface IGenericService<TEntity> where TEntity : EntityBase
     Task UpdateAsync(TEntity entity);
 
     /// <summary>
-    /// Filters entities based on the specified expression.
+    /// Filters entities based on the specified expression and pagination request.
     /// </summary>
-    /// <param name="expression">The filter expression.</param>
-    /// <returns>An IQueryable containing filtered entities.</returns>
-    IQueryable<TEntity> FilterByExpression(Expression<Func<TEntity, bool>> expression);
+    /// <param name="expression">The expression used to filter entities.</param>
+    /// <param name="paginationRequest">The pagination request containing page number and size.</param>
+    /// <returns>An IQueryable containing filtered and paginated entities.</returns>
+    IQueryable<TEntity> FilterByExpressionWithPagination(Expression<Func<TEntity, bool>> expression, IPaginationRequest paginationRequest);
+
+    /// <summary>
+    /// Finds an entity based on the specified predicate.
+    /// </summary>
+    /// <param name="predicate">The predicate used to find the entity.</param>
+    /// <returns>The found entity, or null if no entity matches the predicate.</returns>
+    Task<TEntity?> FilterByExpression(Expression<Func<TEntity, bool>> predicate);
+
+    /// <summary>
+    /// Counts the number of entities that match the specified predicate.
+    /// </summary>
+    /// <param name="predicate"></param>
+    /// <returns></returns>
+    Task<int> GetCountAsync(Expression<Func<TEntity, bool>> predicate);
 }

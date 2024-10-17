@@ -20,7 +20,7 @@
     <None Remove="Division\NewFile1.txt" />
     <None Remove="Match\NewFile1.txt" />
     <None Remove="PlayerStatistic\NewFile1.txt" />
-    <None Remove="SanctionPlayer\NewFile1.txt" />
+    <None Remove="PlayerSanction\NewFile1.txt" />
     <None Remove="Tournament\NewFile1.txt" />
   </ItemGroup>
 

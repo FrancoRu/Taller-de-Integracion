@@ -1,4 +1,5 @@
 ﻿using Club12.Entities.TeamEntity;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -11,22 +12,39 @@ namespace Club12.Entities.PlayerEntity;
 public class Player : EntityBase
 {
     /// <summary>
-    /// The name of the player.
+    /// The first name of the player.
     /// </summary>
     [Required]
-    public required string Name { get; set; }
+    [MaxLength(35)]
+    public required string FirstName { get; set; }
+
+    /// <summary>
+    /// The second name of the player.
+    /// </summary>
+    [Required]
+    [MaxLength(35)]
+    public required string SecondName { get; set; }
 
     /// <summary>
     /// The last name of the player.
     /// </summary>
     [Required]
+    [MaxLength(35)]
     public required string LastName { get; set; }
 
     /// <summary>
     /// The document number of the player.
     /// </summary>
     [Required]
+    [MaxLength(11)]
     public required string DocumentNumber { get; set; }
+
+    /// <summary>
+    /// Indicates if the player is currently sanctioned.
+    /// </summary>
+    [Required]
+    [DefaultValue(false)]
+    public required bool IsSanctioned { get; set; } = false;
 
     /// <summary>
     /// The team the player belongs to.
