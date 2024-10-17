@@ -9,7 +9,7 @@ public interface IUserService
     /// </summary>
     /// <param name="userName"></param>
     /// <returns>The user entity if found, otherwise null.</returns>
-    Task<User?> GetUserByUserNameAsync(string userName);
+    User? GetUserByUserNameAsync(string userName);
 
     /// <summary>
     /// Validates user credentials.

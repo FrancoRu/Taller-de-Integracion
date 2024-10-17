@@ -53,7 +53,7 @@ using (IServiceScope scope = app.Services.CreateScope())
     ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
     db.Database.Migrate();
 
-    await app.Services.EnsureAdminUserExists();
+    app.Services.EnsureAdminUserExists();
 }
 
 app.UseSerilogRequestLogging();

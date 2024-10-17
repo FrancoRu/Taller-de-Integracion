@@ -135,9 +135,9 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
         return genericDao.Where(expression).Paginate(paginationRequest.PageNumber, paginationRequest.PageSize);
     }
 
-    public async Task<TEntity?> FilterByExpression(Expression<Func<TEntity, bool>> predicate)
+    public IQueryable<TEntity> FilterByExpression(Expression<Func<TEntity, bool>> expression)
     {
-        return await genericDao.Where(predicate).FirstOrDefaultAsync();
+        return genericDao.Where(expression);
     }
 
     public async Task<int> GetCountAsync(Expression<Func<TEntity, bool>> predicate)

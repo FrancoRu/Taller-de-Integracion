@@ -179,13 +179,13 @@ public static class ServiceExtension
     /// Ensures that an admin user exists in the database. If no admin user is found, it creates one with default credentials.
     /// </summary>
     /// <param name="serviceProvider">The <see cref="IServiceProvider"/> instance.</param>
-    public static async Task EnsureAdminUserExists(this IServiceProvider serviceProvider)
+    public static void EnsureAdminUserExists(this IServiceProvider serviceProvider)
     {
         using IServiceScope scope = serviceProvider.CreateScope();
         ApplicationDBContext dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
         IUserService userService = scope.ServiceProvider.GetRequiredService<IUserService>();
 
-        User? adminUser = await userService.GetUserByUserNameAsync("admin");
+        User? adminUser = userService.GetUserByUserNameAsync("admin");
 
         if (adminUser is null)
         {

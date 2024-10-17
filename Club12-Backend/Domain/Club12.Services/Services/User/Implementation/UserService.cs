@@ -11,8 +11,8 @@ public class UserService(IGenericService<User> genericUserService) : IUserServic
         return Encrypt.CheckHash(plainTextPassword, userEntity.Password);
     }
 
-    public async Task<User?> GetUserByUserNameAsync(string userName)
+    public User? GetUserByUserNameAsync(string userName)
     {
-        return await genericUserService.FilterByExpression(user => user.Username.Equals(userName));
+        return genericUserService.FilterByExpression(user => user.Username.Equals(userName)).FirstOrDefault();
     }
 }

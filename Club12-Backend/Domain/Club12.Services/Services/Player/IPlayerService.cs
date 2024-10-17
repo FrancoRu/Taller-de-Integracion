@@ -1,4 +1,5 @@
 ﻿using Club12.Entities.PlayerEntity;
+using Club12.Services.DTOs.Abstract;
 
 namespace Club12.Services.Services.PlayerService;
 /// <summary>
@@ -34,4 +35,11 @@ public interface IPlayerService
     /// </summary>
     /// <param name="playerEntity">The Player to delete.</param>
     void DeletePlayer(Player playerEntity);
+
+    /// <summary>
+    /// Retrieves players with pagination and filtering.
+    /// </summary>
+    /// <param name="filter">The filtering and pagination request.</param>
+    /// <returns>A paginated response containing the players.</returns>
+    Task<PaginatedResponse<Player>> GetAllPlayersAsync(GetPlayersFilteredRequest filter);
 }

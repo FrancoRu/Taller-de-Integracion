@@ -1,6 +1,6 @@
-﻿using Club12.Entities.PlayerEntity;
-using Club12.Entities.SanctionPlayerEntity;
-using Club12.Services.DataAccessLayer.GenericEntity;
+﻿using Club12.Entities.SanctionPlayerEntity;
+using Club12.Services.Services.PlayerSanctionService;
+using Club12.Services.Services.PlayerService;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -10,8 +10,8 @@ namespace Club12.Services.BackgroundServices;
 /// A hosted service for cleaning up expired player sanctions.
 /// </summary>
 public class SanctionCleanupService(
-    IGenericService<PlayerSanction> playerSanctionGenericService,
-    IGenericService<Player> playerGenericService,
+    IPlayerSanctionService playerSanctionGenericService,
+    IPlayerService playerGenericService,
     ILogger<SanctionCleanupService> logger) : IHostedService, IDisposable
 {
     private const int TIMERINTERVALINHOURS = 24;
@@ -40,18 +40,18 @@ public class SanctionCleanupService(
         try
         {
             DateTime today = DateTime.UtcNow;
-            var expiredSanctions = await playerSanctionGenericService.GetExpiredSanctionsAsync(today);
+            IEnumerable<PlayerSanction>? expiredSanctions = await playerSanctionGenericService.GetExpiredSanctionsAsync(today);
 
             if (expiredSanctions is not null && expiredSanctions.Any())
             {
                 await Task.WhenAll(expiredSanctions.Select(async sanction =>
                 {
-                    await playerSanctionGenericService.DeleteAsync(sanction.Id);
+                    await playerSanctionGenericService.DeletePlayerSanctionAsync(sanction);
 
                     if (sanction.Player is not null)
                     {
                         sanction.Player.IsSanctioned = false;
-                        await playerGenericService.UpdateAsync(sanction.Player);
+                        await playerGenericService.UpdatePlayer(sanction.Player);
                     }
                 }));
 

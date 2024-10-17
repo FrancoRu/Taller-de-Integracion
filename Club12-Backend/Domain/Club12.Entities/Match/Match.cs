@@ -1,5 +1,6 @@
 ﻿using Club12.Entities.DivisionEntity;
 using Club12.Entities.TeamEntity;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -58,6 +59,13 @@ public class Match : EntityBase
     public int? VisitorScore { get; set; }
 
     /// <summary>
+    /// Indicates whether the match has finished.
+    /// </summary>
+    [Required]
+    [DefaultValue(false)]
+    public required bool IsFinished { get; set; }
+
+    /// <summary>
     /// Represents the winning team in the match.
     /// </summary>
     [Column("WinningTeamId")]
@@ -78,5 +86,4 @@ public class Match : EntityBase
     /// Division Id the match belongs to.
     /// </summary>
     public Guid DivisionId { get; set; }
-
 }

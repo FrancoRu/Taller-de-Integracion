@@ -37,9 +37,9 @@ public class UserController(
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult> Login(LogInUserRequest userLoginRequest)
+    public IActionResult Login(LogInUserRequest userLoginRequest)
     {
-        User? user = await userService.GetUserByUserNameAsync(userLoginRequest.UserName);
+        User? user = userService.GetUserByUserNameAsync(userLoginRequest.UserName);
 
         if (user == null || !userService.ValidateCredentials(user, userLoginRequest.Password))
         {

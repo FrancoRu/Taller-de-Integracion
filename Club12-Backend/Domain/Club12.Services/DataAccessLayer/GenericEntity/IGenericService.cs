@@ -127,14 +127,14 @@ public interface IGenericService<TEntity> where TEntity : EntityBase
     IQueryable<TEntity> FilterByExpressionWithPagination(Expression<Func<TEntity, bool>> expression, IPaginationRequest paginationRequest);
 
     /// <summary>
-    /// Finds an entity based on the specified predicate.
+    /// Filters entities based on the specified expression.
     /// </summary>
-    /// <param name="predicate">The predicate used to find the entity.</param>
-    /// <returns>The found entity, or null if no entity matches the predicate.</returns>
-    Task<TEntity?> FilterByExpression(Expression<Func<TEntity, bool>> predicate);
+    /// <param name="expression">The expression used to filter entities.</param>
+    /// <returns>An IQueryable of entities matching the expression.</returns>
+    IQueryable<TEntity> FilterByExpression(Expression<Func<TEntity, bool>> expression);
 
     /// <summary>
-    /// Counts the number of entities that match the specified predicate.
+    /// Counts the number of entities that match the specified expression.
     /// </summary>
     /// <param name="predicate"></param>
     /// <returns></returns>
