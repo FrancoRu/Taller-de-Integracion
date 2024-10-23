@@ -14,14 +14,14 @@ namespace Club12.API.Controllers;
 /// <remarks>
 /// Initializes a new instance of the <see cref="TournamentController"/> class.
 /// </remarks>
-/// <param name="tournamentService">The Tournament service.</param>
-/// <param name="mapper">The AutoMapper instance.</param>
+/// <param name="_tournamentService">The Tournament service.</param>
+/// <param name="_mapper">The AutoMapper instance.</param>
 [Authorize(Roles = "SuperAdmin")]
 [Route("api/")]
 [ApiController]
 public class TournamentController(
-    ITournamentService tournamentService,
-    IMapper mapper
+    ITournamentService _tournamentService,
+    IMapper _mapper
     ) : ControllerBase
 {
     /// <summary>
@@ -39,9 +39,9 @@ public class TournamentController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public ActionResult<TournamentResponse> CreateTournament(CreateTournamentRequest tournamentRequest)
     {
-        Tournament mappedTournament = mapper.Map<Tournament>(tournamentRequest);
-        Tournament createdTournament = tournamentService.CreateTournament(mappedTournament);
-        TournamentResponse tournamentResponse = mapper.Map<TournamentResponse>(createdTournament);
+        Tournament mappedTournament = _mapper.Map<Tournament>(tournamentRequest);
+        Tournament createdTournament = _tournamentService.CreateTournament(mappedTournament);
+        TournamentResponse tournamentResponse = _mapper.Map<TournamentResponse>(createdTournament);
 
         return new ObjectResult(tournamentResponse) { StatusCode = StatusCodes.Status201Created };
     }
@@ -60,14 +60,14 @@ public class TournamentController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public ActionResult<TournamentResponse> GetTournamentById(Guid tournamentId)
     {
-        Tournament? tournament = tournamentService.GetTournamentById(tournamentId);
+        Tournament? tournament = _tournamentService.GetTournamentById(tournamentId);
 
         if (tournament is null)
         {
             return BadRequest($"Tournament with id {tournamentId} not found.");
         }
 
-        TournamentResponse tournamentResponse = mapper.Map<TournamentResponse>(tournament);
+        TournamentResponse tournamentResponse = _mapper.Map<TournamentResponse>(tournament);
         return Ok(tournamentResponse);
     }
 
@@ -87,15 +87,15 @@ public class TournamentController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> UpdateTournament(Guid tournamentId, CreateTournamentRequest tournamentRequest)
     {
-        Tournament? existingTournament = tournamentService.GetTournamentById(tournamentId);
+        Tournament? existingTournament = _tournamentService.GetTournamentById(tournamentId);
 
         if (existingTournament is null)
         {
             return BadRequest($"Tournament with id {tournamentId} not found.");
         }
 
-        mapper.Map(tournamentRequest, existingTournament);
-        bool updateResult = await tournamentService.UpdateTournament(existingTournament);
+        _mapper.Map(tournamentRequest, existingTournament);
+        bool updateResult = await _tournamentService.UpdateTournament(existingTournament);
 
         return !updateResult ? BadRequest("Failed to update the tournament.") : Ok();
     }
@@ -115,14 +115,14 @@ public class TournamentController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult DeleteTournamentById(Guid tournamentId)
     {
-        Tournament? tournament = tournamentService.GetTournamentById(tournamentId);
+        Tournament? tournament = _tournamentService.GetTournamentById(tournamentId);
 
         if (tournament is null)
         {
             return BadRequest($"Tournament with id {tournamentId} not found.");
         }
 
-        tournamentService.DeleteTournament(tournament);
+        _tournamentService.DeleteTournament(tournament);
         return Ok();
     }
 
@@ -137,15 +137,9 @@ public class TournamentController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaginatedResponse<TournamentResponse>>> GetFilteredTournaments([FromQuery] GetTournamentsFilteredRequest filterRequest)
     {
-        PaginatedResponse<Tournament> paginatedTournaments = await tournamentService.GetAllTournamentsAsync(filterRequest);
+        PaginatedResponse<Tournament> paginatedTournaments = await _tournamentService.GetAllTournamentsAsync(filterRequest);
 
-        PaginatedResponse<TournamentResponse> response = new()
-        {
-            Page = paginatedTournaments.Page,
-            PageSize = paginatedTournaments.PageSize,
-            TotalCount = paginatedTournaments.TotalCount,
-            Items = mapper.Map<List<TournamentResponse>>(paginatedTournaments.Items)
-        };
+        PaginatedResponse<TournamentResponse> response = _mapper.Map<PaginatedResponse<TournamentResponse>>(paginatedTournaments);
 
         return Ok(response);
     }

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Entities.DTOs.Abstract;
 using Entities.DTOs.Division;
 using Entities.DTOs.Player;
 using Entities.DTOs.Team;
@@ -83,3 +84,51 @@ public class TournamentProfile : Profile
         _ = CreateMap<CreateTournamentRequest, Tournament>();
     }
 }
+
+/// <summary>
+/// AutoMapper profile for paginated response mappings.
+/// </summary>
+public class PaginatedResponseProfile : Profile
+{
+    /// <summary>
+    /// Initializes mapping configuration for paginated responses.
+    /// </summary>
+    public PaginatedResponseProfile()
+    {
+        CreateMap(typeof(PaginatedResponse<>), typeof(PaginatedResponse<>))
+            .ConvertUsing(typeof(PaginatedResponseConverter<,>));
+    }
+}
+
+/// <summary>
+/// Converter to handle mapping between paginated responses with different types.
+/// </summary>
+/// <typeparam name="TSource">The source entity type.</typeparam>
+/// <typeparam name="TDestination">The destination DTO type.</typeparam>
+public class PaginatedResponseConverter<TSource, TDestination>
+    : ITypeConverter<PaginatedResponse<TSource>, PaginatedResponse<TDestination>>
+{
+    /// <summary>
+    /// Applies the mapping between paginated responses with different types.
+    /// </summary>
+    /// <param name="source"></param>
+    /// <param name="destination"></param>
+    /// <param name="context"></param>
+    /// <returns></returns>
+    public PaginatedResponse<TDestination> Convert(
+        PaginatedResponse<TSource> source,
+        PaginatedResponse<TDestination> destination,
+        ResolutionContext context)
+    {
+        return new PaginatedResponse<TDestination>
+        {
+            Page = source.Page,
+            PageSize = source.PageSize,
+            TotalCount = source.TotalCount,
+            Items = context.Mapper.Map<List<TDestination>>(source.Items)
+        };
+    }
+}
+
+
+

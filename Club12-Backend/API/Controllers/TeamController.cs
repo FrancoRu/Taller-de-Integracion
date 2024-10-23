@@ -23,12 +23,12 @@ namespace Club12.API.Controllers;
 [Route("api/")]
 [ApiController]
 public class TeamController(
-    ITeamService teamService,
-    IDivisionService divisionService,
-    ICloudflareService cloudflareService,
-    IExcelService excelService,
-    IPlayerService playerService,
-    IMapper mapper
+    ITeamService _teamService,
+    IDivisionService _divisionService,
+    ICloudflareService _cloudflareService,
+    IExcelService _excelService,
+    IPlayerService _playerService,
+    IMapper _mapper
     ) : ControllerBase
 {
     /// <summary>
@@ -46,19 +46,19 @@ public class TeamController(
             return BadRequest("The logo file must be a valid JPEG/PNG image.");
         }
 
-        Division? division = divisionService.GetDivisionById(teamRequest.DivisionId);
+        Division? division = _divisionService.GetDivisionById(teamRequest.DivisionId);
         if (division is null)
         {
             return BadRequest($"Division with id {teamRequest.DivisionId} not found.");
         }
 
-        string logoUrl = await cloudflareService.UploadLogoAsync(teamRequest.LogoFile.OpenReadStream(), teamRequest.LogoFile.FileName);
+        string logoUrl = await _cloudflareService.UploadLogoAsync(teamRequest.LogoFile.OpenReadStream(), teamRequest.LogoFile.FileName);
 
-        Team team = mapper.Map<Team>(teamRequest);
+        Team team = _mapper.Map<Team>(teamRequest);
         team.LogoUrl = logoUrl;
 
-        Team createdTeam = teamService.CreateTeam(team);
-        TeamResponse teamResponse = mapper.Map<TeamResponse>(createdTeam);
+        Team createdTeam = _teamService.CreateTeam(team);
+        TeamResponse teamResponse = _mapper.Map<TeamResponse>(createdTeam);
 
         return CreatedAtAction(nameof(GetTeamById), new { id = teamResponse.Id }, teamResponse);
     }
@@ -79,15 +79,15 @@ public class TeamController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> UpdateTeam(Guid teamId, UpdateTeamRequest teamRequest)
     {
-        Team? existingTeam = teamService.GetTeamById(teamId);
+        Team? existingTeam = _teamService.GetTeamById(teamId);
 
         if (existingTeam is null)
         {
             return BadRequest($"Team with id {teamId} not found.");
         }
 
-        mapper.Map(teamRequest, existingTeam);
-        bool updateResult = await teamService.UpdateTeam(existingTeam);
+        _mapper.Map(teamRequest, existingTeam);
+        bool updateResult = await _teamService.UpdateTeam(existingTeam);
 
         return !updateResult ? BadRequest("Failed to update the team.") : Ok();
     }
@@ -108,16 +108,16 @@ public class TeamController(
             return BadRequest("The logo file must be a valid JPEG/PNG image.");
         }
 
-        Team? team = teamService.GetTeamById(teamId);
+        Team? team = _teamService.GetTeamById(teamId);
         if (team is null)
         {
             return BadRequest($"Team with id {teamId} not found.");
         }
 
-        string logoUrl = await cloudflareService.UploadLogoAsync(logoRequest.LogoFile.OpenReadStream(), logoRequest.LogoFile.FileName);
+        string logoUrl = await _cloudflareService.UploadLogoAsync(logoRequest.LogoFile.OpenReadStream(), logoRequest.LogoFile.FileName);
         team.LogoUrl = logoUrl;
 
-        bool updateResult = await teamService.UpdateTeam(team);
+        bool updateResult = await _teamService.UpdateTeam(team);
         return !updateResult ? BadRequest("Failed to update the logo.") : Ok();
     }
 
@@ -135,14 +135,14 @@ public class TeamController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public ActionResult<TeamResponse> GetTeamById(Guid id)
     {
-        Team? team = teamService.GetTeamById(id);
+        Team? team = _teamService.GetTeamById(id);
 
         if (team is null)
         {
             return BadRequest($"Team with id {id} not found.");
         }
 
-        TeamResponse teamResponse = mapper.Map<TeamResponse>(team);
+        TeamResponse teamResponse = _mapper.Map<TeamResponse>(team);
         return Ok(teamResponse);
     }
 
@@ -161,14 +161,14 @@ public class TeamController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult DeleteTeamById(Guid id)
     {
-        Team? team = teamService.GetTeamById(id);
+        Team? team = _teamService.GetTeamById(id);
 
         if (team is null)
         {
             return BadRequest($"Team with id {id} not found.");
         }
 
-        teamService.DeleteTeam(team);
+        _teamService.DeleteTeam(team);
         return Ok();
     }
 
@@ -183,15 +183,9 @@ public class TeamController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaginatedResponse<TeamResponse>>> GetFilteredTeams([FromQuery] GetTeamsFilteredRequest filterRequest)
     {
-        PaginatedResponse<Team> paginatedTeams = await teamService.GetTeamsAsync(filterRequest);
+        PaginatedResponse<Team> paginatedTeams = await _teamService.GetTeamsAsync(filterRequest);
 
-        PaginatedResponse<TeamResponse> response = new()
-        {
-            Page = paginatedTeams.Page,
-            PageSize = paginatedTeams.PageSize,
-            TotalCount = paginatedTeams.TotalCount,
-            Items = mapper.Map<List<TeamResponse>>(paginatedTeams.Items)
-        };
+        PaginatedResponse<TeamResponse> response = _mapper.Map<PaginatedResponse<TeamResponse>>(paginatedTeams);
 
         return Ok(response);
     }
@@ -216,15 +210,15 @@ public class TeamController(
             return BadRequest("The logo file must be a valid JPEG/PNG image.");
         }
 
-        Division? division = divisionService.GetDivisionById(batchTeamRequest.DivisionId);
+        Division? division = _divisionService.GetDivisionById(batchTeamRequest.DivisionId);
         if (division is null)
         {
             return BadRequest($"Division with id {batchTeamRequest.DivisionId} not found.");
         }
 
-        (string teamName, string threeLetterCode, List<(string FirstName, string LastName, string DocumentNumber)> players) = await excelService.ReadTeamAndPlayersAsync(batchTeamRequest.TeamFile);
+        (string teamName, string threeLetterCode, List<(string FirstName, string SecondName, string LastName, string DocumentNumber)> players) = await _excelService.ReadTeamAndPlayersAsync(batchTeamRequest.TeamFile);
 
-        string logoUrl = await cloudflareService.UploadLogoAsync(batchTeamRequest.LogoFile.OpenReadStream(), batchTeamRequest.LogoFile.FileName);
+        string logoUrl = await _cloudflareService.UploadLogoAsync(batchTeamRequest.LogoFile.OpenReadStream(), batchTeamRequest.LogoFile.FileName);
 
         CreateTeamRequest teamRequest = new()
         {
@@ -234,24 +228,26 @@ public class TeamController(
             LogoFile = batchTeamRequest.LogoFile
         };
 
-        Team teamMapped = mapper.Map<Team>(teamRequest);
-        Team createdTeam = teamService.CreateTeam(teamMapped);
+        Team teamMapped = _mapper.Map<Team>(teamRequest);
+        teamMapped.LogoUrl = logoUrl;
+        Team createdTeam = _teamService.CreateTeam(teamMapped);
 
-        foreach ((string FirstName, string LastName, string DocumentNumber) in players)
+        foreach ((string FirstName, string SecondName, string LastName, string DocumentNumber) in players)
         {
             CreatePlayerRequest playerRequest = new()
             {
-                Name = FirstName,
+                FirstName = FirstName,
+                SecondName = SecondName,
                 LastName = LastName,
                 DocumentNumber = DocumentNumber,
                 TeamId = createdTeam.Id
             };
 
-            Player mappedPlayer = mapper.Map<Player>(playerRequest);
-            playerService.CreatePlayer(mappedPlayer);
+            Player mappedPlayer = _mapper.Map<Player>(playerRequest);
+            _playerService.CreatePlayer(mappedPlayer);
         }
 
-        TeamResponse teamResponse = mapper.Map<TeamResponse>(createdTeam);
+        TeamResponse teamResponse = _mapper.Map<TeamResponse>(createdTeam);
 
         return CreatedAtAction(nameof(GetTeamById), new { id = teamResponse.Id }, teamResponse);
     }

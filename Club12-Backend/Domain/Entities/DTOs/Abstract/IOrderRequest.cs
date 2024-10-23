@@ -15,7 +15,7 @@ public interface IOrderRequest
     /// <summary>
     /// The sort order. Default is Ascending.
     /// </summary>
-    SortOrder Order { get; set; }
+    SortOrder? Order { get; set; }
 }
 
 /// <summary>

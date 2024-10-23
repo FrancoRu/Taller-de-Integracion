@@ -12,5 +12,5 @@ public interface IExcelService
     /// </summary>
     /// <param name="file">The Excel file containing team and player information.</param>
     /// <returns>A tuple containing team data as strings and a list of player data as strings.</returns>
-    Task<(string TeamName, string ThreeLetterCode, List<(string FirstName, string LastName, string DocumentNumber)> Players)> ReadTeamAndPlayersAsync(IFormFile file);
+    Task<(string TeamName, string ThreeLetterCode, List<(string FirstName, string SecondName, string LastName, string DocumentNumber)> Players)> ReadTeamAndPlayersAsync(IFormFile file);
 }

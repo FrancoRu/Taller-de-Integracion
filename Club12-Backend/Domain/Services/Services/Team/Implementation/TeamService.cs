@@ -46,7 +46,7 @@ public class TeamService(IGenericService<Team> genericTeamService) : ITeamServic
     public async Task<PaginatedResponse<Team>> GetTeamsAsync(GetTeamsFilteredRequest filter)
     {
         Expression<Func<Team, bool>> expression = QueryableExtensions.ConstructFilterExpression<Team, GetTeamsFilteredRequest>(filter);
-        IQueryable<Team> filteredTeams = genericTeamService.FilterByExpressionWithPagination(expression, filter).SortBy(filter);
+        IQueryable<Team> filteredTeams = genericTeamService.FilterByExpressionWithPagination(expression, filter, team => team.Players).SortBy(filter);
         int totalCount = await genericTeamService.GetCountAsync(expression);
 
         return new PaginatedResponse<Team>

@@ -8,10 +8,16 @@ namespace Entities.DTOs.Player;
 public class CreatePlayerRequest
 {
     /// <summary>
-    /// The name of the Player.
+    /// The first name of the Player.
     /// </summary>
-    [Required(ErrorMessage = "The Name field is required.")]
-    public required string Name { get; set; }
+    [Required(ErrorMessage = "The First Name field is required.")]
+    public required string FirstName { get; set; }
+
+    /// <summary>
+    /// The second name of the Player.
+    /// </summary>
+    [Required(ErrorMessage = "The Second Name field is required.")]
+    public required string SecondName { get; set; }
 
     /// <summary>
     /// The last name of the player.

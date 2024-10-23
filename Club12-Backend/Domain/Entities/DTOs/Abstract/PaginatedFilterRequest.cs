@@ -24,10 +24,10 @@ public class PaginatedFilterRequest : IPaginationRequest, IOrderRequest
     /// <summary>
     /// The property name to sort by.
     /// </summary>
-    public string? OrderBy { get; set; }
+    public string? OrderBy { get; set; } = "DateCreated";
 
     /// <summary>
     /// The sort order. Default is Ascending.
     /// </summary>
-    public SortOrder Order { get; set; } = SortOrder.Ascending;
+    public SortOrder? Order { get; set; } = SortOrder.Ascending;
 }

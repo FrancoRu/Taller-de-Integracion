@@ -11,12 +11,12 @@ public class PlayerResponse : BaseEntityResponse
     /// <summary>
     /// The name of the Player.
     /// </summary>
-    public required string Name { get; set; }
+    public required string FirstName { get; set; }
 
     /// <summary>
     /// The middle name of the player.
     /// </summary>
-    public required string MiddleName { get; set; }
+    public required string SecondName { get; set; }
 
     /// <summary>
     /// The last name of the player.

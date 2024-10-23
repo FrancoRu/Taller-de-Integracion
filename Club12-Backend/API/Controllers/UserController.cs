@@ -13,14 +13,14 @@ namespace Club12.API.Controllers;
 /// <remarks>
 /// Initializes a new instance of the <see cref="UserController"/> class.
 /// </remarks>
-/// <param name="userService">The user service.</param>
-/// <param name="authService">The auth service.</param>
+/// <param name="_userService">The user service.</param>
+/// <param name="_authService">The auth service.</param>
 [Authorize(Roles = "SuperAdmin")]
 [ApiController]
 [Route("api/")]
 public class UserController(
-    IUserService userService,
-    IAuthService authService
+    IUserService _userService,
+    IAuthService _authService
     ) : ControllerBase
 {
 
@@ -38,14 +38,14 @@ public class UserController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public IActionResult Login(LogInUserRequest userLoginRequest)
     {
-        User? user = userService.GetUserByUserNameAsync(userLoginRequest.Username);
+        User? user = _userService.GetUserByUserNameAsync(userLoginRequest.Username);
 
-        if (user == null || !userService.ValidateCredentials(user, userLoginRequest.Password))
+        if (user == null || !_userService.ValidateCredentials(user, userLoginRequest.Password))
         {
             return Unauthorized("Invalid credentials");
         }
 
-        TokenResponse token = authService.GenerateJwtToken(user);
+        TokenResponse token = _authService.GenerateJwtToken(user);
 
         return Ok(token);
     }

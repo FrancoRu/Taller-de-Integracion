@@ -16,16 +16,16 @@ namespace Club12.API.Controllers;
 /// <remarks>
 /// Initializes a new instance of the <see cref="PlayerController"/> class.
 /// </remarks>
-/// <param name="playerService">The Player service.</param>
-/// <param name="teamService">The Team service.</param>
-/// <param name="mapper">The AutoMapper instance.</param>
+/// <param name="_playerService">The Player service.</param>
+/// <param name="_teamService">The Team service.</param>
+/// <param name="_mapper">The AutoMapper instance.</param>
 [Authorize(Roles = "SuperAdmin")]
 [Route("api/")]
 [ApiController]
 public class PlayerController(
-    IPlayerService playerService,
-    ITeamService teamService,
-    IMapper mapper
+    IPlayerService _playerService,
+    ITeamService _teamService,
+    IMapper _mapper
     ) : ControllerBase
 {
     /// <summary>
@@ -44,16 +44,16 @@ public class PlayerController(
     public ActionResult<PlayerResponse> CreatePlayer(CreatePlayerRequest playerRequest)
     {
         Guid TeamId = playerRequest.TeamId;
-        Team? existingTeam = teamService.GetTeamById(TeamId);
+        Team? existingTeam = _teamService.GetTeamById(TeamId);
 
         if (existingTeam is null)
         {
             return BadRequest($"There is no Team with id: {TeamId}.");
         }
 
-        Player mappedPlayer = mapper.Map<Player>(playerRequest);
-        Player createdPlayer = playerService.CreatePlayer(mappedPlayer);
-        PlayerResponse playerResponse = mapper.Map<PlayerResponse>(createdPlayer);
+        Player mappedPlayer = _mapper.Map<Player>(playerRequest);
+        Player createdPlayer = _playerService.CreatePlayer(mappedPlayer);
+        PlayerResponse playerResponse = _mapper.Map<PlayerResponse>(createdPlayer);
 
         return new ObjectResult(playerResponse) { StatusCode = StatusCodes.Status201Created };
     }
@@ -72,14 +72,14 @@ public class PlayerController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public ActionResult<PlayerResponse> GetPlayerById(Guid id)
     {
-        Player? player = playerService.GetPlayerById(id);
+        Player? player = _playerService.GetPlayerById(id);
 
         if (player is null)
         {
             return BadRequest($"Player with id {id} not found.");
         }
 
-        PlayerResponse playerResponse = mapper.Map<PlayerResponse>(player);
+        PlayerResponse playerResponse = _mapper.Map<PlayerResponse>(player);
         return Ok(playerResponse);
     }
 
@@ -99,15 +99,15 @@ public class PlayerController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> UpdatePlayer(Guid playerId, UpdatePlayerRequest playerRequest)
     {
-        Player? existingPlayer = playerService.GetPlayerById(playerId);
+        Player? existingPlayer = _playerService.GetPlayerById(playerId);
 
         if (existingPlayer is null)
         {
             return BadRequest($"Player with id {playerId} not found.");
         }
 
-        mapper.Map(playerRequest, existingPlayer);
-        bool updateResult = await playerService.UpdatePlayer(existingPlayer);
+        _mapper.Map(playerRequest, existingPlayer);
+        bool updateResult = await _playerService.UpdatePlayer(existingPlayer);
 
         return !updateResult ? BadRequest("Failed to update the player.") : Ok();
     }
@@ -127,14 +127,14 @@ public class PlayerController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult DeletePlayerById(Guid id)
     {
-        Player? player = playerService.GetPlayerById(id);
+        Player? player = _playerService.GetPlayerById(id);
 
         if (player is null)
         {
             return BadRequest($"Player with id {id} not found.");
         }
 
-        playerService.DeletePlayer(player);
+        _playerService.DeletePlayer(player);
         return Ok();
     }
 
@@ -149,15 +149,9 @@ public class PlayerController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaginatedResponse<PlayerResponse>>> GetFilteredPlayers([FromQuery] GetPlayersFilteredRequest filterRequest)
     {
-        PaginatedResponse<Player> paginatedPlayers = await playerService.GetAllPlayersAsync(filterRequest);
+        PaginatedResponse<Player> paginatedPlayers = await _playerService.GetAllPlayersAsync(filterRequest);
 
-        PaginatedResponse<PlayerResponse> response = new()
-        {
-            Page = paginatedPlayers.Page,
-            PageSize = paginatedPlayers.PageSize,
-            TotalCount = paginatedPlayers.TotalCount,
-            Items = mapper.Map<List<PlayerResponse>>(paginatedPlayers.Items)
-        };
+        PaginatedResponse<PlayerResponse> response = _mapper.Map<PaginatedResponse<PlayerResponse>>(paginatedPlayers);
 
         return Ok(response);
     }

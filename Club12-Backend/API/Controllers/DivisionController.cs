@@ -14,14 +14,14 @@ namespace Club12.API.Controllers;
 /// <remarks>
 /// Initializes a new instance of the <see cref="DivisionController"/> class.
 /// </remarks>
-/// <param name="divisionService">The division service.</param>
-/// <param name="mapper">The AutoMapper instance.</param>
+/// <param name="_divisionService">The division service.</param>
+/// <param name="_mapper">The AutoMapper instance.</param>
 [Authorize(Roles = "SuperAdmin")]
 [Route("api/")]
 [ApiController]
 public class DivisionController(
-    IDivisionService divisionService,
-    IMapper mapper
+    IDivisionService _divisionService,
+    IMapper _mapper
     ) : ControllerBase
 {
 
@@ -38,9 +38,9 @@ public class DivisionController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult CreateDivision(CreateDivisionRequest divisionRequest)
     {
-        Division mappedDivision = mapper.Map<Division>(divisionRequest);
-        Division createdDivision = divisionService.CreateDivision(mappedDivision);
-        DivisionResponse divisionResponse = mapper.Map<DivisionResponse>(createdDivision);
+        Division mappedDivision = _mapper.Map<Division>(divisionRequest);
+        Division createdDivision = _divisionService.CreateDivision(mappedDivision);
+        DivisionResponse divisionResponse = _mapper.Map<DivisionResponse>(createdDivision);
 
         return new ObjectResult(divisionResponse) { StatusCode = StatusCodes.Status201Created };
     }
@@ -59,14 +59,14 @@ public class DivisionController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public ActionResult<DivisionResponse> GetDivisionById(Guid divisionId)
     {
-        Division? division = divisionService.GetDivisionById(divisionId);
+        Division? division = _divisionService.GetDivisionById(divisionId);
 
         if (division is null)
         {
             return BadRequest($"Division with id {divisionId} not found.");
         }
 
-        DivisionResponse divisionResponse = mapper.Map<DivisionResponse>(division);
+        DivisionResponse divisionResponse = _mapper.Map<DivisionResponse>(division);
         return Ok(divisionResponse);
     }
 
@@ -85,14 +85,14 @@ public class DivisionController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult DeleteDivisionById(Guid divisionId)
     {
-        Division? division = divisionService.GetDivisionById(divisionId);
+        Division? division = _divisionService.GetDivisionById(divisionId);
 
         if (division is null)
         {
             return BadRequest($"Division with id {divisionId} not found.");
         }
 
-        divisionService.DeleteDivision(division);
+        _divisionService.DeleteDivision(division);
         return Ok();
     }
 
@@ -112,15 +112,15 @@ public class DivisionController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> UpdateDivisionById(Guid divisionId, UpdateDivisionRequest divisionRequest)
     {
-        Division? existingDivision = divisionService.GetDivisionById(divisionId);
+        Division? existingDivision = _divisionService.GetDivisionById(divisionId);
 
         if (existingDivision is null)
         {
             return BadRequest($"Division with id {divisionId} not found.");
         }
 
-        mapper.Map(divisionRequest, existingDivision);
-        bool updateResult = await divisionService.UpdateDivision(existingDivision);
+        _mapper.Map(divisionRequest, existingDivision);
+        bool updateResult = await _divisionService.UpdateDivision(existingDivision);
 
         return !updateResult ? BadRequest("Failed to update the division.") : Ok();
     }
@@ -136,15 +136,9 @@ public class DivisionController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaginatedResponse<DivisionResponse>>> GetFilteredDivisions([FromQuery] GetDivisionsFilteredRequest filterRequest)
     {
-        PaginatedResponse<Division> paginatedDivisions = await divisionService.GetAllDivisionsAsync(filterRequest);
+        PaginatedResponse<Division> paginatedDivisions = await _divisionService.GetAllDivisionsAsync(filterRequest);
 
-        PaginatedResponse<DivisionResponse> response = new()
-        {
-            Page = paginatedDivisions.Page,
-            PageSize = paginatedDivisions.PageSize,
-            TotalCount = paginatedDivisions.TotalCount,
-            Items = mapper.Map<List<DivisionResponse>>(paginatedDivisions.Items)
-        };
+        PaginatedResponse<DivisionResponse> response = _mapper.Map<PaginatedResponse<DivisionResponse>>(paginatedDivisions);
 
         return Ok(response);
     }
