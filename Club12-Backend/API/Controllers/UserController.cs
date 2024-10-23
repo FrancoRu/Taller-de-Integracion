@@ -17,7 +17,7 @@ namespace Club12.API.Controllers;
 /// <param name="_authService">The auth service.</param>
 [Authorize(Roles = "SuperAdmin")]
 [ApiController]
-[Route("api/")]
+[Route("api/users/")]
 public class UserController(
     IUserService _userService,
     IAuthService _authService

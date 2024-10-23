@@ -17,7 +17,7 @@ namespace Club12.API.Controllers;
 /// <param name="_divisionService">The division service.</param>
 /// <param name="_mapper">The AutoMapper instance.</param>
 [Authorize(Roles = "SuperAdmin")]
-[Route("api/")]
+[Route("api/divisions/")]
 [ApiController]
 public class DivisionController(
     IDivisionService _divisionService,
@@ -33,7 +33,7 @@ public class DivisionController(
     /// <para>Returns 201 (Created) with the division response if the creation was successful.</para>
     /// <para>Returns 403 (Forbidden) if the user is not authenticated.</para>
     /// </returns>
-    [HttpPost("divisions")]
+    [HttpPost()]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(DivisionResponse))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public IActionResult CreateDivision(CreateDivisionRequest divisionRequest)
@@ -54,7 +54,7 @@ public class DivisionController(
     /// <para>Returns 400 (Bad Request) if the division with the provided id was not found.</para>
     /// </returns>
     [AllowAnonymous]
-    [HttpGet("divisions/{divisionId:guid}")]
+    [HttpGet("{divisionId:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DivisionResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public ActionResult<DivisionResponse> GetDivisionById(Guid divisionId)
@@ -79,7 +79,7 @@ public class DivisionController(
     /// Returns 400 (Bad Request) if the division with the provided id was not found.
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
-    [HttpDelete("divisions/{divisionId:guid}")]
+    [HttpDelete("{divisionId:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -106,7 +106,7 @@ public class DivisionController(
     /// Returns 400 (Bad Request) if the division with the provided id was not found.
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
-    [HttpPut("divisions/{divisionId:guid}")]
+    [HttpPut("{divisionId:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DivisionResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -131,7 +131,7 @@ public class DivisionController(
     /// <param name="filterRequest">The filtering and pagination parameters.</param>
     /// <returns>A paginated response containing the filtered divisions.</returns>
     [AllowAnonymous]
-    [HttpGet("divisions")]
+    [HttpGet()]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<DivisionResponse>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaginatedResponse<DivisionResponse>>> GetFilteredDivisions([FromQuery] GetDivisionsFilteredRequest filterRequest)

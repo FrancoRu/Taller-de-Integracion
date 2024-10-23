@@ -20,7 +20,7 @@ namespace Club12.API.Controllers;
 /// Controller for managing teams.
 /// </summary>
 [Authorize(Roles = "SuperAdmin")]
-[Route("api/")]
+[Route("api/teams/")]
 [ApiController]
 public class TeamController(
     ITeamService _teamService,
@@ -36,7 +36,7 @@ public class TeamController(
     /// </summary>
     /// <param name="teamRequest">The team creation request object containing the team details.</param>
     /// <returns>The created team response with details of the new team.</returns>
-    [HttpPost("teams")]
+    [HttpPost()]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TeamResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<TeamResponse>> CreateTeam(CreateTeamRequest teamRequest)
@@ -73,7 +73,7 @@ public class TeamController(
     /// Returns 400 (Bad Request) if the team with the provided id was not found.
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
-    [HttpPut("teams/{teamId:guid}")]
+    [HttpPut("{teamId:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TeamResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -98,7 +98,7 @@ public class TeamController(
     /// <param name="teamId">The id of the team to update the logo.</param>
     /// <param name="logoRequest">The update team logo request.</param>
     /// <returns>Returns 200 (OK) if the logo was successfully updated.</returns>
-    [HttpPut("teams/{teamId:guid}/logo")]
+    [HttpPut("{teamId:guid}/logo")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> UpdateTeamLogo(Guid teamId, UpdateTeamLogoRequest logoRequest)
@@ -130,7 +130,7 @@ public class TeamController(
     /// <para>Returns 400 (Bad Request) if the team with the provided id was not found.</para>
     /// </returns>
     [AllowAnonymous]
-    [HttpGet("teams/{id:guid}")]
+    [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TeamResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public ActionResult<TeamResponse> GetTeamById(Guid id)
@@ -155,7 +155,7 @@ public class TeamController(
     /// Returns 400 (Bad Request) if the team with the provided id was not found.
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
-    [HttpDelete("teams/{id:guid}")]
+    [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -178,7 +178,7 @@ public class TeamController(
     /// <param name="filterRequest">The filtering and pagination parameters.</param>
     /// <returns>A paginated response containing the filtered teams.</returns>
     [AllowAnonymous]
-    [HttpGet("teams")]
+    [HttpGet()]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<TeamResponse>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaginatedResponse<TeamResponse>>> GetFilteredTeams([FromQuery] GetTeamsFilteredRequest filterRequest)
@@ -195,7 +195,7 @@ public class TeamController(
     /// </summary>
     /// <param name="batchTeamRequest">The team creation request object containing the team details.</param>
     /// <returns>The created team response with details of the new team.</returns>
-    [HttpPost("teams/batch")]
+    [HttpPost("batch")]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TeamResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<TeamResponse>> CreateTeamWithExcel(BatchCreateTeamRequest batchTeamRequest)

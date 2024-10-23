@@ -20,7 +20,7 @@ namespace Club12.API.Controllers;
 /// <param name="_teamService">The Team service.</param>
 /// <param name="_mapper">The AutoMapper instance.</param>
 [Authorize(Roles = "SuperAdmin")]
-[Route("api/")]
+[Route("api/players/")]
 [ApiController]
 public class PlayerController(
     IPlayerService _playerService,
@@ -37,7 +37,7 @@ public class PlayerController(
     /// <para>Returns 400 (Bad Request) if the Team with the provided id was not found.</para>
     /// <para>Returns 403 (Forbidden) if the user is not authenticated.</para>
     /// </returns>
-    [HttpPost("players")]
+    [HttpPost()]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(PlayerResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -67,7 +67,7 @@ public class PlayerController(
     /// <para>Returns 400 (Bad Request) if the Player with the provided id was not found.</para>
     /// </returns>
     [AllowAnonymous]
-    [HttpGet("players/{id:guid}")]
+    [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public ActionResult<PlayerResponse> GetPlayerById(Guid id)
@@ -93,7 +93,7 @@ public class PlayerController(
     /// Returns 400 (Bad Request) if the Player with the provided id was not found.
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
-    [HttpPut("players/{playerId:guid}")]
+    [HttpPut("{playerId:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -121,7 +121,7 @@ public class PlayerController(
     /// Returns 400 (Bad Request) if the Player with the provided id was not found.
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
-    [HttpDelete("players/{id:guid}")]
+    [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -144,7 +144,7 @@ public class PlayerController(
     /// <param name="filterRequest">The filtering and pagination parameters.</param>
     /// <returns>A paginated response containing the filtered players.</returns>
     [AllowAnonymous]
-    [HttpGet("players")]
+    [HttpGet()]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<PlayerResponse>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaginatedResponse<PlayerResponse>>> GetFilteredPlayers([FromQuery] GetPlayersFilteredRequest filterRequest)

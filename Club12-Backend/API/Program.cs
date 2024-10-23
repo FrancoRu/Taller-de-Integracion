@@ -56,14 +56,13 @@ using (IServiceScope scope = app.Services.CreateScope())
     app.Services.EnsureAdminUserExists();
 }
 
-app.UseSerilogRequestLogging();
-
 if (!builder.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+app.UseSerilogRequestLogging();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();

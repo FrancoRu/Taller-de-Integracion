@@ -17,7 +17,7 @@ namespace Club12.API.Controllers;
 /// <param name="_tournamentService">The Tournament service.</param>
 /// <param name="_mapper">The AutoMapper instance.</param>
 [Authorize(Roles = "SuperAdmin")]
-[Route("api/")]
+[Route("api/tournaments/")]
 [ApiController]
 public class TournamentController(
     ITournamentService _tournamentService,
@@ -33,7 +33,7 @@ public class TournamentController(
     /// <para>Returns 400 (Bad Request) if there was an error in the request.</para>
     /// <para>Returns 403 (Forbidden) if the user is not authenticated.</para>
     /// </returns>
-    [HttpPost("tournaments")]
+    [HttpPost()]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TournamentResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -55,7 +55,7 @@ public class TournamentController(
     /// <para>Returns 400 (Bad Request) if the Tournament with the provided tournamentId was not found.</para>
     /// </returns>
     [AllowAnonymous]
-    [HttpGet("tournaments/{tournamentId:guid}")]
+    [HttpGet("{tournamentId:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TournamentResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public ActionResult<TournamentResponse> GetTournamentById(Guid tournamentId)
@@ -81,7 +81,7 @@ public class TournamentController(
     /// Returns 400 (Bad Request) if the Tournament with the provided tournamentId was not found.
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
-    [HttpPut("tournaments/{tournamentId:guid}")]
+    [HttpPut("{tournamentId:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TournamentResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -109,7 +109,7 @@ public class TournamentController(
     /// Returns 400 (Bad Request) if the Tournament with the provided tournamentId was not found.
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
-    [HttpDelete("tournaments/{tournamentId:guid}")]
+    [HttpDelete("{tournamentId:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -132,7 +132,7 @@ public class TournamentController(
     /// <param name="filterRequest">The filtering and pagination parameters.</param>
     /// <returns>A paginated response containing the filtered tournaments.</returns>
     [AllowAnonymous]
-    [HttpGet("tournaments")]
+    [HttpGet()]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<TournamentResponse>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaginatedResponse<TournamentResponse>>> GetFilteredTournaments([FromQuery] GetTournamentsFilteredRequest filterRequest)
