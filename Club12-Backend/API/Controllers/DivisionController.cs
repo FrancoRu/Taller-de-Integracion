@@ -120,7 +120,7 @@ public class DivisionController(
         }
 
         _mapper.Map(divisionRequest, existingDivision);
-        bool updateResult = await _divisionService.UpdateDivision(existingDivision);
+        bool updateResult = await _divisionService.UpdateDivisionAsync(existingDivision);
 
         return !updateResult ? BadRequest("Failed to update the division.") : Ok();
     }

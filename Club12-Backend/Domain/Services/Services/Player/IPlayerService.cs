@@ -30,7 +30,7 @@ public interface IPlayerService
     /// <param name="playerEntity">The Player to update.</param>
     /// <param name="userId">The ID of the user performing the operation.</param>
     /// <returns>A boolean indicating whether the update was successful.</returns>
-    Task<bool> UpdatePlayer(Player playerEntity);
+    Task<bool> UpdatePlayerAsync(Player playerEntity);
 
     /// <summary>
     /// Deletes a Player.

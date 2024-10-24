@@ -14,20 +14,20 @@ public interface IPlayerSanctionService
     /// </summary>
     /// <param name="playerSanctionEntity">The player sanction entity to create.</param>
     /// <returns>The created player sanction.</returns>
-    Task<PlayerSanction> CreatePlayerSanctionAsync(PlayerSanction playerSanctionEntity);
+    PlayerSanction CreatePlayerSanction(PlayerSanction playerSanctionEntity);
 
     /// <summary>
     /// Retrieves a player sanction by its ID.
     /// </summary>
     /// <param name="playerSanctionId">The ID of the player sanction to retrieve.</param>
     /// <returns>The player sanction with the specified ID, or null if not found.</returns>
-    PlayerSanction? GetPlayerSanctionByIdAsync(Guid playerSanctionId);
+    PlayerSanction? GetPlayerSanctionById(Guid playerSanctionId);
 
     /// <summary>
     /// Deletes a player sanction.
     /// </summary>
     /// <param name="playerSanctionEntity">The player sanction to delete.</param>
-    Task DeletePlayerSanctionAsync(PlayerSanction playerSanctionEntity);
+    void DeletePlayerSanction(PlayerSanction playerSanctionEntity);
 
     /// <summary>
     /// Updates a player sanction asynchronously.

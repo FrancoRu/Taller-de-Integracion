@@ -1,9 +1,12 @@
 ﻿using Entities.DTOs.Abstract;
 using Entities.DTOs.Tournament;
 using Entities.Models.TournamentEntity;
+
 using Microsoft.EntityFrameworkCore;
+
 using Services.DataAccessLayer.GenericEntity;
 using Services.Utils.OrderFiltering;
+
 using System.Linq.Expressions;
 
 namespace Services.Services.TournamentService.Implementation;
@@ -28,7 +31,7 @@ public class TournamentService(IGenericService<Tournament> genericTournamentServ
         genericTournamentService.Delete(tournamentEntity);
     }
 
-    public async Task<bool> UpdateTournament(Tournament tournamentEntity)
+    public async Task<bool> UpdateTournamentAsync(Tournament tournamentEntity)
     {
         try
         {

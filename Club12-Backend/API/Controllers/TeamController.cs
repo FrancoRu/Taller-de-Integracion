@@ -1,13 +1,17 @@
 ﻿using AutoMapper;
+
 using Club12.API.Utils;
+
 using Entities.DTOs.Abstract;
 using Entities.DTOs.Player;
 using Entities.DTOs.Team;
 using Entities.Models.DivisionEntity;
 using Entities.Models.PlayerEntity;
 using Entities.Models.TeamEntity;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+
 using Services.Services.DivisionService;
 using Services.Services.PlayerService;
 using Services.Services.TeamService;
@@ -87,7 +91,7 @@ public class TeamController(
         }
 
         _mapper.Map(teamRequest, existingTeam);
-        bool updateResult = await _teamService.UpdateTeam(existingTeam);
+        bool updateResult = await _teamService.UpdateTeamAsync(existingTeam);
 
         return !updateResult ? BadRequest("Failed to update the team.") : Ok();
     }
@@ -117,7 +121,7 @@ public class TeamController(
         string logoUrl = await _cloudflareService.UploadLogoAsync(logoRequest.LogoFile.OpenReadStream(), logoRequest.LogoFile.FileName);
         team.LogoUrl = logoUrl;
 
-        bool updateResult = await _teamService.UpdateTeam(team);
+        bool updateResult = await _teamService.UpdateTeamAsync(team);
         return !updateResult ? BadRequest("Failed to update the logo.") : Ok();
     }
 
@@ -183,7 +187,7 @@ public class TeamController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaginatedResponse<TeamResponse>>> GetFilteredTeams([FromQuery] GetTeamsFilteredRequest filterRequest)
     {
-        PaginatedResponse<Team> paginatedTeams = await _teamService.GetTeamsAsync(filterRequest);
+        PaginatedResponse<Team> paginatedTeams = await _teamService.GetAllTeamsAsync(filterRequest);
 
         PaginatedResponse<TeamResponse> response = _mapper.Map<PaginatedResponse<TeamResponse>>(paginatedTeams);
 

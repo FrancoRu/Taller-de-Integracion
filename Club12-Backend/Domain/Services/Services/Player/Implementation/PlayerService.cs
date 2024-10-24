@@ -26,7 +26,7 @@ public class PlayerService(IGenericService<Player> genericPlayerService) : IPlay
         genericPlayerService.Delete(playerEntity);
     }
 
-    public async Task<bool> UpdatePlayer(Player playerEntity)
+    public async Task<bool> UpdatePlayerAsync(Player playerEntity)
     {
         try
         {

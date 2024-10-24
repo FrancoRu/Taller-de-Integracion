@@ -1,5 +1,6 @@
 ﻿using Entities;
 using Entities.DTOs.Abstract;
+
 using System.Linq.Expressions;
 
 namespace Services.DataAccessLayer.GenericEntity;

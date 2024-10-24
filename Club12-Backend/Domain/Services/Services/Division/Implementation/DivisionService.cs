@@ -21,7 +21,7 @@ public class DivisionService(IGenericService<Division> genericDivisionService) :
         genericDivisionService.Delete(divisionEntity);
     }
 
-    public async Task<bool> UpdateDivision(Division divisionEntity)
+    public async Task<bool> UpdateDivisionAsync(Division divisionEntity)
     {
         try
         {

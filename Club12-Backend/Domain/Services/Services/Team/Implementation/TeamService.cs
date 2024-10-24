@@ -1,10 +1,13 @@
 ﻿using Entities.DTOs.Abstract;
 using Entities.DTOs.Team;
 using Entities.Models.TeamEntity;
+
 using Microsoft.EntityFrameworkCore;
+
 using Services.DataAccessLayer.GenericEntity;
 using Services.Services.TeamService;
 using Services.Utils.OrderFiltering;
+
 using System.Linq.Expressions;
 
 namespace Club12.Services.Services.TeamService.Implementation;
@@ -30,7 +33,7 @@ public class TeamService(IGenericService<Team> genericTeamService) : ITeamServic
         genericTeamService.Delete(teamEntity);
     }
 
-    public async Task<bool> UpdateTeam(Team teamEntity)
+    public async Task<bool> UpdateTeamAsync(Team teamEntity)
     {
         try
         {
@@ -43,7 +46,7 @@ public class TeamService(IGenericService<Team> genericTeamService) : ITeamServic
         }
     }
 
-    public async Task<PaginatedResponse<Team>> GetTeamsAsync(GetTeamsFilteredRequest filter)
+    public async Task<PaginatedResponse<Team>> GetAllTeamsAsync(GetTeamsFilteredRequest filter)
     {
         Expression<Func<Team, bool>> expression = QueryableExtensions.ConstructFilterExpression<Team, GetTeamsFilteredRequest>(filter);
         IQueryable<Team> filteredTeams = genericTeamService.FilterByExpressionWithPagination(expression, filter, team => team.Players).SortBy(filter);

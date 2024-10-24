@@ -1,11 +1,16 @@
 ﻿using AutoMapper;
+
 using Entities.DTOs.Abstract;
 using Entities.DTOs.Division;
+using Entities.DTOs.Match;
 using Entities.DTOs.Player;
+using Entities.DTOs.PlayerStatistic;
 using Entities.DTOs.Team;
 using Entities.DTOs.Tournament;
 using Entities.Models.DivisionEntity;
+using Entities.Models.MatchEntity;
 using Entities.Models.PlayerEntity;
+using Entities.Models.PlayerStatisticEntity;
 using Entities.Models.TeamEntity;
 using Entities.Models.TournamentEntity;
 
@@ -22,7 +27,7 @@ public class TeamProfile : Profile
     public TeamProfile()
     {
         _ = CreateMap<Team, TeamResponse>()
-            .ReverseMap();
+                .ReverseMap();
 
         _ = CreateMap<CreateTeamRequest, Team>();
 
@@ -41,7 +46,7 @@ public class DivisionProfile : Profile
     public DivisionProfile()
     {
         _ = CreateMap<Division, DivisionResponse>()
-            .ReverseMap();
+                .ReverseMap();
 
         _ = CreateMap<CreateDivisionRequest, Division>();
 
@@ -60,7 +65,7 @@ public class PlayerProfile : Profile
     public PlayerProfile()
     {
         _ = CreateMap<Player, PlayerResponse>()
-            .ReverseMap();
+                .ReverseMap();
 
         _ = CreateMap<CreatePlayerRequest, Player>();
 
@@ -79,9 +84,58 @@ public class TournamentProfile : Profile
     public TournamentProfile()
     {
         _ = CreateMap<Tournament, TournamentResponse>()
-            .ReverseMap();
+                .ReverseMap();
 
         _ = CreateMap<CreateTournamentRequest, Tournament>();
+    }
+}
+
+
+/// <summary>
+/// AutoMapper profile for match mappings.
+/// </summary>
+public class MatchProfile : Profile
+{
+    /// <summary>
+    /// Initializes mapping configuration for match entities.
+    /// </summary>
+    public MatchProfile()
+    {
+        _ = CreateMap<CreateMatchRequest, Match>()
+                .ForMember(dest => dest.HomeTeamId, opt => opt.MapFrom(src => src.HomeTeamId))
+                .ForMember(dest => dest.VisitorTeamId, opt => opt.MapFrom(src => src.VisitorTeamId))
+                .ForMember(dest => dest.DivisionId, opt => opt.MapFrom(src => src.DivisionId));
+
+        _ = CreateMap<Match, MatchResponse>()
+                .ForMember(dest => dest.HomeTeamName, opt => opt.MapFrom(src => src.HomeTeam.Name))
+                .ForMember(dest => dest.VisitorTeamName, opt => opt.MapFrom(src => src.VisitorTeam.Name))
+                .ForMember(dest => dest.WinningTeamName, opt => opt.MapFrom(src => src.WinningTeam != null ? src.WinningTeam.Name : null))
+                .ReverseMap();
+
+        _ = CreateMap<UpdateMatchScoreRequest, Match>()
+                .ForMember(dest => dest.HomeScore, opt => opt.MapFrom(src => src.HomeScore))
+                .ForMember(dest => dest.VisitorScore, opt => opt.MapFrom(src => src.VisitorScore));
+
+        _ = CreateMap<UpdateMatchRequest, Match>();
+    }
+}
+
+/// <summary>
+/// AutoMapper profile for player statistics.
+/// </summary>
+public class PlayerStatisticProfile : Profile
+{
+    /// <summary>
+    /// Initializes mapping configuration for player statistics.
+    /// </summary>
+    public PlayerStatisticProfile()
+    {
+        _ = CreateMap<CreatePlayerStatisticRequest, PlayerStatistic>();
+
+        _ = CreateMap<PlayerStatistic, PlayerStatisticResponse>()
+                .ReverseMap();
+
+        _ = CreateMap<UpdatePlayerStatisticRequest, PlayerStatistic>();
     }
 }
 

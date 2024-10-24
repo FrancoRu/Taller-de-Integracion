@@ -30,7 +30,7 @@ public interface ITeamService
     /// <param name="team">The team to update.</param>
     /// <param name="userId">The id of the user updating the team.</param>
     /// <returns>A boolean indicating whether the update was successful.</returns>
-    Task<bool> UpdateTeam(Team teamEntity);
+    Task<bool> UpdateTeamAsync(Team teamEntity);
 
     /// <summary>
     /// Deletes a team.
@@ -43,5 +43,5 @@ public interface ITeamService
     /// </summary>
     /// <param name="filter">The filtering criteria.</param>
     /// <returns>A paginated response containing the filtered teams.</returns>
-    Task<PaginatedResponse<Team>> GetTeamsAsync(GetTeamsFilteredRequest filter);
+    Task<PaginatedResponse<Team>> GetAllTeamsAsync(GetTeamsFilteredRequest filter);
 }

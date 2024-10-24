@@ -95,7 +95,7 @@ public class TournamentController(
         }
 
         _mapper.Map(tournamentRequest, existingTournament);
-        bool updateResult = await _tournamentService.UpdateTournament(existingTournament);
+        bool updateResult = await _tournamentService.UpdateTournamentAsync(existingTournament);
 
         return !updateResult ? BadRequest("Failed to update the tournament.") : Ok();
     }

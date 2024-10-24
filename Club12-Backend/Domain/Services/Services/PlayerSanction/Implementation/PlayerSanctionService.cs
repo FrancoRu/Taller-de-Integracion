@@ -1,31 +1,34 @@
 ﻿using Entities.DTOs.Abstract;
 using Entities.DTOs.PlayerSanction;
 using Entities.Models.PlayerSanctionEntity;
+
 using Microsoft.EntityFrameworkCore;
+
 using Services.DataAccessLayer.GenericEntity;
 using Services.Services.PlayerSanctionService;
 using Services.Utils.OrderFiltering;
+
 using System.Linq.Expressions;
 
 namespace Club12.Services.Services.PlayerSanctionService.Implementation;
 
 public class PlayerSanctionService(IGenericService<PlayerSanction> genericPlayerSanctionService) : IPlayerSanctionService
 {
-    public async Task<PlayerSanction> CreatePlayerSanctionAsync(PlayerSanction playerSanctionEntity)
+    public PlayerSanction CreatePlayerSanction(PlayerSanction playerSanctionEntity)
     {
-        await genericPlayerSanctionService.InsertAsync(playerSanctionEntity);
+        genericPlayerSanctionService.Insert(playerSanctionEntity);
         return playerSanctionEntity;
     }
 
-    public PlayerSanction? GetPlayerSanctionByIdAsync(Guid playerSanctionId)
+    public PlayerSanction? GetPlayerSanctionById(Guid playerSanctionId)
     {
         return genericPlayerSanctionService.TryGet(playerSanctionId);
     }
 
 
-    public async Task DeletePlayerSanctionAsync(PlayerSanction playerSanctionEntity)
+    public void DeletePlayerSanction(PlayerSanction playerSanctionEntity)
     {
-        await genericPlayerSanctionService.DeleteAsync(playerSanctionEntity);
+        genericPlayerSanctionService.DeleteAsync(playerSanctionEntity);
     }
 
 

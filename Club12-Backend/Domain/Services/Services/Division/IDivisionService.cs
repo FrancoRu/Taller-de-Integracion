@@ -36,7 +36,7 @@ public interface IDivisionService
     /// <param name="divisionEntity">The division to update.</param>
     /// <param name="userId">The ID of the user updating the division.</param>
     /// <returns>A boolean indicating whether the update was successful.</returns>
-    Task<bool> UpdateDivision(Division divisionEntity);
+    Task<bool> UpdateDivisionAsync(Division divisionEntity);
 
     /// <summary>
     /// Retrieves divisions with pagination and filtering.

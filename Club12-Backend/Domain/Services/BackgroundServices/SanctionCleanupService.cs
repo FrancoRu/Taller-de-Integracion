@@ -1,6 +1,8 @@
 ﻿using Entities.Models.PlayerSanctionEntity;
+
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+
 using Services.Services.PlayerSanctionService;
 using Services.Services.PlayerService;
 
@@ -46,12 +48,12 @@ public class SanctionCleanupService(
             {
                 await Task.WhenAll(expiredSanctions.Select(async sanction =>
                 {
-                    await playerSanctionGenericService.DeletePlayerSanctionAsync(sanction);
+                    playerSanctionGenericService.DeletePlayerSanction(sanction);
 
                     if (sanction.Player is not null)
                     {
                         sanction.Player.IsSanctioned = false;
-                        await playerGenericService.UpdatePlayer(sanction.Player);
+                        await playerGenericService.UpdatePlayerAsync(sanction.Player);
                     }
                 }));
 

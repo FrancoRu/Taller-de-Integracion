@@ -1,10 +1,13 @@
 ﻿using AutoMapper;
+
 using Entities.DTOs.Abstract;
 using Entities.DTOs.Player;
 using Entities.Models.PlayerEntity;
 using Entities.Models.TeamEntity;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+
 using Services.Services.PlayerService;
 using Services.Services.TeamService;
 
@@ -107,7 +110,7 @@ public class PlayerController(
         }
 
         _mapper.Map(playerRequest, existingPlayer);
-        bool updateResult = await _playerService.UpdatePlayer(existingPlayer);
+        bool updateResult = await _playerService.UpdatePlayerAsync(existingPlayer);
 
         return !updateResult ? BadRequest("Failed to update the player.") : Ok();
     }
