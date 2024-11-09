@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from 'axios'
+import axios, { AxiosError, AxiosResponse } from 'axios'
 import jsCookie from 'js-cookie'
 import envVariables from '../constants/envVariables'
 const TOKEN_KEY = 'Club12_SignInToken'
@@ -84,7 +84,6 @@ const sendRequest = async (
 ) => {
 	const headers = getHeaders(configOverride)
 	const url = buildEndpoint(resource)
-
 	let response: AxiosResponse | null = null
 
 	try {
@@ -94,11 +93,10 @@ const sendRequest = async (
 			headers,
 			data: body
 		})
-		response = result
-		return buildResponse(result)
+		return result
 	} catch (error: any) {
-		response = error.response
-		throw error
+		throw new AxiosError(error)
+		// response = error.response
 	} finally {
 		if (response !== null) {
 			const statusCode: number = (response as AxiosResponse).status
@@ -122,11 +120,11 @@ export const sendPost = async (
 	configOverride?: ConfigOverride
 ) => {
 	// TODO call sendRequest
-	const headers = getHeaders(configOverride)
-	const url = buildEndpoint(resource)
-	const result = await axios.post(url, body, { headers })
+	// const headers = getHeaders(configOverride)
+	// const url = buildEndpoint(resource)
+	const result = await sendRequest('POST', resource, configOverride, body) //axios.post(url, body, { headers })
 
-	return buildResponse(result)
+	return result
 }
 
 export const sendPut = async (

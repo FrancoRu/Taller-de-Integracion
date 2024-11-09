@@ -17,12 +17,12 @@ namespace Persistance.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.2")
+                .HasAnnotation("ProductVersion", "8.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Club12.Entities.DivisionEntity.Division", b =>
+            modelBuilder.Entity("Entities.Models.DivisionEntity.Division", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -36,16 +36,25 @@ namespace Persistance.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("DateUpdated");
 
+                    b.Property<bool>("IsFinished")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<Guid>("TournamentId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TournamentId");
 
                     b.ToTable("Divisions", "Club12");
                 });
 
-            modelBuilder.Entity("Club12.Entities.MatchEntity.Match", b =>
+            modelBuilder.Entity("Entities.Models.MatchEntity.Match", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -59,27 +68,47 @@ namespace Persistance.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("DateUpdated");
 
-                    b.Property<int>("HomeScore")
+                    b.Property<Guid>("DivisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("HomeScore")
                         .HasColumnType("integer");
 
                     b.Property<Guid>("HomeTeamId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("IsFinished")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime>("MatchDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("VisitorScore")
+                    b.Property<int>("MatchWeek")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("VenueId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("VisitorScore")
                         .HasColumnType("integer");
 
                     b.Property<Guid>("VisitorTeamId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("WinningTeamId")
+                    b.Property<Guid?>("WinningTeamId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DivisionId");
+
                     b.HasIndex("HomeTeamId");
+
+                    b.HasIndex("VenueId");
 
                     b.HasIndex("VisitorTeamId");
 
@@ -88,7 +117,7 @@ namespace Persistance.Migrations
                     b.ToTable("Matches", "Club12");
                 });
 
-            modelBuilder.Entity("Club12.Entities.PlayerEntity.Player", b =>
+            modelBuilder.Entity("Entities.Models.PlayerEntity.Player", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -102,22 +131,31 @@ namespace Persistance.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("DateUpdated");
 
-                    b.Property<double>("Height")
-                        .HasColumnType("double precision");
+                    b.Property<string>("DocumentNumber")
+                        .IsRequired()
+                        .HasMaxLength(11)
+                        .HasColumnType("character varying(11)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(35)
+                        .HasColumnType("character varying(35)");
+
+                    b.Property<bool>("IsSanctioned")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("LastName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(35)
+                        .HasColumnType("character varying(35)");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("SecondName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(35)
+                        .HasColumnType("character varying(35)");
 
                     b.Property<Guid>("TeamId")
                         .HasColumnType("uuid");
-
-                    b.Property<double>("Weight")
-                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 
@@ -126,7 +164,42 @@ namespace Persistance.Migrations
                     b.ToTable("Players", "Club12");
                 });
 
-            modelBuilder.Entity("Club12.Entities.PlayersStatisticEntity.PlayerStatistic", b =>
+            modelBuilder.Entity("Entities.Models.PlayerSanctionEntity.PlayerSanction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DateCreated");
+
+                    b.Property<DateTime?>("DateUpdated")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DateUpdated");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<int>("Duration")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("IssuedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("PlayerId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlayerId");
+
+                    b.ToTable("PlayerSanctions", "Club12");
+                });
+
+            modelBuilder.Entity("Entities.Models.PlayerStatisticEntity.PlayerStatistic", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -146,11 +219,8 @@ namespace Persistance.Migrations
                     b.Property<Guid>("PlayerId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("StatisticId")
-                        .HasColumnType("uuid");
-
-                    b.Property<double>("Value")
-                        .HasColumnType("double precision");
+                    b.Property<int>("Value")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -158,129 +228,10 @@ namespace Persistance.Migrations
 
                     b.HasIndex("PlayerId");
 
-                    b.HasIndex("StatisticId");
-
                     b.ToTable("PlayersStatistics", "Club12");
                 });
 
-            modelBuilder.Entity("Club12.Entities.SancitonEntity.Sanction", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("DateCreated");
-
-                    b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("DateUpdated");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Sanctions", "Club12");
-                });
-
-            modelBuilder.Entity("Club12.Entities.SanctionPlayerEntity.SanctionPlayer", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("DateCreated");
-
-                    b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("DateUpdated");
-
-                    b.Property<int>("Duration")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("IssuedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("PlayerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("SanctionId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PlayerId");
-
-                    b.HasIndex("SanctionId");
-
-                    b.ToTable("SanctionPlayers", "Club12");
-                });
-
-            modelBuilder.Entity("Club12.Entities.StandingSummaryEntity.StandingSummary", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("DateCreated");
-
-                    b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("DateUpdated");
-
-                    b.Property<int>("Position")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("TeamId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("TournamentId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TeamId");
-
-                    b.HasIndex("TournamentId");
-
-                    b.ToTable("StandingsSummaries", "Club12");
-                });
-
-            modelBuilder.Entity("Club12.Entities.StatisticEntity.Statistic", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("DateCreated");
-
-                    b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("DateUpdated");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Statistics", "Club12");
-                });
-
-            modelBuilder.Entity("Club12.Entities.TeamEntity.Team", b =>
+            modelBuilder.Entity("Entities.Models.TeamEntity.Team", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -297,6 +248,10 @@ namespace Persistance.Migrations
                     b.Property<Guid>("DivisionId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("LogoUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -312,7 +267,7 @@ namespace Persistance.Migrations
                     b.ToTable("Teams", "Club12");
                 });
 
-            modelBuilder.Entity("Club12.Entities.TournamentEntity.Tournament", b =>
+            modelBuilder.Entity("Entities.Models.TournamentEntity.Tournament", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -330,15 +285,16 @@ namespace Persistance.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("Year")
-                        .HasColumnType("integer");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
                     b.ToTable("Tournaments", "Club12");
                 });
 
-            modelBuilder.Entity("Club12.Entities.UserEntity.User", b =>
+            modelBuilder.Entity("Entities.Models.UserEntity.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -352,7 +308,7 @@ namespace Persistance.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("DateUpdated");
 
-                    b.Property<string>("PasswordHashed")
+                    b.Property<string>("Password")
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
@@ -362,7 +318,7 @@ namespace Persistance.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
-                    b.Property<string>("UserName")
+                    b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(25)
                         .HasColumnType("character varying(25)");
@@ -372,36 +328,91 @@ namespace Persistance.Migrations
                     b.ToTable("Users", "Club12");
                 });
 
-            modelBuilder.Entity("Club12.Entities.MatchEntity.Match", b =>
+            modelBuilder.Entity("Entities.Models.VenueEntity.Venue", b =>
                 {
-                    b.HasOne("Club12.Entities.TeamEntity.Team", "HomeTeam")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DateCreated");
+
+                    b.Property<DateTime?>("DateUpdated")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DateUpdated");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PhotoUrl")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Venues", "Club12");
+                });
+
+            modelBuilder.Entity("Entities.Models.DivisionEntity.Division", b =>
+                {
+                    b.HasOne("Entities.Models.TournamentEntity.Tournament", "Tournament")
+                        .WithMany("Divisions")
+                        .HasForeignKey("TournamentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tournament");
+                });
+
+            modelBuilder.Entity("Entities.Models.MatchEntity.Match", b =>
+                {
+                    b.HasOne("Entities.Models.DivisionEntity.Division", "Division")
+                        .WithMany()
+                        .HasForeignKey("DivisionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.TeamEntity.Team", "HomeTeam")
                         .WithMany()
                         .HasForeignKey("HomeTeamId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Club12.Entities.TeamEntity.Team", "VisitorTeam")
+                    b.HasOne("Entities.Models.VenueEntity.Venue", "Venue")
+                        .WithMany()
+                        .HasForeignKey("VenueId");
+
+                    b.HasOne("Entities.Models.TeamEntity.Team", "VisitorTeam")
                         .WithMany()
                         .HasForeignKey("VisitorTeamId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Club12.Entities.TeamEntity.Team", "WinningTeam")
+                    b.HasOne("Entities.Models.TeamEntity.Team", "WinningTeam")
                         .WithMany()
-                        .HasForeignKey("WinningTeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("WinningTeamId");
+
+                    b.Navigation("Division");
 
                     b.Navigation("HomeTeam");
+
+                    b.Navigation("Venue");
 
                     b.Navigation("VisitorTeam");
 
                     b.Navigation("WinningTeam");
                 });
 
-            modelBuilder.Entity("Club12.Entities.PlayerEntity.Player", b =>
+            modelBuilder.Entity("Entities.Models.PlayerEntity.Player", b =>
                 {
-                    b.HasOne("Club12.Entities.TeamEntity.Team", "Team")
+                    b.HasOne("Entities.Models.TeamEntity.Team", "Team")
                         .WithMany("Players")
                         .HasForeignKey("TeamId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -410,75 +421,40 @@ namespace Persistance.Migrations
                     b.Navigation("Team");
                 });
 
-            modelBuilder.Entity("Club12.Entities.PlayersStatisticEntity.PlayerStatistic", b =>
+            modelBuilder.Entity("Entities.Models.PlayerSanctionEntity.PlayerSanction", b =>
                 {
-                    b.HasOne("Club12.Entities.MatchEntity.Match", "Match")
-                        .WithMany()
-                        .HasForeignKey("MatchId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Club12.Entities.PlayerEntity.Player", "Player")
+                    b.HasOne("Entities.Models.PlayerEntity.Player", "Player")
                         .WithMany()
                         .HasForeignKey("PlayerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Club12.Entities.StatisticEntity.Statistic", "Statistic")
+                    b.Navigation("Player");
+                });
+
+            modelBuilder.Entity("Entities.Models.PlayerStatisticEntity.PlayerStatistic", b =>
+                {
+                    b.HasOne("Entities.Models.MatchEntity.Match", "Match")
                         .WithMany()
-                        .HasForeignKey("StatisticId")
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.PlayerEntity.Player", "Player")
+                        .WithMany()
+                        .HasForeignKey("PlayerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Match");
 
                     b.Navigation("Player");
-
-                    b.Navigation("Statistic");
                 });
 
-            modelBuilder.Entity("Club12.Entities.SanctionPlayerEntity.SanctionPlayer", b =>
+            modelBuilder.Entity("Entities.Models.TeamEntity.Team", b =>
                 {
-                    b.HasOne("Club12.Entities.PlayerEntity.Player", "Player")
-                        .WithMany()
-                        .HasForeignKey("PlayerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Club12.Entities.SancitonEntity.Sanction", "Sanction")
-                        .WithMany()
-                        .HasForeignKey("SanctionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Player");
-
-                    b.Navigation("Sanction");
-                });
-
-            modelBuilder.Entity("Club12.Entities.StandingSummaryEntity.StandingSummary", b =>
-                {
-                    b.HasOne("Club12.Entities.TeamEntity.Team", "Team")
-                        .WithMany()
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Club12.Entities.TournamentEntity.Tournament", "Tournament")
-                        .WithMany()
-                        .HasForeignKey("TournamentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Team");
-
-                    b.Navigation("Tournament");
-                });
-
-            modelBuilder.Entity("Club12.Entities.TeamEntity.Team", b =>
-                {
-                    b.HasOne("Club12.Entities.DivisionEntity.Division", "Division")
-                        .WithMany()
+                    b.HasOne("Entities.Models.DivisionEntity.Division", "Division")
+                        .WithMany("Teams")
                         .HasForeignKey("DivisionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -486,9 +462,19 @@ namespace Persistance.Migrations
                     b.Navigation("Division");
                 });
 
-            modelBuilder.Entity("Club12.Entities.TeamEntity.Team", b =>
+            modelBuilder.Entity("Entities.Models.DivisionEntity.Division", b =>
+                {
+                    b.Navigation("Teams");
+                });
+
+            modelBuilder.Entity("Entities.Models.TeamEntity.Team", b =>
                 {
                     b.Navigation("Players");
+                });
+
+            modelBuilder.Entity("Entities.Models.TournamentEntity.Tournament", b =>
+                {
+                    b.Navigation("Divisions");
                 });
 #pragma warning restore 612, 618
         }

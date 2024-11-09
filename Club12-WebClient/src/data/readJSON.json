@@ -59,11 +59,11 @@
 	"login": [
 		{
 			"id": "userLogin",
-			"name": "email",
+			"name": "userName",
 			"label": "Usuario",
-			"type": "email",
+			"type": "text",
 			"input": {
-				"placeholder": "Ingrese su correo electrónico",
+				"placeholder": "Ingrese su nombre de usuario",
 				"required": true
 			}
 		},
