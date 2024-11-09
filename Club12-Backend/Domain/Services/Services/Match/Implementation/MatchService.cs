@@ -1,4 +1,5 @@
 ﻿using Entities.DTOs.Abstract;
+using Entities.DTOs.Division;
 using Entities.DTOs.Match;
 using Entities.Models.DivisionEntity;
 using Entities.Models.MatchEntity;
@@ -16,17 +17,17 @@ using MatchType = Entities.Models.MatchTypeEnum.MatchType;
 
 namespace Services.Services.MatchService.Implementation;
 
-public class MatchService(IGenericService<Match> genericMatchService) : IMatchService
+public class MatchService(IGenericService<Match> _genericMatchService) : IMatchService
 {
     public Match CreateMatch(Match matchEntity)
     {
-        genericMatchService.Insert(matchEntity);
+        _genericMatchService.Insert(matchEntity);
         return matchEntity;
     }
 
     public Match? GetMatchById(Guid matchId)
     {
-        return genericMatchService.FilterByExpression(match => match.Id == matchId)
+        return _genericMatchService.FilterByExpression(match => match.Id == matchId)
                                   .Include(match => match.HomeTeam)
                                   .Include(match => match.VisitorTeam)
                                   .Include(match => match.Division)
@@ -36,14 +37,14 @@ public class MatchService(IGenericService<Match> genericMatchService) : IMatchSe
 
     public void DeleteMatch(Match matchEntity)
     {
-        genericMatchService.Delete(matchEntity);
+        _genericMatchService.Delete(matchEntity);
     }
 
     public async Task<bool> UpdateMatchAsync(Match matchEntity)
     {
         try
         {
-            await genericMatchService.UpdateAsync(matchEntity);
+            await _genericMatchService.UpdateAsync(matchEntity);
             return true;
         }
         catch
@@ -55,12 +56,12 @@ public class MatchService(IGenericService<Match> genericMatchService) : IMatchSe
     public async Task<PaginatedResponse<Match>> GetAllMatchesAsync(GetMatchesFilteredRequest filter)
     {
         Expression<Func<Match, bool>> expression = QueryableExtensions.ConstructFilterExpression<Match, GetMatchesFilteredRequest>(filter);
-        IQueryable<Match> filteredMatches = genericMatchService.FilterByExpressionWithPagination(expression, filter, match => match.HomeTeam,
+        IQueryable<Match> filteredMatches = _genericMatchService.FilterByExpressionWithPagination(expression, filter, match => match.HomeTeam,
                                                                                                                      match => match.VisitorTeam,
                                                                                                                      match => match.Division,
                                                                                                                      match => match.Venue)
                                                                                                 .SortBy(filter);
-        int totalCount = await genericMatchService.GetCountAsync(expression);
+        int totalCount = await _genericMatchService.GetCountAsync(expression);
 
         return new PaginatedResponse<Match>
         {
@@ -126,7 +127,66 @@ public class MatchService(IGenericService<Match> genericMatchService) : IMatchSe
             matches.AddRange(roundMatches);
         }
 
-        await genericMatchService.InsertRangeAsync(matches);
+        await _genericMatchService.InsertRangeAsync(matches);
     }
 
+    public async Task<List<PositionResponse>> GetPositionsTableAsync(Guid divisionId)
+    {
+        IQueryable<MatchStats> homeMatches = _genericMatchService
+            .FilterByExpression(match => match.DivisionId == divisionId && match.IsFinished)
+            .Select(match => new MatchStats
+            {
+                TeamId = match.HomeTeamId,
+                TeamName = match.HomeTeam.Name,
+                PointsFor = match.HomeScore ?? 0,
+                PointsAgainst = match.VisitorScore ?? 0,
+                IsWin = match.WinningTeamId == match.HomeTeamId,
+                IsLoss = match.WinningTeamId != null && match.WinningTeamId != match.HomeTeamId
+            });
+
+        IQueryable<MatchStats> visitorMatches = _genericMatchService
+            .FilterByExpression(match => match.DivisionId == divisionId && match.IsFinished)
+            .Select(match => new MatchStats
+            {
+                TeamId = match.VisitorTeamId,
+                TeamName = match.VisitorTeam.Name,
+                PointsFor = match.VisitorScore ?? 0,
+                PointsAgainst = match.HomeScore ?? 0,
+                IsWin = match.WinningTeamId == match.VisitorTeamId,
+                IsLoss = match.WinningTeamId != null && match.WinningTeamId != match.VisitorTeamId
+            });
+
+        List<PositionResponse> matchResults = await homeMatches
+            .Union(visitorMatches)
+            .GroupBy(x => new { x.TeamId, x.TeamName })
+            .Select(g => new PositionResponse
+            {
+                TeamId = g.Key.TeamId,
+                TeamName = g.Key.TeamName,
+                MatchesPlayed = g.Count(),
+                Wins = g.Count(x => x.IsWin),
+                Losses = g.Count(x => x.IsLoss),
+                PointsFor = g.Sum(x => x.PointsFor),
+                PointsAgainst = g.Sum(x => x.PointsAgainst),
+                PointsDifference = g.Sum(x => x.PointsFor - x.PointsAgainst),
+                Points = (g.Count(x => x.IsWin) * 2) + g.Count(x => x.IsLoss)
+            })
+            .OrderByDescending(x => x.Points)
+            .ThenByDescending(x => x.PointsDifference)
+            .ThenByDescending(x => x.PointsFor)
+            .ThenByDescending(x => x.Wins)
+            .ToListAsync();
+
+        return matchResults;
+    }
+}
+
+public class MatchStats
+{
+    public Guid TeamId { get; set; }
+    public required string TeamName { get; set; }
+    public int PointsFor { get; set; }
+    public int PointsAgainst { get; set; }
+    public bool IsWin { get; set; }
+    public bool IsLoss { get; set; }
 }

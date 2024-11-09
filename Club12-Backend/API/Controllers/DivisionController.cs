@@ -176,4 +176,30 @@ public class DivisionController(
 
         return Ok("Fixture generated successfully.");
     }
+
+    /// <summary>
+    /// Retrieves the positions table for a specified division.
+    /// </summary>
+    /// <param name="divisionId">The ID of the division.</param>
+    /// <returns>The positions table with team statistics for the division.</returns>
+    [HttpGet("{divisionId:guid}/positions")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<PositionResponse>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<List<PositionResponse>>> GetPositionsTable(Guid divisionId)
+    {
+        Division? division = _divisionService.GetDivisionById(divisionId);
+
+        if (division is null)
+        {
+            return BadRequest($"Division with id {divisionId} not found.");
+        }
+
+        List<PositionResponse> positions = await _matchService.GetPositionsTableAsync(divisionId);
+
+        return Ok(positions);
+    }
+
 }
+
+

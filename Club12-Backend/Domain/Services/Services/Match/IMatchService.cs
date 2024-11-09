@@ -1,4 +1,5 @@
 ﻿using Entities.DTOs.Abstract;
+using Entities.DTOs.Division;
 using Entities.DTOs.Match;
 using Entities.Models.DivisionEntity;
 using Entities.Models.MatchEntity;
@@ -50,4 +51,11 @@ public interface IMatchService
     /// <param name="division">The division for which the fixture should be generated.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     Task GenerateFixtureAsync(Division division);
+
+    /// <summary>
+    /// Gets the positions table for the specified division.
+    /// </summary>
+    /// <param name="divisionId"></param>
+    /// <returns></returns>
+    Task<List<PositionResponse>> GetPositionsTableAsync(Guid divisionId);
 }
