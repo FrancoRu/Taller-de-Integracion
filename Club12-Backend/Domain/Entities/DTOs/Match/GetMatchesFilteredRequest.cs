@@ -1,5 +1,7 @@
 ﻿using Entities.DTOs.Abstract;
 
+using MatchType = Entities.Models.MatchTypeEnum.MatchType;
+
 namespace Entities.DTOs.Match;
 
 /// <summary>

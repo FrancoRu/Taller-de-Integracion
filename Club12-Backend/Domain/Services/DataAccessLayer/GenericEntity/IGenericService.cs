@@ -127,7 +127,7 @@ public interface IGenericService<TEntity> where TEntity : EntityBase
     /// <param name="paginationRequest">The pagination request containing the page number and page size.</param>
     /// <param name="includes">An optional array of expressions to specify related entities to include in the query.</param>
     /// <returns>A queryable collection of filtered entities, paginated according to the provided pagination request.</returns>
-    IQueryable<TEntity> FilterByExpressionWithPagination(Expression<Func<TEntity, bool>> expression, IPaginationRequest paginationRequest, params Expression<Func<TEntity, object>>[] includes);
+    IQueryable<TEntity> FilterByExpressionWithPagination(Expression<Func<TEntity, bool>> expression, IPaginationRequest paginationRequest, params Expression<Func<TEntity, object?>>[] includes);
 
     /// <summary>
     /// Filters entities based on the specified expression.
@@ -142,4 +142,11 @@ public interface IGenericService<TEntity> where TEntity : EntityBase
     /// <param name="predicate"></param>
     /// <returns></returns>
     Task<int> GetCountAsync(Expression<Func<TEntity, bool>> predicate);
+
+    /// <summary>
+    /// Asynchronously inserts a range of entities.
+    /// </summary>
+    /// <param name="entities">The collection of entities to be inserted asynchronously.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    Task InsertRangeAsync(ICollection<TEntity> entities);
 }

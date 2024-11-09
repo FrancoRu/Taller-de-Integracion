@@ -1,5 +1,7 @@
-﻿using Entities.Models.TeamEntity;
+﻿using Entities.Models.MatchEntity;
+using Entities.Models.TeamEntity;
 using Entities.Models.TournamentEntity;
+
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -42,4 +44,9 @@ public class Division : EntityBase
     /// The list of teams in this division.
     /// </summary>
     public virtual required ICollection<Team> Teams { get; set; }
+
+    /// <summary>
+    /// The list of matches in this division.
+    /// </summary>
+    public virtual required ICollection<Match> Matches { get; set; }
 }

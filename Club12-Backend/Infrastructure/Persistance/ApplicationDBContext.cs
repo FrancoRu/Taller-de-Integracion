@@ -7,7 +7,11 @@ using Entities.Models.PlayerStatisticEntity;
 using Entities.Models.TeamEntity;
 using Entities.Models.TournamentEntity;
 using Entities.Models.UserEntity;
+using Entities.Models.VenueEntity;
+
 using Microsoft.EntityFrameworkCore;
+
+using MatchType = Entities.Models.MatchTypeEnum.MatchType;
 
 namespace Persistence;
 
@@ -27,7 +31,7 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
             .Property(match => match.Type)
             .HasConversion(
                 value => value.ToString(),
-                value => (MatchType)Enum.Parse(typeof(MatchType), value));
+                value => (MatchType) Enum.Parse(typeof(MatchType), value));
 
         modelBuilder.Entity<Team>()
             .HasMany(team => team.Players)
@@ -53,4 +57,6 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
     public virtual DbSet<PlayerSanction> PlayerSanctions { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
+
+    public virtual DbSet<Venue> Venues { get; set; }
 }

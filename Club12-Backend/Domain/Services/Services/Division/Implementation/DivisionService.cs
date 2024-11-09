@@ -1,9 +1,12 @@
 ﻿using Entities.DTOs.Abstract;
 using Entities.DTOs.Division;
 using Entities.Models.DivisionEntity;
+
 using Microsoft.EntityFrameworkCore;
+
 using Services.DataAccessLayer.GenericEntity;
 using Services.Utils.OrderFiltering;
+
 using System.Linq.Expressions;
 
 namespace Services.Services.DivisionService.Implementation;
@@ -44,7 +47,9 @@ public class DivisionService(IGenericService<Division> genericDivisionService) :
     public async Task<PaginatedResponse<Division>> GetAllDivisionsAsync(GetDivisionsFilteredRequest filter)
     {
         Expression<Func<Division, bool>> expression = QueryableExtensions.ConstructFilterExpression<Division, GetDivisionsFilteredRequest>(filter);
-        IQueryable<Division> filteredDivisions = genericDivisionService.FilterByExpressionWithPagination(expression, filter, division => division.Teams).SortBy(filter);
+        IQueryable<Division> filteredDivisions = genericDivisionService.FilterByExpressionWithPagination(expression, filter, division => division.Teams,
+                                                                                                                             division => division.Matches)
+                                                                                                                                         .SortBy(filter);
         int totalCount = await genericDivisionService.GetCountAsync(expression);
 
         return new PaginatedResponse<Division>

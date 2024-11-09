@@ -1,5 +1,6 @@
 ﻿using Entities.DTOs.Abstract;
 using Entities.DTOs.Match;
+using Entities.Models.DivisionEntity;
 using Entities.Models.MatchEntity;
 
 namespace Services.Services.MatchService;
@@ -42,4 +43,11 @@ public interface IMatchService
     /// <param name="filter">The filtering criteria.</param>
     /// <returns>A paginated response containing the filtered matches.</returns>
     Task<PaginatedResponse<Match>> GetAllMatchesAsync(GetMatchesFilteredRequest filter);
+
+    /// <summary>
+    /// Generates the fixture (matches) for the specified division.
+    /// </summary>
+    /// <param name="division">The division for which the fixture should be generated.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    Task GenerateFixtureAsync(Division division);
 }

@@ -1,4 +1,5 @@
 ﻿using Entities.DTOs.Abstract;
+using Entities.DTOs.Match;
 using Entities.DTOs.Team;
 
 namespace Entities.DTOs.Division;
@@ -27,4 +28,9 @@ public class DivisionResponse : BaseEntityResponse
     /// The Id of the tournament this division belongs to.
     /// </summary>
     public required Guid TournamentId { get; set; }
+
+    /// <summary>
+    /// The matches in the division.
+    /// </summary>
+    public required IEnumerable<MatchResponse> Matches { get; set; }
 }

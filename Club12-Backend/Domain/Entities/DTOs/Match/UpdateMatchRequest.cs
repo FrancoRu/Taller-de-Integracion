@@ -12,4 +12,9 @@ public class UpdateMatchRequest
     /// </summary>
     [Required]
     public required DateTime MatchDate { get; set; }
+
+    /// <summary>
+    /// The id of the venue where the match will be played.
+    /// </summary>
+    public Guid? VenueId { get; set; }
 }

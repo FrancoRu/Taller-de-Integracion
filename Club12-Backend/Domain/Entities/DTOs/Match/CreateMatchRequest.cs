@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
+using MatchType = Entities.Models.MatchTypeEnum.MatchType;
+
 namespace Entities.DTOs.Match;
 
 /// <summary>
@@ -16,8 +18,13 @@ public class CreateMatchRequest
     /// <summary>
     /// The type of the match (e.g., regular or playoff).
     /// </summary>
-    [Required(ErrorMessage = "The Type field is required.")]
-    public required MatchType Type { get; set; }
+    public MatchType? Type { get; set; } = MatchType.Regular;
+
+    /// <summary>
+    /// Represents the week number of the match in the fixture.
+    /// </summary>
+    [Required]
+    public required int MatchWeek { get; set; }
 
     /// <summary>
     /// The unique identifier of the home team.
@@ -36,4 +43,9 @@ public class CreateMatchRequest
     /// </summary>
     [Required(ErrorMessage = "The DivisionId field is required.")]
     public required Guid DivisionId { get; set; }
+
+    /// <summary>
+    /// The unique identifier of the venue where the match will be played.
+    /// </summary>    
+    public Guid? VenueId { get; set; }
 }

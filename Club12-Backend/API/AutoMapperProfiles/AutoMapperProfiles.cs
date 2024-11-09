@@ -7,12 +7,14 @@ using Entities.DTOs.Player;
 using Entities.DTOs.PlayerStatistic;
 using Entities.DTOs.Team;
 using Entities.DTOs.Tournament;
+using Entities.DTOs.Venue;
 using Entities.Models.DivisionEntity;
 using Entities.Models.MatchEntity;
 using Entities.Models.PlayerEntity;
 using Entities.Models.PlayerStatisticEntity;
 using Entities.Models.TeamEntity;
 using Entities.Models.TournamentEntity;
+using Entities.Models.VenueEntity;
 
 namespace Club12.API.AutoMapperProfiles;
 
@@ -29,9 +31,11 @@ public class TeamProfile : Profile
         _ = CreateMap<Team, TeamResponse>()
                 .ReverseMap();
 
-        _ = CreateMap<CreateTeamRequest, Team>();
+        _ = CreateMap<CreateTeamRequest, Team>()
+            .ForMember(dest => dest.ThreeLetterCode, opt => opt.MapFrom(src => src.ThreeLetterCode.ToUpper()));
 
-        _ = CreateMap<UpdateTeamRequest, Team>();
+        _ = CreateMap<UpdateTeamRequest, Team>()
+            .ForMember(dest => dest.ThreeLetterCode, opt => opt.MapFrom(src => src.ThreeLetterCode.ToUpper()));
     }
 }
 
@@ -117,6 +121,25 @@ public class MatchProfile : Profile
                 .ForMember(dest => dest.VisitorScore, opt => opt.MapFrom(src => src.VisitorScore));
 
         _ = CreateMap<UpdateMatchRequest, Match>();
+    }
+}
+
+/// <summary>
+/// AutoMapper profile for venue mappings.
+/// </summary>
+public class VenueProfile : Profile
+{
+    /// <summary>
+    /// Initializes mapping configuration for venue entities.
+    /// </summary>
+    public VenueProfile()
+    {
+        _ = CreateMap<Venue, VenueResponse>()
+                .ReverseMap();
+
+        _ = CreateMap<CreateVenueRequest, Venue>();
+
+        _ = CreateMap<UpdateVenueRequest, Venue>();
     }
 }
 

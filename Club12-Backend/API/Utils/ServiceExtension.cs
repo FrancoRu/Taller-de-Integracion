@@ -10,7 +10,9 @@ using Entities.Models.PlayerStatisticEntity;
 using Entities.Models.TeamEntity;
 using Entities.Models.TournamentEntity;
 using Entities.Models.UserEntity;
+using Entities.Models.VenueEntity;
 
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -34,6 +36,8 @@ using Services.Services.TournamentService;
 using Services.Services.TournamentService.Implementation;
 using Services.Services.UserService;
 using Services.Services.UserService.Implementation;
+using Services.Services.VenueService;
+using Services.Services.VenueService.Implementation;
 using Services.Utils;
 using Services.Utils.Cloudfare;
 using Services.Utils.Excel;
@@ -79,10 +83,14 @@ public static class ServiceExtension
         collection.AddScoped<ITournamentService, TournamentService>();
         collection.AddScoped<IGenericService<User>, GenericService<User>>();
         collection.AddScoped<IUserService, UserService>();
+        collection.AddScoped<IGenericService<Venue>, GenericService<Venue>>();
+        collection.AddScoped<IVenueService, VenueService>();
         collection.AddScoped<ICloudflareService, CloudflareService>();
         collection.AddScoped<IExcelService, ExcelService>();
         collection.AddHostedService<SanctionCleanupService>();
-        collection.AddProblemDetails().AddExceptionHandler<GlobalHandlerException>();
+        collection.AddSingleton<IExceptionHandler, GlobalHandlerException>();
+        collection.AddProblemDetails()
+                  .AddExceptionHandler<GlobalHandlerException>();
     }
 
     /// <summary>

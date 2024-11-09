@@ -1,8 +1,12 @@
 ﻿using Entities.Models.DivisionEntity;
 using Entities.Models.TeamEntity;
+using Entities.Models.VenueEntity;
+
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+
+using MatchType = Entities.Models.MatchTypeEnum.MatchType;
 
 namespace Entities.Models.MatchEntity;
 
@@ -23,6 +27,12 @@ public class Match : EntityBase
     /// </summary>
     [Required]
     public required MatchType Type { get; set; }
+
+    /// <summary>
+    /// Represents the week number of the match in the fixture.
+    /// </summary>
+    [Required]
+    public required int MatchWeek { get; set; }
 
     /// <summary>
     /// Represents the home team in the match.
@@ -86,4 +96,15 @@ public class Match : EntityBase
     /// Division Id the match belongs to.
     /// </summary>
     public Guid DivisionId { get; set; }
+
+    /// <summary>
+    /// Represents the venue where the match is played.
+    /// </summary>
+    [Column("VenueId")]
+    public Venue? Venue { get; set; }
+
+    /// <summary>
+    /// Represents the ID of the venue.
+    /// </summary>
+    public Guid? VenueId { get; set; }
 }

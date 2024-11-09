@@ -6,6 +6,8 @@ using Entities.Models.PlayerStatisticEntity;
 using Entities.Models.TeamEntity;
 using Entities.Models.TournamentEntity;
 using Entities.Models.UserEntity;
+using Entities.Models.VenueEntity;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace Entities;
@@ -55,4 +57,9 @@ public interface IClub12DBContext
     /// <see cref="DbSet{User}"/> of users in the system.
     /// </summary>
     DbSet<User> Users { get; set; }
+
+    /// <summary>
+    /// <see cref="DbSet{Venue}"/> of venues in the system.
+    /// </summary>
+    DbSet<Venue> Venues { get; }
 }

@@ -1,4 +1,7 @@
 ﻿using Entities.DTOs.Abstract;
+using Entities.DTOs.Venue;
+
+using MatchType = Entities.Models.MatchTypeEnum.MatchType;
 
 namespace Entities.DTOs.Match;
 
@@ -16,6 +19,11 @@ public class MatchResponse : BaseEntityResponse
     /// The type of the match (e.g., regular or playoff).
     /// </summary>
     public required MatchType Type { get; set; }
+
+    /// <summary>
+    /// Represents the week number of the match in the fixture.
+    /// </summary>
+    public required int MatchWeek { get; set; }
 
     /// <summary>
     /// The unique identifier of the home team.
@@ -56,4 +64,9 @@ public class MatchResponse : BaseEntityResponse
     /// The name of the winning team, if available.
     /// </summary>
     public string? WinningTeamName { get; set; }
+
+    /// <summary>
+    /// The venue where the match is played.
+    /// </summary>
+    public VenueResponse? Venue { get; set; }
 }

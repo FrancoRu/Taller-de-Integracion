@@ -1,8 +1,12 @@
 ﻿using Entities;
 using Entities.DTOs.Abstract;
+
 using Microsoft.EntityFrameworkCore;
+
 using Persistence;
+
 using Services.Utils.OrderFiltering;
+
 using System.Linq.Expressions;
 
 namespace Services.DataAccessLayer.GenericEntity.Implementation;
@@ -133,18 +137,17 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
     public IQueryable<TEntity> FilterByExpressionWithPagination(
     Expression<Func<TEntity, bool>> expression,
     IPaginationRequest paginationRequest,
-    params Expression<Func<TEntity, object>>[] includes)
+    params Expression<Func<TEntity, object?>>[] includes)
     {
         IQueryable<TEntity> query = genericDao.Where(expression);
 
-        foreach (Expression<Func<TEntity, object>> include in includes)
+        foreach (Expression<Func<TEntity, object?>> include in includes)
         {
             query = query.Include(include);
         }
 
         return query.Paginate(paginationRequest.PageNumber, paginationRequest.PageSize);
     }
-
 
     public IQueryable<TEntity> FilterByExpression(Expression<Func<TEntity, bool>> expression)
     {
@@ -154,5 +157,19 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
     public async Task<int> GetCountAsync(Expression<Func<TEntity, bool>> predicate)
     {
         return await genericDao.Where(predicate).AsNoTracking().CountAsync();
+    }
+
+    public virtual async Task InsertRangeAsync(ICollection<TEntity> entities)
+    {
+        if (entities.Count is 0) return;
+
+        foreach (TEntity entity in entities)
+        {
+            entity.DateCreated = DateTime.UtcNow;
+            entity.DateUpdated = DateTime.UtcNow;
+        }
+
+        await genericDao.InsertAsync(entities);
+        await genericDao.SaveAsync();
     }
 }

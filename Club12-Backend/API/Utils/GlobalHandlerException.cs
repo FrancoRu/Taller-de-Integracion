@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
+
 using System.Diagnostics;
 
 namespace Club12.API.Utils;
@@ -9,8 +10,7 @@ namespace Club12.API.Utils;
 /// <remarks>
 /// Initializes a new instance of the <see cref="GlobalHandlerException"/> class.
 /// </remarks>
-/// <param name="logger">The logger to log exceptions.</param>
-/// <exception cref="ArgumentNullException">Thrown when the logger is null.</exception>
+/// <param name="logger"></param>
 public class GlobalHandlerException(ILogger<GlobalHandlerException> logger) : IExceptionHandler
 {
 

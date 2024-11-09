@@ -1,10 +1,14 @@
 ﻿using AutoMapper;
+
 using Entities.DTOs.Abstract;
 using Entities.DTOs.Division;
 using Entities.Models.DivisionEntity;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+
 using Services.Services.DivisionService;
+using Services.Services.MatchService;
 
 namespace Club12.API.Controllers;
 
@@ -15,12 +19,14 @@ namespace Club12.API.Controllers;
 /// Initializes a new instance of the <see cref="DivisionController"/> class.
 /// </remarks>
 /// <param name="_divisionService">The division service.</param>
+/// <param name="_matchService">The match service.</param>
 /// <param name="_mapper">The AutoMapper instance.</param>
 [Authorize(Roles = "SuperAdmin")]
 [Route("api/divisions/")]
 [ApiController]
 public class DivisionController(
     IDivisionService _divisionService,
+    IMatchService _matchService,
     IMapper _mapper
     ) : ControllerBase
 {
@@ -143,4 +149,31 @@ public class DivisionController(
         return Ok(response);
     }
 
+    /// <summary>
+    /// Generates the fixture (matches) for the specified division.
+    /// </summary>
+    /// <param name="divisionId">The ID of the division for which to generate the fixture.</param>
+    /// <returns>Returns 200 (Ok) if the fixture is successfully generated.
+    /// <para>Returns 400 (Bad Request) if the division with the specified ID does not exist.</para></returns>
+    [HttpPost("{divisionId:guid}/generate-fixture")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GenerateFixtureForDivision(Guid divisionId)
+    {
+        Division? division = _divisionService.GetDivisionById(divisionId);
+
+        if (division is null)
+        {
+            return BadRequest($"Division with id {divisionId} not found.");
+        }
+
+        if (division.IsFinished)
+        {
+            return BadRequest("Division is already finished.");
+        }
+
+        await _matchService.GenerateFixtureAsync(division);
+
+        return Ok("Fixture generated successfully.");
+    }
 }
