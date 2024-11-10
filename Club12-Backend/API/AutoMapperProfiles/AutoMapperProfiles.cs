@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 
 using Entities.DTOs.Abstract;
+using Entities.DTOs.BlogPost;
 using Entities.DTOs.Division;
 using Entities.DTOs.Match;
 using Entities.DTOs.Player;
@@ -8,6 +9,7 @@ using Entities.DTOs.PlayerStatistic;
 using Entities.DTOs.Team;
 using Entities.DTOs.Tournament;
 using Entities.DTOs.Venue;
+using Entities.Models.BlogPostEntity;
 using Entities.Models.DivisionEntity;
 using Entities.Models.MatchEntity;
 using Entities.Models.PlayerEntity;
@@ -35,7 +37,7 @@ public class TeamProfile : Profile
             .ForMember(dest => dest.ThreeLetterCode, opt => opt.MapFrom(src => src.ThreeLetterCode.ToUpper()));
 
         _ = CreateMap<UpdateTeamRequest, Team>()
-            .ForMember(dest => dest.ThreeLetterCode, opt => opt.MapFrom(src => src.ThreeLetterCode.ToUpper()));
+            .ForMember(dest => dest.ThreeLetterCode, opt => opt.MapFrom(src => src.ThreeLetterCode != null ? src.ThreeLetterCode.ToUpper() : null));
     }
 }
 
@@ -159,6 +161,25 @@ public class PlayerStatisticProfile : Profile
                 .ReverseMap();
 
         _ = CreateMap<UpdatePlayerStatisticRequest, PlayerStatistic>();
+    }
+}
+
+/// <summary>
+/// AutoMapper profile for blog post mappings.
+/// </summary>
+public class BlogPostProfile : Profile
+{
+    /// <summary>
+    /// Initializes mapping configuration for blog post entities.
+    /// </summary>
+    public BlogPostProfile()
+    {
+        _ = CreateMap<CreateBlogPostRequest, BlogPost>();
+
+        _ = CreateMap<BlogPost, BlogPostResponse>()
+            .ReverseMap();
+
+        _ = CreateMap<UpdateBlogPostRequest, BlogPost>();
     }
 }
 

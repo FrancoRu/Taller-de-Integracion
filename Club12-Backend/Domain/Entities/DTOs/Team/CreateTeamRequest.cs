@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+
 using System.ComponentModel.DataAnnotations;
 
 namespace Entities.DTOs.Team;
@@ -20,6 +21,12 @@ public class CreateTeamRequest
     [Required(ErrorMessage = "The Three-letter code field is required.")]
     [MaxLength(3)]
     public required string ThreeLetterCode { get; init; }
+
+    /// <summary>
+    /// The color of the team's shirt.
+    /// </summary>
+    [Required(ErrorMessage = "The ShirtColor field is required")]
+    public required string ShirtColor { get; set; }
 
     /// <summary>
     /// The unique identifier of the division to which the team belongs.

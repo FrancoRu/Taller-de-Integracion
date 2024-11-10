@@ -31,7 +31,7 @@ public class Division : EntityBase
     /// <summary>
     /// The tournament this division belongs to.
     /// </summary>
-    [Column("TournamentId")]
+    [Column(nameof(TournamentId))]
     [Required]
     public required Tournament Tournament { get; set; }
 

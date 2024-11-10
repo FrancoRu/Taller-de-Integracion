@@ -1,8 +1,10 @@
-﻿using Entities.Models.DivisionEntity;
+﻿using Entities.Models.BlogPostEntity;
+using Entities.Models.DivisionEntity;
 using Entities.Models.MatchEntity;
 using Entities.Models.PlayerEntity;
 using Entities.Models.PlayerSanctionEntity;
 using Entities.Models.PlayerStatisticEntity;
+using Entities.Models.StaffEntity;
 using Entities.Models.TeamEntity;
 using Entities.Models.TournamentEntity;
 using Entities.Models.UserEntity;
@@ -62,4 +64,14 @@ public interface IClub12DBContext
     /// <see cref="DbSet{Venue}"/> of venues in the system.
     /// </summary>
     DbSet<Venue> Venues { get; }
+
+    /// <summary>
+    /// <see cref="DbSet{BlogPosts}"/> of blog posts in the system.
+    /// </summary>
+    DbSet<BlogPost> BlogPosts { get; }
+
+    /// <summary>
+    /// <see cref="DbSet{Staff}"/> of staffs in the system.
+    /// </summary>
+    DbSet<Staff> Staffs { get; }
 }

@@ -23,6 +23,8 @@ using Services.Auth.Implementation;
 using Services.BackgroundServices;
 using Services.DataAccessLayer.GenericEntity;
 using Services.DataAccessLayer.GenericEntity.Implementation;
+using Services.Services.BlogPostService;
+using Services.Services.BlogPostService.Implementation;
 using Services.Services.DivisionService;
 using Services.Services.DivisionService.Implementation;
 using Services.Services.MatchService;
@@ -87,6 +89,7 @@ public static class ServiceExtension
         collection.AddScoped<IVenueService, VenueService>();
         collection.AddScoped<ICloudflareService, CloudflareService>();
         collection.AddScoped<IExcelService, ExcelService>();
+        collection.AddScoped<IBlogPostService, BlogPostService>();
         collection.AddHostedService<SanctionCleanupService>();
         collection.AddSingleton<IExceptionHandler, GlobalHandlerException>();
         collection.AddProblemDetails()

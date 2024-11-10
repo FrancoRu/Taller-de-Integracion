@@ -56,7 +56,7 @@ public class TeamController(
             return BadRequest($"Division with id {teamRequest.DivisionId} not found.");
         }
 
-        string logoUrl = await _cloudflareService.UploadLogoAsync(teamRequest.LogoFile.OpenReadStream(), teamRequest.LogoFile.FileName);
+        string logoUrl = await _cloudflareService.UploadFileAsync(teamRequest.LogoFile.OpenReadStream(), teamRequest.LogoFile.FileName);
 
         Team team = _mapper.Map<Team>(teamRequest);
         team.LogoUrl = logoUrl;
@@ -118,7 +118,7 @@ public class TeamController(
             return BadRequest($"Team with id {teamId} not found.");
         }
 
-        string logoUrl = await _cloudflareService.UploadLogoAsync(logoRequest.LogoFile.OpenReadStream(), logoRequest.LogoFile.FileName);
+        string logoUrl = await _cloudflareService.UploadFileAsync(logoRequest.LogoFile.OpenReadStream(), logoRequest.LogoFile.FileName);
         team.LogoUrl = logoUrl;
 
         bool updateResult = await _teamService.UpdateTeamAsync(team);
@@ -222,12 +222,13 @@ public class TeamController(
 
         (string teamName, string threeLetterCode, List<(string FirstName, string SecondName, string LastName, string DocumentNumber)> players) = await _excelService.ReadTeamAndPlayersAsync(batchTeamRequest.TeamFile);
 
-        string logoUrl = await _cloudflareService.UploadLogoAsync(batchTeamRequest.LogoFile.OpenReadStream(), batchTeamRequest.LogoFile.FileName);
+        string logoUrl = await _cloudflareService.UploadFileAsync(batchTeamRequest.LogoFile.OpenReadStream(), batchTeamRequest.LogoFile.FileName);
 
         CreateTeamRequest teamRequest = new()
         {
             Name = teamName,
             ThreeLetterCode = threeLetterCode,
+            ShirtColor = "Blue",
             DivisionId = division.Id,
             LogoFile = batchTeamRequest.LogoFile
         };
