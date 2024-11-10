@@ -16,14 +16,7 @@ public class Player : EntityBase
     /// </summary>
     [Required]
     [MaxLength(35)]
-    public required string FirstName { get; set; }
-
-    /// <summary>
-    /// The second name of the player.
-    /// </summary>
-    [Required]
-    [MaxLength(35)]
-    public required string SecondName { get; set; }
+    public required string Name { get; set; }
 
     /// <summary>
     /// The last name of the player.
@@ -47,9 +40,30 @@ public class Player : EntityBase
     public required bool IsSanctioned { get; set; } = false;
 
     /// <summary>
+    /// Indicates whether the individual is part of a federation.
+    /// </summary>
+    public required bool IsFederated { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets the name of the social work or insurance organization associated with the individual.
+    /// </summary>
+    public string? SocialWork { get; set; }
+
+    /// <summary>
+    /// Gets or sets the club or category to which the individual belongs.
+    /// </summary>
+    public string? ClubOrCategory { get; set; }
+
+    /// <summary>
+    /// Gets or sets the phone number of the individual.
+    /// </summary>
+    public string? PhoneNumber { get; set; }
+
+
+    /// <summary>
     /// The team the player belongs to.
     /// </summary>
-    [Column("TeamId")]
+    [Column(nameof(TeamId))]
     [Required]
     public required Team Team { get; set; }
 

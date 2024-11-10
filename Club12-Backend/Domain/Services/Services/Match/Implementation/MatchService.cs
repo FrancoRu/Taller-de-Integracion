@@ -86,7 +86,7 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
 
         List<Team> teams = [.. division.Teams];
 
-        int numberOfRounds = teams.Count - 1;
+        int numberOfRounds = (teams.Count * 2) - 1;
 
         List<Match> matches = [];
         DateTime currentMatchDate = DateTime.UtcNow;

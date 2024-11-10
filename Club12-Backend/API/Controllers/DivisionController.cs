@@ -27,7 +27,8 @@ namespace Club12.API.Controllers;
 public class DivisionController(
     IDivisionService _divisionService,
     IMatchService _matchService,
-    IMapper _mapper
+    IMapper _mapper,
+    ILogger<DivisionController> _logger
     ) : ControllerBase
 {
 
@@ -142,6 +143,8 @@ public class DivisionController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaginatedResponse<DivisionResponse>>> GetFilteredDivisions([FromQuery] GetDivisionsFilteredRequest filterRequest)
     {
+        _logger.LogError("Puto");
+        throw new Exception("exception");
         PaginatedResponse<Division> paginatedDivisions = await _divisionService.GetAllDivisionsAsync(filterRequest);
 
         PaginatedResponse<DivisionResponse> response = _mapper.Map<PaginatedResponse<DivisionResponse>>(paginatedDivisions);
