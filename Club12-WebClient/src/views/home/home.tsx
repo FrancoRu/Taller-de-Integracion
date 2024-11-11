@@ -1,9 +1,23 @@
-import '../../styles/home/home.css'
-import { Tournament } from '../tournaments/tournament'
+import { useEffect } from "react";
+import { useAuth } from "../../modules/auth/hook/useAuth.hook";
+import { NavMenu } from "./navMenu";
+import { redirect } from "react-router-dom";
+import { IndexTournament } from "../tournament";
+import { TournamentProvider } from "../../modules/tournament/context/tournament.context";
+
 export const Home = () => {
-	return (
-		<div className='home'>
-			<Tournament />
-		</div>
-	)
-}
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    redirect("/");
+  }, [isAuthenticated]);
+  return (
+    <>
+      <NavMenu isAuthenticated={isAuthenticated} />
+      <h1>{isAuthenticated ? "Autenticado" : "No autenticado"}</h1>
+      <TournamentProvider>
+        <IndexTournament />
+      </TournamentProvider>
+    </>
+  );
+};
