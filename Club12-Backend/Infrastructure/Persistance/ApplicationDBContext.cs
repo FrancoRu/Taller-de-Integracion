@@ -1,14 +1,12 @@
-﻿using Club12.Entities;
-using Club12.Entities.DivisionEntity;
-using Club12.Entities.MatchEntity;
-using Club12.Entities.PlayerEntity;
-using Club12.Entities.PlayersStatisticEntity;
-using Club12.Entities.SancitonEntity;
-using Club12.Entities.SanctionPlayerEntity;
-using Club12.Entities.StatisticEntity;
-using Club12.Entities.TeamEntity;
-using Club12.Entities.TournamentEntity;
-using Club12.Entities.UserEntity;
+﻿using Entities;
+using Entities.Models.DivisionEntity;
+using Entities.Models.MatchEntity;
+using Entities.Models.PlayerEntity;
+using Entities.Models.PlayerSanctionEntity;
+using Entities.Models.PlayerStatisticEntity;
+using Entities.Models.TeamEntity;
+using Entities.Models.TournamentEntity;
+using Entities.Models.UserEntity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Persistence;
@@ -21,20 +19,15 @@ internal interface IDomainDBContexts : IClub12DBContext
 
 }
 
-public class ApplicationDBContext : DbContext, IDomainDBContexts
+public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options) : DbContext(options), IDomainDBContexts
 {
-
-    public ApplicationDBContext(DbContextOptions<ApplicationDBContext> options) : base(options)
-    {
-    }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Match>()
-        .Property(match => match.Type)
-        .HasConversion(
-            value => value.ToString(),
-            value => (MatchType)Enum.Parse(typeof(MatchType), value));
+            .Property(match => match.Type)
+            .HasConversion(
+                value => value.ToString(),
+                value => (MatchType)Enum.Parse(typeof(MatchType), value));
 
         modelBuilder.Entity<Team>()
             .HasMany(team => team.Players)
@@ -57,11 +50,7 @@ public class ApplicationDBContext : DbContext, IDomainDBContexts
 
     public virtual DbSet<PlayerStatistic> PlayersStatistics { get; set; }
 
-    public virtual DbSet<Statistic> Statistics { get; set; }
-
-    public virtual DbSet<Sanction> Sanctions { get; set; }
-
-    public virtual DbSet<SanctionPlayer> SanctionsPlayers { get; set; }
+    public virtual DbSet<PlayerSanction> PlayerSanctions { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
 }

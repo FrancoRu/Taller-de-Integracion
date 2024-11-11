@@ -32,7 +32,6 @@ export const DataTable: React.FC<ITable> = ({ data, style }) => {
 						}
 					}
 				}}
-				checkboxSelection
 			/>
 		</div>
 	)

@@ -29,26 +29,22 @@ export const SignUp: React.FC = () => {
 	}
 
 	return (
-		<div id='container'>
-			<div id='blur'>
-				<Box
-					sx={{
-						display: 'flex',
-						flexDirection: 'column',
-						maxWidth: '300px',
-						margin: 'auto',
-						backgroundColor: 'white',
-						color: 'black',
-						padding: '16px',
-						borderRadius: '8px',
-						marginTop: '3rem',
-						boxShadow: '0 2px 4px rgba(0, 0, 0, 0.6)'
-					}}
-				>
-					<Typography variant='h5'>Registro</Typography>
-					<Form handleSubmit={handleSubmit} data={data} value={'Registro'} />
-				</Box>
-			</div>
-		</div>
+		<Box
+			sx={{
+				display: 'flex',
+				flexDirection: 'column',
+				maxWidth: '300px',
+				margin: 'auto',
+				backgroundColor: 'white',
+				color: 'black',
+				padding: '16px',
+				borderRadius: '8px',
+				marginTop: '3rem',
+				boxShadow: '0 2px 4px rgba(0, 0, 0, 0.6)'
+			}}
+		>
+			<Typography variant='h5'>Registro</Typography>
+			<Form handleSubmit={handleSubmit} data={data} value={'Registro'} />
+		</Box>
 	)
 }

@@ -1,14 +1,13 @@
 ﻿using AutoMapper;
-using Club12.DTOs.Division;
-using Club12.DTOs.Player;
-using Club12.DTOs.Team;
-using Club12.DTOs.User;
 using Club12.Entities.DivisionEntity;
 using Club12.Entities.PlayerEntity;
 using Club12.Entities.TeamEntity;
 using Club12.Entities.UserEntity;
 using Club12.Services.Utils;
 using Club12.Viewmodels.Division;
+using Club12.Viewmodels.Player;
+using Club12.Viewmodels.Team;
+using Club12.Viewmodels.User;
 
 namespace Club12.AutoMapperProfiles;
 

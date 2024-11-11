@@ -1,0 +1,39 @@
+.container-header {
+	width: 100%;
+}
+
+.ul-navbar {
+	height: 50px;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	justify-content: space-around;
+}
+
+.ul-navbar li {
+	position: relative;
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	width: 100%;
+	height: 100%;
+	list-style: none;
+}
+
+.ul-navbar .li-navbar p,
+.ul-navbar .li-navbar span,
+.ul-navbar .li-navbar a {
+	width: 100%;
+	text-align: center;
+	text-decoration: none;
+	color: white;
+	position: relative;
+	z-index: 1;
+}
+
+.nav-navbar {
+	background: #ff5000;
+	background: linear-gradient(90deg, #ff5000 0%, #ffa500 80%);
+	background: -webkit-linear-gradient(90deg, #ff5000 0%, #ffa500 80%);
+	background: -moz-linear-gradient(90deg, #ff5000 0%, #ffa500 80%);
+}

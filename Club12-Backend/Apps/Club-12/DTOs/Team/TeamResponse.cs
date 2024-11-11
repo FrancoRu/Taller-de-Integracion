@@ -1,11 +1,11 @@
-﻿using Club12.DTOs.Abstract;
+﻿using Club12.Viewmodels.Abstract;
 
-namespace Club12.DTOs.Team;
+namespace Club12.Viewmodels.Team;
 
 /// <summary>
 /// Represents a response for a team, inheriting from the base response.
 /// </summary>
-public record TeamResponse : GenericEntity
+public class TeamResponse : BaseResponse
 {
     /// <summary>
     /// The name of the team.
@@ -21,9 +21,4 @@ public record TeamResponse : GenericEntity
     /// The unique identifier of the division to which the team belongs.
     /// </summary>
     public required string DivisionId { get; set; }
-
-    /// <summary>
-    /// The URL of the team's logo.
-    /// </summary>
-    public required string LogoUrl { get; set; }
 }

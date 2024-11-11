@@ -3,5 +3,6 @@ export interface ITable {
 	style?: {
 		height?: string | number
 		width?: string | number
+		color?: string
 	}
 }

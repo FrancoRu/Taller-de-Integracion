@@ -1,11 +1,11 @@
-﻿using Club12.DTOs.Abstract;
+﻿using Club12.Viewmodels.Abstract;
 
-namespace Club12.DTOs.Player;
+namespace Club12.Viewmodels.Player;
 
 /// <summary>
 /// Represents a response for a Player, inheriting from the base response.
 /// </summary>
-public record PlayerResponse : GenericEntity
+public class PlayerResponse : BaseResponse
 {
     /// <summary>
     /// The name of the Player.

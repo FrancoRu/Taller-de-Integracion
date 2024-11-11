@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Club12.DTOs.User;
+namespace Club12.Viewmodels.User;
 
 /// <summary>
 /// Represents a request object for user login.

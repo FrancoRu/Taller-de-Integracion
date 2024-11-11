@@ -59,11 +59,11 @@
 	"login": [
 		{
 			"id": "userLogin",
-			"name": "userName",
+			"name": "email",
 			"label": "Usuario",
-			"type": "text",
+			"type": "email",
 			"input": {
-				"placeholder": "Ingrese su nombre de usuario",
+				"placeholder": "Ingrese su correo electrónico",
 				"required": true
 			}
 		},
@@ -129,6 +129,32 @@
 					"label": "Super Admin"
 				}
 			]
+		}
+	],
+	"tabla-prueba": [
+		{
+			"id": 1,
+			"team1": "Equipo A",
+			"team2": "Equipo B",
+			"scoreTeam1": 3,
+			"scoreTeam2": 1,
+			"date": "2022-03-01"
+		},
+		{
+			"id": 2,
+			"team1": "Equipo C",
+			"team2": "Equipo D",
+			"scoreTeam1": 2,
+			"scoreTeam2": 2,
+			"date": "2022-03-02"
+		},
+		{
+			"id": 3,
+			"team1": "Equipo E",
+			"team2": "Equipo F",
+			"scoreTeam1": 1,
+			"scoreTeam2": 4,
+			"date": "2022-03-03"
 		}
 	]
 }

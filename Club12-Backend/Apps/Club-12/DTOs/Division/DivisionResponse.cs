@@ -1,11 +1,11 @@
-﻿using Club12.DTOs.Abstract;
+﻿using Club12.Viewmodels.Abstract;
 
-namespace Club12.DTOs.Division;
+namespace Club12.Viewmodels.Division;
 
 /// <summary>
 /// Represents a response for a division, inheriting from the base response.
 /// </summary>
-public record DivisionResponse : GenericEntity
+public class DivisionResponse : BaseResponse
 {
     /// <summary>
     /// The name of the division.

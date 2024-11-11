@@ -27,13 +27,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Domain\Club12.Entities\Club12.Entities.csproj" />
-    <ProjectReference Include="..\..\Domain\Club12.Services\Club12.Services.csproj" />
+    <ProjectReference Include="..\..\Domain\Club-12\Club12.Entities\Club12.Entities.csproj" />
+    <ProjectReference Include="..\..\Domain\Club-12\Club12.Services\Club12.Services.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Persistance\Persistance.csproj" />    
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="DTOs\TokenResponse\" />
   </ItemGroup>
 
 </Project>
