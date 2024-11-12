@@ -10,7 +10,7 @@ export const DataTable: React.FC<ITable> = ({ data, style }) => {
 	}))
 
 	const rows = data.map((elements) => {
-		const row: Record<string, any> = { id: elements.id }
+		const row: Record<string, string> = { id: elements.id }
 		headers.forEach((header) => {
 			if (header !== 'id') {
 				row[header] = elements[header]

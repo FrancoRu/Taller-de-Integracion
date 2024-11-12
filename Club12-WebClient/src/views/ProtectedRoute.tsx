@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 
 export const ProtectedRoute = () => {
 	// if (!isAuthenticated) return <Navigate to="/login" replace></Navigate>
