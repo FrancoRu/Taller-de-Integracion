@@ -1,6 +1,6 @@
 // IndexTournament.tsx
 import React, { useEffect, useState } from "react";
-import { useTournament } from "../../modules/tournament/hook/useTournament.hook";
+import { useTournament } from "../../modules/tournament/hook/tournament.hook";
 import {
   CreateTournament,
   Tournament,
@@ -24,7 +24,7 @@ export const IndexTournament = () => {
     };
 
     fetchTournaments();
-  }, [getAllTournament]);
+  }, []);
 
   // Manejador para actualizar el estado del formulario
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {

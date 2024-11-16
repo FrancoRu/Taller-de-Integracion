@@ -1,15 +1,15 @@
-import React, { createContext, useState } from "react";
+import { AxiosError } from "axios";
 import Cookies from "js-cookie";
+import React, { createContext, useState } from "react";
+import { ProviderProps } from "../../core/types/types";
+import { useError } from "../../error/hooks/error.hock";
+import { authService } from "../service/auth.service";
 import {
   IAuthContextProps,
   ITokenResponse,
   IUser,
   UserLoginRequest,
 } from "../type/auth";
-import { AxiosError } from "axios";
-import { ProviderProps } from "../../core/types/types";
-import { authService } from "../service/auth.service";
-import { useError } from "../../error/hooks/useError";
 
 export const AuthContext = createContext<IAuthContextProps | undefined>(
   undefined

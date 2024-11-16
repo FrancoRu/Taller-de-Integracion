@@ -36,7 +36,7 @@ export const unregisterToken = (): void => {
 export const getRegisteredToken = (): string | undefined =>
   jsCookie.get(TOKEN_KEY);
 
-const buildResponse = (axiosResult: AxiosResponse): any => {
+const buildResponse = (axiosResult: AxiosResponse): unknown => {
   if (axiosResult.status === 200) {
     return axiosResult.data || {};
   }
@@ -69,7 +69,7 @@ const getHeaders = (configOverride?: ConfigOverride): headersContent => {
 };
 
 export const buildEndpoint = (resource: string): string => {
-  let resourceFinal = resource;
+  const resourceFinal = resource;
   // if (!resourceFinal.startsWith("/")) {
   //   resourceFinal = `/${resourceFinal}`;
   // }
@@ -80,11 +80,11 @@ const sendRequest = async (
   method: string,
   resource: string,
   configOverride = {},
-  body = null
+  body: unknown | null = null
 ) => {
   const headers = getHeaders(configOverride);
   const url = buildEndpoint(resource);
-  let response: AxiosResponse | null = null;
+  const response: AxiosResponse | null = null;
   try {
     const result = await axios.request({
       method,
@@ -93,15 +93,33 @@ const sendRequest = async (
       data: body,
     });
     return result;
-  } catch (error: any) {
-    throw new AxiosError(error);
-    // response = error.response
+  } catch (error: unknown) {
+    throwError(error);
   } finally {
     if (response !== null) {
       const statusCode: number = (response as AxiosResponse).status;
       const codeHandlers = statusCodeHandlers[statusCode] || [];
       codeHandlers.forEach((handler) => handler(response as AxiosResponse));
     }
+  }
+};
+
+const throwError = (error: unknown) => {
+  switch (true) {
+    case axios.isAxiosError(error):
+      throw error;
+
+    case error instanceof Error:
+      throw new AxiosError(
+        error.message,
+        undefined,
+        undefined,
+        undefined,
+        undefined
+      );
+
+    default:
+      throw new AxiosError("An unknown error occurred");
   }
 };
 
@@ -115,20 +133,17 @@ const sendRequest = async (
 
 export const sendPost = async (
   resource: string,
-  body: any,
+  body: unknown,
   configOverride?: ConfigOverride
 ) => {
-  // TODO call sendRequest
-  // const headers = getHeaders(configOverride)
-  // const url = buildEndpoint(resource)
-  const result = await sendRequest("POST", resource, configOverride, body); //axios.post(url, body, { headers })
-
-  return result;
+  // Usamos sendRequest para realizar la solicitud POST
+  const result = await sendRequest("POST", resource, configOverride, body);
+  return result; // Retornamos el resultado obtenido
 };
 
 export const sendPut = async (
   resource: string,
-  body: any,
+  body: unknown,
   configOverride?: ConfigOverride
 ) => {
   // TODO call sendRequest
@@ -176,7 +191,7 @@ export const downloadfile = async (
   link.remove();
 };
 
-export const onStatusCode = (statusCode: number, callback: () => any) => {
+export const onStatusCode = (statusCode: number, callback: () => unknown) => {
   if (statusCodeHandlers[statusCode]) {
     statusCodeHandlers[statusCode].push(callback);
   } else {
@@ -184,6 +199,6 @@ export const onStatusCode = (statusCode: number, callback: () => any) => {
   }
 };
 
-export const onUnauthorized = (callback: () => any) => {
+export const onUnauthorized = (callback: () => unknown) => {
   onStatusCode(401, callback);
 };

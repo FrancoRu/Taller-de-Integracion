@@ -6,8 +6,8 @@ import {
   Tournament,
 } from "../type/tournament";
 //import { useAuth } from "../../auth/hook/useAuth.hook";
-import { useError } from "../../error/hooks/useError";
 import { AxiosError } from "axios";
+import { useError } from "../../error/hooks/error.hock";
 import { tournamentService } from "../service/tournament.service";
 
 export const TournamentContext = createContext<
@@ -27,10 +27,10 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
     }
   }
 
-  async function createTournament(value: CreateTournament): Promise<any> {
+  async function createTournament(value: CreateTournament): Promise<void> {
     try {
       const result = await service.create(value);
-      setMessage(result.status, ["Tournament create successfully"]);
+      result && setMessage(result.status, ["Tournament create successfully"]);
     } catch (error: unknown) {
       setError(error as AxiosError);
     }

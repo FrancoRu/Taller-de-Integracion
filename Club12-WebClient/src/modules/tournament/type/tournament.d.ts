@@ -1,7 +1,7 @@
 // Define las propiedades necesarias en tu interfaz
 export interface ITournamentContextProps {
   getAllTournament: () => Promise<Tournament[] | undefined>;
-  createTournament: (value: CreateTournament) => Promise<any>;
+  createTournament: (value: CreateTournament) => Promise<void>;
 }
 
 export interface CreateTournament {
