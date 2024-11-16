@@ -1,7 +1,5 @@
 ﻿using Entities.DTOs.Abstract;
-using Entities.DTOs.Division;
 using Entities.DTOs.Match;
-using Entities.Models.DivisionEntity;
 using Entities.Models.MatchEntity;
 using Entities.Models.TeamEntity;
 
@@ -131,13 +129,4 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
 
         await _genericMatchService.InsertRangeAsync(allMatches);
     }
-
-public class MatchStats
-{
-    public Guid TeamId { get; set; }
-    public required string TeamName { get; set; }
-    public int PointsFor { get; set; }
-    public int PointsAgainst { get; set; }
-    public bool IsWin { get; set; }
-    public bool IsLoss { get; set; }
 }

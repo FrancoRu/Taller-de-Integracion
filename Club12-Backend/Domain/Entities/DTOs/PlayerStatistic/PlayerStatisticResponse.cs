@@ -21,9 +21,4 @@ public class PlayerStatisticResponse : BaseEntityResponse
     /// The ID of the associated match.
     /// </summary>
     public Guid MatchId { get; set; }
-
-    /// <summary>
-    /// The ID of the associated player.
-    /// </summary>
-    public Guid PlayerId { get; set; }
 }

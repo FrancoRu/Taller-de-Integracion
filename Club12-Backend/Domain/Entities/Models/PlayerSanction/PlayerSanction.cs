@@ -1,4 +1,5 @@
 ﻿using Entities.Models.PlayerEntity;
+
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 

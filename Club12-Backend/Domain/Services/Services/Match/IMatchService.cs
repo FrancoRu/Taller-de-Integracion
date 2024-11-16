@@ -1,7 +1,5 @@
 ﻿using Entities.DTOs.Abstract;
-using Entities.DTOs.Division;
 using Entities.DTOs.Match;
-using Entities.Models.DivisionEntity;
 using Entities.Models.MatchEntity;
 using Entities.Models.TeamEntity;
 
