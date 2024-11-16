@@ -12,8 +12,8 @@ using Persistence;
 namespace Persistance.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20241110000502_AddStaffEntityAndApplyChangesIntoTeam")]
-    partial class AddStaffEntityAndApplyChangesIntoTeam
+    [Migration("20241116162324_InitialFixMigrationWithoutErrors")]
+    partial class InitialFixMigrationWithoutErrors
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,45 @@ namespace Persistance.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Entities.Models.BlogPostEntity.BlogPost", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Author")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DateCreated");
+
+                    b.Property<DateTime?>("DateUpdated")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DateUpdated");
+
+                    b.Property<string>("MarkdownText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PhotoUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Views")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("BlogPosts", "Content");
+                });
 
             modelBuilder.Entity("Entities.Models.DivisionEntity.Division", b =>
                 {
@@ -126,6 +165,17 @@ namespace Persistance.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("BirthDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Club")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("ClubOrCategory")
                         .HasColumnType("text");
 
@@ -139,8 +189,8 @@ namespace Persistance.Migrations
 
                     b.Property<string>("DocumentNumber")
                         .IsRequired()
-                        .HasMaxLength(11)
-                        .HasColumnType("character varying(11)");
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
 
                     b.Property<bool>("IsFederated")
                         .HasColumnType("boolean");
@@ -150,16 +200,26 @@ namespace Persistance.Migrations
 
                     b.Property<string>("LastName")
                         .IsRequired()
-                        .HasMaxLength(35)
-                        .HasColumnType("character varying(35)");
+                        .HasMaxLength(70)
+                        .HasColumnType("character varying(70)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(35)
                         .HasColumnType("character varying(35)");
 
+                    b.Property<string>("Names")
+                        .IsRequired()
+                        .HasMaxLength(70)
+                        .HasColumnType("character varying(70)");
+
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("text");
+
+                    b.Property<string>("SocialSecurity")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("SocialWork")
                         .HasColumnType("text");
@@ -257,27 +317,31 @@ namespace Persistance.Migrations
 
                     b.Property<string>("LastName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("Names")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("PhoneNumber")
-                        .HasColumnType("text");
-
-                    b.Property<string>("StaffType")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
 
                     b.Property<Guid>("TeamId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
                     b.HasIndex("TeamId");
 
-                    b.ToTable("Staffs", "Club12");
+                    b.ToTable("StaffS", "Club12");
                 });
 
             modelBuilder.Entity("Entities.Models.TeamEntity.Team", b =>
@@ -507,7 +571,7 @@ namespace Persistance.Migrations
             modelBuilder.Entity("Entities.Models.StaffEntity.Staff", b =>
                 {
                     b.HasOne("Entities.Models.TeamEntity.Team", "Team")
-                        .WithMany("Staffs")
+                        .WithMany("Staff")
                         .HasForeignKey("TeamId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -537,7 +601,7 @@ namespace Persistance.Migrations
                 {
                     b.Navigation("Players");
 
-                    b.Navigation("Staffs");
+                    b.Navigation("Staff");
                 });
 
             modelBuilder.Entity("Entities.Models.TournamentEntity.Tournament", b =>

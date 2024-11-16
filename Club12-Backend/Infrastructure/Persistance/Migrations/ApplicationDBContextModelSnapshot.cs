@@ -173,6 +173,9 @@ namespace Persistance.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("ClubOrCategory")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("DateCreated")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("DateCreated");
@@ -197,23 +200,23 @@ namespace Persistance.Migrations
                         .HasMaxLength(70)
                         .HasColumnType("character varying(70)");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(35)
+                        .HasColumnType("character varying(35)");
+
                     b.Property<string>("Names")
                         .IsRequired()
                         .HasMaxLength(70)
                         .HasColumnType("character varying(70)");
 
                     b.Property<string>("PhoneNumber")
-                        .IsRequired()
-                        .HasMaxLength(15)
-                        .HasColumnType("character varying(15)");
+                        .HasColumnType("text");
 
                     b.Property<string>("SocialSecurity")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("text");
 
                     b.Property<string>("SocialWork")
                         .HasColumnType("text");
@@ -327,9 +330,6 @@ namespace Persistance.Migrations
                     b.Property<Guid>("TeamId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("TeamId1")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasColumnType("text");
@@ -338,12 +338,7 @@ namespace Persistance.Migrations
 
                     b.HasIndex("TeamId");
 
-                    b.HasIndex("TeamId1");
-
-                    b.ToTable("Staff", "Club12", t =>
-                        {
-                            t.HasCheckConstraint("CK_Team_MaxStaffCount", "(SELECT COUNT(*) FROM Club12.Staff WHERE TeamId = [TeamId]) <= 3");
-                        });
+                    b.ToTable("StaffS", "Club12");
                 });
 
             modelBuilder.Entity("Entities.Models.TeamEntity.Team", b =>
@@ -572,15 +567,9 @@ namespace Persistance.Migrations
 
             modelBuilder.Entity("Entities.Models.StaffEntity.Staff", b =>
                 {
-                    b.HasOne("Entities.Models.TeamEntity.Team", null)
+                    b.HasOne("Entities.Models.TeamEntity.Team", "Team")
                         .WithMany("Staff")
                         .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.TeamEntity.Team", "Team")
-                        .WithMany()
-                        .HasForeignKey("TeamId1")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

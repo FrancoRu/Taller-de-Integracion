@@ -66,13 +66,6 @@ public class Player : EntityBase
 
 
     /// <summary>
-    /// Indicates if the player is federated.
-    /// </summary>
-    [Required]
-    [DefaultValue(false)]
-    public required bool IsFederated { get; set; } = false;
-
-    /// <summary>
     /// The club the player belongs to, if federated.
     /// </summary>
     [MaxLength(100)]
@@ -88,13 +81,7 @@ public class Player : EntityBase
     /// The birthdate of the player.
     /// </summary>
     public required DateTime BirthDate { get; set; }
-
-    /// <summary>
-    /// The phone number of the player.
-    /// </summary>
-    [Required]
-    [MaxLength(15)]
-    public required string PhoneNumber { get; set; }
+     
 
     /// <summary>
     /// The medical social work or health provider of the player.
