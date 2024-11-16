@@ -1,9 +1,12 @@
 ﻿using AutoMapper;
+
 using Entities.DTOs.Abstract;
 using Entities.DTOs.Tournament;
 using Entities.Models.TournamentEntity;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+
 using Services.Services.TournamentService;
 
 namespace Club12.API.Controllers;

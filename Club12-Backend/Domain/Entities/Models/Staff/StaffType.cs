@@ -1,22 +1,22 @@
-﻿namespace Entities.Models.StaffEntity;
+﻿namespace Entities.Models.StaffEnum;
 
 /// <summary>
-/// Represents different types of staff roles.
+/// Enum representing the types of staff members.
 /// </summary>
 public enum StaffType
 {
     /// <summary>
-    /// Represents a delegate role.
+    /// Represents a coach staff member.
     /// </summary>
-    DELEGATE,
+    Coach,
 
     /// <summary>
-    /// Represents a subdelegate role.
+    /// Represents a delegate staff member.
     /// </summary>
-    SUBDELEGATE,
+    Delegate,
 
     /// <summary>
-    /// Represents a DT (Director Técnico) role.
+    /// Represents a sub-delegate staff member.
     /// </summary>
-    DT,
+    SubDelegate
 }

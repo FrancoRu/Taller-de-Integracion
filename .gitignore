@@ -399,6 +399,60 @@ FodyWeavers.xsd
 src/**/obj
 src/**/bin
 
+# Node modules
+node_modules/
+**/node_modules/
+./node_modules/
+
+# Build directories for frontend projects (React, Vue, Angular)
+dist/
+build/
+out/
+.eslintcache
+
+# Dependency directories
+bower_components/
+jspm_packages/
+
+# Temporary files
+.temp/
+.cache/
+*.cache
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDE and tool configs
+.vscode/
+.idea/
+*.iml
+
+# Testing files
+coverage/
+*.lcov
+*.lcov.info
+
+# Environment variable files
+.env
+.env.*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Service Workers
+sw.js
+pwa-manifest.json
+
+# Miscellaneous
+.sass-cache/
+.cypress_cache/
+.DS_Store
+Thumbs.db
+
 .idea/
 
 # Appsettings for each developer

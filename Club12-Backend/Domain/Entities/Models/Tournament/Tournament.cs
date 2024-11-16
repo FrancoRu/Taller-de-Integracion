@@ -1,4 +1,5 @@
 ﻿using Entities.Models.DivisionEntity;
+
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 

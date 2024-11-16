@@ -1,4 +1,5 @@
 ﻿using Entities.DTOs.Abstract;
+
 using System.ComponentModel.DataAnnotations;
 
 namespace Entities.DTOs.Player;

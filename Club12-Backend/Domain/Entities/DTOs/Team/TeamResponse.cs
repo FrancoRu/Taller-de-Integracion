@@ -19,6 +19,11 @@ public class TeamResponse : BaseEntityResponse
     public required string ThreeLetterCode { get; set; }
 
     /// <summary>
+    /// The color of the team's shirt.
+    /// </summary>
+    public required string ShirtColor { get; set; }
+
+    /// <summary>
     /// The unique identifier of the division to which the team belongs.
     /// </summary>
     public required Guid DivisionId { get; set; }

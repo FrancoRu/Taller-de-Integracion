@@ -19,8 +19,7 @@ public class Match : EntityBase
     /// <summary>
     /// Represents the date of the match.
     /// </summary>
-    [Required]
-    public required DateTime MatchDate { get; set; }
+    public DateTime MatchDate { get; set; }
 
     /// <summary>
     /// Represents the type of the match (regular or playoff).
@@ -38,7 +37,7 @@ public class Match : EntityBase
     /// Represents the home team in the match.
     /// </summary>
     [Required]
-    [Column("HomeTeamId")]
+    [Column(nameof(HomeTeamId))]
     public required Team HomeTeam { get; set; }
 
     /// <summary>
@@ -50,7 +49,7 @@ public class Match : EntityBase
     /// Represents the visitor team in the match.
     /// </summary>
     [Required]
-    [Column("VisitorTeamId")]
+    [Column(nameof(VisitorTeamId))]
     public required Team VisitorTeam { get; set; }
 
     /// <summary>
@@ -78,7 +77,7 @@ public class Match : EntityBase
     /// <summary>
     /// Represents the winning team in the match.
     /// </summary>
-    [Column("WinningTeamId")]
+    [Column(nameof(WinningTeamId))]
     public Team? WinningTeam { get; set; }
 
     /// <summary>
@@ -89,8 +88,8 @@ public class Match : EntityBase
     /// <summary>
     /// Represents the winning team in the match.
     /// </summary>
-    [Column("DivisionId")]
-    public required Division Division { get; set; }
+    [Column(nameof(DivisionId))]
+    public Division Division { get; set; } = default!;
 
     /// <summary>
     /// Division Id the match belongs to.
@@ -100,7 +99,7 @@ public class Match : EntityBase
     /// <summary>
     /// Represents the venue where the match is played.
     /// </summary>
-    [Column("VenueId")]
+    [Column(nameof(VenueId))]
     public Venue? Venue { get; set; }
 
     /// <summary>

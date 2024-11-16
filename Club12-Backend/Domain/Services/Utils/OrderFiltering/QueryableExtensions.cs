@@ -1,4 +1,5 @@
 ﻿using Entities.DTOs.Abstract;
+
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -79,7 +80,7 @@ public static class QueryableExtensions
 
         MethodInfo genericMethod = method.MakeGenericMethod(typeof(T), property.Type);
 
-        return (IQueryable<T>)genericMethod.Invoke(null, new object[] { source, lambda })!;
+        return (IQueryable<T>) genericMethod.Invoke(null, new object[] { source, lambda })!;
     }
 
     private static bool ShouldSkipProperty(string propertyName)

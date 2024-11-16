@@ -1,6 +1,7 @@
 ﻿using Entities.Models.DivisionEntity;
 using Entities.Models.PlayerEntity;
 using Entities.Models.StaffEntity;
+
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -30,15 +31,16 @@ public class Team : EntityBase
     public required string LogoUrl { get; set; }
 
     /// <summary>
-    /// Gets or sets the color of the shirt.
+    /// The color of the team's shirt.
     /// </summary>
+    [Required]
     public required string ShirtColor { get; set; }
 
     /// <summary>
     /// The division that the team belongs to.
     /// </summary>
     [Required]
-    [Column("DivisionId")]
+    [Column(nameof(DivisionId))]
     public required Division Division { get; set; }
 
     /// <summary>
@@ -52,8 +54,7 @@ public class Team : EntityBase
     public virtual required ICollection<Player> Players { get; set; }
 
     /// <summary>
-    /// The collection of staff members associated with the entity.
-    /// Limited to a maximum of 3 staff members.
+    /// The staff belonging to the team.
     /// </summary>
-    public virtual IEnumerable<Staff>? Staffs { get; set; }
+    public ICollection<Staff>? Staff { get; set; }
 }

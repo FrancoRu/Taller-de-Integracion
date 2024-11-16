@@ -1,7 +1,5 @@
 ﻿using Entities.DTOs.Abstract;
-using Entities.DTOs.Division;
 using Entities.DTOs.Match;
-using Entities.Models.DivisionEntity;
 using Entities.Models.MatchEntity;
 using Entities.Models.TeamEntity;
 
@@ -72,121 +70,63 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
         };
     }
 
-    /// <summary>
-    /// Generates the fixture (matches) for the given division.
-    /// </summary>
-    /// <param name="division">The division for which the fixture should be generated.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    public async Task GenerateFixtureAsync(Division division)
+    public async Task GenerateFixtureAsync(IEnumerable<Team> teams, Guid divisionId)
     {
-        if (division.Teams is null || division.Teams.Count is 0 || division.Teams.Count < 2 || division.Teams.Count % 2 is not 0)
+        if (teams is null || !teams.Any() || teams.Count() < 2 || teams.Count() % 2 != 0)
         {
-            throw new ArgumentException("The division must have at least two teams to generate a fixture.");
+            throw new ArgumentException("The list must have at least two teams and an even number of teams to generate a fixture.");
         }
 
-        List<Team> teams = [.. division.Teams];
-
-        int numberOfRounds = (teams.Count * 2) - 1;
-
-        List<Match> matches = [];
+        int numberOfTeams = teams.Count();
+        int numberOfRounds = (numberOfTeams - 1) * 2;
         DateTime currentMatchDate = DateTime.UtcNow;
 
-        var matchups = teams
-            .SelectMany((homeTeam, homeIndex) => teams
-                .Where((awayTeam, awayIndex) => awayIndex > homeIndex)
-                .Select(awayTeam => new { homeTeam, awayTeam }))
+        List<List<(Team home, Team away)>> firstHalfRounds = Enumerable.Range(0, numberOfRounds / 2)
+            .Select(round =>
+            {
+                List<Team> rotatedTeams = teams.Skip(round).Concat(teams.Take(round)).ToList();
+                return rotatedTeams
+                    .Take(numberOfTeams / 2)
+                    .Zip(rotatedTeams.Skip(numberOfTeams / 2).Reverse(), (home, away) => (home, away))
+                    .ToList();
+            }).ToList();
+
+        List<Match> firstRoundMatches = firstHalfRounds
+            .SelectMany((roundMatches, roundIndex) => roundMatches
+                .Select(match => new Match
+                {
+                    HomeTeamId = match.home.Id,
+                    VisitorTeamId = match.away.Id,
+                    HomeTeam = match.home,
+                    VisitorTeam = match.away,
+                    Type = MatchType.Regular,
+                    MatchWeek = roundIndex + 1,
+                    IsFinished = false,
+                    DivisionId = divisionId,
+                    MatchDate = currentMatchDate
+                }))
             .ToList();
 
-        foreach (int round in Enumerable.Range(0, numberOfRounds))
-        {
-            List<Match> roundMatches = matchups
-                .Where((matchup, index) => index % numberOfRounds == round)
-                .Select((matchup, index) =>
+        currentMatchDate = currentMatchDate.AddDays(7 * firstRoundMatches.Count);
+
+        List<Match> secondRoundMatches = firstHalfRounds
+            .SelectMany((roundMatches, roundIndex) => roundMatches
+                .Select(match => new Match
                 {
-                    Team homeTeam = matchup.homeTeam;
-                    Team awayTeam = matchup.awayTeam;
+                    HomeTeamId = match.away.Id,
+                    VisitorTeamId = match.home.Id,
+                    HomeTeam = match.away,
+                    VisitorTeam = match.home,
+                    Type = MatchType.Regular,
+                    MatchWeek = roundIndex + 8,
+                    IsFinished = false,
+                    DivisionId = divisionId,
+                    MatchDate = currentMatchDate
+                }))
+            .ToList();
 
-                    Match match = new()
-                    {
-                        HomeTeamId = homeTeam.Id,
-                        VisitorTeamId = awayTeam.Id,
-                        HomeTeam = homeTeam,
-                        VisitorTeam = awayTeam,
-                        Type = MatchType.Regular,
-                        MatchWeek = round + 1,
-                        IsFinished = false,
-                        DivisionId = division.Id,
-                        Division = division,
-                        MatchDate = currentMatchDate
-                    };
+        List<Match> allMatches = [.. firstRoundMatches, .. secondRoundMatches];
 
-                    currentMatchDate = currentMatchDate.AddDays(7);
-                    return match;
-                }).ToList();
-
-            matches.AddRange(roundMatches);
-        }
-
-        await _genericMatchService.InsertRangeAsync(matches);
+        await _genericMatchService.InsertRangeAsync(allMatches);
     }
-
-    public async Task<List<PositionResponse>> GetPositionsTableAsync(Guid divisionId)
-    {
-        IQueryable<MatchStats> homeMatches = _genericMatchService
-            .FilterByExpression(match => match.DivisionId == divisionId && match.IsFinished)
-            .Select(match => new MatchStats
-            {
-                TeamId = match.HomeTeamId,
-                TeamName = match.HomeTeam.Name,
-                PointsFor = match.HomeScore ?? 0,
-                PointsAgainst = match.VisitorScore ?? 0,
-                IsWin = match.WinningTeamId == match.HomeTeamId,
-                IsLoss = match.WinningTeamId != null && match.WinningTeamId != match.HomeTeamId
-            });
-
-        IQueryable<MatchStats> visitorMatches = _genericMatchService
-            .FilterByExpression(match => match.DivisionId == divisionId && match.IsFinished)
-            .Select(match => new MatchStats
-            {
-                TeamId = match.VisitorTeamId,
-                TeamName = match.VisitorTeam.Name,
-                PointsFor = match.VisitorScore ?? 0,
-                PointsAgainst = match.HomeScore ?? 0,
-                IsWin = match.WinningTeamId == match.VisitorTeamId,
-                IsLoss = match.WinningTeamId != null && match.WinningTeamId != match.VisitorTeamId
-            });
-
-        List<PositionResponse> matchResults = await homeMatches
-            .Union(visitorMatches)
-            .GroupBy(x => new { x.TeamId, x.TeamName })
-            .Select(g => new PositionResponse
-            {
-                TeamId = g.Key.TeamId,
-                TeamName = g.Key.TeamName,
-                MatchesPlayed = g.Count(),
-                Wins = g.Count(x => x.IsWin),
-                Losses = g.Count(x => x.IsLoss),
-                PointsFor = g.Sum(x => x.PointsFor),
-                PointsAgainst = g.Sum(x => x.PointsAgainst),
-                PointsDifference = g.Sum(x => x.PointsFor - x.PointsAgainst),
-                Points = (g.Count(x => x.IsWin) * 2) + g.Count(x => x.IsLoss)
-            })
-            .OrderByDescending(x => x.Points)
-            .ThenByDescending(x => x.PointsDifference)
-            .ThenByDescending(x => x.PointsFor)
-            .ThenByDescending(x => x.Wins)
-            .ToListAsync();
-
-        return matchResults;
-    }
-}
-
-public class MatchStats
-{
-    public Guid TeamId { get; set; }
-    public required string TeamName { get; set; }
-    public int PointsFor { get; set; }
-    public int PointsAgainst { get; set; }
-    public bool IsWin { get; set; }
-    public bool IsLoss { get; set; }
 }

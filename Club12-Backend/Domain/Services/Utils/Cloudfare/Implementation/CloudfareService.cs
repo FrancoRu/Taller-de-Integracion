@@ -11,7 +11,7 @@ public class CloudflareService : ICloudflareService
     /// <param name="file">The file stream (ignored in mock).</param>
     /// <param name="fileName">The name of the image file (ignored in mock).</param>
     /// <returns>A mock URL for the uploaded image.</returns>
-    public Task<string> UploadLogoAsync(Stream file, string fileName)
+    public Task<string> UploadFileAsync(Stream file, string fileName)
     {
         return Task.FromResult($"https://mock.cloudflare.com/images/{Guid.NewGuid()}.jpeg");
     }
