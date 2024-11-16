@@ -1,4 +1,5 @@
 ﻿using Entities.Models.MatchEntity;
+using Entities.Models.PositionModel;
 using Entities.Models.TeamEntity;
 using Entities.Models.TournamentEntity;
 
@@ -49,4 +50,10 @@ public class Division : EntityBase
     /// The list of matches in this division.
     /// </summary>
     public virtual required ICollection<Match> Matches { get; set; }
+
+    /// <summary>
+    /// The positions of teams in the division.
+    /// </summary>
+    [NotMapped]
+    public required IEnumerable<Position> Positions { get; set; } = [];
 }

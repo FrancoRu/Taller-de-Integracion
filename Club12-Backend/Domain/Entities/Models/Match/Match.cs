@@ -89,7 +89,7 @@ public class Match : EntityBase
     /// Represents the winning team in the match.
     /// </summary>
     [Column(nameof(DivisionId))]
-    public required Division Division { get; set; }
+    public Division Division { get; set; } = default!;
 
     /// <summary>
     /// Division Id the match belongs to.

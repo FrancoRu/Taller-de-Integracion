@@ -2,13 +2,16 @@
 
 using Entities.DTOs.Abstract;
 using Entities.DTOs.Division;
+using Entities.DTOs.TopScorer;
 using Entities.Models.DivisionEntity;
+using Entities.Models.TopScorerModel;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using Services.Services.DivisionService;
 using Services.Services.MatchService;
+using Services.Services.PlayerStatisticService;
 
 namespace Club12.API.Controllers;
 
@@ -20,6 +23,7 @@ namespace Club12.API.Controllers;
 /// </remarks>
 /// <param name="_divisionService">The division service.</param>
 /// <param name="_matchService">The match service.</param>
+/// <param name="_playerStatisticService">The player statistics service.</param>
 /// <param name="_mapper">The AutoMapper instance.</param>
 [Authorize(Roles = "SuperAdmin")]
 [Route("api/divisions/")]
@@ -27,6 +31,7 @@ namespace Club12.API.Controllers;
 public class DivisionController(
     IDivisionService _divisionService,
     IMatchService _matchService,
+    IPlayerStatisticService _playerStatisticService,
     IMapper _mapper
     ) : ControllerBase
 {
@@ -65,7 +70,7 @@ public class DivisionController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public ActionResult<DivisionResponse> GetDivisionById(Guid divisionId)
     {
-        Division? division = _divisionService.GetDivisionById(divisionId);
+        Division? division = _divisionService.GetDivisionWithStats(divisionId);
 
         if (division is null)
         {
@@ -73,6 +78,7 @@ public class DivisionController(
         }
 
         DivisionResponse divisionResponse = _mapper.Map<DivisionResponse>(division);
+
         return Ok(divisionResponse);
     }
 
@@ -172,21 +178,21 @@ public class DivisionController(
             return BadRequest("Division is already finished.");
         }
 
-        await _matchService.GenerateFixtureAsync(division);
+        await _matchService.GenerateFixtureAsync([.. division.Teams], divisionId);
 
         return Ok("Fixture generated successfully.");
     }
 
     /// <summary>
-    /// Retrieves the positions table for a specified division.
+    /// The top scorers for the specified division.
     /// </summary>
-    /// <param name="divisionId">The ID of the division.</param>
-    /// <returns>The positions table with team statistics for the division.</returns>
-    [HttpGet("{divisionId:guid}/positions")]
+    /// <param name="divisionId">The ID of the division to get top scorers for.</param>
+    /// <returns>A list of top scorers for the specified division.</returns>
     [AllowAnonymous]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<PositionResponse>))]
+    [HttpGet("top-scorers/{divisionId:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<TopScorerResponse>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<List<PositionResponse>>> GetPositionsTable(Guid divisionId)
+    public ActionResult<List<TopScorerResponse>> GetTopScorersByDivision(Guid divisionId)
     {
         Division? division = _divisionService.GetDivisionById(divisionId);
 
@@ -195,11 +201,14 @@ public class DivisionController(
             return BadRequest($"Division with id {divisionId} not found.");
         }
 
-        List<PositionResponse> positions = await _matchService.GetPositionsTableAsync(divisionId);
+        List<Guid> matchIds = division.Matches.Select(match => match.Id).ToList();
+        int totalMatches = (division.Teams.Count * 2) - 1;
+        List<TopScorer> topScorers = _playerStatisticService.GetTopScorersByDivision(matchIds, totalMatches);
 
-        return Ok(positions);
+        List<TopScorerResponse> topScorersResponse = _mapper.Map<List<TopScorerResponse>>(topScorers);
+
+        return Ok(topScorersResponse);
     }
-
 }
 
 
