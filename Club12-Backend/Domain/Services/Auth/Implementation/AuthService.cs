@@ -1,9 +1,12 @@
 ﻿using Entities.DTOs.User;
 using Entities.Models.UserEntity;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Services.Auth.Implementation;
@@ -30,7 +33,7 @@ public class AuthService(IConfiguration configuration) : IAuthService
                 new Claim(ClaimTypes.Role, userEntity.Role),
                 new Claim("userId", userEntity.Id.ToString())
              }),
-            Expires = DateTime.UtcNow.AddSeconds(60),
+            Expires = DateTime.UtcNow.AddHours(24),
             Issuer = _issuer,
             Audience = _audience,
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -39,7 +42,7 @@ public class AuthService(IConfiguration configuration) : IAuthService
         SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
         string accessToken = tokenHandler.WriteToken(token);
 
-        TimeSpan expiresIn = TimeSpan.FromSeconds(60);
+        TimeSpan expiresIn = TimeSpan.FromHours(24);
 
         // Generate refresh token
         string refreshToken = GenerateRefreshToken();
@@ -54,7 +57,7 @@ public class AuthService(IConfiguration configuration) : IAuthService
     private static string GenerateRefreshToken()
     {
         byte[] randomBytes = new byte[64];
-        using System.Security.Cryptography.RandomNumberGenerator rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        using RandomNumberGenerator rng = RandomNumberGenerator.Create();
         rng.GetBytes(randomBytes);
         return Convert.ToBase64String(randomBytes);
     }

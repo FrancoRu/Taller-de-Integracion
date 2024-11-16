@@ -4,7 +4,7 @@ import { Box, Typography } from "@mui/material";
 import "../../styles/auth/auth.css";
 
 import formDataLogin from "../../data/readJSON.json";
-import { Form } from "../../components/form/form";
+import { Form } from "../../components/Form/Form";
 import { BaseInputJSON } from "../../types/form/form";
 import { handleFields } from "../../utils/formUtils";
 import { UserLoginRequest } from "../../types/auths/auth";

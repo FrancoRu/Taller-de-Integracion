@@ -44,4 +44,11 @@ public interface IDivisionService
     /// <param name="filter">The filtering and pagination request.</param>
     /// <returns>A paginated response containing the divisions.</returns>
     Task<PaginatedResponse<Division>> GetAllDivisionsAsync(GetDivisionsFilteredRequest filter);
+
+    /// <summary>
+    /// Gets the division with the specified ID, including the teams and matches and stats.
+    /// </summary>
+    /// <param name="divisionId"></param>
+    /// <returns></returns>
+    Division? GetDivisionWithStats(Guid divisionId);
 }

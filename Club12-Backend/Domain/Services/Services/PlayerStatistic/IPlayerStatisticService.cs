@@ -1,4 +1,5 @@
 ﻿using Entities.Models.PlayerStatisticEntity;
+using Entities.Models.TopScorerModel;
 
 namespace Services.Services.PlayerStatisticService;
 
@@ -33,4 +34,17 @@ public interface IPlayerStatisticService
     /// <param name="playerStatisticEntity">The player statistic to update.</param>
     /// <returns>A boolean indicating whether the update was successful.</returns>
     Task<bool> UpdatePlayerStatisticAsync(PlayerStatistic playerStatisticEntity);
+
+    /// <summary>
+    /// Retrieves the top scorers for the given set of matches within a division.
+    /// The method aggregates player statistics based on match performance and organizes them by player and match week.
+    /// </summary>
+    /// <param name="matchIds">A list of match IDs corresponding to the matches within the division.</param>
+    /// <param name="totalMatches" >The total number of matches in the division.</param>
+    /// <returns>
+    /// A list of <see cref="TopScorer"/> models that contain the aggregated performance
+    /// data (e.g., total points scored by each player) for the specified matches.
+    /// Each <see cref="TopScorer"/> includes the player's information and their performance data grouped by match week.
+    /// </returns>
+    List<TopScorer> GetTopScorersByDivision(IEnumerable<Guid> matchIds, int totalMatches);
 }

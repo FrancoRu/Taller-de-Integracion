@@ -3,6 +3,7 @@ using Entities.DTOs.Division;
 using Entities.DTOs.Match;
 using Entities.Models.DivisionEntity;
 using Entities.Models.MatchEntity;
+using Entities.Models.TeamEntity;
 
 namespace Services.Services.MatchService;
 
@@ -46,16 +47,10 @@ public interface IMatchService
     Task<PaginatedResponse<Match>> GetAllMatchesAsync(GetMatchesFilteredRequest filter);
 
     /// <summary>
-    /// Generates the fixture (matches) for the specified division.
+    /// Generates the fixture (matches) for the given list of teams.
     /// </summary>
-    /// <param name="division">The division for which the fixture should be generated.</param>
+    /// <param name="teams">The list of teams for which the fixture should be generated.</param>
+    /// <param name="divisionId">The division ID to associate with the matches.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task GenerateFixtureAsync(Division division);
-
-    /// <summary>
-    /// Gets the positions table for the specified division.
-    /// </summary>
-    /// <param name="divisionId"></param>
-    /// <returns></returns>
-    Task<List<PositionResponse>> GetPositionsTableAsync(Guid divisionId);
+    Task GenerateFixtureAsync(IEnumerable<Team> teams, Guid divisionId);
 }

@@ -20,9 +20,9 @@ public class DivisionResponse : BaseEntityResponse
     public required bool IsFinished { get; set; }
 
     /// <summary>
-    /// The teams in the division.
+    /// The positions of teams in the division.
     /// </summary>
-    public required IEnumerable<TeamResponse> Teams { get; set; }
+    public required IEnumerable<PositionResponse> Positions { get; set; }
 
     /// <summary>
     /// The Id of the tournament this division belongs to.
@@ -30,7 +30,7 @@ public class DivisionResponse : BaseEntityResponse
     public required Guid TournamentId { get; set; }
 
     /// <summary>
-    /// The matches in the division.
+    /// The matches grouped by week in the division.
     /// </summary>
-    public required IEnumerable<MatchResponse> Matches { get; set; }
+    public required IDictionary<int, IEnumerable<MinimalMatchResponse>> MatchesByWeek { get; set; }
 }

@@ -7,6 +7,7 @@ using Entities.DTOs.Match;
 using Entities.DTOs.Player;
 using Entities.DTOs.PlayerStatistic;
 using Entities.DTOs.Team;
+using Entities.DTOs.TopScorer;
 using Entities.DTOs.Tournament;
 using Entities.DTOs.Venue;
 using Entities.Models.BlogPostEntity;
@@ -14,7 +15,9 @@ using Entities.Models.DivisionEntity;
 using Entities.Models.MatchEntity;
 using Entities.Models.PlayerEntity;
 using Entities.Models.PlayerStatisticEntity;
+using Entities.Models.PositionModel;
 using Entities.Models.TeamEntity;
+using Entities.Models.TopScorerModel;
 using Entities.Models.TournamentEntity;
 using Entities.Models.VenueEntity;
 
@@ -52,11 +55,27 @@ public class DivisionProfile : Profile
     public DivisionProfile()
     {
         _ = CreateMap<Division, DivisionResponse>()
-                .ReverseMap();
+            .ForMember(dest => dest.MatchesByWeek, opt => opt.MapFrom<MatchesByWeekResolver>())
+            .ReverseMap();
 
         _ = CreateMap<CreateDivisionRequest, Division>();
 
         _ = CreateMap<UpdateDivisionRequest, Division>();
+    }
+}
+
+/// <summary>
+/// AutoMapper profile for mapping between TopScorer service model and TopScorerResponse API model.
+/// </summary>
+public class TopScorerProfile : Profile
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TopScorerProfile"/> class.
+    /// Configures the mappings between TopScorer and TopScorerResponse.
+    /// </summary>
+    public TopScorerProfile()
+    {
+        CreateMap<TopScorer, TopScorerResponse>();
     }
 }
 
@@ -71,7 +90,7 @@ public class PlayerProfile : Profile
     public PlayerProfile()
     {
         _ = CreateMap<Player, PlayerResponse>()
-                .ReverseMap();
+            .ReverseMap();
 
         _ = CreateMap<CreatePlayerRequest, Player>();
 
@@ -90,7 +109,7 @@ public class TournamentProfile : Profile
     public TournamentProfile()
     {
         _ = CreateMap<Tournament, TournamentResponse>()
-                .ReverseMap();
+            .ReverseMap();
 
         _ = CreateMap<CreateTournamentRequest, Tournament>();
     }
@@ -108,19 +127,24 @@ public class MatchProfile : Profile
     public MatchProfile()
     {
         _ = CreateMap<CreateMatchRequest, Match>()
-                .ForMember(dest => dest.HomeTeamId, opt => opt.MapFrom(src => src.HomeTeamId))
-                .ForMember(dest => dest.VisitorTeamId, opt => opt.MapFrom(src => src.VisitorTeamId))
-                .ForMember(dest => dest.DivisionId, opt => opt.MapFrom(src => src.DivisionId));
+            .ForMember(dest => dest.HomeTeamId, opt => opt.MapFrom(src => src.HomeTeamId))
+            .ForMember(dest => dest.VisitorTeamId, opt => opt.MapFrom(src => src.VisitorTeamId))
+            .ForMember(dest => dest.DivisionId, opt => opt.MapFrom(src => src.DivisionId));
 
         _ = CreateMap<Match, MatchResponse>()
-                .ForMember(dest => dest.HomeTeamName, opt => opt.MapFrom(src => src.HomeTeam.Name))
-                .ForMember(dest => dest.VisitorTeamName, opt => opt.MapFrom(src => src.VisitorTeam.Name))
-                .ForMember(dest => dest.WinningTeamName, opt => opt.MapFrom(src => src.WinningTeam != null ? src.WinningTeam.Name : null))
-                .ReverseMap();
+            .ForMember(dest => dest.HomeTeamName, opt => opt.MapFrom(src => src.HomeTeam.Name))
+            .ForMember(dest => dest.VisitorTeamName, opt => opt.MapFrom(src => src.VisitorTeam.Name))
+            .ForMember(dest => dest.WinningTeamName, opt => opt.MapFrom(src => src.WinningTeam != null ? src.WinningTeam.Name : null))
+            .ReverseMap();
+
+        _ = CreateMap<Match, MinimalMatchResponse>()
+               .ForMember(dest => dest.HomeTeamName, opt => opt.MapFrom(src => src.HomeTeam.Name))
+               .ForMember(dest => dest.VisitorTeamName, opt => opt.MapFrom(src => src.VisitorTeam.Name))
+               .ForMember(dest => dest.WinningTeamName, opt => opt.MapFrom(src => src.WinningTeam != null ? src.WinningTeam.Name : null));
 
         _ = CreateMap<UpdateMatchScoreRequest, Match>()
-                .ForMember(dest => dest.HomeScore, opt => opt.MapFrom(src => src.HomeScore))
-                .ForMember(dest => dest.VisitorScore, opt => opt.MapFrom(src => src.VisitorScore));
+            .ForMember(dest => dest.HomeScore, opt => opt.MapFrom(src => src.HomeScore))
+            .ForMember(dest => dest.VisitorScore, opt => opt.MapFrom(src => src.VisitorScore));
 
         _ = CreateMap<UpdateMatchRequest, Match>();
     }
@@ -137,7 +161,7 @@ public class VenueProfile : Profile
     public VenueProfile()
     {
         _ = CreateMap<Venue, VenueResponse>()
-                .ReverseMap();
+            .ReverseMap();
 
         _ = CreateMap<CreateVenueRequest, Venue>();
 
@@ -158,7 +182,7 @@ public class PlayerStatisticProfile : Profile
         _ = CreateMap<CreatePlayerStatisticRequest, PlayerStatistic>();
 
         _ = CreateMap<PlayerStatistic, PlayerStatisticResponse>()
-                .ReverseMap();
+            .ReverseMap();
 
         _ = CreateMap<UpdatePlayerStatisticRequest, PlayerStatistic>();
     }
@@ -180,6 +204,20 @@ public class BlogPostProfile : Profile
             .ReverseMap();
 
         _ = CreateMap<UpdateBlogPostRequest, BlogPost>();
+    }
+}
+
+/// <summary>
+/// AutoMapper profile for position mappings.
+/// </summary>
+public class PositionProfile : Profile
+{
+    /// <summary>
+    /// Initializes the mapping configuration for PositionDTO and PositionResponse.
+    /// </summary>
+    public PositionProfile()
+    {
+        _ = CreateMap<Position, PositionResponse>();
     }
 }
 
@@ -228,5 +266,30 @@ public class PaginatedResponseConverter<TSource, TDestination>
     }
 }
 
-
-
+/// <summary>
+/// Custom resolver to map matches grouped by week into MatchesByWeek.
+/// </summary>
+public class MatchesByWeekResolver : IValueResolver<Division, DivisionResponse, IDictionary<int, IEnumerable<MinimalMatchResponse>>>
+{
+    /// <summary>
+    /// Resolves the matches grouped by week into a dictionary.
+    /// </summary>
+    /// <param name="source"></param>
+    /// <param name="destination"></param>
+    /// <param name="destMember"></param>
+    /// <param name="context"></param>
+    /// <returns></returns>
+    public IDictionary<int, IEnumerable<MinimalMatchResponse>> Resolve(
+        Division source,
+        DivisionResponse destination,
+        IDictionary<int, IEnumerable<MinimalMatchResponse>> destMember,
+        ResolutionContext context)
+    {
+        return source.Matches
+            .GroupBy(match => match.MatchWeek)
+            .ToDictionary(
+                group => group.Key,
+                group => context.Mapper.Map<IEnumerable<MinimalMatchResponse>>(group.ToList())
+            );
+    }
+}
