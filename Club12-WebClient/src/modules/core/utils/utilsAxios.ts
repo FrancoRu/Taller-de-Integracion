@@ -133,7 +133,7 @@ const throwError = (error: unknown) => {
 
 export const sendPost = async (
   resource: string,
-  body: unknown,
+  body?: unknown,
   configOverride?: ConfigOverride
 ) => {
   // Usamos sendRequest para realizar la solicitud POST
@@ -155,7 +155,8 @@ export const sendPut = async (
   return buildResponse(result);
 };
 
-export const sendGet = async (resource: string) => sendRequest("GET", resource);
+export const sendGet = async (resource: string, body?: unknown | null) =>
+  sendRequest("GET", resource, {}, body);
 
 export const sendDelete = async (
   resource: string,

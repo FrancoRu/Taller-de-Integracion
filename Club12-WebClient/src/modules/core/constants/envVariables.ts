@@ -1,9 +1,15 @@
-const envVariables = {
-  apiUrl: "https://localhost:5001",
+const routes = {
+  apiUrl: "https://localhost:5001/api",
 
-  authUrl: "api/users",
-
-  tournamentUrl: "api/tournaments",
+  blogposts: "/blogposts",
+  divisions: "/divisions",
+  matches: "/matches",
+  players: "/players",
+  playerStatistics: "/player-statistics",
+  teams: "/teams",
+  tournaments: "/tournaments",
+  users: "/users",
+  venues: "/venues",
 };
 
-export default envVariables;
+export default routes;
