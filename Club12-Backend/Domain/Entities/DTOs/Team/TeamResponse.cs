@@ -36,5 +36,5 @@ public class TeamResponse : BaseEntityResponse
     /// <summary>
     /// The list of players in the team.
     /// </summary>
-    public required List<PlayerResponse> Players { get; set; } = [];
+    public required List<PublicPlayerResponse> Players { get; set; } = [];
 }

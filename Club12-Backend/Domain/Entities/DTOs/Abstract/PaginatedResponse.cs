@@ -9,7 +9,7 @@ public class PaginatedResponse<T>
     /// <summary>
     /// The items in the collection.
     /// </summary>
-    public required IEnumerable<T> Items { get; set; }
+    public IEnumerable<T> Items { get; set; } = [];
 
     /// <summary>
     /// The current page number.

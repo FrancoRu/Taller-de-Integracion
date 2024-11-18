@@ -25,6 +25,13 @@ public interface IMatchService
     Task<Match?> GetMatchByIdAsync(Guid matchId);
 
     /// <summary>
+    /// Retrieves a match by its id asynchronously with the scorers.
+    /// </summary>
+    /// <param name="matchId">The id of the match to retrieve.</param>
+    /// <returns>The match with the specified id, or null if not found.</returns>
+    Task<Match?> GetMatchByIdWithScorersAsync(Guid matchId);
+
+    /// <summary>
     /// Updates a match asynchronously.
     /// </summary>
     /// <param name="matchEntity">The match to update.</param>

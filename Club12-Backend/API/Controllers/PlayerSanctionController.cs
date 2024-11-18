@@ -63,19 +63,19 @@ public class PlayerSanctionController(IPlayerSanctionService _playerSanctionServ
     /// <summary>
     /// Updates a player sanction asynchronously.
     /// </summary>
-    /// <param name="sanctionId">The id of the sanction to update.</param>
+    /// <param name="id">The id of the sanction to update.</param>
     /// <param name="updateRequest">The request with updated sanction data.</param>
     /// <returns>Returns the result of the update operation.</returns>
-    [HttpPut("{sanctionId:guid}")]
+    [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> UpdatePlayerSanction(Guid sanctionId, UpdatePlayerSanctionRequest updateRequest)
+    public async Task<ActionResult> UpdatePlayerSanction(Guid id, UpdatePlayerSanctionRequest updateRequest)
     {
-        PlayerSanction? existingSanction = await _playerSanctionService.GetPlayerSanctionByIdAsync(sanctionId);
+        PlayerSanction? existingSanction = await _playerSanctionService.GetPlayerSanctionByIdAsync(id);
 
         if (existingSanction is null)
         {
-            return BadRequest($"Player sanction with id {sanctionId} not found.");
+            return BadRequest($"Player sanction with id {id} not found.");
         }
 
         _mapper.Map(updateRequest, existingSanction);

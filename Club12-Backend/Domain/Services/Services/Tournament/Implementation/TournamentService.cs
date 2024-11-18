@@ -55,7 +55,8 @@ public class TournamentService(IGenericService<Tournament> _genericTournamentSer
     public async Task<PaginatedResponse<Tournament>> GetAllTournamentsAsync(GetTournamentsFilteredRequest filter)
     {
         Expression<Func<Tournament, bool>> expression = QueryableExtensions.ConstructFilterExpression<Tournament, GetTournamentsFilteredRequest>(filter);
-        IQueryable<Tournament> filteredTournaments = _genericTournamentService.FilterByExpressionWithPagination(expression, filter).SortBy(filter);
+        IQueryable<Tournament> filteredTournaments = _genericTournamentService.FilterByExpressionWithPagination(expression, filter, tournament => tournament.Divisions)
+                                                                                                                                   .SortBy(filter);
         int totalCount = await _genericTournamentService.GetCountAsync(expression);
 
         return new PaginatedResponse<Tournament>

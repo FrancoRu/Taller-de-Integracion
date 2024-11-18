@@ -3,11 +3,13 @@ using Club12.Services.Services.PlayerStatisticService.Implementation;
 using Club12.Services.Services.StaffService.Implementation;
 using Club12.Services.Services.TeamService.Implementation;
 
+using Entities.Models.BlogPostEntity;
 using Entities.Models.DivisionEntity;
 using Entities.Models.MatchEntity;
 using Entities.Models.PlayerEntity;
 using Entities.Models.PlayerSanctionEntity;
 using Entities.Models.PlayerStatisticEntity;
+using Entities.Models.StaffEntity;
 using Entities.Models.TeamEntity;
 using Entities.Models.TournamentEntity;
 using Entities.Models.UserEntity;
@@ -92,7 +94,9 @@ public static class ServiceExtension
         collection.AddScoped<ICloudflareService, CloudflareService>();
         collection.AddScoped<IExcelService, ExcelService>();
         collection.AddScoped<IBlogPostService, BlogPostService>();
+        collection.AddScoped<IGenericService<BlogPost>, GenericService<BlogPost>>();
         collection.AddScoped<IStaffService, StaffService>();
+        collection.AddScoped<IGenericService<Staff>, GenericService<Staff>>();
         collection.AddHostedService<SanctionCleanupService>();
         collection.AddSingleton<IExceptionHandler, GlobalHandlerException>();
         collection.AddProblemDetails()

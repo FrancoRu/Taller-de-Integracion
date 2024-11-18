@@ -64,19 +64,19 @@ public class PlayerStatisticController(IPlayerStatisticService _playerStatisticS
     /// <summary>
     /// Updates a player statistic asynchronously.
     /// </summary>
-    /// <param name="statisticId">The id of the statistic to update.</param>
+    /// <param name="id">The id of the statistic to update.</param>
     /// <param name="updateRequest">The request with updated statistics.</param>
     /// <returns>Returns the result of the update operation.</returns>
-    [HttpPut("{statisticId:guid}")]
+    [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> UpdatePlayerStatistic(Guid statisticId, UpdatePlayerStatisticRequest updateRequest)
+    public async Task<ActionResult> UpdatePlayerStatistic(Guid id, UpdatePlayerStatisticRequest updateRequest)
     {
-        PlayerStatistic? existingStatistic = await _playerStatisticService.GetPlayerStatisticByIdAsync(statisticId);
+        PlayerStatistic? existingStatistic = await _playerStatisticService.GetPlayerStatisticByIdAsync(id);
 
         if (existingStatistic is null)
         {
-            return BadRequest($"Player statistic with id {statisticId} not found.");
+            return BadRequest($"Player statistic with id {id} not found.");
         }
 
         _mapper.Map(updateRequest, existingStatistic);

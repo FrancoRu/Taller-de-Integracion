@@ -65,19 +65,19 @@ public class BlogPostController(
     /// <summary>
     /// Updates an existing blog post by its id.
     /// </summary>
-    /// <param name="postId">The id of the blog post to update.</param>
+    /// <param name="id">The id of the blog post to update.</param>
     /// <param name="blogPostRequest">The blog post request with updated content.</param>
     /// <returns>Returns 200 (OK) with the updated blog post response if the update was successful, or 400 (Bad Request) if the blog post was not found.</returns>
-    [HttpPut("{postId:guid}")]
+    [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BlogPostResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> UpdateBlogPost(Guid postId, UpdateBlogPostRequest blogPostRequest)
+    public async Task<ActionResult> UpdateBlogPost(Guid id, UpdateBlogPostRequest blogPostRequest)
     {
-        BlogPost? existingPost = await _blogPostService.GetBlogPostByIdAsync(postId);
+        BlogPost? existingPost = await _blogPostService.GetBlogPostByIdAsync(id);
 
         if (existingPost is null)
         {
-            return BadRequest($"Blog post with id {postId} not found.");
+            return BadRequest($"Blog post with id {id} not found.");
         }
 
         _mapper.Map(blogPostRequest, existingPost);
@@ -89,23 +89,23 @@ public class BlogPostController(
     /// <summary>
     /// Updates the photo of a blog post.
     /// </summary>
-    /// <param name="postId">The id of the blog post to update the photo.</param>
+    /// <param name="id">The id of the blog post to update the photo.</param>
     /// <param name="photoRequest">The update blog post photo request.</param>
     /// <returns>Returns 200 (OK) if the photo was successfully updated.</returns>
-    [HttpPut("{postId:guid}/photo")]
+    [HttpPut("{id:guid}/photo")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> UpdateBlogPostPhoto(Guid postId, UpdateBlogPostPhotoRequest photoRequest)
+    public async Task<ActionResult> UpdateBlogPostPhoto(Guid id, UpdateBlogPostPhotoRequest photoRequest)
     {
         if (!photoRequest.PhotoFile.IsValidImageFile())
         {
             return BadRequest("The photo file must be a valid JPEG/PNG image.");
         }
 
-        BlogPost? blogPost = await _blogPostService.GetBlogPostByIdAsync(postId);
+        BlogPost? blogPost = await _blogPostService.GetBlogPostByIdAsync(id);
         if (blogPost is null)
         {
-            return BadRequest($"Blog post with id {postId} not found.");
+            return BadRequest($"Blog post with id {id} not found.");
         }
 
         string photoUrl = await _cloudflareService.UploadFileAsync(photoRequest.PhotoFile.OpenReadStream(), photoRequest.PhotoFile.FileName);

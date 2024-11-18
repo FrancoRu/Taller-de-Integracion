@@ -50,9 +50,9 @@ public class PlayerService(IGenericService<Player> _genericPlayerService) : IPla
         }
     }
 
-    public async Task<PaginatedResponse<Player>> GetAllPlayersAsync(GetPlayersFilteredRequest filter)
+    public async Task<PaginatedResponse<Player>> GetAllPlayersAsync(PlayerFilterRequestBase filter)
     {
-        Expression<Func<Player, bool>> expression = QueryableExtensions.ConstructFilterExpression<Player, GetPlayersFilteredRequest>(filter);
+        Expression<Func<Player, bool>> expression = QueryableExtensions.ConstructFilterExpression<Player, PlayerFilterRequestBase>(filter);
         IQueryable<Player> filteredPlayers = _genericPlayerService.FilterByExpressionWithPagination(expression, filter).SortBy(filter);
         int totalCount = await _genericPlayerService.GetCountAsync(expression);
 

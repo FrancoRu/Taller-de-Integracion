@@ -80,20 +80,20 @@ public class StaffController(IStaffService _staffService, ITeamService _teamServ
     /// <summary>
     /// Updates a staff member by its id.
     /// </summary>
-    /// <param name="staffId">The id of the staff member to update.</param>
+    /// <param name="id">The id of the staff member to update.</param>
     /// <param name="staffRequest">The staff request.</param>
     /// <returns>The updated staff response.</returns>
-    [HttpPut("{staffId:guid}")]
+    [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> UpdateStaffAsync(Guid staffId, UpdateStaffRequest staffRequest)
+    public async Task<ActionResult> UpdateStaffAsync(Guid id, UpdateStaffRequest staffRequest)
     {
-        Staff? existingStaff = await _staffService.GetStaffByIdAsync(staffId);
+        Staff? existingStaff = await _staffService.GetStaffByIdAsync(id);
 
         if (existingStaff is null)
         {
-            return BadRequest($"Staff with id {staffId} not found.");
+            return BadRequest($"Staff with id {id} not found.");
         }
 
         _mapper.Map(staffRequest, existingStaff);

@@ -42,5 +42,5 @@ public interface IPlayerService
     /// </summary>
     /// <param name="filter">The filtering and pagination request.</param>
     /// <returns>A paginated response containing the players.</returns>
-    Task<PaginatedResponse<Player>> GetAllPlayersAsync(GetPlayersFilteredRequest filter);
+    Task<PaginatedResponse<Player>> GetAllPlayersAsync(PlayerFilterRequestBase filter);
 }

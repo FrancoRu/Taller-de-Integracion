@@ -94,7 +94,7 @@ public class Match : EntityBase
     public Division Division { get; set; } = default!;
 
     /// <summary>
-    /// Division Id the match belongs to.
+    /// Divisions Id the match belongs to.
     /// </summary>
     public Guid DivisionId { get; set; }
 

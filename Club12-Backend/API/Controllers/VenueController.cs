@@ -69,24 +69,24 @@ public class VenueController(IVenueService _venueService, IMapper _mapper) : Con
     /// <summary>
     /// Updates a venue by its id asynchronously.
     /// </summary>
-    /// <param name="venueId">The id of the venue to update.</param>
+    /// <param name="id">The id of the venue to update.</param>
     /// <param name="venueRequest">The venue update request.</param>
     /// <returns>
     /// Returns 200 (OK) with the updated Venue response if the update was successful.
     /// Returns 400 (Bad Request) if the Venue with the provided id was not found.
     /// Returns 403 (Forbidden) if the user is not authorized.
     /// </returns>
-    [HttpPut("{venueId:guid}")]
+    [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> UpdateVenue(Guid venueId, UpdateVenueRequest venueRequest)
+    public async Task<ActionResult> UpdateVenue(Guid id, UpdateVenueRequest venueRequest)
     {
-        Venue? existingVenue = await _venueService.GetVenueByIdAsync(venueId);
+        Venue? existingVenue = await _venueService.GetVenueByIdAsync(id);
 
         if (existingVenue is null)
         {
-            return BadRequest($"Venue with id {venueId} not found.");
+            return BadRequest($"Venue with id {id} not found.");
         }
 
         _mapper.Map(venueRequest, existingVenue);

@@ -49,22 +49,22 @@ public class TournamentController(
     /// <summary>
     /// Retrieves a tournament by its Id.
     /// </summary>
-    /// <param name="tournamentId">The id of the tournament to retrieve.</param>
+    /// <param name="id">The id of the tournament to retrieve.</param>
     /// <returns>The Tournament with the specified Id.
     /// <para>Returns 200 (OK) with the Tournament response if it was found.</para>
-    /// <para>Returns 400 (Bad Request) if the Tournament with the provided tournamentId was not found.</para>
+    /// <para>Returns 400 (Bad Request) if the Tournament with the provided id was not found.</para>
     /// </returns>
     [AllowAnonymous]
-    [HttpGet("{tournamentId:guid}")]
+    [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TournamentResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<TournamentResponse>> GetTournamentById(Guid tournamentId)
+    public async Task<ActionResult<TournamentResponse>> GetTournamentById(Guid id)
     {
-        Tournament? tournament = await _tournamentService.GetTournamentByIdAsync(tournamentId);
+        Tournament? tournament = await _tournamentService.GetTournamentByIdAsync(id);
 
         if (tournament is null)
         {
-            return BadRequest($"Tournament with id {tournamentId} not found.");
+            return BadRequest($"Tournament with id {id} not found.");
         }
 
         TournamentResponse tournamentResponse = _mapper.Map<TournamentResponse>(tournament);
@@ -72,26 +72,26 @@ public class TournamentController(
     }
 
     /// <summary>
-    /// Updates a tournament by its tournamentId.
+    /// Updates a tournament by its id.
     /// </summary>
-    /// <param name="tournamentId">The tournamentId of the tournament to update.</param>
+    /// <param name="id">The id of the tournament to update.</param>
     /// <param name="tournamentRequest">The tournament request.</param>
     /// <returns>
     /// Returns 200 (OK) with the updated Tournament response if the update was successful.
-    /// Returns 400 (Bad Request) if the Tournament with the provided tournamentId was not found.
+    /// Returns 400 (Bad Request) if the Tournament with the provided id was not found.
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
-    [HttpPut("{tournamentId:guid}")]
+    [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TournamentResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> UpdateTournamentAsync(Guid tournamentId, CreateTournamentRequest tournamentRequest)
+    public async Task<ActionResult> UpdateTournamentAsync(Guid id, CreateTournamentRequest tournamentRequest)
     {
-        Tournament? existingTournament = await _tournamentService.GetTournamentByIdAsync(tournamentId);
+        Tournament? existingTournament = await _tournamentService.GetTournamentByIdAsync(id);
 
         if (existingTournament is null)
         {
-            return BadRequest($"Tournament with id {tournamentId} not found.");
+            return BadRequest($"Tournament with id {id} not found.");
         }
 
         _mapper.Map(tournamentRequest, existingTournament);
@@ -101,25 +101,25 @@ public class TournamentController(
     }
 
     /// <summary>
-    /// Deletes a tournament by its tournamentId.
+    /// Deletes a tournament by its id.
     /// </summary>
-    /// <param name="tournamentId">The tournamentId of the Tournament to delete.</param>
+    /// <param name="id">The id of the Tournament to delete.</param>
     /// <returns>
     /// Returns 200 (OK) if the Tournament was successfully deleted.
-    /// Returns 400 (Bad Request) if the Tournament with the provided tournamentId was not found.
+    /// Returns 400 (Bad Request) if the Tournament with the provided id was not found.
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
-    [HttpDelete("{tournamentId:guid}")]
+    [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> DeleteTournamentById(Guid tournamentId)
+    public async Task<IActionResult> DeleteTournamentById(Guid id)
     {
-        Tournament? tournament = await _tournamentService.GetTournamentByIdAsync(tournamentId);
+        Tournament? tournament = await _tournamentService.GetTournamentByIdAsync(id);
 
         if (tournament is null)
         {
-            return BadRequest($"Tournament with id {tournamentId} not found.");
+            return BadRequest($"Tournament with id {id} not found.");
         }
 
         bool deleteResult = await _tournamentService.DeleteTournamentAsync(tournament);
@@ -137,6 +137,7 @@ public class TournamentController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaginatedResponse<TournamentResponse>>> GetFilteredTournaments([FromQuery] GetTournamentsFilteredRequest filterRequest)
     {
+        //TODO: Check the models depths.
         PaginatedResponse<Tournament> paginatedTournaments = await _tournamentService.GetAllTournamentsAsync(filterRequest);
         PaginatedResponse<TournamentResponse> response = _mapper.Map<PaginatedResponse<TournamentResponse>>(paginatedTournaments);
 

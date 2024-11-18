@@ -53,22 +53,22 @@ public class DivisionController(
     /// <summary>
     /// Retrieves a division by its id.
     /// </summary>
-    /// <param name="divisionId">The id of the division to retrieve.</param>
+    /// <param name="id">The id of the division to retrieve.</param>
     /// <returns>The division with the specified id.
     /// <para>Returns 200 (Ok) with the division response if it was found.</para>
     /// <para>Returns 400 (Bad Request) if the division with the provided id was not found.</para>
     /// </returns>
     [AllowAnonymous]
-    [HttpGet("{divisionId:guid}/detail")]
+    [HttpGet("{id:guid}/detail")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedDivisionResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<DetailedDivisionResponse>> GetDivisionById(Guid divisionId)
+    public async Task<ActionResult<DetailedDivisionResponse>> GetDivisionById(Guid id)
     {
-        Division? division = await _divisionService.GetDivisionWithStatsAsync(divisionId);
+        Division? division = await _divisionService.GetDivisionWithStatsAsync(id);
 
         if (division is null)
         {
-            return BadRequest($"Division with id {divisionId} not found.");
+            return BadRequest($"Division with id {id} not found.");
         }
 
         DetailedDivisionResponse divisionResponse = _mapper.Map<DetailedDivisionResponse>(division);
@@ -79,23 +79,23 @@ public class DivisionController(
     /// <summary>
     /// Deletes a division by its id.
     /// </summary>
-    /// <param name="divisionId">The id of the division to delete.</param>
+    /// <param name="id">The id of the division to delete.</param>
     /// <returns>
     /// Returns 200 (Ok) if the division was successfully deleted.
     /// Returns 400 (Bad Request) if the division with the provided id was not found.
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
-    [HttpDelete("{divisionId:guid}")]
+    [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> DeleteDivisionById(Guid divisionId)
+    public async Task<IActionResult> DeleteDivisionById(Guid id)
     {
-        Division? division = await _divisionService.GetDivisionByIdAsync(divisionId);
+        Division? division = await _divisionService.GetDivisionByIdAsync(id);
 
         if (division is null)
         {
-            return BadRequest($"Division with id {divisionId} not found.");
+            return BadRequest($"Division with id {id} not found.");
         }
 
         bool deleteResult = await _divisionService.DeleteDivisionAsync(division);
@@ -106,24 +106,24 @@ public class DivisionController(
     /// <summary>
     /// Updates a division by its id.
     /// </summary>
-    /// <param name="divisionId">The id of the division to update.</param>
+    /// <param name="id">The id of the division to update.</param>
     /// <param name="divisionRequest">The updated division information.</param>
     /// <returns>
     /// Returns 200 (Ok) with the updated division response if the update was successful.
     /// Returns 400 (Bad Request) if the division with the provided id was not found.
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
-    [HttpPut("{divisionId:guid}")]
+    [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> UpdateDivisionById(Guid divisionId, UpdateDivisionRequest divisionRequest)
+    public async Task<IActionResult> UpdateDivisionById(Guid id, UpdateDivisionRequest divisionRequest)
     {
-        Division? existingDivision = await _divisionService.GetDivisionByIdAsync(divisionId);
+        Division? existingDivision = await _divisionService.GetDivisionByIdAsync(id);
 
         if (existingDivision is null)
         {
-            return BadRequest($"Division with id {divisionId} not found.");
+            return BadRequest($"Division with id {id} not found.");
         }
 
         _mapper.Map(divisionRequest, existingDivision);
@@ -153,19 +153,19 @@ public class DivisionController(
     /// <summary>
     /// Generates the fixture (matches) for the specified division.
     /// </summary>
-    /// <param name="divisionId">The ID of the division for which to generate the fixture.</param>
+    /// <param name="id">The ID of the division for which to generate the fixture.</param>
     /// <returns>Returns 200 (Ok) if the fixture is successfully generated.
     /// <para>Returns 400 (Bad Request) if the division with the specified ID does not exist.</para></returns>
-    [HttpPost("{divisionId:guid}/generate-fixture")]
+    [HttpPost("{id:guid}/generate-fixture")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> GenerateFixtureForDivision(Guid divisionId)
+    public async Task<IActionResult> GenerateFixtureForDivision(Guid id)
     {
-        Division? division = await _divisionService.GetDivisionByIdAsync(divisionId);
+        Division? division = await _divisionService.GetDivisionByIdAsync(id);
 
         if (division is null)
         {
-            return BadRequest($"Division with id {divisionId} not found.");
+            return BadRequest($"Division with id {id} not found.");
         }
 
         if (division.IsFinished)
@@ -173,7 +173,7 @@ public class DivisionController(
             return BadRequest("Division is already finished.");
         }
 
-        await _matchService.GenerateFixtureAsync([.. division.Teams], divisionId);
+        await _matchService.GenerateFixtureAsync([.. division.Teams], id);
 
         return Ok("Fixture generated successfully.");
     }
@@ -181,19 +181,19 @@ public class DivisionController(
     /// <summary>
     /// The top scorers for the specified division.
     /// </summary>
-    /// <param name="divisionId">The ID of the division to get top scorers for.</param>
+    /// <param name="id">The ID of the division to get top scorers for.</param>
     /// <returns>A list of top scorers for the specified division.</returns>
     [AllowAnonymous]
-    [HttpGet("{divisionId:guid}/top-scorers")]
+    [HttpGet("{id:guid}/top-scorers")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<TopScorerResponse>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<List<TopScorerResponse>>> GetTopScorersByDivision(Guid divisionId)
+    public async Task<ActionResult<List<TopScorerResponse>>> GetTopScorersByDivision(Guid id)
     {
-        List<TopScorer>? topScorers = await _divisionService.GetTopScorersByDivisionAsync(divisionId);
+        List<TopScorer>? topScorers = await _divisionService.GetTopScorersByDivisionAsync(id);
 
         if (topScorers is null)
         {
-            return BadRequest($"Division with id {divisionId} not found.");
+            return BadRequest($"Division with id {id} not found.");
         }
 
         List<TopScorerResponse> topScorersResponse = _mapper.Map<List<TopScorerResponse>>(topScorers);

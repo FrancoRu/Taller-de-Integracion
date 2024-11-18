@@ -25,6 +25,14 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
 
     public async Task<Match?> GetMatchByIdAsync(Guid matchId)
     {
+        return await _genericMatchService.FilterByExpression(match => match.Id == matchId)
+            .Include(m => m.HomeTeam)
+            .Include(m => m.VisitorTeam)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<Match?> GetMatchByIdWithScorersAsync(Guid matchId)
+    {
         Match? match = await _genericMatchService.FilterByExpression(match => match.Id == matchId)
             .Include(m => m.HomeTeam)
             .Include(m => m.VisitorTeam)

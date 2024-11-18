@@ -125,7 +125,7 @@ public class DivisionService(IGenericService<Division> _genericDivisionService) 
     {
         Expression<Func<Division, bool>> expression = QueryableExtensions.ConstructFilterExpression<Division, GetDivisionsFilteredRequest>(filter);
         IQueryable<Division> filteredDivisions = _genericDivisionService.FilterByExpressionWithPagination(expression, filter, division => division.Teams,
-                                                                                                                             division => division.Matches)
+                                                                                                                              division => division.Matches)
                                                                                                                                          .SortBy(filter);
         int totalCount = await _genericDivisionService.GetCountAsync(expression);
 

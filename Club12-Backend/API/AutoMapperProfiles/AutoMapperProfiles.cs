@@ -94,8 +94,12 @@ public class PlayerProfile : Profile
     /// </summary>
     public PlayerProfile()
     {
-        _ = CreateMap<Player, PlayerResponse>()
+        _ = CreateMap<Player, PublicPlayerResponse>()
+            .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.LastName.ToUpper()}, {src.Names}"))
             .ReverseMap();
+
+        CreateMap<Player, AdminPlayerResponse>()
+            .IncludeBase<Player, PublicPlayerResponse>();
 
         _ = CreateMap<CreatePlayerRequest, Player>();
 
@@ -114,6 +118,7 @@ public class TournamentProfile : Profile
     public TournamentProfile()
     {
         _ = CreateMap<Tournament, TournamentResponse>()
+            .ForMember(dest => dest.Divisions, opt => opt.MapFrom(src => src.Divisions))
             .ReverseMap();
 
         _ = CreateMap<CreateTournamentRequest, Tournament>();
@@ -150,7 +155,10 @@ public class MatchProfile : Profile
             .ForMember(dest => dest.WinningTeamName, opt => opt.MapFrom(src => src.WinningTeam != null ? src.WinningTeam.Name : null))
             .ReverseMap();
 
-        _ = CreateMap<UpdateMatchScoreRequest, Match>();
+        _ = CreateMap<UpdateMatchScoreRequest, Match>()
+            .ForMember(dest => dest.IsFinished, opt => opt.MapFrom(src => true))
+            .ForMember(dest => dest.WinningTeam, opt => opt.MapFrom((src, dest) =>
+                src.HomeScore > src.VisitorScore ? dest.HomeTeam : dest.VisitorTeam));
 
         _ = CreateMap<UpdateMatchRequest, Match>();
     }

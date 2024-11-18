@@ -68,24 +68,24 @@ public class TeamController(
     /// <summary>
     /// Updates a team by its id.
     /// </summary>
-    /// <param name="teamId">The id of the team to update.</param>
+    /// <param name="id">The id of the team to update.</param>
     /// <param name="teamRequest">The team request excluding logo update.</param>
     /// <returns>
     /// Returns 200 (OK) with the updated team response if the update was successful.
     /// Returns 400 (Bad Request) if the team with the provided id was not found.
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
-    [HttpPut("{teamId:guid}")]
+    [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> UpdateTeam(Guid teamId, UpdateTeamRequest teamRequest)
+    public async Task<ActionResult> UpdateTeam(Guid id, UpdateTeamRequest teamRequest)
     {
-        Team? existingTeam = await _teamService.GetTeamByIdAsync(teamId);
+        Team? existingTeam = await _teamService.GetTeamByIdAsync(id);
 
         if (existingTeam is null)
         {
-            return BadRequest($"Team with id {teamId} not found.");
+            return BadRequest($"Team with id {id} not found.");
         }
 
         _mapper.Map(teamRequest, existingTeam);
@@ -97,23 +97,23 @@ public class TeamController(
     /// <summary>
     /// Updates the logo of a team.
     /// </summary>
-    /// <param name="teamId">The id of the team to update the logo.</param>
+    /// <param name="id">The id of the team to update the logo.</param>
     /// <param name="logoRequest">The update team logo request.</param>
     /// <returns>Returns 200 (OK) if the logo was successfully updated.</returns>
-    [HttpPut("{teamId:guid}/logo")]
+    [HttpPut("{id:guid}/logo")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> UpdateTeamLogo(Guid teamId, UpdateTeamLogoRequest logoRequest)
+    public async Task<ActionResult> UpdateTeamLogo(Guid id, UpdateTeamLogoRequest logoRequest)
     {
         if (!logoRequest.LogoFile.IsValidImageFile())
         {
             return BadRequest("The logo file must be a valid JPEG/PNG image.");
         }
 
-        Team? team = await _teamService.GetTeamByIdAsync(teamId);
+        Team? team = await _teamService.GetTeamByIdAsync(id);
         if (team is null)
         {
-            return BadRequest($"Team with id {teamId} not found.");
+            return BadRequest($"Team with id {id} not found.");
         }
 
         string logoUrl = await _cloudflareService.UploadFileAsync(logoRequest.LogoFile.OpenReadStream(), logoRequest.LogoFile.FileName);
@@ -212,10 +212,10 @@ public class TeamController(
     //        return BadRequest("The logo file must be a valid JPEG/PNG image.");
     //    }
 
-    //    Division? division = _divisionService.GetDivisionById(batchTeamRequest.DivisionId);
+    //    Divisions? division = _divisionService.GetDivisionById(batchTeamRequest.DivisionId);
     //    if (division is null)
     //    {
-    //        return BadRequest($"Division with id {batchTeamRequest.DivisionId} not found.");
+    //        return BadRequest($"Divisions with id {batchTeamRequest.DivisionId} not found.");
     //    }
 
     //    (string teamName, string threeLetterCode, List<(string FirstName, string SecondName, string LastName, string DocumentNumber)> players) = await _excelService.ReadTeamAndPlayersAsync(batchTeamRequest.TeamFile);

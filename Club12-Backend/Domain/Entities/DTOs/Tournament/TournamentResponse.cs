@@ -21,5 +21,5 @@ public class TournamentResponse : BaseEntityResponse
     /// <summary>
     /// The divisions associated with the tournament.
     /// </summary>
-    public required IEnumerable<DetailedDivisionResponse> Division { get; set; }
+    public required IEnumerable<DetailedDivisionResponse> Divisions { get; set; }
 }

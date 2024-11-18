@@ -38,10 +38,10 @@ public class PlayerController(
     /// <para>Returns 403 (Forbidden) if the user is not authenticated.</para>
     /// </returns>
     [HttpPost()]
-    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(PlayerResponse))]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(PublicPlayerResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<PlayerResponse>> CreatePlayerAsync(CreatePlayerRequest playerRequest)
+    public async Task<ActionResult<PublicPlayerResponse>> CreatePlayerAsync(CreatePlayerRequest playerRequest)
     {
         Guid TeamId = playerRequest.TeamId;
         Team? existingTeam = await _teamService.GetTeamByIdAsync(TeamId);
@@ -53,7 +53,7 @@ public class PlayerController(
 
         Player mappedPlayer = _mapper.Map<Player>(playerRequest);
         Player createdPlayer = await _playerService.CreatePlayerAsync(mappedPlayer);
-        PlayerResponse playerResponse = _mapper.Map<PlayerResponse>(createdPlayer);
+        PublicPlayerResponse playerResponse = _mapper.Map<PublicPlayerResponse>(createdPlayer);
 
         return new ObjectResult(playerResponse) { StatusCode = StatusCodes.Status201Created };
     }
@@ -68,9 +68,9 @@ public class PlayerController(
     /// </returns>
     [AllowAnonymous]
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerResponse))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PublicPlayerResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<PlayerResponse>> GetPlayerByIdAsync(Guid id)
+    public async Task<ActionResult<PublicPlayerResponse>> GetPlayerByIdAsync(Guid id)
     {
         Player? player = await _playerService.GetPlayerByIdAsync(id);
 
@@ -79,31 +79,31 @@ public class PlayerController(
             return BadRequest($"Player with id {id} not found.");
         }
 
-        PlayerResponse playerResponse = _mapper.Map<PlayerResponse>(player);
+        PublicPlayerResponse playerResponse = _mapper.Map<PublicPlayerResponse>(player);
         return Ok(playerResponse);
     }
 
     /// <summary>
     /// Updates a player by its id.
     /// </summary>
-    /// <param name="playerId">The id of the player to update.</param>
+    /// <param name="id">The id of the player to update.</param>
     /// <param name="playerRequest">The player request.</param>
     /// <returns>
     /// Returns 200 (OK) with the updated Player response if the update was successful.
     /// Returns 400 (Bad Request) if the Player with the provided id was not found.
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
-    [HttpPut("{playerId:guid}")]
+    [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> UpdatePlayerAsync(Guid playerId, UpdatePlayerRequest playerRequest)
+    public async Task<ActionResult> UpdatePlayerAsync(Guid id, UpdatePlayerRequest playerRequest)
     {
-        Player? existingPlayer = await _playerService.GetPlayerByIdAsync(playerId);
+        Player? existingPlayer = await _playerService.GetPlayerByIdAsync(id);
 
         if (existingPlayer is null)
         {
-            return BadRequest($"Player with id {playerId} not found.");
+            return BadRequest($"Player with id {id} not found.");
         }
 
         _mapper.Map(playerRequest, existingPlayer);
@@ -144,14 +144,36 @@ public class PlayerController(
     /// <param name="filterRequest">The filtering and pagination parameters.</param>
     /// <returns>A paginated response containing the filtered players.</returns>
     [AllowAnonymous]
-    [HttpGet()]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<PlayerResponse>))]
+    [HttpGet("public")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<PublicPlayerResponse>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<PaginatedResponse<PlayerResponse>>> GetFilteredPlayersAsync([FromQuery] GetPlayersFilteredRequest filterRequest)
+    public async Task<ActionResult<PaginatedResponse<PublicPlayerResponse>>> GetFilteredPlayersAsync([FromQuery] GetPublicPlayersFilteredRequest filterRequest)
     {
         PaginatedResponse<Player> paginatedPlayers = await _playerService.GetAllPlayersAsync(filterRequest);
 
-        PaginatedResponse<PlayerResponse> response = _mapper.Map<PaginatedResponse<PlayerResponse>>(paginatedPlayers);
+        PaginatedResponse<PublicPlayerResponse> response = _mapper.Map<PaginatedResponse<PublicPlayerResponse>>(paginatedPlayers);
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Retrieves filtered players with pagination and detailed information for admins.
+    /// This endpoint is for private use only and requires admin access.
+    /// </summary>
+    /// <param name="filterRequest"> The filtering and pagination parameters. This includes optional query parameters like:    /// </param>
+    /// <returns> A paginated response containing the filtered players. </returns>
+    /// <response code="200">Returns a paginated list of filtered players</response>
+    /// <response code="400">Returns 400 if there is an invalid filter parameter or the filter results in no data</response>
+    /// <response code="403">Returns 403 if the user does not have the required permissions (admin)</response>
+    [HttpGet("")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<AdminPlayerResponse>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<PaginatedResponse<AdminPlayerResponse>>> GetFilteredPlayersPrivateAsync([FromQuery] GetPlayersFilteredRequest filterRequest)
+    {
+        PaginatedResponse<Player> paginatedPlayers = await _playerService.GetAllPlayersAsync(filterRequest);
+
+        PaginatedResponse<AdminPlayerResponse> response = _mapper.Map<PaginatedResponse<AdminPlayerResponse>>(paginatedPlayers);
 
         return Ok(response);
     }
