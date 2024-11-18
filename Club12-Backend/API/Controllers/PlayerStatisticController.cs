@@ -13,16 +13,14 @@ namespace Club12.API.Controllers;
 /// <summary>
 /// Controller for managing Player Statistics.
 /// </summary>
-/// <remarks>
-/// Initializes a new instance of the <see cref="PlayerStatisticController"/> class.
-/// </remarks>
-/// <param name="playerStatisticService">The Player Statistic service.</param>
-/// <param name="mapper">The AutoMapper instance.</param>
+/// <param name="_playerStatisticService">The Player Statistic service.</param>
+/// <param name="_mapper">The Auto_mapper instance.</param>
 [Authorize(Roles = "SuperAdmin")]
 [Route("api/player-statistics/")]
 [ApiController]
-public class PlayerStatisticController(IPlayerStatisticService playerStatisticService, IMapper mapper) : ControllerBase
+public class PlayerStatisticController(IPlayerStatisticService _playerStatisticService, IMapper _mapper) : ControllerBase
 {
+
     /// <summary>
     /// Creates a new player statistic.
     /// </summary>
@@ -32,13 +30,13 @@ public class PlayerStatisticController(IPlayerStatisticService playerStatisticSe
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(PlayerStatisticResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public ActionResult<PlayerStatisticResponse> CreatePlayerStatistic(CreatePlayerStatisticRequest playerStatisticRequest)
+    public async Task<ActionResult<PlayerStatisticResponse>> CreatePlayerStatistic(CreatePlayerStatisticRequest playerStatisticRequest)
     {
-        PlayerStatistic mappedStatistic = mapper.Map<PlayerStatistic>(playerStatisticRequest);
-        PlayerStatistic createdStatistic = playerStatisticService.CreatePlayerStatistic(mappedStatistic);
-        PlayerStatisticResponse statisticResponse = mapper.Map<PlayerStatisticResponse>(createdStatistic);
+        PlayerStatistic mappedStatistic = _mapper.Map<PlayerStatistic>(playerStatisticRequest);
+        PlayerStatistic createdStatistic = await _playerStatisticService.CreatePlayerStatisticAsync(mappedStatistic);
+        PlayerStatisticResponse statisticResponse = _mapper.Map<PlayerStatisticResponse>(createdStatistic);
 
-        return CreatedAtAction(nameof(GetPlayerStatisticById), new { id = statisticResponse.Id }, statisticResponse);
+        return new ObjectResult(statisticResponse) { StatusCode = StatusCodes.Status201Created };
     }
 
     /// <summary>
@@ -50,16 +48,16 @@ public class PlayerStatisticController(IPlayerStatisticService playerStatisticSe
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerStatisticResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public ActionResult<PlayerStatisticResponse> GetPlayerStatisticById(Guid id)
+    public async Task<ActionResult<PlayerStatisticResponse>> GetPlayerStatisticById(Guid id)
     {
-        PlayerStatistic? statistic = playerStatisticService.GetPlayerStatisticById(id);
+        PlayerStatistic? statistic = await _playerStatisticService.GetPlayerStatisticByIdAsync(id);
 
         if (statistic is null)
         {
             return BadRequest($"Player statistic with id {id} not found.");
         }
 
-        PlayerStatisticResponse statisticResponse = mapper.Map<PlayerStatisticResponse>(statistic);
+        PlayerStatisticResponse statisticResponse = _mapper.Map<PlayerStatisticResponse>(statistic);
         return Ok(statisticResponse);
     }
 
@@ -70,21 +68,21 @@ public class PlayerStatisticController(IPlayerStatisticService playerStatisticSe
     /// <param name="updateRequest">The request with updated statistics.</param>
     /// <returns>Returns the result of the update operation.</returns>
     [HttpPut("{statisticId:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> UpdatePlayerStatistic(Guid statisticId, UpdatePlayerStatisticRequest updateRequest)
     {
-        PlayerStatistic? existingStatistic = playerStatisticService.GetPlayerStatisticById(statisticId);
+        PlayerStatistic? existingStatistic = await _playerStatisticService.GetPlayerStatisticByIdAsync(statisticId);
 
         if (existingStatistic is null)
         {
             return BadRequest($"Player statistic with id {statisticId} not found.");
         }
 
-        mapper.Map(updateRequest, existingStatistic);
-        bool updateResult = await playerStatisticService.UpdatePlayerStatisticAsync(existingStatistic);
+        _mapper.Map(updateRequest, existingStatistic);
+        bool updateResult = await _playerStatisticService.UpdatePlayerStatisticAsync(existingStatistic);
 
-        return !updateResult ? BadRequest("Failed to update the player statistic.") : Ok();
+        return !updateResult ? BadRequest("Failed to update the player statistic.") : NoContent();
     }
 
     /// <summary>
@@ -93,18 +91,18 @@ public class PlayerStatisticController(IPlayerStatisticService playerStatisticSe
     /// <param name="id">The id of the player statistic to delete.</param>
     /// <returns>Returns the result of the delete operation.</returns>
     [HttpDelete("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public ActionResult DeletePlayerStatisticById(Guid id)
+    public async Task<ActionResult> DeletePlayerStatisticById(Guid id)
     {
-        PlayerStatistic? statistic = playerStatisticService.GetPlayerStatisticById(id);
+        PlayerStatistic? statistic = await _playerStatisticService.GetPlayerStatisticByIdAsync(id);
 
         if (statistic is null)
         {
             return BadRequest($"Player statistic with id {id} not found.");
         }
 
-        playerStatisticService.DeletePlayerStatistic(statistic);
-        return Ok();
+        bool deleteResult = await _playerStatisticService.DeletePlayerStatisticAsync(statistic);
+        return deleteResult ? BadRequest($"Failed to delete player statistic with id: {id}.") : NoContent();
     }
 }

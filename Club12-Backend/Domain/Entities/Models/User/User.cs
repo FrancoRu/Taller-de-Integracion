@@ -29,4 +29,15 @@ public class User : EntityBase
     [Required]
     [MaxLength(10)]
     public required string Role { get; set; }
+
+    /// <summary>
+    /// The refresh token of the user.
+    /// </summary>
+    [MaxLength(256)]
+    public string? RefreshToken { get; set; }
+
+    /// <summary>
+    /// The expiration date and time of the refresh token.
+    /// </summary>
+    public DateTime? RefreshTokenExpiryTime { get; set; }
 }

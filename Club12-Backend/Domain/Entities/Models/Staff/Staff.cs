@@ -9,7 +9,7 @@ namespace Entities.Models.StaffEntity;
 /// <summary>
 /// Represents a staff member in the Club12 application.
 /// </summary>
-[Table("StaffS", Schema = "Club12")]
+[Table("Staffs", Schema = "Club12")]
 public class Staff : EntityBase
 {
     /// <summary>

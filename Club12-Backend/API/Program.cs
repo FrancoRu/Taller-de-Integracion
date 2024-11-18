@@ -57,7 +57,7 @@ using (IServiceScope scope = app.Services.CreateScope())
     ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
     db.Database.Migrate();
 
-    app.Services.EnsureAdminUserExists();
+    await app.Services.EnsureAdminUserExists();
 }
 
 if (!builder.Environment.IsProduction())

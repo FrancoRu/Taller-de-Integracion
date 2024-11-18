@@ -1,4 +1,6 @@
 ﻿using Entities.Models.DivisionEntity;
+using Entities.Models.PlayerStatisticEntity;
+using Entities.Models.ScorerModel;
 using Entities.Models.TeamEntity;
 using Entities.Models.VenueEntity;
 
@@ -86,7 +88,7 @@ public class Match : EntityBase
     public Guid? WinningTeamId { get; set; }
 
     /// <summary>
-    /// Represents the winning team in the match.
+    /// Represents the division the match belongs to.
     /// </summary>
     [Column(nameof(DivisionId))]
     public Division Division { get; set; } = default!;
@@ -106,4 +108,21 @@ public class Match : EntityBase
     /// Represents the ID of the venue.
     /// </summary>
     public Guid? VenueId { get; set; }
+
+    /// <summary>
+    /// Represents the collection of player statistics associated with the match.
+    /// </summary>
+    public ICollection<PlayerStatistic> PlayerStatistics { get; set; } = [];
+
+    /// <summary>
+    /// The collection of home team scorers for the match.
+    /// </summary>
+    [NotMapped]
+    public IEnumerable<Scorer> HomeScorers { get; set; } = [];
+
+    /// <summary>
+    /// The collection of visitor team scorers for the match.
+    /// </summary>
+    [NotMapped]
+    public IEnumerable<Scorer> VisitorScorers { get; set; } = [];
 }

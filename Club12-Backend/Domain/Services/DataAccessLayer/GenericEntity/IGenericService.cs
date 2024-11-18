@@ -27,7 +27,7 @@ public interface IGenericService<TEntity> where TEntity : EntityBase
     /// Deletes a collection of entities.
     /// </summary>
     /// <param name="entities">The collection of entities to be deleted.</param>
-    void Delete(IEnumerable<TEntity> entities);
+    void DeleteBatch(IEnumerable<TEntity> entities);
 
     /// <summary>
     /// Asynchronously deletes entities based on a specified condition.

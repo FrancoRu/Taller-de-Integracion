@@ -11,24 +11,19 @@ using System.Linq.Expressions;
 
 namespace Services.Services.BlogPostService.Implementation;
 
-public class BlogPostService(IGenericService<BlogPost> genericBlogPostService) : IBlogPostService
+public class BlogPostService(IGenericService<BlogPost> _genericBlogPostService) : IBlogPostService
 {
-    public BlogPost CreateBlogPost(BlogPost blogPostEntity)
+    public async Task<BlogPost> CreateBlogPostAsync(BlogPost blogPostEntity)
     {
-        genericBlogPostService.Insert(blogPostEntity);
+        await _genericBlogPostService.InsertAsync(blogPostEntity);
         return blogPostEntity;
     }
 
-    public void DeleteBlogPost(BlogPost blogPostEntity)
-    {
-        genericBlogPostService.Delete(blogPostEntity);
-    }
-
-    public async Task<bool> UpdateBlogPostAsync(BlogPost blogPostEntity)
+    public async Task<bool> DeleteBlogPostAsync(BlogPost blogPostEntity)
     {
         try
         {
-            await genericBlogPostService.UpdateAsync(blogPostEntity);
+            await _genericBlogPostService.DeleteAsync(blogPostEntity);
             return true;
         }
         catch
@@ -37,19 +32,32 @@ public class BlogPostService(IGenericService<BlogPost> genericBlogPostService) :
         }
     }
 
-    public BlogPost? GetBlogPostById(Guid blogPostId)
+    public async Task<bool> UpdateBlogPostAsync(BlogPost blogPostEntity)
     {
-        return genericBlogPostService.FilterByExpression(blogPost => blogPost.Id == blogPostId)
-                                     .FirstOrDefault();
+        try
+        {
+            await _genericBlogPostService.UpdateAsync(blogPostEntity);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<BlogPost?> GetBlogPostByIdAsync(Guid blogPostId)
+    {
+        return await _genericBlogPostService.FilterByExpression(blogPost => blogPost.Id == blogPostId)
+                                           .FirstOrDefaultAsync();
     }
 
     public async Task<PaginatedResponse<BlogPost>> GetAllBlogPostsAsync(GetBlogPostsFilteredRequest filter)
     {
         Expression<Func<BlogPost, bool>> expression = QueryableExtensions.ConstructFilterExpression<BlogPost, GetBlogPostsFilteredRequest>(filter);
-        IQueryable<BlogPost> filteredBlogPosts = genericBlogPostService.FilterByExpressionWithPagination(expression, filter)
-                                                                                     .SortBy(filter);
+        IQueryable<BlogPost> filteredBlogPosts = _genericBlogPostService.FilterByExpressionWithPagination(expression, filter)
+                                                                     .SortBy(filter);
 
-        int totalCount = await genericBlogPostService.GetCountAsync(expression);
+        int totalCount = await _genericBlogPostService.GetCountAsync(expression);
 
         return new PaginatedResponse<BlogPost>
         {

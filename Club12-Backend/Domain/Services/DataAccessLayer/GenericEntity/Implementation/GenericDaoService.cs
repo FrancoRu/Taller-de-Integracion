@@ -10,9 +10,9 @@ namespace Services.DataAccessLayer.GenericEntity.Implementation;
 
 public class GenericDaoService<TEntity> : IGenericDaoService<TEntity> where TEntity : EntityBase
 {
-    public GenericDaoService(ApplicationDBContext context)
+    public GenericDaoService(ApplicationDBContext _context)
     {
-        GetContext = context;
+        GetContext = _context;
         DbSet = GetContext.Set<TEntity>();
     }
 

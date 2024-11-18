@@ -13,30 +13,29 @@ public interface ITeamService
     /// Creates a new team.
     /// </summary>
     /// <param name="teamEntity">The team entity to create.</param>
-    /// <param name="userId">The id of the user creating the team.</param>
     /// <returns>The created team.</returns>
-    Team CreateTeam(Team teamEntity);
+    Task<Team> CreateTeamAsync(Team teamEntity);
 
     /// <summary>
     /// Retrieves a team by its id.
     /// </summary>
     /// <param name="teamId">The id of the team to retrieve.</param>
     /// <returns>The team with the specified id, or null if not found.</returns>
-    Team? GetTeamById(Guid teamId);
+    Task<Team?> GetTeamByIdAsync(Guid teamId);
 
     /// <summary>
     /// Updates a team asynchronously.
     /// </summary>
-    /// <param name="team">The team to update.</param>
-    /// <param name="userId">The id of the user updating the team.</param>
+    /// <param name="teamEntity">The team entity to update.</param>
     /// <returns>A boolean indicating whether the update was successful.</returns>
     Task<bool> UpdateTeamAsync(Team teamEntity);
 
     /// <summary>
-    /// Deletes a team.
+    /// Deletes a team asynchronously.
     /// </summary>
-    /// <param name="team">The team to delete.</param>
-    void DeleteTeam(Team teamEntity);
+    /// <param name="teamEntity">The team to delete.</param>
+    /// <returns>A boolean indicating whether the deletion was successful.</returns>
+    Task<bool> DeleteTeamAsync(Team teamEntity);
 
     /// <summary>
     /// Retrieves a paginated list of teams based on filtering criteria.

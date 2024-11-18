@@ -16,9 +16,6 @@ namespace Club12.API.Controllers;
 /// <summary>
 /// Controller for managing Players.
 /// </summary>
-/// <remarks>
-/// Initializes a new instance of the <see cref="PlayerController"/> class.
-/// </remarks>
 /// <param name="_playerService">The Player service.</param>
 /// <param name="_teamService">The Team service.</param>
 /// <param name="_mapper">The AutoMapper instance.</param>
@@ -44,10 +41,10 @@ public class PlayerController(
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(PlayerResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public ActionResult<PlayerResponse> CreatePlayer(CreatePlayerRequest playerRequest)
+    public async Task<ActionResult<PlayerResponse>> CreatePlayerAsync(CreatePlayerRequest playerRequest)
     {
         Guid TeamId = playerRequest.TeamId;
-        Team? existingTeam = _teamService.GetTeamById(TeamId);
+        Team? existingTeam = await _teamService.GetTeamByIdAsync(TeamId);
 
         if (existingTeam is null)
         {
@@ -55,7 +52,7 @@ public class PlayerController(
         }
 
         Player mappedPlayer = _mapper.Map<Player>(playerRequest);
-        Player createdPlayer = _playerService.CreatePlayer(mappedPlayer);
+        Player createdPlayer = await _playerService.CreatePlayerAsync(mappedPlayer);
         PlayerResponse playerResponse = _mapper.Map<PlayerResponse>(createdPlayer);
 
         return new ObjectResult(playerResponse) { StatusCode = StatusCodes.Status201Created };
@@ -73,9 +70,9 @@ public class PlayerController(
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public ActionResult<PlayerResponse> GetPlayerById(Guid id)
+    public async Task<ActionResult<PlayerResponse>> GetPlayerByIdAsync(Guid id)
     {
-        Player? player = _playerService.GetPlayerById(id);
+        Player? player = await _playerService.GetPlayerByIdAsync(id);
 
         if (player is null)
         {
@@ -97,12 +94,12 @@ public class PlayerController(
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
     [HttpPut("{playerId:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerResponse))]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> UpdatePlayer(Guid playerId, UpdatePlayerRequest playerRequest)
+    public async Task<ActionResult> UpdatePlayerAsync(Guid playerId, UpdatePlayerRequest playerRequest)
     {
-        Player? existingPlayer = _playerService.GetPlayerById(playerId);
+        Player? existingPlayer = await _playerService.GetPlayerByIdAsync(playerId);
 
         if (existingPlayer is null)
         {
@@ -112,7 +109,7 @@ public class PlayerController(
         _mapper.Map(playerRequest, existingPlayer);
         bool updateResult = await _playerService.UpdatePlayerAsync(existingPlayer);
 
-        return !updateResult ? BadRequest("Failed to update the player.") : Ok();
+        return !updateResult ? BadRequest("Failed to update the player.") : NoContent();
     }
 
     /// <summary>
@@ -125,20 +122,20 @@ public class PlayerController(
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
     [HttpDelete("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public IActionResult DeletePlayerById(Guid id)
+    public async Task<IActionResult> DeletePlayerByIdAsync(Guid id)
     {
-        Player? player = _playerService.GetPlayerById(id);
+        Player? player = await _playerService.GetPlayerByIdAsync(id);
 
         if (player is null)
         {
             return BadRequest($"Player with id {id} not found.");
         }
 
-        _playerService.DeletePlayer(player);
-        return Ok();
+        await _playerService.DeletePlayerAsync(player);
+        return NoContent();
     }
 
     /// <summary>
@@ -150,7 +147,7 @@ public class PlayerController(
     [HttpGet()]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<PlayerResponse>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<PaginatedResponse<PlayerResponse>>> GetFilteredPlayers([FromQuery] GetPlayersFilteredRequest filterRequest)
+    public async Task<ActionResult<PaginatedResponse<PlayerResponse>>> GetFilteredPlayersAsync([FromQuery] GetPlayersFilteredRequest filterRequest)
     {
         PaginatedResponse<Player> paginatedPlayers = await _playerService.GetAllPlayersAsync(filterRequest);
 

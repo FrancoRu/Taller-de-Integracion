@@ -8,18 +8,18 @@ namespace Services.Services.VenueService;
 public interface IVenueService
 {
     /// <summary>
-    /// Creates a new Venue.
+    /// Creates a new Venue asynchronously.
     /// </summary>
     /// <param name="venueEntity">The Venue entity to create.</param>
     /// <returns>The created Venue.</returns>
-    Venue CreateVenue(Venue venueEntity);
+    Task<Venue> CreateVenueAsync(Venue venueEntity);
 
     /// <summary>
-    /// Retrieves a Venue by its id.
+    /// Retrieves a Venue by its id asynchronously.
     /// </summary>
     /// <param name="venueId">The id of the Venue to retrieve.</param>
     /// <returns>The Venue with the specified id, or null if not found.</returns>
-    Venue? GetVenueById(Guid venueId);
+    Task<Venue?> GetVenueByIdAsync(Guid venueId);
 
     /// <summary>
     /// Updates a Venue asynchronously.
@@ -29,13 +29,14 @@ public interface IVenueService
     Task<bool> UpdateVenueAsync(Venue venueEntity);
 
     /// <summary>
-    /// Deletes a Venue.
+    /// Deletes a Venue asynchronously.
     /// </summary>
     /// <param name="venueEntity">The Venue to delete.</param>
-    void DeleteVenue(Venue venueEntity);
+    /// <returns>A boolean indicating whether the deletion was successful.</returns>
+    Task<bool> DeleteVenueAsync(Venue venueEntity);
 
     /// <summary>
-    /// Retrieves all venus
+    /// Retrieves all venues asynchronously.
     /// </summary>
     /// <param name="filter">The filtering and pagination request.</param>
     /// <returns>A paginated response containing the venues.</returns>

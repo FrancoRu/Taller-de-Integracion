@@ -56,5 +56,5 @@ public class Team : EntityBase
     /// <summary>
     /// The staff belonging to the team.
     /// </summary>
-    public ICollection<Staff>? Staff { get; set; }
+    public virtual required ICollection<Staff> Staff { get; set; }
 }

@@ -11,31 +11,39 @@ using System.Linq.Expressions;
 
 namespace Services.Services.TournamentService.Implementation;
 
-public class TournamentService(IGenericService<Tournament> genericTournamentService) : ITournamentService
+public class TournamentService(IGenericService<Tournament> _genericTournamentService) : ITournamentService
 {
-    public Tournament CreateTournament(Tournament tournamentEntity)
+    public async Task<Tournament> CreateTournamentAsync(Tournament tournamentEntity)
     {
-        genericTournamentService.Insert(tournamentEntity);
+        await _genericTournamentService.InsertAsync(tournamentEntity);
         return tournamentEntity;
     }
 
-    public Tournament? GetTournamentById(Guid tournamentId)
+    public async Task<Tournament?> GetTournamentByIdAsync(Guid tournamentId)
     {
-        return genericTournamentService.FilterByExpression(tournament => tournament.Id == tournamentId)
-                                       .Include(tournament => tournament.Divisions)
-                                       .FirstOrDefault();
+        return await _genericTournamentService.FilterByExpression(tournament => tournament.Id == tournamentId)
+                                             .Include(tournament => tournament.Divisions)
+                                             .FirstOrDefaultAsync();
     }
 
-    public void DeleteTournament(Tournament tournamentEntity)
+    public async Task<bool> DeleteTournamentAsync(Tournament tournamentEntity)
     {
-        genericTournamentService.Delete(tournamentEntity);
+        try
+        {
+            await _genericTournamentService.DeleteAsync(tournamentEntity);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public async Task<bool> UpdateTournamentAsync(Tournament tournamentEntity)
     {
         try
         {
-            await genericTournamentService.UpdateAsync(tournamentEntity);
+            await _genericTournamentService.UpdateAsync(tournamentEntity);
             return true;
         }
         catch
@@ -47,8 +55,8 @@ public class TournamentService(IGenericService<Tournament> genericTournamentServ
     public async Task<PaginatedResponse<Tournament>> GetAllTournamentsAsync(GetTournamentsFilteredRequest filter)
     {
         Expression<Func<Tournament, bool>> expression = QueryableExtensions.ConstructFilterExpression<Tournament, GetTournamentsFilteredRequest>(filter);
-        IQueryable<Tournament> filteredTournaments = genericTournamentService.FilterByExpressionWithPagination(expression, filter).SortBy(filter);
-        int totalCount = await genericTournamentService.GetCountAsync(expression);
+        IQueryable<Tournament> filteredTournaments = _genericTournamentService.FilterByExpressionWithPagination(expression, filter).SortBy(filter);
+        int totalCount = await _genericTournamentService.GetCountAsync(expression);
 
         return new PaginatedResponse<Tournament>
         {

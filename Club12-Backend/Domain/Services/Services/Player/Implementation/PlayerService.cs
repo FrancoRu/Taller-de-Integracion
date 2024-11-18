@@ -11,29 +11,37 @@ using System.Linq.Expressions;
 
 namespace Services.Services.PlayerService.Implementation;
 
-public class PlayerService(IGenericService<Player> genericPlayerService) : IPlayerService
+public class PlayerService(IGenericService<Player> _genericPlayerService) : IPlayerService
 {
-    public Player CreatePlayer(Player playerEntity)
+    public async Task<Player> CreatePlayerAsync(Player playerEntity)
     {
-        genericPlayerService.Insert(playerEntity);
+        await _genericPlayerService.InsertAsync(playerEntity);
         return playerEntity;
     }
 
-    public Player? GetPlayerById(Guid playerId)
+    public async Task<Player?> GetPlayerByIdAsync(Guid playerId)
     {
-        return genericPlayerService.TryGet(playerId);
+        return await _genericPlayerService.FilterByExpression(player => player.Id == playerId).FirstOrDefaultAsync();
     }
 
-    public void DeletePlayer(Player playerEntity)
+    public async Task<bool> DeletePlayerAsync(Player playerEntity)
     {
-        genericPlayerService.Delete(playerEntity);
+        try
+        {
+            await _genericPlayerService.DeleteAsync(playerEntity);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public async Task<bool> UpdatePlayerAsync(Player playerEntity)
     {
         try
         {
-            await genericPlayerService.UpdateAsync(playerEntity);
+            await _genericPlayerService.UpdateAsync(playerEntity);
             return true;
         }
         catch
@@ -45,8 +53,8 @@ public class PlayerService(IGenericService<Player> genericPlayerService) : IPlay
     public async Task<PaginatedResponse<Player>> GetAllPlayersAsync(GetPlayersFilteredRequest filter)
     {
         Expression<Func<Player, bool>> expression = QueryableExtensions.ConstructFilterExpression<Player, GetPlayersFilteredRequest>(filter);
-        IQueryable<Player> filteredPlayers = genericPlayerService.FilterByExpressionWithPagination(expression, filter).SortBy(filter);
-        int totalCount = await genericPlayerService.GetCountAsync(expression);
+        IQueryable<Player> filteredPlayers = _genericPlayerService.FilterByExpressionWithPagination(expression, filter).SortBy(filter);
+        int totalCount = await _genericPlayerService.GetCountAsync(expression);
 
         return new PaginatedResponse<Player>
         {

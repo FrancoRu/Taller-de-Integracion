@@ -14,9 +14,6 @@ namespace Club12.API.Controllers;
 /// <summary>
 /// Controller for managing Tournaments.
 /// </summary>
-/// <remarks>
-/// Initializes a new instance of the <see cref="TournamentController"/> class.
-/// </remarks>
 /// <param name="_tournamentService">The Tournament service.</param>
 /// <param name="_mapper">The AutoMapper instance.</param>
 [Authorize(Roles = "SuperAdmin")]
@@ -24,9 +21,9 @@ namespace Club12.API.Controllers;
 [ApiController]
 public class TournamentController(
     ITournamentService _tournamentService,
-    IMapper _mapper
-    ) : ControllerBase
+    IMapper _mapper) : ControllerBase
 {
+
     /// <summary>
     /// Creates a new tournament.
     /// </summary>
@@ -36,14 +33,14 @@ public class TournamentController(
     /// <para>Returns 400 (Bad Request) if there was an error in the request.</para>
     /// <para>Returns 403 (Forbidden) if the user is not authenticated.</para>
     /// </returns>
-    [HttpPost()]
+    [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TournamentResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public ActionResult<TournamentResponse> CreateTournament(CreateTournamentRequest tournamentRequest)
+    public async Task<ActionResult<TournamentResponse>> CreateTournamentAsync(CreateTournamentRequest tournamentRequest)
     {
         Tournament mappedTournament = _mapper.Map<Tournament>(tournamentRequest);
-        Tournament createdTournament = _tournamentService.CreateTournament(mappedTournament);
+        Tournament createdTournament = await _tournamentService.CreateTournamentAsync(mappedTournament);
         TournamentResponse tournamentResponse = _mapper.Map<TournamentResponse>(createdTournament);
 
         return new ObjectResult(tournamentResponse) { StatusCode = StatusCodes.Status201Created };
@@ -61,9 +58,9 @@ public class TournamentController(
     [HttpGet("{tournamentId:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TournamentResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public ActionResult<TournamentResponse> GetTournamentById(Guid tournamentId)
+    public async Task<ActionResult<TournamentResponse>> GetTournamentById(Guid tournamentId)
     {
-        Tournament? tournament = _tournamentService.GetTournamentById(tournamentId);
+        Tournament? tournament = await _tournamentService.GetTournamentByIdAsync(tournamentId);
 
         if (tournament is null)
         {
@@ -88,9 +85,9 @@ public class TournamentController(
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TournamentResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> UpdateTournament(Guid tournamentId, CreateTournamentRequest tournamentRequest)
+    public async Task<ActionResult> UpdateTournamentAsync(Guid tournamentId, CreateTournamentRequest tournamentRequest)
     {
-        Tournament? existingTournament = _tournamentService.GetTournamentById(tournamentId);
+        Tournament? existingTournament = await _tournamentService.GetTournamentByIdAsync(tournamentId);
 
         if (existingTournament is null)
         {
@@ -100,7 +97,7 @@ public class TournamentController(
         _mapper.Map(tournamentRequest, existingTournament);
         bool updateResult = await _tournamentService.UpdateTournamentAsync(existingTournament);
 
-        return !updateResult ? BadRequest("Failed to update the tournament.") : Ok();
+        return updateResult ? Ok() : BadRequest("Failed to update the tournament.");
     }
 
     /// <summary>
@@ -116,17 +113,17 @@ public class TournamentController(
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public IActionResult DeleteTournamentById(Guid tournamentId)
+    public async Task<IActionResult> DeleteTournamentById(Guid tournamentId)
     {
-        Tournament? tournament = _tournamentService.GetTournamentById(tournamentId);
+        Tournament? tournament = await _tournamentService.GetTournamentByIdAsync(tournamentId);
 
         if (tournament is null)
         {
             return BadRequest($"Tournament with id {tournamentId} not found.");
         }
 
-        _tournamentService.DeleteTournament(tournament);
-        return Ok();
+        bool deleteResult = await _tournamentService.DeleteTournamentAsync(tournament);
+        return deleteResult ? Ok() : BadRequest("Failed to delete the tournament.");
     }
 
     /// <summary>
@@ -135,13 +132,12 @@ public class TournamentController(
     /// <param name="filterRequest">The filtering and pagination parameters.</param>
     /// <returns>A paginated response containing the filtered tournaments.</returns>
     [AllowAnonymous]
-    [HttpGet()]
+    [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<TournamentResponse>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaginatedResponse<TournamentResponse>>> GetFilteredTournaments([FromQuery] GetTournamentsFilteredRequest filterRequest)
     {
         PaginatedResponse<Tournament> paginatedTournaments = await _tournamentService.GetAllTournamentsAsync(filterRequest);
-
         PaginatedResponse<TournamentResponse> response = _mapper.Map<PaginatedResponse<TournamentResponse>>(paginatedTournaments);
 
         return Ok(response);

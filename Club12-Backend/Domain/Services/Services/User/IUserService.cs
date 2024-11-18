@@ -5,17 +5,31 @@ namespace Services.Services.UserService;
 public interface IUserService
 {
     /// <summary>
-    /// Gets the user by its user name.
+    /// Asynchronously gets the user by its user name.
     /// </summary>
-    /// <param name="userName"></param>
+    /// <param name="userName">The username to search for.</param>
     /// <returns>The user entity if found, otherwise null.</returns>
-    User? GetUserByUserNameAsync(string userName);
+    Task<User?> GetUserByUserNameAsync(string userName);
 
     /// <summary>
-    /// Validates user credentials.
+    /// Asynchronously validates user credentials.
     /// </summary>
-    /// <param name="userEntity">The user request containing login credentials.</param>
-    /// <param name="plainTextPassword">The user request password.</param>
-    /// <returns>True if the credentials are valid, otherwise false.</returns>
-    bool ValidateCredentials(User userEntity, string plainTextPassword);
+    /// <param name="userEntity">The user entity containing login credentials.</param>
+    /// <param name="plainTextPassword">The plain text password to validate.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result is true if the credentials are valid, otherwise false.</returns>
+    Task<bool> ValidateCredentialsAsync(User userEntity, string plainTextPassword);
+
+    /// <summary>
+    /// Asynchronously gets the user by their refresh token.
+    /// </summary>
+    /// <param name="refreshToken">The refresh token to search for.</param>
+    /// <returns>The user entity if found, otherwise null.</returns>
+    Task<User?> GetUserByRefreshTokenAsync(string refreshToken);
+
+    /// <summary>
+    /// Updates a user in the database.
+    /// </summary>
+    /// <param name="user">The user to update.</param>
+    /// <returns>A task that represents the asynchronous operation. True if it could be updated, false if not.</returns>
+    Task<bool> UpdateUserAsync(User user);
 }
