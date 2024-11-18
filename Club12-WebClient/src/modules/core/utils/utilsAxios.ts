@@ -1,6 +1,6 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
 import jsCookie from "js-cookie";
-import envVariables from "../constants/envVariables";
+import routes from "../constants/routes";
 
 const TOKEN_KEY: string = "Club12_SignInToken";
 type headersContent = {
@@ -17,8 +17,17 @@ const statusCodeHandlers: Record<
   ((response: AxiosResponse) => void)[]
 > = {};
 
+/**
+ * Checks if a token is set in cookies.
+ * @returns {boolean} True if the token exists, false otherwise.
+ */
 export const tokenIsSet = (): boolean => !!jsCookie.get(TOKEN_KEY);
 
+/**
+ * Registers a token in cookies.
+ * @param {string} newToken - The token to store.
+ * @param {Date} expirationDate - The expiration date for the token.
+ */
 export const registerToken = (newToken: string, expirationDate: Date) => {
   jsCookie.set(TOKEN_KEY, newToken, {
     expires: expirationDate,
@@ -27,22 +36,26 @@ export const registerToken = (newToken: string, expirationDate: Date) => {
   });
 };
 
+/**
+ * Unregisters (removes) the token from cookies.
+ */
 export const unregisterToken = (): void => {
   jsCookie.remove(TOKEN_KEY, {
     path: "/",
   });
 };
 
+/**
+ * Retrieves the currently registered token.
+ * @returns {string } The registered token, or undefined if none is set.
+ */
 export const getRegisteredToken = (): string | undefined =>
   jsCookie.get(TOKEN_KEY);
 
-const buildResponse = (axiosResult: AxiosResponse): unknown => {
-  if (axiosResult.status === 200) {
-    return axiosResult.data || {};
-  }
-  return {};
-};
-
+/**
+ * Retrieves the default headers for requests.
+ * @returns {headersContent} The default headers.
+ */
 const getDefaultHeaders = (): headersContent => {
   const headers: headersContent = {
     "Content-Type": "application/json; charset=utf-8",
@@ -55,10 +68,15 @@ const getDefaultHeaders = (): headersContent => {
   return headers;
 };
 
+/**
+ * Merges custom headers with default headers.
+ * @param {ConfigOverride} [configOverride] - The override configuration.
+ * @returns {headersContent} The resulting headers.
+ */
 const getHeaders = (configOverride?: ConfigOverride): headersContent => {
   let headers: headersContent = getDefaultHeaders();
 
-  if (configOverride && configOverride.headers) {
+  if (configOverride?.headers) {
     headers = {
       ...headers,
       ...configOverride.headers,
@@ -68,25 +86,33 @@ const getHeaders = (configOverride?: ConfigOverride): headersContent => {
   return headers;
 };
 
+/**
+ * Builds the full API endpoint URL.
+ * @param {string} resource - The API resource.
+ * @returns {string} The encoded full endpoint URL.
+ */
 export const buildEndpoint = (resource: string): string => {
-  const resourceFinal = resource;
-  // if (!resourceFinal.startsWith("/")) {
-  //   resourceFinal = `/${resourceFinal}`;
-  // }
-  return encodeURI(`${envVariables.apiUrl}/${resourceFinal}`);
+  return encodeURI(`${routes.apiUrl}/${resource}`);
 };
 
-const sendRequest = async (
+/**
+ * Sends an HTTP request.
+ * @param {string} method - HTTP method (GET, POST, PUT, DELETE).
+ * @param {string} resource - API resource.
+ * @param {Object} configOverride - Request configuration overrides.
+ * @param {unknown | null} body - Request body data.
+ * @returns {Promise<AxiosResponse<T>>} A promise that resolves with the response or undefined.
+ */
+const sendRequest = async <T>(
   method: string,
   resource: string,
-  configOverride = {},
+  configOverride: object = {},
   body: unknown | null = null
-) => {
+): Promise<AxiosResponse<T>> => {
   const headers = getHeaders(configOverride);
   const url = buildEndpoint(resource);
-  const response: AxiosResponse | null = null;
   try {
-    const result = await axios.request({
+    const result: AxiosResponse<T> = await axios.request({
       method,
       url,
       headers,
@@ -95,15 +121,14 @@ const sendRequest = async (
     return result;
   } catch (error: unknown) {
     throwError(error);
-  } finally {
-    if (response !== null) {
-      const statusCode: number = (response as AxiosResponse).status;
-      const codeHandlers = statusCodeHandlers[statusCode] || [];
-      codeHandlers.forEach((handler) => handler(response as AxiosResponse));
-    }
+    throw new Error("Unexpected error during request execution");
   }
 };
 
+/**
+ * Throws an appropriate error based on its type.
+ * @param {unknown} error - The error object.
+ */
 const throwError = (error: unknown) => {
   switch (true) {
     case axios.isAxiosError(error):
@@ -125,58 +150,67 @@ const throwError = (error: unknown) => {
 
 /**
  * Sends a POST HTTP request.
- *
- * @param {string} resource API resource.
- * @param {any} body request body.
- * @returns
+ * @param {string} resource - API resource.
+ * @param {unknown} [body] - Request body.
+ * @param {ConfigOverride} [configOverride] - Configuration overrides.
+ * @returns {Promise<AxiosResponse<T> >} A promise that resolves with the server response.
  */
-
-export const sendPost = async (
+export const sendPost = async <T>(
   resource: string,
   body?: unknown,
   configOverride?: ConfigOverride
-) => {
-  // Usamos sendRequest para realizar la solicitud POST
-  const result = await sendRequest("POST", resource, configOverride, body);
-  return result; // Retornamos el resultado obtenido
+): Promise<AxiosResponse<T>> => {
+  return await sendRequest<T>("POST", resource, configOverride, body);
 };
 
-export const sendPut = async (
+/**
+ * Sends a PUT HTTP request.
+ * @param {string} resource - API resource.
+ * @param {unknown} body - Request body.
+ * @param {ConfigOverride} [configOverride] - Configuration overrides.
+ * @returns {Promise<AxiosResponse<T> >} A promise that resolves with the server response.
+ */
+export const sendPut = async <T>(
   resource: string,
   body: unknown,
   configOverride?: ConfigOverride
-) => {
-  // TODO call sendRequest
-  const headers = getHeaders(configOverride);
-  const url = buildEndpoint(resource);
-
-  const result = await axios.put(url, body, { headers });
-
-  return buildResponse(result);
+): Promise<AxiosResponse<T>> => {
+  return await sendRequest<T>("PUT", resource, configOverride, body);
 };
 
-export const sendGet = async (resource: string, body?: unknown | null) =>
-  sendRequest("GET", resource, {}, body);
+/**
+ * Sends a GET HTTP request.
+ * @param {string} resource - API resource.
+ * @param {unknown | null} [body] - Request body.
+ * @returns {Promise<AxiosResponse<T> >} A promise that resolves with the server response.
+ */
+export const sendGet = async <T>(
+  resource: string,
+  body?: unknown | null
+): Promise<AxiosResponse<T>> => sendRequest<T>("GET", resource, {}, body);
 
-export const sendDelete = async (
+/**
+ * Sends a DELETE HTTP request.
+ * @param {string} resource - API resource.
+ * @param {ConfigOverride} [configOverride] - Configuration overrides.
+ * @returns {Promise<AxiosResponse<T> >} A promise that resolves when the resource is deleted.
+ */
+export const sendDelete = async <T>(
   resource: string,
   configOverride?: ConfigOverride
-) => {
-  // TODO call sendRequest
-  const headers = getHeaders(configOverride);
-  const url = buildEndpoint(resource);
-
-  const result = await axios.delete(url, { headers });
-
-  return buildResponse(result);
+): Promise<AxiosResponse<T>> => {
+  return await sendRequest<T>("DELETE", resource, configOverride);
 };
 
+/**
+ * Downloads a file from the server.
+ * @param {string} resource - API resource.
+ * @param {string} fileNameWithExtension - Name of the file to save locally.
+ */
 export const downloadfile = async (
   resource: string,
   fileNameWithExtension: string
 ) => {
-  // TODO call sendRequest?
-  // https://stackoverflow.com/a/53230807
   const headers = getHeaders();
   const url = buildEndpoint(resource);
 
@@ -185,13 +219,17 @@ export const downloadfile = async (
   const fileUrl = window.URL.createObjectURL(new Blob([result.data]));
   const link = document.createElement("a");
   link.href = fileUrl;
-  link.setAttribute("download", fileNameWithExtension); // or any other extension
+  link.setAttribute("download", fileNameWithExtension);
   document.body.appendChild(link);
   link.click();
-
   link.remove();
 };
 
+/**
+ * Registers a callback for a specific HTTP status code.
+ * @param {number} statusCode - HTTP status code.
+ * @param {() => unknown} callback - Function to execute when the status code is received.
+ */
 export const onStatusCode = (statusCode: number, callback: () => unknown) => {
   if (statusCodeHandlers[statusCode]) {
     statusCodeHandlers[statusCode].push(callback);
@@ -200,6 +238,10 @@ export const onStatusCode = (statusCode: number, callback: () => unknown) => {
   }
 };
 
+/**
+ * Registers a callback for the 401 Unauthorized status code.
+ * @param {() => unknown} callback - Function to execute when a 401 status code is received.
+ */
 export const onUnauthorized = (callback: () => unknown) => {
   onStatusCode(401, callback);
 };

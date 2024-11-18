@@ -21,7 +21,7 @@ export interface ITeamContextProps {
    * @param logoFile The file containing the team logo.
    * @returns A promise that resolves with the response containing the added teams.
    */
-  addTeamBatch(
+  addTeamToDivisionIdBatch(
     divisionId: string,
     teamFile: File,
     logoFile: File
@@ -29,19 +29,19 @@ export interface ITeamContextProps {
 
   /**
    * Updates an existing team by its ID.
-   * @param teamId The ID of the team to update.
+   * @param id The ID of the team to update.
    * @param data The updated team data.
    * @returns A promise that resolves with the updated team details.
    */
-  putTeam(teamId: string, data: PutTeamRequest): Promise<TeamResponse>;
+  putTeamById(id: string, data: PutTeamRequest): Promise<TeamResponse>;
 
   /**
    * Updates the logo of an existing team.
-   * @param teamId The ID of the team whose logo is to be updated.
+   * @param id The ID of the team whose logo is to be updated.
    * @param logo The new logo file.
    * @returns A promise that resolves when the logo is successfully updated.
    */
-  putTeamLogo(teamId: string, logo: File): Promise<void>;
+  putTeamLogoById(id: string, logo: File): Promise<void>;
 
   /**
    * Fetches teams based on filters.
@@ -160,19 +160,19 @@ export interface PutTeamRequest {
    * The updated name of the team.
    * @type {string}
    */
-  name: string;
+  name?: string;
 
   /**
    * The updated three-letter code representing the team.
    * @type {string}
    */
-  threeLetterCode: string;
+  threeLetterCode?: string;
 
   /**
    * The updated shirt color of the team.
    * @type {string}
    */
-  shirtColor: string;
+  shirtColor?: string;
 }
 
 /**

@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { redirect } from "react-router-dom";
 import { useAuth } from "../../modules/auth/hook/auth.hook";
-import { TournamentProvider } from "../../modules/tournament/context/tournament.context";
-import { IndexTournament } from "../tournament";
+import { BlogPostProvider } from "../../modules/blogPost/context/blogPost.context";
+import AddBlogPostForm from "../blogPost/addBlogPost";
 import { NavMenu } from "./navMenu";
 
 export const Home = () => {
@@ -15,9 +15,9 @@ export const Home = () => {
     <>
       <NavMenu isAuthenticated={isAuthenticated} />
       <h1>{isAuthenticated ? "Autenticado" : "No autenticado"}</h1>
-      <TournamentProvider>
-        <IndexTournament />
-      </TournamentProvider>
+      <BlogPostProvider>
+        <AddBlogPostForm />
+      </BlogPostProvider>
     </>
   );
 };

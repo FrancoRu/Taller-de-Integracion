@@ -1,5 +1,5 @@
 import { Filtered, GenericResponsePagination } from "../../core/types/types";
-import { VenueResponse } from "../../Venue/type/Venue";
+import { VenueResponse } from "../../venue/type/venue";
 
 /**
  * Context properties and methods for managing matches in a sports system.
@@ -20,7 +20,7 @@ export interface IMatchContextProps {
    * @param matchScore The new scores for the home and visitor teams.
    * @returns A promise that resolves when the score is successfully updated.
    */
-  putMatchScoreRequest(
+  putMatchScoreByMatchId(
     id: string,
     matchScore: PutMatchScoreRequest
   ): Promise<void>;
@@ -31,7 +31,10 @@ export interface IMatchContextProps {
    * @param matchDate The new match date.
    * @returns A promise that resolves when the match date and venue are successfully updated.
    */
-  putMatchDate(id: string, matchDate: PutMatchDateRequest): Promise<void>;
+  putMatchDateByMatchId(
+    id: string,
+    matchDate: PutMatchDateRequest
+  ): Promise<void>;
 
   /**
    * Fetches a match by its ID.
@@ -54,7 +57,7 @@ export interface IMatchContextProps {
    * @param id The ID of the match to delete.
    * @returns A promise that resolves when the match is successfully deleted.
    */
-  deleteMatch(id: string): Promise<void>;
+  deleteMatchById(id: string): Promise<void>;
 }
 
 /**
@@ -217,31 +220,31 @@ export interface MatchFiltered extends Filtered {
    * The name of the home team.
    * @type {string}
    */
-  homeTeamName: string;
+  homeTeamName?: string;
 
   /**
    * The name of the visitor team.
    * @type {string}
    */
-  visitorTeamName: string;
+  visitorTeamName?: string;
 
   /**
    * The name of the division the match belongs to.
    * @type {string}
    */
-  divisionName: string;
+  divisionName?: string;
 
   /**
    * The type of match (Regular or Playoff).
    * @type {TypeMatch}
    */
-  type: TypeMatch;
+  type?: TypeMatch;
 
   /**
    * Indicates whether the match is finished.
    * @type {boolean}
    */
-  isFinished: boolean;
+  isFinished?: boolean;
 }
 
 /**
@@ -271,11 +274,11 @@ export interface PutMatchDateRequest {
    * The new match date.
    * @type {string}
    */
-  matchDate: string;
+  matchDate?: string;
 
   /**
    * The ID of the venue where the match will take place.
    * @type {string}
    */
-  venueId: string;
+  venueId?: string;
 }

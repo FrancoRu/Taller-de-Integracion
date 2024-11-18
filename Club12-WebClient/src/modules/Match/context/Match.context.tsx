@@ -1,9 +1,13 @@
 import { createContext, ReactNode, useState } from "react";
-import { IMatchContextProps } from "../type/Match.d";
+import { IMatchContextProps } from "../type/match";
 
-export const MatchContext = createContext<IMatchContextProps | undefined>(undefined);
+export const MatchContext = createContext<IMatchContextProps | undefined>(
+  undefined
+);
 
-export const MatchProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const MatchProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [state, setState] = useState<IMatchContextProps>({});
 
   return (

@@ -1,5 +1,5 @@
 import { Filtered, GenericResponsePagination } from "../../core/types/types";
-import { MatchResponse } from "../../Match/type/Match";
+import { MatchResponse } from "../../match/type/match";
 
 /**
  * Context properties and methods for managing divisions in a React application.
@@ -12,14 +12,14 @@ export interface IDivisionContextProps {
    * @param division The details of the division to add.
    * @returns A promise that resolves with the response containing the newly added division.
    */
-  addDivision(division: AddDivisionRequest): Promise<DivisionResponse>;
+  addDivision(division: AddDivisionRequest): Promise<DivisionResponse | void>;
 
   /**
    * Generates fixtures for a division based on its ID.
    * @param id The ID of the division for which to generate fixtures.
    * @returns A promise that resolves when the fixtures are successfully generated.
    */
-  generateFixture(id: string): Promise<void>;
+  generateFixtureByDivisionId(id: string): Promise<void>;
 
   /**
    * Updates an existing division by its ID.
@@ -30,14 +30,14 @@ export interface IDivisionContextProps {
   putDivisionById(
     id: string,
     division: PutDivisionRequest
-  ): Promise<DivisionResponse>;
+  ): Promise<DivisionResponse | void>;
 
   /**
    * Fetches a division by its ID.
    * @param id The ID of the division to fetch.
    * @returns A promise that resolves with the division data.
    */
-  getDivisionsById(id: string): Promise<DivisionResponse>;
+  getDivisionsById(id: string): Promise<DivisionResponse | void>;
 
   /**
    * Fetches divisions based on filters and pagination.
@@ -46,14 +46,16 @@ export interface IDivisionContextProps {
    */
   getDivisionsByFilters(
     filter: DivisionFiltered
-  ): Promise<GenericResponsePagination<DivisionResponse>>;
+  ): Promise<GenericResponsePagination<DivisionResponse> | void>;
 
   /**
    * Fetches the top scores for a division by its ID.
    * @param id The ID of the division to fetch top scores for.
    * @returns A promise that resolves with an array of top score responses for the division.
    */
-  getTopScores(id: string): Promise<DivisionTopScoreResponse[]>;
+  getTopScoresByDivisionId(
+    id: string
+  ): Promise<DivisionTopScoreResponse[] | void>;
 
   /**
    * Deletes a division by its ID.
@@ -231,7 +233,7 @@ export interface DivisionFiltered extends PutDivisionRequest, Filtered {
    * Indicates whether to fetch finished divisions only.
    * @type {boolean}
    */
-  isFinished: boolean;
+  isFinished?: boolean;
 }
 
 /**
@@ -243,5 +245,5 @@ export interface PutDivisionRequest {
    * The updated name of the division.
    * @type {string}
    */
-  name: string;
+  name?: string;
 }

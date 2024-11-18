@@ -11,7 +11,7 @@ export interface IBlogPostContextProps {
    * @param post The details of the blog post to add.
    * @returns A promise that resolves with the response containing the newly added blog post.
    */
-  addBlogPost(post: AddBlogPostRequest): Promise<BlogPostResponse>;
+  addBlogPost(post: AddBlogPostRequest): Promise<BlogPostResponse | void>;
 
   /**
    * Updates an existing blog post by its ID.
@@ -22,7 +22,7 @@ export interface IBlogPostContextProps {
   putBlogPostById(
     id: string,
     post: PutBlogPostRequest
-  ): Promise<BlogPostResponse>;
+  ): Promise<BlogPostResponse | void>;
 
   /**
    * Updates the photo of an existing blog post by its ID.
@@ -37,7 +37,7 @@ export interface IBlogPostContextProps {
    * @param id The ID of the blog post to fetch.
    * @returns A promise that resolves with the blog post data.
    */
-  getBlogPostsById(id: string): Promise<BlogPostResponse>;
+  getBlogPostsById(id: string): Promise<BlogPostResponse | void>;
 
   /**
    * Fetches blog posts based on filters and pagination.
@@ -46,7 +46,7 @@ export interface IBlogPostContextProps {
    */
   getBlogPostsByFilters(
     filter: BlogPostFiltered
-  ): Promise<GenericResponsePagination<BlogPostResponse>>;
+  ): Promise<GenericResponsePagination<BlogPostResponse> | void>;
 
   /**
    * Deletes a blog post by its ID.
@@ -75,9 +75,9 @@ export interface AddBlogPostRequest {
 
   /**
    * The photo file of the blog post (optional).
-   * @type {File | null}
+   * @type {File}
    */
-  photoFile: File | null;
+  photoFile?: File;
 
   /**
    * The markdown text content of the blog post.
@@ -143,21 +143,21 @@ export interface BlogPostResponse {
 export interface BlogPostFiltered extends Filetered {
   /**
    * The title of the blog post to filter by.
-   * @type {string | null}
+   * @type {string}
    */
-  title: string | null;
+  title?: string;
 
   /**
    * The author of the blog post to filter by.
-   * @type {string | null}
+   * @type {string}
    */
-  author: string | null;
+  author?: string;
 
   /**
    * The keyword to filter blog posts by.
-   * @type {string | null}
+   * @type {string}
    */
-  keyword: string | null;
+  keyword?: string;
 }
 
 /**
@@ -169,17 +169,17 @@ export interface PutBlogPostRequest {
    * The updated title of the blog post.
    * @type {string}
    */
-  title: string;
+  title?: string;
 
   /**
    * The updated markdown text content of the blog post.
    * @type {string}
    */
-  markdownText: string;
+  markdownText?: string;
 
   /**
    * The updated author of the blog post.
    * @type {string}
    */
-  author: string;
+  author?: string;
 }

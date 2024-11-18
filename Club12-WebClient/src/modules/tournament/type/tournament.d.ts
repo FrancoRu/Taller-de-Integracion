@@ -1,5 +1,5 @@
 import { Filtered, GenericResponsePagination } from "../../core/types/types";
-import { DivisionResponse } from "../../Division/type/Division";
+import { DivisionResponse } from "../../division/type/division";
 
 /**
  * Context properties and methods for managing tournaments.
@@ -12,9 +12,7 @@ export interface ITournamentContextProps {
    * @param tournament The details of the tournament to add.
    * @returns A promise that resolves with the response containing the newly added tournament.
    */
-  addTournament: (
-    tournament: AddTournamentRequest
-  ) => Promise<TournamentResponse>;
+  addTournament(tournament: AddTournamentRequest): Promise<TournamentResponse>;
 
   /**
    * Updates an existing tournament by its ID.
@@ -22,10 +20,10 @@ export interface ITournamentContextProps {
    * @param tournament The updated tournament data.
    * @returns A promise that resolves when the tournament is successfully updated.
    */
-  putTournament: (
+  putTournamentById(
     id: string,
     tournament: PutTournamentRequest
-  ) => Promise<void>;
+  ): Promise<void>;
 
   /**
    * Fetches a tournament by its ID.
@@ -39,16 +37,16 @@ export interface ITournamentContextProps {
    * @param filter The filters to apply when fetching tournaments.
    * @returns A promise that resolves with the paginated response containing tournaments that match the filters.
    */
-  getAllTournamentsByFilter: (
+  getAllTournamentsByFilter(
     filter: TournamentFiltered
-  ) => Promise<GenericResponsePagination<TournamentResponse>>;
+  ): Promise<GenericResponsePagination<TournamentResponse>>;
 
   /**
    * Deletes a tournament by its ID.
    * @param id The ID of the tournament to delete.
    * @returns A promise that resolves when the tournament is successfully deleted.
    */
-  deleteTournamentById: (id: string) => Promise<void>;
+  deleteTournamentById(id: string): Promise<void>;
 }
 
 /**
@@ -103,10 +101,22 @@ export interface TournamentResponse {
  * The structure for filtering tournaments.
  * @interface TournamentFiltered
  */
-export interface TournamentFiltered extends AddTournamentRequest, Filtered {}
+export interface TournamentFiltered extends PutTournamentRequest, Filtered {}
 
 /**
  * The request body structure for updating an existing tournament.
  * @interface PutTournamentRequest
  */
-export interface PutTournamentRequest extends AddTournamentRequest {}
+export interface PutTournamentRequest {
+  /**
+   * The name of the tournament.
+   * @type {string}
+   */
+  name?: string;
+
+  /**
+   * A description of the tournament.
+   * @type {string}
+   */
+  description?: string;
+}

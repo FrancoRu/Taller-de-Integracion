@@ -9,34 +9,35 @@ export interface IVenueContextProps {
    * @param venue The details of the venue to add.
    * @returns A promise that resolves with the response containing the newly added venue.
    */
-  addVenue: (venue: AddVenueRequest) => Promise<VenueResponse>;
+  addVenue(venue: AddVenueRequest): Promise<VenueResponse>;
 
   /**
    * Updates an existing venue.
+   * @param id The ID of the venue to put.
    * @param venue The updated venue details.
    * @returns A promise that resolves with the response containing the updated venue.
    */
-  putVenue: (venue: PutVenueRequest) => Promise<VenueResponse>;
+  putVenueById(id: string, venue: PutVenueRequest): Promise<VenueResponse>;
 
   /**
    * Fetches all venues from the system.
    * @returns A promise that resolves with an array of venues.
    */
-  getAllVenues: () => Promise<VenueResponse[]>;
+  getAllVenues(): Promise<VenueResponse[]>;
 
   /**
    * Fetches a specific venue by its unique ID.
    * @param id The ID of the venue to fetch.
    * @returns A promise that resolves with the venue data.
    */
-  getVenueById: (id: string) => Promise<VenueResponse>;
+  getVenueById(id: string): Promise<VenueResponse>;
 
   /**
    * Deletes a venue by its unique ID.
    * @param id The ID of the venue to delete.
    * @returns A promise that resolves when the venue is successfully deleted.
    */
-  deleteVenue: (id: string) => Promise<void>;
+  deleteVenueById(id: string): Promise<void>;
 }
 
 /**
@@ -81,4 +82,22 @@ export interface VenueResponse extends AddVenueRequest {
  * It is the same as AddVenueRequest since only the venue details are updated.
  * @interface PutVenueRequest
  */
-export interface PutVenueRequest extends AddVenueRequest {}
+export interface PutVenueRequest {
+  /**
+   * The name of the venue.
+   * @type {string}
+   */
+  name?: string;
+
+  /**
+   * The address of the venue.
+   * @type {string}
+   */
+  address?: string;
+
+  /**
+   * The URL of the venue's photo.
+   * @type {string}
+   */
+  photoUrl?: string;
+}

@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { DivisionContext } from "../context/Division.context";
+import { DivisionContext } from "../context/division.context";
 
 export const useDivision = () => {
   const context = useContext(DivisionContext);

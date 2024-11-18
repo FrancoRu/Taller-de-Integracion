@@ -1,9 +1,13 @@
 import { createContext, ReactNode, useState } from "react";
-import { IVenueContextProps } from "../type/Venue.d";
+import { IVenueContextProps } from "../type/venue";
 
-export const VenueContext = createContext<IVenueContextProps | undefined>(undefined);
+export const VenueContext = createContext<IVenueContextProps | undefined>(
+  undefined
+);
 
-export const VenueProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const VenueProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [state, setState] = useState<IVenueContextProps>({});
 
   return (

@@ -22,11 +22,11 @@ export interface IPlayerContextProps {
 
   /**
    * Fetches players based on filters and pagination.
-   * @param playerFiltered The filter criteria to apply when fetching players.
+   * @param filter The filter criteria to apply when fetching players.
    * @returns A promise that resolves with a paginated response containing filtered players.
    */
-  getPlayers(
-    playerFiltered: PlayerFiltered
+  getPlayersByFilter(
+    filter: PlayerFiltered
   ): Promise<GenericResponsePagination<PlayerResponse>>;
 
   /**
@@ -35,14 +35,14 @@ export interface IPlayerContextProps {
    * @param player The updated player details.
    * @returns A promise that resolves when the player is successfully updated.
    */
-  putPlayer(id: string, player: PutPlayerRequest): Promise<void>;
+  putPlayerById(id: string, player: PutPlayerRequest): Promise<void>;
 
   /**
    * Deletes a player by its ID.
    * @param id The ID of the player to delete.
    * @returns A promise that resolves when the player is successfully deleted.
    */
-  deletePlayer(id: string): Promise<void>;
+  deletePlayerById(id: string): Promise<void>;
 }
 
 /**
@@ -110,17 +110,17 @@ export interface PutPlayerRequest {
    * The name of the player.
    * @type {string}
    */
-  name: string;
+  name?: string;
 
   /**
    * The last name of the player.
    * @type {string}
    */
-  lastName: string;
+  lastName?: string;
 
   /**
    * The document number of the player.
    * @type {string}
    */
-  documentNumber: string;
+  documentNumber?: string;
 }

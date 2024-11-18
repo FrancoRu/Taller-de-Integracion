@@ -1,9 +1,13 @@
 import { createContext, ReactNode, useState } from "react";
-import { IDivisionContextProps } from "../type/Division.d";
+import { IDivisionContextProps } from "../type/division";
 
-export const DivisionContext = createContext<IDivisionContextProps | undefined>(undefined);
+export const DivisionContext = createContext<IDivisionContextProps | undefined>(
+  undefined
+);
 
-export const DivisionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [state, setState] = useState<IDivisionContextProps>({});
 
   return (

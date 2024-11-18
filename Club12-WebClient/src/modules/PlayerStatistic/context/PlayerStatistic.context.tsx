@@ -1,9 +1,13 @@
 import { createContext, ReactNode, useState } from "react";
-import { IPlayerStatisticContextProps } from "../type/PlayerStatistic.d";
+import { IPlayerStatisticContextProps } from "../type/playerStatistic";
 
-export const PlayerStatisticContext = createContext<IPlayerStatisticContextProps | undefined>(undefined);
+export const PlayerStatisticContext = createContext<
+  IPlayerStatisticContextProps | undefined
+>(undefined);
 
-export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [state, setState] = useState<IPlayerStatisticContextProps>({});
 
   return (

@@ -5,8 +5,8 @@ import { ProviderProps } from "../../core/types/types";
 import { useError } from "../../error/hooks/error.hock";
 import { authService } from "../service/auth.service";
 import {
+  AuthResponse,
   IAuthContextProps,
-  ITokenResponse,
   IUser,
   UserLoginRequest,
 } from "../type/auth";
@@ -25,11 +25,16 @@ export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
   const signIn = async (user: UserLoginRequest): Promise<boolean> => {
     try {
       const res = await service.loginRequest(user);
-      if (res?.status === 200 && res?.data && res.data?.accessToken) {
+      if (
+        res?.status === 200 &&
+        res?.data
+        //&& res.data?.accessToken
+      ) {
         setUser({
           userName: user.userName,
-          accessToken: res?.data as ITokenResponse,
+          accessToken: res?.data as AuthResponse,
         });
+        console.log(res);
         const expiresIn = res.data.expiresIn.split(":").map(Number);
         const expiresInMs =
           expiresIn[0] * 3600 * 1000 +

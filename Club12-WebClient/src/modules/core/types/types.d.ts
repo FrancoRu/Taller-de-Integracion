@@ -10,10 +10,10 @@ export interface GenericResponsePagination<T> {
 }
 
 export interface Filetered {
-  pageNumber: number | null;
-  pageSize: number | null;
-  orderBy: string | null;
-  order: Order | null;
+  pageNumber?: number;
+  pageSize?: number;
+  orderBy?: string;
+  order?: Order;
 }
 export enum Order {
   ASC = "asc",

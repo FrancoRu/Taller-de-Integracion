@@ -1,12 +1,15 @@
-import routes from "../../core/constants/envVariables";
+import { AxiosResponse } from "axios";
+import routes from "../../core/constants/routes";
 import { sendGet, sendPost } from "../../core/utils/utilsAxios";
-import { authSignUp, UserLoginRequest } from "../type/auth";
+import { AuthResponse, authSignUp, UserLoginRequest } from "../type/auth";
 
 export const authService = {
   registerRequest: async (user: authSignUp) => sendPost(routes.users, user),
 
-  loginRequest: (user: UserLoginRequest) =>
-    sendPost(`${routes.users}/login`, user),
+  loginRequest: (
+    user: UserLoginRequest
+  ): Promise<AxiosResponse<AuthResponse> | undefined> =>
+    sendPost<AuthResponse>(`${routes.users}/login`, user),
 
   logoutRequest: () => sendGet(`${routes.users}/logout`),
 

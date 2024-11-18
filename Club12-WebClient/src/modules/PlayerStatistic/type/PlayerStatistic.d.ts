@@ -17,10 +17,14 @@ export interface IPlayerStatisticContextProps {
 
   /**
    * Updates an existing player statistic.
+   * @param {string} statisticId - The unique identifier of the player statistic to update.
    * @param playerStatistic The updated player statistic details.
    * @returns A promise that resolves when the player statistic is successfully updated.
    */
-  putPlayerStatistic(playerStatistic: PutPlayerStatisticRequest): Promise<void>;
+  putPlayerStatisticById(
+    statisticId: string,
+    playerStatistic: PutPlayerStatisticRequest
+  ): Promise<void>;
 
   /**
    * Fetches a player statistic by its ID.
@@ -100,5 +104,5 @@ export interface PutPlayerStatisticRequest {
    * The updated value of the player statistic.
    * @type {number}
    */
-  value: number;
+  value?: number;
 }
