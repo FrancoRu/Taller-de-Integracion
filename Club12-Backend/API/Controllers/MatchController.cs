@@ -3,6 +3,7 @@
 using Entities.DTOs.Abstract;
 using Entities.DTOs.Match;
 using Entities.Models.MatchEntity;
+using Entities.Models.PlayerStatisticEntity;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,15 +15,12 @@ namespace Club12.API.Controllers;
 /// <summary>
 /// Controller for managing Matches.
 /// </summary>
-/// <remarks>
-/// Initializes a new instance of the <see cref="MatchController"/> class.
-/// </remarks>
-/// <param name="matchService">The Match service.</param>
-/// <param name="mapper">The AutoMapper instance.</param>
+/// <param name="_matchService">The Match service.</param>
+/// <param name="_mapper">The AutoMapper instance.</param>
 [Authorize(Roles = "SuperAdmin")]
 [Route("api/matches/")]
 [ApiController]
-public class MatchController(IMatchService matchService, IMapper mapper) : ControllerBase
+public class MatchController(IMatchService _matchService, IMapper _mapper) : ControllerBase
 {
     /// <summary>
     /// Creates a new match.
@@ -30,16 +28,38 @@ public class MatchController(IMatchService matchService, IMapper mapper) : Contr
     /// <param name="matchRequest">The match request DTO.</param>
     /// <returns>The created match response.</returns>
     [HttpPost()]
-    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(MatchResponse))]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(MinimalMatchResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public ActionResult<MatchResponse> CreateMatch(CreateMatchRequest matchRequest)
+    public async Task<ActionResult<MinimalMatchResponse>> CreateMatch(CreateMatchRequest matchRequest)
     {
-        Match mappedMatch = mapper.Map<Match>(matchRequest);
-        Match createdMatch = matchService.CreateMatch(mappedMatch);
-        MatchResponse matchResponse = mapper.Map<MatchResponse>(createdMatch);
+        Match mappedMatch = _mapper.Map<Match>(matchRequest);
+        Match createdMatch = await _matchService.CreateMatchAsync(mappedMatch);
+        MinimalMatchResponse matchResponse = _mapper.Map<MinimalMatchResponse>(createdMatch);
 
-        return CreatedAtAction(nameof(GetMatchById), new { id = matchResponse.Id }, matchResponse);
+        return new ObjectResult(matchResponse) { StatusCode = StatusCodes.Status201Created };
+    }
+
+    /// <summary>
+    /// Retrieves a match by its id with detailed values.
+    /// </summary>
+    /// <param name="id">The id of the match.</param>
+    /// <returns>The match response DTO.</returns>
+    [AllowAnonymous]
+    [HttpGet("{id:guid}/detail")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedMatchResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<DetailedMatchResponse>> GetMatchByIdWithScorers(Guid id)
+    {
+        Match? match = await _matchService.GetMatchByIdWithScorersAsync(id);
+
+        if (match is null)
+        {
+            return BadRequest($"Match with id {id} not found.");
+        }
+
+        DetailedMatchResponse matchResponse = _mapper.Map<DetailedMatchResponse>(match);
+        return Ok(matchResponse);
     }
 
     /// <summary>
@@ -49,67 +69,87 @@ public class MatchController(IMatchService matchService, IMapper mapper) : Contr
     /// <returns>The match response DTO.</returns>
     [AllowAnonymous]
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatchResponse))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedMatchResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public ActionResult<MatchResponse> GetMatchById(Guid id)
+    public async Task<ActionResult<DetailedMatchResponse>> GetMatchById(Guid id)
     {
-        Match? match = matchService.GetMatchById(id);
+        Match? match = await _matchService.GetMatchByIdAsync(id);
 
         if (match is null)
         {
             return BadRequest($"Match with id {id} not found.");
         }
 
-        MatchResponse matchResponse = mapper.Map<MatchResponse>(match);
+        DetailedMatchResponse matchResponse = _mapper.Map<DetailedMatchResponse>(match);
         return Ok(matchResponse);
     }
 
     /// <summary>
     /// Updates the score of a match.
     /// </summary>
-    /// <param name="matchId">The id of the match to update.</param>
+    /// <param name="id">The id of the match to update.</param>
     /// <param name="scoreRequest">The request with updated scores.</param>
     /// <returns>Returns the result of the score update operation.</returns>
-    [HttpPut("{matchId:guid}/score")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [HttpPut("{id:guid}/score")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> UpdateMatchScore(Guid matchId, UpdateMatchScoreRequest scoreRequest)
+    public async Task<ActionResult> UpdateMatchScore(Guid id, UpdateMatchScoreRequest scoreRequest)
     {
-        Match? existingMatch = matchService.GetMatchById(matchId);
-
+        Match? existingMatch = await _matchService.GetMatchByIdAsync(id);
         if (existingMatch is null)
         {
-            return BadRequest($"Match with id {matchId} not found.");
+            return BadRequest($"Match with ID {id} not found.");
         }
 
-        mapper.Map(scoreRequest, existingMatch);
-        bool updateResult = await matchService.UpdateMatchAsync(existingMatch);
+        int homeTeamTotalScore = scoreRequest.HomeTeamPlayerScores.Sum(s => s.Points);
+        int visitorTeamTotalScore = scoreRequest.VisitorTeamPlayerScores.Sum(s => s.Points);
 
-        return !updateResult ? BadRequest("Failed to update the match score.") : Ok();
+        if (homeTeamTotalScore != scoreRequest.HomeScore || visitorTeamTotalScore != scoreRequest.VisitorScore)
+        {
+            return BadRequest("Player points must sum up to the team score.");
+        }
+
+        _mapper.Map(scoreRequest, existingMatch);
+
+        scoreRequest.HomeTeamPlayerScores
+            .Concat(scoreRequest.VisitorTeamPlayerScores)
+            .Select(playerScore => new PlayerStatistic
+            {
+                PlayerId = playerScore.PlayerId,
+                Value = playerScore.Points,
+                MatchId = id,
+                DateCreated = DateTime.UtcNow,
+                DateUpdated = DateTime.UtcNow
+            })
+            .ToList()
+            .ForEach(existingMatch.PlayerStatistics.Add);
+
+        bool updateResult = await _matchService.UpdateMatchAsync(existingMatch);
+        return !updateResult ? BadRequest("Failed to update the match score.") : NoContent();
     }
 
     /// <summary>
     /// Updates the date of a match.
     /// </summary>
-    /// <param name="matchId">The id of the match to update.</param>
+    /// <param name="id">The id of the match to update.</param>
     /// <param name="updateRequest">The request containing the new match date.</param>
     /// <returns>Returns the result of the date update operation.</returns>
-    [HttpPut("{matchId:guid}/date")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [HttpPut("{id:guid}/date")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> UpdateMatchDate(Guid matchId, UpdateMatchRequest updateRequest)
+    public async Task<ActionResult> UpdateMatchDate(Guid id, UpdateMatchRequest updateRequest)
     {
-        Match? existingMatch = matchService.GetMatchById(matchId);
+        Match? existingMatch = await _matchService.GetMatchByIdAsync(id);
 
         if (existingMatch is null)
         {
-            return BadRequest($"Match with id {matchId} not found.");
+            return BadRequest($"Match with id {id} not found.");
         }
 
-        mapper.Map(updateRequest, existingMatch);
-        bool updateResult = await matchService.UpdateMatchAsync(existingMatch);
+        _mapper.Map(updateRequest, existingMatch);
+        bool updateResult = await _matchService.UpdateMatchAsync(existingMatch);
 
-        return !updateResult ? BadRequest("Failed to update the match date.") : Ok();
+        return !updateResult ? BadRequest("Failed to update the match date.") : NoContent();
     }
 
     /// <summary>
@@ -118,19 +158,19 @@ public class MatchController(IMatchService matchService, IMapper mapper) : Contr
     /// <param name="id">The id of the match to delete.</param>
     /// <returns>Returns the result of the delete operation.</returns>
     [HttpDelete("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public ActionResult DeleteMatchById(Guid id)
+    public async Task<ActionResult> DeleteMatchById(Guid id)
     {
-        Match? match = matchService.GetMatchById(id);
+        Match? match = await _matchService.GetMatchByIdAsync(id);
 
         if (match is null)
         {
             return BadRequest($"Match with id {id} not found.");
         }
 
-        matchService.DeleteMatch(match);
-        return Ok();
+        bool deleteResult = await _matchService.DeleteMatchAsync(match);
+        return deleteResult ? BadRequest("Could not delete match.") : NoContent();
     }
 
     /// <summary>
@@ -140,13 +180,13 @@ public class MatchController(IMatchService matchService, IMapper mapper) : Contr
     /// <returns>A paginated response containing the filtered matches.</returns>
     [AllowAnonymous]
     [HttpGet()]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<MatchResponse>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<DetailedMatchResponse>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<PaginatedResponse<MatchResponse>>> GetFilteredMatches([FromQuery] GetMatchesFilteredRequest filterRequest)
+    public async Task<ActionResult<PaginatedResponse<DetailedMatchResponse>>> GetFilteredMatches([FromQuery] GetMatchesFilteredRequest filterRequest)
     {
-        PaginatedResponse<Match> paginatedMatches = await matchService.GetAllMatchesAsync(filterRequest);
+        PaginatedResponse<Match> paginatedMatches = await _matchService.GetAllMatchesAsync(filterRequest);
 
-        PaginatedResponse<MatchResponse> response = mapper.Map<PaginatedResponse<MatchResponse>>(paginatedMatches);
+        PaginatedResponse<DetailedMatchResponse> response = _mapper.Map<PaginatedResponse<DetailedMatchResponse>>(paginatedMatches);
 
         return Ok(response);
     }

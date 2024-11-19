@@ -1,18 +1,20 @@
 ﻿using Club12.Services.Services.PlayerSanctionService.Implementation;
 using Club12.Services.Services.PlayerStatisticService.Implementation;
+using Club12.Services.Services.StaffService.Implementation;
 using Club12.Services.Services.TeamService.Implementation;
 
+using Entities.Models.BlogPostEntity;
 using Entities.Models.DivisionEntity;
 using Entities.Models.MatchEntity;
 using Entities.Models.PlayerEntity;
 using Entities.Models.PlayerSanctionEntity;
 using Entities.Models.PlayerStatisticEntity;
+using Entities.Models.StaffEntity;
 using Entities.Models.TeamEntity;
 using Entities.Models.TournamentEntity;
 using Entities.Models.UserEntity;
 using Entities.Models.VenueEntity;
 
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -33,6 +35,7 @@ using Services.Services.PlayerSanctionService;
 using Services.Services.PlayerService;
 using Services.Services.PlayerService.Implementation;
 using Services.Services.PlayerStatisticService;
+using Services.Services.StaffService;
 using Services.Services.TeamService;
 using Services.Services.TournamentService;
 using Services.Services.TournamentService.Implementation;
@@ -90,10 +93,10 @@ public static class ServiceExtension
         collection.AddScoped<ICloudflareService, CloudflareService>();
         collection.AddScoped<IExcelService, ExcelService>();
         collection.AddScoped<IBlogPostService, BlogPostService>();
+        collection.AddScoped<IGenericService<BlogPost>, GenericService<BlogPost>>();
+        collection.AddScoped<IStaffService, StaffService>();
+        collection.AddScoped<IGenericService<Staff>, GenericService<Staff>>();
         collection.AddHostedService<SanctionCleanupService>();
-        collection.AddSingleton<IExceptionHandler, GlobalHandlerException>();
-        collection.AddProblemDetails()
-                  .AddExceptionHandler<GlobalHandlerException>();
     }
 
     /// <summary>
@@ -214,13 +217,13 @@ public static class ServiceExtension
     /// Ensures that an admin user exists in the database. If no admin user is found, it creates one with default credentials.
     /// </summary>
     /// <param name="serviceProvider">The <see cref="IServiceProvider"/> instance.</param>
-    public static void EnsureAdminUserExists(this IServiceProvider serviceProvider)
+    public static async Task EnsureAdminUserExists(this IServiceProvider serviceProvider)
     {
         using IServiceScope scope = serviceProvider.CreateScope();
         ApplicationDBContext dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
         IUserService userService = scope.ServiceProvider.GetRequiredService<IUserService>();
 
-        User? adminUser = userService.GetUserByUserNameAsync("admin");
+        User? adminUser = await userService.GetUserByUserNameAsync("admin");
 
         if (adminUser is null)
         {

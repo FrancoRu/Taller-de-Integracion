@@ -16,4 +16,9 @@ public class GetTeamsFilteredRequest : PaginatedFilterRequest
     /// The three-letter code of the team to filter by.
     /// </summary>
     public string? ThreeLetterCode { get; set; }
+
+    /// <summary>
+    /// The color of the team's shirt.
+    /// </summary>
+    public required string ShirtColor { get; set; }
 }

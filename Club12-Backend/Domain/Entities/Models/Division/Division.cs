@@ -16,7 +16,7 @@ namespace Entities.Models.DivisionEntity;
 public class Division : EntityBase
 {
     /// <summary>
-    /// The name of the Division.
+    /// The name of the Divisions.
     /// </summary>
     [Required]
     [MaxLength(30)]

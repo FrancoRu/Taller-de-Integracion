@@ -24,7 +24,7 @@ public class PlayerStatistic : EntityBase
     /// </summary>
     [Required]
     [Column("MatchId")]
-    public required Match Match { get; set; }
+    public Match Match { get; set; } = default!;
 
     /// <summary>
     /// Represents the ID of the match associated with the player statistic.
@@ -36,7 +36,7 @@ public class PlayerStatistic : EntityBase
     /// </summary>
     [Required]
     [Column("PlayerId")]
-    public required Player Player { get; set; }
+    public Player Player { get; set; } = default!;
 
     /// <summary>
     /// Represents the ID of the player associated with the player statistic.

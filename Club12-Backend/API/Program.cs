@@ -46,6 +46,9 @@ builder.Services.AddCustomAuthentication(builder.Configuration);
 builder.Services.AddControllers().AddCustomJsonOptions();
 builder.Services.AddCustomSwagger(builder.Configuration);
 
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 WebApplication app = builder.Build();
 
 using (IServiceScope scope = app.Services.CreateScope())
@@ -53,7 +56,7 @@ using (IServiceScope scope = app.Services.CreateScope())
     ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
     db.Database.Migrate();
 
-    app.Services.EnsureAdminUserExists();
+    await app.Services.EnsureAdminUserExists();
 }
 
 if (!builder.Environment.IsProduction())
@@ -66,6 +69,7 @@ app.UseSerilogRequestLogging();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseSerilogRequestLogging();
 app.MapControllers();
 
 app.UseStatusCodePages();

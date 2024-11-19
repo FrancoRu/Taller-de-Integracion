@@ -12,32 +12,39 @@ using System.Linq.Expressions;
 
 namespace Club12.Services.Services.TeamService.Implementation;
 
-public class TeamService(IGenericService<Team> genericTeamService) : ITeamService
+public class TeamService(IGenericService<Team> _genericTeamService) : ITeamService
 {
-
-    public Team CreateTeam(Team teamEntity)
+    public async Task<Team> CreateTeamAsync(Team teamEntity)
     {
-        genericTeamService.Insert(teamEntity);
+        await _genericTeamService.InsertAsync(teamEntity);
         return teamEntity;
     }
 
-    public Team? GetTeamById(Guid teamId)
+    public async Task<Team?> GetTeamByIdAsync(Guid teamId)
     {
-        return genericTeamService.FilterByExpression(team => team.Id == teamId)
-                                 .Include(team => team.Players)
-                                 .FirstOrDefault();
+        return await _genericTeamService.FilterByExpression(team => team.Id == teamId)
+                                        .Include(team => team.Players)
+                                        .FirstOrDefaultAsync();
     }
 
-    public void DeleteTeam(Team teamEntity)
+    public async Task<bool> DeleteTeamAsync(Team teamEntity)
     {
-        genericTeamService.Delete(teamEntity);
+        try
+        {
+            await _genericTeamService.DeleteAsync(teamEntity);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public async Task<bool> UpdateTeamAsync(Team teamEntity)
     {
         try
         {
-            await genericTeamService.UpdateAsync(teamEntity);
+            await _genericTeamService.UpdateAsync(teamEntity);
             return true;
         }
         catch
@@ -49,8 +56,8 @@ public class TeamService(IGenericService<Team> genericTeamService) : ITeamServic
     public async Task<PaginatedResponse<Team>> GetAllTeamsAsync(GetTeamsFilteredRequest filter)
     {
         Expression<Func<Team, bool>> expression = QueryableExtensions.ConstructFilterExpression<Team, GetTeamsFilteredRequest>(filter);
-        IQueryable<Team> filteredTeams = genericTeamService.FilterByExpressionWithPagination(expression, filter, team => team.Players).SortBy(filter);
-        int totalCount = await genericTeamService.GetCountAsync(expression);
+        IQueryable<Team> filteredTeams = _genericTeamService.FilterByExpressionWithPagination(expression, filter, team => team.Players).SortBy(filter);
+        int totalCount = await _genericTeamService.GetCountAsync(expression);
 
         return new PaginatedResponse<Team>
         {

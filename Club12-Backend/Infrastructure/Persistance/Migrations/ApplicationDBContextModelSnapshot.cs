@@ -338,7 +338,7 @@ namespace Persistance.Migrations
 
                     b.HasIndex("TeamId");
 
-                    b.ToTable("StaffS", "Club12");
+                    b.ToTable("Staffs", "Club12");
                 });
 
             modelBuilder.Entity("Entities.Models.TeamEntity.Team", b =>
@@ -426,6 +426,13 @@ namespace Persistance.Migrations
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
+
+                    b.Property<string>("RefreshToken")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime?>("RefreshTokenExpiryTime")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Role")
                         .IsRequired()
@@ -549,7 +556,7 @@ namespace Persistance.Migrations
             modelBuilder.Entity("Entities.Models.PlayerStatisticEntity.PlayerStatistic", b =>
                 {
                     b.HasOne("Entities.Models.MatchEntity.Match", "Match")
-                        .WithMany()
+                        .WithMany("PlayerStatistics")
                         .HasForeignKey("MatchId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -592,6 +599,11 @@ namespace Persistance.Migrations
                     b.Navigation("Matches");
 
                     b.Navigation("Teams");
+                });
+
+            modelBuilder.Entity("Entities.Models.MatchEntity.Match", b =>
+                {
+                    b.Navigation("PlayerStatistics");
                 });
 
             modelBuilder.Entity("Entities.Models.TeamEntity.Team", b =>

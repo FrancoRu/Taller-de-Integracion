@@ -7,12 +7,20 @@ namespace Club12.API.Utils;
 /// <summary>
 /// Handles global exceptions and returns standardized ProblemDetails responses.
 /// </summary>
-/// <remarks>
-/// Initializes a new instance of the <see cref="GlobalHandlerException"/> class.
-/// </remarks>
-/// <param name="logger"></param>
-public class GlobalHandlerException(ILogger<GlobalHandlerException> logger) : IExceptionHandler
+public class GlobalExceptionHandler : IExceptionHandler
 {
+    private readonly ILogger<GlobalExceptionHandler> _logger;
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="logger"></param>
+    /// <exception cref="ArgumentNullException"></exception>
+    public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger)
+    {
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger.LogInformation("GlobalHandlerException initialized.");
+    }
 
     /// <summary>
     /// Tries to handle exceptions globally and returns standardized ProblemDetails.
@@ -29,7 +37,7 @@ public class GlobalHandlerException(ILogger<GlobalHandlerException> logger) : IE
             string traceId = Activity.Current?.Id ?? httpContext.TraceIdentifier;
             Exception exceptionDetails = exceptionHandlerFeature.Error;
 
-            logger.LogError(exceptionDetails,
+            _logger.LogError(exceptionDetails,
                 "An unhandled exception occurred on the {MachineName}. TraceId: {TraceId}.",
                 Environment.MachineName,
                 traceId);
