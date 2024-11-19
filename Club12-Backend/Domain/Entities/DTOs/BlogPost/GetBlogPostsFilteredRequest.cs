@@ -17,6 +17,7 @@ public class GetBlogPostsFilteredRequest : PaginatedFilterRequest
     /// </summary>
     public string? Title { get; set; }
 
+    //TODO: Figure out how to do this.
     /// <summary>
     /// A keyword to search within the markdown text content of the blog post.
     /// </summary>

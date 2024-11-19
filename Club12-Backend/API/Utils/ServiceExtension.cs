@@ -15,7 +15,6 @@ using Entities.Models.TournamentEntity;
 using Entities.Models.UserEntity;
 using Entities.Models.VenueEntity;
 
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -98,9 +97,6 @@ public static class ServiceExtension
         collection.AddScoped<IStaffService, StaffService>();
         collection.AddScoped<IGenericService<Staff>, GenericService<Staff>>();
         collection.AddHostedService<SanctionCleanupService>();
-        collection.AddSingleton<IExceptionHandler, GlobalHandlerException>();
-        collection.AddProblemDetails()
-                  .AddExceptionHandler<GlobalHandlerException>();
     }
 
     /// <summary>

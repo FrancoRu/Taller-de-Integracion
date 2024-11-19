@@ -7,7 +7,7 @@ namespace Entities.Models.BlogPostEntity;
 /// <summary>
 /// Represents a blog post in the application.
 /// </summary>
-[Table("BlogPosts", Schema = "Content")]
+[Table("BlogPosts", Schema = "Club12")]
 public class BlogPost : EntityBase
 {
     /// <summary>

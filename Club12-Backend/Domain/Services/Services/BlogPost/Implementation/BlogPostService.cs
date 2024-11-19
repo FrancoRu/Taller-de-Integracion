@@ -55,7 +55,7 @@ public class BlogPostService(IGenericService<BlogPost> _genericBlogPostService) 
     {
         Expression<Func<BlogPost, bool>> expression = QueryableExtensions.ConstructFilterExpression<BlogPost, GetBlogPostsFilteredRequest>(filter);
         IQueryable<BlogPost> filteredBlogPosts = _genericBlogPostService.FilterByExpressionWithPagination(expression, filter)
-                                                                     .SortBy(filter);
+                                                                                                         .SortBy(filter);
 
         int totalCount = await _genericBlogPostService.GetCountAsync(expression);
 

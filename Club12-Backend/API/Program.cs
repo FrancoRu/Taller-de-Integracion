@@ -50,6 +50,9 @@ builder.Services.AddCustomAuthentication(builder.Configuration);
 builder.Services.AddControllers().AddCustomJsonOptions();
 builder.Services.AddCustomSwagger(builder.Configuration);
 
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 WebApplication app = builder.Build();
 
 using (IServiceScope scope = app.Services.CreateScope())
@@ -70,6 +73,7 @@ app.UseSerilogRequestLogging();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseSerilogRequestLogging();
 app.MapControllers();
 
 app.UseStatusCodePages();
