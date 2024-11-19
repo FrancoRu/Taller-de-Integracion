@@ -20,10 +20,6 @@ public class Player : EntityBase
     public required string Names { get; set; }
 
     /// <summary>
-    [MaxLength(35)]
-    public required string Name { get; set; }
-
-    /// <summary>
     /// The last name of the player.
     /// </summary>
     [Required]
@@ -50,20 +46,19 @@ public class Player : EntityBase
     public required bool IsFederated { get; set; } = false;
 
     /// <summary>
-    /// Gets or sets the name of the social work or insurance organization associated with the individual.
+    /// The name of the social work or insurance organization associated with the individual.
     /// </summary>
     public string? SocialWork { get; set; }
 
     /// <summary>
-    /// Gets or sets the club or category to which the individual belongs.
+    /// The club or category to which the individual belongs.
     /// </summary>
     public string? ClubOrCategory { get; set; }
 
     /// <summary>
-    /// Gets or sets the phone number of the individual.
+    /// The phone number of the individual.
     /// </summary>
     public string? PhoneNumber { get; set; }
-
 
     /// <summary>
     /// The club the player belongs to, if federated.
@@ -81,7 +76,6 @@ public class Player : EntityBase
     /// The birthdate of the player.
     /// </summary>
     public required DateTime BirthDate { get; set; }
-     
 
     /// <summary>
     /// The medical social work or health provider of the player.
