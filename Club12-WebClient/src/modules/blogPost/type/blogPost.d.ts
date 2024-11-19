@@ -1,4 +1,4 @@
-import { Filetered, GenericResponsePagination } from "../../core/types/types";
+import { GenericResponsePagination } from "../../core/types/types";
 
 /**
  * Context properties and methods for managing blog posts in a React application.
@@ -11,7 +11,7 @@ export interface IBlogPostContextProps {
    * @param post The details of the blog post to add.
    * @returns A promise that resolves with the response containing the newly added blog post.
    */
-  addBlogPost(post: AddBlogPostRequest): Promise<BlogPostResponse | void>;
+  addBlogPost(post: CreateBlogPostRequest): Promise<BlogPostResponse | void>;
 
   /**
    * Updates an existing blog post by its ID.
@@ -21,7 +21,7 @@ export interface IBlogPostContextProps {
    */
   putBlogPostById(
     id: string,
-    post: PutBlogPostRequest
+    post: UpdateBlogPostRequest
   ): Promise<BlogPostResponse | void>;
 
   /**
@@ -30,7 +30,7 @@ export interface IBlogPostContextProps {
    * @param photo The new photo file to upload.
    * @returns A promise that resolves when the photo is successfully updated.
    */
-  putPhotoBlogPostById(id: string, photo: File): Promise<void>;
+  putPhotoBlogPostById(id: string, photo: IFormFile): Promise<void>;
 
   /**
    * Fetches a blog post by its ID.
@@ -45,7 +45,7 @@ export interface IBlogPostContextProps {
    * @returns A promise that resolves with a paginated response containing filtered blog posts.
    */
   getBlogPostsByFilters(
-    filter: BlogPostFiltered
+    filter: GetBlogPostsFilteredRequest
   ): Promise<GenericResponsePagination<BlogPostResponse> | void>;
 
   /**
@@ -58,9 +58,9 @@ export interface IBlogPostContextProps {
 
 /**
  * The request body structure for adding a new blog post.
- * @interface AddBlogPostRequest
+ * @interface CreateBlogPostRequest
  */
-export interface AddBlogPostRequest {
+export interface CreateBlogPostRequest {
   /**
    * The author of the blog post.
    * @type {string}
@@ -74,16 +74,52 @@ export interface AddBlogPostRequest {
   title: string;
 
   /**
-   * The photo file of the blog post (optional).
-   * @type {File}
+   * The photo file to upload for the blog post (optional).
+   * @type {IFormFile}
    */
-  photoFile?: File;
+  photoFile?: IFormFile;
 
   /**
    * The markdown text content of the blog post.
    * @type {string}
    */
   markdownText: string;
+}
+
+/**
+ * The request body structure for updating an existing blog post.
+ * @interface UpdateBlogPostRequest
+ */
+export interface UpdateBlogPostRequest {
+  /**
+   * The updated title of the blog post.
+   * @type {string}
+   */
+  title?: string;
+
+  /**
+   * The updated markdown text content of the blog post.
+   * @type {string}
+   */
+  markdownText?: string;
+
+  /**
+   * The updated author of the blog post.
+   * @type {string}
+   */
+  author?: string;
+}
+
+/**
+ * The request body structure for updating the photo of an existing blog post.
+ * @interface UpdateBlogPostPhotoRequest
+ */
+export interface UpdateBlogPostPhotoRequest {
+  /**
+   * The file of the blog post photo to be updated.
+   * @type {IFormFile}
+   */
+  photoFile: IFormFile;
 }
 
 /**
@@ -116,10 +152,10 @@ export interface BlogPostResponse {
   views: number;
 
   /**
-   * The URL of the blog post's photo.
+   * The URL of the photo associated with the blog post.
    * @type {string}
    */
-  photoUrl: string;
+  photoUrl?: string;
 
   /**
    * The markdown text content of the blog post.
@@ -128,58 +164,44 @@ export interface BlogPostResponse {
   markdownText: string;
 
   /**
-   * The date when the blog post was created.
+   * The date and time the blog post was created.
    * @type {Date}
    */
   createdAt: Date;
 }
 
 /**
- * The filter criteria for fetching blog posts.
- * This extends from Filetered and includes additional properties for filtering by title, author, and keyword.
- * @interface BlogPostFiltered
- * @extends Filetered
+ * The request body structure for fetching filtered blog posts with pagination.
+ * @interface GetBlogPostsFilteredRequest
  */
-export interface BlogPostFiltered extends Filetered {
+export interface GetBlogPostsFilteredRequest {
   /**
-   * The title of the blog post to filter by.
-   * @type {string}
-   */
-  title?: string;
-
-  /**
-   * The author of the blog post to filter by.
+   * The author to filter blog posts by.
    * @type {string}
    */
   author?: string;
 
   /**
-   * The keyword to filter blog posts by.
+   * The title to filter blog posts by.
+   * @type {string}
+   */
+  title?: string;
+
+  /**
+   * A keyword to search within the markdown text content of the blog post.
    * @type {string}
    */
   keyword?: string;
-}
-
-/**
- * The request body structure for updating an existing blog post.
- * @interface PutBlogPostRequest
- */
-export interface PutBlogPostRequest {
-  /**
-   * The updated title of the blog post.
-   * @type {string}
-   */
-  title?: string;
 
   /**
-   * The updated markdown text content of the blog post.
-   * @type {string}
+   * Pagination properties from `PaginatedFilterRequest`.
+   * @type {number}
    */
-  markdownText?: string;
+  pageIndex: number;
 
   /**
-   * The updated author of the blog post.
-   * @type {string}
+   * Pagination properties from `PaginatedFilterRequest`.
+   * @type {number}
    */
-  author?: string;
+  pageSize: number;
 }

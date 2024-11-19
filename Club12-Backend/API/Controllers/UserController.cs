@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Services.Auth;
 using Services.Services.UserService;
 
+using System.Security.Claims;
+
 namespace Club12.API.Controllers;
 
 /// <summary>
@@ -14,7 +16,7 @@ namespace Club12.API.Controllers;
 /// </summary>
 /// <param name="_userService">The user service.</param>
 /// <param name="_authService">The auth service.</param>
-//[Authorize(Roles = "SuperAdmin")]
+[Authorize(Roles = "SuperAdmin")]
 [ApiController]
 [Route("api/users/")]
 public class UserController(IUserService _userService, IAuthService _authService) : ControllerBase
@@ -56,7 +58,6 @@ public class UserController(IUserService _userService, IAuthService _authService
     /// A 200 OK response with a new token pair (access and refresh tokens) if successful.
     /// A 401 Unauthorized response if the refresh token is invalid.
     /// </returns>
-    [AllowAnonymous]
     [HttpPost("refresh-token")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokenResponse))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -76,5 +77,42 @@ public class UserController(IUserService _userService, IAuthService _authService
         await _userService.UpdateUserAsync(user);
 
         return Ok(token);
+    }
+
+    /// <summary>
+    /// Logs out the current authenticated user by invalidating their refresh token.
+    /// </summary>
+    /// <remarks>
+    /// This endpoint invalidates the user's refresh token, preventing the user from using it to obtain a new access token.
+    /// </remarks>
+    /// <returns>
+    /// A 200 OK response if the logout is successful.
+    /// A 400 Bad Request response if the user is not authenticated or cannot be found.
+    /// </returns>
+    [HttpPost("logout")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Logout()
+    {
+        string? username = User.FindFirst(ClaimTypes.Name)?.Value;
+
+        if (string.IsNullOrEmpty(username))
+        {
+            return Unauthorized("User is not authenticated.");
+        }
+
+        User? user = await _userService.GetUserByUserNameAsync(username);
+
+        if (user is null)
+        {
+            return BadRequest("Something went wrong.");
+        }
+
+        user.RefreshToken = null;
+        user.RefreshTokenExpiryTime = null;
+
+        await _userService.UpdateUserAsync(user);
+
+        return Ok();
     }
 }

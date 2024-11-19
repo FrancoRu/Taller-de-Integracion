@@ -5,7 +5,7 @@ import {
   sendGet,
   sendPost,
   sendPut,
-} from "../../core/utils/utilsAxios";
+} from "../../core/utils/axiosUtils";
 import { AddVenueRequest, PutVenueRequest, VenueResponse } from "../type/venue";
 
 /**

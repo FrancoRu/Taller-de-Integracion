@@ -1,20 +1,18 @@
 import { AxiosResponse } from "axios";
 import routes from "../../core/constants/routes";
-import { sendGet, sendPost } from "../../core/utils/utilsAxios";
-import { AuthResponse, authSignUp, UserLoginRequest } from "../type/auth";
+import { sendPost } from "../../core/utils/axiosUtils";
+import { AuthResponse, LogInUserRequest, RefreshTokenRequest } from "../type/auth";
 
 export const authService = {
-  registerRequest: async (user: authSignUp) => sendPost(routes.users, user),
-
   loginRequest: (
-    user: UserLoginRequest
+    user: LogInUserRequest
   ): Promise<AxiosResponse<AuthResponse> | undefined> =>
     sendPost<AuthResponse>(`${routes.users}/login`, user),
 
-  logoutRequest: () => sendGet(`${routes.users}/logout`),
+  refreshTokenRequest: (
+    refreshToken: RefreshTokenRequest
+  ): Promise<AxiosResponse<AuthResponse> | undefined> =>
+    sendPost<AuthResponse>(`${routes.users}/refresh-token`, refreshToken),
 
-  verifyTokenRequest: () => sendGet(`${routes.users}/verifyToken`),
-  // verifyTokenRequest : () => axios.get(`api/verifyToken`),
-
-  // GetLogOutRequest : () => axios.get('api/logout'),
+  logoutRequest: () => sendPost(`${routes.users}/logout`),
 };

@@ -1,8 +1,10 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
 import jsCookie from "js-cookie";
 import routes from "../constants/routes";
+import { COOKIE_SIGNIN_TOKEN } from "../constants/constants";
 
-const TOKEN_KEY: string = "Club12_SignInToken";
+const TOKEN_KEY: string = COOKIE_SIGNIN_TOKEN;
+
 type headersContent = {
   "Content-Type": string;
   Authorization?: string;
@@ -47,7 +49,7 @@ export const unregisterToken = (): void => {
 
 /**
  * Retrieves the currently registered token.
- * @returns {string } The registered token, or undefined if none is set.
+ * @returns {string | undefined} The registered token, or undefined if none is set.
  */
 export const getRegisteredToken = (): string | undefined =>
   jsCookie.get(TOKEN_KEY);
@@ -87,30 +89,42 @@ const getHeaders = (configOverride?: ConfigOverride): headersContent => {
 };
 
 /**
- * Builds the full API endpoint URL.
+ * Builds the full API endpoint URL, including optional query parameters.
  * @param {string} resource - The API resource.
+ * @param {object} [query] - The query parameters as an object.
  * @returns {string} The encoded full endpoint URL.
  */
-export const buildEndpoint = (resource: string): string => {
-  return encodeURI(`${routes.apiUrl}/${resource}`);
+export const buildEndpoint = (resource: string, query?: object): string => {
+  let finalResource = `${routes.apiUrl}/${resource}`;
+
+  if (query) {
+    const queryParams = Object.entries(query)
+      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+      .join("&");
+    finalResource += `?${queryParams}`;
+  }
+
+  return finalResource;
 };
 
 /**
  * Sends an HTTP request.
  * @param {string} method - HTTP method (GET, POST, PUT, DELETE).
  * @param {string} resource - API resource.
- * @param {Object} configOverride - Request configuration overrides.
+ * @param {object} [configOverride] - Request configuration overrides.
  * @param {unknown | null} body - Request body data.
+ * @param {object} [query] - Query parameters.
  * @returns {Promise<AxiosResponse<T>>} A promise that resolves with the response or undefined.
  */
 const sendRequest = async <T>(
   method: string,
   resource: string,
   configOverride: object = {},
-  body: unknown | null = null
+  body: unknown | null = null,
+  query?: object
 ): Promise<AxiosResponse<T>> => {
   const headers = getHeaders(configOverride);
-  const url = buildEndpoint(resource);
+  const url = buildEndpoint(resource, query); // Pass query to buildEndpoint
   try {
     const result: AxiosResponse<T> = await axios.request({
       method,
@@ -153,7 +167,7 @@ const throwError = (error: unknown) => {
  * @param {string} resource - API resource.
  * @param {unknown} [body] - Request body.
  * @param {ConfigOverride} [configOverride] - Configuration overrides.
- * @returns {Promise<AxiosResponse<T> >} A promise that resolves with the server response.
+ * @returns {Promise<AxiosResponse<T>>} A promise that resolves with the server response.
  */
 export const sendPost = async <T>(
   resource: string,
@@ -168,7 +182,7 @@ export const sendPost = async <T>(
  * @param {string} resource - API resource.
  * @param {unknown} body - Request body.
  * @param {ConfigOverride} [configOverride] - Configuration overrides.
- * @returns {Promise<AxiosResponse<T> >} A promise that resolves with the server response.
+ * @returns {Promise<AxiosResponse<T>>} A promise that resolves with the server response.
  */
 export const sendPut = async <T>(
   resource: string,
@@ -181,19 +195,31 @@ export const sendPut = async <T>(
 /**
  * Sends a GET HTTP request.
  * @param {string} resource - API resource.
- * @param {unknown | null} [body] - Request body.
- * @returns {Promise<AxiosResponse<T> >} A promise that resolves with the server response.
+ * @param {object} [query] - Query parameters.
+ * @returns {Promise<AxiosResponse<T>>} A promise that resolves with the server response.
  */
 export const sendGet = async <T>(
   resource: string,
-  body?: unknown | null
-): Promise<AxiosResponse<T>> => sendRequest<T>("GET", resource, {}, body);
+  query?: object
+): Promise<AxiosResponse<T>> => {
+  try {
+    const result: AxiosResponse<T> = await axios.request({
+      method: "GET",
+      url: buildEndpoint(resource, query),
+      headers: getHeaders(),
+    });
+    return result;
+  } catch (error) {
+    console.error("Error in sendGet:", error); // Log any errors
+    throw error;
+  }
+};
 
 /**
  * Sends a DELETE HTTP request.
  * @param {string} resource - API resource.
  * @param {ConfigOverride} [configOverride] - Configuration overrides.
- * @returns {Promise<AxiosResponse<T> >} A promise that resolves when the resource is deleted.
+ * @returns {Promise<AxiosResponse<T>>} A promise that resolves when the resource is deleted.
  */
 export const sendDelete = async <T>(
   resource: string,

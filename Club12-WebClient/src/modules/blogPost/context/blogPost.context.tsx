@@ -4,11 +4,11 @@ import { GenericResponsePagination } from "../../core/types/types";
 import { useError } from "../../error/hooks/error.hock";
 import { blogPostService } from "../service/blogPost.service";
 import {
-  AddBlogPostRequest,
-  BlogPostFiltered,
   BlogPostResponse,
+  CreateBlogPostRequest,
+  GetBlogPostsFilteredRequest,
   IBlogPostContextProps,
-  PutBlogPostRequest,
+  UpdateBlogPostRequest,
 } from "../type/blogPost";
 
 export const BlogPostContext = createContext<IBlogPostContextProps | undefined>(
@@ -21,7 +21,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
   const { setError, setMessage } = useError();
 
   const addBlogPost = async (
-    post: AddBlogPostRequest
+    post: CreateBlogPostRequest
   ): Promise<BlogPostResponse | void> => {
     try {
       const response: AxiosResponse<BlogPostResponse> =
@@ -49,7 +49,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
 
   const putBlogPostById = async (
     id: string,
-    post: PutBlogPostRequest
+    post: UpdateBlogPostRequest
   ): Promise<BlogPostResponse | void> => {
     try {
       await blogPostService.putBlogPostById(id, post);
@@ -92,10 +92,10 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const getBlogPostsByFilters = async (
-    filter: BlogPostFiltered
+    filter: GetBlogPostsFilteredRequest
   ): Promise<GenericResponsePagination<BlogPostResponse> | void> => {
     try {
-      await blogPostService.getBlogPostsByFilters(filter);
+      return await blogPostService.getBlogPostsByFilters(filter);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);

@@ -6,7 +6,7 @@ import {
   sendGet,
   sendPost,
   sendPut,
-} from "../../core/utils/utilsAxios";
+} from "../../core/utils/axiosUtils";
 import {
   AddPlayerRequest,
   PlayerFiltered,
