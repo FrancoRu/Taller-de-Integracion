@@ -1,7 +1,9 @@
 ﻿using Club12.API.Utils;
-using Entities;
+
 using Microsoft.EntityFrameworkCore;
+
 using Persistence;
+
 using Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -54,7 +56,7 @@ WebApplication app = builder.Build();
 using (IServiceScope scope = app.Services.CreateScope())
 {
     ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
-    db.Database.Migrate();
+    //db.Database.Migrate();
 
     await app.Services.EnsureAdminUserExists();
 }
