@@ -11,7 +11,7 @@ import { AddVenueRequest, PutVenueRequest, VenueResponse } from "../type/venue";
 /**
  * Service for managing venues.
  */
-export const VenueService = {
+export const venueService = {
   /**
    * Adds a new venue.
    * @param {AddVenueRequest} venue - The venue details to add.

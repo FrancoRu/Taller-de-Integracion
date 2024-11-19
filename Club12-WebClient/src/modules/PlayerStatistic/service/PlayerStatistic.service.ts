@@ -15,7 +15,7 @@ import {
 /**
  * Service for managing player statistics.
  */
-export const PlayerStatisticService = {
+export const playerStatisticService = {
   /**
    * Adds a new player statistic.
    * @param {AddPlayerStatisticRequest} playerStatistic - The player statistic details to add.

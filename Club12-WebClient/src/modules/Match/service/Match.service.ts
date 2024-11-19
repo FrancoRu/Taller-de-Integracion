@@ -18,7 +18,7 @@ import {
 /**
  * MatchService provides methods to interact with the matches API.
  */
-export const MatchService = {
+export const matchService = {
   /**
    * Adds a new match.
    * @param {AddMatchRequest} match - The match data to be added.

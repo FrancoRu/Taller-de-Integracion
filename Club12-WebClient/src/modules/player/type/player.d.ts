@@ -11,14 +11,14 @@ export interface IPlayerContextProps {
    * @param player The details of the player to add.
    * @returns A promise that resolves with the response containing the newly added player.
    */
-  addPlayer(player: AddPlayerRequest): Promise<PlayerResponse>;
+  addPlayer(player: AddPlayerRequest): Promise<PlayerResponse | void>;
 
   /**
    * Fetches a player by its ID.
    * @param id The ID of the player to fetch.
    * @returns A promise that resolves with the player details.
    */
-  getPlayerById(id: string): Promise<PlayerResponse>;
+  getPlayerById(id: string): Promise<PlayerResponse | void>;
 
   /**
    * Fetches players based on filters and pagination.
@@ -27,7 +27,7 @@ export interface IPlayerContextProps {
    */
   getPlayersByFilter(
     filter: PlayerFiltered
-  ): Promise<GenericResponsePagination<PlayerResponse>>;
+  ): Promise<GenericResponsePagination<PlayerResponse> | void>;
 
   /**
    * Updates a player's information.

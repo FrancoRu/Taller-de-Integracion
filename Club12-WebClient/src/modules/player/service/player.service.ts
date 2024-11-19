@@ -26,7 +26,7 @@ export const playerService = {
   addPlayer: async (
     player: AddPlayerRequest
   ): Promise<AxiosResponse<PlayerResponse>> =>
-    await sendPost<PlayerResponse>(routes.players, player),
+    await sendPost(routes.players, player),
 
   /**
    * Retrieves a player by their ID.
@@ -34,7 +34,7 @@ export const playerService = {
    * @returns {Promise<AxiosResponse<PlayerResponse>>} The server response.
    */
   getPlayerById: async (id: string): Promise<AxiosResponse<void>> =>
-    await sendGet<void>(`${routes.players}/${id}`),
+    await sendGet(`${routes.players}/${id}`),
 
   /**
    * Retrieves a list of players based on a filter.
@@ -44,10 +44,7 @@ export const playerService = {
   getPlayersByFilter: async (
     filter: PlayerFiltered
   ): Promise<AxiosResponse<GenericResponsePagination<PlayerResponse>>> =>
-    await sendGet<GenericResponsePagination<PlayerResponse>>(
-      routes.players,
-      filter
-    ),
+    await sendGet(routes.players, filter),
 
   /**
    * Updates the details of an existing player.
@@ -58,8 +55,7 @@ export const playerService = {
   putPlayerById: async (
     id: string,
     player: PutPlayerRequest
-  ): Promise<AxiosResponse<void>> =>
-    sendPut<void>(`${routes.players}/${id}`, player),
+  ): Promise<AxiosResponse<void>> => sendPut(`${routes.players}/${id}`, player),
 
   /**
    * Deletes a player by their ID.
@@ -67,5 +63,5 @@ export const playerService = {
    * @returns {Promise<AxiosResponse<PlayerResponse>>} The server response.
    */
   deletePlayerById: async (id: string): Promise<AxiosResponse<void>> =>
-    sendDelete<void>(`${routes.players}/${id}`),
+    sendDelete(`${routes.players}/${id}`),
 };

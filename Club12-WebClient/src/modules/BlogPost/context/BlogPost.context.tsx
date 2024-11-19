@@ -2,7 +2,7 @@ import { AxiosError, AxiosResponse } from "axios";
 import { createContext, ReactNode } from "react";
 import { GenericResponsePagination } from "../../core/types/types";
 import { useError } from "../../error/hooks/error.hock";
-import { BlogPostService } from "../service/blogPost.service";
+import { blogPostService } from "../service/blogPost.service";
 import {
   AddBlogPostRequest,
   BlogPostFiltered,
@@ -25,7 +25,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
   ): Promise<BlogPostResponse | void> => {
     try {
       const response: AxiosResponse<BlogPostResponse> =
-        await BlogPostService.addBlogPost(post);
+        await blogPostService.addBlogPost(post);
 
       if (response && response.data) {
         setMessage(response.status, ["Blog Post created successfully"]);
@@ -52,7 +52,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
     post: PutBlogPostRequest
   ): Promise<BlogPostResponse | void> => {
     try {
-      await BlogPostService.putBlogPostById(id, post);
+      await blogPostService.putBlogPostById(id, post);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
@@ -67,7 +67,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
     photo: File
   ): Promise<void> => {
     try {
-      await BlogPostService.putPhotoBlogPostById(id, photo);
+      await blogPostService.putPhotoBlogPostById(id, photo);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
@@ -81,7 +81,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
     id: string
   ): Promise<BlogPostResponse | void> => {
     try {
-      await BlogPostService.getBlogPostsById(id);
+      await blogPostService.getBlogPostsById(id);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
@@ -95,7 +95,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
     filter: BlogPostFiltered
   ): Promise<GenericResponsePagination<BlogPostResponse> | void> => {
     try {
-      await BlogPostService.getBlogPostsByFilters(filter);
+      await blogPostService.getBlogPostsByFilters(filter);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
@@ -107,7 +107,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
 
   const deleteBlogPostById = async (id: string): Promise<void> => {
     try {
-      await BlogPostService.deleteBlogPostById(id);
+      await blogPostService.deleteBlogPostById(id);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);

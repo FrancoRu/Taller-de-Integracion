@@ -18,7 +18,7 @@ import {
 /**
  * DivisionService provides methods to interact with the divisions API.
  */
-export const DivisionService = {
+export const divisionService = {
   /**
    * Adds a new division.
    * @param {AddDivisionRequest} division - The division data to be added.

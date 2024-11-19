@@ -9,7 +9,7 @@ export interface IVenueContextProps {
    * @param venue The details of the venue to add.
    * @returns A promise that resolves with the response containing the newly added venue.
    */
-  addVenue(venue: AddVenueRequest): Promise<VenueResponse>;
+  addVenue(venue: AddVenueRequest): Promise<VenueResponse | void>;
 
   /**
    * Updates an existing venue.
@@ -17,20 +17,23 @@ export interface IVenueContextProps {
    * @param venue The updated venue details.
    * @returns A promise that resolves with the response containing the updated venue.
    */
-  putVenueById(id: string, venue: PutVenueRequest): Promise<VenueResponse>;
+  putVenueById(
+    id: string,
+    venue: PutVenueRequest
+  ): Promise<VenueResponse | void>;
 
   /**
    * Fetches all venues from the system.
    * @returns A promise that resolves with an array of venues.
    */
-  getAllVenues(): Promise<VenueResponse[]>;
+  getAllVenues(): Promise<VenueResponse[] | void>;
 
   /**
    * Fetches a specific venue by its unique ID.
    * @param id The ID of the venue to fetch.
    * @returns A promise that resolves with the venue data.
    */
-  getVenueById(id: string): Promise<VenueResponse>;
+  getVenueById(id: string): Promise<VenueResponse | void>;
 
   /**
    * Deletes a venue by its unique ID.

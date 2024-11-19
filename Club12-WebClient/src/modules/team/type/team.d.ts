@@ -12,7 +12,7 @@ export interface ITeamContextProps {
    * @param team The details of the team to add.
    * @returns A promise that resolves with the response containing the newly added team.
    */
-  addTeam(team: AddTeamRequest): Promise<TeamResponse>;
+  addTeam(team: AddTeamRequest): Promise<TeamResponse | void>;
 
   /**
    * Adds a batch of teams with associated files (e.g., for a specific division).
@@ -25,7 +25,7 @@ export interface ITeamContextProps {
     divisionId: string,
     teamFile: File,
     logoFile: File
-  ): Promise<TeamResponse>;
+  ): Promise<TeamResponse | void>;
 
   /**
    * Updates an existing team by its ID.
@@ -33,7 +33,7 @@ export interface ITeamContextProps {
    * @param data The updated team data.
    * @returns A promise that resolves with the updated team details.
    */
-  putTeamById(id: string, data: PutTeamRequest): Promise<TeamResponse>;
+  putTeamById(id: string, data: PutTeamRequest): Promise<TeamResponse | void>;
 
   /**
    * Updates the logo of an existing team.
@@ -50,14 +50,14 @@ export interface ITeamContextProps {
    */
   getTeamsByFiltered(
     filters: TeamFiltered
-  ): Promise<GenericResponsePagination<TeamResponse>>;
+  ): Promise<GenericResponsePagination<TeamResponse> | void>;
 
   /**
    * Fetches a team by its ID.
    * @param id The ID of the team to fetch.
    * @returns A promise that resolves with the team details.
    */
-  getTeamById(id: string): Promise<TeamResponse>;
+  getTeamById(id: string): Promise<TeamResponse | void>;
 
   /**
    * Deletes a team by its ID.

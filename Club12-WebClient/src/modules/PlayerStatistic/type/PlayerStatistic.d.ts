@@ -13,7 +13,7 @@ export interface IPlayerStatisticContextProps {
    */
   addPlayerStatistic(
     playerStatistic: AddPlayerStatisticRequest
-  ): Promise<PlayerResponse>;
+  ): Promise<PlayerResponse | void>;
 
   /**
    * Updates an existing player statistic.
@@ -31,7 +31,7 @@ export interface IPlayerStatisticContextProps {
    * @param id The ID of the player statistic to fetch.
    * @returns A promise that resolves with the player statistic details.
    */
-  getPlayerStatisticById(id: string): Promise<PlayerResponse>;
+  getPlayerStatisticById(id: string): Promise<PlayerResponse | void>;
 
   /**
    * Deletes a player statistic by its ID.

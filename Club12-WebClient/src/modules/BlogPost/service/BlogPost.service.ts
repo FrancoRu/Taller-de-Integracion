@@ -17,7 +17,7 @@ import {
 /**
  * BlogPostService provides methods to interact with the blog posts API.
  */
-export const BlogPostService = {
+export const blogPostService = {
   /**
    * Adds a new blog post.
    * @param {AddBlogPostRequest} post - The post data to be added.

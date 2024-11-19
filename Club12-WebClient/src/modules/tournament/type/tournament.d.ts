@@ -12,7 +12,9 @@ export interface ITournamentContextProps {
    * @param tournament The details of the tournament to add.
    * @returns A promise that resolves with the response containing the newly added tournament.
    */
-  addTournament(tournament: AddTournamentRequest): Promise<TournamentResponse>;
+  addTournament(
+    tournament: AddTournamentRequest
+  ): Promise<TournamentResponse | void>;
 
   /**
    * Updates an existing tournament by its ID.
@@ -30,7 +32,7 @@ export interface ITournamentContextProps {
    * @param id The ID of the tournament to fetch.
    * @returns A promise that resolves with the tournament details.
    */
-  getTournamentById(id: string): Promise<TournamentResponse>;
+  getTournamentById(id: string): Promise<TournamentResponse | void>;
 
   /**
    * Fetches tournaments based on filters.
@@ -39,7 +41,7 @@ export interface ITournamentContextProps {
    */
   getAllTournamentsByFilter(
     filter: TournamentFiltered
-  ): Promise<GenericResponsePagination<TournamentResponse>>;
+  ): Promise<GenericResponsePagination<TournamentResponse> | void>;
 
   /**
    * Deletes a tournament by its ID.

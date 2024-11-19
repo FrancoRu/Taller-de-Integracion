@@ -12,7 +12,7 @@ export interface IMatchContextProps {
    * @param match The details of the match to add.
    * @returns A promise that resolves with the response containing the newly added match.
    */
-  addMatch(match: AddMatchRequest): Promise<MatchResponse>;
+  addMatch(match: AddMatchRequest): Promise<MatchResponse | void>;
 
   /**
    * Updates the score of an existing match.
@@ -41,7 +41,7 @@ export interface IMatchContextProps {
    * @param id The ID of the match to fetch.
    * @returns A promise that resolves with the match details.
    */
-  getMatchById(id: string): Promise<MatchResponse>;
+  getMatchById(id: string): Promise<MatchResponse | void>;
 
   /**
    * Fetches matches based on filters and pagination.
@@ -50,7 +50,7 @@ export interface IMatchContextProps {
    */
   getMatchByFilter(
     filter: MatchFiltered
-  ): Promise<GenericResponsePagination<MatchResponse>>;
+  ): Promise<GenericResponsePagination<MatchResponse> | void>;
 
   /**
    * Deletes a match by its ID.
