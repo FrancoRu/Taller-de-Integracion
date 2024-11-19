@@ -46,16 +46,6 @@ public class Player : EntityBase
     public required bool IsFederated { get; set; } = false;
 
     /// <summary>
-    /// The name of the social work or insurance organization associated with the individual.
-    /// </summary>
-    public string? SocialWork { get; set; }
-
-    /// <summary>
-    /// The club or category to which the individual belongs.
-    /// </summary>
-    public string? ClubOrCategory { get; set; }
-
-    /// <summary>
     /// The phone number of the individual.
     /// </summary>
     public string? PhoneNumber { get; set; }
