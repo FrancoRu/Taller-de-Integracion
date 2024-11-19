@@ -63,6 +63,9 @@ public class DivisionProfile : Profile
             .ForMember(dest => dest.MatchesByWeek, opt => opt.MapFrom<MatchesByWeekResolver>())
             .ReverseMap();
 
+        _ = CreateMap<Division, MinimalDivisionResponse>()
+            .ReverseMap();
+
         _ = CreateMap<CreateDivisionRequest, Division>();
 
         _ = CreateMap<UpdateDivisionRequest, Division>();
