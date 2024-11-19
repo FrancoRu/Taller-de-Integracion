@@ -28,6 +28,7 @@ public class Staff : EntityBase
 
     /// <summary>
     /// The phone number of the staff member.
+    /// Optional field.
     /// </summary>
     [Required]
     [MaxLength(15)]

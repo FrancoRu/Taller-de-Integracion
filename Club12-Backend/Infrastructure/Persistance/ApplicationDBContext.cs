@@ -1,4 +1,6 @@
-﻿using Entities;
+﻿
+
+using Entities;
 using Entities.Models.BlogPostEntity;
 using Entities.Models.DivisionEntity;
 using Entities.Models.MatchEntity;
@@ -6,16 +8,13 @@ using Entities.Models.PlayerEntity;
 using Entities.Models.PlayerSanctionEntity;
 using Entities.Models.PlayerStatisticEntity;
 using Entities.Models.StaffEntity;
-using Entities.Models.StaffEnum;
 using Entities.Models.TeamEntity;
 using Entities.Models.TournamentEntity;
 using Entities.Models.UserEntity;
 using Entities.Models.VenueEntity;
-
 using Microsoft.EntityFrameworkCore;
-
 using MatchType = Entities.Models.MatchTypeEnum.MatchType;
-
+using StaffType = Entities.Models.StaffEnum.StaffType;
 namespace Persistence;
 
 /// <summary>
@@ -34,7 +33,8 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
             .Property(match => match.Type)
             .HasConversion(
                 value => value.ToString(),
-                value => (MatchType) Enum.Parse(typeof(MatchType), value));
+                value => (MatchType)Enum.Parse(typeof(MatchType), value)
+            );
 
         modelBuilder.Entity<Staff>()
             .Property(staff => staff.Type)
@@ -48,6 +48,12 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
             .HasForeignKey(player => player.TeamId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        modelBuilder.Entity<Staff>()
+            .Property(staffType => staffType.Type)
+            .HasConversion(
+                value => value.ToString(),
+                value => (StaffType)Enum.Parse(typeof(StaffType), value)
+            );
         base.OnModelCreating(modelBuilder);
     }
 
