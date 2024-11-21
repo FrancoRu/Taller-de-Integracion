@@ -41,7 +41,10 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
             .Include(m => m.Venue)
             .FirstOrDefaultAsync();
 
-        if (match is null) return null;
+        if (match is null)
+        {
+            return null;
+        }
 
         var playerStats = match.PlayerStatistics
             .Select(ps => new

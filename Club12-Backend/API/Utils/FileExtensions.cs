@@ -13,7 +13,9 @@ public static class FileExtensions
     public static bool IsValidImageFile(this IFormFile file)
     {
         if (file is null || file.Length is 0)
+        {
             return false;
+        }
 
         string[] validExtensions = [".jpg", ".jpeg", ".png"];
         string fileExtension = Path.GetExtension(file.FileName).ToLower();
@@ -29,7 +31,9 @@ public static class FileExtensions
     public static bool IsValidExcelFile(this IFormFile file)
     {
         if (file is null || file.Length is 0)
+        {
             return false;
+        }
 
         string[] validExtensions = [".xls", ".xlsx"];
         string fileExtension = Path.GetExtension(file.FileName).ToLower();

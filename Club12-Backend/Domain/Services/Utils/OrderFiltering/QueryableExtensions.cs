@@ -72,7 +72,10 @@ public static class QueryableExtensions
     /// </summary>
     public static IQueryable<T> SortBy<T>(this IQueryable<T> source, IOrderRequest orderRequest)
     {
-        if (string.IsNullOrEmpty(orderRequest.OrderBy)) return source;
+        if (string.IsNullOrEmpty(orderRequest.OrderBy))
+        {
+            return source;
+        }
 
         ParameterExpression parameter = Expression.Parameter(typeof(T), "x");
         MemberExpression property = Expression.Property(parameter, orderRequest.OrderBy);
@@ -84,7 +87,7 @@ public static class QueryableExtensions
 
         MethodInfo genericMethod = method.MakeGenericMethod(typeof(T), property.Type);
 
-        return (IQueryable<T>) genericMethod.Invoke(null, new object[] { source, lambda })!;
+        return (IQueryable<T>) genericMethod.Invoke(null, [source, lambda])!;
     }
 
     private static bool ShouldSkipProperty(string propertyName)

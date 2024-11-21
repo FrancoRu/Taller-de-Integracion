@@ -39,7 +39,7 @@ public class AuthService(IConfiguration configuration) : IAuthService
         SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
         string accessToken = tokenHandler.WriteToken(token);
 
-        string refreshToken = await Task.Run(() => GenerateRefreshToken());
+        string refreshToken = await Task.Run(GenerateRefreshToken);
 
         return new TokenResponse(accessToken, TimeSpan.FromHours(24), refreshToken);
     }
