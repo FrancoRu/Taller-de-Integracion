@@ -1,3 +1,5 @@
+/* eslint-disable space-before-function-paren */
+/* eslint-disable comma-dangle */
 /* eslint-disable semi */
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
