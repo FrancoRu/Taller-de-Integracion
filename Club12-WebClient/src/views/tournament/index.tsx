@@ -1,5 +1,5 @@
 // IndexTournament.tsx
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
 export const IndexTournament = () => {
   //const { getAllTournament, createTournament } = useTournament();

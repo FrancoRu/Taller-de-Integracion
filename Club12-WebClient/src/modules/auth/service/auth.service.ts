@@ -1,7 +1,11 @@
-import { AxiosResponse } from "axios";
-import routes from "../../core/constants/routes";
-import { sendPost } from "../../core/utils/axiosUtils";
-import { AuthResponse, LogInUserRequest, RefreshTokenRequest } from "../type/auth";
+import { AxiosResponse } from 'axios';
+import routes from '../../core/constants/routes';
+import { sendPost } from '../../core/utils/axiosUtils';
+import {
+  AuthResponse,
+  LogInUserRequest,
+  RefreshTokenRequest,
+} from '../type/auth';
 
 export const authService = {
   loginRequest: (

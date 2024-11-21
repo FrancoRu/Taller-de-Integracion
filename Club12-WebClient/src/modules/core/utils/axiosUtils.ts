@@ -1,12 +1,12 @@
-import axios, { AxiosError, AxiosResponse } from "axios";
-import jsCookie from "js-cookie";
-import routes from "../constants/routes";
-import { COOKIE_SIGNIN_TOKEN } from "../constants/constants";
+import axios, { AxiosError, AxiosResponse } from 'axios';
+import jsCookie from 'js-cookie';
+import routes from '../constants/routes';
+import { COOKIE_SIGNIN_TOKEN } from '../constants/constants';
 
 const TOKEN_KEY: string = COOKIE_SIGNIN_TOKEN;
 
 type headersContent = {
-  "Content-Type": string;
+  'Content-Type': string;
   Authorization?: string;
 };
 
@@ -33,8 +33,8 @@ export const tokenIsSet = (): boolean => !!jsCookie.get(TOKEN_KEY);
 export const registerToken = (newToken: string, expirationDate: Date) => {
   jsCookie.set(TOKEN_KEY, newToken, {
     expires: expirationDate,
-    sameSite: "lax",
-    path: "/",
+    sameSite: 'lax',
+    path: '/',
   });
 };
 
@@ -43,7 +43,7 @@ export const registerToken = (newToken: string, expirationDate: Date) => {
  */
 export const unregisterToken = (): void => {
   jsCookie.remove(TOKEN_KEY, {
-    path: "/",
+    path: '/',
   });
 };
 
@@ -60,7 +60,7 @@ export const getRegisteredToken = (): string | undefined =>
  */
 const getDefaultHeaders = (): headersContent => {
   const headers: headersContent = {
-    "Content-Type": "application/json; charset=utf-8",
+    'Content-Type': 'application/json; charset=utf-8',
   };
 
   if (tokenIsSet()) {
@@ -99,8 +99,11 @@ export const buildEndpoint = (resource: string, query?: object): string => {
 
   if (query) {
     const queryParams = Object.entries(query)
-      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-      .join("&");
+      .map(
+        ([key, value]) =>
+          `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+      )
+      .join('&');
     finalResource += `?${queryParams}`;
   }
 
@@ -135,7 +138,7 @@ const sendRequest = async <T>(
     return result;
   } catch (error: unknown) {
     throwError(error);
-    throw new Error("Unexpected error during request execution");
+    throw new Error('Unexpected error during request execution');
   }
 };
 
@@ -158,7 +161,7 @@ const throwError = (error: unknown) => {
       );
 
     default:
-      throw new AxiosError("An unknown error occurred");
+      throw new AxiosError('An unknown error occurred');
   }
 };
 
@@ -174,7 +177,7 @@ export const sendPost = async <T>(
   body?: unknown,
   configOverride?: ConfigOverride
 ): Promise<AxiosResponse<T>> => {
-  return await sendRequest<T>("POST", resource, configOverride, body);
+  return await sendRequest<T>('POST', resource, configOverride, body);
 };
 
 /**
@@ -189,7 +192,7 @@ export const sendPut = async <T>(
   body: unknown,
   configOverride?: ConfigOverride
 ): Promise<AxiosResponse<T>> => {
-  return await sendRequest<T>("PUT", resource, configOverride, body);
+  return await sendRequest<T>('PUT', resource, configOverride, body);
 };
 
 /**
@@ -204,13 +207,13 @@ export const sendGet = async <T>(
 ): Promise<AxiosResponse<T>> => {
   try {
     const result: AxiosResponse<T> = await axios.request({
-      method: "GET",
+      method: 'GET',
       url: buildEndpoint(resource, query),
       headers: getHeaders(),
     });
     return result;
   } catch (error) {
-    console.error("Error in sendGet:", error); // Log any errors
+    console.error('Error in sendGet:', error); // Log any errors
     throw error;
   }
 };
@@ -225,7 +228,7 @@ export const sendDelete = async <T>(
   resource: string,
   configOverride?: ConfigOverride
 ): Promise<AxiosResponse<T>> => {
-  return await sendRequest<T>("DELETE", resource, configOverride);
+  return await sendRequest<T>('DELETE', resource, configOverride);
 };
 
 /**
@@ -240,12 +243,12 @@ export const downloadfile = async (
   const headers = getHeaders();
   const url = buildEndpoint(resource);
 
-  const result = await axios.get(url, { headers, responseType: "blob" });
+  const result = await axios.get(url, { headers, responseType: 'blob' });
 
   const fileUrl = window.URL.createObjectURL(new Blob([result.data]));
-  const link = document.createElement("a");
+  const link = document.createElement('a');
   link.href = fileUrl;
-  link.setAttribute("download", fileNameWithExtension);
+  link.setAttribute('download', fileNameWithExtension);
   document.body.appendChild(link);
   link.click();
   link.remove();

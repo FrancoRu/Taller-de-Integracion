@@ -1,13 +1,18 @@
-import { AxiosResponse } from "axios";
-import routes from "../../core/constants/routes";
-import { GenericResponsePagination } from "../../core/types/types";
+import { AxiosResponse } from 'axios';
+import routes from '../../core/constants/routes';
+import { GenericResponsePagination } from '../../core/types/types';
 import {
   sendDelete,
   sendGet,
   sendPost,
   sendPut,
-} from "../../core/utils/axiosUtils";
-import { BlogPostResponse, CreateBlogPostRequest, GetBlogPostsFilteredRequest, UpdateBlogPostRequest } from "../type/blogPost";
+} from '../../core/utils/axiosUtils';
+import {
+  BlogPostResponse,
+  CreateBlogPostRequest,
+  GetBlogPostsFilteredRequest,
+  UpdateBlogPostRequest,
+} from '../type/blogPost';
 
 /**
  * BlogPostService provides methods to interact with the blog posts API.
@@ -22,12 +27,12 @@ export const blogPostService = {
     post: CreateBlogPostRequest
   ): Promise<AxiosResponse<BlogPostResponse>> => {
     const formData = new FormData();
-    formData.append("Author", post.author);
-    formData.append("Title", post.title);
-    formData.append("MarkdownText", post.markdownText);
+    formData.append('Author', post.author);
+    formData.append('Title', post.title);
+    formData.append('MarkdownText', post.markdownText);
 
     if (post.photoFile) {
-      formData.append("PhotoFile", post.photoFile as Blob);
+      formData.append('PhotoFile', post.photoFile as Blob);
     }
 
     return await sendPost<BlogPostResponse>(routes.blogposts, formData);
@@ -44,11 +49,14 @@ export const blogPostService = {
     post: UpdateBlogPostRequest
   ): Promise<AxiosResponse<BlogPostResponse>> => {
     const formData = new FormData();
-    if (post.author) formData.append("Author", post.author);
-    if (post.title) formData.append("Title", post.title);
-    if (post.markdownText) formData.append("MarkdownText", post.markdownText);
+    if (post.author) formData.append('Author', post.author);
+    if (post.title) formData.append('Title', post.title);
+    if (post.markdownText) formData.append('MarkdownText', post.markdownText);
 
-    return await sendPut<BlogPostResponse>(`${routes.blogposts}/${id}`, formData);
+    return await sendPut<BlogPostResponse>(
+      `${routes.blogposts}/${id}`,
+      formData
+    );
   },
 
   /**
@@ -62,7 +70,7 @@ export const blogPostService = {
     photo: File
   ): Promise<AxiosResponse<void>> => {
     const formData = new FormData();
-    formData.append("PhotoFile", photo); // Add photo as FormData
+    formData.append('PhotoFile', photo); // Add photo as FormData
 
     return await sendPut<void>(`${routes.blogposts}/${id}/photo`, formData);
   },
@@ -87,10 +95,12 @@ export const blogPostService = {
     filter: GetBlogPostsFilteredRequest
   ): Promise<GenericResponsePagination<BlogPostResponse> | void> => {
     try {
-      const response = await sendGet<GenericResponsePagination<BlogPostResponse>>(routes.blogposts, filter);
+      const response = await sendGet<
+        GenericResponsePagination<BlogPostResponse>
+      >(routes.blogposts, filter);
       return response.data;
     } catch (error) {
-      console.error("Error fetching blog posts:", error);
+      console.error('Error fetching blog posts:', error);
       throw error;
     }
   },
@@ -100,9 +110,7 @@ export const blogPostService = {
    * @param {string} id - The ID of the blog post to delete.
    * @returns {Promise<AxiosResponse<void>>} - A promise that resolves when the blog post is deleted.
    */
-  deleteBlogPostById: async (
-    id: string
-  ): Promise<AxiosResponse<void>> => {
+  deleteBlogPostById: async (id: string): Promise<AxiosResponse<void>> => {
     return await sendDelete<void>(`${routes.blogposts}/${id}`);
   },
 };

@@ -1,19 +1,19 @@
-import { AxiosResponse } from "axios";
-import routes from "../../core/constants/routes";
-import { GenericResponsePagination } from "../../core/types/types";
+import { AxiosResponse } from 'axios';
+import routes from '../../core/constants/routes';
+import { GenericResponsePagination } from '../../core/types/types';
 import {
   sendDelete,
   sendGet,
   sendPost,
   sendPut,
-} from "../../core/utils/axiosUtils";
+} from '../../core/utils/axiosUtils';
 import {
   AddDivisionRequest,
   DivisionFiltered,
   DivisionResponse,
   DivisionTopScoreResponse,
   PutDivisionRequest,
-} from "../type/division";
+} from '../type/division';
 
 /**
  * DivisionService provides methods to interact with the divisions API.

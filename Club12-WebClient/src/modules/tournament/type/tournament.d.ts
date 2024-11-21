@@ -1,5 +1,5 @@
-import { Filtered, GenericResponsePagination } from "../../core/types/types";
-import { DivisionResponse } from "../../division/type/division";
+import { Filtered, GenericResponsePagination } from '../../core/types/types';
+import { DivisionResponse } from '../../division/type/division';
 
 /**
  * Context properties and methods for managing tournaments.

@@ -1,23 +1,25 @@
-import { AxiosError } from "axios";
-import Cookies from "js-cookie";
-import React, { createContext, useState, useEffect } from "react";
-import { ProviderProps } from "../../core/types/types";
-import { useError } from "../../error/hooks/error.hock";
-import { authService } from "../service/auth.service";
+import { AxiosError } from 'axios';
+import Cookies from 'js-cookie';
+import React, { createContext, useState, useEffect } from 'react';
+import { ProviderProps } from '../../core/types/types';
+import { useError } from '../../error/hooks/error.hock';
+import { authService } from '../service/auth.service';
 import {
   AuthResponse,
   IAuthContextProps,
   IUser,
   LogInUserRequest,
-} from "../type/auth";
+} from '../type/auth';
 
 import {
   COOKIE_SIGNIN_TOKEN,
   SUCCESS_MESSAGES,
   EXPIRATION_TIME,
-} from "../../core/constants/constants";
+} from '../../core/constants/constants';
 
-export const AuthContext = createContext<IAuthContextProps | undefined>(undefined);
+export const AuthContext = createContext<IAuthContextProps | undefined>(
+  undefined
+);
 
 export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
   const [user, setUser] = useState<IUser | null>(null);
@@ -40,7 +42,7 @@ export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
           accessToken: res?.data as AuthResponse,
         });
 
-        const expiresIn = res.data.expiresIn.split(":").map(Number);
+        const expiresIn = res.data.expiresIn.split(':').map(Number);
         const expiresInMs =
           expiresIn[0] * EXPIRATION_TIME.MS_IN_HOUR +
           expiresIn[1] * EXPIRATION_TIME.MS_IN_MINUTE +

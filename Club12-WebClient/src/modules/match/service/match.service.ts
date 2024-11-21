@@ -1,19 +1,19 @@
-import { AxiosResponse } from "axios";
-import routes from "../../core/constants/routes";
-import { GenericResponsePagination } from "../../core/types/types";
+import { AxiosResponse } from 'axios';
+import routes from '../../core/constants/routes';
+import { GenericResponsePagination } from '../../core/types/types';
 import {
   sendDelete,
   sendGet,
   sendPost,
   sendPut,
-} from "../../core/utils/axiosUtils";
+} from '../../core/utils/axiosUtils';
 import {
   AddMatchRequest,
   MatchFiltered,
   MatchResponse,
   PutMatchDateRequest,
   PutMatchScoreRequest,
-} from "../type/match";
+} from '../type/match';
 
 /**
  * MatchService provides methods to interact with the matches API.

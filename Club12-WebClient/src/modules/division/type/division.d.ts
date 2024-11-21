@@ -1,5 +1,5 @@
-import { Filtered, GenericResponsePagination } from "../../core/types/types";
-import { MatchResponse } from "../../match/type/match";
+import { Filtered, GenericResponsePagination } from '../../core/types/types';
+import { MatchResponse } from '../../match/type/match';
 
 /**
  * Context properties and methods for managing divisions in a React application.

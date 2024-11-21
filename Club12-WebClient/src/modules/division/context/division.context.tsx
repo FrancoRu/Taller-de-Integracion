@@ -1,8 +1,8 @@
-import { AxiosError } from "axios";
-import { createContext, ReactNode } from "react";
-import { GenericResponsePagination } from "../../core/types/types";
-import { useError } from "../../error/hooks/error.hock";
-import { divisionService } from "../service/division.service";
+import { AxiosError } from 'axios';
+import { createContext, ReactNode } from 'react';
+import { GenericResponsePagination } from '../../core/types/types';
+import { useError } from '../../error/hooks/error.hock';
+import { divisionService } from '../service/division.service';
 import {
   AddDivisionRequest,
   DivisionFiltered,
@@ -10,7 +10,7 @@ import {
   DivisionTopScoreResponse,
   IDivisionContextProps,
   PutDivisionRequest,
-} from "../type/division";
+} from '../type/division';
 
 export const DivisionContext = createContext<IDivisionContextProps | undefined>(
   undefined
@@ -30,7 +30,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -42,7 +42,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -57,7 +57,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -71,7 +71,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -85,7 +85,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -99,7 +99,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -111,7 +111,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };

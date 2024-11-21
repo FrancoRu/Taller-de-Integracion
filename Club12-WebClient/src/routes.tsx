@@ -1,10 +1,10 @@
-import { RouteProps } from "react-router-dom";
-import { lazy } from "react";
-import PrivateRoute from "./views/core/privateRoute";
-import Dashboard from "./views/dashboard/dashboard";
-import { BlogPostProvider } from "./modules/blogPost/context/blogPost.context";
+import { RouteProps } from 'react-router-dom';
+import { lazy } from 'react';
+import PrivateRoute from './views/core/privateRoute';
+import Dashboard from './views/dashboard/dashboard';
+import { BlogPostProvider } from './modules/blogPost/context/blogPost.context';
 
-const Home = lazy(() => import('./views/home/home')); 
+const Home = lazy(() => import('./views/home/home'));
 const Login = lazy(() => import('./views/auth/login'));
 const NotFound = lazy(() => import('./views/errors/NotFound'));
 
@@ -16,19 +16,19 @@ export const routes: AppRoute[] = [
   {
     path: '/',
     element: (
-      <BlogPostProvider>  {/* Wrap Home with BlogPostProvider */}
+      <BlogPostProvider>
         <Home />
       </BlogPostProvider>
-    ),  // Home is publicly accessible
+    ),
   },
   {
     path: '/login',
-    element: <Login />,  // Login is publicly accessible
+    element: <Login />,
   },
   {
-    path: '/dashboard',  // Protected Dashboard route
+    path: '/dashboard',
     element: (
-      <BlogPostProvider> {/* Wrap Dashboard with BlogPostProvider */}
+      <BlogPostProvider>
         <PrivateRoute>
           <Dashboard />
         </PrivateRoute>
@@ -37,6 +37,6 @@ export const routes: AppRoute[] = [
   },
   {
     path: '*',
-    element: <NotFound />,  // Fallback for unmatched routes
+    element: <NotFound />,
   },
 ];

@@ -1,5 +1,5 @@
-import { Filtered, GenericResponsePagination } from "../../core/types/types";
-import { PlayerResponse } from "../../player/type/player";
+import { Filtered, GenericResponsePagination } from '../../core/types/types';
+import { PlayerResponse } from '../../player/type/player';
 
 /**
  * Context properties and methods for managing teams in a sports system.

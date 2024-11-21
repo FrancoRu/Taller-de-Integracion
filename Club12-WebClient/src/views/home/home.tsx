@@ -1,6 +1,6 @@
-import { Box, Container, Typography } from "@mui/material";
-import { orange, grey } from "@mui/material/colors";
-import ShowPosts from "../blogPost/showPosts"; // Display blog posts
+import { Box, Container, Typography } from '@mui/material';
+import { orange, grey } from '@mui/material/colors';
+import ShowPosts from '../blogPost/showPosts'; // Display blog posts
 
 const Home = () => {
   return (
@@ -11,7 +11,7 @@ const Home = () => {
           padding: 4,
           borderRadius: 2,
           boxShadow: 3,
-          textAlign: "center",
+          textAlign: 'center',
         }}
       >
         <Typography
@@ -19,7 +19,7 @@ const Home = () => {
           sx={{
             color: orange[500],
             marginBottom: 2,
-            fontWeight: "bold",
+            fontWeight: 'bold',
           }}
         >
           Welcome to Club12 Blog!

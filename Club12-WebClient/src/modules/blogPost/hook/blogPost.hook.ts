@@ -1,10 +1,10 @@
-import { useContext } from "react";
-import { BlogPostContext } from "../context/blogPost.context";
+import { useContext } from 'react';
+import { BlogPostContext } from '../context/blogPost.context';
 
 export const useBlogPost = () => {
   const context = useContext(BlogPostContext);
   if (!context) {
-    throw new Error("useBlogPost must be used within a BlogPostProvider");
+    throw new Error('useBlogPost must be used within a BlogPostProvider');
   }
   return context;
 };

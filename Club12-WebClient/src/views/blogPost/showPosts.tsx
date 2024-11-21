@@ -1,8 +1,18 @@
-import React, { useEffect, useState } from "react";
-import { Grid, Card, CardContent, Typography, Button, CircularProgress } from "@mui/material";
-import { useBlogPost } from "../../modules/blogPost/hook/blogPost.hook";
-import { BlogPostResponse, GetBlogPostsFilteredRequest } from "../../modules/blogPost/type/blogPost";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import {
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  CircularProgress,
+} from '@mui/material';
+import { useBlogPost } from '../../modules/blogPost/hook/blogPost.hook';
+import {
+  BlogPostResponse,
+  GetBlogPostsFilteredRequest,
+} from '../../modules/blogPost/type/blogPost';
+import { useNavigate } from 'react-router-dom';
 
 const ShowPosts: React.FC = () => {
   const { getBlogPostsByFilters, getBlogPostsById } = useBlogPost();
@@ -18,9 +28,9 @@ const ShowPosts: React.FC = () => {
   const filterParams: GetBlogPostsFilteredRequest = {
     pageIndex: pagination.page,
     pageSize: pagination.pageSize,
-    author: "",
-    title: "",
-    keyword: "",
+    author: '',
+    title: '',
+    keyword: '',
   };
 
   useEffect(() => {
@@ -36,7 +46,7 @@ const ShowPosts: React.FC = () => {
           }
         }
       } catch (error) {
-        console.error("Error loading blog posts:", error);
+        console.error('Error loading blog posts:', error);
       } finally {
         setLoading(false);
       }
@@ -50,7 +60,7 @@ const ShowPosts: React.FC = () => {
     let newPage = direction === 'next' ? page + 1 : page - 1;
 
     if (newPage < 1 || newPage > Math.ceil(totalCount / pageSize)) return;
-    setPagination((prev) => ({ ...prev, page: newPage }));
+    setPagination(prev => ({ ...prev, page: newPage }));
   };
 
   const handleReadMore = async (id: string) => {
@@ -60,7 +70,7 @@ const ShowPosts: React.FC = () => {
         navigate(`/blog/${id}`, { state: { post: postDetails } });
       }
     } catch (error) {
-      console.error("Error fetching detailed post:", error);
+      console.error('Error fetching detailed post:', error);
     }
   };
 
@@ -68,14 +78,14 @@ const ShowPosts: React.FC = () => {
     <div>
       <Grid container spacing={3} justifyContent="center">
         {posts.length > 0 ? (
-          posts.map((post) => (
+          posts.map(post => (
             <Grid item xs={12} sm={6} md={4} key={post.id}>
               <Card sx={{ maxWidth: 345 }}>
                 <CardContent>
                   <Typography variant="h6">{post.title}</Typography>
                   <div
                     dangerouslySetInnerHTML={{
-                      __html: post.markdownText.substring(0, 150) + "..."
+                      __html: post.markdownText.substring(0, 150) + '...',
                     }}
                   />
                   <Button
@@ -96,7 +106,7 @@ const ShowPosts: React.FC = () => {
         )}
       </Grid>
 
-      <div style={{ textAlign: "center", marginTop: 20 }}>
+      <div style={{ textAlign: 'center', marginTop: 20 }}>
         {loading ? (
           <CircularProgress />
         ) : (

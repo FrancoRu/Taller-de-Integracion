@@ -1,4 +1,4 @@
-import { GenericResponsePagination } from "../../core/types/types";
+import { GenericResponsePagination } from '../../core/types/types';
 
 /**
  * Context properties and methods for managing blog posts in a React application.

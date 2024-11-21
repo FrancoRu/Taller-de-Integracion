@@ -10,7 +10,10 @@ interface ErrorBoundaryState {
   errorInfo: ErrorInfo | null;
 }
 
-class ErrorBoundary extends Component<{ children: React.ReactNode }, ErrorBoundaryState> {
+class ErrorBoundary extends Component<
+  { children: React.ReactNode },
+  ErrorBoundaryState
+> {
   constructor(props: { children: React.ReactNode }) {
     super(props);
     this.state = {
@@ -25,7 +28,7 @@ class ErrorBoundary extends Component<{ children: React.ReactNode }, ErrorBounda
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error("Error caught by Error Boundary:", error, errorInfo);
+    console.error('Error caught by Error Boundary:', error, errorInfo);
     this.setState({
       errorInfo: errorInfo,
     });
@@ -36,24 +39,27 @@ class ErrorBoundary extends Component<{ children: React.ReactNode }, ErrorBounda
       return (
         <Box
           sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "100vh",
-            textAlign: "center",
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100vh',
+            textAlign: 'center',
             backgroundColor: grey[200],
             padding: 3,
           }}
         >
-          <Typography variant="h2" sx={{ color: orange[500], fontWeight: "bold" }}>
+          <Typography
+            variant="h2"
+            sx={{ color: orange[500], fontWeight: 'bold' }}
+          >
             Something Went Wrong
           </Typography>
-          <Typography variant="h5" sx={{ marginTop: 2, fontStyle: "italic" }}>
+          <Typography variant="h5" sx={{ marginTop: 2, fontStyle: 'italic' }}>
             We encountered an unexpected error.
           </Typography>
           <Typography variant="body1" sx={{ marginTop: 2, color: grey[800] }}>
-            <i>{this.state.error?.message || "Unknown error occurred."}</i>
+            <i>{this.state.error?.message || 'Unknown error occurred.'}</i>
           </Typography>
           <Box sx={{ marginTop: 4 }}>
             <Button
@@ -63,7 +69,7 @@ class ErrorBoundary extends Component<{ children: React.ReactNode }, ErrorBounda
               sx={{
                 backgroundColor: orange[500],
                 color: grey[900],
-                "&:hover": {
+                '&:hover': {
                   backgroundColor: orange[700],
                 },
               }}
@@ -75,7 +81,7 @@ class ErrorBoundary extends Component<{ children: React.ReactNode }, ErrorBounda
       );
     }
 
-      return this.props.children;
+    return this.props.children;
   }
 }
 

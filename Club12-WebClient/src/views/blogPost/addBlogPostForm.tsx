@@ -1,7 +1,13 @@
-import React, { useState } from "react";
-import { TextField, Button, Card, CardContent, Typography } from "@mui/material";
-import { useBlogPost } from "../../modules/blogPost/hook/blogPost.hook";
-import { CreateBlogPostRequest } from "../../modules/blogPost/type/blogPost";
+import React, { useState } from 'react';
+import {
+  TextField,
+  Button,
+  Card,
+  CardContent,
+  Typography,
+} from '@mui/material';
+import { useBlogPost } from '../../modules/blogPost/hook/blogPost.hook';
+import { CreateBlogPostRequest } from '../../modules/blogPost/type/blogPost';
 
 /**
  * AddBlogPostForm handles the blog post creation.
@@ -9,9 +15,9 @@ import { CreateBlogPostRequest } from "../../modules/blogPost/type/blogPost";
 const AddBlogPostForm: React.FC = () => {
   const { addBlogPost } = useBlogPost();
   const [formData, setFormData] = useState<CreateBlogPostRequest>({
-    author: "",
-    title: "",
-    markdownText: "",
+    author: '',
+    title: '',
+    markdownText: '',
   });
 
   const handleInputChange = (
@@ -28,7 +34,7 @@ const AddBlogPostForm: React.FC = () => {
   };
 
   return (
-    <Card sx={{ maxWidth: 600, margin: "auto", padding: 3 }}>
+    <Card sx={{ maxWidth: 600, margin: 'auto', padding: 3 }}>
       <CardContent>
         <Typography variant="h5" gutterBottom>
           Add New Blog Post

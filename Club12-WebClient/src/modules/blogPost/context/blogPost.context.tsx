@@ -1,15 +1,15 @@
-import { AxiosError, AxiosResponse } from "axios";
-import { createContext, ReactNode } from "react";
-import { GenericResponsePagination } from "../../core/types/types";
-import { useError } from "../../error/hooks/error.hock";
-import { blogPostService } from "../service/blogPost.service";
+import { AxiosError, AxiosResponse } from 'axios';
+import { createContext, ReactNode } from 'react';
+import { GenericResponsePagination } from '../../core/types/types';
+import { useError } from '../../error/hooks/error.hock';
+import { blogPostService } from '../service/blogPost.service';
 import {
   BlogPostResponse,
   CreateBlogPostRequest,
   GetBlogPostsFilteredRequest,
   IBlogPostContextProps,
   UpdateBlogPostRequest,
-} from "../type/blogPost";
+} from '../type/blogPost';
 
 export const BlogPostContext = createContext<IBlogPostContextProps | undefined>(
   undefined
@@ -28,12 +28,12 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
         await blogPostService.addBlogPost(post);
 
       if (response && response.data) {
-        setMessage(response.status, ["Blog Post created successfully"]);
+        setMessage(response.status, ['Blog Post created successfully']);
         return response.data;
       }
 
       throw new AxiosError(
-        "Invalid response data",
+        'Invalid response data',
         undefined,
         undefined,
         response
@@ -42,7 +42,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -57,7 +57,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -72,7 +72,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -86,7 +86,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -100,7 +100,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -112,7 +112,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };

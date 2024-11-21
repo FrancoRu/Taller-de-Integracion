@@ -1,18 +1,18 @@
-import { AxiosResponse } from "axios";
-import routes from "../../core/constants/routes";
-import { GenericResponsePagination } from "../../core/types/types";
+import { AxiosResponse } from 'axios';
+import routes from '../../core/constants/routes';
+import { GenericResponsePagination } from '../../core/types/types';
 import {
   sendDelete,
   sendGet,
   sendPost,
   sendPut,
-} from "../../core/utils/axiosUtils";
+} from '../../core/utils/axiosUtils';
 import {
   AddTournamentRequest,
   PutTournamentRequest,
   TournamentFiltered,
   TournamentResponse,
-} from "../type/tournament";
+} from '../type/tournament';
 
 /**
  * Service for managing tournaments.

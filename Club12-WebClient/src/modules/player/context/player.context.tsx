@@ -1,15 +1,15 @@
-import { AxiosError } from "axios";
-import { createContext, ReactNode } from "react";
-import { GenericResponsePagination } from "../../core/types/types";
-import { useError } from "../../error/hooks/error.hock";
-import { playerService } from "../service/player.service";
+import { AxiosError } from 'axios';
+import { createContext, ReactNode } from 'react';
+import { GenericResponsePagination } from '../../core/types/types';
+import { useError } from '../../error/hooks/error.hock';
+import { playerService } from '../service/player.service';
 import {
   AddPlayerRequest,
   IPlayerContextProps,
   PlayerFiltered,
   PlayerResponse,
   PutPlayerRequest,
-} from "../type/player.d";
+} from '../type/player.d';
 
 export const PlayerContext = createContext<IPlayerContextProps | undefined>(
   undefined
@@ -29,7 +29,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -40,7 +40,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -53,7 +53,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -67,7 +67,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -79,7 +79,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };

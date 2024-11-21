@@ -1,4 +1,4 @@
-import { Filetered, GenericResponsePagination } from "../../core/types/types";
+import { Filetered, GenericResponsePagination } from '../../core/types/types';
 
 /**
  * Context properties and methods for managing players in a sports system.
