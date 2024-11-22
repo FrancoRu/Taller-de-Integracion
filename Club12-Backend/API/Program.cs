@@ -73,7 +73,6 @@ app.UseSerilogRequestLogging();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseSerilogRequestLogging();
 app.MapControllers();
 
 app.UseStatusCodePages();

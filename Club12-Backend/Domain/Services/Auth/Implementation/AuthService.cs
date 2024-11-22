@@ -24,12 +24,12 @@ public class AuthService(IConfiguration configuration) : IAuthService
 
         SecurityTokenDescriptor tokenDescriptor = new()
         {
-            Subject = new ClaimsIdentity(new[]
-            {
+            Subject = new ClaimsIdentity(
+            [
                 new Claim(ClaimTypes.Name, userEntity.Username),
                 new Claim(ClaimTypes.Role, userEntity.Role),
                 new Claim("userId", userEntity.Id.ToString())
-            }),
+            ]),
             Expires = DateTime.UtcNow.AddHours(24),
             Issuer = _issuer,
             Audience = _audience,
