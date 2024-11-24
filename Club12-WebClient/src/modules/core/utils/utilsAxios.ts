@@ -89,11 +89,22 @@ const getHeaders = (configOverride?: ConfigOverride): headersContent => {
 /**
  * Builds the full API endpoint URL.
  * @param {string} resource - The API resource.
+ * @param {object} [query] - The query parameters as an object.
  * @returns {string} The encoded full endpoint URL.
  */
-export const buildEndpoint = (resource: string): string => {
-  return encodeURI(`${routes.apiUrl}/${resource}`);
+export const buildEndpoint = (resource: string, query?: object): string => {
+  let finalResource = `${routes.apiUrl}/${resource}`;
+
+  if (query) {
+    const queryParams = Object.entries(query)
+      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+      .join("&");
+    finalResource += `?${queryParams}`;
+  }
+
+  return finalResource;
 };
+
 
 /**
  * Sends an HTTP request.
@@ -106,11 +117,12 @@ export const buildEndpoint = (resource: string): string => {
 const sendRequest = async <T>(
   method: string,
   resource: string,
-  configOverride: object = {},
-  body: unknown | null = null
+  configOverride?: object,
+  body?: unknown | null,
+  query?: object
 ): Promise<AxiosResponse<T>> => {
   const headers = getHeaders(configOverride);
-  const url = buildEndpoint(resource);
+  const url = buildEndpoint(resource, query);
   try {
     const result: AxiosResponse<T> = await axios.request({
       method,
@@ -141,9 +153,7 @@ const throwError = (error: unknown) => {
         undefined,
         undefined,
         undefined
-      );
-
-    default:
+      );sen
       throw new AxiosError("An unknown error occurred");
   }
 };
@@ -186,8 +196,8 @@ export const sendPut = async <T>(
  */
 export const sendGet = async <T>(
   resource: string,
-  body?: unknown | null
-): Promise<AxiosResponse<T>> => sendRequest<T>("GET", resource, {}, body);
+  query?: object
+): Promise<AxiosResponse<T>> => sendRequest<T>("GET", resource, query=query);
 
 /**
  * Sends a DELETE HTTP request.
