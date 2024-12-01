@@ -1,8 +1,8 @@
-import { AxiosError } from "axios";
-import { createContext, ReactNode } from "react";
-import { GenericResponsePagination } from "../../core/types/types";
-import { useError } from "../../error/hooks/error.hock";
-import { matchService } from "../service/match.service";
+import { AxiosError } from 'axios';
+import { createContext, ReactNode } from 'react';
+import { GenericResponsePagination } from '../../core/types/types';
+import { useError } from '../../error/hooks/error.hock';
+import { matchService } from '../service/match.service';
 import {
   AddMatchRequest,
   IMatchContextProps,
@@ -10,7 +10,7 @@ import {
   MatchResponse,
   PutMatchDateRequest,
   PutMatchScoreRequest,
-} from "../type/match";
+} from '../type/match';
 
 export const MatchContext = createContext<IMatchContextProps | undefined>(
   undefined
@@ -30,7 +30,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -45,7 +45,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -60,7 +60,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -72,7 +72,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -86,7 +86,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -97,7 +97,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };

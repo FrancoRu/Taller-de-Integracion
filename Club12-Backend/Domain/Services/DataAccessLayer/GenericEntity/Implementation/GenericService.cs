@@ -13,14 +13,14 @@ namespace Services.DataAccessLayer.GenericEntity.Implementation;
 
 public class GenericService<TEntity>(ApplicationDBContext context) : IGenericService<TEntity> where TEntity : EntityBase
 {
-    protected GenericDaoService<TEntity> genericDao = new(context);
+    protected GenericDaoService<TEntity> _genericDao = new(context);
 
     public virtual void Insert(TEntity entity)
     {
         entity.DateCreated = DateTime.UtcNow;
         entity.DateUpdated = DateTime.UtcNow;
-        genericDao.Insert(entity);
-        genericDao.Save();
+        _genericDao.Insert(entity);
+        _genericDao.Save();
     }
 
     public virtual void Insert(ICollection<TEntity> entities)
@@ -30,21 +30,21 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
             item.DateCreated = DateTime.UtcNow;
             item.DateUpdated = DateTime.UtcNow;
         }
-        genericDao.Insert(entities);
-        genericDao.Save();
+        _genericDao.Insert(entities);
+        _genericDao.Save();
     }
 
     public virtual IQueryable<TEntity> FindAllQueryable()
     {
-        return genericDao.FindAllQueryable();
+        return _genericDao.FindAllQueryable();
     }
 
     public virtual async Task InsertAsync(TEntity entity)
     {
         entity.DateCreated = DateTime.UtcNow;
         entity.DateUpdated = DateTime.UtcNow;
-        await genericDao.InsertAsync(entity);
-        await genericDao.SaveAsync();
+        await _genericDao.InsertAsync(entity);
+        await _genericDao.SaveAsync();
     }
 
     public virtual async Task InsertAsync(ICollection<TEntity> entities)
@@ -55,63 +55,63 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
             item.DateUpdated = DateTime.UtcNow;
         }
 
-        await genericDao.InsertAsync(entities);
-        await genericDao.SaveAsync();
+        await _genericDao.InsertAsync(entities);
+        await _genericDao.SaveAsync();
     }
 
     public virtual void Delete(TEntity entity)
     {
-        genericDao.Delete(entity);
-        genericDao.Save();
+        _genericDao.Delete(entity);
+        _genericDao.Save();
     }
 
-    public virtual void Delete(IEnumerable<TEntity> entities)
+    public virtual void DeleteBatch(IEnumerable<TEntity> entities)
     {
         foreach (TEntity item in entities)
         {
-            genericDao.Delete(item);
+            _genericDao.Delete(item);
         }
-        genericDao.Save();
+        _genericDao.Save();
     }
 
     public virtual async Task DeleteAsync(TEntity entity)
     {
-        genericDao.Delete(entity);
-        await genericDao.SaveAsync();
+        _genericDao.Delete(entity);
+        await _genericDao.SaveAsync();
     }
 
     public virtual async Task DeleteWhereAsync(Expression<Func<TEntity, bool>> expression)
     {
-        IQueryable<TEntity> entities = genericDao.Where(expression);
-        genericDao.Delete(entities);
-        await genericDao.SaveAsync();
+        IQueryable<TEntity> entities = _genericDao.Where(expression);
+        _genericDao.Delete(entities);
+        await _genericDao.SaveAsync();
     }
 
     public virtual void DeleteUnattached(TEntity entity)
     {
-        genericDao.DeleteUnattached(entity);
-        genericDao.Save();
+        _genericDao.DeleteUnattached(entity);
+        _genericDao.Save();
     }
 
     public virtual void Update(TEntity entity)
     {
         entity.DateUpdated = DateTime.UtcNow;
-        genericDao.Update(entity);
-        genericDao.Save();
+        _genericDao.Update(entity);
+        _genericDao.Save();
     }
 
     public virtual Task UpdateAsync(TEntity entity)
     {
         entity.DateUpdated = DateTime.UtcNow;
-        genericDao.Update(entity);
-        return genericDao.SaveAsync();
+        _genericDao.Update(entity);
+        return _genericDao.SaveAsync();
     }
 
     public virtual TEntity? TryGet(params object[] keyValues)
     {
         try
         {
-            return genericDao.Get(keyValues);
+            return _genericDao.Get(keyValues);
         }
         catch (InvalidOperationException)
         {
@@ -121,17 +121,17 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
 
     public virtual async Task<IEnumerable<TEntity>> FindAllAsync()
     {
-        return await genericDao.FindAllAsync();
+        return await _genericDao.FindAllAsync();
     }
 
     public virtual IEnumerable<TEntity> FindAll()
     {
-        return genericDao.FindAllEnumerable();
+        return _genericDao.FindAllEnumerable();
     }
 
     public virtual void EntityDispose()
     {
-        genericDao.GenericEntityDispose();
+        _genericDao.GenericEntityDispose();
     }
 
     public IQueryable<TEntity> FilterByExpressionWithPagination(
@@ -139,7 +139,7 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
     IPaginationRequest paginationRequest,
     params Expression<Func<TEntity, object?>>[] includes)
     {
-        IQueryable<TEntity> query = genericDao.Where(expression);
+        IQueryable<TEntity> query = _genericDao.Where(expression);
 
         foreach (Expression<Func<TEntity, object?>> include in includes)
         {
@@ -151,17 +151,20 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
 
     public IQueryable<TEntity> FilterByExpression(Expression<Func<TEntity, bool>> expression)
     {
-        return genericDao.Where(expression);
+        return _genericDao.Where(expression);
     }
 
     public async Task<int> GetCountAsync(Expression<Func<TEntity, bool>> predicate)
     {
-        return await genericDao.Where(predicate).AsNoTracking().CountAsync();
+        return await _genericDao.Where(predicate).AsNoTracking().CountAsync();
     }
 
     public virtual async Task InsertRangeAsync(ICollection<TEntity> entities)
     {
-        if (entities.Count is 0) return;
+        if (entities.Count is 0)
+        {
+            return;
+        }
 
         foreach (TEntity entity in entities)
         {
@@ -169,7 +172,7 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
             entity.DateUpdated = DateTime.UtcNow;
         }
 
-        await genericDao.InsertAsync(entities);
-        await genericDao.SaveAsync();
+        await _genericDao.InsertAsync(entities);
+        await _genericDao.SaveAsync();
     }
 }

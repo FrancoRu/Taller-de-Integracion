@@ -18,6 +18,7 @@ public class CreateMatchRequest
     /// <summary>
     /// The type of the match (e.g., regular or playoff).
     /// </summary>
+    [AllowedValues(MatchType.Regular, MatchType.Playoff)]
     public MatchType? Type { get; set; } = MatchType.Regular;
 
     /// <summary>

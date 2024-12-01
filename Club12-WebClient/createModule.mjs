@@ -1,16 +1,19 @@
-import { existsSync, mkdirSync, writeFileSync } from "fs";
-import { join } from "path";
+/* eslint-disable space-before-function-paren */
+/* eslint-disable comma-dangle */
+/* eslint-disable semi */
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { join } from 'path';
 
 const moduleName = process.argv[2];
 if (!moduleName) {
   console.error(
-    "❌ Please provide a module name: npm run create <module-name>"
+    '❌ Please provide a module name: npm run create <module-name>'
   );
   process.exit(1);
 }
 
-const baseDir = join(process.cwd(), "src", "modules", moduleName);
-const subDirs = ["context", "hook", "service", "type"];
+const baseDir = join(process.cwd(), 'src', 'modules', moduleName);
+const subDirs = ['context', 'hook', 'service', 'type'];
 const files = {
   context: `${moduleName}.context.tsx`,
   hook: `${moduleName}.hook.ts`,
@@ -77,7 +80,7 @@ try {
     console.log(`✔️ Created module folder: ${baseDir}`);
   }
 
-  subDirs.forEach((subDir) => {
+  subDirs.forEach(subDir => {
     const subDirPath = join(baseDir, subDir);
     if (!existsSync(subDirPath)) {
       mkdirSync(subDirPath, { recursive: true });
@@ -94,5 +97,5 @@ try {
 
   console.log(`✅ Module "${moduleName}" created successfully.`);
 } catch (error) {
-  console.error("❌ Error creating module:", error);
+  console.error('❌ Error creating module:', error);
 }

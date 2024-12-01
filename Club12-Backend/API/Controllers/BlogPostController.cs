@@ -10,13 +10,18 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using Services.Services.BlogPostService;
+
 using Services.Utils.Cloudfare;
 
 namespace Club12.API.Controllers;
 
+
 /// <summary>
 /// Controller for managing blog posts.
 /// </summary>
+/// <param name="_blogPostService">The blog post service.</param>
+/// <param name="_cloudflareService">The cloudfare service.</param>   
+/// <param name="_mapper">The AutoMapper instance.</param>
 [Authorize(Roles = "SuperAdmin")]
 [Route("api/blogposts/")]
 [ApiController]
@@ -51,31 +56,28 @@ public class BlogPostController(
         BlogPost blogPost = _mapper.Map<BlogPost>(blogPostRequest);
         blogPost.PhotoUrl = photoUrl;
 
-        BlogPost createdBlogPost = _blogPostService.CreateBlogPost(blogPost);
+        BlogPost createdBlogPost = await _blogPostService.CreateBlogPostAsync(blogPost);
         BlogPostResponse blogPostResponse = _mapper.Map<BlogPostResponse>(createdBlogPost);
 
-        return CreatedAtAction(nameof(GetBlogPostById), new { id = blogPostResponse.Id }, blogPostResponse);
+        return new ObjectResult(blogPostResponse) { StatusCode = StatusCodes.Status201Created };
     }
 
     /// <summary>
     /// Updates an existing blog post by its id.
     /// </summary>
-    /// <param name="postId">The id of the blog post to update.</param>
+    /// <param name="id">The id of the blog post to update.</param>
     /// <param name="blogPostRequest">The blog post request with updated content.</param>
-    /// <returns>
-    /// Returns 200 (OK) with the updated blog post response if the update was successful.
-    /// Returns 400 (Bad Request) if the blog post with the provided id was not found.
-    /// </returns>
-    [HttpPut("{postId:guid}")]
+    /// <returns>Returns 200 (OK) with the updated blog post response if the update was successful, or 400 (Bad Request) if the blog post was not found.</returns>
+    [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BlogPostResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> UpdateBlogPost(Guid postId, UpdateBlogPostRequest blogPostRequest)
+    public async Task<ActionResult> UpdateBlogPost(Guid id, UpdateBlogPostRequest blogPostRequest)
     {
-        BlogPost? existingPost = _blogPostService.GetBlogPostById(postId);
+        BlogPost? existingPost = await _blogPostService.GetBlogPostByIdAsync(id);
 
         if (existingPost is null)
         {
-            return BadRequest($"Blog post with id {postId} not found.");
+            return BadRequest($"Blog post with id {id} not found.");
         }
 
         _mapper.Map(blogPostRequest, existingPost);
@@ -87,23 +89,23 @@ public class BlogPostController(
     /// <summary>
     /// Updates the photo of a blog post.
     /// </summary>
-    /// <param name="postId">The id of the blog post to update the photo.</param>
+    /// <param name="id">The id of the blog post to update the photo.</param>
     /// <param name="photoRequest">The update blog post photo request.</param>
     /// <returns>Returns 200 (OK) if the photo was successfully updated.</returns>
-    [HttpPut("{postId:guid}/photo")]
+    [HttpPut("{id:guid}/photo")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> UpdateBlogPostPhoto(Guid postId, UpdateBlogPostPhotoRequest photoRequest)
+    public async Task<ActionResult> UpdateBlogPostPhoto(Guid id, UpdateBlogPostPhotoRequest photoRequest)
     {
         if (!photoRequest.PhotoFile.IsValidImageFile())
         {
             return BadRequest("The photo file must be a valid JPEG/PNG image.");
         }
 
-        BlogPost? blogPost = _blogPostService.GetBlogPostById(postId);
+        BlogPost? blogPost = await _blogPostService.GetBlogPostByIdAsync(id);
         if (blogPost is null)
         {
-            return BadRequest($"Blog post with id {postId} not found.");
+            return BadRequest($"Blog post with id {id} not found.");
         }
 
         string photoUrl = await _cloudflareService.UploadFileAsync(photoRequest.PhotoFile.OpenReadStream(), photoRequest.PhotoFile.FileName);
@@ -124,7 +126,7 @@ public class BlogPostController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<BlogPostResponse>> GetBlogPostById(Guid id)
     {
-        BlogPost? blogPost = _blogPostService.GetBlogPostById(id);
+        BlogPost? blogPost = await _blogPostService.GetBlogPostByIdAsync(id);
 
         if (blogPost is null)
         {
@@ -147,21 +149,21 @@ public class BlogPostController(
     /// Deletes a blog post by its id.
     /// </summary>
     /// <param name="id">The id of the blog post to delete.</param>
-    /// <returns>Returns 200 (OK) if the blog post was successfully deleted.</returns>
+    /// <returns>Returns 204 (No Content) if the blog post was successfully deleted, or 400 (Bad Request) if not found.</returns>
     [HttpDelete("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public IActionResult DeleteBlogPostById(Guid id)
+    public async Task<IActionResult> DeleteBlogPostById(Guid id)
     {
-        BlogPost? blogPost = _blogPostService.GetBlogPostById(id);
+        BlogPost? blogPost = await _blogPostService.GetBlogPostByIdAsync(id);
 
         if (blogPost is null)
         {
             return BadRequest($"Blog post with id {id} not found.");
         }
 
-        _blogPostService.DeleteBlogPost(blogPost);
-        return Ok();
+        bool deleteResult = await _blogPostService.DeleteBlogPostAsync(blogPost);
+        return !deleteResult ? BadRequest("Failed to delete the blog post.") : NoContent();
     }
 
     /// <summary>

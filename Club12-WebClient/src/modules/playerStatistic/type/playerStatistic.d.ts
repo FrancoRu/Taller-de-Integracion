@@ -1,4 +1,4 @@
-import { PlayerResponse } from "../../player/type/player";
+import { PlayerResponse } from '../../player/type/player';
 
 /**
  * Context properties and methods for managing player statistics in a sports system.

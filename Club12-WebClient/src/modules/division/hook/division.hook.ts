@@ -1,10 +1,10 @@
-import { useContext } from "react";
-import { DivisionContext } from "../context/division.context";
+import { useContext } from 'react';
+import { DivisionContext } from '../context/division.context';
 
 export const useDivision = () => {
   const context = useContext(DivisionContext);
   if (!context) {
-    throw new Error("useDivision must be used within a DivisionProvider");
+    throw new Error('useDivision must be used within a DivisionProvider');
   }
   return context;
 };

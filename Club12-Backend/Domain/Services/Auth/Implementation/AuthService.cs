@@ -11,28 +11,25 @@ using System.Text;
 
 namespace Services.Auth.Implementation;
 
-/// <summary>
-/// Service responsible for generating JWT tokens.
-/// </summary>
 public class AuthService(IConfiguration configuration) : IAuthService
 {
     private readonly string _jwtSecret = configuration.GetSection("JWT:Key").Value ?? throw new ArgumentNullException(nameof(configuration), "The JWT Key should be initialized");
     private readonly string _issuer = configuration.GetSection("JWT:Issuer").Value ?? throw new ArgumentNullException(nameof(configuration), "The JWT Issuer should be initialized");
     private readonly string _audience = configuration.GetSection("JWT:Audience").Value ?? throw new ArgumentNullException(nameof(configuration), "The JWT Audience should be initialized");
 
-    public TokenResponse GenerateJwtToken(User userEntity)
+    public async Task<TokenResponse> GenerateJwtTokenAsync(User userEntity)
     {
         JwtSecurityTokenHandler tokenHandler = new();
         byte[] key = Encoding.ASCII.GetBytes(_jwtSecret);
 
         SecurityTokenDescriptor tokenDescriptor = new()
         {
-            Subject = new ClaimsIdentity(new[]
-            {
+            Subject = new ClaimsIdentity(
+            [
                 new Claim(ClaimTypes.Name, userEntity.Username),
                 new Claim(ClaimTypes.Role, userEntity.Role),
                 new Claim("userId", userEntity.Id.ToString())
-             }),
+            ]),
             Expires = DateTime.UtcNow.AddHours(24),
             Issuer = _issuer,
             Audience = _audience,
@@ -42,18 +39,20 @@ public class AuthService(IConfiguration configuration) : IAuthService
         SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
         string accessToken = tokenHandler.WriteToken(token);
 
-        TimeSpan expiresIn = TimeSpan.FromHours(24);
+        string refreshToken = await Task.Run(GenerateRefreshToken);
 
-        // Generate refresh token
-        string refreshToken = GenerateRefreshToken();
+        return new TokenResponse(accessToken, TimeSpan.FromHours(24), refreshToken);
+    }
 
-        return new TokenResponse(accessToken, expiresIn, refreshToken);
+    public async Task<TokenResponse> RefreshJwtTokenAsync(User userEntity)
+    {
+        return await GenerateJwtTokenAsync(userEntity);
     }
 
     /// <summary>
-    /// Generates a random refresh token.
+    /// Generates a refresh token.
     /// </summary>
-    /// <returns>A newly generated refresh token.</returns>
+    /// <returns></returns>
     private static string GenerateRefreshToken()
     {
         byte[] randomBytes = new byte[64];

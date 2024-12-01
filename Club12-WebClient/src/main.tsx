@@ -1,13 +1,13 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import "./index.css";
-import App from "./App";
-import { AuthProvider } from "./modules/auth/context/auth.context";
-import { BrowserRouter } from "react-router-dom";
-import { ErrorProvider } from "./modules/error/context/error.context";
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+import { AuthProvider } from './modules/auth/context/auth.context';
+import { BrowserRouter } from 'react-router-dom';
+import { ErrorProvider } from './modules/error/context/error.context';
 
 //process.loadEnvFile();
-ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <BrowserRouter>
       <ErrorProvider>

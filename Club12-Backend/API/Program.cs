@@ -1,17 +1,21 @@
 ﻿using Club12.API.Utils;
+
 using Entities;
+
 using Microsoft.EntityFrameworkCore;
+
 using Persistence;
+
 using Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add Serilog logging  
 builder.Host.UseSerilog((context, configuration) =>
-configuration.WriteTo.Console().ReadFrom.Configuration(context.Configuration));
+    configuration.ReadFrom.Configuration(context.Configuration));
 
 builder.Services.AddAutoMapper(typeof(Program));
-//builder.Services.AddScoped<IClub12DBContext, ApplicationDBContext>();
+builder.Services.AddScoped<IClub12DBContext, ApplicationDBContext>();
 
 string? connectionString = builder.Configuration.GetConnectionString("DbConnection");
 string? jwtSecret = builder.Configuration.GetSection("JWT:Key").Value;
@@ -46,14 +50,17 @@ builder.Services.AddCustomAuthentication(builder.Configuration);
 builder.Services.AddControllers().AddCustomJsonOptions();
 builder.Services.AddCustomSwagger(builder.Configuration);
 
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 WebApplication app = builder.Build();
 
 using (IServiceScope scope = app.Services.CreateScope())
 {
     ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
-    db.Database.Migrate();
+    //db.Database.Migrate();
 
-    app.Services.EnsureAdminUserExists();
+    await app.Services.EnsureAdminUserExists();
 }
 
 if (!builder.Environment.IsProduction())

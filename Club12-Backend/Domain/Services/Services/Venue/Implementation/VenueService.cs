@@ -1,32 +1,42 @@
 ﻿using Entities.Models.VenueEntity;
 
+using Microsoft.EntityFrameworkCore;
+
 using Services.DataAccessLayer.GenericEntity;
 
 namespace Services.Services.VenueService.Implementation;
 
-public class VenueService(IGenericService<Venue> genericVenueService) : IVenueService
+public class VenueService(IGenericService<Venue> _genericVenueService) : IVenueService
 {
-    public Venue CreateVenue(Venue venueEntity)
+    public async Task<Venue> CreateVenueAsync(Venue venueEntity)
     {
-        genericVenueService.Insert(venueEntity);
+        await _genericVenueService.InsertAsync(venueEntity);
         return venueEntity;
     }
 
-    public Venue? GetVenueById(Guid venueId)
+    public async Task<Venue?> GetVenueByIdAsync(Guid venueId)
     {
-        return genericVenueService.FilterByExpression(venue => venue.Id == venueId).FirstOrDefault();
+        return await _genericVenueService.FilterByExpression(venue => venue.Id == venueId).FirstOrDefaultAsync();
     }
 
-    public void DeleteVenue(Venue venueEntity)
+    public async Task<bool> DeleteVenueAsync(Venue venueEntity)
     {
-        genericVenueService.Delete(venueEntity);
+        try
+        {
+            await _genericVenueService.DeleteAsync(venueEntity);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public async Task<bool> UpdateVenueAsync(Venue venueEntity)
     {
         try
         {
-            await genericVenueService.UpdateAsync(venueEntity);
+            await _genericVenueService.UpdateAsync(venueEntity);
             return true;
         }
         catch
@@ -37,6 +47,6 @@ public class VenueService(IGenericService<Venue> genericVenueService) : IVenueSe
 
     public async Task<IEnumerable<Venue>> GetAllVenuesAsync()
     {
-        return await genericVenueService.FindAllAsync();
+        return await _genericVenueService.FindAllAsync();
     }
 }

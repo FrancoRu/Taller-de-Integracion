@@ -12,31 +12,37 @@ using System.Linq.Expressions;
 
 namespace Club12.Services.Services.PlayerSanctionService.Implementation;
 
-public class PlayerSanctionService(IGenericService<PlayerSanction> genericPlayerSanctionService) : IPlayerSanctionService
+public class PlayerSanctionService(IGenericService<PlayerSanction> _genericPlayerSanctionService) : IPlayerSanctionService
 {
-    public PlayerSanction CreatePlayerSanction(PlayerSanction playerSanctionEntity)
+    public async Task<PlayerSanction> CreatePlayerSanctionAsync(PlayerSanction playerSanctionEntity)
     {
-        genericPlayerSanctionService.Insert(playerSanctionEntity);
+        await _genericPlayerSanctionService.InsertAsync(playerSanctionEntity);
         return playerSanctionEntity;
     }
 
-    public PlayerSanction? GetPlayerSanctionById(Guid playerSanctionId)
+    public async Task<PlayerSanction?> GetPlayerSanctionByIdAsync(Guid playerSanctionId)
     {
-        return genericPlayerSanctionService.TryGet(playerSanctionId);
+        return await _genericPlayerSanctionService.FilterByExpression(playerSanction => playerSanction.Id == playerSanctionId).FirstOrDefaultAsync();
     }
 
-
-    public void DeletePlayerSanction(PlayerSanction playerSanctionEntity)
+    public async Task<bool> DeletePlayerSanctionAsync(PlayerSanction playerSanctionEntity)
     {
-        genericPlayerSanctionService.DeleteAsync(playerSanctionEntity);
+        try
+        {
+            await _genericPlayerSanctionService.DeleteAsync(playerSanctionEntity);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
-
 
     public async Task<bool> UpdatePlayerSanctionAsync(PlayerSanction playerSanctionEntity)
     {
         try
         {
-            await genericPlayerSanctionService.UpdateAsync(playerSanctionEntity);
+            await _genericPlayerSanctionService.UpdateAsync(playerSanctionEntity);
             return true;
         }
         catch
@@ -47,17 +53,16 @@ public class PlayerSanctionService(IGenericService<PlayerSanction> genericPlayer
 
     public async Task<IEnumerable<PlayerSanction>> GetExpiredSanctionsAsync(DateTime cutoffDate)
     {
-        return await genericPlayerSanctionService.FilterByExpression(playerSanction => playerSanction.IssuedDate.AddDays(playerSanction.Duration) <= cutoffDate)
+        return await _genericPlayerSanctionService.FilterByExpression(playerSanction => playerSanction.IssuedDate.AddDays(playerSanction.Duration) <= cutoffDate)
             .Include(s => s.Player)
             .ToListAsync();
     }
 
     public async Task<PaginatedResponse<PlayerSanction>> GetPlayerSanctionsAsync(GetPlayerSanctionsFilteredRequest filter)
     {
-
         Expression<Func<PlayerSanction, bool>> expression = QueryableExtensions.ConstructFilterExpression<PlayerSanction, GetPlayerSanctionsFilteredRequest>(filter);
-        IQueryable<PlayerSanction> filteredSanctions = genericPlayerSanctionService.FilterByExpressionWithPagination(expression, filter).SortBy(filter);
-        int totalCount = await genericPlayerSanctionService.GetCountAsync(expression);
+        IQueryable<PlayerSanction> filteredSanctions = _genericPlayerSanctionService.FilterByExpressionWithPagination(expression, filter).SortBy(filter);
+        int totalCount = await _genericPlayerSanctionService.GetCountAsync(expression);
 
         return new PaginatedResponse<PlayerSanction>
         {

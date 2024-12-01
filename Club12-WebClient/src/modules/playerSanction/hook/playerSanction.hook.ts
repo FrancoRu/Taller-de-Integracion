@@ -1,10 +1,12 @@
-import { useContext } from "react";
-import { PlayerSanctionContext } from "../context/playerSanction.context";
+import { useContext } from 'react';
+import { PlayerSanctionContext } from '../context/playerSanction.context';
 
 export const usePlayerSanction = () => {
   const context = useContext(PlayerSanctionContext);
   if (!context) {
-    throw new Error("usePlayerSanction must be used within a PlayerSanctionProvider");
+    throw new Error(
+      'usePlayerSanction must be used within a PlayerSanctionProvider'
+    );
   }
   return context;
 };

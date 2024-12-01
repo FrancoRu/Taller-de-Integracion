@@ -4,6 +4,9 @@ using Entities.Models.BlogPostEntity;
 
 namespace Services.Services.BlogPostService;
 
+/// <summary>
+/// Represents a service for managing blog posts.
+/// </summary>
 public interface IBlogPostService
 {
     /// <summary>
@@ -12,20 +15,20 @@ public interface IBlogPostService
     /// <param name="blogPostEntity">The blog post entity to create.</param>
     /// <param name="userId">The ID of the user creating the blog post.</param>
     /// <returns>The created blog post.</returns>
-    BlogPost CreateBlogPost(BlogPost blogPostEntity);
+    Task<BlogPost> CreateBlogPostAsync(BlogPost blogPostEntity);
 
     /// <summary>
     /// Retrieves a blog post by its id.
     /// </summary>
     /// <param name="blogPostId">The id of the blog post to retrieve.</param>
     /// <returns>The blog post with the specified id, or null if not found.</returns>
-    BlogPost? GetBlogPostById(Guid blogPostId);
+    Task<BlogPost?> GetBlogPostByIdAsync(Guid blogPostId);
 
     /// <summary>
     /// Deletes a blog post.
     /// </summary>
     /// <param name="blogPostEntity">The blog post to delete.</param>
-    void DeleteBlogPost(BlogPost blogPostEntity);
+    Task<bool> DeleteBlogPostAsync(BlogPost blogPostEntity);
 
     /// <summary>
     /// Updates a blog post asynchronously.

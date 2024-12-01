@@ -6,7 +6,7 @@ namespace Entities.DTOs.Division;
 /// <summary>
 /// Represents a response for a division, inheriting from the base response.
 /// </summary>
-public class DivisionResponse : BaseEntityResponse
+public class DetailedDivisionResponse : BaseEntityResponse
 {
     /// <summary>
     /// The name of the division.

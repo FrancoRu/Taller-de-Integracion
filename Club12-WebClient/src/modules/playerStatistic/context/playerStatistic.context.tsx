@@ -1,13 +1,13 @@
-import { AxiosError } from "axios";
-import { createContext, ReactNode } from "react";
-import { useError } from "../../error/hooks/error.hock";
-import { PlayerResponse } from "../../player/type/player";
-import { playerStatisticService } from "../service/playerStatistic.service";
+import { AxiosError } from 'axios';
+import { createContext, ReactNode } from 'react';
+import { useError } from '../../error/hooks/error.hock';
+import { PlayerResponse } from '../../player/type/player';
+import { playerStatisticService } from '../service/playerStatistic.service';
 import {
   AddPlayerStatisticRequest,
   IPlayerStatisticContextProps,
   PutPlayerStatisticRequest,
-} from "../type/playerStatistic";
+} from '../type/playerStatistic';
 
 export const PlayerStatisticContext = createContext<
   IPlayerStatisticContextProps | undefined
@@ -26,7 +26,7 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -43,7 +43,7 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -56,7 +56,7 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -68,7 +68,7 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };

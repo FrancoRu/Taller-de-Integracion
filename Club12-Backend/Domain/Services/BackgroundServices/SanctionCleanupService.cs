@@ -48,7 +48,8 @@ public class SanctionCleanupService(
             {
                 await Task.WhenAll(expiredSanctions.Select(async sanction =>
                 {
-                    playerSanctionGenericService.DeletePlayerSanction(sanction);
+                    // TODO: Handle error if it happens.
+                    _ = await playerSanctionGenericService.DeletePlayerSanctionAsync(sanction);
 
                     if (sanction.Player is not null)
                     {

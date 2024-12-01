@@ -1,18 +1,18 @@
-import { AxiosError } from "axios";
-import { createContext } from "react";
+import { AxiosError } from 'axios';
+import { createContext } from 'react';
 import {
   GenericResponsePagination,
   ProviderProps,
-} from "../../core/types/types";
-import { useError } from "../../error/hooks/error.hock";
-import { tournamentService } from "../service/tournament.service";
+} from '../../core/types/types';
+import { useError } from '../../error/hooks/error.hock';
+import { tournamentService } from '../service/tournament.service';
 import {
   AddTournamentRequest,
   ITournamentContextProps,
   PutTournamentRequest,
   TournamentFiltered,
   TournamentResponse,
-} from "../type/tournament";
+} from '../type/tournament';
 
 export const TournamentContext = createContext<
   ITournamentContextProps | undefined
@@ -29,7 +29,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -43,7 +43,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -56,7 +56,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -69,7 +69,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -80,7 +80,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };

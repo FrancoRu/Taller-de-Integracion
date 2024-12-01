@@ -1,16 +1,16 @@
-import { AxiosResponse } from "axios";
-import routes from "../../core/constants/routes";
+import { AxiosResponse } from 'axios';
+import routes from '../../core/constants/routes';
 import {
   sendDelete,
   sendGet,
   sendPost,
   sendPut,
-} from "../../core/utils/utilsAxios";
+} from '../../core/utils/axiosUtils';
 import {
   AddPlayerStatisticRequest,
   PlayerStatisticResponse,
   PutPlayerStatisticRequest,
-} from "../type/playerStatistic";
+} from '../type/playerStatistic';
 
 /**
  * Service for managing player statistics.

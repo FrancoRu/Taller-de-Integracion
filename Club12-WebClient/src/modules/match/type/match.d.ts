@@ -1,5 +1,5 @@
-import { Filtered, GenericResponsePagination } from "../../core/types/types";
-import { VenueResponse } from "../../venue/type/venue";
+import { Filtered, GenericResponsePagination } from '../../core/types/types';
+import { VenueResponse } from '../../venue/type/venue';
 
 /**
  * Context properties and methods for managing matches in a sports system.
@@ -201,13 +201,13 @@ export enum TypeMatch {
    * A regular match in the tournament.
    * @type {string}
    */
-  Regular = "Regular",
+  Regular = 'Regular',
 
   /**
    * A playoff match in the tournament.
    * @type {string}
    */
-  Playoff = "Playoff",
+  Playoff = 'Playoff',
 }
 
 /**

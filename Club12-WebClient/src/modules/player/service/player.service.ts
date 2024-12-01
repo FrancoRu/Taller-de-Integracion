@@ -1,18 +1,18 @@
-import { AxiosResponse } from "axios";
-import routes from "../../core/constants/routes";
-import { GenericResponsePagination } from "../../core/types/types";
+import { AxiosResponse } from 'axios';
+import routes from '../../core/constants/routes';
+import { GenericResponsePagination } from '../../core/types/types';
 import {
   sendDelete,
   sendGet,
   sendPost,
   sendPut,
-} from "../../core/utils/utilsAxios";
+} from '../../core/utils/axiosUtils';
 import {
   AddPlayerRequest,
   PlayerFiltered,
   PlayerResponse,
   PutPlayerRequest,
-} from "../type/player";
+} from '../type/player';
 
 /**
  * Service for managing player-related operations.

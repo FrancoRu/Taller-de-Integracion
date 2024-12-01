@@ -1,15 +1,15 @@
-import { AxiosError } from "axios";
-import { createContext, ReactNode } from "react";
-import { GenericResponsePagination } from "../../core/types/types";
-import { useError } from "../../error/hooks/error.hock";
-import { teamService } from "../service/team.service";
+import { AxiosError } from 'axios';
+import { createContext, ReactNode } from 'react';
+import { GenericResponsePagination } from '../../core/types/types';
+import { useError } from '../../error/hooks/error.hock';
+import { teamService } from '../service/team.service';
 import {
   AddTeamRequest,
   ITeamContextProps,
   PutTeamRequest,
   TeamFiltered,
   TeamResponse,
-} from "../type/team.d";
+} from '../type/team.d';
 
 export const TeamContext = createContext<ITeamContextProps | undefined>(
   undefined
@@ -28,7 +28,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -47,7 +47,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -61,7 +61,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -72,7 +72,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -85,7 +85,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -96,7 +96,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };
@@ -107,7 +107,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError("An unknown error occurred"));
+        setError(new AxiosError('An unknown error occurred'));
       }
     }
   };

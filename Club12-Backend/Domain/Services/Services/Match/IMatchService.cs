@@ -11,18 +11,25 @@ namespace Services.Services.MatchService;
 public interface IMatchService
 {
     /// <summary>
-    /// Creates a new match.
+    /// Creates a new match asynchronously.
     /// </summary>
     /// <param name="matchEntity">The match entity to create.</param>
     /// <returns>The created match.</returns>
-    Match CreateMatch(Match matchEntity);
+    Task<Match> CreateMatchAsync(Match matchEntity);
 
     /// <summary>
-    /// Retrieves a match by its id.
+    /// Retrieves a match by its id asynchronously.
     /// </summary>
     /// <param name="matchId">The id of the match to retrieve.</param>
     /// <returns>The match with the specified id, or null if not found.</returns>
-    Match? GetMatchById(Guid matchId);
+    Task<Match?> GetMatchByIdAsync(Guid matchId);
+
+    /// <summary>
+    /// Retrieves a match by its id asynchronously with the scorers.
+    /// </summary>
+    /// <param name="matchId">The id of the match to retrieve.</param>
+    /// <returns>The match with the specified id, or null if not found.</returns>
+    Task<Match?> GetMatchByIdWithScorersAsync(Guid matchId);
 
     /// <summary>
     /// Updates a match asynchronously.
@@ -32,20 +39,21 @@ public interface IMatchService
     Task<bool> UpdateMatchAsync(Match matchEntity);
 
     /// <summary>
-    /// Deletes a match.
+    /// Deletes a match asynchronously.
     /// </summary>
     /// <param name="matchEntity">The match to delete.</param>
-    void DeleteMatch(Match matchEntity);
+    /// <returns>A task representing the asynchronous delete operation and a boolean indicating success.</returns>
+    Task<bool> DeleteMatchAsync(Match matchEntity);
 
     /// <summary>
-    /// Retrieves a paginated list of matches based on filtering criteria.
+    /// Retrieves a paginated list of matches based on filtering criteria asynchronously.
     /// </summary>
     /// <param name="filter">The filtering criteria.</param>
     /// <returns>A paginated response containing the filtered matches.</returns>
     Task<PaginatedResponse<Match>> GetAllMatchesAsync(GetMatchesFilteredRequest filter);
 
     /// <summary>
-    /// Generates the fixture (matches) for the given list of teams.
+    /// Generates the fixture (matches) for the given list of teams asynchronously.
     /// </summary>
     /// <param name="teams">The list of teams for which the fixture should be generated.</param>
     /// <param name="divisionId">The division ID to associate with the matches.</param>

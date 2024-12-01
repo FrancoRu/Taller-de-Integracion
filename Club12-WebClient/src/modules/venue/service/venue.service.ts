@@ -1,12 +1,12 @@
-import { AxiosResponse } from "axios";
-import routes from "../../core/constants/routes";
+import { AxiosResponse } from 'axios';
+import routes from '../../core/constants/routes';
 import {
   sendDelete,
   sendGet,
   sendPost,
   sendPut,
-} from "../../core/utils/utilsAxios";
-import { AddVenueRequest, PutVenueRequest, VenueResponse } from "../type/venue";
+} from '../../core/utils/axiosUtils';
+import { AddVenueRequest, PutVenueRequest, VenueResponse } from '../type/venue';
 
 /**
  * Service for managing venues.

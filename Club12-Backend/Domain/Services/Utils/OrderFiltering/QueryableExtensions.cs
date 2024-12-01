@@ -40,7 +40,10 @@ public static class QueryableExtensions
                 MemberExpression propertyAccess = Expression.Property(parameter, property.Name);
                 if (property.PropertyType == typeof(string) && filterValue is string stringValue)
                 {
-                    Expression containsExpression = Expression.Call(propertyAccess, containsMethod, Expression.Constant(stringValue));
+                    MethodInfo? toLowerMethod = typeof(string).GetMethod("ToLower", Type.EmptyTypes) ?? throw new InvalidCastException("The 'ToLower' method could not be found on the string class.");
+                    Expression toLowerProperty = Expression.Call(propertyAccess, toLowerMethod);
+                    Expression toLowerFilterValue = Expression.Constant(stringValue.ToLower());
+                    Expression containsExpression = Expression.Call(toLowerProperty, containsMethod, toLowerFilterValue);
                     finalExpression = Expression.AndAlso(finalExpression, containsExpression);
                 }
                 else
@@ -55,6 +58,7 @@ public static class QueryableExtensions
         return Expression.Lambda<Func<TEntity, bool>>(finalExpression, parameter);
     }
 
+
     /// <summary>
     /// Paginates the given source sequence based on the specified page number and page size.
     /// </summary>
@@ -68,7 +72,10 @@ public static class QueryableExtensions
     /// </summary>
     public static IQueryable<T> SortBy<T>(this IQueryable<T> source, IOrderRequest orderRequest)
     {
-        if (string.IsNullOrEmpty(orderRequest.OrderBy)) return source;
+        if (string.IsNullOrEmpty(orderRequest.OrderBy))
+        {
+            return source;
+        }
 
         ParameterExpression parameter = Expression.Parameter(typeof(T), "x");
         MemberExpression property = Expression.Property(parameter, orderRequest.OrderBy);
@@ -80,7 +87,7 @@ public static class QueryableExtensions
 
         MethodInfo genericMethod = method.MakeGenericMethod(typeof(T), property.Type);
 
-        return (IQueryable<T>) genericMethod.Invoke(null, new object[] { source, lambda })!;
+        return (IQueryable<T>) genericMethod.Invoke(null, [source, lambda])!;
     }
 
     private static bool ShouldSkipProperty(string propertyName)

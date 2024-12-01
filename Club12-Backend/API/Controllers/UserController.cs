@@ -7,48 +7,112 @@ using Microsoft.AspNetCore.Mvc;
 using Services.Auth;
 using Services.Services.UserService;
 
+using System.Security.Claims;
+
 namespace Club12.API.Controllers;
 
 /// <summary>
 /// Controller for managing users.
 /// </summary>
-/// <remarks>
-/// Initializes a new instance of the <see cref="UserController"/> class.
-/// </remarks>
 /// <param name="_userService">The user service.</param>
 /// <param name="_authService">The auth service.</param>
-//[Authorize(Roles = "SuperAdmin")]
+[Authorize(Roles = "SuperAdmin")]
 [ApiController]
 [Route("api/users/")]
-public class UserController(
-    IUserService _userService,
-    IAuthService _authService
-    ) : ControllerBase
+public class UserController(IUserService _userService, IAuthService _authService) : ControllerBase
 {
-
     /// <summary>
     /// Logs in a user and generates a JWT token.
     /// </summary>
-    /// <param name="userLoginRequest">The user login request.</param>
+    /// <param name="userLoginRequest">The user login request containing username and password.</param>
     /// <returns>
-    /// Returns 200 (Ok) with the generated JWT token if the login is successful.
-    /// Returns 401 (Unauthorized) if the credentials are invalid.
+    /// A 200 OK response with the generated JWT token if login is successful.
+    /// A 401 Unauthorized response if the credentials are invalid.
     /// </returns>
     [AllowAnonymous]
     [HttpPost("login")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokenResponse))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public IActionResult Login(LogInUserRequest userLoginRequest)
+    public async Task<IActionResult> Login(LogInUserRequest userLoginRequest)
     {
-        User? user = _userService.GetUserByUserNameAsync(userLoginRequest.Username);
-
-        if (user == null || !_userService.ValidateCredentials(user, userLoginRequest.Password))
+        User? user = await _userService.GetUserByUserNameAsync(userLoginRequest.Username);
+        if (user is null || !await _userService.ValidateCredentialsAsync(user, userLoginRequest.Password))
         {
             return Unauthorized("Invalid credentials");
         }
 
-        TokenResponse token = _authService.GenerateJwtToken(user);
+        TokenResponse token = await _authService.GenerateJwtTokenAsync(user);
+
+        user.RefreshToken = token.RefreshToken;
+        user.RefreshTokenExpiryTime = DateTime.UtcNow.Add(token.ExpiresIn);
+        await _userService.UpdateUserAsync(user);
 
         return Ok(token);
+    }
+
+    /// <summary>
+    /// Refreshes the JWT token using a valid refresh token.
+    /// </summary>
+    /// <param name="refreshTokenRequest">The request containing the refresh token.</param>
+    /// <returns>
+    /// A 200 OK response with a new token pair (access and refresh tokens) if successful.
+    /// A 401 Unauthorized response if the refresh token is invalid.
+    /// </returns>
+    [HttpPost("refresh-token")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokenResponse))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> RefreshToken(RefreshTokenRequest refreshTokenRequest)
+    {
+        User? user = await _userService.GetUserByRefreshTokenAsync(refreshTokenRequest.RefreshToken);
+
+        if (user is null || user.RefreshTokenExpiryTime < DateTime.UtcNow)
+        {
+            return Unauthorized("Invalid or expired refresh token");
+        }
+
+        TokenResponse token = await _authService.GenerateJwtTokenAsync(user);
+
+        user.RefreshToken = token.RefreshToken;
+        user.RefreshTokenExpiryTime = DateTime.UtcNow.Add(token.ExpiresIn);
+        await _userService.UpdateUserAsync(user);
+
+        return Ok(token);
+    }
+
+    /// <summary>
+    /// Logs out the current authenticated user by invalidating their refresh token.
+    /// </summary>
+    /// <remarks>
+    /// This endpoint invalidates the user's refresh token, preventing the user from using it to obtain a new access token.
+    /// </remarks>
+    /// <returns>
+    /// A 200 OK response if the logout is successful.
+    /// A 400 Bad Request response if the user is not authenticated or cannot be found.
+    /// </returns>
+    [HttpPost("logout")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Logout()
+    {
+        string? username = User.FindFirst(ClaimTypes.Name)?.Value;
+
+        if (string.IsNullOrEmpty(username))
+        {
+            return Unauthorized("User is not authenticated.");
+        }
+
+        User? user = await _userService.GetUserByUserNameAsync(username);
+
+        if (user is null)
+        {
+            return BadRequest("Something went wrong.");
+        }
+
+        user.RefreshToken = null;
+        user.RefreshTokenExpiryTime = null;
+
+        await _userService.UpdateUserAsync(user);
+
+        return Ok();
     }
 }
