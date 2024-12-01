@@ -97,14 +97,16 @@ export const buildEndpoint = (resource: string, query?: object): string => {
 
   if (query) {
     const queryParams = Object.entries(query)
-      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+      .map(
+        ([key, value]) =>
+          `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+      )
       .join("&");
     finalResource += `?${queryParams}`;
   }
 
   return finalResource;
 };
-
 
 /**
  * Sends an HTTP request.
@@ -153,7 +155,7 @@ const throwError = (error: unknown) => {
         undefined,
         undefined,
         undefined
-      );sen
+      );
       throw new AxiosError("An unknown error occurred");
   }
 };
@@ -197,7 +199,8 @@ export const sendPut = async <T>(
 export const sendGet = async <T>(
   resource: string,
   query?: object
-): Promise<AxiosResponse<T>> => sendRequest<T>("GET", resource, query=query);
+): Promise<AxiosResponse<T>> =>
+  sendRequest<T>("GET", resource, (query = query));
 
 /**
  * Sends a DELETE HTTP request.
