@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
 import jsCookie from "js-cookie";
 import routes from "../constants/routes";
+import { RequestProps } from "../types/types";
 
 const TOKEN_KEY: string = "Club12_SignInToken";
 type headersContent = {
@@ -108,21 +109,26 @@ export const buildEndpoint = (resource: string, query?: object): string => {
   return finalResource;
 };
 
+
 /**
  * Sends an HTTP request.
- * @param {string} method - HTTP method (GET, POST, PUT, DELETE).
- * @param {string} resource - API resource.
- * @param {Object} configOverride - Request configuration overrides.
- * @param {unknown | null} body - Request body data.
- * @returns {Promise<AxiosResponse<T>>} A promise that resolves with the response or undefined.
+ * 
+ * @template T The expected response type.
+ * @param {RequestProps} options - The request properties. See `RequestProps` type in `type.d.ts`.
+ * @param {string} options.method - HTTP method (GET, POST, PUT, DELETE).
+ * @param {string} options.resource - The API resource endpoint.
+ * @param {object} [options.configOverride] - Configuration overrides for the HTTP request.
+ * @param {unknown} [options.body] - The request payload (if applicable).
+ * @param {object} [options.query] - Query parameters for the request.
+ * @returns {Promise<AxiosResponse<T>>} A promise that resolves with the response.
  */
-const sendRequest = async <T>(
-  method: string,
-  resource: string,
-  configOverride?: object,
-  body?: unknown | null,
-  query?: object
-): Promise<AxiosResponse<T>> => {
+const sendRequest = async <T>({
+  method,
+  resource,
+  configOverride,
+  body,
+  query,
+}: RequestProps): Promise<AxiosResponse<T>> => {
   const headers = getHeaders(configOverride);
   const url = buildEndpoint(resource, query);
   try {
@@ -172,7 +178,7 @@ export const sendPost = async <T>(
   body?: unknown,
   configOverride?: ConfigOverride
 ): Promise<AxiosResponse<T>> => {
-  return await sendRequest<T>("POST", resource, configOverride, body);
+  return await sendRequest<T>({method: "POST", resource, configOverride, body});
 };
 
 /**
@@ -187,7 +193,7 @@ export const sendPut = async <T>(
   body: unknown,
   configOverride?: ConfigOverride
 ): Promise<AxiosResponse<T>> => {
-  return await sendRequest<T>("PUT", resource, configOverride, body);
+  return await sendRequest<T>({method: "PUT", resource, configOverride, body});
 };
 
 /**
@@ -200,7 +206,7 @@ export const sendGet = async <T>(
   resource: string,
   query?: object
 ): Promise<AxiosResponse<T>> =>
-  sendRequest<T>("GET", resource, (query = query));
+  sendRequest<T>({method:"GET", resource, query});
 
 /**
  * Sends a DELETE HTTP request.
@@ -212,7 +218,7 @@ export const sendDelete = async <T>(
   resource: string,
   configOverride?: ConfigOverride
 ): Promise<AxiosResponse<T>> => {
-  return await sendRequest<T>("DELETE", resource, configOverride);
+  return await sendRequest<T>({method: "DELETE", resource, configOverride});
 };
 
 /**

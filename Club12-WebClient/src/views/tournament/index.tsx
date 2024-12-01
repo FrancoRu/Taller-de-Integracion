@@ -1,9 +1,9 @@
 // IndexTournament.tsx
-import { useEffect } from "react";
+import { useEffect } from 'react'
 
 export const IndexTournament = () => {
-  //const { getAllTournament, createTournament } = useTournament();
-  //const [tournaments, setTournaments] = useState<TournamentResponse[]>([]);
+  // const { getAllTournament, createTournament } = useTournament();
+  // const [tournaments, setTournaments] = useState<TournamentResponse[]>([]);
   // const [formData, setFormData] = useState<CreateTournament>({
   //   description: "",
   //   name: "",
@@ -12,14 +12,14 @@ export const IndexTournament = () => {
   useEffect(() => {
     // Función para obtener todos los torneos y guardarlos en el estado
     const fetchTournaments = async () => {
-      //const data = await getAllTournament();
+      // const data = await getAllTournament();
       // if (false) {
       //   setTournaments(data);
       // }
-    };
+    }
 
-    fetchTournaments();
-  }, []);
+    fetchTournaments()
+  }, [])
 
   // Manejador para actualizar el estado del formulario
   // const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,7 +72,7 @@ export const IndexTournament = () => {
             value={formData.name}
             onChange={handleInputChange}
             required
-          /> 
+          />
         </div>
         <div>
           <label>Descripción:</label>
@@ -85,7 +85,7 @@ export const IndexTournament = () => {
           />
         </div>
         <button type="submit">Crear Torneo</button>
-      </form>*/}
+      </form> */}
     </div>
-  );
-};
+  )
+}

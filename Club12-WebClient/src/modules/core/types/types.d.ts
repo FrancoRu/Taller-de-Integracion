@@ -29,3 +29,11 @@ export enum Routes {
   LA_PREVIA = "/la-previa",
   CAMPEONATO = "/campeonato",
 }
+
+type RequestProps = {
+  method: string;
+  resource: string;
+  configOverride?: object;
+  body?: unknown;
+  query?: object;
+}
