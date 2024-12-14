@@ -1,5 +1,6 @@
 ﻿using Entities.Models.DivisionEntity;
 using Entities.Models.PlayerStatisticEntity;
+using Entities.Models.RoundNameEnum;
 using Entities.Models.ScorerModel;
 using Entities.Models.TeamEntity;
 using Entities.Models.VenueEntity;
@@ -32,8 +33,17 @@ public class Match : EntityBase
     /// <summary>
     /// Represents the week number of the match in the fixture.
     /// </summary>
-    [Required]
-    public required int MatchWeek { get; set; }
+    public int? MatchWeek { get; set; }
+
+    /// <summary>
+    /// The name of the round in the playoffs.
+    /// </summary>
+    public RoundName? RoundName { get; set; }
+
+    /// <summary>
+    /// Represents the game number of the match in the playoffs.
+    /// </summary>
+    public int? GameNumber { get; set; }
 
     /// <summary>
     /// Represents the home team in the match.

@@ -36,7 +36,7 @@ public class TeamProfile : Profile
     public TeamProfile()
     {
         _ = CreateMap<Team, TeamResponse>()
-                .ReverseMap();
+            .ReverseMap();
 
         _ = CreateMap<Team, TeamDetailedMatchResponse>()
             .ReverseMap();
@@ -153,6 +153,7 @@ public class MatchProfile : Profile
             .ReverseMap();
 
         _ = CreateMap<Match, MinimalMatchResponse>()
+            .ForMember(dest => dest.MatchType, opt => opt.MapFrom(src => src.Type.ToString()))
             .ForMember(dest => dest.HomeTeamName, opt => opt.MapFrom(src => src.HomeTeam.Name))
             .ForMember(dest => dest.VisitorTeamName, opt => opt.MapFrom(src => src.VisitorTeam.Name))
             .ForMember(dest => dest.WinningTeamName, opt => opt.MapFrom(src => src.WinningTeam != null ? src.WinningTeam.Name : null))
@@ -319,7 +320,7 @@ public class MatchesByWeekResolver : IValueResolver<Division, DetailedDivisionRe
         ResolutionContext context)
     {
         return source.Matches
-            .GroupBy(match => match.MatchWeek)
+            .GroupBy(match => match.MatchWeek!.Value)
             .ToDictionary(
                 group => group.Key,
                 group => context.Mapper.Map<IEnumerable<MinimalMatchResponse>>(group.ToList())

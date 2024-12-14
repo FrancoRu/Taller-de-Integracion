@@ -173,7 +173,7 @@ public class DivisionController(
             return BadRequest("Division is already finished.");
         }
 
-        await _matchService.GenerateFixtureAsync([.. division.Teams], id);
+        await _matchService.GenerateFixtureAsync(id, [.. division.Teams]);
 
         return Ok("Fixture generated successfully.");
     }
@@ -199,5 +199,35 @@ public class DivisionController(
         List<TopScorerResponse> topScorersResponse = _mapper.Map<List<TopScorerResponse>>(topScorers);
 
         return Ok(topScorersResponse);
+    }
+
+    /// <summary>
+    /// Generates the playoff matches (Bo3 rounds) for the specified division.
+    /// </summary>
+    /// <param name="id">The ID of the division for which to generate the playoffs.</param>
+    /// <returns>Returns 200 (Ok) if the playoffs are successfully generated.
+    /// <para>Returns 400 (Bad Request) if the division does not exist, playoffs are already generated, or there are insufficient teams to generate playoffs.</para></returns>
+    [HttpPost("{id:guid}/generate-playoffs")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GeneratePlayoffs(Guid id)
+    {
+        Division? division = await _divisionService.GetDivisionWithStatsAsync(id);
+
+        if (division is null)
+        {
+            return BadRequest($"Division with id {id} not found.");
+        }
+
+        if (division.PlayoffsGenerated)
+        {
+            return BadRequest("Playoffs have already been generated for this division.");
+        }
+
+        await _matchService.GeneratePlayoffMatchesAsync(id, division.Teams.Take(8));
+        division.PlayoffsGenerated = true;
+        bool updateResult = await _divisionService.UpdateDivisionAsync(division);
+
+        return !updateResult ? BadRequest("Failed to update division with playoffs generated.") : Ok("Playoffs generated successfully.");
     }
 }
