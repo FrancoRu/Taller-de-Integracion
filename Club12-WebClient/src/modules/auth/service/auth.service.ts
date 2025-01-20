@@ -1,18 +1,22 @@
-import envVariables from "../../core/constants/envVariables";
-import { sendGet, sendPost } from "../../core/utils/utilsAxios";
-import { authSignUp, UserLoginRequest } from "../type/auth";
+import { AxiosResponse } from 'axios';
+import routes from '../../core/constants/routes';
+import { sendPost } from '../../core/utils/axiosUtils';
+import {
+  AuthResponse,
+  LogInUserRequest,
+  RefreshTokenRequest,
+} from '../type/auth';
 
 export const authService = {
-  registerRequest: async (user: authSignUp) =>
-    sendPost(envVariables.authUrl, user),
+  loginRequest: (
+    user: LogInUserRequest
+  ): Promise<AxiosResponse<AuthResponse> | undefined> =>
+    sendPost<AuthResponse>(`${routes.users}/login`, user),
 
-  loginRequest: (user: UserLoginRequest) =>
-    sendPost(`${envVariables.authUrl}/login`, user),
+  refreshTokenRequest: (
+    refreshToken: RefreshTokenRequest
+  ): Promise<AxiosResponse<AuthResponse> | undefined> =>
+    sendPost<AuthResponse>(`${routes.users}/refresh-token`, refreshToken),
 
-  logoutRequest: () => sendGet(`${envVariables.authUrl}/logout`),
-
-  verifyTokenRequest: () => sendGet(`${envVariables.authUrl}/verifyToken`),
-  // verifyTokenRequest : () => axios.get(`api/verifyToken`),
-
-  // GetLogOutRequest : () => axios.get('api/logout'),
+  logoutRequest: () => sendPost(`${routes.users}/logout`),
 };

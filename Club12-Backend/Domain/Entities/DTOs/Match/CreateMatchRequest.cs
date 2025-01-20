@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Entities.Models.RoundNameEnum;
+
+using System.ComponentModel.DataAnnotations;
 
 using MatchType = Entities.Models.MatchTypeEnum.MatchType;
 
@@ -20,6 +22,13 @@ public class CreateMatchRequest
     /// </summary>
     [AllowedValues(MatchType.Regular, MatchType.Playoff)]
     public MatchType? Type { get; set; } = MatchType.Regular;
+
+    /// <summary>
+    /// The name of the playoff round (QTF, SF or F).
+    /// </summary>
+    [AllowedValues(RoundName.Quarterfinal, RoundName.Semifinal, RoundName.Final)]
+    public RoundName? Round { get; set; }
+
 
     /// <summary>
     /// Represents the week number of the match in the fixture.

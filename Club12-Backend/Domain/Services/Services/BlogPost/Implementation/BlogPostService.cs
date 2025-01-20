@@ -48,7 +48,7 @@ public class BlogPostService(IGenericService<BlogPost> _genericBlogPostService) 
     public async Task<BlogPost?> GetBlogPostByIdAsync(Guid blogPostId)
     {
         return await _genericBlogPostService.FilterByExpression(blogPost => blogPost.Id == blogPostId)
-                                           .FirstOrDefaultAsync();
+                                            .FirstOrDefaultAsync();
     }
 
     public async Task<PaginatedResponse<BlogPost>> GetAllBlogPostsAsync(GetBlogPostsFilteredRequest filter)

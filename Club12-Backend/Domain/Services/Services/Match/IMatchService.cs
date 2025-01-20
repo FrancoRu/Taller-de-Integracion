@@ -55,8 +55,16 @@ public interface IMatchService
     /// <summary>
     /// Generates the fixture (matches) for the given list of teams asynchronously.
     /// </summary>
-    /// <param name="teams">The list of teams for which the fixture should be generated.</param>
     /// <param name="divisionId">The division ID to associate with the matches.</param>
+    /// <param name="teams">The list of teams for which the fixture should be generated.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task GenerateFixtureAsync(IEnumerable<Team> teams, Guid divisionId);
+    Task GenerateFixtureAsync(Guid divisionId, IEnumerable<Team> teams);
+
+    /// <summary>
+    /// Generates the playoff matches (Bo3 format) for the given list of teams asynchronously.
+    /// </summary>
+    /// <param name="divisionId">The ID of the division to generate playoffs for.</param>
+    /// <param name="teams">The list of top 8 teams for the playoffs.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    Task GeneratePlayoffMatchesAsync(Guid divisionId, IEnumerable<Team> teams);
 }

@@ -27,7 +27,7 @@ public class Division : EntityBase
     /// </summary>
     [Required]
     [DefaultValue(false)]
-    public required bool IsFinished { get; set; } = false;
+    public bool IsFinished { get; set; } = false;
 
     /// <summary>
     /// The tournament this division belongs to.
@@ -40,6 +40,13 @@ public class Division : EntityBase
     /// The Id of the tournament this division belongs to.
     /// </summary>
     public Guid TournamentId { get; set; }
+
+    /// <summary>
+    /// Represents if the division has the playoffs generated.
+    /// </summary>
+    [Required]
+    [DefaultValue(false)]
+    public bool PlayoffsGenerated { get; set; } = false;
 
     /// <summary>
     /// The list of teams in this division.

@@ -1,7 +1,7 @@
-import { createContext, useEffect, useState } from "react";
-import { AxiosError } from "axios";
-import Swal from "sweetalert2";
-import { ProviderProps } from "../../core/types/types";
+import { createContext, useEffect, useState } from 'react';
+import { AxiosError } from 'axios';
+import Swal from 'sweetalert2';
+import { ProviderProps } from '../../core/types/types';
 
 interface ErrorContextProp {
   errors: string[] | null;
@@ -18,23 +18,23 @@ export const ErrorProvider: React.FC<ProviderProps> = ({ children }) => {
 
   const setError = (error: AxiosError) => {
     const axiosError = error.message as unknown as AxiosError;
-    const data = axiosError.response?.data ?? "Error in the request";
+    const data = axiosError.response?.data ?? 'Error in the request';
     const status = axiosError.response?.status ?? 404;
 
-    setErrors((prevErrors) => [...prevErrors, data as string]);
+    setErrors(prevErrors => [...prevErrors, data as string]);
     setMessage(status, [data as string]);
   };
 
   const setMessage = (status: number, message: string[]) => {
-    const stat = status < 400 ? "success" : "error";
-    const messages = message.join(", ");
+    const stat = status < 400 ? 'success' : 'error';
+    const messages = message.join(', ');
     Swal.fire({
-      position: "center",
+      position: 'center',
       icon: stat,
       title: messages,
       showConfirmButton: false,
       timer: 1500,
-      color: "black",
+      color: 'black',
     });
     // Swal.fire({
     //   title: "Custom width, padding, color, background.",

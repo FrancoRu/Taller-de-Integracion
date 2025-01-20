@@ -1,47 +1,99 @@
-import { createContext } from "react";
-import { ProviderProps } from "../../core/types/types";
+import { AxiosError } from 'axios';
+import { createContext } from 'react';
 import {
-  CreateTournament,
+  GenericResponsePagination,
+  ProviderProps,
+} from '../../core/types/types';
+import { useError } from '../../error/hooks/error.hock';
+import { tournamentService } from '../service/tournament.service';
+import {
+  AddTournamentRequest,
   ITournamentContextProps,
-  Tournament,
-} from "../type/tournament";
-//import { useAuth } from "../../auth/hook/useAuth.hook";
-import { AxiosError } from "axios";
-import { useError } from "../../error/hooks/error.hock";
-import { tournamentService } from "../service/tournament.service";
+  PutTournamentRequest,
+  TournamentFiltered,
+  TournamentResponse,
+} from '../type/tournament';
 
 export const TournamentContext = createContext<
   ITournamentContextProps | undefined
 >(undefined);
 
 export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
-  // const { isAuthenticated } = useAuth();
-  const { setError, setMessage } = useError();
-  const service = tournamentService;
-  async function getAllTournament(): Promise<Tournament[] | undefined> {
+  const { setError } = useError();
+  const addTournament = async (
+    tournament: AddTournamentRequest
+  ): Promise<TournamentResponse | void> => {
     try {
-      const result = await service.getAll();
-      return result?.data?.items as Tournament[];
+      await tournamentService.addTournament(tournament);
     } catch (error: unknown) {
-      setError(error as AxiosError);
+      if (error instanceof AxiosError) {
+        setError(error);
+      } else {
+        setError(new AxiosError('An unknown error occurred'));
+      }
     }
-  }
-
-  async function createTournament(value: CreateTournament): Promise<void> {
+  };
+  const putTournamentById = async (
+    id: string,
+    tournament: PutTournamentRequest
+  ): Promise<void> => {
     try {
-      const result = await service.create(value);
-      result && setMessage(result.status, ["Tournament create successfully"]);
+      await tournamentService.putTournamentById(id, tournament);
     } catch (error: unknown) {
-      setError(error as AxiosError);
+      if (error instanceof AxiosError) {
+        setError(error);
+      } else {
+        setError(new AxiosError('An unknown error occurred'));
+      }
     }
-  }
-  const tournamentContext: ITournamentContextProps = {
-    getAllTournament,
-    createTournament,
+  };
+  const getTournamentById = async (
+    id: string
+  ): Promise<TournamentResponse | void> => {
+    try {
+      await tournamentService.getTournamentById(id);
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        setError(error);
+      } else {
+        setError(new AxiosError('An unknown error occurred'));
+      }
+    }
+  };
+  const getAllTournamentsByFilter = async (
+    filter: TournamentFiltered
+  ): Promise<GenericResponsePagination<TournamentResponse> | void> => {
+    try {
+      await tournamentService.getAllTournamentsByFilter(filter);
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        setError(error);
+      } else {
+        setError(new AxiosError('An unknown error occurred'));
+      }
+    }
+  };
+  const deleteTournamentById = async (id: string): Promise<void> => {
+    try {
+      await tournamentService.deleteTournamentById(id);
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        setError(error);
+      } else {
+        setError(new AxiosError('An unknown error occurred'));
+      }
+    }
   };
 
+  const container: ITournamentContextProps = {
+    addTournament,
+    getAllTournamentsByFilter,
+    getTournamentById,
+    putTournamentById,
+    deleteTournamentById,
+  };
   return (
-    <TournamentContext.Provider value={tournamentContext}>
+    <TournamentContext.Provider value={container}>
       {children}
     </TournamentContext.Provider>
   );

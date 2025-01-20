@@ -1,23 +1,44 @@
-import { useEffect } from "react";
-import { redirect } from "react-router-dom";
-import { useAuth } from "../../modules/auth/hook/auth.hook";
-import { TournamentProvider } from "../../modules/tournament/context/tournament.context";
-import { IndexTournament } from "../tournament";
-import { NavMenu } from "./navMenu";
+import { Box, Container, Typography } from '@mui/material';
+import { orange, grey } from '@mui/material/colors';
+import ShowPosts from '../blogPost/showPosts'; // Display blog posts
 
-export const Home = () => {
-  const { isAuthenticated } = useAuth();
-
-  useEffect(() => {
-    redirect("/");
-  }, [isAuthenticated]);
+const Home = () => {
   return (
-    <>
-      <NavMenu isAuthenticated={isAuthenticated} />
-      <h1>{isAuthenticated ? "Autenticado" : "No autenticado"}</h1>
-      <TournamentProvider>
-        <IndexTournament />
-      </TournamentProvider>
-    </>
+    <Container component="main" maxWidth="md" sx={{ paddingTop: 4 }}>
+      <Box
+        sx={{
+          backgroundColor: grey[800],
+          padding: 4,
+          borderRadius: 2,
+          boxShadow: 3,
+          textAlign: 'center',
+        }}
+      >
+        <Typography
+          variant="h3"
+          sx={{
+            color: orange[500],
+            marginBottom: 2,
+            fontWeight: 'bold',
+          }}
+        >
+          Welcome to Club12 Blog!
+        </Typography>
+        <Typography
+          variant="h6"
+          sx={{
+            color: grey[300],
+            marginBottom: 4,
+          }}
+        >
+          Explore the latest posts from our team.
+        </Typography>
+
+        {/* Show blog posts */}
+        <ShowPosts />
+      </Box>
+    </Container>
   );
 };
+
+export default Home;

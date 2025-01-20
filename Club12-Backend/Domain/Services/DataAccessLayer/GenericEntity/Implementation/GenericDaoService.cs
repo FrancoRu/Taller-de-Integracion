@@ -103,7 +103,7 @@ public class GenericDaoService<TEntity> : IGenericDaoService<TEntity> where TEnt
 
     public IEnumerable<TEntity> FindAllEnumerable()
     {
-        return DbSet.ToList();
+        return [.. DbSet];
     }
 
     public virtual IQueryable<TEntity> Include(Expression<Func<TEntity, object>> expression)
