@@ -9,11 +9,14 @@ import ErrorBoundary from './views/errors/error-boundary';
 import Loading from './views/core/loading';
 import { useAuth } from './modules/auth/hook/auth.hook';
 import NavMenu from './views/home/navMenu';
+import theme from './theme';
+import { ThemeProvider } from '@mui/material';
 
 function App() {
-  const { isAuthenticated, logOut } = useAuth();
+  const { isAuthenticated, logOut } = useAuth();  
 
   return (
+    <ThemeProvider theme={theme}>
     <ErrorBoundary>
       <NavMenu isAuthenticated={isAuthenticated} onLogout={logOut} />
       <Suspense fallback={<Loading />}>
@@ -24,6 +27,7 @@ function App() {
         </Routes>
       </Suspense>
     </ErrorBoundary>
+    </ThemeProvider>
   );
 }
 
