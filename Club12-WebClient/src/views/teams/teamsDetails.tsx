@@ -69,7 +69,7 @@ const TeamsDetails: React.FC = () => {
             <CardMedia
               component="img"
               sx={{
-                width: 200,
+                width: 300,
                 objectFit: "cover",
                 borderRadius: `${theme.shape.borderRadius}px 0 0 ${theme.shape.borderRadius}px`,
               }}
