@@ -38,7 +38,7 @@ const TeamsGrid: React.FC = () => {
               justifyContent: "center",
               height: 210,
               border: `2px dashed ${theme.palette.primary.light}`,
-              backgroundColor: theme.palette.background.paper,
+              backgroundColor: 'white',
               transition: "0.3s",
               "&:hover": {
                 backgroundColor: theme.palette.primary.light,
@@ -67,6 +67,7 @@ const TeamsGrid: React.FC = () => {
                 borderRadius: theme.shape.borderRadius,
                 boxShadow: theme.shadows[3],
                 transition: "0.3s",
+                background: 'white',
                 "&:hover": {
                   boxShadow: theme.shadows[6],
                   transform: "scale(1.03)",
