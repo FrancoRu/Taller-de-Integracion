@@ -4,6 +4,7 @@ import PrivateRoute from './views/core/privateRoute';
 import Dashboard from './views/dashboard/dashboard';
 import { BlogPostProvider } from './modules/blogPost/context/blogPost.context';
 import SanctionsTable from './views/sanctions/sanctions';
+import Braket1 from './views/bracket/bracket';
 
 const Home = lazy(() => import('./views/home/home'));
 const Login = lazy(() => import('./views/auth/login'));
@@ -58,6 +59,14 @@ export const routes: AppRoute[] = [
     element: (
       <BlogPostProvider>
         <SanctionsTable />
+      </BlogPostProvider>
+    ),
+  },
+  {
+    path: '/braket',
+    element: (
+      <BlogPostProvider>
+        <Braket1 />
       </BlogPostProvider>
     ),
   },

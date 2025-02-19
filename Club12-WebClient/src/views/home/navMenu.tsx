@@ -38,6 +38,7 @@ const menuItems = [
   { label: "Información", path: "/informacion" },
   { label: "Teams", path: "/teams" },
   { label: "Sancionados", path: "/sanciones" },
+  { label: "Braket", path: "/braket" },
 ];
 
 const NavMenu: React.FC<{ isAuthenticated: boolean, onLogout: () => void }> = ({ isAuthenticated, onLogout }) => {

@@ -46,8 +46,6 @@ const SanctionsTable: React.FC = () => {
                 key={row.player}
                 sx={{
                   backgroundColor: index % 2 === 0 ? theme.palette.grey[100] : "white",
-                  "&:hover": { backgroundColor: theme.palette.action.hover },
-                  transition: "0.3s",
                 }}
               >
                 <TableCell component="th" scope="row" sx={{ fontWeight: 500 }}>

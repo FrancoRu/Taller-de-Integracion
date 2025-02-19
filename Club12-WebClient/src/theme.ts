@@ -10,8 +10,8 @@ const theme = createTheme({
       main: "#2E2E2E",  
     },
     background: {
-      default: "#f4f6f8",
-      paper: "#ffffff",
+      default: "#ffa05b",
+      paper: "#ffe7d6",
     },
     text: {
       primary: "#333",
@@ -29,16 +29,33 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           "&:hover": {
-            backgroundColor: "#e3f2fd",  // Efecto hover en filas de tabla
+            backgroundColor: "#ffc79e",
+            transition: "background-color 0.3s ease-in-out",  // Color hover para todas las filas (incluye header)
+          },  
+          "&.MuiTableRow-head:hover": {
+            backgroundColor: "#E59700", // Evita el hover en el header
           },
         },
       },
     },
+    
     MuiButton: {
       styleOverrides: {
         root: {
           borderRadius: "8px",
           textTransform: "none",  // Evita mayúsculas forzadas en botones
+        },
+      },
+    },
+    MuiCssBaseline: {
+      styleOverrides: { 
+        body: {
+          backgroundColor: "#f4f6f8 !important",
+          // backgroundImage: "url('/assets/background.jpg')", // Ruta de tu imagen de fondo
+          // backgroundSize: "cover", // Para que la imagen cubra toda la pantalla
+          // backgroundPosition: "center", // Centra la imagen
+          // backgroundAttachment: "fixed", // Fija la imagen al fondo al hacer scroll
+          border: "5px solid red !important", 
         },
       },
     },

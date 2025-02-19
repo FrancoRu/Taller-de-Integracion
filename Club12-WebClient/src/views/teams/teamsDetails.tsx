@@ -69,7 +69,7 @@ const TeamsDetails: React.FC = () => {
             <CardMedia
               component="img"
               sx={{
-                width: 300,
+                width: 200,
                 objectFit: "cover",
                 borderRadius: `${theme.shape.borderRadius}px 0 0 ${theme.shape.borderRadius}px`,
               }}
@@ -116,8 +116,13 @@ const TeamsDetails: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {team.players.map((player) => (
-                    <TableRow key={player.id}>
+                  {team.players.map((player, index) => (
+                    <TableRow 
+                    key={player.id}
+                    sx={{
+                      backgroundColor: index % 2 === 0 ? theme.palette.grey[100] : "white",
+                    }}
+                    >
                       <TableCell>{player.name}</TableCell>
                       <TableCell>{player.position}</TableCell>
                       <TableCell>{player.number}</TableCell>
