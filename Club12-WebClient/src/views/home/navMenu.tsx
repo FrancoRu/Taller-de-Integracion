@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { AppBar, Toolbar, Typography, Button, Box, ButtonProps } from "@mui/material";
 import { grey } from "@mui/material/colors";
 import { styled } from "@mui/material/styles";
-import { FaHome, FaUsers, FaInfoCircle, FaBan, FaTrophy } from "react-icons/fa";
+import { FaHome, FaUsers, FaInfoCircle, FaBan, FaTrophy } from "react-icons/fa"; //  ICONOS https://react-icons.github.io/react-icons/
 import { FaPeopleGroup } from "react-icons/fa6";
 
 // Extender ButtonProps para soportar `active`
@@ -59,18 +59,18 @@ const NavMenu: React.FC<{ isAuthenticated: boolean; onLogout: () => void }> = ({
         </Typography>
 
         <Box sx={{ display: "flex" }}>
-          {menuItems.map((item) => (
-            <StyledButton
-              key={item.path}
-              component={Link}
-              to={item.path}
-              startIcon={item.icon}
-              active={location.pathname === item.path} // Pasamos `active` como prop
-            >
-              {item.label}
-            </StyledButton>
-          ))}
-        </Box>
+        {menuItems.map((item) => (
+          <StyledButton
+            key={item.path}
+            component={Link}
+            to={item.path}
+            startIcon={item.icon}
+            active={item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path)}
+          >
+            {item.label}
+          </StyledButton>
+        ))}
+        </Box>  
 
         <Box>
           {isAuthenticated ? (
