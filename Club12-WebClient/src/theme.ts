@@ -59,6 +59,22 @@ const theme = createTheme({
         },
       },
     },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          backgroundColor: "#fff", // Fondo blanco para todos los TextField
+          borderRadius: "8px",
+        },
+      },
+    },
+    MuiInputBase: {
+      styleOverrides: {
+        root: {
+          backgroundColor: "#fff", // Aplica también a inputs dentro de los TextField
+          borderRadius: "8px",
+        },
+      },
+    },
   },
 });
 
