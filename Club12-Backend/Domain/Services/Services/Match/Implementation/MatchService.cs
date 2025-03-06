@@ -1,6 +1,7 @@
 ﻿using Entities.DTOs.Abstract;
 using Entities.DTOs.Match;
 using Entities.Models.MatchEntity;
+using Entities.Models.RoundNameEnum;
 using Entities.Models.ScorerModel;
 using Entities.Models.TeamEntity;
 
@@ -41,7 +42,10 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
             .Include(m => m.Venue)
             .FirstOrDefaultAsync();
 
-        if (match is null) return null;
+        if (match is null)
+        {
+            return null;
+        }
 
         var playerStats = match.PlayerStatistics
             .Select(ps => new
@@ -96,6 +100,45 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
         return match;
     }
 
+    public async Task GeneratePlayoffMatchesAsync(Guid divisionId, IEnumerable<Team> teams)
+    {
+        DateTime currentMatchDate = DateTime.UtcNow;
+
+        List<Match> playoffMatches = teams
+            .SelectMany((team, index) =>
+            {
+                if (index % 2 is 0)
+                {
+                    Team homeTeam = team;
+                    Team awayTeam = teams.ElementAt(index + 1);
+
+                    return Enumerable.Range(1, 3).Select(round => new Match
+                    {
+                        HomeTeamId = homeTeam.Id,
+                        VisitorTeamId = awayTeam.Id,
+                        HomeTeam = homeTeam,
+                        VisitorTeam = awayTeam,
+                        Type = MatchType.Playoff,
+                        RoundName = round switch
+                        {
+                            1 => RoundName.Quarterfinal,
+                            2 => RoundName.Semifinal,
+                            3 => RoundName.Final,
+                            _ => throw new ArgumentOutOfRangeException(nameof(round), "Invalid playoff round.")
+                        },
+                        IsFinished = false,
+                        DivisionId = divisionId,
+                        MatchDate = currentMatchDate
+                    });
+                }
+
+                return [];
+            })
+            .ToList();
+
+        await _genericMatchService.InsertRangeAsync(playoffMatches);
+    }
+
     public async Task<bool> DeleteMatchAsync(Match matchEntity)
     {
         try
@@ -142,7 +185,7 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
         };
     }
 
-    public async Task GenerateFixtureAsync(IEnumerable<Team> teams, Guid divisionId)
+    public async Task GenerateFixtureAsync(Guid divisionId, IEnumerable<Team> teams)
     {
         if (teams is null || !teams.Any() || teams.Count() < 2 || teams.Count() % 2 != 0)
         {

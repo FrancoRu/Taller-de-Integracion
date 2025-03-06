@@ -71,7 +71,10 @@ public class DivisionService(IGenericService<Division> _genericDivisionService) 
                                                     .ThenInclude(match => match.VisitorTeam)
                                                 .FirstOrDefaultAsync();
 
-        if (division is null) return null;
+        if (division is null)
+        {
+            return null;
+        }
 
         List<Position> teamStats =
         [

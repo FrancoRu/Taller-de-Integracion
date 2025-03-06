@@ -161,7 +161,10 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
 
     public virtual async Task InsertRangeAsync(ICollection<TEntity> entities)
     {
-        if (entities.Count is 0) return;
+        if (entities.Count is 0)
+        {
+            return;
+        }
 
         foreach (TEntity entity in entities)
         {

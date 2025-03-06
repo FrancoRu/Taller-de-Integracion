@@ -12,7 +12,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add Serilog logging  
 builder.Host.UseSerilog((context, configuration) =>
-configuration.WriteTo.Console().ReadFrom.Configuration(context.Configuration));
+    configuration.ReadFrom.Configuration(context.Configuration));
 
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddScoped<IClub12DBContext, ApplicationDBContext>();
@@ -73,7 +73,6 @@ app.UseSerilogRequestLogging();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseSerilogRequestLogging();
 app.MapControllers();
 
 app.UseStatusCodePages();
