@@ -9,6 +9,7 @@ import {
   Paper,
   Typography,
   useTheme,
+  Box,
 } from "@mui/material";
 
 function createData(player: string, number: number) {
@@ -27,7 +28,12 @@ const SanctionsTable: React.FC = () => {
   const theme = useTheme();
 
   return (
-    <Paper sx={{ padding: 3, boxShadow: 4, borderRadius: 3 }}>
+    <Box
+      justifyContent="center"
+      alignItems="center"
+      minHeight="90vh"
+      padding={3}
+      sx={{ backgroundColor: theme.palette.background.default }}>
       <Typography variant="h5" sx={{ fontWeight: "bold", marginBottom: 2 }}>
         ⚠️ Jugadores Sancionados
       </Typography>
@@ -57,7 +63,7 @@ const SanctionsTable: React.FC = () => {
           </TableBody>
         </Table>
       </TableContainer>
-    </Paper>
+    </Box>
   );
 };
 
