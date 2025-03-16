@@ -41,4 +41,9 @@ public class MinimalMatchResponse : BaseEntityResponse
     /// Whether the match has finished.
     /// </summary>
     public required bool IsFinished { get; set; }
+
+    /// <summary>
+    /// The type of the match (e.g., regular or playoff).
+    /// </summary>
+    public required string MatchType { get; set; }
 }

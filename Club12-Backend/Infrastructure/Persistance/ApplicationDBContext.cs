@@ -7,6 +7,7 @@ using Entities.Models.MatchEntity;
 using Entities.Models.PlayerEntity;
 using Entities.Models.PlayerSanctionEntity;
 using Entities.Models.PlayerStatisticEntity;
+using Entities.Models.RoundNameEnum;
 using Entities.Models.StaffEntity;
 using Entities.Models.TeamEntity;
 using Entities.Models.TournamentEntity;
@@ -38,6 +39,13 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
                 value => (MatchType) Enum.Parse(typeof(MatchType), value)
             );
 
+        modelBuilder.Entity<Match>()
+            .Property(match => match.RoundName)
+            .HasConversion(
+                value => value == null ? null : value.ToString(),
+                value => value == null ? null : (RoundName) Enum.Parse(typeof(RoundName), value)
+            );
+
         modelBuilder.Entity<Staff>()
             .Property(staff => staff.Type)
             .HasConversion(
@@ -57,6 +65,7 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
                 value => (StaffType) Enum.Parse(typeof(StaffType), value)
             );
         base.OnModelCreating(modelBuilder);
+
     }
 
     public virtual required DbSet<Team> Teams { get; set; }
