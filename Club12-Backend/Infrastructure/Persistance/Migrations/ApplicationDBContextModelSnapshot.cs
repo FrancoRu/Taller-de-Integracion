@@ -17,7 +17,7 @@ namespace Persistance.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.10")
+                .HasAnnotation("ProductVersion", "8.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -58,7 +58,7 @@ namespace Persistance.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("BlogPosts", "Content");
+                    b.ToTable("BlogPosts", "Club12");
                 });
 
             modelBuilder.Entity("Entities.Models.DivisionEntity.Division", b =>
@@ -82,6 +82,9 @@ namespace Persistance.Migrations
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
+
+                    b.Property<bool>("PlayoffsGenerated")
+                        .HasColumnType("boolean");
 
                     b.Property<Guid>("TournamentId")
                         .HasColumnType("uuid");
@@ -110,6 +113,9 @@ namespace Persistance.Migrations
                     b.Property<Guid>("DivisionId")
                         .HasColumnType("uuid");
 
+                    b.Property<int?>("GameNumber")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("HomeScore")
                         .HasColumnType("integer");
 
@@ -122,8 +128,11 @@ namespace Persistance.Migrations
                     b.Property<DateTime>("MatchDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("MatchWeek")
+                    b.Property<int?>("MatchWeek")
                         .HasColumnType("integer");
+
+                    b.Property<string>("RoundName")
+                        .HasColumnType("text");
 
                     b.Property<string>("Type")
                         .IsRequired()
@@ -173,9 +182,6 @@ namespace Persistance.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("ClubOrCategory")
-                        .HasColumnType("text");
-
                     b.Property<DateTime>("DateCreated")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("DateCreated");
@@ -200,11 +206,6 @@ namespace Persistance.Migrations
                         .HasMaxLength(70)
                         .HasColumnType("character varying(70)");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(35)
-                        .HasColumnType("character varying(35)");
-
                     b.Property<string>("Names")
                         .IsRequired()
                         .HasMaxLength(70)
@@ -217,9 +218,6 @@ namespace Persistance.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
-
-                    b.Property<string>("SocialWork")
-                        .HasColumnType("text");
 
                     b.Property<Guid>("TeamId")
                         .HasColumnType("uuid");

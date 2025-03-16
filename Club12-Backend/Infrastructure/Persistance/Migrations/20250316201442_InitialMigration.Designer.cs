@@ -12,15 +12,15 @@ using Persistence;
 namespace Persistance.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20241118095436_AddRefreshToken")]
-    partial class AddRefreshToken
+    [Migration("20250316201442_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.10")
+                .HasAnnotation("ProductVersion", "8.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -61,7 +61,7 @@ namespace Persistance.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("BlogPosts", "Content");
+                    b.ToTable("BlogPosts", "Club12");
                 });
 
             modelBuilder.Entity("Entities.Models.DivisionEntity.Division", b =>
@@ -85,6 +85,9 @@ namespace Persistance.Migrations
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
+
+                    b.Property<bool>("PlayoffsGenerated")
+                        .HasColumnType("boolean");
 
                     b.Property<Guid>("TournamentId")
                         .HasColumnType("uuid");
@@ -113,6 +116,9 @@ namespace Persistance.Migrations
                     b.Property<Guid>("DivisionId")
                         .HasColumnType("uuid");
 
+                    b.Property<int?>("GameNumber")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("HomeScore")
                         .HasColumnType("integer");
 
@@ -125,8 +131,11 @@ namespace Persistance.Migrations
                     b.Property<DateTime>("MatchDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("MatchWeek")
+                    b.Property<int?>("MatchWeek")
                         .HasColumnType("integer");
+
+                    b.Property<string>("RoundName")
+                        .HasColumnType("text");
 
                     b.Property<string>("Type")
                         .IsRequired()
@@ -206,9 +215,7 @@ namespace Persistance.Migrations
                         .HasColumnType("character varying(70)");
 
                     b.Property<string>("PhoneNumber")
-                        .IsRequired()
-                        .HasMaxLength(15)
-                        .HasColumnType("character varying(15)");
+                        .HasColumnType("text");
 
                     b.Property<string>("SocialSecurity")
                         .IsRequired()
