@@ -1,30 +1,23 @@
-import '@fontsource/roboto/300.css';
-import '@fontsource/roboto/400.css';
-import '@fontsource/roboto/500.css';
-import '@fontsource/roboto/700.css';
-import { Routes, Route } from 'react-router-dom';
-import { Suspense } from 'react';
-import { routes } from './routes';
-import ErrorBoundary from './views/errors/error-boundary';
-import Loading from './views/core/loading';
-import { useAuth } from './modules/auth/hook/auth.hook';
-import NavMenu from './views/home/navMenu';
+import '@fontsource/roboto/300.css'
+import '@fontsource/roboto/400.css'
+import '@fontsource/roboto/500.css'
+import '@fontsource/roboto/700.css'
+import { Route, Routes } from 'react-router-dom'
+import { Login } from './views/auth/login'
+import { Home } from './views/home/home'
 
-function App() {
-  const { isAuthenticated, logOut } = useAuth();
+// import { Login } from "./views/auth/login";
+// import { Routes } from "./modules/core/types/types";
 
+function App () {
   return (
-    <ErrorBoundary>
-      <NavMenu isAuthenticated={isAuthenticated} onLogout={logOut} />
-      <Suspense fallback={<Loading />}>
-        <Routes>
-          {routes.map((route, index) => (
-            <Route key={index} path={route.path} element={route.element} />
-          ))}
-        </Routes>
-      </Suspense>
-    </ErrorBoundary>
-  );
+    <div>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+      </Routes>
+    </div>
+  )
 }
 
-export default App;
+export default App
