@@ -7,7 +7,6 @@ using Entities.Models.MatchEntity;
 using Entities.Models.PlayerEntity;
 using Entities.Models.PlayerSanctionEntity;
 using Entities.Models.PlayerStatisticEntity;
-using Entities.Models.RoundNameEnum;
 using Entities.Models.StaffEntity;
 using Entities.Models.TeamEntity;
 using Entities.Models.TournamentEntity;
@@ -18,7 +17,7 @@ using Microsoft.EntityFrameworkCore;
 
 using MatchType = Entities.Models.MatchTypeEnum.MatchType;
 using StaffType = Entities.Models.StaffEnum.StaffType;
-namespace Persistence;
+namespace Persistance;
 
 /// <summary>
 /// This is a placeholder interface that inherits from all domain DBContext interfaces.
@@ -37,13 +36,6 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
             .HasConversion(
                 value => value.ToString(),
                 value => (MatchType) Enum.Parse(typeof(MatchType), value)
-            );
-
-        modelBuilder.Entity<Match>()
-            .Property(match => match.RoundName)
-            .HasConversion(
-                value => value == null ? null : value.ToString(),
-                value => value == null ? null : (RoundName) Enum.Parse(typeof(RoundName), value)
             );
 
         modelBuilder.Entity<Staff>()

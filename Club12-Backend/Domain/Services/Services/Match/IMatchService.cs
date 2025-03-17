@@ -1,6 +1,7 @@
 ﻿using Entities.DTOs.Abstract;
 using Entities.DTOs.Match;
 using Entities.Models.MatchEntity;
+using Entities.Models.PlayoffSeriesEntity;
 using Entities.Models.TeamEntity;
 
 namespace Services.Services.MatchService;
@@ -61,10 +62,11 @@ public interface IMatchService
     Task GenerateFixtureAsync(Guid divisionId, IEnumerable<Team> teams);
 
     /// <summary>
-    /// Generates the playoff matches (Bo3 format) for the given list of teams asynchronously.
+    /// Generates playoff matches for the specified division, teams, and playoff series.
     /// </summary>
-    /// <param name="divisionId">The ID of the division to generate playoffs for.</param>
-    /// <param name="teams">The list of top 8 teams for the playoffs.</param>
+    /// <param name="divisionId">The ID of the division.</param>
+    /// <param name="teams">The teams participating in the playoffs.</param>
+    /// <param name="playoffSeries">The playoff series to which the matches belong.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task GeneratePlayoffMatchesAsync(Guid divisionId, IEnumerable<Team> teams);
+    Task GeneratePlayoffMatchesAsync(Guid divisionId, IEnumerable<Team> teams, List<PlayoffSeries> playoffSeries);
 }

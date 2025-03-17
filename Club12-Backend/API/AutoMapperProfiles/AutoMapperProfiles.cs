@@ -288,16 +288,13 @@ public class PaginatedResponseConverter<TSource, TDestination>
     public PaginatedResponse<TDestination> Convert(
         PaginatedResponse<TSource> source,
         PaginatedResponse<TDestination> destination,
-        ResolutionContext context)
-    {
-        return new PaginatedResponse<TDestination>
+        ResolutionContext context) => new()
         {
             Page = source.Page,
             PageSize = source.PageSize,
             TotalCount = source.TotalCount,
             Items = context.Mapper.Map<List<TDestination>>(source.Items)
         };
-    }
 }
 
 /// <summary>
@@ -317,13 +314,10 @@ public class MatchesByWeekResolver : IValueResolver<Division, DetailedDivisionRe
         Division source,
         DetailedDivisionResponse destination,
         IDictionary<int, IEnumerable<MinimalMatchResponse>> destMember,
-        ResolutionContext context)
-    {
-        return source.Matches
+        ResolutionContext context) => source.Matches
             .GroupBy(match => match.MatchWeek!.Value)
             .ToDictionary(
                 group => group.Key,
                 group => context.Mapper.Map<IEnumerable<MinimalMatchResponse>>(group.ToList())
             );
-    }
 }
