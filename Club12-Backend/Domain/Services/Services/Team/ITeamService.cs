@@ -31,6 +31,13 @@ public interface ITeamService
     Task<bool> UpdateTeamAsync(Team teamEntity);
 
     /// <summary>
+    /// Updates multiple teams asynchronously.
+    /// </summary>
+    /// <param name="teams">The list of team entities to update.</param>
+    /// <returns>A boolean indicating whether the update was successful.</returns>
+    Task<bool> UpdateTeamsAsync(IEnumerable<Team> teams);
+
+    /// <summary>
     /// Deletes a team asynchronously.
     /// </summary>
     /// <param name="teamEntity">The team to delete.</param>

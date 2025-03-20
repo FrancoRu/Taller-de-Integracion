@@ -4,6 +4,7 @@ using Entities.DTOs.Abstract;
 using Entities.DTOs.Division;
 using Entities.DTOs.TopScorer;
 using Entities.Models.DivisionEntity;
+using Entities.Models.TeamEntity;
 using Entities.Models.TopScorerModel;
 
 using Microsoft.AspNetCore.Authorization;
@@ -11,6 +12,8 @@ using Microsoft.AspNetCore.Mvc;
 
 using Services.Services.DivisionService;
 using Services.Services.MatchService;
+using Services.Services.PlayoffService;
+using Services.Services.TeamService;
 
 namespace Club12.API.Controllers;
 
@@ -18,7 +21,9 @@ namespace Club12.API.Controllers;
 /// Controller for managing divisions.
 /// </summary>
 /// <param name="_divisionService">The division service.</param>
+/// <param name="_teamService">The team service.</param>
 /// <param name="_matchService">The match service.</param>
+/// <param name="_playoffSeriesService">The playoff series service.</param>
 /// <param name="_mapper">The AutoMapper instance.</param>
 [Authorize(Roles = "SuperAdmin")]
 [Route("api/divisions/")]
@@ -26,6 +31,8 @@ namespace Club12.API.Controllers;
 public class DivisionController(
     IDivisionService _divisionService,
     IMatchService _matchService,
+    ITeamService _teamService,
+    IPlayoffSeriesService _playoffSeriesService,
     IMapper _mapper
     ) : ControllerBase
 {
@@ -224,10 +231,48 @@ public class DivisionController(
             return BadRequest("Playoffs have already been generated for this division.");
         }
 
-        await _matchService.GeneratePlayoffMatchesAsync(id, division.Teams.Take(8));
+        if (division.Teams.Count < 8)
+        {
+            return BadRequest("Insufficient teams to generate playoffs. At least 8 teams are required.");
+        }
+
+        List<Team> teams = division.Teams.Take(8).ToList();
+
+        bool seedsAssigned = await AssignSeedsAndUpdateTeamsAsync(teams);
+        if (!seedsAssigned)
+        {
+            return BadRequest("Failed to update team seeds.");
+        }
+
+        List<Entities.Models.PlayoffSeriesEntity.PlayoffSeries> playoffSeries = await _playoffSeriesService.CreatePlayoffSeriesAsync();
+        await _matchService.GeneratePlayoffMatchesAsync(id, teams, playoffSeries);
+
         division.PlayoffsGenerated = true;
         bool updateResult = await _divisionService.UpdateDivisionAsync(division);
 
         return !updateResult ? BadRequest("Failed to update division with playoffs generated.") : Ok("Playoffs generated successfully.");
+    }
+
+    /// <summary>
+    /// Assigns seeds to the top 8 teams and updates them in the database.
+    /// </summary>
+    /// <param name="teams">The list of teams to assign seeds to.</param>
+    /// <returns>True if the teams were successfully updated; otherwise, false.</returns>
+    private async Task<bool> AssignSeedsAndUpdateTeamsAsync(List<Team> teams)
+    {
+        if (teams.Count < 8)
+        {
+            return false;
+        }
+
+        List<Team> seededTeams = teams
+            .Select((team, index) =>
+            {
+                team.Seed = index + 1;
+                return team;
+            })
+            .ToList();
+
+        return await _teamService.UpdateTeamsAsync(seededTeams);
     }
 }

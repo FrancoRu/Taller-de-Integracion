@@ -48,15 +48,47 @@ const CreateTeam: React.FC = () => {
     setPlayers(players.filter((player) => player.id !== id));
   };
 
-  const handleSubmit = () => {
-    const newTeam = {
-      id: Math.floor(Math.random() * 1000),
-      name: teamName,
-      image: imageUrl,
-      players,
-    };
-    console.log("Team Created:", newTeam);
+  const handleSubmit = async () => {
+    if (!teamName || !imageUrl || players.length === 0) {
+      alert("Please fill all fields and add at least one player.");
+      return;
+    }
+  
+    const formData = new FormData();
+    formData.append("Name", teamName);
+    formData.append("DivisionId", "1"); 
+    // players.forEach((player, index) => {
+    //   formData.append(`Players[${index}].Name`, player.name);
+    //   formData.append(`Players[${index}].Position`, player.position);
+    //   formData.append(`Players[${index}].Number`, player.number.toString());
+    // });
+  
+    // Convertir la imagen base64 en archivo
+    if (imageUrl) {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      formData.append("LogoFile", blob, "team-logo.png");
+    }
+  
+    try {
+      const response = await fetch("https://tu-api.com/api/teams/", {
+        method: "POST",
+        body: formData,
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to create team");
+      }
+  
+      const data = await response.json();
+      console.log("Team Created:", data);
+      alert("Team created successfully!");
+    } catch (error) {
+      console.error("Error:", error);
+      alert("An error occurred while creating the team.");
+    }
   };
+  
 
   return (
     <Paper

@@ -3,7 +3,7 @@ using Entities.DTOs.Abstract;
 
 using Microsoft.EntityFrameworkCore;
 
-using Persistence;
+using Persistance;
 
 using Services.Utils.OrderFiltering;
 
@@ -34,10 +34,7 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
         _genericDao.Save();
     }
 
-    public virtual IQueryable<TEntity> FindAllQueryable()
-    {
-        return _genericDao.FindAllQueryable();
-    }
+    public virtual IQueryable<TEntity> FindAllQueryable() => _genericDao.FindAllQueryable();
 
     public virtual async Task InsertAsync(TEntity entity)
     {
@@ -107,6 +104,18 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
         return _genericDao.SaveAsync();
     }
 
+    public virtual async Task UpdateRangeAsync(IEnumerable<TEntity> entities)
+    {
+        DateTime now = DateTime.UtcNow;
+
+        foreach (TEntity entity in entities)
+        {
+            entity.DateUpdated = now;
+        }
+
+        await _genericDao.UpdateRangeAsync(entities);
+    }
+
     public virtual TEntity? TryGet(params object[] keyValues)
     {
         try
@@ -119,20 +128,11 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
         }
     }
 
-    public virtual async Task<IEnumerable<TEntity>> FindAllAsync()
-    {
-        return await _genericDao.FindAllAsync();
-    }
+    public virtual async Task<IEnumerable<TEntity>> FindAllAsync() => await _genericDao.FindAllAsync();
 
-    public virtual IEnumerable<TEntity> FindAll()
-    {
-        return _genericDao.FindAllEnumerable();
-    }
+    public virtual IEnumerable<TEntity> FindAll() => _genericDao.FindAllEnumerable();
 
-    public virtual void EntityDispose()
-    {
-        _genericDao.GenericEntityDispose();
-    }
+    public virtual void EntityDispose() => _genericDao.GenericEntityDispose();
 
     public IQueryable<TEntity> FilterByExpressionWithPagination(
     Expression<Func<TEntity, bool>> expression,
@@ -149,15 +149,9 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
         return query.Paginate(paginationRequest.PageNumber, paginationRequest.PageSize);
     }
 
-    public IQueryable<TEntity> FilterByExpression(Expression<Func<TEntity, bool>> expression)
-    {
-        return _genericDao.Where(expression);
-    }
+    public IQueryable<TEntity> FilterByExpression(Expression<Func<TEntity, bool>> expression) => _genericDao.Where(expression);
 
-    public async Task<int> GetCountAsync(Expression<Func<TEntity, bool>> predicate)
-    {
-        return await _genericDao.Where(predicate).AsNoTracking().CountAsync();
-    }
+    public async Task<int> GetCountAsync(Expression<Func<TEntity, bool>> predicate) => await _genericDao.Where(predicate).AsNoTracking().CountAsync();
 
     public virtual async Task InsertRangeAsync(ICollection<TEntity> entities)
     {

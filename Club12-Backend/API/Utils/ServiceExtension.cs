@@ -18,7 +18,7 @@ using Entities.Models.VenueEntity;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
-using Persistence;
+using Persistance;
 
 using Services.Auth;
 using Services.Auth.Implementation;

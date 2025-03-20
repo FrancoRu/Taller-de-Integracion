@@ -40,7 +40,7 @@
   </ItemGroup>
 
 	<ItemGroup>
-	 <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+	 <FrameworkReference Include="Microsoft.AspNetCore.App" />
 	</ItemGroup>
 	
 </Project>

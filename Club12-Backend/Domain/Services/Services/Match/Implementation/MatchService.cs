@@ -1,7 +1,7 @@
 ﻿using Entities.DTOs.Abstract;
 using Entities.DTOs.Match;
 using Entities.Models.MatchEntity;
-using Entities.Models.RoundNameEnum;
+using Entities.Models.PlayoffSeriesEntity;
 using Entities.Models.ScorerModel;
 using Entities.Models.TeamEntity;
 
@@ -24,13 +24,10 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
         return matchEntity;
     }
 
-    public async Task<Match?> GetMatchByIdAsync(Guid matchId)
-    {
-        return await _genericMatchService.FilterByExpression(match => match.Id == matchId)
+    public async Task<Match?> GetMatchByIdAsync(Guid matchId) => await _genericMatchService.FilterByExpression(match => match.Id == matchId)
             .Include(m => m.HomeTeam)
             .Include(m => m.VisitorTeam)
             .FirstOrDefaultAsync();
-    }
 
     public async Task<Match?> GetMatchByIdWithScorersAsync(Guid matchId)
     {
@@ -72,7 +69,7 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
                             Names = ps.Names,
                             LastName = ps.LastName,
                             Points = ps.Value,
-                            TeamId = match.HomeTeamId,
+                            TeamId = match.HomeTeamId.Value,
                             TeamName = match.HomeTeam.Name
                         })
                         .OrderByDescending(ps => ps.Points)
@@ -98,45 +95,6 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
         match.VisitorScorers = awayScorers;
 
         return match;
-    }
-
-    public async Task GeneratePlayoffMatchesAsync(Guid divisionId, IEnumerable<Team> teams)
-    {
-        DateTime currentMatchDate = DateTime.UtcNow;
-
-        List<Match> playoffMatches = teams
-            .SelectMany((team, index) =>
-            {
-                if (index % 2 is 0)
-                {
-                    Team homeTeam = team;
-                    Team awayTeam = teams.ElementAt(index + 1);
-
-                    return Enumerable.Range(1, 3).Select(round => new Match
-                    {
-                        HomeTeamId = homeTeam.Id,
-                        VisitorTeamId = awayTeam.Id,
-                        HomeTeam = homeTeam,
-                        VisitorTeam = awayTeam,
-                        Type = MatchType.Playoff,
-                        RoundName = round switch
-                        {
-                            1 => RoundName.Quarterfinal,
-                            2 => RoundName.Semifinal,
-                            3 => RoundName.Final,
-                            _ => throw new ArgumentOutOfRangeException(nameof(round), "Invalid playoff round.")
-                        },
-                        IsFinished = false,
-                        DivisionId = divisionId,
-                        MatchDate = currentMatchDate
-                    });
-                }
-
-                return [];
-            })
-            .ToList();
-
-        await _genericMatchService.InsertRangeAsync(playoffMatches);
     }
 
     public async Task<bool> DeleteMatchAsync(Match matchEntity)
@@ -243,5 +201,99 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
         List<Match> allMatches = [.. firstRoundMatches, .. secondRoundMatches];
 
         await _genericMatchService.InsertRangeAsync(allMatches);
+    }
+
+    public async Task GeneratePlayoffMatchesAsync(Guid divisionId, IEnumerable<Team> teams, List<PlayoffSeries> playoffSeries)
+    {
+        DateTime currentMatchDate = DateTime.UtcNow;
+
+        List<List<Team>> pairedTeams = PairTeams(teams);
+
+        List<Match> playoffMatches = GenerateAllMatches(playoffSeries, pairedTeams, divisionId, currentMatchDate);
+
+        await _genericMatchService.InsertRangeAsync(playoffMatches);
+    }
+
+    /// <summary>
+    /// Pairs teams for the first round (Quarterfinals) based on seeding.
+    /// </summary>
+    private static List<List<Team>> PairTeams(IEnumerable<Team> teams)
+    {
+        if (teams.Count() % 2 != 0)
+        {
+            throw new ArgumentException("The number of teams must be even to generate playoff matches.");
+        }
+
+        // Order teams by seed (1 to 8)
+        var orderedTeams = teams.OrderBy(t => t.Seed).ToList();
+
+        // Pair teams: 1 vs. 8, 2 vs. 7, 3 vs. 6, 4 vs. 5
+        var pairedTeams = new List<List<Team>>();
+        for (int i = 0; i < orderedTeams.Count / 2; i++)
+        {
+            pairedTeams.Add(
+        [
+            orderedTeams[i],
+            orderedTeams[orderedTeams.Count - 1 - i]
+        ]);
+        }
+
+        return pairedTeams;
+    }
+
+    /// <summary>
+    /// Generates all matches for a given series and team pair.
+    /// </summary>
+    private static List<Match> GenerateAllMatches(List<PlayoffSeries> playoffSeries, List<List<Team>> pairedTeams, Guid divisionId, DateTime startDate)
+    {
+        List<Match> allMatches = new();
+
+        foreach (PlayoffSeries series in playoffSeries)
+        {
+            foreach (List<Team> teamPair in pairedTeams)
+            {
+                List<Match> matches = GenerateMatchesForSeries(series, teamPair, divisionId, startDate);
+                allMatches.AddRange(matches);
+            }
+
+            pairedTeams = pairedTeams
+                .Select(pair => new List<Team> { pair[0], pair[1] })
+                .ToList();
+        }
+
+        return allMatches;
+    }
+
+    /// <summary>
+    /// Generates matches for a given series and team pair.
+    /// </summary>
+    private static List<Match> GenerateMatchesForSeries(PlayoffSeries series, List<Team> teamPair, Guid divisionId, DateTime startDate)
+    {
+        List<Match> matches = new();
+
+        Team homeTeam = teamPair[0];
+        Team awayTeam = teamPair[1];
+
+        for (int gameNumber = 1; gameNumber <= 3; gameNumber++)
+        {
+            Match match = new()
+            {
+                HomeTeamId = homeTeam.Id,
+                VisitorTeamId = awayTeam.Id,
+                HomeTeam = homeTeam,
+                VisitorTeam = awayTeam,
+                Type = MatchType.Playoff,
+                IsFinished = false,
+                DivisionId = divisionId,
+                MatchDate = startDate.AddDays((gameNumber - 1) * 2),
+                PlayoffSeriesId = series.Id,
+                PlayoffSeries = series,
+                GameNumber = gameNumber
+            };
+
+            matches.Add(match);
+        }
+
+        return matches;
     }
 }

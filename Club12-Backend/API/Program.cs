@@ -4,7 +4,7 @@ using Entities;
 
 using Microsoft.EntityFrameworkCore;
 
-using Persistence;
+using Persistance;
 
 using Serilog;
 
@@ -58,7 +58,7 @@ WebApplication app = builder.Build();
 using (IServiceScope scope = app.Services.CreateScope())
 {
     ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
-    //db.Database.Migrate();
+    db.Database.Migrate();
 
     await app.Services.EnsureAdminUserExists();
 }

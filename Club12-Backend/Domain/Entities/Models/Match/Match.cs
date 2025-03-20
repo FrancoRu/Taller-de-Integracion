@@ -1,6 +1,6 @@
 ﻿using Entities.Models.DivisionEntity;
 using Entities.Models.PlayerStatisticEntity;
-using Entities.Models.RoundNameEnum;
+using Entities.Models.PlayoffSeriesEntity;
 using Entities.Models.ScorerModel;
 using Entities.Models.TeamEntity;
 using Entities.Models.VenueEntity;
@@ -36,33 +36,21 @@ public class Match : EntityBase
     public int? MatchWeek { get; set; }
 
     /// <summary>
-    /// The name of the round in the playoffs.
-    /// </summary>
-    public RoundName? RoundName { get; set; }
-
-    /// <summary>
-    /// Represents the game number of the match in the playoffs.
-    /// </summary>
-    public int? GameNumber { get; set; }
-
-    /// <summary>
     /// Represents the home team in the match.
     /// </summary>
-    [Required]
-    [Column(nameof(HomeTeamId))]
-    public required Team HomeTeam { get; set; }
+    [ForeignKey(nameof(HomeTeamId))]
+    public Team? HomeTeam { get; set; }
 
     /// <summary>
     /// Represents the ID of the home team.
     /// </summary>
-    public Guid HomeTeamId { get; set; }
+    public Guid? HomeTeamId { get; set; }
 
     /// <summary>
     /// Represents the visitor team in the match.
     /// </summary>
-    [Required]
-    [Column(nameof(VisitorTeamId))]
-    public required Team VisitorTeam { get; set; }
+    [ForeignKey(nameof(VisitorTeamId))]
+    public Team? VisitorTeam { get; set; }
 
     /// <summary>
     /// Represents the ID of the visitor team.
@@ -89,7 +77,7 @@ public class Match : EntityBase
     /// <summary>
     /// Represents the winning team in the match.
     /// </summary>
-    [Column(nameof(WinningTeamId))]
+    [ForeignKey(nameof(WinningTeamId))]
     public Team? WinningTeam { get; set; }
 
     /// <summary>
@@ -100,18 +88,18 @@ public class Match : EntityBase
     /// <summary>
     /// Represents the division the match belongs to.
     /// </summary>
-    [Column(nameof(DivisionId))]
+    [ForeignKey(nameof(DivisionId))]
     public Division Division { get; set; } = default!;
 
     /// <summary>
-    /// Divisions Id the match belongs to.
+    /// Represents the ID of the division the match belongs to.
     /// </summary>
     public Guid DivisionId { get; set; }
 
     /// <summary>
     /// Represents the venue where the match is played.
     /// </summary>
-    [Column(nameof(VenueId))]
+    [ForeignKey(nameof(VenueId))]
     public Venue? Venue { get; set; }
 
     /// <summary>
@@ -120,9 +108,25 @@ public class Match : EntityBase
     public Guid? VenueId { get; set; }
 
     /// <summary>
+    /// Represents the playoff series the match belongs to.
+    /// </summary>
+    [ForeignKey(nameof(PlayoffSeriesId))]
+    public PlayoffSeries? PlayoffSeries { get; set; }
+
+    /// <summary>
+    /// Represents the ID of the playoff series the match belongs to.
+    /// </summary>
+    public Guid? PlayoffSeriesId { get; set; }
+
+    /// <summary>
+    /// Represents the game number of the match in the playoff series.
+    /// </summary>
+    public int? GameNumber { get; set; }
+
+    /// <summary>
     /// Represents the collection of player statistics associated with the match.
     /// </summary>
-    public ICollection<PlayerStatistic> PlayerStatistics { get; set; } = [];
+    public virtual ICollection<PlayerStatistic> PlayerStatistics { get; set; } = [];
 
     /// <summary>
     /// The collection of home team scorers for the match.
