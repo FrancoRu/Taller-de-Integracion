@@ -2,7 +2,7 @@
 
 using Microsoft.EntityFrameworkCore;
 
-using Persistence;
+using Persistance;
 
 using System.Linq.Expressions;
 

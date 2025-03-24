@@ -53,6 +53,19 @@ public class TeamService(IGenericService<Team> _genericTeamService) : ITeamServi
         }
     }
 
+    public async Task<bool> UpdateTeamsAsync(IEnumerable<Team> teams)
+    {
+        try
+        {
+            await _genericTeamService.UpdateRangeAsync(teams);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public async Task<PaginatedResponse<Team>> GetAllTeamsAsync(GetTeamsFilteredRequest filter)
     {
         Expression<Func<Team, bool>> expression = QueryableExtensions.ConstructFilterExpression<Team, GetTeamsFilteredRequest>(filter);

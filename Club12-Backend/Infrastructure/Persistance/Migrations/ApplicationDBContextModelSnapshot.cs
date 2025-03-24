@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using Persistence;
+using Persistance;
 
 #nullable disable
 
@@ -119,7 +119,7 @@ namespace Persistance.Migrations
                     b.Property<int?>("HomeScore")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("HomeTeamId")
+                    b.Property<Guid?>("HomeTeamId")
                         .HasColumnType("uuid");
 
                     b.Property<bool>("IsFinished")
@@ -131,8 +131,8 @@ namespace Persistance.Migrations
                     b.Property<int?>("MatchWeek")
                         .HasColumnType("integer");
 
-                    b.Property<string>("RoundName")
-                        .HasColumnType("text");
+                    b.Property<Guid?>("PlayoffSeriesId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Type")
                         .IsRequired()
@@ -155,6 +155,8 @@ namespace Persistance.Migrations
                     b.HasIndex("DivisionId");
 
                     b.HasIndex("HomeTeamId");
+
+                    b.HasIndex("PlayoffSeriesId");
 
                     b.HasIndex("VenueId");
 
@@ -296,6 +298,50 @@ namespace Persistance.Migrations
                     b.ToTable("PlayersStatistics", "Club12");
                 });
 
+            modelBuilder.Entity("Entities.Models.PlayoffSeriesEntity.PlayoffSeries", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DateCreated");
+
+                    b.Property<DateTime?>("DateUpdated")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DateUpdated");
+
+                    b.Property<int>("GamesRequiredToWin")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("HomeTeamWins")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsFinished")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("NextSeriesId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RoundName")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VisitorTeamWins")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("WinningTeamId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NextSeriesId");
+
+                    b.HasIndex("WinningTeamId");
+
+                    b.ToTable("PlayoffSeries", "Club12");
+                });
+
             modelBuilder.Entity("Entities.Models.StaffEntity.Staff", b =>
                 {
                     b.Property<Guid>("Id")
@@ -363,6 +409,9 @@ namespace Persistance.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("Seed")
+                        .HasColumnType("integer");
 
                     b.Property<string>("ShirtColor")
                         .IsRequired()
@@ -500,9 +549,11 @@ namespace Persistance.Migrations
 
                     b.HasOne("Entities.Models.TeamEntity.Team", "HomeTeam")
                         .WithMany()
-                        .HasForeignKey("HomeTeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("HomeTeamId");
+
+                    b.HasOne("Entities.Models.PlayoffSeriesEntity.PlayoffSeries", "PlayoffSeries")
+                        .WithMany("Matches")
+                        .HasForeignKey("PlayoffSeriesId");
 
                     b.HasOne("Entities.Models.VenueEntity.Venue", "Venue")
                         .WithMany()
@@ -521,6 +572,8 @@ namespace Persistance.Migrations
                     b.Navigation("Division");
 
                     b.Navigation("HomeTeam");
+
+                    b.Navigation("PlayoffSeries");
 
                     b.Navigation("Venue");
 
@@ -570,6 +623,21 @@ namespace Persistance.Migrations
                     b.Navigation("Player");
                 });
 
+            modelBuilder.Entity("Entities.Models.PlayoffSeriesEntity.PlayoffSeries", b =>
+                {
+                    b.HasOne("Entities.Models.PlayoffSeriesEntity.PlayoffSeries", "NextSeries")
+                        .WithMany()
+                        .HasForeignKey("NextSeriesId");
+
+                    b.HasOne("Entities.Models.TeamEntity.Team", "WinningTeam")
+                        .WithMany()
+                        .HasForeignKey("WinningTeamId");
+
+                    b.Navigation("NextSeries");
+
+                    b.Navigation("WinningTeam");
+                });
+
             modelBuilder.Entity("Entities.Models.StaffEntity.Staff", b =>
                 {
                     b.HasOne("Entities.Models.TeamEntity.Team", "Team")
@@ -602,6 +670,11 @@ namespace Persistance.Migrations
             modelBuilder.Entity("Entities.Models.MatchEntity.Match", b =>
                 {
                     b.Navigation("PlayerStatistics");
+                });
+
+            modelBuilder.Entity("Entities.Models.PlayoffSeriesEntity.PlayoffSeries", b =>
+                {
+                    b.Navigation("Matches");
                 });
 
             modelBuilder.Entity("Entities.Models.TeamEntity.Team", b =>

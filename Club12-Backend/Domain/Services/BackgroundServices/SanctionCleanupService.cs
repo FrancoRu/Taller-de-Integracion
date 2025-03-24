@@ -44,26 +44,25 @@ public class SanctionCleanupService(
             DateTime today = DateTime.UtcNow;
             IEnumerable<PlayerSanction>? expiredSanctions = await playerSanctionGenericService.GetExpiredSanctionsAsync(today);
 
-            if (expiredSanctions is not null && expiredSanctions.Any())
-            {
-                await Task.WhenAll(expiredSanctions.Select(async sanction =>
-                {
-                    // TODO: Handle error if it happens.
-                    _ = await playerSanctionGenericService.DeletePlayerSanctionAsync(sanction);
-
-                    if (sanction.Player is not null)
-                    {
-                        sanction.Player.IsSanctioned = false;
-                        await playerGenericService.UpdatePlayerAsync(sanction.Player);
-                    }
-                }));
-
-                logger.LogInformation(LOGEXPIREDSANCTIONSMESSAGE, expiredSanctions.Count());
-            }
-            else
+            if (expiredSanctions is null || !expiredSanctions.Any())
             {
                 logger.LogInformation(LOGNOEXPIREDSANCTIONSMESSAGE);
+                return;
             }
+
+            await Task.WhenAll(expiredSanctions.Select(async sanction =>
+            {
+                // TODO: Handle error if it happens.
+                _ = await playerSanctionGenericService.DeletePlayerSanctionAsync(sanction);
+
+                if (sanction.Player is not null)
+                {
+                    sanction.Player.IsSanctioned = false;
+                    await playerGenericService.UpdatePlayerAsync(sanction.Player);
+                }
+            }));
+
+            logger.LogInformation(LOGEXPIREDSANCTIONSMESSAGE, expiredSanctions.Count());
         }
         catch (Exception ex)
         {

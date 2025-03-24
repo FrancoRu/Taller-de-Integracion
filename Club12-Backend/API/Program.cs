@@ -4,7 +4,7 @@ using Entities;
 
 using Microsoft.EntityFrameworkCore;
 
-using Persistence;
+using Persistance;
 
 using Serilog;
 

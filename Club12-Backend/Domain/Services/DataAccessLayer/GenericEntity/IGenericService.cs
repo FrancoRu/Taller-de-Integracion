@@ -120,6 +120,14 @@ public interface IGenericService<TEntity> where TEntity : EntityBase
     Task UpdateAsync(TEntity entity);
 
     /// <summary>
+    /// Asynchronously updates a collection of entities.
+    /// </summary>
+    /// <param name="entities">The collection of entities to be updated.</param>
+    /// <param name="userId">The ID of the user performing the update operation.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    Task UpdateRangeAsync(IEnumerable<TEntity> entities);
+
+    /// <summary>
     /// Filters entities based on the specified expression and pagination request.
     /// </summary>
     /// <typeparam name="TEntity">The type of the entity to filter.</typeparam>
