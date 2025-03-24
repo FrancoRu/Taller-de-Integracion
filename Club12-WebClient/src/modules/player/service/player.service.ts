@@ -26,7 +26,7 @@ export const playerService = {
   addPlayer: async (
     player: AddPlayerRequest
   ): Promise<AxiosResponse<PlayerResponse>> =>
-    await sendPost(routes.players, player),
+    sendPost(routes.players, player),
 
   /**
    * Retrieves a player by their ID.
@@ -34,7 +34,7 @@ export const playerService = {
    * @returns {Promise<AxiosResponse<PlayerResponse>>} The server response.
    */
   getPlayerById: async (id: string): Promise<AxiosResponse<void>> =>
-    await sendGet(`${routes.players}/${id}`),
+    sendGet(`${routes.players}/${id}`),
 
   /**
    * Retrieves a list of players based on a filter.
@@ -44,7 +44,7 @@ export const playerService = {
   getPlayersByFilter: async (
     filter: PlayerFiltered
   ): Promise<AxiosResponse<GenericResponsePagination<PlayerResponse>>> =>
-    await sendGet(routes.players, filter),
+    sendGet(routes.players, filter),
 
   /**
    * Updates the details of an existing player.

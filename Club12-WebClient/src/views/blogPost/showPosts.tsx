@@ -26,7 +26,7 @@ const ShowPosts: React.FC = () => {
   const navigate = useNavigate();
 
   const filterParams: GetBlogPostsFilteredRequest = {
-    pageIndex: pagination.page,
+    pageNumber: pagination.page,
     pageSize: pagination.pageSize,
     author: '',
     title: '',

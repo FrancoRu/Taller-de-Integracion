@@ -50,10 +50,12 @@ export const blogPostService = {
   ): Promise<AxiosResponse<BlogPostResponse>> => {
     const formData = new FormData();
     if (post.author) formData.append('Author', post.author);
+
     if (post.title) formData.append('Title', post.title);
+    
     if (post.markdownText) formData.append('MarkdownText', post.markdownText);
 
-    return await sendPut<BlogPostResponse>(
+    return sendPut<BlogPostResponse>(
       `${routes.blogposts}/${id}`,
       formData
     );
@@ -72,7 +74,7 @@ export const blogPostService = {
     const formData = new FormData();
     formData.append('PhotoFile', photo); // Add photo as FormData
 
-    return await sendPut<void>(`${routes.blogposts}/${id}/photo`, formData);
+    return sendPut<void>(`${routes.blogposts}/${id}/photo`, formData);
   },
 
   /**
@@ -82,9 +84,8 @@ export const blogPostService = {
    */
   getBlogPostsById: async (
     id: string
-  ): Promise<AxiosResponse<BlogPostResponse>> => {
-    return await sendGet<BlogPostResponse>(`${routes.blogposts}/${id}`);
-  },
+  ): Promise<AxiosResponse<BlogPostResponse>> =>
+    sendGet<BlogPostResponse>(`${routes.blogposts}/${id}`),
 
   /**
    * Fetches blog posts based on filters and pagination.
@@ -93,24 +94,14 @@ export const blogPostService = {
    */
   getBlogPostsByFilters: async (
     filter: GetBlogPostsFilteredRequest
-  ): Promise<GenericResponsePagination<BlogPostResponse> | void> => {
-    try {
-      const response = await sendGet<
-        GenericResponsePagination<BlogPostResponse>
-      >(routes.blogposts, filter);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching blog posts:', error);
-      throw error;
-    }
-  },
+  ): Promise<AxiosResponse<GenericResponsePagination<BlogPostResponse>> | void> => 
+    sendGet<GenericResponsePagination<BlogPostResponse>>(routes.blogposts, filter),
 
   /**
    * Deletes a blog post by its ID.
    * @param {string} id - The ID of the blog post to delete.
    * @returns {Promise<AxiosResponse<void>>} - A promise that resolves when the blog post is deleted.
    */
-  deleteBlogPostById: async (id: string): Promise<AxiosResponse<void>> => {
-    return await sendDelete<void>(`${routes.blogposts}/${id}`);
-  },
+  deleteBlogPostById: async (id: string): Promise<AxiosResponse<void>> =>
+     sendDelete<void>(`${routes.blogposts}/${id}`),
 };

@@ -95,7 +95,8 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
     filter: GetBlogPostsFilteredRequest
   ): Promise<GenericResponsePagination<BlogPostResponse> | void> => {
     try {
-      return await blogPostService.getBlogPostsByFilters(filter);
+      const response = await blogPostService.getBlogPostsByFilters(filter);
+      return response?.data;
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);

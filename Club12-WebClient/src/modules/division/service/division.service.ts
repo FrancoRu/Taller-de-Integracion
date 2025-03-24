@@ -27,7 +27,7 @@ export const divisionService = {
   addDivision: async (
     division: AddDivisionRequest
   ): Promise<AxiosResponse<DivisionResponse>> =>
-    await sendPost<DivisionResponse>(routes.divisions, division),
+    sendPost<DivisionResponse>(routes.divisions, division),
 
   /**
    * Generates the fixture for a division based on its ID.
@@ -37,7 +37,7 @@ export const divisionService = {
   generateFixtureByDivisionId: async (
     id: string
   ): Promise<AxiosResponse<void>> =>
-    await sendPost<void>(`${routes.divisions}/${id}/generate-fixture`),
+    sendPost<void>(`${routes.divisions}/${id}/generate-fixture`),
 
   /**
    * Updates an existing division by its ID.
@@ -49,7 +49,7 @@ export const divisionService = {
     id: string,
     division: PutDivisionRequest
   ): Promise<AxiosResponse<DivisionResponse>> =>
-    await sendPut<DivisionResponse>(`${routes.divisions}/${id}`, division),
+    sendPut<DivisionResponse>(`${routes.divisions}/${id}`, division),
 
   /**
    * Retrieves a division by its ID.
