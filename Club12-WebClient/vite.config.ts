@@ -10,17 +10,17 @@ export default defineConfig({
     outDir: 'build',
     assetsDir: 'assets',
     sourcemap: true,
-    minify: 'terser',
+    minify: 'terser'
   },
   optimizeDeps: {
-    include: ['react', 'react-dom'],
+    include: ['react', 'react-dom']
   },
   server: {
-    port: 5173,
+    port: 5173
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
-    },
-  },
-});
+      '@': path.resolve(__dirname, 'src') // Ajusta la ruta según la estructura de tu proyecto
+    }
+  }
+})

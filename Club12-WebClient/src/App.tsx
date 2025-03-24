@@ -15,6 +15,7 @@ import { ThemeProvider } from '@mui/material';
 function App() {
   const { isAuthenticated, logOut } = useAuth();  
 
+function App () {
   return (
     <ThemeProvider theme={theme}>
     <ErrorBoundary>
@@ -31,4 +32,4 @@ function App() {
   );
 }
 
-export default App;
+export default App
