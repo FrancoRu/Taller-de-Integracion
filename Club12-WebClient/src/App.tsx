@@ -13,6 +13,11 @@ import MedicalRecord from './views/home/information/medicalRecord';
 import Regulation from './views/home/information/regulation';
 import theme from './theme';
 import { ThemeProvider } from '@mui/material';
+import TeamsGrid from './views/teams/teamsGrid';
+import TeamsDetails from './views/teams/teamsDetails';
+import TeamCreate from './views/teams/teamsCreate';
+import SanctionsTable from './views/sanctions/sanctions';
+import Bracket1 from './views/bracket/bracket';
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -30,6 +35,11 @@ function App() {
           <Route path="/quienes-somos" element={<HowWeAre />} />
           <Route path="/ficha-medica" element={<MedicalRecord />} />
           <Route path="/reglamento" element={<Regulation />} />
+          <Route path="/equipos" element={<TeamsGrid />} />
+          <Route path="/equipos/:teamId" element={<TeamsDetails />} />
+          <Route path="/equipos/crear" element={<TeamCreate />} />
+          <Route path="/sanciones" element={<SanctionsTable />} />
+          <Route path="/braket" element={<Bracket1 />} />
           <Route path="/login" element={<Login />} />
         </Routes>
       </div>

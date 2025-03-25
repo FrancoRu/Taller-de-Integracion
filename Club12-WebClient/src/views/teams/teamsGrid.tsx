@@ -10,7 +10,7 @@ const teams = [
 
 const TeamsGrid: React.FC = () => {
   const navigate = useNavigate();
-  const theme = useTheme(); // Usamos el tema
+  const theme = useTheme(); 
 
   const handleTeamClick = (id: number) => {
     navigate(`/teams/${id}`);
@@ -25,7 +25,6 @@ const TeamsGrid: React.FC = () => {
       }}
     >
       <Grid container spacing={3}>
-        {/* Tarjeta "Add New Team" */}
         <Grid item xs={12} sm={6} md={4}>
           <Card
             onClick={() => navigate("/teams/create")}
@@ -57,7 +56,6 @@ const TeamsGrid: React.FC = () => {
           </Card>
         </Grid>
 
-        {/* Tarjetas de equipos */}
         {teams.map((team) => (
           <Grid item xs={12} sm={6} md={4} key={team.id}>
             <Card

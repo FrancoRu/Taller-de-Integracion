@@ -46,12 +46,12 @@
       },
       "applicationUrl": "https://localhost:5001/"
     },
-    "Bava": {
+    "Tomas": {
       "commandName": "Project",
       "launchBrowser": true,
       "launchUrl": "swagger",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Bava"
+        "ASPNETCORE_ENVIRONMENT": "Tomas"
       },
       "applicationUrl": "https://localhost:5001/"
     }

@@ -1,21 +1,6 @@
 import React from "react";
 import { useParams } from "react-router-dom";
-import {
-  Box,
-  Typography,
-  Grid,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Card,
-  CardContent,
-  CardMedia,
-  useTheme,
-} from "@mui/material";
+import {  Box,  Typography,  Grid,  Table,  TableBody,  TableCell,  TableContainer,  TableHead,  TableRow,  Paper,  Card,  CardContent,  CardMedia,  useTheme} from "@mui/material";
 
 const teamsData = [
   {
@@ -32,7 +17,7 @@ const teamsData = [
 ];
 
 const TeamsDetails: React.FC = () => {
-  const theme = useTheme(); // Obtenemos el tema
+  const theme = useTheme(); 
 
   const { teamId } = useParams<{ teamId: string }>();
   const team = teamsData.find((t) => t.id === parseInt(teamId || "", 10));
@@ -55,8 +40,7 @@ const TeamsDetails: React.FC = () => {
         minHeight: "100vh",
       }}
     >
-      <Grid container spacing={3} justifyContent="center">
-        {/* Tarjeta del equipo */}
+      <Grid container spacing={3} justifyContent="center">        
         <Grid item xs={12} md={8}>
           <Card
             sx={{

@@ -1,16 +1,5 @@
 import * as React from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Typography,
-  useTheme,
-  Box,
-} from "@mui/material";
+import {  Table,  TableBody,  TableCell,  TableContainer,  TableHead,  TableRow,  Paper,  Typography,  useTheme,  Box,} from "@mui/material";
 
 function createData(player: string, number: number) {
   return { player, number };

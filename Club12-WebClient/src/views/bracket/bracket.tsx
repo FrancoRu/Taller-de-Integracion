@@ -1,14 +1,6 @@
 import React, { useState } from 'react';
 import { Bracket } from 'react-brackets';
-import {
-  Box,
-  Paper,
-  Typography,
-  TextField,
-  Button,
-  Grid,
-  useTheme,
-} from '@mui/material';
+import {  Box,  Paper,  Typography,  TextField,  Button,  Grid,  useTheme,} from '@mui/material';
 
 const Bracket1: React.FC = () => {
   const theme = useTheme();
@@ -22,7 +14,7 @@ const Bracket1: React.FC = () => {
     { title: string; seeds: { id: number; teams: { name: string }[] }[] }[]
   >([]);
 
-  // Manejar cambios en el número de equipos
+
   const handleNumTeamsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     let value = Number(event.target.value);
     if (value < 2) value = 2; // Mínimo 2 equipos

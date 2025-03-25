@@ -30,10 +30,10 @@ const theme = createTheme({
         root: {
           "&:hover": {
             backgroundColor: "#ffc79e",
-            transition: "background-color 0.3s ease-in-out",  // Color hover para todas las filas (incluye header)
+            transition: "background-color 0.3s ease-in-out",  
           },  
           "&.MuiTableRow-head:hover": {
-            backgroundColor: "#E59700", // Evita el hover en el header
+            backgroundColor: "#E59700", 
           },
         },
       },
@@ -43,7 +43,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: "8px",
-          textTransform: "none",  // Evita mayúsculas forzadas en botones
+          textTransform: "none",  
         },
       },
     },
@@ -51,10 +51,6 @@ const theme = createTheme({
       styleOverrides: { 
         body: {
           backgroundColor: "#f4f6f8 !important",
-          // backgroundImage: "url('/assets/background.jpg')", // Ruta de tu imagen de fondo
-          // backgroundSize: "cover", // Para que la imagen cubra toda la pantalla
-          // backgroundPosition: "center", // Centra la imagen
-          // backgroundAttachment: "fixed", // Fija la imagen al fondo al hacer scroll
           border: "5px solid red !important", 
         },
       },
@@ -62,7 +58,7 @@ const theme = createTheme({
     MuiTextField: {
       styleOverrides: {
         root: {
-          backgroundColor: "#fff", // Fondo blanco para todos los TextField
+          backgroundColor: "#fff", 
           borderRadius: "8px",
         },
       },
@@ -70,7 +66,7 @@ const theme = createTheme({
     MuiInputBase: {
       styleOverrides: {
         root: {
-          backgroundColor: "#fff", // Aplica también a inputs dentro de los TextField
+          backgroundColor: "#fff", 
           borderRadius: "8px",
         },
       },

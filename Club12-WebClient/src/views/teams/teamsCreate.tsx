@@ -1,21 +1,5 @@
 import { useState } from "react";
-import {
-  Box,
-  Typography,
-  Grid,
-  TextField,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Card,
-  CardContent,
-  Paper,
-  IconButton,
-  useTheme,
-} from "@mui/material";
+import {  Box,  Typography,  Grid,  TextField,  Button,  Table,  TableBody,  TableCell,  TableHead,  TableRow,  Card,  CardContent,  Paper,  IconButton,  useTheme,} from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 
 const CreateTeam: React.FC = () => {
@@ -57,13 +41,7 @@ const CreateTeam: React.FC = () => {
     const formData = new FormData();
     formData.append("Name", teamName);
     formData.append("DivisionId", "1"); 
-    // players.forEach((player, index) => {
-    //   formData.append(`Players[${index}].Name`, player.name);
-    //   formData.append(`Players[${index}].Position`, player.position);
-    //   formData.append(`Players[${index}].Number`, player.number.toString());
-    // });
   
-    // Convertir la imagen base64 en archivo
     if (imageUrl) {
       const response = await fetch(imageUrl);
       const blob = await response.blob();
