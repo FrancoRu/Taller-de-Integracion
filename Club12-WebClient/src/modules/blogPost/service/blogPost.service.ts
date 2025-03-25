@@ -23,7 +23,7 @@ export const blogPostService = {
    * @param {CreateBlogPostRequest} post - The post data to be added.
    * @returns {Promise<AxiosResponse<BlogPostResponse>>} - A promise that resolves with the server response.
    */
-  addBlogPost: async (
+  addBlogPost: (
     post: CreateBlogPostRequest
   ): Promise<AxiosResponse<BlogPostResponse>> => {
     const formData = new FormData();
@@ -35,7 +35,7 @@ export const blogPostService = {
       formData.append('PhotoFile', post.photoFile as Blob);
     }
 
-    return await sendPost<BlogPostResponse>(routes.blogposts, formData);
+    return sendPost<BlogPostResponse>(routes.blogposts, formData);
   },
 
   /**

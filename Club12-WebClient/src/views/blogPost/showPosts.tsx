@@ -57,7 +57,7 @@ const ShowPosts: React.FC = () => {
   const handlePageChange = (direction: 'next' | 'previous') => {
     if (loading) return;
     const { page, pageSize, totalCount } = pagination;
-    let newPage = direction === 'next' ? page + 1 : page - 1;
+    const newPage = direction === 'next' ? page + 1 : page - 1;
 
     if (newPage < 1 || newPage > Math.ceil(totalCount / pageSize)) return;
     setPagination(prev => ({ ...prev, page: newPage }));

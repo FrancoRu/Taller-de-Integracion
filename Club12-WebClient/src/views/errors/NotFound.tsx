@@ -2,7 +2,7 @@ import { Typography, Box, Button } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { orange, grey } from '@mui/material/colors';
 
-const NotFound = () => {
+export default function NotFound(){
   return (
     <Box
       sx={{
@@ -44,6 +44,4 @@ const NotFound = () => {
       </Box>
     </Box>
   );
-};
-
-export default NotFound;
+}

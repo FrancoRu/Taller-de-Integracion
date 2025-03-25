@@ -30,7 +30,7 @@ export interface IBlogPostContextProps {
    * @param photo The new photo file to upload.
    * @returns A promise that resolves when the photo is successfully updated.
    */
-  putPhotoBlogPostById(id: string, photo: IFormFile): Promise<void>;
+  putPhotoBlogPostById(id: string, photo: File): Promise<void>;
 
   /**
    * Fetches a blog post by its ID.
@@ -75,9 +75,9 @@ export interface CreateBlogPostRequest {
 
   /**
    * The photo file to upload for the blog post (optional).
-   * @type {IFormFile}
+   * @type {File}
    */
-  photoFile?: IFormFile;
+  photoFile?: File;
 
   /**
    * The markdown text content of the blog post.
@@ -117,9 +117,9 @@ export interface UpdateBlogPostRequest {
 export interface UpdateBlogPostPhotoRequest {
   /**
    * The file of the blog post photo to be updated.
-   * @type {IFormFile}
+   * @type {File}
    */
-  photoFile: IFormFile;
+  photoFile: File;
 }
 
 /**

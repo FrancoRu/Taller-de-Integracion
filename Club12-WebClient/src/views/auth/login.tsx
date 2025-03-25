@@ -4,7 +4,7 @@ import { useAuth } from '../../modules/auth/hook/auth.hook';
 import { TextField, Button, Container, Typography, Box } from '@mui/material';
 import { orange, grey } from '@mui/material/colors';
 
-const Login = () => {
+export default function Login(){
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
@@ -109,6 +109,4 @@ const Login = () => {
       </Box>
     </Container>
   );
-};
-
-export default Login;
+}

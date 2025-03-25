@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 interface ProviderProps {
   children: ReactNode;
 }
@@ -15,6 +16,7 @@ export interface Filetered {
   orderBy?: string;
   order?: Order;
 }
+
 export enum Order {
   ASC = 'asc',
   DESC = 'desc',
