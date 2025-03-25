@@ -11,6 +11,8 @@ import { useAuth } from './modules/auth/hook/auth.hook';
 import { useEffect } from 'react';
 import MedicalRecord from './views/home/information/medicalRecord';
 import Regulation from './views/home/information/regulation';
+import theme from './theme';
+import { ThemeProvider } from '@mui/material';
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -20,16 +22,18 @@ function App() {
   }, [isAuthenticated]);
 
   return (
-    <div>
-      <NavMenu />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/quienes-somos" element={<HowWeAre />} />
-        <Route path="/ficha-medica" element={<MedicalRecord />} />
-        <Route path="/reglamento" element={<Regulation />} />
-        <Route path="/login" element={<Login />} />
-      </Routes>
-    </div>
+    <ThemeProvider theme={theme}>
+      <div>
+        <NavMenu />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/quienes-somos" element={<HowWeAre />} />
+          <Route path="/ficha-medica" element={<MedicalRecord />} />
+          <Route path="/reglamento" element={<Regulation />} />
+          <Route path="/login" element={<Login />} />
+        </Routes>
+      </div>
+    </ThemeProvider>
   );
 }
 

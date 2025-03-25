@@ -1,112 +1,97 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../modules/auth/hook/auth.hook';
-import { TextField, Button, Container, Typography, Box } from '@mui/material';
-import { orange, grey } from '@mui/material/colors';
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  Card,
+  CardContent,
+  useTheme,
+} from '@mui/material';
 
-export default function Login(){
-  const { signIn } = useAuth();
+export default function Login() {
+  const theme = useTheme();
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [credentials, setCredentials] = useState({
+    username: '',
+    password: '',
+  });
+  const [error, setError] = useState('');
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCredentials({ ...credentials, [e.target.name]: e.target.value });
+  };
 
-    const isAuthenticated = await signIn({ username, password });
-
-    if (isAuthenticated) navigate('/');
+  const handleLogin = () => {
+    if (
+      credentials.username === 'admin' &&
+      credentials.password === 'password'
+    ) {
+      navigate('/');
+    } else {
+      setError('Usuario o contraseña incorrectos');
+    }
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          padding: 3,
-          borderRadius: 2,
-          boxShadow: 3,
-          backgroundColor: grey[800],
-        }}
-      >
-        <Typography
-          variant="h5"
-          component="h1"
-          gutterBottom
-          sx={{ color: orange[500] }}
-        >
-          Club 12 - Admin Sign In
-        </Typography>
-        <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      minHeight="90vh"
+      sx={{ backgroundColor: theme.palette.background.default }}
+    >
+      <Card sx={{ maxWidth: 400, padding: 3, boxShadow: theme.shadows[5] }}>
+        <CardContent>
+          <Typography
+            variant="h4"
+            gutterBottom
+            align="center"
+            color={theme.palette.primary.main}
+          >
+            Administrador
+          </Typography>
+          {error && (
+            <Typography
+              color="error"
+              variant="body2"
+              align="center"
+              gutterBottom
+            >
+              {error}
+            </Typography>
+          )}
           <TextField
+            fullWidth
+            label="Usuario"
+            name="username"
             variant="outlined"
             margin="normal"
-            required
-            fullWidth
-            label="Username"
-            autoFocus
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-            sx={{
-              backgroundColor: grey[900],
-              color: 'white',
-              '& .MuiInputLabel-root': {
-                color: 'white',
-              },
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': {
-                  borderColor: orange[500],
-                },
-                '&:hover fieldset': {
-                  borderColor: orange[500],
-                },
-              },
-            }}
+            value={credentials.username}
+            onChange={handleChange}
           />
           <TextField
+            fullWidth
+            label="Contraseña"
+            name="password"
+            type="password"
             variant="outlined"
             margin="normal"
-            required
-            fullWidth
-            label="Password"
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            sx={{
-              backgroundColor: grey[900],
-              color: 'white',
-              '& .MuiInputLabel-root': {
-                color: 'white',
-              },
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': {
-                  borderColor: orange[500],
-                },
-                '&:hover fieldset': {
-                  borderColor: orange[500],
-                },
-              },
-            }}
+            value={credentials.password}
+            onChange={handleChange}
           />
           <Button
-            type="submit"
             fullWidth
             variant="contained"
-            color="warning"
-            sx={{
-              marginTop: 2,
-              backgroundColor: orange[500],
-              '&:hover': {
-                backgroundColor: orange[600],
-              },
-            }}
+            color="primary"
+            onClick={handleLogin}
+            sx={{ mt: 2, color: 'white', fontWeight: 'bold' }}
           >
-            Sign In
+            Iniciar Sesion
           </Button>
-        </form>
-      </Box>
-    </Container>
+        </CardContent>
+      </Card>
+    </Box>
   );
 }

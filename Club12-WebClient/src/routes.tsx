@@ -3,10 +3,15 @@ import { lazy } from 'react';
 import PrivateRoute from './views/core/privateRoute';
 import Dashboard from './views/dashboard/dashboard';
 import { BlogPostProvider } from './modules/blogPost/context/blogPost.context';
+import SanctionsTable from './views/sanctions/sanctions';
+import Braket1 from './views/bracket/bracket';
 
 const Home = lazy(() => import('./views/home/home'));
 const Login = lazy(() => import('./views/auth/login'));
 const NotFound = lazy(() => import('./views/errors/NotFound'));
+const TeamsGrid = lazy(() => import('./views/teams/teamsGrid'));
+const TeamDetails = lazy(() => import('./views/teams/teamsDetails'));
+const TeamCreate = lazy(() => import('./views/teams/teamsCreate'));
 
 export type AppRoute = RouteProps & {
   element: JSX.Element;
@@ -16,7 +21,7 @@ export const routes: AppRoute[] = [
   {
     path: '/',
     element: (
-      <BlogPostProvider>
+      <BlogPostProvider>  
         <Home />
       </BlogPostProvider>
     ),
@@ -24,6 +29,46 @@ export const routes: AppRoute[] = [
   {
     path: '/login',
     element: <Login />,
+  },
+  {
+    path: '/teams',
+    element: (
+      <BlogPostProvider>
+        <TeamsGrid />
+      </BlogPostProvider>
+    ),
+  },
+  {
+    path: '/teams/:teamId',
+    element: (
+      <BlogPostProvider>
+        <TeamDetails />
+      </BlogPostProvider>
+    ),
+  },
+  {
+    path: '/teams/create',
+    element: (
+      <BlogPostProvider>
+        <TeamCreate />
+      </BlogPostProvider>
+    ),
+  },
+  {
+    path: '/sanciones',
+    element: (
+      <BlogPostProvider>
+        <SanctionsTable />
+      </BlogPostProvider>
+    ),
+  },
+  {
+    path: '/braket',
+    element: (
+      <BlogPostProvider>
+        <Braket1 />
+      </BlogPostProvider>
+    ),
   },
   {
     path: '/dashboard',
