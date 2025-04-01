@@ -27,7 +27,7 @@ const TeamsGrid: React.FC = () => {
       <Grid container spacing={3}>
         <Grid item xs={12} sm={6} md={4}>
           <Card
-            onClick={() => navigate("/teams/create")}
+            onClick={() => navigate("/equipos/crear")}
             sx={{
               cursor: "pointer",
               display: "flex",
