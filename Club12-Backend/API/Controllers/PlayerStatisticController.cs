@@ -1,12 +1,12 @@
 ﻿using AutoMapper;
 
 using Entities.DTOs.PlayerStatistic;
-using Entities.Models.PlayerStatisticEntity;
+using Entities.Models.PlayerStatistics;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Services.Services.PlayerStatisticService;
+using Services.Services.PlayerStatistics;
 
 namespace Club12.API.Controllers;
 

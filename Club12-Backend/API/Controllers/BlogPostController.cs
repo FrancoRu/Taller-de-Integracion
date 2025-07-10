@@ -3,14 +3,13 @@
 using Club12.API.Utils;
 
 using Entities.DTOs.Abstract;
-using Entities.DTOs.BlogPost;
-using Entities.Models.BlogPostEntity;
+using Entities.DTOs.BlogPosts;
+using Entities.Models.BlogPosts;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Services.Services.BlogPostService;
-
+using Services.Services.BlogPosts;
 using Services.Utils.Cloudfare;
 
 namespace Club12.API.Controllers;

@@ -1,19 +1,14 @@
-﻿using Club12.Services.Services.PlayerSanctionService.Implementation;
-using Club12.Services.Services.PlayerStatisticService.Implementation;
-using Club12.Services.Services.StaffService.Implementation;
-using Club12.Services.Services.TeamService.Implementation;
-
-using Entities.Models.BlogPostEntity;
-using Entities.Models.DivisionEntity;
-using Entities.Models.MatchEntity;
-using Entities.Models.PlayerEntity;
-using Entities.Models.PlayerSanctionEntity;
-using Entities.Models.PlayerStatisticEntity;
-using Entities.Models.StaffEntity;
-using Entities.Models.TeamEntity;
-using Entities.Models.TournamentEntity;
-using Entities.Models.UserEntity;
-using Entities.Models.VenueEntity;
+﻿using Entities.Models.BlogPosts;
+using Entities.Models.Divisions;
+using Entities.Models.Matches;
+using Entities.Models.Players;
+using Entities.Models.PlayerSanctions;
+using Entities.Models.PlayerStatistics;
+using Entities.Models.Staffs;
+using Entities.Models.Teams;
+using Entities.Models.Tournaments;
+using Entities.Models.Users;
+using Entities.Models.Venues;
 
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -25,26 +20,31 @@ using Services.Auth.Implementation;
 using Services.BackgroundServices;
 using Services.DataAccessLayer.GenericEntity;
 using Services.DataAccessLayer.GenericEntity.Implementation;
-using Services.Services.BlogPostService;
-using Services.Services.BlogPostService.Implementation;
-using Services.Services.DivisionService;
-using Services.Services.DivisionService.Implementation;
-using Services.Services.MatchService;
-using Services.Services.MatchService.Implementation;
-using Services.Services.PlayerSanctionService;
-using Services.Services.PlayerService;
-using Services.Services.PlayerService.Implementation;
-using Services.Services.PlayerStatisticService;
-using Services.Services.StaffService;
-using Services.Services.TeamService;
-using Services.Services.TournamentService;
-using Services.Services.TournamentService.Implementation;
-using Services.Services.UserService;
-using Services.Services.UserService.Implementation;
-using Services.Services.VenueService;
-using Services.Services.VenueService.Implementation;
+using Services.Services.BlogPosts;
+using Services.Services.BlogPosts.Implementation;
+using Services.Services.Divisions;
+using Services.Services.Divisions.Implementation;
+using Services.Services.Matches;
+using Services.Services.Matches.Implementation;
+using Services.Services.Players;
+using Services.Services.Players.Implementation;
+using Services.Services.PlayerSanctions;
+using Services.Services.PlayerSanctions.Implementation;
+using Services.Services.PlayerStatistics;
+using Services.Services.PlayerStatistics.Implementation;
+using Services.Services.Staffs;
+using Services.Services.Staffs.Implementation;
+using Services.Services.Teams;
+using Services.Services.Teams.Implementation;
+using Services.Services.Tournaments;
+using Services.Services.Tournaments.Implementation;
+using Services.Services.Users;
+using Services.Services.Users.Implementation;
+using Services.Services.Venues;
+using Services.Services.Venues.Implementation;
 using Services.Utils;
 using Services.Utils.Cloudfare;
+using Services.Utils.Cloudfare.Implementation;
 using Services.Utils.Excel;
 using Services.Utils.Excel.Implementation;
 
@@ -103,19 +103,16 @@ public static class ServiceExtension
     /// Adds custom authorization policies based on predefined roles.
     /// </summary>
     /// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
-    public static void AddCustomAuthorization(this IServiceCollection services)
-    {
-        services.AddAuthorization(options =>
-        {
-            _roles.ToList().ForEach(role =>
-            {
-                options.AddPolicy(role.Key, policy =>
-                {
-                    policy.RequireRole(role.Value);
-                });
-            });
-        });
-    }
+    public static void AddCustomAuthorization(this IServiceCollection services) => services.AddAuthorization(options =>
+                                                                                        {
+                                                                                            _roles.ToList().ForEach(role =>
+                                                                                            {
+                                                                                                options.AddPolicy(role.Key, policy =>
+                                                                                                {
+                                                                                                    policy.RequireRole(role.Value);
+                                                                                                });
+                                                                                            });
+                                                                                        });
 
     /// <summary>
     /// Adds custom authentication with JWT bearer token.
@@ -153,46 +150,41 @@ public static class ServiceExtension
     /// Adds custom JSON serialization options.
     /// </summary>
     /// <param name="builder">The <see cref="IMvcBuilder"/> to configure JSON options.</param>
-    public static void AddCustomJsonOptions(this IMvcBuilder builder)
-    {
-        builder.AddJsonOptions(options =>
-        {
-            options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-        });
-    }
+    public static void AddCustomJsonOptions(this IMvcBuilder builder) => builder.AddJsonOptions(options =>
+                                                                              {
+                                                                                  options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+                                                                              });
 
     /// <summary>
     /// Adds custom Swagger configuration.
     /// </summary>
     /// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
     /// <param name="configuration">The <see cref="IConfiguration"/> to access configuration settings.</param>
-    public static void AddCustomSwagger(this IServiceCollection services, IConfiguration configuration)
-    {
-        services.AddSwaggerGen(context =>
-        {
-            context.SwaggerDoc("v1", new OpenApiInfo
-            {
-                Title = configuration["Swagger:Title"],
-                Version = configuration["Swagger:Version"],
-            });
+    public static void AddCustomSwagger(this IServiceCollection services, IConfiguration configuration) => services.AddSwaggerGen(context =>
+                                                                                                                {
+                                                                                                                    context.SwaggerDoc("v1", new OpenApiInfo
+                                                                                                                    {
+                                                                                                                        Title = configuration["Swagger:Title"],
+                                                                                                                        Version = configuration["Swagger:Version"],
+                                                                                                                    });
 
-            string xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-            context.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+                                                                                                                    string xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                                                                                                                    context.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
 
-            context.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
+                                                                                                                    context.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
 
-            context.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-            {
-                Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below.",
-                Name = "Authorization",
-                In = ParameterLocation.Header,
-                Type = SecuritySchemeType.ApiKey,
-                Scheme = "Bearer"
-            });
+                                                                                                                    context.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                                                                                                                    {
+                                                                                                                        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below.",
+                                                                                                                        Name = "Authorization",
+                                                                                                                        In = ParameterLocation.Header,
+                                                                                                                        Type = SecuritySchemeType.ApiKey,
+                                                                                                                        Scheme = "Bearer"
+                                                                                                                    });
 
 
-            context.AddSecurityRequirement(new OpenApiSecurityRequirement
-            {
+                                                                                                                    context.AddSecurityRequirement(new OpenApiSecurityRequirement
+                                                                                                                    {
                 {
                     new OpenApiSecurityScheme
                     {
@@ -207,11 +199,10 @@ public static class ServiceExtension
                     },
                     new List<string>()
                 }
-            });
+                                                                                                                    });
 
-            context.SchemaFilter<DisplayEnumSchemaFilter>();
-        });
-    }
+                                                                                                                    context.SchemaFilter<DisplayEnumSchemaFilter>();
+                                                                                                                });
 
     /// <summary>
     /// Ensures that an admin user exists in the database. If no admin user is found, it creates one with default credentials.

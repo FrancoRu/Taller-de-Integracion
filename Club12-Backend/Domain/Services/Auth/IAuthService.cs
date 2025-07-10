@@ -1,5 +1,5 @@
 ﻿using Entities.DTOs.User;
-using Entities.Models.UserEntity;
+using Entities.Models.Users;
 
 namespace Services.Auth;
 

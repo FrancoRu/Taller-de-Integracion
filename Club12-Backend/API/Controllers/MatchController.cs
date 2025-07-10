@@ -2,18 +2,18 @@
 
 using Entities.DTOs.Abstract;
 using Entities.DTOs.Match;
-using Entities.Models.MatchEntity;
-using Entities.Models.PlayerStatisticEntity;
-using Entities.Models.PlayoffSeriesEntity;
-using Entities.Models.TeamEntity;
+using Entities.Models.Matches;
+using Entities.Models.PlayerStatistics;
+using Entities.Models.PlayoffSeries;
+using Entities.Models.Teams;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Services.Services.MatchService;
-using Services.Services.PlayoffService;
+using Services.Services.Matches;
+using Services.Services.PlayoffSeries;
 
-using MatchType = Entities.Models.MatchTypeEnum.MatchType;
+using MatchType = Entities.Models.Matches.MatchType;
 
 namespace Club12.API.Controllers;
 
@@ -235,7 +235,7 @@ public class MatchController(IMatchService _matchService, IPlayoffSeriesService 
     /// <returns>True if the playoff series was successfully updated; otherwise, false.</returns>
     private async Task<bool> HandlePlayoffSeriesAsync(Match match)
     {
-        PlayoffSeries? playoffSeries = await _playoffSeriesService.GetSeriesByIdAsync(match.PlayoffSeriesId.Value);
+        PlayoffSerie? playoffSeries = await _playoffSeriesService.GetSeriesByIdAsync(match.PlayoffSeriesId.Value);
         if (playoffSeries is null)
         {
             return false; // Playoff series not found
@@ -269,7 +269,7 @@ public class MatchController(IMatchService _matchService, IPlayoffSeriesService 
             // If there's a next series, assign the winning team based on seed
             if (playoffSeries.NextSeriesId.HasValue)
             {
-                PlayoffSeries? nextSeries = await _playoffSeriesService.GetSeriesByIdAsync(playoffSeries.NextSeriesId.Value);
+                PlayoffSerie? nextSeries = await _playoffSeriesService.GetSeriesByIdAsync(playoffSeries.NextSeriesId.Value);
                 if (nextSeries is null)
                 {
                     return false; // Next series not found

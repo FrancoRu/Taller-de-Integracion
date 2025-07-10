@@ -1,16 +1,17 @@
-﻿using Entities.Models.BlogPostEntity;
-using Entities.Models.DivisionEntity;
-using Entities.Models.MatchEntity;
-using Entities.Models.PlayerEntity;
-using Entities.Models.PlayerSanctionEntity;
-using Entities.Models.PlayerStatisticEntity;
-using Entities.Models.StaffEntity;
-using Entities.Models.TeamEntity;
-using Entities.Models.TournamentEntity;
-using Entities.Models.UserEntity;
-using Entities.Models.VenueEntity;
+﻿using Entities.Models.BlogPosts;
+using Entities.Models.Divisions;
+using Entities.Models.Matches;
+using Entities.Models.Players;
+using Entities.Models.PlayerSanctions;
+using Entities.Models.PlayerStatistics;
+using Entities.Models.Staffs;
+using Entities.Models.Teams;
+using Entities.Models.Tournaments;
+using Entities.Models.Users;
+using Entities.Models.Venues;
 
 using Microsoft.EntityFrameworkCore;
+
 
 namespace Entities;
 

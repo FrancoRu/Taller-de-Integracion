@@ -1,11 +1,11 @@
 ﻿using Entities.DTOs.User;
-using Entities.Models.UserEntity;
+using Entities.Models.Users;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using Services.Auth;
-using Services.Services.UserService;
+using Services.Services.Users;
 
 using System.Security.Claims;
 

@@ -1,4 +1,4 @@
-﻿using Entities.Models.StaffEnum;
+﻿using Entities.Models.Staffs;
 
 using System.ComponentModel.DataAnnotations;
 

@@ -20,11 +20,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Models\Division\NewFile1.txt" />
-    <None Remove="Models\Match\NewFile1.txt" />
-    <None Remove="Models\PlayerStatistic\NewFile1.txt" />
-    <None Remove="Models\PlayerSanction\NewFile1.txt" />
-    <None Remove="Models\Tournament\NewFile1.txt" />
+    <None Remove="Models\Divisions\NewFile1.txt" />
+    <None Remove="Models\Matches\NewFile1.txt" />
+    <None Remove="Models\PlayerStatistics\NewFile1.txt" />
+    <None Remove="Models\PlayerSanctions\NewFile1.txt" />
+    <None Remove="Models\Tournaments\NewFile1.txt" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,12 +1,12 @@
 ﻿using AutoMapper;
 
 using Entities.DTOs.Venue;
-using Entities.Models.VenueEntity;
+using Entities.Models.Venues;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Services.Services.VenueService;
+using Services.Services.Venues;
 
 namespace Club12.API.Controllers;
 

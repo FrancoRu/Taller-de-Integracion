@@ -1,14 +1,14 @@
 ﻿using AutoMapper;
 
 using Entities.DTOs.Staff;
-using Entities.Models.StaffEntity;
-using Entities.Models.TeamEntity;
+using Entities.Models.Staffs;
+using Entities.Models.Teams;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Services.Services.StaffService;
-using Services.Services.TeamService;
+using Services.Services.Staffs;
+using Services.Services.Teams;
 
 namespace Club12.API.Controllers;
 

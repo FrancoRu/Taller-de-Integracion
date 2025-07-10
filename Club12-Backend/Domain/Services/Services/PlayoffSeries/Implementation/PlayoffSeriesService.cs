@@ -1,22 +1,22 @@
-﻿using Entities.Models.PlayoffSeriesEntity;
-using Entities.Models.RoundNameEnum;
+﻿using Entities.Models.Matches;
+using Entities.Models.PlayoffSeries;
 
 using Microsoft.EntityFrameworkCore;
 
 using Services.DataAccessLayer.GenericEntity;
 
-namespace Services.Services.PlayoffService.Implementation;
+namespace Services.Services.PlayoffSeries.Implementation;
 
 /// <summary>
 /// Implementation of the <see cref="IPlayoffSeriesService"/> interface.
 /// </summary>
 /// <param name="_genericPlayoffSeriesService">The generic service to handle playoff series data.</param>
-public class PlayoffSeriesService(IGenericService<PlayoffSeries> _genericPlayoffSeriesService) : IPlayoffSeriesService
+public class PlayoffSeriesService(IGenericService<PlayoffSerie> _genericPlayoffSeriesService) : IPlayoffSeriesService
 {
     /// <inheritdoc />
-    public async Task<List<PlayoffSeries>> CreatePlayoffSeriesAsync()
+    public async Task<List<PlayoffSerie>> CreatePlayoffSeriesAsync()
     {
-        List<PlayoffSeries> playoffSeries =
+        List<PlayoffSerie> playoffSeries =
         [
             new() {
                 RoundName = RoundName.Quarterfinal,
@@ -25,7 +25,7 @@ public class PlayoffSeriesService(IGenericService<PlayoffSeries> _genericPlayoff
                 HomeTeamWins = 0,
                 VisitorTeamWins = 0
             },
-            new PlayoffSeries
+            new PlayoffSerie
             {
                 RoundName = RoundName.Semifinal,
                 IsFinished = false,
@@ -33,7 +33,7 @@ public class PlayoffSeriesService(IGenericService<PlayoffSeries> _genericPlayoff
                 HomeTeamWins = 0,
                 VisitorTeamWins = 0
             },
-            new PlayoffSeries
+            new PlayoffSerie
             {
                 RoundName = RoundName.Final,
                 IsFinished = false,
@@ -53,7 +53,7 @@ public class PlayoffSeriesService(IGenericService<PlayoffSeries> _genericPlayoff
     }
 
     /// <inheritdoc />
-    public async Task<PlayoffSeries?> GetSeriesByIdAsync(Guid id) => await _genericPlayoffSeriesService
+    public async Task<PlayoffSerie?> GetSeriesByIdAsync(Guid id) => await _genericPlayoffSeriesService
         .FilterByExpression(series => series.Id == id)
         .Include(series => series.Matches)
             .ThenInclude(match => match.HomeTeam)
@@ -62,7 +62,7 @@ public class PlayoffSeriesService(IGenericService<PlayoffSeries> _genericPlayoff
         .FirstOrDefaultAsync();
 
     /// <inheritdoc />
-    public async Task<bool> UpdateSeriesAsync(PlayoffSeries series)
+    public async Task<bool> UpdateSeriesAsync(PlayoffSerie series)
     {
         try
         {
@@ -76,7 +76,7 @@ public class PlayoffSeriesService(IGenericService<PlayoffSeries> _genericPlayoff
     }
 
     /// <inheritdoc />
-    public async Task<bool> DeleteSeriesAsync(PlayoffSeries series)
+    public async Task<bool> DeleteSeriesAsync(PlayoffSerie series)
     {
         try
         {

@@ -1,10 +1,10 @@
-﻿using Entities.Models.PlayerSanctionEntity;
+﻿using Entities.Models.PlayerSanctions;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-using Services.Services.PlayerSanctionService;
-using Services.Services.PlayerService;
+using Services.Services.Players;
+using Services.Services.PlayerSanctions;
 
 namespace Services.BackgroundServices;
 

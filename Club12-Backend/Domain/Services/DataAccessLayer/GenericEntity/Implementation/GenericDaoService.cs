@@ -74,7 +74,7 @@ public class GenericDaoService<TEntity> : IGenericDaoService<TEntity> where TEnt
 
     public async Task UpdateRangeAsync(IEnumerable<TEntity> entities)
     {
-        foreach (var entity in entities)
+        foreach (TEntity entity in entities)
         {
             GetContext.Entry(entity).State = EntityState.Modified;
         }

@@ -1,12 +1,12 @@
 ﻿using AutoMapper;
 
 using Entities.DTOs.PlayerSanction;
-using Entities.Models.PlayerSanctionEntity;
+using Entities.Models.PlayerSanctions;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Services.Services.PlayerSanctionService;
+using Services.Services.PlayerSanctions;
 
 namespace Club12.API.Controllers;
 

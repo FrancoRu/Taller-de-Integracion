@@ -1,5 +1,5 @@
 ﻿using Entities.DTOs.Abstract;
-using Entities.DTOs.Division;
+using Entities.DTOs.Divisions;
 
 namespace Entities.DTOs.Tournament;
 

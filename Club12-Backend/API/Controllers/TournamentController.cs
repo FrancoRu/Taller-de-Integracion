@@ -2,12 +2,12 @@
 
 using Entities.DTOs.Abstract;
 using Entities.DTOs.Tournament;
-using Entities.Models.TournamentEntity;
+using Entities.Models.Tournaments;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Services.Services.TournamentService;
+using Services.Services.Tournaments;
 
 namespace Club12.API.Controllers;
 

@@ -4,14 +4,14 @@ using Club12.API.Utils;
 
 using Entities.DTOs.Abstract;
 using Entities.DTOs.Team;
-using Entities.Models.DivisionEntity;
-using Entities.Models.TeamEntity;
+using Entities.Models.Divisions;
+using Entities.Models.Teams;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Services.Services.DivisionService;
-using Services.Services.TeamService;
+using Services.Services.Divisions;
+using Services.Services.Teams;
 using Services.Utils.Cloudfare;
 
 namespace Club12.API.Controllers;

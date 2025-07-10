@@ -2,14 +2,14 @@
 
 using Entities.DTOs.Abstract;
 using Entities.DTOs.Player;
-using Entities.Models.PlayerEntity;
-using Entities.Models.TeamEntity;
+using Entities.Models.Players;
+using Entities.Models.Teams;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Services.Services.PlayerService;
-using Services.Services.TeamService;
+using Services.Services.Players;
+using Services.Services.Teams;
 
 namespace Club12.API.Controllers;
 

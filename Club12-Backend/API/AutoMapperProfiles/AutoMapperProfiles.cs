@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 
 using Entities.DTOs.Abstract;
-using Entities.DTOs.BlogPost;
-using Entities.DTOs.Division;
+using Entities.DTOs.BlogPosts;
+using Entities.DTOs.Divisions;
 using Entities.DTOs.Match;
 using Entities.DTOs.Player;
 using Entities.DTOs.PlayerStatistic;
@@ -11,17 +11,17 @@ using Entities.DTOs.Team;
 using Entities.DTOs.TopScorer;
 using Entities.DTOs.Tournament;
 using Entities.DTOs.Venue;
-using Entities.Models.BlogPostEntity;
-using Entities.Models.DivisionEntity;
-using Entities.Models.MatchEntity;
-using Entities.Models.PlayerEntity;
-using Entities.Models.PlayerStatisticEntity;
-using Entities.Models.PositionModel;
-using Entities.Models.ScorerModel;
-using Entities.Models.TeamEntity;
-using Entities.Models.TopScorerModel;
-using Entities.Models.TournamentEntity;
-using Entities.Models.VenueEntity;
+using Entities.Models.BlogPosts;
+using Entities.Models.Divisions;
+using Entities.Models.Matches;
+using Entities.Models.Players;
+using Entities.Models.PlayerStatistics;
+using Entities.Models.Positions;
+using Entities.Models.Scorers;
+using Entities.Models.Teams;
+using Entities.Models.TopScorers;
+using Entities.Models.Tournaments;
+using Entities.Models.Venues;
 
 namespace Club12.API.AutoMapperProfiles;
 

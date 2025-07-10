@@ -62,10 +62,7 @@ public static class QueryableExtensions
     /// <summary>
     /// Paginates the given source sequence based on the specified page number and page size.
     /// </summary>
-    public static IQueryable<T> Paginate<T>(this IQueryable<T> source, int pageNumber, int pageSize)
-    {
-        return source.Skip((pageNumber - 1) * pageSize).Take(pageSize);
-    }
+    public static IQueryable<T> Paginate<T>(this IQueryable<T> source, int pageNumber, int pageSize) => source.Skip((pageNumber - 1) * pageSize).Take(pageSize);
 
     /// <summary>
     /// Sorts the source sequence by the specified property name in either ascending or descending order.
@@ -90,12 +87,9 @@ public static class QueryableExtensions
         return (IQueryable<T>) genericMethod.Invoke(null, [source, lambda])!;
     }
 
-    private static bool ShouldSkipProperty(string propertyName)
-    {
-        return propertyName is
+    private static bool ShouldSkipProperty(string propertyName) => propertyName is
             nameof(PaginatedFilterRequest.PageSize) or
             nameof(PaginatedFilterRequest.PageNumber) or
             nameof(PaginatedFilterRequest.OrderBy) or
             nameof(PaginatedFilterRequest.Order);
-    }
 }

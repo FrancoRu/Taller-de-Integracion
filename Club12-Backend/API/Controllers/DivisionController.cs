@@ -1,19 +1,20 @@
 ﻿using AutoMapper;
 
 using Entities.DTOs.Abstract;
-using Entities.DTOs.Division;
+using Entities.DTOs.Divisions;
 using Entities.DTOs.TopScorer;
-using Entities.Models.DivisionEntity;
-using Entities.Models.TeamEntity;
-using Entities.Models.TopScorerModel;
+using Entities.Models.Divisions;
+using Entities.Models.PlayoffSeries;
+using Entities.Models.Teams;
+using Entities.Models.TopScorers;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Services.Services.DivisionService;
-using Services.Services.MatchService;
-using Services.Services.PlayoffService;
-using Services.Services.TeamService;
+using Services.Services.Divisions;
+using Services.Services.Matches;
+using Services.Services.PlayoffSeries;
+using Services.Services.Teams;
 
 namespace Club12.API.Controllers;
 
@@ -244,7 +245,7 @@ public class DivisionController(
             return BadRequest("Failed to update team seeds.");
         }
 
-        List<Entities.Models.PlayoffSeriesEntity.PlayoffSeries> playoffSeries = await _playoffSeriesService.CreatePlayoffSeriesAsync();
+        List<PlayoffSerie> playoffSeries = await _playoffSeriesService.CreatePlayoffSeriesAsync();
         await _matchService.GeneratePlayoffMatchesAsync(id, teams, playoffSeries);
 
         division.PlayoffsGenerated = true;

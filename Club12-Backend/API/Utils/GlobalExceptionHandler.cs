@@ -65,20 +65,17 @@ public class GlobalExceptionHandler : IExceptionHandler
     /// <returns>
     /// A tuple containing the HTTP status code and a corresponding title for the response.
     /// </returns>
-    private static (int StatusCode, string Title) MapException(Exception exception)
+    private static (int StatusCode, string Title) MapException(Exception exception) => exception switch
     {
-        return exception switch
-        {
-            ArgumentNullException => (StatusCodes.Status400BadRequest, "Bad Request: Required argument is missing."),
-            UnauthorizedAccessException => (StatusCodes.Status403Forbidden, "Forbidden: You do not have permission to access this resource."),
-            KeyNotFoundException => (StatusCodes.Status404NotFound, "Not Found: The specified resource could not be found."),
-            InvalidOperationException => (StatusCodes.Status409Conflict, "Conflict: The operation is invalid in the current state."),
-            TimeoutException => (StatusCodes.Status408RequestTimeout, "Request Timeout: The operation took too long to complete."),
-            FormatException => (StatusCodes.Status400BadRequest, "Bad Request: Invalid format encountered."),
-            NotImplementedException => (StatusCodes.Status501NotImplemented, "Not Implemented: The requested functionality is not available."),
-            StackOverflowException => (StatusCodes.Status500InternalServerError, "Internal Server Error: Stack overflow occurred."),
-            OperationCanceledException => (StatusCodes.Status499ClientClosedRequest, "Client Closed Request: Operation was cancelled by the client."),
-            _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred.")
-        };
-    }
+        ArgumentNullException => (StatusCodes.Status400BadRequest, "Bad Request: Required argument is missing."),
+        UnauthorizedAccessException => (StatusCodes.Status403Forbidden, "Forbidden: You do not have permission to access this resource."),
+        KeyNotFoundException => (StatusCodes.Status404NotFound, "Not Found: The specified resource could not be found."),
+        InvalidOperationException => (StatusCodes.Status409Conflict, "Conflict: The operation is invalid in the current state."),
+        TimeoutException => (StatusCodes.Status408RequestTimeout, "Request Timeout: The operation took too long to complete."),
+        FormatException => (StatusCodes.Status400BadRequest, "Bad Request: Invalid format encountered."),
+        NotImplementedException => (StatusCodes.Status501NotImplemented, "Not Implemented: The requested functionality is not available."),
+        StackOverflowException => (StatusCodes.Status500InternalServerError, "Internal Server Error: Stack overflow occurred."),
+        OperationCanceledException => (StatusCodes.Status499ClientClosedRequest, "Client Closed Request: Operation was cancelled by the client."),
+        _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred.")
+    };
 }

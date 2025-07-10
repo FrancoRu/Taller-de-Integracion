@@ -1,5 +1,5 @@
 ﻿using Entities.DTOs.User;
-using Entities.Models.UserEntity;
+using Entities.Models.Users;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -44,10 +44,7 @@ public class AuthService(IConfiguration configuration) : IAuthService
         return new TokenResponse(accessToken, TimeSpan.FromHours(24), refreshToken);
     }
 
-    public async Task<TokenResponse> RefreshJwtTokenAsync(User userEntity)
-    {
-        return await GenerateJwtTokenAsync(userEntity);
-    }
+    public async Task<TokenResponse> RefreshJwtTokenAsync(User userEntity) => await GenerateJwtTokenAsync(userEntity);
 
     /// <summary>
     /// Generates a refresh token.

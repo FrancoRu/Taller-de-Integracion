@@ -1,7 +1,5 @@
 ﻿using Entities.DTOs.Abstract;
 
-using MatchType = Entities.Models.MatchTypeEnum.MatchType;
-
 namespace Entities.DTOs.Match;
 
 /// <summary>
@@ -27,7 +25,7 @@ public class GetMatchesFilteredRequest : PaginatedFilterRequest
     /// <summary>
     /// The match type (e.g., regular, playoff) to filter by.
     /// </summary>
-    public MatchType? Type { get; set; }
+    public Models.Matches.MatchType? Type { get; set; }
 
     /// <summary>
     /// Whether to filter only finished matches.

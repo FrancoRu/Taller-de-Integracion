@@ -1,8 +1,7 @@
-﻿using Entities.Models.RoundNameEnum;
+﻿using Entities.Models.Matches;
 
 using System.ComponentModel.DataAnnotations;
 
-using MatchType = Entities.Models.MatchTypeEnum.MatchType;
 
 namespace Entities.DTOs.Match;
 
@@ -20,8 +19,8 @@ public class CreateMatchRequest
     /// <summary>
     /// The type of the match (e.g., regular or playoff).
     /// </summary>
-    [AllowedValues(MatchType.Regular, MatchType.Playoff)]
-    public MatchType? Type { get; set; } = MatchType.Regular;
+    [AllowedValues(Models.Matches.MatchType.Regular, Models.Matches.MatchType.Playoff)]
+    public Models.Matches.MatchType? Type { get; set; } = Models.Matches.MatchType.Regular;
 
     /// <summary>
     /// The name of the playoff round (QTF, SF or F).
