@@ -4,6 +4,7 @@ using Entities.Models.Matches;
 using Entities.Models.Players;
 using Entities.Models.PlayerSanctions;
 using Entities.Models.PlayerStatistics;
+using Entities.Models.PlayoffSeries;
 using Entities.Models.Staffs;
 using Entities.Models.Teams;
 using Entities.Models.Tournaments;
@@ -32,6 +33,8 @@ using Services.Services.PlayerSanctions;
 using Services.Services.PlayerSanctions.Implementation;
 using Services.Services.PlayerStatistics;
 using Services.Services.PlayerStatistics.Implementation;
+using Services.Services.PlayoffSeries;
+using Services.Services.PlayoffSeries.Implementation;
 using Services.Services.Staffs;
 using Services.Services.Staffs.Implementation;
 using Services.Services.Teams;
@@ -96,6 +99,8 @@ public static class ServiceExtension
         collection.AddScoped<IGenericService<BlogPost>, GenericService<BlogPost>>();
         collection.AddScoped<IStaffService, StaffService>();
         collection.AddScoped<IGenericService<Staff>, GenericService<Staff>>();
+        collection.AddScoped<IPlayoffSeriesService, PlayoffSeriesService>();
+        collection.AddScoped<IGenericService<PlayoffSerie>, GenericService<PlayoffSerie>>();
         collection.AddHostedService<SanctionCleanupService>();
     }
 

@@ -304,17 +304,21 @@ public class MatchesByWeekResolver : IValueResolver<Division, DetailedDivisionRe
 {
     /// <summary>
     /// Resolves the matches grouped by week into a dictionary.
+    /// Safely handles cases where the source Matches collection might be null or empty.
     /// </summary>
-    /// <param name="source"></param>
-    /// <param name="destination"></param>
-    /// <param name="destMember"></param>
-    /// <param name="context"></param>
-    /// <returns></returns>
+    /// <param name="source">The source Division object.</param>
+    /// <param name="destination">The destination DetailedDivisionResponse object.</param>
+    /// <param name="destMember">The destination member (MatchesByWeek).</param>
+    /// <param name="context">The resolution context.</param>
+    /// <returns>A dictionary of matches grouped by week, or an empty dictionary if no matches are present.</returns>
     public IDictionary<int, IEnumerable<MinimalMatchResponse>> Resolve(
         Division source,
         DetailedDivisionResponse destination,
         IDictionary<int, IEnumerable<MinimalMatchResponse>> destMember,
-        ResolutionContext context) => source.Matches
+        ResolutionContext context) => source.Matches == null || source.Matches.Count == 0
+            ? new Dictionary<int, IEnumerable<MinimalMatchResponse>>()
+            : (IDictionary<int, IEnumerable<MinimalMatchResponse>>) source.Matches
+            .Where(match => match.MatchWeek.HasValue)
             .GroupBy(match => match.MatchWeek!.Value)
             .ToDictionary(
                 group => group.Key,
