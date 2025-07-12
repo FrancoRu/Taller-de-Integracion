@@ -1,4 +1,8 @@
-import { Filtered, GenericResponsePagination } from '../../core/types/types';
+import {
+  Filtered,
+  GenericResponsePagination,
+  GUID,
+} from '../../core/types/types';
 import { MatchResponse } from '../../match/type/match';
 
 /**
@@ -234,6 +238,8 @@ export interface DivisionFiltered extends PutDivisionRequest, Filtered {
    * @type {boolean}
    */
   isFinished?: boolean;
+
+  tournamentId?: GUID;
 }
 
 /**
@@ -246,4 +252,12 @@ export interface PutDivisionRequest {
    * @type {string}
    */
   name?: string;
+}
+
+export interface IDivisionPropsView {
+  name: string;
+}
+
+export interface IAllDivisionPropsView {
+  divisions: DivisionResponse[];
 }

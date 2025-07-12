@@ -1,4 +1,4 @@
-import { Filetered, GenericResponsePagination } from '../../core/types/types';
+import { Filtered, GenericResponsePagination } from '../../core/types/types';
 
 /**
  * Context properties and methods for managing blog posts in a React application.
@@ -174,7 +174,7 @@ export interface BlogPostResponse {
  * The request body structure for fetching filtered blog posts with pagination.
  * @interface GetBlogPostsFilteredRequest
  */
-export interface GetBlogPostsFilteredRequest extends Filetered {
+export interface GetBlogPostsFilteredRequest extends Filtered {
   /**
    * The author to filter blog posts by.
    * @type {string}

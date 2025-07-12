@@ -6,12 +6,31 @@ import {
   CardContent,
   Typography,
 } from '@mui/material';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import { useBlogPost } from '../../modules/blogPost/hook/blogPost.hook';
 import { CreateBlogPostRequest } from '../../modules/blogPost/type/blogPost';
 
-/**
- * AddBlogPostForm handles the blog post creation.
- */
+const quillModules = {
+  toolbar: {
+    container: [
+      [{ header: [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      ['blockquote', 'code-block'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      [{ script: 'sub' }, { script: 'super' }],
+      [{ indent: '-1' }, { indent: '+1' }],
+      [{ direction: 'rtl' }],
+      [{ size: ['small', false, 'large', 'huge'] }],
+      [{ color: [] }, { background: [] }],
+      [{ font: [] }],
+      [{ align: [] }],
+      ['link', 'image', 'video'],
+      ['clean'],
+    ],
+  },
+};
+
 const AddBlogPostForm: React.FC = () => {
   const { addBlogPost } = useBlogPost();
   const [formData, setFormData] = useState<CreateBlogPostRequest>({
@@ -27,9 +46,12 @@ const AddBlogPostForm: React.FC = () => {
     setFormData({ ...formData, [name]: value });
   };
 
+  const handleQuillChange = (content: string) => {
+    setFormData({ ...formData, markdownText: content });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Submit form data to add blog post
     addBlogPost(formData);
   };
 
@@ -58,16 +80,15 @@ const AddBlogPostForm: React.FC = () => {
             required
             margin="normal"
           />
-          <TextField
-            label="Markdown Text"
-            name="markdownText"
+          <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
+            Blog Content (HTML)
+          </Typography>
+          <ReactQuill
+            theme="snow"
             value={formData.markdownText}
-            onChange={handleInputChange}
-            fullWidth
-            multiline
-            rows={4}
-            required
-            margin="normal"
+            onChange={handleQuillChange}
+            modules={quillModules}
+            style={{ height: '200px', marginBottom: '20px' }}
           />
           <Button type="submit" variant="contained" color="primary">
             Submit

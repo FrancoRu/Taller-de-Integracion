@@ -1,4 +1,4 @@
-import { Filetered, GenericResponsePagination } from '../../core/types/types';
+import { Filtered, GenericResponsePagination } from '../../core/types/types';
 
 /**
  * Context properties and methods for managing players in a sports system.
@@ -50,7 +50,7 @@ export interface IPlayerContextProps {
  * @interface PlayerFiltered
  * @extends PutPlayerRequest
  */
-export interface PlayerFiltered extends PutPlayerRequest, Filetered {}
+export interface PlayerFiltered extends PutPlayerRequest, Filtered {}
 
 /**
  * The request body structure for adding a new player.

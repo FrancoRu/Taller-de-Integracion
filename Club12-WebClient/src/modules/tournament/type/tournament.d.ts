@@ -1,4 +1,8 @@
-import { Filtered, GenericResponsePagination } from '../../core/types/types';
+import {
+  Filtered,
+  GenericResponsePagination,
+  GUID,
+} from '../../core/types/types';
 import { DivisionResponse } from '../../division/type/division';
 
 /**
@@ -96,7 +100,7 @@ export interface TournamentResponse {
    * The division associated with the tournament.
    * @type {DivisionResponse}
    */
-  division: DivisionResponse;
+  division?: DivisionResponse;
 }
 
 /**
@@ -121,4 +125,8 @@ export interface PutTournamentRequest {
    * @type {string}
    */
   description?: string;
+}
+
+export interface ITournamentViewProps {
+  id: GUID;
 }

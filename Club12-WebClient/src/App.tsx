@@ -13,11 +13,13 @@ import MedicalRecord from './views/home/information/medicalRecord';
 import Regulation from './views/home/information/regulation';
 import theme from './theme';
 import { ThemeProvider } from '@mui/material';
-import TeamsGrid from './views/teams/teamsGrid';
-import TeamsDetails from './views/teams/teamsDetails';
-import TeamCreate from './views/teams/teamsCreate';
+import TeamsGrid from './views/teams/commons/teamsGrid';
+import TeamsDetails from './views/teams/commons/teamsDetails';
+import TeamCreate from './views/teams/commons/teamsCreate';
 import SanctionsTable from './views/sanctions/sanctions';
-import Bracket1 from './views/bracket/bracket';
+import Bracket1 from './views/core/bracket/bracket';
+import { Tournament } from './views/tournament';
+import { TournamentProvider } from './modules/tournament/context/tournament.context';
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -35,6 +37,14 @@ function App() {
           <Route path="/quienes-somos" element={<HowWeAre />} />
           <Route path="/ficha-medica" element={<MedicalRecord />} />
           <Route path="/reglamento" element={<Regulation />} />
+          <Route
+            path="/zona-a"
+            element={
+              <TournamentProvider>
+                <Tournament id={'a-a-a-a-a'} />
+              </TournamentProvider>
+            }
+          />
           <Route path="/equipos" element={<TeamsGrid />} />
           <Route path="/equipos/:teamId" element={<TeamsDetails />} />
           <Route path="/equipos/crear" element={<TeamCreate />} />

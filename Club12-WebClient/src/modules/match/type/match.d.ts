@@ -1,5 +1,4 @@
-import { Filtered, GenericResponsePagination } from '../../core/types/types';
-import { VenueResponse } from '../../venue/type/venue';
+import { VenueResponse } from '@/modules/venue/type/venue';
 
 /**
  * Context properties and methods for managing matches in a sports system.
@@ -149,6 +148,8 @@ export interface MatchResponse {
    */
   homeTeamName: string;
 
+  homeTeamLogoUrl: string;
+
   /**
    * The ID of the visitor team.
    * @type {string}
@@ -161,6 +162,7 @@ export interface MatchResponse {
    */
   visitorTeamName: string;
 
+  visitorTeamLogoUrl: string;
   /**
    * The score of the home team.
    * @type {number}

@@ -95,8 +95,8 @@ const getHeaders = (configOverride?: ConfigOverride): headersContent => {
  * @returns {string} The encoded full endpoint URL.
  */
 export const buildEndpoint = (resource: string, query?: object): string => {
-  let finalResource = `${routes.apiUrl}/${resource}`;
-
+  const finalResource = `${routes.apiUrl}/${resource}`;
+  console.log(finalResource);
   if (query) {
     const queryParams = Object.entries(query)
       .map(
@@ -104,7 +104,7 @@ export const buildEndpoint = (resource: string, query?: object): string => {
           `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
       )
       .join('&');
-    finalResource += `?${queryParams}`;
+    return `${finalResource}?${queryParams}`;
   }
 
   return finalResource;

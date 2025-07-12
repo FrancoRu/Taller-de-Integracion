@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode } from 'react';
 interface ProviderProps {
   children: ReactNode;
 }
@@ -10,7 +10,7 @@ export interface GenericResponsePagination<T> {
   totalCount: number;
 }
 
-export interface Filetered {
+export interface Filtered {
   pageNumber?: number;
   pageSize?: number;
   orderBy?: string;
@@ -38,4 +38,6 @@ type RequestProps = {
   configOverride?: object;
   body?: unknown;
   query?: object;
-}
+};
+
+type GUID = `${string}-${string}-${string}-${string}-${string}`;
