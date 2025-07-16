@@ -20,6 +20,7 @@ import SanctionsTable from './views/sanctions/sanctions';
 import Bracket1 from './views/core/bracket/bracket';
 import { Tournament } from './views/tournament';
 import { TournamentProvider } from './modules/tournament/context/tournament.context';
+import { TeamProvider } from './modules/team/context/team.context';
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -44,10 +45,22 @@ function App() {
                 <Tournament id={'a-a-a-a-a'} />
               </TournamentProvider>
             }
+            
           />
-          <Route path="/equipos" element={<TeamsGrid />} />
-          <Route path="/equipos/:teamId" element={<TeamsDetails />} />
-          <Route path="/equipos/crear" element={<TeamCreate />} />
+           {/* Teams Routes */}
+           <Route
+            path="/equipos/*"
+            element={
+              <TeamProvider>
+                <Routes>
+                  <Route path="" element={<TeamsGrid />} />
+                  <Route path=":teamId" element={<TeamsDetails />} />
+                  <Route path="crear" element={<TeamCreate />} />
+                </Routes>
+              </TeamProvider>
+            }
+          />
+
           <Route path="/sanciones" element={<SanctionsTable />} />
           <Route path="/braket" element={<Bracket1 />} />
           <Route path="/login" element={<Login />} />
