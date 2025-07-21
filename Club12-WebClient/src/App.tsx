@@ -6,20 +6,25 @@ import { redirect, Route, Routes } from 'react-router-dom';
 import Home from './views/home/home';
 import Login from './views/auth/login';
 import HowWeAre from './views/home/howWeAre/howWeAre';
-import NavMenu from './views/home/navMenu';
+import NavMenu from './views/home/NavMenu/navMenu';
 import { useAuth } from './modules/auth/hook/auth.hook';
 import { useEffect } from 'react';
 import MedicalRecord from './views/home/information/medicalRecord';
 import Regulation from './views/home/information/regulation';
-import theme from './theme';
-import { ThemeProvider } from '@mui/material';
 import TeamsGrid from './views/teams/commons/teamsGrid';
 import TeamsDetails from './views/teams/commons/teamsDetails';
 import TeamCreate from './views/teams/commons/teamsCreate';
 import SanctionsTable from './views/sanctions/sanctions';
-import Bracket1 from './views/core/bracket/bracket';
-import { Tournament } from './views/tournament';
 import { TournamentProvider } from './modules/tournament/context/tournament.context';
+import { CreateTournament } from './views/tournament/CRUD/create-tournament';
+import { TournamentDashboard } from './views/tournament/dashboard';
+import { TournamentIndex } from './views/tournament';
+import { DivisionIndex } from './views/division';
+import { RoutesNavigationViews } from './views/core/routes-const';
+import { EditTournament } from './views/tournament/CRUD/edit-tournament';
+import { CreateDivision } from './views/division/CRUD/create-division';
+import { DetailDidivion } from './views/division/CRUD/details-division';
+import { EditDivision } from './views/division/CRUD/edit-division';
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -29,31 +34,50 @@ function App() {
   }, [isAuthenticated]);
 
   return (
-    <ThemeProvider theme={theme}>
+    <TournamentProvider>
       <div>
         <NavMenu />
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/quienes-somos" element={<HowWeAre />} />
-          <Route path="/ficha-medica" element={<MedicalRecord />} />
-          <Route path="/reglamento" element={<Regulation />} />
+          <Route path={RoutesNavigationViews.Home} element={<Home />} />
           <Route
-            path="/zona-a"
-            element={
-              <TournamentProvider>
-                <Tournament id={'a-a-a-a-a'} />
-              </TournamentProvider>
-            }
+            path={RoutesNavigationViews.How_We_Are}
+            element={<HowWeAre />}
           />
+          <Route
+            path={RoutesNavigationViews.Medical_Record}
+            element={<MedicalRecord />}
+          />
+          <Route path={RoutesNavigationViews.Rules} element={<Regulation />} />
+          <Route
+            path={RoutesNavigationViews.Tournament}
+            element={<TournamentIndex />}
+          >
+            <Route path="crear" element={<CreateTournament />} />
+            <Route path=":id">
+              <Route index element={<TournamentDashboard />} />
+              <Route path="editar" element={<EditTournament />} />
+
+              <Route
+                path={`${RoutesNavigationViews.Division}/*`}
+                element={<DivisionIndex />}
+              >
+                <Route path="crear" element={<CreateDivision />} />
+                <Route path=":divisionId">
+                  <Route index element={<DetailDidivion />} />
+                  <Route path="editar" element={<EditDivision />} />
+                </Route>
+              </Route>
+            </Route>
+          </Route>
+
           <Route path="/equipos" element={<TeamsGrid />} />
           <Route path="/equipos/:teamId" element={<TeamsDetails />} />
           <Route path="/equipos/crear" element={<TeamCreate />} />
           <Route path="/sanciones" element={<SanctionsTable />} />
-          <Route path="/braket" element={<Bracket1 />} />
           <Route path="/login" element={<Login />} />
         </Routes>
       </div>
-    </ThemeProvider>
+    </TournamentProvider>
   );
 }
 

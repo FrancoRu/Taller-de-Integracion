@@ -2,14 +2,9 @@ import { createContext, useEffect, useState } from 'react';
 import { AxiosError } from 'axios';
 import Swal from 'sweetalert2';
 import { ProviderProps } from '../../core/types/types';
+import { IErrorContextProp } from '../type/error.d';
 
-interface ErrorContextProp {
-  errors: string[] | null;
-  setError: (value: AxiosError) => void;
-  setMessage: (status: number, message: string[]) => void;
-}
-
-export const ErrorContext = createContext<ErrorContextProp | undefined>(
+export const ErrorContext = createContext<IErrorContextProp | undefined>(
   undefined
 );
 
@@ -36,19 +31,6 @@ export const ErrorProvider: React.FC<ProviderProps> = ({ children }) => {
       timer: 1500,
       color: 'black',
     });
-    // Swal.fire({
-    //   title: "Custom width, padding, color, background.",
-    //   width: 600,
-    //   padding: "1em",
-    //   color: "#716add",
-    //   //   background: "#fff url(/images/trees.png)",
-    //   backdrop: `
-    // 	  rgba(0,0,123,0.4)
-    // 	  url("https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExZHFqcjVya3FzcnY4N3d6M3U3cGZiMW56aHZ2ZTlrMWV4aGxuanllNiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/TfiH9bCZuNDFQYpyD4/giphy.gif")
-    // 	  left top
-    // 	  no-repeat
-    // 	`,
-    // });
   };
 
   useEffect(() => {

@@ -20,6 +20,7 @@
     "@mui/x-data-grid": "^6.19.5",
     "@vitejs/plugin-react": "^4.6.0",
     "axios": "^1.7.7",
+    "dayjs": "^1.11.13",
     "js-cookie": "3.0.5",
     "node": "^22.11.0",
     "react": "^17.0.0 || ^18.0.0",

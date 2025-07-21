@@ -61,10 +61,7 @@ export const routes: AppRoute[] = [
       </BlogPostProvider>
     ),
   },
-  // {
-  //   path: '/braket',
-  //   element: <BlogPostProvider>{/* <Braket1 /> */}</BlogPostProvider>,
-  // },
+
   {
     path: '/dashboard',
     element: (

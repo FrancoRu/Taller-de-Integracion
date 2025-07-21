@@ -5,3 +5,9 @@ export interface BadRequestResponse {
   detail: string;
   instance: string;
 }
+
+interface IErrorContextProp {
+  errors: string[] | null;
+  setError: (value: AxiosError) => void;
+  setMessage: (status: number, message: string[]) => void;
+}

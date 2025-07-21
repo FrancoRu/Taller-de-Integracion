@@ -96,7 +96,6 @@ const getHeaders = (configOverride?: ConfigOverride): headersContent => {
  */
 export const buildEndpoint = (resource: string, query?: object): string => {
   const finalResource = `${routes.apiUrl}/${resource}`;
-  console.log(finalResource);
   if (query) {
     const queryParams = Object.entries(query)
       .map(

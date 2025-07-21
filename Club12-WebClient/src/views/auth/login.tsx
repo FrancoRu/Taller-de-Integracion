@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {  Box,  TextField,  Button,  Typography,  Card,  CardContent,  useTheme,} from '@mui/material';
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  Card,
+  CardContent,
+  useTheme,
+} from '@mui/material';
 
 export default function Login() {
   const theme = useTheme();
@@ -34,7 +42,7 @@ export default function Login() {
       minHeight="90vh"
       sx={{ backgroundColor: theme.palette.background.default }}
     >
-      <Card sx={{ maxWidth: 400, padding: 3, boxShadow: theme.shadows[5] }}>
+      <Card sx={{ maxWidth: 400 }}>
         <CardContent>
           <Typography
             variant="h4"
@@ -78,7 +86,6 @@ export default function Login() {
             variant="contained"
             color="primary"
             onClick={handleLogin}
-            sx={{ mt: 2, color: 'white', fontWeight: 'bold' }}
           >
             Iniciar Sesion
           </Button>

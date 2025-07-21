@@ -1,9 +1,10 @@
+import { IStageResponse } from '@/modules/stage/type/stage.d';
 import {
   Filtered,
   GenericResponsePagination,
   GUID,
-} from '../../core/types/types';
-import { MatchResponse } from '../../match/type/match';
+} from '../../core/types/types.d';
+import { MatchResponse } from '../../match/type/match.d';
 
 /**
  * Context properties and methods for managing divisions in a React application.
@@ -11,12 +12,14 @@ import { MatchResponse } from '../../match/type/match';
  * @interface IDivisionContextProps
  */
 export interface IDivisionContextProps {
+  division: IDivisionResponse | null;
+  divisions: IDivisionResponse[] | null;
   /**
    * Adds a new division to the system.
    * @param division The details of the division to add.
    * @returns A promise that resolves with the response containing the newly added division.
    */
-  addDivision(division: AddDivisionRequest): Promise<DivisionResponse | void>;
+  addDivision(division: AddDivisionRequest): Promise<IDivisionResponse | void>;
 
   /**
    * Generates fixtures for a division based on its ID.
@@ -32,16 +35,16 @@ export interface IDivisionContextProps {
    * @returns A promise that resolves with the response containing the updated division.
    */
   putDivisionById(
-    id: string,
-    division: PutDivisionRequest
-  ): Promise<DivisionResponse | void>;
+    id: GUID,
+    division: IPutDivisionRequest
+  ): Promise<boolean | void>;
 
   /**
    * Fetches a division by its ID.
    * @param id The ID of the division to fetch.
    * @returns A promise that resolves with the division data.
    */
-  getDivisionsById(id: string): Promise<DivisionResponse | void>;
+  getDivisionsById(id: string): Promise<IDivisionResponse | void>;
 
   /**
    * Fetches divisions based on filters and pagination.
@@ -50,7 +53,7 @@ export interface IDivisionContextProps {
    */
   getDivisionsByFilters(
     filter: DivisionFiltered
-  ): Promise<GenericResponsePagination<DivisionResponse> | void>;
+  ): Promise<GenericResponsePagination<IDivisionResponse> | void>;
 
   /**
    * Fetches the top scores for a division by its ID.
@@ -82,21 +85,21 @@ export interface AddDivisionRequest {
 
   /**
    * The ID of the tournament to which the division belongs.
-   * @type {string}
+   * @type {GUID}
    */
-  tournamentId: string;
+  tournamentId: GUID;
 }
 
 /**
  * The response structure for a division, including details about the division, its matches, and positions.
- * @interface DivisionResponse
+ * @interface IDivisionResponse
  */
-export interface DivisionResponse {
+export interface IDivisionResponse {
   /**
    * The unique identifier of the division.
-   * @type {string}
+   * @type {GUID}
    */
-  id: string;
+  id: GUID;
 
   /**
    * The name of the division.
@@ -114,19 +117,19 @@ export interface DivisionResponse {
    * The list of positions for teams in the division.
    * @type {Position[]}
    */
-  positions: Position[];
+  positions?: Position[];
 
   /**
    * The ID of the tournament to which the division belongs.
-   * @type {string}
+   * @type {GUID}
    */
-  tournamentId: string;
+  tournamentId: GUID;
 
   /**
    * The list of matches for the division, grouped by week.
-   * @type {MatchResponse[]}
+   * @type {IStageResponse[]}
    */
-  matchesByWeek: MatchResponse[];
+  stages?: IStageResponse[];
 }
 
 /**
@@ -229,10 +232,10 @@ type Position = {
  * The filter criteria for fetching divisions, which extends from PutDivisionRequest and Filtered.
  * This includes the `isFinished` property to filter divisions by their completion status.
  * @interface DivisionFiltered
- * @extends PutDivisionRequest
+ * @extends IPutDivisionRequest
  * @extends Filtered
  */
-export interface DivisionFiltered extends PutDivisionRequest, Filtered {
+export interface DivisionFiltered extends Filtered {
   /**
    * Indicates whether to fetch finished divisions only.
    * @type {boolean}
@@ -240,13 +243,7 @@ export interface DivisionFiltered extends PutDivisionRequest, Filtered {
   isFinished?: boolean;
 
   tournamentId?: GUID;
-}
 
-/**
- * The request body structure for updating an existing division.
- * @interface PutDivisionRequest
- */
-export interface PutDivisionRequest {
   /**
    * The updated name of the division.
    * @type {string}
@@ -254,10 +251,18 @@ export interface PutDivisionRequest {
   name?: string;
 }
 
-export interface IDivisionPropsView {
+/**
+ * The request body structure for updating an existing division.
+ * @interface PutDivisionRequest
+ */
+export interface IPutDivisionRequest {
+  /**
+   * The updated name of the division.
+   * @type {string}
+   */
   name: string;
 }
 
-export interface IAllDivisionPropsView {
-  divisions: DivisionResponse[];
+export interface IDivisionPropsView {
+  name: string;
 }

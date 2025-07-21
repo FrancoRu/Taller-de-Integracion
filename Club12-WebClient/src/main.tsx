@@ -5,16 +5,20 @@ import App from './App';
 import { AuthProvider } from './modules/auth/context/auth.context';
 import { BrowserRouter } from 'react-router-dom';
 import { ErrorProvider } from './modules/error/context/error.context';
+import { ThemeProvider } from '@emotion/react';
+import theme from './theme';
 
 //process.loadEnvFile();
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <ErrorProvider>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </ErrorProvider>
-    </BrowserRouter>
+    <ThemeProvider theme={theme}>
+      <BrowserRouter>
+        <ErrorProvider>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </ErrorProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   </React.StrictMode>
 );

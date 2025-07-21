@@ -1,16 +1,17 @@
-import { AxiosError } from 'axios';
-import { createContext, ReactNode } from 'react';
-import { GenericResponsePagination } from '../../core/types/types';
+import { AxiosError, AxiosResponse } from 'axios';
+import { createContext, ReactNode, useEffect, useState } from 'react';
+import { GenericResponsePagination, GUID } from '../../core/types/types';
 import { useError } from '../../error/hooks/error.hock';
 import { divisionService } from '../service/division.service';
 import {
   AddDivisionRequest,
   DivisionFiltered,
-  DivisionResponse,
+  IDivisionResponse,
   DivisionTopScoreResponse,
   IDivisionContextProps,
-  PutDivisionRequest,
+  IPutDivisionRequest,
 } from '../type/division';
+import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 
 export const DivisionContext = createContext<IDivisionContextProps | undefined>(
   undefined
@@ -19,13 +20,28 @@ export const DivisionContext = createContext<IDivisionContextProps | undefined>(
 export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
+  const [division, setDivision] = useState<IDivisionResponse | null>(null);
+
+  const [divisions, setDivisions] = useState<IDivisionResponse[] | null>(null);
+
   const { setError } = useError();
+
+  useEffect(() => {
+    if (!division) return;
+
+    setDivisions(prev => upsertListById(prev, division));
+  }, [division]);
 
   const addDivision = async (
     division: AddDivisionRequest
-  ): Promise<DivisionResponse | void> => {
+  ): Promise<IDivisionResponse | void> => {
     try {
-      await divisionService.addDivision(division);
+      const res: AxiosResponse<IDivisionResponse> =
+        await divisionService.addDivision(division);
+
+      if (res && res.data) {
+        setDivision(res.data);
+      }
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
@@ -48,11 +64,25 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const putDivisionById = async (
-    id: string,
-    division: PutDivisionRequest
-  ): Promise<DivisionResponse | void> => {
+    id: GUID,
+    divisionRequest: IPutDivisionRequest
+  ): Promise<boolean | void> => {
     try {
-      await divisionService.putDivisionById(id, division);
+      const res: AxiosResponse<IDivisionResponse> =
+        await divisionService.putDivisionById(id, divisionRequest);
+
+      console.log(res);
+      if (res && res.status == 204) {
+        setDivision(prev => {
+          if (!prev) return prev;
+
+          return {
+            ...prev,
+            name: divisionRequest.name,
+          };
+        });
+        return true;
+      }
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
@@ -63,10 +93,23 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const getDivisionsById = async (
-    id: string
-  ): Promise<DivisionResponse | void> => {
+    id: GUID
+  ): Promise<IDivisionResponse | void> => {
     try {
-      await divisionService.getDivisionsById(id);
+      const existinsDivision: IDivisionResponse | undefined = divisions?.find(
+        e => e.id == id
+      );
+
+      if (existinsDivision) {
+        setDivision(existinsDivision);
+        return existinsDivision;
+      }
+
+      const res: AxiosResponse<IDivisionResponse> =
+        await divisionService.getDivisionsById(id);
+      if (res && res.data) {
+        setDivision(res.data);
+      }
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
@@ -78,9 +121,14 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
 
   const getDivisionsByFilters = async (
     filter: DivisionFiltered
-  ): Promise<GenericResponsePagination<DivisionResponse> | void> => {
+  ): Promise<GenericResponsePagination<IDivisionResponse> | void> => {
     try {
-      await divisionService.getDivisionsByFilters(filter);
+      const res: AxiosResponse<GenericResponsePagination<IDivisionResponse>> =
+        await divisionService.getDivisionsByFilters(filter);
+      if (res && res.data) {
+        setDivisions(res.data.items);
+        return res.data;
+      }
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
@@ -107,6 +155,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
   const deleteDivisionsById = async (id: string): Promise<void> => {
     try {
       await divisionService.deleteDivisionsById(id);
+      setDivision(null);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
@@ -117,6 +166,8 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const container: IDivisionContextProps = {
+    division,
+    divisions,
     addDivision,
     generateFixtureByDivisionId,
     putDivisionById,

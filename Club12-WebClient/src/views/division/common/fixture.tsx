@@ -1,7 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { IAllDivisionPropsView } from '@/modules/division/type/division';
+import Slide from '@mui/material/Slide';
 import { MatchResponse, TypeMatch } from '@/modules/match/type/match.d';
+import dayjs from 'dayjs';
+import { IAllStagePropsView } from '@/modules/stage/type/stage.d';
 
 const TeamCell: React.FC<{
   id: string;
@@ -10,7 +12,6 @@ const TeamCell: React.FC<{
   score?: number;
 }> = ({ id, name, logoUrl, score }) => {
   if (!name) return null;
-
   return (
     <div
       id={id}
@@ -36,63 +37,64 @@ const PaginationButtons: React.FC<{
   count: number;
   currentPage: number;
   onPageChange: (page: number) => void;
-}> = ({ count, currentPage, onPageChange }) => {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 12,
-        marginTop: 20,
-        justifyContent: 'center',
-      }}
-      role="navigation"
-      aria-label="Navegación de divisiones"
-    >
-      {Array.from({ length: count }).map((_, idx) => (
-        <button
-          key={idx}
-          onClick={() => onPageChange(idx)}
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: '50%',
-            backgroundColor: idx === currentPage ? '#1e1e1e' : '#2c2c2c',
-            color: idx === currentPage ? 'white' : '#aaa',
-            border: '1px solid #444',
-            cursor: 'pointer',
-            fontWeight: idx === currentPage ? 'bold' : 'normal',
-            transition: 'all 0.2s',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 0,
-          }}
-          aria-current={idx === currentPage ? 'page' : undefined}
-          aria-label={`Página ${idx + 1}`}
-          type="button"
-        >
-          {idx + 1}
-        </button>
-      ))}
-    </div>
-  );
-};
+}> = ({ count, currentPage, onPageChange }) => (
+  <div
+    style={{
+      display: 'flex',
+      gap: 12,
+      marginTop: 20,
+      justifyContent: 'center',
+    }}
+    role="navigation"
+    aria-label="Navegación de divisiones"
+  >
+    {Array.from({ length: count }).map((_, idx) => (
+      <button
+        key={idx}
+        onClick={() => onPageChange(idx)}
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: '50%',
+          backgroundColor: idx === currentPage ? '#1e1e1e' : '#2c2c2c',
+          color: idx === currentPage ? 'white' : '#aaa',
+          border: '1px solid #444',
+          cursor: 'pointer',
+          fontWeight: idx === currentPage ? 'bold' : 'normal',
+          transition: 'all 0.2s',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 0,
+        }}
+        aria-current={idx === currentPage ? 'page' : undefined}
+        aria-label={`Página ${idx + 1}`}
+        type="button"
+      >
+        {idx + 1}
+      </button>
+    ))}
+  </div>
+);
 
-export const Fixture: React.FC<IAllDivisionPropsView> = ({ divisions }) => {
+export const Fixture: React.FC<IAllStagePropsView> = ({ stages }) => {
   const [currentPage, setCurrentPage] = useState(0);
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right'>(
+    'left'
+  );
 
   const currentDivision = useMemo(() => {
-    if (!divisions || divisions.length === 0) return null;
-    const index = divisions.length - 1 - currentPage;
-    return divisions[index] ?? null;
-  }, [currentPage, divisions]);
+    if (!stages || stages.length === 0) return null;
+    const index = stages.length - 1 - currentPage;
+    return stages[index] ?? null;
+  }, [currentPage, stages]);
 
   const maxPageSize = useMemo(() => {
-    if (!divisions) return 0;
-    return Math.max(...divisions.map(d => d.matchesByWeek?.length ?? 0), 0);
-  }, [divisions]);
+    if (!stages) return 0;
+    return Math.max(...stages.map(d => d.matchesByWeek?.length ?? 0), 0);
+  }, [stages]);
 
-  const paddedRows: MatchResponse[] = useMemo(() => {
+  const paddedRows = useMemo(() => {
     if (!currentDivision) return [];
     const matches = currentDivision.matchesByWeek ?? [];
     const emptyCount = maxPageSize - matches.length;
@@ -119,7 +121,7 @@ export const Fixture: React.FC<IAllDivisionPropsView> = ({ divisions }) => {
         photoUrl: '',
       },
       isEmpty: true,
-    })) as MatchResponse[];
+    }));
 
     return [...matches, ...filler];
   }, [currentDivision, maxPageSize]);
@@ -130,18 +132,24 @@ export const Fixture: React.FC<IAllDivisionPropsView> = ({ divisions }) => {
         field: 'date',
         headerName: 'Horario',
         flex: 1,
-        valueGetter: params => params.row.matchDate || '',
+        valueGetter: params => {
+          const date = dayjs(params.row.matchDate);
+          return date.isValid() ? date.format('DD/MM/YY') : '';
+        },
+        sortable: false,
       },
       {
         field: 'venue',
         headerName: 'Cancha',
         flex: 1,
         valueGetter: params => params.row.venue.name || '',
+        sortable: false,
       },
       {
         field: 'HomeTeam',
         headerName: 'Equipo 1',
         flex: 1,
+        sortable: false,
         renderCell: params => (
           <TeamCell
             id={params.row.homeTeamId}
@@ -155,6 +163,7 @@ export const Fixture: React.FC<IAllDivisionPropsView> = ({ divisions }) => {
         field: 'VisitorTeam',
         headerName: 'Equipo 2',
         flex: 1,
+        sortable: false,
         renderCell: params => (
           <TeamCell
             id={params.row.visitorTeamId}
@@ -168,6 +177,11 @@ export const Fixture: React.FC<IAllDivisionPropsView> = ({ divisions }) => {
     []
   );
 
+  const handlePageChange = (page: number) => {
+    setSlideDirection(page > currentPage ? 'left' : 'right');
+    setCurrentPage(page);
+  };
+
   if (!currentDivision) {
     return <p>No hay divisiones disponibles.</p>;
   }
@@ -175,28 +189,34 @@ export const Fixture: React.FC<IAllDivisionPropsView> = ({ divisions }) => {
   return (
     <>
       <h1>Fixture</h1>
-      <h2 style={{ marginBottom: 16 }}>{currentDivision.name}</h2>
+      <h2 style={{ marginBottom: 16 }}>{currentDivision.name.toUpperCase()}</h2>
 
-      <DataGrid
-        rows={paddedRows}
-        columns={columns}
-        rowSelection={false}
-        disableRowSelectionOnClick
-        hideFooter
-        autoHeight
-        getRowId={row => row.id}
-        sx={{
-          '& .MuiDataGrid-row': {
-            minHeight: 64,
-            maxHeight: 64,
-          },
-        }}
-      />
+      <Slide
+        direction={slideDirection}
+        in={true}
+        mountOnEnter
+        unmountOnExit
+        timeout={500}
+        key={currentDivision.id}
+      >
+        <div>
+          <DataGrid
+            rows={paddedRows}
+            columns={columns}
+            rowSelection={false}
+            disableRowSelectionOnClick
+            disableColumnMenu={true}
+            hideFooter
+            autoHeight
+            getRowId={row => row.id}
+          />
+        </div>
+      </Slide>
 
       <PaginationButtons
-        count={divisions.length}
+        count={stages.length}
         currentPage={currentPage}
-        onPageChange={setCurrentPage}
+        onPageChange={handlePageChange}
       />
     </>
   );
