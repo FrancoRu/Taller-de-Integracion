@@ -1,20 +1,48 @@
-import React from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { Grid, Card, CardContent, Typography, CardMedia, Box, useTheme } from "@mui/material";
-
-const teams = [
-  { id: 1, name: "Wolves", image: "https://thumbs.dreamstime.com/b/wolves-mascot-logo-design-team-sports-gaming-348043314.jpg" },
-  { id: 2, name: "Lions", image: "https://img.freepik.com/vecteurs-premium/logo-sport-lion_27088-255.jpg" },
-  { id: 3, name: "Eagles", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSRinm8KyFuNSQ1Ce2RSYdwGAjnnWrkrew9kw&s" },
-];
+import {  Grid,  Card,  CardContent,  Typography,  CardMedia,  Box,  useTheme,  CircularProgress,} from "@mui/material";
+import { TeamContext } from "@/modules/team/context/team.context";
+import { TeamResponse } from "@/modules/team/type/team";
 
 const TeamsGrid: React.FC = () => {
   const navigate = useNavigate();
-  const theme = useTheme(); 
+  const theme = useTheme();
 
-  const handleTeamClick = (id: number) => {
+  const teamContext = useContext(TeamContext);
+
+  if (!teamContext) {
+    throw new Error("TeamsGrid must be used within a TeamProvider");
+  }
+
+  const { getTeamsByFiltered } = teamContext;
+
+  const [teams, setTeams] = useState<TeamResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTeams = async () => {
+      setLoading(true);
+      const result = await getTeamsByFiltered({ pageNumber: 1, pageSize: 100 });
+      if (result?.items) {
+        setTeams(result.items);
+      }
+      setLoading(false);
+    };
+
+    fetchTeams();
+  }, [getTeamsByFiltered]);
+
+  const handleTeamClick = (id: string) => {
     navigate(`/teams/${id}`);
   };
+
+  if (loading) {
+    return (
+      <Box p={3} textAlign="center">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -37,7 +65,7 @@ const TeamsGrid: React.FC = () => {
               justifyContent: "center",
               height: 210,
               border: `2px dashed ${theme.palette.primary.light}`,
-              backgroundColor: 'white',
+              backgroundColor: "white",
               transition: "0.3s",
               "&:hover": {
                 backgroundColor: theme.palette.primary.light,
@@ -46,10 +74,18 @@ const TeamsGrid: React.FC = () => {
             }}
           >
             <CardContent>
-              <Typography variant="h4" align="center" sx={{ color: theme.palette.primary.main }}>
+              <Typography
+                variant="h4"
+                align="center"
+                sx={{ color: theme.palette.primary.main }}
+              >
                 +
               </Typography>
-              <Typography variant="h6" align="center" sx={{ color: theme.palette.text.primary }}>
+              <Typography
+                variant="h6"
+                align="center"
+                sx={{ color: theme.palette.text.primary }}
+              >
                 Add New Team
               </Typography>
             </CardContent>
@@ -65,7 +101,7 @@ const TeamsGrid: React.FC = () => {
                 borderRadius: theme.shape.borderRadius,
                 boxShadow: theme.shadows[3],
                 transition: "0.3s",
-                background: 'white',
+                background: "white",
                 "&:hover": {
                   boxShadow: theme.shadows[6],
                   transform: "scale(1.03)",
@@ -75,7 +111,7 @@ const TeamsGrid: React.FC = () => {
               <CardMedia
                 component="img"
                 height="140"
-                image={team.image}
+                image={team.logoUrl || "/placeholder-image.jpg"} 
                 alt={team.name}
                 sx={{
                   borderTopLeftRadius: theme.shape.borderRadius,
