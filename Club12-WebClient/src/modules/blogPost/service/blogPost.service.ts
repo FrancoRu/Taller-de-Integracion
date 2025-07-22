@@ -45,20 +45,17 @@ export const blogPostService = {
    * @returns {Promise<AxiosResponse<BlogPostResponse>>} - A promise that resolves with the server response.
    */
   putBlogPostById: async (
-    id: string,
+    id: GUID,
     post: UpdateBlogPostRequest
   ): Promise<AxiosResponse<BlogPostResponse>> => {
     const formData = new FormData();
     if (post.author) formData.append('Author', post.author);
 
     if (post.title) formData.append('Title', post.title);
-    
+
     if (post.markdownText) formData.append('MarkdownText', post.markdownText);
 
-    return sendPut<BlogPostResponse>(
-      `${routes.blogposts}/${id}`,
-      formData
-    );
+    return sendPut<BlogPostResponse>(`${routes.blogposts}/${id}`, formData);
   },
 
   /**
@@ -68,7 +65,7 @@ export const blogPostService = {
    * @returns {Promise<AxiosResponse<void>>} - A promise that resolves with the server response.
    */
   putPhotoBlogPostById: async (
-    id: string,
+    id: GUID,
     photo: File
   ): Promise<AxiosResponse<void>> => {
     const formData = new FormData();
@@ -83,7 +80,7 @@ export const blogPostService = {
    * @returns {Promise<AxiosResponse<BlogPostResponse>>} - A promise that resolves with the blog post data.
    */
   getBlogPostsById: async (
-    id: string
+    id: GUID
   ): Promise<AxiosResponse<BlogPostResponse>> =>
     sendGet<BlogPostResponse>(`${routes.blogposts}/${id}`),
 
@@ -94,14 +91,19 @@ export const blogPostService = {
    */
   getBlogPostsByFilters: async (
     filter: GetBlogPostsFilteredRequest
-  ): Promise<AxiosResponse<GenericResponsePagination<BlogPostResponse>> | void> => 
-    sendGet<GenericResponsePagination<BlogPostResponse>>(routes.blogposts, filter),
+  ): Promise<AxiosResponse<
+    GenericResponsePagination<BlogPostResponse>
+  > | void> =>
+    sendGet<GenericResponsePagination<BlogPostResponse>>(
+      routes.blogposts,
+      filter
+    ),
 
   /**
    * Deletes a blog post by its ID.
    * @param {string} id - The ID of the blog post to delete.
    * @returns {Promise<AxiosResponse<void>>} - A promise that resolves when the blog post is deleted.
    */
-  deleteBlogPostById: async (id: string): Promise<AxiosResponse<void>> =>
-     sendDelete<void>(`${routes.blogposts}/${id}`),
+  deleteBlogPostById: async (id: GUID): Promise<AxiosResponse<void>> =>
+    sendDelete<void>(`${routes.blogposts}/${id}`),
 };

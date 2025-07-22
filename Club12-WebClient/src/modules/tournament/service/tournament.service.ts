@@ -46,7 +46,7 @@ export const tournamentService = {
    * @returns {Promise<AxiosResponse<ITournamentResponse>>} The server response containing the tournament details.
    */
   getTournamentById: async (
-    id: string
+    id: GUID
   ): Promise<AxiosResponse<ITournamentResponse>> =>
     await sendGet(`${routes.tournaments}/${id}`),
 
@@ -65,6 +65,6 @@ export const tournamentService = {
    * @param {string} id - The ID of the tournament to delete.
    * @returns {Promise<AxiosResponse<void>>} The server response.
    */
-  deleteTournamentById: async (id: string): Promise<AxiosResponse<void>> =>
+  deleteTournamentById: async (id: GUID): Promise<AxiosResponse<void>> =>
     await sendDelete(`${routes.tournaments}/${id}`),
 };

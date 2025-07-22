@@ -15,7 +15,7 @@ namespace Club12.API.Controllers;
 /// </summary>
 /// <param name="_playerStatisticService">The Player Statistic service.</param>
 /// <param name="_mapper">The Auto_mapper instance.</param>
-[Authorize(Roles = "SuperAdmin")]
+//[Authorize(Roles = "SuperAdmin")]
 [Route("api/player-statistics/")]
 [ApiController]
 public class PlayerStatisticController(IPlayerStatisticService _playerStatisticService, IMapper _mapper) : ControllerBase

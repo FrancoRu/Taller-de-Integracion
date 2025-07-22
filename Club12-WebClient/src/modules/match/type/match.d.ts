@@ -20,7 +20,7 @@ export interface IMatchContextProps {
    * @returns A promise that resolves when the score is successfully updated.
    */
   putMatchScoreByMatchId(
-    id: string,
+    id: GUID,
     matchScore: PutMatchScoreRequest
   ): Promise<void>;
 
@@ -31,7 +31,7 @@ export interface IMatchContextProps {
    * @returns A promise that resolves when the match date and venue are successfully updated.
    */
   putMatchDateByMatchId(
-    id: string,
+    id: GUID,
     matchDate: PutMatchDateRequest
   ): Promise<void>;
 
@@ -40,7 +40,7 @@ export interface IMatchContextProps {
    * @param id The ID of the match to fetch.
    * @returns A promise that resolves with the match details.
    */
-  getMatchById(id: string): Promise<MatchResponse | void>;
+  getMatchById(id: GUID): Promise<MatchResponse | void>;
 
   /**
    * Fetches matches based on filters and pagination.
@@ -56,7 +56,7 @@ export interface IMatchContextProps {
    * @param id The ID of the match to delete.
    * @returns A promise that resolves when the match is successfully deleted.
    */
-  deleteMatchById(id: string): Promise<void>;
+  deleteMatchById(id: GUID): Promise<void>;
 }
 
 /**
@@ -86,25 +86,25 @@ export interface AddMatchRequest {
    * The ID of the home team.
    * @type {string}
    */
-  homeTeamId: string;
+  homeTeamid: GUID;
 
   /**
    * The ID of the visitor team.
    * @type {string}
    */
-  visitorTeamId: string;
+  visitorTeamid: GUID;
 
   /**
    * The ID of the division the match belongs to.
    * @type {string}
    */
-  divisionId: string;
+  divisionid: GUID;
 
   /**
    * The ID of the venue where the match will take place.
    * @type {string}
    */
-  venueId: string;
+  venueid: GUID;
 }
 
 /**
@@ -116,7 +116,7 @@ export interface MatchResponse {
    * The unique identifier of the match.
    * @type {string}
    */
-  id: string;
+  id: GUID;
 
   /**
    * The date and time of the match.
@@ -140,7 +140,7 @@ export interface MatchResponse {
    * The ID of the home team.
    * @type {string}
    */
-  homeTeamId: string;
+  homeTeamid: GUID;
 
   /**
    * The name of the home team.
@@ -154,7 +154,7 @@ export interface MatchResponse {
    * The ID of the visitor team.
    * @type {string}
    */
-  visitorTeamId: string;
+  visitorTeamid: GUID;
 
   /**
    * The name of the visitor team.

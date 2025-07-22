@@ -22,7 +22,7 @@ export interface IPlayerStatisticContextProps {
    * @returns A promise that resolves when the player statistic is successfully updated.
    */
   putPlayerStatisticById(
-    statisticId: string,
+    statisticid: GUID,
     playerStatistic: PutPlayerStatisticRequest
   ): Promise<void>;
 
@@ -31,14 +31,14 @@ export interface IPlayerStatisticContextProps {
    * @param id The ID of the player statistic to fetch.
    * @returns A promise that resolves with the player statistic details.
    */
-  getPlayerStatisticById(id: string): Promise<PlayerResponse | void>;
+  getPlayerStatisticById(id: GUID): Promise<PlayerResponse | void>;
 
   /**
    * Deletes a player statistic by its ID.
    * @param id The ID of the player statistic to delete.
    * @returns A promise that resolves when the player statistic is successfully deleted.
    */
-  deletePlayerStatisticById(id: string): Promise<void>;
+  deletePlayerStatisticById(id: GUID): Promise<void>;
 }
 
 /**
@@ -56,13 +56,13 @@ export interface AddPlayerStatisticRequest {
    * The ID of the match in which the statistic was recorded.
    * @type {string}
    */
-  matchId: string;
+  matchid: GUID;
 
   /**
    * The ID of the player for whom the statistic is recorded.
    * @type {string}
    */
-  playerId: string;
+  playerid: GUID;
 }
 
 /**
@@ -74,13 +74,13 @@ export interface PlayerStatisticResponse {
    * The unique identifier of the player statistic.
    * @type {string}
    */
-  id: string;
+  id: GUID;
 
   /**
    * The ID of the player for whom the statistic is recorded.
    * @type {string}
    */
-  playerId: string;
+  playerid: GUID;
 
   /**
    * The value of the player statistic.
@@ -92,7 +92,7 @@ export interface PlayerStatisticResponse {
    * The ID of the match in which the statistic was recorded.
    * @type {string}
    */
-  matchId: string;
+  matchid: GUID;
 }
 
 /**

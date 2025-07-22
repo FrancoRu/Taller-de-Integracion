@@ -18,7 +18,7 @@ export interface IPlayerContextProps {
    * @param id The ID of the player to fetch.
    * @returns A promise that resolves with the player details.
    */
-  getPlayerById(id: string): Promise<PlayerResponse | void>;
+  getPlayerById(id: GUID): Promise<PlayerResponse | void>;
 
   /**
    * Fetches players based on filters and pagination.
@@ -35,14 +35,14 @@ export interface IPlayerContextProps {
    * @param player The updated player details.
    * @returns A promise that resolves when the player is successfully updated.
    */
-  putPlayerById(id: string, player: PutPlayerRequest): Promise<void>;
+  putPlayerById(id: GUID, player: PutPlayerRequest): Promise<void>;
 
   /**
    * Deletes a player by its ID.
    * @param id The ID of the player to delete.
    * @returns A promise that resolves when the player is successfully deleted.
    */
-  deletePlayerById(id: string): Promise<void>;
+  deletePlayerById(id: GUID): Promise<void>;
 }
 
 /**
@@ -85,7 +85,7 @@ export interface AddPlayerRequest {
    * The ID of the team the player belongs to.
    * @type {string}
    */
-  teamId: string;
+  teamid: GUID;
 }
 
 /**
@@ -98,7 +98,7 @@ export interface PlayerResponse extends AddPlayerRequest {
    * The unique identifier of the player.
    * @type {string}
    */
-  id: string;
+  id: GUID;
 }
 
 /**

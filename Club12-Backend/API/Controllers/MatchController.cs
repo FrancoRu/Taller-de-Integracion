@@ -23,7 +23,7 @@ namespace Club12.API.Controllers;
 /// <param name="_matchService">The Match service.</param>
 /// <param name="_playoffSeriesService"></param>
 /// <param name="_mapper">The AutoMapper instance.</param>
-[Authorize(Roles = "SuperAdmin")]
+//[Authorize(Roles = "SuperAdmin")]
 [Route("api/matches/")]
 [ApiController]
 public class MatchController(IMatchService _matchService, IPlayoffSeriesService _playoffSeriesService, IMapper _mapper) : ControllerBase

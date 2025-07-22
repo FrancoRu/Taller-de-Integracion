@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 import { IAllStagePropsView } from '@/modules/stage/type/stage.d';
 
 const TeamCell: React.FC<{
-  id: string;
+  id: GUID;
   name: string;
   logoUrl: string;
   score?: number;

@@ -29,7 +29,7 @@ export const venueService = {
    * @returns {Promise<AxiosResponse<VenueResponse>>} The server response.
    */
   putVenueById: async (
-    id: string,
+    id: GUID,
     venue: PutVenueRequest
   ): Promise<AxiosResponse<VenueResponse>> =>
     await sendPut(`${routes.venues}/${id}`, venue),
@@ -46,7 +46,7 @@ export const venueService = {
    * @param {string} id - The ID of the venue to retrieve.
    * @returns {Promise<AxiosResponse<VenueResponse>>} The server response containing the venue details.
    */
-  getVenueById: async (id: string): Promise<AxiosResponse<VenueResponse>> =>
+  getVenueById: async (id: GUID): Promise<AxiosResponse<VenueResponse>> =>
     await sendGet(`${routes.venues}/${id}`),
 
   /**
@@ -54,6 +54,6 @@ export const venueService = {
    * @param {string} id - The ID of the venue to delete.
    * @returns {Promise<AxiosResponse<void>>} The server response.
    */
-  deleteVenueById: async (id: string): Promise<AxiosResponse<void>> =>
+  deleteVenueById: async (id: GUID): Promise<AxiosResponse<void>> =>
     await sendDelete(`${routes.venues}/${id}`),
 };

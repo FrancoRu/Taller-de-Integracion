@@ -19,7 +19,7 @@ namespace Club12.API.Controllers;
 /// <param name="_playerService">The Player service.</param>
 /// <param name="_teamService">The Team service.</param>
 /// <param name="_mapper">The AutoMapper instance.</param>
-[Authorize(Roles = "SuperAdmin")]
+//[Authorize(Roles = "SuperAdmin")]
 [Route("api/players/")]
 [ApiController]
 public class PlayerController(

@@ -34,7 +34,7 @@ export const teamService = {
    * @returns {Promise<AxiosResponse<TeamResponse>>} The server response.
    */
   addTeamToDivisionIdBatch: async (
-    divisionId: string,
+    divisionid: GUID,
     teamFile: File,
     logoFile: File
   ): Promise<AxiosResponse<TeamResponse>> =>
@@ -47,7 +47,7 @@ export const teamService = {
    * @returns {Promise<AxiosResponse<TeamResponse>>} The server response.
    */
   putTeamById: async (
-    id: string,
+    id: GUID,
     data: PutTeamRequest
   ): Promise<AxiosResponse<TeamResponse>> =>
     await sendPut(`${routes.teams}/${id}`, data),
@@ -58,10 +58,7 @@ export const teamService = {
    * @param {File} logo - The new logo file.
    * @returns {Promise<AxiosResponse<void>>} The server response.
    */
-  putTeamLogoById: async (
-    id: string,
-    logo: File
-  ): Promise<AxiosResponse<void>> =>
+  putTeamLogoById: async (id: GUID, logo: File): Promise<AxiosResponse<void>> =>
     await sendPut(`${routes.teams}/${id}/logo`, logo),
 
   /**
@@ -79,7 +76,7 @@ export const teamService = {
    * @param {string} id - The ID of the team to retrieve.
    * @returns {Promise<AxiosResponse<TeamResponse>>} The server response containing the team details.
    */
-  getTeamById: async (id: string): Promise<AxiosResponse<TeamResponse>> =>
+  getTeamById: async (id: GUID): Promise<AxiosResponse<TeamResponse>> =>
     await sendGet(`${routes.teams}/${id}`),
 
   /**
@@ -87,6 +84,6 @@ export const teamService = {
    * @param {string} id - The ID of the team to delete.
    * @returns {Promise<AxiosResponse<void>>} The server response.
    */
-  deleteTeamById: async (id: string): Promise<AxiosResponse<void>> =>
+  deleteTeamById: async (id: GUID): Promise<AxiosResponse<void>> =>
     await sendDelete(`${routes.teams}/${id}`),
 };

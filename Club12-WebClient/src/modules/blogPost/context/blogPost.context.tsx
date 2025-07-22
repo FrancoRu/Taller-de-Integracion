@@ -1,6 +1,6 @@
 import { AxiosError, AxiosResponse } from 'axios';
 import React, { createContext, ReactNode } from 'react';
-import { GenericResponsePagination } from '../../core/types/types';
+import { GenericResponsePagination, GUID } from '../../core/types/types.d';
 import { useError } from '../../error/hooks/error.hock';
 import { blogPostService } from '../service/blogPost.service';
 import {
@@ -48,7 +48,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const putBlogPostById = async (
-    id: string,
+    id: GUID,
     post: UpdateBlogPostRequest
   ): Promise<BlogPostResponse | void> => {
     try {
@@ -62,10 +62,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const putPhotoBlogPostById = async (
-    id: string,
-    photo: File
-  ): Promise<void> => {
+  const putPhotoBlogPostById = async (id: GUID, photo: File): Promise<void> => {
     try {
       await blogPostService.putPhotoBlogPostById(id, photo);
     } catch (error: unknown) {
@@ -78,7 +75,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const getBlogPostsById = async (
-    id: string
+    id: GUID
   ): Promise<BlogPostResponse | void> => {
     try {
       await blogPostService.getBlogPostsById(id);
@@ -106,7 +103,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const deleteBlogPostById = async (id: string): Promise<void> => {
+  const deleteBlogPostById = async (id: GUID): Promise<void> => {
     try {
       await blogPostService.deleteBlogPostById(id);
     } catch (error: unknown) {

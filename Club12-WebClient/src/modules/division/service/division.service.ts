@@ -34,9 +34,7 @@ export const divisionService = {
    * @param {string} id - The ID of the division to generate the fixture for.
    * @returns {Promise<AxiosResponse<IDivisionResponse>>} - A promise that resolves with the server response.
    */
-  generateFixtureByDivisionId: async (
-    id: string
-  ): Promise<AxiosResponse<void>> =>
+  generateFixtureByDivisionId: async (id: GUID): Promise<AxiosResponse<void>> =>
     sendPost<void>(`${routes.divisions}/${id}/generate-fixture`),
 
   /**
@@ -80,7 +78,7 @@ export const divisionService = {
    * @returns {Promise<AxiosResponse<DivisionTopScoreResponse>>} - A promise that resolves with the top scorers for the division.
    */
   getTopScoresByDivisionId: async (
-    id: string
+    id: GUID
   ): Promise<AxiosResponse<DivisionTopScoreResponse>> =>
     sendGet<DivisionTopScoreResponse>(`${routes.divisions}/top-scorers/${id}`),
 
@@ -89,6 +87,6 @@ export const divisionService = {
    * @param {string} id - The ID of the division to delete.
    * @returns {Promise<AxiosResponse<IDivisionResponse>>} - A promise that resolves when the division is deleted.
    */
-  deleteDivisionsById: async (id: string): Promise<AxiosResponse<void>> =>
+  deleteDivisionsById: async (id: GUID): Promise<AxiosResponse<void>> =>
     sendDelete<void>(`${routes.divisions}/${id}`),
 };

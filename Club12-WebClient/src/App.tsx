@@ -16,7 +16,6 @@ import TeamsDetails from './views/teams/commons/teamsDetails';
 import TeamCreate from './views/teams/commons/teamsCreate';
 import SanctionsTable from './views/sanctions/sanctions';
 import { TournamentProvider } from './modules/tournament/context/tournament.context';
-import { TeamProvider } from './modules/team/context/team.context';
 import { CreateTournament } from './views/tournament/CRUD/create-tournament';
 import { TournamentDashboard } from './views/tournament/dashboard';
 import { TournamentIndex } from './views/tournament';

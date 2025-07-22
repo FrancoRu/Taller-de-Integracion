@@ -33,7 +33,7 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const putVenueById = async (
-    id: string,
+    id: GUID,
     venue: PutVenueRequest
   ): Promise<VenueResponse | void> => {
     try {
@@ -59,7 +59,7 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const getVenueById = async (id: string): Promise<VenueResponse | void> => {
+  const getVenueById = async (id: GUID): Promise<VenueResponse | void> => {
     try {
       await venueService.getVenueById(id);
     } catch (error: unknown) {
@@ -70,7 +70,7 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
       }
     }
   };
-  const deleteVenueById = async (id: string): Promise<void> => {
+  const deleteVenueById = async (id: GUID): Promise<void> => {
     try {
       await venueService.deleteVenueById(id);
     } catch (error: unknown) {

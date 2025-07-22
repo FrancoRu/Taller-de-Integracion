@@ -2,6 +2,7 @@ import { useError } from '@/modules/error/hooks/error.hock';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { IPutTournamentRequest } from '@/modules/tournament/type/tournament.d';
 import theme from '@/theme';
+import { RoutesNavigationViews } from '@/views/core/routes-const';
 import {
   Card,
   CardContent,
@@ -35,7 +36,7 @@ export const EditTournament: React.FC = () => {
     }
   }, [tournament]);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!editTournament.name.trim()) {
       setMessage(400, ['El nombre es obligatorio']);
       return;
@@ -46,7 +47,9 @@ export const EditTournament: React.FC = () => {
       return;
     }
 
-    putTournamentById(tournament?.id, editTournament);
+    await putTournamentById(tournament?.id, editTournament);
+
+    navigate(`/${RoutesNavigationViews.Tournament}/${tournament.id}`);
   };
 
   return (

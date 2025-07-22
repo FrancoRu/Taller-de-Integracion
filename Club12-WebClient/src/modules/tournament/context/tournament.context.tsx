@@ -120,10 +120,11 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       }
     }
   };
-  const deleteTournamentById = async (id: string): Promise<void> => {
+  const deleteTournamentById = async (id: GUID): Promise<void> => {
     try {
       await tournamentService.deleteTournamentById(id);
       setTournament(null);
+      setTournaments(prev => (prev ? prev.filter(e => e.id !== id) : null));
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);

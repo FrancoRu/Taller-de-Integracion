@@ -36,7 +36,7 @@ export const matchService = {
    * @returns {Promise<AxiosResponse<void>>} - A promise that resolves with the server response.
    */
   putMatchScoreByMatchId: async (
-    id: string,
+    id: GUID,
     matchScore: PutMatchScoreRequest
   ): Promise<AxiosResponse<void>> =>
     sendPut<void>(`${routes.matches}/${id}/score`, matchScore),
@@ -48,7 +48,7 @@ export const matchService = {
    * @returns {Promise<AxiosResponse<MatchResponse>>} - A promise that resolves with the server response.
    */
   putMatchDateByMatchId: async (
-    id: string,
+    id: GUID,
     matchDate: PutMatchDateRequest
   ): Promise<AxiosResponse<void>> =>
     sendPut<void>(`${routes.matches}/${id}/date`, matchDate),
@@ -58,7 +58,7 @@ export const matchService = {
    * @param {string} id - The ID of the match to retrieve.
    * @returns {Promise<AxiosResponse<MatchResponse>>} - A promise that resolves with the match data.
    */
-  getMatchById: async (id: string): Promise<AxiosResponse<MatchResponse>> =>
+  getMatchById: async (id: GUID): Promise<AxiosResponse<MatchResponse>> =>
     sendGet<MatchResponse>(`${routes.matches}/${id}`),
 
   /**
@@ -69,16 +69,13 @@ export const matchService = {
   getMatchByFilter: async (
     filter: MatchFiltered
   ): Promise<AxiosResponse<GenericResponsePagination<MatchResponse>>> =>
-    sendGet<GenericResponsePagination<MatchResponse>>(
-      routes.matches,
-      filter
-    ),
+    sendGet<GenericResponsePagination<MatchResponse>>(routes.matches, filter),
 
   /**
    * Deletes a match by its ID.
    * @param {string} id - The ID of the match to delete.
    * @returns {Promise<AxiosResponse<MatchResponse>>} - A promise that resolves when the match is deleted.
    */
-  deleteMatchById: async (id: string): Promise<AxiosResponse<void>> =>
+  deleteMatchById: async (id: GUID): Promise<AxiosResponse<void>> =>
     sendDelete<void>(`${routes.matches}/${id}`),
 };

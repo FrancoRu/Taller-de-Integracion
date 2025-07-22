@@ -1,0 +1,14 @@
+import Delete from '@mui/icons-material/Delete';
+import Edit from '@mui/icons-material/Edit';
+import Emoji from '@mui/icons-material/EmojiEmotions';
+import Add from '@mui/icons-material/Add';
+import Check from '@mui/icons-material/Check';
+import Mouse from '@mui/icons-material/Mouse';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+export const DeleteIcon = Delete;
+export const EditIcon = Edit;
+export const EmojiEmotionsIcon = Emoji;
+export const AddIcon = Add;
+export const CheckIcon = Check;
+export const MouseIcon = Mouse;
+export const ArrowForward = ArrowForwardIcon;

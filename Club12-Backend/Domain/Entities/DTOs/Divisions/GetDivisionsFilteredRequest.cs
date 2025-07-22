@@ -16,4 +16,6 @@ public class GetDivisionsFilteredRequest : PaginatedFilterRequest
     /// Indicates whether to filter divisions by their finished status.
     /// </summary>
     public bool? IsFinished { get; set; }
+
+    public Guid? TournamentId { get; set; }
 }

@@ -36,7 +36,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const putMatchScoreByMatchId = async (
-    id: string,
+    id: GUID,
     matchScore: PutMatchScoreRequest
   ): Promise<void> => {
     try {
@@ -51,7 +51,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const putMatchDateByMatchId = async (
-    id: string,
+    id: GUID,
     matchDate: PutMatchDateRequest
   ): Promise<void> => {
     try {
@@ -65,7 +65,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const getMatchById = async (id: string): Promise<MatchResponse | void> => {
+  const getMatchById = async (id: GUID): Promise<MatchResponse | void> => {
     try {
       await matchService.getMatchById(id);
     } catch (error: unknown) {
@@ -90,7 +90,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       }
     }
   };
-  const deleteMatchById = async (id: string): Promise<void> => {
+  const deleteMatchById = async (id: GUID): Promise<void> => {
     try {
       await matchService.deleteMatchById(id);
     } catch (error: unknown) {

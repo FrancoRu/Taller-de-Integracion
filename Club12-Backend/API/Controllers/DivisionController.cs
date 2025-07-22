@@ -26,7 +26,7 @@ namespace Club12.API.Controllers;
 /// <param name="_matchService">The match service.</param>
 /// <param name="_playoffSeriesService">The playoff series service.</param>
 /// <param name="_mapper">The AutoMapper instance.</param>
-[Authorize(Roles = "SuperAdmin")]
+//[Authorize(Roles = "SuperAdmin")]
 [Route("api/divisions/")]
 [ApiController]
 public class DivisionController(

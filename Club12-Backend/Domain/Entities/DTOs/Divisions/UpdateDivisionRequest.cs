@@ -12,4 +12,9 @@ public class UpdateDivisionRequest
     /// </summary>
     [Required(ErrorMessage = "The Name field is required.")]
     public required string Name { get; set; }
+
+    /// <summary>
+    /// Indicates whether the division is finished.
+    /// </summary>
+    public required bool IsFinished { get; set; }
 }

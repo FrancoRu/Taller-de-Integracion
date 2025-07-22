@@ -21,7 +21,7 @@ namespace Club12.API.Controllers;
 /// <param name="_blogPostService">The blog post service.</param>
 /// <param name="_cloudflareService">The cloudfare service.</param>   
 /// <param name="_mapper">The AutoMapper instance.</param>
-[Authorize(Roles = "SuperAdmin")]
+//[Authorize(Roles = "SuperAdmin")]
 [Route("api/blogposts/")]
 [ApiController]
 public class BlogPostController(

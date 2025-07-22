@@ -15,7 +15,7 @@ namespace Club12.API.Controllers;
 /// </summary>
 /// <param name="_venueService">The Venue service.</param>
 /// <param name="_mapper">The AutoMapper instance.</param>
-[Authorize(Roles = "SuperAdmin")]
+//[Authorize(Roles = "SuperAdmin")]
 [Route("api/venues/")]
 [ApiController]
 public class VenueController(IVenueService _venueService, IMapper _mapper) : ControllerBase

@@ -16,7 +16,7 @@ namespace Club12.API.Controllers;
 /// </summary>
 /// <param name="_tournamentService">The Tournament service.</param>
 /// <param name="_mapper">The AutoMapper instance.</param>
-[Authorize(Roles = "SuperAdmin")]
+//[Authorize(Roles = "SuperAdmin")]
 [Route("api/tournaments/")]
 [ApiController]
 public class TournamentController(

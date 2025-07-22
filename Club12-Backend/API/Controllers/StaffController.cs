@@ -18,7 +18,7 @@ namespace Club12.API.Controllers;
 /// <param name="_teamService">The team service for managing teams associated with staff.</param>
 /// <param name="_mapper">The AutoMapper instance for mapping data models.</param>
 /// </summary>
-[Authorize(Roles = "SuperAdmin")]
+//[Authorize(Roles = "SuperAdmin")]
 [Route("api/staff/")]
 [ApiController]
 public class StaffController(IStaffService _staffService, ITeamService _teamService, IMapper _mapper) : ControllerBase

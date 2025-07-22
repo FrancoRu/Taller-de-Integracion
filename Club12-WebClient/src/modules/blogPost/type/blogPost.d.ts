@@ -20,7 +20,7 @@ export interface IBlogPostContextProps {
    * @returns A promise that resolves with the response containing the updated blog post.
    */
   putBlogPostById(
-    id: string,
+    id: GUID,
     post: UpdateBlogPostRequest
   ): Promise<BlogPostResponse | void>;
 
@@ -30,14 +30,14 @@ export interface IBlogPostContextProps {
    * @param photo The new photo file to upload.
    * @returns A promise that resolves when the photo is successfully updated.
    */
-  putPhotoBlogPostById(id: string, photo: File): Promise<void>;
+  putPhotoBlogPostById(id: GUID, photo: File): Promise<void>;
 
   /**
    * Fetches a blog post by its ID.
    * @param id The ID of the blog post to fetch.
    * @returns A promise that resolves with the blog post data.
    */
-  getBlogPostsById(id: string): Promise<BlogPostResponse | void>;
+  getBlogPostsById(id: GUID): Promise<BlogPostResponse | void>;
 
   /**
    * Fetches blog posts based on filters and pagination.
@@ -53,7 +53,7 @@ export interface IBlogPostContextProps {
    * @param id The ID of the blog post to delete.
    * @returns A promise that resolves when the blog post is successfully deleted.
    */
-  deleteBlogPostById(id: string): Promise<void>;
+  deleteBlogPostById(id: GUID): Promise<void>;
 }
 
 /**
@@ -131,7 +131,7 @@ export interface BlogPostResponse {
    * The unique identifier of the blog post.
    * @type {string}
    */
-  id: string;
+  id: GUID;
 
   /**
    * The author of the blog post.

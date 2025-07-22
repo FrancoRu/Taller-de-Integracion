@@ -22,7 +22,7 @@ export interface ITeamContextProps {
    * @returns A promise that resolves with the response containing the added teams.
    */
   addTeamToDivisionIdBatch(
-    divisionId: string,
+    divisionid: GUID,
     teamFile: File,
     logoFile: File
   ): Promise<TeamResponse | void>;
@@ -33,7 +33,7 @@ export interface ITeamContextProps {
    * @param data The updated team data.
    * @returns A promise that resolves with the updated team details.
    */
-  putTeamById(id: string, data: PutTeamRequest): Promise<TeamResponse | void>;
+  putTeamById(id: GUID, data: PutTeamRequest): Promise<TeamResponse | void>;
 
   /**
    * Updates the logo of an existing team.
@@ -41,7 +41,7 @@ export interface ITeamContextProps {
    * @param logo The new logo file.
    * @returns A promise that resolves when the logo is successfully updated.
    */
-  putTeamLogoById(id: string, logo: File): Promise<void>;
+  putTeamLogoById(id: GUID, logo: File): Promise<void>;
 
   /**
    * Fetches teams based on filters.
@@ -57,14 +57,14 @@ export interface ITeamContextProps {
    * @param id The ID of the team to fetch.
    * @returns A promise that resolves with the team details.
    */
-  getTeamById(id: string): Promise<TeamResponse | void>;
+  getTeamById(id: GUID): Promise<TeamResponse | void>;
 
   /**
    * Deletes a team by its ID.
    * @param id The ID of the team to delete.
    * @returns A promise that resolves when the team is successfully deleted.
    */
-  deleteTeamById(id: string): Promise<void>;
+  deleteTeamById(id: GUID): Promise<void>;
 }
 
 /**
@@ -94,7 +94,7 @@ export interface AddTeamRequest {
    * The ID of the division the team belongs to.
    * @type {string}
    */
-  divisionId: string;
+  divisionid: GUID;
 
   /**
    * The logo file of the team.
@@ -112,7 +112,7 @@ export interface TeamResponse {
    * The unique ID of the team.
    * @type {string}
    */
-  id: string;
+  id: GUID;
 
   /**
    * The name of the team.
@@ -136,7 +136,7 @@ export interface TeamResponse {
    * The ID of the division the team belongs to.
    * @type {string}
    */
-  divisionId: string;
+  divisionid: GUID;
 
   /**
    * The URL of the team's logo.

@@ -33,7 +33,7 @@ export const playerStatisticService = {
    * @returns {Promise<AxiosResponse<void>>} The server response.
    */
   putPlayerStatisticById: async (
-    statisticId: string,
+    statisticid: GUID,
     playerStatistic: PutPlayerStatisticRequest
   ): Promise<AxiosResponse<void>> =>
     await sendPut(`${routes.playerStatistics}/${statisticId}`, playerStatistic),
@@ -44,7 +44,7 @@ export const playerStatisticService = {
    * @returns {Promise<AxiosResponse<PlayerStatisticResponse>>} The server response.
    */
   getPlayerStatisticById: async (
-    id: string
+    id: GUID
   ): Promise<AxiosResponse<PlayerStatisticResponse>> =>
     await sendGet(`${routes.playerStatistics}/${id}`),
 
@@ -53,6 +53,6 @@ export const playerStatisticService = {
    * @param {string} id - The ID of the player statistic to delete.
    * @returns {Promise<AxiosResponse<void>>} The server response.
    */
-  deletePlayerStatisticById: async (id: string): Promise<AxiosResponse<void>> =>
+  deletePlayerStatisticById: async (id: GUID): Promise<AxiosResponse<void>> =>
     await sendDelete(`${routes.playerStatistics}/${id}`),
 };

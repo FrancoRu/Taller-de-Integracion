@@ -1,3 +1,4 @@
+import { GUID } from '@/modules/core/types/types';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import {
   AddDivisionRequest,
@@ -15,10 +16,11 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export const CreateDivision: React.FC = () => {
   const theme = useTheme();
+  const { id } = useParams<{ id: GUID }>();
   const { tournament } = useTournament();
   const { errors, setMessage }: IErrorContextProp = useError();
   const navigate = useNavigate();
@@ -42,6 +44,7 @@ export const CreateDivision: React.FC = () => {
     }
 
     addDivision(division);
+    navigate(`/torneo/${id}`);
   };
 
   return (

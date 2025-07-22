@@ -31,7 +31,7 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
   const putPlayerStatisticById = async (
-    statisticId: string,
+    statisticid: GUID,
     playerStatistic: PutPlayerStatisticRequest
   ): Promise<void> => {
     try {
@@ -48,7 +48,7 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
   const getPlayerStatisticById = async (
-    id: string
+    id: GUID
   ): Promise<PlayerResponse | void> => {
     try {
       await playerStatisticService.getPlayerStatisticById(id);
@@ -61,7 +61,7 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const deletePlayerStatisticById = async (id: string): Promise<void> => {
+  const deletePlayerStatisticById = async (id: GUID): Promise<void> => {
     try {
       await playerStatisticService.deletePlayerStatisticById(id);
     } catch (error: unknown) {

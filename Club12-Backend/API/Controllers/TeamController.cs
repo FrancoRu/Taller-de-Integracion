@@ -23,7 +23,7 @@ namespace Club12.API.Controllers;
 /// <param name="_cloudflareService">The Cloudflare service for handling file uploads.</param>
 /// <param name="_mapper">The AutoMapper instance for mapping data models.</param>
 /// </summary>
-[Authorize(Roles = "SuperAdmin")]
+//[Authorize(Roles = "SuperAdmin")]
 [Route("api/teams/")]
 [ApiController]
 public class TeamController(

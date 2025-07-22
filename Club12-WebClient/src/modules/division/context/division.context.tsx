@@ -24,7 +24,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
 
   const [divisions, setDivisions] = useState<IDivisionResponse[] | null>(null);
 
-  const { setError } = useError();
+  const { setError, setMessage } = useError();
 
   useEffect(() => {
     if (!division) return;
@@ -38,9 +38,9 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const res: AxiosResponse<IDivisionResponse> =
         await divisionService.addDivision(division);
-
       if (res && res.data) {
         setDivision(res.data);
+        setMessage(res.status, ['Division creada exitosamente']);
       }
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
@@ -51,7 +51,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const generateFixtureByDivisionId = async (id: string): Promise<void> => {
+  const generateFixtureByDivisionId = async (id: GUID): Promise<void> => {
     try {
       await divisionService.generateFixtureByDivisionId(id);
     } catch (error: unknown) {
@@ -71,7 +71,6 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
       const res: AxiosResponse<IDivisionResponse> =
         await divisionService.putDivisionById(id, divisionRequest);
 
-      console.log(res);
       if (res && res.status == 204) {
         setDivision(prev => {
           if (!prev) return prev;
@@ -125,7 +124,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const res: AxiosResponse<GenericResponsePagination<IDivisionResponse>> =
         await divisionService.getDivisionsByFilters(filter);
-      if (res && res.data) {
+      if (res) {
         setDivisions(res.data.items);
         return res.data;
       }
@@ -139,7 +138,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const getTopScoresByDivisionId = async (
-    id: string
+    id: GUID
   ): Promise<DivisionTopScoreResponse[] | void> => {
     try {
       await divisionService.getTopScoresByDivisionId(id);
@@ -152,10 +151,11 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const deleteDivisionsById = async (id: string): Promise<void> => {
+  const deleteDivisionsById = async (id: GUID): Promise<void> => {
     try {
       await divisionService.deleteDivisionsById(id);
       setDivision(null);
+      setDivisions(prev => (prev ? prev.filter(e => e.id !== id) : null));
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);

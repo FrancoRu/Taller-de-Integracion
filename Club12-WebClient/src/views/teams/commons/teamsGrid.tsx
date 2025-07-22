@@ -1,8 +1,17 @@
-import React, { useEffect, useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
-import {  Grid,  Card,  CardContent,  Typography,  CardMedia,  Box,  useTheme,  CircularProgress,} from "@mui/material";
-import { TeamContext } from "@/modules/team/context/team.context";
-import { TeamResponse } from "@/modules/team/type/team";
+import React, { useEffect, useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  CardMedia,
+  Box,
+  useTheme,
+  CircularProgress,
+} from '@mui/material';
+import { TeamContext } from '@/modules/team/context/team.context';
+import { TeamResponse } from '@/modules/team/type/team';
 
 const TeamsGrid: React.FC = () => {
   const navigate = useNavigate();
@@ -11,7 +20,7 @@ const TeamsGrid: React.FC = () => {
   const teamContext = useContext(TeamContext);
 
   if (!teamContext) {
-    throw new Error("TeamsGrid must be used within a TeamProvider");
+    throw new Error('TeamsGrid must be used within a TeamProvider');
   }
 
   const { getTeamsByFiltered } = teamContext;
@@ -32,7 +41,7 @@ const TeamsGrid: React.FC = () => {
     fetchTeams();
   }, [getTeamsByFiltered]);
 
-  const handleTeamClick = (id: string) => {
+  const handleTeamClick = (id: GUID) => {
     navigate(`/teams/${id}`);
   };
 
@@ -47,7 +56,7 @@ const TeamsGrid: React.FC = () => {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
+        minHeight: '100vh',
         backgroundColor: theme.palette.background.default,
         padding: 3,
       }}
@@ -55,19 +64,19 @@ const TeamsGrid: React.FC = () => {
       <Grid container spacing={3}>
         <Grid item xs={12} sm={6} md={4}>
           <Card
-            onClick={() => navigate("/equipos/crear")}
+            onClick={() => navigate('/equipos/crear')}
             sx={{
-              cursor: "pointer",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
               borderRadius: theme.shape.borderRadius,
-              justifyContent: "center",
+              justifyContent: 'center',
               height: 210,
               border: `2px dashed ${theme.palette.primary.light}`,
-              backgroundColor: "white",
-              transition: "0.3s",
-              "&:hover": {
+              backgroundColor: 'white',
+              transition: '0.3s',
+              '&:hover': {
                 backgroundColor: theme.palette.primary.light,
                 boxShadow: theme.shadows[5],
               },
@@ -92,26 +101,26 @@ const TeamsGrid: React.FC = () => {
           </Card>
         </Grid>
 
-        {teams.map((team) => (
+        {teams.map(team => (
           <Grid item xs={12} sm={6} md={4} key={team.id}>
             <Card
               onClick={() => handleTeamClick(team.id)}
               sx={{
-                cursor: "pointer",
+                cursor: 'pointer',
                 borderRadius: theme.shape.borderRadius,
                 boxShadow: theme.shadows[3],
-                transition: "0.3s",
-                background: "white",
-                "&:hover": {
+                transition: '0.3s',
+                background: 'white',
+                '&:hover': {
                   boxShadow: theme.shadows[6],
-                  transform: "scale(1.03)",
+                  transform: 'scale(1.03)',
                 },
               }}
             >
               <CardMedia
                 component="img"
                 height="140"
-                image={team.logoUrl || "/placeholder-image.jpg"} 
+                image={team.logoUrl || '/placeholder-image.jpg'}
                 alt={team.name}
                 sx={{
                   borderTopLeftRadius: theme.shape.borderRadius,
@@ -122,7 +131,7 @@ const TeamsGrid: React.FC = () => {
                 <Typography
                   variant="h6"
                   align="center"
-                  sx={{ fontWeight: "bold", color: theme.palette.text.primary }}
+                  sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}
                 >
                   {team.name}
                 </Typography>

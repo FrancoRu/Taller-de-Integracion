@@ -17,10 +17,7 @@ export interface IVenueContextProps {
    * @param venue The updated venue details.
    * @returns A promise that resolves with the response containing the updated venue.
    */
-  putVenueById(
-    id: string,
-    venue: PutVenueRequest
-  ): Promise<VenueResponse | void>;
+  putVenueById(id: GUID, venue: PutVenueRequest): Promise<VenueResponse | void>;
 
   /**
    * Fetches all venues from the system.
@@ -33,14 +30,14 @@ export interface IVenueContextProps {
    * @param id The ID of the venue to fetch.
    * @returns A promise that resolves with the venue data.
    */
-  getVenueById(id: string): Promise<VenueResponse | void>;
+  getVenueById(id: GUID): Promise<VenueResponse | void>;
 
   /**
    * Deletes a venue by its unique ID.
    * @param id The ID of the venue to delete.
    * @returns A promise that resolves when the venue is successfully deleted.
    */
-  deleteVenueById(id: string): Promise<void>;
+  deleteVenueById(id: GUID): Promise<void>;
 }
 
 /**
@@ -77,7 +74,7 @@ export interface VenueResponse extends AddVenueRequest {
    * The unique identifier of the venue.
    * @type {string}
    */
-  id: string;
+  id: GUID;
 }
 
 /**

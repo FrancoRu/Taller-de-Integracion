@@ -53,7 +53,7 @@ export interface ITournamentContextProps {
    * @param id The ID of the tournament to delete.
    * @returns A promise that resolves when the tournament is successfully deleted.
    */
-  deleteTournamentById(id: string): Promise<void>;
+  deleteTournamentById(id: GUID): Promise<void>;
 }
 
 /**
@@ -151,7 +151,7 @@ export type StatisticsPositions = {
 };
 
 export type DataPositions = {
-  id: string;
+  id: GUID;
   nameTeam: string;
   positions: StatisticsPositions;
 };

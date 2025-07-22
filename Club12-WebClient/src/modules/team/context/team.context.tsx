@@ -33,7 +33,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
   const addTeamToDivisionIdBatch = async (
-    divisionId: string,
+    divisionid: GUID,
     teamFile: File,
     logoFile: File
   ): Promise<TeamResponse | void> => {
@@ -52,7 +52,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
   const putTeamById = async (
-    id: string,
+    id: GUID,
     data: PutTeamRequest
   ): Promise<TeamResponse | void> => {
     try {
@@ -65,7 +65,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
       }
     }
   };
-  const putTeamLogoById = async (id: string, logo: File): Promise<void> => {
+  const putTeamLogoById = async (id: GUID, logo: File): Promise<void> => {
     try {
       await teamService.putTeamLogoById(id, logo);
     } catch (error: unknown) {
@@ -89,7 +89,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
       }
     }
   };
-  const getTeamById = async (id: string): Promise<TeamResponse | void> => {
+  const getTeamById = async (id: GUID): Promise<TeamResponse | void> => {
     try {
       await teamService.getTeamById(id);
     } catch (error: unknown) {
@@ -100,7 +100,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
       }
     }
   };
-  const deleteTeamById = async (id: string): Promise<void> => {
+  const deleteTeamById = async (id: GUID): Promise<void> => {
     try {
       await teamService.deleteTeamById(id);
     } catch (error: unknown) {

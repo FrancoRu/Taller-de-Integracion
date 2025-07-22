@@ -33,7 +33,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
       }
     }
   };
-  const getPlayerById = async (id: string): Promise<PlayerResponse | void> => {
+  const getPlayerById = async (id: GUID): Promise<PlayerResponse | void> => {
     try {
       await playerService.getPlayerById(id);
     } catch (error: unknown) {
@@ -58,7 +58,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
   const putPlayerById = async (
-    id: string,
+    id: GUID,
     player: PutPlayerRequest
   ): Promise<void> => {
     try {
@@ -72,7 +72,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const deletePlayerById = async (id: string): Promise<void> => {
+  const deletePlayerById = async (id: GUID): Promise<void> => {
     try {
       await playerService.deletePlayerById(id);
     } catch (error: unknown) {

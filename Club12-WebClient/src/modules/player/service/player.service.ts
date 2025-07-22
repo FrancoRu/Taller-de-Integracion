@@ -25,15 +25,14 @@ export const playerService = {
    */
   addPlayer: async (
     player: AddPlayerRequest
-  ): Promise<AxiosResponse<PlayerResponse>> =>
-    sendPost(routes.players, player),
+  ): Promise<AxiosResponse<PlayerResponse>> => sendPost(routes.players, player),
 
   /**
    * Retrieves a player by their ID.
    * @param {string} id - The ID of the player to retrieve.
    * @returns {Promise<AxiosResponse<PlayerResponse>>} The server response.
    */
-  getPlayerById: async (id: string): Promise<AxiosResponse<void>> =>
+  getPlayerById: async (id: GUID): Promise<AxiosResponse<void>> =>
     sendGet(`${routes.players}/${id}`),
 
   /**
@@ -53,7 +52,7 @@ export const playerService = {
    * @returns {Promise<AxiosResponse<void>>} The server response.
    */
   putPlayerById: async (
-    id: string,
+    id: GUID,
     player: PutPlayerRequest
   ): Promise<AxiosResponse<void>> => sendPut(`${routes.players}/${id}`, player),
 
@@ -62,6 +61,6 @@ export const playerService = {
    * @param {string} id - The ID of the player to delete.
    * @returns {Promise<AxiosResponse<PlayerResponse>>} The server response.
    */
-  deletePlayerById: async (id: string): Promise<AxiosResponse<void>> =>
+  deletePlayerById: async (id: GUID): Promise<AxiosResponse<void>> =>
     sendDelete(`${routes.players}/${id}`),
 };

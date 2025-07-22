@@ -26,7 +26,7 @@ export interface IDivisionContextProps {
    * @param id The ID of the division for which to generate fixtures.
    * @returns A promise that resolves when the fixtures are successfully generated.
    */
-  generateFixtureByDivisionId(id: string): Promise<void>;
+  generateFixtureByDivisionId(id: GUID): Promise<void>;
 
   /**
    * Updates an existing division by its ID.
@@ -44,7 +44,7 @@ export interface IDivisionContextProps {
    * @param id The ID of the division to fetch.
    * @returns A promise that resolves with the division data.
    */
-  getDivisionsById(id: string): Promise<IDivisionResponse | void>;
+  getDivisionsById(id: GUID): Promise<IDivisionResponse | void>;
 
   /**
    * Fetches divisions based on filters and pagination.
@@ -61,7 +61,7 @@ export interface IDivisionContextProps {
    * @returns A promise that resolves with an array of top score responses for the division.
    */
   getTopScoresByDivisionId(
-    id: string
+    id: GUID
   ): Promise<DivisionTopScoreResponse[] | void>;
 
   /**
@@ -69,7 +69,7 @@ export interface IDivisionContextProps {
    * @param id The ID of the division to delete.
    * @returns A promise that resolves when the division is successfully deleted.
    */
-  deleteDivisionsById(id: string): Promise<void>;
+  deleteDivisionsById(id: GUID): Promise<void>;
 }
 
 /**
@@ -141,7 +141,7 @@ export interface DivisionTopScoreResponse {
    * The unique identifier of the player.
    * @type {string}
    */
-  playerId: string;
+  playerid: GUID;
 
   /**
    * The first name of the player.
@@ -177,7 +177,7 @@ type Position = {
    * The unique identifier of the team.
    * @type {string}
    */
-  teamId: string;
+  teamid: GUID;
 
   /**
    * The name of the team.
@@ -261,6 +261,8 @@ export interface IPutDivisionRequest {
    * @type {string}
    */
   name: string;
+
+  isFinished: boolean;
 }
 
 export interface IDivisionPropsView {

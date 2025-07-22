@@ -63,7 +63,7 @@ const ShowPosts: React.FC = () => {
     setPagination(prev => ({ ...prev, page: newPage }));
   };
 
-  const handleReadMore = async (id: string) => {
+  const handleReadMore = async (id: GUID) => {
     try {
       const postDetails = await getBlogPostsById(id);
       if (postDetails) {

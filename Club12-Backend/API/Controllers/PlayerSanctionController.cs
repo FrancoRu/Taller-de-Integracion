@@ -15,7 +15,7 @@ namespace Club12.API.Controllers;
 /// </summary>
 /// <param name="_playerSanctionService">The Player Sanction service.</param>
 /// <param name="_mapper">The AutoMapper instance.</param>
-[Authorize(Roles = "SuperAdmin")]
+//[Authorize(Roles = "SuperAdmin")]
 [Route("api/player-sanctions/")]
 [ApiController]
 public class PlayerSanctionController(IPlayerSanctionService _playerSanctionService, IMapper _mapper) : ControllerBase

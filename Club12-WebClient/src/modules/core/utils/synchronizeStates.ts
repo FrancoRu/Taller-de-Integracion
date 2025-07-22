@@ -1,4 +1,4 @@
-export function upsertListById<T extends { id: string }>(
+export function upsertListById<T extends { id: GUID }>(
   list: T[] | null | undefined,
   item: T
 ): T[] {
