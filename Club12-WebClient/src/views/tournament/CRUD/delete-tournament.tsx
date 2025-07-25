@@ -3,7 +3,7 @@ import Swal from 'sweetalert2';
 import { GUID } from '@/modules/core/types/types';
 import { useNavigate } from 'react-router-dom';
 
-export const RenderPopupToDeleteTournament: React.FC<{
+export const DeleteTournament: React.FC<{
   id: GUID;
   fn: (id: GUID) => Promise<void>;
   onClose: () => void;

@@ -1,4 +1,5 @@
-﻿using Entities.Models.BlogPosts;
+﻿using Club12.API.Utils.Converters;
+using Entities.Models.BlogPosts;
 using Entities.Models.Divisions;
 using Entities.Models.Matches;
 using Entities.Models.Players;
@@ -6,6 +7,7 @@ using Entities.Models.PlayerSanctions;
 using Entities.Models.PlayerStatistics;
 using Entities.Models.PlayoffSeries;
 using Entities.Models.Staffs;
+using Entities.Models.Stages;
 using Entities.Models.Teams;
 using Entities.Models.Tournaments;
 using Entities.Models.Users;
@@ -37,6 +39,8 @@ using Services.Services.PlayoffSeries;
 using Services.Services.PlayoffSeries.Implementation;
 using Services.Services.Staffs;
 using Services.Services.Staffs.Implementation;
+using Services.Services.Stages;
+using Services.Services.Stages.Implementation;
 using Services.Services.Teams;
 using Services.Services.Teams.Implementation;
 using Services.Services.Tournaments;
@@ -101,6 +105,8 @@ public static class ServiceExtension
         collection.AddScoped<IGenericService<Staff>, GenericService<Staff>>();
         collection.AddScoped<IPlayoffSeriesService, PlayoffSeriesService>();
         collection.AddScoped<IGenericService<PlayoffSerie>, GenericService<PlayoffSerie>>();
+        collection.AddScoped<IGenericService<Stage>, GenericService<Stage>>();
+        collection.AddScoped<IStageService, StageService>();
         collection.AddHostedService<SanctionCleanupService>();
     }
 
@@ -151,14 +157,20 @@ public static class ServiceExtension
         });
     }
 
+
     /// <summary>
     /// Adds custom JSON serialization options.
     /// </summary>
     /// <param name="builder">The <see cref="IMvcBuilder"/> to configure JSON options.</param>
-    public static void AddCustomJsonOptions(this IMvcBuilder builder) => builder.AddJsonOptions(options =>
-                                                                              {
-                                                                                  options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-                                                                              });
+    public static void AddCustomJsonOptions(this IMvcBuilder builder) =>
+        builder.AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+
+            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+
+            options.JsonSerializerOptions.Converters.Add(new DateOnlyJsonConverter());
+        });
 
     /// <summary>
     /// Adds custom Swagger configuration.

@@ -25,6 +25,12 @@ import { EditTournament } from './views/tournament/CRUD/edit-tournament';
 import { CreateDivision } from './views/division/CRUD/create-division';
 import { DetailDidivion } from './views/division/CRUD/details-division';
 import { EditDivision } from './views/division/CRUD/edit-division';
+import { DivisionProvider } from './modules/division/context/division.context';
+import { StageProvider } from './modules/stage/context/stage.context';
+import { StageIndex } from './views/stage';
+import { CreateStage } from './views/stage/CRUD/create-stage';
+import { DetailStage } from './views/stage/CRUD/details-stage';
+import { EditStage } from './views/stage/CRUD/edit-stage';
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -35,48 +41,63 @@ function App() {
 
   return (
     <TournamentProvider>
-      <div>
-        <NavMenu />
-        <Routes>
-          <Route path={RoutesNavigationViews.Home} element={<Home />} />
-          <Route
-            path={RoutesNavigationViews.How_We_Are}
-            element={<HowWeAre />}
-          />
-          <Route
-            path={RoutesNavigationViews.Medical_Record}
-            element={<MedicalRecord />}
-          />
-          <Route path={RoutesNavigationViews.Rules} element={<Regulation />} />
-          <Route
-            path={RoutesNavigationViews.Tournament}
-            element={<TournamentIndex />}
-          >
-            <Route path="crear" element={<CreateTournament />} />
-            <Route path=":id">
-              <Route index element={<TournamentDashboard />} />
-              <Route path="editar" element={<EditTournament />} />
-
+      <DivisionProvider>
+        <StageProvider>
+          <div>
+            <NavMenu />
+            <Routes>
+              <Route path={RoutesNavigationViews.Home} element={<Home />} />
               <Route
-                path={`${RoutesNavigationViews.Division}/*`}
+                path={RoutesNavigationViews.How_We_Are}
+                element={<HowWeAre />}
+              />
+              <Route
+                path={RoutesNavigationViews.Medical_Record}
+                element={<MedicalRecord />}
+              />
+              <Route
+                path={RoutesNavigationViews.Rules}
+                element={<Regulation />}
+              />
+              <Route
+                path={RoutesNavigationViews.Tournament}
+                element={<TournamentIndex />}
+              >
+                <Route path="crear" element={<CreateTournament />} />
+                <Route path=":id">
+                  <Route index element={<TournamentDashboard />} />
+                  <Route path="editar" element={<EditTournament />} />
+                </Route>
+              </Route>
+              <Route
+                path={`${RoutesNavigationViews.Division}`}
                 element={<DivisionIndex />}
               >
                 <Route path="crear" element={<CreateDivision />} />
-                <Route path=":divisionId">
+                <Route path=":id">
                   <Route index element={<DetailDidivion />} />
                   <Route path="editar" element={<EditDivision />} />
                 </Route>
               </Route>
-            </Route>
-          </Route>
-
-          <Route path="/equipos" element={<TeamsGrid />} />
-          <Route path="/equipos/:teamId" element={<TeamsDetails />} />
-          <Route path="/equipos/crear" element={<TeamCreate />} />
-          <Route path="/sanciones" element={<SanctionsTable />} />
-          <Route path="/login" element={<Login />} />
-        </Routes>
-      </div>
+              <Route
+                path={`${RoutesNavigationViews.Stage}`}
+                element={<StageIndex />}
+              >
+                <Route path="crear" element={<CreateStage />} />
+                <Route path=":id">
+                  <Route index element={<DetailStage />} />
+                  <Route path="editar" element={<EditStage />} />
+                </Route>
+              </Route>
+              <Route path="/equipos" element={<TeamsGrid />} />
+              <Route path="/equipos/:teamId" element={<TeamsDetails />} />
+              <Route path="/equipos/crear" element={<TeamCreate />} />
+              <Route path="/sanciones" element={<SanctionsTable />} />
+              <Route path="/login" element={<Login />} />
+            </Routes>
+          </div>
+        </StageProvider>
+      </DivisionProvider>
     </TournamentProvider>
   );
 }

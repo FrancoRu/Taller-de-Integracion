@@ -6,6 +6,7 @@ using Entities.Models.Players;
 using Entities.Models.PlayerSanctions;
 using Entities.Models.PlayerStatistics;
 using Entities.Models.Staffs;
+using Entities.Models.Stages;
 using Entities.Models.Teams;
 using Entities.Models.Tournaments;
 using Entities.Models.Users;
@@ -36,6 +37,13 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
                 value => (MatchType) Enum.Parse(typeof(MatchType), value)
             );
 
+        modelBuilder.Entity<Stage>()
+            .Property(stage => stage.StageType)
+            .HasConversion(
+                value => value.ToString(),
+                value => (StageType) Enum.Parse(typeof(StageType), value)
+            );
+
         modelBuilder.Entity<Staff>()
             .Property(staff => staff.Type)
             .HasConversion(
@@ -46,6 +54,12 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
             .HasMany(team => team.Players)
             .WithOne(player => player.Team)
             .HasForeignKey(player => player.TeamId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Division>()
+            .HasMany(division => division.Stages)
+            .WithOne(stage => stage.Division)
+            .HasForeignKey(stages => stages.DivisionId)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Staff>()
@@ -79,4 +93,6 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
     public virtual required DbSet<BlogPost> BlogPosts { get; set; }
 
     public virtual required DbSet<Staff> Staffs { get; set; }
+
+    public virtual required DbSet<Stage> Stages { get; set; }
 }

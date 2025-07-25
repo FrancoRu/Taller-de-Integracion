@@ -1,6 +1,5 @@
 import { IDivisionResponse } from '@/modules/division/type/division.d';
 import React, { useEffect, useState } from 'react';
-import { CustomBox } from '../core/MUI/customsThemes/CustomBox';
 import {
   Box,
   Card,
@@ -17,8 +16,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { RoutesNavigationViews } from '../core/routes-const';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { GUID } from '@/modules/core/types/types';
-import { RenderPopupToDeleteDivision } from './CRUD/delete-division';
-import { EditIcon, DeleteIcon, ArrowForward } from '../core/MUI/icons/icons';
+import { DeleteDivision } from './CRUD/delete-division';
+import {
+  EditIcon,
+  DeleteIcon,
+  ArrowForwardIcon,
+} from '../core/MUI/icons/icons';
 export const DivisionDashboard: React.FC = () => {
   const { divisions, getDivisionsByFilters } = useDivision();
 
@@ -40,11 +43,7 @@ export const DivisionDashboard: React.FC = () => {
     })();
   }, [id]);
 
-  return !divisions ? (
-    <CustomBox>
-      <Typography>Divisiones no encontradas para este torneo.</Typography>
-    </CustomBox>
-  ) : (
+  return (
     <Box>
       {divisions ? (
         divisions.length > 0 ? (
@@ -69,7 +68,6 @@ const RenderDivision: React.FC<IDivisionResponse> = ({
   id,
   name,
   isFinished,
-  tournamentId,
 }) => {
   const { deleteDivisionsById } = useDivision();
   const navigate = useNavigate();
@@ -81,9 +79,7 @@ const RenderDivision: React.FC<IDivisionResponse> = ({
 
     setIsAnimating(true);
     setTimeout(() => {
-      navigate(
-        `/${RoutesNavigationViews.Tournament}/${tournamentId}/${RoutesNavigationViews.Division}/${id}`
-      );
+      navigate(`/${RoutesNavigationViews.Division}/${id}`);
       setIsAnimating(false);
     }, 300);
   };
@@ -118,7 +114,7 @@ const RenderDivision: React.FC<IDivisionResponse> = ({
                   transform: isAnimating ? 'translateX(10px)' : 'translateX(0)',
                 }}
               >
-                <ArrowForward titleAccess="Seleccionar Division" />
+                <ArrowForwardIcon titleAccess="Seleccionar Division" />
               </IconButton>
             </Tooltip>
 
@@ -126,7 +122,7 @@ const RenderDivision: React.FC<IDivisionResponse> = ({
               <IconButton
                 color="secondary"
                 onClick={() =>
-                  navigate(`${RoutesNavigationViews.Division}/${id}/editar`)
+                  navigate(`/${RoutesNavigationViews.Division}/${id}/editar`)
                 }
               >
                 <EditIcon titleAccess="Editar Division" />
@@ -141,7 +137,7 @@ const RenderDivision: React.FC<IDivisionResponse> = ({
           </Stack>
 
           {showPopup && (
-            <RenderPopupToDeleteDivision
+            <DeleteDivision
               id={id}
               fn={deleteDivisionsById}
               onClose={() => setShowPopup(false)}

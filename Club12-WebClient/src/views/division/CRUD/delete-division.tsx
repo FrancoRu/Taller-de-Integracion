@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import Swal from 'sweetalert2';
 import { GUID } from '@/modules/core/types/types';
 
-export const RenderPopupToDeleteDivision: React.FC<{
+export const DeleteDivision: React.FC<{
   id: GUID;
   fn: (id: GUID) => Promise<void>;
   onClose: () => void;

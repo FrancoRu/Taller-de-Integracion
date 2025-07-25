@@ -49,13 +49,13 @@ public class DivisionController(
     [HttpPost()]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(DetailedDivisionResponse))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<DetailedDivisionResponse>> CreateDivision(CreateDivisionRequest divisionRequest)
+    public async Task<ActionResult<DivisionResponse>> CreateDivision(CreateDivisionRequest divisionRequest)
     {
         Division mappedDivision = _mapper.Map<Division>(divisionRequest);
         Division createdDivision = await _divisionService.CreateDivisionAsync(mappedDivision);
-        DetailedDivisionResponse divisionResponse = _mapper.Map<DetailedDivisionResponse>(createdDivision);
+        DivisionResponse divisionResponse = _mapper.Map<DivisionResponse>(createdDivision);
 
-        return new ObjectResult(divisionResponse) { StatusCode = StatusCodes.Status201Created };
+        return CreatedAtAction(nameof(GetDivisionById),new { id = divisionResponse.Id }, divisionResponse);
     }
 
     /// <summary>
@@ -70,7 +70,7 @@ public class DivisionController(
     [HttpGet("{id:guid}/detail")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedDivisionResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<DetailedDivisionResponse>> GetDivisionById(Guid id)
+    public async Task<ActionResult<DivisionResponse>> GetDivisionById(Guid id)
     {
         Division? division = await _divisionService.GetDivisionWithStatsAsync(id);
 
@@ -79,7 +79,7 @@ public class DivisionController(
             return BadRequest($"Division with id {id} not found.");
         }
 
-        DetailedDivisionResponse divisionResponse = _mapper.Map<DetailedDivisionResponse>(division);
+        DivisionResponse divisionResponse = _mapper.Map<DivisionResponse>(division);
 
         return Ok(divisionResponse);
     }
@@ -122,7 +122,7 @@ public class DivisionController(
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
     [HttpPut("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> UpdateDivisionById(Guid id, UpdateDivisionRequest divisionRequest)
@@ -137,7 +137,7 @@ public class DivisionController(
         _mapper.Map(divisionRequest, existingDivision);
         bool updateResult = await _divisionService.UpdateDivisionAsync(existingDivision);
 
-        return !updateResult ? BadRequest("Failed to update the division.") : NoContent();
+        return !updateResult ? BadRequest("Failed to update the division.") : Ok();
     }
 
     /// <summary>
@@ -153,7 +153,7 @@ public class DivisionController(
     {
         PaginatedResponse<Division> paginatedDivisions = await _divisionService.GetAllDivisionsAsync(filterRequest);
 
-        PaginatedResponse<DetailedDivisionResponse> response = _mapper.Map<PaginatedResponse<DetailedDivisionResponse>>(paginatedDivisions);
+        PaginatedResponse<DivisionResponse> response = _mapper.Map<PaginatedResponse<DivisionResponse>>(paginatedDivisions);
 
         return Ok(response);
     }

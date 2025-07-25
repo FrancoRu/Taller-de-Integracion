@@ -66,6 +66,7 @@ public class DivisionService(IGenericService<Division> _genericDivisionService) 
                                                     .ThenInclude(match => match.HomeTeam)
                                                 .Include(division => division.Matches)
                                                     .ThenInclude(match => match.VisitorTeam)
+                                                .Include(division => division.Stages)
                                                 .FirstOrDefaultAsync();
 
         if (division is null)
@@ -125,7 +126,8 @@ public class DivisionService(IGenericService<Division> _genericDivisionService) 
     {
         Expression<Func<Division, bool>> expression = QueryableExtensions.ConstructFilterExpression<Division, GetDivisionsFilteredRequest>(filter);
         IQueryable<Division> filteredDivisions = _genericDivisionService.FilterByExpressionWithPagination(expression, filter, division => division.Teams,
-                                                                                                                              division => division.Matches)
+                                                                                                                              division => division.Matches,
+                                                                                                                              division => division.Stages)
                                                                                                                                          .SortBy(filter);
         int totalCount = await _genericDivisionService.GetCountAsync(expression);
 
@@ -188,11 +190,6 @@ public class DivisionService(IGenericService<Division> _genericDivisionService) 
 
                 foreach (PlayerStatistic? stat in group)
                 {
-                    int matchWeek = stat.Match?.MatchWeek ?? 0;
-                    if (matchWeek > 0 && matchWeek <= totalMatches)
-                    {
-                        weeklyScores[matchWeek] += stat.Value;
-                    }
                 }
 
                 return new TopScorer

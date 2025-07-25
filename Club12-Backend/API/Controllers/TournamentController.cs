@@ -94,10 +94,9 @@ public class TournamentController(
             return BadRequest($"Tournament with id {id} not found.");
         }
 
-        _mapper.Map(tournamentRequest, existingTournament);
-        bool updateResult = await _tournamentService.UpdateTournamentAsync(existingTournament);
+        _mapper.Map(tournamentRequest, existingTournament);;
 
-        return updateResult ? Ok() : BadRequest("Failed to update the tournament.");
+        return Ok(await _tournamentService.UpdateTournamentAsync(existingTournament));
     }
 
     /// <summary>

@@ -176,14 +176,14 @@ public class MatchController(IMatchService _matchService, IPlayoffSeriesService 
             return BadRequest("Failed to update the match score.");
         }
 
-        if (existingMatch.Type == MatchType.Playoff && existingMatch.PlayoffSeriesId.HasValue)
-        {
-            bool seriesUpdateSuccess = await HandlePlayoffSeriesAsync(existingMatch);
-            if (!seriesUpdateSuccess)
-            {
-                return BadRequest("Failed to update the playoff series.");
-            }
-        }
+        //if (existingMatch.Type == MatchType.Playoff && existingMatch.PlayoffSeriesId.HasValue)
+        //{
+        //    bool seriesUpdateSuccess = await HandlePlayoffSeriesAsync(existingMatch);
+        //    if (!seriesUpdateSuccess)
+        //    {
+        //        return BadRequest("Failed to update the playoff series.");
+        //    }
+        //}
 
         return NoContent();
     }
@@ -233,103 +233,103 @@ public class MatchController(IMatchService _matchService, IPlayoffSeriesService 
     /// </summary>
     /// <param name="match">The match that was updated.</param>
     /// <returns>True if the playoff series was successfully updated; otherwise, false.</returns>
-    private async Task<bool> HandlePlayoffSeriesAsync(Match match)
-    {
-        PlayoffSerie? playoffSeries = await _playoffSeriesService.GetSeriesByIdAsync(match.PlayoffSeriesId.Value);
-        if (playoffSeries is null)
-        {
-            return false; // Playoff series not found
-        }
+    //private async Task<bool> HandlePlayoffSeriesAsync(Match match)
+    //{
+    //    PlayoffSerie? playoffSeries = await _playoffSeriesService.GetSeriesByIdAsync(match.PlayoffSeriesId.Value);
+    //    if (playoffSeries is null)
+    //    {
+    //        return false; // Playoff series not found
+    //    }
 
-        // Update series wins based on the match result
-        if (match.HomeScore > match.VisitorScore)
-        {
-            playoffSeries.HomeTeamWins++;
-        }
-        else
-        {
-            playoffSeries.VisitorTeamWins++;
-        }
+    //    // Update series wins based on the match result
+    //    if (match.HomeScore > match.VisitorScore)
+    //    {
+    //        playoffSeries.HomeTeamWins++;
+    //    }
+    //    else
+    //    {
+    //        playoffSeries.VisitorTeamWins++;
+    //    }
 
-        // Check if the series is finished
-        if (playoffSeries.HomeTeamWins >= playoffSeries.GamesRequiredToWin || playoffSeries.VisitorTeamWins >= playoffSeries.GamesRequiredToWin)
-        {
-            playoffSeries.IsFinished = true;
-            playoffSeries.WinningTeamId = playoffSeries.HomeTeamWins >= playoffSeries.GamesRequiredToWin
-                ? match.HomeTeamId
-                : match.VisitorTeamId;
+    //    // Check if the series is finished
+    //    if (playoffSeries.HomeTeamWins >= playoffSeries.GamesRequiredToWin || playoffSeries.VisitorTeamWins >= playoffSeries.GamesRequiredToWin)
+    //    {
+    //        playoffSeries.IsFinished = true;
+    //        playoffSeries.WinningTeamId = playoffSeries.HomeTeamWins >= playoffSeries.GamesRequiredToWin
+    //            ? match.HomeTeamId
+    //            : match.VisitorTeamId;
 
-            // Mark remaining matches in the series as finished (if any)
-            foreach (Match? remainingMatch in playoffSeries.Matches.Where(m => !m.IsFinished))
-            {
-                remainingMatch.IsFinished = true;
-                await _matchService.UpdateMatchAsync(remainingMatch);
-            }
+    //        // Mark remaining matches in the series as finished (if any)
+    //        foreach (Match? remainingMatch in playoffSeries.Matches.Where(m => !m.IsFinished))
+    //        {
+    //            remainingMatch.IsFinished = true;
+    //            await _matchService.UpdateMatchAsync(remainingMatch);
+    //        }
 
-            // If there's a next series, assign the winning team based on seed
-            if (playoffSeries.NextSeriesId.HasValue)
-            {
-                PlayoffSerie? nextSeries = await _playoffSeriesService.GetSeriesByIdAsync(playoffSeries.NextSeriesId.Value);
-                if (nextSeries is null)
-                {
-                    return false; // Next series not found
-                }
+    //        // If there's a next series, assign the winning team based on seed
+    //        if (playoffSeries.NextSeriesId.HasValue)
+    //        {
+    //            PlayoffSerie? nextSeries = await _playoffSeriesService.GetSeriesByIdAsync(playoffSeries.NextSeriesId.Value);
+    //            if (nextSeries is null)
+    //            {
+    //                return false; // Next series not found
+    //            }
 
-                // Get the winning team from the current match
-                Team? winningTeam = playoffSeries.WinningTeamId == match.HomeTeamId
-                    ? match.HomeTeam
-                    : match.VisitorTeam;
+    //            // Get the winning team from the current match
+    //            Team? winningTeam = playoffSeries.WinningTeamId == match.HomeTeamId
+    //                ? match.HomeTeam
+    //                : match.VisitorTeam;
 
-                if (winningTeam is null)
-                {
-                    return false; // Winning team not found in the match
-                }
+    //            if (winningTeam is null)
+    //            {
+    //                return false; // Winning team not found in the match
+    //            }
 
-                // Find the next match in the next series using GameNumber
-                Match? nextMatch = nextSeries.Matches.FirstOrDefault(m => m.GameNumber == match.GameNumber);
-                if (nextMatch is null)
-                {
-                    return false; // Next match not found in the next series
-                }
-
-
-                Team? otherTeam = nextMatch.HomeTeam ?? nextMatch.VisitorTeam;
-
-                if (otherTeam is null)
-                {
-                    if (nextMatch.HomeTeam is null)
-                    {
-                        nextMatch.HomeTeam = winningTeam;
-                    }
-                    else
-                    {
-                        nextMatch.VisitorTeam = winningTeam;
-                    }
-                }
-                else
-                {
-                    Team homeTeam = winningTeam.Seed < otherTeam.Seed ? winningTeam : otherTeam;
-                    Team visitorTeam = winningTeam.Seed < otherTeam.Seed ? otherTeam : winningTeam;
-
-                    nextMatch.HomeTeam = homeTeam;
-                    nextMatch.VisitorTeam = visitorTeam;
-                }
+    //            // Find the next match in the next series using GameNumber
+    //            Match? nextMatch = nextSeries.Matches.FirstOrDefault(m => m.GameNumber == match.GameNumber);
+    //            if (nextMatch is null)
+    //            {
+    //                return false; // Next match not found in the next series
+    //            }
 
 
-                bool matchUpdated = await _matchService.UpdateMatchAsync(nextMatch);
-                if (!matchUpdated)
-                {
-                    return false;
-                }
+    //            Team? otherTeam = nextMatch.HomeTeam ?? nextMatch.VisitorTeam;
 
-                bool seriesUpdated = await _playoffSeriesService.UpdateSeriesAsync(nextSeries);
-                if (!seriesUpdated)
-                {
-                    return false;
-                }
-            }
-        }
+    //            if (otherTeam is null)
+    //            {
+    //                if (nextMatch.HomeTeam is null)
+    //                {
+    //                    nextMatch.HomeTeam = winningTeam;
+    //                }
+    //                else
+    //                {
+    //                    nextMatch.VisitorTeam = winningTeam;
+    //                }
+    //            }
+    //            else
+    //            {
+    //                Team homeTeam = winningTeam.Seed < otherTeam.Seed ? winningTeam : otherTeam;
+    //                Team visitorTeam = winningTeam.Seed < otherTeam.Seed ? otherTeam : winningTeam;
 
-        return await _playoffSeriesService.UpdateSeriesAsync(playoffSeries);
-    }
+    //                nextMatch.HomeTeam = homeTeam;
+    //                nextMatch.VisitorTeam = visitorTeam;
+    //            }
+
+
+    //            bool matchUpdated = await _matchService.UpdateMatchAsync(nextMatch);
+    //            if (!matchUpdated)
+    //            {
+    //                return false;
+    //            }
+
+    //            bool seriesUpdated = await _playoffSeriesService.UpdateSeriesAsync(nextSeries);
+    //            if (!seriesUpdated)
+    //            {
+    //                return false;
+    //            }
+    //        }
+    //    }
+
+    //    return await _playoffSeriesService.UpdateSeriesAsync(playoffSeries);
+    //}
 }

@@ -36,7 +36,6 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
             .Include(m => m.VisitorTeam)
             .Include(m => m.PlayerStatistics)
                 .ThenInclude(ps => ps.Player)
-            .Include(m => m.Venue)
             .FirstOrDefaultAsync();
 
         if (match is null)
@@ -127,9 +126,7 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
     {
         Expression<Func<Match, bool>> expression = QueryableExtensions.ConstructFilterExpression<Match, GetMatchesFilteredRequest>(filter);
         IQueryable<Match> filteredMatches = _genericMatchService.FilterByExpressionWithPagination(expression, filter, match => match.HomeTeam,
-                                                                                                                      match => match.VisitorTeam,
-                                                                                                                      match => match.Division,
-                                                                                                                      match => match.Venue)
+                                                                                                                      match => match.VisitorTeam)
                                                                                                                         .SortBy(filter);
 
         int totalCount = await _genericMatchService.GetCountAsync(expression);
@@ -173,9 +170,7 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
                     HomeTeam = match.home,
                     VisitorTeam = match.away,
                     Type = MatchType.Regular,
-                    MatchWeek = roundIndex + 1,
                     IsFinished = false,
-                    DivisionId = divisionId,
                     MatchDate = currentMatchDate
                 }))
             .ToList();
@@ -191,9 +186,7 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
                     HomeTeam = match.away,
                     VisitorTeam = match.home,
                     Type = MatchType.Regular,
-                    MatchWeek = roundIndex + 8,
                     IsFinished = false,
-                    DivisionId = divisionId,
                     MatchDate = currentMatchDate
                 }))
             .ToList();
@@ -284,11 +277,7 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
                 VisitorTeam = awayTeam,
                 Type = MatchType.Playoff,
                 IsFinished = false,
-                DivisionId = divisionId,
-                MatchDate = startDate.AddDays((gameNumber - 1) * 2),
-                PlayoffSeriesId = series.Id,
-                PlayoffSeries = series,
-                GameNumber = gameNumber
+                MatchDate = startDate.AddDays((gameNumber - 1) * 2)
             };
 
             matches.Add(match);

@@ -1,5 +1,6 @@
 ﻿using Entities.Models.Matches;
 using Entities.Models.Positions;
+using Entities.Models.Stages;
 using Entities.Models.Teams;
 using Entities.Models.Tournaments;
 
@@ -57,6 +58,12 @@ public class Division : EntityBase
     /// The list of matches in this division.
     /// </summary>
     public virtual required ICollection<Match> Matches { get; set; }
+
+    /// <summary>
+    /// The list of Stages in this division.
+    /// </summary>
+    public virtual required ICollection<Stage> Stages { get; set; }
+
 
     /// <summary>
     /// The positions of teams in the division.

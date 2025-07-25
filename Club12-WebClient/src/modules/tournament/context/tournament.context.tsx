@@ -58,13 +58,12 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
   };
   const putTournamentById = async (
     id: GUID,
-    tournament: IPutTournamentRequest
+    tournamentRequest: IPutTournamentRequest
   ): Promise<void> => {
     try {
       const res: AxiosResponse<ITournamentResponse> =
-        await tournamentService.putTournamentById(id, tournament);
-
-      if (res && res.data) {
+        await tournamentService.putTournamentById(id, tournamentRequest);
+      if (res && res.status == 200) {
         setTournament(res.data);
       }
     } catch (error: unknown) {

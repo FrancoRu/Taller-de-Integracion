@@ -27,8 +27,8 @@ public interface ITournamentService
     /// Updates a Tournament asynchronously.
     /// </summary>
     /// <param name="tournamentEntity">The Tournament to update.</param>
-    /// <returns>A boolean indicating whether the update was successful.</returns>
-    Task<bool> UpdateTournamentAsync(Tournament tournamentEntity);
+    /// <returns>A Tournament entity indicating whether the update was successful.</returns>
+    Task<Tournament> UpdateTournamentAsync(Tournament tournamentEntity);
 
     /// <summary>
     /// Deletes a Tournament asynchronously.

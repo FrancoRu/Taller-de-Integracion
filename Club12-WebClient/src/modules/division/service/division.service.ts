@@ -57,7 +57,7 @@ export const divisionService = {
   getDivisionsById: async (
     id: GUID
   ): Promise<AxiosResponse<IDivisionResponse>> =>
-    sendGet<IDivisionResponse>(`${routes.divisions}/${id}/details`),
+    sendGet<IDivisionResponse>(`${routes.divisions}/${id}/detail`),
 
   /**
    * Retrieves divisions based on provided filters.

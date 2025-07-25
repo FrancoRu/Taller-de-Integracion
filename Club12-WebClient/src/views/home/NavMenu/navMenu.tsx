@@ -31,11 +31,7 @@ const NavMenu = () => {
 
   return (
     <AppBar position="static">
-      <Toolbar>
-        <Typography variant="h6" sx={{ flexGrow: 1 }}>
-          Mi Aplicación
-        </Typography>
-
+      <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
         {isMobile ? (
           <>
             <IconButton
@@ -46,7 +42,6 @@ const NavMenu = () => {
             >
               <MenuIcon />
             </IconButton>
-
             <Drawer
               anchor="left"
               open={mobileOpen}
@@ -60,6 +55,8 @@ const NavMenu = () => {
         ) : (
           <DesktopNavItems />
         )}
+
+        <Typography variant="h6">Mi Aplicación</Typography>
       </Toolbar>
     </AppBar>
   );

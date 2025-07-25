@@ -7,6 +7,7 @@ using Entities.DTOs.Match;
 using Entities.DTOs.Player;
 using Entities.DTOs.PlayerStatistic;
 using Entities.DTOs.Scorer;
+using Entities.DTOs.Stage;
 using Entities.DTOs.Team;
 using Entities.DTOs.TopScorer;
 using Entities.DTOs.Tournament;
@@ -18,6 +19,7 @@ using Entities.Models.Players;
 using Entities.Models.PlayerStatistics;
 using Entities.Models.Positions;
 using Entities.Models.Scorers;
+using Entities.Models.Stages;
 using Entities.Models.Teams;
 using Entities.Models.TopScorers;
 using Entities.Models.Tournaments;
@@ -59,8 +61,10 @@ public class DivisionProfile : Profile
     /// </summary>
     public DivisionProfile()
     {
-        _ = CreateMap<Division, DetailedDivisionResponse>()
-            .ForMember(dest => dest.MatchesByWeek, opt => opt.MapFrom<MatchesByWeekResolver>())
+        //_ = CreateMap<Division, DetailedDivisionResponse>()
+        //    .ForMember(dest => dest.MatchesByWeek, opt => opt.MapFrom<MatchesByWeekResolver>())
+        //    .ReverseMap();
+        _ = CreateMap<Division, DivisionResponse>()
             .ReverseMap();
 
         _ = CreateMap<Division, MinimalDivisionResponse>()
@@ -242,6 +246,23 @@ public class BlogPostProfile : Profile
 }
 
 /// <summary>
+/// AutoMapper profile for stage mappings.
+/// </summary>
+public class StageProfile: Profile
+{
+    /// <summary>
+    /// Initializes mapping configuration for stage entities.
+    /// </summary>
+    public StageProfile()
+    {
+        _ = CreateMap<CreateStageRequest, Stage>();
+        _ = CreateMap<Stage, StageResponse>()
+            .ReverseMap();
+        _ = CreateMap<UpdateStageRequest, Stage>();
+    }
+}
+
+/// <summary>
 /// AutoMapper profile for position mappings.
 /// </summary>
 public class PositionProfile : Profile
@@ -297,31 +318,31 @@ public class PaginatedResponseConverter<TSource, TDestination>
         };
 }
 
-/// <summary>
-/// Custom resolver to map matches grouped by week into MatchesByWeek.
-/// </summary>
-public class MatchesByWeekResolver : IValueResolver<Division, DetailedDivisionResponse, IDictionary<int, IEnumerable<MinimalMatchResponse>>>
-{
-    /// <summary>
-    /// Resolves the matches grouped by week into a dictionary.
-    /// Safely handles cases where the source Matches collection might be null or empty.
-    /// </summary>
-    /// <param name="source">The source Division object.</param>
-    /// <param name="destination">The destination DetailedDivisionResponse object.</param>
-    /// <param name="destMember">The destination member (MatchesByWeek).</param>
-    /// <param name="context">The resolution context.</param>
-    /// <returns>A dictionary of matches grouped by week, or an empty dictionary if no matches are present.</returns>
-    public IDictionary<int, IEnumerable<MinimalMatchResponse>> Resolve(
-        Division source,
-        DetailedDivisionResponse destination,
-        IDictionary<int, IEnumerable<MinimalMatchResponse>> destMember,
-        ResolutionContext context) => source.Matches == null || source.Matches.Count == 0
-            ? new Dictionary<int, IEnumerable<MinimalMatchResponse>>()
-            : (IDictionary<int, IEnumerable<MinimalMatchResponse>>) source.Matches
-            .Where(match => match.MatchWeek.HasValue)
-            .GroupBy(match => match.MatchWeek!.Value)
-            .ToDictionary(
-                group => group.Key,
-                group => context.Mapper.Map<IEnumerable<MinimalMatchResponse>>(group.ToList())
-            );
-}
+///// <summary>
+///// Custom resolver to map matches grouped by week into MatchesByWeek.
+///// </summary>
+//public class MatchesByWeekResolver : IValueResolver<Division, DetailedDivisionResponse, IDictionary<int, IEnumerable<MinimalMatchResponse>>>
+//{
+//    /// <summary>
+//    /// Resolves the matches grouped by week into a dictionary.
+//    /// Safely handles cases where the source Matches collection might be null or empty.
+//    /// </summary>
+//    /// <param name="source">The source Division object.</param>
+//    /// <param name="destination">The destination DetailedDivisionResponse object.</param>
+//    /// <param name="destMember">The destination member (MatchesByWeek).</param>
+//    /// <param name="context">The resolution context.</param>
+//    /// <returns>A dictionary of matches grouped by week, or an empty dictionary if no matches are present.</returns>
+//    //public IDictionary<int, IEnumerable<MinimalMatchResponse>> Resolve(
+//    //    Division source,
+//    //    DetailedDivisionResponse destination,
+//    //    IDictionary<int, IEnumerable<MinimalMatchResponse>> destMember,
+//    //    ResolutionContext context) => source.Matches == null || source.Matches.Count == 0
+//    //        ? new Dictionary<int, IEnumerable<MinimalMatchResponse>>()
+//    //        : (IDictionary<int, IEnumerable<MinimalMatchResponse>>) source.Matches
+//    //        .Where(match => match.Id)
+//    //        .GroupBy(match => match.MatchWeek!.Value)
+//    //        .ToDictionary(
+//    //            group => group.Key,
+//    //            group => context.Mapper.Map<IEnumerable<MinimalMatchResponse>>(group.ToList())
+//    //        );
+//}

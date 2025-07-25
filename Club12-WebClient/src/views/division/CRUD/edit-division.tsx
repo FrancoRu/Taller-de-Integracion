@@ -19,16 +19,15 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 export const EditDivision: React.FC = () => {
   const { division, putDivisionById, getDivisionsById } = useDivision();
-  const { divisionId, id: tournamentId } = useParams<{
-    divisionId: GUID;
+  const { id } = useParams<{
     id: GUID;
   }>();
 
   useEffect(() => {
-    if (divisionId) {
-      getDivisionsById(divisionId);
+    if (id) {
+      getDivisionsById(id);
     }
-  }, [divisionId]);
+  }, [id]);
 
   const { errors, setMessage } = useError();
   const [editDivision, setEditDivision] = useState<IPutDivisionRequest>({
@@ -45,29 +44,22 @@ export const EditDivision: React.FC = () => {
   const navigate = useNavigate();
 
   const handleCreate = async () => {
-    if (!division || !divisionId || !tournamentId) {
+    if (!division || !id) {
       setMessage(400, ['Hubo un problema, intentelo mas tarde.']);
     }
     if (!editDivision.name.trim()) {
       setMessage(400, ['El nombre es obligatorio']);
       return;
     }
-    const success = await putDivisionById(divisionId as GUID, editDivision);
+    const success = await putDivisionById(id as GUID, editDivision);
     if (success) {
       setMessage(200, ['División actualizada correctamente']);
-      navigate(`/torneo/${tournamentId}`);
+      navigate(`/torneo/${division?.tournamentId}`);
     }
   };
 
   return (
-    <CustomBox
-      sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-      }}
-    >
+    <CustomBox>
       <Card>
         <CardContent>
           <Typography

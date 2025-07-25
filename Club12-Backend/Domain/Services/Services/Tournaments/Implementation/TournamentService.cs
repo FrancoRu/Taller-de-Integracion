@@ -36,16 +36,16 @@ public class TournamentService(IGenericService<Tournament> _genericTournamentSer
         }
     }
 
-    public async Task<bool> UpdateTournamentAsync(Tournament tournamentEntity)
+    public async Task<Tournament> UpdateTournamentAsync(Tournament tournamentEntity)
     {
         try
         {
             await _genericTournamentService.UpdateAsync(tournamentEntity);
-            return true;
+            return tournamentEntity;
         }
-        catch
+        catch(Exception)
         {
-            return false;
+            throw;
         }
     }
 

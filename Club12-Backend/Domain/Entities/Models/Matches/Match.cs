@@ -2,6 +2,7 @@
 using Entities.Models.PlayerStatistics;
 using Entities.Models.PlayoffSeries;
 using Entities.Models.Scorers;
+using Entities.Models.Stages;
 using Entities.Models.Teams;
 using Entities.Models.Venues;
 
@@ -27,11 +28,6 @@ public class Match : EntityBase
     /// </summary>
     [Required]
     public required MatchType Type { get; set; }
-
-    /// <summary>
-    /// Represents the week number of the match in the fixture.
-    /// </summary>
-    public int? MatchWeek { get; set; }
 
     /// <summary>
     /// Represents the home team in the match.
@@ -86,40 +82,13 @@ public class Match : EntityBase
     /// <summary>
     /// Represents the division the match belongs to.
     /// </summary>
-    [ForeignKey(nameof(DivisionId))]
-    public Division Division { get; set; } = default!;
+    [ForeignKey(nameof(StageId))]
+    public Stage Stage { get; set; } = default!;
 
     /// <summary>
     /// Represents the ID of the division the match belongs to.
     /// </summary>
-    public Guid DivisionId { get; set; }
-
-    /// <summary>
-    /// Represents the venue where the match is played.
-    /// </summary>
-    [ForeignKey(nameof(VenueId))]
-    public Venue? Venue { get; set; }
-
-    /// <summary>
-    /// Represents the ID of the venue.
-    /// </summary>
-    public Guid? VenueId { get; set; }
-
-    /// <summary>
-    /// Represents the playoff series the match belongs to.
-    /// </summary>
-    [ForeignKey(nameof(PlayoffSeriesId))]
-    public PlayoffSerie? PlayoffSeries { get; set; }
-
-    /// <summary>
-    /// Represents the ID of the playoff series the match belongs to.
-    /// </summary>
-    public Guid? PlayoffSeriesId { get; set; }
-
-    /// <summary>
-    /// Represents the game number of the match in the playoff series.
-    /// </summary>
-    public int? GameNumber { get; set; }
+    public Guid StageId { get; set; }
 
     /// <summary>
     /// Represents the collection of player statistics associated with the match.

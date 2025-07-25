@@ -3,6 +3,7 @@ const routes = {
 
   blogposts: 'blogposts',
   divisions: 'divisions',
+  stages: 'stages',
   matches: 'matches',
   players: 'players',
   playersSanctions: 'players-sanctions',

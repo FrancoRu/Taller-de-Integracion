@@ -8,5 +8,5 @@ public class BaseEntityResponse
     /// <summary>
     /// The unique identifier of the entity.
     /// </summary>
-    public required string Id { get; set; }
+    public required Guid Id { get; set; }
 }

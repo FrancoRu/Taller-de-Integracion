@@ -16,12 +16,10 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { RenderPopupToDeleteTournament } from './CRUD/delete-tournament';
+import { DeleteTournament } from './CRUD/delete-tournament';
 import { RoutesNavigationViews } from '../core/routes-const';
-import { EditIcon, DeleteIcon, AddIcon } from '../core/MUI/icons/icons';
-import { IDivisionContextProps } from '@/modules/division/type/division';
-import { useDivision } from '@/modules/division/hook/division.hook';
-import { DivisionDashboard } from '../division/dashboard';
+import { EditIcon, DeleteIcon } from '../core/MUI/icons/icons';
+import { InfoDivision } from '../division/info';
 
 export const TournamentDashboard: React.FC = () => {
   const { id } = useParams<{ id: GUID }>();
@@ -30,8 +28,6 @@ export const TournamentDashboard: React.FC = () => {
 
   const { tournament, getTournamentById }: ITournamentContextProps =
     useTournament();
-  const { divisions }: IDivisionContextProps = useDivision();
-
   useEffect(() => {
     if (!id) {
       setMessage(400, ['Id not found']);
@@ -43,14 +39,16 @@ export const TournamentDashboard: React.FC = () => {
 
   useEffect(() => {
     (async () => {
-      const tournamentFound = await getTournamentById(id);
+      if (!tournament || tournament.id !== id) {
+        const tournamentFound = await getTournamentById(id);
 
-      if (!tournamentFound) {
-        setMessage(400, ['Tournament not found']);
-        navigate('/', { replace: true });
+        if (!tournamentFound) {
+          setMessage(400, ['Tournament not found']);
+          navigate('/', { replace: true });
+        }
       }
     })();
-  }, [id]);
+  }, [id, tournament]);
 
   if (!tournament) {
     return <LoadingIndicator />;
@@ -59,20 +57,7 @@ export const TournamentDashboard: React.FC = () => {
   return (
     <>
       <TournamentTitle {...tournament} />
-      <Card
-        sx={{
-          width: '98%',
-          mx: 'auto',
-          px: { xs: 2, sm: 3, md: 4 },
-        }}
-      >
-        <CardContent>
-          <Typography variant="h6">
-            Total de divisiones en el torneo: {divisions?.length}
-          </Typography>
-          <DivisionDashboard />
-        </CardContent>
-      </Card>
+      <InfoDivision {...tournament} />
       <Outlet />
     </>
   );
@@ -87,13 +72,7 @@ const TournamentTitle: React.FC<ITournamentResponse> = ({
   const [showPopup, setShowPopup] = useState(false);
 
   return (
-    <Card
-      sx={{
-        width: '98%',
-        mx: 'auto',
-        px: { xs: 2, sm: 3, md: 4 },
-      }}
-    >
+    <Card>
       <CardContent>
         <Stack
           direction="row"
@@ -102,7 +81,7 @@ const TournamentTitle: React.FC<ITournamentResponse> = ({
           mb={1}
         >
           <Typography variant="h6" fontWeight="bold">
-            Torneo: {name}
+            {name}
           </Typography>
 
           <Stack direction="row" spacing={1}>
@@ -122,17 +101,6 @@ const TournamentTitle: React.FC<ITournamentResponse> = ({
                 <DeleteIcon />
               </IconButton>
             </Tooltip>
-
-            <Tooltip title="Agregar División">
-              <IconButton
-                color="success"
-                onClick={() =>
-                  navigate(`${RoutesNavigationViews.Division}/crear`)
-                }
-              >
-                <AddIcon />
-              </IconButton>
-            </Tooltip>
           </Stack>
         </Stack>
 
@@ -144,7 +112,7 @@ const TournamentTitle: React.FC<ITournamentResponse> = ({
       </CardContent>
 
       {showPopup && (
-        <RenderPopupToDeleteTournament
+        <DeleteTournament
           id={id}
           fn={deleteTournamentById}
           onClose={() => setShowPopup(false)}

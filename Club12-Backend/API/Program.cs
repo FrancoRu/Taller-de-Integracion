@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Persistance;
 
 using Serilog;
+using System.Text.Json.Serialization;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 

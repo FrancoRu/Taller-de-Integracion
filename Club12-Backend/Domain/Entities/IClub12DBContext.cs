@@ -5,6 +5,7 @@ using Entities.Models.Players;
 using Entities.Models.PlayerSanctions;
 using Entities.Models.PlayerStatistics;
 using Entities.Models.Staffs;
+using Entities.Models.Stages;
 using Entities.Models.Teams;
 using Entities.Models.Tournaments;
 using Entities.Models.Users;
@@ -75,4 +76,9 @@ public interface IClub12DBContext
     /// <see cref="DbSet{Staff}"/> of staffs in the system.
     /// </summary>
     DbSet<Staff> Staffs { get; }
+
+    /// <summary>
+    /// <see cref="DbSet{Stage}"/> of Stages in the system.
+    /// </summary>
+    DbSet<Stage> Stages { get; }
 }

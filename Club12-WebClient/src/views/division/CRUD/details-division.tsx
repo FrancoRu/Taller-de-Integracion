@@ -4,12 +4,7 @@ import {
   IDivisionContextProps,
   IDivisionResponse,
 } from '@/modules/division/type/division';
-import { CustomBox } from '@/views/core/MUI/customsThemes/CustomBox';
-import { EditIcon, DeleteIcon, AddIcon } from '@/views/core/MUI/icons/icons';
-import { RoutesNavigationViews } from '@/views/core/routes-const';
-import { Fixture } from '@/views/division/common/fixture';
-import { Positions } from '@/views/division/common/positions';
-import { RenderPopupToDeleteTournament } from '@/views/tournament/CRUD/delete-tournament';
+import { EditIcon, DeleteIcon } from '@/views/core/MUI/icons/icons';
 import {
   Card,
   CardContent,
@@ -20,21 +15,19 @@ import {
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate, useParams } from 'react-router-dom';
-import { RenderPopupToDeleteDivision } from './delete-division';
-import { IStageResponse } from '@/modules/stage/type/stage';
-import { DivisionDashboard } from '../dashboard';
+import { DeleteDivision } from './delete-division';
+import { InfoStage } from '@/views/stage/info';
 
 export const DetailDidivion: React.FC = () => {
-  const { divisionId } = useParams<{ divisionId: GUID }>();
+  const { id } = useParams<{ id: GUID }>();
   const { division, getDivisionsById } = useDivision();
-
-  if (!divisionId) {
+  if (!id) {
     return null;
   }
 
   useEffect(() => {
     (async () => {
-      await getDivisionsById(divisionId);
+      await getDivisionsById(id);
     })();
   }, []);
 
@@ -45,37 +38,15 @@ export const DetailDidivion: React.FC = () => {
   return (
     <>
       <RenderDivisionDetails {...division} />
-      <Card
-        sx={{
-          width: '98%',
-          mx: 'auto',
-          px: { xs: 2, sm: 3, md: 4 },
-        }}
-      >
-        <CardContent>
-          <Typography variant="h6">
-            Total de Fechas en la division: {division.stages?.length ?? 0}
-          </Typography>
-          <NoStagesMessage></NoStagesMessage>
-          {/* <DivisionDashboard /> */}
-        </CardContent>
-      </Card>
+      <InfoStage {...division} />
       <Outlet />
     </>
   );
 };
 
-const NoStagesMessage: React.FC = () => (
-  <CustomBox>
-    <Typography>
-      No se encontraron fechas cargadas para esta division todavía
-    </Typography>
-  </CustomBox>
-);
-
 const RenderDivisionDetails: React.FC<IDivisionResponse> = ({ id, name }) => {
   const navigate = useNavigate();
-  const [showPopup, setShowPopup] = useState<boolean>(false);
+  const [showPopupDelete, setShowPopupDelete] = useState<boolean>(false);
   const { deleteDivisionsById }: IDivisionContextProps = useDivision();
   return (
     <Card
@@ -93,60 +64,35 @@ const RenderDivisionDetails: React.FC<IDivisionResponse> = ({ id, name }) => {
           mb={1}
         >
           <Typography variant="h6" fontWeight="bold">
-            Division: {name}
+            División: {name}
           </Typography>
 
           <Stack direction="row" spacing={1}>
-            <Tooltip title="Editar Division">
-              <IconButton
-                color="primary"
-                onClick={() =>
-                  navigate(`/${RoutesNavigationViews.Division}/${id}/editar`)
-                }
-              >
+            <Tooltip title="Editar División">
+              <IconButton color="primary" onClick={() => navigate(`editar`)}>
                 <EditIcon />
               </IconButton>
             </Tooltip>
 
-            <Tooltip title="Eliminar Division">
-              <IconButton color="error" onClick={() => setShowPopup(true)}>
-                <DeleteIcon />
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title="Agregar Fecha">
+            <Tooltip title="Eliminar División">
               <IconButton
-                color="success"
-                onClick={() =>
-                  navigate(`/${RoutesNavigationViews.Stage}/crear`)
-                }
+                color="error"
+                onClick={() => setShowPopupDelete(true)}
               >
-                <AddIcon />
+                <DeleteIcon />
               </IconButton>
             </Tooltip>
           </Stack>
         </Stack>
       </CardContent>
 
-      {showPopup && (
-        <RenderPopupToDeleteDivision
+      {showPopupDelete && (
+        <DeleteDivision
           id={id}
           fn={deleteDivisionsById}
-          onClose={() => setShowPopup(false)}
+          onClose={() => setShowPopupDelete(false)}
         />
       )}
     </Card>
-    // <Card>
-    //   <CardContent>
-    //     {!stages || stages.length === 0 ? (
-    //       <NoStagesMessage />
-    //     ) : (
-    //       <>
-    //         <Fixture stages={stages} />
-    //         <Positions stages={stages} />
-    //       </>
-    //     )}
-    //   </CardContent>
-    // </Card>
   );
 };

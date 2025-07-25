@@ -7,6 +7,7 @@ import {
 import { useError } from '@/modules/error/hooks/error.hock';
 import { IErrorContextProp } from '@/modules/error/type/error';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
+import { CustomBox } from '@/views/core/MUI/customsThemes/CustomBox';
 import {
   Card,
   CardContent,
@@ -48,51 +49,53 @@ export const CreateDivision: React.FC = () => {
   };
 
   return (
-    <Card>
-      <CardContent>
-        <Typography
-          variant="h4"
-          gutterBottom
-          align="center"
-          color={theme.palette.primary.main}
-        >
-          Crear Division
-        </Typography>
+    <CustomBox>
+      <Card>
+        <CardContent>
+          <Typography
+            variant="h4"
+            gutterBottom
+            align="center"
+            color={theme.palette.primary.main}
+          >
+            Crear Division
+          </Typography>
 
-        {errors && errors.length > 0 && (
-          <>
-            {errors.map((e, i) => (
-              <Typography
-                key={i}
-                color="error"
-                variant="body2"
-                align="center"
-                gutterBottom
-              >
-                {e}
-              </Typography>
-            ))}
-          </>
-        )}
-        <TextField
-          fullWidth
-          label="Nombre"
-          name="name"
-          variant="outlined"
-          margin="normal"
-          value={division.name}
-          onChange={e => setDivision({ ...division, name: e.target.value })}
-        />
+          {errors && errors.length > 0 && (
+            <>
+              {errors.map((e, i) => (
+                <Typography
+                  key={i}
+                  color="error"
+                  variant="body2"
+                  align="center"
+                  gutterBottom
+                >
+                  {e}
+                </Typography>
+              ))}
+            </>
+          )}
+          <TextField
+            fullWidth
+            label="Nombre"
+            name="name"
+            variant="outlined"
+            margin="normal"
+            value={division.name}
+            onChange={e => setDivision({ ...division, name: e.target.value })}
+          />
 
-        <Button
-          fullWidth
-          variant="contained"
-          color="primary"
-          onClick={handleCreate}
-        >
-          Crear
-        </Button>
-      </CardContent>
-    </Card>
+          <Button
+            fullWidth
+            variant="contained"
+            color="primary"
+            onClick={handleCreate}
+          >
+            Crear
+          </Button>
+        </CardContent>
+      </Card>
+    </CustomBox>
   );
 };

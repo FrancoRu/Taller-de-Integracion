@@ -48,7 +48,6 @@ export const EditTournament: React.FC = () => {
     }
 
     await putTournamentById(tournament?.id, editTournament);
-
     navigate(`/${RoutesNavigationViews.Tournament}/${tournament.id}`);
   };
 
