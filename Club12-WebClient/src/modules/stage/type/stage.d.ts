@@ -165,9 +165,9 @@ export interface IAddStageRequest {
 
   /**
    * The type of the stage, such as "Group" or "Elimination".
-   * @type {string}
+   * @type {StageType}
    */
-  stageType: string;
+  stageType: StageType;
 
   /**
    * Indicates whether the stage is currently active.

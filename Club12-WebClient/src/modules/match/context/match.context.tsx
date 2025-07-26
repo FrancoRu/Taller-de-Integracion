@@ -1,16 +1,17 @@
-import { AxiosError } from 'axios';
-import { createContext, ReactNode } from 'react';
-import { GenericResponsePagination } from '../../core/types/types';
+import { AxiosError, AxiosResponse } from 'axios';
+import { createContext, ReactNode, useEffect, useState } from 'react';
+import { GenericResponsePagination, GUID } from '../../core/types/types';
 import { useError } from '../../error/hooks/error.hock';
 import { matchService } from '../service/match.service';
 import {
   AddMatchRequest,
   IMatchContextProps,
   MatchFiltered,
-  MatchResponse,
+  IMatchResponse,
   PutMatchDateRequest,
   PutMatchScoreRequest,
 } from '../type/match';
+import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 
 export const MatchContext = createContext<IMatchContextProps | undefined>(
   undefined
@@ -19,13 +20,27 @@ export const MatchContext = createContext<IMatchContextProps | undefined>(
 export const MatchProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const { setError } = useError();
+  const [match, setMatch] = useState<IMatchResponse | null>(null);
+  const [matches, setMatches] = useState<IMatchResponse[] | null>(null);
+
+  const { setError, setMessage } = useError();
+
+  useEffect(() => {
+    if (!match) return;
+
+    setMatches(prev => upsertListById(prev, match));
+  }, [match]);
 
   const addMatch = async (
     match: AddMatchRequest
-  ): Promise<MatchResponse | void> => {
+  ): Promise<IMatchResponse | void> => {
     try {
-      await matchService.addMatch(match);
+      const res: AxiosResponse<IMatchResponse> =
+        await matchService.addMatch(match);
+      if (res) {
+        setMatch(res.data);
+        setMessage(res.status, ['El partido fue creado satisfactoriamente.']);
+      }
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
@@ -65,7 +80,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const getMatchById = async (id: GUID): Promise<MatchResponse | void> => {
+  const getMatchById = async (id: GUID): Promise<IMatchResponse | void> => {
     try {
       await matchService.getMatchById(id);
     } catch (error: unknown) {
@@ -79,9 +94,13 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
 
   const getMatchByFilter = async (
     filter: MatchFiltered
-  ): Promise<GenericResponsePagination<MatchResponse> | void> => {
+  ): Promise<GenericResponsePagination<IMatchResponse> | void> => {
     try {
-      await matchService.getMatchByFilter(filter);
+      const res: AxiosResponse<GenericResponsePagination<IMatchResponse>> =
+        await matchService.getMatchByFilter(filter);
+      if (res) {
+        setMatches(res.data.items);
+      }
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
@@ -102,13 +121,29 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
+  const generateMatchesAutomatically = async (id: GUID): Promise<boolean> => {
+    try {
+      console.log(id);
+      return true;
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        setError(error);
+      } else {
+        setError(new AxiosError('An unknown error occurred'));
+      }
+      return false; // en caso de error
+    }
+  };
   const container: IMatchContextProps = {
+    match,
+    matches,
     addMatch,
     putMatchDateByMatchId,
     putMatchScoreByMatchId,
     getMatchById,
     getMatchByFilter,
     deleteMatchById,
+    generateMatchesAutomatically,
   };
   return (
     <MatchContext.Provider value={container}>{children}</MatchContext.Provider>

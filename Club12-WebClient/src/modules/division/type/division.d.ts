@@ -4,7 +4,7 @@ import {
   GenericResponsePagination,
   GUID,
 } from '../../core/types/types.d';
-import { MatchResponse } from '../../match/type/match.d';
+import { IMatchResponse } from '../../match/type/match.d';
 
 /**
  * Context properties and methods for managing divisions in a React application.

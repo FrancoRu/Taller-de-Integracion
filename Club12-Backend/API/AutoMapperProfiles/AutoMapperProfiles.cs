@@ -258,6 +258,7 @@ public class StageProfile: Profile
         _ = CreateMap<CreateStageRequest, Stage>();
         _ = CreateMap<Stage, StageResponse>()
             .ReverseMap();
+        
         _ = CreateMap<UpdateStageRequest, Stage>();
     }
 }

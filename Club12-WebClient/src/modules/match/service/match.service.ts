@@ -10,7 +10,7 @@ import {
 import {
   AddMatchRequest,
   MatchFiltered,
-  MatchResponse,
+  IMatchResponse,
   PutMatchDateRequest,
   PutMatchScoreRequest,
 } from '../type/match';
@@ -22,12 +22,12 @@ export const matchService = {
   /**
    * Adds a new match.
    * @param {AddMatchRequest} match - The match data to be added.
-   * @returns {Promise<AxiosResponse<MatchResponse>>} - A promise that resolves with the server response.
+   * @returns {Promise<AxiosResponse<IMatchResponse>>} - A promise that resolves with the server response.
    */
   addMatch: async (
     match: AddMatchRequest
-  ): Promise<AxiosResponse<MatchResponse>> =>
-    sendPost<MatchResponse>(routes.matches, match),
+  ): Promise<AxiosResponse<IMatchResponse>> =>
+    sendPost<IMatchResponse>(routes.matches, match),
 
   /**
    * Updates the score of an existing match.
@@ -45,7 +45,7 @@ export const matchService = {
    * Updates the date of an existing match.
    * @param {string} id - The ID of the match to update.
    * @param {PutMatchDateRequest} matchDate - The new match date data.
-   * @returns {Promise<AxiosResponse<MatchResponse>>} - A promise that resolves with the server response.
+   * @returns {Promise<AxiosResponse<IMatchResponse>>} - A promise that resolves with the server response.
    */
   putMatchDateByMatchId: async (
     id: GUID,
@@ -56,25 +56,25 @@ export const matchService = {
   /**
    * Retrieves a match by its ID.
    * @param {string} id - The ID of the match to retrieve.
-   * @returns {Promise<AxiosResponse<MatchResponse>>} - A promise that resolves with the match data.
+   * @returns {Promise<AxiosResponse<IMatchResponse>>} - A promise that resolves with the match data.
    */
-  getMatchById: async (id: GUID): Promise<AxiosResponse<MatchResponse>> =>
-    sendGet<MatchResponse>(`${routes.matches}/${id}`),
+  getMatchById: async (id: GUID): Promise<AxiosResponse<IMatchResponse>> =>
+    sendGet<IMatchResponse>(`${routes.matches}/${id}`),
 
   /**
    * Retrieves matches based on the provided filter.
    * @param {MatchFiltered} filter - The filter to apply when retrieving matches.
-   * @returns {Promise<AxiosResponse<GenericResponsePagination<MatchResponse>>>} - A promise that resolves with a list of matches matching the filter.
+   * @returns {Promise<AxiosResponse<GenericResponsePagination<IMatchResponse>>>} - A promise that resolves with a list of matches matching the filter.
    */
   getMatchByFilter: async (
     filter: MatchFiltered
-  ): Promise<AxiosResponse<GenericResponsePagination<MatchResponse>>> =>
-    sendGet<GenericResponsePagination<MatchResponse>>(routes.matches, filter),
+  ): Promise<AxiosResponse<GenericResponsePagination<IMatchResponse>>> =>
+    sendGet<GenericResponsePagination<IMatchResponse>>(routes.matches, filter),
 
   /**
    * Deletes a match by its ID.
    * @param {string} id - The ID of the match to delete.
-   * @returns {Promise<AxiosResponse<MatchResponse>>} - A promise that resolves when the match is deleted.
+   * @returns {Promise<AxiosResponse<IMatchResponse>>} - A promise that resolves when the match is deleted.
    */
   deleteMatchById: async (id: GUID): Promise<AxiosResponse<void>> =>
     sendDelete<void>(`${routes.matches}/${id}`),

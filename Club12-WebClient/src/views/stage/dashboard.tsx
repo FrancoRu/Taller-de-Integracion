@@ -130,17 +130,21 @@ const RenderStage: React.FC<IStageResponse> = ({
 
           <Stack direction="row" spacing={1} justifyContent="center">
             <Tooltip title="Seleccionar Etapa">
-              <IconButton
-                color="primary"
-                disabled={!isActive || isAnimating}
-                onClick={handleNavigate}
-                sx={{
-                  transition: 'transform 0.5s ease',
-                  transform: isAnimating ? 'translateX(10px)' : 'translateX(0)',
-                }}
-              >
-                <ArrowForwardIcon titleAccess="Seleccionar Etapa" />
-              </IconButton>
+              <span>
+                <IconButton
+                  color="primary"
+                  disabled={!isActive || isAnimating}
+                  onClick={handleNavigate}
+                  sx={{
+                    transition: 'transform 0.5s ease',
+                    transform: isAnimating
+                      ? 'translateX(10px)'
+                      : 'translateX(0)',
+                  }}
+                >
+                  <ArrowForwardIcon titleAccess="Seleccionar Etapa" />
+                </IconButton>
+              </span>
             </Tooltip>
 
             <Tooltip title="Editar Etapa">

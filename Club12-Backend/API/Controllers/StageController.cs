@@ -75,23 +75,21 @@ public class StageController(IStageService _stageService, IMapper _mapper) : Con
     /// Updates an existing Stage.
     /// </summary>
     /// <param name="id">The id of the Stage to update.</param>
-    /// <param name="updatedStage">The updated Stage data.</param>
+    /// <param name="stageRequest">The updated Stage data.</param>
     /// <returns>The updated Stage entity.</returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Stage))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<Stage>> UpdateStage(Guid id, [FromBody] Stage updatedStage)
+    public async Task<ActionResult<Stage>> UpdateStage(Guid id, UpdateStageRequest stageRequest)
     {
-        if (updatedStage == null || id != updatedStage.Id)
-            return BadRequest("Invalid Stage data.");
-
         Stage? existingStage = await _stageService.GetStageByIdAsync(id);
         if (existingStage == null)
             return NotFound($"Stage with id {id} not found.");
-
-        Stage result = await _stageService.UpdateStageAsync(updatedStage);
+        
+        _mapper.Map(stageRequest, existingStage);
+        Stage result = await _stageService.UpdateStageAsync(existingStage);
         return Ok(result);
     }
 

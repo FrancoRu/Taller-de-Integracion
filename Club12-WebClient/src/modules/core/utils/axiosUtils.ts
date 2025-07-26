@@ -136,22 +136,22 @@ const sendRequest = async <T>(
     });
     return result;
   } catch (error: unknown) {
-    throwError(error);
-    throw new Error('Unexpected error during request execution');
+    throw throwError(error);
   }
 };
 
 /**
  * Throws an appropriate error based on its type.
  * @param {unknown} error - The error object.
+ * @returns {AxiosError | Error} - The error object processed.
  */
-const throwError = (error: unknown) => {
+const throwError = (error: unknown): AxiosError | Error => {
   switch (true) {
     case axios.isAxiosError(error):
-      throw error;
+      return error;
 
     case error instanceof Error:
-      throw new AxiosError(
+      return new AxiosError(
         error.message,
         undefined,
         undefined,
@@ -160,7 +160,7 @@ const throwError = (error: unknown) => {
       );
 
     default:
-      throw new AxiosError('An unknown error occurred');
+      return new AxiosError('An unknown error occurred');
   }
 };
 
@@ -226,9 +226,8 @@ export const sendGet = async <T>(
 export const sendDelete = async <T>(
   resource: string,
   configOverride?: ConfigOverride
-): Promise<AxiosResponse<T>> => {
-  return await sendRequest<T>('DELETE', resource, configOverride);
-};
+): Promise<AxiosResponse<T>> =>
+  await sendRequest<T>('DELETE', resource, configOverride);
 
 /**
  * Downloads a file from the server.

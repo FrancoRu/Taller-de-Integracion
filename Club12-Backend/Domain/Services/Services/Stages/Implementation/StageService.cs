@@ -10,7 +10,7 @@ namespace Services.Services.Stages.Implementation;
 
 public class StageService(IGenericService<Stage> _genericStageService) : IStageService
 {
-    public async Task<Stage?> GetStageByIdAsync(Guid stageId) 
+    public async Task<Stage?> GetStageByIdAsync(Guid stageId)
         => await _genericStageService.FilterByExpression(stage => stage.Id == stageId).FirstOrDefaultAsync();
 
     public async Task<PaginatedResponse<Stage>> GetAllStagesAsync(GetStagesFilteredRequest filter)
@@ -55,8 +55,16 @@ public class StageService(IGenericService<Stage> _genericStageService) : IStageS
 
     public async Task<Stage> CreateStageAsync(Stage stageEntity)
     {
-        await _genericStageService.InsertAsync(stageEntity);
-        return stageEntity;
+        bool existStage = await _genericStageService.ExistAny(
+            s => s.Name == stageEntity.Name && s.DivisionId == stageEntity.DivisionId);
+
+        if (!existStage)
+        {
+            await _genericStageService.InsertAsync(stageEntity);
+            return stageEntity;
+        }
+
+        throw new InvalidOperationException($"Stage with name '{stageEntity.Name}' already exists in the current division.");
     }
 
 }

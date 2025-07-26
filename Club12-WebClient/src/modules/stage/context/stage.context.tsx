@@ -40,7 +40,9 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
         setStage(res.data);
         setMessage(res.status, ['Fase creada exitosamente']);
       }
+      return res.data;
     } catch (error: unknown) {
+      console.log(error);
       if (error instanceof AxiosError) {
         setError(error);
       } else {
@@ -56,11 +58,8 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const res: AxiosResponse<IStageResponse> =
         await stageService.putStageById(id, stageRequest);
-
-      if (res && res.status === 200) {
-        setStage(res.data);
-        return true;
-      }
+      setStage(res.data);
+      return true;
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
@@ -119,6 +118,7 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
       await stageService.deleteStagesById(id);
       setStage(null);
       setStages(prev => (prev ? prev.filter(e => e.id !== id) : null));
+      setMessage(204, ['La etapa ha sido eliminada.']);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);

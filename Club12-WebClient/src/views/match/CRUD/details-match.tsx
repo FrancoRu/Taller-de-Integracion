@@ -1,6 +1,8 @@
 import { GUID } from '@/modules/core/types/types';
-import { useStage } from '@/modules/stage/hook/stage.hook';
-import { IStageContextProps, IStageResponse } from '@/modules/stage/type/stage';
+import { useMatch } from '@/modules/match/hook/match.hook';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { IMatchContextProps, IMatchResponse } from '@/modules/match/type/match';
 import { EditIcon, DeleteIcon } from '@/views/core/MUI/icons/icons';
 import {
   Card,
@@ -10,39 +12,39 @@ import {
   Tooltip,
   IconButton,
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { DeleteStage } from './delete-stage';
-import { InfoMatch } from '@/views/match/info';
+import { DeleteMatch } from './delete-match';
 
-export const DetailStage: React.FC = () => {
+export const DetailMatch: React.FC = () => {
   const { id } = useParams<{ id: GUID }>();
-  const { stage, getStagesById } = useStage();
+  const { match, getMatchById } = useMatch();
   if (!id) {
     return null;
   }
 
   useEffect(() => {
     (async () => {
-      await getStagesById(id);
+      await getMatchById(id);
     })();
   }, []);
 
-  if (!stage) {
+  if (!match) {
     return null;
   }
   return (
     <>
-      <RenderStageDetails {...stage} />
-      <InfoMatch {...stage} />
+      <RenderMatchDetails {...match} />
     </>
   );
 };
 
-const RenderStageDetails: React.FC<IStageResponse> = ({ id, name }) => {
+const RenderMatchDetails: React.FC<IMatchResponse> = ({
+  id,
+  homeTeamName,
+  visitorTeamName,
+}) => {
   const navigate = useNavigate();
   const [showPopupDelete, setShowPopupDelete] = useState<boolean>(false);
-  const { deleteStagesById }: IStageContextProps = useStage();
+  const { deleteMatchById }: IMatchContextProps = useMatch();
   return (
     <Card
       sx={{
@@ -59,7 +61,7 @@ const RenderStageDetails: React.FC<IStageResponse> = ({ id, name }) => {
           mb={1}
         >
           <Typography variant="h6" fontWeight="bold">
-            Etapa: {name}
+            Partido: {homeTeamName} - {visitorTeamName}
           </Typography>
 
           <Stack direction="row" spacing={1}>
@@ -82,9 +84,9 @@ const RenderStageDetails: React.FC<IStageResponse> = ({ id, name }) => {
       </CardContent>
 
       {showPopupDelete && (
-        <DeleteStage
+        <DeleteMatch
           id={id}
-          fn={deleteStagesById}
+          fn={deleteMatchById}
           onClose={() => setShowPopupDelete(false)}
         />
       )}

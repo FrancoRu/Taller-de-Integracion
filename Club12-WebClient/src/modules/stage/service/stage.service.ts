@@ -62,5 +62,5 @@ export const stageService = {
    * @returns {Promise<AxiosResponse<void>>} The response indicating the deletion result.
    */
   deleteStagesById: async (id: GUID): Promise<AxiosResponse<void>> =>
-    sendDelete(`${routes.divisions}/${id}`),
+    sendDelete(`${routes.stages}/${id}`),
 };

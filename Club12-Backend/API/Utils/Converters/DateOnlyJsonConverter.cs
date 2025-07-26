@@ -24,7 +24,7 @@ public class DateOnlyJsonConverter : JsonConverter<DateTime>
     /// <returns>A <see cref="DateTime"/> parsed from the JSON string.</returns>
     public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        return DateTime.ParseExact(reader.GetString()!, Format, CultureInfo.InvariantCulture);
+        return reader.GetDateTime();
     }
 
     /// <summary>

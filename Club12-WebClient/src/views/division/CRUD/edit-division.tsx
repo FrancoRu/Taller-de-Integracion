@@ -121,7 +121,7 @@ export const EditDivision: React.FC = () => {
             color="primary"
             onClick={handleCreate}
           >
-            Editar
+            Guardar Cambios
           </Button>
         </CardContent>
       </Card>

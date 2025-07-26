@@ -6,4 +6,5 @@ export enum RoutesNavigationViews {
   Tournament = 'torneo',
   Division = 'division',
   Stage = 'etapa',
+  Match = 'partido',
 }

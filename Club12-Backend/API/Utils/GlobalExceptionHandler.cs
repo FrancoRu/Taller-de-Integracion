@@ -46,6 +46,7 @@ public class GlobalExceptionHandler : IExceptionHandler
 
             IResult result = Results.Problem(
                 title: title,
+                detail: exceptionDetails.Message,
                 statusCode: statusCode,
                 extensions: new Dictionary<string, object?> { ["traceId"] = traceId }
             );

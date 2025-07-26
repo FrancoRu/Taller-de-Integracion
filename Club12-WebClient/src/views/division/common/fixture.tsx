@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import Slide from '@mui/material/Slide';
-import { MatchResponse, TypeMatch } from '@/modules/match/type/match.d';
+import { IMatchResponse, TypeMatch } from '@/modules/match/type/match.d';
 import dayjs from 'dayjs';
 import { IAllStagePropsView } from '@/modules/stage/type/stage.d';
 
@@ -126,7 +126,7 @@ export const Fixture: React.FC<IAllStagePropsView> = ({ stages }) => {
     return [...matches, ...filler];
   }, [currentDivision, maxPageSize]);
 
-  const columns: GridColDef<MatchResponse>[] = useMemo(
+  const columns: GridColDef<IMatchResponse>[] = useMemo(
     () => [
       {
         field: 'date',

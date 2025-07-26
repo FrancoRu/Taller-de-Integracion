@@ -113,7 +113,7 @@ export const EditTournament: React.FC = () => {
           color="primary"
           onClick={handleCreate}
         >
-          Editar
+          Guardar Cambios
         </Button>
       </CardContent>
     </Card>

@@ -169,4 +169,9 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
         await _genericDao.InsertAsync(entities);
         await _genericDao.SaveAsync();
     }
+
+    public virtual async Task<bool> ExistAny(Expression<Func<TEntity, bool>> expression)
+    {
+        return await _genericDao.Where(expression).AsNoTracking().AnyAsync();
+    }
 }

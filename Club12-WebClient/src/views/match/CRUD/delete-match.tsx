@@ -2,14 +2,14 @@ import { GUID } from '@/modules/core/types/types';
 import { useEffect } from 'react';
 import Swal from 'sweetalert2';
 
-export const DeleteStage: React.FC<{
+export const DeleteMatch: React.FC<{
   id: GUID;
   fn: (id: GUID) => Promise<void>;
   onClose: () => void;
 }> = ({ id, fn, onClose }) => {
   useEffect(() => {
     Swal.fire({
-      title: '¿Está usted seguro de querer eliminar esta etapa?',
+      title: '¿Está usted seguro de querer eliminar este partido?',
       text: '¡Usted no podrá revertir este cambio!',
       icon: 'warning',
       showCancelButton: true,

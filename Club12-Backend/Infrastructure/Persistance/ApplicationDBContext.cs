@@ -21,7 +21,7 @@ namespace Persistance;
 /// <summary>
 /// This is a placeholder interface that inherits from all domain DBContext interfaces.
 /// </summary>
-internal interface IDomainDBContexts : IClub12DBContext
+public interface IDomainDBContexts : IClub12DBContext
 {
 
 }
@@ -43,6 +43,10 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
                 value => value.ToString(),
                 value => (StageType) Enum.Parse(typeof(StageType), value)
             );
+        modelBuilder.Entity<Stage>()
+            .HasIndex(s => new { s.Name, s.DivisionId })
+            .IsUnique()
+            .HasDatabaseName("CONSTRAINT_UNIQUE_STAGE_NAME_AND_DIVISIONID");
 
         modelBuilder.Entity<Staff>()
             .Property(staff => staff.Type)

@@ -1,3 +1,4 @@
+import { GUID } from '@/modules/core/types/types';
 import { VenueResponse } from '@/modules/venue/type/venue';
 
 /**
@@ -6,12 +7,14 @@ import { VenueResponse } from '@/modules/venue/type/venue';
  * @interface IMatchContextProps
  */
 export interface IMatchContextProps {
+  match: IMatchResponse | null;
+  matches: IMatchResponse[] | null;
   /**
    * Adds a new match to the system.
    * @param match The details of the match to add.
    * @returns A promise that resolves with the response containing the newly added match.
    */
-  addMatch(match: AddMatchRequest): Promise<MatchResponse | void>;
+  addMatch(match: AddMatchRequest): Promise<IMatchResponse | void>;
 
   /**
    * Updates the score of an existing match.
@@ -40,7 +43,7 @@ export interface IMatchContextProps {
    * @param id The ID of the match to fetch.
    * @returns A promise that resolves with the match details.
    */
-  getMatchById(id: GUID): Promise<MatchResponse | void>;
+  getMatchById(id: GUID): Promise<IMatchResponse | void>;
 
   /**
    * Fetches matches based on filters and pagination.
@@ -49,7 +52,7 @@ export interface IMatchContextProps {
    */
   getMatchByFilter(
     filter: MatchFiltered
-  ): Promise<GenericResponsePagination<MatchResponse> | void>;
+  ): Promise<GenericResponsePagination<IMatchResponse> | void>;
 
   /**
    * Deletes a match by its ID.
@@ -57,6 +60,14 @@ export interface IMatchContextProps {
    * @returns A promise that resolves when the match is successfully deleted.
    */
   deleteMatchById(id: GUID): Promise<void>;
+
+  /**
+   * Automatically generates matches for the specified division or tournament.
+   *
+   * @param {GUID} id - The unique identifier of the stage for which the stages will be generated.
+   * @returns {Promise<boolean>} A promise that resolves to true if the stages were successfully generated, or false otherwise.
+   */
+  generateMatchesAutomatically(id: GUID): Promise<boolean>;
 }
 
 /**
@@ -111,7 +122,7 @@ export interface AddMatchRequest {
  * The response structure for a match, including team details, scores, and match results.
  * @interface MatchResponse
  */
-export interface MatchResponse {
+export interface IMatchResponse {
   /**
    * The unique identifier of the match.
    * @type {string}
@@ -231,10 +242,10 @@ export interface MatchFiltered extends Filtered {
   visitorTeamName?: string;
 
   /**
-   * The name of the division the match belongs to.
-   * @type {string}
+   * The id of the stage the match belongs to.
+   * @type {GUID}
    */
-  divisionName?: string;
+  stageId?: GUID;
 
   /**
    * The type of match (Regular or Playoff).

@@ -157,4 +157,11 @@ public interface IGenericService<TEntity> where TEntity : EntityBase
     /// <param name="entities">The collection of entities to be inserted asynchronously.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     Task InsertRangeAsync(ICollection<TEntity> entities);
+
+    /// <summary>
+    /// Checks asynchronously if any entities of type <typeparamref name="TEntity"/> satisfy the specified predicate.
+    /// </summary>
+    /// <param name="expression">The filter expression to apply.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains true if any entities match the predicate; otherwise, false.</returns>
+    Task<bool> ExistAny(Expression<Func<TEntity, bool>> expression);
 }

@@ -15,9 +15,4 @@ public class UpdateStageRequest
     /// If null, the default should be true.
     /// </summary>
     public bool? IsActive { get; set; }
-
-    /// <summary>
-    /// Optional new Division ID if the stage is moved to a different division.
-    /// </summary>
-    public int? DivisionId { get; set; }
 }

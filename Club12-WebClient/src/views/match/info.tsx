@@ -1,3 +1,6 @@
+import { IStageResponse } from '@/modules/stage/type/stage';
+import React, { useEffect, useState } from 'react';
+import { RoutesNavigationViews } from '../core/routes-const';
 import {
   Card,
   CardContent,
@@ -6,23 +9,20 @@ import {
   Tooltip,
   IconButton,
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
-import { AddIcon, SettingsSuggestIcon } from '../core/MUI/icons/icons';
-import { RoutesNavigationViews } from '../core/routes-const';
-import { StageDashboard } from './dashboard';
-import { NoStagesMessage } from './NoStageMessage';
 import { useNavigate } from 'react-router-dom';
-import { GenerateStage } from './CRUD/generate-stage';
-import { IDivisionResponse } from '@/modules/division/type/division';
-import { useStage } from '@/modules/stage/hook/stage.hook';
+import { AddIcon, SettingsSuggestIcon } from '../core/MUI/icons/icons';
+import { useMatch } from '@/modules/match/hook/match.hook';
+import { MatchDashboard } from './dashboard';
+import { NoMatchesMessage } from './NoMatchMessage';
+import { GenerateMatch } from './CRUD/generate-match';
 
-export const InfoStage: React.FC<IDivisionResponse> = ({ name, id }) => {
+export const InfoMatch: React.FC<IStageResponse> = ({ id, name }) => {
   const navigate = useNavigate();
   const [showPopup, setShowPopup] = useState<boolean>(false);
-  const { stages, getStagesByFilters } = useStage();
+  const { matches, getMatchByFilter } = useMatch();
   useEffect(() => {
     (async () => {
-      await getStagesByFilters({ divisionId: id });
+      await getMatchByFilter({ stageId: id });
     })();
   }, [id]);
   return (
@@ -42,21 +42,21 @@ export const InfoStage: React.FC<IDivisionResponse> = ({ name, id }) => {
             mb={1}
           >
             <Typography variant="h6">
-              Total de fases: {stages?.length ?? 0}
+              Total de partidos: {matches?.length ?? 0}
             </Typography>
 
             <Stack direction="row" spacing={1}>
-              <Tooltip title="Agregar Fase">
+              <Tooltip title="Agregar Partido">
                 <IconButton
                   color="success"
                   onClick={() =>
-                    navigate(`/${RoutesNavigationViews.Stage}/crear`)
+                    navigate(`/${RoutesNavigationViews.Match}/crear`)
                   }
                 >
                   <AddIcon />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="Generar Fases Automáticamente">
+              <Tooltip title="Generar partidos automáticamente">
                 <IconButton color="success" onClick={() => setShowPopup(true)}>
                   <SettingsSuggestIcon />
                 </IconButton>
@@ -64,18 +64,18 @@ export const InfoStage: React.FC<IDivisionResponse> = ({ name, id }) => {
             </Stack>
           </Stack>
 
-          {stages && stages.length > 0 ? (
-            <StageDashboard />
+          {matches && matches.length > 0 ? (
+            <MatchDashboard />
           ) : (
-            <NoStagesMessage name={name} />
+            <NoMatchesMessage name={name} />
           )}
         </CardContent>
       </Card>
       {showPopup && (
-        <GenerateStage
+        <GenerateMatch
           id={id}
           onClose={() => setShowPopup(false)}
-        ></GenerateStage>
+        ></GenerateMatch>
       )}
     </>
   );
