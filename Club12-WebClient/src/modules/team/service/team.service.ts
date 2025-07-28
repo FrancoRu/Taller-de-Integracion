@@ -8,10 +8,10 @@ import {
   sendPut,
 } from '../../core/utils/axiosUtils';
 import {
-  AddTeamRequest,
-  PutTeamRequest,
+  IAddTeamRequest,
+  IPutTeamRequest,
   TeamFiltered,
-  TeamResponse,
+  ITeamResponse,
 } from '../type/team';
 
 /**
@@ -20,10 +20,12 @@ import {
 export const teamService = {
   /**
    * Adds a new team.
-   * @param {AddTeamRequest} team - The team details to add.
-   * @returns {Promise<AxiosResponse<TeamResponse>>} The server response.
+   * @param {IAddTeamRequest} team - The team details to add.
+   * @returns {Promise<AxiosResponse<ITeamResponse>>} The server response.
    */
-  addTeam: async (team: AddTeamRequest): Promise<AxiosResponse<TeamResponse>> =>
+  addTeam: async (
+    team: IAddTeamRequest
+  ): Promise<AxiosResponse<ITeamResponse>> =>
     await sendPost(routes.teams, team),
 
   /**
@@ -31,25 +33,25 @@ export const teamService = {
    * @param {string} divisionId - The ID of the division to add teams to.
    * @param {File} teamFile - The file containing team data.
    * @param {File} logoFile - The file containing team logos.
-   * @returns {Promise<AxiosResponse<TeamResponse>>} The server response.
+   * @returns {Promise<AxiosResponse<ITeamResponse>>} The server response.
    */
   addTeamToDivisionIdBatch: async (
     divisionid: GUID,
     teamFile: File,
     logoFile: File
-  ): Promise<AxiosResponse<TeamResponse>> =>
+  ): Promise<AxiosResponse<ITeamResponse>> =>
     await sendPost(`${routes.teams}/${divisionId}`, { teamFile, logoFile }),
 
   /**
    * Updates an existing team.
    * @param {string} id - The ID of the team to update.
-   * @param {PutTeamRequest} data - The updated team details.
-   * @returns {Promise<AxiosResponse<TeamResponse>>} The server response.
+   * @param {IPutTeamRequest} data - The updated team details.
+   * @returns {Promise<AxiosResponse<ITeamResponse>>} The server response.
    */
   putTeamById: async (
     id: GUID,
-    data: PutTeamRequest
-  ): Promise<AxiosResponse<TeamResponse>> =>
+    data: IPutTeamRequest
+  ): Promise<AxiosResponse<ITeamResponse>> =>
     await sendPut(`${routes.teams}/${id}`, data),
 
   /**
@@ -64,19 +66,19 @@ export const teamService = {
   /**
    * Retrieves teams based on the provided filters.
    * @param {TeamFiltered} filters - The filters to apply when retrieving teams.
-   * @returns {Promise<AxiosResponse<GenericResponsePagination<TeamResponse>>>} The server response containing the filtered teams.
+   * @returns {Promise<AxiosResponse<GenericResponsePagination<ITeamResponse>>>} The server response containing the filtered teams.
    */
   getTeamsByFiltered: async (
     filters: TeamFiltered
-  ): Promise<AxiosResponse<GenericResponsePagination<TeamResponse>>> =>
+  ): Promise<AxiosResponse<GenericResponsePagination<ITeamResponse>>> =>
     await sendGet(routes.teams, filters),
 
   /**
    * Retrieves a specific team by its ID.
    * @param {string} id - The ID of the team to retrieve.
-   * @returns {Promise<AxiosResponse<TeamResponse>>} The server response containing the team details.
+   * @returns {Promise<AxiosResponse<ITeamResponse>>} The server response containing the team details.
    */
-  getTeamById: async (id: GUID): Promise<AxiosResponse<TeamResponse>> =>
+  getTeamById: async (id: GUID): Promise<AxiosResponse<ITeamResponse>> =>
     await sendGet(`${routes.teams}/${id}`),
 
   /**

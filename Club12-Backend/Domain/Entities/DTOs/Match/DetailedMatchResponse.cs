@@ -20,11 +20,6 @@ public class DetailedMatchResponse : BaseEntityResponse
     public required string MatchType { get; set; }
 
     /// <summary>
-    /// Represents the week number of the match in the fixture.
-    /// </summary>
-    public required int MatchWeek { get; set; }
-
-    /// <summary>
     /// The team details for the home team.
     /// </summary>
     public required TeamDetailedMatchResponse HomeTeam { get; set; }

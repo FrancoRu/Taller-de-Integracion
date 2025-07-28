@@ -1,6 +1,6 @@
 import { AxiosResponse } from 'axios';
 import routes from '../../core/constants/routes';
-import { GenericResponsePagination } from '../../core/types/types';
+import { GenericResponsePagination, GUID } from '../../core/types/types';
 import {
   sendDelete,
   sendGet,
@@ -8,10 +8,10 @@ import {
   sendPut,
 } from '../../core/utils/axiosUtils';
 import {
-  AddPlayerRequest,
+  IAddPlayerRequest,
   PlayerFiltered,
-  PlayerResponse,
-  PutPlayerRequest,
+  IPlayerResponse,
+  IPutPlayerRequest,
 } from '../type/player';
 
 /**
@@ -20,17 +20,18 @@ import {
 export const playerService = {
   /**
    * Adds a new player.
-   * @param {AddPlayerRequest} player - The player details to add.
-   * @returns {Promise<AxiosResponse<PlayerResponse>>} The server response.
+   * @param {IAddPlayerRequest} player - The player details to add.
+   * @returns {Promise<AxiosResponse<IPlayerResponse>>} The server response.
    */
   addPlayer: async (
-    player: AddPlayerRequest
-  ): Promise<AxiosResponse<PlayerResponse>> => sendPost(routes.players, player),
+    player: IAddPlayerRequest
+  ): Promise<AxiosResponse<IPlayerResponse>> =>
+    sendPost(routes.players, player),
 
   /**
    * Retrieves a player by their ID.
    * @param {string} id - The ID of the player to retrieve.
-   * @returns {Promise<AxiosResponse<PlayerResponse>>} The server response.
+   * @returns {Promise<AxiosResponse<IPlayerResponse>>} The server response.
    */
   getPlayerById: async (id: GUID): Promise<AxiosResponse<void>> =>
     sendGet(`${routes.players}/${id}`),
@@ -38,28 +39,29 @@ export const playerService = {
   /**
    * Retrieves a list of players based on a filter.
    * @param {PlayerFiltered} filter - The filter criteria for retrieving players.
-   * @returns {Promise<AxiosResponse<PlayerResponse>>} The server response.
+   * @returns {Promise<AxiosResponse<IPlayerResponse>>} The server response.
    */
   getPlayersByFilter: async (
     filter: PlayerFiltered
-  ): Promise<AxiosResponse<GenericResponsePagination<PlayerResponse>>> =>
+  ): Promise<AxiosResponse<GenericResponsePagination<IPlayerResponse>>> =>
     sendGet(routes.players, filter),
 
   /**
    * Updates the details of an existing player.
    * @param {string} id - The ID of the player to update.
-   * @param {PutPlayerRequest} player - The updated player details.
+   * @param {IPutPlayerRequest} player - The updated player details.
    * @returns {Promise<AxiosResponse<void>>} The server response.
    */
   putPlayerById: async (
     id: GUID,
-    player: PutPlayerRequest
-  ): Promise<AxiosResponse<void>> => sendPut(`${routes.players}/${id}`, player),
+    player: IPutPlayerRequest
+  ): Promise<AxiosResponse<IPlayerResponse>> =>
+    sendPut(`${routes.players}/${id}`, player),
 
   /**
    * Deletes a player by their ID.
    * @param {string} id - The ID of the player to delete.
-   * @returns {Promise<AxiosResponse<PlayerResponse>>} The server response.
+   * @returns {Promise<AxiosResponse<IPlayerResponse>>} The server response.
    */
   deletePlayerById: async (id: GUID): Promise<AxiosResponse<void>> =>
     sendDelete(`${routes.players}/${id}`),

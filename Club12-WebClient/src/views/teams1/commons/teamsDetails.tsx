@@ -18,11 +18,12 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { TeamContext } from '@/modules/team/context/team.context';
-import { TeamResponse } from '@/modules/team/type/team';
+import { ITeamResponse } from '@/modules/team/type/team';
+import { GUID } from '@/modules/core/types/types';
 
 const TeamsDetails: React.FC = () => {
   const theme = useTheme();
-  const { teamId } = useParams<{ teamid: GUID }>();
+  const { teamId } = useParams<{ teamId: GUID }>();
 
   const teamContext = useContext(TeamContext);
 
@@ -32,7 +33,7 @@ const TeamsDetails: React.FC = () => {
 
   const { getTeamById } = teamContext;
 
-  const [team, setTeam] = useState<TeamResponse | null>(null);
+  const [team, setTeam] = useState<ITeamResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

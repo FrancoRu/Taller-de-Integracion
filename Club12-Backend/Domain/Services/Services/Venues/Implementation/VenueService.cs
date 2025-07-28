@@ -29,17 +29,10 @@ public class VenueService(IGenericService<Venue> _genericVenueService) : IVenueS
         }
     }
 
-    public async Task<bool> UpdateVenueAsync(Venue venueEntity)
+    public async Task<Venue> UpdateVenueAsync(Venue venueEntity)
     {
-        try
-        {
             await _genericVenueService.UpdateAsync(venueEntity);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
+            return venueEntity;
     }
 
     public async Task<IEnumerable<Venue>> GetAllVenuesAsync() => await _genericVenueService.FindAllAsync();

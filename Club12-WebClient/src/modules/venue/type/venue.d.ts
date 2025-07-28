@@ -4,12 +4,14 @@
  * @interface IVenueContextProps
  */
 export interface IVenueContextProps {
+  venue: IVenueResponse | null;
+  venues: IVenueResponse[] | null;
   /**
    * Adds a new venue to the system.
    * @param venue The details of the venue to add.
    * @returns A promise that resolves with the response containing the newly added venue.
    */
-  addVenue(venue: AddVenueRequest): Promise<VenueResponse | void>;
+  addVenue(venue: IAddVenueRequest): Promise<IVenueResponse | void>;
 
   /**
    * Updates an existing venue.
@@ -17,20 +19,23 @@ export interface IVenueContextProps {
    * @param venue The updated venue details.
    * @returns A promise that resolves with the response containing the updated venue.
    */
-  putVenueById(id: GUID, venue: PutVenueRequest): Promise<VenueResponse | void>;
+  putVenueById(
+    id: GUID,
+    venue: IPutVenueRequest
+  ): Promise<IVenueResponse | void>;
 
   /**
    * Fetches all venues from the system.
    * @returns A promise that resolves with an array of venues.
    */
-  getAllVenues(): Promise<VenueResponse[] | void>;
+  getAllVenues(): Promise<IVenueResponse[] | void>;
 
   /**
    * Fetches a specific venue by its unique ID.
    * @param id The ID of the venue to fetch.
    * @returns A promise that resolves with the venue data.
    */
-  getVenueById(id: GUID): Promise<VenueResponse | void>;
+  getVenueById(id: GUID): Promise<IVenueResponse | void>;
 
   /**
    * Deletes a venue by its unique ID.
@@ -42,9 +47,9 @@ export interface IVenueContextProps {
 
 /**
  * The request body structure for adding a new venue.
- * @interface AddVenueRequest
+ * @interface IAddVenueRequest
  */
-export interface AddVenueRequest {
+export interface IAddVenueRequest {
   /**
    * The name of the venue.
    * @type {string}
@@ -67,9 +72,9 @@ export interface AddVenueRequest {
 /**
  * The response structure when a venue is created or updated.
  * This extends from AddVenueRequest and includes an ID.
- * @interface VenueResponse
+ * @interface IVenueResponse
  */
-export interface VenueResponse extends AddVenueRequest {
+export interface IVenueResponse extends IAddVenueRequest {
   /**
    * The unique identifier of the venue.
    * @type {string}
@@ -80,9 +85,9 @@ export interface VenueResponse extends AddVenueRequest {
 /**
  * The request body structure for updating an existing venue.
  * It is the same as AddVenueRequest since only the venue details are updated.
- * @interface PutVenueRequest
+ * @interface IPutVenueRequest
  */
-export interface PutVenueRequest {
+export interface IPutVenueRequest {
   /**
    * The name of the venue.
    * @type {string}

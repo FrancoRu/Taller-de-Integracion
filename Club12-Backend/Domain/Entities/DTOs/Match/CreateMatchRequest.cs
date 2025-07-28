@@ -23,19 +23,6 @@ public class CreateMatchRequest
     public Models.Matches.MatchType? Type { get; set; } = Models.Matches.MatchType.Regular;
 
     /// <summary>
-    /// The name of the playoff round (QTF, SF or F).
-    /// </summary>
-    [AllowedValues(RoundName.Quarterfinal, RoundName.Semifinal, RoundName.Final)]
-    public RoundName? Round { get; set; }
-
-
-    /// <summary>
-    /// Represents the week number of the match in the fixture.
-    /// </summary>
-    [Required]
-    public required int MatchWeek { get; set; }
-
-    /// <summary>
     /// The unique identifier of the home team.
     /// </summary>
     [Required(ErrorMessage = "The HomeTeamId field is required.")]
@@ -48,10 +35,10 @@ public class CreateMatchRequest
     public required Guid VisitorTeamId { get; set; }
 
     /// <summary>
-    /// The unique identifier of the division to which the match belongs.
+    /// The unique identifier of the stage to which the match belongs.
     /// </summary>
     [Required(ErrorMessage = "The DivisionId field is required.")]
-    public required Guid DivisionId { get; set; }
+    public required Guid StageId { get; set; }
 
     /// <summary>
     /// The unique identifier of the venue where the match will be played.

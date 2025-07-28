@@ -1,4 +1,4 @@
-import { PlayerResponse } from '../../player/type/player';
+import { IPlayerResponse } from '../../player/type/player';
 
 /**
  * Context properties and methods for managing player statistics in a sports system.
@@ -13,7 +13,7 @@ export interface IPlayerStatisticContextProps {
    */
   addPlayerStatistic(
     playerStatistic: AddPlayerStatisticRequest
-  ): Promise<PlayerResponse | void>;
+  ): Promise<IPlayerResponse | void>;
 
   /**
    * Updates an existing player statistic.
@@ -31,7 +31,7 @@ export interface IPlayerStatisticContextProps {
    * @param id The ID of the player statistic to fetch.
    * @returns A promise that resolves with the player statistic details.
    */
-  getPlayerStatisticById(id: GUID): Promise<PlayerResponse | void>;
+  getPlayerStatisticById(id: GUID): Promise<IPlayerResponse | void>;
 
   /**
    * Deletes a player statistic by its ID.

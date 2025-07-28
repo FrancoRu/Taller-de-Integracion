@@ -8,7 +8,7 @@ import {
   sendPut,
 } from '../../core/utils/axiosUtils';
 import {
-  AddMatchRequest,
+  IAddMatchRequest,
   MatchFiltered,
   IMatchResponse,
   PutMatchDateRequest,
@@ -21,11 +21,11 @@ import {
 export const matchService = {
   /**
    * Adds a new match.
-   * @param {AddMatchRequest} match - The match data to be added.
+   * @param {IAddMatchRequest} match - The match data to be added.
    * @returns {Promise<AxiosResponse<IMatchResponse>>} - A promise that resolves with the server response.
    */
   addMatch: async (
-    match: AddMatchRequest
+    match: IAddMatchRequest
   ): Promise<AxiosResponse<IMatchResponse>> =>
     sendPost<IMatchResponse>(routes.matches, match),
 

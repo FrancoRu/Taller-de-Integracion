@@ -8,9 +8,9 @@ import SanctionsTable from './views/sanctions/sanctions';
 const Home = lazy(() => import('./views/home/home'));
 const Login = lazy(() => import('./views/auth/login'));
 const NotFound = lazy(() => import('./views/core/errors/NotFound'));
-const TeamsGrid = lazy(() => import('./views/teams/commons/teamsGrid'));
-const TeamDetails = lazy(() => import('./views/teams/commons/teamsDetails'));
-const TeamCreate = lazy(() => import('./views/teams/commons/teamsCreate'));
+const TeamsGrid = lazy(() => import('./views/teams1/commons/teamsGrid'));
+const TeamDetails = lazy(() => import('./views/teams1/commons/teamsDetails'));
+const TeamCreate = lazy(() => import('./views/teams1/commons/teamsCreate'));
 
 export type AppRoute = RouteProps & {
   element: JSX.Element;

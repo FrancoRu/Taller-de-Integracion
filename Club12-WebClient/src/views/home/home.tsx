@@ -1,15 +1,13 @@
-import { useAuth } from '../../modules/auth/hook/auth.hook';
-import { BlogPostProvider } from '../../modules/blogPost/context/blogPost.context';
-import AddBlogPostForm from '../blogPost/addBlogPostForm';
-import ShowPosts from '../blogPost/showPosts';
+import { InfoTeam } from '../team/info';
+import { InfoTournament } from '../tournament/info';
+import { InfoVenue } from '../venue/info';
 
 export default function Home() {
-  const { isAuthenticated } = useAuth();
   return (
     <>
-      <BlogPostProvider>
-        {isAuthenticated ? <AddBlogPostForm /> : <ShowPosts />}
-      </BlogPostProvider>
+      <InfoTournament />
+      <InfoVenue />
+      <InfoTeam />
     </>
   );
 }

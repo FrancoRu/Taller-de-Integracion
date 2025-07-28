@@ -1,19 +1,35 @@
-import { useContext, useState } from "react";
-import {  Box,  Typography,  Grid,  TextField,  Button,  Table,  TableBody,  TableCell,  TableHead,  TableRow,  Card,  CardContent,  Paper,  IconButton,  useTheme,} from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
-import { TeamContext } from "@/modules/team/context/team.context";
+import { useContext, useState } from 'react';
+import {
+  Box,
+  Typography,
+  Grid,
+  TextField,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Card,
+  CardContent,
+  Paper,
+  IconButton,
+  useTheme,
+} from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { TeamContext } from '@/modules/team/context/team.context';
 
 const CreateTeam: React.FC = () => {
   const theme = useTheme();
   const teamContext = useContext(TeamContext);
 
   if (!teamContext) {
-    throw new Error("CreateTeam must be used within a TeamProvider");
+    throw new Error('CreateTeam must be used within a TeamProvider');
   }
 
-  const { addTeamToDivisionIdBatch } = teamContext;
+  //const { addTeamToDivisionIdBatch } = teamContext;
 
-  const [teamName, setTeamName] = useState("");
+  const [teamName, setTeamName] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
@@ -21,9 +37,9 @@ const CreateTeam: React.FC = () => {
     { id: number; name: string; position: string; number: number }[]
   >([]);
   const [newPlayer, setNewPlayer] = useState({
-    name: "",
-    position: "",
-    number: "",
+    name: '',
+    position: '',
+    number: '',
   });
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,26 +65,26 @@ const CreateTeam: React.FC = () => {
           number: Number(newPlayer.number),
         },
       ]);
-      setNewPlayer({ name: "", position: "", number: "" });
+      setNewPlayer({ name: '', position: '', number: '' });
     }
   };
 
   const handleRemovePlayer = (id: number) => {
-    setPlayers(players.filter((player) => player.id !== id));
+    setPlayers(players.filter(player => player.id !== id));
   };
 
   const handleSubmit = async () => {
     if (!teamName || !imageFile) {
-      alert("Please fill all fields and upload a team logo.");
+      alert('Please fill all fields and upload a team logo.');
       return;
     }
 
     try {
-      await addTeamToDivisionIdBatch("1", imageFile, imageFile); // Usa imageFile como ambos parámetros si es necesario
-      alert("Team created successfully!");
+      //await addTeamToDivisionIdBatch("1", imageFile, imageFile); // Usa imageFile como ambos parámetros si es necesario
+      alert('Team created successfully!');
     } catch (error) {
-      console.error("Error creating team:", error);
-      alert("An error occurred while creating the team.");
+      console.error('Error creating team:', error);
+      alert('An error occurred while creating the team.');
     }
   };
 
@@ -94,7 +110,7 @@ const CreateTeam: React.FC = () => {
               fullWidth
               label="Team Name"
               value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
+              onChange={e => setTeamName(e.target.value)}
               margin="normal"
             />
           </Grid>
@@ -103,43 +119,47 @@ const CreateTeam: React.FC = () => {
               type="file"
               accept="image/*"
               onChange={handleImageUpload}
-              style={{ display: "none" }}
+              style={{ display: 'none' }}
               id="imageUpload"
             />
             <label htmlFor="imageUpload">
               <Card
                 sx={{
-                  cursor: "pointer",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   height: 300,
                   width: 500,
-                  border: "2px dashed gray",
-                  backgroundColor: "#f5f5f5",
-                  overflow: "hidden",
+                  border: '2px dashed gray',
+                  backgroundColor: '#f5f5f5',
+                  overflow: 'hidden',
                 }}
               >
                 {imageUrl ? (
                   <img
                     src={imageUrl}
                     alt="Team"
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
                   />
                 ) : (
                   <CardContent>
                     <Typography
                       variant="h5"
                       align="center"
-                      sx={{ color: "gray" }}
+                      sx={{ color: 'gray' }}
                     >
                       +
                     </Typography>
                     <Typography
                       variant="h6"
                       align="center"
-                      sx={{ color: "gray" }}
+                      sx={{ color: 'gray' }}
                     >
                       Add Image
                     </Typography>
@@ -160,7 +180,7 @@ const CreateTeam: React.FC = () => {
                 fullWidth
                 label="Name"
                 value={newPlayer.name}
-                onChange={(e) =>
+                onChange={e =>
                   setNewPlayer({ ...newPlayer, name: e.target.value })
                 }
               />
@@ -170,7 +190,7 @@ const CreateTeam: React.FC = () => {
                 fullWidth
                 label="Position"
                 value={newPlayer.position}
-                onChange={(e) =>
+                onChange={e =>
                   setNewPlayer({ ...newPlayer, position: e.target.value })
                 }
               />
@@ -181,7 +201,7 @@ const CreateTeam: React.FC = () => {
                 label="Number"
                 type="number"
                 value={newPlayer.number}
-                onChange={(e) =>
+                onChange={e =>
                   setNewPlayer({ ...newPlayer, number: e.target.value })
                 }
               />
@@ -205,12 +225,10 @@ const CreateTeam: React.FC = () => {
             </Typography>
             <Table>
               <TableHead>
-                <TableRow
-                  sx={{ backgroundColor: theme.palette.primary.light }}
-                >
+                <TableRow sx={{ backgroundColor: theme.palette.primary.light }}>
                   <TableCell
                     sx={{
-                      fontWeight: "bold",
+                      fontWeight: 'bold',
                       color: theme.palette.primary.contrastText,
                     }}
                   >
@@ -218,7 +236,7 @@ const CreateTeam: React.FC = () => {
                   </TableCell>
                   <TableCell
                     sx={{
-                      fontWeight: "bold",
+                      fontWeight: 'bold',
                       color: theme.palette.primary.contrastText,
                     }}
                   >
@@ -226,7 +244,7 @@ const CreateTeam: React.FC = () => {
                   </TableCell>
                   <TableCell
                     sx={{
-                      fontWeight: "bold",
+                      fontWeight: 'bold',
                       color: theme.palette.primary.contrastText,
                     }}
                   >
@@ -234,9 +252,9 @@ const CreateTeam: React.FC = () => {
                   </TableCell>
                   <TableCell
                     sx={{
-                      fontWeight: "bold",
+                      fontWeight: 'bold',
                       color: theme.palette.primary.contrastText,
-                      textAlign: "center",
+                      textAlign: 'center',
                     }}
                   >
                     Eliminar
@@ -249,13 +267,13 @@ const CreateTeam: React.FC = () => {
                     key={player.id}
                     sx={{
                       backgroundColor:
-                        index % 2 === 0 ? theme.palette.grey[100] : "white",
+                        index % 2 === 0 ? theme.palette.grey[100] : 'white',
                     }}
                   >
                     <TableCell>{player.name}</TableCell>
                     <TableCell>{player.position}</TableCell>
                     <TableCell>{player.number}</TableCell>
-                    <TableCell sx={{ textAlign: "center" }}>
+                    <TableCell sx={{ textAlign: 'center' }}>
                       <IconButton
                         color="error"
                         onClick={() => handleRemovePlayer(player.id)}
@@ -271,11 +289,7 @@ const CreateTeam: React.FC = () => {
         )}
 
         <Box mt={4}>
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={handleSubmit}
-          >
+          <Button variant="contained" color="secondary" onClick={handleSubmit}>
             Create Team
           </Button>
         </Box>

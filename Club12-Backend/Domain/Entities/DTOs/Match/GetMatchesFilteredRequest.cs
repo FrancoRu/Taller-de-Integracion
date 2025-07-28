@@ -18,9 +18,9 @@ public class GetMatchesFilteredRequest : PaginatedFilterRequest
     public string? VisitorTeamName { get; set; }
 
     /// <summary>
-    /// The division name to filter by.
+    /// The stage name to filter by.
     /// </summary>
-    public string? DivisionName { get; set; }
+    public string? StageName { get; set; }
 
     /// <summary>
     /// The match type (e.g., regular, playoff) to filter by.

@@ -1,5 +1,5 @@
 import { GUID } from '@/modules/core/types/types';
-import { VenueResponse } from '@/modules/venue/type/venue';
+import { IVenueResponse } from '@/modules/venue/type/venue';
 
 /**
  * Context properties and methods for managing matches in a sports system.
@@ -14,7 +14,7 @@ export interface IMatchContextProps {
    * @param match The details of the match to add.
    * @returns A promise that resolves with the response containing the newly added match.
    */
-  addMatch(match: AddMatchRequest): Promise<IMatchResponse | void>;
+  addMatch(match: IAddMatchRequest): Promise<IMatchResponse | void>;
 
   /**
    * Updates the score of an existing match.
@@ -74,7 +74,7 @@ export interface IMatchContextProps {
  * The request body structure for adding a new match.
  * @interface AddMatchRequest
  */
-export interface AddMatchRequest {
+export interface IAddMatchRequest {
   /**
    * The date and time of the match.
    * @type {string}
@@ -86,12 +86,6 @@ export interface AddMatchRequest {
    * @type {TypeMatch}
    */
   type: TypeMatch;
-
-  /**
-   * The match week number.
-   * @type {number}
-   */
-  matchWeek: number;
 
   /**
    * The ID of the home team.
@@ -107,13 +101,13 @@ export interface AddMatchRequest {
 
   /**
    * The ID of the division the match belongs to.
-   * @type {string}
+   * @type {GUID}
    */
-  divisionid: GUID;
+  stageId: GUID;
 
   /**
    * The ID of the venue where the match will take place.
-   * @type {string}
+   * @type {GUID}
    */
   venueid: GUID;
 }
@@ -200,9 +194,9 @@ export interface IMatchResponse {
 
   /**
    * The venue where the match was played.
-   * @type {VenueResponse}
+   * @type {IVenueResponse}
    */
-  venue: VenueResponse;
+  venue: IVenueResponse;
 }
 
 /**

@@ -6,7 +6,11 @@ import {
   sendPost,
   sendPut,
 } from '../../core/utils/axiosUtils';
-import { AddVenueRequest, PutVenueRequest, VenueResponse } from '../type/venue';
+import {
+  IAddVenueRequest,
+  IPutVenueRequest,
+  IVenueResponse,
+} from '../type/venue';
 
 /**
  * Service for managing venues.
@@ -14,39 +18,39 @@ import { AddVenueRequest, PutVenueRequest, VenueResponse } from '../type/venue';
 export const venueService = {
   /**
    * Adds a new venue.
-   * @param {AddVenueRequest} venue - The venue details to add.
-   * @returns {Promise<AxiosResponse<VenueResponse>>} The server response.
+   * @param {IAddVenueRequest} venue - The venue details to add.
+   * @returns {Promise<AxiosResponse<IVenueResponse>>} The server response.
    */
   addVenue: async (
-    venue: AddVenueRequest
-  ): Promise<AxiosResponse<VenueResponse>> =>
+    venue: IAddVenueRequest
+  ): Promise<AxiosResponse<IVenueResponse>> =>
     await sendPost(routes.venues, venue),
 
   /**
    * Updates an existing venue.
    * @param {string} id - The ID of the venue to update.
-   * @param {PutVenueRequest} venue - The updated venue details.
-   * @returns {Promise<AxiosResponse<VenueResponse>>} The server response.
+   * @param {IPutVenueRequest} venue - The updated venue details.
+   * @returns {Promise<AxiosResponse<IVenueResponse>>} The server response.
    */
   putVenueById: async (
     id: GUID,
-    venue: PutVenueRequest
-  ): Promise<AxiosResponse<VenueResponse>> =>
+    venue: IPutVenueRequest
+  ): Promise<AxiosResponse<IVenueResponse>> =>
     await sendPut(`${routes.venues}/${id}`, venue),
 
   /**
    * Retrieves all venues.
-   * @returns {Promise<AxiosResponse<VenueResponse[]>>} The server response containing the list of venues.
+   * @returns {Promise<AxiosResponse<IVenueResponse[]>>} The server response containing the list of venues.
    */
-  getAllVenues: async (): Promise<AxiosResponse<VenueResponse[]>> =>
+  getAllVenues: async (): Promise<AxiosResponse<IVenueResponse[]>> =>
     await sendGet(routes.venues),
 
   /**
    * Retrieves a venue by its ID.
    * @param {string} id - The ID of the venue to retrieve.
-   * @returns {Promise<AxiosResponse<VenueResponse>>} The server response containing the venue details.
+   * @returns {Promise<AxiosResponse<IVenueResponse>>} The server response containing the venue details.
    */
-  getVenueById: async (id: GUID): Promise<AxiosResponse<VenueResponse>> =>
+  getVenueById: async (id: GUID): Promise<AxiosResponse<IVenueResponse>> =>
     await sendGet(`${routes.venues}/${id}`),
 
   /**

@@ -26,7 +26,7 @@ public interface IVenueService
     /// </summary>
     /// <param name="venueEntity">The Venue to update.</param>
     /// <returns>A boolean indicating whether the update was successful.</returns>
-    Task<bool> UpdateVenueAsync(Venue venueEntity);
+    Task<Venue> UpdateVenueAsync(Venue venueEntity);
 
     /// <summary>
     /// Deletes a Venue asynchronously.

@@ -37,8 +37,7 @@ public class VenueController(IVenueService _venueService, IMapper _mapper) : Con
         Venue mappedVenue = _mapper.Map<Venue>(venueRequest);
         Venue createdVenue = await _venueService.CreateVenueAsync(mappedVenue);
         VenueResponse venueResponse = _mapper.Map<VenueResponse>(createdVenue);
-
-        return new ObjectResult(venueResponse) { StatusCode = StatusCodes.Status201Created };
+        return CreatedAtAction(nameof(GetVenueById), new { venueResponse.Id }, venueResponse);
     }
 
     /// <summary>
@@ -77,7 +76,7 @@ public class VenueController(IVenueService _venueService, IMapper _mapper) : Con
     /// Returns 403 (Forbidden) if the user is not authorized.
     /// </returns>
     [HttpPut("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> UpdateVenue(Guid id, UpdateVenueRequest venueRequest)
@@ -90,9 +89,7 @@ public class VenueController(IVenueService _venueService, IMapper _mapper) : Con
         }
 
         _mapper.Map(venueRequest, existingVenue);
-        bool updateResult = await _venueService.UpdateVenueAsync(existingVenue);
-
-        return !updateResult ? BadRequest("Failed to update the venue.") : NoContent();
+        return Ok(await _venueService.UpdateVenueAsync(existingVenue));
     }
 
     /// <summary>

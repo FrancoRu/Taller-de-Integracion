@@ -1,5 +1,5 @@
-import { Filtered, GenericResponsePagination } from '../../core/types/types';
-import { PlayerResponse } from '../../player/type/player';
+import { Filtered, GenericResponsePagination } from '../../core/types/types.d';
+import { IPlayerResponse } from '../../player/type/player.d';
 
 /**
  * Context properties and methods for managing teams in a sports system.
@@ -7,25 +7,27 @@ import { PlayerResponse } from '../../player/type/player';
  * @interface ITeamContextProps
  */
 export interface ITeamContextProps {
+  team: ITeamResponse | null;
+  teams: ITeamResponse[] | null;
   /**
    * Adds a new team.
    * @param team The details of the team to add.
    * @returns A promise that resolves with the response containing the newly added team.
    */
-  addTeam(team: AddTeamRequest): Promise<TeamResponse | void>;
+  addTeam(team: IAddTeamRequest): Promise<ITeamResponse | void>;
 
-  /**
-   * Adds a batch of teams with associated files (e.g., for a specific division).
-   * @param divisionId The ID of the division the teams belong to.
-   * @param teamFile The file containing the team data.
-   * @param logoFile The file containing the team logo.
-   * @returns A promise that resolves with the response containing the added teams.
-   */
-  addTeamToDivisionIdBatch(
-    divisionid: GUID,
-    teamFile: File,
-    logoFile: File
-  ): Promise<TeamResponse | void>;
+  // /**
+  //  * Adds a batch of teams with associated files (e.g., for a specific division).
+  //  * @param divisionId The ID of the division the teams belong to.
+  //  * @param teamFile The file containing the team data.
+  //  * @param logoFile The file containing the team logo.
+  //  * @returns A promise that resolves with the response containing the added teams.
+  //  */
+  // addTeamToDivisionIdBatch(
+  //   divisionid: GUID,
+  //   teamFile: File,
+  //   logoFile: File
+  // ): Promise<ITeamResponse | void>;
 
   /**
    * Updates an existing team by its ID.
@@ -33,7 +35,7 @@ export interface ITeamContextProps {
    * @param data The updated team data.
    * @returns A promise that resolves with the updated team details.
    */
-  putTeamById(id: GUID, data: PutTeamRequest): Promise<TeamResponse | void>;
+  putTeamById(id: GUID, data: IPutTeamRequest): Promise<ITeamResponse | void>;
 
   /**
    * Updates the logo of an existing team.
@@ -50,14 +52,14 @@ export interface ITeamContextProps {
    */
   getTeamsByFiltered(
     filters: TeamFiltered
-  ): Promise<GenericResponsePagination<TeamResponse> | void>;
+  ): Promise<GenericResponsePagination<ITeamResponse> | void>;
 
   /**
    * Fetches a team by its ID.
    * @param id The ID of the team to fetch.
    * @returns A promise that resolves with the team details.
    */
-  getTeamById(id: GUID): Promise<TeamResponse | void>;
+  getTeamById(id: GUID): Promise<ITeamResponse | void>;
 
   /**
    * Deletes a team by its ID.
@@ -69,9 +71,9 @@ export interface ITeamContextProps {
 
 /**
  * The request body structure for adding a new team.
- * @interface AddTeamRequest
+ * @interface IAddTeamRequest
  */
-export interface AddTeamRequest {
+export interface IAddTeamRequest {
   /**
    * The name of the team.
    * @type {string}
@@ -91,12 +93,6 @@ export interface AddTeamRequest {
   shirtColor: string;
 
   /**
-   * The ID of the division the team belongs to.
-   * @type {string}
-   */
-  divisionid: GUID;
-
-  /**
    * The logo file of the team.
    * @type {File}
    */
@@ -105,12 +101,12 @@ export interface AddTeamRequest {
 
 /**
  * The response structure for a team.
- * @interface TeamResponse
+ * @interface ITeamResponse
  */
-export interface TeamResponse {
+export interface ITeamResponse {
   /**
    * The unique ID of the team.
-   * @type {string}
+   * @type {GUID}
    */
   id: GUID;
 
@@ -133,12 +129,6 @@ export interface TeamResponse {
   shirtColor: string;
 
   /**
-   * The ID of the division the team belongs to.
-   * @type {string}
-   */
-  divisionid: GUID;
-
-  /**
    * The URL of the team's logo.
    * @type {string}
    */
@@ -146,16 +136,16 @@ export interface TeamResponse {
 
   /**
    * A list of players on the team.
-   * @type {PlayerResponse[]}
+   * @type {IPlayerResponse[]}
    */
-  players: PlayerResponse[];
+  players: IPlayerResponse[];
 }
 
 /**
  * The request body structure for updating an existing team.
- * @interface PutTeamRequest
+ * @interface IPutTeamRequest
  */
-export interface PutTeamRequest {
+export interface IPutTeamRequest {
   /**
    * The updated name of the team.
    * @type {string}
@@ -179,4 +169,4 @@ export interface PutTeamRequest {
  * The filters for fetching teams.
  * @interface TeamFiltered
  */
-export interface TeamFiltered extends PutTeamRequest, Filtered {}
+export interface TeamFiltered extends IPutTeamRequest, Filtered {}

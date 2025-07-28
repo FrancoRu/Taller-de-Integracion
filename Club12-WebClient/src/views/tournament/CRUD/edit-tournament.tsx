@@ -1,3 +1,4 @@
+import { GUID } from '@/modules/core/types/types';
 import { useError } from '@/modules/error/hooks/error.hock';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { IPutTournamentRequest } from '@/modules/tournament/type/tournament.d';
@@ -11,44 +12,58 @@ import {
   Button,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export const EditTournament: React.FC = () => {
   const { errors, setMessage } = useError();
-  const { tournament, putTournamentById } = useTournament();
+  const { tournament, getTournamentById, putTournamentById } = useTournament();
+  const { id } = useParams<{ id: GUID }>();
   const navigate = useNavigate();
   const [editTournament, setEditTournament] = useState<IPutTournamentRequest>({
     name: tournament?.name ?? '',
     description: tournament?.description ?? '',
   });
 
-  if (!tournament) {
-    navigate('/', { replace: true });
-    return;
-  }
+  useEffect(() => {
+    if (!id) {
+      navigate('/', { replace: true });
+      return;
+    }
+
+    if (!tournament) {
+      (async () => {
+        const res = await getTournamentById(id);
+        if (!res) {
+          navigate('/', { replace: true });
+        }
+      })();
+    }
+  }, [id, tournament, getTournamentById, navigate]);
 
   useEffect(() => {
     if (tournament) {
       setEditTournament({
-        name: tournament.name,
-        description: tournament.description,
+        name: tournament.name ?? '',
+        description: tournament.description ?? '',
       });
     }
   }, [tournament]);
 
-  const handleCreate = async () => {
-    if (!editTournament.name.trim()) {
-      setMessage(400, ['El nombre es obligatorio']);
+  const handleUpdate = async () => {
+    const messages: string[] = [];
+    !editTournament.name.trim() && messages.push('El nombre es obligatorio');
+    !editTournament.description.trim() &&
+      messages.push('La descripcion es obligatoria');
+    (!tournament || !tournament.id) &&
+      messages.push('No se encontró el torneo para actualizar.');
+
+    if (messages.length > 0) {
+      setMessage(400, messages);
       return;
     }
 
-    if (!editTournament.description.trim()) {
-      setMessage(400, ['La descripcion es obligatoria']);
-      return;
-    }
-
-    await putTournamentById(tournament?.id, editTournament);
-    navigate(`/${RoutesNavigationViews.Tournament}/${tournament.id}`);
+    await putTournamentById(tournament!.id, editTournament);
+    navigate(`/${RoutesNavigationViews.Tournament}/${tournament!.id}`);
   };
 
   return (
@@ -111,7 +126,7 @@ export const EditTournament: React.FC = () => {
           fullWidth
           variant="contained"
           color="primary"
-          onClick={handleCreate}
+          onClick={handleUpdate}
         >
           Guardar Cambios
         </Button>

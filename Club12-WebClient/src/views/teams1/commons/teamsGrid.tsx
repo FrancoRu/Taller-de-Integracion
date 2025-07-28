@@ -11,7 +11,8 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { TeamContext } from '@/modules/team/context/team.context';
-import { TeamResponse } from '@/modules/team/type/team';
+import { ITeamResponse } from '@/modules/team/type/team';
+import { GUID } from '@/modules/core/types/types';
 
 const TeamsGrid: React.FC = () => {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ const TeamsGrid: React.FC = () => {
 
   const { getTeamsByFiltered } = teamContext;
 
-  const [teams, setTeams] = useState<TeamResponse[]>([]);
+  const [teams, setTeams] = useState<ITeamResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

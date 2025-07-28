@@ -1,15 +1,16 @@
-import { AxiosError } from 'axios';
-import { createContext, ReactNode } from 'react';
-import { GenericResponsePagination } from '../../core/types/types';
+import { AxiosError, AxiosResponse } from 'axios';
+import { createContext, ReactNode, useEffect, useState } from 'react';
+import { GenericResponsePagination, GUID } from '../../core/types/types';
 import { useError } from '../../error/hooks/error.hock';
 import { teamService } from '../service/team.service';
 import {
-  AddTeamRequest,
+  IAddTeamRequest,
   ITeamContextProps,
-  PutTeamRequest,
+  IPutTeamRequest,
   TeamFiltered,
-  TeamResponse,
+  ITeamResponse,
 } from '../type/team.d';
+import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 
 export const TeamContext = createContext<ITeamContextProps | undefined>(
   undefined
@@ -18,12 +19,25 @@ export const TeamContext = createContext<ITeamContextProps | undefined>(
 export const TeamProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
+  const [team, setTeam] = useState<ITeamResponse | null>(null);
+  const [teams, setTeams] = useState<ITeamResponse[] | null>(null);
+
   const { setError } = useError();
+
+  useEffect(() => {
+    if (!team) return;
+    teams;
+    setTeams(prev => upsertListById(prev, team));
+  }, [team]);
+
   const addTeam = async (
-    team: AddTeamRequest
-  ): Promise<TeamResponse | void> => {
+    team: IAddTeamRequest
+  ): Promise<ITeamResponse | void> => {
     try {
-      await teamService.addTeam(team);
+      const res: AxiosResponse<ITeamResponse> = await teamService.addTeam(team);
+      if (res) {
+        setTeam(res.data);
+      }
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
@@ -32,29 +46,29 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
       }
     }
   };
-  const addTeamToDivisionIdBatch = async (
-    divisionid: GUID,
-    teamFile: File,
-    logoFile: File
-  ): Promise<TeamResponse | void> => {
-    try {
-      await teamService.addTeamToDivisionIdBatch(
-        divisionId,
-        teamFile,
-        logoFile
-      );
-    } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        setError(error);
-      } else {
-        setError(new AxiosError('An unknown error occurred'));
-      }
-    }
-  };
+  // const addTeamToDivisionIdBatch = async (
+  //   divisionid: GUID,
+  //   teamFile: File,
+  //   logoFile: File
+  // ): Promise<ITeamResponse | void> => {
+  //   try {
+  //     await teamService.addTeamToDivisionIdBatch(
+  //       divisionId,
+  //       teamFile,
+  //       logoFile
+  //     );
+  //   } catch (error: unknown) {
+  //     if (error instanceof AxiosError) {
+  //       setError(error);
+  //     } else {
+  //       setError(new AxiosError('An unknown error occurred'));
+  //     }
+  //   }
+  // };
   const putTeamById = async (
     id: GUID,
-    data: PutTeamRequest
-  ): Promise<TeamResponse | void> => {
+    data: IPutTeamRequest
+  ): Promise<ITeamResponse | void> => {
     try {
       await teamService.putTeamById(id, data);
     } catch (error: unknown) {
@@ -65,6 +79,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
       }
     }
   };
+
   const putTeamLogoById = async (id: GUID, logo: File): Promise<void> => {
     try {
       await teamService.putTeamLogoById(id, logo);
@@ -76,9 +91,10 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
       }
     }
   };
+
   const getTeamsByFiltered = async (
     filters: TeamFiltered
-  ): Promise<GenericResponsePagination<TeamResponse> | void> => {
+  ): Promise<GenericResponsePagination<ITeamResponse> | void> => {
     try {
       await teamService.getTeamsByFiltered(filters);
     } catch (error: unknown) {
@@ -89,7 +105,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
       }
     }
   };
-  const getTeamById = async (id: GUID): Promise<TeamResponse | void> => {
+  const getTeamById = async (id: GUID): Promise<ITeamResponse | void> => {
     try {
       await teamService.getTeamById(id);
     } catch (error: unknown) {
@@ -113,8 +129,10 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const container: ITeamContextProps = {
+    team,
+    teams,
     addTeam,
-    addTeamToDivisionIdBatch,
+    // addTeamToDivisionIdBatch,
     getTeamById,
     getTeamsByFiltered,
     putTeamById,

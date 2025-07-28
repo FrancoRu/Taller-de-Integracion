@@ -10,7 +10,7 @@ import {
   Grid,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   ArrowForwardIcon,
   EditIcon,
@@ -20,7 +20,6 @@ import { RoutesNavigationViews } from '../core/routes-const';
 import { useStage } from '@/modules/stage/hook/stage.hook';
 import { DeleteStage } from './CRUD/delete-stage';
 import { useDivision } from '@/modules/division/hook/division.hook';
-import { GUID } from '@/modules/core/types/types';
 import LoadingIndicator from '../core/components/LoadingIndicator';
 import { NoStagesMessage } from './NoStageMessage';
 import { translateStageType } from '@/modules/core/utils/translateStageType';
@@ -29,22 +28,19 @@ export const StageDashboard: React.FC = () => {
   const { stages, getStagesByFilters } = useStage();
 
   const { division } = useDivision();
-  const { id } = useParams<{ id: GUID }>();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!division) {
       navigate('/');
+      return;
     }
+    (async () => {
+      await getStagesByFilters({ divisionId: division.id });
+    })();
   }, [division, navigate]);
 
   if (!division) return null;
-
-  useEffect(() => {
-    (async () => {
-      await getStagesByFilters({ divisionId: id });
-    })();
-  }, [id]);
 
   return (
     <Box>

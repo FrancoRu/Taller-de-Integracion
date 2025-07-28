@@ -119,4 +119,3 @@ export const EditStage: React.FC = () => {
     </CustomBox>
   );
 };
-``;

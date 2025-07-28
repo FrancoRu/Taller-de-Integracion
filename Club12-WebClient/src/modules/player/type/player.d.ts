@@ -6,19 +6,21 @@ import { Filtered, GenericResponsePagination } from '../../core/types/types';
  * @interface IPlayerContextProps
  */
 export interface IPlayerContextProps {
+  player: IPlayerResponse | null;
+  players: IPlayerResponse[] | null;
   /**
    * Adds a new player to the system.
    * @param player The details of the player to add.
    * @returns A promise that resolves with the response containing the newly added player.
    */
-  addPlayer(player: AddPlayerRequest): Promise<PlayerResponse | void>;
+  addPlayer(player: IAddPlayerRequest): Promise<IPlayerResponse | void>;
 
   /**
    * Fetches a player by its ID.
    * @param id The ID of the player to fetch.
    * @returns A promise that resolves with the player details.
    */
-  getPlayerById(id: GUID): Promise<PlayerResponse | void>;
+  getPlayerById(id: GUID): Promise<IPlayerResponse | void>;
 
   /**
    * Fetches players based on filters and pagination.
@@ -27,7 +29,7 @@ export interface IPlayerContextProps {
    */
   getPlayersByFilter(
     filter: PlayerFiltered
-  ): Promise<GenericResponsePagination<PlayerResponse> | void>;
+  ): Promise<GenericResponsePagination<IPlayerResponse> | void>;
 
   /**
    * Updates a player's information.
@@ -35,7 +37,10 @@ export interface IPlayerContextProps {
    * @param player The updated player details.
    * @returns A promise that resolves when the player is successfully updated.
    */
-  putPlayerById(id: GUID, player: PutPlayerRequest): Promise<void>;
+  putPlayerById(
+    id: GUID,
+    player: IPutPlayerRequest
+  ): Promise<IPlayerResponse | void>;
 
   /**
    * Deletes a player by its ID.
@@ -48,15 +53,51 @@ export interface IPlayerContextProps {
 /**
  * The filter criteria for fetching players, which includes the player's name and document number.
  * @interface PlayerFiltered
- * @extends PutPlayerRequest
+ * @extends IAddPlayerRequest
  */
-export interface PlayerFiltered extends PutPlayerRequest, Filtered {}
+export interface PlayerFiltered extends Filtered {
+  /**
+   * The first name of the player.
+   * @type {string}
+   */
+  firstName?: string;
+
+  /**
+   * The second name of the player (if applicable).
+   * @type {string}
+   */
+  secondName?: string;
+
+  /**
+   * The last name of the player.
+   * @type {string}
+   */
+  lastName?: string;
+
+  /**
+   * The document number of the player (e.g., ID, passport).
+   * @type {string}
+   */
+  documentNumber?: string;
+
+  /**
+   * The ID of the team the player belongs to.
+   * @type {GUID}
+   */
+  teamId?: GUID;
+
+  birthDate?: Date;
+
+  phoneNumber?: string;
+
+  socialSecurity?: string;
+}
 
 /**
  * The request body structure for adding a new player.
- * @interface AddPlayerRequest
+ * @interface IAddPlayerRequest
  */
-export interface AddPlayerRequest {
+export interface IAddPlayerRequest {
   /**
    * The first name of the player.
    * @type {string}
@@ -83,17 +124,23 @@ export interface AddPlayerRequest {
 
   /**
    * The ID of the team the player belongs to.
-   * @type {string}
+   * @type {GUID}
    */
-  teamid: GUID;
+  teamId: GUID;
+
+  birthDate?: Date;
+
+  phoneNumber?: string;
+
+  socialSecurity?: string;
 }
 
 /**
  * The response structure for a player, including the player's personal information and team ID.
  * @interface PlayerResponse
- * @extends AddPlayerRequest
+ * @extends IAddPlayerRequest
  */
-export interface PlayerResponse extends AddPlayerRequest {
+export interface IPlayerResponse extends IAddPlayerRequest {
   /**
    * The unique identifier of the player.
    * @type {string}
@@ -103,14 +150,20 @@ export interface PlayerResponse extends AddPlayerRequest {
 
 /**
  * The request body structure for updating a player's information.
- * @interface PutPlayerRequest
+ * @interface IPutPlayerRequest
  */
-export interface PutPlayerRequest {
+export interface IPutPlayerRequest {
   /**
-   * The name of the player.
+   * The first name of the player.
    * @type {string}
    */
-  name?: string;
+  firstName: string;
+
+  /**
+   * The second name of the player (if applicable).
+   * @type {string}
+   */
+  secondName: string;
 
   /**
    * The last name of the player.
@@ -123,4 +176,10 @@ export interface PutPlayerRequest {
    * @type {string}
    */
   documentNumber?: string;
+
+  birthDate?: Date;
+
+  phoneNumber?: string;
+
+  socialSecurity?: string;
 }

@@ -22,6 +22,7 @@ import {
   DeleteIcon,
   ArrowForwardIcon,
 } from '../core/MUI/icons/icons';
+import { NoDivisionMessage } from './NoDivisionMessage';
 export const DivisionDashboard: React.FC = () => {
   const { divisions, getDivisionsByFilters } = useDivision();
 
@@ -55,7 +56,7 @@ export const DivisionDashboard: React.FC = () => {
             ))}
           </Grid>
         ) : (
-          <RenderNoDivision name={tournament.name} />
+          <NoDivisionMessage name={tournament.name} />
         )
       ) : (
         <LoadingIndicator />
@@ -146,11 +147,5 @@ const RenderDivision: React.FC<IDivisionResponse> = ({
         </Stack>
       </CardContent>
     </Card>
-  );
-};
-
-const RenderNoDivision: React.FC<{ name: string }> = ({ name }) => {
-  return (
-    <Typography>No se encontraron division para el Torneo: {name}</Typography>
   );
 };

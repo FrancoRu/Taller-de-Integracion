@@ -4,7 +4,7 @@ import { GenericResponsePagination, GUID } from '../../core/types/types';
 import { useError } from '../../error/hooks/error.hock';
 import { matchService } from '../service/match.service';
 import {
-  AddMatchRequest,
+  IAddMatchRequest,
   IMatchContextProps,
   MatchFiltered,
   IMatchResponse,
@@ -32,7 +32,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
   }, [match]);
 
   const addMatch = async (
-    match: AddMatchRequest
+    match: IAddMatchRequest
   ): Promise<IMatchResponse | void> => {
     try {
       const res: AxiosResponse<IMatchResponse> =

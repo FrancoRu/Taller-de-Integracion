@@ -11,8 +11,12 @@ import { DivisionDashboard } from './dashboard';
 import { AddIcon } from '../core/MUI/icons/icons';
 import { RoutesNavigationViews } from '../core/routes-const';
 import { useNavigate } from 'react-router-dom';
+import { NoDivisionMessage } from './NoDivisionMessage';
 
-export const InfoDivision: React.FC<ITournamentResponse> = ({ divisions }) => {
+export const InfoDivision: React.FC<ITournamentResponse> = ({
+  name,
+  divisions,
+}) => {
   const navigate = useNavigate();
   return (
     <Card>
@@ -39,7 +43,12 @@ export const InfoDivision: React.FC<ITournamentResponse> = ({ divisions }) => {
             </Tooltip>
           </Stack>
         </Stack>
-        <DivisionDashboard />
+
+        {divisions && divisions.length > 0 ? (
+          <DivisionDashboard />
+        ) : (
+          <NoDivisionMessage name={name} />
+        )}
       </CardContent>
     </Card>
   );

@@ -1,7 +1,7 @@
 import { AxiosError } from 'axios';
 import { createContext, ReactNode } from 'react';
 import { useError } from '../../error/hooks/error.hock';
-import { PlayerResponse } from '../../player/type/player';
+import { IPlayerResponse } from '../../player/type/player';
 import { playerStatisticService } from '../service/playerStatistic.service';
 import {
   AddPlayerStatisticRequest,
@@ -19,7 +19,7 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
   const { setError } = useError();
   const addPlayerStatistic = async (
     playerStatistic: AddPlayerStatisticRequest
-  ): Promise<PlayerResponse | void> => {
+  ): Promise<IPlayerResponse | void> => {
     try {
       await playerStatisticService.addPlayerStatistic(playerStatistic);
     } catch (error: unknown) {
@@ -49,7 +49,7 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
   };
   const getPlayerStatisticById = async (
     id: GUID
-  ): Promise<PlayerResponse | void> => {
+  ): Promise<IPlayerResponse | void> => {
     try {
       await playerStatisticService.getPlayerStatisticById(id);
     } catch (error: unknown) {
