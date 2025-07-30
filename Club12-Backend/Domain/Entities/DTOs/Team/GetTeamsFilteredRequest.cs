@@ -20,5 +20,5 @@ public class GetTeamsFilteredRequest : PaginatedFilterRequest
     /// <summary>
     /// The color of the team's shirt.
     /// </summary>
-    public required string ShirtColor { get; set; }
+    public string? ShirtColor { get; set; }
 }

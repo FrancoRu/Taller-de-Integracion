@@ -218,18 +218,18 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
         }
 
         // Order teams by seed (1 to 8)
-        List<Team> orderedTeams = [.. teams.OrderBy(t => t.Seed)];
+        //List<Team> orderedTeams = [.. teams.OrderBy(t => t.Seed)];
 
         // Pair teams: 1 vs. 8, 2 vs. 7, 3 vs. 6, 4 vs. 5
         List<List<Team>> pairedTeams = [];
-        for (int i = 0; i < orderedTeams.Count / 2; i++)
-        {
-            pairedTeams.Add(
-        [
-            orderedTeams[i],
-            orderedTeams[orderedTeams.Count - 1 - i]
-        ]);
-        }
+        //for (int i = 0; i < orderedTeams.Count / 2; i++)
+        //{
+        //    pairedTeams.Add(
+        //[
+        //    orderedTeams[i],
+        //    orderedTeams[orderedTeams.Count - 1 - i]
+        //]);
+        //}
 
         return pairedTeams;
     }

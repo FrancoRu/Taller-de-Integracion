@@ -4,7 +4,6 @@ using Club12.API.Utils;
 
 using Entities.DTOs.Abstract;
 using Entities.DTOs.Team;
-using Entities.Models.Divisions;
 using Entities.Models.Teams;
 
 using Microsoft.AspNetCore.Authorization;
@@ -30,6 +29,7 @@ public class TeamController(
     ITeamService _teamService,
     IDivisionService _divisionService,
     ICloudflareService _cloudflareService,
+    SupabaseHelper _supabaseHelper,
     IMapper _mapper
     ) : ControllerBase
 {
@@ -48,21 +48,18 @@ public class TeamController(
             return BadRequest("The logo file must be a valid JPEG/PNG image.");
         }
 
-        Division? division = await _divisionService.GetDivisionByIdAsync(teamRequest.DivisionId);
-        if (division is null)
-        {
-            return BadRequest($"Division with id {teamRequest.DivisionId} not found.");
-        }
 
-        string logoUrl = await _cloudflareService.UploadFileAsync(teamRequest.LogoFile.OpenReadStream(), teamRequest.LogoFile.FileName);
+        await _supabaseHelper.UploadImageAsync(teamRequest.LogoFile.OpenReadStream(), teamRequest.LogoFile.FileName);
 
+        //string logoUrl = await _cloudflareService.UploadFileAsync(teamRequest.LogoFile.OpenReadStream(), teamRequest.LogoFile.FileName);
+        string logoUrl = _supabaseHelper.GetPublicUrl(teamRequest.LogoFile.FileName);
         Team team = _mapper.Map<Team>(teamRequest);
         team.LogoUrl = logoUrl;
 
         Team createdTeam = await _teamService.CreateTeamAsync(team);
         TeamResponse teamResponse = _mapper.Map<TeamResponse>(createdTeam);
 
-        return new ObjectResult(teamResponse) { StatusCode = StatusCodes.Status201Created };
+        return CreatedAtAction(nameof(GetTeamById), new { id = createdTeam.Id }, teamResponse);
     }
 
     /// <summary>
@@ -168,6 +165,11 @@ public class TeamController(
         if (team is null)
         {
             return BadRequest($"Team with id {id} not found.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(team.LogoUrl))
+        {
+            await _supabaseHelper.DeleteImageAsync(team.LogoUrl);
         }
 
         bool deleteResult = await _teamService.DeleteTeamAsync(team);

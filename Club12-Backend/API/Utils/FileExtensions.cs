@@ -17,7 +17,7 @@ public static class FileExtensions
             return false;
         }
 
-        string[] validExtensions = [".jpg", ".jpeg", ".png"];
+        string[] validExtensions = [".jpg", ".jpeg", ".png", ".webp"];
         string fileExtension = Path.GetExtension(file.FileName).ToLower();
 
         return validExtensions.Contains(fileExtension);

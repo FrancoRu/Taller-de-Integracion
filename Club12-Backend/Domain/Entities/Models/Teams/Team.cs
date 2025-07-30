@@ -36,26 +36,7 @@ public class Team : EntityBase
     /// </summary>
     [Required]
     public required string ShirtColor { get; set; }
-
-    /// <summary>
-    /// The division that the team belongs to.
-    /// </summary>
-    [Required]
-    [Column(nameof(DivisionId))]
-    public required Division Division { get; set; }
-
-    /// <summary>
-    /// The ID of the division that the team belongs to.
-    /// </summary>
-    public Guid DivisionId { get; set; }
-
-    /// <summary>
-    /// Represents the seed of the team in the division.
-    /// </summary>
-    [Required]
-    [DefaultValue(0)]
-    public required int Seed { get; set; }
-
+   
     /// <summary>
     /// The players belonging to the team.
     /// </summary>

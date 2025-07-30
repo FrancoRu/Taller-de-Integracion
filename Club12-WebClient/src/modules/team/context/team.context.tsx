@@ -96,7 +96,11 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
     filters: TeamFiltered
   ): Promise<GenericResponsePagination<ITeamResponse> | void> => {
     try {
-      await teamService.getTeamsByFiltered(filters);
+      const res: AxiosResponse<GenericResponsePagination<ITeamResponse>> =
+        await teamService.getTeamsByFiltered(filters);
+      if (res) {
+        setTeams(res.data.items);
+      }
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);

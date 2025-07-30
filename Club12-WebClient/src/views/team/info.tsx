@@ -24,7 +24,7 @@ export const InfoTeam: React.FC = () => {
         await getTeamsByFiltered({});
       })();
     }
-  }, []);
+  }, [teams]);
   return (
     <Card>
       <CardContent>

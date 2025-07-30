@@ -29,6 +29,13 @@ const baseTheme = createTheme({
 
 const theme = createTheme(baseTheme, {
   components: {
+    MuiListItemText: {
+      styleOverrides: {
+        primary: {
+          fontWeight: 'bold',
+        },
+      },
+    },
     MuiTableRow: {
       styleOverrides: {
         root: {

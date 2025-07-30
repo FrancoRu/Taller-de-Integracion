@@ -239,12 +239,6 @@ public class DivisionController(
 
         List<Team> teams = division.Teams.Take(8).ToList();
 
-        bool seedsAssigned = await AssignSeedsAndUpdateTeamsAsync(teams);
-        if (!seedsAssigned)
-        {
-            return BadRequest("Failed to update team seeds.");
-        }
-
         List<PlayoffSerie> playoffSeries = await _playoffSeriesService.CreatePlayoffSeriesAsync();
         await _matchService.GeneratePlayoffMatchesAsync(id, teams, playoffSeries);
 
@@ -254,26 +248,4 @@ public class DivisionController(
         return !updateResult ? BadRequest("Failed to update division with playoffs generated.") : Ok("Playoffs generated successfully.");
     }
 
-    /// <summary>
-    /// Assigns seeds to the top 8 teams and updates them in the database.
-    /// </summary>
-    /// <param name="teams">The list of teams to assign seeds to.</param>
-    /// <returns>True if the teams were successfully updated; otherwise, false.</returns>
-    private async Task<bool> AssignSeedsAndUpdateTeamsAsync(List<Team> teams)
-    {
-        if (teams.Count < 8)
-        {
-            return false;
-        }
-
-        List<Team> seededTeams = teams
-            .Select((team, index) =>
-            {
-                team.Seed = index + 1;
-                return team;
-            })
-            .ToList();
-
-        return await _teamService.UpdateTeamsAsync(seededTeams);
-    }
 }

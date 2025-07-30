@@ -29,12 +29,6 @@ public class CreateTeamRequest
     public required string ShirtColor { get; set; }
 
     /// <summary>
-    /// The unique identifier of the division to which the team belongs.
-    /// </summary>
-    [Required(ErrorMessage = "The DivisionId field is required.")]
-    public required Guid DivisionId { get; init; }
-
-    /// <summary>
     /// The logo image file to upload (must be JPEG or PNG).
     /// </summary>
     [Required(ErrorMessage = "The Logo image is required.")]

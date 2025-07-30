@@ -1,6 +1,6 @@
 import { AxiosResponse } from 'axios';
 import routes from '../../core/constants/routes';
-import { GenericResponsePagination } from '../../core/types/types';
+import { GenericResponsePagination, GUID } from '../../core/types/types';
 import {
   sendDelete,
   sendGet,
@@ -25,22 +25,30 @@ export const teamService = {
    */
   addTeam: async (
     team: IAddTeamRequest
-  ): Promise<AxiosResponse<ITeamResponse>> =>
-    await sendPost(routes.teams, team),
+  ): Promise<AxiosResponse<ITeamResponse>> => {
+    const formData = new FormData();
+    formData.append('Name', team.name);
+    formData.append('ThreeLetterCode', team.threeLetterCode);
+    formData.append('ShirtColor', team.shirtColor);
+    formData.append('LogoFile', team.logo);
+    return await sendPost(routes.teams, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
 
   /**
    * Adds a batch of teams to a division.
-   * @param {string} divisionId - The ID of the division to add teams to.
    * @param {File} teamFile - The file containing team data.
    * @param {File} logoFile - The file containing team logos.
    * @returns {Promise<AxiosResponse<ITeamResponse>>} The server response.
    */
   addTeamToDivisionIdBatch: async (
-    divisionid: GUID,
     teamFile: File,
     logoFile: File
   ): Promise<AxiosResponse<ITeamResponse>> =>
-    await sendPost(`${routes.teams}/${divisionId}`, { teamFile, logoFile }),
+    await sendPost(`${routes.teams}/${1}`, { teamFile, logoFile }),
 
   /**
    * Updates an existing team.

@@ -51,7 +51,7 @@ export const CreateTeam: React.FC = () => {
     const res: ITeamResponse | void = await addTeam(form);
 
     if (res) {
-      navigate(`/${RoutesNavigationViews.Team}`);
+      navigate(`/${RoutesNavigationViews.Team}/${res.id}`);
     }
   };
 
@@ -85,7 +85,6 @@ export const CreateTeam: React.FC = () => {
           )}
 
           <Grid container spacing={2}>
-            {/* Columna izquierda - campos de texto */}
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
@@ -120,7 +119,6 @@ export const CreateTeam: React.FC = () => {
               />
             </Grid>
 
-            {/* Columna derecha - input file */}
             <Grid
               item
               xs={12}

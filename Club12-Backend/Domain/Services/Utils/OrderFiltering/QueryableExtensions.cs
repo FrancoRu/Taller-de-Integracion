@@ -20,42 +20,65 @@ public static class QueryableExtensions
     /// <exception cref="InvalidOperationException">Thrown when the 'Contains' method is not found.</exception>
     public static Expression<Func<TEntity, bool>> ConstructFilterExpression<TEntity, T>(T filter) where T : PaginatedFilterRequest
     {
-        ParameterExpression parameter = Expression.Parameter(typeof(TEntity), "x");
-        Expression finalExpression = Expression.Constant(true);
-        MethodInfo? containsMethod = typeof(string).GetMethod("Contains", [typeof(string)])
+        PropertyInfo[] filterProperties = [.. typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => !ShouldSkipProperty(p.Name))];
+
+        bool allNullOrEmpty = filterProperties.All(property =>
+        {
+            var value = property.GetValue(filter);
+            if (value == null) return true;
+            if (property.PropertyType == typeof(string))
+            {
+                return string.IsNullOrWhiteSpace((string)value);
+            }
+            return false;
+        });
+
+        if (allNullOrEmpty)
+        {
+            ParameterExpression parameter = Expression.Parameter(typeof(TEntity), "x");
+            Expression trueExpr = Expression.Constant(true);
+            return Expression.Lambda<Func<TEntity, bool>>(trueExpr, parameter);
+        }
+
+
+        ParameterExpression parameterExpr = Expression.Parameter(typeof(TEntity), "x");
+        Expression? finalExpression = null;
+
+        MethodInfo containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) })
             ?? throw new InvalidOperationException("The 'Contains' method could not be found on the string class.");
 
-        PropertyInfo[] filterProperties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        MethodInfo toLowerMethod = typeof(string).GetMethod("ToLower", Type.EmptyTypes)
+            ?? throw new InvalidCastException("The 'ToLower' method could not be found on the string class.");
 
         foreach (PropertyInfo property in filterProperties)
         {
-            if (ShouldSkipProperty(property.Name))
+            object? filterValue = property.GetValue(filter);
+
+            // Saltamos null o empty string (ya manejado arriba)
+            if (filterValue == null) continue;
+            if (property.PropertyType == typeof(string) && string.IsNullOrWhiteSpace((string)filterValue)) continue;
+
+            MemberExpression propertyAccess = Expression.Property(parameterExpr, property.Name);
+            Expression currentExpr;
+
+            if (property.PropertyType == typeof(string) && filterValue is string stringValue)
             {
-                continue;
+                Expression toLowerProperty = Expression.Call(propertyAccess, toLowerMethod);
+                Expression toLowerFilterValue = Expression.Constant(stringValue.ToLower());
+                currentExpr = Expression.Call(toLowerProperty, containsMethod, toLowerFilterValue);
+            }
+            else
+            {
+                ConstantExpression constantValue = Expression.Constant(filterValue);
+                currentExpr = Expression.Equal(propertyAccess, constantValue);
             }
 
-            object? filterValue = property.GetValue(filter);
-            if (filterValue is not null)
-            {
-                MemberExpression propertyAccess = Expression.Property(parameter, property.Name);
-                if (property.PropertyType == typeof(string) && filterValue is string stringValue)
-                {
-                    MethodInfo? toLowerMethod = typeof(string).GetMethod("ToLower", Type.EmptyTypes) ?? throw new InvalidCastException("The 'ToLower' method could not be found on the string class.");
-                    Expression toLowerProperty = Expression.Call(propertyAccess, toLowerMethod);
-                    Expression toLowerFilterValue = Expression.Constant(stringValue.ToLower());
-                    Expression containsExpression = Expression.Call(toLowerProperty, containsMethod, toLowerFilterValue);
-                    finalExpression = Expression.AndAlso(finalExpression, containsExpression);
-                }
-                else
-                {
-                    ConstantExpression constantValue = Expression.Constant(filterValue);
-                    Expression equalityExpression = Expression.Equal(propertyAccess, constantValue);
-                    finalExpression = Expression.AndAlso(finalExpression, equalityExpression);
-                }
-            }
+            finalExpression = finalExpression == null ? currentExpr : Expression.AndAlso(finalExpression, currentExpr);
         }
 
-        return Expression.Lambda<Func<TEntity, bool>>(finalExpression, parameter);
+        finalExpression ??= Expression.Constant(true);
+
+        return Expression.Lambda<Func<TEntity, bool>>(finalExpression, parameterExpr);
     }
 
 
