@@ -31,10 +31,18 @@ export const playerService = {
   /**
    * Retrieves a player by their ID.
    * @param {string} id - The ID of the player to retrieve.
+   * @param {boolean} isAdministrative - Whether to fetch the player using the administrative route.
    * @returns {Promise<AxiosResponse<IPlayerResponse>>} The server response.
    */
-  getPlayerById: async (id: GUID): Promise<AxiosResponse<void>> =>
-    sendGet(`${routes.players}/${id}`),
+  getPlayerById: async (
+    id: GUID,
+    isAdministrative: boolean
+  ): Promise<AxiosResponse<IPlayerResponse>> => {
+    const resource: string = isAdministrative
+      ? `${routes.players}/admin`
+      : routes.players;
+    return sendGet(`${resource}/${id}`);
+  },
 
   /**
    * Retrieves a list of players based on a filter.

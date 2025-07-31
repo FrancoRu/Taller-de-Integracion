@@ -49,7 +49,6 @@ export const CreateTeam: React.FC = () => {
     }
 
     const res: ITeamResponse | void = await addTeam(form);
-
     if (res) {
       navigate(`/${RoutesNavigationViews.Team}/${res.id}`);
     }

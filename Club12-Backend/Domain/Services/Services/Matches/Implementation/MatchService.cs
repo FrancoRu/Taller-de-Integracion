@@ -47,7 +47,7 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
             .Select(ps => new
             {
                 ps.PlayerId,
-                ps.Player.Names,
+                ps.Player.FirstName,
                 ps.Player.LastName,
                 ps.Value,
                 ps.Player.TeamId,
@@ -65,7 +65,7 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
                         .Select(ps => new Scorer
                         {
                             PlayerId = ps.PlayerId,
-                            Names = ps.Names,
+                            Names = ps.FirstName,
                             LastName = ps.LastName,
                             Points = ps.Value,
                             TeamId = match.HomeTeamId.Value,
@@ -81,7 +81,7 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
                         .Select(ps => new Scorer
                         {
                             PlayerId = ps.PlayerId,
-                            Names = ps.Names,
+                            Names = ps.FirstName,
                             LastName = ps.LastName,
                             Points = ps.Value,
                             TeamId = match.VisitorTeamId,

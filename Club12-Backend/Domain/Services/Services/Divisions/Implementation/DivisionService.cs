@@ -195,7 +195,7 @@ public class DivisionService(IGenericService<Division> _genericDivisionService) 
                 return new TopScorer
                 {
                     PlayerId = group.Key,
-                    FirstName = player?.Names ?? "Unknown",
+                    FirstName = player?.FirstName ?? "Unknown",
                     LastName = player?.LastName ?? "Unknown",
                     WeeklyScores = weeklyScores
                 };

@@ -66,7 +66,6 @@ const RenderTeam: React.FC<ITeamResponse> = ({
   const navigate = useNavigate();
   const [showPopup, setShowPopup] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-
   const handleNavigate = () => {
     setIsAnimating(true);
     setTimeout(() => {
@@ -155,6 +154,7 @@ const RenderTeam: React.FC<ITeamResponse> = ({
           {showPopup && (
             <DeleteTeam
               id={id}
+              route={RoutesNavigationViews.Home}
               fn={deleteTeamById}
               onClose={() => setShowPopup(false)}
             />

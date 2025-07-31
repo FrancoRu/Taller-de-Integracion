@@ -126,7 +126,7 @@ const sendRequest = async <T>(
   query?: object
 ): Promise<AxiosResponse<T>> => {
   const headers = getHeaders(configOverride);
-  const url = buildEndpoint(resource, query); // Pass query to buildEndpoint
+  const url = buildEndpoint(resource, query);
   try {
     const result: AxiosResponse<T> = await axios.request({
       method,

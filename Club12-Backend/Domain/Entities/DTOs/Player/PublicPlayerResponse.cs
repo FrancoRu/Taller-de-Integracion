@@ -8,9 +8,14 @@ namespace Entities.DTOs.Player;
 public class PublicPlayerResponse : BaseEntityResponse
 {
     /// <summary>
-    /// The name of the Player.
+    /// The first name of the Player.
     /// </summary>
-    public required string Names { get; set; }
+    public required string FirstName { get; set; }
+
+    /// <summary>
+    /// The second name of the Player.
+    /// </summary>
+    public required string SecondName { get; set; }
 
     /// <summary>
     /// The last name of the player.

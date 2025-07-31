@@ -1,14 +1,14 @@
 import { GUID } from '@/modules/core/types/types';
-import { RoutesNavigationViews } from '@/views/core/routes-const';
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
 export const DeleteTeam: React.FC<{
   id: GUID;
+  route: string;
   fn: (id: GUID) => Promise<void>;
   onClose: () => void;
-}> = ({ id, fn, onClose }) => {
+}> = ({ id, route, fn, onClose }) => {
   const navigate = useNavigate();
   useEffect(() => {
     Swal.fire({
@@ -23,7 +23,7 @@ export const DeleteTeam: React.FC<{
     }).then(async result => {
       if (result.isConfirmed) {
         await fn(id);
-        navigate(`/${RoutesNavigationViews.Team}`);
+        navigate(`/${route}`);
       }
       onClose();
     });

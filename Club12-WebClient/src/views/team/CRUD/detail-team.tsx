@@ -9,30 +9,32 @@ import {
   Typography,
   Tooltip,
   IconButton,
+  Box,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DeleteTeam } from './delete-team';
+import { RoutesNavigationViews } from '@/views/core/routes-const';
+import { InfoPlayer } from '@/views/player/info';
 
 export const DetailTeam: React.FC = () => {
   const { id } = useParams<{ id: GUID }>();
   const { team, getTeamById } = useTeam();
-  if (!id) {
-    return null;
-  }
 
   useEffect(() => {
     (async () => {
       await getTeamById(id);
     })();
-  }, []);
+  }, [id]);
 
-  if (!team) {
-    return null;
-  }
   return (
     <>
-      <RenderTeamDetails {...team} />
+      {team && (
+        <>
+          <RenderTeamDetails {...team} />
+          <InfoPlayer {...team} />
+        </>
+      )}
     </>
   );
 };
@@ -85,27 +87,48 @@ const RenderTeamDetails: React.FC<ITeamResponse> = ({
           </Stack>
         </Stack>
 
-        <Typography variant="body2" color="text.secondary">
-          Código: {threeLetterCode}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Color de camiseta: {shirtColor}
-        </Typography>
+        <Stack
+          direction="row"
+          spacing={2}
+          alignItems="center"
+          justifyContent="space-between"
+        >
+          {logoUrl && (
+            <Box
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                overflow: 'hidden',
+                border: '2px solid orange',
+                boxShadow: '0 0 8px rgba(255,165,0,0.7)',
+                display: { xs: 'none', sm: 'block' },
+                flexShrink: 0,
+              }}
+            >
+              <img
+                src={logoUrl}
+                alt={`Logo del equipo ${name}`}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            </Box>
+          )}
 
-        {logoUrl && (
-          <Typography
-            variant="body2"
-            color="primary"
-            sx={{ mt: 1, wordBreak: 'break-word' }}
-          >
-            Logo: {logoUrl}
-          </Typography>
-        )}
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Código: {threeLetterCode}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Color de camiseta: {shirtColor}
+            </Typography>
+          </Box>
+        </Stack>
       </CardContent>
 
       {showPopupDelete && (
         <DeleteTeam
           id={id}
+          route={RoutesNavigationViews.Team}
           fn={deleteTeamById}
           onClose={() => setShowPopupDelete(false)}
         />

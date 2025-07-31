@@ -38,6 +38,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
       if (res) {
         setTeam(res.data);
       }
+      return res?.data;
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
@@ -99,7 +100,19 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
       const res: AxiosResponse<GenericResponsePagination<ITeamResponse>> =
         await teamService.getTeamsByFiltered(filters);
       if (res) {
-        setTeams(res.data.items);
+        const newIds = res.data.items
+          .map(e => e.id)
+          .sort()
+          .join(',');
+
+        const currentIds = (teams ?? [])
+          .map(t => t.id)
+          .sort()
+          .join(',');
+
+        if (newIds !== currentIds) {
+          setTeams(res.data.items);
+        }
       }
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
@@ -111,7 +124,11 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
   };
   const getTeamById = async (id: GUID): Promise<ITeamResponse | void> => {
     try {
-      await teamService.getTeamById(id);
+      const res: AxiosResponse<ITeamResponse> =
+        await teamService.getTeamById(id);
+      if (res) {
+        setTeam(res.data);
+      }
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
@@ -123,6 +140,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
   const deleteTeamById = async (id: GUID): Promise<void> => {
     try {
       await teamService.deleteTeamById(id);
+      setTeams(prev => prev?.filter(e => e.id !== id) ?? null);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);

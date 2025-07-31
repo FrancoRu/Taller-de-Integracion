@@ -1,5 +1,5 @@
 ﻿using Entities.Models.Teams;
-
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -10,14 +10,21 @@ namespace Entities.Models.Players;
 /// Represents a player in the Club12 application.
 /// </summary>
 [Table("Players", Schema = "Club12")]
+[Index(nameof(DocumentNumber), IsUnique = true)]
 public class Player : EntityBase
 {
     /// <summary>
-    /// The names of the player.
+    /// The first name of the player.
     /// </summary>
     [Required]
     [MaxLength(70)]
-    public required string Names { get; set; }
+    public required string FirstName { get; set; }
+
+    /// <summary>
+    /// The second name of the player.
+    /// </summary>
+    [MaxLength(70)]
+    public string? SecondName { get; set; }
 
     /// <summary>
     /// The last name of the player.
@@ -25,6 +32,14 @@ public class Player : EntityBase
     [Required]
     [MaxLength(70)]
     public required string LastName { get; set; }
+
+    /// <summary>
+    /// The full name of the player, composed of last name in uppercase followed by first and second name if present.
+    /// </summary>
+    public string FullName => string.Concat(
+        LastName.ToUpper(),
+        string.IsNullOrWhiteSpace(SecondName) ? $" {FirstName}" : $" {FirstName} {SecondName}"
+    );
 
     /// <summary>
     /// The document number of the player.
@@ -41,26 +56,9 @@ public class Player : EntityBase
     public required bool IsSanctioned { get; set; } = false;
 
     /// <summary>
-    /// Indicates whether the individual is part of a federation.
-    /// </summary>
-    public required bool IsFederated { get; set; } = false;
-
-    /// <summary>
     /// The phone number of the individual.
     /// </summary>
     public string? PhoneNumber { get; set; }
-
-    /// <summary>
-    /// The club the player belongs to, if federated.
-    /// </summary>
-    [MaxLength(100)]
-    public string? Club { get; set; }
-
-    /// <summary>
-    /// The category the player belongs to, if federated.
-    /// </summary>
-    [MaxLength(50)]
-    public string? Category { get; set; }
 
     /// <summary>
     /// The birthdate of the player.

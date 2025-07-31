@@ -1,6 +1,4 @@
-﻿using Entities.DTOs.Player.Validation;
-
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Entities.DTOs.Player;
 
@@ -10,11 +8,17 @@ namespace Entities.DTOs.Player;
 public class CreatePlayerRequest
 {
     /// <summary>
-    /// The names of the player.
+    /// The first name of the player.
     /// </summary>
-    [Required(ErrorMessage = "The Name field is required.")]
+    [Required(ErrorMessage = "The First Name field is required.")]
     [MaxLength(70, ErrorMessage = "The Name field must not exceed 70 characters.")]
-    public required string Name { get; set; }
+    public required string FirstName { get; set; }
+
+    /// <summary>
+    /// The second name of the player.
+    /// </summary>
+    [MaxLength(70, ErrorMessage = "The Second Name field must not exceed 70 characters.")]
+    public string? SecondName { get; set; } = null;
 
     /// <summary>
     /// The last name of the player.
@@ -50,29 +54,11 @@ public class CreatePlayerRequest
     [MaxLength(100, ErrorMessage = "The SocialSecurity field must not exceed 100 characters.")]
     public required string SocialSecurity { get; set; }
 
+
     /// <summary>
     /// The team the player belongs to.
     /// </summary>
     [Required(ErrorMessage = "The TeamId field is required.")]
     public required Guid TeamId { get; set; }
 
-    /// <summary>
-    /// Indicates if the player is federated.
-    /// </summary>
-    [Required(ErrorMessage = "The IsFederated field is required.")]
-    public required bool IsFederated { get; set; }
-
-    /// <summary>
-    /// The club the player belongs to, if federated.
-    /// </summary>
-    [MaxLength(100)]
-    [FederatedValidation(ErrorMessage = "Both Club and Category are required if the player is federated.")]
-    public string? Club { get; set; }
-
-    /// <summary>
-    /// The category the player belongs to, if federated.
-    /// </summary>
-    [MaxLength(50)]
-    [FederatedValidation(ErrorMessage = "Both Club and Category are required if the player is federated.")]
-    public string? Category { get; set; }
 }

@@ -1,6 +1,9 @@
 import { GUID } from '@/modules/core/types/types';
 import { usePlayer } from '@/modules/player/hook/player.hook';
-import { IPlayerResponse } from '@/modules/player/type/player';
+import {
+  IPlayerContextProps,
+  IPlayerResponse,
+} from '@/modules/player/type/player';
 import { EditIcon, DeleteIcon } from '@/views/core/MUI/icons/icons';
 import {
   Card,
@@ -17,17 +20,23 @@ import { useTeam } from '@/modules/team/hook/team.hook';
 
 export const DetailPlayer: React.FC = () => {
   const { id } = useParams<{ id: GUID }>();
-  const { player, getPlayerById } = usePlayer();
+  const { player, getPlayerById }: IPlayerContextProps = usePlayer();
 
   const { team, getTeamById } = useTeam();
   if (!id) return null;
-
   useEffect(() => {
     (async () => {
-      await getPlayerById(id);
-      await getTeamById(player?.teamId);
+      await getPlayerById(id, true); //the true is only for testing, change to useAuth
     })();
   }, [id]);
+
+  useEffect(() => {
+    if (!team && player?.teamId) {
+      (async () => {
+        await getTeamById(player?.teamId);
+      })();
+    }
+  }, [player]);
 
   if (!player) return null;
 
@@ -40,9 +49,7 @@ export const DetailPlayer: React.FC = () => {
 
 const RenderPlayerDetails: React.FC<IPlayerResponse & { teamName: string }> = ({
   id,
-  firstName,
-  secondName,
-  lastName,
+  fullName,
   documentNumber,
   birthDate,
   phoneNumber,
@@ -68,10 +75,7 @@ const RenderPlayerDetails: React.FC<IPlayerResponse & { teamName: string }> = ({
           mb={1}
         >
           <Typography variant="h6" fontWeight="bold">
-            Jugador:{' '}
-            {!secondName?.trim()
-              ? `${firstName} ${lastName}`
-              : `${firstName} ${secondName} ${lastName}`}
+            Jugador:{fullName}
           </Typography>
 
           <Stack direction="row" spacing={1}>

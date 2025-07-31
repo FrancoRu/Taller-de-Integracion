@@ -72,6 +72,7 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
                 value => value.ToString(),
                 value => (StaffType) Enum.Parse(typeof(StaffType), value)
             );
+
         base.OnModelCreating(modelBuilder);
 
     }

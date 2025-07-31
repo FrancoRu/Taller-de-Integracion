@@ -2,9 +2,11 @@ import { useError } from '@/modules/error/hooks/error.hock';
 import { IErrorContextProp } from '@/modules/error/type/error';
 import { usePlayer } from '@/modules/player/hook/player.hook';
 import {
+  IPlayerContextProps,
   IPlayerResponse,
   IPutPlayerRequest,
 } from '@/modules/player/type/player';
+import { GUID_EMPTY } from '@/views/core/constants/const';
 import { CustomBox } from '@/views/core/MUI/customsThemes/CustomBox';
 import { RoutesNavigationViews } from '@/views/core/routes-const';
 import {
@@ -15,7 +17,7 @@ import {
   Button,
   useTheme,
 } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export const EditPlayer: React.FC = () => {
@@ -23,7 +25,8 @@ export const EditPlayer: React.FC = () => {
   const navigate = useNavigate();
   const { errors, setMessage }: IErrorContextProp = useError();
 
-  const { player, putPlayerById } = usePlayer();
+  const { player, putPlayerById }: IPlayerContextProps = usePlayer();
+
   const [form, setForm] = useState<IPutPlayerRequest>({
     firstName: player?.firstName ?? '',
     secondName: player?.secondName ?? '',
@@ -32,7 +35,23 @@ export const EditPlayer: React.FC = () => {
     birthDate: player?.birthDate,
     phoneNumber: player?.phoneNumber,
     socialSecurity: player?.socialSecurity,
+    teamId: player?.teamId ?? GUID_EMPTY,
   });
+
+  useEffect(() => {
+    if (!player) return;
+
+    setForm({
+      firstName: player.firstName,
+      secondName: player.secondName,
+      lastName: player.lastName,
+      documentNumber: player.documentNumber,
+      birthDate: player.birthDate,
+      phoneNumber: player.phoneNumber,
+      socialSecurity: player.socialSecurity,
+      teamId: player.teamId,
+    });
+  }, [player]);
 
   if (!player) {
     return (
@@ -59,8 +78,9 @@ export const EditPlayer: React.FC = () => {
     }
 
     const res: IPlayerResponse | void = await putPlayerById(player.id, form);
+    console.log(res);
     if (res) {
-      navigate(`/${RoutesNavigationViews.Team}/${player.teamId}`);
+      navigate(`/${RoutesNavigationViews.Player}/${res.id}`);
     }
   };
 

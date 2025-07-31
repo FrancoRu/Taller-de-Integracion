@@ -47,9 +47,16 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
       }
     }
   };
-  const getPlayerById = async (id: GUID): Promise<IPlayerResponse | void> => {
+  const getPlayerById = async (
+    id: GUID,
+    isAdministrative: boolean = false
+  ): Promise<IPlayerResponse | void> => {
     try {
-      await playerService.getPlayerById(id);
+      const res: AxiosResponse<IPlayerResponse> =
+        await playerService.getPlayerById(id, isAdministrative);
+      if (res) {
+        setPlayer(res.data);
+      }
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
@@ -62,7 +69,11 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
     filter: PlayerFiltered
   ): Promise<GenericResponsePagination<IPlayerResponse> | void> => {
     try {
-      await playerService.getPlayersByFilter(filter);
+      const res: AxiosResponse<GenericResponsePagination<IPlayerResponse>> =
+        await playerService.getPlayersByFilter(filter);
+      if (res) {
+        setPlayers(res.data.items);
+      }
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
@@ -81,6 +92,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
       if (res) {
         setPlayer(res.data);
       }
+      return res.data;
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
@@ -93,6 +105,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
   const deletePlayerById = async (id: GUID): Promise<void> => {
     try {
       await playerService.deletePlayerById(id);
+      setPlayer(null);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);

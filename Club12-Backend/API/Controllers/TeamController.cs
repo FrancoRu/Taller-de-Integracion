@@ -11,15 +11,12 @@ using Microsoft.AspNetCore.Mvc;
 
 using Services.Services.Divisions;
 using Services.Services.Teams;
-using Services.Utils.Cloudfare;
 
 namespace Club12.API.Controllers;
 
 /// <summary>
 /// Controller for managing teams.
 /// <param name="_teamService">The team service for handling team-related operations.</param>
-/// <param name="_divisionService">The division service for managing divisions associated with teams.</param>
-/// <param name="_cloudflareService">The Cloudflare service for handling file uploads.</param>
 /// <param name="_mapper">The AutoMapper instance for mapping data models.</param>
 /// </summary>
 //[Authorize(Roles = "SuperAdmin")]
@@ -27,8 +24,6 @@ namespace Club12.API.Controllers;
 [ApiController]
 public class TeamController(
     ITeamService _teamService,
-    IDivisionService _divisionService,
-    ICloudflareService _cloudflareService,
     SupabaseHelper _supabaseHelper,
     IMapper _mapper
     ) : ControllerBase
@@ -48,11 +43,8 @@ public class TeamController(
             return BadRequest("The logo file must be a valid JPEG/PNG image.");
         }
 
+        string logoUrl = await _supabaseHelper.UploadImageAsync<Team>(teamRequest.LogoFile.OpenReadStream(), teamRequest.LogoFile.FileName);
 
-        await _supabaseHelper.UploadImageAsync(teamRequest.LogoFile.OpenReadStream(), teamRequest.LogoFile.FileName);
-
-        //string logoUrl = await _cloudflareService.UploadFileAsync(teamRequest.LogoFile.OpenReadStream(), teamRequest.LogoFile.FileName);
-        string logoUrl = _supabaseHelper.GetPublicUrl(teamRequest.LogoFile.FileName);
         Team team = _mapper.Map<Team>(teamRequest);
         team.LogoUrl = logoUrl;
 
@@ -113,8 +105,8 @@ public class TeamController(
             return BadRequest($"Team with id {id} not found.");
         }
 
-        string logoUrl = await _cloudflareService.UploadFileAsync(logoRequest.LogoFile.OpenReadStream(), logoRequest.LogoFile.FileName);
-        team.LogoUrl = logoUrl;
+        //string logoUrl = await _cloudflareService.UploadFileAsync(logoRequest.LogoFile.OpenReadStream(), logoRequest.LogoFile.FileName);
+        //team.LogoUrl = logoUrl;
 
         bool updateResult = await _teamService.UpdateTeamAsync(team);
         return !updateResult ? BadRequest("Failed to update the logo.") : Ok();
@@ -169,9 +161,8 @@ public class TeamController(
 
         if (!string.IsNullOrWhiteSpace(team.LogoUrl))
         {
-            await _supabaseHelper.DeleteImageAsync(team.LogoUrl);
+            await _supabaseHelper.DeleteImageAsync<Team>(team.LogoUrl.Split('/').Last());
         }
-
         bool deleteResult = await _teamService.DeleteTeamAsync(team);
         return !deleteResult ? BadRequest("Failed to delete the team.") : NoContent();
     }

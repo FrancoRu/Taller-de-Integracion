@@ -16,12 +16,12 @@ public class SupabaseHelper
     /// <param name="configuration">The application configuration containing Supabase settings.</param>
     public SupabaseHelper(IConfiguration configuration)
     {
-        var section = configuration.GetSection("SupaBase");
+        IConfigurationSection section = configuration.GetSection("SupaBase");
         _baseUrl = section["ProjectUrl"]!;
-        var serviceRole = section["ServiceRole"]!;
+        string serviceRole = section["ServiceRole"]!;
         _bucketName = section["BucketName"]!;
 
-        var options = new Supabase.SupabaseOptions
+        Supabase.SupabaseOptions options = new()
         {
             AutoRefreshToken = true,
             AutoConnectRealtime = true
@@ -36,20 +36,23 @@ public class SupabaseHelper
     /// </summary>
     /// <param name="fileStream">The image stream to upload.</param>
     /// <param name="fileName">The destination filename in the bucket.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <returns>A string representing the new file name.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the upload fails.</exception>
-    public async Task UploadImageAsync(Stream fileStream, string fileName)
+    public async Task<string> UploadImageAsync<T>(Stream fileStream, string fileName)
     {
         try
         {
+            string newFileName = GenerateNameFile(fileName);
+            string fullPathInBucket = $"{typeof(T).Name}/{newFileName}";
             await _client.Storage
                 .From(_bucketName)
-                .Upload(UseStreamDotReadMethod(fileStream), fileName,
+                .Upload(UseStreamDotReadMethod(fileStream), fullPathInBucket,
                     new()
                     {
                         Upsert = true
                     }
                 );
+            return _client.Storage.From(_bucketName).GetPublicUrl(fullPathInBucket);
         }
         catch (Exception ex)
         {
@@ -65,26 +68,16 @@ public class SupabaseHelper
     /// <exception cref="InvalidOperationException">
     /// Thrown when an error occurs while deleting the file.
     /// </exception>
-    public async Task DeleteImageAsync(string fileName)
+    public async Task DeleteImageAsync<T>(string fileName)
     {
         try
         {
-            await _client.Storage.From(_bucketName).Remove(fileName);
+            await _client.Storage.From(_bucketName).Remove($"{typeof(T).Name}/{fileName}");
         }
         catch (Exception ex)
         {
             throw new InvalidOperationException($"Error uploading file: {ex.Message}", ex);
         }
-    }
-
-    /// <summary>
-    /// Generates a public URL for an uploaded file in Supabase Storage.
-    /// </summary>
-    /// <param name="fileName">The name of the file stored in the bucket.</param>
-    /// <returns>A publicly accessible URL for the file.</returns>
-    public string GetPublicUrl(string fileName)
-    {
-        return $"{_baseUrl}/storage/v1/object/public/{_bucketName}/{fileName}";
     }
 
     /// <summary>
@@ -95,14 +88,28 @@ public class SupabaseHelper
     /// <returns>A byte array containing all data read from the stream.</returns>
     private static byte[] UseStreamDotReadMethod(Stream stream)
     {
-        List<byte> totalStream = new();
+        List<byte> totalStream = [];
         byte[] buffer = new byte[32];
         int read;
         while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
         {
             totalStream.AddRange(buffer[..read]);
         }
-        return totalStream.ToArray();
+        return [.. totalStream];
+    }
+
+    /// <summary>
+    /// Generates a new unique file name by replacing the original name with a GUID,
+    /// preserving the original file extension.
+    /// </summary>
+    /// <param name="fileName">The original file name including extension.</param>
+    /// <returns>A new file name string consisting of a GUID and the original extension.</returns>
+    private static string GenerateNameFile(string fileName)
+    {
+        string extension = Path.GetExtension(fileName);
+        string newName = Guid.NewGuid().ToString();
+
+        return $"{newName}{extension}";
     }
 
 }

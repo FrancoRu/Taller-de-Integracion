@@ -10,10 +10,17 @@ namespace Entities.DTOs.Player;
 public class UpdatePlayerRequest
 {
     /// <summary>
-    /// The names of the player.
+    /// The first name of the player.
     /// </summary>
+    [Required(ErrorMessage = "The First Name field is required.")]
     [MaxLength(70, ErrorMessage = "The Name field must not exceed 70 characters.")]
-    public string? Name { get; set; }
+    public required string FirstName { get; set; }
+
+    /// <summary>
+    /// The second name of the player.
+    /// </summary>
+    [MaxLength(70, ErrorMessage = "The Second Name field must not exceed 70 characters.")]
+    public string? SecondName { get; set; } = null;
 
     /// <summary>
     /// The last name of the player.

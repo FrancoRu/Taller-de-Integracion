@@ -54,8 +54,7 @@ public class PlayerController(
         Player mappedPlayer = _mapper.Map<Player>(playerRequest);
         Player createdPlayer = await _playerService.CreatePlayerAsync(mappedPlayer);
         PublicPlayerResponse playerResponse = _mapper.Map<PublicPlayerResponse>(createdPlayer);
-
-        return new ObjectResult(playerResponse) { StatusCode = StatusCodes.Status201Created };
+        return CreatedAtAction(nameof(GetPlayerByIdAsync), new {id = createdPlayer.Id}, playerResponse);
     }
 
     /// <summary>
@@ -80,6 +79,29 @@ public class PlayerController(
         }
 
         PublicPlayerResponse playerResponse = _mapper.Map<PublicPlayerResponse>(player);
+        return Ok(playerResponse);
+    }
+
+    /// <summary>
+    /// Retrieves a player by ID with complete data for admin view.
+    /// </summary>
+    /// <param name="id">The unique identifier of the player.</param>
+    /// <returns>
+    /// Returns <see cref="AdminPlayerResponse"/> if the player is found; otherwise, returns a 400 Bad Request.
+    /// </returns>
+    [HttpGet("admin/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AdminPlayerResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<AdminPlayerResponse>> GetPlayerByIdCompleteDataAsync(Guid id)
+    {
+        Player? player = await _playerService.GetPlayerByIdAsync(id);
+
+        if (player is null)
+        {
+            return BadRequest($"Player with id {id} not found.");
+        }
+
+        AdminPlayerResponse playerResponse = _mapper.Map<AdminPlayerResponse>(player);
         return Ok(playerResponse);
     }
 
@@ -109,7 +131,7 @@ public class PlayerController(
         _mapper.Map(playerRequest, existingPlayer);
         bool updateResult = await _playerService.UpdatePlayerAsync(existingPlayer);
 
-        return !updateResult ? BadRequest("Failed to update the player.") : NoContent();
+        return updateResult ? Ok(existingPlayer) : BadRequest("Something went wrong");
     }
 
     /// <summary>

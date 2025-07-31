@@ -102,7 +102,7 @@ public class PlayerProfile : Profile
     public PlayerProfile()
     {
         _ = CreateMap<Player, PublicPlayerResponse>()
-            .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.LastName.ToUpper()}, {src.Names}"))
+            .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.FullName))
             .ReverseMap();
 
         CreateMap<Player, AdminPlayerResponse>()

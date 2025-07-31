@@ -1,4 +1,8 @@
-import { Filtered, GenericResponsePagination } from '../../core/types/types';
+import {
+  Filtered,
+  GenericResponsePagination,
+  GUID,
+} from '../../core/types/types';
 
 /**
  * Context properties and methods for managing players in a sports system.
@@ -18,9 +22,13 @@ export interface IPlayerContextProps {
   /**
    * Fetches a player by its ID.
    * @param id The ID of the player to fetch.
+   * @param isAdministrative Whether to use the administrative route to fetch the player. Defaults to false.
    * @returns A promise that resolves with the player details.
    */
-  getPlayerById(id: GUID): Promise<IPlayerResponse | void>;
+  getPlayerById(
+    id: GUID,
+    isAdministrative: boolean = false
+  ): Promise<IPlayerResponse | void>;
 
   /**
    * Fetches players based on filters and pagination.
@@ -53,7 +61,6 @@ export interface IPlayerContextProps {
 /**
  * The filter criteria for fetching players, which includes the player's name and document number.
  * @interface PlayerFiltered
- * @extends IAddPlayerRequest
  */
 export interface PlayerFiltered extends Filtered {
   /**
@@ -146,6 +153,8 @@ export interface IPlayerResponse extends IAddPlayerRequest {
    * @type {string}
    */
   id: GUID;
+
+  fullName: string;
 }
 
 /**
@@ -182,4 +191,6 @@ export interface IPutPlayerRequest {
   phoneNumber?: string;
 
   socialSecurity?: string;
+
+  teamId: GUID;
 }
