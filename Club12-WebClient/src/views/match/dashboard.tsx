@@ -11,7 +11,6 @@ import {
   Typography,
   Tooltip,
   IconButton,
-  Avatar,
   Chip,
   Divider,
 } from '@mui/material';
@@ -26,6 +25,7 @@ import {
 import { RoutesNavigationViews } from '../core/routes-const';
 import { NoMatchesMessage } from './NoMatchMessage';
 import { DeleteMatch } from './CRUD/delete-match';
+import { formatMatchDate } from '@/modules/core/utils/formatDate';
 
 export const MatchDashboard: React.FC = () => {
   const { matches, getMatchByFilter } = useMatch();
@@ -36,7 +36,7 @@ export const MatchDashboard: React.FC = () => {
 
   useEffect(() => {
     if (!stage) {
-      navigate('/');
+      navigate(RoutesNavigationViews.Home);
     }
   }, [stage, navigate]);
 
@@ -69,23 +69,47 @@ export const MatchDashboard: React.FC = () => {
   );
 };
 
-const formatMatchDate = (iso: string) =>
-  new Date(iso).toLocaleString(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
+const TeamBlock: React.FC<{
+  name: string;
+  logo?: string;
+  align: 'left' | 'right';
+}> = ({ name, logo, align }) => {
+  return (
+    <Stack alignItems={align === 'left' ? 'flex-start' : 'flex-end'}>
+      {logo && (
+        <Box
+          sx={{
+            width: 48,
+            height: 48,
+            borderRadius: '50%',
+            overflow: 'hidden',
+            border: '2px solid orange',
+            boxShadow: '0 0 6px rgba(255,165,0,0.5)',
+            mb: 0.5,
+          }}
+        >
+          <img
+            src={logo}
+            alt={`Logo de ${name}`}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        </Box>
+      )}
+      <Typography variant="body2" fontWeight={500}>
+        {name}
+      </Typography>
+    </Stack>
+  );
+};
 
 export const RenderMatch: React.FC<IMatchResponse> = ({
   id,
   matchDate,
-  homeTeamName,
-  homeTeamLogoUrl,
-  visitorTeamName,
-  visitorTeamLogoUrl,
-  homeScore,
-  visitorScore,
+  matchType,
+  homeTeam,
+  visitorTeam,
   isFinished,
-  winningTeamName,
+  winningTeamId,
   venue,
 }) => {
   const { deleteMatchById } = useMatch();
@@ -102,8 +126,10 @@ export const RenderMatch: React.FC<IMatchResponse> = ({
   };
 
   const winner =
-    isFinished && winningTeamName
-      ? `Ganador: ${winningTeamName}`
+    isFinished && winningTeamId
+      ? `Ganador: ${
+          winningTeamId === homeTeam.id ? homeTeam.name : visitorTeam.name
+        }`
       : isFinished
         ? 'Empate'
         : 'Pendiente';
@@ -122,7 +148,6 @@ export const RenderMatch: React.FC<IMatchResponse> = ({
           <Stack
             direction="row"
             spacing={1}
-            alignItems="center"
             justifyContent="center"
             flexWrap="wrap"
           >
@@ -130,6 +155,12 @@ export const RenderMatch: React.FC<IMatchResponse> = ({
               label={isFinished ? 'Finalizado' : 'Programado'}
               size="small"
               color={isFinished ? 'success' : 'warning'}
+              variant="outlined"
+            />
+            <Chip
+              label={matchType}
+              size="small"
+              color="info"
               variant="outlined"
             />
           </Stack>
@@ -148,17 +179,16 @@ export const RenderMatch: React.FC<IMatchResponse> = ({
             justifyContent="space-between"
             sx={{ width: '100%' }}
           >
-            {/* Local */}
+            {/* Equipo local */}
             <TeamBlock
-              name={homeTeamName}
-              logo={homeTeamLogoUrl}
+              name={homeTeam.name}
+              logo={homeTeam.logoUrl}
               align="right"
             />
 
-            {/* Score */}
             <Box>
               <Typography variant="h5" fontWeight={700} align="center">
-                {homeScore} - {visitorScore}
+                {homeTeam.score} - {visitorTeam.score}
               </Typography>
               <Typography
                 variant="caption"
@@ -170,10 +200,9 @@ export const RenderMatch: React.FC<IMatchResponse> = ({
               </Typography>
             </Box>
 
-            {/* Visitante */}
             <TeamBlock
-              name={visitorTeamName}
-              logo={visitorTeamLogoUrl}
+              name={visitorTeam.name}
+              logo={visitorTeam.logoUrl}
               align="left"
             />
           </Stack>
@@ -193,7 +222,7 @@ export const RenderMatch: React.FC<IMatchResponse> = ({
                       : 'translateX(0)',
                   }}
                 >
-                  <ArrowForwardIcon titleAccess="Ver partido" />
+                  <ArrowForwardIcon />
                 </IconButton>
               </span>
             </Tooltip>
@@ -205,17 +234,18 @@ export const RenderMatch: React.FC<IMatchResponse> = ({
                   navigate(`/${RoutesNavigationViews.Match}/${id}/editar`)
                 }
               >
-                <EditIcon titleAccess="Editar partido" />
+                <EditIcon />
               </IconButton>
             </Tooltip>
 
             <Tooltip title="Eliminar partido">
               <IconButton color="error" onClick={() => setShowPopup(true)}>
-                <DeleteIcon titleAccess="Eliminar partido" />
+                <DeleteIcon />
               </IconButton>
             </Tooltip>
           </Stack>
 
+          {/* Modal de eliminación */}
           {showPopup && (
             <DeleteMatch
               id={id as GUID}
@@ -228,32 +258,3 @@ export const RenderMatch: React.FC<IMatchResponse> = ({
     </Card>
   );
 };
-
-type TeamBlockProps = {
-  name: string;
-  logo?: string;
-  align?: 'left' | 'right';
-};
-
-const TeamBlock: React.FC<TeamBlockProps> = ({
-  name,
-  logo,
-  align = 'left',
-}) => (
-  <Stack
-    direction={align === 'left' ? 'row' : 'row-reverse'}
-    spacing={1}
-    alignItems="center"
-    sx={{ maxWidth: '45%' }}
-  >
-    <Avatar src={logo} alt={name} />
-    <Typography
-      variant="body1"
-      noWrap
-      textOverflow="ellipsis"
-      textAlign={align === 'left' ? 'left' : 'right'}
-    >
-      {name}
-    </Typography>
-  </Stack>
-);

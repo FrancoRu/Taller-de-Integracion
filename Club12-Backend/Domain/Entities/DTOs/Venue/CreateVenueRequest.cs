@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Http;
+using System.ComponentModel.DataAnnotations;
 
 namespace Entities.DTOs.Venue;
 
@@ -22,8 +23,9 @@ public class CreateVenueRequest
     public required string Address { get; set; }
 
     /// <summary>
-    /// The URL of the venue's photo.
+    /// The logo image file to upload (must be JPEG or PNG).
     /// </summary>
-    [Url]
-    public string? PhotoUrl { get; set; }
+    [Required(ErrorMessage = "The image file image is required.")]
+    [DataType(DataType.Upload)]
+    public required IFormFile ImageFile { get; init; }
 }

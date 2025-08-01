@@ -3,7 +3,8 @@ import { useError } from '@/modules/error/hooks/error.hock';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import { IAddMatchRequest, TypeMatch } from '@/modules/match/type/match.d';
 import { useStage } from '@/modules/stage/hook/stage.hook';
-import { ITeamResponse } from '@/modules/team/type/team.d';
+import { useTeam } from '@/modules/team/hook/team.hook';
+import { ITeamContextProps } from '@/modules/team/type/team.d';
 import { useVenue } from '@/modules/venue/hook/venue.hook';
 import { GUID_EMPTY } from '@/views/core/constants/const';
 import { CustomBox } from '@/views/core/MUI/customsThemes/CustomBox';
@@ -21,12 +22,16 @@ import { useNavigate } from 'react-router-dom';
 
 export const CreateMatch: React.FC = () => {
   const { venues, getAllVenues } = useVenue();
+  const { teams, getTeamsByFiltered }: ITeamContextProps = useTeam();
   const { addMatch } = useMatch();
-  const teams: ITeamResponse[] = MockTeams;
 
   const { stage } = useStage();
   const navigate = useNavigate();
   const { errors, setMessage } = useError();
+
+  useEffect(() => {
+    (async () => await getTeamsByFiltered({}))();
+  }, [teams]);
 
   useEffect(() => {
     if (!stage) {
@@ -75,8 +80,10 @@ export const CreateMatch: React.FC = () => {
     if (res) navigate(`/${RoutesNavigationViews.Match}`);
   };
 
-  const availableVisitorTeams = teams.filter(t => t.id !== form.homeTeamid);
-  const availableHomeTeams = teams.filter(t => t.id !== form.visitorTeamid);
+  const availableVisitorTeams =
+    teams?.filter(t => t.id !== form.homeTeamid) ?? [];
+  const availableHomeTeams =
+    teams?.filter(t => t.id !== form.visitorTeamid) ?? [];
 
   return (
     <CustomBox>
@@ -188,86 +195,3 @@ export const CreateMatch: React.FC = () => {
     </CustomBox>
   );
 };
-
-const MockTeams: ITeamResponse[] = [
-  {
-    id: '11111111-1111-1111-1111-111111111111',
-    name: 'Tigres FC',
-    threeLetterCode: 'TIG',
-    shirtColor: 'Amarillo',
-    logoUrl: 'https://fakeimg.pl/250x100/?text=Tigres',
-    players: [],
-  },
-  {
-    id: '22222222-2222-2222-2222-222222222222',
-    name: 'Leones United',
-    threeLetterCode: 'LEU',
-    shirtColor: 'Rojo',
-    logoUrl: 'https://fakeimg.pl/250x100/?text=Leones',
-    players: [],
-  },
-  {
-    id: '33333333-3333-3333-3333-333333333333',
-    name: 'Águilas Doradas',
-    threeLetterCode: 'AGD',
-    shirtColor: 'Dorado',
-    logoUrl: 'https://fakeimg.pl/250x100/?text=Aguilas',
-    players: [],
-  },
-  {
-    id: '44444444-4444-4444-4444-444444444444',
-    name: 'Lobos Negros',
-    threeLetterCode: 'LON',
-    shirtColor: 'Negro',
-    logoUrl: 'https://fakeimg.pl/250x100/?text=Lobos',
-    players: [],
-  },
-  {
-    id: '55555555-5555-5555-5555-555555555555',
-    name: 'Panteras Blancas',
-    threeLetterCode: 'PAB',
-    shirtColor: 'Blanco',
-    logoUrl: 'https://fakeimg.pl/250x100/?text=Panteras',
-    players: [],
-  },
-  {
-    id: '66666666-6666-6666-6666-666666666666',
-    name: 'Toros Salvajes',
-    threeLetterCode: 'TOS',
-    shirtColor: 'Verde',
-    logoUrl: 'https://fakeimg.pl/250x100/?text=Toros',
-    players: [],
-  },
-  {
-    id: '77777777-7777-7777-7777-777777777777',
-    name: 'Jaguares FC',
-    threeLetterCode: 'JAG',
-    shirtColor: 'Naranja',
-    logoUrl: 'https://fakeimg.pl/250x100/?text=Jaguares',
-    players: [],
-  },
-  {
-    id: '88888888-8888-8888-8888-888888888888',
-    name: 'Pumas Rojos',
-    threeLetterCode: 'PUR',
-    shirtColor: 'Rojo Oscuro',
-    logoUrl: 'https://fakeimg.pl/250x100/?text=Pumas',
-    players: [],
-  },
-  {
-    id: '99999999-9999-9999-9999-999999999999',
-    name: 'Cóndores',
-    threeLetterCode: 'CON',
-    shirtColor: 'Azul',
-    logoUrl: 'https://fakeimg.pl/250x100/?text=Condor',
-    players: [],
-  },
-  {
-    id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-    name: 'Halcones',
-    threeLetterCode: 'HAL',
-    shirtColor: 'Gris',
-    logoUrl: 'https://fakeimg.pl/250x100/?text=Halcones',
-    players: [],
-  },
-];

@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
-
+using Club12.API.Utils;
 using Entities.DTOs.Venue;
+using Entities.Models.Teams;
 using Entities.Models.Venues;
 
 using Microsoft.AspNetCore.Authorization;
@@ -18,7 +19,7 @@ namespace Club12.API.Controllers;
 //[Authorize(Roles = "SuperAdmin")]
 [Route("api/venues/")]
 [ApiController]
-public class VenueController(IVenueService _venueService, IMapper _mapper) : ControllerBase
+public class VenueController(IVenueService _venueService, SupabaseHelper _supabaseHelper,IMapper _mapper) : ControllerBase
 {
 
     /// <summary>
@@ -34,7 +35,9 @@ public class VenueController(IVenueService _venueService, IMapper _mapper) : Con
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<VenueResponse>> CreateVenue(CreateVenueRequest venueRequest)
     {
+        string logoUrl = await _supabaseHelper.UploadImageAsync<Venue>(venueRequest.ImageFile.OpenReadStream(), venueRequest.ImageFile.FileName);
         Venue mappedVenue = _mapper.Map<Venue>(venueRequest);
+        mappedVenue.PhotoUrl = logoUrl;
         Venue createdVenue = await _venueService.CreateVenueAsync(mappedVenue);
         VenueResponse venueResponse = _mapper.Map<VenueResponse>(createdVenue);
         return CreatedAtAction(nameof(GetVenueById), new { venueResponse.Id }, venueResponse);
@@ -113,7 +116,10 @@ public class VenueController(IVenueService _venueService, IMapper _mapper) : Con
         {
             return BadRequest($"Venue with id {id} not found.");
         }
-
+        if (!string.IsNullOrWhiteSpace(venue.PhotoUrl))
+        {
+            await _supabaseHelper.DeleteImageAsync<Team>(venue.PhotoUrl.Split('/').Last());
+        }
         bool deleteResult = await _venueService.DeleteVenueAsync(venue);
         return !deleteResult ? BadRequest($"Failed to delete the venue with id {id}.") : NoContent();
     }

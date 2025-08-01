@@ -1,4 +1,8 @@
-import { Filtered, GenericResponsePagination } from '../../core/types/types.d';
+import {
+  Filtered,
+  GenericResponsePagination,
+  GUID,
+} from '../../core/types/types.d';
 import { IPlayerResponse } from '../../player/type/player.d';
 
 /**
@@ -165,6 +169,32 @@ export interface IPutTeamRequest {
   shirtColor?: string;
 }
 
+/**
+ * @interface ITeamMatchResponse
+ * @description Represents the response structure for a team in a match,
+ * including its identification, visual details, and score.
+ */
+export interface ITeamMatchResponse {
+  /**
+   * @property {GUID} id - The unique identifier (GUID) for the team.
+   */
+  id: GUID;
+
+  /**
+   * @property {string} name - The name of the team.
+   */
+  name: string;
+
+  /**
+   * @property {string} logoUrl - The URL pointing to the team's logo image.
+   */
+  logoUrl: string;
+
+  /**
+   * @property {number} score - The score achieved by the team in the match.
+   */
+  score: number;
+}
 /**
  * The filters for fetching teams.
  * @interface TeamFiltered

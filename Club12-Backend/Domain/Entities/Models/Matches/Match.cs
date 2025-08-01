@@ -86,6 +86,18 @@ public class Match : EntityBase
     public Stage Stage { get; set; } = default!;
 
     /// <summary>
+    /// Represents the ID of the venue the match belongs to.
+    /// </summary>
+    public Guid? VenueId { get; set; }
+
+
+    /// <summary>
+    /// Represents the venue the match belongs to.
+    /// </summary>
+    [ForeignKey(nameof(VenueId))]
+    public Venue? Venue { get; set; }
+
+    /// <summary>
     /// Represents the ID of the division the match belongs to.
     /// </summary>
     public Guid StageId { get; set; }

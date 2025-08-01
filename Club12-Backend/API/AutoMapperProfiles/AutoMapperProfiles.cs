@@ -154,6 +154,7 @@ public class MatchProfile : Profile
             .ForPath(dest => dest.HomeTeam.Scorers, opt => opt.MapFrom(src => src.HomeScorers))
             .ForPath(dest => dest.VisitorTeam.Scorers, opt => opt.MapFrom(src => src.VisitorScorers))
             .ForMember(dest => dest.WinningTeamName, opt => opt.MapFrom(src => src.WinningTeam != null ? src.WinningTeam.Name : null))
+            .ForMember(dest => dest.WinningTeamId, opt => opt.MapFrom(src => src.WinningTeam != null ? src.WinningTeam.Id : (Guid?)null))
             .ReverseMap();
 
         _ = CreateMap<Match, MinimalMatchResponse>()

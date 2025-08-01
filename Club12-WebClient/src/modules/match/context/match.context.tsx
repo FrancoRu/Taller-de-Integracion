@@ -82,7 +82,22 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
 
   const getMatchById = async (id: GUID): Promise<IMatchResponse | void> => {
     try {
-      await matchService.getMatchById(id);
+      const existingMatch: IMatchResponse | undefined = matches?.find(
+        e => e.id == id
+      );
+
+      if (existingMatch) {
+        match?.id !== existingMatch.id && setMatch(existingMatch);
+        return existingMatch;
+      }
+
+      const res: AxiosResponse<IMatchResponse> =
+        await matchService.getMatchById(id);
+
+      if (res) {
+        setMatch(res.data);
+      }
+      return res.data;
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);

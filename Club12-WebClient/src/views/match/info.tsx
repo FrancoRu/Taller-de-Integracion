@@ -12,9 +12,9 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { AddIcon, SettingsSuggestIcon } from '../core/MUI/icons/icons';
 import { useMatch } from '@/modules/match/hook/match.hook';
-import { MatchDashboard } from './dashboard';
 import { NoMatchesMessage } from './NoMatchMessage';
 import { GenerateMatch } from './CRUD/generate-match';
+import { MatchDashboard } from './dashboard';
 
 export const InfoMatch: React.FC<IStageResponse> = ({ id, name }) => {
   const navigate = useNavigate();

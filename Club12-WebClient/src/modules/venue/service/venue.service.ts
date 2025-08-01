@@ -11,6 +11,7 @@ import {
   IPutVenueRequest,
   IVenueResponse,
 } from '../type/venue';
+import { GUID } from '@/modules/core/types/types';
 
 /**
  * Service for managing venues.
@@ -23,8 +24,17 @@ export const venueService = {
    */
   addVenue: async (
     venue: IAddVenueRequest
-  ): Promise<AxiosResponse<IVenueResponse>> =>
-    await sendPost(routes.venues, venue),
+  ): Promise<AxiosResponse<IVenueResponse>> => {
+    const formData = new FormData();
+    formData.append('Name', venue.name);
+    formData.append('Address', venue.address);
+    formData.append('ImageFile', venue.imageFile);
+    return await sendPost(routes.venues, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
 
   /**
    * Updates an existing venue.

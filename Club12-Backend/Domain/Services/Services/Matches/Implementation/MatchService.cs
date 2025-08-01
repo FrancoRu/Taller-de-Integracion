@@ -27,6 +27,8 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
     public async Task<Match?> GetMatchByIdAsync(Guid matchId) => await _genericMatchService.FilterByExpression(match => match.Id == matchId)
             .Include(m => m.HomeTeam)
             .Include(m => m.VisitorTeam)
+            .Include(m => m.Stage)
+            .Include(m => m.Venue)
             .FirstOrDefaultAsync();
 
     public async Task<Match?> GetMatchByIdWithScorersAsync(Guid matchId)
@@ -36,6 +38,7 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
             .Include(m => m.VisitorTeam)
             .Include(m => m.PlayerStatistics)
                 .ThenInclude(ps => ps.Player)
+            .Include(m => m.Venue)
             .FirstOrDefaultAsync();
 
         if (match is null)

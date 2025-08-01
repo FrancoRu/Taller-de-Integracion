@@ -23,8 +23,9 @@ public class DateOnlyJsonConverter : JsonConverter<DateTime>
         "yyyy-MM-ddTHH:mm:ss",
         "yyyy-MM-ddTHH:mm:ss.fff",
         "yyyy-MM-ddTHH:mm:ssZ",
-        "o", 
-        "s"  
+        "o",
+        "s",
+        "yyyy-MM-ddTHH:mm"
     ];
 
     /// <summary>

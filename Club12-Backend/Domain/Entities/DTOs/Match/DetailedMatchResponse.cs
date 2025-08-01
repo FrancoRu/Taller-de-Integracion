@@ -43,4 +43,9 @@ public class DetailedMatchResponse : BaseEntityResponse
     /// The name of the winning team, if available.
     /// </summary>
     public string? WinningTeamName { get; set; }
+
+    /// <summary>
+    /// The Id of the winning team, if available.
+    /// </summary>
+    public Guid? WinningTeamId { get; set; }
 }

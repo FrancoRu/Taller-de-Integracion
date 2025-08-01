@@ -1,6 +1,6 @@
 import { GUID } from '@/modules/core/types/types';
 import { useTeam } from '@/modules/team/hook/team.hook';
-import { ITeamResponse } from '@/modules/team/type/team';
+import { ITeamMatchResponse, ITeamResponse } from '@/modules/team/type/team';
 import { EditIcon, DeleteIcon } from '@/views/core/MUI/icons/icons';
 import {
   Card,
@@ -12,7 +12,7 @@ import {
   Box,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { DeleteTeam } from './delete-team';
 import { RoutesNavigationViews } from '@/views/core/routes-const';
 import { InfoPlayer } from '@/views/player/info';
@@ -20,7 +20,7 @@ import { InfoPlayer } from '@/views/player/info';
 export const DetailTeam: React.FC = () => {
   const { id } = useParams<{ id: GUID }>();
   const { team, getTeamById } = useTeam();
-
+  if (!id) return null;
   useEffect(() => {
     (async () => {
       await getTeamById(id);
@@ -134,5 +134,42 @@ const RenderTeamDetails: React.FC<ITeamResponse> = ({
         />
       )}
     </Card>
+  );
+};
+
+export const RenderTeamMatch: React.FC<ITeamMatchResponse> = ({
+  logoUrl,
+  name,
+  id,
+}) => {
+  return (
+    <Stack direction="column" alignItems="center" spacing={1}>
+      <Box
+        sx={{
+          width: 100,
+          height: 100,
+          borderRadius: '50%',
+          overflow: 'hidden',
+          border: '2px solid orange',
+          boxShadow: '0 0 8px rgba(255,165,0,0.7)',
+          display: { xs: 'none', sm: 'block' },
+          flexShrink: 0,
+        }}
+      >
+        <img
+          src={logoUrl}
+          alt={`Logo del equipo ${name}`}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+      </Box>
+      <Typography fontWeight="bold">
+        <Link
+          to={`/${RoutesNavigationViews.Team}/${id}`}
+          style={{ textDecoration: 'none', color: 'inherit' }}
+        >
+          {name}
+        </Link>
+      </Typography>
+    </Stack>
   );
 };

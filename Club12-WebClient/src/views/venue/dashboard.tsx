@@ -106,7 +106,7 @@ const RenderVenue: React.FC<IVenueResponse> = ({
               style={{
                 width: '100%',
                 maxHeight: '150px',
-                objectFit: 'cover',
+                objectFit: 'contain',
                 borderRadius: 4,
               }}
             />
@@ -157,6 +157,7 @@ const RenderVenue: React.FC<IVenueResponse> = ({
           {showPopup && (
             <DeleteVenue
               id={id}
+              route={RoutesNavigationViews.Home}
               fn={deleteVenueById}
               onClose={() => setShowPopup(false)}
             />

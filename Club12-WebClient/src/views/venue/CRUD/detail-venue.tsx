@@ -8,33 +8,29 @@ import {
   Typography,
   Tooltip,
   IconButton,
+  Box,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DeleteVenue } from './delete-venue';
 import { GUID } from '@/modules/core/types/types';
+import { RoutesNavigationViews } from '@/views/core/routes-const';
 
 export const DetailVenue: React.FC = () => {
   const { id } = useParams<{ id: GUID }>();
   const { venue, getVenueById } = useVenue();
-  if (!id) {
-    return null;
-  }
 
   useEffect(() => {
-    (async () => {
-      await getVenueById(id);
-    })();
-  }, []);
+    if (id) {
+      (async () => {
+        await getVenueById(id);
+      })();
+    }
+  }, [id]);
 
-  if (!venue) {
-    return null;
-  }
-  return (
-    <>
-      <RenderVenueDetails {...venue} />
-    </>
-  );
+  if (!venue) return null;
+
+  return <RenderVenueDetails {...venue} />;
 };
 
 const RenderVenueDetails: React.FC<IVenueResponse> = ({
@@ -84,23 +80,45 @@ const RenderVenueDetails: React.FC<IVenueResponse> = ({
           </Stack>
         </Stack>
 
-        <Typography variant="body2" color="text.secondary">
-          Dirección: {address}
-        </Typography>
-        {photoUrl && (
-          <Typography
-            variant="body2"
-            color="primary"
-            sx={{ mt: 1, wordBreak: 'break-word' }}
-          >
-            Foto: {photoUrl}
-          </Typography>
-        )}
+        <Stack
+          direction="row"
+          spacing={2}
+          alignItems="center"
+          justifyContent="space-between"
+        >
+          {photoUrl && (
+            <Box
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                overflow: 'hidden',
+                border: '2px solid orange',
+                boxShadow: '0 0 8px rgba(255,165,0,0.7)',
+                display: { xs: 'none', sm: 'block' },
+                flexShrink: 0,
+              }}
+            >
+              <img
+                src={photoUrl}
+                alt={`Foto de la sede ${name}`}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            </Box>
+          )}
+
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Dirección: {address}
+            </Typography>
+          </Box>
+        </Stack>
       </CardContent>
 
       {showPopupDelete && (
         <DeleteVenue
           id={id}
+          route={RoutesNavigationViews.Venue}
           fn={deleteVenueById}
           onClose={() => setShowPopupDelete(false)}
         />

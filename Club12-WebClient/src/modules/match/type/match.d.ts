@@ -1,4 +1,5 @@
 import { GUID } from '@/modules/core/types/types';
+import { ITeamMatchResponse } from '@/modules/team/type/team';
 import { IVenueResponse } from '@/modules/venue/type/venue';
 
 /**
@@ -113,88 +114,47 @@ export interface IAddMatchRequest {
 }
 
 /**
- * The response structure for a match, including team details, scores, and match results.
- * @interface MatchResponse
+ * @interface IMatchResponse
+ * @description The response structure for a match, including team details, scores, and match results.
  */
 export interface IMatchResponse {
   /**
-   * The unique identifier of the match.
-   * @type {string}
+   * @property {GUID} id - The unique identifier of the match.
    */
   id: GUID;
 
   /**
-   * The date and time of the match.
-   * @type {string}
+   * @property {string} matchDate - The date and time when the match took place.
    */
   matchDate: string;
 
   /**
-   * The type of match (e.g., Regular, Playoff).
-   * @type {TypeMatch}
+   * @property {TypeMatch} matchType - The category or type of the match (e.g., Regular Season, Playoff).
    */
-  type: TypeMatch;
+  matchType: TypeMatch;
 
   /**
-   * The match week number.
-   * @type {number}
+   * @property {ITeamMatchResponse} homeTeam - Details of the home team participating in the match.
    */
-  matchWeek: number;
+  homeTeam: ITeamMatchResponse;
 
   /**
-   * The ID of the home team.
-   * @type {string}
+   * @property {ITeamMatchResponse} visitorTeam - Details of the visiting team participating in the match.
    */
-  homeTeamid: GUID;
+  visitorTeam: ITeamMatchResponse;
 
   /**
-   * The name of the home team.
-   * @type {string}
-   */
-  homeTeamName: string;
-
-  homeTeamLogoUrl: string;
-
-  /**
-   * The ID of the visitor team.
-   * @type {string}
-   */
-  visitorTeamid: GUID;
-
-  /**
-   * The name of the visitor team.
-   * @type {string}
-   */
-  visitorTeamName: string;
-
-  visitorTeamLogoUrl: string;
-  /**
-   * The score of the home team.
-   * @type {number}
-   */
-  homeScore: number;
-
-  /**
-   * The score of the visitor team.
-   * @type {number}
-   */
-  visitorScore: number;
-
-  /**
-   * Indicates whether the match has finished.
-   * @type {boolean}
+   * @property {boolean} isFinished - A boolean indicating whether the match has concluded.
    */
   isFinished: boolean;
 
   /**
-   * The name of the winning team.
-   * @type {string}
+   * @property {GUID | null} winningTeamId - The unique identifier (GUID) of the team that won the match, or null if the match is not finished or was a draw.
    */
-  winningTeamName: string;
+  winningTeamId: GUID | null;
 
   /**
-   * The venue where the match was played.
-   * @type {IVenueResponse}
+   * @property {IVenueResponse} venue - Details about the venue where the match was played.
    */
   venue: IVenueResponse;
 }
@@ -288,4 +248,27 @@ export interface PutMatchDateRequest {
    * @type {string}
    */
   venueId?: string;
+}
+
+/**
+ * @interface IMatchStatusChipProps
+ * @description Props for a component that displays the status of a match,
+ * such as upcoming, in-progress, or finished.
+ */
+export interface IMatchStatusChipProps {
+  /**
+   * @property {string} startTime - The start time of the match, typically in ISO 8601 format.
+   */
+  startTime: string;
+
+  /**
+   * @property {boolean} isFinished - A boolean indicating whether the match has concluded.
+   */
+  isFinished: boolean;
+
+  /**
+   * @property {number} [maxMinutes] - An optional property representing the maximum duration
+   * of the match in minutes. Useful for calculating remaining time or progress.
+   */
+  maxMinutes?: number;
 }

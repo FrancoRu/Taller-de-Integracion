@@ -63,10 +63,10 @@ export interface IAddVenueRequest {
   address: string;
 
   /**
-   * The URL of the venue's photo.
-   * @type {string}
+   * The image file of the venue's photo.
+   * @type {File}
    */
-  photoUrl: string;
+  imageFile: File;
 }
 
 /**
@@ -74,12 +74,25 @@ export interface IAddVenueRequest {
  * This extends from AddVenueRequest and includes an ID.
  * @interface IVenueResponse
  */
-export interface IVenueResponse extends IAddVenueRequest {
+export interface IVenueResponse {
   /**
    * The unique identifier of the venue.
    * @type {string}
    */
   id: GUID;
+  /**
+   * The name of the venue.
+   * @type {string}
+   */
+  name: string;
+
+  /**
+   * The address of the venue.
+   * @type {string}
+   */
+  address: string;
+
+  photoUrl: string;
 }
 
 /**
