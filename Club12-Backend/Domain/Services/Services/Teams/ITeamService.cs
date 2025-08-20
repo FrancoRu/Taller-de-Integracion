@@ -1,6 +1,7 @@
 ﻿using Entities.DTOs.Abstract;
 using Entities.DTOs.Team;
 using Entities.Models.Teams;
+using Entities.Models.Tournaments;
 
 namespace Services.Services.Teams;
 
@@ -50,4 +51,6 @@ public interface ITeamService
     /// <param name="filter">The filtering criteria.</param>
     /// <returns>A paginated response containing the filtered teams.</returns>
     Task<PaginatedResponse<Team>> GetAllTeamsAsync(GetTeamsFilteredRequest filter);
+
+    Task<bool> RegisterTeamsToTournamentAsync(Tournament tournament, List<Guid> teamIds);
 }

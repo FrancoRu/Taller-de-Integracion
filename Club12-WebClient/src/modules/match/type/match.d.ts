@@ -1,4 +1,5 @@
-import { GUID } from '@/modules/core/types/types';
+import { Filtered, GUID } from '@/modules/core/types/types';
+import { IStageResponse } from '@/modules/stage/type/stage';
 import { ITeamMatchResponse } from '@/modules/team/type/team';
 import { IVenueResponse } from '@/modules/venue/type/venue';
 
@@ -25,8 +26,8 @@ export interface IMatchContextProps {
    */
   putMatchScoreByMatchId(
     id: GUID,
-    matchScore: PutMatchScoreRequest
-  ): Promise<void>;
+    matchScore: IPutMatchScoreRequest
+  ): Promise<IMatchResponse | void>;
 
   /**
    * Updates the match date and venue.
@@ -34,10 +35,10 @@ export interface IMatchContextProps {
    * @param matchDate The new match date.
    * @returns A promise that resolves when the match date and venue are successfully updated.
    */
-  putMatchDateByMatchId(
+  putMatchByMatchId(
     id: GUID,
-    matchDate: PutMatchDateRequest
-  ): Promise<void>;
+    matchDate: IPutMatchRequest
+  ): Promise<IMatchResponse | void>;
 
   /**
    * Fetches a match by its ID.
@@ -157,6 +158,8 @@ export interface IMatchResponse {
    * @property {IVenueResponse} venue - Details about the venue where the match was played.
    */
   venue: IVenueResponse;
+
+  stageId: GUID;
 }
 
 /**
@@ -216,9 +219,9 @@ export interface MatchFiltered extends Filtered {
 
 /**
  * The request body structure for updating the score of a match.
- * @interface PutMatchScoreRequest
+ * @interface IPutMatchScoreRequest
  */
-export interface PutMatchScoreRequest {
+export interface IPutMatchScoreRequest {
   /**
    * The new score for the home team.
    * @type {number}
@@ -234,9 +237,9 @@ export interface PutMatchScoreRequest {
 
 /**
  * The request body structure for updating the date and venue of a match.
- * @interface PutMatchDateRequest
+ * @interface IPutMatchRequest
  */
-export interface PutMatchDateRequest {
+export interface IPutMatchRequest {
   /**
    * The new match date.
    * @type {string}
@@ -271,4 +274,29 @@ export interface IMatchStatusChipProps {
    * of the match in minutes. Useful for calculating remaining time or progress.
    */
   maxMinutes?: number;
+}
+
+export interface IEditMatch {
+  id: GUID;
+  homeScore: number;
+  visitorScore: number;
+  matchDate: Date;
+  isFinished: boolean;
+  venue: IVenueResponse | null;
+
+  /**
+   * The start date of the stage.
+   * @type {string} ISO 8601 format date.
+   */
+  startDate: string;
+
+  /**
+   * The end date of the stage.
+   * @type {string} ISO 8601 format date.
+   */
+  endDate: string;
+}
+
+export interface IDashboardMatches {
+  matches: IMatchResponse[] | null;
 }

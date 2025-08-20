@@ -6,6 +6,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import MouseIcon from '@mui/icons-material/Mouse';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
+import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
 
 export {
   DeleteIcon,
@@ -16,4 +17,5 @@ export {
   MouseIcon,
   ArrowForwardIcon,
   SettingsSuggestIcon,
+  AppRegistrationIcon,
 };

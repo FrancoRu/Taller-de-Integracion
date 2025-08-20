@@ -6,7 +6,7 @@ using Entities.Models.Tournaments;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
+using Services.Services.Teams;
 using Services.Services.Tournaments;
 
 namespace Club12.API.Controllers;
@@ -15,12 +15,14 @@ namespace Club12.API.Controllers;
 /// Controller for managing Tournaments.
 /// </summary>
 /// <param name="_tournamentService">The Tournament service.</param>
+/// <param name="_teamService">The Team service.</param>
 /// <param name="_mapper">The AutoMapper instance.</param>
 //[Authorize(Roles = "SuperAdmin")]
 [Route("api/tournaments/")]
 [ApiController]
 public class TournamentController(
     ITournamentService _tournamentService,
+    ITeamService _teamService,
     IMapper _mapper) : ControllerBase
 {
 
@@ -140,5 +142,20 @@ public class TournamentController(
         PaginatedResponse<TournamentResponse> response = _mapper.Map<PaginatedResponse<TournamentResponse>>(paginatedTournaments);
 
         return Ok(response);
+    }
+
+    [HttpPost("register-teams/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult> RegisterTeam(Guid id, RegisterTeamsInTournamentRequest registerTeamsRequest)
+    {
+        Tournament? tournament = await _tournamentService.GetTournamentByIdAsync(id);
+        if (tournament is null)
+        {
+            return BadRequest($"Tournament with id {id} not found.");
+        }
+        bool registrationResult = await _teamService.RegisterTeamsToTournamentAsync(tournament, registerTeamsRequest.TeamIds);
+        return registrationResult ? Ok() : BadRequest("Failed to register teams for the tournament.");
     }
 }

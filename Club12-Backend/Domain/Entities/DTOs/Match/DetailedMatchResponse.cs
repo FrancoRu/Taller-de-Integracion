@@ -48,4 +48,9 @@ public class DetailedMatchResponse : BaseEntityResponse
     /// The Id of the winning team, if available.
     /// </summary>
     public Guid? WinningTeamId { get; set; }
+
+    /// <summary>
+    /// The Id of the stage.
+    /// </summary>
+    public Guid? StageId { get; set; }
 }

@@ -109,7 +109,6 @@ public static class ServiceExtension
         collection.AddScoped<IStageService, StageService>();
         collection.AddHostedService<SanctionCleanupService>();
         collection.AddSingleton<SupabaseHelper>();
-
     }
 
     /// <summary>

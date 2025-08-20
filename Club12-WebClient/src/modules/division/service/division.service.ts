@@ -79,8 +79,10 @@ export const divisionService = {
    */
   getTopScoresByDivisionId: async (
     id: GUID
-  ): Promise<AxiosResponse<DivisionTopScoreResponse>> =>
-    sendGet<DivisionTopScoreResponse>(`${routes.divisions}/top-scorers/${id}`),
+  ): Promise<AxiosResponse<DivisionTopScoreResponse[]>> =>
+    sendGet<DivisionTopScoreResponse[]>(
+      `${routes.divisions}/top-scorers/${id}`
+    ),
 
   /**
    * Deletes a division by its ID.

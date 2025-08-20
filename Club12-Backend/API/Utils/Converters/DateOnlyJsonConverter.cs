@@ -10,6 +10,10 @@ namespace Club12.API.Utils.Converters;
 /// </summary>
 public class DateOnlyJsonConverter : JsonConverter<DateTime>
 {
+
+    /// <summary>
+    /// The date format used for serialization and deserialization ("dd/MM/yyyy").
+    /// </summary>
     private static readonly string[] _formats =
     [
         "dd/MM/yyyy",
@@ -23,15 +27,11 @@ public class DateOnlyJsonConverter : JsonConverter<DateTime>
         "yyyy-MM-ddTHH:mm:ss",
         "yyyy-MM-ddTHH:mm:ss.fff",
         "yyyy-MM-ddTHH:mm:ssZ",
+        "yyyy-MM-ddTHH:mm:ss.fffZ",
         "o",
         "s",
         "yyyy-MM-ddTHH:mm"
     ];
-
-    /// <summary>
-    /// The date format used for serialization and deserialization ("dd/MM/yyyy").
-    /// </summary>
-    private const string Format = "dd/MM/yyyy";
 
     /// <summary>
     /// Reads and converts the JSON string to a <see cref="DateTime"/> using the "dd/MM/yyyy" format.
@@ -51,7 +51,7 @@ public class DateOnlyJsonConverter : JsonConverter<DateTime>
                 DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
                 out DateTime parsedDate))
         {
-            return parsedDate;
+            return DateTime.SpecifyKind(parsedDate, DateTimeKind.Unspecified);
         }
 
         throw new JsonException($"Invalid date: '{dateString}'.");
@@ -65,6 +65,6 @@ public class DateOnlyJsonConverter : JsonConverter<DateTime>
     /// <param name="options">The <see cref="JsonSerializerOptions"/> used during serialization.</param>
     public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
     {
-        writer.WriteStringValue(value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+        writer.WriteStringValue(value.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture));
     }
 }

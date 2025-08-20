@@ -17,7 +17,7 @@ import { GUID } from '@/modules/core/types/types';
 import { RoutesNavigationViews } from '@/views/core/routes-const';
 
 export const DetailVenue: React.FC = () => {
-  const { id } = useParams<{ id: GUID }>();
+  const { venueId: id } = useParams<{ venueId: GUID }>();
   const { venue, getVenueById } = useVenue();
 
   useEffect(() => {

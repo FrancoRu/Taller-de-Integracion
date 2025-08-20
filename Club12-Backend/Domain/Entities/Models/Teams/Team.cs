@@ -1,7 +1,7 @@
 ﻿using Entities.Models.Divisions;
 using Entities.Models.Players;
 using Entities.Models.Staffs;
-
+using Entities.Models.Tournaments;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -36,7 +36,12 @@ public class Team : EntityBase
     /// </summary>
     [Required]
     public required string ShirtColor { get; set; }
-   
+
+    [Column(nameof(TournamentId))]
+    public Tournament? Tournament { get; set; }
+
+    public Guid? TournamentId { get; set; }
+
     /// <summary>
     /// The players belonging to the team.
     /// </summary>

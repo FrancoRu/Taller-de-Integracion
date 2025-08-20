@@ -3,7 +3,7 @@ import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import Slide from '@mui/material/Slide';
 import { IMatchResponse, TypeMatch } from '@/modules/match/type/match.d';
 import dayjs from 'dayjs';
-import { IAllStagePropsView } from '@/modules/stage/type/stage.d';
+import { IDashboardStage } from '@/modules/stage/type/stage.d';
 
 const TeamCell: React.FC<{
   id: GUID;
@@ -77,7 +77,7 @@ const PaginationButtons: React.FC<{
   </div>
 );
 
-export const Fixture: React.FC<IAllStagePropsView> = ({ stages }) => {
+export const Fixture: React.FC<IDashboardStage> = ({ stages }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right'>(
     'left'

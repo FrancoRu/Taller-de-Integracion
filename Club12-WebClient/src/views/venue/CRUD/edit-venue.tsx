@@ -22,7 +22,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 export const EditVenue: React.FC = () => {
   const theme = useTheme();
-  const { id } = useParams<{ id: GUID }>();
+  const { venueId: id } = useParams<{ venueId: GUID }>();
   const navigate = useNavigate();
   const { errors, setMessage }: IErrorContextProp = useError();
   const { putVenueById, getVenueById }: IVenueContextProps = useVenue();

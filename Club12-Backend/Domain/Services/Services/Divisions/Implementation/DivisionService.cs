@@ -66,7 +66,6 @@ public class DivisionService(IGenericService<Division> _genericDivisionService) 
                                                     .ThenInclude(match => match.HomeTeam)
                                                 .Include(division => division.Matches)
                                                     .ThenInclude(match => match.VisitorTeam)
-                                                .Include(division => division.Stages)
                                                 .FirstOrDefaultAsync();
 
         if (division is null)

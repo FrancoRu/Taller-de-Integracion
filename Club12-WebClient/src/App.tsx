@@ -50,12 +50,19 @@ import { TeamDashboard } from './views/team/dashboard';
 import { DetailTeam } from './views/team/CRUD/detail-team';
 import { EditTeam } from './views/team/CRUD/edit-team';
 import { CreateTeam } from './views/team/CRUD/create-team';
+import { PlayerSanctionIndex } from './views/playerSanction';
+import { PlayerSanctionDashboard } from './views/playerSanction/dashboard';
+import { CreatePlayerSanction } from './views/playerSanction/CRUD/create-playerSanction';
+import { DetailPlayerSanction } from './views/playerSanction/CRUD/detail-playerSanction';
+import { EditPlayerSanction } from './views/playerSanction/CRUD/edit-playerSanction';
+import { PlayerSanctionProvider } from './modules/playerSanction/context/playerSanction.context';
+import { RegisterTeamsTournament } from './views/tournament/CRUD/register-teams-tournament';
 
 function App() {
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    redirect('/');
+    redirect(RoutesNavigationViews.Home);
   }, [isAuthenticated]);
 
   return (
@@ -66,108 +73,124 @@ function App() {
             <VenueProvider>
               <TeamProvider>
                 <PlayerProvider>
-                  <div>
-                    <NavMenu />
-                    <Routes>
-                      <Route
-                        path={RoutesNavigationViews.Home}
-                        element={<Home />}
-                      />
-                      <Route
-                        path={RoutesNavigationViews.How_We_Are}
-                        element={<HowWeAre />}
-                      />
-                      <Route
-                        path={RoutesNavigationViews.Medical_Record}
-                        element={<MedicalRecord />}
-                      />
-                      <Route
-                        path={RoutesNavigationViews.Rules}
-                        element={<Regulation />}
-                      />
-                      <Route
-                        path={RoutesNavigationViews.Tournament}
-                        element={<TournamentIndex />}
-                      >
-                        <Route path="crear" element={<CreateTournament />} />
-                        <Route path=":id">
-                          <Route index element={<TournamentDashboard />} />
-                          <Route path="editar" element={<EditTournament />} />
+                  <PlayerSanctionProvider>
+                    <div>
+                      <NavMenu />
+                      <Routes>
+                        <Route
+                          path={RoutesNavigationViews.Home}
+                          element={<Home />}
+                        />
+                        <Route
+                          path={RoutesNavigationViews.How_We_Are}
+                          element={<HowWeAre />}
+                        />
+                        <Route
+                          path={RoutesNavigationViews.Medical_Record}
+                          element={<MedicalRecord />}
+                        />
+                        <Route
+                          path={RoutesNavigationViews.Rules}
+                          element={<Regulation />}
+                        />
+                        <Route
+                          path={RoutesNavigationViews.Tournament}
+                          element={<TournamentIndex />}
+                        >
+                          <Route path="crear" element={<CreateTournament />} />
+                          <Route path=":tournamentId">
+                            <Route index element={<TournamentDashboard />} />
+                            <Route
+                              path="registro-equipos"
+                              element={<RegisterTeamsTournament />}
+                            />
+                            <Route path="editar" element={<EditTournament />} />
+                          </Route>
                         </Route>
-                      </Route>
-                      <Route
-                        path={`${RoutesNavigationViews.Division}`}
-                        element={<DivisionIndex />}
-                      >
-                        <Route path="crear" element={<CreateDivision />} />
-                        <Route path=":id">
-                          <Route index element={<DetailDidivion />} />
-                          <Route path="editar" element={<EditDivision />} />
+                        <Route
+                          path={`${RoutesNavigationViews.Division}`}
+                          element={<DivisionIndex />}
+                        >
+                          <Route path="crear" element={<CreateDivision />} />
+                          <Route path=":divisionId">
+                            <Route index element={<DetailDidivion />} />
+                            <Route path="editar" element={<EditDivision />} />
+                          </Route>
                         </Route>
-                      </Route>
-                      <Route
-                        path={`${RoutesNavigationViews.Stage}`}
-                        element={<StageIndex />}
-                      >
-                        <Route path="crear" element={<CreateStage />} />
-                        <Route path=":id">
-                          <Route index element={<DetailStage />} />
-                          <Route path="editar" element={<EditStage />} />
+                        <Route
+                          path={`${RoutesNavigationViews.Stage}`}
+                          element={<StageIndex />}
+                        >
+                          <Route path="crear" element={<CreateStage />} />
+                          <Route path=":stageId">
+                            <Route index element={<DetailStage />} />
+                            <Route path="editar" element={<EditStage />} />
+                          </Route>
                         </Route>
-                      </Route>
-                      <Route
-                        path={`${RoutesNavigationViews.Match}`}
-                        element={<MatchIndex />}
-                      >
-                        <Route path="crear" element={<CreateMatch />} />
-                        <Route path=":id">
-                          <Route index element={<DetailMatch />} />
-                          <Route path="editar" element={<EditMatch />} />
+                        <Route
+                          path={`${RoutesNavigationViews.Match}`}
+                          element={<MatchIndex />}
+                        >
+                          <Route path="crear" element={<CreateMatch />} />
+                          <Route path=":matchId">
+                            <Route index element={<DetailMatch />} />
+                            <Route path="editar" element={<EditMatch />} />
+                          </Route>
                         </Route>
-                      </Route>
-                      <Route
-                        path={`${RoutesNavigationViews.Venue}`}
-                        element={<VenueIndex />}
-                      >
-                        <Route index element={<VenueDashboard />} />
-                        <Route path="crear" element={<CreateVenue />} />
-                        <Route path=":id">
-                          <Route index element={<DetailVenue />} />
-                          <Route path="editar" element={<EditVenue />} />
+                        <Route
+                          path={`${RoutesNavigationViews.Venue}`}
+                          element={<VenueIndex />}
+                        >
+                          <Route index element={<VenueDashboard />} />
+                          <Route path="crear" element={<CreateVenue />} />
+                          <Route path=":venueId">
+                            <Route index element={<DetailVenue />} />
+                            <Route path="editar" element={<EditVenue />} />
+                          </Route>
                         </Route>
-                      </Route>
-                      <Route
-                        path={`${RoutesNavigationViews.Team}`}
-                        element={<TeamIndex />}
-                      >
-                        <Route index element={<TeamDashboard />} />
-                        <Route path="crear" element={<CreateTeam />} />
-                        <Route path=":id">
-                          <Route index element={<DetailTeam />} />
-                          <Route path="editar" element={<EditTeam />} />
+                        <Route
+                          path={`${RoutesNavigationViews.Team}`}
+                          element={<TeamIndex />}
+                        >
+                          <Route index element={<TeamDashboard />} />
+                          <Route path="crear" element={<CreateTeam />} />
+                          <Route path=":teamId">
+                            <Route index element={<DetailTeam />} />
+                            <Route path="editar" element={<EditTeam />} />
+                          </Route>
                         </Route>
-                      </Route>
-                      <Route
-                        path={`${RoutesNavigationViews.Player}`}
-                        element={<PlayerIndex />}
-                      >
-                        <Route index element={<PlayerDashboard />} />
-                        <Route path="crear" element={<CreatePlayer />} />
-                        <Route path=":id">
-                          <Route index element={<DetailPlayer />} />
-                          <Route path="editar" element={<EditPlayer />} />
+                        <Route
+                          path={`${RoutesNavigationViews.Player}`}
+                          element={<PlayerIndex />}
+                        >
+                          <Route index element={<PlayerDashboard />} />
+                          <Route path="crear" element={<CreatePlayer />} />
+                          <Route path=":playerId">
+                            <Route index element={<DetailPlayer />} />
+                            <Route path="editar" element={<EditPlayer />} />
+                          </Route>
                         </Route>
-                      </Route>
-                      {/* <Route path="/equipos" element={<TeamsGrid />} />
-                      <Route
-                        path="/equipos/:teamId"
-                        element={<TeamsDetails />}
-                      />
-                      <Route path="/equipos/crear" element={<TeamCreate />} />
-                      <Route path="/sanciones" element={<SanctionsTable />} /> */}
-                      <Route path="/login" element={<Login />} />
-                    </Routes>
-                  </div>
+                        <Route
+                          path={`${RoutesNavigationViews.PlayerSanction}`}
+                          element={<PlayerSanctionIndex />}
+                        >
+                          <Route index element={<PlayerSanctionDashboard />} />
+                          <Route
+                            path="crear"
+                            element={<CreatePlayerSanction />}
+                          />
+                          <Route path=":playerSanctionId">
+                            <Route index element={<DetailPlayerSanction />} />
+                            <Route
+                              path="editar"
+                              element={<EditPlayerSanction />}
+                            />
+                          </Route>
+                        </Route>
+                        <Route path="/login" element={<Login />} />
+                      </Routes>
+                    </div>
+                  </PlayerSanctionProvider>
                 </PlayerProvider>
               </TeamProvider>
             </VenueProvider>

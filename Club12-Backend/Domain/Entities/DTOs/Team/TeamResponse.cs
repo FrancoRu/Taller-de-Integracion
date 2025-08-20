@@ -28,6 +28,8 @@ public class TeamResponse : BaseEntityResponse
     /// </summary>
     public required string LogoUrl { get; set; }
 
+    public Guid? TournamentId { get; set; }
+
     /// <summary>
     /// The list of players in the team.
     /// </summary>

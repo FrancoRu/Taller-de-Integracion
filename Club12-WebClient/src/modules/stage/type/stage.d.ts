@@ -34,7 +34,7 @@ export interface IStageContextProps {
    * @param {GUID} id - The unique identifier of the stage to retrieve.
    * @returns {Promise<IStageResponse | void>} A promise resolving to the requested stage or void on failure.
    */
-  getStagesById(id: GUID): Promise<IStageResponse | void>;
+  getStageById(id: GUID): Promise<IStageResponse | void>;
 
   /**
    * Retrieves a paginated list of stages based on filters.
@@ -122,12 +122,6 @@ export interface IStageResponse {
    * @type {GUID}
    */
   divisionId: GUID;
-
-  /**
-   * The list of matches for the stage, grouped by week.
-   * @type {MatchResponse[]}
-   */
-  matchesByWeek: MatchResponse[];
 }
 
 /**
@@ -284,6 +278,6 @@ export enum StageType {
   Final = 'Final',
 }
 
-export interface IAllStagePropsView {
+export interface IDashboardStage {
   stages: IStageResponse[];
 }

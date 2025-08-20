@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Entities.DTOs.Abstract;
+using Entities.DTOs.Match;
 using Entities.DTOs.Stage;
 using Entities.Models.Stages;
 using Microsoft.AspNetCore.Authorization;
@@ -63,12 +64,13 @@ public class StageController(IStageService _stageService, IMapper _mapper) : Con
     /// <returns>Paginated list of Stages.</returns>
     [AllowAnonymous]
     [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<Stage>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<StageResponse>))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<PaginatedResponse<Stage>>> GetFilteredMatches([FromQuery] GetStagesFilteredRequest filterRequest)
+    public async Task<ActionResult<PaginatedResponse<Stage>>> GetFilteredStages([FromQuery] GetStagesFilteredRequest filterRequest)
     {
-        PaginatedResponse<Stage> pagedStages = await _stageService.GetAllStagesAsync(filterRequest);
-        return Ok(pagedStages);
+        PaginatedResponse<Stage> paginatedStages = await _stageService.GetAllStagesAsync(filterRequest);
+        PaginatedResponse<StageResponse> paginatedResponse = _mapper.Map<PaginatedResponse<StageResponse>>(paginatedStages);
+        return Ok(paginatedResponse);
     }
 
     /// <summary>

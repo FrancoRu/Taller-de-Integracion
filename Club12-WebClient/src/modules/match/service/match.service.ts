@@ -1,6 +1,6 @@
 import { AxiosResponse } from 'axios';
 import routes from '../../core/constants/routes';
-import { GenericResponsePagination } from '../../core/types/types';
+import { GenericResponsePagination, GUID } from '../../core/types/types';
 import {
   sendDelete,
   sendGet,
@@ -11,8 +11,8 @@ import {
   IAddMatchRequest,
   MatchFiltered,
   IMatchResponse,
-  PutMatchDateRequest,
-  PutMatchScoreRequest,
+  IPutMatchRequest,
+  IPutMatchScoreRequest,
 } from '../type/match';
 
 /**
@@ -32,26 +32,26 @@ export const matchService = {
   /**
    * Updates the score of an existing match.
    * @param {string} id - The ID of the match to update.
-   * @param {PutMatchScoreRequest} matchScore - The new match score data.
-   * @returns {Promise<AxiosResponse<void>>} - A promise that resolves with the server response.
+   * @param {IPutMatchScoreRequest} matchScore - The new match score data.
+   * @returns {Promise<AxiosResponse<IMatchResponse>>} - A promise that resolves with the server response.
    */
   putMatchScoreByMatchId: async (
     id: GUID,
-    matchScore: PutMatchScoreRequest
-  ): Promise<AxiosResponse<void>> =>
-    sendPut<void>(`${routes.matches}/${id}/score`, matchScore),
+    matchScore: IPutMatchScoreRequest
+  ): Promise<AxiosResponse<IMatchResponse>> =>
+    sendPut<IMatchResponse>(`${routes.matches}/${id}/score`, matchScore),
 
   /**
    * Updates the date of an existing match.
    * @param {string} id - The ID of the match to update.
-   * @param {PutMatchDateRequest} matchDate - The new match date data.
+   * @param {IPutMatchRequest} matchDate - The new match date data.
    * @returns {Promise<AxiosResponse<IMatchResponse>>} - A promise that resolves with the server response.
    */
-  putMatchDateByMatchId: async (
+  putMatchByMatchId: async (
     id: GUID,
-    matchDate: PutMatchDateRequest
-  ): Promise<AxiosResponse<void>> =>
-    sendPut<void>(`${routes.matches}/${id}/date`, matchDate),
+    matchDate: IPutMatchRequest
+  ): Promise<AxiosResponse<IMatchResponse>> =>
+    sendPut<IMatchResponse>(`${routes.matches}/${id}`, matchDate),
 
   /**
    * Retrieves a match by its ID.

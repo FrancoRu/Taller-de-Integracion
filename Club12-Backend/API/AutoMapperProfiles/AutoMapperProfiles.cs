@@ -5,6 +5,7 @@ using Entities.DTOs.BlogPosts;
 using Entities.DTOs.Divisions;
 using Entities.DTOs.Match;
 using Entities.DTOs.Player;
+using Entities.DTOs.PlayerSanction;
 using Entities.DTOs.PlayerStatistic;
 using Entities.DTOs.Scorer;
 using Entities.DTOs.Stage;
@@ -16,6 +17,7 @@ using Entities.Models.BlogPosts;
 using Entities.Models.Divisions;
 using Entities.Models.Matches;
 using Entities.Models.Players;
+using Entities.Models.PlayerSanctions;
 using Entities.Models.PlayerStatistics;
 using Entities.Models.Positions;
 using Entities.Models.Scorers;
@@ -167,7 +169,9 @@ public class MatchProfile : Profile
         _ = CreateMap<UpdateMatchScoreRequest, Match>()
             .ForMember(dest => dest.IsFinished, opt => opt.MapFrom(src => true))
             .ForMember(dest => dest.WinningTeam, opt => opt.MapFrom((src, dest) =>
-                src.HomeScore > src.VisitorScore ? dest.HomeTeam : dest.VisitorTeam));
+                src.HomeScore > src.VisitorScore ? dest.HomeTeam : dest.VisitorTeam))
+            .ForMember(dest => dest.HomeScore, opt => opt.MapFrom(src => src.HomeScore))
+            .ForMember(dest => dest.VisitorScore, opt => opt.MapFrom(src => src.VisitorScore));
 
         _ = CreateMap<UpdateMatchRequest, Match>();
     }
@@ -211,6 +215,25 @@ public class PlayerStatisticProfile : Profile
     }
 }
 
+/// <summary>
+/// AutoMapper profile for player sanction.
+/// </summary>
+public class PlayerSanctionProfile : Profile
+{
+    /// <summary>
+    /// Initializes mapping configuration for player sanction.
+    /// </summary>
+    public PlayerSanctionProfile()
+    {
+        _ = CreateMap<CreatePlayerSanctionRequest, PlayerSanction>();
+        _ = CreateMap<PlayerSanction, PlayerSanctionResponse>()
+            .ForMember(dest => dest.PlayerFullName, opt => opt.MapFrom(src => src.Player.FullName))
+            .ReverseMap()
+            .ForMember(dest => dest.Player, opt => opt.Ignore());
+
+        _ = CreateMap<UpdatePlayerSanctionRequest, PlayerSanction>();
+    }
+}
 /// <summary>
 /// AutoMapper profile for scorer mappings.
 /// </summary>

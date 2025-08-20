@@ -1,5 +1,6 @@
 ﻿using Entities.DTOs.Abstract;
 using Entities.DTOs.Divisions;
+using System.ComponentModel.DataAnnotations;
 
 namespace Entities.DTOs.Tournament;
 
@@ -22,4 +23,30 @@ public class TournamentResponse : BaseEntityResponse
     /// The divisions associated with the tournament.
     /// </summary>
     public required IEnumerable<MinimalDivisionResponse> Divisions { get; set; }
+
+    /// <summary>
+    /// The deadline for team registrations.
+    /// Must be earlier than the tournament start date.
+    /// </summary>
+    public required DateTime TeamRegistrationDeadline { get; set; }
+
+    /// <summary>
+    /// The start date of the tournament.
+    /// </summary>
+    public required DateTime StartDate { get; set; }
+
+    /// <summary>
+    /// The maximum number of teams allowed to participate in the tournament.
+    /// </summary>
+    public required int MaxTeams { get; set; }
+
+    /// <summary>
+    /// The minimum number of teams required to hold the tournament.
+    /// </summary>
+    public required int MinTeams { get; set; }
+
+    /// <summary>
+    /// Indicates whether the tournament has finished.
+    /// </summary>
+    public bool IsFinished { get; set; }
 }

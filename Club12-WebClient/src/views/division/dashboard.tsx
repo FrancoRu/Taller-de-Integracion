@@ -25,43 +25,37 @@ import {
 import { NoDivisionMessage } from './NoDivisionMessage';
 export const DivisionDashboard: React.FC = () => {
   const { divisions, getDivisionsByFilters } = useDivision();
-
+  const { tournamentId: id } = useParams<{ tournamentId: GUID }>();
   const { tournament } = useTournament();
-  const { id } = useParams<{ id: GUID }>();
-  const navigate = useNavigate();
 
   useEffect(() => {
-    if (!tournament) {
-      navigate('/');
+    if (tournament) {
+      (async () => {
+        await getDivisionsByFilters({ tournamentId: id });
+      })();
     }
-  }, [tournament, navigate]);
-
-  if (!tournament) return null;
-
-  useEffect(() => {
-    (async () => {
-      await getDivisionsByFilters({ tournamentId: id });
-    })();
   }, [id]);
 
   return (
-    <Box>
-      {divisions ? (
-        divisions.length > 0 ? (
-          <Grid container spacing={3} sx={{ px: 2, py: 3 }}>
-            {divisions.map(d => (
-              <Grid item key={d.id} xs={12} sm={8} md={4}>
-                <RenderDivision {...d} />
-              </Grid>
-            ))}
-          </Grid>
+    tournament && (
+      <Box>
+        {divisions ? (
+          divisions.length > 0 ? (
+            <Grid container spacing={3} sx={{ px: 2, py: 3 }}>
+              {divisions.map(d => (
+                <Grid item key={d.id} xs={12} sm={8} md={4}>
+                  <RenderDivision {...d} />
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+            <NoDivisionMessage name={tournament.name} />
+          )
         ) : (
-          <NoDivisionMessage name={tournament.name} />
-        )
-      ) : (
-        <LoadingIndicator />
-      )}
-    </Box>
+          <LoadingIndicator />
+        )}
+      </Box>
+    )
   );
 };
 

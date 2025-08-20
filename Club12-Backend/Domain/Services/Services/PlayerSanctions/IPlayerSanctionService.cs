@@ -35,7 +35,7 @@ public interface IPlayerSanctionService
     /// </summary>
     /// <param name="playerSanctionEntity">The player sanction to update.</param>
     /// <returns>A boolean indicating whether the update was successful.</returns>
-    Task<bool> UpdatePlayerSanctionAsync(PlayerSanction playerSanctionEntity);
+    Task<PlayerSanction> UpdatePlayerSanctionAsync(PlayerSanction playerSanctionEntity);
 
     /// <summary>
     /// Retrieves expired player sanctions as of a specific date asynchronously.

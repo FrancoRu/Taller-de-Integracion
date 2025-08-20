@@ -1,6 +1,5 @@
-import { GUID } from '@/modules/core/types/types';
 import { useMatch } from '@/modules/match/hook/match.hook';
-import { IMatchResponse } from '@/modules/match/type/match';
+import { IDashboardMatches, IMatchResponse } from '@/modules/match/type/match';
 import { useStage } from '@/modules/stage/hook/stage.hook';
 import {
   Box,
@@ -14,8 +13,8 @@ import {
   Chip,
   Divider,
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import LoadingIndicator from '../core/components/LoadingIndicator';
 import {
   ArrowForwardIcon,
@@ -23,49 +22,34 @@ import {
   DeleteIcon,
 } from '../core/MUI/icons/icons';
 import { RoutesNavigationViews } from '../core/routes-const';
-import { NoMatchesMessage } from './NoMatchMessage';
+import { NoMatchesMessage } from './message/NoMatchesMessage';
 import { DeleteMatch } from './CRUD/delete-match';
-import { formatMatchDate } from '@/modules/core/utils/formatDate';
+import { formatMatchDateToString } from '@/modules/core/utils/formatDate';
+import { GUID } from '@/modules/core/types/types';
 
-export const MatchDashboard: React.FC = () => {
-  const { matches, getMatchByFilter } = useMatch();
-
+export const MatchDashboard: React.FC<IDashboardMatches> = ({ matches }) => {
   const { stage } = useStage();
-  const { id } = useParams<{ id: GUID }>();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!stage) {
-      navigate(RoutesNavigationViews.Home);
-    }
-  }, [stage, navigate]);
-
-  if (!stage) return null;
-
-  useEffect(() => {
-    (async () => {
-      await getMatchByFilter({ stageId: id });
-    })();
-  }, [id]);
 
   return (
-    <Box>
-      {matches ? (
-        matches.length > 0 ? (
-          <Grid container spacing={3} sx={{ px: 2, py: 3 }}>
-            {matches.map(m => (
-              <Grid item key={m.id} xs={12} sm={8} md={4}>
-                <RenderMatch {...m} />
-              </Grid>
-            ))}
-          </Grid>
+    stage && (
+      <Box>
+        {matches ? (
+          matches.length > 0 ? (
+            <Grid container spacing={3} sx={{ px: 2, py: 3 }}>
+              {matches.map(m => (
+                <Grid item key={m.id} xs={12} sm={8} md={4}>
+                  <RenderMatch {...m} />
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+            <NoMatchesMessage name={stage.name} />
+          )
         ) : (
-          <NoMatchesMessage name={stage.name} />
-        )
-      ) : (
-        <LoadingIndicator />
-      )}
-    </Box>
+          <LoadingIndicator />
+        )}
+      </Box>
+    )
   );
 };
 
@@ -137,6 +121,9 @@ export const RenderMatch: React.FC<IMatchResponse> = ({
   return (
     <Card
       sx={{
+        backgroundColor: 'background.paper',
+        border: '2px solid',
+        borderColor: 'primary.main',
         transition: 'transform 0.2s',
         '&:hover': {
           transform: 'scale(1.02)',
@@ -166,12 +153,11 @@ export const RenderMatch: React.FC<IMatchResponse> = ({
           </Stack>
 
           <Typography variant="caption" color="text.secondary" align="center">
-            {formatMatchDate(matchDate)} • {venue?.name}
+            {formatMatchDateToString(matchDate)} • {venue?.name}
           </Typography>
 
           <Divider sx={{ my: 1.5, width: '100%' }} />
 
-          {/* Marcador */}
           <Stack
             direction="row"
             spacing={2}
@@ -179,7 +165,6 @@ export const RenderMatch: React.FC<IMatchResponse> = ({
             justifyContent="space-between"
             sx={{ width: '100%' }}
           >
-            {/* Equipo local */}
             <TeamBlock
               name={homeTeam.name}
               logo={homeTeam.logoUrl}
@@ -207,7 +192,6 @@ export const RenderMatch: React.FC<IMatchResponse> = ({
             />
           </Stack>
 
-          {/* Acciones */}
           <Stack direction="row" spacing={1} justifyContent="center" mt={1.5}>
             <Tooltip title="Ver partido">
               <span>
@@ -237,15 +221,15 @@ export const RenderMatch: React.FC<IMatchResponse> = ({
                 <EditIcon />
               </IconButton>
             </Tooltip>
-
-            <Tooltip title="Eliminar partido">
-              <IconButton color="error" onClick={() => setShowPopup(true)}>
-                <DeleteIcon />
-              </IconButton>
-            </Tooltip>
+            {!isFinished && (
+              <Tooltip title="Eliminar partido">
+                <IconButton color="error" onClick={() => setShowPopup(true)}>
+                  <DeleteIcon />
+                </IconButton>
+              </Tooltip>
+            )}
           </Stack>
 
-          {/* Modal de eliminación */}
           {showPopup && (
             <DeleteMatch
               id={id as GUID}

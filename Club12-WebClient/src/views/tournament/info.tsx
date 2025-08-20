@@ -28,13 +28,12 @@ export const InfoTournament: React.FC = () => {
   const navigate = useNavigate();
   const { tournaments, getAllTournamentsByFilter }: ITournamentContextProps =
     useTournament();
+
   useEffect(() => {
-    if (!tournaments || tournaments.length === 0) {
-      (async () => {
-        await getAllTournamentsByFilter({});
-      })();
-    }
-  }, []);
+    (async () => {
+      await getAllTournamentsByFilter({});
+    })();
+  }, [getAllTournamentsByFilter]);
 
   return (
     <Card>

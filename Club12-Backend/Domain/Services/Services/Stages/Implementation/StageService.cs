@@ -11,12 +11,14 @@ namespace Services.Services.Stages.Implementation;
 public class StageService(IGenericService<Stage> _genericStageService) : IStageService
 {
     public async Task<Stage?> GetStageByIdAsync(Guid stageId)
-        => await _genericStageService.FilterByExpression(stage => stage.Id == stageId).FirstOrDefaultAsync();
+        => await _genericStageService.FilterByExpression(stage => stage.Id == stageId)
+        .FirstOrDefaultAsync();
 
     public async Task<PaginatedResponse<Stage>> GetAllStagesAsync(GetStagesFilteredRequest filter)
     {
         Expression<Func<Stage, bool>> expression = QueryableExtensions.ConstructFilterExpression<Stage, GetStagesFilteredRequest>(filter);
-        IQueryable<Stage> filteredPlayers = _genericStageService.FilterByExpressionWithPagination(expression, filter).SortBy(filter);
+        IQueryable<Stage> filteredPlayers = _genericStageService.FilterByExpressionWithPagination(expression, filter)
+            .SortBy(filter);
         int totalCount = await _genericStageService.GetCountAsync(expression);
 
         return new PaginatedResponse<Stage>

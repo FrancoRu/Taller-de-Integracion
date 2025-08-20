@@ -1,6 +1,12 @@
 import { AxiosError } from 'axios';
 import Cookies from 'js-cookie';
-import React, { createContext, useState, useEffect } from 'react';
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from 'react'; // Import useCallback and useMemo
 import { ProviderProps } from '../../core/types/types';
 import { useError } from '../../error/hooks/error.hock';
 import { authService } from '../service/auth.service';
@@ -31,57 +37,79 @@ export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
     if (token) {
       setIsAuthenticated(true);
     }
-  }, []);
+  }, []); // Empty dependency array means this runs once on mount
 
-  const signIn = async (user: LogInUserRequest): Promise<boolean> => {
-    try {
-      const res = await authService.loginRequest(user);
-      if (res?.status === 200 && res?.data) {
-        setUser({
-          username: user.username,
-          accessToken: res?.data as AuthResponse,
-        });
+  // --- Functions memoized with useCallback ---
 
-        const expiresIn = res.data.expiresIn.split(':').map(Number);
-        const expiresInMs =
-          expiresIn[0] * EXPIRATION_TIME.MS_IN_HOUR +
-          expiresIn[1] * EXPIRATION_TIME.MS_IN_MINUTE +
-          expiresIn[2] * EXPIRATION_TIME.MS_IN_SECOND;
+  const signIn = useCallback(
+    async (userData: LogInUserRequest): Promise<boolean> => {
+      // Renamed 'user' to 'userData' for clarity
+      try {
+        const res = await authService.loginRequest(userData);
+        if (res?.status === 200 && res?.data) {
+          setUser({
+            username: userData.username, // Use userData here
+            accessToken: res?.data as AuthResponse,
+          });
 
-        setTimeout(() => {
-          Cookies.remove(COOKIE_SIGNIN_TOKEN);
-          setIsAuthenticated(false);
-        }, expiresInMs);
+          // Calculate expiration time in milliseconds
+          const expiresIn = res.data.expiresIn.split(':').map(Number);
+          const expiresInMs =
+            expiresIn[0] * EXPIRATION_TIME.MS_IN_HOUR +
+            expiresIn[1] * EXPIRATION_TIME.MS_IN_MINUTE +
+            expiresIn[2] * EXPIRATION_TIME.MS_IN_SECOND;
 
-        Cookies.set(COOKIE_SIGNIN_TOKEN, res.data.accessToken, {
-          expires: expiresInMs / (1000 * 60 * 60 * 24),
-        });
+          // Set a timeout to remove the cookie and update auth status
+          setTimeout(() => {
+            Cookies.remove(COOKIE_SIGNIN_TOKEN);
+            setIsAuthenticated(false);
+          }, expiresInMs);
 
-        setIsAuthenticated(true);
-        setMessage(res.status, [SUCCESS_MESSAGES.LOGIN_SUCCESS]);
-        return true;
+          // Set the cookie with its expiration
+          // Note: Cookies.set 'expires' is in days, so convert expiresInMs to days
+          Cookies.set(COOKIE_SIGNIN_TOKEN, res.data.accessToken, {
+            expires: expiresInMs / (1000 * 60 * 60 * 24),
+          });
+
+          setIsAuthenticated(true);
+          setMessage(res.status, [SUCCESS_MESSAGES.LOGIN_SUCCESS]);
+          return true;
+        }
+      } catch (error: unknown) {
+        setError(error as AxiosError);
+        return false;
       }
-    } catch (error: unknown) {
-      setError(error as AxiosError);
       return false;
-    }
-    return false;
-  };
+    },
+    [setUser, setIsAuthenticated, setMessage, setError] // Dependencies: all state setters and error context functions
+  );
 
-  const logOut = async () => {
-    try {
-      await authService.logoutRequest();
-      Cookies.remove(COOKIE_SIGNIN_TOKEN);
-      setIsAuthenticated(false);
-      setUser(null);
-    } catch (error: unknown) {
-      setError(error as AxiosError);
-    }
-  };
+  const logOut = useCallback(
+    async () => {
+      try {
+        await authService.logoutRequest();
+        Cookies.remove(COOKIE_SIGNIN_TOKEN);
+        setIsAuthenticated(false);
+        setUser(null);
+      } catch (error: unknown) {
+        setError(error as AxiosError);
+      }
+    },
+    [setIsAuthenticated, setUser, setError] // Dependencies: state setters and error context function
+  );
+
+  // --- Context value object memoized with useMemo ---
+  const contextValue = useMemo(
+    () => ({
+      signIn,
+      logOut,
+      user,
+      isAuthenticated,
+    }),
+    [signIn, logOut, user, isAuthenticated] // Dependencies: memoized functions and state variables
+  );
 
   return (
-    <AuthContext.Provider value={{ signIn, logOut, user, isAuthenticated }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 };

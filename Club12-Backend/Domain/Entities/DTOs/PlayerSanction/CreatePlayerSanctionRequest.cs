@@ -31,4 +31,6 @@ public class CreatePlayerSanctionRequest
     /// </summary>
     [Required(ErrorMessage = "The PlayerId field is required.")]
     public required Guid PlayerId { get; set; }
+
+    public required Guid MatchId { get; set; }
 }

@@ -19,7 +19,7 @@ import { DeleteDivision } from './delete-division';
 import { InfoStage } from '@/views/stage/info';
 
 export const DetailDidivion: React.FC = () => {
-  const { id } = useParams<{ id: GUID }>();
+  const { divisionId: id } = useParams<{ divisionId: GUID }>();
   const { division, getDivisionsById } = useDivision();
   if (!id) {
     return null;

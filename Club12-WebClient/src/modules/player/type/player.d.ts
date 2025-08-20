@@ -157,6 +157,44 @@ export interface IPlayerResponse extends IAddPlayerRequest {
   fullName: string;
 }
 
+export interface IPublicPlayerResponse {
+  /**
+   * The unique identifier of the player.
+   * @type {GUID}
+   */
+  id: GUID;
+
+  /**
+   * The first name of the player.
+   * @type {string}
+   */
+  firstName: string;
+
+  /**
+   * The second name of the player.
+   * @type {string}
+   */
+  secondName: string;
+
+  /**
+   * The last name of the player.
+   * @type {string}
+   */
+  lastName: string;
+
+  /**
+   * The full name of the player.
+   * @type {string}
+   */
+  fullName: string;
+
+  /**
+   * The unique identifier of the team to which the player belongs.
+   * @type {GUID}
+   */
+  teamId: GUID;
+}
+
 /**
  * The request body structure for updating a player's information.
  * @interface IPutPlayerRequest

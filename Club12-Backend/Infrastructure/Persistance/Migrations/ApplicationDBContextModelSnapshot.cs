@@ -34,11 +34,11 @@ namespace Persistance.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateCreated");
 
                     b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateUpdated");
 
                     b.Property<string>("MarkdownText")
@@ -68,11 +68,11 @@ namespace Persistance.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateCreated");
 
                     b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateUpdated");
 
                     b.Property<bool>("IsFinished")
@@ -103,11 +103,11 @@ namespace Persistance.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateCreated");
 
                     b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateUpdated");
 
                     b.Property<Guid?>("DivisionId")
@@ -123,7 +123,7 @@ namespace Persistance.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<DateTime>("MatchDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<Guid>("StageId")
                         .HasColumnType("uuid");
@@ -168,11 +168,11 @@ namespace Persistance.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateCreated");
 
                     b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateUpdated");
 
                     b.Property<string>("Description")
@@ -184,12 +184,17 @@ namespace Persistance.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("IssuedDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("MatchId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("PlayerId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("MatchId");
 
                     b.HasIndex("PlayerId");
 
@@ -203,11 +208,11 @@ namespace Persistance.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateCreated");
 
                     b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateUpdated");
 
                     b.Property<Guid>("MatchId")
@@ -235,14 +240,14 @@ namespace Persistance.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("BirthDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateCreated");
 
                     b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateUpdated");
 
                     b.Property<string>("DocumentNumber")
@@ -295,11 +300,11 @@ namespace Persistance.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateCreated");
 
                     b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateUpdated");
 
                     b.Property<string>("LastName")
@@ -338,11 +343,11 @@ namespace Persistance.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateCreated");
 
                     b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateUpdated");
 
                     b.Property<string>("Description")
@@ -353,7 +358,7 @@ namespace Persistance.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -371,7 +376,7 @@ namespace Persistance.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("Id");
 
@@ -391,11 +396,11 @@ namespace Persistance.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateCreated");
 
                     b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateUpdated");
 
                     b.Property<Guid?>("DivisionId")
@@ -417,9 +422,14 @@ namespace Persistance.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("TournamentId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("DivisionId");
+
+                    b.HasIndex("TournamentId");
 
                     b.ToTable("Teams", "Club12");
                 });
@@ -431,24 +441,42 @@ namespace Persistance.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateCreated");
 
                     b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateUpdated");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsFinished")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("MaxTeams")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MinTeams")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("TeamRegistrationDeadline")
+                        .HasColumnType("timestamp without time zone");
+
                     b.HasKey("Id");
 
-                    b.ToTable("Tournaments", "Club12");
+                    b.ToTable("Tournaments", "Club12", t =>
+                        {
+                            t.HasCheckConstraint("CK_Tournament_DeadlineBeforeStart", "[TeamRegistrationDeadline] < [StartDate]");
+                        });
                 });
 
             modelBuilder.Entity("Entities.Models.Users.User", b =>
@@ -458,11 +486,11 @@ namespace Persistance.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateCreated");
 
                     b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateUpdated");
 
                     b.Property<string>("Password")
@@ -475,7 +503,7 @@ namespace Persistance.Migrations
                         .HasColumnType("character varying(256)");
 
                     b.Property<DateTime?>("RefreshTokenExpiryTime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Role")
                         .IsRequired()
@@ -504,11 +532,11 @@ namespace Persistance.Migrations
                         .HasColumnType("character varying(200)");
 
                     b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateCreated");
 
                     b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("DateUpdated");
 
                     b.Property<string>("Name")
@@ -578,11 +606,19 @@ namespace Persistance.Migrations
 
             modelBuilder.Entity("Entities.Models.PlayerSanctions.PlayerSanction", b =>
                 {
+                    b.HasOne("Entities.Models.Matches.Match", "Match")
+                        .WithMany()
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Entities.Models.Players.Player", "Player")
                         .WithMany()
                         .HasForeignKey("PlayerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Match");
 
                     b.Navigation("Player");
                 });
@@ -644,6 +680,12 @@ namespace Persistance.Migrations
                     b.HasOne("Entities.Models.Divisions.Division", null)
                         .WithMany("Teams")
                         .HasForeignKey("DivisionId");
+
+                    b.HasOne("Entities.Models.Tournaments.Tournament", "Tournament")
+                        .WithMany("Teams")
+                        .HasForeignKey("TournamentId");
+
+                    b.Navigation("Tournament");
                 });
 
             modelBuilder.Entity("Entities.Models.Divisions.Division", b =>
@@ -675,6 +717,8 @@ namespace Persistance.Migrations
             modelBuilder.Entity("Entities.Models.Tournaments.Tournament", b =>
                 {
                     b.Navigation("Divisions");
+
+                    b.Navigation("Teams");
                 });
 #pragma warning restore 612, 618
         }

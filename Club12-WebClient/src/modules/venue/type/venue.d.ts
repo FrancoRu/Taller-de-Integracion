@@ -119,3 +119,7 @@ export interface IPutVenueRequest {
    */
   photoUrl?: string;
 }
+
+export interface VenueDashboardProps {
+  venues: IVenueResponse[];
+}

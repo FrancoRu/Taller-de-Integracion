@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -11,23 +11,26 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import DesktopNavItems from './desktop';
 import MobileNavItems from './mobile';
-import { useTournament } from '@/modules/tournament/hook/tournament.hook';
+// import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 
 const NavMenu = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { getAllTournamentsByFilter } = useTournament();
+  // const { tournaments } = useTournament();
 
   const toggleDrawer = () => setMobileOpen(!mobileOpen);
   const closeDrawer = () => setMobileOpen(false);
 
-  useEffect(() => {
-    (async () => {
-      await getAllTournamentsByFilter({});
-    })();
-  }, []);
+  //TODO REVIEW THIS
+  // useEffect(() => {
+  //   if (!tournaments || tournaments.length === 0) {
+  //     (async () => {
+  //       await getAllTournamentsByFilter({});
+  //     })();
+  //   }
+  // }, [getAllTournamentsByFilter]);
 
   return (
     <AppBar position="static">

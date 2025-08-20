@@ -11,6 +11,8 @@ import {
   IPutPlayerRequest,
 } from '../type/player.d';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
+import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
+import { fetchAndSetList } from '@/modules/core/utils/comparator';
 
 export const PlayerContext = createContext<IPlayerContextProps | undefined>(
   undefined
@@ -43,7 +45,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
     }
   };
@@ -61,7 +63,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
     }
   };
@@ -69,16 +71,17 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
     filter: PlayerFiltered
   ): Promise<GenericResponsePagination<IPlayerResponse> | void> => {
     try {
-      const res: AxiosResponse<GenericResponsePagination<IPlayerResponse>> =
-        await playerService.getPlayersByFilter(filter);
-      if (res) {
-        setPlayers(res.data.items);
-      }
+      return await fetchAndSetList<IPlayerResponse, PlayerFiltered>({
+        apiCall: f => playerService.getPlayersByFilter(f),
+        currentState: players,
+        setState: setPlayers,
+        filter: filter,
+      });
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
     }
   };
@@ -97,7 +100,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
     }
   };
@@ -110,7 +113,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
     }
   };

@@ -20,16 +20,4 @@ public class UpdateMatchScoreRequest
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "The VisitorScore must be a non-negative number.")]
     public required int VisitorScore { get; set; }
-
-    /// <summary>
-    /// Home team players and their corresponding scores
-    /// </summary>
-    [Required]
-    public required List<PlayerScoreRequest> HomeTeamPlayerScores { get; set; }
-
-    /// <summary>
-    /// Visitor team players and their corresponding scores
-    /// </summary>
-    [Required]
-    public required List<PlayerScoreRequest> VisitorTeamPlayerScores { get; set; }
 }

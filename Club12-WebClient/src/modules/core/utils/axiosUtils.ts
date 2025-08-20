@@ -160,7 +160,7 @@ const throwError = (error: unknown): AxiosError | Error => {
       );
 
     default:
-      return new AxiosError('An unknown error occurred');
+      return new AxiosError(ERROR_MESSAGES.GENERIC_ERROR);
   }
 };
 

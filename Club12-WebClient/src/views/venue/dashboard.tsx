@@ -16,19 +16,25 @@ import {
   DeleteIcon,
 } from '../core/MUI/icons/icons';
 import { useVenue } from '@/modules/venue/hook/venue.hook';
-import { IVenueResponse } from '@/modules/venue/type/venue.d';
+import {
+  IVenueContextProps,
+  IVenueResponse,
+} from '@/modules/venue/type/venue.d';
 import LoadingIndicator from '../core/components/LoadingIndicator';
 import { DeleteVenue } from './CRUD/delete-venue';
 import { RoutesNavigationViews } from '../core/routes-const';
+import { NoVenueMessage } from './NoVenueMessage';
 
 export const VenueDashboard: React.FC = () => {
-  const { venues, getAllVenues } = useVenue();
+  const { venues, getAllVenues }: IVenueContextProps = useVenue();
 
   useEffect(() => {
-    (async () => {
-      await getAllVenues();
-    })();
-  }, []);
+    if (!venues || venues.length === 0) {
+      (async () => {
+        await getAllVenues();
+      })();
+    }
+  }, [venues, getAllVenues]);
 
   return (
     <Box>
@@ -42,14 +48,7 @@ export const VenueDashboard: React.FC = () => {
             ))}
           </Grid>
         ) : (
-          <Typography
-            align="center"
-            variant="h6"
-            color="text.secondary"
-            sx={{ mt: 3 }}
-          >
-            No hay sedes registradas.
-          </Typography>
+          <NoVenueMessage />
         )
       ) : (
         <LoadingIndicator />

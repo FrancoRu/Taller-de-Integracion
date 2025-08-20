@@ -142,7 +142,7 @@ public interface IGenericService<TEntity> where TEntity : EntityBase
     /// </summary>
     /// <param name="expression">The expression used to filter entities.</param>
     /// <returns>An IQueryable of entities matching the expression.</returns>
-    IQueryable<TEntity> FilterByExpression(Expression<Func<TEntity, bool>> expression);
+    IQueryable<TEntity> FilterByExpression(Expression<Func<TEntity, bool>> expression, params Expression<Func<TEntity, object?>>[] includes);
 
     /// <summary>
     /// Counts the number of entities that match the specified expression.

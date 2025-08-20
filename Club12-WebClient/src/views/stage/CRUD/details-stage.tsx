@@ -16,25 +16,23 @@ import { DeleteStage } from './delete-stage';
 import { InfoMatch } from '@/views/match/info';
 
 export const DetailStage: React.FC = () => {
-  const { id } = useParams<{ id: GUID }>();
-  const { stage, getStagesById } = useStage();
-  if (!id) {
-    return null;
-  }
-
+  const { stageId: id } = useParams<{ stageId: GUID }>();
+  const { stage, getStageById } = useStage();
   useEffect(() => {
-    (async () => {
-      await getStagesById(id);
-    })();
-  }, []);
-
-  if (!stage) {
-    return null;
-  }
+    if (id && (!stage || stage.id != id)) {
+      (async () => {
+        await getStageById(id);
+      })();
+    }
+  }, [id]);
   return (
     <>
-      <RenderStageDetails {...stage} />
-      <InfoMatch {...stage} />
+      {stage && (
+        <>
+          <RenderStageDetails {...stage} />
+          <InfoMatch {...stage} />
+        </>
+      )}
     </>
   );
 };

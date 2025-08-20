@@ -14,12 +14,13 @@ import { NoStagesMessage } from './NoStageMessage';
 import { useNavigate } from 'react-router-dom';
 import { GenerateStage } from './CRUD/generate-stage';
 import { IDivisionResponse } from '@/modules/division/type/division';
+import { IStageContextProps } from '@/modules/stage/type/stage';
 import { useStage } from '@/modules/stage/hook/stage.hook';
 
-export const InfoStage: React.FC<IDivisionResponse> = ({ name, id }) => {
+export const InfoStage: React.FC<IDivisionResponse> = ({ id, name }) => {
   const navigate = useNavigate();
   const [showPopup, setShowPopup] = useState<boolean>(false);
-  const { stages, getStagesByFilters } = useStage();
+  const { stages, getStagesByFilters }: IStageContextProps = useStage();
   useEffect(() => {
     (async () => {
       await getStagesByFilters({ divisionId: id });
@@ -65,7 +66,7 @@ export const InfoStage: React.FC<IDivisionResponse> = ({ name, id }) => {
           </Stack>
 
           {stages && stages.length > 0 ? (
-            <StageDashboard />
+            <StageDashboard stages={stages} />
           ) : (
             <NoStagesMessage name={name} />
           )}

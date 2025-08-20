@@ -1,4 +1,5 @@
-﻿using Entities.DTOs.Scorer;
+﻿using Entities.DTOs.Player;
+using Entities.DTOs.Scorer;
 
 namespace Entities.DTOs.Team;
 
@@ -31,4 +32,6 @@ public class TeamDetailedMatchResponse
     /// List of scorers for the team.
     /// </summary>
     public List<ScorerResponse> Scorers { get; set; } = [];
+
+    public List<PublicPlayerResponse> Players { get; set; } = [];
 }

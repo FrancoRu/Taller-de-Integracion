@@ -18,7 +18,7 @@ import { RoutesNavigationViews } from '@/views/core/routes-const';
 import { InfoPlayer } from '@/views/player/info';
 
 export const DetailTeam: React.FC = () => {
-  const { id } = useParams<{ id: GUID }>();
+  const { teamId: id } = useParams<{ teamId: GUID }>();
   const { team, getTeamById } = useTeam();
   if (!id) return null;
   useEffect(() => {

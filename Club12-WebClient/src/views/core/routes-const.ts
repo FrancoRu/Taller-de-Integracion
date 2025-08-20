@@ -9,5 +9,6 @@ export enum RoutesNavigationViews {
   Match = 'partido',
   Venue = 'cancha',
   Player = 'jugador',
+  PlayerSanction = 'sancion',
   Team = 'equipo',
 }

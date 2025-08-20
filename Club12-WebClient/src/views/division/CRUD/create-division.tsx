@@ -3,11 +3,13 @@ import { useDivision } from '@/modules/division/hook/division.hook';
 import {
   AddDivisionRequest,
   IDivisionContextProps,
+  IDivisionResponse,
 } from '@/modules/division/type/division';
 import { useError } from '@/modules/error/hooks/error.hock';
 import { IErrorContextProp } from '@/modules/error/type/error';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { CustomBox } from '@/views/core/MUI/customsThemes/CustomBox';
+import { RoutesNavigationViews } from '@/views/core/routes-const';
 import {
   Card,
   CardContent,
@@ -21,7 +23,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 export const CreateDivision: React.FC = () => {
   const theme = useTheme();
-  const { id } = useParams<{ id: GUID }>();
+  const { tournamentId: id } = useParams<{ tournamentId: GUID }>();
   const { tournament } = useTournament();
   const { errors, setMessage }: IErrorContextProp = useError();
   const navigate = useNavigate();
@@ -38,14 +40,16 @@ export const CreateDivision: React.FC = () => {
     name: '',
   });
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!division.name.trim()) {
       setMessage(400, ['El nombre es obligatorio']);
       return;
     }
 
-    addDivision(division);
-    navigate(`/torneo/${id}`);
+    const res: IDivisionResponse | void = await addDivision(division);
+    if (res) {
+      navigate(`/${RoutesNavigationViews.Tournament}/${id}`);
+    }
   };
 
   return (

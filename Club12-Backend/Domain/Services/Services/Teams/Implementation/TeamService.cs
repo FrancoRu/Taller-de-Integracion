@@ -1,7 +1,7 @@
 ﻿using Entities.DTOs.Abstract;
 using Entities.DTOs.Team;
 using Entities.Models.Teams;
-
+using Entities.Models.Tournaments;
 using Microsoft.EntityFrameworkCore;
 
 using Services.DataAccessLayer.GenericEntity;
@@ -75,5 +75,28 @@ public class TeamService(IGenericService<Team> _genericTeamService) : ITeamServi
             TotalCount = totalCount,
             Items = await filteredTeams.ToListAsync()
         };
+    }
+
+    public async Task<bool> RegisterTeamsToTournamentAsync(Tournament tournament, List<Guid> teamIds)
+    {
+        try { 
+            List<Team> teamsToRegister = await _genericTeamService.FilterByExpression(team => teamIds.Contains(team.Id) 
+            || team.TournamentId == tournament.Id)
+                .ToListAsync();
+
+            teamsToRegister.AsParallel().ForAll(team =>
+            {
+                if (!teamIds.Contains(team.Id)) team.TournamentId = null;
+                else if(team.TournamentId == tournament.Id) return;
+                else team.Tournament = tournament;
+            });
+
+            await _genericTeamService.UpdateRangeAsync(teamsToRegister);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

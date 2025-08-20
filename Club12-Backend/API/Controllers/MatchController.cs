@@ -96,8 +96,8 @@ public class MatchController(IMatchService _matchService, IPlayoffSeriesService 
     /// <param name="id">The id of the match to update.</param>
     /// <param name="updateRequest">The request containing the new match date.</param>
     /// <returns>Returns the result of the date update operation.</returns>
-    [HttpPut("{id:guid}/date")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type=typeof(DetailedMatchResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> UpdateMatchDate(Guid id, UpdateMatchRequest updateRequest)
     {
@@ -109,9 +109,9 @@ public class MatchController(IMatchService _matchService, IPlayoffSeriesService 
         }
 
         _mapper.Map(updateRequest, existingMatch);
-        bool updateResult = await _matchService.UpdateMatchAsync(existingMatch);
-
-        return !updateResult ? BadRequest("Failed to update the match date.") : NoContent();
+        await _matchService.UpdateMatchAsync(existingMatch);
+        DetailedMatchResponse detailedMatch = _mapper.Map<DetailedMatchResponse>(existingMatch);
+        return Ok(detailedMatch);
     }
 
     /// <summary>
@@ -160,7 +160,7 @@ public class MatchController(IMatchService _matchService, IPlayoffSeriesService 
     /// <param name="scoreRequest">The request with updated scores.</param>
     /// <returns>Returns the result of the score update operation.</returns>
     [HttpPut("{id:guid}/score")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedMatchResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> UpdateMatchScore(Guid id, UpdateMatchScoreRequest scoreRequest)
     {
@@ -170,63 +170,53 @@ public class MatchController(IMatchService _matchService, IPlayoffSeriesService 
             return BadRequest($"Match with ID {id} not found.");
         }
 
-        bool matchUpdateSuccess = await UpdateMatchScoreAsync(existingMatch, scoreRequest);
-        if (!matchUpdateSuccess)
-        {
-            return BadRequest("Failed to update the match score.");
-        }
+        _mapper.Map(scoreRequest, existingMatch);
 
-        //if (existingMatch.Type == MatchType.Playoff && existingMatch.PlayoffSeriesId.HasValue)
-        //{
-        //    bool seriesUpdateSuccess = await HandlePlayoffSeriesAsync(existingMatch);
-        //    if (!seriesUpdateSuccess)
-        //    {
-        //        return BadRequest("Failed to update the playoff series.");
-        //    }
-        //}
+        await _matchService.UpdateMatchAsync(existingMatch);
 
-        return NoContent();
+        DetailedMatchResponse detailedMatch = _mapper.Map<DetailedMatchResponse>(existingMatch);
+        return Ok(detailedMatch);
     }
 
-    /// <summary>
-    /// Updates the score of a match and player statistics.
-    /// </summary>
-    /// <param name="match">The match to update.</param>
-    /// <param name="scoreRequest">The request with updated scores.</param>
-    /// <returns>True if the update was successful; otherwise, false.</returns>
-    private async Task<bool> UpdateMatchScoreAsync(Match match, UpdateMatchScoreRequest scoreRequest)
-    {
-        int homeTeamTotalScore = scoreRequest.HomeTeamPlayerScores.Sum(s => s.Points);
-        int visitorTeamTotalScore = scoreRequest.VisitorTeamPlayerScores.Sum(s => s.Points);
+    ///// <summary>
+    ///// Updates the score of a match and player statistics.
+    ///// </summary>
+    ///// <param name="match">The match to update.</param>
+    ///// <param name="scoreRequest">The request with updated scores.</param>
+    ///// <returns>True if the update was successful; otherwise, false.</returns>
+    //private async Task<bool> UpdateMatchScoreAsync(Match match, UpdateMatchScoreRequest scoreRequest)
+    //{
+    //    int homeTeamTotalScore = scoreRequest.HomeTeamPlayerScores.Sum(s => s.Points);
+    //    int visitorTeamTotalScore = scoreRequest.VisitorTeamPlayerScores.Sum(s => s.Points);
 
-        if (homeTeamTotalScore != scoreRequest.HomeScore || visitorTeamTotalScore != scoreRequest.VisitorScore)
-        {
-            return false; // Player points must sum up to the team score
-        }
+    //    if (homeTeamTotalScore != scoreRequest.HomeScore || visitorTeamTotalScore != scoreRequest.VisitorScore)
+    //    {
+    //        return false; // Player points must sum up to the team score
+    //    }
 
-        _mapper.Map(scoreRequest, match);
-        UpdatePlayerStatistics(match, scoreRequest);
+    //    _mapper.Map(scoreRequest, match);
+    //    UpdatePlayerStatistics(match, scoreRequest);
 
-        return await _matchService.UpdateMatchAsync(match); // Save the updated match
-    }
+    //    return await _matchService.UpdateMatchAsync(match); // Save the updated match
+    //}
 
     /// <summary>
     /// Updates player statistics for the match.
     /// </summary>
     /// <param name="match">The match to update.</param>
     /// <param name="scoreRequest">The request with updated scores.</param>
-    private static void UpdatePlayerStatistics(Match match, UpdateMatchScoreRequest scoreRequest) => scoreRequest.HomeTeamPlayerScores
-            .Concat(scoreRequest.VisitorTeamPlayerScores)
-            .Select(playerScore => new PlayerStatistic
-            {
-                PlayerId = playerScore.PlayerId,
-                Value = playerScore.Points,
-                MatchId = match.Id,
-                DateCreated = DateTime.UtcNow,
-                DateUpdated = DateTime.UtcNow
-            })
-            .ToList()
-            .ForEach(match.PlayerStatistics.Add);
+    //private static void UpdatePlayerStatistics(Match match, UpdateMatchScoreRequest scoreRequest) => scoreRequest.HomeTeamPlayerScores
+    //        .Concat(scoreRequest.VisitorTeamPlayerScores)
+    //        .Select(playerScore => new PlayerStatistic
+    //        {
+    //            PlayerId = playerScore.PlayerId,
+    //            Value = playerScore.Points,
+    //            MatchId = match.Id,
+    //            DateCreated = DateTime.UtcNow,
+    //            DateUpdated = DateTime.UtcNow
+    //        })
+    //        .ToList()
+    //        .ForEach(match.PlayerStatistics.Add);
 
     /// <summary>
     /// Handles the playoff series logic after a match is updated.

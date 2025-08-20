@@ -2,9 +2,9 @@ import { TypeMatch } from '@/modules/match/type/match.d';
 import React from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { DataPositions } from '@/modules/tournament/type/tournament';
-import { IAllStagePropsView } from '@/modules/stage/type/stage.d';
+import { IDashboardStage } from '@/modules/stage/type/stage.d';
 
-export const Positions: React.FC<IAllStagePropsView> = ({ stages }) => {
+export const Positions: React.FC<IDashboardStage> = ({ stages }) => {
   const regularMatches = stages.flatMap(d =>
     d.matchesByWeek.filter(m => m.type === TypeMatch.Regular)
   );

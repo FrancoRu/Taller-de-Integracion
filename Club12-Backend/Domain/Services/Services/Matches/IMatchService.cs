@@ -37,7 +37,7 @@ public interface IMatchService
     /// </summary>
     /// <param name="matchEntity">The match to update.</param>
     /// <returns>A boolean indicating whether the update was successful.</returns>
-    Task<bool> UpdateMatchAsync(Match matchEntity);
+    Task<Match> UpdateMatchAsync(Match matchEntity);
 
     /// <summary>
     /// Deletes a match asynchronously.

@@ -1,4 +1,4 @@
-import { IStageResponse } from '@/modules/stage/type/stage.d';
+import { IDashboardStage, IStageResponse } from '@/modules/stage/type/stage.d';
 import {
   Card,
   CardContent,
@@ -8,8 +8,9 @@ import {
   IconButton,
   Box,
   Grid,
+  Chip,
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowForwardIcon,
@@ -24,23 +25,8 @@ import LoadingIndicator from '../core/components/LoadingIndicator';
 import { NoStagesMessage } from './NoStageMessage';
 import { translateStageType } from '@/modules/core/utils/translateStageType';
 
-export const StageDashboard: React.FC = () => {
-  const { stages, getStagesByFilters } = useStage();
-
+export const StageDashboard: React.FC<IDashboardStage> = ({ stages }) => {
   const { division } = useDivision();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!division) {
-      navigate('/');
-      return;
-    }
-    (async () => {
-      await getStagesByFilters({ divisionId: division.id });
-    })();
-  }, [division, navigate]);
-
-  if (!division) return null;
 
   return (
     <Box>
@@ -54,7 +40,7 @@ export const StageDashboard: React.FC = () => {
             ))}
           </Grid>
         ) : (
-          <NoStagesMessage name={division.name} />
+          <NoStagesMessage name={division!.name} />
         )
       ) : (
         <LoadingIndicator />
@@ -79,8 +65,6 @@ const RenderStage: React.FC<IStageResponse> = ({
   const [isAnimating, setIsAnimating] = useState(false);
 
   const handleNavigate = () => {
-    if (!isActive) return;
-
     setIsAnimating(true);
     setTimeout(() => {
       navigate(`/${RoutesNavigationViews.Stage}/${id}`);
@@ -91,10 +75,9 @@ const RenderStage: React.FC<IStageResponse> = ({
   return (
     <Card
       sx={{
-        backgroundColor: !isActive ? 'grey.200' : 'background.paper',
-        opacity: !isActive ? 0.6 : 1,
-        border: !isActive ? '2px solid #ccc' : '2px solid',
-        borderColor: !isActive ? 'grey.400' : 'primary.main',
+        backgroundColor: 'background.paper',
+        border: '2px solid',
+        borderColor: 'primary.main',
         transition: 'transform 0.2s',
         '&:hover': {
           transform: 'scale(1.02)',
@@ -129,7 +112,6 @@ const RenderStage: React.FC<IStageResponse> = ({
               <span>
                 <IconButton
                   color="primary"
-                  disabled={!isActive || isAnimating}
                   onClick={handleNavigate}
                   sx={{
                     transition: 'transform 0.5s ease',
@@ -142,23 +124,25 @@ const RenderStage: React.FC<IStageResponse> = ({
                 </IconButton>
               </span>
             </Tooltip>
-
-            <Tooltip title="Editar Etapa">
-              <IconButton
-                color="secondary"
-                onClick={() =>
-                  navigate(`/${RoutesNavigationViews.Stage}/${id}/editar`)
-                }
-              >
-                <EditIcon titleAccess="Editar Etapa" />
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title="Eliminar Etapa">
-              <IconButton color="error" onClick={() => setShowPopup(true)}>
-                <DeleteIcon titleAccess="Eliminar Etapa" />
-              </IconButton>
-            </Tooltip>
+            {isActive && (
+              <>
+                <Tooltip title="Editar Etapa">
+                  <IconButton
+                    color="secondary"
+                    onClick={() =>
+                      navigate(`/${RoutesNavigationViews.Stage}/${id}/editar`)
+                    }
+                  >
+                    <EditIcon titleAccess="Editar Etapa" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Eliminar Etapa">
+                  <IconButton color="error" onClick={() => setShowPopup(true)}>
+                    <DeleteIcon titleAccess="Eliminar Etapa" />
+                  </IconButton>
+                </Tooltip>
+              </>
+            )}
           </Stack>
 
           {showPopup && (
@@ -167,6 +151,13 @@ const RenderStage: React.FC<IStageResponse> = ({
               fn={deleteStagesById}
               onClose={() => setShowPopup(false)}
             />
+          )}
+        </Stack>
+        <Stack direction="row" spacing={1} justifyContent="center">
+          {isActive ? (
+            <Chip label="Activa" color="success" />
+          ) : (
+            <Chip label="Finalizada" color="error" />
           )}
         </Stack>
       </CardContent>

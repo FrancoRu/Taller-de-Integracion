@@ -22,7 +22,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 export const EditTeam: React.FC = () => {
   const theme = useTheme();
-  const { id } = useParams<{ id: GUID }>();
+  const { teamId: id } = useParams<{ teamId: GUID }>();
   const navigate = useNavigate();
   const { errors, setMessage }: IErrorContextProp = useError();
   const { team, putTeamById, getTeamById }: ITeamContextProps = useTeam();

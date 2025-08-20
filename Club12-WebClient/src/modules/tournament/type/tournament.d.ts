@@ -21,7 +21,7 @@ export interface ITournamentContextProps {
    * @returns A promise that resolves with the response containing the newly added tournament.
    */
   addTournament(
-    tournament: AddTournamentRequest
+    tournament: IAddTournamentRequest
   ): Promise<ITournamentResponse | void>;
 
   /**
@@ -54,13 +54,27 @@ export interface ITournamentContextProps {
    * @returns A promise that resolves when the tournament is successfully deleted.
    */
   deleteTournamentById(id: GUID): Promise<void>;
+
+  /**
+   * Registers one or more teams in a specific tournament.
+   *
+   * @async
+   * @function registerTeams
+   * @param {string} id - The unique identifier (GUID) of the tournament where teams will be registered.
+   * @param {string[]} teamsId - An array of team identifiers (GUIDs) to be registered in the tournament.
+   * @returns {Promise<AxiosResponse<boolean>>} A promise resolving to an Axios response indicating whether the registration was successful.
+   */
+  registerTeamsByTournamentId(
+    id: GUID,
+    teamsId: GUID[]
+  ): Promise<boolean | void>;
 }
 
 /**
  * The request body structure for adding a new tournament.
- * @interface AddTournamentRequest
+ * @interface IAddTournamentRequest
  */
-export interface AddTournamentRequest {
+export interface IAddTournamentRequest {
   /**
    * The name of the tournament.
    * @type {string}
@@ -72,11 +86,36 @@ export interface AddTournamentRequest {
    * @type {string}
    */
   description: string;
+
+  /**
+   * The deadline for team registrations.
+   * Must be earlier than the tournament start date.
+   * @type {Date}
+   */
+  teamRegistrationDeadline: Date;
+
+  /**
+   * The start date of the tournament.
+   * @type {Date}
+   */
+  startDate: Date;
+
+  /**
+   * The maximum number of teams allowed to participate in the tournament.
+   * @type {number}
+   */
+  maxTeams: number;
+
+  /**
+   * The minimum number of teams required to hold the tournament.
+   * @type {number}
+   */
+  minTeams: number;
 }
 
 /**
  * The response structure for a tournament.
- * @interface TournamentResponse
+ * @interface ITournamentResponse
  */
 export interface ITournamentResponse {
   /**
@@ -98,10 +137,41 @@ export interface ITournamentResponse {
   name: string;
 
   /**
-   * The division associated with the tournament.
+   * The divisions associated with the tournament.
    * @type {IDivisionResponse[]}
    */
   divisions?: IDivisionResponse[];
+
+  /**
+   * The deadline for team registrations.
+   * Must be earlier than the tournament start date.
+   * @type {Date}
+   */
+  teamRegistrationDeadline: Date;
+
+  /**
+   * The start date of the tournament.
+   * @type {Date}
+   */
+  startDate: Date;
+
+  /**
+   * The maximum number of teams allowed to participate in the tournament.
+   * @type {number}
+   */
+  maxTeams: number;
+
+  /**
+   * The minimum number of teams required to hold the tournament.
+   * @type {number}
+   */
+  minTeams: number;
+
+  /**
+   * Indicates whether the tournament has finished.
+   * @type {boolean}
+   */
+  isFinished: boolean;
 }
 
 /**
@@ -124,7 +194,7 @@ export interface ITournamentFiltered extends Filtered {
 
 /**
  * The request body structure for updating an existing tournament.
- * @interface PutTournamentRequest
+ * @interface IPutTournamentRequest
  */
 export interface IPutTournamentRequest {
   /**
@@ -138,6 +208,31 @@ export interface IPutTournamentRequest {
    * @type {string}
    */
   description: string;
+
+  /**
+   * The deadline for team registrations.
+   * Must be earlier than the tournament start date.
+   * @type {Date}
+   */
+  teamRegistrationDeadline: Date;
+
+  /**
+   * The start date of the tournament.
+   * @type {Date}
+   */
+  startDate: Date;
+
+  /**
+   * The maximum number of teams allowed to participate in the tournament.
+   * @type {number}
+   */
+  maxTeams: number;
+
+  /**
+   * The minimum number of teams required to hold the tournament.
+   * @type {number}
+   */
+  minTeams: number;
 }
 
 export type StatisticsPositions = {

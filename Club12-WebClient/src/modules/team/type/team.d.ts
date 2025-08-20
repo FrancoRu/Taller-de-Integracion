@@ -3,7 +3,10 @@ import {
   GenericResponsePagination,
   GUID,
 } from '../../core/types/types.d';
-import { IPlayerResponse } from '../../player/type/player.d';
+import {
+  IPublicPlayerResponse,
+  IPlayerResponse,
+} from '../../player/type/player.d';
 
 /**
  * Context properties and methods for managing teams in a sports system.
@@ -143,6 +146,8 @@ export interface ITeamResponse {
    * @type {IPlayerResponse[]}
    */
   players: IPlayerResponse[];
+
+  tournamentId: GUID | null;
 }
 
 /**
@@ -194,6 +199,8 @@ export interface ITeamMatchResponse {
    * @property {number} score - The score achieved by the team in the match.
    */
   score: number;
+
+  players: IPublicPlayerResponse[];
 }
 /**
  * The filters for fetching teams.

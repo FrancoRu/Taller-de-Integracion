@@ -11,20 +11,23 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { AddIcon, SettingsSuggestIcon } from '../core/MUI/icons/icons';
-import { useMatch } from '@/modules/match/hook/match.hook';
-import { NoMatchesMessage } from './NoMatchMessage';
+import { NoMatchesMessage } from './message/NoMatchesMessage';
 import { GenerateMatch } from './CRUD/generate-match';
 import { MatchDashboard } from './dashboard';
+import { IMatchContextProps } from '@/modules/match/type/match';
+import { useMatch } from '@/modules/match/hook/match.hook';
 
 export const InfoMatch: React.FC<IStageResponse> = ({ id, name }) => {
   const navigate = useNavigate();
   const [showPopup, setShowPopup] = useState<boolean>(false);
-  const { matches, getMatchByFilter } = useMatch();
+  const { matches, getMatchByFilter }: IMatchContextProps = useMatch();
+
   useEffect(() => {
     (async () => {
       await getMatchByFilter({ stageId: id });
     })();
   }, [id]);
+
   return (
     <>
       <Card
@@ -65,7 +68,7 @@ export const InfoMatch: React.FC<IStageResponse> = ({ id, name }) => {
           </Stack>
 
           {matches && matches.length > 0 ? (
-            <MatchDashboard />
+            <MatchDashboard matches={matches} />
           ) : (
             <NoMatchesMessage name={name} />
           )}

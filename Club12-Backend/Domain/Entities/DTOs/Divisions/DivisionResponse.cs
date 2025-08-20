@@ -33,8 +33,4 @@ public class DivisionResponse
     /// </summary>
     public Guid TournamentId { get; set; }
 
-    /// <summary>
-    /// Gets or sets the list of matches for the division, grouped by stage or week.
-    /// </summary>
-    public List<StageResponse>? Stages { get; set; }
 }

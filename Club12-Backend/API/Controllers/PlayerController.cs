@@ -54,7 +54,7 @@ public class PlayerController(
         Player mappedPlayer = _mapper.Map<Player>(playerRequest);
         Player createdPlayer = await _playerService.CreatePlayerAsync(mappedPlayer);
         PublicPlayerResponse playerResponse = _mapper.Map<PublicPlayerResponse>(createdPlayer);
-        return CreatedAtAction(nameof(GetPlayerByIdAsync), new {id = createdPlayer.Id}, playerResponse);
+        return CreatedAtRoute("GetPlayerById", new { id = createdPlayer.Id }, playerResponse);
     }
 
     /// <summary>
@@ -66,7 +66,7 @@ public class PlayerController(
     /// <para>Returns 400 (Bad Request) if the Player with the provided id was not found.</para>
     /// </returns>
     [AllowAnonymous]
-    [HttpGet("{id:guid}")]
+    [HttpGet("{id:guid}", Name = "GetPlayerById")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PublicPlayerResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PublicPlayerResponse>> GetPlayerByIdAsync(Guid id)

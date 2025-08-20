@@ -19,7 +19,7 @@ import { DeletePlayer } from './delete-player';
 import { useTeam } from '@/modules/team/hook/team.hook';
 
 export const DetailPlayer: React.FC = () => {
-  const { id } = useParams<{ id: GUID }>();
+  const { playerId: id } = useParams<{ playerId: GUID }>();
   const { player, getPlayerById }: IPlayerContextProps = usePlayer();
 
   const { team, getTeamById } = useTeam();

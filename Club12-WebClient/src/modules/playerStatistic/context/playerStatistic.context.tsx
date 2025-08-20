@@ -26,7 +26,7 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
     }
   };
@@ -43,7 +43,7 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
     }
   };
@@ -56,7 +56,7 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
     }
   };
@@ -68,7 +68,7 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
     }
   };

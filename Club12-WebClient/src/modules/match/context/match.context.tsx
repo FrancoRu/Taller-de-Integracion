@@ -8,10 +8,12 @@ import {
   IMatchContextProps,
   MatchFiltered,
   IMatchResponse,
-  PutMatchDateRequest,
-  PutMatchScoreRequest,
+  IPutMatchRequest,
+  IPutMatchScoreRequest,
 } from '../type/match';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
+import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
+import { fetchAndSetList } from '@/modules/core/utils/comparator';
 
 export const MatchContext = createContext<IMatchContextProps | undefined>(
   undefined
@@ -41,59 +43,62 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
         setMatch(res.data);
         setMessage(res.status, ['El partido fue creado satisfactoriamente.']);
       }
+      return res.data;
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
     }
   };
 
   const putMatchScoreByMatchId = async (
     id: GUID,
-    matchScore: PutMatchScoreRequest
-  ): Promise<void> => {
+    matchScore: IPutMatchScoreRequest
+  ): Promise<IMatchResponse | void> => {
     try {
-      await matchService.putMatchScoreByMatchId(id, matchScore);
+      const res: AxiosResponse<IMatchResponse> =
+        await matchService.putMatchScoreByMatchId(id, matchScore);
+      if (res) {
+        setMatch(res.data);
+        setMessage(res.status, ['Partido actualizado correctamente']);
+      }
+      return res.data;
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
     }
   };
 
-  const putMatchDateByMatchId = async (
+  const putMatchByMatchId = async (
     id: GUID,
-    matchDate: PutMatchDateRequest
-  ): Promise<void> => {
+    matchDate: IPutMatchRequest
+  ): Promise<IMatchResponse | void> => {
     try {
-      await matchService.putMatchDateByMatchId(id, matchDate);
+      const res: AxiosResponse<IMatchResponse> =
+        await matchService.putMatchByMatchId(id, matchDate);
+      if (res) {
+        setMatch(res.data);
+        setMessage(res.status, ['Partido creado satisfactoriamente']);
+      }
+      return res.data;
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
     }
   };
 
   const getMatchById = async (id: GUID): Promise<IMatchResponse | void> => {
     try {
-      const existingMatch: IMatchResponse | undefined = matches?.find(
-        e => e.id == id
-      );
-
-      if (existingMatch) {
-        match?.id !== existingMatch.id && setMatch(existingMatch);
-        return existingMatch;
-      }
-
       const res: AxiosResponse<IMatchResponse> =
         await matchService.getMatchById(id);
-
       if (res) {
         setMatch(res.data);
       }
@@ -102,7 +107,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
     }
   };
@@ -111,16 +116,17 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
     filter: MatchFiltered
   ): Promise<GenericResponsePagination<IMatchResponse> | void> => {
     try {
-      const res: AxiosResponse<GenericResponsePagination<IMatchResponse>> =
-        await matchService.getMatchByFilter(filter);
-      if (res) {
-        setMatches(res.data.items);
-      }
+      return await fetchAndSetList<IMatchResponse, MatchFiltered>({
+        apiCall: f => matchService.getMatchByFilter(f),
+        currentState: matches,
+        setState: setMatches,
+        filter: filter,
+      });
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
     }
   };
@@ -131,7 +137,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
     }
   };
@@ -144,7 +150,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
       return false; // en caso de error
     }
@@ -153,7 +159,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
     match,
     matches,
     addMatch,
-    putMatchDateByMatchId,
+    putMatchByMatchId,
     putMatchScoreByMatchId,
     getMatchById,
     getMatchByFilter,

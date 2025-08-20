@@ -20,7 +20,7 @@ public class GetMatchesFilteredRequest : PaginatedFilterRequest
     /// <summary>
     /// The stage name to filter by.
     /// </summary>
-    public string? StageName { get; set; }
+    public Guid? StageId { get; set; }
 
     /// <summary>
     /// The match type (e.g., regular, playoff) to filter by.

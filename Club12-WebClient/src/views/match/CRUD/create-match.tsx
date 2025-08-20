@@ -17,9 +17,11 @@ import {
   MenuItem,
   Button,
 } from '@mui/material';
+import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 export const CreateMatch: React.FC = () => {
   const { venues, getAllVenues } = useVenue();
   const { teams, getTeamsByFiltered }: ITeamContextProps = useTeam();
@@ -31,7 +33,7 @@ export const CreateMatch: React.FC = () => {
 
   useEffect(() => {
     (async () => await getTeamsByFiltered({}))();
-  }, [teams]);
+  }, [getTeamsByFiltered]);
 
   useEffect(() => {
     if (!stage) {
@@ -85,6 +87,16 @@ export const CreateMatch: React.FC = () => {
   const availableHomeTeams =
     teams?.filter(t => t.id !== form.visitorTeamid) ?? [];
 
+  dayjs.extend(utc);
+  dayjs.extend(timezone);
+
+  const minDateLocal = stage?.startDate
+    ? dayjs.utc(stage.startDate).local().format('YYYY-MM-DDTHH:mm')
+    : undefined;
+
+  const maxDateLocal = stage?.endDate
+    ? dayjs.utc(stage.endDate).local().format('YYYY-MM-DDTHH:mm')
+    : undefined;
   return (
     <CustomBox>
       <Card>
@@ -120,8 +132,8 @@ export const CreateMatch: React.FC = () => {
             value={form.matchDate}
             onChange={e => setForm({ ...form, matchDate: e.target.value })}
             inputProps={{
-              min: stage?.startDate?.slice(0, 16),
-              max: stage?.endDate?.slice(0, 16),
+              min: minDateLocal,
+              max: maxDateLocal,
             }}
           />
 

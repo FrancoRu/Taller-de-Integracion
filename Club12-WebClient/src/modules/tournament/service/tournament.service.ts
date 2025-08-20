@@ -8,7 +8,7 @@ import {
   sendPut,
 } from '../../core/utils/axiosUtils';
 import {
-  AddTournamentRequest,
+  IAddTournamentRequest,
   IPutTournamentRequest,
   ITournamentFiltered,
   ITournamentResponse,
@@ -20,11 +20,11 @@ import {
 export const tournamentService = {
   /**
    * Adds a new tournament.
-   * @param {AddTournamentRequest} tournament - The tournament details to add.
+   * @param {IAddTournamentRequest} tournament - The tournament details to add.
    * @returns {Promise<AxiosResponse<ITournamentResponse>>} The server response.
    */
   addTournament: async (
-    tournament: AddTournamentRequest
+    tournament: IAddTournamentRequest
   ): Promise<AxiosResponse<ITournamentResponse>> =>
     await sendPost(`${routes.tournaments}`, tournament),
 
@@ -67,4 +67,21 @@ export const tournamentService = {
    */
   deleteTournamentById: async (id: GUID): Promise<AxiosResponse<void>> =>
     await sendDelete(`${routes.tournaments}/${id}`),
+
+  /**
+   * Registers one or more teams in a specific tournament.
+   *
+   * @async
+   * @function registerTeams
+   * @param {string} id - The unique identifier (GUID) of the tournament where teams will be registered.
+   * @param {string[]} teamsId - An array of team identifiers (GUIDs) to be registered in the tournament.
+   * @returns {Promise<AxiosResponse<boolean>>} A promise resolving to an Axios response indicating whether the registration was successful.
+   */
+  registerTeamsByTournamentId: async (
+    id: GUID,
+    teamsId: GUID[]
+  ): Promise<AxiosResponse<boolean>> =>
+    await sendPost(`${routes.tournaments}/register-teams/${id}`, {
+      teamIds: teamsId,
+    }),
 };

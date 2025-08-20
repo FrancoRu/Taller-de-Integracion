@@ -8,6 +8,7 @@ using Persistance;
 using Services.Utils.OrderFiltering;
 
 using System.Linq.Expressions;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Services.DataAccessLayer.GenericEntity.Implementation;
 
@@ -17,8 +18,7 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
 
     public virtual void Insert(TEntity entity)
     {
-        entity.DateCreated = DateTime.UtcNow;
-        entity.DateUpdated = DateTime.UtcNow;
+        entity.DateCreated = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
         _genericDao.Insert(entity);
         _genericDao.Save();
     }
@@ -27,8 +27,7 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
     {
         foreach (TEntity item in entities)
         {
-            item.DateCreated = DateTime.UtcNow;
-            item.DateUpdated = DateTime.UtcNow;
+            item.DateCreated = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
         }
         _genericDao.Insert(entities);
         _genericDao.Save();
@@ -38,8 +37,7 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
 
     public virtual async Task InsertAsync(TEntity entity)
     {
-        entity.DateCreated = DateTime.UtcNow;
-        entity.DateUpdated = DateTime.UtcNow;
+        entity.DateCreated = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
         await _genericDao.InsertAsync(entity);
         await _genericDao.SaveAsync();
     }
@@ -48,8 +46,7 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
     {
         foreach (TEntity item in entities)
         {
-            item.DateCreated = DateTime.UtcNow;
-            item.DateUpdated = DateTime.UtcNow;
+            item.DateCreated = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
         }
 
         await _genericDao.InsertAsync(entities);
@@ -92,21 +89,21 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
 
     public virtual void Update(TEntity entity)
     {
-        entity.DateUpdated = DateTime.UtcNow;
+        entity.DateUpdated = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
         _genericDao.Update(entity);
         _genericDao.Save();
     }
 
     public virtual Task UpdateAsync(TEntity entity)
     {
-        entity.DateUpdated = DateTime.UtcNow;
+        entity.DateUpdated = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
         _genericDao.Update(entity);
         return _genericDao.SaveAsync();
     }
 
     public virtual async Task UpdateRangeAsync(IEnumerable<TEntity> entities)
     {
-        DateTime now = DateTime.UtcNow;
+        DateTime now = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
 
         foreach (TEntity entity in entities)
         {
@@ -149,7 +146,14 @@ public class GenericService<TEntity>(ApplicationDBContext context) : IGenericSer
         return query.Paginate(paginationRequest.PageNumber, paginationRequest.PageSize);
     }
 
-    public IQueryable<TEntity> FilterByExpression(Expression<Func<TEntity, bool>> expression) => _genericDao.Where(expression);
+    public IQueryable<TEntity> FilterByExpression(Expression<Func<TEntity, bool>> expression, params Expression<Func<TEntity, object?>>[] includes) {
+        IQueryable<TEntity> query = _genericDao.Where(expression);
+        foreach (Expression<Func<TEntity, object?>> include in includes)
+        {
+            query = query.Include(include);
+        }
+        return query;
+    }
 
     public async Task<int> GetCountAsync(Expression<Func<TEntity, bool>> predicate) => await _genericDao.Where(predicate).AsNoTracking().CountAsync();
 

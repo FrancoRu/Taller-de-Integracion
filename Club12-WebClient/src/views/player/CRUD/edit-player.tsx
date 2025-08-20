@@ -78,7 +78,6 @@ export const EditPlayer: React.FC = () => {
     }
 
     const res: IPlayerResponse | void = await putPlayerById(player.id, form);
-    console.log(res);
     if (res) {
       navigate(`/${RoutesNavigationViews.Player}/${res.id}`);
     }

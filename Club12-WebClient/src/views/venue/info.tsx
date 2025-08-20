@@ -24,7 +24,7 @@ export const InfoVenue: React.FC = () => {
         await getAllVenues();
       })();
     }
-  }, []);
+  }, [getAllVenues]);
   return (
     <Card>
       <CardContent>

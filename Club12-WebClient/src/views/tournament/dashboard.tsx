@@ -18,37 +18,41 @@ import {
 } from '@mui/material';
 import { DeleteTournament } from './CRUD/delete-tournament';
 import { RoutesNavigationViews } from '../core/routes-const';
-import { EditIcon, DeleteIcon } from '../core/MUI/icons/icons';
+import {
+  EditIcon,
+  DeleteIcon,
+  AppRegistrationIcon,
+} from '../core/MUI/icons/icons';
 import { InfoDivision } from '../division/info';
+import { isDeadlineInTheFuture } from '@/modules/core/utils/formatDate';
 
 export const TournamentDashboard: React.FC = () => {
-  const { id } = useParams<{ id: GUID }>();
+  const { tournamentId: id } = useParams<{ tournamentId: GUID }>();
   const { setMessage } = useError();
   const navigate = useNavigate();
 
   const { tournament, getTournamentById }: ITournamentContextProps =
     useTournament();
+
+  if (!id) {
+    navigate(`/${RoutesNavigationViews.Home}`, { replace: true });
+    setMessage(400, [
+      'Hubo un problema al cargar el torneo. Porfavor intentelo mas tarde',
+    ]);
+    return;
+  }
+
   useEffect(() => {
-    if (!id) {
-      setMessage(400, ['Id not found']);
-      navigate('/', { replace: true });
-    }
-  }, [id, navigate, setMessage]);
-
-  if (!id) return;
-
-  useEffect(() => {
-    (async () => {
-      if (!tournament || tournament.id !== id) {
-        const tournamentFound = await getTournamentById(id);
-
-        if (!tournamentFound) {
-          setMessage(400, ['Tournament not found']);
-          navigate('/', { replace: true });
-        }
+    const fetchTournament = async () => {
+      if (tournament && tournament.id === id) {
+        return;
       }
-    })();
-  }, [id, tournament]);
+
+      await getTournamentById(id);
+    };
+
+    fetchTournament();
+  }, [id, tournament, getTournamentById, setMessage, navigate]);
 
   if (!tournament) {
     return <LoadingIndicator />;
@@ -66,6 +70,7 @@ const TournamentTitle: React.FC<ITournamentResponse> = ({
   id,
   name,
   description,
+  teamRegistrationDeadline,
 }) => {
   const navigate = useNavigate();
   const { deleteTournamentById } = useTournament();
@@ -101,6 +106,20 @@ const TournamentTitle: React.FC<ITournamentResponse> = ({
                 <DeleteIcon />
               </IconButton>
             </Tooltip>
+            {isDeadlineInTheFuture(teamRegistrationDeadline) && (
+              <Tooltip title="Registrar Equipos">
+                <IconButton
+                  color="primary"
+                  onClick={() =>
+                    navigate(
+                      `/${RoutesNavigationViews.Tournament}/${id}/registro-equipos`
+                    )
+                  }
+                >
+                  <AppRegistrationIcon />
+                </IconButton>
+              </Tooltip>
+            )}
           </Stack>
         </Stack>
 

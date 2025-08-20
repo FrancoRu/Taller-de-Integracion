@@ -1,5 +1,5 @@
 import { Typography } from '@mui/material';
-import { CustomBox } from '../core/MUI/customsThemes/CustomBox';
+import { CustomBox } from '../../core/MUI/customsThemes/CustomBox';
 
 export const NoMatchesMessage: React.FC<{ name: string }> = ({ name }) => (
   <CustomBox>

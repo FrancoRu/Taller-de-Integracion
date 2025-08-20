@@ -31,13 +31,14 @@ export const PlayerDashboard: React.FC = () => {
 
   useEffect(() => {
     if (!team) {
-      navigate('/');
+      navigate(`/${RoutesNavigationViews.Home}`);
     }
     (async () => {
       await getPlayersByFilter({ teamId: team?.id });
     })();
   }, [team, navigate]);
 
+  console.log(team);
   if (!team) return null;
 
   return (

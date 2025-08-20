@@ -8,6 +8,7 @@ import {
 } from '@/modules/player/type/player';
 import { useTeam } from '@/modules/team/hook/team.hook';
 import { ITeamContextProps } from '@/modules/team/type/team';
+import { GUID_EMPTY } from '@/views/core/constants/const';
 import { CustomBox } from '@/views/core/MUI/customsThemes/CustomBox';
 import { RoutesNavigationViews } from '@/views/core/routes-const';
 import {
@@ -33,7 +34,7 @@ export const CreatePlayer: React.FC = () => {
     secondName: '',
     lastName: '',
     documentNumber: '',
-    teamId: team?.id,
+    teamId: team?.id ?? GUID_EMPTY,
     birthDate: undefined,
     phoneNumber: '',
     socialSecurity: '',

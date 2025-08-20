@@ -13,7 +13,8 @@ using Entities.Models.Users;
 using Entities.Models.Venues;
 
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Persistance.Conventions;
 using MatchType = Entities.Models.Matches.MatchType;
 
 namespace Persistance;
@@ -26,8 +27,16 @@ public interface IDomainDBContexts : IClub12DBContext
 
 }
 
+
 public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options) : DbContext(options), IDomainDBContexts
 {
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        configurationBuilder.Conventions.Add(_ => new DateTimeToTimestampWithoutTimeZoneConvention());
+
+        base.ConfigureConventions(configurationBuilder);
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Match>()
@@ -72,6 +81,14 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
                 value => value.ToString(),
                 value => (StaffType) Enum.Parse(typeof(StaffType), value)
             );
+
+        modelBuilder.Entity<Tournament>()
+            .ToTable(t => 
+                t.HasCheckConstraint(
+                    "CK_Tournament_DeadlineBeforeStart",
+                    "\"TeamRegistrationDeadline\" < \"StartDate\""
+                    )
+                );
 
         base.OnModelCreating(modelBuilder);
 

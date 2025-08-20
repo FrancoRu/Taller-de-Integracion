@@ -49,6 +49,7 @@ public class SupabaseHelper
                 .Upload(UseStreamDotReadMethod(fileStream), fullPathInBucket,
                     new()
                     {
+                        CacheControl= "31536000",
                         Upsert = true
                     }
                 );

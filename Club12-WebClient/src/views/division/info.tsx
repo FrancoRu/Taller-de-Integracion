@@ -28,7 +28,7 @@ export const InfoDivision: React.FC<ITournamentResponse> = ({
           mb={1}
         >
           <Typography variant="h6">
-            Total de divisiones: {divisions?.length}
+            {/* Total de divisiones: {divisions?.length} */}
           </Typography>
           <Stack direction="row" spacing={1}>
             <Tooltip title="Agregar División">

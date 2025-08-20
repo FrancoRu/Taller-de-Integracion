@@ -1,3 +1,5 @@
+// src/error/context/error.context.tsx
+
 import { createContext, useEffect, useState } from 'react';
 import { AxiosError } from 'axios';
 import Swal from 'sweetalert2';
@@ -27,11 +29,23 @@ export const ErrorProvider: React.FC<ProviderProps> = ({ children }) => {
       const message = data.detail ?? 'Error in the request';
       const status = data.statusCode ?? error.response?.status ?? 400;
 
-      setErrors(prevErrors => [...prevErrors, message]);
+      // Only add new errors if they're not already present to avoid duplicates
+      // Or if you want to show all errors, just use: setErrors(prevErrors => [...prevErrors, message]);
+      setErrors(prevErrors => {
+        if (!prevErrors.includes(message)) {
+          return [...prevErrors, message];
+        }
+        return prevErrors;
+      });
       setMessage(status, [message]);
     } else {
       const fallbackMessage = error.message || 'Unknown error';
-      setErrors(prevErrors => [...prevErrors, fallbackMessage]);
+      setErrors(prevErrors => {
+        if (!prevErrors.includes(fallbackMessage)) {
+          return [...prevErrors, fallbackMessage];
+        }
+        return prevErrors;
+      });
       setMessage(error.response?.status ?? 500, [fallbackMessage]);
     }
   };
@@ -50,13 +64,13 @@ export const ErrorProvider: React.FC<ProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    if (errors !== null) {
+    if (errors.length > 0) {
       const timer = setTimeout(() => {
         setErrors([]);
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [errors]);
+  }, [errors]); // Dependency: `errors` state
 
   return (
     <ErrorContext.Provider value={{ errors, setError, setMessage }}>

@@ -19,8 +19,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 export const EditDivision: React.FC = () => {
   const { division, putDivisionById, getDivisionsById } = useDivision();
-  const { id } = useParams<{
-    id: GUID;
+  const { divisionId: id } = useParams<{
+    divisionId: GUID;
   }>();
 
   useEffect(() => {

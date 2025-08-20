@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-
+using Entities.DTOs.Abstract;
 using Entities.DTOs.PlayerSanction;
 using Entities.Models.PlayerSanctions;
 
@@ -35,7 +35,7 @@ public class PlayerSanctionController(IPlayerSanctionService _playerSanctionServ
         PlayerSanction createdSanction = await _playerSanctionService.CreatePlayerSanctionAsync(mappedSanction);
         PlayerSanctionResponse sanctionResponse = _mapper.Map<PlayerSanctionResponse>(createdSanction);
 
-        return new ObjectResult(sanctionResponse) { StatusCode = StatusCodes.Status201Created };
+        return CreatedAtAction(nameof(GetPlayerSanctionById), new { id = sanctionResponse.Id }, sanctionResponse);
     }
 
     /// <summary>
@@ -61,13 +61,38 @@ public class PlayerSanctionController(IPlayerSanctionService _playerSanctionServ
     }
 
     /// <summary>
+    /// Retrieves a paginated list of player sanctions filtered by the specified criteria.
+    /// </summary>
+    /// <param name="filterRequest">The filtering parameters for player sanctions.</param>
+    /// <returns>
+    /// Returns a <see cref="PaginatedResponse{PlayerSanctionResponse}"/> containing the filtered sanctions.
+    /// Possible HTTP responses:
+    /// <list type="bullet">
+    ///   <item><description>200 OK - The filtered sanctions were retrieved successfully.</description></item>
+    ///   <item><description>400 Bad Request - The request parameters were invalid.</description></item>
+    /// </list>
+    /// </returns>
+    [AllowAnonymous]
+    [HttpGet("find")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<PlayerSanctionResponse>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<PaginatedResponse<PlayerSanctionResponse>>> GetFilteredPlayersPrivateAsync([FromQuery] GetPlayerSanctionsFilteredRequest filterRequest)
+    {
+        PaginatedResponse<PlayerSanction> paginatedPlayerSanctions = await _playerSanctionService.GetPlayerSanctionsAsync(filterRequest);
+
+        PaginatedResponse<PlayerSanctionResponse> response = _mapper.Map<PaginatedResponse<PlayerSanctionResponse>>(paginatedPlayerSanctions);
+
+        return Ok(response);
+    }
+    /// <summary>
     /// Updates a player sanction asynchronously.
     /// </summary>
     /// <param name="id">The id of the sanction to update.</param>
     /// <param name="updateRequest">The request with updated sanction data.</param>
     /// <returns>Returns the result of the update operation.</returns>
     [HttpPut("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerSanctionResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> UpdatePlayerSanction(Guid id, UpdatePlayerSanctionRequest updateRequest)
     {
@@ -79,9 +104,8 @@ public class PlayerSanctionController(IPlayerSanctionService _playerSanctionServ
         }
 
         _mapper.Map(updateRequest, existingSanction);
-        bool updateResult = await _playerSanctionService.UpdatePlayerSanctionAsync(existingSanction);
-
-        return !updateResult ? BadRequest("Failed to update the player sanction.") : NoContent();
+        await _playerSanctionService.UpdatePlayerSanctionAsync(existingSanction);
+        return Ok(_mapper.Map<PlayerSanctionResponse>(existingSanction));
     }
 
     /// <summary>
@@ -101,7 +125,6 @@ public class PlayerSanctionController(IPlayerSanctionService _playerSanctionServ
             return BadRequest($"Player sanction with id {id} not found.");
         }
 
-        bool deleteResult = await _playerSanctionService.DeletePlayerSanctionAsync(sanction);
-        return deleteResult ? BadRequest() : NoContent();
+        return await _playerSanctionService.DeletePlayerSanctionAsync(sanction) ? NoContent() : BadRequest();
     }
 }

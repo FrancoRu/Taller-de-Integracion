@@ -11,6 +11,8 @@ import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
 import { AxiosError, AxiosResponse } from 'axios';
 import { stageService } from '../service/stage.service';
+import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
+import { fetchAndSetList } from '@/modules/core/utils/comparator';
 
 export const StageContext = createContext<IStageContextProps | undefined>(
   undefined
@@ -46,7 +48,7 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
     }
   };
@@ -64,20 +66,20 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
     }
   };
 
-  const getStagesById = async (id: GUID): Promise<IStageResponse | void> => {
+  const getStageById = async (id: GUID): Promise<IStageResponse | void> => {
     try {
-      const existinsstage: IStageResponse | undefined = stages?.find(
+      const existingStage: IStageResponse | undefined = stages?.find(
         e => e.id == id
       );
 
-      if (existinsstage) {
-        setStage(existinsstage);
-        return existinsstage;
+      if (existingStage) {
+        setStage(existingStage);
+        return existingStage;
       }
 
       const res: AxiosResponse<IStageResponse> =
@@ -89,7 +91,7 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
     }
   };
@@ -98,17 +100,17 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
     filter: StageFiltered
   ): Promise<GenericResponsePagination<IStageResponse> | void> => {
     try {
-      const res: AxiosResponse<GenericResponsePagination<IStageResponse>> =
-        await stageService.getStagesByFilters(filter);
-      if (res) {
-        setStages(res.data.items);
-        return res.data;
-      }
+      return await fetchAndSetList<IStageResponse, StageFiltered>({
+        apiCall: f => stageService.getStagesByFilters(f),
+        currentState: stages,
+        setState: setStages,
+        filter: filter,
+      });
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
     }
   };
@@ -123,7 +125,7 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
     }
   };
@@ -139,7 +141,7 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
       if (error instanceof AxiosError) {
         setError(error);
       } else {
-        setError(new AxiosError('An unknown error occurred'));
+        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
       return false; // en caso de error
     }
@@ -151,7 +153,7 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
     addStage,
     putStageById,
     getStagesByFilters,
-    getStagesById,
+    getStageById,
     deleteStagesById,
     generateStagesAutomatically,
   };

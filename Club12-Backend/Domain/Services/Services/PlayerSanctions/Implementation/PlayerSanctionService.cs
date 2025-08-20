@@ -19,7 +19,8 @@ public class PlayerSanctionService(IGenericService<PlayerSanction> _genericPlaye
         return playerSanctionEntity;
     }
 
-    public async Task<PlayerSanction?> GetPlayerSanctionByIdAsync(Guid playerSanctionId) => await _genericPlayerSanctionService.FilterByExpression(playerSanction => playerSanction.Id == playerSanctionId).FirstOrDefaultAsync();
+    public async Task<PlayerSanction?> GetPlayerSanctionByIdAsync(Guid playerSanctionId) => 
+        await _genericPlayerSanctionService.FilterByExpression(playerSanction => playerSanction.Id == playerSanctionId, playerSanction => playerSanction.Player).FirstOrDefaultAsync();
 
     public async Task<bool> DeletePlayerSanctionAsync(PlayerSanction playerSanctionEntity)
     {
@@ -34,17 +35,10 @@ public class PlayerSanctionService(IGenericService<PlayerSanction> _genericPlaye
         }
     }
 
-    public async Task<bool> UpdatePlayerSanctionAsync(PlayerSanction playerSanctionEntity)
+    public async Task<PlayerSanction> UpdatePlayerSanctionAsync(PlayerSanction playerSanctionEntity)
     {
-        try
-        {
-            await _genericPlayerSanctionService.UpdateAsync(playerSanctionEntity);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
+        await _genericPlayerSanctionService.UpdateAsync(playerSanctionEntity);
+        return playerSanctionEntity;
     }
 
     public async Task<IEnumerable<PlayerSanction>> GetExpiredSanctionsAsync(DateTime cutoffDate) => await _genericPlayerSanctionService.FilterByExpression(playerSanction => playerSanction.IssuedDate.AddDays(playerSanction.Duration) <= cutoffDate)
@@ -54,7 +48,9 @@ public class PlayerSanctionService(IGenericService<PlayerSanction> _genericPlaye
     public async Task<PaginatedResponse<PlayerSanction>> GetPlayerSanctionsAsync(GetPlayerSanctionsFilteredRequest filter)
     {
         Expression<Func<PlayerSanction, bool>> expression = QueryableExtensions.ConstructFilterExpression<PlayerSanction, GetPlayerSanctionsFilteredRequest>(filter);
-        IQueryable<PlayerSanction> filteredSanctions = _genericPlayerSanctionService.FilterByExpressionWithPagination(expression, filter).SortBy(filter);
+        IQueryable<PlayerSanction> filteredSanctions = _genericPlayerSanctionService.FilterByExpressionWithPagination(expression, filter,
+            sanctions => sanctions.Player,
+            sanctions => sanctions.Match).SortBy(filter);
         int totalCount = await _genericPlayerSanctionService.GetCountAsync(expression);
 
         return new PaginatedResponse<PlayerSanction>

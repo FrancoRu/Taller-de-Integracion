@@ -17,15 +17,18 @@ import { useNavigate } from 'react-router-dom';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { EditIcon, DeleteIcon } from '@/views/core/MUI/icons/icons';
 import { DeleteTeam } from './CRUD/delete-team';
+import { NoTeamMessage } from './NoTeamMessage';
 
 export const TeamDashboard: React.FC = () => {
   const { teams, getTeamsByFiltered } = useTeam();
 
   useEffect(() => {
-    (async () => {
-      await getTeamsByFiltered({});
-    })();
-  }, []);
+    if (!teams || teams.length === 0) {
+      (async () => {
+        await getTeamsByFiltered({});
+      })();
+    }
+  }, [teams, getTeamsByFiltered]);
 
   return (
     <Box>
@@ -39,14 +42,7 @@ export const TeamDashboard: React.FC = () => {
             ))}
           </Grid>
         ) : (
-          <Typography
-            align="center"
-            variant="h6"
-            color="text.secondary"
-            sx={{ mt: 3 }}
-          >
-            No hay equipos registrados.
-          </Typography>
+          <NoTeamMessage />
         )
       ) : (
         <LoadingIndicator />

@@ -23,7 +23,14 @@ public class PlayerSanctionResponse : BaseEntityResponse
     public required string Description { get; set; }
 
     /// <summary>
-    /// The unique identifier of the player who has a sanction.
+    /// The unique identifier of the player who has the sanction.
     /// </summary>
     public required Guid PlayerId { get; set; }
+
+    public required string PlayerFullName { get; set; }
+
+    /// <summary>
+    /// The unique identifier of the match associated with the sanction.
+    /// </summary>
+    public required Guid MatchId { get; set; }
 }

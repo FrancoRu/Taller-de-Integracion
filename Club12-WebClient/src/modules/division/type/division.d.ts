@@ -124,12 +124,6 @@ export interface IDivisionResponse {
    * @type {GUID}
    */
   tournamentId: GUID;
-
-  /**
-   * The list of matches for the division, grouped by week.
-   * @type {IStageResponse[]}
-   */
-  stages?: IStageResponse[];
 }
 
 /**

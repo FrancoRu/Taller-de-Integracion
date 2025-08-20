@@ -26,7 +26,9 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
 
     public async Task<Match?> GetMatchByIdAsync(Guid matchId) => await _genericMatchService.FilterByExpression(match => match.Id == matchId)
             .Include(m => m.HomeTeam)
+                .ThenInclude(t => t!.Players)
             .Include(m => m.VisitorTeam)
+                .ThenInclude(t => t!.Players)
             .Include(m => m.Stage)
             .Include(m => m.Venue)
             .FirstOrDefaultAsync();
@@ -112,16 +114,16 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
         }
     }
 
-    public async Task<bool> UpdateMatchAsync(Match matchEntity)
+    public async Task<Match> UpdateMatchAsync(Match matchEntity)
     {
         try
         {
             await _genericMatchService.UpdateAsync(matchEntity);
-            return true;
+            return matchEntity;
         }
         catch
         {
-            return false;
+            throw new Exception("could not update match");
         }
     }
 
@@ -129,7 +131,8 @@ public class MatchService(IGenericService<Match> _genericMatchService) : IMatchS
     {
         Expression<Func<Match, bool>> expression = QueryableExtensions.ConstructFilterExpression<Match, GetMatchesFilteredRequest>(filter);
         IQueryable<Match> filteredMatches = _genericMatchService.FilterByExpressionWithPagination(expression, filter, match => match.HomeTeam,
-                                                                                                                      match => match.VisitorTeam)
+                                                                                                                      match => match.VisitorTeam,
+                                                                                                                      match => match.Venue)
                                                                                                                         .SortBy(filter);
 
         int totalCount = await _genericMatchService.GetCountAsync(expression);
