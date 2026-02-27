@@ -14,28 +14,66 @@ using System.Threading.Tasks;
 
 namespace Application.Services;
 
+/// <summary>
+/// Service class responsible for managing team-related operations within the application.
+/// Provides methods for creating, retrieving, updating, deleting, and bulk updating teams,
+/// as well as filtering teams and registering them to tournaments.
+/// Utilizes repositories for data access and supports asynchronous operations.
+/// </summary>
 public class TeamService(IUnitOfWork unitOfWork) : ITeamService
 {
     private readonly ITeamRepository teamRepository = unitOfWork.TeamRepository;
     private readonly IStageTeamMatchRepository stageTeamMatchRepository = unitOfWork.StageTeamMatchRepository;
+
+    /// <summary>
+    /// Creates a new team entity and persists it to the repository.
+    /// </summary>
+    /// <param name="teamEntity">The team entity to create.</param>
+    /// <returns>The created team entity.</returns>
     public async Task<Team> CreateTeamAsync(Team teamEntity)
     {
         await teamRepository.AddAsync(teamEntity);
         return teamEntity;
     }
 
+    /// <summary>
+    /// Retrieves a team by its unique identifier, including its associated players.
+    /// </summary>
+    /// <param name="teamId">The unique identifier of the team.</param>
+    /// <returns>The team entity if found; otherwise, null.</returns>
     public async Task<Team?> GetTeamByIdAsync(Guid teamId)
         => await teamRepository.GetByIdAsync(teamId, includes: [team => team.Players]);
 
+    /// <summary>
+    /// Deletes a team entity by its unique identifier.
+    /// </summary>
+    /// <param name="id">The unique identifier of the team to delete.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     public async Task DeleteTeamAsync(Guid id)
         => await teamRepository.RemoveAsync(team => team.Id == id);
 
+    /// <summary>
+    /// Updates an existing team entity in the repository.
+    /// </summary>
+    /// <param name="teamEntity">The team entity with updated information.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     public async Task UpdateTeamAsync(Team teamEntity)
         => await teamRepository.UpdateAsync(teamEntity);
 
+    /// <summary>
+    /// Updates a collection of team entities in bulk.
+    /// </summary>
+    /// <param name="teams">The collection of team entities to update.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     public async Task UpdateTeamsAsync(IEnumerable<Team> teams)
         => await teamRepository.UpdateRangeAsync(teams);
 
+    /// <summary>
+    /// Retrieves a paginated list of teams based on the provided filter criteria.
+    /// Supports filtering by stage and tournament, and includes related players and stage team matches.
+    /// </summary>
+    /// <param name="filter">The filter criteria for retrieving teams.</param>
+    /// <returns>A paginated response containing the filtered teams.</returns>
     public async Task<PaginatedResponse<Team>> GetAllTeamsAsync(GetTeamsFilteredRequest filter)
     {
         Expression<Func<Team, bool>> expression = QueryableExtensions.ConstructFilterExpression<Team, GetTeamsFilteredRequest>(filter);
@@ -70,6 +108,17 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
         };
     }
 
+    /// <summary>
+    /// Registers a list of teams to a specified tournament.
+    /// Updates the tournament association for each team based on the provided team IDs.
+    /// - Teams whose IDs are not in <paramref name="teamIds"/> will be unassigned from the tournament.
+    /// - Teams already assigned to the tournament are left unchanged.
+    /// - Teams in <paramref name="teamIds"/> but not yet assigned will be associated with the tournament.
+    /// The changes are persisted in bulk.
+    /// </summary>
+    /// <param name="tournament">The tournament entity to register teams to.</param>
+    /// <param name="teamIds">A list of team IDs to be registered in the tournament.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     public async Task RegisterTeamsToTournamentAsync(Tournament tournament, List<Guid> teamIds)
     {
         List<Team> teamsToRegister = [.. await teamRepository.FindAsync(team => teamIds.Contains(team.Id)

@@ -14,16 +14,22 @@ using Domain.Entities.Models;
 namespace API.Controllers;
 
 /// <summary>
-/// Controller for managing Stage entities.
+/// Controller for managing Stage entities, providing endpoints for creation, retrieval, update, deletion,
+/// automated generation of stages and matches, and team assignment operations.
 /// </summary>
-/// <param name="_stageService">The Match service.</param>
-/// <param name="_mapper">The AutoMapper instance.</param>
-//[Authorize(Roles = "SuperAdmin")]
+/// <remarks>
+/// This controller exposes RESTful endpoints for handling Stage-related operations in the tournament system.
+/// It supports creating new stages, generating stages and matches for a division, retrieving stages by ID or with filters,
+/// updating and deleting stages, and assigning or unassigning teams to stages.
+/// The controller leverages dependency injection for services and AutoMapper for DTO mapping.
+/// </remarks>
+/// <param name="_stageService">Service for Stage business logic and persistence operations.</param>
+/// <param name="matchService">Service for Match business logic and automated match generation.</param>
+/// <param name="_mapper">AutoMapper instance for mapping between entities and DTOs.</param>
 [Route("api/stages/")]
 [ApiController]
 public class StageController(IStageService _stageService, IMatchService matchService, IMapper _mapper) : ControllerBase
 {
-
     /// <summary>
     /// Creates a new Stage.
     /// </summary>
@@ -44,8 +50,10 @@ public class StageController(IStageService _stageService, IMatchService matchSer
     /// <summary>
     /// Generates all stages and matches for the specified division and returns the resulting stage information.
     /// </summary>
-    /// <remarks>Use this endpoint to automatically create the full set of stages and matches for a division.
-    /// This operation is typically used after a division has been set up and is ready for scheduling.</remarks>
+    /// <remarks>
+    /// Use this endpoint to automatically create the full set of stages and matches for a division.
+    /// This operation is typically used after a division has been set up and is ready for scheduling.
+    /// </remarks>
     /// <param name="id">The unique identifier of the division for which stages and matches are to be generated.</param>
     /// <returns>An HTTP 200 OK response containing a list of stage details if the operation succeeds.</returns>
     [HttpPost("generate/{id:guid}")]
@@ -116,7 +124,6 @@ public class StageController(IStageService _stageService, IMatchService matchSer
             return NotFound($"Stage with id {id} not found.");
 
         _mapper.Map(stageRequest, existingStage);
-        
         await _stageService.UpdateStageAsync(existingStage);
 
         return Ok();
@@ -133,12 +140,22 @@ public class StageController(IStageService _stageService, IMatchService matchSer
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> DeleteStage(Guid id)
     {
-       
         await _stageService.DeleteStageAsync(id);
-
         return NoContent();
     }
 
+    /// <summary>
+    /// Assigns one or more teams to a specific stage.
+    /// </summary>
+    /// <remarks>
+    /// This endpoint allows assigning teams to a stage, either manually or automatically.
+    /// The assignment is based on the provided team IDs and the 'Auto' flag in the request.
+    /// </remarks>
+    /// <param name="id">The unique identifier of the stage to which teams will be assigned.</param>
+    /// <param name="request">The assignment request containing team IDs and assignment mode.</param>
+    /// <returns>
+    /// Returns HTTP 200 OK if the assignment is successful, or 404 Not Found if the stage does not exist.
+    /// </returns>
     [HttpPost("{id:guid}/assign-team")]
     public async Task<ActionResult> AssignamentTeam(Guid id, AssignamentTeamRequest request)
     {
@@ -152,6 +169,14 @@ public class StageController(IStageService _stageService, IMatchService matchSer
         return Ok();
     }
 
+    /// <summary>
+    /// Unassigns one or more teams from a specific stage.
+    /// </summary>
+    /// <param name="id">The unique identifier of the stage from which teams will be unassigned.</param>
+    /// <param name="request">The unassignment request containing team IDs.</param>
+    /// <returns>
+    /// Returns HTTP 200 OK if the unassignment is successful, or 404 Not Found if the stage does not exist.
+    /// </returns>
     [HttpDelete("{id:guid}/unassign-team")]
     public async Task<ActionResult> UnassignamentTeam(Guid id, UnassignamentTeamRequest request)
     {

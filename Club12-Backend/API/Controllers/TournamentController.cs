@@ -13,12 +13,10 @@ using Domain.Entities.Models;
 namespace API.Controllers;
 
 /// <summary>
-/// Controller for managing Tournaments.
+/// Controller responsible for managing tournament-related operations.
+/// Provides endpoints for creating, retrieving, updating, deleting, and filtering tournaments,
+/// as well as registering teams to tournaments.
 /// </summary>
-/// <param name="_tournamentService">The Tournament service.</param>
-/// <param name="_teamService">The Team service.</param>
-/// <param name="_mapper">The AutoMapper instance.</param>
-//[Authorize(Roles = "SuperAdmin")]
 [Route("api/tournaments/")]
 [ApiController]
 public class TournamentController(
@@ -26,15 +24,14 @@ public class TournamentController(
     ITeamService _teamService,
     IMapper _mapper) : ControllerBase
 {
-
     /// <summary>
     /// Creates a new tournament.
     /// </summary>
-    /// <param name="tournamentRequest">The tournament request.</param>
-    /// <returns>The created Tournament response.
-    /// <para>Returns 201 (Created) with the Tournament response if the creation was successful.</para>
-    /// <para>Returns 400 (Bad Request) if there was an error in the request.</para>
-    /// <para>Returns 403 (Forbidden) if the user is not authenticated.</para>
+    /// <param name="tournamentRequest">Tournament creation data.</param>
+    /// <returns>
+    /// Returns 201 (Created) with the created tournament details.
+    /// Returns 400 (Bad Request) if the request is invalid.
+    /// Returns 403 (Forbidden) if the user is not authorized.
     /// </returns>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TournamentResponse))]
@@ -50,12 +47,12 @@ public class TournamentController(
     }
 
     /// <summary>
-    /// Retrieves a tournament by its Id.
+    /// Retrieves a tournament by its unique identifier.
     /// </summary>
-    /// <param name="id">The id of the tournament to retrieve.</param>
-    /// <returns>The Tournament with the specified Id.
-    /// <para>Returns 200 (OK) with the Tournament response if it was found.</para>
-    /// <para>Returns 400 (Bad Request) if the Tournament with the provided id was not found.</para>
+    /// <param name="id">Tournament identifier (GUID).</param>
+    /// <returns>
+    /// Returns 200 (OK) with tournament details if found.
+    /// Returns 400 (Bad Request) if not found.
     /// </returns>
     [AllowAnonymous]
     [HttpGet("{id:guid}")]
@@ -75,14 +72,14 @@ public class TournamentController(
     }
 
     /// <summary>
-    /// Updates a tournament by its id.
+    /// Updates an existing tournament by its identifier.
     /// </summary>
-    /// <param name="id">The id of the tournament to update.</param>
-    /// <param name="tournamentRequest">The tournament request.</param>
+    /// <param name="id">Tournament identifier (GUID).</param>
+    /// <param name="tournamentRequest">Tournament update data.</param>
     /// <returns>
-    /// Returns 200 (OK) with the updated Tournament response if the update was successful.
-    /// Returns 400 (Bad Request) if the Tournament with the provided id was not found.
-    /// Returns 403 (Forbidden) if the user is not authenticated.
+    /// Returns 200 (OK) if updated successfully.
+    /// Returns 400 (Bad Request) if not found.
+    /// Returns 403 (Forbidden) if unauthorized.
     /// </returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TournamentResponse))]
@@ -105,13 +102,13 @@ public class TournamentController(
     }
 
     /// <summary>
-    /// Deletes a tournament by its id.
+    /// Deletes a tournament by its identifier.
     /// </summary>
-    /// <param name="id">The id of the Tournament to delete.</param>
+    /// <param name="id">Tournament identifier (GUID).</param>
     /// <returns>
-    /// Returns 200 (OK) if the Tournament was successfully deleted.
-    /// Returns 400 (Bad Request) if the Tournament with the provided id was not found.
-    /// Returns 403 (Forbidden) if the user is not authenticated.
+    /// Returns 200 (OK) if deleted successfully.
+    /// Returns 400 (Bad Request) if not found.
+    /// Returns 403 (Forbidden) if unauthorized.
     /// </returns>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -124,10 +121,13 @@ public class TournamentController(
     }
 
     /// <summary>
-    /// Retrieves filtered tournaments with pagination.
+    /// Retrieves tournaments filtered and paginated according to provided parameters.
     /// </summary>
-    /// <param name="filterRequest">The filtering and pagination parameters.</param>
-    /// <returns>A paginated response containing the filtered tournaments.</returns>
+    /// <param name="filterRequest">Filtering and pagination parameters.</param>
+    /// <returns>
+    /// Returns 200 (OK) with paginated tournament results.
+    /// Returns 400 (Bad Request) if parameters are invalid.
+    /// </returns>
     [AllowAnonymous]
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<TournamentResponse>))]
@@ -140,6 +140,16 @@ public class TournamentController(
         return Ok(response);
     }
 
+    /// <summary>
+    /// Registers teams to a tournament.
+    /// </summary>
+    /// <param name="id">Tournament identifier (GUID).</param>
+    /// <param name="registerTeamsRequest">Request containing team IDs to register.</param>
+    /// <returns>
+    /// Returns 200 (OK) if teams registered successfully.
+    /// Returns 400 (Bad Request) if tournament not found.
+    /// Returns 403 (Forbidden) if unauthorized.
+    /// </returns>
     [HttpPost("register-teams/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

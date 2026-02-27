@@ -42,6 +42,17 @@ public class MatchController(IMatchService _matchService, IStageTeamMatchService
         return new ObjectResult(matchResponse) { StatusCode = StatusCodes.Status201Created };
     }
 
+    /// <summary>
+    /// Generates automated matches for a given stage.
+    /// </summary>
+    /// <remarks>
+    /// This endpoint creates a set of matches automatically based on the provided stage identifier.
+    /// The generated matches are mapped to detailed match response DTOs and returned to the client.
+    /// </remarks>
+    /// <param name="id">The unique identifier of the stage for which matches will be generated.</param>
+    /// <returns>
+    /// Returns a list of <see cref="DetailedMatchResponse"/> objects representing the generated matches.
+    /// </returns>
     [HttpPost("generate/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<DetailedMatchResponse>))]
     public async Task<ActionResult> GenerateMatches(Guid id)
@@ -223,11 +234,11 @@ public class MatchController(IMatchService _matchService, IStageTeamMatchService
     //    return await _matchService.UpdateMatchAsync(match); // Save the updated match
     //}
 
-    /// <summary>
-    /// Updates player statistics for the match.
-    /// </summary>
-    /// <param name="match">The match to update.</param>
-    /// <param name="scoreRequest">The request with updated scores.</param>
+    ///// <summary>
+    ///// Updates player statistics for the match.
+    ///// </summary>
+    ///// <param name="match">The match to update.</param>
+    ///// <param name="scoreRequest">The request with updated scores.</param>
     //private static void UpdatePlayerStatistics(Match match, UpdateMatchScoreRequest scoreRequest) => scoreRequest.HomeTeamPlayerScores
     //        .Concat(scoreRequest.VisitorTeamPlayerScores)
     //        .Select(playerScore => new PlayerStatistic
@@ -241,11 +252,11 @@ public class MatchController(IMatchService _matchService, IStageTeamMatchService
     //        .ToList()
     //        .ForEach(match.PlayerStatistics.Add);
 
-    /// <summary>
-    /// Handles the playoff series logic after a match is updated.
-    /// </summary>
-    /// <param name="match">The match that was updated.</param>
-    /// <returns>True if the playoff series was successfully updated; otherwise, false.</returns>
+    // <summary>
+    // Handles the playoff series logic after a match is updated.
+    // </summary>
+    // <param name="match">The match that was updated.</param>
+    // <returns>True if the playoff series was successfully updated; otherwise, false.</returns>
     //private async Task<bool> HandlePlayoffSeriesAsync(Match match)
     //{
     //    PlayoffSerie? playoffSeries = await _playoffSeriesService.GetSeriesByIdAsync(match.PlayoffSeriesId.Value);
