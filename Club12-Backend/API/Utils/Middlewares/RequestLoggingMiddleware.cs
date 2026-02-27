@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace API.Utils.Middlewares;
 
+/// <summary>
+/// Middleware that logs HTTP request details including method, path, query parameters, body, and correlation ID.
+/// </summary>
 public class RequestLoggingMiddleware(RequestDelegate next, ILogger<RequestLoggingMiddleware> logger)
 {
     private const string LogTemplate = @"
@@ -30,6 +33,11 @@ Body:
 ───────────────────────────────────────────────
 ";
 
+    /// <summary>   
+    /// Logs the HTTP request details and invokes the next middleware in the pipeline.
+    /// </summary>
+    /// <param name="context">The current HTTP context.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     public async Task InvokeAsync(HttpContext context)
     {
         System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -42,7 +50,7 @@ Body:
         string fullUrl = $"{scheme}://{host}{url}";
         string correlationId = context.TraceIdentifier;
 
-        string queryParams = context.Request.Query.Any()
+        string queryParams = context.Request.Query.Count != 0
             ? string.Join(Environment.NewLine, context.Request.Query.Select(q => $"  {q.Key}: {q.Value}"))
             : "  (none)";
 
@@ -50,7 +58,7 @@ Body:
         if (context.Request.ContentLength > 0 && context.Request.Body.CanSeek)
         {
             context.Request.Body.Position = 0;
-            using var reader = new StreamReader(context.Request.Body, leaveOpen: true);
+            using StreamReader reader = new(context.Request.Body, leaveOpen: true);
             body = await reader.ReadToEndAsync();
             context.Request.Body.Position = 0;
         }
