@@ -1,18 +1,19 @@
 ﻿using AutoMapper;
-
-using Club12.API.Utils;
-
-using Entities.DTOs.Abstract;
-using Entities.DTOs.Team;
-using Entities.Models.Teams;
-
+using API.Utils;
+using Application.DTOs.Abstract.Response;
+using Application.DTOs.Team.Request;
+using Application.DTOs.Team.Response;
+using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Domain.Entities.Models;
+using Application.Utils.Helper.SupabaseHelper;
 
-using Services.Services.Divisions;
-using Services.Services.Teams;
-
-namespace Club12.API.Controllers;
+namespace API.Controllers;
 
 /// <summary>
 /// Controller for managing teams.
@@ -78,9 +79,10 @@ public class TeamController(
         }
 
         _mapper.Map(teamRequest, existingTeam);
-        bool updateResult = await _teamService.UpdateTeamAsync(existingTeam);
+        
+        await _teamService.UpdateTeamAsync(existingTeam);
 
-        return !updateResult ? BadRequest("Failed to update the team.") : NoContent();
+        return NoContent();
     }
 
     /// <summary>
@@ -108,8 +110,8 @@ public class TeamController(
         //string logoUrl = await _cloudflareService.UploadFileAsync(logoRequest.LogoFile.OpenReadStream(), logoRequest.LogoFile.FileName);
         //team.LogoUrl = logoUrl;
 
-        bool updateResult = await _teamService.UpdateTeamAsync(team);
-        return !updateResult ? BadRequest("Failed to update the logo.") : Ok();
+        await _teamService.UpdateTeamAsync(team);
+        return Ok();
     }
 
     /// <summary>
@@ -163,8 +165,8 @@ public class TeamController(
         {
             await _supabaseHelper.DeleteImageAsync<Team>(team.LogoUrl.Split('/').Last());
         }
-        bool deleteResult = await _teamService.DeleteTeamAsync(team);
-        return !deleteResult ? BadRequest("Failed to delete the team.") : NoContent();
+        await _teamService.DeleteTeamAsync(id);
+        return NoContent();
     }
 
     /// <summary>

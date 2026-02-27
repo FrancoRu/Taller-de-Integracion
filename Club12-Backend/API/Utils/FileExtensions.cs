@@ -1,4 +1,8 @@
-﻿namespace Club12.API.Utils;
+﻿using Microsoft.AspNetCore.Http;
+using System.IO;
+using System.Linq;
+
+namespace API.Utils;
 
 /// <summary>
 /// Provides extension methods for file validation.

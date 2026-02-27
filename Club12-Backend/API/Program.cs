@@ -1,87 +1,72 @@
-﻿using Club12.API.Utils;
-
-using Entities;
-
-using Microsoft.EntityFrameworkCore;
-
-using Persistance;
-
+﻿using API.Utils;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using System.Text.Json.Serialization;
+using System;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-// Add Serilog logging  
-builder.Host.UseSerilog((context, configuration) =>
-    configuration.ReadFrom.Configuration(context.Configuration));
+// Serilog
+builder.Host.AddSerilogConfig(builder.Configuration);
 
-builder.Services.AddAutoMapper(typeof(Program));
-builder.Services.AddScoped<IClub12DBContext, ApplicationDBContext>();
+builder.Services
+    .AddAutoMapper(typeof(Program))
+    .AddDbContextConfig(builder.Configuration)
+    .AddCorsConfig(builder.Configuration)
+    .RegisterScoped()
+    .RegisterSingletons()
+    .AddCustomAuthorization()
+    .AddCustomAuthentication(builder.Configuration)
+    .AddCustomSwagger(builder.Configuration);
 
-string? connectionString = builder.Configuration.GetConnectionString("DbConnection");
-string? jwtSecret = builder.Configuration.GetSection("JWT:Key").Value;
 
-if (jwtSecret is null)
-{
-    Log.Fatal("There wasn't a JWT Key in the appsettings.");
-    throw new ArgumentException("The JWT Key should be initialized already.");
-}
-
-if (connectionString is null)
-{
-    Log.Fatal("Connection string is missing. Using default or fallback connection string.");
-    throw new ArgumentException("The connection string should be initialized already.");
-}
-
-builder.Services.AddDbContext<ApplicationDBContext>(options => options.UseNpgsql(connectionString));
-
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(policy =>
-    {
-        policy.WithOrigins(builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()!)
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
-
-builder.Services.RegisterApplicationServices();
-builder.Services.AddCustomAuthorization();
-builder.Services.AddCustomAuthentication(builder.Configuration);
 builder.Services.AddControllers().AddCustomJsonOptions();
-builder.Services.AddCustomSwagger(builder.Configuration);
 
+// Exception Handler & Problem Details
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 WebApplication app = builder.Build();
 
-using (IServiceScope scope = app.Services.CreateScope())
-{
-    ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
-    db.Database.Migrate();
+// Database migration & admin user creation
+app.ExecuteMigrations();
 
-    await app.Services.EnsureAdminUserExists();
-}
+// Swagger
+app.UseSwaggerConfig(builder.Environment);
 
-if (!builder.Environment.IsProduction())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Logging, CORS, Auth, Controllers, Exception Handling
+app.UseSerilogRequestLogging()
+    .UseCors()
+    .UseAuthentication()
+    .UseAuthorization();
 
-app.UseSerilogRequestLogging();
-app.UseCors();
-app.UseAuthentication();
-app.UseAuthorization();
 app.MapControllers();
+app.UseExceptionHandlerConfig();
+app.UseLoggingToRequestContextMiddleware(builder.Configuration);
 
-app.UseStatusCodePages();
-app.UseExceptionHandler();
-
+// Startup logs
 Log.Information("----- Starting up -----");
-Log.Information("\r\n                                                                \r\n  ####    ##       ##  ##   #####               ##      ####   \r\n ##  ##   ##       ##  ##   ##  ##             ###     ##  ##  \r\n ##       ##       ##  ##   #####               ##        ##   \r\n ##       ##       ##  ##   ##  ##              ##       ##    \r\n ##  ##   ##       ##  ##   ##  ##              ##      ##     \r\n  ####    ######   ######   #####             ######   ######  \r\n                                                               \r\n");
+Log.Information(@"
+                                                               
+  ####    ##       ##  ##   #####               ##      ####   
+ ##  ##   ##       ##  ##   ##  ##             ###     ##  ##  
+ ##       ##       ##  ##   #####               ##        ##   
+ ##       ##       ##  ##   ##  ##              ##       ##    
+ ##  ##   ##       ##  ##   ##  ##              ##      ##     
+  ####    ######   ######   #####             ######   ######  
+                                                               
+");
 Log.Information("----- Started     -----");
-Log.CloseAndFlush();
 
-app.Run();
+try
+{
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

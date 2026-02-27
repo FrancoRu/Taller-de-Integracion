@@ -115,6 +115,17 @@ export interface IAddMatchRequest {
 }
 
 /**
+ *
+ */
+export interface MatchFormProps<T extends IAddMatchRequest> {
+  errors: string[] | null;
+  startDate: string;
+  endDate: string;
+  form: T;
+  setForm: Dispatch<SetStateAction<T>>;
+}
+
+/**
  * @interface IMatchResponse
  * @description The response structure for a match, including team details, scores, and match results.
  */
@@ -137,12 +148,12 @@ export interface IMatchResponse {
   /**
    * @property {ITeamMatchResponse} homeTeam - Details of the home team participating in the match.
    */
-  homeTeam: ITeamMatchResponse;
+  homeTeam: ITeamMatchResponse | null;
 
   /**
    * @property {ITeamMatchResponse} visitorTeam - Details of the visiting team participating in the match.
    */
-  visitorTeam: ITeamMatchResponse;
+  visitorTeam: ITeamMatchResponse | null;
 
   /**
    * @property {boolean} isFinished - A boolean indicating whether the match has concluded.
@@ -157,27 +168,12 @@ export interface IMatchResponse {
   /**
    * @property {IVenueResponse} venue - Details about the venue where the match was played.
    */
-  venue: IVenueResponse;
+  venue: IVenueResponse | null;
 
+  /**
+   * @property {GUID} stageId - The unique identifier of the stage to which the match belongs.
+   */
   stageId: GUID;
-}
-
-/**
- * The types of matches that can exist (Regular or Playoff).
- * @enum TypeMatch
- */
-export enum TypeMatch {
-  /**
-   * A regular match in the tournament.
-   * @type {string}
-   */
-  Regular = 'Regular',
-
-  /**
-   * A playoff match in the tournament.
-   * @type {string}
-   */
-  Playoff = 'Playoff',
 }
 
 /**
@@ -239,19 +235,7 @@ export interface IPutMatchScoreRequest {
  * The request body structure for updating the date and venue of a match.
  * @interface IPutMatchRequest
  */
-export interface IPutMatchRequest {
-  /**
-   * The new match date.
-   * @type {string}
-   */
-  matchDate?: string;
-
-  /**
-   * The ID of the venue where the match will take place.
-   * @type {string}
-   */
-  venueId?: string;
-}
+export interface IPutMatchRequest extends Partial<IAddMatchRequest> {}
 
 /**
  * @interface IMatchStatusChipProps
@@ -276,7 +260,7 @@ export interface IMatchStatusChipProps {
   maxMinutes?: number;
 }
 
-export interface IEditMatch {
+export interface IEditMatch extends IPutMatchRequest {
   id: GUID;
   homeScore: number;
   visitorScore: number;

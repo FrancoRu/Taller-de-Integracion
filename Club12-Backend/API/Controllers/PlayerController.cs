@@ -1,17 +1,16 @@
 ﻿using AutoMapper;
-
-using Entities.DTOs.Abstract;
-using Entities.DTOs.Player;
-using Entities.Models.Players;
-using Entities.Models.Teams;
-
+using Application.DTOs.Abstract.Response;
+using Application.DTOs.Player.Request;
+using Application.DTOs.Player.Response;
+using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Threading.Tasks;
+using Domain.Entities.Models;
 
-using Services.Services.Players;
-using Services.Services.Teams;
-
-namespace Club12.API.Controllers;
+namespace API.Controllers;
 
 /// <summary>
 /// Controller for managing Players.
@@ -129,9 +128,9 @@ public class PlayerController(
         }
 
         _mapper.Map(playerRequest, existingPlayer);
-        bool updateResult = await _playerService.UpdatePlayerAsync(existingPlayer);
+        await _playerService.UpdatePlayerAsync(existingPlayer);
 
-        return updateResult ? Ok(existingPlayer) : BadRequest("Something went wrong");
+        return Ok(existingPlayer);
     }
 
     /// <summary>
@@ -149,14 +148,7 @@ public class PlayerController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeletePlayerByIdAsync(Guid id)
     {
-        Player? player = await _playerService.GetPlayerByIdAsync(id);
-
-        if (player is null)
-        {
-            return BadRequest($"Player with id {id} not found.");
-        }
-
-        await _playerService.DeletePlayerAsync(player);
+        await _playerService.DeletePlayerAsync(id);
         return NoContent();
     }
 

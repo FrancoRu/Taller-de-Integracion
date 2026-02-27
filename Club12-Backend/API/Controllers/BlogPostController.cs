@@ -1,32 +1,29 @@
 ﻿using AutoMapper;
-
-using Club12.API.Utils;
-
-using Entities.DTOs.Abstract;
-using Entities.DTOs.BlogPosts;
-using Entities.Models.BlogPosts;
-
+using API.Utils;
+using Application.DTOs.Abstract.Response;
+using Application.DTOs.BlogPosts.Request;
+using Application.DTOs.BlogPosts.Response;
+using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Threading.Tasks;
+using Domain.Entities.Models;
 
-using Services.Services.BlogPosts;
-using Services.Utils.Cloudfare;
-
-namespace Club12.API.Controllers;
+namespace API.Controllers;
 
 
 /// <summary>
 /// Controller for managing blog posts.
 /// </summary>
 /// <param name="_blogPostService">The blog post service.</param>
-/// <param name="_cloudflareService">The cloudfare service.</param>   
 /// <param name="_mapper">The AutoMapper instance.</param>
 //[Authorize(Roles = "SuperAdmin")]
 [Route("api/blogposts/")]
 [ApiController]
 public class BlogPostController(
     IBlogPostService _blogPostService,
-    ICloudflareService _cloudflareService,
     IMapper _mapper
     ) : ControllerBase
 {
@@ -49,7 +46,6 @@ public class BlogPostController(
                 return BadRequest("The photo file must be a valid JPEG/PNG image.");
             }
 
-            photoUrl = await _cloudflareService.UploadFileAsync(blogPostRequest.PhotoFile.OpenReadStream(), blogPostRequest.PhotoFile.FileName);
         }
 
         BlogPost blogPost = _mapper.Map<BlogPost>(blogPostRequest);
@@ -80,9 +76,9 @@ public class BlogPostController(
         }
 
         _mapper.Map(blogPostRequest, existingPost);
-        bool updateResult = await _blogPostService.UpdateBlogPostAsync(existingPost);
+        await _blogPostService.UpdateBlogPostAsync(existingPost);
 
-        return !updateResult ? BadRequest("Failed to update the blog post.") : Ok();
+        return Ok();
     }
 
     /// <summary>
@@ -107,11 +103,11 @@ public class BlogPostController(
             return BadRequest($"Blog post with id {id} not found.");
         }
 
-        string photoUrl = await _cloudflareService.UploadFileAsync(photoRequest.PhotoFile.OpenReadStream(), photoRequest.PhotoFile.FileName);
-        blogPost.PhotoUrl = photoUrl;
+        //string photoUrl = await _cloudflareService.UploadFileAsync(photoRequest.PhotoFile.OpenReadStream(), photoRequest.PhotoFile.FileName);
+        //blogPost.PhotoUrl = photoUrl;
 
-        bool updateResult = await _blogPostService.UpdateBlogPostAsync(blogPost);
-        return !updateResult ? BadRequest("Failed to update the photo.") : Ok();
+        await _blogPostService.UpdateBlogPostAsync(blogPost);
+        return Ok();
     }
 
     /// <summary>
@@ -133,12 +129,8 @@ public class BlogPostController(
         }
 
         blogPost.Views++;
+        await _blogPostService.UpdateBlogPostAsync(blogPost);
 
-        bool updateSuccess = await _blogPostService.UpdateBlogPostAsync(blogPost);
-        if (!updateSuccess)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, "Sorry, we ran into an issue, please try again later.");
-        }
 
         BlogPostResponse blogPostResponse = _mapper.Map<BlogPostResponse>(blogPost);
         return Ok(blogPostResponse);
@@ -154,15 +146,8 @@ public class BlogPostController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> DeleteBlogPostById(Guid id)
     {
-        BlogPost? blogPost = await _blogPostService.GetBlogPostByIdAsync(id);
-
-        if (blogPost is null)
-        {
-            return BadRequest($"Blog post with id {id} not found.");
-        }
-
-        bool deleteResult = await _blogPostService.DeleteBlogPostAsync(blogPost);
-        return !deleteResult ? BadRequest("Failed to delete the blog post.") : NoContent();
+        await _blogPostService.DeleteBlogPostAsync(id);
+        return NoContent();
     }
 
     /// <summary>

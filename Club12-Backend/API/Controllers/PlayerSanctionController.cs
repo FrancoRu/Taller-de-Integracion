@@ -1,14 +1,16 @@
 ﻿using AutoMapper;
-using Entities.DTOs.Abstract;
-using Entities.DTOs.PlayerSanction;
-using Entities.Models.PlayerSanctions;
-
+using Application.DTOs.Abstract.Response;
+using Application.DTOs.PlayerSanction.Request;
+using Application.DTOs.PlayerSanction.Response;
+using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Threading.Tasks;
+using Domain.Entities.Models;
 
-using Services.Services.PlayerSanctions;
-
-namespace Club12.API.Controllers;
+namespace API.Controllers;
 
 /// <summary>
 /// Controller for managing Player Sanctions.
@@ -118,13 +120,7 @@ public class PlayerSanctionController(IPlayerSanctionService _playerSanctionServ
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> DeletePlayerSanctionById(Guid id)
     {
-        PlayerSanction? sanction = await _playerSanctionService.GetPlayerSanctionByIdAsync(id);
-
-        if (sanction is null)
-        {
-            return BadRequest($"Player sanction with id {id} not found.");
-        }
-
-        return await _playerSanctionService.DeletePlayerSanctionAsync(sanction) ? NoContent() : BadRequest();
+        await _playerSanctionService.DeletePlayerSanctionAsync(id);
+        return NoContent();
     }
 }

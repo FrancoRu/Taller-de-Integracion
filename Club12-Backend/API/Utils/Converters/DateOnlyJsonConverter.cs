@@ -1,8 +1,9 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Club12.API.Utils.Converters;
+namespace API.Utils.Converters;
 
 /// <summary>
 /// A custom JSON converter for <see cref="DateTime"/> that serializes and deserializes dates

@@ -1,16 +1,15 @@
 ﻿using AutoMapper;
-
-using Entities.DTOs.Staff;
-using Entities.Models.Staffs;
-using Entities.Models.Teams;
-
+using Application.DTOs.Staff.Request;
+using Application.DTOs.Staff.Response;
+using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Threading.Tasks;
+using Domain.Entities.Models;
 
-using Services.Services.Staffs;
-using Services.Services.Teams;
-
-namespace Club12.API.Controllers;
+namespace API.Controllers;
 
 /// <summary>
 /// Controller for managing Staff members.
@@ -97,9 +96,9 @@ public class StaffController(IStaffService _staffService, ITeamService _teamServ
         }
 
         _mapper.Map(staffRequest, existingStaff);
-        bool updateResult = await _staffService.UpdateStaffAsync(existingStaff);
+        await _staffService.UpdateStaffAsync(existingStaff);
 
-        return !updateResult ? BadRequest("Failed to update the staff.") : NoContent();
+        return NoContent();
     }
 
     /// <summary>
@@ -113,14 +112,8 @@ public class StaffController(IStaffService _staffService, ITeamService _teamServ
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteStaffByIdAsync(Guid id)
     {
-        Staff? staff = await _staffService.GetStaffByIdAsync(id);
-
-        if (staff is null)
-        {
-            return BadRequest($"Staff with id {id} not found.");
-        }
-
-        bool deleteResult = await _staffService.DeleteStaffAsync(staff);
-        return !deleteResult ? BadRequest($"Failed to delete staff with id {id}.") : NoContent();
+      
+        await _staffService.DeleteStaffAsync(id);
+        return NoContent();
     }
 }

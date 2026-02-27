@@ -1,15 +1,18 @@
 ﻿using AutoMapper;
-using Club12.API.Utils;
-using Entities.DTOs.Venue;
-using Entities.Models.Teams;
-using Entities.Models.Venues;
-
+using Application.DTOs.Venue.Request;
+using Application.DTOs.Venue.Response;
+using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Domain.Entities.Models;
+using System.Linq;
+using Application.Utils.Helper.SupabaseHelper;
 
-using Services.Services.Venues;
-
-namespace Club12.API.Controllers;
+namespace API.Controllers;
 
 /// <summary>
 /// Controller for managing Venues.
@@ -92,7 +95,10 @@ public class VenueController(IVenueService _venueService, SupabaseHelper _supaba
         }
 
         _mapper.Map(venueRequest, existingVenue);
-        return Ok(await _venueService.UpdateVenueAsync(existingVenue));
+
+        await _venueService.UpdateVenueAsync(existingVenue);
+
+        return Ok();
     }
 
     /// <summary>
@@ -116,12 +122,14 @@ public class VenueController(IVenueService _venueService, SupabaseHelper _supaba
         {
             return BadRequest($"Venue with id {id} not found.");
         }
+
         if (!string.IsNullOrWhiteSpace(venue.PhotoUrl))
         {
             await _supabaseHelper.DeleteImageAsync<Team>(venue.PhotoUrl.Split('/').Last());
         }
-        bool deleteResult = await _venueService.DeleteVenueAsync(venue);
-        return !deleteResult ? BadRequest($"Failed to delete the venue with id {id}.") : NoContent();
+        
+        await _venueService.DeleteVenueAsync(id);
+        return NoContent();
     }
 
     /// <summary>

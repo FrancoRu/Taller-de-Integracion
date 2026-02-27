@@ -1,8 +1,13 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
-
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace Club12.API.Utils;
+namespace API.Utils;
 
 /// <summary>
 /// Handles global exceptions and returns standardized ProblemDetails responses.

@@ -1,32 +1,28 @@
 ﻿using AutoMapper;
-
-using Entities.DTOs.Abstract;
-using Entities.DTOs.Match;
-using Entities.Models.Matches;
-using Entities.Models.PlayerStatistics;
-using Entities.Models.PlayoffSeries;
-using Entities.Models.Teams;
-
+using Application.DTOs.Abstract.Response;
+using Application.DTOs.Match.Request;
+using Application.DTOs.Match.Response;
+using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Domain.Entities.Models;
 
-using Services.Services.Matches;
-using Services.Services.PlayoffSeries;
-
-using MatchType = Entities.Models.Matches.MatchType;
-
-namespace Club12.API.Controllers;
+namespace API.Controllers;
 
 /// <summary>
 /// Controller for managing Matches.
 /// </summary>
 /// <param name="_matchService">The Match service.</param>
-/// <param name="_playoffSeriesService"></param>
 /// <param name="_mapper">The AutoMapper instance.</param>
 //[Authorize(Roles = "SuperAdmin")]
 [Route("api/matches/")]
 [ApiController]
-public class MatchController(IMatchService _matchService, IPlayoffSeriesService _playoffSeriesService, IMapper _mapper) : ControllerBase
+public class MatchController(IMatchService _matchService, IStageTeamMatchService _stageTeamMatchService ,IMapper _mapper) : ControllerBase
 {
     /// <summary>
     /// Creates a new match.
@@ -44,6 +40,14 @@ public class MatchController(IMatchService _matchService, IPlayoffSeriesService 
         MinimalMatchResponse matchResponse = _mapper.Map<MinimalMatchResponse>(createdMatch);
 
         return new ObjectResult(matchResponse) { StatusCode = StatusCodes.Status201Created };
+    }
+
+    [HttpPost("generate/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<DetailedMatchResponse>))]
+    public async Task<ActionResult> GenerateMatches(Guid id)
+    {
+        List<Match> response = await _matchService.CreateAutomatedMatchesAsync(stageId: id);
+        return Ok(_mapper.Map<List<DetailedMatchResponse>>(response));
     }
 
     /// <summary>
@@ -108,6 +112,31 @@ public class MatchController(IMatchService _matchService, IPlayoffSeriesService 
             return BadRequest($"Match with id {id} not found.");
         }
 
+        if (existingMatch.IsFinished || existingMatch.MatchDate <= DateTime.Now)
+        {
+            return BadRequest("Cannot update a match that has already started or finished.");
+        }
+
+
+        List<Guid> teamsId = [];
+
+        if(existingMatch.HomeTeamId.HasValue)
+        {
+            teamsId.Add(existingMatch.HomeTeamId.Value);
+        }
+
+        if(existingMatch.VisitorTeamId.HasValue )
+        {
+            teamsId.Add(existingMatch.VisitorTeamId.Value);
+        }
+
+        bool canUpdate = await _stageTeamMatchService.AllTeamsAssignedToStage(stageId: existingMatch.StageId, TeamIds: [.. teamsId.Distinct()]);
+
+        if (!canUpdate)
+        {
+            return BadRequest("Cannot update match date because one or both teams are not assigned to the stage.");
+        }
+
         _mapper.Map(updateRequest, existingMatch);
         await _matchService.UpdateMatchAsync(existingMatch);
         DetailedMatchResponse detailedMatch = _mapper.Map<DetailedMatchResponse>(existingMatch);
@@ -124,15 +153,9 @@ public class MatchController(IMatchService _matchService, IPlayoffSeriesService 
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> DeleteMatchById(Guid id)
     {
-        Match? match = await _matchService.GetMatchByIdAsync(id);
-
-        if (match is null)
-        {
-            return BadRequest($"Match with id {id} not found.");
-        }
-
-        bool deleteResult = await _matchService.DeleteMatchAsync(match);
-        return deleteResult ? BadRequest("Could not delete match.") : NoContent();
+        
+        await _matchService.DeleteMatchAsync(id);
+        return NoContent();
     }
 
     /// <summary>
@@ -212,8 +235,8 @@ public class MatchController(IMatchService _matchService, IPlayoffSeriesService 
     //            PlayerId = playerScore.PlayerId,
     //            Value = playerScore.Points,
     //            MatchId = match.Id,
-    //            DateCreated = DateTime.UtcNow,
-    //            DateUpdated = DateTime.UtcNow
+    //            DateCreated = DateTime.Now,
+    //            DateUpdated = DateTime.Now
     //        })
     //        .ToList()
     //        .ForEach(match.PlayerStatistics.Add);

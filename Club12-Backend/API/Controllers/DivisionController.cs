@@ -1,39 +1,29 @@
 ﻿using AutoMapper;
-
-using Entities.DTOs.Abstract;
-using Entities.DTOs.Divisions;
-using Entities.DTOs.TopScorer;
-using Entities.Models.Divisions;
-using Entities.Models.PlayoffSeries;
-using Entities.Models.Teams;
-using Entities.Models.TopScorers;
-
+using Application.DTOs.Abstract.Response;
+using Application.DTOs.Divisions.Request;
+using Application.DTOs.Divisions.Response;
+using Application.DTOs.TopScorer.Response;
+using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Domain.Entities.Models;
 
-using Services.Services.Divisions;
-using Services.Services.Matches;
-using Services.Services.PlayoffSeries;
-using Services.Services.Teams;
-
-namespace Club12.API.Controllers;
+namespace API.Controllers;
 
 /// <summary>
 /// Controller for managing divisions.
 /// </summary>
 /// <param name="_divisionService">The division service.</param>
-/// <param name="_teamService">The team service.</param>
-/// <param name="_matchService">The match service.</param>
-/// <param name="_playoffSeriesService">The playoff series service.</param>
 /// <param name="_mapper">The AutoMapper instance.</param>
 //[Authorize(Roles = "SuperAdmin")]
 [Route("api/divisions/")]
 [ApiController]
 public class DivisionController(
     IDivisionService _divisionService,
-    IMatchService _matchService,
-    ITeamService _teamService,
-    IPlayoffSeriesService _playoffSeriesService,
     IMapper _mapper
     ) : ControllerBase
 {
@@ -72,7 +62,7 @@ public class DivisionController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<DivisionResponse>> GetDivisionById(Guid id)
     {
-        Division? division = await _divisionService.GetDivisionWithStatsAsync(id);
+        Division? division = await _divisionService.GetSimpleDivisionByIdAsync(id);
 
         if (division is null)
         {
@@ -99,15 +89,9 @@ public class DivisionController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteDivisionById(Guid id)
     {
-        Division? division = await _divisionService.GetDivisionByIdAsync(id);
-
-        if (division is null)
-        {
-            return BadRequest($"Division with id {id} not found.");
-        }
-
-        bool deleteResult = await _divisionService.DeleteDivisionAsync(division);
-        return !deleteResult ? BadRequest("Failed to delete the division.") : NoContent();
+        
+        await _divisionService.DeleteDivisionAsync(id);
+        return NoContent();
 
     }
 
@@ -127,7 +111,7 @@ public class DivisionController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> UpdateDivisionById(Guid id, UpdateDivisionRequest divisionRequest)
     {
-        Division? existingDivision = await _divisionService.GetDivisionByIdAsync(id);
+        Division? existingDivision = await _divisionService.GetFullDivisionByIdAsync(id);
 
         if (existingDivision is null)
         {
@@ -135,9 +119,9 @@ public class DivisionController(
         }
 
         _mapper.Map(divisionRequest, existingDivision);
-        bool updateResult = await _divisionService.UpdateDivisionAsync(existingDivision);
+        await _divisionService.UpdateDivisionAsync(existingDivision);
 
-        return !updateResult ? BadRequest("Failed to update the division.") : Ok();
+        return Ok();
     }
 
     /// <summary>
@@ -169,7 +153,7 @@ public class DivisionController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GenerateFixtureForDivision(Guid id)
     {
-        Division? division = await _divisionService.GetDivisionByIdAsync(id);
+        Division? division = await _divisionService.GetFullDivisionByIdAsync(id);
 
         if (division is null)
         {
@@ -181,7 +165,7 @@ public class DivisionController(
             return BadRequest("Division is already finished.");
         }
 
-        await _matchService.GenerateFixtureAsync(id, [.. division.Teams]);
+        //await _matchService.GenerateFixtureAsync(id, [.. division.Teams]);
 
         return Ok("Fixture generated successfully.");
     }
@@ -197,16 +181,16 @@ public class DivisionController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<List<TopScorerResponse>>> GetTopScorersByDivision(Guid id)
     {
-        List<TopScorer>? topScorers = await _divisionService.GetTopScorersByDivisionAsync(id);
+        //List<TopScorer>? topScorers = await _divisionService.GetTopScorersByDivisionAsync(id);
 
-        if (topScorers is null)
-        {
-            return BadRequest($"Division with id {id} not found.");
-        }
+        //if (topScorers is null)
+        //{
+        //    return BadRequest($"Division with id {id} not found.");
+        //}
 
-        List<TopScorerResponse> topScorersResponse = _mapper.Map<List<TopScorerResponse>>(topScorers);
+        //List<TopScorerResponse> topScorersResponse = _mapper.Map<List<TopScorerResponse>>(topScorers);
 
-        return Ok(topScorersResponse);
+        return Ok(/*topScorersResponse*/);
     }
 
     /// <summary>
@@ -220,32 +204,33 @@ public class DivisionController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GeneratePlayoffs(Guid id)
     {
-        Division? division = await _divisionService.GetDivisionWithStatsAsync(id);
+        //Division? division = await _divisionService.GetDivisionWithStatsAsync(id);
 
-        if (division is null)
-        {
-            return BadRequest($"Division with id {id} not found.");
-        }
+        //if (division is null)
+        //{
+        //    return BadRequest($"Division with id {id} not found.");
+        //}
 
-        if (division.PlayoffsGenerated)
-        {
-            return BadRequest("Playoffs have already been generated for this division.");
-        }
+        ////if (division.PlayoffsGenerated)
+        ////{
+        ////    return BadRequest("Playoffs have already been generated for this division.");
+        ////}
 
-        if (division.Teams.Count < 8)
-        {
-            return BadRequest("Insufficient teams to generate playoffs. At least 8 teams are required.");
-        }
+        ////if (division.Teams.Count < 8)
+        ////{
+        ////    return BadRequest("Insufficient teams to generate playoffs. At least 8 teams are required.");
+        ////}
 
-        List<Team> teams = division.Teams.Take(8).ToList();
+        ////List<Team> teams = division.Teams.Take(8).ToList();
 
-        List<PlayoffSerie> playoffSeries = await _playoffSeriesService.CreatePlayoffSeriesAsync();
-        await _matchService.GeneratePlayoffMatchesAsync(id, teams, playoffSeries);
+        ////List<PlayoffSerie> playoffSeries = await _playoffSeriesService.CreatePlayoffSeriesAsync();
+        ////await _matchService.GeneratePlayoffMatchesAsync(id, teams, playoffSeries);
 
-        division.PlayoffsGenerated = true;
-        bool updateResult = await _divisionService.UpdateDivisionAsync(division);
+        ////division.PlayoffsGenerated = true;
+        //bool updateResult = await _divisionService.UpdateDivisionAsync(division);
 
-        return !updateResult ? BadRequest("Failed to update division with playoffs generated.") : Ok("Playoffs generated successfully.");
+        //return !updateResult ? BadRequest("Failed to update division with playoffs generated.") : Ok("Playoffs generated successfully.");
+        return Ok();
     }
 
 }

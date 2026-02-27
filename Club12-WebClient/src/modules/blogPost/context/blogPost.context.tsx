@@ -1,6 +1,6 @@
 import { AxiosError, AxiosResponse } from 'axios';
 import React, { createContext, ReactNode } from 'react';
-import { GenericResponsePagination, GUID } from '../../core/types/types.d';
+import { GenericResponsePagination, GUID } from '../../core/types/types';
 import { useError } from '../../error/hooks/error.hock';
 import { blogPostService } from '../service/blogPost.service';
 import {
@@ -10,6 +10,7 @@ import {
   IBlogPostContextProps,
   UpdateBlogPostRequest,
 } from '../type/blogPost';
+import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 
 export const BlogPostContext = createContext<IBlogPostContextProps | undefined>(
   undefined

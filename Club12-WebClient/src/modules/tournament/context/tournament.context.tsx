@@ -10,7 +10,7 @@ import {
   GenericResponsePagination,
   GUID,
   ProviderProps,
-} from '../../core/types/types.d';
+} from '../../core/types/types';
 import { useError } from '../../error/hooks/error.hock';
 import { tournamentService } from '../service/tournament.service';
 import {

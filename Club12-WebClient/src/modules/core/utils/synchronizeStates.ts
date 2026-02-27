@@ -1,4 +1,4 @@
-import { GUID } from '../types/types.d';
+import { GUID } from '../types/types';
 
 export function upsertListById<T extends { id: GUID }>(
   list: T[] | null | undefined,

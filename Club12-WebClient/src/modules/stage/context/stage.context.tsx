@@ -131,19 +131,22 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const generateStagesAutomatically = async (
-    id: GUID,
-    quantityTeams: number
-  ): Promise<boolean> => {
+    id: GUID
+  ): Promise<IStageResponse[] | void> => {
     try {
-      console.log(id, quantityTeams);
-      return true;
+      const res: AxiosResponse<IStageResponse[]> =
+        await stageService.generateStages(id);
+
+      if (res && res.data) {
+        setStages(res.data);
+        return res.data;
+      }
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         setError(error);
       } else {
         setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
       }
-      return false; // en caso de error
     }
   };
 

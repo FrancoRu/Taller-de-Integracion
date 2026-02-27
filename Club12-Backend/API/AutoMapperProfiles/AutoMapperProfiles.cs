@@ -1,33 +1,32 @@
 ﻿using AutoMapper;
+using Application.DTOs.Abstract.Response;
+using Application.DTOs.BlogPosts.Request;
+using Application.DTOs.BlogPosts.Response;
+using Application.DTOs.Divisions.Request;
+using Application.DTOs.Divisions.Response;
+using Application.DTOs.Match.Request;
+using Application.DTOs.Match.Response;
+using Application.DTOs.Player.Request;
+using Application.DTOs.Player.Response;
+using Application.DTOs.PlayerSanction.Request;
+using Application.DTOs.PlayerSanction.Response;
+using Application.DTOs.PlayerStatistic.Request;
+using Application.DTOs.PlayerStatistic.Response;
+using Application.DTOs.Scorer.Response;
+using Application.DTOs.Stage.Request;
+using Application.DTOs.Stage.Response;
+using Application.DTOs.Team.Request;
+using Application.DTOs.Team.Response;
+using Application.DTOs.TopScorer.Response;
+using Application.DTOs.Tournament.Request;
+using Application.DTOs.Tournament.Response;
+using Application.DTOs.Venue.Request;
+using Application.DTOs.Venue.Response;
+using System;
+using System.Collections.Generic;
+using Domain.Entities.Models;
 
-using Entities.DTOs.Abstract;
-using Entities.DTOs.BlogPosts;
-using Entities.DTOs.Divisions;
-using Entities.DTOs.Match;
-using Entities.DTOs.Player;
-using Entities.DTOs.PlayerSanction;
-using Entities.DTOs.PlayerStatistic;
-using Entities.DTOs.Scorer;
-using Entities.DTOs.Stage;
-using Entities.DTOs.Team;
-using Entities.DTOs.TopScorer;
-using Entities.DTOs.Tournament;
-using Entities.DTOs.Venue;
-using Entities.Models.BlogPosts;
-using Entities.Models.Divisions;
-using Entities.Models.Matches;
-using Entities.Models.Players;
-using Entities.Models.PlayerSanctions;
-using Entities.Models.PlayerStatistics;
-using Entities.Models.Positions;
-using Entities.Models.Scorers;
-using Entities.Models.Stages;
-using Entities.Models.Teams;
-using Entities.Models.TopScorers;
-using Entities.Models.Tournaments;
-using Entities.Models.Venues;
-
-namespace Club12.API.AutoMapperProfiles;
+namespace API.AutoMapperProfiles;
 
 /// <summary>
 /// AutoMapper profile for team mappings.
@@ -282,7 +281,6 @@ public class StageProfile: Profile
         _ = CreateMap<CreateStageRequest, Stage>();
         _ = CreateMap<Stage, StageResponse>()
             .ReverseMap();
-        
         _ = CreateMap<UpdateStageRequest, Stage>();
     }
 }

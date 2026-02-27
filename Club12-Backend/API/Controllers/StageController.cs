@@ -1,13 +1,17 @@
 ﻿using AutoMapper;
-using Entities.DTOs.Abstract;
-using Entities.DTOs.Match;
-using Entities.DTOs.Stage;
-using Entities.Models.Stages;
+using Application.DTOs.Abstract.Response;
+using Application.DTOs.Stage.Request;
+using Application.DTOs.Stage.Response;
+using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Services.Services.Stages;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Domain.Entities.Models;
 
-namespace Club12.API.Controllers;
+namespace API.Controllers;
 
 /// <summary>
 /// Controller for managing Stage entities.
@@ -17,7 +21,7 @@ namespace Club12.API.Controllers;
 //[Authorize(Roles = "SuperAdmin")]
 [Route("api/stages/")]
 [ApiController]
-public class StageController(IStageService _stageService, IMapper _mapper) : ControllerBase
+public class StageController(IStageService _stageService, IMatchService matchService, IMapper _mapper) : ControllerBase
 {
 
     /// <summary>
@@ -35,6 +39,27 @@ public class StageController(IStageService _stageService, IMapper _mapper) : Con
         Stage createdStage = await _stageService.CreateStageAsync(mappedStage);
         StageResponse stageResponse = _mapper.Map<StageResponse>(createdStage);
         return CreatedAtAction(nameof(GetStageById), new { createdStage.Id }, stageResponse);
+    }
+
+    /// <summary>
+    /// Generates all stages and matches for the specified division and returns the resulting stage information.
+    /// </summary>
+    /// <remarks>Use this endpoint to automatically create the full set of stages and matches for a division.
+    /// This operation is typically used after a division has been set up and is ready for scheduling.</remarks>
+    /// <param name="id">The unique identifier of the division for which stages and matches are to be generated.</param>
+    /// <returns>An HTTP 200 OK response containing a list of stage details if the operation succeeds.</returns>
+    [HttpPost("generate/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<StageResponse>))]
+    public async Task<ActionResult> GenerateStagesAndMatches(Guid id)
+    {
+        List<Stage> response = await _stageService.CreateAutomatedStagesAsync(divisionId: id);
+
+        foreach (Stage stage in response)
+        {
+            stage.Matches = await matchService.CreateAutomatedMatchesAsync(stageId: stage.Id);
+        }
+
+        return Ok(_mapper.Map<List<StageResponse>>(response));
     }
 
     /// <summary>
@@ -89,10 +114,12 @@ public class StageController(IStageService _stageService, IMapper _mapper) : Con
         Stage? existingStage = await _stageService.GetStageByIdAsync(id);
         if (existingStage == null)
             return NotFound($"Stage with id {id} not found.");
-        
+
         _mapper.Map(stageRequest, existingStage);
-        Stage result = await _stageService.UpdateStageAsync(existingStage);
-        return Ok(result);
+        
+        await _stageService.UpdateStageAsync(existingStage);
+
+        return Ok();
     }
 
     /// <summary>
@@ -106,13 +133,33 @@ public class StageController(IStageService _stageService, IMapper _mapper) : Con
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> DeleteStage(Guid id)
     {
+       
+        await _stageService.DeleteStageAsync(id);
+
+        return NoContent();
+    }
+
+    [HttpPost("{id:guid}/assign-team")]
+    public async Task<ActionResult> AssignamentTeam(Guid id, AssignamentTeamRequest request)
+    {
         Stage? stage = await _stageService.GetStageByIdAsync(id);
 
         if (stage == null)
             return NotFound($"Stage with id {id} not found.");
 
-        bool deleted = await _stageService.DeleteStageAsync(stage);
+        await _stageService.AssignTeamsToStageAsync(stage, request.TeamIds, request.Auto);
 
-        return deleted ? NoContent() : BadRequest("Failed to delete the Stage.");
+        return Ok();
+    }
+
+    [HttpDelete("{id:guid}/unassign-team")]
+    public async Task<ActionResult> UnassignamentTeam(Guid id, UnassignamentTeamRequest request)
+    {
+        Stage? stage = await _stageService.GetStageByIdAsync(id);
+
+        if (stage == null)
+            return NotFound($"Stage with id {id} not found.");
+        await _stageService.UnassignTeamsFromStageAsync(stage, request.TeamIds);
+        return Ok();
     }
 }

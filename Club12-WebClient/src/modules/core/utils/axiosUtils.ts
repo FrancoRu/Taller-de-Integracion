@@ -1,7 +1,10 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import jsCookie from 'js-cookie';
-import routes from '../constants/routes';
-import { COOKIE_SIGNIN_TOKEN } from '../constants/constants';
+import routes from '@/modules/core/constants/routes';
+import {
+  ERROR_MESSAGES,
+  COOKIE_SIGNIN_TOKEN,
+} from '@/modules/core/constants/constants';
 
 const TOKEN_KEY: string = COOKIE_SIGNIN_TOKEN;
 
@@ -205,6 +208,7 @@ export const sendGet = async <T>(
   query?: object
 ): Promise<AxiosResponse<T>> => {
   try {
+    console.log(buildEndpoint(resource, query));
     const result: AxiosResponse<T> = await axios.request({
       method: 'GET',
       url: buildEndpoint(resource, query),

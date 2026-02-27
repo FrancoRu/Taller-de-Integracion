@@ -129,7 +129,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
   };
   return (
     <PlayerContext.Provider value={container}>
-      {children}s
+      {children}
     </PlayerContext.Provider>
   );
 };

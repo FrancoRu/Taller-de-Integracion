@@ -11,20 +11,25 @@ import { useNavigate } from 'react-router-dom';
 import { AddIcon } from '../core/MUI/icons/icons';
 import { RoutesNavigationViews } from '../core/routes-const';
 import { useTeam } from '@/modules/team/hook/team.hook';
-import { ITeamContextProps } from '@/modules/team/type/team';
+import { ITeamContextProps, TeamFiltered } from '@/modules/team/type/team';
 import { TeamDashboard } from './dashboard';
 import { NoTeamMessage } from './NoTeamMessage';
+import { GUID } from '@/modules/core/types/types';
 
-export const InfoTeam: React.FC = () => {
+export const InfoTeam: React.FC<{
+  stageId?: GUID;
+  tournamentId?: GUID;
+}> = ({ stageId, tournamentId }) => {
   const navigate = useNavigate();
   const { teams, getTeamsByFiltered }: ITeamContextProps = useTeam();
   useEffect(() => {
-    if (!teams || teams.length === 0) {
-      (async () => {
-        await getTeamsByFiltered({});
-      })();
-    }
-  }, [teams, getTeamsByFiltered]);
+    (async () => {
+      await getTeamsByFiltered({
+        ...(stageId && { stageId }),
+        ...(tournamentId && { tournamentId }),
+      } as TeamFiltered);
+    })();
+  }, [stageId, tournamentId]);
   return (
     <Card>
       <CardContent>

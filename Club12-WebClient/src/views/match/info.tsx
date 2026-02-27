@@ -16,6 +16,7 @@ import { GenerateMatch } from './CRUD/generate-match';
 import { MatchDashboard } from './dashboard';
 import { IMatchContextProps } from '@/modules/match/type/match';
 import { useMatch } from '@/modules/match/hook/match.hook';
+import { Order } from '@/modules/core/constants/order';
 
 export const InfoMatch: React.FC<IStageResponse> = ({ id, name }) => {
   const navigate = useNavigate();
@@ -24,7 +25,11 @@ export const InfoMatch: React.FC<IStageResponse> = ({ id, name }) => {
 
   useEffect(() => {
     (async () => {
-      await getMatchByFilter({ stageId: id });
+      await getMatchByFilter({
+        stageId: id,
+        orderBy: 'matchDate',
+        order: Order.ASC,
+      });
     })();
   }, [id]);
 
@@ -59,11 +64,16 @@ export const InfoMatch: React.FC<IStageResponse> = ({ id, name }) => {
                   <AddIcon />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="Generar partidos automáticamente">
-                <IconButton color="success" onClick={() => setShowPopup(true)}>
-                  <SettingsSuggestIcon />
-                </IconButton>
-              </Tooltip>
+              {(matches === null || matches.length === 0) && (
+                <Tooltip title="Generar partidos automáticamente">
+                  <IconButton
+                    color="success"
+                    onClick={() => setShowPopup(true)}
+                  >
+                    <SettingsSuggestIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
             </Stack>
           </Stack>
 

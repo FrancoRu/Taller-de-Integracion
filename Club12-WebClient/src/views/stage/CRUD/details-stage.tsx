@@ -14,6 +14,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DeleteStage } from './delete-stage';
 import { InfoMatch } from '@/views/match/info';
+import { InfoTeam } from '@/views/team/info';
 
 export const DetailStage: React.FC = () => {
   const { stageId: id } = useParams<{ stageId: GUID }>();
@@ -31,6 +32,7 @@ export const DetailStage: React.FC = () => {
         <>
           <RenderStageDetails {...stage} />
           <InfoMatch {...stage} />
+          <InfoTeam stageId={id} />
         </>
       )}
     </>

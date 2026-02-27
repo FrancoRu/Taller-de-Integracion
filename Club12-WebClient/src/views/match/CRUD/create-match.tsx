@@ -1,39 +1,23 @@
-import { GUID } from '@/modules/core/types/types.d';
+import { GUID } from '@/modules/core/types/types';
 import { useError } from '@/modules/error/hooks/error.hock';
 import { useMatch } from '@/modules/match/hook/match.hook';
-import { IAddMatchRequest, TypeMatch } from '@/modules/match/type/match.d';
+import { IAddMatchRequest } from '@/modules/match/type/match';
+import { TypeMatch } from '@/modules/core/enum/match/typeMatch';
 import { useStage } from '@/modules/stage/hook/stage.hook';
-import { useTeam } from '@/modules/team/hook/team.hook';
-import { ITeamContextProps } from '@/modules/team/type/team.d';
-import { useVenue } from '@/modules/venue/hook/venue.hook';
 import { GUID_EMPTY } from '@/views/core/constants/const';
 import { CustomBox } from '@/views/core/MUI/customsThemes/CustomBox';
 import { RoutesNavigationViews } from '@/views/core/routes-const';
-import {
-  Card,
-  CardContent,
-  Typography,
-  TextField,
-  MenuItem,
-  Button,
-} from '@mui/material';
-import dayjs from 'dayjs';
+import { Card, CardContent, Typography, Button } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
+
+import { MatchForm } from './match-form';
 export const CreateMatch: React.FC = () => {
-  const { venues, getAllVenues } = useVenue();
-  const { teams, getTeamsByFiltered }: ITeamContextProps = useTeam();
   const { addMatch } = useMatch();
 
   const { stage } = useStage();
   const navigate = useNavigate();
   const { errors, setMessage } = useError();
-
-  useEffect(() => {
-    (async () => await getTeamsByFiltered({}))();
-  }, [getTeamsByFiltered]);
 
   useEffect(() => {
     if (!stage) {
@@ -43,10 +27,6 @@ export const CreateMatch: React.FC = () => {
       ]);
     }
   }, [stage, navigate, setMessage]);
-
-  useEffect(() => {
-    if (!venues) (async () => await getAllVenues())();
-  }, [venues, getAllVenues]);
 
   const [form, setForm] = useState<IAddMatchRequest>({
     matchDate: '',
@@ -82,22 +62,7 @@ export const CreateMatch: React.FC = () => {
     if (res) navigate(`/${RoutesNavigationViews.Match}`);
   };
 
-  const availableVisitorTeams =
-    teams?.filter(t => t.id !== form.homeTeamid) ?? [];
-  const availableHomeTeams =
-    teams?.filter(t => t.id !== form.visitorTeamid) ?? [];
-
-  dayjs.extend(utc);
-  dayjs.extend(timezone);
-
-  const minDateLocal = stage?.startDate
-    ? dayjs.utc(stage.startDate).local().format('YYYY-MM-DDTHH:mm')
-    : undefined;
-
-  const maxDateLocal = stage?.endDate
-    ? dayjs.utc(stage.endDate).local().format('YYYY-MM-DDTHH:mm')
-    : undefined;
-  return (
+  return stage ? (
     <CustomBox>
       <Card>
         <CardContent>
@@ -105,93 +70,15 @@ export const CreateMatch: React.FC = () => {
             Crear Partido
           </Typography>
 
-          {errors && errors.length > 0 && (
-            <>
-              {errors.map((e, i) => (
-                <Typography
-                  key={i}
-                  color="error"
-                  variant="body2"
-                  align="center"
-                  gutterBottom
-                >
-                  {e}
-                </Typography>
-              ))}
-            </>
-          )}
-
-          <TextField
-            fullWidth
-            label="Fecha y Hora"
-            name="matchDate"
-            type="datetime-local"
-            InputLabelProps={{ shrink: true }}
-            variant="outlined"
-            margin="normal"
-            value={form.matchDate}
-            onChange={e => setForm({ ...form, matchDate: e.target.value })}
-            inputProps={{
-              min: minDateLocal,
-              max: maxDateLocal,
-            }}
+          <MatchForm
+            showTeams={true}
+            stageId={stage.id}
+            startDate={stage.startDate}
+            endDate={stage.endDate}
+            errors={errors}
+            form={form}
+            setForm={setForm}
           />
-
-          <TextField
-            fullWidth
-            select
-            label="Cancha"
-            variant="outlined"
-            margin="normal"
-            value={form.venueid}
-            onChange={e =>
-              setForm({ ...form, venueid: e.target.value as GUID })
-            }
-          >
-            {venues?.map(v => (
-              <MenuItem key={v.id} value={v.id}>
-                {v.name}
-              </MenuItem>
-            ))}
-          </TextField>
-
-          {/* Home Team */}
-          <TextField
-            fullWidth
-            select
-            label="Equipo Local"
-            variant="outlined"
-            margin="normal"
-            value={form.homeTeamid}
-            onChange={e =>
-              setForm({ ...form, homeTeamid: e.target.value as GUID })
-            }
-          >
-            {availableHomeTeams.map(team => (
-              <MenuItem key={team.id} value={team.id}>
-                {team.name}
-              </MenuItem>
-            ))}
-          </TextField>
-
-          {/* Visitor Team */}
-          <TextField
-            fullWidth
-            select
-            label="Equipo Visitante"
-            variant="outlined"
-            margin="normal"
-            value={form.visitorTeamid}
-            onChange={e =>
-              setForm({ ...form, visitorTeamid: e.target.value as GUID })
-            }
-          >
-            {availableVisitorTeams.map(team => (
-              <MenuItem key={team.id} value={team.id}>
-                {team.name}
-              </MenuItem>
-            ))}
-          </TextField>
 
           <Button
             fullWidth
@@ -205,5 +92,7 @@ export const CreateMatch: React.FC = () => {
         </CardContent>
       </Card>
     </CustomBox>
+  ) : (
+    <Typography>Cargando etapa...</Typography>
   );
 };

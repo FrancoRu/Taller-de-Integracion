@@ -6,7 +6,6 @@ import { StageType } from '@/modules/stage/type/stage.d';
  */
 const STAGE_TYPE_ES = {
   [StageType.Group]: 'Fase de grupos',
-  [StageType.RoundOf16]: 'Octavos de final',
   [StageType.QuarterFinal]: 'Cuartos de final',
   [StageType.SemiFinal]: 'Semifinal',
   [StageType.ThirdPlace]: 'Tercer puesto',

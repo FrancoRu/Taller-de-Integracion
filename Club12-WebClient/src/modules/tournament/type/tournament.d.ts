@@ -3,7 +3,7 @@ import {
   Filtered,
   GenericResponsePagination,
   GUID,
-} from '../../core/types/types.d';
+} from '../../core/types/types';
 import { IDivisionResponse } from '../../division/type/division';
 
 /**

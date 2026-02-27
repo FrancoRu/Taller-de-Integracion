@@ -5,7 +5,7 @@ import {
 } from '@/modules/tournament/type/tournament';
 import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate, useParams } from 'react-router-dom';
-import { GUID } from '@/modules/core/types/types.d';
+import { GUID } from '@/modules/core/types/types';
 import { useError } from '@/modules/error/hooks/error.hock';
 import LoadingIndicator from '../core/components/LoadingIndicator';
 import {

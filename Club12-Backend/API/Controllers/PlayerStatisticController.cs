@@ -1,14 +1,15 @@
 ﻿using AutoMapper;
-
-using Entities.DTOs.PlayerStatistic;
-using Entities.Models.PlayerStatistics;
-
+using Application.DTOs.PlayerStatistic.Request;
+using Application.DTOs.PlayerStatistic.Response;
+using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Threading.Tasks;
+using Domain.Entities.Models;
 
-using Services.Services.PlayerStatistics;
-
-namespace Club12.API.Controllers;
+namespace API.Controllers;
 
 /// <summary>
 /// Controller for managing Player Statistics.
@@ -80,9 +81,9 @@ public class PlayerStatisticController(IPlayerStatisticService _playerStatisticS
         }
 
         _mapper.Map(updateRequest, existingStatistic);
-        bool updateResult = await _playerStatisticService.UpdatePlayerStatisticAsync(existingStatistic);
+        await _playerStatisticService.UpdatePlayerStatisticAsync(existingStatistic);
 
-        return !updateResult ? BadRequest("Failed to update the player statistic.") : NoContent();
+        return NoContent();
     }
 
     /// <summary>
@@ -95,14 +96,7 @@ public class PlayerStatisticController(IPlayerStatisticService _playerStatisticS
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> DeletePlayerStatisticById(Guid id)
     {
-        PlayerStatistic? statistic = await _playerStatisticService.GetPlayerStatisticByIdAsync(id);
-
-        if (statistic is null)
-        {
-            return BadRequest($"Player statistic with id {id} not found.");
-        }
-
-        bool deleteResult = await _playerStatisticService.DeletePlayerStatisticAsync(statistic);
-        return deleteResult ? BadRequest($"Failed to delete player statistic with id: {id}.") : NoContent();
+        await _playerStatisticService.DeletePlayerStatisticAsync(id);
+        return NoContent();
     }
 }

@@ -1,6 +1,6 @@
-@Club12.Server_HostAddress = http://localhost:5176
+@Server_HostAddress = http://localhost:5176
 
-GET {{Club12.Server_HostAddress}}/weatherforecast/
+GET {{Server_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###

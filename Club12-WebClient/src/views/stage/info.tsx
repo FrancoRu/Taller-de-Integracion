@@ -16,14 +16,19 @@ import { GenerateStage } from './CRUD/generate-stage';
 import { IDivisionResponse } from '@/modules/division/type/division';
 import { IStageContextProps } from '@/modules/stage/type/stage';
 import { useStage } from '@/modules/stage/hook/stage.hook';
+import { Order } from '@/modules/core/constants/order';
 
 export const InfoStage: React.FC<IDivisionResponse> = ({ id, name }) => {
   const navigate = useNavigate();
-  const [showPopup, setShowPopup] = useState<boolean>(false);
   const { stages, getStagesByFilters }: IStageContextProps = useStage();
+  const [showPopup, setShowPopup] = useState<boolean>(false);
   useEffect(() => {
     (async () => {
-      await getStagesByFilters({ divisionId: id });
+      await getStagesByFilters({
+        divisionId: id,
+        order: Order.ASC,
+        orderBy: 'order',
+      });
     })();
   }, [id]);
   return (
@@ -57,11 +62,16 @@ export const InfoStage: React.FC<IDivisionResponse> = ({ id, name }) => {
                   <AddIcon />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="Generar Fases Automáticamente">
-                <IconButton color="success" onClick={() => setShowPopup(true)}>
-                  <SettingsSuggestIcon />
-                </IconButton>
-              </Tooltip>
+              {(stages === null || stages.length === 0) && (
+                <Tooltip title="Generar Fases Automáticamente">
+                  <IconButton
+                    color="success"
+                    onClick={() => setShowPopup(true)}
+                  >
+                    <SettingsSuggestIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
             </Stack>
           </Stack>
 

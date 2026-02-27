@@ -2,11 +2,12 @@
 using Microsoft.OpenApi.Models;
 
 using Swashbuckle.AspNetCore.SwaggerGen;
-
+using System;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Reflection;
 
-namespace Club12.API.Utils;
+namespace API.Utils;
 
 /// <summary>
 /// Displays the display name of an enum value in the Swagger UI.
@@ -23,7 +24,7 @@ public class DisplayEnumSchemaFilter : ISchemaFilter
         if (context.Type.IsEnum)
         {
             Type enumType = context.Type;
-            schema.Enum = Enum.GetNames(enumType)
+            schema.Enum = [.. Enum.GetNames(enumType)
                 .Select(name =>
                 {
                     MemberInfo[] memberInfo = enumType.GetMember(name);
@@ -31,8 +32,7 @@ public class DisplayEnumSchemaFilter : ISchemaFilter
 
                     string displayName = displayAttribute?.Name ?? name;
                     return new OpenApiString(displayName) as IOpenApiAny;
-                })
-                .ToList();
+                })];
         }
     }
 }

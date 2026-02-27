@@ -1,4 +1,4 @@
-import { GUID, GenericResponsePagination } from '@/modules/core/types/types.d';
+import { GUID, GenericResponsePagination } from '@/modules/core/types/types';
 import {
   IAddStageRequest,
   IPutStageRequest,
@@ -63,4 +63,12 @@ export const stageService = {
    */
   deleteStagesById: async (id: GUID): Promise<AxiosResponse<void>> =>
     sendDelete(`${routes.stages}/${id}`),
+
+  /**
+   * Generates stages automatically based on the provided ID.
+   * @param {GUID} id - The unique identifier for which to generate stages.
+   * @returns {Promise<AxiosResponse<IStageResponse[]>>} The response containing the generated stages.
+   */
+  generateStages: async (id: GUID): Promise<AxiosResponse<IStageResponse[]>> =>
+    sendPost(`${routes.stages}/generate/${id}`),
 };

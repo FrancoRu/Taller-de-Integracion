@@ -8,37 +8,26 @@ export const GenerateStage: React.FC<{
   onClose: () => void;
 }> = ({ id, onClose }) => {
   const { generateStagesAutomatically, getStagesByFilters } = useStage();
+
   useEffect(() => {
     Swal.fire({
-      title: 'Ingrese la cantidad de equipos',
-      input: 'number',
-      inputAttributes: {
-        min: '1',
-        step: '1',
-        autocapitalize: 'off',
-        autocorrect: 'off',
-        inputmode: 'numeric',
-      },
-      inputValidator: value => {
-        if (!value || Number(value) < 4) {
-          return 'Por favor ingrese una cantidad válida mayor a 3';
-        }
-        return null;
-      },
+      title: '¿Estás seguro?',
+      text: 'Se generarán las fases automáticamente. Una vez realizada esta acción, no podrás volver a utilizar esta función para esta división.',
+      icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Generar',
+      confirmButtonText: 'Sí, generar fáses',
       cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
       showLoaderOnConfirm: true,
-      preConfirm: async quantityTeamsStr => {
-        const quantityTeams = Number(quantityTeamsStr);
-        if (isNaN(quantityTeams) || quantityTeams < 4) {
-          Swal.showValidationMessage('Cantidad inválida');
-          return false;
-        }
+      preConfirm: async () => {
         try {
-          const result = await generateStagesAutomatically(id, quantityTeams);
+          const result = await generateStagesAutomatically(id);
+
           if (!result) {
-            Swal.showValidationMessage('No se pudieron generar las fases.');
+            Swal.showValidationMessage(
+              'No se pudieron generar las fases. Verifica si ya han sido creadas.'
+            );
             return false;
           }
           return true;
@@ -52,7 +41,7 @@ export const GenerateStage: React.FC<{
       if (result.isConfirmed) {
         Swal.fire({
           title: '¡Generadas!',
-          text: 'Las fases fueron generadas exitosamente.',
+          text: 'Las fases y los encuentros han sido creados exitosamente.',
           icon: 'success',
         }).then(async () => {
           await getStagesByFilters({ divisionId: id });
@@ -60,7 +49,7 @@ export const GenerateStage: React.FC<{
       }
       onClose();
     });
-  }, [id, onClose]);
+  }, [id, onClose, generateStagesAutomatically, getStagesByFilters]);
 
   return null;
 };

@@ -45,8 +45,8 @@ export const EditMatch: React.FC = () => {
     if (match && stage) {
       setEditMatch({
         id: match.id,
-        homeScore: match.homeTeam.score ?? 0,
-        visitorScore: match.visitorTeam.score ?? 0,
+        homeScore: match.homeTeam?.score ?? 0,
+        visitorScore: match.visitorTeam?.score ?? 0,
         matchDate: new Date(match.matchDate),
         isFinished: match.isFinished,
         venue: match.venue ?? null,

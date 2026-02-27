@@ -20,31 +20,18 @@ import {
 import { RoutesNavigationViews } from '../core/routes-const';
 import { useStage } from '@/modules/stage/hook/stage.hook';
 import { DeleteStage } from './CRUD/delete-stage';
-import { useDivision } from '@/modules/division/hook/division.hook';
-import LoadingIndicator from '../core/components/LoadingIndicator';
-import { NoStagesMessage } from './NoStageMessage';
 import { translateStageType } from '@/modules/core/utils/translateStageType';
 
 export const StageDashboard: React.FC<IDashboardStage> = ({ stages }) => {
-  const { division } = useDivision();
-
   return (
     <Box>
-      {stages ? (
-        stages.length > 0 ? (
-          <Grid container spacing={3} sx={{ px: 2, py: 3 }}>
-            {stages.map(s => (
-              <Grid item key={s.id} xs={12} sm={8} md={4}>
-                <RenderStage {...s} />
-              </Grid>
-            ))}
+      <Grid container spacing={3} sx={{ px: 2, py: 3 }}>
+        {stages.map(s => (
+          <Grid item key={s.id} xs={12} sm={8} md={4}>
+            <RenderStage {...s} />
           </Grid>
-        ) : (
-          <NoStagesMessage name={division!.name} />
-        )
-      ) : (
-        <LoadingIndicator />
-      )}
+        ))}
+      </Grid>
     </Box>
   );
 };

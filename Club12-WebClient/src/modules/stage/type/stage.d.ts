@@ -1,4 +1,4 @@
-import { Filtered, GUID } from '@/modules/core/types/types.d';
+import { Filtered, GUID } from '@/modules/core/types/types';
 
 /**
  * Represents the context properties and operations available for managing stages.
@@ -56,13 +56,9 @@ export interface IStageContextProps {
    * Generates division stages automatically based on the provided division ID and number of teams.
    *
    * @param {GUID} id - The unique identifier of the division.
-   * @param {number} quantityTeams - The number of teams for which the stages should be generated.
-   * @returns {Promise<boolean>} A promise that resolves to true if the stages are successfully generated, otherwise false.
+   * @returns {Promise<IStageResponse[] | void>} A promise that resolves to true if the stages are successfully generated, otherwise false.
    */
-  generateStagesAutomatically(
-    id: GUID,
-    quantityTeams: number
-  ): Promise<boolean>;
+  generateStagesAutomatically(id: GUID): Promise<IStageResponse[] | void>;
 }
 
 /**
@@ -122,6 +118,12 @@ export interface IStageResponse {
    * @type {GUID}
    */
   divisionId: GUID;
+
+  /**
+   * The order of the stage within the stage.
+   * @type {number}
+   */
+  order: number;
 }
 
 /**
@@ -251,11 +253,6 @@ export enum StageType {
    * A group stage, typically used for round-robin matches.
    */
   Group = 'Group',
-
-  /**
-   * A knockout stage with 16 teams (Round of 16).
-   */
-  RoundOf16 = 'RoundOf16',
 
   /**
    * A knockout stage with 8 teams (Quarterfinals).

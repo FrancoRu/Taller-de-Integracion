@@ -1,15 +1,16 @@
 ﻿using AutoMapper;
-
-using Entities.DTOs.Abstract;
-using Entities.DTOs.Tournament;
-using Entities.Models.Tournaments;
-
+using Application.DTOs.Abstract.Response;
+using Application.DTOs.Tournament.Request;
+using Application.DTOs.Tournament.Response;
+using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Services.Services.Teams;
-using Services.Services.Tournaments;
+using System;
+using System.Threading.Tasks;
+using Domain.Entities.Models;
 
-namespace Club12.API.Controllers;
+namespace API.Controllers;
 
 /// <summary>
 /// Controller for managing Tournaments.
@@ -96,9 +97,11 @@ public class TournamentController(
             return BadRequest($"Tournament with id {id} not found.");
         }
 
-        _mapper.Map(tournamentRequest, existingTournament);;
+        _mapper.Map(tournamentRequest, existingTournament);
 
-        return Ok(await _tournamentService.UpdateTournamentAsync(existingTournament));
+        await _tournamentService.UpdateTournamentAsync(existingTournament);
+
+        return Ok();
     }
 
     /// <summary>
@@ -116,15 +119,8 @@ public class TournamentController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteTournamentById(Guid id)
     {
-        Tournament? tournament = await _tournamentService.GetTournamentByIdAsync(id);
-
-        if (tournament is null)
-        {
-            return BadRequest($"Tournament with id {id} not found.");
-        }
-
-        bool deleteResult = await _tournamentService.DeleteTournamentAsync(tournament);
-        return deleteResult ? Ok() : BadRequest("Failed to delete the tournament.");
+        await _tournamentService.DeleteTournamentAsync(id);
+        return NoContent();
     }
 
     /// <summary>
@@ -155,7 +151,7 @@ public class TournamentController(
         {
             return BadRequest($"Tournament with id {id} not found.");
         }
-        bool registrationResult = await _teamService.RegisterTeamsToTournamentAsync(tournament, registerTeamsRequest.TeamIds);
-        return registrationResult ? Ok() : BadRequest("Failed to register teams for the tournament.");
+        await _teamService.RegisterTeamsToTournamentAsync(tournament, registerTeamsRequest.TeamIds);
+        return Ok();
     }
 }

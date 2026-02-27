@@ -6,43 +6,40 @@ import {
   IMatchResponse,
   IPutMatchRequest,
 } from '@/modules/match/type/match';
-import { TextField, MenuItem, Button } from '@mui/material';
+import { TypeMatch } from '@/modules/core/enum/match/typeMatch';
+import { Button } from '@mui/material';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { RoutesNavigationViews } from '@/views/core/routes-const';
+import { MatchForm } from '../match-form';
+import { useError } from '@/modules/error/hooks/error.hock';
+import { IErrorContextProp } from '@/modules/error/type/error';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { RoutesNavigationViews } from '@/views/core/routes-const';
-import { useVenue } from '@/modules/venue/hook/venue.hook';
-import { IVenueContextProps } from '@/modules/venue/type/venue';
 
 export const EditNotStartedMatch: React.FC<IEditMatch> = ({
-  id,
-  matchDate,
-  venue,
   startDate,
   endDate,
 }) => {
-  dayjs.extend(utc);
-  dayjs.extend(timezone);
-  const { putMatchByMatchId }: IMatchContextProps = useMatch();
-
-  const { venues, getAllVenues }: IVenueContextProps = useVenue();
-  const [form, setForm] = useState<IPutMatchRequest>({
-    matchDate: dayjs.utc(matchDate).format('YYYY-MM-DDTHH:mm'),
-    venueId: venue?.id,
-  });
-
-  useEffect(() => {
-    if (!venues) {
-      (async () => {
-        await getAllVenues();
-      })();
-    }
-  }, [getAllVenues]);
-
   const navigate = useNavigate();
 
+  dayjs.extend(utc);
+  dayjs.extend(timezone);
+
+  const { match, putMatchByMatchId }: IMatchContextProps = useMatch();
+
+  if (!match || !match.id) navigate(`/${RoutesNavigationViews.Match}`);
+
+  const { errors }: IErrorContextProp = useError();
+  const [form, setForm] = useState<IPutMatchRequest>({
+    ...match,
+    matchDate: dayjs.utc(match?.matchDate).format('YYYY-MM-DDTHH:mm'),
+    homeTeamid: match?.homeTeam?.id,
+    visitorTeamid: match?.visitorTeam?.id,
+    venueid: match?.venue?.id,
+  });
+  console.log(form);
   const handleUpdate = async () => {
     const messages: string[] = [];
     !form.matchDate && messages.push('La fecha del partido es obligatoria.');
@@ -54,51 +51,25 @@ export const EditNotStartedMatch: React.FC<IEditMatch> = ({
         'La fecha del partido debe estar dentro del rango de la etapa.'
       );
 
-    const res: IMatchResponse | void = await putMatchByMatchId(id, form);
+    const res: IMatchResponse | void = await putMatchByMatchId(
+      match?.id as GUID,
+      form
+    );
 
-    if (res) navigate(`/${RoutesNavigationViews.Match}/${id}`);
+    if (res) navigate(`/${RoutesNavigationViews.Match}/${match?.id}`);
   };
-  const minDateLocal = startDate
-    ? dayjs.utc(startDate).format('YYYY-MM-DDTHH:mm')
-    : undefined;
-
-  const maxDateLocal = endDate
-    ? dayjs.utc(endDate).format('YYYY-MM-DDTHH:mm')
-    : undefined;
 
   return (
     <>
-      <TextField
-        fullWidth
-        label="Fecha y Hora"
-        name="matchDate"
-        type="datetime-local"
-        InputLabelProps={{ shrink: true }}
-        variant="outlined"
-        margin="normal"
-        value={form.matchDate}
-        onChange={e => setForm({ ...form, matchDate: e.target.value })}
-        inputProps={{
-          min: minDateLocal,
-          max: maxDateLocal,
-        }}
+      <MatchForm
+        stageId={match?.stageId as GUID}
+        form={form}
+        setForm={setForm}
+        showTeams={match?.matchType == TypeMatch.Regular}
+        startDate={startDate}
+        endDate={endDate}
+        errors={errors}
       />
-
-      <TextField
-        fullWidth
-        select
-        label="Cancha"
-        variant="outlined"
-        margin="normal"
-        value={form.venueId}
-        onChange={e => setForm({ ...form, venueId: e.target.value as GUID })}
-      >
-        {venues?.map(v => (
-          <MenuItem key={v.id} value={v.id}>
-            {v.name}
-          </MenuItem>
-        ))}
-      </TextField>
       <Button
         fullWidth
         variant="contained"

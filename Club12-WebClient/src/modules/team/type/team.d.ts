@@ -2,7 +2,7 @@ import {
   Filtered,
   GenericResponsePagination,
   GUID,
-} from '../../core/types/types.d';
+} from '../../core/types/types';
 import {
   IPublicPlayerResponse,
   IPlayerResponse,
@@ -22,19 +22,6 @@ export interface ITeamContextProps {
    * @returns A promise that resolves with the response containing the newly added team.
    */
   addTeam(team: IAddTeamRequest): Promise<ITeamResponse | void>;
-
-  // /**
-  //  * Adds a batch of teams with associated files (e.g., for a specific division).
-  //  * @param divisionId The ID of the division the teams belong to.
-  //  * @param teamFile The file containing the team data.
-  //  * @param logoFile The file containing the team logo.
-  //  * @returns A promise that resolves with the response containing the added teams.
-  //  */
-  // addTeamToDivisionIdBatch(
-  //   divisionid: GUID,
-  //   teamFile: File,
-  //   logoFile: File
-  // ): Promise<ITeamResponse | void>;
 
   /**
    * Updates an existing team by its ID.
@@ -206,4 +193,7 @@ export interface ITeamMatchResponse {
  * The filters for fetching teams.
  * @interface TeamFiltered
  */
-export interface TeamFiltered extends IPutTeamRequest, Filtered {}
+export interface TeamFiltered extends IPutTeamRequest, Filtered {
+  stageId?: GUID;
+  tournamentId?: GUID;
+}

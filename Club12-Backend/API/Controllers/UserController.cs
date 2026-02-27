@@ -1,15 +1,15 @@
-﻿using Entities.DTOs.User;
-using Entities.Models.Users;
-
+﻿using Application.DTOs.User.Request;
+using Application.DTOs.User.Response;
+using Application.Interfaces.Services;
+using Domain.Entities.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-
-using Services.Auth;
-using Services.Services.Users;
-
+using System;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
-namespace Club12.API.Controllers;
+namespace API.Controllers;
 
 /// <summary>
 /// Controller for managing users.
