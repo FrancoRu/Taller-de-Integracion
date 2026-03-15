@@ -1,4 +1,5 @@
 import { createContext, ReactNode, useEffect, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   IAddStageRequest,
   IPutStageRequest,
@@ -12,7 +13,6 @@ import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
 import { AxiosError, AxiosResponse } from 'axios';
 import { stageService } from '../service/stage.service';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
-import { fetchAndSetList } from '@/modules/core/utils/comparator';
 
 export const StageContext = createContext<IStageContextProps | undefined>(
   undefined
@@ -25,6 +25,38 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
   const [stages, setStages] = useState<IStageResponse[] | null>(null);
 
   const { setError, setMessage } = useError();
+  const queryClient = useQueryClient();
+
+  const handleUnknownError = (error: unknown) => {
+    if (error instanceof AxiosError) {
+      setError(error);
+      return;
+    }
+
+    setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+  };
+
+  const addStageMutation = useMutation({
+    mutationFn: stageService.addStage,
+  });
+
+  const putStageMutation = useMutation({
+    mutationFn: ({
+      id,
+      stageRequest,
+    }: {
+      id: GUID;
+      stageRequest: IPutStageRequest;
+    }) => stageService.putStageById(id, stageRequest),
+  });
+
+  const deleteStageMutation = useMutation({
+    mutationFn: stageService.deleteStagesById,
+  });
+
+  const generateStagesMutation = useMutation({
+    mutationFn: stageService.generateStages,
+  });
 
   useEffect(() => {
     if (!stage) return;
@@ -37,19 +69,16 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
   ): Promise<IStageResponse | void> => {
     try {
       const res: AxiosResponse<IStageResponse> =
-        await stageService.addStage(stage);
+        await addStageMutation.mutateAsync(stage);
       if (res && res.data) {
         setStage(res.data);
+        queryClient.setQueryData(['stage', 'byId', res.data.id], res);
+        await queryClient.invalidateQueries({ queryKey: ['stage', 'list'] });
         setMessage(res.status, ['Fase creada exitosamente']);
       }
       return res.data;
     } catch (error: unknown) {
-      console.log(error);
-      if (error instanceof AxiosError) {
-        setError(error);
-      } else {
-        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-      }
+      handleUnknownError(error);
     }
   };
 
@@ -59,15 +88,13 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
   ): Promise<boolean | void> => {
     try {
       const res: AxiosResponse<IStageResponse> =
-        await stageService.putStageById(id, stageRequest);
+        await putStageMutation.mutateAsync({ id, stageRequest });
       setStage(res.data);
+      queryClient.setQueryData(['stage', 'byId', id], res);
+      await queryClient.invalidateQueries({ queryKey: ['stage', 'list'] });
       return true;
     } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        setError(error);
-      } else {
-        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-      }
+      handleUnknownError(error);
     }
   };
 
@@ -82,17 +109,17 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
         return existingStage;
       }
 
-      const res: AxiosResponse<IStageResponse> =
-        await stageService.getStagesById(id);
+      const res: AxiosResponse<IStageResponse> = await queryClient.fetchQuery({
+        queryKey: ['stage', 'byId', id],
+        queryFn: async () => await stageService.getStagesById(id),
+      });
+
       if (res && res.data) {
         setStage(res.data);
+        return res.data;
       }
     } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        setError(error);
-      } else {
-        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-      }
+      handleUnknownError(error);
     }
   };
 
@@ -100,33 +127,30 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
     filter: StageFiltered
   ): Promise<GenericResponsePagination<IStageResponse> | void> => {
     try {
-      return await fetchAndSetList<IStageResponse, StageFiltered>({
-        apiCall: f => stageService.getStagesByFilters(f),
-        currentState: stages,
-        setState: setStages,
-        filter: filter,
+      const res = await queryClient.fetchQuery({
+        queryKey: ['stage', 'list', filter],
+        queryFn: async () => await stageService.getStagesByFilters(filter),
       });
-    } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        setError(error);
-      } else {
-        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+
+      if (res?.data?.items) {
+        setStages(res.data.items);
+        return res.data;
       }
+    } catch (error: unknown) {
+      handleUnknownError(error);
     }
   };
 
   const deleteStagesById = async (id: GUID): Promise<void> => {
     try {
-      await stageService.deleteStagesById(id);
+      await deleteStageMutation.mutateAsync(id);
       setStage(null);
       setStages(prev => (prev ? prev.filter(e => e.id !== id) : null));
+      queryClient.removeQueries({ queryKey: ['stage', 'byId', id] });
+      await queryClient.invalidateQueries({ queryKey: ['stage', 'list'] });
       setMessage(204, ['La etapa ha sido eliminada.']);
     } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        setError(error);
-      } else {
-        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-      }
+      handleUnknownError(error);
     }
   };
 
@@ -135,18 +159,15 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
   ): Promise<IStageResponse[] | void> => {
     try {
       const res: AxiosResponse<IStageResponse[]> =
-        await stageService.generateStages(id);
+        await generateStagesMutation.mutateAsync(id);
 
       if (res && res.data) {
         setStages(res.data);
+        await queryClient.invalidateQueries({ queryKey: ['stage', 'list'] });
         return res.data;
       }
     } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        setError(error);
-      } else {
-        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-      }
+      handleUnknownError(error);
     }
   };
 

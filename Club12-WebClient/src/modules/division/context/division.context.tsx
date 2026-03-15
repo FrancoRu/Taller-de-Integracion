@@ -7,6 +7,7 @@ import {
   useCallback,
   useMemo,
 } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { GenericResponsePagination, GUID } from '../../core/types/types';
 import { useError } from '../../error/hooks/error.hock';
 import { divisionService } from '../service/division.service';
@@ -20,7 +21,6 @@ import {
 } from '../type/division';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
-import { fetchAndSetList } from '@/modules/core/utils/comparator';
 
 export const DivisionContext = createContext<IDivisionContextProps | undefined>(
   undefined
@@ -33,6 +33,38 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
   const [divisions, setDivisions] = useState<IDivisionResponse[] | null>(null);
 
   const { setError, setMessage } = useError();
+  const queryClient = useQueryClient();
+
+  const handleUnknownError = (error: unknown) => {
+    if (error instanceof AxiosError) {
+      setError(error);
+      return;
+    }
+
+    setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+  };
+
+  const addDivisionMutation = useMutation({
+    mutationFn: divisionService.addDivision,
+  });
+
+  const generateFixtureMutation = useMutation({
+    mutationFn: divisionService.generateFixtureByDivisionId,
+  });
+
+  const putDivisionMutation = useMutation({
+    mutationFn: ({
+      id,
+      divisionRequest,
+    }: {
+      id: GUID;
+      divisionRequest: IPutDivisionRequest;
+    }) => divisionService.putDivisionById(id, divisionRequest),
+  });
+
+  const deleteDivisionMutation = useMutation({
+    mutationFn: divisionService.deleteDivisionsById,
+  });
 
   useEffect(() => {
     if (!division) return;
@@ -45,37 +77,33 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
     ): Promise<IDivisionResponse | void> => {
       try {
         const res: AxiosResponse<IDivisionResponse> =
-          await divisionService.addDivision(divisionRequest);
+          await addDivisionMutation.mutateAsync(divisionRequest);
         if (res && res.data) {
           setDivision(res.data);
+          queryClient.setQueryData(['division', 'byId', res.data.id], res);
           setMessage(res.status, ['Division creada exitosamente']);
+          await queryClient.invalidateQueries({
+            queryKey: ['division', 'list'],
+          });
           return res.data;
         }
       } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          setError(error);
-        } else {
-          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-        }
+        handleUnknownError(error);
       }
     },
-    [setDivision, setMessage, setError]
+    [addDivisionMutation, queryClient, setMessage]
   );
 
   const generateFixtureByDivisionId = useCallback(
     async (id: GUID): Promise<void> => {
       try {
-        await divisionService.generateFixtureByDivisionId(id);
+        await generateFixtureMutation.mutateAsync(id);
         setMessage(200, ['Fixture generado exitosamente']);
       } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          setError(error);
-        } else {
-          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-        }
+        handleUnknownError(error);
       }
     },
-    [setMessage, setError]
+    [generateFixtureMutation, setMessage]
   );
 
   const putDivisionById = useCallback(
@@ -85,7 +113,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
     ): Promise<boolean | void> => {
       try {
         const res: AxiosResponse<IDivisionResponse> =
-          await divisionService.putDivisionById(id, divisionRequest);
+          await putDivisionMutation.mutateAsync({ id, divisionRequest });
 
         if (res && res.status === 204) {
           setDivision(prev => {
@@ -99,23 +127,26 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
           setMessage(res.status, [
             'La información de la división fue actualizada correctamente',
           ]);
+          await queryClient.invalidateQueries({
+            queryKey: ['division', 'list'],
+          });
           return true;
         } else if (res && res.data) {
           setDivision(res.data);
+          queryClient.setQueryData(['division', 'byId', id], res);
           setMessage(res.status, [
             'La información de la división fue actualizada correctamente',
           ]);
+          await queryClient.invalidateQueries({
+            queryKey: ['division', 'list'],
+          });
           return true;
         }
       } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          setError(error);
-        } else {
-          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-        }
+        handleUnknownError(error);
       }
     },
-    [setDivision, setMessage, setError]
+    [putDivisionMutation, setDivision, setMessage, queryClient]
   );
 
   const getDivisionsById = useCallback(
@@ -131,20 +162,20 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
         }
 
         const res: AxiosResponse<IDivisionResponse> =
-          await divisionService.getDivisionsById(id);
+          await queryClient.fetchQuery({
+            queryKey: ['division', 'byId', id],
+            queryFn: async () => await divisionService.getDivisionsById(id),
+          });
+
         if (res && res.data) {
           setDivision(res.data);
           return res.data;
         }
       } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          setError(error);
-        } else {
-          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-        }
+        handleUnknownError(error);
       }
     },
-    [divisions, setDivision, setError]
+    [divisions, setDivision, queryClient]
   );
 
   const getDivisionsByFilters = useCallback(
@@ -152,56 +183,55 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
       filter: DivisionFiltered
     ): Promise<GenericResponsePagination<IDivisionResponse> | void> => {
       try {
-        return await fetchAndSetList<IDivisionResponse, DivisionFiltered>({
-          apiCall: f => divisionService.getDivisionsByFilters(f),
-          currentState: divisions,
-          setState: setDivisions,
-          filter: filter,
+        const res = await queryClient.fetchQuery({
+          queryKey: ['division', 'list', filter],
+          queryFn: async () =>
+            await divisionService.getDivisionsByFilters(filter),
         });
-      } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          setError(error);
-        } else {
-          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+
+        if (res?.data?.items) {
+          setDivisions(res.data.items);
+          return res.data;
         }
+      } catch (error: unknown) {
+        handleUnknownError(error);
       }
     },
-    [setDivisions, setError, divisions]
+    [setDivisions, queryClient]
   );
 
   const getTopScoresByDivisionId = useCallback(
     async (id: GUID): Promise<DivisionTopScoreResponse[] | void> => {
       try {
         const res: AxiosResponse<DivisionTopScoreResponse[]> =
-          await divisionService.getTopScoresByDivisionId(id);
+          await queryClient.fetchQuery({
+            queryKey: ['division', 'top-scorers', id],
+            queryFn: async () =>
+              await divisionService.getTopScoresByDivisionId(id),
+          });
+
         return res.data;
       } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          setError(error);
-        } else {
-          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-        }
+        handleUnknownError(error);
       }
     },
-    [setError]
+    [queryClient]
   );
 
   const deleteDivisionsById = useCallback(
     async (id: GUID): Promise<void> => {
       try {
-        await divisionService.deleteDivisionsById(id);
+        await deleteDivisionMutation.mutateAsync(id);
         setDivision(null);
         setDivisions(prev => (prev ? prev.filter(e => e.id !== id) : null));
+        queryClient.removeQueries({ queryKey: ['division', 'byId', id] });
+        await queryClient.invalidateQueries({ queryKey: ['division', 'list'] });
         setMessage(204, ['La división ha sido eliminada.']);
       } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          setError(error);
-        } else {
-          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-        }
+        handleUnknownError(error);
       }
     },
-    [setDivision, setDivisions, setMessage, setError]
+    [deleteDivisionMutation, queryClient, setMessage]
   );
 
   const container: IDivisionContextProps = useMemo(

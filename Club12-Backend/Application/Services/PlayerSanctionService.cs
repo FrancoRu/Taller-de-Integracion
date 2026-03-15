@@ -4,7 +4,6 @@ using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Utils.Extensions;
 using Domain.Entities.Models;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;

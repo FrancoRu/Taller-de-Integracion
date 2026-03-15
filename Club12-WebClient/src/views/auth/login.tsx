@@ -9,10 +9,12 @@ import {
   CardContent,
   useTheme,
 } from '@mui/material';
+import { useAuth } from '../../modules/auth/hook/auth.hook';
 
 export default function Login() {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { signIn } = useAuth();
   const [credentials, setCredentials] = useState({
     username: '',
     password: '',
@@ -23,12 +25,10 @@ export default function Login() {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
   };
 
-  const handleLogin = () => {
-    if (
-      credentials.username === 'admin' &&
-      credentials.password === 'password'
-    ) {
-      navigate('/');
+  const handleLogin = async () => {
+    const success = await signIn(credentials);
+    if (success) {
+      navigate('/panel');
     } else {
       setError('Usuario o contraseña incorrectos');
     }

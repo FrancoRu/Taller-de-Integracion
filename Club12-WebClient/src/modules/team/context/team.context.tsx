@@ -6,7 +6,8 @@ import {
   useState,
   useCallback,
   useMemo,
-} from 'react'; // Importamos useCallback y useMemo
+} from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { GenericResponsePagination, GUID } from '../../core/types/types';
 import { useError } from '../../error/hooks/error.hock';
 import { teamService } from '../service/team.service';
@@ -19,7 +20,6 @@ import {
 } from '../type/team.d';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
-import { fetchAndSetList } from '@/modules/core/utils/comparator';
 
 export const TeamContext = createContext<ITeamContextProps | undefined>(
   undefined
@@ -32,70 +32,91 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
   const [teams, setTeams] = useState<ITeamResponse[] | null>(null);
 
   const { setError } = useError();
+  const queryClient = useQueryClient();
+
+  const handleUnknownError = (error: unknown) => {
+    if (error instanceof AxiosError) {
+      setError(error);
+      return;
+    }
+
+    setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+  };
+
+  const addTeamMutation = useMutation({
+    mutationFn: teamService.addTeam,
+  });
+
+  const putTeamMutation = useMutation({
+    mutationFn: ({ id, data }: { id: GUID; data: IPutTeamRequest }) =>
+      teamService.putTeamById(id, data),
+  });
+
+  const putTeamLogoMutation = useMutation({
+    mutationFn: ({ id, logo }: { id: GUID; logo: File }) =>
+      teamService.putTeamLogoById(id, logo),
+  });
+
+  const deleteTeamMutation = useMutation({
+    mutationFn: teamService.deleteTeamById,
+  });
 
   useEffect(() => {
     if (!team) return;
     setTeams(prev => upsertListById(prev, team));
   }, [team]);
 
-  // --- Funciones memoizadas con useCallback ---
-
   const addTeam = useCallback(
     async (teamData: IAddTeamRequest): Promise<ITeamResponse | void> => {
       try {
         const res: AxiosResponse<ITeamResponse> =
-          await teamService.addTeam(teamData);
+          await addTeamMutation.mutateAsync(teamData);
         if (res) {
           setTeam(res.data);
+          queryClient.setQueryData(['team', 'byId', res.data.id], res);
+          await queryClient.invalidateQueries({ queryKey: ['team', 'list'] });
         }
         return res?.data;
       } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          setError(error);
-        } else {
-          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-        }
+        handleUnknownError(error);
       }
     },
-    [setTeam, setError]
+    [addTeamMutation, queryClient]
   );
 
   const putTeamById = useCallback(
     async (id: GUID, data: IPutTeamRequest): Promise<ITeamResponse | void> => {
       try {
-        const res: AxiosResponse<ITeamResponse> = await teamService.putTeamById(
-          id,
-          data
-        );
+        const res: AxiosResponse<ITeamResponse> =
+          await putTeamMutation.mutateAsync({
+            id,
+            data,
+          });
+
         if (res) {
           setTeam(res.data);
+          queryClient.setQueryData(['team', 'byId', id], res);
+          await queryClient.invalidateQueries({ queryKey: ['team', 'list'] });
         }
+        return res?.data;
       } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          setError(error);
-        } else {
-          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-        }
+        handleUnknownError(error);
       }
     },
-    [setTeam, setError]
+    [putTeamMutation, queryClient]
   );
 
   const putTeamLogoById = useCallback(
     async (id: GUID, logo: File): Promise<void> => {
       try {
-        await teamService.putTeamLogoById(id, logo);
-        // Podrías querer actualizar el 'team' o 'teams' después de subir un logo
-        // Por ejemplo: getTeamById(id); o una lógica para actualizar el equipo en 'teams'
+        await putTeamLogoMutation.mutateAsync({ id, logo });
+        await queryClient.invalidateQueries({ queryKey: ['team', 'byId', id] });
+        await queryClient.invalidateQueries({ queryKey: ['team', 'list'] });
       } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          setError(error);
-        } else {
-          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-        }
+        handleUnknownError(error);
       }
     },
-    [setError] // Dependencias: setError. Si actualizas team/teams aquí, agrégalos
+    [putTeamLogoMutation, queryClient]
   );
 
   const getTeamsByFiltered = useCallback(
@@ -103,65 +124,63 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
       filter: TeamFiltered
     ): Promise<GenericResponsePagination<ITeamResponse> | void> => {
       try {
-        return await fetchAndSetList<ITeamResponse, TeamFiltered>({
-          apiCall: f => teamService.getTeamsByFiltered(f),
-          currentState: teams,
-          setState: setTeams,
-          filter: filter,
+        const res = await queryClient.fetchQuery({
+          queryKey: ['team', 'list', filter],
+          queryFn: async () => await teamService.getTeamsByFiltered(filter),
         });
-      } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          setError(error);
-        } else {
-          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+
+        if (res?.data?.items) {
+          setTeams(res.data.items);
+          return res.data;
         }
+      } catch (error: unknown) {
+        handleUnknownError(error);
       }
     },
-    [setTeams, teams, setError] // Dependencias: setTeams (el setter), teams (para el `currentIds` check), setError
+    [queryClient]
   );
 
   const getTeamById = useCallback(
     async (id: GUID): Promise<ITeamResponse | void> => {
       try {
-        const res: AxiosResponse<ITeamResponse> =
-          await teamService.getTeamById(id);
+        const res: AxiosResponse<ITeamResponse> = await queryClient.fetchQuery({
+          queryKey: ['team', 'byId', id],
+          queryFn: async () => await teamService.getTeamById(id),
+        });
+
         if (res) {
           setTeam(res.data);
+          return res.data;
         }
       } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          setError(error);
-        } else {
-          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-        }
+        handleUnknownError(error);
       }
     },
-    [setTeam, setError]
+    [queryClient]
   );
 
   const deleteTeamById = useCallback(
     async (id: GUID): Promise<void> => {
       try {
-        await teamService.deleteTeamById(id);
+        await deleteTeamMutation.mutateAsync(id);
         setTeams(prev => prev?.filter(e => e.id !== id) ?? null);
-      } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          setError(error);
-        } else {
-          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+        if (team?.id === id) {
+          setTeam(null);
         }
+        queryClient.removeQueries({ queryKey: ['team', 'byId', id] });
+        await queryClient.invalidateQueries({ queryKey: ['team', 'list'] });
+      } catch (error: unknown) {
+        handleUnknownError(error);
       }
     },
-    [setTeams, setError] // Dependencias: setTeams, setError
+    [deleteTeamMutation, queryClient, team]
   );
 
-  // --- Objeto de contexto memoizado con useMemo ---
   const container: ITeamContextProps = useMemo(
     () => ({
       team,
       teams,
       addTeam,
-      // addTeamToDivisionIdBatch, // Comentado, por lo tanto no se incluye en las dependencias
       getTeamById,
       getTeamsByFiltered,
       putTeamById,
@@ -177,7 +196,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
       putTeamById,
       putTeamLogoById,
       deleteTeamById,
-    ] // Todas las funciones y estados como dependencias
+    ]
   );
 
   return (

@@ -13,7 +13,6 @@ public interface IUnitOfWork
     IVenueRepository VenueRepository { get; }
     ITournamentRepository TournamentRepository { get; }
     IStageRepository StageRepository { get; }
-    IStaffRepository StaffRepository { get; }
     IPlayerStatisticRepository PlayerStatisticRepository { get; }
     IPlayerSanctionRepository PlayerSanctionRepository { get; }
     IPlayerRepository PlayerRepository { get; }

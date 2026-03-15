@@ -101,12 +101,18 @@ export const buildEndpoint = (resource: string, query?: object): string => {
   const finalResource = `${routes.apiUrl}/${resource}`;
   if (query) {
     const queryParams = Object.entries(query)
+      .filter(
+        ([, value]) => value !== undefined && value !== null && value !== ''
+      )
       .map(
         ([key, value]) =>
-          `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+          `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`
       )
       .join('&');
-    return `${finalResource}?${queryParams}`;
+
+    if (queryParams.length > 0) {
+      return `${finalResource}?${queryParams}`;
+    }
   }
 
   return finalResource;
@@ -208,7 +214,6 @@ export const sendGet = async <T>(
   query?: object
 ): Promise<AxiosResponse<T>> => {
   try {
-    console.log(buildEndpoint(resource, query));
     const result: AxiosResponse<T> = await axios.request({
       method: 'GET',
       url: buildEndpoint(resource, query),

@@ -1,25 +1,18 @@
-﻿using Application.DTOs.User.Response;
-using Domain.Entities.Models;
+﻿using Application.DTOs.Auth.Response;
+using System.Collections.Generic;
+using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Application.Interfaces.Services;
 
 /// <summary>
-/// Service interface for generating and refreshing JWT tokens.
+/// Token generator service (JWT + refresh token).
 /// </summary>
+/// <remarks>
+/// This service is framework-agnostic (no Identity types). It only needs a set of claims.
+/// </remarks>
 public interface IAuthService
 {
-    /// <summary>
-    /// Generates a JWT token for the given user.
-    /// </summary>
-    /// <param name="userEntity">The user entity for which to generate the token.</param>
-    /// <returns>A <see cref="TokenResponse"/> containing the generated JWT access token and refresh token.</returns>
-    Task<TokenResponse> GenerateJwtTokenAsync(User userEntity);
-
-    /// <summary>
-    /// Refreshes the JWT token using the provided refresh token.
-    /// </summary>
-    /// <param name="userEntity">The user entity associated with the refresh token.</param>
-    /// <returns>A <see cref="TokenResponse"/> containing the refreshed JWT access token and a new refresh token.</returns>
-    Task<TokenResponse> RefreshJwtTokenAsync(User userEntity);
+    Task<TokenResponse> GenerateJwtTokenAsync(IEnumerable<Claim> claims, CancellationToken ct = default);
 }

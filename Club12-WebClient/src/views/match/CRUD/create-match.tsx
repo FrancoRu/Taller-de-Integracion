@@ -2,7 +2,7 @@ import { GUID } from '@/modules/core/types/types';
 import { useError } from '@/modules/error/hooks/error.hock';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import { IAddMatchRequest } from '@/modules/match/type/match';
-import { TypeMatch } from '@/modules/core/enum/match/typeMatch';
+import { MatchType } from '@/modules/core/enum/match/matchType';
 import { useStage } from '@/modules/stage/hook/stage.hook';
 import { GUID_EMPTY } from '@/views/core/constants/const';
 import { CustomBox } from '@/views/core/MUI/customsThemes/CustomBox';
@@ -30,7 +30,7 @@ export const CreateMatch: React.FC = () => {
 
   const [form, setForm] = useState<IAddMatchRequest>({
     matchDate: '',
-    type: TypeMatch.Regular,
+    type: MatchType.Regular,
     homeTeamid: GUID_EMPTY,
     visitorTeamid: GUID_EMPTY,
     stageId: stage?.id as GUID,

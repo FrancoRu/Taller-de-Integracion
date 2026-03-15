@@ -1,5 +1,6 @@
 import { AxiosError, AxiosResponse } from 'axios';
 import React, { createContext, ReactNode } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { GenericResponsePagination, GUID } from '../../core/types/types';
 import { useError } from '../../error/hooks/error.hock';
 import { blogPostService } from '../service/blogPost.service';
@@ -20,16 +21,49 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const { setError, setMessage } = useError();
+  const queryClient = useQueryClient();
+
+  const handleUnknownError = (error: unknown) => {
+    if (error instanceof AxiosError) {
+      setError(error);
+      return;
+    }
+
+    setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+  };
+
+  const addBlogPostMutation = useMutation({
+    mutationFn: blogPostService.addBlogPost,
+  });
+
+  const putBlogPostMutation = useMutation({
+    mutationFn: ({ id, post }: { id: GUID; post: UpdateBlogPostRequest }) =>
+      blogPostService.putBlogPostById(id, post),
+  });
+
+  const putPhotoBlogPostMutation = useMutation({
+    mutationFn: ({ id, photo }: { id: GUID; photo: File }) =>
+      blogPostService.putPhotoBlogPostById(id, photo),
+  });
+
+  const deleteBlogPostMutation = useMutation({
+    mutationFn: blogPostService.deleteBlogPostById,
+  });
 
   const addBlogPost = async (
     post: CreateBlogPostRequest
   ): Promise<BlogPostResponse | void> => {
     try {
       const response: AxiosResponse<BlogPostResponse> =
-        await blogPostService.addBlogPost(post);
+        await addBlogPostMutation.mutateAsync(post);
 
       if (response && response.data) {
         setMessage(response.status, ['Blog Post created successfully']);
+        queryClient.setQueryData(
+          ['blogPost', 'byId', response.data.id],
+          response
+        );
+        await queryClient.invalidateQueries({ queryKey: ['blogPost', 'list'] });
         return response.data;
       }
 
@@ -40,11 +74,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
         response
       );
     } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        setError(error);
-      } else {
-        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-      }
+      handleUnknownError(error);
     }
   };
 
@@ -53,25 +83,26 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
     post: UpdateBlogPostRequest
   ): Promise<BlogPostResponse | void> => {
     try {
-      await blogPostService.putBlogPostById(id, post);
-    } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        setError(error);
-      } else {
-        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+      const response = await putBlogPostMutation.mutateAsync({ id, post });
+      if (response?.data) {
+        queryClient.setQueryData(['blogPost', 'byId', id], response);
+        await queryClient.invalidateQueries({ queryKey: ['blogPost', 'list'] });
+        return response.data;
       }
+    } catch (error: unknown) {
+      handleUnknownError(error);
     }
   };
 
   const putPhotoBlogPostById = async (id: GUID, photo: File): Promise<void> => {
     try {
-      await blogPostService.putPhotoBlogPostById(id, photo);
+      await putPhotoBlogPostMutation.mutateAsync({ id, photo });
+      await queryClient.invalidateQueries({
+        queryKey: ['blogPost', 'byId', id],
+      });
+      await queryClient.invalidateQueries({ queryKey: ['blogPost', 'list'] });
     } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        setError(error);
-      } else {
-        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-      }
+      handleUnknownError(error);
     }
   };
 
@@ -79,13 +110,14 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
     id: GUID
   ): Promise<BlogPostResponse | void> => {
     try {
-      await blogPostService.getBlogPostsById(id);
+      const response = await queryClient.fetchQuery({
+        queryKey: ['blogPost', 'byId', id],
+        queryFn: async () => await blogPostService.getBlogPostsById(id),
+      });
+
+      return response?.data;
     } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        setError(error);
-      } else {
-        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-      }
+      handleUnknownError(error);
     }
   };
 
@@ -93,26 +125,25 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
     filter: GetBlogPostsFilteredRequest
   ): Promise<GenericResponsePagination<BlogPostResponse> | void> => {
     try {
-      const response = await blogPostService.getBlogPostsByFilters(filter);
+      const response = await queryClient.fetchQuery({
+        queryKey: ['blogPost', 'list', filter],
+        queryFn: async () =>
+          await blogPostService.getBlogPostsByFilters(filter),
+      });
+
       return response?.data;
     } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        setError(error);
-      } else {
-        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-      }
+      handleUnknownError(error);
     }
   };
 
   const deleteBlogPostById = async (id: GUID): Promise<void> => {
     try {
-      await blogPostService.deleteBlogPostById(id);
+      await deleteBlogPostMutation.mutateAsync(id);
+      queryClient.removeQueries({ queryKey: ['blogPost', 'byId', id] });
+      await queryClient.invalidateQueries({ queryKey: ['blogPost', 'list'] });
     } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        setError(error);
-      } else {
-        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-      }
+      handleUnknownError(error);
     }
   };
   const container: IBlogPostContextProps = {

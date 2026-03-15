@@ -1,5 +1,6 @@
 import { AxiosError, AxiosResponse } from 'axios';
 import React, { createContext, ReactNode, useEffect, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { GenericResponsePagination, GUID } from '../../core/types/types';
 import { useError } from '../../error/hooks/error.hock';
 import { playerSanctionService } from '../service/playerSanction.service';
@@ -12,7 +13,6 @@ import {
 } from '../type/playerSanction.d';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
-import { fetchAndSetList } from '@/modules/core/utils/comparator';
 
 export const PlayerSanctionContext = createContext<
   IPlayerSanctionContextProps | undefined
@@ -28,6 +28,34 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
   >(null);
 
   const { setError } = useError();
+  const queryClient = useQueryClient();
+
+  const handleUnknownError = (error: unknown) => {
+    if (error instanceof AxiosError) {
+      setError(error);
+      return;
+    }
+
+    setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+  };
+
+  const addPlayerSanctionMutation = useMutation({
+    mutationFn: playerSanctionService.addPlayerSanction,
+  });
+
+  const putPlayerSanctionMutation = useMutation({
+    mutationFn: ({
+      id,
+      sanction,
+    }: {
+      id: GUID;
+      sanction: IPutPlayerSanction;
+    }) => playerSanctionService.putPlayerSanctionById(id, sanction),
+  });
+
+  const deletePlayerSanctionMutation = useMutation({
+    mutationFn: playerSanctionService.deletePlayerSanction,
+  });
 
   useEffect(() => {
     if (!playerSanction) return;
@@ -42,17 +70,17 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
   ): Promise<IPlayerSanctionResponse | void> => {
     try {
       const res: AxiosResponse<IPlayerSanctionResponse> =
-        await playerSanctionService.addPlayerSanction(sanction);
+        await addPlayerSanctionMutation.mutateAsync(sanction);
       if (res) {
         setPlayerSanction(res.data);
+        queryClient.setQueryData(['playerSanction', 'byId', res.data.id], res);
+        await queryClient.invalidateQueries({
+          queryKey: ['playerSanction', 'list'],
+        });
       }
       return res.data;
     } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        setError(error);
-      } else {
-        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-      }
+      handleUnknownError(error);
     }
   };
 
@@ -61,18 +89,18 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
   ): Promise<IPlayerSanctionResponse | void> => {
     try {
       const res: AxiosResponse<IPlayerSanctionResponse> =
-        await playerSanctionService.getPlayerSanctionById(id);
+        await queryClient.fetchQuery({
+          queryKey: ['playerSanction', 'byId', id],
+          queryFn: async () =>
+            await playerSanctionService.getPlayerSanctionById(id),
+        });
 
       if (res) {
         setPlayerSanction(res.data);
       }
       return res.data;
     } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        setError(error);
-      } else {
-        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-      }
+      handleUnknownError(error);
     }
   };
 
@@ -80,21 +108,18 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
     filter: IPlayerSanctionFiltered
   ): Promise<GenericResponsePagination<IPlayerSanctionResponse> | void> => {
     try {
-      return await fetchAndSetList<
-        IPlayerSanctionResponse,
-        IPlayerSanctionFiltered
-      >({
-        apiCall: f => playerSanctionService.getPlayerSanctionByFilter(f),
-        currentState: playerSanctions,
-        setState: setPlayerSanctions,
-        filter: filter,
+      const res = await queryClient.fetchQuery({
+        queryKey: ['playerSanction', 'list', filter],
+        queryFn: async () =>
+          await playerSanctionService.getPlayerSanctionByFilter(filter),
       });
-    } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        setError(error);
-      } else {
-        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+
+      if (res?.data?.items) {
+        setPlayerSanctions(res.data.items);
+        return res.data;
       }
+    } catch (error: unknown) {
+      handleUnknownError(error);
     }
   };
 
@@ -104,34 +129,34 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
   ): Promise<IPlayerSanctionResponse | void> => {
     try {
       const res: AxiosResponse<IPlayerSanctionResponse> =
-        await playerSanctionService.putPlayerSanctionById(id, sanction);
+        await putPlayerSanctionMutation.mutateAsync({ id, sanction });
       if (res) {
         setPlayerSanction(res.data);
+        queryClient.setQueryData(['playerSanction', 'byId', id], res);
+        await queryClient.invalidateQueries({
+          queryKey: ['playerSanction', 'list'],
+        });
       }
       return res.data;
     } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        setError(error);
-      } else {
-        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-      }
+      handleUnknownError(error);
     }
   };
 
   const deletePlayerSanction = async (id: GUID): Promise<void> => {
     try {
-      await playerSanctionService.deletePlayerSanction(id);
+      await deletePlayerSanctionMutation.mutateAsync(id);
       if (playerSanction?.id != id) {
         setPlayerSanction(playerSanctions?.find(e => e.id == id) ?? null);
       }
       setPlayerSanction(null);
       removeToList(id);
+      queryClient.removeQueries({ queryKey: ['playerSanction', 'byId', id] });
+      await queryClient.invalidateQueries({
+        queryKey: ['playerSanction', 'list'],
+      });
     } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        setError(error);
-      } else {
-        setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-      }
+      handleUnknownError(error);
     }
   };
 

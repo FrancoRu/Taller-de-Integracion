@@ -103,6 +103,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     {
         return new Stage
         {
+            Id = Guid.Empty,
             Name = template.Name,
             Description = template.Description,
             StageType = stageType,
@@ -112,7 +113,9 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
             EndDate = startDate.AddDays(StageTemplate.DurationDays * daysMultiplier),
             Division = division,
             DivisionId = division.Id,
-            Matches = []
+            Matches = [],
+            DateCreated = DateTime.UtcNow,
+            CreatedBy = "System",
         };
     }
 
@@ -231,9 +234,11 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
 
             newItems = [.. filteredIds.Select(teamId => new StageTeamMatch
             {
+                Id = Guid.Empty,
                 StageId = stage.Id,
                 TeamId = teamId,
                 DateCreated = DateTime.UtcNow,
+                CreatedBy = "System",
             })];
         }
         else
@@ -247,8 +252,10 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
 
             newItems = [.. teams.Select(t => new StageTeamMatch
             {
+                Id = Guid.Empty,
                 StageId = stage.Id,
                 TeamId = t.Id,
+                CreatedBy = "System",
                 DateCreated = DateTime.UtcNow,
             })];
         }

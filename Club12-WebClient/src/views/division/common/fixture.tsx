@@ -1,12 +1,25 @@
 import React, { useMemo, useState } from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import Slide from '@mui/material/Slide';
-import { IMatchResponse, TypeMatch } from '@/modules/match/type/match.d';
+import { IMatchResponse } from '@/modules/match/type/match.d';
 import dayjs from 'dayjs';
-import { IDashboardStage } from '@/modules/stage/type/stage.d';
+import { IDashboardStage, IStageResponse } from '@/modules/stage/type/stage.d';
+import { GUID } from '@/modules/core/types/types';
+
+interface StageWithMatches extends IStageResponse {
+  matchesByWeek?: IMatchResponse[];
+}
+
+interface FixtureRow {
+  id: string;
+  matchDate: string;
+  venueName: string;
+  homeTeam: IMatchResponse['homeTeam'];
+  visitorTeam: IMatchResponse['visitorTeam'];
+}
 
 const TeamCell: React.FC<{
-  id: GUID;
+  id?: GUID;
   name: string;
   logoUrl: string;
   score?: number;
@@ -14,7 +27,7 @@ const TeamCell: React.FC<{
   if (!name) return null;
   return (
     <div
-      id={id}
+      id={id ?? ''}
       style={{ display: 'flex', alignItems: 'center', gap: 8 }}
       aria-label={`Equipo ${name}`}
     >
@@ -78,55 +91,52 @@ const PaginationButtons: React.FC<{
 );
 
 export const Fixture: React.FC<IDashboardStage> = ({ stages }) => {
+  const stagesWithMatches = stages as StageWithMatches[];
   const [currentPage, setCurrentPage] = useState(0);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right'>(
     'left'
   );
 
   const currentDivision = useMemo(() => {
-    if (!stages || stages.length === 0) return null;
-    const index = stages.length - 1 - currentPage;
-    return stages[index] ?? null;
-  }, [currentPage, stages]);
+    if (!stagesWithMatches || stagesWithMatches.length === 0) return null;
+    const index = stagesWithMatches.length - 1 - currentPage;
+    return stagesWithMatches[index] ?? null;
+  }, [currentPage, stagesWithMatches]);
 
   const maxPageSize = useMemo(() => {
-    if (!stages) return 0;
-    return Math.max(...stages.map(d => d.matchesByWeek?.length ?? 0), 0);
-  }, [stages]);
+    if (!stagesWithMatches) return 0;
+    return Math.max(
+      ...stagesWithMatches.map(d => d.matchesByWeek?.length ?? 0),
+      0
+    );
+  }, [stagesWithMatches]);
 
   const paddedRows = useMemo(() => {
-    if (!currentDivision) return [];
-    const matches = currentDivision.matchesByWeek ?? [];
-    const emptyCount = maxPageSize - matches.length;
+    if (!currentDivision) return [] as FixtureRow[];
 
-    const filler = Array.from({ length: emptyCount }, (_, i) => ({
-      id: `empty-empty-empty-empty-${i}`,
-      matchDate: '',
-      type: TypeMatch.Regular,
-      matchWeek: 0,
-      homeTeamId: '',
-      homeTeamName: '',
-      homeTeamLogoUrl: '',
-      visitorTeamId: '',
-      visitorTeamName: '',
-      visitorTeamLogoUrl: '',
-      homeScore: 0,
-      visitorScore: 0,
-      isFinished: false,
-      winningTeamName: '',
-      venue: {
-        id: '',
-        name: '',
-        address: '',
-        photoUrl: '',
-      },
-      isEmpty: true,
+    const matches = currentDivision.matchesByWeek ?? [];
+    const mappedMatches: FixtureRow[] = matches.map(match => ({
+      id: match.id,
+      matchDate: match.matchDate,
+      venueName: match.venue?.name ?? '',
+      homeTeam: match.homeTeam,
+      visitorTeam: match.visitorTeam,
     }));
 
-    return [...matches, ...filler];
+    const emptyCount = Math.max(maxPageSize - mappedMatches.length, 0);
+
+    const filler: FixtureRow[] = Array.from({ length: emptyCount }, (_, i) => ({
+      id: `empty-empty-empty-empty-${i}`,
+      matchDate: '',
+      venueName: '',
+      homeTeam: null,
+      visitorTeam: null,
+    }));
+
+    return [...mappedMatches, ...filler];
   }, [currentDivision, maxPageSize]);
 
-  const columns: GridColDef<IMatchResponse>[] = useMemo(
+  const columns: GridColDef<FixtureRow>[] = useMemo(
     () => [
       {
         field: 'date',
@@ -142,7 +152,7 @@ export const Fixture: React.FC<IDashboardStage> = ({ stages }) => {
         field: 'venue',
         headerName: 'Cancha',
         flex: 1,
-        valueGetter: params => params.row.venue.name || '',
+        valueGetter: params => params.row.venueName,
         sortable: false,
       },
       {
@@ -152,10 +162,10 @@ export const Fixture: React.FC<IDashboardStage> = ({ stages }) => {
         sortable: false,
         renderCell: params => (
           <TeamCell
-            id={params.row.homeTeamId}
-            name={params.row.homeTeamName}
-            logoUrl={params.row.homeTeamLogoUrl}
-            score={params.row.homeScore}
+            id={params.row.homeTeam?.id}
+            name={params.row.homeTeam?.name ?? ''}
+            logoUrl={params.row.homeTeam?.logoUrl ?? ''}
+            score={params.row.homeTeam?.score}
           />
         ),
       },
@@ -166,10 +176,10 @@ export const Fixture: React.FC<IDashboardStage> = ({ stages }) => {
         sortable: false,
         renderCell: params => (
           <TeamCell
-            id={params.row.visitorTeamId}
-            name={params.row.visitorTeamName}
-            logoUrl={params.row.visitorTeamLogoUrl}
-            score={params.row.visitorScore}
+            id={params.row.visitorTeam?.id}
+            name={params.row.visitorTeam?.name ?? ''}
+            logoUrl={params.row.visitorTeam?.logoUrl ?? ''}
+            score={params.row.visitorTeam?.score}
           />
         ),
       },

@@ -5,7 +5,6 @@ using Application.Interfaces.Services;
 using Application.Utils.Extensions;
 using Domain.Entities.Models;
 using Domain.Enums;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -151,7 +150,8 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
                     VisitorTeam = match.away,
                     Type = MatchType.Regular,
                     IsFinished = false,
-                    MatchDate = currentMatchDate
+                    MatchDate = currentMatchDate,
+                    CreatedBy = "System",
                 }))];
 
         currentMatchDate = currentMatchDate.AddDays(7 * firstRoundMatches.Count);
@@ -166,7 +166,8 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
                     VisitorTeam = match.home,
                     Type = MatchType.Regular,
                     IsFinished = false,
-                    MatchDate = currentMatchDate
+                    MatchDate = currentMatchDate,
+                    CreatedBy = "System",
                 }))];
 
         List<Match> allMatches = [.. firstRoundMatches, .. secondRoundMatches];
@@ -205,7 +206,8 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
             StageId = stage.Id,
             Type = matchType,
             IsFinished = false,
-            MatchDate = matchDate
+            MatchDate = matchDate,
+            CreatedBy = "System"
         };
 
     private static async Task<List<Match>> CreateGroupStageMatchesAsync(Stage stage, int totalTeams = 4)
@@ -285,53 +287,5 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
         return matchDates;
     }
 
-    /// <summary>
-    /// Generates all matches for a given series and team pair.
-    /// </summary>
-    private static List<Match> GenerateAllMatches(List<PlayoffSerie> PlayoffSerie, List<List<Team>> pairedTeams, Guid divisionId, DateTime startDate)
-    {
-        List<Match> allMatches = [];
-
-        foreach (PlayoffSerie series in PlayoffSerie)
-        {
-            foreach (List<Team> teamPair in pairedTeams)
-            {
-                List<Match> matches = GenerateMatchesForSeries(series, teamPair, divisionId, startDate);
-                allMatches.AddRange(matches);
-            }
-
-            pairedTeams = [.. pairedTeams.Select(pair => new List<Team> { pair[0], pair[1] })];
-        }
-
-        return allMatches;
-    }
-
-    /// <summary>
-    /// Generates matches for a given series and team pair.
-    /// </summary>
-    private static List<Match> GenerateMatchesForSeries(PlayoffSerie series, List<Team> teamPair, Guid divisionId, DateTime startDate)
-    {
-        List<Match> matches = [];
-
-        Team homeTeam = teamPair[0];
-        Team awayTeam = teamPair[1];
-
-        for (int gameNumber = 1; gameNumber <= 3; gameNumber++)
-        {
-            Match match = new()
-            {
-                HomeTeamId = homeTeam.Id,
-                VisitorTeamId = awayTeam.Id,
-                HomeTeam = homeTeam,
-                VisitorTeam = awayTeam,
-                Type = MatchType.Playoff,
-                IsFinished = false,
-                MatchDate = startDate.AddDays((gameNumber - 1) * 2)
-            };
-
-            matches.Add(match);
-        }
-
-        return matches;
-    }
+    
 }

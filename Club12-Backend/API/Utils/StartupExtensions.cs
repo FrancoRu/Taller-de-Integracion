@@ -5,9 +5,12 @@ using Application.Interfaces.Services;
 using Application.Services;
 using Application.Utils.Helper.SupabaseHelper;
 using Domain;
-using Infrastructure;
+using Domain.Enums;
+using Infrastructure.Identity;
+using Infrastructure.Persistance;
 using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,6 +25,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 namespace API.Utils;
 
@@ -74,13 +78,24 @@ public static class StartupExtensions
     }
 
     /// <summary>
-    /// Executes database migrations at application startup.
+    /// Runs EF migrations for both <see cref="ApplicationDBContext"/> and <see cref="IdentityAppDbContext"/>,
+    /// then seeds the initial admin user.
     /// </summary>
-    public static void ExecuteMigrations(this WebApplication app)
+    public static async Task ExecuteMigrationsAndSeedAsync(this WebApplication app)
     {
-        using IServiceScope scope = app.Services.CreateScope();
+        await using AsyncServiceScope scope = app.Services.CreateAsyncScope();
+
+        // Main domain DB
         ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
-        db.Database.Migrate();
+        await db.Database.MigrateAsync();
+
+        // Identity DB
+        IdentityAppDbContext identityDb = scope.ServiceProvider.GetRequiredService<IdentityAppDbContext>();
+        await identityDb.Database.MigrateAsync();
+
+        // Seed admin user
+        IdentitySeeder seeder = scope.ServiceProvider.GetRequiredService<IdentitySeeder>();
+        await seeder.SeedAsync();
     }
 
     /// <summary>
@@ -104,33 +119,30 @@ public static class StartupExtensions
         app.UseExceptionHandler();
     }
 
-    // Autorización
-    private static readonly Dictionary<string, string> _roles = new()
-    {
-        { "SuperAdmin", "SuperAdmin" }
-    };
+    // One policy per domain role — single source of truth via UserRoleType enum.
+    private static readonly string[] _roleNames =
+    [
+        UserRoleType.ADMIN.ToRoleName(),
+        UserRoleType.OWNER.ToRoleName(),
+        UserRoleType.TOURNAMENT_MANAGER.ToRoleName(),
+        UserRoleType.TEAM_MANAGER.ToRoleName(),
+        UserRoleType.GUEST.ToRoleName(),
+    ];
 
     /// <summary>
-    /// Adds custom authorization policies based on predefined roles.
+    /// Adds custom authorization policies based on <see cref="UserRoleType"/> domain roles.
     /// </summary>
     public static IServiceCollection AddCustomAuthorization(this IServiceCollection services)
     {
-
         services.AddAuthorization(options =>
         {
-            _roles.ToList().ForEach(role =>
-            {
-                options.AddPolicy(role.Key, policy =>
-                {
-                    policy.RequireRole(role.Value);
-                });
-            });
+            foreach (string role in _roleNames)
+                options.AddPolicy(role, policy => policy.RequireRole(role));
         });
 
         return services;
     }
 
-    // Autenticación
     /// <summary>
     /// Adds and configures JWT authentication for the application.
     /// </summary>
@@ -147,20 +159,19 @@ public static class StartupExtensions
         {
             options.TokenValidationParameters = new TokenValidationParameters
             {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
+                ValidateIssuer           = true,
+                ValidateAudience         = true,
+                ValidateLifetime         = true,
                 ValidateIssuerSigningKey = true,
-                ValidIssuer = configuration["JWT:Issuer"],
-                ValidAudience = configuration["JWT:Audience"],
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
+                ValidIssuer              = configuration["JWT:Issuer"],
+                ValidAudience            = configuration["JWT:Audience"],
+                IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
             };
         });
 
         return services;
     }
 
-    // Middleware de logging
     /// <summary>
     /// Adds middleware for logging requests to the request context if enabled in configuration.
     /// </summary>
@@ -179,7 +190,6 @@ public static class StartupExtensions
         return app;
     }
 
-    // JSON options
     /// <summary>
     /// Adds custom JSON serialization options for MVC, including enum and date converters.
     /// </summary>
@@ -193,7 +203,6 @@ public static class StartupExtensions
         });
     }
 
-    // Swagger
     /// <summary>
     /// Adds and configures Swagger for API documentation, including security definitions and schema filters.
     /// </summary>
@@ -203,7 +212,7 @@ public static class StartupExtensions
         {
             context.SwaggerDoc("v1", new OpenApiInfo
             {
-                Title = configuration["Swagger:Title"],
+                Title   = configuration["Swagger:Title"],
                 Version = configuration["Swagger:Version"],
             });
 
@@ -214,10 +223,10 @@ public static class StartupExtensions
             context.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below.",
-                Name = "Authorization",
-                In = ParameterLocation.Header,
-                Type = SecuritySchemeType.ApiKey,
-                Scheme = "Bearer"
+                Name        = "Authorization",
+                In          = ParameterLocation.Header,
+                Type        = SecuritySchemeType.ApiKey,
+                Scheme      = "Bearer"
             });
 
             context.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -225,14 +234,10 @@ public static class StartupExtensions
                 {
                     new OpenApiSecurityScheme
                     {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "Bearer"
-                        },
-                        Scheme = "oauth2",
-                        Name = "Bearer",
-                        In = ParameterLocation.Header
+                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" },
+                        Scheme    = "oauth2",
+                        Name      = "Bearer",
+                        In        = ParameterLocation.Header
                     },
                     new List<string>()
                 }
@@ -240,7 +245,7 @@ public static class StartupExtensions
 
             context.SchemaFilter<DisplayEnumSchemaFilter>();
         });
-        
+
         return services;
     }
 
@@ -254,53 +259,84 @@ public static class StartupExtensions
     }
 
     /// <summary>
+    /// Registers Identity DbContext, ASP.NET Core Identity services, <see cref="IAuthenticationService"/>,
+    /// and <see cref="IdentitySeeder"/>.
+    /// </summary>
+    public static IServiceCollection AddIdentityConfig(this IServiceCollection services, IConfiguration configuration)
+    {
+        string? connectionString = configuration.GetConnectionString("DbConnection");
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new ArgumentException("The connection string should be initialized already.");
+
+        services.AddDbContext<IdentityAppDbContext>(options => options.UseNpgsql(connectionString));
+
+        services.AddIdentityCore<ApplicationUser>(options =>
+        {
+            options.User.RequireUniqueEmail = true;
+        })
+            .AddRoles<IdentityRole<Guid>>()
+            .AddEntityFrameworkStores<IdentityAppDbContext>()
+            .AddSignInManager()
+            .AddDefaultTokenProviders();
+
+        services.AddScoped<IAuthenticationService, IdentityAuthenticationService>();
+        services.AddScoped<IdentitySeeder>();
+
+        return services;
+    }
+
+    /// <summary>
     /// Registers scoped services and repositories for dependency injection using reflection.
     /// </summary>
     public static IServiceCollection RegisterScoped(this IServiceCollection services)
     {
-        string? serviceInterfaceNamespace = typeof(IDivisionService).Namespace;
-        string? serviceImplNamespace = typeof(DivisionService).Namespace;
+        string? serviceInterfaceNamespace   = typeof(IDivisionService).Namespace;
+        string? serviceImplNamespace        = typeof(DivisionService).Namespace;
         string? repositoryInterfaceNamespace = typeof(IBlogPostRepository).Namespace;
-        string? repositoryImplNamespace = typeof(BlogPostRepository).Namespace;
-        string serviceSuffix = "Service";
-        string repositorySuffix = "Repository";
-        string interfacePrefix = "I";
+        string? repositoryImplNamespace     = typeof(BlogPostRepository).Namespace;
+        string  serviceSuffix               = "Service";
+        string  repositorySuffix            = "Repository";
+        string  interfacePrefix             = "I";
 
-        ArgumentNullException.ThrowIfNull(serviceInterfaceNamespace, "Service interface namespace cannot be null.");
-        ArgumentNullException.ThrowIfNull(serviceImplNamespace, "Service implementation namespace cannot be null.");
+        ArgumentNullException.ThrowIfNull(serviceInterfaceNamespace,    "Service interface namespace cannot be null.");
+        ArgumentNullException.ThrowIfNull(serviceImplNamespace,         "Service implementation namespace cannot be null.");
         ArgumentNullException.ThrowIfNull(repositoryInterfaceNamespace, "Repository interface namespace cannot be null.");
-        ArgumentNullException.ThrowIfNull(repositoryImplNamespace, "Repository implementation namespace cannot be null.");
+        ArgumentNullException.ThrowIfNull(repositoryImplNamespace,      "Repository implementation namespace cannot be null.");
 
-        Assembly serviceAssembly = typeof(AuthService).Assembly;
+        Assembly serviceAssembly  = typeof(AuthService).Assembly;
         Assembly IServiceAssembly = typeof(IAuthService).Assembly;
-        Assembly repoAssembly = typeof(BlogPostRepository).Assembly;
-        Assembly IRepoAssembly = typeof(IBlogPostRepository).Assembly;
+        Assembly repoAssembly     = typeof(BlogPostRepository).Assembly;
+        Assembly IRepoAssembly    = typeof(IBlogPostRepository).Assembly;
 
         IEnumerable<Type> serviceInterfaces = IServiceAssembly.GetTypes()
-            .Where(t => t.IsInterface && t.Namespace == serviceInterfaceNamespace && t.Name.StartsWith(interfacePrefix) && t.Name.EndsWith(serviceSuffix));
+            .Where(t => t.IsInterface && t.Namespace == serviceInterfaceNamespace
+                     && t.Name.StartsWith(interfacePrefix) && t.Name.EndsWith(serviceSuffix));
 
         foreach (Type iface in serviceInterfaces)
         {
             Type? implementation = serviceAssembly.GetTypes()
-                .FirstOrDefault(t => t.IsClass && !t.IsAbstract && t.Namespace == serviceImplNamespace && t.Name == iface.Name[1..]);
-            if (implementation != null)
-            {
+                .FirstOrDefault(t => t.IsClass && !t.IsAbstract
+                                  && t.Namespace == serviceImplNamespace
+                                  && t.Name == iface.Name[1..]);
+            if (implementation is not null)
                 services.AddScoped(iface, implementation);
-            }
         }
 
         IEnumerable<Type> repoInterfaces = IRepoAssembly.GetTypes()
-            .Where(t => t.IsInterface && t.Namespace == repositoryInterfaceNamespace && t.Name.StartsWith(interfacePrefix) && t.Name.EndsWith(repositorySuffix));
+            .Where(t => t.IsInterface && t.Namespace == repositoryInterfaceNamespace
+                     && t.Name.StartsWith(interfacePrefix) && t.Name.EndsWith(repositorySuffix));
 
         foreach (Type iface in repoInterfaces)
         {
             Type? implementation = repoAssembly.GetTypes()
-                .FirstOrDefault(t => t.IsClass && !t.IsAbstract && t.Namespace == repositoryImplNamespace && t.Name == iface.Name[1..]);
-            if (implementation != null)
-            {   
+                .FirstOrDefault(t => t.IsClass && !t.IsAbstract
+                                  && t.Namespace == repositoryImplNamespace
+                                  && t.Name == iface.Name[1..]);
+            if (implementation is not null)
                 services.AddScoped(iface, implementation);
-            }
         }
+
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
         return services;
-    }       
+    }
 }

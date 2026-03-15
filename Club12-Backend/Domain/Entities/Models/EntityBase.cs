@@ -1,30 +1,25 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain.Entities.Models;
 
-/// <summary>
-/// Represents the base class for all entities.
-/// </summary>
+/// <summary>Base class for all domain entities.</summary>
 public abstract class EntityBase
 {
     /// <summary>
     /// The unique identifier of the entity.
     /// </summary>
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public Guid Id { get; set; }
+    public Guid Id { get; set; } = Guid.Empty;
 
     /// <summary>
     /// The date when the entity was created.
     /// </summary>
-    [Required]
-    [Column("DateCreated")]
-    public DateTime DateCreated { get; set; }
+    public DateTime DateCreated { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// The date when the entity was last updated.
     /// </summary>
-    [Column("DateUpdated")]
     public DateTime? DateUpdated { get; set; }
+
+    public required string CreatedBy { get; set; } = "system";
+    public string? UpdatedBy { get; set; }
 }

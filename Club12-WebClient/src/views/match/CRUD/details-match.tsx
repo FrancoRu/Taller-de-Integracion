@@ -22,7 +22,6 @@ import { IErrorContextProp } from '@/modules/error/type/error';
 import { RenderTeamMatch } from '@/views/team/CRUD/detail-team';
 import { MatchStatusChip } from '../util/matchStatusChip';
 import { InfoPlayerSanction } from '@/views/playerSanction/info';
-import { match } from 'assert';
 
 export const DetailMatch: React.FC = () => {
   const { matchId: id } = useParams<{ matchId: GUID }>();
@@ -59,6 +58,16 @@ const RenderMatchDetails: React.FC<IMatchResponse> = ({
   const navigate = useNavigate();
   const [showPopupDelete, setShowPopupDelete] = useState(false);
   const { deleteMatchById }: IMatchContextProps = useMatch();
+  const safeHomeTeam = homeTeam ?? null;
+  const safeVisitorTeam = visitorTeam ?? null;
+  const homeScore = safeHomeTeam?.score ?? 0;
+  const visitorScore = safeVisitorTeam?.score ?? 0;
+  const winnerTeam =
+    isFinished && winningTeamId && safeHomeTeam && safeVisitorTeam
+      ? winningTeamId === safeHomeTeam.id
+        ? safeHomeTeam
+        : safeVisitorTeam
+      : null;
   return (
     <>
       <Card sx={{ width: '98%', mx: 'auto', px: { xs: 2, sm: 3, md: 4 } }}>
@@ -73,8 +82,7 @@ const RenderMatchDetails: React.FC<IMatchResponse> = ({
                   <strong>Tipo de partido:</strong> {matchType}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  <strong>Resultado:</strong> {homeTeam.score} -{' '}
-                  {visitorTeam.score}
+                  <strong>Resultado:</strong> {homeScore} - {visitorScore}
                 </Typography>
                 {venue && (
                   <Typography
@@ -96,21 +104,17 @@ const RenderMatchDetails: React.FC<IMatchResponse> = ({
                   isFinished={isFinished}
                 />
                 <Stack direction="row" spacing={4} alignItems="center">
-                  <RenderTeamMatch {...homeTeam} />
+                  {safeHomeTeam && <RenderTeamMatch {...safeHomeTeam} />}
                   <Typography variant="h6">vs</Typography>
-                  <RenderTeamMatch {...visitorTeam} />
+                  {safeVisitorTeam && <RenderTeamMatch {...safeVisitorTeam} />}
                 </Stack>
               </Stack>
             </Grid>
 
             <Grid item xs={12} md={4} alignContent="center">
-              {isFinished && winningTeamId && (
+              {winnerTeam && (
                 <Stack direction="column" alignItems="center" spacing={3}>
-                  <RenderTeamMatch
-                    {...(winningTeamId === homeTeam.id
-                      ? homeTeam
-                      : visitorTeam)}
-                  />
+                  <RenderTeamMatch {...winnerTeam} />
                   <Chip label="Ganador" color="success" size="small" />
                 </Stack>
               )}

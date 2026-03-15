@@ -2,6 +2,7 @@ using Application.DTOs.Abstract.Request;
 using Application.Interfaces.Repositories;
 using Application.Utils.Extensions;
 using Domain.Entities.Models;
+using Infrastructure.Persistance;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;

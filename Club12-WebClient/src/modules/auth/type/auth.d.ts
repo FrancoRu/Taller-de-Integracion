@@ -1,3 +1,5 @@
+import { UserRolesType } from '../../core/enum/user/userRolesType';
+
 /**
  * Represents the response object for authentication tokens.
  * @interface TokenResponse
@@ -7,7 +9,7 @@ export interface TokenResponse {
    * The access token used for authentication.
    * @type {string | null}
    */
-  accessToken: string | null;
+  accessToken: string;
 
   /**
    * The expiration duration of the access token in date-span format.
@@ -58,25 +60,7 @@ export interface LogInUserRequest {
  * Represents the response containing user authentication information.
  * @interface AuthResponse
  */
-export interface AuthResponse {
-  /**
-   * The access token used for authentication.
-   * @type {string}
-   */
-  accessToken: string;
-
-  /**
-   * The expiration duration of the access token in date-span format.
-   * @type {string}
-   */
-  expiresIn: string;
-
-  /**
-   * The refresh token used to refresh the access token.
-   * @type {string}
-   */
-  refreshToken: string;
-}
+export type AuthResponse = TokenResponse;
 
 /**
  * Represents the authentication context properties for sign-in, sign-out, and user information.
@@ -107,6 +91,12 @@ export interface IAuthContextProps {
    * @type {boolean}
    */
   isAuthenticated: boolean;
+
+  /**
+   * The role of the current user.
+   * @type {UserRolesType}
+   */
+  role: UserRolesType;
 }
 
 /**
@@ -125,4 +115,10 @@ export interface IUser {
    * @type {AuthResponse}
    */
   accessToken: AuthResponse;
+
+  /**
+   * The role of the user.
+   * @type {UserRolesType}
+   */
+  role: UserRolesType;
 }

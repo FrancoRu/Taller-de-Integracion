@@ -6,7 +6,7 @@ import {
   IMatchResponse,
   IPutMatchRequest,
 } from '@/modules/match/type/match';
-import { TypeMatch } from '@/modules/core/enum/match/typeMatch';
+import { MatchType } from '@/modules/core/enum/match/matchType';
 import { Button } from '@mui/material';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -65,7 +65,7 @@ export const EditNotStartedMatch: React.FC<IEditMatch> = ({
         stageId={match?.stageId as GUID}
         form={form}
         setForm={setForm}
-        showTeams={match?.matchType == TypeMatch.Regular}
+        showTeams={match?.matchType == MatchType.Regular}
         startDate={startDate}
         endDate={endDate}
         errors={errors}

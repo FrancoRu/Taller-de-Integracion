@@ -100,6 +100,14 @@ export const RenderMatch: React.FC<IMatchResponse> = ({
   const navigate = useNavigate();
   const [showPopup, setShowPopup] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const home = homeTeam ?? null;
+  const visitor = visitorTeam ?? null;
+  const homeName = home?.name ?? 'Equipo local';
+  const visitorName = visitor?.name ?? 'Equipo visitante';
+  const homeLogo = home?.logoUrl;
+  const visitorLogo = visitor?.logoUrl;
+  const homeScore = home?.score ?? 0;
+  const visitorScore = visitor?.score ?? 0;
 
   const handleNavigate = () => {
     setIsAnimating(true);
@@ -111,9 +119,7 @@ export const RenderMatch: React.FC<IMatchResponse> = ({
 
   const winner =
     isFinished && winningTeamId
-      ? `Ganador: ${
-          winningTeamId === homeTeam.id ? homeTeam.name : visitorTeam.name
-        }`
+      ? `Ganador: ${winningTeamId === home?.id ? homeName : visitorName}`
       : isFinished
         ? 'Empate'
         : 'Pendiente';
@@ -165,15 +171,11 @@ export const RenderMatch: React.FC<IMatchResponse> = ({
             justifyContent="space-between"
             sx={{ width: '100%' }}
           >
-            <TeamBlock
-              name={homeTeam.name}
-              logo={homeTeam.logoUrl}
-              align="right"
-            />
+            <TeamBlock name={homeName} logo={homeLogo} align="right" />
 
             <Box>
               <Typography variant="h5" fontWeight={700} align="center">
-                {homeTeam.score} - {visitorTeam.score}
+                {homeScore} - {visitorScore}
               </Typography>
               <Typography
                 variant="caption"
@@ -185,11 +187,7 @@ export const RenderMatch: React.FC<IMatchResponse> = ({
               </Typography>
             </Box>
 
-            <TeamBlock
-              name={visitorTeam.name}
-              logo={visitorTeam.logoUrl}
-              align="left"
-            />
+            <TeamBlock name={visitorName} logo={visitorLogo} align="left" />
           </Stack>
 
           <Stack direction="row" spacing={1} justifyContent="center" mt={1.5}>

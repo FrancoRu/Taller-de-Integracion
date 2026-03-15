@@ -1,4 +1,5 @@
 using Application.Interfaces.Repositories;
+using Infrastructure.Persistance;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
@@ -14,14 +15,13 @@ namespace Infrastructure.Repositories;
 /// The <see cref="SaveChangesAsync"/> method commits all changes to the database in a single transaction.
 /// </remarks>
 public class UnitOfWork(
-    DbContext context,
+    ApplicationDBContext context,
     IPlayerRepository playerRepository,
     ITeamRepository teamRepository,
     IDivisionRepository divisionRepository,
     IMatchRepository matchRepository,
     ITournamentRepository tournamentRepository,
     IBlogPostRepository blogPostRepository,
-    IStaffRepository staffRepository,
     IPlayerSanctionRepository playerSanctionRepository,
     IPlayerStatisticRepository playerStatisticRepository,
     IVenueRepository venueRepository,
@@ -54,10 +54,6 @@ public class UnitOfWork(
     /// </summary>
     public IStageRepository StageRepository { get; } = stageRepository;
 
-    /// <summary>
-    /// Gets the repository for staff entities.
-    /// </summary>
-    public IStaffRepository StaffRepository { get; } = staffRepository;
 
     /// <summary>
     /// Gets the repository for player statistic entities.

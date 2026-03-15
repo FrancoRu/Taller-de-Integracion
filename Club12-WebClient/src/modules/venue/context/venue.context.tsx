@@ -7,6 +7,7 @@ import {
   useCallback,
   useMemo,
 } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useError } from '../../error/hooks/error.hock';
 import { venueService } from '../service/venue.service';
 import {
@@ -30,10 +31,32 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
   const [venues, setVenues] = useState<IVenueResponse[] | null>(null);
 
   const { setError, setMessage } = useError();
+  const queryClient = useQueryClient();
+
+  const handleUnknownError = (error: unknown) => {
+    if (error instanceof AxiosError) {
+      setError(error);
+      return;
+    }
+
+    setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+  };
+
+  const addVenueMutation = useMutation({
+    mutationFn: venueService.addVenue,
+  });
+
+  const putVenueMutation = useMutation({
+    mutationFn: ({ id, venue }: { id: GUID; venue: IPutVenueRequest }) =>
+      venueService.putVenueById(id, venue),
+  });
+
+  const deleteVenueMutation = useMutation({
+    mutationFn: venueService.deleteVenueById,
+  });
 
   useEffect(() => {
     if (!venue) return;
-    // Usamos el nuevo nombre setVenues
     setVenues(prev => upsertListById(prev, venue));
   }, [venue]);
 
@@ -41,23 +64,21 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
     async (venue: IAddVenueRequest): Promise<IVenueResponse | void> => {
       try {
         const res: AxiosResponse<IVenueResponse> =
-          await venueService.addVenue(venue);
+          await addVenueMutation.mutateAsync(venue);
 
         if (res) {
           setVenue(res.data);
+          queryClient.setQueryData(['venue', 'byId', res.data.id], res);
+          await queryClient.invalidateQueries({ queryKey: ['venue', 'list'] });
           setMessage(res.status, ['La cancha fue creada exitosamente.']);
         }
 
         return res.data;
       } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          setError(error);
-        } else {
-          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-        }
+        handleUnknownError(error);
       }
     },
-    [setVenue, setMessage, setError]
+    [addVenueMutation, queryClient, setMessage]
   );
 
   const putVenueById = useCallback(
@@ -67,10 +88,12 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
     ): Promise<IVenueResponse | void> => {
       try {
         const res: AxiosResponse<IVenueResponse> =
-          await venueService.putVenueById(id, venue);
+          await putVenueMutation.mutateAsync({ id, venue });
 
         if (res) {
           setVenue(res.data);
+          queryClient.setQueryData(['venue', 'byId', id], res);
+          await queryClient.invalidateQueries({ queryKey: ['venue', 'list'] });
           setMessage(res.status, [
             'La información de la cancha fue actualizada correctamente',
           ]);
@@ -78,36 +101,31 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
 
         return res.data;
       } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          setError(error);
-        } else {
-          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-        }
+        handleUnknownError(error);
       }
     },
-    [setVenue, setMessage, setError]
+    [putVenueMutation, queryClient, setMessage]
   );
 
-  const getAllVenues = useCallback(
-    async (): Promise<IVenueResponse[] | void> => {
-      try {
-        const res: AxiosResponse<IVenueResponse[]> =
-          await venueService.getAllVenues();
+  const getAllVenues = useCallback(async (): Promise<
+    IVenueResponse[] | void
+  > => {
+    try {
+      const res: AxiosResponse<IVenueResponse[]> = await queryClient.fetchQuery(
+        {
+          queryKey: ['venue', 'list'],
+          queryFn: async () => await venueService.getAllVenues(),
+        }
+      );
 
-        if (res) {
-          setVenues(res.data);
-        }
-        return res.data;
-      } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          setError(error);
-        } else {
-          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-        }
+      if (res) {
+        setVenues(res.data);
       }
-    },
-    [setVenues, setError] // Dependencias: setVenues (el setter), setError
-  );
+      return res.data;
+    } catch (error: unknown) {
+      handleUnknownError(error);
+    }
+  }, [queryClient]);
 
   const getVenueById = useCallback(
     async (id: GUID): Promise<IVenueResponse | void> => {
@@ -118,8 +136,12 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
           setVenue(existingVenue);
           return existingVenue;
         }
-        const res: AxiosResponse<IVenueResponse> =
-          await venueService.getVenueById(id);
+        const res: AxiosResponse<IVenueResponse> = await queryClient.fetchQuery(
+          {
+            queryKey: ['venue', 'byId', id],
+            queryFn: async () => await venueService.getVenueById(id),
+          }
+        );
 
         if (res) {
           setVenue(res.data);
@@ -127,32 +149,26 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
 
         return res.data;
       } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          setError(error);
-        } else {
-          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-        }
+        handleUnknownError(error);
       }
     },
-    [venues, setVenue, setError] // Dependencias: venues (para el find), setVenue, setError
+    [venues, queryClient]
   );
 
   const deleteVenueById = useCallback(
     async (id: GUID): Promise<void> => {
       try {
-        await venueService.deleteVenueById(id);
+        await deleteVenueMutation.mutateAsync(id);
         setVenue(null);
-        setVenues(prev => (prev ? prev.filter(e => e.id !== id) : null)); // Usamos el nuevo nombre setVenues
+        setVenues(prev => (prev ? prev.filter(e => e.id !== id) : null));
+        queryClient.removeQueries({ queryKey: ['venue', 'byId', id] });
+        await queryClient.invalidateQueries({ queryKey: ['venue', 'list'] });
         setMessage(204, ['La cancha ha sido eliminada.']);
       } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          setError(error);
-        } else {
-          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-        }
+        handleUnknownError(error);
       }
     },
-    [setVenue, setVenues, setMessage, setError] // Dependencias: setVenue, setVenues, setMessage, setError
+    [deleteVenueMutation, queryClient, setMessage]
   );
 
   const container: IVenueContextProps = useMemo(

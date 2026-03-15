@@ -1,6 +1,6 @@
 import { AxiosResponse } from 'axios';
 import routes from '../../core/constants/routes';
-import { GenericResponsePagination } from '../../core/types/types';
+import { GenericResponsePagination, GUID } from '../../core/types/types';
 import {
   sendDelete,
   sendGet,
@@ -91,9 +91,7 @@ export const blogPostService = {
    */
   getBlogPostsByFilters: async (
     filter: GetBlogPostsFilteredRequest
-  ): Promise<AxiosResponse<
-    GenericResponsePagination<BlogPostResponse>
-  > | void> =>
+  ): Promise<AxiosResponse<GenericResponsePagination<BlogPostResponse>>> =>
     sendGet<GenericResponsePagination<BlogPostResponse>>(
       routes.blogposts,
       filter

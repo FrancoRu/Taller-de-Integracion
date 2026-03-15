@@ -1,117 +1,44 @@
-﻿using Application.DTOs.User.Request;
-using Application.DTOs.User.Response;
-using Application.Interfaces.Services;
-using Domain.Entities.Models;
-using Microsoft.AspNetCore.Authorization;
+﻿using Infrastructure.Identity;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace API.Controllers;
 
 /// <summary>
-/// Controller for managing users.
+/// Controller for identity-user management operations.
+/// Authentication (login / refresh / guest / magic-link) is handled by <see cref="AuthController"/>.
 /// </summary>
-/// <param name="_userService">The user service.</param>
-/// <param name="_authService">The auth service.</param>
-//[Authorize(Roles = "SuperAdmin")]
 [ApiController]
-[Route("api/users/")]
-public class UserController(IUserService _userService, IAuthService _authService) : ControllerBase
+[Route("api/users")]
+public class UserController(UserManager<ApplicationUser> userManager) : ControllerBase
 {
-    /// <summary>
-    /// Logs in a user and generates a JWT token.
-    /// </summary>
-    /// <param name="userLoginRequest">The user login request containing username and password.</param>
-    /// <returns>
-    /// A 200 OK response with the generated JWT token if login is successful.
-    /// A 401 Unauthorized response if the credentials are invalid.
-    /// </returns>
-    [AllowAnonymous]
-    [HttpPost("login")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokenResponse))]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Login(LogInUserRequest userLoginRequest)
-    {
-        User? user = await _userService.GetUserByUserNameAsync(userLoginRequest.Username);
-        if (user is null || !await _userService.ValidateCredentialsAsync(user, userLoginRequest.Password))
-        {
-            return Unauthorized("Invalid credentials");
-        }
-
-        TokenResponse token = await _authService.GenerateJwtTokenAsync(user);
-
-        user.RefreshToken = token.RefreshToken;
-        user.RefreshTokenExpiryTime = DateTime.UtcNow.Add(token.ExpiresIn);
-        await _userService.UpdateUserAsync(user);
-
-        return Ok(token);
-    }
-
-    /// <summary>
-    /// Refreshes the JWT token using a valid refresh token.
-    /// </summary>
-    /// <param name="refreshTokenRequest">The request containing the refresh token.</param>
-    /// <returns>
-    /// A 200 OK response with a new token pair (access and refresh tokens) if successful.
-    /// A 401 Unauthorized response if the refresh token is invalid.
-    /// </returns>
-    [HttpPost("refresh-token")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokenResponse))]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> RefreshToken(RefreshTokenRequest refreshTokenRequest)
-    {
-        User? user = await _userService.GetUserByRefreshTokenAsync(refreshTokenRequest.RefreshToken);
-
-        if (user is null || user.RefreshTokenExpiryTime < DateTime.UtcNow)
-        {
-            return Unauthorized("Invalid or expired refresh token");
-        }
-
-        TokenResponse token = await _authService.GenerateJwtTokenAsync(user);
-
-        user.RefreshToken = token.RefreshToken;
-        user.RefreshTokenExpiryTime = DateTime.UtcNow.Add(token.ExpiresIn);
-        await _userService.UpdateUserAsync(user);
-
-        return Ok(token);
-    }
-
     /// <summary>
     /// Logs out the current authenticated user by invalidating their refresh token.
     /// </summary>
-    /// <remarks>
-    /// This endpoint invalidates the user's refresh token, preventing the user from using it to obtain a new access token.
-    /// </remarks>
-    /// <returns>
-    /// A 200 OK response if the logout is successful.
-    /// A 400 Bad Request response if the user is not authenticated or cannot be found.
-    /// </returns>
     [HttpPost("logout")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Logout()
+    public async Task<IActionResult> Logout(CancellationToken ct)
     {
-        string? username = User.FindFirst(ClaimTypes.Name)?.Value;
+        string? email = User.FindFirst(ClaimTypes.Email)?.Value;
 
-        if (string.IsNullOrEmpty(username))
-        {
+        if (string.IsNullOrEmpty(email))
             return Unauthorized("User is not authenticated.");
-        }
 
-        User? user = await _userService.GetUserByUserNameAsync(username);
+        ApplicationUser? user = await userManager.FindByEmailAsync(email);
 
         if (user is null)
-        {
             return BadRequest("Something went wrong.");
-        }
 
-        user.RefreshToken = null;
+        user.RefreshToken           = null;
         user.RefreshTokenExpiryTime = null;
 
-        await _userService.UpdateUserAsync(user);
+        await userManager.UpdateAsync(user);
 
         return Ok();
     }

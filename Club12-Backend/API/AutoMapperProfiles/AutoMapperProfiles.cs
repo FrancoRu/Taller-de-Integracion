@@ -77,20 +77,6 @@ public class DivisionProfile : Profile
     }
 }
 
-/// <summary>
-/// AutoMapper profile for mapping between TopScorer service model and TopScorerResponse API model.
-/// </summary>
-public class TopScorerProfile : Profile
-{
-    /// <summary>
-    /// Initializes a new instance of the <see cref="TopScorerProfile"/> class.
-    /// Configures the mappings between TopScorer and TopScorerResponse.
-    /// </summary>
-    public TopScorerProfile()
-    {
-        CreateMap<TopScorer, TopScorerResponse>();
-    }
-}
 
 /// <summary>
 /// AutoMapper profile for player mappings.
@@ -341,31 +327,4 @@ public class PaginatedResponseConverter<TSource, TDestination>
         };
 }
 
-///// <summary>
-///// Custom resolver to map matches grouped by week into MatchesByWeek.
-///// </summary>
-//public class MatchesByWeekResolver : IValueResolver<Division, DetailedDivisionResponse, IDictionary<int, IEnumerable<MinimalMatchResponse>>>
-//{
-//    /// <summary>
-//    /// Resolves the matches grouped by week into a dictionary.
-//    /// Safely handles cases where the source Matches collection might be null or empty.
-//    /// </summary>
-//    /// <param name="source">The source Division object.</param>
-//    /// <param name="destination">The destination DetailedDivisionResponse object.</param>
-//    /// <param name="destMember">The destination member (MatchesByWeek).</param>
-//    /// <param name="context">The resolution context.</param>
-//    /// <returns>A dictionary of matches grouped by week, or an empty dictionary if no matches are present.</returns>
-//    //public IDictionary<int, IEnumerable<MinimalMatchResponse>> Resolve(
-//    //    Division source,
-//    //    DetailedDivisionResponse destination,
-//    //    IDictionary<int, IEnumerable<MinimalMatchResponse>> destMember,
-//    //    ResolutionContext context) => source.Matches == null || source.Matches.Count == 0
-//    //        ? new Dictionary<int, IEnumerable<MinimalMatchResponse>>()
-//    //        : (IDictionary<int, IEnumerable<MinimalMatchResponse>>) source.Matches
-//    //        .Where(match => match.Id)
-//    //        .GroupBy(match => match.MatchWeek!.Value)
-//    //        .ToDictionary(
-//    //            group => group.Key,
-//    //            group => context.Mapper.Map<IEnumerable<MinimalMatchResponse>>(group.ToList())
-//    //        );
-//}
+

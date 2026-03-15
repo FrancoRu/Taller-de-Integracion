@@ -13,6 +13,7 @@ import {
   GetBlogPostsFilteredRequest,
 } from '../../modules/blogPost/type/blogPost';
 import { useNavigate } from 'react-router-dom';
+import { GUID } from '@/modules/core/types/types';
 
 const ShowPosts: React.FC = () => {
   const { getBlogPostsByFilters, getBlogPostsById } = useBlogPost();

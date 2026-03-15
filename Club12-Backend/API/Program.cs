@@ -12,13 +12,13 @@ builder.Host.AddSerilogConfig(builder.Configuration);
 builder.Services
     .AddAutoMapper(typeof(Program))
     .AddDbContextConfig(builder.Configuration)
+    .AddIdentityConfig(builder.Configuration)
     .AddCorsConfig(builder.Configuration)
     .RegisterScoped()
     .RegisterSingletons()
     .AddCustomAuthorization()
     .AddCustomAuthentication(builder.Configuration)
     .AddCustomSwagger(builder.Configuration);
-
 
 builder.Services.AddControllers().AddCustomJsonOptions();
 
@@ -28,8 +28,8 @@ builder.Services.AddProblemDetails();
 
 WebApplication app = builder.Build();
 
-// Database migration & admin user creation
-app.ExecuteMigrations();
+// Migrations (ApplicationDB + IdentityDB) + admin user seeding
+await app.ExecuteMigrationsAndSeedAsync();
 
 // Swagger
 app.UseSwaggerConfig(builder.Environment);
@@ -60,7 +60,7 @@ Log.Information("----- Started     -----");
 
 try
 {
-    app.Run();
+    await app.RunAsync();
 }
 catch (Exception ex)
 {
@@ -68,5 +68,5 @@ catch (Exception ex)
 }
 finally
 {
-    Log.CloseAndFlush();
+    await Log.CloseAndFlushAsync();
 }

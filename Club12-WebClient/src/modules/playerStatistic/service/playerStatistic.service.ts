@@ -1,5 +1,6 @@
 import { AxiosResponse } from 'axios';
 import routes from '../../core/constants/routes';
+import { GUID } from '../../core/types/types';
 import {
   sendDelete,
   sendGet,
@@ -36,7 +37,7 @@ export const playerStatisticService = {
     statisticid: GUID,
     playerStatistic: PutPlayerStatisticRequest
   ): Promise<AxiosResponse<void>> =>
-    await sendPut(`${routes.playerStatistics}/${statisticId}`, playerStatistic),
+    await sendPut(`${routes.playerStatistics}/${statisticid}`, playerStatistic),
 
   /**
    * Retrieves a player statistic by its ID.

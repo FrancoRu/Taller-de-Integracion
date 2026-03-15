@@ -31,7 +31,7 @@ public class TournamentService(ITournamentRepository tournamentRepository) : ITo
     public async Task<PaginatedResponse<Tournament>> GetAllTournamentsAsync(GetTournamentsFilteredRequest filter)
     {
         Expression<Func<Tournament, bool>> expression = QueryableExtensions.ConstructFilterExpression<Tournament, GetTournamentsFilteredRequest>(filter);
-        IEnumerable<Tournament> filteredTournaments = await tournamentRepository.FindAsync(expression, includes: [tournament => tournament.Id], filter: filter);
+        IEnumerable<Tournament> filteredTournaments = await tournamentRepository.FindAsync(expression, filter: filter);
         int totalCount = await tournamentRepository.CountAsync(expression);
 
         return new PaginatedResponse<Tournament>
