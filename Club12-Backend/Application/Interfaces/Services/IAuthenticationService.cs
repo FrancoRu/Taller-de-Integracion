@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.Auth.Request;
 using Application.DTOs.Auth.Response;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -8,10 +9,6 @@ namespace Application.Interfaces.Services;
 /// <summary>
 /// Application boundary for authentication and user-registration flows.
 /// </summary>
-/// <remarks>
-/// Infrastructure (Identity/EF Core) implements this interface.
-/// API controllers depend on this interface to keep Clean Architecture boundaries.
-/// </remarks>
 public interface IAuthenticationService
 {
     Task<TokenResponse>        LoginAsync(LogInUserRequest request, CancellationToken ct = default);
@@ -21,7 +18,19 @@ public interface IAuthenticationService
     Task<TokenResponse>        RefreshAsync(RefreshTokenRequest request, CancellationToken ct = default);
 
     /// <summary>
-    /// Registers a new user. The caller's role determines which target roles are permitted.
+    /// Verifies the password-reset token from the email link, sets the new password,
+    /// clears <c>MustChangePassword</c>, and returns a ready-to-use JWT.
     /// </summary>
-    Task<RegisterUserResponse> RegisterAsync(RegisterUserRequest request, string callerRole, CancellationToken ct = default);
+    Task<TokenResponse> ConfirmPasswordResetAsync(
+        PasswordResetConfirmRequest request, CancellationToken ct = default);
+
+    /// <summary>
+    /// Registers a new user. <paramref name="callerRole"/> determines permitted target roles;
+    /// <paramref name="callerId"/> is stored as <c>CreatedByOwnerId</c> when the caller is an OWNER.
+    /// </summary>
+    Task<RegisterUserResponse> RegisterAsync(
+        RegisterUserRequest request,
+        string callerRole,
+        Guid   callerId,
+        CancellationToken ct = default);
 }

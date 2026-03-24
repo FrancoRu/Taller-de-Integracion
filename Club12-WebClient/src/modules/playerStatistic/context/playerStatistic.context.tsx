@@ -1,5 +1,5 @@
 import { AxiosError } from 'axios';
-import { createContext, ReactNode } from 'react';
+import { createContext, ReactNode, useCallback, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useError } from '../../error/hooks/error.hock';
 import { IPlayerResponse } from '../../player/type/player';
@@ -22,14 +22,17 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
   const { setError } = useError();
   const queryClient = useQueryClient();
 
-  const handleUnknownError = (error: unknown) => {
-    if (error instanceof AxiosError) {
-      setError(error);
-      return;
-    }
+  const handleUnknownError = useCallback(
+    (error: unknown) => {
+      if (error instanceof AxiosError) {
+        setError(error);
+        return;
+      }
 
-    setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-  };
+      setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+    },
+    [setError]
+  );
 
   const addPlayerStatisticMutation = useMutation({
     mutationFn: playerStatisticService.addPlayerStatistic,
@@ -53,66 +56,86 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
     mutationFn: playerStatisticService.deletePlayerStatisticById,
   });
 
-  const addPlayerStatistic = async (
-    playerStatistic: AddPlayerStatisticRequest
-  ): Promise<IPlayerResponse | void> => {
-    try {
-      const response =
-        await addPlayerStatisticMutation.mutateAsync(playerStatistic);
-      await queryClient.invalidateQueries({ queryKey: ['playerStatistic'] });
-      return response?.data as unknown as IPlayerResponse;
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
+  const addPlayerStatistic = useCallback(
+    async (
+      playerStatistic: AddPlayerStatisticRequest
+    ): Promise<IPlayerResponse | void> => {
+      try {
+        const response =
+          await addPlayerStatisticMutation.mutateAsync(playerStatistic);
+        await queryClient.invalidateQueries({ queryKey: ['playerStatistic'] });
+        return response?.data as unknown as IPlayerResponse;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [addPlayerStatisticMutation, queryClient, handleUnknownError]
+  );
 
-  const putPlayerStatisticById = async (
-    statisticid: GUID,
-    playerStatistic: PutPlayerStatisticRequest
-  ): Promise<void> => {
-    try {
-      await putPlayerStatisticMutation.mutateAsync({
-        statisticid,
-        playerStatistic,
-      });
-      await queryClient.invalidateQueries({ queryKey: ['playerStatistic'] });
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
+  const putPlayerStatisticById = useCallback(
+    async (
+      statisticid: GUID,
+      playerStatistic: PutPlayerStatisticRequest
+    ): Promise<void> => {
+      try {
+        await putPlayerStatisticMutation.mutateAsync({
+          statisticid,
+          playerStatistic,
+        });
+        await queryClient.invalidateQueries({ queryKey: ['playerStatistic'] });
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [putPlayerStatisticMutation, queryClient, handleUnknownError]
+  );
 
-  const getPlayerStatisticById = async (
-    id: GUID
-  ): Promise<IPlayerResponse | void> => {
-    try {
-      const response = await queryClient.fetchQuery({
-        queryKey: ['playerStatistic', 'byId', id],
-        queryFn: async () =>
-          await playerStatisticService.getPlayerStatisticById(id),
-      });
+  const getPlayerStatisticById = useCallback(
+    async (id: GUID): Promise<IPlayerResponse | void> => {
+      try {
+        const response = await queryClient.fetchQuery({
+          queryKey: ['playerStatistic', 'byId', id],
+          queryFn: async () =>
+            await playerStatisticService.getPlayerStatisticById(id),
+        });
 
-      return response?.data as unknown as IPlayerResponse;
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
+        return response?.data as unknown as IPlayerResponse;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [queryClient, handleUnknownError]
+  );
 
-  const deletePlayerStatisticById = async (id: GUID): Promise<void> => {
-    try {
-      await deletePlayerStatisticMutation.mutateAsync(id);
-      queryClient.removeQueries({ queryKey: ['playerStatistic', 'byId', id] });
-      await queryClient.invalidateQueries({ queryKey: ['playerStatistic'] });
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
+  const deletePlayerStatisticById = useCallback(
+    async (id: GUID): Promise<void> => {
+      try {
+        await deletePlayerStatisticMutation.mutateAsync(id);
+        queryClient.removeQueries({
+          queryKey: ['playerStatistic', 'byId', id],
+        });
+        await queryClient.invalidateQueries({ queryKey: ['playerStatistic'] });
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [deletePlayerStatisticMutation, queryClient, handleUnknownError]
+  );
 
-  const container = {
-    addPlayerStatistic,
-    putPlayerStatisticById,
-    getPlayerStatisticById,
-    deletePlayerStatisticById,
-  };
+  const container = useMemo(
+    () => ({
+      addPlayerStatistic,
+      putPlayerStatisticById,
+      getPlayerStatisticById,
+      deletePlayerStatisticById,
+    }),
+    [
+      addPlayerStatistic,
+      putPlayerStatisticById,
+      getPlayerStatisticById,
+      deletePlayerStatisticById,
+    ]
+  );
   return (
     <PlayerStatisticContext.Provider value={container}>
       {children}

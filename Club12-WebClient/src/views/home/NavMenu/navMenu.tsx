@@ -8,7 +8,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
+import { MenuIcon } from '@/views/core/MUI/icons/icons';
 import DesktopNavItems from './desktop';
 import MobileNavItems from './mobile';
 // import { useTournament } from '@/modules/tournament/hook/tournament.hook';

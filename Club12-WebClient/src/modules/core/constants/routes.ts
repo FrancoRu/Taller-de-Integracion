@@ -12,6 +12,7 @@ const routes = {
   teams: 'teams',
   tournaments: 'tournaments',
   users: 'users',
+  auth: 'auth',
   venues: 'venues',
 };
 

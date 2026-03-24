@@ -43,11 +43,10 @@ public static class QueryableExtensions
             return Expression.Lambda<Func<TEntity, bool>>(trueExpr, parameter);
         }
 
-
         ParameterExpression parameterExpr = Expression.Parameter(typeof(TEntity), "x");
         Expression? finalExpression = null;
 
-        MethodInfo containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) })
+        MethodInfo containsMethod = typeof(string).GetMethod("Contains", [typeof(string)])
             ?? throw new InvalidOperationException("The 'Contains' method could not be found on the string class.");
 
         MethodInfo toLowerMethod = typeof(string).GetMethod("ToLower", Type.EmptyTypes)
@@ -71,8 +70,14 @@ public static class QueryableExtensions
             }
             else
             {
-                ConstantExpression constantValue = Expression.Constant(filterValue);
-                currentExpr = Expression.Equal(propertyAccess, constantValue);
+                Expression constantExpr = Expression.Constant(filterValue, filterValue.GetType());
+
+                if (constantExpr.Type != propertyAccess.Type)
+                {
+                    constantExpr = Expression.Convert(constantExpr, propertyAccess.Type);
+                }
+
+                currentExpr = Expression.Equal(propertyAccess, constantExpr);
             }
 
             finalExpression = finalExpression == null ? currentExpr : Expression.AndAlso(finalExpression, currentExpr);
@@ -82,7 +87,6 @@ public static class QueryableExtensions
 
         return Expression.Lambda<Func<TEntity, bool>>(finalExpression, parameterExpr);
     }
-
 
     /// <summary>
     /// Paginates the given source sequence based on the specified page number and page size.
@@ -109,7 +113,7 @@ public static class QueryableExtensions
 
         MethodInfo genericMethod = method.MakeGenericMethod(typeof(T), property.Type);
 
-        return (IQueryable<T>) genericMethod.Invoke(null, [source, lambda])!;
+        return (IQueryable<T>)genericMethod.Invoke(null, [source, lambda])!;
     }
 
     private static bool ShouldSkipProperty(string propertyName) => propertyName is

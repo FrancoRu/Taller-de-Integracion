@@ -27,17 +27,13 @@ public sealed class IdentityAuthenticationService(
     UserManager<ApplicationUser> userManager,
     IAuthService                 authService) : IAuthenticationService
 {
-    private const string MagicLinkPurpose    = "MagicLink";
-    private const int    RefreshExpiryDays   = 7;
+    private const string MagicLinkPurpose  = "MagicLink";
+    private const int    RefreshExpiryDays = 7;
 
     // ─────────────────────────────────────────────────────────────
     // Role-creation permission matrix
     // ─────────────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Maps each caller role to the set of roles it is allowed to create.
-    /// Roles absent from this map cannot create any user.
-    /// </summary>
     private static readonly Dictionary<string, HashSet<string>> _creationPolicy =
         new(StringComparer.OrdinalIgnoreCase)
         {
@@ -46,7 +42,7 @@ public sealed class IdentityAuthenticationService(
                 UserRoleType.ADMIN.ToRoleName(),
                 UserRoleType.OWNER.ToRoleName(),
                 UserRoleType.TOURNAMENT_MANAGER.ToRoleName(),
-                UserRoleType.TEAM_MANAGER.ToRoleName()   // Admin must be able to create TeamManagers
+                UserRoleType.TEAM_MANAGER.ToRoleName()
             },
             [UserRoleType.OWNER.ToRoleName()] = new(StringComparer.OrdinalIgnoreCase)
             {
@@ -60,15 +56,18 @@ public sealed class IdentityAuthenticationService(
 
     /// <inheritdoc/>
     public async Task<RegisterUserResponse> RegisterAsync(
-        RegisterUserRequest request, string callerRole, CancellationToken ct = default)
+        RegisterUserRequest request, string callerRole, Guid callerId, CancellationToken ct = default)
     {
         EnforceCreationPolicy(callerRole, request.Role);
 
         ApplicationUser user = new()
         {
-            UserName       = request.Email,
-            Email          = request.Email,
-            EmailConfirmed = true,
+            UserName         = request.Username,
+            Email            = request.Email,
+            EmailConfirmed   = true,
+            PhoneNumber      = request.Phone,
+            // TournamentManagers are linked to the Owner who created them
+            CreatedByOwnerId = IsOwner(callerRole) ? callerId : null,
         };
 
         bool isTeamManager = string.Equals(
@@ -76,7 +75,7 @@ public sealed class IdentityAuthenticationService(
             StringComparison.OrdinalIgnoreCase);
 
         IdentityResult result = isTeamManager
-            ? await userManager.CreateAsync(user)                  // No password — magic-link only
+            ? await userManager.CreateAsync(user)
             : await CreateWithPasswordAsync(user, request.Password);
 
         if (!result.Succeeded)
@@ -87,7 +86,8 @@ public sealed class IdentityAuthenticationService(
 
         await userManager.AddToRoleAsync(user, request.Role.ToUpperInvariant());
 
-        return new RegisterUserResponse(user.Id, user.Email!, request.Role.ToUpperInvariant());
+        return new RegisterUserResponse(
+            user.Id, user.Email!, user.UserName!, request.Role.ToUpperInvariant(), user.PhoneNumber);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -106,7 +106,8 @@ public sealed class IdentityAuthenticationService(
         IList<string> roles = await userManager.GetRolesAsync(user);
 
         if (roles.Contains(UserRoleType.TEAM_MANAGER.ToRoleName()))
-            throw new UnauthorizedAccessException("TeamManager accounts must authenticate via the magic-link flow.");
+            throw new UnauthorizedAccessException(
+                "TeamManager accounts must authenticate via the magic-link flow.");
 
         return await BuildTokenResponseAsync(user, roles, ct);
     }
@@ -116,7 +117,8 @@ public sealed class IdentityAuthenticationService(
     // ─────────────────────────────────────────────────────────────
 
     /// <inheritdoc/>
-    public async Task<MagicLinkResponse> RequestMagicLinkAsync(MagicLinkRequest request, CancellationToken ct = default)
+    public async Task<MagicLinkResponse> RequestMagicLinkAsync(
+        MagicLinkRequest request, CancellationToken ct = default)
     {
         ApplicationUser user = await userManager.FindByEmailAsync(request.Email)
             ?? throw new KeyNotFoundException("No account found for that email.");
@@ -124,12 +126,13 @@ public sealed class IdentityAuthenticationService(
         IList<string> roles = await userManager.GetRolesAsync(user);
 
         if (!roles.Contains(UserRoleType.TEAM_MANAGER.ToRoleName()))
-            throw new UnauthorizedAccessException("Magic-link is only available for TeamManager accounts.");
+            throw new UnauthorizedAccessException(
+                "Magic-link is only available for TeamManager accounts.");
 
         string token = await userManager.GenerateUserTokenAsync(
             user, TokenOptions.DefaultEmailProvider, MagicLinkPurpose);
 
-        // TODO: dispatch via email — never expose the token in production responses.
+        // TODO: in production, send via IEmailService — never expose the token in responses.
         string magicLink =
             $"/api/auth/magic-link/login" +
             $"?email={Uri.EscapeDataString(user.Email!)}" +
@@ -139,7 +142,8 @@ public sealed class IdentityAuthenticationService(
     }
 
     /// <inheritdoc/>
-    public async Task<TokenResponse> MagicLinkLoginAsync(MagicLinkLoginRequest request, CancellationToken ct = default)
+    public async Task<TokenResponse> MagicLinkLoginAsync(
+        MagicLinkLoginRequest request, CancellationToken ct = default)
     {
         ApplicationUser user = await userManager.FindByEmailAsync(request.Email)
             ?? throw new UnauthorizedAccessException("Invalid magic-link.");
@@ -155,6 +159,34 @@ public sealed class IdentityAuthenticationService(
     }
 
     // ─────────────────────────────────────────────────────────────
+    // Password reset confirm  (from email link)
+    // ─────────────────────────────────────────────────────────────
+
+    /// <inheritdoc/>
+    public async Task<TokenResponse> ConfirmPasswordResetAsync(
+        PasswordResetConfirmRequest request, CancellationToken ct = default)
+    {
+        ApplicationUser user = await userManager.FindByEmailAsync(request.Email)
+            ?? throw new UnauthorizedAccessException("Invalid password reset request.");
+
+        // Verifies the token AND sets the new password atomically.
+        IdentityResult result = await userManager.ResetPasswordAsync(
+            user, request.Token, request.NewPassword);
+
+        if (!result.Succeeded)
+            throw new InvalidOperationException(
+                string.Join("; ", result.Errors.Select(e => e.Description)));
+
+        // Clear the forced-reset flag so the middleware no longer blocks the user.
+        user.MustChangePassword = false;
+        await userManager.UpdateAsync(user);
+
+        // Return a ready-to-use JWT — the user is automatically logged in after reset.
+        IList<string> roles = await userManager.GetRolesAsync(user);
+        return await BuildTokenResponseAsync(user, roles, ct);
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // Guest  (no DB interaction)
     // ─────────────────────────────────────────────────────────────
 
@@ -163,7 +195,6 @@ public sealed class IdentityAuthenticationService(
     {
         Claim[] claims = [new(ClaimTypes.Role, UserRoleType.GUEST.ToRoleName())];
         TokenResponse response = await authService.GenerateJwtTokenAsync(claims, ct);
-
         return new TokenResponse(response.AccessToken, response.ExpiresIn, refreshToken: null);
     }
 
@@ -172,7 +203,8 @@ public sealed class IdentityAuthenticationService(
     // ─────────────────────────────────────────────────────────────
 
     /// <inheritdoc/>
-    public async Task<TokenResponse> RefreshAsync(RefreshTokenRequest request, CancellationToken ct = default)
+    public async Task<TokenResponse> RefreshAsync(
+        RefreshTokenRequest request, CancellationToken ct = default)
     {
         ApplicationUser user = await userManager.Users
             .FirstOrDefaultAsync(u => u.RefreshToken == request.RefreshToken, ct)
@@ -192,12 +224,15 @@ public sealed class IdentityAuthenticationService(
     private async Task<TokenResponse> BuildTokenResponseAsync(
         ApplicationUser user, IList<string> roles, CancellationToken ct)
     {
-        IEnumerable<Claim> claims =
+        List<Claim> claims =
         [
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Email,          user.Email!),
             ..roles.Select(r => new Claim(ClaimTypes.Role, r))
         ];
+
+        if (user.MustChangePassword)
+            claims.Add(new Claim("must_change_password", "true"));
 
         TokenResponse response = await authService.GenerateJwtTokenAsync(claims, ct);
 
@@ -216,10 +251,6 @@ public sealed class IdentityAuthenticationService(
         return await userManager.CreateAsync(user, password);
     }
 
-    /// <summary>
-    /// Throws <see cref="UnauthorizedAccessException"/> if <paramref name="callerRole"/>
-    /// is not allowed to create a user with <paramref name="targetRole"/>.
-    /// </summary>
     private static void EnforceCreationPolicy(string callerRole, string targetRole)
     {
         bool allowed = _creationPolicy.TryGetValue(callerRole, out HashSet<string>? permitted)
@@ -229,4 +260,7 @@ public sealed class IdentityAuthenticationService(
             throw new UnauthorizedAccessException(
                 $"Role '{callerRole}' is not allowed to create users with role '{targetRole}'.");
     }
+
+    private static bool IsOwner(string role) =>
+        role.Equals(UserRoleType.OWNER.ToRoleName(), StringComparison.OrdinalIgnoreCase);
 }

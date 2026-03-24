@@ -1,6 +1,8 @@
-import { Link, useRouteError } from 'react-router-dom';
-import { Typography, Box, Button } from '@mui/material';
-import { orange, grey } from '@mui/material/colors';
+import { useRouteError } from 'react-router-dom';
+import { Typography } from '@mui/material';
+import { grey } from '@mui/material/colors';
+import ErrorPageLayout from '../components/ErrorPageLayout';
+import ErrorPageActions from '../components/ErrorPageActions';
 
 interface ErrorDetails {
   statusText?: string;
@@ -9,48 +11,23 @@ interface ErrorDetails {
 
 export default function ErrorPage() {
   const error = useRouteError() as ErrorDetails | { message: string };
+  const message =
+    (error as ErrorDetails).statusText || (error as ErrorDetails).message;
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        textAlign: 'center',
-        backgroundColor: grey[200],
-        padding: 3,
-      }}
-    >
-      <Typography variant="h2" sx={{ color: orange[500], fontWeight: 'bold' }}>
-        Oops!
+    <ErrorPageLayout code="Error">
+      <Typography
+        variant="h5"
+        sx={{ fontWeight: 600, color: grey[800], mb: 1 }}
+      >
+        Ocurrió un error inesperado
       </Typography>
-      <Typography variant="h5" sx={{ marginTop: 2, fontStyle: 'italic' }}>
-        Sorry, an unexpected error has occurred.
-      </Typography>
-      <Typography variant="body1" sx={{ marginTop: 2, color: grey[800] }}>
-        <i>
-          {(error as ErrorDetails).statusText ||
-            (error as ErrorDetails).message}
-        </i>
-      </Typography>
-      <Box sx={{ marginTop: 4 }}>
-        <Button
-          component={Link}
-          to="/"
-          variant="contained"
-          sx={{
-            backgroundColor: orange[500],
-            color: grey[900],
-            '&:hover': {
-              backgroundColor: orange[700],
-            },
-          }}
-        >
-          Go Back to Home
-        </Button>
-      </Box>
-    </Box>
+      {message && (
+        <Typography variant="body1" sx={{ color: grey[500], maxWidth: 400 }}>
+          {message}
+        </Typography>
+      )}
+      <ErrorPageActions />
+    </ErrorPageLayout>
   );
 }

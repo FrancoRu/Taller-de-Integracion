@@ -91,6 +91,12 @@ export interface IAddTeamRequest {
    * @type {File}
    */
   logo: File;
+
+  /**
+   * The ID of the tournament the team belongs to.
+   * @type {GUID | null}
+   */
+  tournamentId?: GUID | null;
 }
 
 /**

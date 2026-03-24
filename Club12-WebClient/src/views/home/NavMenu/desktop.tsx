@@ -7,8 +7,7 @@ import {
   Menu,
   MenuItem,
 } from '@mui/material';
-import ExpandLess from '@mui/icons-material/ExpandLess';
-import ExpandMore from '@mui/icons-material/ExpandMore';
+import { ExpandLessIcon, ExpandMoreIcon } from '@/views/core/MUI/icons/icons';
 import { RoutesNavigationViews } from '@/views/core/routes-const';
 import TournamentMenuItems from '../tournaments/tournamentsMenuItems';
 
@@ -72,7 +71,7 @@ const DesktopNavItems: React.FC<DesktopNavItemsProps> = ({
         onClick={handleOpenInfoMenu}
       >
         <ListItemText primary="Información" />
-        {openInfoMenu ? <ExpandLess /> : <ExpandMore />}
+        {openInfoMenu ? <ExpandLessIcon /> : <ExpandMoreIcon />}
       </ListItemButton>
       <Menu
         id="information-menu"

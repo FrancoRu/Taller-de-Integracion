@@ -4,6 +4,7 @@ import { sendPost } from '../../core/utils/axiosUtils';
 import {
   AuthResponse,
   LogInUserRequest,
+  PasswordResetConfirmRequest,
   RefreshTokenRequest,
 } from '../type/auth';
 
@@ -11,12 +12,17 @@ export const authService = {
   loginRequest: (
     user: LogInUserRequest
   ): Promise<AxiosResponse<AuthResponse> | undefined> =>
-    sendPost<AuthResponse>(`${routes.users}/login`, user),
+    sendPost<AuthResponse>(`${routes.auth}/login`, user),
 
   refreshTokenRequest: (
     refreshToken: RefreshTokenRequest
   ): Promise<AxiosResponse<AuthResponse> | undefined> =>
-    sendPost<AuthResponse>(`${routes.users}/refresh-token`, refreshToken),
+    sendPost<AuthResponse>(`${routes.auth}/refresh-token`, refreshToken),
 
-  logoutRequest: () => sendPost(`${routes.users}/logout`),
+  confirmPasswordResetRequest: (
+    payload: PasswordResetConfirmRequest
+  ): Promise<AxiosResponse<AuthResponse> | undefined> =>
+    sendPost<AuthResponse>(`${routes.auth}/password-reset/confirm`, payload),
+
+  logoutRequest: () => sendPost(`${routes.auth}/logout`),
 };

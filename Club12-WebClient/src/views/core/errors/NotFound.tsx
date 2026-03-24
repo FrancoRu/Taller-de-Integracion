@@ -1,47 +1,21 @@
-import { Typography, Box, Button } from '@mui/material';
-import { Link } from 'react-router-dom';
-import { orange, grey } from '@mui/material/colors';
+import { Typography } from '@mui/material';
+import { grey } from '@mui/material/colors';
+import ErrorPageLayout from '../components/ErrorPageLayout';
+import ErrorPageActions from '../components/ErrorPageActions';
 
-export default function NotFound(){
+export default function NotFound() {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        textAlign: 'center',
-        backgroundColor: grey[100],
-        padding: 3,
-      }}
-    >
-      <Typography variant="h2" sx={{ color: orange[500], fontWeight: 'bold' }}>
-        404 - Out of Bounds!
+    <ErrorPageLayout code={404}>
+      <Typography
+        variant="h5"
+        sx={{ fontWeight: 600, color: grey[800], mb: 1 }}
+      >
+        Página no encontrada
       </Typography>
-      <Typography variant="h5" sx={{ marginTop: 2 }}>
-        Looks like you’ve thrown the ball out of bounds.
+      <Typography variant="body1" sx={{ color: grey[500], maxWidth: 380 }}>
+        La página que estás buscando no existe o fue movida.
       </Typography>
-      <Typography variant="body1" sx={{ marginTop: 2, color: grey[700] }}>
-        The page you're looking for doesn't exist. How about we get back to the
-        court?
-      </Typography>
-      <Box sx={{ marginTop: 4 }}>
-        <Button
-          component={Link}
-          to="/"
-          variant="contained"
-          sx={{
-            backgroundColor: orange[500],
-            color: grey[900],
-            '&:hover': {
-              backgroundColor: orange[700],
-            },
-          }}
-        >
-          Back to Home
-        </Button>
-      </Box>
-    </Box>
+      <ErrorPageActions />
+    </ErrorPageLayout>
   );
 }

@@ -37,6 +37,30 @@ export interface RefreshTokenRequest {
 }
 
 /**
+ * Represents a password reset confirmation request from an email link.
+ * @interface PasswordResetConfirmRequest
+ */
+export interface PasswordResetConfirmRequest {
+  /**
+   * Email associated with the user account.
+   * @type {string}
+   */
+  email: string;
+
+  /**
+   * Token received by email for password reset.
+   * @type {string}
+   */
+  token: string;
+
+  /**
+   * New password to set.
+   * @type {string}
+   */
+  newPassword: string;
+}
+
+/**
  * Represents a user login request.
  * @interface LogInUserRequest
  */
@@ -46,7 +70,7 @@ export interface LogInUserRequest {
    * @type {string}
    * @minLength 1
    */
-  username: string;
+  email: string;
 
   /**
    * The password of the user.

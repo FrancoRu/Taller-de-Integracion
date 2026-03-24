@@ -128,7 +128,6 @@ public class TournamentController(
     /// Returns 200 (OK) with paginated tournament results.
     /// Returns 400 (Bad Request) if parameters are invalid.
     /// </returns>
-    [AllowAnonymous]
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<TournamentResponse>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

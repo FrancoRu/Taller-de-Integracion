@@ -1,4 +1,5 @@
 ﻿using API.Utils;
+using API.Utils.Middlewares;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -12,7 +13,6 @@ builder.Host.AddSerilogConfig(builder.Configuration);
 builder.Services
     .AddAutoMapper(typeof(Program))
     .AddDbContextConfig(builder.Configuration)
-    .AddIdentityConfig(builder.Configuration)
     .AddCorsConfig(builder.Configuration)
     .RegisterScoped()
     .RegisterSingletons()
@@ -21,6 +21,8 @@ builder.Services
     .AddCustomSwagger(builder.Configuration);
 
 builder.Services.AddControllers().AddCustomJsonOptions();
+builder.Services.AddEmailConfig(builder.Configuration);   
+builder.Services.AddIdentityConfig(builder.Configuration); 
 
 // Exception Handler & Problem Details
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -38,7 +40,8 @@ app.UseSwaggerConfig(builder.Environment);
 app.UseSerilogRequestLogging()
     .UseCors()
     .UseAuthentication()
-    .UseAuthorization();
+    .UseAuthorization()
+    .UseMiddleware<MustChangePasswordMiddleware>();
 
 app.MapControllers();
 app.UseExceptionHandlerConfig();

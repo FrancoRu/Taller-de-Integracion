@@ -26,7 +26,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
     }
 
     public async Task<Match?> GetMatchByIdAsync(Guid matchId)
-        => await matchRepository.GetByIdAsync(matchId);
+        => await matchRepository.GetByIdAsync(matchId, includes: [m => m.HomeTeam!, m=> m.VisitorTeam!]);
 
     public async Task<Match?> GetMatchByIdWithScorersAsync(Guid matchId)
     {

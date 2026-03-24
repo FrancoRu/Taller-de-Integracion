@@ -31,6 +31,11 @@ export const teamService = {
     formData.append('ThreeLetterCode', team.threeLetterCode);
     formData.append('ShirtColor', team.shirtColor);
     formData.append('LogoFile', team.logo);
+
+    if (team.tournamentId !== undefined) {
+      formData.append('TournamentId', team.tournamentId ?? '');
+    }
+
     return await sendPost(routes.teams, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

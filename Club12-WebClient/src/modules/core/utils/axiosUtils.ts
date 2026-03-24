@@ -4,9 +4,11 @@ import routes from '@/modules/core/constants/routes';
 import {
   ERROR_MESSAGES,
   COOKIE_SIGNIN_TOKEN,
+  JWT,
 } from '@/modules/core/constants/constants';
 
 const TOKEN_KEY: string = COOKIE_SIGNIN_TOKEN;
+const INVALID_TOKEN_PATH = '/token-invalido';
 
 type headersContent = {
   'Content-Type': string;
@@ -21,6 +23,57 @@ const statusCodeHandlers: Record<
   number,
   ((response: AxiosResponse) => void)[]
 > = {};
+
+const hasAuthorizationHeader = (error: AxiosError): boolean => {
+  const headers = error.config?.headers as Record<string, unknown> | undefined;
+
+  const authorizationHeader = headers?.Authorization ?? headers?.authorization;
+  return Boolean(authorizationHeader);
+};
+
+const isRefreshTokenRequest = (error: AxiosError): boolean => {
+  const requestUrl = error.config?.url ?? '';
+  return requestUrl.includes('/auth/refresh-token');
+};
+
+const redirectToInvalidToken = (): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  if (window.location.pathname === INVALID_TOKEN_PATH) {
+    return;
+  }
+
+  unregisterToken();
+  localStorage.removeItem(JWT.REFRESH_TOKEN);
+  window.location.assign(INVALID_TOKEN_PATH);
+};
+
+const triggerStatusCodeHandlers = (response: AxiosResponse): void => {
+  const handlers = statusCodeHandlers[response.status];
+  if (!handlers?.length) {
+    return;
+  }
+
+  handlers.forEach(callback => {
+    callback(response);
+  });
+};
+
+const handleUnauthorizedToken = (error: AxiosError): void => {
+  const statusCode = error.response?.status;
+  if (statusCode !== 401) {
+    return;
+  }
+
+  const shouldRedirect =
+    hasAuthorizationHeader(error) || isRefreshTokenRequest(error);
+
+  if (shouldRedirect) {
+    redirectToInvalidToken();
+  }
+};
 
 /**
  * Checks if a token is set in cookies.
@@ -156,8 +209,13 @@ const sendRequest = async <T>(
  */
 const throwError = (error: unknown): AxiosError | Error => {
   switch (true) {
-    case axios.isAxiosError(error):
+    case axios.isAxiosError(error): {
+      if (error.response) {
+        triggerStatusCodeHandlers(error.response);
+      }
+      handleUnauthorizedToken(error);
       return error;
+    }
 
     case error instanceof Error:
       return new AxiosError(

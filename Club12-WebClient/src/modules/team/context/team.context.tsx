@@ -94,8 +94,14 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
           });
 
         if (res) {
-          setTeam(res.data);
-          queryClient.setQueryData(['team', 'byId', id], res);
+          if (res.status === 204) {
+            setTeam(prev =>
+              prev && prev.id === id ? { ...prev, ...data } : prev
+            );
+          } else if (res.data) {
+            setTeam(res.data);
+            queryClient.setQueryData(['team', 'byId', id], res);
+          }
           await queryClient.invalidateQueries({ queryKey: ['team', 'list'] });
         }
         return res?.data;

@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
-
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Application.DTOs.Team.Request;
@@ -34,4 +34,6 @@ public class CreateTeamRequest
     [Required(ErrorMessage = "The Logo image is required.")]
     [DataType(DataType.Upload)]
     public required IFormFile LogoFile { get; init; }
+
+    public Guid? TournamentId { get; init; }
 }

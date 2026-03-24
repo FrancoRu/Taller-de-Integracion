@@ -1,0 +1,206 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Button,
+  Card,
+  CardContent,
+  MenuItem,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { useAuth } from '../../../modules/auth/hook/auth.hook';
+import { useUser } from '../../../modules/user/hook/user.hook';
+import { RegisterUserRequest } from '../../../modules/user/type/user';
+import { UserRolesType } from '../../../modules/core/enum/user/userRolesType';
+import { useError } from '../../../modules/error/hooks/error.hock';
+
+const ROLE_LABELS: Partial<Record<UserRolesType, string>> = {
+  OWNER: 'Owner',
+  TOURNAMENT_MANAGER: 'Responsable del Torneo',
+  TEAM_MANAGER: 'Responsable de Equipo',
+};
+
+// Roles that Admin can assign
+const ADMIN_ASSIGNABLE_ROLES: UserRolesType[] = [
+  UserRolesType.Owner,
+  UserRolesType.TournamentManager,
+];
+
+// Owner always creates TeamManager accounts
+const OWNER_FIXED_ROLE = UserRolesType.TeamManager;
+
+const EMPTY_FORM: RegisterUserRequest = {
+  email: '',
+  username: '',
+  phone: '',
+  password: '',
+  role: '',
+};
+
+const CreateUser: React.FC = () => {
+  const navigate = useNavigate();
+  const { role: loggedRole } = useAuth();
+  const { createUser } = useUser();
+  const { errors, setMessage } = useError();
+  const [submitting, setSubmitting] = useState(false);
+
+  const isAdmin = loggedRole === UserRolesType.Admin;
+  const isOwner = loggedRole === UserRolesType.Owner;
+
+  // Redirect roles that can't create users
+  useEffect(() => {
+    if (!isAdmin && !isOwner) {
+      navigate('/', { replace: true });
+    }
+  }, [isAdmin, isOwner, navigate]);
+
+  const [form, setForm] = useState<RegisterUserRequest>({
+    ...EMPTY_FORM,
+    role: isOwner ? OWNER_FIXED_ROLE : '',
+  });
+
+  const needsPassword = form.role !== UserRolesType.TeamManager;
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async () => {
+    const messages: string[] = [];
+
+    if (!form.email.trim()) messages.push('El email es requerido.');
+    if (!form.username.trim())
+      messages.push('El nombre de usuario es requerido.');
+    if (
+      form.username.length > 0 &&
+      (form.username.length < 3 || form.username.length > 50)
+    )
+      messages.push('El nombre de usuario debe tener entre 3 y 50 caracteres.');
+    if (!form.role) messages.push('El rol es requerido.');
+    if (needsPassword && !form.password?.trim())
+      messages.push('La contraseña es requerida para este rol.');
+
+    if (messages.length > 0) {
+      setMessage(400, messages);
+      return;
+    }
+
+    const payload: RegisterUserRequest = {
+      email: form.email.trim(),
+      username: form.username.trim(),
+      phone: form.phone?.trim() || undefined,
+      password: needsPassword ? form.password?.trim() : undefined,
+      role: form.role,
+    };
+
+    setSubmitting(true);
+    const result = await createUser(payload);
+    setSubmitting(false);
+
+    if (result) {
+      navigate('/panel/usuarios');
+    }
+  };
+
+  if (!isAdmin && !isOwner) return null;
+
+  return (
+    <Card sx={{ maxWidth: 520, mx: 'auto', mt: 3 }}>
+      <CardContent>
+        <Typography variant="h6" mb={2}>
+          Registrar nuevo usuario
+        </Typography>
+
+        {errors && errors.length > 0 && (
+          <Stack spacing={0.5} mb={2}>
+            {errors.map((e, i) => (
+              <Typography key={i} color="error" variant="body2">
+                {e}
+              </Typography>
+            ))}
+          </Stack>
+        )}
+
+        <Stack spacing={2}>
+          <TextField
+            fullWidth
+            label="Email"
+            name="email"
+            type="email"
+            value={form.email}
+            onChange={handleChange}
+          />
+
+          <TextField
+            fullWidth
+            label="Nombre de usuario"
+            name="username"
+            value={form.username}
+            onChange={handleChange}
+            inputProps={{ minLength: 3, maxLength: 50 }}
+          />
+
+          <TextField
+            fullWidth
+            label="Teléfono (opcional)"
+            name="phone"
+            value={form.phone ?? ''}
+            onChange={handleChange}
+          />
+
+          {isAdmin && (
+            <TextField
+              select
+              fullWidth
+              label="Rol"
+              name="role"
+              value={form.role}
+              onChange={handleChange}
+            >
+              <MenuItem value="">Seleccionar rol</MenuItem>
+              {ADMIN_ASSIGNABLE_ROLES.map(r => (
+                <MenuItem key={r} value={r}>
+                  {ROLE_LABELS[r] ?? r}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
+
+          {needsPassword && (
+            <TextField
+              fullWidth
+              label="Contraseña"
+              name="password"
+              type="password"
+              value={form.password ?? ''}
+              onChange={handleChange}
+            />
+          )}
+
+          <Stack direction="row" spacing={2} justifyContent="flex-end">
+            <Button
+              variant="outlined"
+              onClick={() => navigate('/panel/usuarios')}
+              disabled={submitting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              disabled={submitting}
+            >
+              {submitting ? 'Guardando...' : 'Crear usuario'}
+            </Button>
+          </Stack>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default CreateUser;

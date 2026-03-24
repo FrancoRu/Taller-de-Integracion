@@ -85,12 +85,6 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
             expression = expression.And(stageExpression);
         }
 
-        if (filter.TournamentId.HasValue)
-        {
-            Expression<Func<Team, bool>> tournamentExpression =
-                team => team.TournamentId == filter.TournamentId.Value;
-        }
-
         IEnumerable<Team> filteredTeams = await teamRepository.FindAsync(
             expression,
             includes: [team => team.Players, team => team.StageTeamMatches],

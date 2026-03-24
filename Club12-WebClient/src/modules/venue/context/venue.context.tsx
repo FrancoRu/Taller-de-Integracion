@@ -91,20 +91,42 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
           await putVenueMutation.mutateAsync({ id, venue });
 
         if (res) {
-          setVenue(res.data);
-          queryClient.setQueryData(['venue', 'byId', id], res);
-          await queryClient.invalidateQueries({ queryKey: ['venue', 'list'] });
-          setMessage(res.status, [
-            'La información de la cancha fue actualizada correctamente',
-          ]);
+          if (res.status === 204) {
+            const currentVenue =
+              venues?.find(existingVenue => existingVenue.id === id) ?? null;
+            const updatedVenue: IVenueResponse = {
+              id,
+              name: venue.name ?? currentVenue?.name ?? '',
+              address: venue.address ?? currentVenue?.address ?? '',
+              photoUrl: venue.photoUrl ?? currentVenue?.photoUrl ?? '',
+            };
+            setVenue(updatedVenue);
+            setVenues(prev => upsertListById(prev, updatedVenue));
+            await queryClient.invalidateQueries({
+              queryKey: ['venue', 'list'],
+            });
+            setMessage(res.status, [
+              'La información de la cancha fue actualizada correctamente',
+            ]);
+            return updatedVenue;
+          } else if (res.data) {
+            setVenue(res.data);
+            setVenues(prev => upsertListById(prev, res.data));
+            queryClient.setQueryData(['venue', 'byId', id], res);
+            await queryClient.invalidateQueries({
+              queryKey: ['venue', 'list'],
+            });
+            setMessage(res.status, [
+              'La información de la cancha fue actualizada correctamente',
+            ]);
+            return res.data;
+          }
         }
-
-        return res.data;
       } catch (error: unknown) {
         handleUnknownError(error);
       }
     },
-    [putVenueMutation, queryClient, setMessage]
+    [putVenueMutation, queryClient, setMessage, venues]
   );
 
   const getAllVenues = useCallback(async (): Promise<

@@ -50,13 +50,18 @@ const theme = createTheme(baseTheme, {
       },
     },
     MuiButton: {
+      defaultProps: {
+        color: 'primary',
+      },
       styleOverrides: {
         root: {
           borderRadius: '8px',
           textTransform: 'none',
           marginTop: '16px',
-          color: 'white',
           fontWeight: 'bold',
+        },
+        contained: {
+          color: '#fff',
         },
       },
     },

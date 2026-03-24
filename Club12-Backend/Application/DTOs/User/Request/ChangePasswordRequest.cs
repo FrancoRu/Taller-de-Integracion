@@ -1,0 +1,18 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace Application.DTOs.User.Request;
+
+/// <summary>
+/// Request to change a user's password.
+/// <see cref="CurrentPassword"/> is required when the caller is changing their own password.
+/// Admins/Owners changing another user's password may omit it.
+/// </summary>
+public sealed class ChangePasswordRequest
+{
+    [Required]
+    [MinLength(8)]
+    public string NewPassword { get; set; } = string.Empty;
+
+    /// <summary>Required only for self-service password changes.</summary>
+    public string? CurrentPassword { get; set; }
+}

@@ -34,6 +34,23 @@ export const AuthContext = createContext<IAuthContextProps | undefined>(
 
 const ROLE_CLAIM =
   'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
+const ROLE_CLAIM_LEGACY =
+  'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role';
+
+const ROLE_NORMALIZATION_MAP: Record<string, UserRolesType> = {
+  admin: UserRolesType.Admin,
+  administrador: UserRolesType.Admin,
+  owner: UserRolesType.Owner,
+  duenio: UserRolesType.Owner,
+  dueño: UserRolesType.Owner,
+  tournament_manager: UserRolesType.TournamentManager,
+  tournamentmanager: UserRolesType.TournamentManager,
+  'tournament manager': UserRolesType.TournamentManager,
+  team_manager: UserRolesType.TeamManager,
+  teammanager: UserRolesType.TeamManager,
+  'team manager': UserRolesType.TeamManager,
+  guest: UserRolesType.Guest,
+};
 
 const parseExpiresInToMs = (expiresIn: string): number => {
   const [dayPart, timePart] = expiresIn.includes('.')
@@ -60,17 +77,32 @@ const getUserRoleFromToken = (accessToken: string): UserRolesType => {
     return UserRolesType.Guest;
   }
 
-  const roleClaim = payload[ROLE_CLAIM] ?? payload.role ?? payload.roles;
-  const roleValues = Array.isArray(roleClaim) ? roleClaim : [roleClaim];
-  const validRoles = new Set(Object.values(UserRolesType));
+  const explicitRoleClaims = [
+    payload[ROLE_CLAIM],
+    payload[ROLE_CLAIM_LEGACY],
+    payload.role,
+    payload.roles,
+    payload.Role,
+    payload.Roles,
+  ];
 
-  const role = roleValues.find(
-    (currentRole): currentRole is UserRolesType =>
-      typeof currentRole === 'string' &&
-      validRoles.has(currentRole as UserRolesType)
+  const dynamicRoleClaims = Object.entries(payload)
+    .filter(([key]) => key.toLowerCase().includes('role'))
+    .map(([, value]) => value);
+
+  const rawRoleValues = [...explicitRoleClaims, ...dynamicRoleClaims].flatMap(
+    value => (Array.isArray(value) ? value : [value])
   );
 
-  return role ?? UserRolesType.Guest;
+  const normalizedRole = rawRoleValues
+    .filter((value): value is string => typeof value === 'string')
+    .flatMap(value => value.split(','))
+    .map(value => value.trim().toLowerCase())
+    .find(value => Boolean(ROLE_NORMALIZATION_MAP[value]));
+
+  return normalizedRole
+    ? ROLE_NORMALIZATION_MAP[normalizedRole]
+    : UserRolesType.Guest;
 };
 
 export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
@@ -193,7 +225,7 @@ export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
         const res = await signInMutation.mutateAsync(userData);
         if (res?.status === 200 && res?.data) {
           const authData = res.data as AuthResponse;
-          const expiresInMs = applyAuthData(authData, userData.username);
+          const expiresInMs = applyAuthData(authData, userData.email);
 
           clearAuthTimeout();
           if (expiresInMs > 0) {

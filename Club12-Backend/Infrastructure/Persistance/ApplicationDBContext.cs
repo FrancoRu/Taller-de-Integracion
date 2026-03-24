@@ -1,6 +1,8 @@
 ﻿using Domain.Entities.Models;
-using Infrastructure.Conventions;
+using Infrastructure.Persistance.Converters;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using System;
 
 namespace Infrastructure.Persistance;
 
@@ -19,7 +21,16 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
 {
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
-        configurationBuilder.Conventions.Add(_ => new DateTimeToTimestampWithoutTimeZoneConvention());
+        configurationBuilder
+            .Properties<DateTime>()
+            .HaveColumnType("timestamp without time zone")
+            .HaveConversion<UtcDateTimeConverter>();
+
+        configurationBuilder
+            .Properties<DateTime?>()
+            .HaveColumnType("timestamp without time zone")
+            .HaveConversion<NullableUtcDateTimeConverter>();
+
         base.ConfigureConventions(configurationBuilder);
     }
 

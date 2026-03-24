@@ -11,6 +11,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TournamentProvider } from './modules/tournament/context/tournament.context';
 import { VenueProvider } from './modules/venue/context/venue.context';
 import { TeamProvider } from './modules/team/context/team.context';
+import { UserProvider } from './modules/user/context/user.context';
+import { DivisionProvider } from './modules/division/context/division.context';
+import { PlayerProvider } from './modules/player/context/player.context';
+import { StageProvider } from './modules/stage/context/stage.context';
+import { MatchProvider } from './modules/match/context/match.context';
+import { PlayerSanctionProvider } from './modules/playerSanction/context/playerSanction.context';
+import { PlayerStatisticProvider } from './modules/playerStatistic/context/playerStatistic.context';
 
 //process.loadEnvFile();
 const queryClient = new QueryClient();
@@ -22,13 +29,27 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         <BrowserRouter>
           <ErrorProvider>
             <AuthProvider>
-              <TournamentProvider>
-                <VenueProvider>
-                  <TeamProvider>
-                    <App />
-                  </TeamProvider>
-                </VenueProvider>
-              </TournamentProvider>
+              <VenueProvider>
+                <TeamProvider>
+                  <PlayerProvider>
+                    <UserProvider>
+                      <TournamentProvider>
+                        <DivisionProvider>
+                          <StageProvider>
+                            <MatchProvider>
+                              <PlayerSanctionProvider>
+                                <PlayerStatisticProvider>
+                                  <App />
+                                </PlayerStatisticProvider>
+                              </PlayerSanctionProvider>
+                            </MatchProvider>
+                          </StageProvider>
+                        </DivisionProvider>
+                      </TournamentProvider>
+                    </UserProvider>
+                  </PlayerProvider>
+                </TeamProvider>
+              </VenueProvider>
             </AuthProvider>
           </ErrorProvider>
         </BrowserRouter>

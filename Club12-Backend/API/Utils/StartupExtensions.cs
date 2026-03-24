@@ -3,9 +3,10 @@ using API.Utils.Middlewares;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Services;
+using Application.Utils.Helper.Email;
 using Application.Utils.Helper.SupabaseHelper;
-using Domain;
 using Domain.Enums;
+using FluentEmail.MailKitSmtp;
 using Infrastructure.Identity;
 using Infrastructure.Persistance;
 using Infrastructure.Repositories;
@@ -260,9 +261,10 @@ public static class StartupExtensions
 
     /// <summary>
     /// Registers Identity DbContext, ASP.NET Core Identity services, <see cref="IAuthenticationService"/>,
-    /// and <see cref="IdentitySeeder"/>.
+    /// <see cref="IUserManagementService"/>, and <see cref="IdentitySeeder"/>.
     /// </summary>
-    public static IServiceCollection AddIdentityConfig(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddIdentityConfig(
+        this IServiceCollection services, IConfiguration configuration)
     {
         string? connectionString = configuration.GetConnectionString("DbConnection");
         if (string.IsNullOrWhiteSpace(connectionString))
@@ -279,7 +281,8 @@ public static class StartupExtensions
             .AddSignInManager()
             .AddDefaultTokenProviders();
 
-        services.AddScoped<IAuthenticationService, IdentityAuthenticationService>();
+        services.AddScoped<IAuthenticationService,  IdentityAuthenticationService>();
+        services.AddScoped<IUserManagementService,  IdentityUserManagementService>(); // ← faltaba
         services.AddScoped<IdentitySeeder>();
 
         return services;
@@ -337,6 +340,42 @@ public static class StartupExtensions
         }
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        return services;
+    }
+
+    /// <summary>
+    /// Registers FluentEmail with Mailgun and binds <see cref="IEmailService"/>
+    /// to <see cref="FluentEmailHelper"/>.
+    /// </summary>
+    public static IServiceCollection AddEmailConfig(
+       this IServiceCollection services, IConfiguration configuration)
+    {
+        string smtpHost = configuration["Smtp:Host"]
+            ?? throw new ArgumentException("Smtp:Host is missing from configuration.");
+        int smtpPort = int.Parse(configuration["Smtp:Port"]
+            ?? throw new ArgumentException("Smtp:Port is missing from configuration."));
+        string username = configuration["Smtp:Username"]
+            ?? throw new ArgumentException("Smtp:Username is missing from configuration.");
+        string password = configuration["Smtp:Password"]
+            ?? throw new ArgumentException("Smtp:Password is missing from configuration.");
+        bool useSsl = bool.Parse(configuration["Smtp:UseSsl"] ?? "true");
+        string fromEmail = configuration["Smtp:FromEmail"] ?? "noreply@club12.com";
+        string fromName = configuration["Smtp:FromName"] ?? "Club12";
+
+        services
+            .AddFluentEmail(fromEmail, fromName)
+            .AddMailKitSender(new SmtpClientOptions
+            {
+                Server = smtpHost,
+                Port = smtpPort,
+                UseSsl = true,
+                User = username,
+                Password = password,
+                RequiresAuthentication = true
+            });
+
+        services.AddScoped<IEmailService, FluentEmailHelper>();
+
         return services;
     }
 }

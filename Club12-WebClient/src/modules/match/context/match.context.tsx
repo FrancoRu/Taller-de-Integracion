@@ -1,5 +1,12 @@
 import { AxiosError, AxiosResponse } from 'axios';
-import { createContext, ReactNode, useEffect, useState } from 'react';
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { GenericResponsePagination, GUID } from '../../core/types/types';
 import { useError } from '../../error/hooks/error.hock';
@@ -28,14 +35,17 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
   const { setError, setMessage } = useError();
   const queryClient = useQueryClient();
 
-  const handleUnknownError = (error: unknown) => {
-    if (error instanceof AxiosError) {
-      setError(error);
-      return;
-    }
+  const handleUnknownError = useCallback(
+    (error: unknown) => {
+      if (error instanceof AxiosError) {
+        setError(error);
+        return;
+      }
 
-    setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-  };
+      setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+    },
+    [setError]
+  );
 
   const addMatchMutation = useMutation({
     mutationFn: matchService.addMatch,
@@ -71,129 +81,165 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
     setMatches(prev => upsertListById(prev, match));
   }, [match]);
 
-  const addMatch = async (
-    match: IAddMatchRequest
-  ): Promise<IMatchResponse | void> => {
-    try {
-      const res: AxiosResponse<IMatchResponse> =
-        await addMatchMutation.mutateAsync(match);
-      if (res) {
-        setMatch(res.data);
-        queryClient.setQueryData(['match', 'byId', res.data.id], res);
-        await queryClient.invalidateQueries({ queryKey: ['match', 'list'] });
-        setMessage(res.status, ['El partido fue creado satisfactoriamente.']);
-      }
-      return res.data;
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
-
-  const putMatchScoreByMatchId = async (
-    id: GUID,
-    matchScore: IPutMatchScoreRequest
-  ): Promise<IMatchResponse | void> => {
-    try {
-      const res: AxiosResponse<IMatchResponse> =
-        await putMatchScoreMutation.mutateAsync({ id, matchScore });
-      if (res) {
-        setMatch(res.data);
-        queryClient.setQueryData(['match', 'byId', id], res);
-        await queryClient.invalidateQueries({ queryKey: ['match', 'list'] });
-        setMessage(res.status, ['Partido actualizado correctamente']);
-      }
-      return res.data;
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
-
-  const putMatchByMatchId = async (
-    id: GUID,
-    matchDate: IPutMatchRequest
-  ): Promise<IMatchResponse | void> => {
-    try {
-      const res: AxiosResponse<IMatchResponse> =
-        await putMatchMutation.mutateAsync({ id, matchDate });
-      if (res) {
-        setMatch(res.data);
-        queryClient.setQueryData(['match', 'byId', id], res);
-        await queryClient.invalidateQueries({ queryKey: ['match', 'list'] });
-        setMessage(res.status, ['Partido creado satisfactoriamente']);
-      }
-      return res.data;
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
-
-  const getMatchById = async (id: GUID): Promise<IMatchResponse | void> => {
-    try {
-      const res: AxiosResponse<IMatchResponse> = await queryClient.fetchQuery({
-        queryKey: ['match', 'byId', id],
-        queryFn: async () => await matchService.getMatchById(id),
-      });
-
-      if (res) {
-        setMatch(res.data);
-      }
-      return res.data;
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
-
-  const getMatchByFilter = async (
-    filter: MatchFiltered
-  ): Promise<GenericResponsePagination<IMatchResponse> | void> => {
-    try {
-      const res = await queryClient.fetchQuery({
-        queryKey: ['match', 'list', filter],
-        queryFn: async () => await matchService.getMatchByFilter(filter),
-      });
-
-      if (res?.data?.items) {
-        setMatches(res.data.items);
+  const addMatch = useCallback(
+    async (match: IAddMatchRequest): Promise<IMatchResponse | void> => {
+      try {
+        const res: AxiosResponse<IMatchResponse> =
+          await addMatchMutation.mutateAsync(match);
+        if (res) {
+          setMatch(res.data);
+          queryClient.setQueryData(['match', 'byId', res.data.id], res);
+          await queryClient.invalidateQueries({ queryKey: ['match', 'list'] });
+          setMessage(res.status, ['El partido fue creado satisfactoriamente.']);
+        }
         return res.data;
+      } catch (error: unknown) {
+        handleUnknownError(error);
       }
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
-  const deleteMatchById = async (id: GUID): Promise<void> => {
-    try {
-      await deleteMatchMutation.mutateAsync(id);
-      setMatches(prev => prev?.filter(e => e.id !== id) ?? null);
-      if (match?.id === id) {
-        setMatch(null);
-      }
-      queryClient.removeQueries({ queryKey: ['match', 'byId', id] });
-      await queryClient.invalidateQueries({ queryKey: ['match', 'list'] });
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
+    },
+    [addMatchMutation, queryClient, setMessage, handleUnknownError]
+  );
 
-  const generateMatchesAutomatically = async (id: GUID): Promise<boolean> => {
-    try {
-      console.log(id);
-      return true;
-    } catch (error: unknown) {
-      handleUnknownError(error);
-      return false; // en caso de error
-    }
-  };
-  const container: IMatchContextProps = {
-    match,
-    matches,
-    addMatch,
-    putMatchByMatchId,
-    putMatchScoreByMatchId,
-    getMatchById,
-    getMatchByFilter,
-    deleteMatchById,
-    generateMatchesAutomatically,
-  };
+  const putMatchScoreByMatchId = useCallback(
+    async (
+      id: GUID,
+      matchScore: IPutMatchScoreRequest
+    ): Promise<IMatchResponse | void> => {
+      try {
+        const res: AxiosResponse<IMatchResponse> =
+          await putMatchScoreMutation.mutateAsync({ id, matchScore });
+        if (res) {
+          setMatch(res.data);
+          queryClient.setQueryData(['match', 'byId', id], res);
+          await queryClient.invalidateQueries({ queryKey: ['match', 'list'] });
+          setMessage(res.status, ['Partido actualizado correctamente']);
+        }
+        return res.data;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [putMatchScoreMutation, queryClient, setMessage, handleUnknownError]
+  );
+
+  const putMatchByMatchId = useCallback(
+    async (
+      id: GUID,
+      matchDate: IPutMatchRequest
+    ): Promise<IMatchResponse | void> => {
+      try {
+        const res: AxiosResponse<IMatchResponse> =
+          await putMatchMutation.mutateAsync({ id, matchDate });
+        if (res) {
+          setMatch(res.data);
+          queryClient.setQueryData(['match', 'byId', id], res);
+          await queryClient.invalidateQueries({ queryKey: ['match', 'list'] });
+          setMessage(res.status, ['Partido creado satisfactoriamente']);
+        }
+        return res.data;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [putMatchMutation, queryClient, setMessage, handleUnknownError]
+  );
+
+  const getMatchById = useCallback(
+    async (id: GUID): Promise<IMatchResponse | void> => {
+      try {
+        const res: AxiosResponse<IMatchResponse> = await queryClient.fetchQuery(
+          {
+            queryKey: ['match', 'byId', id],
+            queryFn: async () => await matchService.getMatchById(id),
+          }
+        );
+
+        if (res) {
+          setMatch(res.data);
+        }
+        return res.data;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [queryClient, handleUnknownError]
+  );
+
+  const getMatchByFilter = useCallback(
+    async (
+      filter: MatchFiltered
+    ): Promise<GenericResponsePagination<IMatchResponse> | void> => {
+      try {
+        const res = await queryClient.fetchQuery({
+          queryKey: ['match', 'list', filter],
+          queryFn: async () => await matchService.getMatchByFilter(filter),
+        });
+
+        if (res?.data?.items) {
+          setMatches(res.data.items);
+          return res.data;
+        }
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [queryClient, handleUnknownError]
+  );
+
+  const deleteMatchById = useCallback(
+    async (id: GUID): Promise<void> => {
+      try {
+        await deleteMatchMutation.mutateAsync(id);
+        setMatches(prev => prev?.filter(e => e.id !== id) ?? null);
+        if (match?.id === id) {
+          setMatch(null);
+        }
+        queryClient.removeQueries({ queryKey: ['match', 'byId', id] });
+        await queryClient.invalidateQueries({ queryKey: ['match', 'list'] });
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [deleteMatchMutation, match, queryClient, handleUnknownError]
+  );
+
+  const generateMatchesAutomatically = useCallback(
+    async (id: GUID): Promise<boolean> => {
+      try {
+        console.log(id);
+        return true;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+        return false;
+      }
+    },
+    [handleUnknownError]
+  );
+
+  const container: IMatchContextProps = useMemo(
+    () => ({
+      match,
+      matches,
+      addMatch,
+      putMatchByMatchId,
+      putMatchScoreByMatchId,
+      getMatchById,
+      getMatchByFilter,
+      deleteMatchById,
+      generateMatchesAutomatically,
+    }),
+    [
+      match,
+      matches,
+      addMatch,
+      putMatchByMatchId,
+      putMatchScoreByMatchId,
+      getMatchById,
+      getMatchByFilter,
+      deleteMatchById,
+      generateMatchesAutomatically,
+    ]
+  );
   return (
     <MatchContext.Provider value={container}>{children}</MatchContext.Provider>
   );

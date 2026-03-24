@@ -98,7 +98,7 @@ public class VenueController(IVenueService _venueService, SupabaseHelper _supaba
 
         await _venueService.UpdateVenueAsync(existingVenue);
 
-        return Ok();
+        return NoContent();
     }
 
     /// <summary>

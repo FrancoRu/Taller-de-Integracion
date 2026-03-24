@@ -1,5 +1,12 @@
 import { AxiosError, AxiosResponse } from 'axios';
-import React, { createContext, ReactNode, useEffect, useState } from 'react';
+import React, {
+  createContext,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { GenericResponsePagination, GUID } from '../../core/types/types';
 import { useError } from '../../error/hooks/error.hock';
@@ -30,14 +37,17 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
   const { setError } = useError();
   const queryClient = useQueryClient();
 
-  const handleUnknownError = (error: unknown) => {
-    if (error instanceof AxiosError) {
-      setError(error);
-      return;
-    }
+  const handleUnknownError = useCallback(
+    (error: unknown) => {
+      if (error instanceof AxiosError) {
+        setError(error);
+        return;
+      }
 
-    setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-  };
+      setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+    },
+    [setError]
+  );
 
   const addPlayerSanctionMutation = useMutation({
     mutationFn: playerSanctionService.addPlayerSanction,
@@ -62,113 +72,154 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
     setPlayerSanctions(prev => upsertListById(prev, playerSanction));
   }, [playerSanction]);
 
-  const removeToList = (id: GUID) => {
+  const removeToList = useCallback((id: GUID) => {
     setPlayerSanctions(prev => prev?.filter(e => e.id != id) ?? null);
-  };
-  const addPlayerSanction = async (
-    sanction: IAddPlayerSanction
-  ): Promise<IPlayerSanctionResponse | void> => {
-    try {
-      const res: AxiosResponse<IPlayerSanctionResponse> =
-        await addPlayerSanctionMutation.mutateAsync(sanction);
-      if (res) {
-        setPlayerSanction(res.data);
-        queryClient.setQueryData(['playerSanction', 'byId', res.data.id], res);
-        await queryClient.invalidateQueries({
-          queryKey: ['playerSanction', 'list'],
-        });
-      }
-      return res.data;
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
+  }, []);
 
-  const getPlayerSanctionById = async (
-    id: GUID
-  ): Promise<IPlayerSanctionResponse | void> => {
-    try {
-      const res: AxiosResponse<IPlayerSanctionResponse> =
-        await queryClient.fetchQuery({
-          queryKey: ['playerSanction', 'byId', id],
-          queryFn: async () =>
-            await playerSanctionService.getPlayerSanctionById(id),
-        });
-
-      if (res) {
-        setPlayerSanction(res.data);
-      }
-      return res.data;
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
-
-  const getPlayerSanctionByFilter = async (
-    filter: IPlayerSanctionFiltered
-  ): Promise<GenericResponsePagination<IPlayerSanctionResponse> | void> => {
-    try {
-      const res = await queryClient.fetchQuery({
-        queryKey: ['playerSanction', 'list', filter],
-        queryFn: async () =>
-          await playerSanctionService.getPlayerSanctionByFilter(filter),
-      });
-
-      if (res?.data?.items) {
-        setPlayerSanctions(res.data.items);
+  const addPlayerSanction = useCallback(
+    async (
+      sanction: IAddPlayerSanction
+    ): Promise<IPlayerSanctionResponse | void> => {
+      try {
+        const res: AxiosResponse<IPlayerSanctionResponse> =
+          await addPlayerSanctionMutation.mutateAsync(sanction);
+        if (res) {
+          setPlayerSanction(res.data);
+          queryClient.setQueryData(
+            ['playerSanction', 'byId', res.data.id],
+            res
+          );
+          await queryClient.invalidateQueries({
+            queryKey: ['playerSanction', 'list'],
+          });
+        }
         return res.data;
+      } catch (error: unknown) {
+        handleUnknownError(error);
       }
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
+    },
+    [addPlayerSanctionMutation, queryClient, handleUnknownError]
+  );
 
-  const putPlayerSanctionById = async (
-    id: GUID,
-    sanction: IPutPlayerSanction
-  ): Promise<IPlayerSanctionResponse | void> => {
-    try {
-      const res: AxiosResponse<IPlayerSanctionResponse> =
-        await putPlayerSanctionMutation.mutateAsync({ id, sanction });
-      if (res) {
-        setPlayerSanction(res.data);
-        queryClient.setQueryData(['playerSanction', 'byId', id], res);
+  const getPlayerSanctionById = useCallback(
+    async (id: GUID): Promise<IPlayerSanctionResponse | void> => {
+      try {
+        const res: AxiosResponse<IPlayerSanctionResponse> =
+          await queryClient.fetchQuery({
+            queryKey: ['playerSanction', 'byId', id],
+            queryFn: async () =>
+              await playerSanctionService.getPlayerSanctionById(id),
+          });
+
+        if (res) {
+          setPlayerSanction(res.data);
+        }
+        return res.data;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [queryClient, handleUnknownError]
+  );
+
+  const getPlayerSanctionByFilter = useCallback(
+    async (
+      filter: IPlayerSanctionFiltered
+    ): Promise<GenericResponsePagination<IPlayerSanctionResponse> | void> => {
+      try {
+        const res = await queryClient.fetchQuery({
+          queryKey: ['playerSanction', 'list', filter],
+          queryFn: async () =>
+            await playerSanctionService.getPlayerSanctionByFilter(filter),
+        });
+
+        if (res?.data?.items) {
+          setPlayerSanctions(res.data.items);
+          return res.data;
+        }
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [queryClient, handleUnknownError]
+  );
+
+  const putPlayerSanctionById = useCallback(
+    async (
+      id: GUID,
+      sanction: IPutPlayerSanction
+    ): Promise<IPlayerSanctionResponse | void> => {
+      try {
+        const res: AxiosResponse<IPlayerSanctionResponse> =
+          await putPlayerSanctionMutation.mutateAsync({ id, sanction });
+        if (res) {
+          if (res.status === 204) {
+            setPlayerSanction(prev =>
+              prev && prev.id === id ? { ...prev, ...sanction } : prev
+            );
+          } else if (res.data) {
+            setPlayerSanction(res.data);
+            queryClient.setQueryData(['playerSanction', 'byId', id], res);
+          }
+          await queryClient.invalidateQueries({
+            queryKey: ['playerSanction', 'list'],
+          });
+        }
+        return res.data;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [putPlayerSanctionMutation, queryClient, handleUnknownError]
+  );
+
+  const deletePlayerSanction = useCallback(
+    async (id: GUID): Promise<void> => {
+      try {
+        await deletePlayerSanctionMutation.mutateAsync(id);
+        if (playerSanction?.id != id) {
+          setPlayerSanction(playerSanctions?.find(e => e.id == id) ?? null);
+        }
+        setPlayerSanction(null);
+        removeToList(id);
+        queryClient.removeQueries({ queryKey: ['playerSanction', 'byId', id] });
         await queryClient.invalidateQueries({
           queryKey: ['playerSanction', 'list'],
         });
+      } catch (error: unknown) {
+        handleUnknownError(error);
       }
-      return res.data;
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
+    },
+    [
+      deletePlayerSanctionMutation,
+      playerSanction,
+      playerSanctions,
+      removeToList,
+      queryClient,
+      handleUnknownError,
+    ]
+  );
 
-  const deletePlayerSanction = async (id: GUID): Promise<void> => {
-    try {
-      await deletePlayerSanctionMutation.mutateAsync(id);
-      if (playerSanction?.id != id) {
-        setPlayerSanction(playerSanctions?.find(e => e.id == id) ?? null);
-      }
-      setPlayerSanction(null);
-      removeToList(id);
-      queryClient.removeQueries({ queryKey: ['playerSanction', 'byId', id] });
-      await queryClient.invalidateQueries({
-        queryKey: ['playerSanction', 'list'],
-      });
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
-
-  const container: IPlayerSanctionContextProps = {
-    playerSanction,
-    playerSanctions,
-    addPlayerSanction,
-    getPlayerSanctionById,
-    getPlayerSanctionByFilter,
-    putPlayerSanctionById,
-    deletePlayerSanction,
-  };
+  const container: IPlayerSanctionContextProps = useMemo(
+    () => ({
+      playerSanction,
+      playerSanctions,
+      addPlayerSanction,
+      getPlayerSanctionById,
+      getPlayerSanctionByFilter,
+      putPlayerSanctionById,
+      deletePlayerSanction,
+    }),
+    [
+      playerSanction,
+      playerSanctions,
+      addPlayerSanction,
+      getPlayerSanctionById,
+      getPlayerSanctionByFilter,
+      putPlayerSanctionById,
+      deletePlayerSanction,
+    ]
+  );
 
   return (
     <PlayerSanctionContext.Provider value={container}>

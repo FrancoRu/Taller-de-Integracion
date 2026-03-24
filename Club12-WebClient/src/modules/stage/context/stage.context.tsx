@@ -1,4 +1,11 @@
-import { createContext, ReactNode, useEffect, useState } from 'react';
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   IAddStageRequest,
@@ -27,14 +34,17 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
   const { setError, setMessage } = useError();
   const queryClient = useQueryClient();
 
-  const handleUnknownError = (error: unknown) => {
-    if (error instanceof AxiosError) {
-      setError(error);
-      return;
-    }
+  const handleUnknownError = useCallback(
+    (error: unknown) => {
+      if (error instanceof AxiosError) {
+        setError(error);
+        return;
+      }
 
-    setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-  };
+      setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+    },
+    [setError]
+  );
 
   const addStageMutation = useMutation({
     mutationFn: stageService.addStage,
@@ -64,123 +74,151 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
     setStages(prev => upsertListById(prev, stage));
   }, [stage]);
 
-  const addStage = async (
-    stage: IAddStageRequest
-  ): Promise<IStageResponse | void> => {
-    try {
-      const res: AxiosResponse<IStageResponse> =
-        await addStageMutation.mutateAsync(stage);
-      if (res && res.data) {
+  const addStage = useCallback(
+    async (stage: IAddStageRequest): Promise<IStageResponse | void> => {
+      try {
+        const res: AxiosResponse<IStageResponse> =
+          await addStageMutation.mutateAsync(stage);
+        if (res && res.data) {
+          setStage(res.data);
+          queryClient.setQueryData(['stage', 'byId', res.data.id], res);
+          await queryClient.invalidateQueries({ queryKey: ['stage', 'list'] });
+          setMessage(res.status, ['Fase creada exitosamente']);
+        }
+        return res.data;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [addStageMutation, queryClient, setMessage, handleUnknownError]
+  );
+
+  const putStageById = useCallback(
+    async (
+      id: GUID,
+      stageRequest: IPutStageRequest
+    ): Promise<boolean | void> => {
+      try {
+        const res: AxiosResponse<IStageResponse> =
+          await putStageMutation.mutateAsync({ id, stageRequest });
         setStage(res.data);
-        queryClient.setQueryData(['stage', 'byId', res.data.id], res);
+        queryClient.setQueryData(['stage', 'byId', id], res);
         await queryClient.invalidateQueries({ queryKey: ['stage', 'list'] });
-        setMessage(res.status, ['Fase creada exitosamente']);
+        return true;
+      } catch (error: unknown) {
+        handleUnknownError(error);
       }
-      return res.data;
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
+    },
+    [putStageMutation, queryClient, handleUnknownError]
+  );
 
-  const putStageById = async (
-    id: GUID,
-    stageRequest: IPutStageRequest
-  ): Promise<boolean | void> => {
-    try {
-      const res: AxiosResponse<IStageResponse> =
-        await putStageMutation.mutateAsync({ id, stageRequest });
-      setStage(res.data);
-      queryClient.setQueryData(['stage', 'byId', id], res);
-      await queryClient.invalidateQueries({ queryKey: ['stage', 'list'] });
-      return true;
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
+  const getStageById = useCallback(
+    async (id: GUID): Promise<IStageResponse | void> => {
+      try {
+        const existingStage: IStageResponse | undefined = stages?.find(
+          e => e.id == id
+        );
 
-  const getStageById = async (id: GUID): Promise<IStageResponse | void> => {
-    try {
-      const existingStage: IStageResponse | undefined = stages?.find(
-        e => e.id == id
-      );
+        if (existingStage) {
+          setStage(existingStage);
+          return existingStage;
+        }
 
-      if (existingStage) {
-        setStage(existingStage);
-        return existingStage;
+        const res: AxiosResponse<IStageResponse> = await queryClient.fetchQuery(
+          {
+            queryKey: ['stage', 'byId', id],
+            queryFn: async () => await stageService.getStagesById(id),
+          }
+        );
+
+        if (res && res.data) {
+          setStage(res.data);
+          return res.data;
+        }
+      } catch (error: unknown) {
+        handleUnknownError(error);
       }
+    },
+    [stages, queryClient, handleUnknownError]
+  );
 
-      const res: AxiosResponse<IStageResponse> = await queryClient.fetchQuery({
-        queryKey: ['stage', 'byId', id],
-        queryFn: async () => await stageService.getStagesById(id),
-      });
+  const getStagesByFilters = useCallback(
+    async (
+      filter: StageFiltered
+    ): Promise<GenericResponsePagination<IStageResponse> | void> => {
+      try {
+        const res = await queryClient.fetchQuery({
+          queryKey: ['stage', 'list', filter],
+          queryFn: async () => await stageService.getStagesByFilters(filter),
+        });
 
-      if (res && res.data) {
-        setStage(res.data);
-        return res.data;
+        if (res?.data?.items) {
+          setStages(res.data.items);
+          return res.data;
+        }
+      } catch (error: unknown) {
+        handleUnknownError(error);
       }
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
+    },
+    [queryClient, handleUnknownError]
+  );
 
-  const getStagesByFilters = async (
-    filter: StageFiltered
-  ): Promise<GenericResponsePagination<IStageResponse> | void> => {
-    try {
-      const res = await queryClient.fetchQuery({
-        queryKey: ['stage', 'list', filter],
-        queryFn: async () => await stageService.getStagesByFilters(filter),
-      });
-
-      if (res?.data?.items) {
-        setStages(res.data.items);
-        return res.data;
-      }
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
-
-  const deleteStagesById = async (id: GUID): Promise<void> => {
-    try {
-      await deleteStageMutation.mutateAsync(id);
-      setStage(null);
-      setStages(prev => (prev ? prev.filter(e => e.id !== id) : null));
-      queryClient.removeQueries({ queryKey: ['stage', 'byId', id] });
-      await queryClient.invalidateQueries({ queryKey: ['stage', 'list'] });
-      setMessage(204, ['La etapa ha sido eliminada.']);
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
-
-  const generateStagesAutomatically = async (
-    id: GUID
-  ): Promise<IStageResponse[] | void> => {
-    try {
-      const res: AxiosResponse<IStageResponse[]> =
-        await generateStagesMutation.mutateAsync(id);
-
-      if (res && res.data) {
-        setStages(res.data);
+  const deleteStagesById = useCallback(
+    async (id: GUID): Promise<void> => {
+      try {
+        await deleteStageMutation.mutateAsync(id);
+        setStage(null);
+        setStages(prev => (prev ? prev.filter(e => e.id !== id) : null));
+        queryClient.removeQueries({ queryKey: ['stage', 'byId', id] });
         await queryClient.invalidateQueries({ queryKey: ['stage', 'list'] });
-        return res.data;
+        setMessage(204, ['La etapa ha sido eliminada.']);
+      } catch (error: unknown) {
+        handleUnknownError(error);
       }
-    } catch (error: unknown) {
-      handleUnknownError(error);
-    }
-  };
+    },
+    [deleteStageMutation, queryClient, setMessage, handleUnknownError]
+  );
 
-  const container: IStageContextProps = {
-    stage,
-    stages,
-    addStage,
-    putStageById,
-    getStagesByFilters,
-    getStageById,
-    deleteStagesById,
-    generateStagesAutomatically,
-  };
+  const generateStagesAutomatically = useCallback(
+    async (id: GUID): Promise<IStageResponse[] | void> => {
+      try {
+        const res: AxiosResponse<IStageResponse[]> =
+          await generateStagesMutation.mutateAsync(id);
+
+        if (res && res.data) {
+          setStages(res.data);
+          await queryClient.invalidateQueries({ queryKey: ['stage', 'list'] });
+          return res.data;
+        }
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [generateStagesMutation, queryClient, handleUnknownError]
+  );
+
+  const container: IStageContextProps = useMemo(
+    () => ({
+      stage,
+      stages,
+      addStage,
+      putStageById,
+      getStagesByFilters,
+      getStageById,
+      deleteStagesById,
+      generateStagesAutomatically,
+    }),
+    [
+      stage,
+      stages,
+      addStage,
+      putStageById,
+      getStagesByFilters,
+      getStageById,
+      deleteStagesById,
+      generateStagesAutomatically,
+    ]
+  );
 
   return (
     <StageContext.Provider value={container}>{children}</StageContext.Provider>

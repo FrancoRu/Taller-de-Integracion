@@ -94,6 +94,7 @@ public class GenericRepository<TEntity>(ApplicationDBContext context)
     public virtual async Task<TEntity> AddAsync(TEntity entity)
     {
         await _dbSet.AddAsync(entity);
+        await _context.SaveChangesAsync();
         return entity;
     }
 
@@ -101,6 +102,7 @@ public class GenericRepository<TEntity>(ApplicationDBContext context)
     public virtual async Task<IEnumerable<TEntity>> AddRangeAsync(IEnumerable<TEntity> entities)
     {
         await _dbSet.AddRangeAsync(entities);
+        await _context.SaveChangesAsync();
         return entities;
     }
 

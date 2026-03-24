@@ -10,13 +10,14 @@ import {
   useTheme,
 } from '@mui/material';
 import { useAuth } from '../../modules/auth/hook/auth.hook';
+import { LogInUserRequest } from '../../modules/auth/type/auth';
 
 export default function Login() {
   const theme = useTheme();
   const navigate = useNavigate();
   const { signIn } = useAuth();
-  const [credentials, setCredentials] = useState({
-    username: '',
+  const [credentials, setCredentials] = useState<LogInUserRequest>({
+    email: '',
     password: '',
   });
   const [error, setError] = useState('');
@@ -65,10 +66,10 @@ export default function Login() {
           <TextField
             fullWidth
             label="Usuario"
-            name="username"
+            name="email"
             variant="outlined"
             margin="normal"
-            value={credentials.username}
+            value={credentials.email}
             onChange={handleChange}
           />
           <TextField

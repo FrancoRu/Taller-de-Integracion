@@ -13,6 +13,19 @@ public sealed class RegisterUserRequest
     public required string Email { get; set; }
 
     /// <summary>
+    /// Unique display name for the user. Stored in AspNetUsers.UserName.
+    /// </summary>
+    [Required(ErrorMessage = "Username is required.")]
+    [StringLength(50, MinimumLength = 3, ErrorMessage = "Username must be between 3 and 50 characters.")]
+    public required string Username { get; set; }
+
+    /// <summary>
+    /// Optional contact phone number.
+    /// </summary>
+    [Phone(ErrorMessage = "Invalid phone number format.")]
+    public string? Phone { get; set; }
+
+    /// <summary>
     /// Required for ADMIN, OWNER, TOURNAMENT_MANAGER.
     /// Leave null when registering a TEAM_MANAGER (magic-link flow).
     /// </summary>

@@ -77,8 +77,14 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       try {
         const res: AxiosResponse<ITournamentResponse> =
           await tournamentService.putTournamentById(id, tournamentRequest);
-        if (res && res.status === 200) {
+        if (res && res.status === 204) {
+          setTournament(prev =>
+            prev && prev.id === id ? { ...prev, ...tournamentRequest } : prev
+          );
+          setMessage(res.status, ['Torneo actualizado correctamente']);
+        } else if (res && res.data) {
           setTournament(res.data);
+          setMessage(res.status, []);
         }
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
@@ -88,7 +94,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
         }
       }
     },
-    [setTournament, setError]
+    [setTournament, setError, setMessage]
   );
 
   const getTournamentById = useCallback(
@@ -167,7 +173,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
         if (res) {
           setMessage(res.status, ['Registro de equipo exitoso']);
         }
-        return res.status === 200;
+        return res.status === 200 || res.status === 204;
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
           setError(error);

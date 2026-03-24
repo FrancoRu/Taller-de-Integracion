@@ -2,8 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { List, ListItemButton, ListItemText, Collapse } from '@mui/material';
-import ExpandLess from '@mui/icons-material/ExpandLess';
-import ExpandMore from '@mui/icons-material/ExpandMore';
+import { ExpandLessIcon, ExpandMoreIcon } from '@/views/core/MUI/icons/icons';
 import { RoutesNavigationViews } from '@/views/core/routes-const';
 import TournamentMenuItems from '../tournaments/tournamentsMenuItems';
 
@@ -51,7 +50,7 @@ const MobileNavItems: React.FC<MobileNavItemsProps> = ({ onCloseDrawer }) => {
 
       <ListItemButton onClick={toggleInfoCollapse}>
         <ListItemText primary="Información" />
-        {openInfoCollapse ? <ExpandLess /> : <ExpandMore />}
+        {openInfoCollapse ? <ExpandLessIcon /> : <ExpandMoreIcon />}
       </ListItemButton>
       <Collapse in={openInfoCollapse} timeout="auto" unmountOnExit>
         <List component="div" disablePadding>
