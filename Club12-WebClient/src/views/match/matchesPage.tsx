@@ -413,7 +413,9 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
   const stageOptions = useMemo(
     () =>
       (stages ?? []).filter(stageOption =>
-        filters.divisionId ? stageOption.divisionId === filters.divisionId : true
+        filters.divisionId
+          ? stageOption.divisionId === filters.divisionId
+          : true
       ),
     [filters.divisionId, stages]
   );
