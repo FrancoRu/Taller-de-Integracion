@@ -8,16 +8,16 @@ import {
   useMemo,
 } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { GenericResponsePagination, GUID } from '../../core/types/types';
-import { useError } from '../../error/hooks/error.hock';
-import { teamService } from '../service/team.service';
+import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
+import { useError } from '@/modules/error/hooks/error.hock';
+import { teamService } from '@/modules/team/service/team.service';
 import {
   IAddTeamRequest,
   ITeamContextProps,
   IPutTeamRequest,
   TeamFiltered,
   ITeamResponse,
-} from '../type/team.d';
+} from '@/modules/team/type/team.d';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 

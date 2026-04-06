@@ -8,16 +8,16 @@ import React, {
   useState,
 } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { GenericResponsePagination, GUID } from '../../core/types/types';
-import { useError } from '../../error/hooks/error.hock';
-import { playerSanctionService } from '../service/playerSanction.service';
+import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
+import { useError } from '@/modules/error/hooks/error.hock';
+import { playerSanctionService } from '@/modules/playerSanction/service/playerSanction.service';
 import {
   IAddPlayerSanction,
   IPlayerSanctionContextProps,
   IPlayerSanctionFiltered,
   IPlayerSanctionResponse,
   IPutPlayerSanction,
-} from '../type/playerSanction.d';
+} from '@/modules/playerSanction/type/playerSanction.d';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 
@@ -72,10 +72,6 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
     setPlayerSanctions(prev => upsertListById(prev, playerSanction));
   }, [playerSanction]);
 
-  const removeToList = useCallback((id: GUID) => {
-    setPlayerSanctions(prev => prev?.filter(e => e.id != id) ?? null);
-  }, []);
-
   const addPlayerSanction = useCallback(
     async (
       sanction: IAddPlayerSanction
@@ -83,7 +79,7 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
       try {
         const res: AxiosResponse<IPlayerSanctionResponse> =
           await addPlayerSanctionMutation.mutateAsync(sanction);
-        if (res) {
+        if (res?.data) {
           setPlayerSanction(res.data);
           queryClient.setQueryData(
             ['playerSanction', 'byId', res.data.id],
@@ -92,8 +88,8 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
           await queryClient.invalidateQueries({
             queryKey: ['playerSanction', 'list'],
           });
+          return res.data;
         }
-        return res.data;
       } catch (error: unknown) {
         handleUnknownError(error);
       }
@@ -177,11 +173,8 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
     async (id: GUID): Promise<void> => {
       try {
         await deletePlayerSanctionMutation.mutateAsync(id);
-        if (playerSanction?.id != id) {
-          setPlayerSanction(playerSanctions?.find(e => e.id == id) ?? null);
-        }
         setPlayerSanction(null);
-        removeToList(id);
+        setPlayerSanctions(prev => prev?.filter(e => e.id !== id) ?? null);
         queryClient.removeQueries({ queryKey: ['playerSanction', 'byId', id] });
         await queryClient.invalidateQueries({
           queryKey: ['playerSanction', 'list'],
@@ -190,14 +183,7 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [
-      deletePlayerSanctionMutation,
-      playerSanction,
-      playerSanctions,
-      removeToList,
-      queryClient,
-      handleUnknownError,
-    ]
+    [deletePlayerSanctionMutation, queryClient, handleUnknownError]
   );
 
   const container: IPlayerSanctionContextProps = useMemo(

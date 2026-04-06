@@ -15,17 +15,20 @@ import PlayersPage from './views/player/PlayersPage';
 import PlayerPage from './views/player/PlayerPage';
 import TeamPage from './views/team/TeamPage';
 import TournamentPage from './views/tournament/TournamentPage';
+import TournamentEditPage from './views/tournament/TournamentEditPage';
 import TournamentsPage from './views/tournament/TournamentsPage';
 import DivisionPage from './views/division/divisionPage';
 import DivisionsPage from './views/division/divisionsPage';
 import StagePage from './views/stage/stagePage';
-import StagesPage from './views/stage/stagesPage';
+import StageCreatePage from './views/stage/stageCreatePage';
+import StageEditPage from './views/stage/stageEditPage';
+import StagesPage from '@/views/stage/stagesPage';
 import MatchPage from './views/match/matchPage';
 import MatchesPage from './views/match/matchesPage';
 import UsersPage from './views/panel/UsersPage';
 import UserDetails from './views/user/userDetails';
-import CreateUser from './views/user/CRUD/createUser';
-import EditUser from './views/user/CRUD/editUser';
+import CreateUser from './views/user/createUser';
+import EditUser from './views/user/editUser';
 import ChangePasswordPage from './views/panel/ChangePasswordPage';
 import StatisticsPage from './views/panel/StatisticsPage';
 import { UserRolesType } from './modules/core/enum/user/userRolesType';
@@ -36,9 +39,11 @@ import PrivateRoute from './views/core/privateRoute';
 import TeamsPage from './views/team/TeamsPage';
 import TeamRegisterPage from './views/team/TeamRegisterPage';
 import PlayerSanctionsPage from './views/playerSanction/PlayerSanctionsPage';
-import ScoresPage from './views/score/ScoresPage';
+import PlayerSanctionPage from './views/playerSanction/PlayerSanctionPage';
+import PlayerSanctionEditPage from './views/playerSanction/playerSanctionEditPage';
 import VenuesPage from './views/venue/VenuesPage';
 import VenuePage from './views/venue/venuePage';
+import ScorersPage from './views/scorer/scorersPage';
 
 const FIRST_TAB_BY_ROLE: Partial<Record<UserRolesType, string>> = {
   [UserRolesType.TeamManager]: '/panel/jugadores',
@@ -130,6 +135,20 @@ function App() {
             }
           />
           <Route
+            path="/panel/torneos/:tournamentId/editar"
+            element={
+              <PrivateRoute
+                allowedRoles={[
+                  UserRolesType.Admin,
+                  UserRolesType.Owner,
+                  UserRolesType.TournamentManager,
+                ]}
+              >
+                <TournamentEditPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
             path="/panel/equipos"
             element={
               <PrivateRoute
@@ -169,6 +188,32 @@ function App() {
             }
           />
           <Route
+            path="/panel/sanciones/:playerSanctionId"
+            element={
+              <PrivateRoute
+                allowedRoles={[
+                  UserRolesType.TournamentManager,
+                  UserRolesType.Owner,
+                ]}
+              >
+                <PlayerSanctionPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/panel/sanciones/editar/:playerSanctionId"
+            element={
+              <PrivateRoute
+                allowedRoles={[
+                  UserRolesType.TournamentManager,
+                  UserRolesType.Owner,
+                ]}
+              >
+                <PlayerSanctionEditPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
             path="/panel/puntuaciones"
             element={
               <PrivateRoute
@@ -177,7 +222,7 @@ function App() {
                   UserRolesType.Owner,
                 ]}
               >
-                <ScoresPage />
+                <ScorersPage />
               </PrivateRoute>
             }
           />
@@ -257,6 +302,32 @@ function App() {
                 ]}
               >
                 <StagesPage wrapInCard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/panel/fases/crear"
+            element={
+              <PrivateRoute
+                allowedRoles={[
+                  UserRolesType.Owner,
+                  UserRolesType.TournamentManager,
+                ]}
+              >
+                <StageCreatePage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/panel/fases/editar/:stageId"
+            element={
+              <PrivateRoute
+                allowedRoles={[
+                  UserRolesType.Owner,
+                  UserRolesType.TournamentManager,
+                ]}
+              >
+                <StageEditPage />
               </PrivateRoute>
             }
           />

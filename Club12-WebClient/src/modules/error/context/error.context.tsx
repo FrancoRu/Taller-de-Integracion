@@ -3,8 +3,8 @@
 import { createContext, useEffect, useState } from 'react';
 import { AxiosError } from 'axios';
 import Swal from 'sweetalert2';
-import { ProviderProps } from '../../core/types/types';
-import { BadRequestResponse, IErrorContextProp } from '../type/error.d';
+import { ProviderProps } from '@/modules/core/types/types';
+import { BadRequestResponse, IErrorContextProp } from '@/modules/error/type/error.d';
 
 export const ErrorContext = createContext<IErrorContextProp | undefined>(
   undefined

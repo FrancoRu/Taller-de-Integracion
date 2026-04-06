@@ -1,10 +1,11 @@
 import { IStageResponse } from '@/modules/stage/type/stage';
+import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
 import {
   Filtered,
   GenericResponsePagination,
   GUID,
-} from '../../core/types/types';
-import { IDivisionResponse } from '../../division/type/division';
+} from '@/modules/core/types/types';
+import { IDivisionResponse } from '@/modules/division/type/division';
 
 /**
  * Context properties and methods for managing tournaments.
@@ -111,6 +112,13 @@ export interface IAddTournamentRequest {
    * @type {number}
    */
   minTeams: number;
+
+  /**
+   * The current status of the tournament.
+   * Defaults to Scheduled when omitted.
+   * @type {TournamentStatus}
+   */
+  status?: TournamentStatus;
 }
 
 /**
@@ -168,10 +176,10 @@ export interface ITournamentResponse {
   minTeams: number;
 
   /**
-   * Indicates whether the tournament has finished.
-   * @type {boolean}
+   * The current status of the tournament.
+   * @type {TournamentStatus}
    */
-  isFinished: boolean;
+  status: TournamentStatus;
 }
 
 /**
@@ -190,6 +198,12 @@ export interface ITournamentFiltered extends Filtered {
    * @type {string}
    */
   description?: string;
+
+  /**
+   * The current status of the tournament.
+   * @type {TournamentStatus}
+   */
+  status?: TournamentStatus;
 }
 
 /**
@@ -233,6 +247,12 @@ export interface IPutTournamentRequest {
    * @type {number}
    */
   minTeams: number;
+
+  /**
+   * The current status of the tournament.
+   * @type {TournamentStatus}
+   */
+  status?: TournamentStatus;
 }
 
 export type StatisticsPositions = {

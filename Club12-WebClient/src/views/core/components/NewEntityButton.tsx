@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@mui/material';
-import { AddIcon } from '../MUI/icons/icons';
+import { AddIcon } from '@/views/core/MUI/icons/icons';
 
 interface NewEntityButtonProps {
   type: string;

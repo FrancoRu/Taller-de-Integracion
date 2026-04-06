@@ -2,7 +2,7 @@ import {
   Filtered,
   GenericResponsePagination,
   GUID,
-} from '../../core/types/types';
+} from '@/modules/core/types/types';
 
 /**
  * Context properties and methods for managing players in a sports system.

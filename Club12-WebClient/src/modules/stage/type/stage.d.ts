@@ -203,6 +203,12 @@ export interface IAddStageRequest {
  */
 export interface StageFiltered extends Filtered {
   /**
+   * Optional filter by Tournament unique identifier.
+   * @type {GUID | null}
+   */
+  tournamentId?: GUID | null;
+
+  /**
    * Optional filter by Division unique identifier.
    * @type {GUID | null}
    */
@@ -277,4 +283,25 @@ export enum StageType {
 
 export interface IDashboardStage {
   stages: IStageResponse[];
+}
+
+export interface IStageCreateFormState {
+  name: string;
+  description: string;
+  stageType: StageType;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  isElimination: boolean;
+  divisionId: GUID | '';
+}
+
+export interface IStageEditFormState {
+  description: string;
+  isActive: boolean;
+}
+
+export interface IStageListFilters
+  extends Pick<StageFiltered, 'name' | 'tournamentId' | 'isActive'> {
+  divisionId?: GUID;
 }

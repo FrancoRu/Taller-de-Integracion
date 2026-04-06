@@ -1,10 +1,12 @@
 using API.Utils.Converters;
 using API.Utils.Middlewares;
+using Application.Interfaces.Mappers;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Services;
 using Application.Utils.Helper.Email;
 using Application.Utils.Helper.SupabaseHelper;
+using Application.Utils.Mappers;
 using Domain.Enums;
 using FluentEmail.MailKitSmtp;
 using Infrastructure.Identity;
@@ -282,7 +284,7 @@ public static class StartupExtensions
             .AddDefaultTokenProviders();
 
         services.AddScoped<IAuthenticationService,  IdentityAuthenticationService>();
-        services.AddScoped<IUserManagementService,  IdentityUserManagementService>(); // ← faltaba
+        services.AddScoped<IUserManagementService,  IdentityUserManagementService>();
         services.AddScoped<IdentitySeeder>();
 
         return services;
@@ -297,52 +299,54 @@ public static class StartupExtensions
         string? serviceImplNamespace        = typeof(DivisionService).Namespace;
         string? repositoryInterfaceNamespace = typeof(IBlogPostRepository).Namespace;
         string? repositoryImplNamespace     = typeof(BlogPostRepository).Namespace;
+        string? mapperInterfaceNamespace = typeof(IScorerMapper).Namespace;
+        string? mapperImplNamespace = typeof(ScorerMapper).Namespace;
         string  serviceSuffix               = "Service";
         string  repositorySuffix            = "Repository";
-        string  interfacePrefix             = "I";
+        string  mapperSuffix = "Mapper";
 
         ArgumentNullException.ThrowIfNull(serviceInterfaceNamespace,    "Service interface namespace cannot be null.");
         ArgumentNullException.ThrowIfNull(serviceImplNamespace,         "Service implementation namespace cannot be null.");
         ArgumentNullException.ThrowIfNull(repositoryInterfaceNamespace, "Repository interface namespace cannot be null.");
         ArgumentNullException.ThrowIfNull(repositoryImplNamespace,      "Repository implementation namespace cannot be null.");
+        ArgumentNullException.ThrowIfNull(mapperInterfaceNamespace, "Mapper interface namespace cannot be null.");
+        ArgumentNullException.ThrowIfNull(mapperImplNamespace,      "Mapper implementation namespace cannot be null.");
 
         Assembly serviceAssembly  = typeof(AuthService).Assembly;
         Assembly IServiceAssembly = typeof(IAuthService).Assembly;
         Assembly repoAssembly     = typeof(BlogPostRepository).Assembly;
         Assembly IRepoAssembly    = typeof(IBlogPostRepository).Assembly;
+        Assembly mapperAssembly   = typeof(ScorerMapper).Assembly;
+        Assembly IMapperAssembly  = typeof(IScorerMapper).Assembly;
 
-        IEnumerable<Type> serviceInterfaces = IServiceAssembly.GetTypes()
-            .Where(t => t.IsInterface && t.Namespace == serviceInterfaceNamespace
-                     && t.Name.StartsWith(interfacePrefix) && t.Name.EndsWith(serviceSuffix));
+        services.HelperRegisterScoped(serviceAssembly, IServiceAssembly, serviceSuffix, serviceInterfaceNamespace, serviceImplNamespace);
+        services.HelperRegisterScoped(repoAssembly, IRepoAssembly, repositorySuffix, repositoryInterfaceNamespace, repositoryImplNamespace);
+        services.HelperRegisterScoped(mapperAssembly, IMapperAssembly, mapperSuffix, mapperInterfaceNamespace, mapperImplNamespace);
 
-        foreach (Type iface in serviceInterfaces)
-        {
-            Type? implementation = serviceAssembly.GetTypes()
-                .FirstOrDefault(t => t.IsClass && !t.IsAbstract
-                                  && t.Namespace == serviceImplNamespace
-                                  && t.Name == iface.Name[1..]);
-            if (implementation is not null)
-                services.AddScoped(iface, implementation);
-        }
-
-        IEnumerable<Type> repoInterfaces = IRepoAssembly.GetTypes()
-            .Where(t => t.IsInterface && t.Namespace == repositoryInterfaceNamespace
-                     && t.Name.StartsWith(interfacePrefix) && t.Name.EndsWith(repositorySuffix));
-
-        foreach (Type iface in repoInterfaces)
-        {
-            Type? implementation = repoAssembly.GetTypes()
-                .FirstOrDefault(t => t.IsClass && !t.IsAbstract
-                                  && t.Namespace == repositoryImplNamespace
-                                  && t.Name == iface.Name[1..]);
-            if (implementation is not null)
-                services.AddScoped(iface, implementation);
-        }
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         return services;
     }
 
+    private static void HelperRegisterScoped(this IServiceCollection services, Assembly implementationAssembly, Assembly interfaceAssembly, string suffix, string iNamespace, string implNamespace)
+    {
+        string interfacePrefix = "I";
+
+        IEnumerable<Type> interfaces = interfaceAssembly.GetTypes()
+            .Where(t => t.IsInterface && t.Namespace == iNamespace
+                     && t.Name.StartsWith(interfacePrefix) && t.Name.EndsWith(suffix));
+
+        foreach (Type iface in interfaces)
+        {
+            Type? implementation = implementationAssembly.GetTypes()
+                .FirstOrDefault(t => t.IsClass && !t.IsAbstract
+                                  && t.Namespace == implNamespace
+                                  && t.Name == iface.Name[1..]);
+
+            if (implementation is not null)
+                services.AddScoped(iface, implementation);
+        }
+    }
     /// <summary>
     /// Registers FluentEmail with Mailgun and binds <see cref="IEmailService"/>
     /// to <see cref="FluentEmailHelper"/>.

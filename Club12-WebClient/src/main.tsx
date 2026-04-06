@@ -18,6 +18,7 @@ import { StageProvider } from './modules/stage/context/stage.context';
 import { MatchProvider } from './modules/match/context/match.context';
 import { PlayerSanctionProvider } from './modules/playerSanction/context/playerSanction.context';
 import { PlayerStatisticProvider } from './modules/playerStatistic/context/playerStatistic.context';
+import { ScorerProvider } from './modules/scorer/context/scorer.context';
 
 //process.loadEnvFile();
 const queryClient = new QueryClient();
@@ -38,9 +39,11 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                           <StageProvider>
                             <MatchProvider>
                               <PlayerSanctionProvider>
-                                <PlayerStatisticProvider>
-                                  <App />
-                                </PlayerStatisticProvider>
+                                <ScorerProvider>
+                                  <PlayerStatisticProvider>
+                                    <App />
+                                  </PlayerStatisticProvider>
+                                </ScorerProvider>
                               </PlayerSanctionProvider>
                             </MatchProvider>
                           </StageProvider>

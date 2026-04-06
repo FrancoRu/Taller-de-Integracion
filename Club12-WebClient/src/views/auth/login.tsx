@@ -9,8 +9,8 @@ import {
   CardContent,
   useTheme,
 } from '@mui/material';
-import { useAuth } from '../../modules/auth/hook/auth.hook';
-import { LogInUserRequest } from '../../modules/auth/type/auth';
+import { useAuth } from '@/modules/auth/hook/auth.hook';
+import { LogInUserRequest } from '@/modules/auth/type/auth';
 
 export default function Login() {
   const theme = useTheme();

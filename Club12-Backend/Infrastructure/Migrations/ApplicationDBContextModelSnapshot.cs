@@ -17,7 +17,7 @@ namespace Persistance.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.11")
+                .HasAnnotation("ProductVersion", "10.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -333,6 +333,46 @@ namespace Persistance.Migrations
                     b.ToTable("PlayersStatistics", "Club12");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Models.Scorer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("DateUpdated")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("MatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PlayerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DateCreated")
+                        .HasDatabaseName("IX_Scorer_CreatedAt");
+
+                    b.HasIndex("MatchId");
+
+                    b.HasIndex("PlayerId");
+
+                    b.ToTable("Scorers", "Club12");
+                });
+
             modelBuilder.Entity("Domain.Entities.Models.Stage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -502,9 +542,6 @@ namespace Persistance.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<bool>("IsFinished")
-                        .HasColumnType("boolean");
-
                     b.Property<int>("MaxTeams")
                         .HasColumnType("integer");
 
@@ -517,6 +554,11 @@ namespace Persistance.Migrations
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.Property<DateTime>("TeamRegistrationDeadline")
                         .HasColumnType("timestamp without time zone");
@@ -670,6 +712,25 @@ namespace Persistance.Migrations
                     b.Navigation("Player");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Models.Scorer", b =>
+                {
+                    b.HasOne("Domain.Entities.Models.Match", "Match")
+                        .WithMany("Scorers")
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Models.Player", "Player")
+                        .WithMany("Scorers")
+                        .HasForeignKey("PlayerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Match");
+
+                    b.Navigation("Player");
+                });
+
             modelBuilder.Entity("Domain.Entities.Models.Stage", b =>
                 {
                     b.HasOne("Domain.Entities.Models.Division", "Division")
@@ -717,6 +778,13 @@ namespace Persistance.Migrations
             modelBuilder.Entity("Domain.Entities.Models.Match", b =>
                 {
                     b.Navigation("PlayerStatistics");
+
+                    b.Navigation("Scorers");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Models.Player", b =>
+                {
+                    b.Navigation("Scorers");
                 });
 
             modelBuilder.Entity("Domain.Entities.Models.Stage", b =>

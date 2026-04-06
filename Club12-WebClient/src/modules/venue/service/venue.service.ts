@@ -1,16 +1,16 @@
 import { AxiosResponse } from 'axios';
-import routes from '../../core/constants/routes';
+import routes from '@/modules/core/constants/routes';
 import {
   sendDelete,
   sendGet,
   sendPost,
   sendPut,
-} from '../../core/utils/axiosUtils';
+} from '@/modules/core/utils/axiosUtils';
 import {
   IAddVenueRequest,
   IPutVenueRequest,
   IVenueResponse,
-} from '../type/venue';
+} from '@/modules/venue/type/venue';
 import { GUID } from '@/modules/core/types/types';
 
 /**

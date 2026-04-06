@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { PlayerStatisticContext } from '../context/playerStatistic.context'
+import { PlayerStatisticContext } from '@/modules/playerStatistic/context/playerStatistic.context'
 
 export const usePlayerStatistic = () => {
   const context = useContext(PlayerStatisticContext)

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import {
   Box,
   Card,
@@ -20,14 +20,18 @@ import {
 import {
   buildActionsColumn,
   TableRowAction,
-} from '../core/components/TableRowActions';
-import NewEntityButton from '../core/components/NewEntityButton';
+} from '@/views/core/components/TableRowActions';
+import NewEntityButton from '@/views/core/components/NewEntityButton';
 import {
   DeleteIcon,
   EditIcon,
   SearchIcon,
   VisibilityIcon,
-} from '../core/MUI/icons/icons';
+} from '@/views/core/MUI/icons/icons';
+import {
+  TABLE_PAGE_SIZE_OPTIONS,
+  TABLE_ROWS_PER_PAGE,
+} from '@/modules/core/constants/pagination';
 
 interface DivisionsPageProps {
   tournamentId?: GUID;
@@ -57,21 +61,39 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
   const [filters, setFilters] = useState<DivisionSearchFilters>(EMPTY_FILTERS);
   const [debouncedFilters, setDebouncedFilters] =
     useState<DivisionSearchFilters>(EMPTY_FILTERS);
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+    page: 0,
+    pageSize: TABLE_ROWS_PER_PAGE,
+  });
+  const getDivisionsByFiltersRef = useRef(getDivisionsByFilters);
+
+  useEffect(() => {
+    getDivisionsByFiltersRef.current = getDivisionsByFilters;
+  }, [getDivisionsByFilters]);
 
   const fetchDivisions = useCallback(
-    async (activeFilters: DivisionSearchFilters) => {
+    async (
+      activeFilters: DivisionSearchFilters,
+      activePaginationModel: GridPaginationModel
+    ) => {
       setLoading(true);
-      await getDivisionsByFilters(
+      await getDivisionsByFiltersRef.current(
         tournamentId
           ? {
               tournamentId,
               ...activeFilters,
+              pageNumber: activePaginationModel.page + 1,
+              pageSize: activePaginationModel.pageSize,
             }
-          : activeFilters
+          : {
+              ...activeFilters,
+              pageNumber: activePaginationModel.page + 1,
+              pageSize: activePaginationModel.pageSize,
+            }
       );
       setLoading(false);
     },
-    [getDivisionsByFilters, tournamentId]
+    [tournamentId]
   );
 
   useEffect(() => {
@@ -83,8 +105,8 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
   }, [filters]);
 
   useEffect(() => {
-    void fetchDivisions(debouncedFilters);
-  }, [debouncedFilters, fetchDivisions]);
+    void fetchDivisions(debouncedFilters, paginationModel);
+  }, [debouncedFilters, fetchDivisions, paginationModel]);
 
   const handleFilterChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -96,7 +118,20 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
     } as DivisionSearchFilters;
 
     setFilters(updated);
+    setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
   };
+
+  const handlePaginationModelChange = useCallback(
+    (nextPaginationModel: GridPaginationModel) => {
+      setPaginationModel(prev =>
+        prev.page === nextPaginationModel.page &&
+        prev.pageSize === nextPaginationModel.pageSize
+          ? prev
+          : nextPaginationModel
+      );
+    },
+    []
+  );
 
   const handleView = useCallback(
     (row: IDivisionResponse) => {
@@ -251,10 +286,9 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
           disableRowSelectionOnClick
           disableColumnMenu
           localeText={{ noRowsLabel: noRowsMessage }}
-          pageSizeOptions={[10, 25, 50]}
-          initialState={{
-            pagination: { paginationModel: { pageSize: 10 } },
-          }}
+          pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+          paginationModel={paginationModel}
+          onPaginationModelChange={handlePaginationModelChange}
         />
       </Box>
     </>

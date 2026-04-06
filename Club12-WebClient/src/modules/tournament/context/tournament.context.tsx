@@ -10,16 +10,16 @@ import {
   GenericResponsePagination,
   GUID,
   ProviderProps,
-} from '../../core/types/types';
-import { useError } from '../../error/hooks/error.hock';
-import { tournamentService } from '../service/tournament.service';
+} from '@/modules/core/types/types';
+import { useError } from '@/modules/error/hooks/error.hock';
+import { tournamentService } from '@/modules/tournament/service/tournament.service';
 import {
   IAddTournamentRequest,
   ITournamentContextProps,
   IPutTournamentRequest,
   ITournamentFiltered,
   ITournamentResponse,
-} from '../type/tournament';
+} from '@/modules/tournament/type/tournament';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 import { fetchAndSetList } from '@/modules/core/utils/comparator';
@@ -75,16 +75,25 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       tournamentRequest: IPutTournamentRequest
     ): Promise<void> => {
       try {
-        const res: AxiosResponse<ITournamentResponse> =
+        const res: AxiosResponse<void> =
           await tournamentService.putTournamentById(id, tournamentRequest);
         if (res && res.status === 204) {
-          setTournament(prev =>
-            prev && prev.id === id ? { ...prev, ...tournamentRequest } : prev
-          );
+          setTournament(prev => {
+            const fallbackFromList =
+              tournaments?.find(e => e.id === id) ?? null;
+            const current = prev && prev.id === id ? prev : fallbackFromList;
+
+            if (!current) {
+              return prev;
+            }
+
+            return {
+              ...current,
+              ...tournamentRequest,
+              status: tournamentRequest.status ?? current.status,
+            };
+          });
           setMessage(res.status, ['Torneo actualizado correctamente']);
-        } else if (res && res.data) {
-          setTournament(res.data);
-          setMessage(res.status, []);
         }
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
@@ -94,7 +103,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
         }
       }
     },
-    [setTournament, setError, setMessage]
+    [setTournament, setError, setMessage, tournaments]
   );
 
   const getTournamentById = useCallback(

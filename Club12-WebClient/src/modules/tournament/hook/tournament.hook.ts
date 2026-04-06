@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { TournamentContext } from '../context/tournament.context';
+import { TournamentContext } from '@/modules/tournament/context/tournament.context';
 
 export const useTournament = () => {
   const context = useContext(TournamentContext);

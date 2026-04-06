@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import {
   Box,
   Button,
@@ -18,7 +18,7 @@ import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { GUID } from '@/modules/core/types/types';
 import { useTeam } from '@/modules/team/hook/team.hook';
-import FormButtons from '../core/components/FormButtons';
+import FormButtons from '@/views/core/components/FormButtons';
 import {
   IAddTeamRequest,
   ITeamResponse,
@@ -28,15 +28,19 @@ import {
 import {
   buildActionsColumn,
   TableRowAction,
-} from '../core/components/TableRowActions';
-import TeamLogo from '../core/components/TeamLogo';
-import NewEntityButton from '../core/components/NewEntityButton';
+} from '@/views/core/components/TableRowActions';
+import TeamLogo from '@/views/core/components/TeamLogo';
+import NewEntityButton from '@/views/core/components/NewEntityButton';
 import {
   DeleteIcon,
   EditIcon,
   SearchIcon,
   VisibilityIcon,
-} from '../core/MUI/icons/icons';
+} from '@/views/core/MUI/icons/icons';
+import {
+  TABLE_PAGE_SIZE_OPTIONS,
+  TABLE_ROWS_PER_PAGE,
+} from '@/modules/core/constants/pagination';
 
 interface TeamsScreenProps {
   tournamentId?: GUID;
@@ -84,24 +88,42 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
   const [filters, setFilters] = useState<TeamsSearchFilters>(EMPTY_FILTERS);
   const [debouncedFilters, setDebouncedFilters] =
     useState<TeamsSearchFilters>(EMPTY_FILTERS);
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+    page: 0,
+    pageSize: TABLE_ROWS_PER_PAGE,
+  });
+  const getTeamsByFilteredRef = useRef(getTeamsByFiltered);
+
+  useEffect(() => {
+    getTeamsByFilteredRef.current = getTeamsByFiltered;
+  }, [getTeamsByFiltered]);
   const [teamForm, setTeamForm] = useState<TeamFormState>(INITIAL_TEAM_FORM);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState<ITeamResponse | null>(null);
 
   const fetchTeams = useCallback(
-    async (activeFilters: TeamsSearchFilters) => {
+    async (
+      activeFilters: TeamsSearchFilters,
+      activePaginationModel: GridPaginationModel
+    ) => {
       setLoading(true);
-      await getTeamsByFiltered(
+      await getTeamsByFilteredRef.current(
         tournamentId
           ? {
               tournamentId,
               ...activeFilters,
+              pageNumber: activePaginationModel.page + 1,
+              pageSize: activePaginationModel.pageSize,
             }
-          : activeFilters
+          : {
+              ...activeFilters,
+              pageNumber: activePaginationModel.page + 1,
+              pageSize: activePaginationModel.pageSize,
+            }
       );
       setLoading(false);
     },
-    [getTeamsByFiltered, tournamentId]
+    [tournamentId]
   );
 
   useEffect(() => {
@@ -113,8 +135,8 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
   }, [filters]);
 
   useEffect(() => {
-    void fetchTeams(debouncedFilters);
-  }, [debouncedFilters, fetchTeams]);
+    void fetchTeams(debouncedFilters, paginationModel);
+  }, [debouncedFilters, fetchTeams, paginationModel]);
 
   const handleFilterChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -126,7 +148,20 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
     } as TeamsSearchFilters;
 
     setFilters(updated);
+    setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
   };
+
+  const handlePaginationModelChange = useCallback(
+    (nextPaginationModel: GridPaginationModel) => {
+      setPaginationModel(prev =>
+        prev.page === nextPaginationModel.page &&
+        prev.pageSize === nextPaginationModel.pageSize
+          ? prev
+          : nextPaginationModel
+      );
+    },
+    []
+  );
 
   const resetTeamForm = useCallback(() => {
     setTeamForm(INITIAL_TEAM_FORM);
@@ -306,7 +341,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
 
     setIsCreateModalOpen(false);
     resetTeamForm();
-    await fetchTeams(debouncedFilters);
+    await fetchTeams(debouncedFilters, paginationModel);
     await Swal.fire({
       title: 'Equipo creado',
       text: 'El equipo se creó correctamente.',
@@ -346,7 +381,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
 
     setEditingTeam(null);
     resetTeamForm();
-    await fetchTeams(debouncedFilters);
+    await fetchTeams(debouncedFilters, paginationModel);
     await Swal.fire({
       title: 'Equipo actualizado',
       text: 'El equipo se actualizó correctamente.',
@@ -424,10 +459,9 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
           disableRowSelectionOnClick
           disableColumnMenu
           localeText={{ noRowsLabel: noRowsMessage }}
-          pageSizeOptions={[10, 25, 50]}
-          initialState={{
-            pagination: { paginationModel: { pageSize: 10 } },
-          }}
+          pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+          paginationModel={paginationModel}
+          onPaginationModelChange={handlePaginationModelChange}
         />
       </Box>
 

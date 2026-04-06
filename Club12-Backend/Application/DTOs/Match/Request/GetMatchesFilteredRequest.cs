@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.Abstract.Request;
+using Domain.Entities.Models;
 using Domain.Enums;
 using System;
 
@@ -23,6 +24,10 @@ public class GetMatchesFilteredRequest : PaginatedFilterRequest
     /// The stage name to filter by.
     /// </summary>
     public Guid? StageId { get; set; }
+
+    public Guid? DivisionId { get; set; }
+
+    public Guid? TournamentId { get; set; }
 
     /// <summary>
     /// The match type (e.g., regular, playoff) to filter by.

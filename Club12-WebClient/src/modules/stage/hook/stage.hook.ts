@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { StageContext } from "../context/stage.context";
+import { StageContext } from "@/modules/stage/context/stage.context";
 
 export const useStage = () => {
   const context = useContext(StageContext);

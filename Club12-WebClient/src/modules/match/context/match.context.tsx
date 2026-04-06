@@ -8,9 +8,9 @@ import {
   useState,
 } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { GenericResponsePagination, GUID } from '../../core/types/types';
-import { useError } from '../../error/hooks/error.hock';
-import { matchService } from '../service/match.service';
+import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
+import { useError } from '@/modules/error/hooks/error.hock';
+import { matchService } from '@/modules/match/service/match.service';
 import {
   IAddMatchRequest,
   IMatchContextProps,
@@ -18,7 +18,7 @@ import {
   IMatchResponse,
   IPutMatchRequest,
   IPutMatchScoreRequest,
-} from '../type/match';
+} from '@/modules/match/type/match';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 

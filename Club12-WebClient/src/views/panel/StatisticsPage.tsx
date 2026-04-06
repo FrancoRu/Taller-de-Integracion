@@ -1,4 +1,4 @@
-import PlaceholderPage from '../core/components/PlaceholderPage';
+import PlaceholderPage from '@/views/core/components/PlaceholderPage';
 
 const StatisticsPage = () => <PlaceholderPage title="Estadisticas" />;
 

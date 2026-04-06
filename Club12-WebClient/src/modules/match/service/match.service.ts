@@ -1,19 +1,20 @@
 import { AxiosResponse } from 'axios';
-import routes from '../../core/constants/routes';
-import { GenericResponsePagination, GUID } from '../../core/types/types';
+import routes from '@/modules/core/constants/routes';
+import { withTablePageSize } from '@/modules/core/constants/pagination';
+import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
 import {
   sendDelete,
   sendGet,
   sendPost,
   sendPut,
-} from '../../core/utils/axiosUtils';
+} from '@/modules/core/utils/axiosUtils';
 import {
   IAddMatchRequest,
   MatchFiltered,
   IMatchResponse,
   IPutMatchRequest,
   IPutMatchScoreRequest,
-} from '../type/match';
+} from '@/modules/match/type/match';
 
 /**
  * MatchService provides methods to interact with the matches API.
@@ -69,7 +70,10 @@ export const matchService = {
   getMatchByFilter: async (
     filter: MatchFiltered
   ): Promise<AxiosResponse<GenericResponsePagination<IMatchResponse>>> =>
-    sendGet<GenericResponsePagination<IMatchResponse>>(routes.matches, filter),
+    sendGet<GenericResponsePagination<IMatchResponse>>(
+      routes.matches,
+      withTablePageSize(filter)
+    ),
 
   /**
    * Deletes a match by its ID.

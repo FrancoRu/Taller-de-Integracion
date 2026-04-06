@@ -1,4 +1,5 @@
 ﻿using Domain.Entities.Models;
+using Domain.Enums;
 using Infrastructure.Persistance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -22,5 +23,6 @@ public class TournamentEntityConfiguration : BaseEntityConfiguration<Tournament>
         builder.Property(t => t.StartDate).IsRequired();
         builder.Property(t => t.MaxTeams).IsRequired();
         builder.Property(t => t.MinTeams).IsRequired();
+        builder.Property(t => t.Status).HasDefaultValue(TournamentStatus.Scheduled).IsRequired();
     }
 }

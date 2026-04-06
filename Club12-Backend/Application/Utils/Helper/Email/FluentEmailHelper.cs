@@ -24,7 +24,7 @@ public sealed class FluentEmailHelper(IFluentEmailFactory emailFactory) : IEmail
     {
         string body = EmailTemplateLoader.Render("PasswordResetTemplate", new()
         {
-            ["{{Username}}"]  = toUsername,
+            ["{{Username}}"] = toUsername,
             ["{{ResetLink}}"] = resetLink,
         });
 
@@ -38,6 +38,29 @@ public sealed class FluentEmailHelper(IFluentEmailFactory emailFactory) : IEmail
     }
 
     // ─────────────────────────────────────────────────────────────
+    // Welcome + set password (newly created users)
+    // ─────────────────────────────────────────────────────────────
+
+    public async Task SendWelcomeSetPasswordAsync(
+        string toEmail, string toUsername, string setPasswordLink,
+        CancellationToken ct = default)
+    {
+        string body = EmailTemplateLoader.Render("WelcomeSetPasswordTemplate", new()
+        {
+            ["{{Username}}"] = toUsername,
+            ["{{SetPasswordLink}}"] = setPasswordLink,
+        });
+
+        SendResponse result = await emailFactory.Create()
+            .To(toEmail)
+            .Subject("Activá tu cuenta - Club12")
+            .Body(body, isHtml: true)
+            .SendAsync(ct);
+
+        ThrowIfFailed(result, "welcome set-password");
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // Magic link (TeamManager)
     // ─────────────────────────────────────────────────────────────
 
@@ -47,7 +70,7 @@ public sealed class FluentEmailHelper(IFluentEmailFactory emailFactory) : IEmail
     {
         string body = EmailTemplateLoader.Render("MagicLinkTemplate", new()
         {
-            ["{{Username}}"]  = toUsername,
+            ["{{Username}}"] = toUsername,
             ["{{MagicLink}}"] = magicLink,
         });
 

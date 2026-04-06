@@ -4,6 +4,7 @@ using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Utils.Extensions;
 using Domain.Entities.Models;
+using LinqKit;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -37,6 +38,31 @@ public class PlayerSanctionService(IPlayerSanctionRepository playerSanctionRepos
     public async Task<PaginatedResponse<PlayerSanction>> GetPlayerSanctionsAsync(GetPlayerSanctionsFilteredRequest filter)
     {
         Expression<Func<PlayerSanction, bool>> expression = QueryableExtensions.ConstructFilterExpression<PlayerSanction, GetPlayerSanctionsFilteredRequest>(filter);
+
+        if (filter.TournamentId.HasValue)
+        {
+            expression = expression.And(playerSanction => playerSanction.Match.Stage != null 
+                && playerSanction.Match.Stage.Division != null 
+                && playerSanction.Match.Stage.Division.TournamentId == filter.TournamentId.Value);
+        }
+
+        if(filter.DivisionId.HasValue)
+        {
+            expression = expression.And(playerSanction => playerSanction.Match.Stage != null
+               && playerSanction.Match.Stage.DivisionId == filter.DivisionId.Value);
+        }
+
+        if(filter.StageId.HasValue)
+        {
+            expression = expression.And(playerSanction => playerSanction.Match.Stage != null
+               && playerSanction.Match.Stage.Id == filter.StageId.Value);
+        }
+
+        if (filter.TeamId.HasValue)
+        {
+            expression = expression.And(playerSanction => playerSanction.Player.TeamId == filter.TeamId.Value);
+        }
+
         IEnumerable<PlayerSanction> filteredSanctions = await playerSanctionRepository.FindAsync(expression, 
             filter: filter, 
             includes: [playerSanction => playerSanction.Player, playerSanction => playerSanction.Match]);

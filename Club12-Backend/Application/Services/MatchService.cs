@@ -5,6 +5,7 @@ using Application.Interfaces.Services;
 using Application.Utils.Extensions;
 using Domain.Entities.Models;
 using Domain.Enums;
+using LinqKit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
 {
     private readonly IMatchRepository matchRepository = unitOfWork.MatchRepository;
     private readonly IStageRepository stageRepository = unitOfWork.StageRepository;
+    private readonly ITeamRepository teamRepository = unitOfWork.TeamRepository;
 
     public async Task<Match> CreateMatchAsync(Match matchEntity)
     {
@@ -59,18 +61,18 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
 
         List<Scorer> homeScorers =
         [
-            .. playerStats
-                        .Where(ps => ps.TeamId == match.HomeTeamId)
-                        .Select(ps => new Scorer
-                        {
-                            PlayerId = ps.PlayerId,
-                            Names = ps.FirstName,
-                            LastName = ps.LastName,
-                            Points = ps.Value,
-                            TeamId = match.HomeTeamId ?? throw new MissingFieldException(""),
-                            TeamName = match.HomeTeam?.Name ?? throw new MissingFieldException("")
-                        })
-                        .OrderByDescending(ps => ps.Points)
+            //.. playerStats
+            //.Where(ps => ps.TeamId == match.HomeTeamId)
+            //.Select(ps => new Scorer
+            //{
+            //    PlayerId = ps.PlayerId,
+            //    Names = ps.FirstName,
+            //    LastName = ps.LastName,
+            //    Points = ps.Value,
+            //                TeamId = match.HomeTeamId ?? throw new MissingFieldException(""),
+            //                TeamName = match.HomeTeam?.Name ?? throw new MissingFieldException("")
+            //})
+            //.OrderByDescending(ps => ps.Points)
         ];
 
         List<Scorer> awayScorers =
@@ -89,9 +91,6 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
             //            .OrderByDescending(ps => ps.Points)
         ];
 
-        match.HomeScorers = homeScorers;
-        match.VisitorScorers = awayScorers;
-
         return match;
     }
 
@@ -104,6 +103,29 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
     public async Task<PaginatedResponse<Match>> GetAllMatchesAsync(GetMatchesFilteredRequest filter)
     {
         Expression<Func<Match, bool>> expression = QueryableExtensions.ConstructFilterExpression<Match, GetMatchesFilteredRequest>(filter);
+
+        if (filter.DivisionId.HasValue)
+        {
+            Expression<Func<Match, bool>> divisionExpression = match => match.Stage.DivisionId == filter.DivisionId.Value;
+            expression = expression.And(divisionExpression);
+
+        }
+        if (filter.TournamentId.HasValue)
+        {
+            Expression<Func<Match, bool>> tournamentExpression = match => match.Stage.Division.TournamentId == filter.TournamentId.Value;
+            expression = expression.And(tournamentExpression);
+        }
+        if (!string.IsNullOrWhiteSpace(filter.HomeTeamName))
+        {
+            Expression<Func<Match, bool>> homeTeamExpression = match => match.HomeTeam != null && match.HomeTeam.Name.ToLower().Contains(filter.HomeTeamName.ToLower());
+            expression = expression.And(homeTeamExpression);
+        }
+        if(!string.IsNullOrWhiteSpace(filter.VisitorTeamName))
+        {
+            Expression<Func<Match, bool>> visitorTeamExpression = match => match.VisitorTeam != null && match.VisitorTeam.Name.ToLower().Contains(filter.VisitorTeamName.ToLower());
+            expression = expression.And(visitorTeamExpression);
+        }
+
         IEnumerable<Match> filteredMatches = await matchRepository.FindAsync(expression, filter: filter, includes: [match => match.HomeTeam!,
                                                                                                                       match => match.VisitorTeam!,
                                                                                                                       match => match.Venue!]);
@@ -177,7 +199,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
 
     public async Task<List<Match>> CreateAutomatedMatchesAsync(Guid stageId)
     {
-        Stage stage = await stageRepository.GetByIdAsync(stageId)
+        Stage stage = await stageRepository.GetByIdAsync(stageId, includes: [s => s.Matches, s => s.Division])
             ?? throw new InvalidOperationException("Stage not found.");
 
         if (stage.Matches.Count > 0)
@@ -187,7 +209,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
 
         List<Match> matches = stage.StageType switch
         {
-            StageType.Group => await CreateGroupStageMatchesAsync(stage),
+            StageType.Group => await CreateGroupStageMatchesAsync(stage, await ResolveGroupTeamCountAsync(stage)),
             StageType.QuarterFinal => await CreateKnockoutStageMatchesAsync(stage),
             StageType.SemiFinal => await CreateKnockoutStageMatchesAsync(stage),
             StageType.ThirdPlace => await CreateFinalStageMatchesAsync(stage),
@@ -210,7 +232,40 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
             CreatedBy = "System"
         };
 
-    private static async Task<List<Match>> CreateGroupStageMatchesAsync(Stage stage, int totalTeams = 4)
+    private async Task<int> ResolveGroupTeamCountAsync(Stage stage)
+    {
+        int totalGroups = await stageRepository.CountAsync(s =>
+            s.DivisionId == stage.DivisionId && s.StageType == StageType.Group);
+
+        if (totalGroups <= 0)
+        {
+            throw new InvalidOperationException("No group stages found for the division.");
+        }
+
+        int registeredTeams = await teamRepository.CountAsync(team => team.TournamentId == stage.Division.TournamentId);
+
+        if (registeredTeams <= 0)
+        {
+            throw new InvalidOperationException("No teams are registered in the tournament.");
+        }
+
+        if (registeredTeams % totalGroups != 0)
+        {
+            throw new InvalidOperationException(
+                $"Registered teams ({registeredTeams}) cannot be distributed evenly across {totalGroups} groups.");
+        }
+
+        int teamsPerGroup = registeredTeams / totalGroups;
+
+        if (teamsPerGroup < 2)
+        {
+            throw new InvalidOperationException("At least 2 teams per group are required to generate matches.");
+        }
+
+        return teamsPerGroup;
+    }
+
+    private static async Task<List<Match>> CreateGroupStageMatchesAsync(Stage stage, int totalTeams)
     {
         List<Match> matches = [];
 

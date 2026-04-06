@@ -1,9 +1,16 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import {
   Box,
   Card,
   CardContent,
+  Chip,
   InputAdornment,
   Stack,
   TextField,
@@ -21,17 +28,57 @@ import {
   VisibilityIcon,
 } from '@/views/core/MUI/icons/icons';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
-import { useTournament } from '../../modules/tournament/hook/tournament.hook';
+import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import {
   ITournamentFiltered,
   ITournamentResponse,
-} from '../../modules/tournament/type/tournament';
-import { useAuth } from '../../modules/auth/hook/auth.hook';
-import { UserRolesType } from '../../modules/core/enum/user/userRolesType';
-import LoadingIndicator from '../core/components/LoadingIndicator';
+} from '@/modules/tournament/type/tournament';
+import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
+import { useAuth } from '@/modules/auth/hook/auth.hook';
+import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
+import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import { useNavigate } from 'react-router-dom';
+import {
+  TABLE_PAGE_SIZE_OPTIONS,
+  TABLE_ROWS_PER_PAGE,
+} from '@/modules/core/constants/pagination';
 
 const EMPTY_FILTERS: ITournamentFiltered = {};
+
+const TOURNAMENT_STATUS_LABELS: Record<TournamentStatus, string> = {
+  [TournamentStatus.Scheduled]: 'Programado',
+  [TournamentStatus.OpenForRegistration]: 'Inscripción abierta',
+  [TournamentStatus.Ongoing]: 'En curso',
+  [TournamentStatus.Finished]: 'Finalizado',
+  [TournamentStatus.Canceled]: 'Cancelado',
+};
+
+const TOURNAMENT_STATUS_CHIP_COLOR: Record<
+  TournamentStatus,
+  'default' | 'success' | 'warning' | 'info' | 'error'
+> = {
+  [TournamentStatus.Scheduled]: 'default',
+  [TournamentStatus.OpenForRegistration]: 'info',
+  [TournamentStatus.Ongoing]: 'warning',
+  [TournamentStatus.Finished]: 'success',
+  [TournamentStatus.Canceled]: 'error',
+};
+
+const resolveTournamentStatus = (status: unknown): TournamentStatus => {
+  if (typeof status === 'string') {
+    if (
+      status === TournamentStatus.Scheduled ||
+      status === TournamentStatus.OpenForRegistration ||
+      status === TournamentStatus.Ongoing ||
+      status === TournamentStatus.Finished ||
+      status === TournamentStatus.Canceled
+    ) {
+      return status;
+    }
+  }
+
+  return TournamentStatus.Scheduled;
+};
 
 const TournamentsPage: React.FC = () => {
   const { tournaments, getAllTournamentsByFilter, deleteTournamentById } =
@@ -40,6 +87,15 @@ const TournamentsPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<ITournamentFiltered>(EMPTY_FILTERS);
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+    page: 0,
+    pageSize: TABLE_ROWS_PER_PAGE,
+  });
+  const getAllTournamentsByFilterRef = useRef(getAllTournamentsByFilter);
+
+  useEffect(() => {
+    getAllTournamentsByFilterRef.current = getAllTournamentsByFilter;
+  }, [getAllTournamentsByFilter]);
 
   const canLoadTournaments = useMemo(
     () =>
@@ -65,9 +121,12 @@ const TournamentsPage: React.FC = () => {
     [navigate]
   );
 
-  const handleEdit = useCallback((_row: ITournamentResponse) => {
-    // Pending panel route for tournament edit by id.
-  }, []);
+  const handleEdit = useCallback(
+    (row: ITournamentResponse) => {
+      navigate(`/panel/torneos/${row.id}/editar`);
+    },
+    [navigate]
+  );
 
   const handleDelete = useCallback(
     async (row: ITournamentResponse) => {
@@ -110,7 +169,6 @@ const TournamentsPage: React.FC = () => {
         color: 'primary',
         icon: <EditIcon fontSize="small" />,
         onClick: handleEdit,
-        disabled: true,
       },
       {
         label: 'Eliminar',
@@ -163,11 +221,23 @@ const TournamentsPage: React.FC = () => {
         minWidth: 70,
       },
       {
-        field: 'isFinished',
+        field: 'status',
         headerName: 'Estado',
-        flex: 0.8,
-        minWidth: 110,
-        renderCell: params => (params.row.isFinished ? 'Finalizado' : 'Activo'),
+        flex: 1,
+        minWidth: 160,
+        renderCell: params => {
+          const status = resolveTournamentStatus(params.row.status);
+          return (
+            <Chip
+              size="small"
+              label={TOURNAMENT_STATUS_LABELS[status]}
+              color={TOURNAMENT_STATUS_CHIP_COLOR[status]}
+              variant={
+                status === TournamentStatus.Scheduled ? 'outlined' : 'filled'
+              }
+            />
+          );
+        },
       },
     ];
 
@@ -175,16 +245,23 @@ const TournamentsPage: React.FC = () => {
   }, [tournamentActions]);
 
   const fetchTournaments = useCallback(
-    async (activeFilters: ITournamentFiltered) => {
+    async (
+      activeFilters: ITournamentFiltered,
+      activePaginationModel: GridPaginationModel
+    ) => {
       if (!canLoadTournaments) {
         return;
       }
 
       setLoading(true);
-      await getAllTournamentsByFilter(activeFilters);
+      await getAllTournamentsByFilterRef.current({
+        ...activeFilters,
+        pageNumber: activePaginationModel.page + 1,
+        pageSize: activePaginationModel.pageSize,
+      });
       setLoading(false);
     },
-    [canLoadTournaments, getAllTournamentsByFilter]
+    [canLoadTournaments]
   );
 
   useEffect(() => {
@@ -192,8 +269,8 @@ const TournamentsPage: React.FC = () => {
       return;
     }
 
-    void fetchTournaments(EMPTY_FILTERS);
-  }, [canLoadTournaments, fetchTournaments]);
+    void fetchTournaments(filters, paginationModel);
+  }, [canLoadTournaments, fetchTournaments, filters, paginationModel]);
 
   useEffect(() => {
     if (!canLoadTournaments) {
@@ -211,8 +288,20 @@ const TournamentsPage: React.FC = () => {
     };
 
     setFilters(updated);
-    void fetchTournaments(updated);
+    setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
   };
+
+  const handlePaginationModelChange = useCallback(
+    (nextPaginationModel: GridPaginationModel) => {
+      setPaginationModel(prev =>
+        prev.page === nextPaginationModel.page &&
+        prev.pageSize === nextPaginationModel.pageSize
+          ? prev
+          : nextPaginationModel
+      );
+    },
+    []
+  );
 
   const rows = useMemo(() => tournaments ?? [], [tournaments]);
 
@@ -284,10 +373,9 @@ const TournamentsPage: React.FC = () => {
               autoHeight
               disableRowSelectionOnClick
               disableColumnMenu
-              pageSizeOptions={[10, 25, 50]}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 10 } },
-              }}
+              pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+              paginationModel={paginationModel}
+              onPaginationModelChange={handlePaginationModelChange}
             />
           </Box>
         )}

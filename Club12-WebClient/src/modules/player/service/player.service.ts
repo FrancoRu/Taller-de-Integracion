@@ -1,18 +1,19 @@
 import { AxiosResponse } from 'axios';
-import routes from '../../core/constants/routes';
-import { GenericResponsePagination, GUID } from '../../core/types/types';
+import routes from '@/modules/core/constants/routes';
+import { withTablePageSize } from '@/modules/core/constants/pagination';
+import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
 import {
   sendDelete,
   sendGet,
   sendPost,
   sendPut,
-} from '../../core/utils/axiosUtils';
+} from '@/modules/core/utils/axiosUtils';
 import {
   IAddPlayerRequest,
   PlayerFiltered,
   IPlayerResponse,
   IPutPlayerRequest,
-} from '../type/player';
+} from '@/modules/player/type/player';
 
 /**
  * Service for managing player-related operations.
@@ -52,7 +53,7 @@ export const playerService = {
   getPlayersByFilter: async (
     filter: PlayerFiltered
   ): Promise<AxiosResponse<GenericResponsePagination<IPlayerResponse>>> =>
-    sendGet(routes.players, filter),
+    sendGet(routes.players, withTablePageSize(filter)),
 
   /**
    * Updates the details of an existing player.

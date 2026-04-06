@@ -33,7 +33,7 @@ public class TeamDetailedMatchResponse
     /// <summary>
     /// List of scorers for the team.
     /// </summary>
-    public List<ScorerResponse> Scorers { get; set; } = [];
+    public List<ScorerByPlayerResponse> Scorers { get; set; } = [];
 
     public List<PublicPlayerResponse> Players { get; set; } = [];
 }

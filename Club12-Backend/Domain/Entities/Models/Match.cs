@@ -89,7 +89,8 @@ public class Match : EntityBase
     /// </summary>
     public virtual ICollection<PlayerStatistic> PlayerStatistics { get; set; } = [];
 
-    /// <summary>Service-layer projections — not persisted (see <see cref="MatchEntityConfiguration"/>).</summary>
-    public IEnumerable<Scorer> HomeScorers { get; set; } = [];
-    public IEnumerable<Scorer> VisitorScorers { get; set; } = [];
+    /// <summary>
+    /// Represents the collection of scorer statistics associated with the match.
+    /// </summary>
+    public virtual ICollection<Scorer> Scorers { get; set; } = [];
 }

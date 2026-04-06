@@ -1,17 +1,19 @@
 import { AxiosResponse } from 'axios';
-import routes from '../../core/constants/routes';
-import { GUID } from '../../core/types/types';
+import routes from '@/modules/core/constants/routes';
+import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
+import { withTablePageSize } from '@/modules/core/constants/pagination';
 import {
   sendDelete,
   sendGet,
   sendPost,
   sendPut,
-} from '../../core/utils/axiosUtils';
+} from '@/modules/core/utils/axiosUtils';
 import {
   AddPlayerStatisticRequest,
+  PlayerStatisticFiltered,
   PlayerStatisticResponse,
   PutPlayerStatisticRequest,
-} from '../type/playerStatistic';
+} from '@/modules/playerStatistic/type/playerStatistic';
 
 /**
  * Service for managing player statistics.
@@ -48,6 +50,17 @@ export const playerStatisticService = {
     id: GUID
   ): Promise<AxiosResponse<PlayerStatisticResponse>> =>
     await sendGet(`${routes.playerStatistics}/${id}`),
+
+  /**
+   * Retrieves player statistics based on filters.
+   * @param {PlayerStatisticFiltered} filter - The filter criteria to apply.
+   * @returns {Promise<AxiosResponse<GenericResponsePagination<PlayerStatisticResponse>>>} The server response.
+   */
+  getPlayerStatisticsByFilter: async (
+    filter: PlayerStatisticFiltered
+  ): Promise<
+    AxiosResponse<GenericResponsePagination<PlayerStatisticResponse>>
+  > => await sendGet(routes.playerStatistics, withTablePageSize(filter)),
 
   /**
    * Deletes a player statistic by its ID.

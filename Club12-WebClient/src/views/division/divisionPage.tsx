@@ -3,13 +3,16 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, Grid, Tab, Tabs, Typography } from '@mui/material';
 import { GUID } from '@/modules/core/types/types';
 import { useDivision } from '@/modules/division/hook/division.hook';
-import LoadingIndicator from '../core/components/LoadingIndicator';
-import StagesPage from '../stage/stagesPage';
+import { useTournament } from '@/modules/tournament/hook/tournament.hook';
+import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
+import StagesPage from '@/views/stage/stagesPage';
+import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 
 const DivisionPage: React.FC = () => {
   const { divisionId } = useParams<{ divisionId: GUID }>();
   const navigate = useNavigate();
   const { division, getDivisionsById } = useDivision();
+  const { tournament, getTournamentById } = useTournament();
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<'detalle' | 'fases'>('detalle');
 
@@ -31,6 +34,36 @@ const DivisionPage: React.FC = () => {
 
     void fetchDivision();
   }, [getDivisionsById, targetDivisionId]);
+
+  useEffect(() => {
+    if (!division?.tournamentId) {
+      return;
+    }
+
+    if (tournament?.id === division.tournamentId) {
+      return;
+    }
+
+    void getTournamentById(division.tournamentId);
+  }, [division?.tournamentId, tournament?.id]);
+
+  const canGenerateStages = useMemo(() => {
+    if (!division?.tournamentId || tournament?.id !== division.tournamentId) {
+      return false;
+    }
+
+    const registrationDeadline = new Date(tournament.teamRegistrationDeadline);
+    const registrationClosedByDate =
+      !Number.isNaN(registrationDeadline.getTime()) &&
+      registrationDeadline.getTime() <= Date.now();
+
+    const registrationClosedByStatus =
+      tournament.status === TournamentStatus.Ongoing ||
+      tournament.status === TournamentStatus.Finished ||
+      tournament.status === TournamentStatus.Canceled;
+
+    return registrationClosedByDate || registrationClosedByStatus;
+  }, [division?.tournamentId, tournament]);
 
   if (!targetDivisionId) {
     return (
@@ -120,6 +153,7 @@ const DivisionPage: React.FC = () => {
         {tab === 'fases' && (
           <StagesPage
             divisionId={targetDivisionId}
+            showGenerateStagesButton={canGenerateStages}
             title={undefined}
             wrapInCard={false}
           />

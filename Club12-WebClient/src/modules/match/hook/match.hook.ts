@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { MatchContext } from '../context/match.context';
+import { MatchContext } from '@/modules/match/context/match.context';
 
 export const useMatch = () => {
   const context = useContext(MatchContext);

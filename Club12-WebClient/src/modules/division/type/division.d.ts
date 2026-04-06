@@ -3,8 +3,8 @@ import {
   Filtered,
   GenericResponsePagination,
   GUID,
-} from '../../core/types/types';
-import { IMatchResponse } from '../../match/type/match.d';
+} from '@/modules/core/types/types';
+import { IMatchResponse } from '@/modules/match/type/match.d';
 
 /**
  * Context properties and methods for managing divisions in a React application.

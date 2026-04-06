@@ -1,10 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Domain.Entities.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Persistance.Configurations;
 
  // Scorer is a service-layer read-model with no DataAnnotations — nothing to migrate.
-internal sealed class ScorerEntityConfiguration { }
+public class ScorerEntityConfiguration: BaseEntityConfiguration<Scorer>
+{
+    protected override void ConfigureEntity(EntityTypeBuilder<Scorer> builder)
+    {
+        builder.ToTable(EntityConstants.Tables.Scorer, EntityConstants.Schema);
+
+        builder.Property(s => s.PlayerId).IsRequired();
+        builder.Property(s => s.Points).IsRequired();
+        builder.Property(s => s.MatchId).IsRequired();
+
+        builder.HasOne(s => s.Player)
+               .WithMany(p => p.Scorers)
+               .HasForeignKey(s => s.PlayerId);
+
+        builder.HasOne(s => s.Match)
+               .WithMany(m => m.Scorers)
+               .HasForeignKey(s => s.MatchId);
+    }
+}

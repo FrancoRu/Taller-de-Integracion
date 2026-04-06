@@ -1,6 +1,6 @@
-using Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using System;
 
@@ -17,6 +17,11 @@ public class IdentityAppDbContext(DbContextOptions<IdentityAppDbContext> options
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Entity<ApplicationUser>()
+            .HasIndex(u => u.NormalizedEmail)
+            .IsUnique();
+
         SeedRoles(builder);
     }
 
@@ -36,9 +41,9 @@ public class IdentityAppDbContext(DbContextOptions<IdentityAppDbContext> options
         string name = roleType.ToRoleName();
         return new IdentityRole<Guid>
         {
-            Id               = new Guid($"00000000-0000-0000-0000-{seed:D12}"),
-            Name             = name,
-            NormalizedName   = name.ToUpperInvariant(),
+            Id = new Guid($"00000000-0000-0000-0000-{seed:D12}"),
+            Name = name,
+            NormalizedName = name.ToUpperInvariant(),
             ConcurrencyStamp = seed.ToString()
         };
     }

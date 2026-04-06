@@ -45,5 +45,4 @@ public class CreateTournamentRequest
     [Required(ErrorMessage = "Min teams is required.")]
     [Range(4, 32, ErrorMessage = "Min teams must be between 4 and 32.")]
     public required int MinTeams { get; set; }
-
 }

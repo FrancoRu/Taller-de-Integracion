@@ -15,12 +15,12 @@ import {
   ArrowBackIcon,
   EditIcon,
   LockResetIcon,
-} from '../core/MUI/icons/icons';
-import { useAuth } from '../../modules/auth/hook/auth.hook';
-import { useError } from '../../modules/error/hooks/error.hock';
-import { useUser } from '../../modules/user/hook/user.hook';
-import { UserRolesType } from '../../modules/core/enum/user/userRolesType';
-import { GUID } from '../../modules/core/types/types';
+} from '@/views/core/MUI/icons/icons';
+import { useAuth } from '@/modules/auth/hook/auth.hook';
+import { useError } from '@/modules/error/hooks/error.hock';
+import { useUser } from '@/modules/user/hook/user.hook';
+import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
+import { GUID } from '@/modules/core/types/types';
 
 const ROLE_LABELS: Record<UserRolesType, string> = {
   ADMIN: 'Admin',

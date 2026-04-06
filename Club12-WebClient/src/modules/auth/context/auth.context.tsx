@@ -10,23 +10,23 @@ import React, {
   useMemo,
 } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ProviderProps } from '../../core/types/types';
-import { useError } from '../../error/hooks/error.hock';
-import { authService } from '../service/auth.service';
+import { ProviderProps } from '@/modules/core/types/types';
+import { useError } from '@/modules/error/hooks/error.hock';
+import { authService } from '@/modules/auth/service/auth.service';
 import {
   AuthResponse,
   IAuthContextProps,
   IUser,
   LogInUserRequest,
-} from '../type/auth';
+} from '@/modules/auth/type/auth';
 
 import {
   COOKIE_SIGNIN_TOKEN,
   SUCCESS_MESSAGES,
   EXPIRATION_TIME,
   JWT,
-} from '../../core/constants/constants';
-import { UserRolesType } from '../../core/enum/user/userRolesType';
+} from '@/modules/core/constants/constants';
+import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 
 export const AuthContext = createContext<IAuthContextProps | undefined>(
   undefined

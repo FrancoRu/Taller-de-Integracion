@@ -1,16 +1,16 @@
 import { AxiosError, AxiosResponse } from 'axios';
 import React, { createContext, ReactNode, useCallback, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { GenericResponsePagination, GUID } from '../../core/types/types';
-import { useError } from '../../error/hooks/error.hock';
-import { blogPostService } from '../service/blogPost.service';
+import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
+import { useError } from '@/modules/error/hooks/error.hock';
+import { blogPostService } from '@/modules/blogPost/service/blogPost.service';
 import {
   BlogPostResponse,
   CreateBlogPostRequest,
   GetBlogPostsFilteredRequest,
   IBlogPostContextProps,
   UpdateBlogPostRequest,
-} from '../type/blogPost';
+} from '@/modules/blogPost/type/blogPost';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 
 export const BlogPostContext = createContext<IBlogPostContextProps | undefined>(

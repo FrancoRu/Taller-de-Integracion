@@ -2,7 +2,7 @@ import {
   Filtered,
   GenericResponsePagination,
   GUID,
-} from '../../core/types/types';
+} from '@/modules/core/types/types';
 
 /**
  * Context properties and methods for managing player sanctions in a sports system.
@@ -112,6 +112,30 @@ export interface IPlayerSanctionResponse {
  * @extends Filtered
  */
 export interface IPlayerSanctionFiltered extends Filtered {
+  /**
+   * The unique identifier of the tournament (optional).
+   * @type {GUID}
+   */
+  tournamentId?: GUID;
+
+  /**
+   * The unique identifier of the division (optional).
+   * @type {GUID}
+   */
+  divisionId?: GUID;
+
+  /**
+   * The unique identifier of the stage (optional).
+   * @type {GUID}
+   */
+  stageId?: GUID;
+
+  /**
+   * The unique identifier of the team (optional).
+   * @type {GUID}
+   */
+  teamId?: GUID;
+
   /**
    * The unique identifier of the related match (optional).
    * @type {GUID}
@@ -230,9 +254,43 @@ export interface CreatePlayerFromMatchPlayerSanctionsProps {
   visitorTeamId: GUID;
 }
 
-interface NoPlayerSanctionMessageProps {
-  /**
-   * The name of the player to optionally include in the message.
-   */
-  name?: string;
+export type PlayerSanctionsSearchFilters = Pick<
+  IPlayerSanctionFiltered,
+  | 'tournamentId'
+  | 'divisionId'
+  | 'stageId'
+  | 'matchId'
+  | 'teamId'
+  | 'playerId'
+  | 'description'
+>;
+
+export interface IPlayerSanctionCreatePageProps {
+  open: boolean;
+  onClose: () => void;
+  onCreated?: () => void;
+}
+
+export interface IPlayerSanctionCreateFormState {
+  duration: string;
+  issuedDate: string;
+  description: string;
+  tournamentId: GUID | '';
+  divisionId: GUID | '';
+  stageId: GUID | '';
+  matchId: GUID | '';
+  teamId: GUID | '';
+  playerId: GUID | '';
+}
+
+export interface IPlayerSanctionEditFormState {
+  duration: string;
+  description: string;
+}
+
+export interface IPlayerSanctionDeletePageProps {
+  open: boolean;
+  sanction: IPlayerSanctionResponse | null;
+  onClose: () => void;
+  onDeleted?: () => void;
 }

@@ -13,8 +13,8 @@ import { GUID } from '@/modules/core/types/types';
 import { usePlayer } from '@/modules/player/hook/player.hook';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
-import LoadingIndicator from '../core/components/LoadingIndicator';
-import NewEntityButton from '../core/components/NewEntityButton';
+import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import NewEntityButton from '@/views/core/components/NewEntityButton';
 import Swal from 'sweetalert2';
 
 const PlayerPage: React.FC = () => {

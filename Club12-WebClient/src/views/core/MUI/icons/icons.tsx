@@ -30,6 +30,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import GavelIcon from '@mui/icons-material/Gavel';
 import StarIcon from '@mui/icons-material/Star';
 import StadiumIcon from '@mui/icons-material/Stadium';
+import ShieldIcon from '@mui/icons-material/Shield';
 
 export {
   DeleteIcon,
@@ -64,4 +65,5 @@ export {
   GavelIcon,
   StarIcon,
   StadiumIcon,
+  ShieldIcon,
 };

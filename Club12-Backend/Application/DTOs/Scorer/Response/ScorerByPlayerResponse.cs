@@ -4,7 +4,7 @@ namespace Application.DTOs.Scorer.Response;
 /// <summary>
 /// Response model representing a scorer's performance in a match.
 /// </summary>
-public class ScorerResponse
+public class ScorerByPlayerResponse: ScorerBaseResponse
 {
     /// <summary>
     /// Unique identifier of the player.
@@ -15,9 +15,4 @@ public class ScorerResponse
     /// Full name of the player, combining first and last names.
     /// </summary>
     public required string FullName { get; set; }
-
-    /// <summary>
-    /// Number of points scored by the player in the match.
-    /// </summary>
-    public required int Points { get; set; }
 }

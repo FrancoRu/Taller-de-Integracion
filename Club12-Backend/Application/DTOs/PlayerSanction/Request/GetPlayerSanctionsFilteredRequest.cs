@@ -17,6 +17,10 @@ public class GetPlayerSanctionsFilteredRequest : PaginatedFilterRequest
     /// </summary>
     public Guid? MatchId { get; set; }
 
+    public Guid? TournamentId { get; set; }
+    public Guid? DivisionId { get; set; }
+    public Guid? StageId { get; set; }
+    public Guid? TeamId { get; set; }
     /// <summary>
     /// The description text to filter sanctions by.
     /// </summary>

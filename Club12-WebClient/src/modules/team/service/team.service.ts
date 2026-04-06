@@ -1,18 +1,19 @@
 import { AxiosResponse } from 'axios';
-import routes from '../../core/constants/routes';
-import { GenericResponsePagination, GUID } from '../../core/types/types';
+import routes from '@/modules/core/constants/routes';
+import { withTablePageSize } from '@/modules/core/constants/pagination';
+import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
 import {
   sendDelete,
   sendGet,
   sendPost,
   sendPut,
-} from '../../core/utils/axiosUtils';
+} from '@/modules/core/utils/axiosUtils';
 import {
   IAddTeamRequest,
   IPutTeamRequest,
   TeamFiltered,
   ITeamResponse,
-} from '../type/team';
+} from '@/modules/team/type/team';
 
 /**
  * Service for managing teams.
@@ -84,7 +85,7 @@ export const teamService = {
   getTeamsByFiltered: async (
     filters: TeamFiltered
   ): Promise<AxiosResponse<GenericResponsePagination<ITeamResponse>>> =>
-    await sendGet(routes.teams, filters),
+    await sendGet(routes.teams, withTablePageSize(filters)),
 
   /**
    * Retrieves a specific team by its ID.

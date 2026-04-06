@@ -1,20 +1,21 @@
 import { AxiosResponse } from 'axios';
-import routes from '../../core/constants/routes';
-import { GenericResponsePagination, GUID } from '../../core/types/types';
-import { sendGet, sendPost, sendPut } from '../../core/utils/axiosUtils';
+import routes from '@/modules/core/constants/routes';
+import { withTablePageSize } from '@/modules/core/constants/pagination';
+import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
+import { sendGet, sendPost, sendPut } from '@/modules/core/utils/axiosUtils';
 import {
   ChangePasswordRequest,
   RegisterUserRequest,
   UpdateUserRequest,
   UserFilterRequest,
   UserResponse,
-} from '../type/user';
+} from '@/modules/user/type/user';
 
 export const userService = {
   getAllUsers: async (
     filters: UserFilterRequest
   ): Promise<AxiosResponse<GenericResponsePagination<UserResponse>>> =>
-    await sendGet(routes.users, filters),
+    await sendGet(routes.users, withTablePageSize(filters)),
 
   getById: async (id: GUID): Promise<AxiosResponse<UserResponse>> =>
     await sendGet(`${routes.users}/${id}`),

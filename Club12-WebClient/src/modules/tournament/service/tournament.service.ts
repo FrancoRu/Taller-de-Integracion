@@ -1,18 +1,19 @@
 import { AxiosResponse } from 'axios';
-import routes from '../../core/constants/routes';
-import { GenericResponsePagination, GUID } from '../../core/types/types';
+import routes from '@/modules/core/constants/routes';
+import { withTablePageSize } from '@/modules/core/constants/pagination';
+import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
 import {
   sendDelete,
   sendGet,
   sendPost,
   sendPut,
-} from '../../core/utils/axiosUtils';
+} from '@/modules/core/utils/axiosUtils';
 import {
   IAddTournamentRequest,
   IPutTournamentRequest,
   ITournamentFiltered,
   ITournamentResponse,
-} from '../type/tournament.d';
+} from '@/modules/tournament/type/tournament.d';
 
 /**
  * Service for managing tournaments.
@@ -32,13 +33,13 @@ export const tournamentService = {
    * Updates an existing tournament.
    * @param {string} id - The ID of the tournament to update.
    * @param {IPutTournamentRequest} tournament - The updated tournament details.
-   * @returns {Promise<AxiosResponse<ITournamentResponse>>} The server response.
+   * @returns {Promise<AxiosResponse<void>>} The server response.
    */
   putTournamentById: async (
     id: GUID,
     tournament: IPutTournamentRequest
-  ): Promise<AxiosResponse<ITournamentResponse>> =>
-    await sendPut(`${routes.tournaments}/${id}`, tournament),
+  ): Promise<AxiosResponse<void>> =>
+    await sendPut<void>(`${routes.tournaments}/${id}`, tournament),
 
   /**
    * Retrieves a tournament by its ID.
@@ -58,7 +59,7 @@ export const tournamentService = {
   getAllTournamentsByFilter: async (
     filter: ITournamentFiltered
   ): Promise<AxiosResponse<GenericResponsePagination<ITournamentResponse>>> =>
-    await sendGet(routes.tournaments, filter),
+    await sendGet(routes.tournaments, withTablePageSize(filter)),
 
   /**
    * Deletes a tournament by its ID.

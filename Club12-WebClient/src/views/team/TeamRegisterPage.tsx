@@ -19,10 +19,12 @@ import {
 } from '@mui/material';
 import Swal from 'sweetalert2';
 import { GUID } from '@/modules/core/types/types';
+import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
+import { TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useTeam } from '@/modules/team/hook/team.hook';
 import { ITeamResponse } from '@/modules/team/type/team.d';
-import TeamLogo from '../core/components/TeamLogo';
+import TeamLogo from '@/views/core/components/TeamLogo';
 
 const TeamRegisterPage: React.FC = () => {
   const {
@@ -42,7 +44,10 @@ const TeamRegisterPage: React.FC = () => {
   useEffect(() => {
     const fetch = async () => {
       setLoadingTournaments(true);
-      await getAllTournamentsByFilter({ pageSize: 300 });
+      await getAllTournamentsByFilter({
+        pageSize: TABLE_ROWS_PER_PAGE,
+        status: TournamentStatus.OpenForRegistration,
+      });
       setLoadingTournaments(false);
     };
     void fetch();
@@ -56,7 +61,7 @@ const TeamRegisterPage: React.FC = () => {
 
     const fetch = async () => {
       setLoadingTeams(true);
-      await getTeamsByFiltered({ pageSize: 300 });
+      await getTeamsByFiltered({ pageSize: TABLE_ROWS_PER_PAGE });
       setLoadingTeams(false);
     };
 
@@ -130,7 +135,13 @@ const TeamRegisterPage: React.FC = () => {
     }
   };
 
-  const tournamentOptions = tournaments ?? [];
+  const tournamentOptions = useMemo(
+    () =>
+      (tournaments ?? []).filter(
+        t => t.status === TournamentStatus.OpenForRegistration
+      ),
+    [tournaments]
+  );
 
   return (
     <Card>
@@ -140,29 +151,36 @@ const TeamRegisterPage: React.FC = () => {
         </Typography>
 
         <Stack spacing={3}>
-          <FormControl fullWidth size="small">
-            <InputLabel id="tournament-select-label">Torneo</InputLabel>
-            <Select
-              labelId="tournament-select-label"
-              label="Torneo"
-              value={selectedTournamentId}
-              onChange={e =>
-                setSelectedTournamentId(e.target.value as GUID | '')
-              }
-              disabled={loadingTournaments}
-              startAdornment={
-                loadingTournaments ? (
-                  <CircularProgress size={16} sx={{ mr: 1 }} />
-                ) : undefined
-              }
-            >
-              {tournamentOptions.map(t => (
-                <MenuItem key={t.id} value={t.id}>
-                  {t.name}
+          {loadingTournaments ? (
+            <Box display="flex" justifyContent="center" py={1}>
+              <CircularProgress size={20} />
+            </Box>
+          ) : tournamentOptions.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              No hay torneos con la inscripcion abierta
+            </Typography>
+          ) : (
+            <FormControl fullWidth size="small">
+              <InputLabel id="tournament-select-label">Torneo</InputLabel>
+              <Select
+                labelId="tournament-select-label"
+                label="Torneo"
+                value={selectedTournamentId}
+                onChange={e =>
+                  setSelectedTournamentId(e.target.value as GUID | '')
+                }
+              >
+                <MenuItem value="" disabled>
+                  Seleccionar torneo
                 </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+                {tournamentOptions.map(t => (
+                  <MenuItem key={t.id} value={t.id}>
+                    {t.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
 
           {selectedTournamentId && (
             <>

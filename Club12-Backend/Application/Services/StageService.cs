@@ -8,6 +8,7 @@ using Application.Utils.Extensions;
 using Application.Utils.Helper.StageHelper;
 using Domain.Entities.Models;
 using Domain.Enums;
+using LinqKit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,6 +44,13 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     public async Task<PaginatedResponse<Stage>> GetAllStagesAsync(GetStagesFilteredRequest filter)
     {
         Expression<Func<Stage, bool>> expression = QueryableExtensions.ConstructFilterExpression<Stage, GetStagesFilteredRequest>(filter);
+
+        if (filter.TournamentId.HasValue)
+        {
+            Expression<Func<Stage, bool>> tournamentExpression = stage => stage.Division.TournamentId == filter.TournamentId.Value;
+            expression = expression.And(tournamentExpression);
+        }
+
         IEnumerable<Stage> filteredPlayers = await stageRepository.FindAsync(expression, filter: filter);
 
         int totalCount = await stageRepository.CountAsync(expression);
@@ -135,21 +143,25 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
             throw new InvalidOperationException("Cannot process the current request because the current division already has some stage.");
         }
 
-        int maxTeams = division.Tournament.MaxTeams;
+        int registeredTeams = await teamRepository.CountAsync(team => team.TournamentId == division.TournamentId);
 
-        // Validate maxTeams is a valid tournament size
-        if (!IsValidTournamentSize(maxTeams))
+        if (!IsValidTournamentSize(registeredTeams))
         {
-            throw new InvalidOperationException($"Invalid tournament size: {maxTeams}. Valid sizes are 8, 16, 32, or 64 teams.");
+            throw new InvalidOperationException(
+                $"Invalid number of registered teams: {registeredTeams}. Valid sizes are 8, 16, 32, or 64 teams.");
+        }
+
+        if (registeredTeams % MaxTeams.GROUP != 0)
+        {
+            throw new InvalidOperationException(
+                $"The number of registered teams ({registeredTeams}) must be divisible by {MaxTeams.GROUP} to generate group stages.");
         }
 
         List<Stage> stages = [];
 
-
         DateTime startDate = division.Tournament.StartDate;
-        // Step 1: Create Group Stage
 
-        int totalGroups = maxTeams / 4;
+        int totalGroups = registeredTeams / MaxTeams.GROUP;
 
         int order = 0;
 
@@ -166,8 +178,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
 
         startDate = stages.First().EndDate.AddDays(2);
 
-        // Step 2: Create Quarter-finals (Cuartos) Stage if necessary
-        if (maxTeams >= 16)
+        if (registeredTeams >= 16)
         {
             Stage quarterFinalStage = BuildStage(StageType.QuarterFinal, StageTemplate.QuarterFinal, startDate, division);
             stages.Add(quarterFinalStage);
@@ -175,19 +186,16 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
             startDate = quarterFinalStage.EndDate.AddDays(2);
         }
 
-        // Step 3: Create Semi-final Stage
         Stage semiFinalStage = BuildStage(StageType.SemiFinal, StageTemplate.SemiFinal, startDate, division);
         stages.Add(semiFinalStage);
         semiFinalStage.Order = order++;
         startDate = semiFinalStage.EndDate.AddDays(1);
 
-        // Step 4: Create Third Place Stage
         Stage thirdPlaceStage = BuildStage(StageType.ThirdPlace, StageTemplate.ThirdPlace, startDate, division);
         stages.Add(thirdPlaceStage);
         thirdPlaceStage.Order = order++;
         startDate = thirdPlaceStage.EndDate.AddDays(2);
 
-        // Step 5: Create Final Stage
         Stage finalStage = BuildStage(StageType.Final, StageTemplate.Final, startDate, division);
         stages.Add(finalStage);
 

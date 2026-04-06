@@ -14,6 +14,8 @@ public class GetStagesFilteredRequest : PaginatedFilterRequest
     /// </summary>
     public Guid? DivisionId { get; set; }
 
+    public Guid? TournamentId { get; set; }
+
     /// <summary>
     /// Optional filter by stage type.
     /// </summary>

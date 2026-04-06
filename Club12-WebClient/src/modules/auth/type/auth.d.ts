@@ -1,4 +1,4 @@
-import { UserRolesType } from '../../core/enum/user/userRolesType';
+import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 
 /**
  * Represents the response object for authentication tokens.

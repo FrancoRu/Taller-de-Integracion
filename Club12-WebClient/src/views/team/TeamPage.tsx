@@ -11,10 +11,10 @@ import {
 } from '@mui/material';
 import { GUID } from '@/modules/core/types/types';
 import { useTeam } from '@/modules/team/hook/team.hook';
-import LoadingIndicator from '../core/components/LoadingIndicator';
-import TeamLogo from '../core/components/TeamLogo';
-import PlayersPage from '../player/PlayersPage';
-import NewEntityButton from '../core/components/NewEntityButton';
+import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import TeamLogo from '@/views/core/components/TeamLogo';
+import PlayersPage from '@/views/player/PlayersPage';
+import NewEntityButton from '@/views/core/components/NewEntityButton';
 import Swal from 'sweetalert2';
 
 interface TeamPageProps {

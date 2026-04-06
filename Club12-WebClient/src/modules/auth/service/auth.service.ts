@@ -1,12 +1,12 @@
 import { AxiosResponse } from 'axios';
-import routes from '../../core/constants/routes';
-import { sendPost } from '../../core/utils/axiosUtils';
+import routes from '@/modules/core/constants/routes';
+import { sendPost } from '@/modules/core/utils/axiosUtils';
 import {
   AuthResponse,
   LogInUserRequest,
   PasswordResetConfirmRequest,
   RefreshTokenRequest,
-} from '../type/auth';
+} from '@/modules/auth/type/auth';
 
 export const authService = {
   loginRequest: (

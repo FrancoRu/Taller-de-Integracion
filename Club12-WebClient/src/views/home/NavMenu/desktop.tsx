@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { ExpandLessIcon, ExpandMoreIcon } from '@/views/core/MUI/icons/icons';
 import { RoutesNavigationViews } from '@/views/core/routes-const';
-import TournamentMenuItems from '../tournaments/tournamentsMenuItems';
+import TournamentMenuItems from '@/views/home/tournaments/tournamentsMenuItems';
 
 interface DesktopNavItemsProps {
   onCloseAnyMenu?: () => void;

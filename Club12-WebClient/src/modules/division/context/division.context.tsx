@@ -8,9 +8,9 @@ import {
   useMemo,
 } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { GenericResponsePagination, GUID } from '../../core/types/types';
-import { useError } from '../../error/hooks/error.hock';
-import { divisionService } from '../service/division.service';
+import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
+import { useError } from '@/modules/error/hooks/error.hock';
+import { divisionService } from '@/modules/division/service/division.service';
 import {
   AddDivisionRequest,
   DivisionFiltered,
@@ -18,7 +18,7 @@ import {
   DivisionTopScoreResponse,
   IDivisionContextProps,
   IPutDivisionRequest,
-} from '../type/division';
+} from '@/modules/division/type/division';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 

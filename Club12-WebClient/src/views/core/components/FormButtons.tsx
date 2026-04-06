@@ -1,4 +1,4 @@
-import { Button } from '@mui/material';
+import { Button, Stack } from '@mui/material';
 
 interface FormButtonsProps {
   onCancel: () => void;
@@ -13,7 +13,7 @@ const FormButtons: React.FC<FormButtonsProps> = ({
   confirmLabel,
   disabled = false,
 }) => (
-  <>
+  <Stack direction="row" spacing={1.5}>
     <Button
       variant="contained"
       color="primary"
@@ -30,7 +30,7 @@ const FormButtons: React.FC<FormButtonsProps> = ({
     >
       {confirmLabel}
     </Button>
-  </>
+  </Stack>
 );
 
 export default FormButtons;

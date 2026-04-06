@@ -4,7 +4,4 @@
 		<Nullable>enable</Nullable>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
-	<ItemGroup>
-	  <Folder Include="Constants\" />
-	</ItemGroup>
 </Project>

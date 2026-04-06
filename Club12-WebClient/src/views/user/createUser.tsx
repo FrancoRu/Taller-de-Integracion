@@ -9,32 +9,30 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { useAuth } from '../../../modules/auth/hook/auth.hook';
-import { useUser } from '../../../modules/user/hook/user.hook';
-import { RegisterUserRequest } from '../../../modules/user/type/user';
-import { UserRolesType } from '../../../modules/core/enum/user/userRolesType';
-import { useError } from '../../../modules/error/hooks/error.hock';
+import { useAuth } from '@/modules/auth/hook/auth.hook';
+import { useUser } from '@/modules/user/hook/user.hook';
+import { RegisterUserRequest } from '@/modules/user/type/user';
+import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
+import { useError } from '@/modules/error/hooks/error.hock';
 
 const ROLE_LABELS: Partial<Record<UserRolesType, string>> = {
-  OWNER: 'Owner',
-  TOURNAMENT_MANAGER: 'Responsable del Torneo',
-  TEAM_MANAGER: 'Responsable de Equipo',
+  [UserRolesType.Owner]: 'Owner',
+  [UserRolesType.TournamentManager]: 'Responsable del Torneo',
+  [UserRolesType.TeamManager]: 'Responsable de Equipo',
 };
 
 // Roles that Admin can assign
-const ADMIN_ASSIGNABLE_ROLES: UserRolesType[] = [
-  UserRolesType.Owner,
-  UserRolesType.TournamentManager,
-];
+const ADMIN_ASSIGNABLE_ROLES: UserRolesType[] = [UserRolesType.Owner];
 
-// Owner always creates TeamManager accounts
-const OWNER_FIXED_ROLE = UserRolesType.TeamManager;
+const OWNER_ASSIGNABLE_ROLES: UserRolesType[] = [
+  UserRolesType.TournamentManager,
+  UserRolesType.TeamManager,
+];
 
 const EMPTY_FORM: RegisterUserRequest = {
   email: '',
   username: '',
   phone: '',
-  password: '',
   role: '',
 };
 
@@ -57,10 +55,7 @@ const CreateUser: React.FC = () => {
 
   const [form, setForm] = useState<RegisterUserRequest>({
     ...EMPTY_FORM,
-    role: isOwner ? OWNER_FIXED_ROLE : '',
   });
-
-  const needsPassword = form.role !== UserRolesType.TeamManager;
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -81,8 +76,6 @@ const CreateUser: React.FC = () => {
     )
       messages.push('El nombre de usuario debe tener entre 3 y 50 caracteres.');
     if (!form.role) messages.push('El rol es requerido.');
-    if (needsPassword && !form.password?.trim())
-      messages.push('La contraseña es requerida para este rol.');
 
     if (messages.length > 0) {
       setMessage(400, messages);
@@ -93,7 +86,6 @@ const CreateUser: React.FC = () => {
       email: form.email.trim(),
       username: form.username.trim(),
       phone: form.phone?.trim() || undefined,
-      password: needsPassword ? form.password?.trim() : undefined,
       role: form.role,
     };
 
@@ -152,34 +144,23 @@ const CreateUser: React.FC = () => {
             onChange={handleChange}
           />
 
-          {isAdmin && (
-            <TextField
-              select
-              fullWidth
-              label="Rol"
-              name="role"
-              value={form.role}
-              onChange={handleChange}
-            >
-              <MenuItem value="">Seleccionar rol</MenuItem>
-              {ADMIN_ASSIGNABLE_ROLES.map(r => (
+          <TextField
+            select
+            fullWidth
+            label="Rol"
+            name="role"
+            value={form.role}
+            onChange={handleChange}
+          >
+            <MenuItem value="">Seleccionar rol</MenuItem>
+            {(isAdmin ? ADMIN_ASSIGNABLE_ROLES : OWNER_ASSIGNABLE_ROLES).map(
+              r => (
                 <MenuItem key={r} value={r}>
                   {ROLE_LABELS[r] ?? r}
                 </MenuItem>
-              ))}
-            </TextField>
-          )}
-
-          {needsPassword && (
-            <TextField
-              fullWidth
-              label="Contraseña"
-              name="password"
-              type="password"
-              value={form.password ?? ''}
-              onChange={handleChange}
-            />
-          )}
+              )
+            )}
+          </TextField>
 
           <Stack direction="row" spacing={2} justifyContent="flex-end">
             <Button

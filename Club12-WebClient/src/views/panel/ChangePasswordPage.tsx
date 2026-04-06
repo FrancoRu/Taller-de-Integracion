@@ -1,4 +1,4 @@
-import UpdatePassword from '../user/CRUD/updatePassword';
+import UpdatePassword from '@/views/user/updatePassword';
 
 const ChangePasswordPage = () => <UpdatePassword />;
 

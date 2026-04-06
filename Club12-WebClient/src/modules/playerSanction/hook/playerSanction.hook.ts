@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { PlayerSanctionContext } from '../context/playerSanction.context';
+import { PlayerSanctionContext } from '@/modules/playerSanction/context/playerSanction.context';
 
 export const usePlayerSanction = () => {
   const context = useContext(PlayerSanctionContext);

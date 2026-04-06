@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../../modules/auth/hook/auth.hook';
+import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { ReactNode } from 'react';
-import { UserRolesType } from '../../modules/core/enum/user/userRolesType';
+import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 
 /**
  * PrivateRoute component that ensures only authenticated users can access the route.

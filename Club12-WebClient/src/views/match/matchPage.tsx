@@ -19,9 +19,9 @@ import { useMatch } from '@/modules/match/hook/match.hook';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import { IPlayerSanctionResponse } from '@/modules/playerSanction/type/playerSanction.d';
 import { formatMatchDateToString } from '@/modules/core/utils/formatDate';
-import LoadingIndicator from '../core/components/LoadingIndicator';
-import TeamLogo from '../core/components/TeamLogo';
-import { VisibilityIcon } from '../core/MUI/icons/icons';
+import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import TeamLogo from '@/views/core/components/TeamLogo';
+import { VisibilityIcon } from '@/views/core/MUI/icons/icons';
 
 const formatDateTime = (value?: string | null) => {
   if (!value) {

@@ -1,5 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import {
   Box,
   Card,
@@ -22,10 +28,14 @@ import {
   SearchIcon,
   VisibilityIcon,
 } from '@/views/core/MUI/icons/icons';
-import { useUser } from '../../modules/user/hook/user.hook';
-import { UserFilterRequest, UserResponse } from '../../modules/user/type/user';
-import { UserRolesType } from '../../modules/core/enum/user/userRolesType';
-import LoadingIndicator from '../core/components/LoadingIndicator';
+import { useUser } from '@/modules/user/hook/user.hook';
+import { UserFilterRequest, UserResponse } from '@/modules/user/type/user';
+import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
+import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import {
+  TABLE_PAGE_SIZE_OPTIONS,
+  TABLE_ROWS_PER_PAGE,
+} from '@/modules/core/constants/pagination';
 
 const ROLE_LABELS: Record<UserRolesType, string> = {
   ADMIN: 'Admin',
@@ -42,6 +52,15 @@ const UsersPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<UserFilterRequest>(EMPTY_FILTERS);
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+    page: 0,
+    pageSize: TABLE_ROWS_PER_PAGE,
+  });
+  const getAllUsersRef = useRef(getAllUsers);
+
+  useEffect(() => {
+    getAllUsersRef.current = getAllUsers;
+  }, [getAllUsers]);
 
   const handleView = useCallback(
     (row: UserResponse) => {
@@ -120,17 +139,24 @@ const UsersPage: React.FC = () => {
   }, [userActions]);
 
   const fetchUsers = useCallback(
-    async (activeFilters: UserFilterRequest) => {
+    async (
+      activeFilters: UserFilterRequest,
+      activePaginationModel: GridPaginationModel
+    ) => {
       setLoading(true);
-      await getAllUsers(activeFilters);
+      await getAllUsersRef.current({
+        ...activeFilters,
+        pageNumber: activePaginationModel.page + 1,
+        pageSize: activePaginationModel.pageSize,
+      });
       setLoading(false);
     },
-    [getAllUsers]
+    []
   );
 
   useEffect(() => {
-    void fetchUsers(EMPTY_FILTERS);
-  }, [fetchUsers]);
+    void fetchUsers(filters, paginationModel);
+  }, [fetchUsers, filters, paginationModel]);
 
   const handleFilterChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -138,8 +164,20 @@ const UsersPage: React.FC = () => {
     const { name, value } = e.target;
     const updated = { ...filters, [name]: value || undefined };
     setFilters(updated);
-    void fetchUsers(updated);
+    setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
   };
+
+  const handlePaginationModelChange = useCallback(
+    (nextPaginationModel: GridPaginationModel) => {
+      setPaginationModel(prev =>
+        prev.page === nextPaginationModel.page &&
+        prev.pageSize === nextPaginationModel.pageSize
+          ? prev
+          : nextPaginationModel
+      );
+    },
+    []
+  );
 
   const rows = useMemo(() => users ?? [], [users]);
 
@@ -222,10 +260,9 @@ const UsersPage: React.FC = () => {
               autoHeight
               disableRowSelectionOnClick
               disableColumnMenu
-              pageSizeOptions={[10, 25, 50]}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 10 } },
-              }}
+              pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+              paginationModel={paginationModel}
+              onPaginationModelChange={handlePaginationModelChange}
             />
           </Box>
         )}

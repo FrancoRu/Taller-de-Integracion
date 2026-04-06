@@ -11,11 +11,11 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { useUser } from '../../modules/user/hook/user.hook';
-import { GUID } from '../../modules/core/types/types';
-import { UpdateUserRequest } from '../../modules/user/type/user';
-import { useError } from '../../modules/error/hooks/error.hock';
-import { COOKIE_SIGNIN_TOKEN } from '../../modules/core/constants/constants';
+import { useUser } from '@/modules/user/hook/user.hook';
+import { GUID } from '@/modules/core/types/types';
+import { UpdateUserRequest } from '@/modules/user/type/user';
+import { useError } from '@/modules/error/hooks/error.hock';
+import { COOKIE_SIGNIN_TOKEN } from '@/modules/core/constants/constants';
 
 const GUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

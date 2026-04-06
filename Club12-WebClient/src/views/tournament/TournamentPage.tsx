@@ -1,16 +1,52 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Card, CardContent, Grid, Tab, Tabs, Typography } from '@mui/material';
+import {
+  Button,
+  Card,
+  CardContent,
+  Grid,
+  Tab,
+  Tabs,
+  Typography,
+} from '@mui/material';
+import Swal from 'sweetalert2';
 import { GUID } from '@/modules/core/types/types';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
-import LoadingIndicator from '../core/components/LoadingIndicator';
-import DivisionsPage from '../division/divisionsPage';
-import TeamsPage from '../team/TeamsPage';
-import Swal from 'sweetalert2';
+import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
+import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
+import { useAuth } from '@/modules/auth/hook/auth.hook';
+import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import DivisionsPage from '@/views/division/divisionsPage';
+import TeamsPage from '@/views/team/TeamsPage';
+
+const TOURNAMENT_STATUS_LABELS: Record<TournamentStatus, string> = {
+  [TournamentStatus.Scheduled]: 'Programado',
+  [TournamentStatus.OpenForRegistration]: 'Inscripción abierta',
+  [TournamentStatus.Ongoing]: 'En curso',
+  [TournamentStatus.Finished]: 'Finalizado',
+  [TournamentStatus.Canceled]: 'Cancelado',
+};
+
+const resolveTournamentStatus = (status: unknown): TournamentStatus => {
+  if (typeof status === 'string') {
+    if (
+      status === TournamentStatus.Scheduled ||
+      status === TournamentStatus.OpenForRegistration ||
+      status === TournamentStatus.Ongoing ||
+      status === TournamentStatus.Finished ||
+      status === TournamentStatus.Canceled
+    ) {
+      return status;
+    }
+  }
+
+  return TournamentStatus.Scheduled;
+};
 
 const TournamentPage: React.FC = () => {
   const { tournamentId } = useParams<{ tournamentId: GUID }>();
   const navigate = useNavigate();
+  const { role } = useAuth();
   const { tournament, getTournamentById } = useTournament();
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<'detalle' | 'divisiones' | 'equipos'>(
@@ -22,14 +58,21 @@ const TournamentPage: React.FC = () => {
       return;
     }
 
+    if (tournament?.id === tournamentId) {
+      return;
+    }
+
     const fetchTournament = async () => {
       setLoading(true);
-      await getTournamentById(tournamentId);
-      setLoading(false);
+      try {
+        await getTournamentById(tournamentId);
+      } finally {
+        setLoading(false);
+      }
     };
 
     void fetchTournament();
-  }, [getTournamentById, tournamentId]);
+  }, [tournamentId, tournament?.id]);
 
   if (!tournamentId) {
     return (
@@ -75,6 +118,9 @@ const TournamentPage: React.FC = () => {
     );
   }
 
+  const canEditTournament =
+    role === UserRolesType.Owner || role === UserRolesType.TournamentManager;
+
   const handleCreateDivision = () => {
     void Swal.fire({
       title: 'Pendiente',
@@ -87,9 +133,28 @@ const TournamentPage: React.FC = () => {
   return (
     <Card>
       <CardContent>
-        <Typography variant="h6" mb={2}>
-          {tournament.name}
-        </Typography>
+        <Grid
+          container
+          alignItems="center"
+          justifyContent="space-between"
+          mb={2}
+        >
+          <Grid item>
+            <Typography variant="h6">{tournament.name}</Typography>
+          </Grid>
+          <Grid item>
+            {canEditTournament && (
+              <Button
+                variant="contained"
+                onClick={() =>
+                  navigate(`/panel/torneos/${tournamentId}/editar`)
+                }
+              >
+                Editar torneo
+              </Button>
+            )}
+          </Grid>
+        </Grid>
 
         <Tabs
           value={tab}
@@ -114,7 +179,11 @@ const TournamentPage: React.FC = () => {
                 Estado
               </Typography>
               <Typography>
-                {tournament.isFinished ? 'Finalizado' : 'Activo'}
+                {
+                  TOURNAMENT_STATUS_LABELS[
+                    resolveTournamentStatus(tournament.status)
+                  ]
+                }
               </Typography>
             </Grid>
             <Grid item xs={12}>

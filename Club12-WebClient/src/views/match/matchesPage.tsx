@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import {
   Box,
   Card,
   CardContent,
   InputAdornment,
+  MenuItem,
   Stack,
   TextField,
   Typography,
@@ -14,18 +15,26 @@ import { useNavigate } from 'react-router-dom';
 import { GUID } from '@/modules/core/types/types';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import { IMatchResponse, MatchFiltered } from '@/modules/match/type/match';
+import { MatchType } from '@/modules/core/enum/match/matchType';
+import { useTournament } from '@/modules/tournament/hook/tournament.hook';
+import { useDivision } from '@/modules/division/hook/division.hook';
+import { useStage } from '@/modules/stage/hook/stage.hook';
 import {
   buildActionsColumn,
   TableRowAction,
-} from '../core/components/TableRowActions';
-import NewEntityButton from '../core/components/NewEntityButton';
-import TeamLogo from '../core/components/TeamLogo';
+} from '@/views/core/components/TableRowActions';
+import NewEntityButton from '@/views/core/components/NewEntityButton';
+import TeamLogo from '@/views/core/components/TeamLogo';
 import {
   DeleteIcon,
   EditIcon,
   SearchIcon,
   VisibilityIcon,
-} from '../core/MUI/icons/icons';
+} from '@/views/core/MUI/icons/icons';
+import {
+  TABLE_PAGE_SIZE_OPTIONS,
+  TABLE_ROWS_PER_PAGE,
+} from '@/modules/core/constants/pagination';
 
 interface MatchesPageProps {
   stageId?: GUID;
@@ -38,7 +47,13 @@ interface MatchesPageProps {
 
 type MatchesSearchFilters = Pick<
   MatchFiltered,
-  'homeTeamName' | 'visitorTeamName'
+  | 'homeTeamName'
+  | 'visitorTeamName'
+  | 'tournamentId'
+  | 'divisionId'
+  | 'stageId'
+  | 'isFinished'
+  | 'type'
 >;
 
 const EMPTY_FILTERS: MatchesSearchFilters = {};
@@ -69,25 +84,94 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
 }) => {
   const navigate = useNavigate();
   const { matches, getMatchByFilter, deleteMatchById } = useMatch();
+  const { tournaments, getAllTournamentsByFilter } = useTournament();
+  const { divisions, getDivisionsByFilters } = useDivision();
+  const { stages, getStagesByFilters } = useStage();
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<MatchesSearchFilters>(EMPTY_FILTERS);
   const [debouncedFilters, setDebouncedFilters] =
     useState<MatchesSearchFilters>(EMPTY_FILTERS);
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+    page: 0,
+    pageSize: TABLE_ROWS_PER_PAGE,
+  });
+  const getMatchByFilterRef = useRef(getMatchByFilter);
+  const getAllTournamentsByFilterRef = useRef(getAllTournamentsByFilter);
+  const getDivisionsByFiltersRef = useRef(getDivisionsByFilters);
+  const getStagesByFiltersRef = useRef(getStagesByFilters);
+
+  useEffect(() => {
+    getMatchByFilterRef.current = getMatchByFilter;
+  }, [getMatchByFilter]);
+
+  useEffect(() => {
+    getAllTournamentsByFilterRef.current = getAllTournamentsByFilter;
+  }, [getAllTournamentsByFilter]);
+
+  useEffect(() => {
+    getDivisionsByFiltersRef.current = getDivisionsByFilters;
+  }, [getDivisionsByFilters]);
+
+  useEffect(() => {
+    getStagesByFiltersRef.current = getStagesByFilters;
+  }, [getStagesByFilters]);
+
+  useEffect(() => {
+    if (stageId) {
+      return;
+    }
+
+    void getAllTournamentsByFilterRef.current({ pageSize: 300 });
+  }, [stageId]);
+
+  useEffect(() => {
+    if (stageId || !filters.tournamentId) {
+      return;
+    }
+
+    void getDivisionsByFiltersRef.current({
+      tournamentId: filters.tournamentId,
+      pageSize: 300,
+    });
+  }, [filters.tournamentId, stageId]);
+
+  useEffect(() => {
+    if (stageId || !filters.divisionId) {
+      return;
+    }
+
+    void getStagesByFiltersRef.current({
+      divisionId: filters.divisionId,
+      pageSize: 300,
+    });
+  }, [filters.divisionId, stageId]);
 
   const fetchMatches = useCallback(
-    async (activeFilters: MatchesSearchFilters) => {
+    async (
+      activeFilters: MatchesSearchFilters,
+      activePaginationModel: GridPaginationModel
+    ) => {
       setLoading(true);
-      await getMatchByFilter(
+      await getMatchByFilterRef.current(
         stageId
           ? {
               stageId,
               ...activeFilters,
+              pageNumber: activePaginationModel.page + 1,
+              pageSize: activePaginationModel.pageSize,
             }
-          : activeFilters
+          : {
+              tournamentId: activeFilters.tournamentId,
+              divisionId: activeFilters.divisionId,
+              stageId: activeFilters.stageId,
+              ...activeFilters,
+              pageNumber: activePaginationModel.page + 1,
+              pageSize: activePaginationModel.pageSize,
+            }
       );
       setLoading(false);
     },
-    [getMatchByFilter, stageId]
+    [stageId]
   );
 
   useEffect(() => {
@@ -99,8 +183,8 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
   }, [filters]);
 
   useEffect(() => {
-    void fetchMatches(debouncedFilters);
-  }, [debouncedFilters, fetchMatches]);
+    void fetchMatches(debouncedFilters, paginationModel);
+  }, [debouncedFilters, fetchMatches, paginationModel]);
 
   const handleFilterChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -111,8 +195,50 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
       [name]: value || undefined,
     } as MatchesSearchFilters;
 
+    if (name === 'tournamentId') {
+      updated.tournamentId = (value as GUID) || undefined;
+      updated.divisionId = undefined;
+      updated.stageId = undefined;
+      setDebouncedFilters(updated);
+    }
+
+    if (name === 'divisionId') {
+      updated.divisionId = (value as GUID) || undefined;
+      updated.stageId = undefined;
+      setDebouncedFilters(updated);
+    }
+
+    if (name === 'stageId') {
+      updated.stageId = (value as GUID) || undefined;
+      setDebouncedFilters(updated);
+    }
+
+    if (name === 'isFinished') {
+      updated.isFinished =
+        value === '' ? undefined : value.toLowerCase() === 'true';
+      setDebouncedFilters(updated);
+    }
+
+    if (name === 'type') {
+      updated.type = (value as MatchFiltered['type']) || undefined;
+      setDebouncedFilters(updated);
+    }
+
     setFilters(updated);
+    setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
   };
+
+  const handlePaginationModelChange = useCallback(
+    (nextPaginationModel: GridPaginationModel) => {
+      setPaginationModel(prev =>
+        prev.page === nextPaginationModel.page &&
+        prev.pageSize === nextPaginationModel.pageSize
+          ? prev
+          : nextPaginationModel
+      );
+    },
+    []
+  );
 
   const handleView = useCallback(
     (row: IMatchResponse) => {
@@ -274,9 +400,41 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
   }, [matchActions]);
 
   const rows = useMemo(() => matches ?? [], [matches]);
+  const tournamentOptions = useMemo(() => tournaments ?? [], [tournaments]);
+  const divisionOptions = useMemo(
+    () =>
+      (divisions ?? []).filter(divisionOption =>
+        filters.tournamentId
+          ? divisionOption.tournamentId === filters.tournamentId
+          : true
+      ),
+    [divisions, filters.tournamentId]
+  );
+  const stageOptions = useMemo(
+    () =>
+      (stages ?? []).filter(stageOption =>
+        filters.divisionId ? stageOption.divisionId === filters.divisionId : true
+      ),
+    [filters.divisionId, stages]
+  );
   const hasActiveFilters = useMemo(
-    () => Boolean(filters.homeTeamName) || Boolean(filters.visitorTeamName),
-    [filters.homeTeamName, filters.visitorTeamName]
+    () =>
+      Boolean(filters.homeTeamName) ||
+      Boolean(filters.visitorTeamName) ||
+      Boolean(filters.tournamentId) ||
+      Boolean(filters.divisionId) ||
+      Boolean(filters.stageId) ||
+      Boolean(filters.type) ||
+      filters.isFinished !== undefined,
+    [
+      filters.homeTeamName,
+      filters.visitorTeamName,
+      filters.tournamentId,
+      filters.divisionId,
+      filters.stageId,
+      filters.type,
+      filters.isFinished,
+    ]
   );
   const noRowsMessage = hasActiveFilters
     ? 'No se encontraron partidos para el filtro aplicado.'
@@ -311,6 +469,106 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
       )}
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2}>
+        {!stageId && (
+          <TextField
+            select
+            label="Tipo"
+            name="type"
+            size="small"
+            value={filters.type ?? ''}
+            onChange={handleFilterChange}
+            sx={{ minWidth: 180 }}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            {Object.values(MatchType).map(matchType => (
+              <MenuItem key={matchType} value={matchType}>
+                {matchType}
+              </MenuItem>
+            ))}
+          </TextField>
+        )}
+
+        {!stageId && (
+          <TextField
+            select
+            label="Estado"
+            name="isFinished"
+            size="small"
+            value={
+              filters.isFinished === undefined
+                ? ''
+                : filters.isFinished
+                  ? 'true'
+                  : 'false'
+            }
+            onChange={handleFilterChange}
+            sx={{ minWidth: 180 }}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            <MenuItem value="false">Programado</MenuItem>
+            <MenuItem value="true">Finalizado</MenuItem>
+          </TextField>
+        )}
+
+        {!stageId && (
+          <TextField
+            select
+            label="Torneo"
+            name="tournamentId"
+            size="small"
+            value={filters.tournamentId ?? ''}
+            onChange={handleFilterChange}
+            sx={{ minWidth: 220 }}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            {tournamentOptions.map(tournamentOption => (
+              <MenuItem key={tournamentOption.id} value={tournamentOption.id}>
+                {tournamentOption.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        )}
+
+        {!stageId && (
+          <TextField
+            select
+            label="División"
+            name="divisionId"
+            size="small"
+            value={filters.divisionId ?? ''}
+            onChange={handleFilterChange}
+            sx={{ minWidth: 220 }}
+            disabled={!filters.tournamentId}
+          >
+            <MenuItem value="">Todas</MenuItem>
+            {divisionOptions.map(divisionOption => (
+              <MenuItem key={divisionOption.id} value={divisionOption.id}>
+                {divisionOption.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        )}
+
+        {!stageId && (
+          <TextField
+            select
+            label="Fase"
+            name="stageId"
+            size="small"
+            value={filters.stageId ?? ''}
+            onChange={handleFilterChange}
+            sx={{ minWidth: 220 }}
+            disabled={!filters.divisionId}
+          >
+            <MenuItem value="">Todas</MenuItem>
+            {stageOptions.map(stageOption => (
+              <MenuItem key={stageOption.id} value={stageOption.id}>
+                {stageOption.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        )}
+
         <TextField
           label="Equipo local"
           name="homeTeamName"
@@ -351,10 +609,9 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
           disableRowSelectionOnClick
           disableColumnMenu
           localeText={{ noRowsLabel: noRowsMessage }}
-          pageSizeOptions={[10, 25, 50]}
-          initialState={{
-            pagination: { paginationModel: { pageSize: 10 } },
-          }}
+          pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+          paginationModel={paginationModel}
+          onPaginationModelChange={handlePaginationModelChange}
         />
       </Box>
     </>

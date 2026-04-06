@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import {
   Box,
   Card,
@@ -20,8 +20,10 @@ import {
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { GUID } from '@/modules/core/types/types';
+import { TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
+import { TABLE_PAGE_SIZE_OPTIONS } from '@/modules/core/constants/pagination';
 import { usePlayer } from '@/modules/player/hook/player.hook';
-import FormButtons from '../core/components/FormButtons';
+import FormButtons from '@/views/core/components/FormButtons';
 import {
   IAddPlayerRequest,
   IPlayerResponse,
@@ -32,13 +34,13 @@ import {
   buildActionsColumn,
   TableRowAction,
 } from '@/views/core/components/TableRowActions';
-import NewEntityButton from '../core/components/NewEntityButton';
+import NewEntityButton from '@/views/core/components/NewEntityButton';
 import {
   DeleteIcon,
   EditIcon,
   SearchIcon,
   VisibilityIcon,
-} from '../core/MUI/icons/icons';
+} from '@/views/core/MUI/icons/icons';
 import { useTeam } from '@/modules/team/hook/team.hook';
 
 type PlayersSearchFilters = Pick<
@@ -114,6 +116,15 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   const [filters, setFilters] = useState<PlayersSearchFilters>(EMPTY_FILTERS);
   const [debouncedFilters, setDebouncedFilters] =
     useState<PlayersSearchFilters>(EMPTY_FILTERS);
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+    page: 0,
+    pageSize: TABLE_ROWS_PER_PAGE,
+  });
+  const getPlayersByFilterRef = useRef(getPlayersByFilter);
+
+  useEffect(() => {
+    getPlayersByFilterRef.current = getPlayersByFilter;
+  }, [getPlayersByFilter]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<IPlayerResponse | null>(
     null
@@ -122,19 +133,28 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     useState<PlayerFormState>(INITIAL_PLAYER_FORM);
 
   const fetchPlayers = useCallback(
-    async (activeFilters: PlayersSearchFilters) => {
+    async (
+      activeFilters: PlayersSearchFilters,
+      activePaginationModel: GridPaginationModel
+    ) => {
       setLoading(true);
-      await getPlayersByFilter(
+      await getPlayersByFilterRef.current(
         teamId
           ? {
               teamId,
               ...activeFilters,
+              pageNumber: activePaginationModel.page + 1,
+              pageSize: activePaginationModel.pageSize,
             }
-          : activeFilters
+          : {
+              ...activeFilters,
+              pageNumber: activePaginationModel.page + 1,
+              pageSize: activePaginationModel.pageSize,
+            }
       );
       setLoading(false);
     },
-    [getPlayersByFilter, teamId]
+    [teamId]
   );
 
   useEffect(() => {
@@ -146,11 +166,11 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   }, [filters]);
 
   useEffect(() => {
-    void fetchPlayers(debouncedFilters);
-  }, [debouncedFilters, fetchPlayers]);
+    void fetchPlayers(debouncedFilters, paginationModel);
+  }, [debouncedFilters, fetchPlayers, paginationModel]);
 
   const loadTeamsForDropdown = useCallback(async () => {
-    await getTeamsByFiltered({ pageSize: 300 });
+    await getTeamsByFiltered({ pageSize: TABLE_ROWS_PER_PAGE });
   }, [getTeamsByFiltered]);
 
   const resetPlayerForm = useCallback(() => {
@@ -170,7 +190,20 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     } as PlayersSearchFilters;
 
     setFilters(updated);
+    setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
   };
+
+  const handlePaginationModelChange = useCallback(
+    (nextPaginationModel: GridPaginationModel) => {
+      setPaginationModel(prev =>
+        prev.page === nextPaginationModel.page &&
+        prev.pageSize === nextPaginationModel.pageSize
+          ? prev
+          : nextPaginationModel
+      );
+    },
+    []
+  );
 
   const handleView = useCallback(
     (row: IPlayerResponse) => {
@@ -375,7 +408,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
 
     setIsCreateModalOpen(false);
     resetPlayerForm();
-    await fetchPlayers(debouncedFilters);
+    await fetchPlayers(debouncedFilters, paginationModel);
     await Swal.fire({
       title: 'Jugador creado',
       text: 'El jugador se creó correctamente.',
@@ -416,7 +449,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
 
     setEditingPlayer(null);
     resetPlayerForm();
-    await fetchPlayers(debouncedFilters);
+    await fetchPlayers(debouncedFilters, paginationModel);
     await Swal.fire({
       title: 'Jugador actualizado',
       text: 'El jugador se actualizó correctamente.',
@@ -508,10 +541,9 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
           disableRowSelectionOnClick
           disableColumnMenu
           localeText={{ noRowsLabel: noRowsMessage }}
-          pageSizeOptions={[10, 25, 50]}
-          initialState={{
-            pagination: { paginationModel: { pageSize: 10 } },
-          }}
+          pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+          paginationModel={paginationModel}
+          onPaginationModelChange={handlePaginationModelChange}
         />
       </Box>
 

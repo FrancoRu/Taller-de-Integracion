@@ -1,16 +1,23 @@
-import { AxiosError } from 'axios';
-import { createContext, ReactNode, useCallback, useMemo } from 'react';
+import { AxiosError, AxiosResponse } from 'axios';
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useError } from '../../error/hooks/error.hock';
-import { IPlayerResponse } from '../../player/type/player';
-import { GUID } from '../../core/types/types';
-import { ERROR_MESSAGES } from '../../core/constants/constants';
-import { playerStatisticService } from '../service/playerStatistic.service';
+import { useError } from '@/modules/error/hooks/error.hock';
+import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
+import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
+import { playerStatisticService } from '@/modules/playerStatistic/service/playerStatistic.service';
 import {
   AddPlayerStatisticRequest,
   IPlayerStatisticContextProps,
+  PlayerStatisticFiltered,
+  PlayerStatisticResponse,
   PutPlayerStatisticRequest,
-} from '../type/playerStatistic';
+} from '@/modules/playerStatistic/type/playerStatistic';
 
 export const PlayerStatisticContext = createContext<
   IPlayerStatisticContextProps | undefined
@@ -19,6 +26,11 @@ export const PlayerStatisticContext = createContext<
 export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
+  const [playerStatistic, setPlayerStatistic] =
+    useState<PlayerStatisticResponse | null>(null);
+  const [playerStatistics, setPlayerStatistics] = useState<
+    PlayerStatisticResponse[] | null
+  >(null);
   const { setError } = useError();
   const queryClient = useQueryClient();
 
@@ -58,18 +70,28 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
 
   const addPlayerStatistic = useCallback(
     async (
-      playerStatistic: AddPlayerStatisticRequest
-    ): Promise<IPlayerResponse | void> => {
+      newPlayerStatistic: AddPlayerStatisticRequest
+    ): Promise<PlayerStatisticResponse | void> => {
       try {
-        const response =
-          await addPlayerStatisticMutation.mutateAsync(playerStatistic);
-        await queryClient.invalidateQueries({ queryKey: ['playerStatistic'] });
-        return response?.data as unknown as IPlayerResponse;
+        const response: AxiosResponse<PlayerStatisticResponse> =
+          await addPlayerStatisticMutation.mutateAsync(newPlayerStatistic);
+
+        if (response?.data) {
+          setPlayerStatistic(response.data);
+          queryClient.setQueryData(
+            ['playerStatistic', 'byId', response.data.id],
+            response
+          );
+          await queryClient.invalidateQueries({
+            queryKey: ['playerStatistic'],
+          });
+          return response.data;
+        }
       } catch (error: unknown) {
         handleUnknownError(error);
       }
     },
-    [addPlayerStatisticMutation, queryClient, handleUnknownError]
+    [addPlayerStatisticMutation, handleUnknownError, queryClient]
   );
 
   const putPlayerStatisticById = useCallback(
@@ -91,20 +113,46 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const getPlayerStatisticById = useCallback(
-    async (id: GUID): Promise<IPlayerResponse | void> => {
+    async (id: GUID): Promise<PlayerStatisticResponse | void> => {
       try {
-        const response = await queryClient.fetchQuery({
-          queryKey: ['playerStatistic', 'byId', id],
-          queryFn: async () =>
-            await playerStatisticService.getPlayerStatisticById(id),
-        });
+        const response: AxiosResponse<PlayerStatisticResponse> =
+          await queryClient.fetchQuery({
+            queryKey: ['playerStatistic', 'byId', id],
+            queryFn: async () =>
+              await playerStatisticService.getPlayerStatisticById(id),
+          });
 
-        return response?.data as unknown as IPlayerResponse;
+        if (response?.data) {
+          setPlayerStatistic(response.data);
+          return response.data;
+        }
       } catch (error: unknown) {
         handleUnknownError(error);
       }
     },
-    [queryClient, handleUnknownError]
+    [handleUnknownError, queryClient]
+  );
+
+  const getPlayerStatisticsByFilter = useCallback(
+    async (
+      filter: PlayerStatisticFiltered
+    ): Promise<GenericResponsePagination<PlayerStatisticResponse> | void> => {
+      try {
+        const response = await queryClient.fetchQuery({
+          queryKey: ['playerStatistic', 'list', filter],
+          queryFn: async () =>
+            await playerStatisticService.getPlayerStatisticsByFilter(filter),
+        });
+
+        if (response?.data?.items) {
+          setPlayerStatistics(response.data.items);
+          return response.data;
+        }
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [handleUnknownError, queryClient]
   );
 
   const deletePlayerStatisticById = useCallback(
@@ -124,16 +172,22 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
 
   const container = useMemo(
     () => ({
+      playerStatistic,
+      playerStatistics,
       addPlayerStatistic,
       putPlayerStatisticById,
       getPlayerStatisticById,
+      getPlayerStatisticsByFilter,
       deletePlayerStatisticById,
     }),
     [
       addPlayerStatistic,
-      putPlayerStatisticById,
-      getPlayerStatisticById,
       deletePlayerStatisticById,
+      getPlayerStatisticById,
+      getPlayerStatisticsByFilter,
+      playerStatistic,
+      playerStatistics,
+      putPlayerStatisticById,
     ]
   );
   return (

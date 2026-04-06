@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Domain.Entities.Models;
 
@@ -21,4 +22,6 @@ public class Player : EntityBase
     public required string SocialSecurity { get; set; }
     public required Team Team { get; set; }
     public Guid TeamId { get; set; }
+
+    public virtual ICollection<Scorer> Scorers { get; set; } = [];
 }

@@ -1,19 +1,20 @@
 import { AxiosResponse } from 'axios';
-import routes from '../../core/constants/routes';
-import { GenericResponsePagination, GUID } from '../../core/types/types';
+import routes from '@/modules/core/constants/routes';
+import { withTablePageSize } from '@/modules/core/constants/pagination';
+import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
 import {
   sendDelete,
   sendGet,
   sendPost,
   sendPut,
-} from '../../core/utils/axiosUtils';
+} from '@/modules/core/utils/axiosUtils';
 import {
   AddDivisionRequest,
   DivisionFiltered,
   IDivisionResponse,
   DivisionTopScoreResponse,
   IPutDivisionRequest,
-} from '../type/division';
+} from '@/modules/division/type/division';
 
 /**
  * DivisionService provides methods to interact with the divisions API.
@@ -69,7 +70,7 @@ export const divisionService = {
   ): Promise<AxiosResponse<GenericResponsePagination<IDivisionResponse>>> =>
     sendGet<GenericResponsePagination<IDivisionResponse>>(
       routes.divisions,
-      filter
+      withTablePageSize(filter)
     ),
 
   /**

@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import {
   Box,
+  Button,
   Card,
   CardContent,
   InputAdornment,
+  MenuItem,
   Stack,
   TextField,
   Typography,
@@ -13,21 +15,32 @@ import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { GUID } from '@/modules/core/types/types';
 import { useStage } from '@/modules/stage/hook/stage.hook';
-import { IStageResponse, StageFiltered } from '@/modules/stage/type/stage.d';
+import {
+  IStageListFilters,
+  IStageResponse,
+} from '@/modules/stage/type/stage.d';
+import { useDivision } from '@/modules/division/hook/division.hook';
+import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import {
   buildActionsColumn,
   TableRowAction,
-} from '../core/components/TableRowActions';
-import NewEntityButton from '../core/components/NewEntityButton';
+} from '@/views/core/components/TableRowActions';
+import NewEntityButton from '@/views/core/components/NewEntityButton';
 import {
   DeleteIcon,
   EditIcon,
   SearchIcon,
+  SettingsSuggestIcon,
   VisibilityIcon,
-} from '../core/MUI/icons/icons';
+} from '@/views/core/MUI/icons/icons';
+import {
+  TABLE_PAGE_SIZE_OPTIONS,
+  TABLE_ROWS_PER_PAGE,
+} from '@/modules/core/constants/pagination';
 
 interface StagesPageProps {
   divisionId?: GUID;
+  showGenerateStagesButton?: boolean;
   emptyMessage?: string;
   title?: string;
   wrapInCard?: boolean;
@@ -35,9 +48,7 @@ interface StagesPageProps {
   onCreate?: () => void;
 }
 
-type StageSearchFilters = Pick<StageFiltered, 'name'>;
-
-const EMPTY_FILTERS: StageSearchFilters = {};
+const EMPTY_FILTERS: IStageListFilters = {};
 
 const formatDate = (value?: string | null) => {
   if (!value) {
@@ -60,6 +71,7 @@ const formatStageType = (value: string) =>
 
 const StagesPage: React.FC<StagesPageProps> = ({
   divisionId,
+  showGenerateStagesButton = false,
   emptyMessage = 'No hay fases cargadas.',
   title = 'Fases',
   wrapInCard = false,
@@ -67,26 +79,84 @@ const StagesPage: React.FC<StagesPageProps> = ({
   onCreate,
 }) => {
   const navigate = useNavigate();
-  const { stages, getStagesByFilters, deleteStagesById } = useStage();
+  const { divisions, getDivisionsByFilters } = useDivision();
+  const { tournaments, getAllTournamentsByFilter } = useTournament();
+  const {
+    stages,
+    getStagesByFilters,
+    deleteStagesById,
+    generateStagesAutomatically,
+  } = useStage();
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState<StageSearchFilters>(EMPTY_FILTERS);
+  const [filters, setFilters] = useState<IStageListFilters>(EMPTY_FILTERS);
   const [debouncedFilters, setDebouncedFilters] =
-    useState<StageSearchFilters>(EMPTY_FILTERS);
+    useState<IStageListFilters>(EMPTY_FILTERS);
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+    page: 0,
+    pageSize: TABLE_ROWS_PER_PAGE,
+  });
+  const getStagesByFiltersRef = useRef(getStagesByFilters);
+  const getDivisionsByFiltersRef = useRef(getDivisionsByFilters);
+  const getAllTournamentsByFilterRef = useRef(getAllTournamentsByFilter);
+
+  useEffect(() => {
+    getStagesByFiltersRef.current = getStagesByFilters;
+  }, [getStagesByFilters]);
+
+  useEffect(() => {
+    getDivisionsByFiltersRef.current = getDivisionsByFilters;
+  }, [getDivisionsByFilters]);
+
+  useEffect(() => {
+    getAllTournamentsByFilterRef.current = getAllTournamentsByFilter;
+  }, [getAllTournamentsByFilter]);
+
+  useEffect(() => {
+    if (divisionId) {
+      return;
+    }
+
+    void getAllTournamentsByFilterRef.current({ pageSize: 300 });
+  }, [divisionId]);
+
+  useEffect(() => {
+    if (divisionId) {
+      return;
+    }
+
+    if (!filters.tournamentId) {
+      return;
+    }
+
+    void getDivisionsByFiltersRef.current({
+      tournamentId: filters.tournamentId,
+      pageSize: 300,
+    });
+  }, [divisionId, filters.tournamentId]);
 
   const fetchStages = useCallback(
-    async (activeFilters: StageSearchFilters) => {
+    async (
+      activeFilters: IStageListFilters,
+      activePaginationModel: GridPaginationModel
+    ) => {
       setLoading(true);
-      await getStagesByFilters(
+      await getStagesByFiltersRef.current(
         divisionId
           ? {
               divisionId,
               ...activeFilters,
+              pageNumber: activePaginationModel.page + 1,
+              pageSize: activePaginationModel.pageSize,
             }
-          : activeFilters
+          : {
+              ...activeFilters,
+              pageNumber: activePaginationModel.page + 1,
+              pageSize: activePaginationModel.pageSize,
+            }
       );
       setLoading(false);
     },
-    [divisionId, getStagesByFilters]
+    [divisionId]
   );
 
   useEffect(() => {
@@ -98,8 +168,8 @@ const StagesPage: React.FC<StagesPageProps> = ({
   }, [filters]);
 
   useEffect(() => {
-    void fetchStages(debouncedFilters);
-  }, [debouncedFilters, fetchStages]);
+    void fetchStages(debouncedFilters, paginationModel);
+  }, [debouncedFilters, fetchStages, paginationModel]);
 
   const handleFilterChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -108,10 +178,40 @@ const StagesPage: React.FC<StagesPageProps> = ({
     const updated = {
       ...filters,
       [name]: value || undefined,
-    } as StageSearchFilters;
+    } as IStageListFilters;
+
+    if (name === 'divisionId') {
+      updated.divisionId = (value as GUID) || undefined;
+      setDebouncedFilters(updated);
+    }
+
+    if (name === 'tournamentId') {
+      updated.tournamentId = (value as GUID) || undefined;
+      updated.divisionId = undefined;
+      setDebouncedFilters(updated);
+    }
+
+    if (name === 'isActive') {
+      updated.isActive =
+        value === '' ? undefined : value.toLowerCase() === 'true';
+      setDebouncedFilters(updated);
+    }
 
     setFilters(updated);
+    setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
   };
+
+  const handlePaginationModelChange = useCallback(
+    (nextPaginationModel: GridPaginationModel) => {
+      setPaginationModel(prev =>
+        prev.page === nextPaginationModel.page &&
+        prev.pageSize === nextPaginationModel.pageSize
+          ? prev
+          : nextPaginationModel
+      );
+    },
+    []
+  );
 
   const handleView = useCallback(
     (row: IStageResponse) => {
@@ -120,9 +220,12 @@ const StagesPage: React.FC<StagesPageProps> = ({
     [navigate]
   );
 
-  const handleEdit = useCallback((_row: IStageResponse) => {
-    // Pending panel route for stage edit by id.
-  }, []);
+  const handleEdit = useCallback(
+    (row: IStageResponse) => {
+      navigate(`/panel/fases/editar/${row.id}`);
+    },
+    [navigate]
+  );
 
   const handleDelete = useCallback(
     async (row: IStageResponse) => {
@@ -165,7 +268,6 @@ const StagesPage: React.FC<StagesPageProps> = ({
         color: 'primary',
         icon: <EditIcon fontSize="small" />,
         onClick: handleEdit,
-        disabled: true,
       },
       {
         label: 'Eliminar',
@@ -193,12 +295,6 @@ const StagesPage: React.FC<StagesPageProps> = ({
         renderCell: params => formatStageType(params.row.stageType),
       },
       {
-        field: 'order',
-        headerName: 'Orden',
-        flex: 0.5,
-        minWidth: 90,
-      },
-      {
         field: 'startDate',
         headerName: 'Inicio',
         flex: 0.8,
@@ -224,11 +320,72 @@ const StagesPage: React.FC<StagesPageProps> = ({
     return [...baseColumns, buildActionsColumn(stageActions)];
   }, [stageActions]);
 
-  const rows = useMemo(() => stages ?? [], [stages]);
-  const hasActiveFilters = useMemo(() => Boolean(filters.name), [filters.name]);
+  const rows = useMemo(
+    () =>
+      [...(stages ?? [])].sort(
+        (a, b) =>
+          (a.order ?? Number.MAX_SAFE_INTEGER) -
+          (b.order ?? Number.MAX_SAFE_INTEGER)
+      ),
+    [stages]
+  );
+
+  const hasActiveFilters = useMemo(
+    () =>
+      Boolean(filters.name) ||
+      Boolean(filters.tournamentId) ||
+      Boolean(filters.divisionId) ||
+      filters.isActive !== undefined,
+    [filters.divisionId, filters.isActive, filters.name, filters.tournamentId]
+  );
+
+  const canGenerateStages =
+    Boolean(divisionId) &&
+    showGenerateStagesButton &&
+    !loading &&
+    !hasActiveFilters &&
+    rows.length === 0;
+
   const noRowsMessage = hasActiveFilters
     ? 'No se encontraron fases para el filtro aplicado.'
     : emptyMessage;
+
+  const tournamentOptions = useMemo(() => tournaments ?? [], [tournaments]);
+  const divisionOptions = useMemo(() => divisions ?? [], [divisions]);
+
+  const handleGenerateStages = useCallback(async () => {
+    if (!divisionId) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const generatedStages = await generateStagesAutomatically(divisionId);
+      if (!generatedStages) {
+        return;
+      }
+
+      await getStagesByFilters({
+        divisionId,
+        pageNumber: paginationModel.page + 1,
+        pageSize: paginationModel.pageSize,
+      });
+      await Swal.fire({
+        title: 'Éxito',
+        text: 'Las fases fueron generadas correctamente.',
+        icon: 'success',
+        confirmButtonColor: '#FD6B00',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    divisionId,
+    generateStagesAutomatically,
+    getStagesByFilters,
+    paginationModel.page,
+    paginationModel.pageSize,
+  ]);
 
   const handleCreateStage = useCallback(() => {
     if (onCreate) {
@@ -236,13 +393,9 @@ const StagesPage: React.FC<StagesPageProps> = ({
       return;
     }
 
-    void Swal.fire({
-      title: 'Pendiente',
-      text: 'La creación de fases desde esta vista aún no está implementada.',
-      icon: 'info',
-      confirmButtonColor: '#FD6B00',
-    });
-  }, [onCreate]);
+    const query = divisionId ? `?divisionId=${divisionId}` : '';
+    navigate(`/panel/fases/crear${query}`);
+  }, [divisionId, navigate, onCreate]);
 
   const content = (
     <>
@@ -254,11 +407,24 @@ const StagesPage: React.FC<StagesPageProps> = ({
           mb={2}
         >
           {title ? <Typography variant="h6">{title}</Typography> : <Box />}
-          <NewEntityButton
-            gender="feminine"
-            type={createType}
-            onClick={handleCreateStage}
-          />
+          <Stack direction="row" spacing={1}>
+            {canGenerateStages && (
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<SettingsSuggestIcon />}
+                onClick={() => void handleGenerateStages()}
+                disabled={loading}
+              >
+                Generar Fases
+              </Button>
+            )}
+            <NewEntityButton
+              gender="feminine"
+              type={createType}
+              onClick={handleCreateStage}
+            />
+          </Stack>
         </Stack>
       )}
 
@@ -277,6 +443,67 @@ const StagesPage: React.FC<StagesPageProps> = ({
             ),
           }}
         />
+
+        {!divisionId && (
+          <TextField
+            select
+            label="Estado"
+            name="isActive"
+            size="small"
+            value={
+              filters.isActive === undefined
+                ? ''
+                : filters.isActive
+                  ? 'true'
+                  : 'false'
+            }
+            onChange={handleFilterChange}
+            sx={{ minWidth: 180 }}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            <MenuItem value="true">Activa</MenuItem>
+            <MenuItem value="false">Inactiva</MenuItem>
+          </TextField>
+        )}
+
+        {!divisionId && (
+          <TextField
+            select
+            label="Torneo"
+            name="tournamentId"
+            size="small"
+            value={filters.tournamentId ?? ''}
+            onChange={handleFilterChange}
+            sx={{ minWidth: 220 }}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            {tournamentOptions.map(tournamentOption => (
+              <MenuItem key={tournamentOption.id} value={tournamentOption.id}>
+                {tournamentOption.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        )}
+
+        {!divisionId && (
+          <TextField
+            select
+            label="División"
+            name="divisionId"
+            size="small"
+            value={filters.divisionId ?? ''}
+            onChange={handleFilterChange}
+            sx={{ minWidth: 220 }}
+            disabled={!filters.tournamentId}
+          >
+            <MenuItem value="">Todas</MenuItem>
+            {divisionOptions.map(divisionOption => (
+              <MenuItem key={divisionOption.id} value={divisionOption.id}>
+                {divisionOption.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        )}
       </Stack>
 
       <Box sx={{ width: '100%' }}>
@@ -289,10 +516,9 @@ const StagesPage: React.FC<StagesPageProps> = ({
           disableRowSelectionOnClick
           disableColumnMenu
           localeText={{ noRowsLabel: noRowsMessage }}
-          pageSizeOptions={[10, 25, 50]}
-          initialState={{
-            pagination: { paginationModel: { pageSize: 10 } },
-          }}
+          pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+          paginationModel={paginationModel}
+          onPaginationModelChange={handlePaginationModelChange}
         />
       </Box>
     </>

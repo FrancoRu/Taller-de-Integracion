@@ -1,8 +1,8 @@
 import { useRouteError } from 'react-router-dom';
 import { Typography } from '@mui/material';
 import { grey } from '@mui/material/colors';
-import ErrorPageLayout from '../components/ErrorPageLayout';
-import ErrorPageActions from '../components/ErrorPageActions';
+import ErrorPageLayout from '@/views/core/components/ErrorPageLayout';
+import ErrorPageActions from '@/views/core/components/ErrorPageActions';
 
 interface ErrorDetails {
   statusText?: string;

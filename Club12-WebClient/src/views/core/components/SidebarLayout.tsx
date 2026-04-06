@@ -16,11 +16,12 @@ import {
   PeopleIcon,
   PersonIcon,
   SettingsIcon,
+  ShieldIcon,
   SportsBasketballSharpIcon,
   SportsIcon,
   StadiumIcon,
   StarIcon,
-} from '../MUI/icons/icons';
+} from '@/views/core/MUI/icons/icons';
 import {
   Box,
   Collapse,
@@ -33,8 +34,8 @@ import {
   Typography,
   Divider,
 } from '@mui/material';
-import { useAuth } from '../../../modules/auth/hook/auth.hook';
-import { UserRolesType } from '../../../modules/core/enum/user/userRolesType';
+import { useAuth } from '@/modules/auth/hook/auth.hook';
+import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 
 const DRAWER_WIDTH = 240;
 
@@ -52,7 +53,7 @@ const TAB_ICONS: Record<string, React.ReactNode> = {
   Torneo: <SportsIcon />,
   Administracion: <ManageAccountsSharpIcon />,
   AdministracionDeEquipos: <GroupsIcon />,
-  Equipos: <GroupsIcon />,
+  Equipos: <ShieldIcon />,
   Registro: <AppRegistrationIcon />,
   Torneos: <EmojiEventsIcon />,
   Divisiones: <SportsBasketballSharpIcon />,
@@ -153,7 +154,7 @@ const TABS_BY_ROLE: Record<UserRolesType, NavTab[]> = {
       children: ADMINISTRATION_CHILDREN,
     },
     {
-      label: 'Administracion de Equipos',
+      label: 'Gestion de Equipos',
       icon: TAB_ICONS['AdministracionDeEquipos'],
       children: TEAM_ADMINISTRATION_CHILDREN,
     },
@@ -165,7 +166,7 @@ const TABS_BY_ROLE: Record<UserRolesType, NavTab[]> = {
       children: ADMINISTRATION_CHILDREN,
     },
     {
-      label: 'Administracion de Equipos',
+      label: 'Gestion de Equipos',
       icon: TAB_ICONS['AdministracionDeEquipos'],
       children: TEAM_ADMINISTRATION_CHILDREN,
     },
@@ -202,7 +203,7 @@ const SidebarLayout: React.FC<{ children: React.ReactNode }> = ({
     Record<string, boolean>
   >({
     Administracion: true,
-    'Administracion de Equipos': true,
+    'Gestion de Equipos': true,
     Configuracion: location.pathname.startsWith('/panel/configuracion'),
   });
 

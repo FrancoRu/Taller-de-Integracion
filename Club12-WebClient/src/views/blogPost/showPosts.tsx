@@ -7,13 +7,14 @@ import {
   Button,
   CircularProgress,
 } from '@mui/material';
-import { useBlogPost } from '../../modules/blogPost/hook/blogPost.hook';
+import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
 import {
   BlogPostResponse,
   GetBlogPostsFilteredRequest,
-} from '../../modules/blogPost/type/blogPost';
+} from '@/modules/blogPost/type/blogPost';
 import { useNavigate } from 'react-router-dom';
 import { GUID } from '@/modules/core/types/types';
+import { TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
 
 const ShowPosts: React.FC = () => {
   const { getBlogPostsByFilters, getBlogPostsById } = useBlogPost();
@@ -21,7 +22,7 @@ const ShowPosts: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     page: 1,
-    pageSize: 5,
+    pageSize: TABLE_ROWS_PER_PAGE,
     totalCount: 0,
   });
   const navigate = useNavigate();

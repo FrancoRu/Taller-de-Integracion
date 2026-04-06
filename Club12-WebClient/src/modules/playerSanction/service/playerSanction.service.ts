@@ -1,18 +1,19 @@
 import { AxiosResponse } from 'axios';
-import routes from '../../core/constants/routes';
-import { GenericResponsePagination, GUID } from '../../core/types/types';
+import routes from '@/modules/core/constants/routes';
+import { withTablePageSize } from '@/modules/core/constants/pagination';
+import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
 import {
   sendDelete,
   sendGet,
   sendPost,
   sendPut,
-} from '../../core/utils/axiosUtils';
+} from '@/modules/core/utils/axiosUtils';
 import {
   IAddPlayerSanction,
   IPlayerSanctionFiltered,
   IPlayerSanctionResponse,
   IPutPlayerSanction,
-} from '../type/playerSanction';
+} from '@/modules/playerSanction/type/playerSanction';
 
 /**
  * Service for managing player sanction-related operations.
@@ -47,7 +48,7 @@ export const playerSanctionService = {
     filter: IPlayerSanctionFiltered
   ): Promise<
     AxiosResponse<GenericResponsePagination<IPlayerSanctionResponse>>
-  > => sendGet(`${routes.playerSanctions}/find`, filter),
+  > => sendGet(`${routes.playerSanctions}/find`, withTablePageSize(filter)),
 
   /**
    * Updates an existing player sanction by its ID.

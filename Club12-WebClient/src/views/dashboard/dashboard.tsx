@@ -1,6 +1,6 @@
 import { Box, Typography } from '@mui/material';
-import { BlogPostProvider } from '../../modules/blogPost/context/blogPost.context';
-import AddBlogPostForm from '../blogPost/addBlogPostForm'; // Import AddBlogPostForm
+import { BlogPostProvider } from '@/modules/blogPost/context/blogPost.context';
+import AddBlogPostForm from '@/views/blogPost/addBlogPostForm'; // Import AddBlogPostForm
 
 const Dashboard = () => {
   return (

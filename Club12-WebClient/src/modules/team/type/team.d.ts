@@ -2,11 +2,11 @@ import {
   Filtered,
   GenericResponsePagination,
   GUID,
-} from '../../core/types/types';
+} from '@/modules/core/types/types';
 import {
   IPublicPlayerResponse,
   IPlayerResponse,
-} from '../../player/type/player.d';
+} from '@/modules/player/type/player.d';
 
 /**
  * Context properties and methods for managing teams in a sports system.

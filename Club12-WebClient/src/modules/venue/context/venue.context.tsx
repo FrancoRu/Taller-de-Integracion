@@ -8,14 +8,14 @@ import {
   useMemo,
 } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useError } from '../../error/hooks/error.hock';
-import { venueService } from '../service/venue.service';
+import { useError } from '@/modules/error/hooks/error.hock';
+import { venueService } from '@/modules/venue/service/venue.service';
 import {
   IAddVenueRequest,
   IVenueContextProps,
   IPutVenueRequest,
   IVenueResponse,
-} from '../type/venue';
+} from '@/modules/venue/type/venue';
 import { GUID } from '@/modules/core/types/types';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';

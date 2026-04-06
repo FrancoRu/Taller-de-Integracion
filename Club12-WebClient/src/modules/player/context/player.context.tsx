@@ -8,16 +8,16 @@ import React, {
   useState,
 } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { GenericResponsePagination, GUID } from '../../core/types/types';
-import { useError } from '../../error/hooks/error.hock';
-import { playerService } from '../service/player.service';
+import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
+import { useError } from '@/modules/error/hooks/error.hock';
+import { playerService } from '@/modules/player/service/player.service';
 import {
   IAddPlayerRequest,
   IPlayerContextProps,
   PlayerFiltered,
   IPlayerResponse,
   IPutPlayerRequest,
-} from '../type/player.d';
+} from '@/modules/player/type/player.d';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 

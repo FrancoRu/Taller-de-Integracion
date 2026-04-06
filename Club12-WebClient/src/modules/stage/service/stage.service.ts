@@ -1,10 +1,11 @@
 import { GUID, GenericResponsePagination } from '@/modules/core/types/types';
+import { withTablePageSize } from '@/modules/core/constants/pagination';
 import {
   IAddStageRequest,
   IPutStageRequest,
   IStageResponse,
   StageFiltered,
-} from '../type/stage.d';
+} from '@/modules/stage/type/stage.d';
 import {
   sendDelete,
   sendGet,
@@ -54,7 +55,7 @@ export const stageService = {
   getStagesByFilters: async (
     filter: StageFiltered
   ): Promise<AxiosResponse<GenericResponsePagination<IStageResponse>>> =>
-    sendGet(routes.stages, filter),
+    sendGet(routes.stages, withTablePageSize(filter)),
 
   /**
    * Deletes a stage by its ID.

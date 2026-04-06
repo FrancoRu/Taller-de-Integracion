@@ -4,10 +4,12 @@ using Application.Interfaces.Services;
 using Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,24 +17,15 @@ namespace Infrastructure.Identity;
 
 /// <summary>
 /// Infrastructure implementation of <see cref="IAuthenticationService"/> backed by ASP.NET Core Identity.
-/// <list type="bullet">
-///   <item>ADMIN, OWNER, TOURNAMENT_MANAGER → password login.</item>
-///   <item>TEAM_MANAGER → magic-link flow only.</item>
-///   <item>GUEST → anonymous JWT, no database interaction.</item>
-/// </list>
-/// JWT generation is delegated to <see cref="IAuthService"/> (Application layer),
-/// keeping this class focused on Identity orchestration only.
 /// </summary>
 public sealed class IdentityAuthenticationService(
     UserManager<ApplicationUser> userManager,
-    IAuthService                 authService) : IAuthenticationService
+    IAuthService authService,
+    IEmailService emailService,
+    IConfiguration configuration) : IAuthenticationService
 {
-    private const string MagicLinkPurpose  = "MagicLink";
-    private const int    RefreshExpiryDays = 7;
-
-    // ─────────────────────────────────────────────────────────────
-    // Role-creation permission matrix
-    // ─────────────────────────────────────────────────────────────
+    private const string MagicLinkPurpose = "MagicLink";
+    private const int RefreshExpiryDays = 7;
 
     private static readonly Dictionary<string, HashSet<string>> _creationPolicy =
         new(StringComparer.OrdinalIgnoreCase)
@@ -60,23 +53,23 @@ public sealed class IdentityAuthenticationService(
     {
         EnforceCreationPolicy(callerRole, request.Role);
 
+        ApplicationUser? existing = await userManager.FindByEmailAsync(request.Email);
+        if (existing is not null)
+            throw new InvalidOperationException("A user with this email already exists.");
+
         ApplicationUser user = new()
         {
-            UserName         = request.Username,
-            Email            = request.Email,
-            EmailConfirmed   = true,
-            PhoneNumber      = request.Phone,
-            // TournamentManagers are linked to the Owner who created them
+            UserName = request.Username,
+            Email = request.Email,
+            EmailConfirmed = true,
+            PhoneNumber = request.Phone,
             CreatedByOwnerId = IsOwner(callerRole) ? callerId : null,
+            MustChangePassword = true
         };
 
-        bool isTeamManager = string.Equals(
-            request.Role, UserRoleType.TEAM_MANAGER.ToRoleName(),
-            StringComparison.OrdinalIgnoreCase);
+        string temporaryPassword = GenerateTemporaryPassword();
 
-        IdentityResult result = isTeamManager
-            ? await userManager.CreateAsync(user)
-            : await CreateWithPasswordAsync(user, request.Password);
+        IdentityResult result = await userManager.CreateAsync(user, temporaryPassword);
 
         if (!result.Succeeded)
         {
@@ -85,6 +78,18 @@ public sealed class IdentityAuthenticationService(
         }
 
         await userManager.AddToRoleAsync(user, request.Role.ToUpperInvariant());
+
+        string token = await userManager.GeneratePasswordResetTokenAsync(user);
+
+        string frontendUrl = configuration["Frontend:PasswordResetUrl"]
+            ?? throw new InvalidOperationException("Frontend:PasswordResetUrl is not configured.");
+
+        string setPasswordLink =
+            $"{frontendUrl}" +
+            $"?email={Uri.EscapeDataString(user.Email!)}" +
+            $"&token={Uri.EscapeDataString(token)}";
+
+        await emailService.SendWelcomeSetPasswordAsync(user.Email!, user.UserName!, setPasswordLink, ct);
 
         return new RegisterUserResponse(
             user.Id, user.Email!, user.UserName!, request.Role.ToUpperInvariant(), user.PhoneNumber);
@@ -132,7 +137,6 @@ public sealed class IdentityAuthenticationService(
         string token = await userManager.GenerateUserTokenAsync(
             user, TokenOptions.DefaultEmailProvider, MagicLinkPurpose);
 
-        // TODO: in production, send via IEmailService — never expose the token in responses.
         string magicLink =
             $"/api/auth/magic-link/login" +
             $"?email={Uri.EscapeDataString(user.Email!)}" +
@@ -169,7 +173,6 @@ public sealed class IdentityAuthenticationService(
         ApplicationUser user = await userManager.FindByEmailAsync(request.Email)
             ?? throw new UnauthorizedAccessException("Invalid password reset request.");
 
-        // Verifies the token AND sets the new password atomically.
         IdentityResult result = await userManager.ResetPasswordAsync(
             user, request.Token, request.NewPassword);
 
@@ -177,11 +180,9 @@ public sealed class IdentityAuthenticationService(
             throw new InvalidOperationException(
                 string.Join("; ", result.Errors.Select(e => e.Description)));
 
-        // Clear the forced-reset flag so the middleware no longer blocks the user.
         user.MustChangePassword = false;
         await userManager.UpdateAsync(user);
 
-        // Return a ready-to-use JWT — the user is automatically logged in after reset.
         IList<string> roles = await userManager.GetRolesAsync(user);
         return await BuildTokenResponseAsync(user, roles, ct);
     }
@@ -227,8 +228,8 @@ public sealed class IdentityAuthenticationService(
         List<Claim> claims =
         [
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new(ClaimTypes.Email,          user.Email!),
-            ..roles.Select(r => new Claim(ClaimTypes.Role, r))
+            new(ClaimTypes.Email, user.Email!),
+            .. roles.Select(r => new Claim(ClaimTypes.Role, r))
         ];
 
         if (user.MustChangePassword)
@@ -236,19 +237,40 @@ public sealed class IdentityAuthenticationService(
 
         TokenResponse response = await authService.GenerateJwtTokenAsync(claims, ct);
 
-        user.RefreshToken           = response.RefreshToken;
+        user.RefreshToken = response.RefreshToken;
         user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(RefreshExpiryDays);
         await userManager.UpdateAsync(user);
 
         return response;
     }
 
-    private async Task<IdentityResult> CreateWithPasswordAsync(ApplicationUser user, string? password)
+    private static string GenerateTemporaryPassword(int length = 16)
     {
-        if (string.IsNullOrWhiteSpace(password))
-            throw new ArgumentException("Password is required for this role.");
+        if (length < 8)
+            length = 8;
 
-        return await userManager.CreateAsync(user, password);
+        const string upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        const string lower = "abcdefghijkmnopqrstuvwxyz";
+        const string digits = "23456789";
+        const string special = "!@#$%^&*_-+=?";
+        string all = upper + lower + digits + special;
+
+        char[] chars = new char[length];
+        chars[0] = upper[RandomNumberGenerator.GetInt32(upper.Length)];
+        chars[1] = lower[RandomNumberGenerator.GetInt32(lower.Length)];
+        chars[2] = digits[RandomNumberGenerator.GetInt32(digits.Length)];
+        chars[3] = special[RandomNumberGenerator.GetInt32(special.Length)];
+
+        for (int i = 4; i < chars.Length; i++)
+            chars[i] = all[RandomNumberGenerator.GetInt32(all.Length)];
+
+        for (int i = chars.Length - 1; i > 0; i--)
+        {
+            int j = RandomNumberGenerator.GetInt32(i + 1);
+            (chars[i], chars[j]) = (chars[j], chars[i]);
+        }
+
+        return new string(chars);
     }
 
     private static void EnforceCreationPolicy(string callerRole, string targetRole)

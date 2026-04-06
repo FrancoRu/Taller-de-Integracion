@@ -51,4 +51,5 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
     public virtual required DbSet<BlogPost>        BlogPosts         { get; set; }
     public virtual required DbSet<Stage>           Stages            { get; set; }
     public virtual required DbSet<StageTeamMatch>  StageTeamMatches  { get; set; }
+    public virtual required DbSet<Scorer>          Scorers           { get; set; }
 }

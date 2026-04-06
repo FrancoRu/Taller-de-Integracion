@@ -3,8 +3,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.Auth.Request;
 
 /// <summary>
-/// Request to register a new user. Password is only required for non-TeamManager roles.
-/// TeamManager accounts authenticate via magic-link and do not need a password.
+/// Request to register a new user. Password is generated automatically by the system.
 /// </summary>
 public sealed class RegisterUserRequest
 {
@@ -24,12 +23,6 @@ public sealed class RegisterUserRequest
     /// </summary>
     [Phone(ErrorMessage = "Invalid phone number format.")]
     public string? Phone { get; set; }
-
-    /// <summary>
-    /// Required for ADMIN, OWNER, TOURNAMENT_MANAGER.
-    /// Leave null when registering a TEAM_MANAGER (magic-link flow).
-    /// </summary>
-    public string? Password { get; set; }
 
     /// <summary>
     /// Target role. Accepted values: ADMIN, OWNER, TOURNAMENT_MANAGER, TEAM_MANAGER.

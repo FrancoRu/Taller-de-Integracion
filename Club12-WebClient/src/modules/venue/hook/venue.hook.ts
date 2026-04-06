@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { VenueContext } from '../context/venue.context';
+import { VenueContext } from '@/modules/venue/context/venue.context';
 
 export const useVenue = () => {
   const context = useContext(VenueContext);

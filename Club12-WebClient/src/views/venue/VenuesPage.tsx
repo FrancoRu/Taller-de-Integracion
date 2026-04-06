@@ -25,16 +25,16 @@ import { useVenue } from '@/modules/venue/hook/venue.hook';
 import {
   buildActionsColumn,
   TableRowAction,
-} from '../core/components/TableRowActions';
-import NewEntityButton from '../core/components/NewEntityButton';
-import FormButtons from '../core/components/FormButtons';
-import TeamLogo from '../core/components/TeamLogo';
+} from '@/views/core/components/TableRowActions';
+import NewEntityButton from '@/views/core/components/NewEntityButton';
+import FormButtons from '@/views/core/components/FormButtons';
+import TeamLogo from '@/views/core/components/TeamLogo';
 import {
   DeleteIcon,
   EditIcon,
   SearchIcon,
   VisibilityIcon,
-} from '../core/MUI/icons/icons';
+} from '@/views/core/MUI/icons/icons';
 
 interface VenuesPageProps {
   emptyMessage?: string;

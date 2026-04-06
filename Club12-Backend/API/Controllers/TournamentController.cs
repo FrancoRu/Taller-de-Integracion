@@ -85,7 +85,7 @@ public class TournamentController(
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TournamentResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> UpdateTournamentAsync(Guid id, CreateTournamentRequest tournamentRequest)
+    public async Task<ActionResult> UpdateTournamentAsync(Guid id, UpdateTournamentRequest tournamentRequest)
     {
         Tournament? existingTournament = await _tournamentService.GetTournamentByIdAsync(id);
 
@@ -98,7 +98,7 @@ public class TournamentController(
 
         await _tournamentService.UpdateTournamentAsync(existingTournament);
 
-        return Ok();
+        return NoContent();
     }
 
     /// <summary>

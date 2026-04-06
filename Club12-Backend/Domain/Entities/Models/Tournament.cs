@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain.Enums;
+using System;
 using System.Collections.Generic;
 
 namespace Domain.Entities.Models;
@@ -40,9 +41,9 @@ public class Tournament : EntityBase
     public required int MinTeams { get; set; }
 
     /// <summary>
-    /// Indicates whether the tournament has finished.
+    /// Current lifecycle status of the tournament.
     /// </summary>
-    public bool IsFinished { get; set; } = false;
+    public TournamentStatus Status { get; set; } = TournamentStatus.Scheduled;
 
     /// <summary>
     /// The divisions associated with the tournament.

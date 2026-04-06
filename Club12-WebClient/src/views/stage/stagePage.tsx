@@ -1,10 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Card, CardContent, Grid, Tab, Tabs, Typography } from '@mui/material';
+import {
+  Button,
+  Card,
+  CardContent,
+  Grid,
+  Stack,
+  Tab,
+  Tabs,
+  Typography,
+} from '@mui/material';
 import { GUID } from '@/modules/core/types/types';
 import { useStage } from '@/modules/stage/hook/stage.hook';
-import LoadingIndicator from '../core/components/LoadingIndicator';
-import MatchesPage from '../match/matchesPage';
+import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import MatchesPage from '@/views/match/matchesPage';
 
 const formatDate = (value?: string | null) => {
   if (!value) {
@@ -95,9 +104,22 @@ const StagePage: React.FC = () => {
   return (
     <Card>
       <CardContent>
-        <Typography variant="h6" mb={2}>
-          {stage.name}
-        </Typography>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          justifyContent="space-between"
+          alignItems={{ xs: 'flex-start', sm: 'center' }}
+          mb={2}
+          gap={1}
+        >
+          <Typography variant="h6">{stage.name}</Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate(`/panel/fases/editar/${targetStageId}`)}
+          >
+            Editar
+          </Button>
+        </Stack>
 
         <Tabs
           value={tab}

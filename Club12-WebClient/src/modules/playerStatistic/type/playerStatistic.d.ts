@@ -1,4 +1,8 @@
-import { IPlayerResponse } from '../../player/type/player';
+import {
+  Filtered,
+  GenericResponsePagination,
+  GUID,
+} from '@/modules/core/types/types';
 
 /**
  * Context properties and methods for managing player statistics in a sports system.
@@ -6,6 +10,9 @@ import { IPlayerResponse } from '../../player/type/player';
  * @interface IPlayerStatisticContextProps
  */
 export interface IPlayerStatisticContextProps {
+  playerStatistic: PlayerStatisticResponse | null;
+  playerStatistics: PlayerStatisticResponse[] | null;
+
   /**
    * Adds a new player statistic.
    * @param playerStatistic The details of the player statistic to add.
@@ -13,7 +20,7 @@ export interface IPlayerStatisticContextProps {
    */
   addPlayerStatistic(
     playerStatistic: AddPlayerStatisticRequest
-  ): Promise<IPlayerResponse | void>;
+  ): Promise<PlayerStatisticResponse | void>;
 
   /**
    * Updates an existing player statistic.
@@ -31,7 +38,16 @@ export interface IPlayerStatisticContextProps {
    * @param id The ID of the player statistic to fetch.
    * @returns A promise that resolves with the player statistic details.
    */
-  getPlayerStatisticById(id: GUID): Promise<IPlayerResponse | void>;
+  getPlayerStatisticById(id: GUID): Promise<PlayerStatisticResponse | void>;
+
+  /**
+   * Fetches player statistics based on filters and pagination.
+   * @param filter The filters to apply when fetching player statistics.
+   * @returns A promise that resolves with the paginated statistics list.
+   */
+  getPlayerStatisticsByFilter(
+    filter: PlayerStatisticFiltered
+  ): Promise<GenericResponsePagination<PlayerStatisticResponse> | void>;
 
   /**
    * Deletes a player statistic by its ID.
@@ -39,6 +55,13 @@ export interface IPlayerStatisticContextProps {
    * @returns A promise that resolves when the player statistic is successfully deleted.
    */
   deletePlayerStatisticById(id: GUID): Promise<void>;
+}
+
+export interface PlayerStatisticFiltered extends Filtered {
+  playerId?: GUID;
+  teamId?: GUID;
+  matchId?: GUID;
+  isByPlayer?: boolean | null;
 }
 
 /**
@@ -105,4 +128,23 @@ export interface PutPlayerStatisticRequest {
    * @type {number}
    */
   value?: number;
+}
+
+export type PlayerStatisticsViewMode = 'team' | 'player';
+
+export interface ITeamStatisticTableRow {
+  id: string;
+  teamName: string;
+  playersWithScore: number;
+  records: number;
+  totalScore: number;
+}
+
+export interface IPlayerStatisticTableRow {
+  id: GUID;
+  playerId: GUID;
+  playerName: string;
+  teamName: string;
+  records: number;
+  totalScore: number;
 }

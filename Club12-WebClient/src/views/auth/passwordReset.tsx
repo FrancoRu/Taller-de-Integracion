@@ -1,6 +1,6 @@
 import { AxiosError } from 'axios';
 import { useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -11,9 +11,9 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { authService } from '../../modules/auth/service/auth.service';
-import { useError } from '../../modules/error/hooks/error.hock';
-import InvalidToken from '../core/errors/invalidToken';
+import { authService } from '@/modules/auth/service/auth.service';
+import { useError } from '@/modules/error/hooks/error.hock';
+import InvalidToken from '@/views/core/errors/invalidToken';
 
 const getPasswordPolicyState = (password: string) => {
   const uniqueCharsCount = new Set(password).size;
@@ -30,11 +30,21 @@ const getPasswordPolicyState = (password: string) => {
 
 export default function PasswordReset() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
   const { setError, setMessage } = useError();
 
-  const email = searchParams.get('email')?.trim() ?? '';
-  const token = searchParams.get('token')?.trim() ?? '';
+  const normalizedSearchParams = useMemo(() => {
+    const normalizedSearch = location.search.replace(/&amp;/gi, '&');
+    return new URLSearchParams(normalizedSearch);
+  }, [location.search]);
+
+  const readQueryParam = (key: string) =>
+    normalizedSearchParams.get(key)?.trim() ??
+    normalizedSearchParams.get(`amp;${key}`)?.trim() ??
+    '';
+
+  const email = readQueryParam('email');
+  const token = readQueryParam('token');
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -63,11 +73,15 @@ export default function PasswordReset() {
     }
 
     if (!passwordPolicy.requireUppercase) {
-      messages.push('La contraseña debe contener al menos una letra mayúscula.');
+      messages.push(
+        'La contraseña debe contener al menos una letra mayúscula.'
+      );
     }
 
     if (!passwordPolicy.requireLowercase) {
-      messages.push('La contraseña debe contener al menos una letra minúscula.');
+      messages.push(
+        'La contraseña debe contener al menos una letra minúscula.'
+      );
     }
 
     if (!passwordPolicy.requireDigit) {
@@ -81,7 +95,9 @@ export default function PasswordReset() {
     }
 
     if (!passwordPolicy.requiredUniqueChars) {
-      messages.push('La contraseña debe contener al menos 2 caracteres únicos.');
+      messages.push(
+        'La contraseña debe contener al menos 2 caracteres únicos.'
+      );
     }
 
     if (!confirmPassword) {
@@ -106,7 +122,9 @@ export default function PasswordReset() {
       });
 
       if (response?.status === 200) {
-        setMessage(200, ['Contraseña actualizada correctamente. Iniciá sesión.']);
+        setMessage(200, [
+          'Contraseña actualizada correctamente. Iniciá sesión.',
+        ]);
         navigate('/login', { replace: true });
       }
     } catch (error: unknown) {
@@ -121,7 +139,12 @@ export default function PasswordReset() {
   }
 
   return (
-    <Box display="flex" justifyContent="center" alignItems="center" minHeight="90vh">
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      minHeight="90vh"
+    >
       <Card sx={{ maxWidth: 520, width: '100%' }}>
         <CardContent>
           <Typography variant="h5" mb={2}>
@@ -144,43 +167,67 @@ export default function PasswordReset() {
               <Divider />
               <Typography
                 variant="body2"
-                color={passwordPolicy.requiredLength ? 'success.main' : 'text.secondary'}
+                color={
+                  passwordPolicy.requiredLength
+                    ? 'success.main'
+                    : 'text.secondary'
+                }
               >
                 {passwordPolicy.requiredLength ? '✓' : '•'} Mínimo 8 caracteres
               </Typography>
               <Typography
                 variant="body2"
-                color={passwordPolicy.requireUppercase ? 'success.main' : 'text.secondary'}
+                color={
+                  passwordPolicy.requireUppercase
+                    ? 'success.main'
+                    : 'text.secondary'
+                }
               >
-                {passwordPolicy.requireUppercase ? '✓' : '•'} Al menos una mayúscula
+                {passwordPolicy.requireUppercase ? '✓' : '•'} Al menos una
+                mayúscula
               </Typography>
               <Typography
                 variant="body2"
-                color={passwordPolicy.requireLowercase ? 'success.main' : 'text.secondary'}
+                color={
+                  passwordPolicy.requireLowercase
+                    ? 'success.main'
+                    : 'text.secondary'
+                }
               >
-                {passwordPolicy.requireLowercase ? '✓' : '•'} Al menos una minúscula
+                {passwordPolicy.requireLowercase ? '✓' : '•'} Al menos una
+                minúscula
               </Typography>
               <Typography
                 variant="body2"
-                color={passwordPolicy.requireDigit ? 'success.main' : 'text.secondary'}
+                color={
+                  passwordPolicy.requireDigit
+                    ? 'success.main'
+                    : 'text.secondary'
+                }
               >
                 {passwordPolicy.requireDigit ? '✓' : '•'} Al menos un número
               </Typography>
               <Typography
                 variant="body2"
                 color={
-                  passwordPolicy.requireNonAlphanumeric ? 'success.main' : 'text.secondary'
+                  passwordPolicy.requireNonAlphanumeric
+                    ? 'success.main'
+                    : 'text.secondary'
                 }
               >
-                {passwordPolicy.requireNonAlphanumeric ? '✓' : '•'} Al menos un carácter
-                especial
+                {passwordPolicy.requireNonAlphanumeric ? '✓' : '•'} Al menos un
+                carácter especial
               </Typography>
               <Typography
                 variant="body2"
-                color={passwordPolicy.requiredUniqueChars ? 'success.main' : 'text.secondary'}
+                color={
+                  passwordPolicy.requiredUniqueChars
+                    ? 'success.main'
+                    : 'text.secondary'
+                }
               >
-                {passwordPolicy.requiredUniqueChars ? '✓' : '•'} Al menos 2 caracteres
-                únicos
+                {passwordPolicy.requiredUniqueChars ? '✓' : '•'} Al menos 2
+                caracteres únicos
               </Typography>
             </Stack>
 
@@ -200,7 +247,11 @@ export default function PasswordReset() {
               >
                 Cancelar
               </Button>
-              <Button variant="contained" onClick={handleSubmit} disabled={submitting}>
+              <Button
+                variant="contained"
+                onClick={handleSubmit}
+                disabled={submitting}
+              >
                 {submitting ? 'Guardando...' : 'Cambiar contraseña'}
               </Button>
             </Stack>

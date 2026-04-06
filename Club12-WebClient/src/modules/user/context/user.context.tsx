@@ -8,17 +8,17 @@ import {
 } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
-import { ProviderProps } from '../../core/types/types';
-import { useError } from '../../error/hooks/error.hock';
-import { userService } from '../service/user.service';
-import { IUserContextProps } from '../type/user';
+import { ProviderProps } from '@/modules/core/types/types';
+import { useError } from '@/modules/error/hooks/error.hock';
+import { userService } from '@/modules/user/service/user.service';
+import { IUserContextProps } from '@/modules/user/type/user';
 import {
   ChangePasswordRequest,
   RegisterUserRequest,
   UpdateUserRequest,
   UserFilterRequest,
   UserResponse,
-} from '../type/user';
+} from '@/modules/user/type/user';
 
 export const UserContext = createContext<IUserContextProps | undefined>(
   undefined

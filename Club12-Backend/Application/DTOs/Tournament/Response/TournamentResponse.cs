@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.Abstract.Response;
 using Application.DTOs.Divisions.Response;
+using Domain.Enums;
 using System;
 using System.Collections.Generic;
 namespace Application.DTOs.Tournament.Response;
@@ -46,7 +47,7 @@ public class TournamentResponse : BaseEntityResponse
     public required int MinTeams { get; set; }
 
     /// <summary>
-    /// Indicates whether the tournament has finished.
+    /// Current lifecycle status of the tournament.
     /// </summary>
-    public bool IsFinished { get; set; }
+    public TournamentStatus Status { get; set; }
 }

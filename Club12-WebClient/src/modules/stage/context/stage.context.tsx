@@ -13,12 +13,12 @@ import {
   IStageContextProps,
   IStageResponse,
   StageFiltered,
-} from '../type/stage.d';
+} from '@/modules/stage/type/stage.d';
 import { useError } from '@/modules/error/hooks/error.hock';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
 import { AxiosError, AxiosResponse } from 'axios';
-import { stageService } from '../service/stage.service';
+import { stageService } from '@/modules/stage/service/stage.service';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 
 export const StageContext = createContext<IStageContextProps | undefined>(

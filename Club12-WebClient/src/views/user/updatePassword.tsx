@@ -11,10 +11,10 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { useError } from '../../../modules/error/hooks/error.hock';
-import { useUser } from '../../../modules/user/hook/user.hook';
-import { COOKIE_SIGNIN_TOKEN } from '../../../modules/core/constants/constants';
-import { GUID } from '../../../modules/core/types/types';
+import { useError } from '@/modules/error/hooks/error.hock';
+import { useUser } from '@/modules/user/hook/user.hook';
+import { COOKIE_SIGNIN_TOKEN } from '@/modules/core/constants/constants';
+import { GUID } from '@/modules/core/types/types';
 
 interface PasswordForm {
   currentPassword: string;

@@ -12,4 +12,8 @@ public interface IEmailService
     Task SendMagicLinkAsync(
         string toEmail, string toUsername, string magicLink,
         CancellationToken ct = default);
+
+    Task SendWelcomeSetPasswordAsync(
+        string toEmail, string toUsername, string setPasswordLink,
+        CancellationToken ct = default);
 }

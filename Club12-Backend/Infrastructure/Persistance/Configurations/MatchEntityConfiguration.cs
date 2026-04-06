@@ -16,8 +16,8 @@ public class MatchEntityConfiguration : BaseEntityConfiguration<Match>
         builder.Property(m => m.StageId).IsRequired();
 
         // Computed service-layer collections — not persisted
-        builder.Ignore(m => m.HomeScorers);
-        builder.Ignore(m => m.VisitorScorers);
+        //builder.Ignore(m => m.HomeScorers);
+        //builder.Ignore(m => m.VisitorScorers);
 
         builder.HasOne(m => m.Stage)
             .WithMany(s => s.Matches)

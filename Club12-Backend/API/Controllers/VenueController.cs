@@ -39,10 +39,10 @@ public class VenueController(IVenueService _venueService, SupabaseHelper _supaba
     public async Task<ActionResult<VenueResponse>> CreateVenue(CreateVenueRequest venueRequest)
     {
         string logoUrl = await _supabaseHelper.UploadImageAsync<Venue>(venueRequest.ImageFile.OpenReadStream(), venueRequest.ImageFile.FileName);
-        Venue mappedVenue = _mapper.Map<Venue>(venueRequest);
-        mappedVenue.PhotoUrl = logoUrl;
-        Venue createdVenue = await _venueService.CreateVenueAsync(mappedVenue);
-        VenueResponse venueResponse = _mapper.Map<VenueResponse>(createdVenue);
+        Venue venue = _mapper.Map<Venue>(venueRequest);
+        venue.PhotoUrl = logoUrl;
+        await _venueService.CreateVenueAsync(venue);
+        VenueResponse venueResponse = _mapper.Map<VenueResponse>(venue);
         return CreatedAtAction(nameof(GetVenueById), new { venueResponse.Id }, venueResponse);
     }
 

@@ -1,5 +1,5 @@
 import { AxiosResponse } from 'axios';
-import { GenericResponsePagination, GUID } from '../types/types';
+import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
 
 interface ListItemWithId {
   id: GUID;

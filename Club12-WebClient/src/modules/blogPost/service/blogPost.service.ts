@@ -1,18 +1,19 @@
 import { AxiosResponse } from 'axios';
-import routes from '../../core/constants/routes';
-import { GenericResponsePagination, GUID } from '../../core/types/types';
+import routes from '@/modules/core/constants/routes';
+import { withTablePageSize } from '@/modules/core/constants/pagination';
+import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
 import {
   sendDelete,
   sendGet,
   sendPost,
   sendPut,
-} from '../../core/utils/axiosUtils';
+} from '@/modules/core/utils/axiosUtils';
 import {
   BlogPostResponse,
   CreateBlogPostRequest,
   GetBlogPostsFilteredRequest,
   UpdateBlogPostRequest,
-} from '../type/blogPost';
+} from '@/modules/blogPost/type/blogPost';
 
 /**
  * BlogPostService provides methods to interact with the blog posts API.
@@ -94,7 +95,7 @@ export const blogPostService = {
   ): Promise<AxiosResponse<GenericResponsePagination<BlogPostResponse>>> =>
     sendGet<GenericResponsePagination<BlogPostResponse>>(
       routes.blogposts,
-      filter
+      withTablePageSize(filter)
     ),
 
   /**

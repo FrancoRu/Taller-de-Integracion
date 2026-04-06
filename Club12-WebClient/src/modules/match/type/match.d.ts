@@ -183,6 +183,18 @@ export interface IMatchResponse {
  */
 export interface MatchFiltered extends Filtered {
   /**
+   * The id of the tournament the match belongs to.
+   * @type {GUID}
+   */
+  tournamentId?: GUID;
+
+  /**
+   * The id of the division the match belongs to.
+   * @type {GUID}
+   */
+  divisionId?: GUID;
+
+  /**
    * The name of the home team.
    * @type {string}
    */

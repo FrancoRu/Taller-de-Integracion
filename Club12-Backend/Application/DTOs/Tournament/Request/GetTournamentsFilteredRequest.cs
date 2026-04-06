@@ -1,5 +1,5 @@
 ﻿using Application.DTOs.Abstract.Request;
-
+using Domain.Enums;
 using System;
 namespace Application.DTOs.Tournament.Request;
 
@@ -17,4 +17,9 @@ public class GetTournamentsFilteredRequest : PaginatedFilterRequest
     /// The description of the tournament to filter by.
     /// </summary>
     public string? Description { get; set; }
+
+    /// <summary>
+    /// The tournament status to filter by.
+    /// </summary>
+    public TournamentStatus? Status { get; set; }
 }

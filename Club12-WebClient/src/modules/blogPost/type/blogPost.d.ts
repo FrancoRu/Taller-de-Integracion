@@ -1,4 +1,4 @@
-import { Filtered, GenericResponsePagination } from '../../core/types/types';
+import { Filtered, GenericResponsePagination } from '@/modules/core/types/types';
 
 /**
  * Context properties and methods for managing blog posts in a React application.
