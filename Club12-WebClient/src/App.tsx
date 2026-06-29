@@ -6,6 +6,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import Home from './views/home/home';
 import PublicTeamsPage from './views/home/teams/PublicTeamsPage';
 import PublicTeamPage from './views/home/teams/PublicTeamPage';
+import PublicScorersPage from './views/home/scorers/PublicScorersPage';
 import Login from './views/auth/login';
 import HowWeAre from './views/home/howWeAre/howWeAre';
 import NavMenu from './views/home/NavMenu/navMenu';
@@ -464,6 +465,7 @@ function App() {
         <Route path="/reglamento" element={<Regulation />} />
         <Route path="/equipos" element={<PublicTeamsPage />} />
         <Route path="/equipos/:teamId" element={<PublicTeamPage />} />
+        <Route path="/goleadores" element={<PublicScorersPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
