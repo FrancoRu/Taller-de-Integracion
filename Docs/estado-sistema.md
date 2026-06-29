@@ -31,8 +31,8 @@ Análisis de funcionalidades implementadas y pendientes, basado en los requisito
 | **Divisiones** | CRUD completo + filtros + **posiciones calculadas** (`PositionResponse`: PJ, PG, PP, GF, GC, DIF, Pts) |
 | **Fases (Stage)** | CRUD completo + generación automática de fases y partidos + asignar/desasignar equipos |
 | **Partidos** | CRUD completo + generación automática + cargar resultado + filtros |
-| **Sanciones** | CRUD completo + filtros + apelación/resolución (`SanctionAppealStatus`, requiere migración `AddSanctionAppeal`) |
-| **Estadísticas de jugador** | CRUD completo + listado filtrado por partido + tipo Puntos/Asistencias (`StatisticType`, requiere aplicar migración `AddPlayerStatisticType`) |
+| **Sanciones** | CRUD completo + filtros + apelación/resolución de sanciones |
+| **Estadísticas de jugador** | CRUD completo + listado filtrado por partido + tipo Puntos/Asistencias |
 | **Goleadores** | Ranking por jugador y por equipo |
 | **Usuarios** | CRUD completo (incluye DELETE) + activar/desactivar (lockout) + cambio de contraseña + reset de contraseña |
 | **Canchas (Venue)** | CRUD completo |
@@ -87,7 +87,6 @@ Análisis de funcionalidades implementadas y pendientes, basado en los requisito
 
 | Funcionalidad | Detalle | Prioridad |
 |---|---|---|
-| **Apelación de sanciones** | Depende del backend (no existe) | 🟡 Media |
 | **Búsqueda pública** | Equipos tiene búsqueda; faltan filtros de búsqueda en vista pública de torneos y jugadores | 🟢 Baja |
 | **Blog/Noticias (frontend)** | `addBlogPostForm.tsx` y `showPosts.tsx` existen pero no están en el router | 🟢 Baja |
 
@@ -95,7 +94,7 @@ Análisis de funcionalidades implementadas y pendientes, basado en los requisito
 
 ## Resumen ejecutivo
 
-- **Backend:** cubre todas las funciones del informe salvo copias de seguridad (infra). Nota: aplicar las migraciones `AddPlayerStatisticType` y `AddSanctionAppeal` a la base (`dotnet ef database update`).
+- **Backend:** cubre todas las funciones del informe salvo copias de seguridad (infra).
 - **Panel admin (frontend):** completo — posiciones, gestión completa de usuarios (eliminar + activar/desactivar), carga de goles/asistencias por partido y apelación/resolución de sanciones.
 - **Vista pública:** completa para los objetivos del informe — equipos, jugadores, torneos, partidos, goleadores, sanciones y clasificaciones/posiciones.
 
