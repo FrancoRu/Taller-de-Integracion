@@ -53,6 +53,7 @@ Análisis de funcionalidades implementadas y pendientes, basado en los requisito
 | Usuarios | `/panel/usuarios`, `/panel/usuarios/:id`, crear, editar | ✅ |
 | Cambiar contraseña | `/panel/configuracion/cambiar-password` | ✅ |
 | Editar perfil | `/panel/configuracion/editar-perfil` | ✅ |
+| Estadísticas | `/panel/estadisticas` | ✅ |
 
 ### ✅ Implementado — Vista pública (no autenticado)
 
@@ -72,7 +73,6 @@ Análisis de funcionalidades implementadas y pendientes, basado en los requisito
 
 | Funcionalidad | Detalle | Prioridad |
 |---|---|---|
-| **Estadísticas (panel)** | `/panel/estadisticas` es un `PlaceholderPage`, no implementado | 🟡 Media |
 | **Crear sanción** | Existe `playerSanctionCreatePage.tsx` pero no está en el router | 🟡 Media |
 | **Eliminar sanción** | Existe `playerSanctionDeletePage.tsx` pero no está en el router | 🟡 Media |
 | **Estadísticas por jugador** | `playerStatisticPage.tsx` y `playerStatisticsPage.tsx` existen pero no están en el router | 🟡 Media |
@@ -86,4 +86,4 @@ Análisis de funcionalidades implementadas y pendientes, basado en los requisito
 - **Panel admin (frontend):** completo para las funciones de administración.
 - **Vista pública:** completa para los objetivos principales. El visitante puede consultar equipos, jugadores, torneos, partidos, resultados, goleadores y sanciones sin autenticarse.
 
-**Pendientes menores:** estadísticas del panel, crear/eliminar sanción, estadísticas por jugador y blog en el router.
+**Pendientes menores:** crear/eliminar sanción, estadísticas por jugador y blog en el router.
