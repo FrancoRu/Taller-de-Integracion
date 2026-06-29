@@ -9,6 +9,8 @@ import PublicTeamPage from './views/home/teams/PublicTeamPage';
 import PublicScorersPage from './views/home/scorers/PublicScorersPage';
 import PublicSanctionsPage from './views/home/sanctions/PublicSanctionsPage';
 import PublicMatchesPage from './views/home/matches/PublicMatchesPage';
+import PublicTournamentsPage from './views/home/tournaments/PublicTournamentsPage';
+import PublicTournamentPage from './views/home/tournaments/PublicTournamentPage';
 import Login from './views/auth/login';
 import HowWeAre from './views/home/howWeAre/howWeAre';
 import NavMenu from './views/home/NavMenu/navMenu';
@@ -470,6 +472,8 @@ function App() {
         <Route path="/goleadores" element={<PublicScorersPage />} />
         <Route path="/sanciones" element={<PublicSanctionsPage />} />
         <Route path="/partidos" element={<PublicMatchesPage />} />
+        <Route path="/torneos" element={<PublicTournamentsPage />} />
+        <Route path="/torneos/:tournamentId" element={<PublicTournamentPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
