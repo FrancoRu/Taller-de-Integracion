@@ -1,0 +1,132 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Box,
+  Card,
+  CardActionArea,
+  CardContent,
+  Chip,
+  CircularProgress,
+  Container,
+  Grid,
+  Typography,
+} from '@mui/material';
+import { useTournament } from '@/modules/tournament/hook/tournament.hook';
+import { ITournamentResponse } from '@/modules/tournament/type/tournament';
+import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
+
+const STATUS_LABEL: Record<TournamentStatus, string> = {
+  Scheduled: 'Programado',
+  OpenForRegistration: 'Inscripción abierta',
+  Ongoing: 'En curso',
+  Finished: 'Finalizado',
+  Canceled: 'Cancelado',
+};
+
+const STATUS_COLOR: Record<TournamentStatus, 'default' | 'info' | 'warning' | 'success' | 'error'> = {
+  Scheduled: 'default',
+  OpenForRegistration: 'info',
+  Ongoing: 'warning',
+  Finished: 'success',
+  Canceled: 'error',
+};
+
+const formatDate = (value: Date | string) => {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString('es-AR');
+};
+
+function TournamentCard({ tournament }: { tournament: ITournamentResponse }) {
+  const navigate = useNavigate();
+  const status = tournament.status as TournamentStatus;
+
+  return (
+    <Card sx={{ height: '100%' }}>
+      <CardActionArea
+        onClick={() => navigate(`/torneos/${tournament.id}`)}
+        sx={{ height: '100%', alignItems: 'flex-start', display: 'flex', flexDirection: 'column' }}
+      >
+        <CardContent sx={{ width: '100%' }}>
+          <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+            <Typography variant="h6" lineHeight={1.3} sx={{ flex: 1, mr: 1 }}>
+              {tournament.name}
+            </Typography>
+            <Chip
+              label={STATUS_LABEL[status] ?? status}
+              color={STATUS_COLOR[status] ?? 'default'}
+              size="small"
+              variant={status === 'Scheduled' ? 'outlined' : 'filled'}
+            />
+          </Box>
+
+          {tournament.description && (
+            <Typography variant="body2" color="text.secondary" mb={1.5} sx={{
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+            }}>
+              {tournament.description}
+            </Typography>
+          )}
+
+          <Typography variant="caption" color="text.secondary" display="block">
+            Inicio: {formatDate(tournament.startDate)}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" display="block">
+            Equipos: {tournament.minTeams}–{tournament.maxTeams}
+          </Typography>
+        </CardContent>
+      </CardActionArea>
+    </Card>
+  );
+}
+
+export default function PublicTournamentsPage() {
+  const { tournaments, getAllTournamentsByFilter } = useTournament();
+  const [loading, setLoading] = useState(false);
+  const getAllTournamentsRef = useRef(getAllTournamentsByFilter);
+
+  useEffect(() => {
+    getAllTournamentsRef.current = getAllTournamentsByFilter;
+  }, [getAllTournamentsByFilter]);
+
+  const fetchTournaments = useCallback(async () => {
+    setLoading(true);
+    await getAllTournamentsRef.current({ pageSize: 100, pageNumber: 1 });
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    void fetchTournaments();
+  }, [fetchTournaments]);
+
+  const rows = useMemo(() => tournaments ?? [], [tournaments]);
+
+  return (
+    <Container maxWidth="lg" sx={{ py: 5 }}>
+      <Typography variant="h4" fontWeight="bold" mb={1}>
+        Torneos
+      </Typography>
+      <Typography variant="body1" color="text.secondary" mb={4}>
+        Todos los torneos de la liga Club 12.
+      </Typography>
+
+      {loading ? (
+        <Box display="flex" justifyContent="center" py={8}>
+          <CircularProgress />
+        </Box>
+      ) : rows.length === 0 ? (
+        <Typography color="text.secondary">No hay torneos disponibles.</Typography>
+      ) : (
+        <Grid container spacing={3}>
+          {rows.map(tournament => (
+            <Grid item xs={12} sm={6} md={4} key={tournament.id}>
+              <TournamentCard tournament={tournament} />
+            </Grid>
+          ))}
+        </Grid>
+      )}
+    </Container>
+  );
+}
