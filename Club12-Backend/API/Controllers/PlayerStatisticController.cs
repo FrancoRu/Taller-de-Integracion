@@ -42,6 +42,27 @@ public class PlayerStatisticController(IPlayerStatisticService _playerStatisticS
     }
 
     /// <summary>
+    /// Retrieves a paginated, filtered list of player statistics.
+    /// </summary>
+    /// <param name="filterRequest">The filtering and pagination parameters.</param>
+    /// <returns>A paginated response containing the filtered player statistics.</returns>
+    [AllowAnonymous]
+    [HttpGet()]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<PlayerStatisticResponse>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PaginatedResponse<PlayerStatisticResponse>>> GetFilteredPlayerStatistics(
+        [FromQuery] GetPlayerStatisticsFilteredRequest filterRequest)
+    {
+        PaginatedResponse<PlayerStatistic> paginatedStatistics =
+            await _playerStatisticService.GetPlayerStatisticsAsync(filterRequest);
+
+        PaginatedResponse<PlayerStatisticResponse> response =
+            _mapper.Map<PaginatedResponse<PlayerStatisticResponse>>(paginatedStatistics);
+
+        return Ok(response);
+    }
+
+    /// <summary>
     /// Retrieves a player statistic by its id.
     /// </summary>
     /// <param name="id">The id of the player statistic.</param>

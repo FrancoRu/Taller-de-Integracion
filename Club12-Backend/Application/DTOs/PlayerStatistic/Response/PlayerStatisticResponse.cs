@@ -1,5 +1,5 @@
 ﻿using Application.DTOs.Abstract.Response;
-
+using Domain.Enums;
 using System;
 namespace Application.DTOs.PlayerStatistic.Response;
 
@@ -17,6 +17,11 @@ public class PlayerStatisticResponse : BaseEntityResponse
     /// The value of the statistic for the player.
     /// </summary>
     public int Value { get; set; }
+
+    /// <summary>
+    /// The type of statistic (Points or Assists).
+    /// </summary>
+    public StatisticType Type { get; set; }
 
     /// <summary>
     /// The ID of the associated match.

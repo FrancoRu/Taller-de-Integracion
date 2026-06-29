@@ -1,7 +1,12 @@
-﻿using Application.Interfaces.Repositories;
+﻿using Application.DTOs.Abstract.Response;
+using Application.DTOs.PlayerStatistic.Request;
+using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Utils.Extensions;
 using Domain.Entities.Models;
 using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace Application.Services;
@@ -21,5 +26,25 @@ public class PlayerStatisticService(IPlayerStatisticRepository playerStatisticRe
         => await playerStatisticRepository.RemoveAsync(playerStatistic => playerStatistic.Id == id);
 
     public async Task UpdatePlayerStatisticAsync(PlayerStatistic playerStatisticEntity)
-        => await playerStatisticRepository.UpdateAsync(playerStatisticEntity); 
+        => await playerStatisticRepository.UpdateAsync(playerStatisticEntity);
+
+    public async Task<PaginatedResponse<PlayerStatistic>> GetPlayerStatisticsAsync(GetPlayerStatisticsFilteredRequest filter)
+    {
+        Expression<Func<PlayerStatistic, bool>> expression =
+            QueryableExtensions.ConstructFilterExpression<PlayerStatistic, GetPlayerStatisticsFilteredRequest>(filter);
+
+        IEnumerable<PlayerStatistic> filteredStatistics = await playerStatisticRepository.FindAsync(
+            expression,
+            filter: filter);
+
+        int totalCount = await playerStatisticRepository.CountAsync(expression);
+
+        return new PaginatedResponse<PlayerStatistic>
+        {
+            Page = filter.PageNumber,
+            PageSize = filter.PageSize,
+            TotalCount = totalCount,
+            Items = filteredStatistics
+        };
+    }
 }

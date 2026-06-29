@@ -5,7 +5,6 @@ import {
   Button,
   Card,
   CardContent,
-  Divider,
   Grid,
   IconButton,
   Stack,
@@ -18,11 +17,10 @@ import { GUID } from '@/modules/core/types/types';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import { IPlayerSanctionResponse } from '@/modules/playerSanction/type/playerSanction.d';
-import { usePlayerStatistic } from '@/modules/playerStatistic/hook/playerStatistic.hook';
-import { IPublicPlayerResponse } from '@/modules/player/type/player.d';
 import { formatMatchDateToString } from '@/modules/core/utils/formatDate';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import TeamLogo from '@/views/core/components/TeamLogo';
+import MatchStatisticsTab from '@/views/match/MatchStatisticsTab';
 import { VisibilityIcon } from '@/views/core/MUI/icons/icons';
 
 const formatDateTime = (value?: string | null) => {
@@ -48,11 +46,8 @@ const MatchPage: React.FC = () => {
   const navigate = useNavigate();
   const { match, getMatchById } = useMatch();
   const { playerSanctions, getPlayerSanctionByFilter } = usePlayerSanction();
-  const { playerStatistics, getPlayerStatisticsByFilter } =
-    usePlayerStatistic();
   const [loading, setLoading] = useState(false);
   const [sanctionsLoading, setSanctionsLoading] = useState(false);
-  const [statisticsLoading, setStatisticsLoading] = useState(false);
   const [tab, setTab] = useState<MatchTab>('detalle');
 
   const targetMatchId = useMemo(
@@ -87,20 +82,6 @@ const MatchPage: React.FC = () => {
 
     void fetchSanctions();
   }, [getPlayerSanctionByFilter, tab, targetMatchId]);
-
-  useEffect(() => {
-    if (tab !== 'puntuaciones' || !targetMatchId) {
-      return;
-    }
-
-    const fetchStatistics = async () => {
-      setStatisticsLoading(true);
-      await getPlayerStatisticsByFilter({ matchId: targetMatchId });
-      setStatisticsLoading(false);
-    };
-
-    void fetchStatistics();
-  }, [getPlayerStatisticsByFilter, tab, targetMatchId]);
 
   if (!targetMatchId) {
     return (
@@ -149,14 +130,6 @@ const MatchPage: React.FC = () => {
   const homeTeam = match.homeTeam;
   const visitorTeam = match.visitorTeam;
   const sanctions = playerSanctions ?? [];
-  const statistics = playerStatistics ?? [];
-  const pointsByPlayerId = statistics.reduce<Record<string, number>>(
-    (acc, stat) => {
-      acc[stat.playerid] = (acc[stat.playerid] ?? 0) + stat.value;
-      return acc;
-    },
-    {}
-  );
   const winningTeamName =
     match.winningTeamId === homeTeam?.id
       ? homeTeam.name
@@ -191,52 +164,6 @@ const MatchPage: React.FC = () => {
       </Stack>
     </Stack>
   );
-
-  const renderTeamScores = (team: typeof homeTeam, fallbackLabel: string) => {
-    const players = team?.players ?? [];
-
-    return (
-      <Card variant="outlined">
-        <CardContent>
-          <Typography variant="subtitle2" color="text.secondary">
-            {team?.name || fallbackLabel}
-          </Typography>
-          <Typography variant="h4" mt={1} mb={2}>
-            {team?.score ?? '—'}
-          </Typography>
-          {players.length > 0 ? (
-            <Stack spacing={1} divider={<Divider flexItem />}>
-              {players.map((player: IPublicPlayerResponse) => (
-                <Stack
-                  key={player.id}
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                >
-                  <Typography
-                    variant="body2"
-                    sx={{ cursor: 'pointer' }}
-                    onClick={() =>
-                      navigate(`/panel/jugadores/${player.id}`)
-                    }
-                  >
-                    {player.fullName}
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600}>
-                    {pointsByPlayerId[player.id] ?? 0}
-                  </Typography>
-                </Stack>
-              ))}
-            </Stack>
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              Sin jugadores registrados.
-            </Typography>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
 
   return (
     <Card>
@@ -336,24 +263,7 @@ const MatchPage: React.FC = () => {
           </>
         )}
 
-        {tab === 'puntuaciones' &&
-          (statisticsLoading ? (
-            <LoadingIndicator />
-          ) : (
-            <Stack spacing={2}>
-              <Typography variant="body1">
-                Puntos por jugador en el partido.
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  {renderTeamScores(homeTeam, 'Equipo local')}
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  {renderTeamScores(visitorTeam, 'Equipo visitante')}
-                </Grid>
-              </Grid>
-            </Stack>
-          ))}
+        {tab === 'puntuaciones' && <MatchStatisticsTab match={match} />}
 
         {tab === 'sanciones' && (
           <>

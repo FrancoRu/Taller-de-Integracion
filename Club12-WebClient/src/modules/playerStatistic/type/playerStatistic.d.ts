@@ -57,10 +57,13 @@ export interface IPlayerStatisticContextProps {
   deletePlayerStatisticById(id: GUID): Promise<void>;
 }
 
+export type StatisticType = 'Points' | 'Assists';
+
 export interface PlayerStatisticFiltered extends Filtered {
   playerId?: GUID;
   teamId?: GUID;
   matchId?: GUID;
+  type?: StatisticType;
   isByPlayer?: boolean | null;
 }
 
@@ -79,13 +82,19 @@ export interface AddPlayerStatisticRequest {
    * The ID of the match in which the statistic was recorded.
    * @type {string}
    */
-  matchid: GUID;
+  matchId: GUID;
 
   /**
    * The ID of the player for whom the statistic is recorded.
    * @type {string}
    */
-  playerid: GUID;
+  playerId: GUID;
+
+  /**
+   * The type of statistic (Points or Assists).
+   * @type {StatisticType}
+   */
+  type: StatisticType;
 }
 
 /**
@@ -103,7 +112,7 @@ export interface PlayerStatisticResponse {
    * The ID of the player for whom the statistic is recorded.
    * @type {string}
    */
-  playerid: GUID;
+  playerId: GUID;
 
   /**
    * The value of the player statistic.
@@ -115,7 +124,13 @@ export interface PlayerStatisticResponse {
    * The ID of the match in which the statistic was recorded.
    * @type {string}
    */
-  matchid: GUID;
+  matchId: GUID;
+
+  /**
+   * The type of statistic (Points or Assists).
+   * @type {StatisticType}
+   */
+  type: StatisticType;
 }
 
 /**

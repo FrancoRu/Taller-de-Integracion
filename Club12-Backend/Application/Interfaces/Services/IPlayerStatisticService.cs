@@ -1,4 +1,6 @@
-﻿using Domain.Entities.Models;
+﻿using Application.DTOs.Abstract.Response;
+using Application.DTOs.PlayerStatistic.Request;
+using Domain.Entities.Models;
 using System;
 using System.Threading.Tasks;
 
@@ -26,4 +28,9 @@ public interface IPlayerStatisticService
     Task DeletePlayerStatisticAsync(Guid id);
 
     Task UpdatePlayerStatisticAsync(PlayerStatistic playerStatisticEntity);
+
+    /// <summary>
+    /// Retrieves a paginated, filtered list of player statistics.
+    /// </summary>
+    Task<PaginatedResponse<PlayerStatistic>> GetPlayerStatisticsAsync(GetPlayerStatisticsFilteredRequest filter);
 }

@@ -13,6 +13,8 @@ public class PlayerStatisticEntityConfiguration : BaseEntityConfiguration<Player
 
         builder.Property(ps => ps.Value).IsRequired();
 
+        builder.Property(ps => ps.Type).IsRequired().HasConversion<string>();
+
         builder.HasOne(ps => ps.Match)
             .WithMany(m => m.PlayerStatistics)
             .HasForeignKey(ps => ps.MatchId)
