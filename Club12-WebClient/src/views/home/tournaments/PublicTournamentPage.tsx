@@ -15,9 +15,13 @@ import { GUID } from '@/modules/core/types/types';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useTeam } from '@/modules/team/hook/team.hook';
 import { useMatch } from '@/modules/match/hook/match.hook';
+import { useDivision } from '@/modules/division/hook/division.hook';
+import { divisionService } from '@/modules/division/service/division.service';
+import { IDivisionResponse } from '@/modules/division/type/division';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import MatchCard from '@/views/home/matches/MatchCard';
+import DivisionStandings from '@/views/division/divisionStandings';
 
 const STATUS_LABEL: Record<TournamentStatus, string> = {
   Scheduled: 'Programado',
@@ -32,7 +36,7 @@ const formatDate = (value: Date | string) => {
   return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString('es-AR');
 };
 
-type Tab = 'info' | 'equipos' | 'partidos';
+type Tab = 'info' | 'posiciones' | 'equipos' | 'partidos';
 
 export default function PublicTournamentPage() {
   const { tournamentId } = useParams<{ tournamentId: GUID }>();
@@ -40,16 +44,21 @@ export default function PublicTournamentPage() {
   const { tournament, getTournamentById } = useTournament();
   const { teams, getTeamsByFiltered } = useTeam();
   const { matches, getMatchByFilter } = useMatch();
+  const { getDivisionsByFilters } = useDivision();
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<Tab>('info');
+  const [standings, setStandings] = useState<IDivisionResponse[]>([]);
+  const [standingsLoading, setStandingsLoading] = useState(false);
 
   const getTournamentRef = useRef(getTournamentById);
   const getTeamsRef = useRef(getTeamsByFiltered);
   const getMatchesRef = useRef(getMatchByFilter);
+  const getDivisionsRef = useRef(getDivisionsByFilters);
 
   useEffect(() => { getTournamentRef.current = getTournamentById; }, [getTournamentById]);
   useEffect(() => { getTeamsRef.current = getTeamsByFiltered; }, [getTeamsByFiltered]);
   useEffect(() => { getMatchesRef.current = getMatchByFilter; }, [getMatchByFilter]);
+  useEffect(() => { getDivisionsRef.current = getDivisionsByFilters; }, [getDivisionsByFilters]);
 
   useEffect(() => {
     if (!tournamentId) return;
@@ -60,6 +69,28 @@ export default function PublicTournamentPage() {
     };
     void fetch();
   }, [tournamentId]);
+
+  useEffect(() => {
+    if (!tournamentId || tab !== 'posiciones') return;
+    const fetchStandings = async () => {
+      setStandingsLoading(true);
+      const response = await getDivisionsRef.current({
+        tournamentId,
+        pageSize: 100,
+        pageNumber: 1,
+      });
+      const divisionsList = response?.items ?? [];
+      const detailed = await Promise.all(
+        divisionsList.map(async division => {
+          const detail = await divisionService.getDivisionsById(division.id);
+          return detail?.data ?? division;
+        })
+      );
+      setStandings(detailed);
+      setStandingsLoading(false);
+    };
+    void fetchStandings();
+  }, [tab, tournamentId]);
 
   useEffect(() => {
     if (!tournamentId || tab !== 'equipos') return;
@@ -114,6 +145,7 @@ export default function PublicTournamentPage() {
         sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}
       >
         <Tab label="Información" value="info" />
+        <Tab label="Posiciones" value="posiciones" />
         <Tab label="Equipos" value="equipos" />
         <Tab label="Partidos" value="partidos" />
       </Tabs>
@@ -142,6 +174,28 @@ export default function PublicTournamentPage() {
           </Grid>
         </Grid>
       )}
+
+      {tab === 'posiciones' &&
+        (standingsLoading ? (
+          <Box display="flex" justifyContent="center" py={5}>
+            <CircularProgress />
+          </Box>
+        ) : standings.length === 0 ? (
+          <Typography color="text.secondary">
+            No hay posiciones disponibles para este torneo.
+          </Typography>
+        ) : (
+          <Box display="flex" flexDirection="column" gap={4}>
+            {standings.map(division => (
+              <Box key={division.id}>
+                <Typography variant="h6" mb={1}>
+                  {division.name}
+                </Typography>
+                <DivisionStandings positions={division.positions} />
+              </Box>
+            ))}
+          </Box>
+        ))}
 
       {tab === 'equipos' && (
         teamRows.length === 0 ? (
