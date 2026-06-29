@@ -13,4 +13,5 @@ export enum RoutesNavigationViews {
   Team = 'equipo',
   Teams = 'equipos',
   Scorers = 'goleadores',
+  Sanctions = 'sanciones',
 }
