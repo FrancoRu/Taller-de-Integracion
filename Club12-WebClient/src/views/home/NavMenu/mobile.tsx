@@ -105,6 +105,17 @@ const MobileNavItems: React.FC<MobileNavItemsProps> = ({ onCloseDrawer }) => {
 
       <ListItemButton
         component={Link}
+        to={`/${RoutesNavigationViews.Matches}`}
+        selected={isSelected(`/${RoutesNavigationViews.Matches}`)}
+        onClick={() =>
+          handleNavigationAndCloseDrawer(`/${RoutesNavigationViews.Matches}`)
+        }
+      >
+        <ListItemText primary="Partidos" />
+      </ListItemButton>
+
+      <ListItemButton
+        component={Link}
         to={`/${RoutesNavigationViews.Sanctions}`}
         selected={isSelected(`/${RoutesNavigationViews.Sanctions}`)}
         onClick={() =>
