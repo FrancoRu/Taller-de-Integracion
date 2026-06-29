@@ -10,9 +10,9 @@ Análisis de funcionalidades implementadas y pendientes, basado en los requisito
 |---|---|---|
 | **Gestión de Jugadores** | ✅ Completo | Alta, modificación y búsqueda (nombre / DNI) en panel admin |
 | **Gestión de Equipos** | ✅ Completo | Creación y composición (altas/bajas) ✅. Estadísticas de equipo (PG/PP) vía tabla de posiciones en panel admin ✅ |
-| **Registro de Sanciones** | ⚠️ Parcial | Registrar, seguimiento, modificar ✅. **Apelación de sanciones — falta** |
-| **Registro de Estadísticas** | ⚠️ Parcial | Goleadores ✅, puntos por jugador ✅, tabla de posiciones (admin + visitantes) ✅. Asistencias — no diferenciadas |
-| **Gestión de Usuarios** | ⚠️ Parcial | Registrar, modificar, reset password ✅. **Eliminar (no wired) / activar-desactivar (no existe) — falta** |
+| **Registro de Sanciones** | ✅ Completo | Registrar, seguimiento, modificar ✅. Apelación + registro de decisiones (aceptar/rechazar) ✅ |
+| **Registro de Estadísticas** | ✅ Completo | Goleadores ✅, carga de goles y asistencias por jugador en el partido ✅, tabla de posiciones (admin + visitantes) ✅ |
+| **Gestión de Usuarios** | ✅ Completo | Registrar, modificar, reset password, eliminar y activar/desactivar (lockout de Identity) ✅ |
 | **Visualización visitantes** | ✅ Completo | Equipos, jugadores, torneos, partidos, goleadores, sanciones, clasificaciones/posiciones ✅ |
 | **Copias de seguridad** | ❌ | Infraestructura, no necesaria para demo |
 
@@ -31,10 +31,10 @@ Análisis de funcionalidades implementadas y pendientes, basado en los requisito
 | **Divisiones** | CRUD completo + filtros + **posiciones calculadas** (`PositionResponse`: PJ, PG, PP, GF, GC, DIF, Pts) |
 | **Fases (Stage)** | CRUD completo + generación automática de fases y partidos + asignar/desasignar equipos |
 | **Partidos** | CRUD completo + generación automática + cargar resultado + filtros |
-| **Sanciones** | CRUD completo + filtros |
-| **Estadísticas de jugador** | CRUD completo |
+| **Sanciones** | CRUD completo + filtros + apelación/resolución (`SanctionAppealStatus`, requiere migración `AddSanctionAppeal`) |
+| **Estadísticas de jugador** | CRUD completo + listado filtrado por partido + tipo Puntos/Asistencias (`StatisticType`, requiere aplicar migración `AddPlayerStatisticType`) |
 | **Goleadores** | Ranking por jugador y por equipo |
-| **Usuarios** | CRUD completo (incluye DELETE) + cambio de contraseña + reset de contraseña |
+| **Usuarios** | CRUD completo (incluye DELETE) + activar/desactivar (lockout) + cambio de contraseña + reset de contraseña |
 | **Canchas (Venue)** | CRUD completo |
 | **Blog/Noticias** | CRUD completo (extra, no requerido por informe) |
 
@@ -42,9 +42,6 @@ Análisis de funcionalidades implementadas y pendientes, basado en los requisito
 
 | Funcionalidad | Detalle | Prioridad |
 |---|---|---|
-| **Activar / desactivar usuario** | El informe pide inhabilitar/habilitar cuentas. No existe endpoint (solo DELETE permanente) | 🟡 Media |
-| **Apelación de sanciones** | El informe lo pide explícito. No existe entidad ni endpoint | 🟡 Media |
-| **Asistencias** | Las estadísticas no diferencian goles de asistencias (valor genérico) | 🟢 Baja |
 | **Copias de seguridad** | Infraestructura, no necesaria para la demo | 🟢 Baja |
 
 ---
@@ -63,11 +60,11 @@ Análisis de funcionalidades implementadas y pendientes, basado en los requisito
 | Torneos | `/panel/torneos`, `/panel/torneos/:id`, `/panel/torneos/:id/editar` | ✅ |
 | Divisiones | `/panel/divisiones`, `/panel/divisiones/:id` (detalle, posiciones, fases) | ✅ |
 | Fases | `/panel/fases`, `/panel/fases/:id`, `/panel/fases/crear`, `/panel/fases/editar/:id` | ✅ |
-| Partidos | `/panel/partidos`, `/panel/partidos/:id` (detalle, puntuaciones por jugador, sanciones) | ✅ |
-| Sanciones | `/panel/sanciones`, `/panel/sanciones/:id`, `/panel/sanciones/editar/:id` | ✅ |
+| Partidos | `/panel/partidos`, `/panel/partidos/:id` (detalle, carga de goles/asistencias por jugador, sanciones) | ✅ |
+| Sanciones | `/panel/sanciones`, `/panel/sanciones/:id` (detalle, apelación, jugador, partido), `/panel/sanciones/editar/:id` | ✅ |
 | Goleadores | `/panel/puntuaciones` | ✅ |
 | Canchas | `/panel/canchas`, `/panel/canchas/:id` | ✅ |
-| Usuarios | `/panel/usuarios`, `/panel/usuarios/:id`, crear, editar | ⚠️ Sin eliminar / activar-desactivar |
+| Usuarios | `/panel/usuarios`, `/panel/usuarios/:id`, crear, editar, eliminar, activar/desactivar | ✅ |
 | Cambiar contraseña | `/panel/configuracion/cambiar-password` | ✅ |
 | Editar perfil | `/panel/configuracion/editar-perfil` | ✅ |
 | Estadísticas | `/panel/estadisticas` | ✅ |
@@ -90,8 +87,6 @@ Análisis de funcionalidades implementadas y pendientes, basado en los requisito
 
 | Funcionalidad | Detalle | Prioridad |
 |---|---|---|
-| **Eliminar usuario** | El backend expone DELETE pero el contexto de usuario del frontend no lo expone ni hay acción en la UI | 🟡 Media |
-| **Activar / desactivar usuario** | Depende del endpoint de backend (no existe) | 🟡 Media |
 | **Apelación de sanciones** | Depende del backend (no existe) | 🟡 Media |
 | **Búsqueda pública** | Equipos tiene búsqueda; faltan filtros de búsqueda en vista pública de torneos y jugadores | 🟢 Baja |
 | **Blog/Noticias (frontend)** | `addBlogPostForm.tsx` y `showPosts.tsx` existen pero no están en el router | 🟢 Baja |
@@ -100,10 +95,12 @@ Análisis de funcionalidades implementadas y pendientes, basado en los requisito
 
 ## Resumen ejecutivo
 
-- **Backend:** cubre casi todo el informe. Pendientes reales: activar/desactivar usuario y apelación de sanciones (ambos requeridos por el informe), asistencias diferenciadas y copias de seguridad.
-- **Panel admin (frontend):** funcional, incluye tabla de posiciones. Hueco restante: gestión completa de usuarios (eliminar / activar-desactivar).
+- **Backend:** cubre todas las funciones del informe salvo copias de seguridad (infra). Nota: aplicar las migraciones `AddPlayerStatisticType` y `AddSanctionAppeal` a la base (`dotnet ef database update`).
+- **Panel admin (frontend):** completo — posiciones, gestión completa de usuarios (eliminar + activar/desactivar), carga de goles/asistencias por partido y apelación/resolución de sanciones.
 - **Vista pública:** completa para los objetivos del informe — equipos, jugadores, torneos, partidos, goleadores, sanciones y clasificaciones/posiciones.
 
-**Foco recomendado para la presentación:**
-1. 🟡 Gestión de usuarios: eliminar + activar/desactivar.
-2. 🟡 Apelación de sanciones.
+**Estado:** las 7 funciones del informe están implementadas, salvo copias de seguridad (🟢 infra, no necesaria para la demo).
+
+**Mejoras opcionales:** 🟢 búsqueda pública (torneos/jugadores) y blog en el router.
+
+> Nota técnica: goleadores usa la entidad `Scorer` (separada de `PlayerStatistic`). Los goles cargados desde el partido alimentan `PlayerStatistic`, no el ranking de goleadores actual. Unificar ambos sistemas queda como mejora futura.
