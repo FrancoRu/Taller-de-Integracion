@@ -214,6 +214,32 @@ public sealed class IdentityUserManagementService(
     }
 
     // ─────────────────────────────────────────────────────────────
+    // Activate / Deactivate  (Identity lockout)
+    // ─────────────────────────────────────────────────────────────
+
+    public async Task<UserResponse> SetActiveAsync(
+        string callerRole, Guid callerId, Guid userId, bool isActive, CancellationToken ct)
+    {
+        ApplicationUser user = await FindOrThrowAsync(userId);
+        EnforceDeleteAccess(user, callerRole, callerId);
+
+        if (user.Id == callerId)
+            throw new InvalidOperationException("You cannot change the active state of your own account.");
+
+        if (isActive)
+        {
+            ThrowIfFailed(await userManager.SetLockoutEndDateAsync(user, null));
+        }
+        else
+        {
+            ThrowIfFailed(await userManager.SetLockoutEnabledAsync(user, true));
+            ThrowIfFailed(await userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue));
+        }
+
+        return await MapOneAsync(user);
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // Access-control helpers
     // ─────────────────────────────────────────────────────────────
 
@@ -256,8 +282,9 @@ public sealed class IdentityUserManagementService(
     {
         IList<string> roles = await userManager.GetRolesAsync(user);
         string role = roles.FirstOrDefault() ?? string.Empty;
+        bool isActive = !(user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow);
         return new UserResponse(user.Id, user.Email!, user.UserName!, role,
-                                user.PhoneNumber, user.CreatedByOwnerId);
+                                user.PhoneNumber, user.CreatedByOwnerId, isActive);
     }
 
     private async Task<IReadOnlyList<UserResponse>> MapManyAsync(IEnumerable<ApplicationUser> users)

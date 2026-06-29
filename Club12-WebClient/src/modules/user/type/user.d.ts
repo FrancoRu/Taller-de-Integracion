@@ -11,6 +11,7 @@ export interface UserResponse {
   email: string;
   phoneNumber?: string;
   role: UserRolesType;
+  isActive: boolean;
 }
 
 export interface RegisterUserRequest {
@@ -49,6 +50,7 @@ export interface IUserContextProps {
     data: ChangePasswordRequest
   ) => Promise<boolean>;
   deleteUser: (id: GUID) => Promise<boolean>;
+  setUserActive: (id: GUID, isActive: boolean) => Promise<UserResponse | void>;
 }
 
 export interface UserFilterRequest extends Filtered {

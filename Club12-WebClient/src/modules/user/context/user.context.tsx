@@ -175,6 +175,25 @@ export const UserProvider: React.FC<ProviderProps> = ({ children }) => {
     [handleUnknownError, queryClient]
   );
 
+  const setUserActive = useCallback(
+    async (
+      id: UserResponse['userId'],
+      isActive: boolean
+    ): Promise<UserResponse | void> => {
+      try {
+        const res: AxiosResponse<UserResponse> =
+          await userService.setUserActive(id, isActive);
+        if (res?.data) {
+          setUser(res.data);
+          return res.data;
+        }
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [handleUnknownError]
+  );
+
   const contextValue = useMemo(
     () => ({
       user,
@@ -186,6 +205,7 @@ export const UserProvider: React.FC<ProviderProps> = ({ children }) => {
       resetUserPassword,
       changeUserPassword,
       deleteUser,
+      setUserActive,
     }),
     [
       user,
@@ -197,6 +217,7 @@ export const UserProvider: React.FC<ProviderProps> = ({ children }) => {
       resetUserPassword,
       changeUserPassword,
       deleteUser,
+      setUserActive,
     ]
   );
 

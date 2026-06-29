@@ -2,7 +2,12 @@ import { AxiosResponse } from 'axios';
 import routes from '@/modules/core/constants/routes';
 import { withTablePageSize } from '@/modules/core/constants/pagination';
 import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
-import { sendGet, sendPost, sendPut } from '@/modules/core/utils/axiosUtils';
+import {
+  sendDelete,
+  sendGet,
+  sendPost,
+  sendPut,
+} from '@/modules/core/utils/axiosUtils';
 import {
   ChangePasswordRequest,
   RegisterUserRequest,
@@ -39,4 +44,13 @@ export const userService = {
     data: ChangePasswordRequest
   ): Promise<AxiosResponse<void>> =>
     await sendPut<void>(`${routes.users}/${id}/password`, data),
+
+  deleteUser: async (id: GUID): Promise<AxiosResponse<void>> =>
+    await sendDelete<void>(`${routes.users}/${id}`),
+
+  setUserActive: async (
+    id: GUID,
+    isActive: boolean
+  ): Promise<AxiosResponse<UserResponse>> =>
+    await sendPut<UserResponse>(`${routes.users}/${id}/active`, { isActive }),
 };

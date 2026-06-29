@@ -22,6 +22,7 @@ import SportsBasketballSharpIcon from '@mui/icons-material/SportsBasketballSharp
 import AccountTreeSharpIcon from '@mui/icons-material/AccountTreeSharp';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
 import BadgeIcon from '@mui/icons-material/Badge';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -57,6 +58,7 @@ export {
   AccountTreeSharpIcon,
   LogoutIcon,
   LockIcon,
+  LockOpenIcon,
   BadgeIcon,
   ExpandLessIcon,
   ExpandMoreIcon,

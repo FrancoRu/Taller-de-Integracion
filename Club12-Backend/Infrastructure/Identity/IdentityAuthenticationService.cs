@@ -108,6 +108,9 @@ public sealed class IdentityAuthenticationService(
         if (!await userManager.CheckPasswordAsync(user, request.Password))
             throw new UnauthorizedAccessException("Invalid credentials.");
 
+        if (await userManager.IsLockedOutAsync(user))
+            throw new UnauthorizedAccessException("This account is deactivated.");
+
         IList<string> roles = await userManager.GetRolesAsync(user);
 
         if (roles.Contains(UserRoleType.TEAM_MANAGER.ToRoleName()))
@@ -157,6 +160,9 @@ public sealed class IdentityAuthenticationService(
 
         if (!valid)
             throw new UnauthorizedAccessException("Magic-link is invalid or has already been used.");
+
+        if (await userManager.IsLockedOutAsync(user))
+            throw new UnauthorizedAccessException("This account is deactivated.");
 
         IList<string> roles = await userManager.GetRolesAsync(user);
         return await BuildTokenResponseAsync(user, roles, ct);

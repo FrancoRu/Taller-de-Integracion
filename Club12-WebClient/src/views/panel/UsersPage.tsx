@@ -10,6 +10,7 @@ import {
   Box,
   Card,
   CardContent,
+  Chip,
   InputAdornment,
   MenuItem,
   Stack,
@@ -26,6 +27,8 @@ import NewEntityButton from '@/views/core/components/NewEntityButton';
 import {
   DeleteIcon,
   EditIcon,
+  LockIcon,
+  LockOpenIcon,
   SearchIcon,
   VisibilityIcon,
 } from '@/views/core/MUI/icons/icons';
@@ -49,7 +52,7 @@ const ROLE_LABELS: Record<UserRolesType, string> = {
 const EMPTY_FILTERS: UserFilterRequest = {};
 
 const UsersPage: React.FC = () => {
-  const { users, getAllUsers, deleteUser } = useUser();
+  const { users, getAllUsers, deleteUser, setUserActive } = useUser();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<UserFilterRequest>(EMPTY_FILTERS);
@@ -107,6 +110,38 @@ const UsersPage: React.FC = () => {
     [deleteUser]
   );
 
+  const handleToggleActive = useCallback(
+    async (row: UserResponse) => {
+      const deactivating = row.isActive;
+      const result = await Swal.fire({
+        title: deactivating ? '¿Desactivar usuario?' : '¿Activar usuario?',
+        text: deactivating
+          ? `"${row.username}" no podrá iniciar sesión hasta reactivarlo.`
+          : `"${row.username}" podrá volver a iniciar sesión.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: deactivating ? 'Desactivar' : 'Activar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: deactivating ? '#d32f2f' : '#2e7d32',
+        cancelButtonColor: '#6e6e6e',
+      });
+
+      if (!result.isConfirmed) {
+        return;
+      }
+
+      const updated = await setUserActive(row.userId, !row.isActive);
+      if (updated) {
+        await Swal.fire({
+          title: deactivating ? 'Usuario desactivado' : 'Usuario activado',
+          icon: 'success',
+          confirmButtonColor: '#FD6B00',
+        });
+      }
+    },
+    [setUserActive]
+  );
+
   const userActions = useMemo<TableRowAction<UserResponse>[]>(
     () => [
       {
@@ -122,13 +157,27 @@ const UsersPage: React.FC = () => {
         onClick: handleEdit,
       },
       {
+        label: 'Desactivar',
+        color: 'warning',
+        icon: <LockIcon fontSize="small" />,
+        onClick: handleToggleActive,
+        hidden: row => !row.isActive,
+      },
+      {
+        label: 'Activar',
+        color: 'success',
+        icon: <LockOpenIcon fontSize="small" />,
+        onClick: handleToggleActive,
+        hidden: row => row.isActive,
+      },
+      {
         label: 'Eliminar',
         color: 'error',
         icon: <DeleteIcon fontSize="small" />,
         onClick: handleDelete,
       },
     ],
-    [handleDelete, handleEdit, handleView]
+    [handleDelete, handleEdit, handleToggleActive, handleView]
   );
 
   const columns: GridColDef<UserResponse>[] = useMemo(() => {
@@ -159,6 +208,20 @@ const UsersPage: React.FC = () => {
         minWidth: 160,
         renderCell: params =>
           ROLE_LABELS[params.row.role as UserRolesType] ?? params.row.role,
+      },
+      {
+        field: 'isActive',
+        headerName: 'Estado',
+        flex: 0.7,
+        minWidth: 110,
+        renderCell: params => (
+          <Chip
+            size="small"
+            label={params.row.isActive ? 'Activo' : 'Inactivo'}
+            color={params.row.isActive ? 'success' : 'default'}
+            variant={params.row.isActive ? 'filled' : 'outlined'}
+          />
+        ),
       },
     ];
 

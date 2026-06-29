@@ -106,9 +106,25 @@ public class UserController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid userId, CancellationToken ct)
-    { 
-        var (role, id) = User.GetCallerClaims();  
+    {
+        var (role, id) = User.GetCallerClaims();
         await userManagementService.DeleteAsync(role, id, userId, ct);
         return NoContent();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // PUT /api/users/{userId}/active   — activate / deactivate account
+    // ─────────────────────────────────────────────────────────────
+
+    [HttpPut("{userId:guid}/active")]
+    [ProducesResponseType(StatusCodes.Status200OK,        Type = typeof(UserResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UserResponse>> SetActive(
+        Guid userId, [FromBody] SetUserActiveRequest request, CancellationToken ct)
+    {
+        var (role, id) = User.GetCallerClaims();
+        return Ok(await userManagementService.SetActiveAsync(role, id, userId, request.IsActive, ct));
     }
 }

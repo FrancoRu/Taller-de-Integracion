@@ -55,4 +55,13 @@ public interface IUserManagementService
     /// </summary>
     Task DeleteAsync(
         string callerRole, Guid callerId, Guid userId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Activates or deactivates a user account via Identity lockout.
+    /// A deactivated account cannot log in until reactivated.
+    /// ADMIN → any user. OWNER → their subordinates only. Others → 403.
+    /// </summary>
+    Task<UserResponse> SetActiveAsync(
+        string callerRole, Guid callerId, Guid userId, bool isActive,
+        CancellationToken ct = default);
 }
