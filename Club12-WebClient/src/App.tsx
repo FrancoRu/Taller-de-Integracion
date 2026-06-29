@@ -4,6 +4,8 @@ import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import Home from './views/home/home';
+import PublicTeamsPage from './views/home/teams/PublicTeamsPage';
+import PublicTeamPage from './views/home/teams/PublicTeamPage';
 import Login from './views/auth/login';
 import HowWeAre from './views/home/howWeAre/howWeAre';
 import NavMenu from './views/home/NavMenu/navMenu';
@@ -460,6 +462,8 @@ function App() {
         <Route path="/quienes-somos" element={<HowWeAre />} />
         <Route path="/ficha-medica" element={<MedicalRecord />} />
         <Route path="/reglamento" element={<Regulation />} />
+        <Route path="/equipos" element={<PublicTeamsPage />} />
+        <Route path="/equipos/:teamId" element={<PublicTeamPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

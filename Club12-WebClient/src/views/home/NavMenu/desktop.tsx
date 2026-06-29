@@ -114,6 +114,17 @@ const DesktopNavItems: React.FC<DesktopNavItemsProps> = ({
         </Link>
       </Menu>
 
+      <ListItemButton
+        component={Link}
+        to={`/${RoutesNavigationViews.Teams}`}
+        selected={isSelected(`/${RoutesNavigationViews.Teams}`)}
+        onClick={() =>
+          handleNavigationAndCloseMenu(`/${RoutesNavigationViews.Teams}`)
+        }
+      >
+        <ListItemText primary="Equipos" />
+      </ListItemButton>
+
       <TournamentMenuItems onNavigate={handleNavigationAndCloseMenu} />
     </Box>
   );
