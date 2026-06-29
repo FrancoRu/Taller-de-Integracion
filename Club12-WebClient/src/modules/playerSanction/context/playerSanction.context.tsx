@@ -13,10 +13,12 @@ import { useError } from '@/modules/error/hooks/error.hock';
 import { playerSanctionService } from '@/modules/playerSanction/service/playerSanction.service';
 import {
   IAddPlayerSanction,
+  IAppealPlayerSanction,
   IPlayerSanctionContextProps,
   IPlayerSanctionFiltered,
   IPlayerSanctionResponse,
   IPutPlayerSanction,
+  IResolveAppeal,
 } from '@/modules/playerSanction/type/playerSanction.d';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
@@ -186,6 +188,55 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
     [deletePlayerSanctionMutation, queryClient, handleUnknownError]
   );
 
+  const appealPlayerSanction = useCallback(
+    async (
+      id: GUID,
+      appeal: IAppealPlayerSanction
+    ): Promise<IPlayerSanctionResponse | void> => {
+      try {
+        const res: AxiosResponse<IPlayerSanctionResponse> =
+          await playerSanctionService.appealPlayerSanction(id, appeal);
+        if (res?.data) {
+          setPlayerSanction(res.data);
+          queryClient.setQueryData(['playerSanction', 'byId', id], res);
+          await queryClient.invalidateQueries({
+            queryKey: ['playerSanction', 'list'],
+          });
+          return res.data;
+        }
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [queryClient, handleUnknownError]
+  );
+
+  const resolvePlayerSanctionAppeal = useCallback(
+    async (
+      id: GUID,
+      resolution: IResolveAppeal
+    ): Promise<IPlayerSanctionResponse | void> => {
+      try {
+        const res: AxiosResponse<IPlayerSanctionResponse> =
+          await playerSanctionService.resolvePlayerSanctionAppeal(
+            id,
+            resolution
+          );
+        if (res?.data) {
+          setPlayerSanction(res.data);
+          queryClient.setQueryData(['playerSanction', 'byId', id], res);
+          await queryClient.invalidateQueries({
+            queryKey: ['playerSanction', 'list'],
+          });
+          return res.data;
+        }
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [queryClient, handleUnknownError]
+  );
+
   const container: IPlayerSanctionContextProps = useMemo(
     () => ({
       playerSanction,
@@ -195,6 +246,8 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
       getPlayerSanctionByFilter,
       putPlayerSanctionById,
       deletePlayerSanction,
+      appealPlayerSanction,
+      resolvePlayerSanctionAppeal,
     }),
     [
       playerSanction,
@@ -204,6 +257,8 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
       getPlayerSanctionByFilter,
       putPlayerSanctionById,
       deletePlayerSanction,
+      appealPlayerSanction,
+      resolvePlayerSanctionAppeal,
     ]
   );
 

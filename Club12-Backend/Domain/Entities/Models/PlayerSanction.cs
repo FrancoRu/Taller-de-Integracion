@@ -1,4 +1,5 @@
 ﻿using System;
+using Domain.Enums;
 
 namespace Domain.Entities.Models;
 
@@ -11,4 +12,10 @@ public class PlayerSanction : EntityBase
     public Guid PlayerId { get; set; }
     public required Match Match { get; set; }
     public Guid MatchId { get; set; }
+
+    public SanctionAppealStatus AppealStatus { get; set; } = SanctionAppealStatus.None;
+    public string? AppealReason { get; set; }
+    public DateTime? AppealDate { get; set; }
+    public string? AppealResolution { get; set; }
+    public DateTime? AppealResolvedDate { get; set; }
 }

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
 using Domain.Entities.Models;
+using Domain.Enums;
 
 namespace API.Controllers;
 
@@ -106,6 +107,74 @@ public class PlayerSanctionController(IPlayerSanctionService _playerSanctionServ
         }
 
         _mapper.Map(updateRequest, existingSanction);
+        await _playerSanctionService.UpdatePlayerSanctionAsync(existingSanction);
+        return Ok(_mapper.Map<PlayerSanctionResponse>(existingSanction));
+    }
+
+    /// <summary>
+    /// Submits an appeal against a player sanction.
+    /// </summary>
+    /// <param name="id">The id of the sanction being appealed.</param>
+    /// <param name="appealRequest">The appeal reason.</param>
+    /// <returns>The updated player sanction response.</returns>
+    [HttpPut("{id:guid}/appeal")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerSanctionResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PlayerSanctionResponse>> AppealPlayerSanction(
+        Guid id, AppealPlayerSanctionRequest appealRequest)
+    {
+        PlayerSanction? existingSanction = await _playerSanctionService.GetPlayerSanctionByIdAsync(id);
+
+        if (existingSanction is null)
+        {
+            return BadRequest($"Player sanction with id {id} not found.");
+        }
+
+        if (existingSanction.AppealStatus == SanctionAppealStatus.Pending)
+        {
+            return BadRequest("This sanction already has a pending appeal.");
+        }
+
+        existingSanction.AppealStatus = SanctionAppealStatus.Pending;
+        existingSanction.AppealReason = appealRequest.Reason;
+        existingSanction.AppealDate = DateTime.UtcNow;
+        existingSanction.AppealResolution = null;
+        existingSanction.AppealResolvedDate = null;
+
+        await _playerSanctionService.UpdatePlayerSanctionAsync(existingSanction);
+        return Ok(_mapper.Map<PlayerSanctionResponse>(existingSanction));
+    }
+
+    /// <summary>
+    /// Resolves a pending appeal, recording the decision.
+    /// </summary>
+    /// <param name="id">The id of the sanction whose appeal is resolved.</param>
+    /// <param name="resolveRequest">The decision (accepted/rejected) and resolution notes.</param>
+    /// <returns>The updated player sanction response.</returns>
+    [HttpPut("{id:guid}/appeal/resolve")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerSanctionResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PlayerSanctionResponse>> ResolvePlayerSanctionAppeal(
+        Guid id, ResolveAppealRequest resolveRequest)
+    {
+        PlayerSanction? existingSanction = await _playerSanctionService.GetPlayerSanctionByIdAsync(id);
+
+        if (existingSanction is null)
+        {
+            return BadRequest($"Player sanction with id {id} not found.");
+        }
+
+        if (existingSanction.AppealStatus != SanctionAppealStatus.Pending)
+        {
+            return BadRequest("There is no pending appeal to resolve for this sanction.");
+        }
+
+        existingSanction.AppealStatus = resolveRequest.Accepted
+            ? SanctionAppealStatus.Accepted
+            : SanctionAppealStatus.Rejected;
+        existingSanction.AppealResolution = resolveRequest.Resolution;
+        existingSanction.AppealResolvedDate = DateTime.UtcNow;
+
         await _playerSanctionService.UpdatePlayerSanctionAsync(existingSanction);
         return Ok(_mapper.Map<PlayerSanctionResponse>(existingSanction));
     }

@@ -64,6 +64,22 @@ export interface IPlayerSanctionContextProps {
    * @returns A promise that resolves when the sanction is successfully deleted.
    */
   deletePlayerSanction(id: GUID): Promise<void>;
+
+  /**
+   * Submits an appeal against a sanction.
+   */
+  appealPlayerSanction(
+    id: GUID,
+    appeal: IAppealPlayerSanction
+  ): Promise<IPlayerSanctionResponse | void>;
+
+  /**
+   * Resolves a pending appeal, recording the decision.
+   */
+  resolvePlayerSanctionAppeal(
+    id: GUID,
+    resolution: IResolveAppeal
+  ): Promise<IPlayerSanctionResponse | void>;
 }
 
 /**
@@ -104,6 +120,40 @@ export interface IPlayerSanctionResponse {
   playerFullName: string;
 
   matchId: GUID;
+
+  appealStatus: SanctionAppealStatus;
+
+  appealReason?: string | null;
+
+  appealDate?: string | null;
+
+  appealResolution?: string | null;
+
+  appealResolvedDate?: string | null;
+}
+
+/**
+ * The appeal state of a player sanction.
+ */
+export type SanctionAppealStatus =
+  | 'None'
+  | 'Pending'
+  | 'Accepted'
+  | 'Rejected';
+
+/**
+ * Request body for submitting an appeal against a sanction.
+ */
+export interface IAppealPlayerSanction {
+  reason: string;
+}
+
+/**
+ * Request body for resolving a sanction appeal.
+ */
+export interface IResolveAppeal {
+  accepted: boolean;
+  resolution: string;
 }
 
 /**

@@ -10,9 +10,11 @@ import {
 } from '@/modules/core/utils/axiosUtils';
 import {
   IAddPlayerSanction,
+  IAppealPlayerSanction,
   IPlayerSanctionFiltered,
   IPlayerSanctionResponse,
   IPutPlayerSanction,
+  IResolveAppeal,
 } from '@/modules/playerSanction/type/playerSanction';
 
 /**
@@ -69,4 +71,16 @@ export const playerSanctionService = {
    */
   deletePlayerSanction: async (id: GUID): Promise<AxiosResponse<void>> =>
     sendDelete(`${routes.playerSanctions}/${id}`),
+
+  appealPlayerSanction: async (
+    id: GUID,
+    appeal: IAppealPlayerSanction
+  ): Promise<AxiosResponse<IPlayerSanctionResponse>> =>
+    sendPut(`${routes.playerSanctions}/${id}/appeal`, appeal),
+
+  resolvePlayerSanctionAppeal: async (
+    id: GUID,
+    resolution: IResolveAppeal
+  ): Promise<AxiosResponse<IPlayerSanctionResponse>> =>
+    sendPut(`${routes.playerSanctions}/${id}/appeal/resolve`, resolution),
 };

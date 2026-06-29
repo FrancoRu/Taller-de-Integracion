@@ -1,5 +1,5 @@
 ﻿using Application.DTOs.Abstract.Response;
-
+using Domain.Enums;
 using System;
 namespace Application.DTOs.PlayerSanction.Response;
 
@@ -34,4 +34,29 @@ public class PlayerSanctionResponse : BaseEntityResponse
     /// The unique identifier of the match associated with the sanction.
     /// </summary>
     public required Guid MatchId { get; set; }
+
+    /// <summary>
+    /// The current appeal status of the sanction.
+    /// </summary>
+    public SanctionAppealStatus AppealStatus { get; set; }
+
+    /// <summary>
+    /// The reason submitted when the sanction was appealed.
+    /// </summary>
+    public string? AppealReason { get; set; }
+
+    /// <summary>
+    /// The date the appeal was submitted.
+    /// </summary>
+    public DateTime? AppealDate { get; set; }
+
+    /// <summary>
+    /// The decision notes recorded when the appeal was resolved.
+    /// </summary>
+    public string? AppealResolution { get; set; }
+
+    /// <summary>
+    /// The date the appeal was resolved.
+    /// </summary>
+    public DateTime? AppealResolvedDate { get; set; }
 }
