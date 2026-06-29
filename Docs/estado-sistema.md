@@ -62,16 +62,16 @@ Análisis de funcionalidades implementadas y pendientes, basado en los requisito
 | Quiénes somos | `/quienes-somos` | ✅ |
 | Ficha médica | `/ficha-medica` | ✅ |
 | Reglamento | `/reglamento` | ✅ |
+| Equipos | `/equipos`, `/equipos/:teamId` | ✅ |
+| Goleadores | `/goleadores` | ✅ |
+| Sanciones | `/sanciones` | ✅ |
+| Partidos | `/partidos` | ✅ |
+| Torneos | `/torneos`, `/torneos/:tournamentId` | ✅ |
 
 ### ❌ Faltante / Incompleto
 
 | Funcionalidad | Detalle | Prioridad |
 |---|---|---|
-| **Vista pública de torneos** | Visitante no puede ver torneos, fixtures, ni posiciones sin loguearse | 🔴 Alta |
-| **Vista pública de partidos** | No hay ruta pública para ver partidos ni resultados | 🔴 Alta |
-| **Vista pública de equipos** | Visitante no puede ver equipos ni sus jugadores | 🔴 Alta |
-| **Vista pública de goleadores** | Ranking de goleadores no accesible sin login | 🔴 Alta |
-| **Vista pública de sanciones** | Visitante no puede consultar sanciones activas | 🟡 Media |
 | **Estadísticas (panel)** | `/panel/estadisticas` es un `PlaceholderPage`, no implementado | 🟡 Media |
 | **Crear sanción** | Existe `playerSanctionCreatePage.tsx` pero no está en el router | 🟡 Media |
 | **Eliminar sanción** | Existe `playerSanctionDeletePage.tsx` pero no está en el router | 🟡 Media |
@@ -84,6 +84,6 @@ Análisis de funcionalidades implementadas y pendientes, basado en los requisito
 
 - **Backend:** prácticamente completo. Todos los módulos del informe tienen endpoints funcionales.
 - **Panel admin (frontend):** completo para las funciones de administración.
-- **Vista pública:** es el mayor pendiente. El visitante actualmente solo ve la home estática y páginas informativas. No puede consultar torneos, partidos, posiciones, equipos ni goleadores sin autenticarse — que era uno de los objetivos principales del sistema.
+- **Vista pública:** completa para los objetivos principales. El visitante puede consultar equipos, jugadores, torneos, partidos, resultados, goleadores y sanciones sin autenticarse.
 
-**Foco para presentación:** implementar las rutas y páginas públicas para visitantes.
+**Pendientes menores:** estadísticas del panel, crear/eliminar sanción, estadísticas por jugador y blog en el router.
