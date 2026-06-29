@@ -6,6 +6,7 @@ import { useDivision } from '@/modules/division/hook/division.hook';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
 import StagesPage from '@/views/stage/stagesPage';
+import DivisionStandings from '@/views/division/divisionStandings';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 
 const DivisionPage: React.FC = () => {
@@ -14,7 +15,9 @@ const DivisionPage: React.FC = () => {
   const { division, getDivisionsById } = useDivision();
   const { tournament, getTournamentById } = useTournament();
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState<'detalle' | 'fases'>('detalle');
+  const [tab, setTab] = useState<'detalle' | 'posiciones' | 'fases'>(
+    'detalle'
+  );
 
   const targetDivisionId = useMemo(
     () => divisionId ?? division?.id,
@@ -122,6 +125,7 @@ const DivisionPage: React.FC = () => {
           sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
         >
           <Tab label="Detalle" value="detalle" />
+          <Tab label="Posiciones" value="posiciones" />
           <Tab label="Fases" value="fases" />
         </Tabs>
 
@@ -148,6 +152,10 @@ const DivisionPage: React.FC = () => {
               <Typography>{division.positions?.length ?? 0}</Typography>
             </Grid>
           </Grid>
+        )}
+
+        {tab === 'posiciones' && (
+          <DivisionStandings positions={division.positions} />
         )}
 
         {tab === 'fases' && (

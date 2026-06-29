@@ -166,7 +166,7 @@ export interface DivisionTopScoreResponse {
  * The structure for a position in a division, including team statistics.
  * @type Position
  */
-type Position = {
+export type Position = {
   /**
    * The unique identifier of the team.
    * @type {string}
