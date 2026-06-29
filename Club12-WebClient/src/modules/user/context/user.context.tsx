@@ -158,6 +158,23 @@ export const UserProvider: React.FC<ProviderProps> = ({ children }) => {
     [handleUnknownError]
   );
 
+  const deleteUser = useCallback(
+    async (id: UserResponse['userId']): Promise<boolean> => {
+      try {
+        await userService.deleteUser(id);
+        setUsers(prev => prev?.filter(u => u.userId !== id) ?? null);
+        setUser(prev => (prev?.userId === id ? null : prev));
+        queryClient.removeQueries({ queryKey: ['user', 'byId', id] });
+        await queryClient.invalidateQueries({ queryKey: ['user', 'list'] });
+        return true;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+        return false;
+      }
+    },
+    [handleUnknownError, queryClient]
+  );
+
   const contextValue = useMemo(
     () => ({
       user,
@@ -168,6 +185,7 @@ export const UserProvider: React.FC<ProviderProps> = ({ children }) => {
       updateUser,
       resetUserPassword,
       changeUserPassword,
+      deleteUser,
     }),
     [
       user,
@@ -178,6 +196,7 @@ export const UserProvider: React.FC<ProviderProps> = ({ children }) => {
       updateUser,
       resetUserPassword,
       changeUserPassword,
+      deleteUser,
     ]
   );
 

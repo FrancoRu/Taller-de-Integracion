@@ -48,6 +48,7 @@ export interface IUserContextProps {
     id: GUID,
     data: ChangePasswordRequest
   ) => Promise<boolean>;
+  deleteUser: (id: GUID) => Promise<boolean>;
 }
 
 export interface UserFilterRequest extends Filtered {

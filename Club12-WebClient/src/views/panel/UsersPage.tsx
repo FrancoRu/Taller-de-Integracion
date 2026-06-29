@@ -17,6 +17,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import {
   buildActionsColumn,
   TableRowAction,
@@ -48,7 +49,7 @@ const ROLE_LABELS: Record<UserRolesType, string> = {
 const EMPTY_FILTERS: UserFilterRequest = {};
 
 const UsersPage: React.FC = () => {
-  const { users, getAllUsers } = useUser();
+  const { users, getAllUsers, deleteUser } = useUser();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<UserFilterRequest>(EMPTY_FILTERS);
@@ -76,9 +77,35 @@ const UsersPage: React.FC = () => {
     [navigate]
   );
 
-  const handleDelete = useCallback((_row: UserResponse) => {
-    // TODO: open confirm dialog
-  }, []);
+  const handleDelete = useCallback(
+    async (row: UserResponse) => {
+      const result = await Swal.fire({
+        title: '¿Eliminar usuario?',
+        text: `Se eliminará a "${row.username}" de forma permanente.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Eliminar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#d32f2f',
+        cancelButtonColor: '#6e6e6e',
+      });
+
+      if (!result.isConfirmed) {
+        return;
+      }
+
+      const deleted = await deleteUser(row.userId);
+      if (deleted) {
+        await Swal.fire({
+          title: 'Eliminado',
+          text: 'El usuario fue eliminado correctamente.',
+          icon: 'success',
+          confirmButtonColor: '#FD6B00',
+        });
+      }
+    },
+    [deleteUser]
+  );
 
   const userActions = useMemo<TableRowAction<UserResponse>[]>(
     () => [
