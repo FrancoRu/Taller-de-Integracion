@@ -22,6 +22,7 @@ import {
 } from '@/modules/playerSanction/type/playerSanction.d';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
+import { playerSanctionKeys } from '@/modules/playerSanction/queryKeys';
 
 export const PlayerSanctionContext = createContext<
   IPlayerSanctionContextProps | undefined
@@ -84,11 +85,11 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
         if (res?.data) {
           setPlayerSanction(res.data);
           queryClient.setQueryData(
-            ['playerSanction', 'byId', res.data.id],
+            playerSanctionKeys.byId(res.data.id),
             res
           );
           await queryClient.invalidateQueries({
-            queryKey: ['playerSanction', 'list'],
+            queryKey: playerSanctionKeys.list(),
           });
           return res.data;
         }
@@ -104,7 +105,7 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
       try {
         const res: AxiosResponse<IPlayerSanctionResponse> =
           await queryClient.fetchQuery({
-            queryKey: ['playerSanction', 'byId', id],
+            queryKey: playerSanctionKeys.byId(id),
             queryFn: async () =>
               await playerSanctionService.getPlayerSanctionById(id),
           });
@@ -126,7 +127,7 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
     ): Promise<GenericResponsePagination<IPlayerSanctionResponse> | void> => {
       try {
         const res = await queryClient.fetchQuery({
-          queryKey: ['playerSanction', 'list', filter],
+          queryKey: playerSanctionKeys.list(filter),
           queryFn: async () =>
             await playerSanctionService.getPlayerSanctionByFilter(filter),
         });
@@ -157,10 +158,10 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
             );
           } else if (res.data) {
             setPlayerSanction(res.data);
-            queryClient.setQueryData(['playerSanction', 'byId', id], res);
+            queryClient.setQueryData(playerSanctionKeys.byId(id), res);
           }
           await queryClient.invalidateQueries({
-            queryKey: ['playerSanction', 'list'],
+            queryKey: playerSanctionKeys.list(),
           });
         }
         return res.data;
@@ -177,9 +178,11 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
         await deletePlayerSanctionMutation.mutateAsync(id);
         setPlayerSanction(null);
         setPlayerSanctions(prev => prev?.filter(e => e.id !== id) ?? null);
-        queryClient.removeQueries({ queryKey: ['playerSanction', 'byId', id] });
+        queryClient.removeQueries({
+          queryKey: playerSanctionKeys.byId(id),
+        });
         await queryClient.invalidateQueries({
-          queryKey: ['playerSanction', 'list'],
+          queryKey: playerSanctionKeys.list(),
         });
       } catch (error: unknown) {
         handleUnknownError(error);
@@ -198,9 +201,9 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
           await playerSanctionService.appealPlayerSanction(id, appeal);
         if (res?.data) {
           setPlayerSanction(res.data);
-          queryClient.setQueryData(['playerSanction', 'byId', id], res);
+          queryClient.setQueryData(playerSanctionKeys.byId(id), res);
           await queryClient.invalidateQueries({
-            queryKey: ['playerSanction', 'list'],
+            queryKey: playerSanctionKeys.list(),
           });
           return res.data;
         }
@@ -224,9 +227,9 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
           );
         if (res?.data) {
           setPlayerSanction(res.data);
-          queryClient.setQueryData(['playerSanction', 'byId', id], res);
+          queryClient.setQueryData(playerSanctionKeys.byId(id), res);
           await queryClient.invalidateQueries({
-            queryKey: ['playerSanction', 'list'],
+            queryKey: playerSanctionKeys.list(),
           });
           return res.data;
         }

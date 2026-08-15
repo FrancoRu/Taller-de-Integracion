@@ -19,6 +19,7 @@ import {
 import { GUID } from '@/modules/core/types/types';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
+import { venueKeys } from '@/modules/venue/queryKeys';
 
 export const VenueContext = createContext<IVenueContextProps | undefined>(
   undefined
@@ -68,8 +69,8 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
 
         if (res) {
           setVenue(res.data);
-          queryClient.setQueryData(['venue', 'byId', res.data.id], res);
-          await queryClient.invalidateQueries({ queryKey: ['venue', 'list'] });
+          queryClient.setQueryData(venueKeys.byId(res.data.id), res);
+          await queryClient.invalidateQueries({ queryKey: venueKeys.list() });
           setMessage(res.status, ['La cancha fue creada exitosamente.']);
         }
 
@@ -103,7 +104,7 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
             setVenue(updatedVenue);
             setVenues(prev => upsertListById(prev, updatedVenue));
             await queryClient.invalidateQueries({
-              queryKey: ['venue', 'list'],
+              queryKey: venueKeys.list(),
             });
             setMessage(res.status, [
               'La información de la cancha fue actualizada correctamente',
@@ -112,9 +113,9 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
           } else if (res.data) {
             setVenue(res.data);
             setVenues(prev => upsertListById(prev, res.data));
-            queryClient.setQueryData(['venue', 'byId', id], res);
+            queryClient.setQueryData(venueKeys.byId(id), res);
             await queryClient.invalidateQueries({
-              queryKey: ['venue', 'list'],
+              queryKey: venueKeys.list(),
             });
             setMessage(res.status, [
               'La información de la cancha fue actualizada correctamente',
@@ -135,7 +136,7 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const res: AxiosResponse<IVenueResponse[]> = await queryClient.fetchQuery(
         {
-          queryKey: ['venue', 'list'],
+          queryKey: venueKeys.list(),
           queryFn: async () => await venueService.getAllVenues(),
         }
       );
@@ -160,7 +161,7 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
         }
         const res: AxiosResponse<IVenueResponse> = await queryClient.fetchQuery(
           {
-            queryKey: ['venue', 'byId', id],
+            queryKey: venueKeys.byId(id),
             queryFn: async () => await venueService.getVenueById(id),
           }
         );
@@ -183,8 +184,8 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
         await deleteVenueMutation.mutateAsync(id);
         setVenue(null);
         setVenues(prev => (prev ? prev.filter(e => e.id !== id) : null));
-        queryClient.removeQueries({ queryKey: ['venue', 'byId', id] });
-        await queryClient.invalidateQueries({ queryKey: ['venue', 'list'] });
+        queryClient.removeQueries({ queryKey: venueKeys.byId(id) });
+        await queryClient.invalidateQueries({ queryKey: venueKeys.list() });
         setMessage(204, ['La cancha ha sido eliminada.']);
       } catch (error: unknown) {
         handleUnknownError(error);

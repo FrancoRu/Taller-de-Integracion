@@ -20,6 +20,7 @@ import {
 } from '@/modules/player/type/player.d';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
+import { playerKeys } from '@/modules/player/queryKeys';
 
 export const PlayerContext = createContext<IPlayerContextProps | undefined>(
   undefined
@@ -72,8 +73,8 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
           await addPlayerMutation.mutateAsync(player);
         if (res) {
           setPlayer(res.data);
-          queryClient.setQueryData(['player', 'byId', res.data.id], res);
-          await queryClient.invalidateQueries({ queryKey: ['player', 'list'] });
+          queryClient.setQueryData(playerKeys.byId(res.data.id), res);
+          await queryClient.invalidateQueries({ queryKey: playerKeys.list() });
           return res.data;
         }
       } catch (error: unknown) {
@@ -91,7 +92,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
       try {
         const res: AxiosResponse<IPlayerResponse> =
           await queryClient.fetchQuery({
-            queryKey: ['player', 'byId', id, isAdministrative],
+            queryKey: playerKeys.byId(id, isAdministrative),
             queryFn: async () =>
               await playerService.getPlayerById(id, isAdministrative),
           });
@@ -112,7 +113,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
     ): Promise<GenericResponsePagination<IPlayerResponse> | void> => {
       try {
         const res = await queryClient.fetchQuery({
-          queryKey: ['player', 'list', filter],
+          queryKey: playerKeys.list(filter),
           queryFn: async () => await playerService.getPlayersByFilter(filter),
         });
 
@@ -141,9 +142,9 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
             );
           } else if (res.data) {
             setPlayer(res.data);
-            queryClient.setQueryData(['player', 'byId', id], res);
+            queryClient.setQueryData(playerKeys.byId(id), res);
           }
-          await queryClient.invalidateQueries({ queryKey: ['player', 'list'] });
+          await queryClient.invalidateQueries({ queryKey: playerKeys.list() });
         }
         return res.data;
       } catch (error: unknown) {
@@ -159,8 +160,8 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
         await deletePlayerMutation.mutateAsync(id);
         setPlayer(null);
         setPlayers(prev => prev?.filter(e => e.id !== id) ?? null);
-        queryClient.removeQueries({ queryKey: ['player', 'byId', id] });
-        await queryClient.invalidateQueries({ queryKey: ['player', 'list'] });
+        queryClient.removeQueries({ queryKey: playerKeys.byId(id) });
+        await queryClient.invalidateQueries({ queryKey: playerKeys.list() });
       } catch (error: unknown) {
         handleUnknownError(error);
       }

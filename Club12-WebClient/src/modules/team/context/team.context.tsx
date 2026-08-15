@@ -20,6 +20,7 @@ import {
 } from '@/modules/team/type/team.d';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
+import { teamKeys } from '@/modules/team/queryKeys';
 
 export const TeamContext = createContext<ITeamContextProps | undefined>(
   undefined
@@ -73,8 +74,8 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
           await addTeamMutation.mutateAsync(teamData);
         if (res) {
           setTeam(res.data);
-          queryClient.setQueryData(['team', 'byId', res.data.id], res);
-          await queryClient.invalidateQueries({ queryKey: ['team', 'list'] });
+          queryClient.setQueryData(teamKeys.byId(res.data.id), res);
+          await queryClient.invalidateQueries({ queryKey: teamKeys.list() });
         }
         return res?.data;
       } catch (error: unknown) {
@@ -100,9 +101,9 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
             );
           } else if (res.data) {
             setTeam(res.data);
-            queryClient.setQueryData(['team', 'byId', id], res);
+            queryClient.setQueryData(teamKeys.byId(id), res);
           }
-          await queryClient.invalidateQueries({ queryKey: ['team', 'list'] });
+          await queryClient.invalidateQueries({ queryKey: teamKeys.list() });
         }
         return res?.data;
       } catch (error: unknown) {
@@ -116,8 +117,8 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
     async (id: GUID, logo: File): Promise<void> => {
       try {
         await putTeamLogoMutation.mutateAsync({ id, logo });
-        await queryClient.invalidateQueries({ queryKey: ['team', 'byId', id] });
-        await queryClient.invalidateQueries({ queryKey: ['team', 'list'] });
+        await queryClient.invalidateQueries({ queryKey: teamKeys.byId(id) });
+        await queryClient.invalidateQueries({ queryKey: teamKeys.list() });
       } catch (error: unknown) {
         handleUnknownError(error);
       }
@@ -131,7 +132,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
     ): Promise<GenericResponsePagination<ITeamResponse> | void> => {
       try {
         const res = await queryClient.fetchQuery({
-          queryKey: ['team', 'list', filter],
+          queryKey: teamKeys.list(filter),
           queryFn: async () => await teamService.getTeamsByFiltered(filter),
         });
 
@@ -150,7 +151,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
     async (id: GUID): Promise<ITeamResponse | void> => {
       try {
         const res: AxiosResponse<ITeamResponse> = await queryClient.fetchQuery({
-          queryKey: ['team', 'byId', id],
+          queryKey: teamKeys.byId(id),
           queryFn: async () => await teamService.getTeamById(id),
         });
 
@@ -173,8 +174,8 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
         if (team?.id === id) {
           setTeam(null);
         }
-        queryClient.removeQueries({ queryKey: ['team', 'byId', id] });
-        await queryClient.invalidateQueries({ queryKey: ['team', 'list'] });
+        queryClient.removeQueries({ queryKey: teamKeys.byId(id) });
+        await queryClient.invalidateQueries({ queryKey: teamKeys.list() });
       } catch (error: unknown) {
         handleUnknownError(error);
       }

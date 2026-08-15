@@ -21,6 +21,7 @@ import {
 } from '@/modules/match/type/match';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
+import { matchKeys } from '@/modules/match/queryKeys';
 
 export const MatchContext = createContext<IMatchContextProps | undefined>(
   undefined
@@ -88,8 +89,8 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
           await addMatchMutation.mutateAsync(match);
         if (res) {
           setMatch(res.data);
-          queryClient.setQueryData(['match', 'byId', res.data.id], res);
-          await queryClient.invalidateQueries({ queryKey: ['match', 'list'] });
+          queryClient.setQueryData(matchKeys.byId(res.data.id), res);
+          await queryClient.invalidateQueries({ queryKey: matchKeys.list() });
           setMessage(res.status, ['El partido fue creado satisfactoriamente.']);
         }
         return res.data;
@@ -110,8 +111,8 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
           await putMatchScoreMutation.mutateAsync({ id, matchScore });
         if (res) {
           setMatch(res.data);
-          queryClient.setQueryData(['match', 'byId', id], res);
-          await queryClient.invalidateQueries({ queryKey: ['match', 'list'] });
+          queryClient.setQueryData(matchKeys.byId(id), res);
+          await queryClient.invalidateQueries({ queryKey: matchKeys.list() });
           setMessage(res.status, ['Partido actualizado correctamente']);
         }
         return res.data;
@@ -132,8 +133,8 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
           await putMatchMutation.mutateAsync({ id, matchDate });
         if (res) {
           setMatch(res.data);
-          queryClient.setQueryData(['match', 'byId', id], res);
-          await queryClient.invalidateQueries({ queryKey: ['match', 'list'] });
+          queryClient.setQueryData(matchKeys.byId(id), res);
+          await queryClient.invalidateQueries({ queryKey: matchKeys.list() });
           setMessage(res.status, ['Partido creado satisfactoriamente']);
         }
         return res.data;
@@ -149,7 +150,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       try {
         const res: AxiosResponse<IMatchResponse> = await queryClient.fetchQuery(
           {
-            queryKey: ['match', 'byId', id],
+            queryKey: matchKeys.byId(id),
             queryFn: async () => await matchService.getMatchById(id),
           }
         );
@@ -171,7 +172,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
     ): Promise<GenericResponsePagination<IMatchResponse> | void> => {
       try {
         const res = await queryClient.fetchQuery({
-          queryKey: ['match', 'list', filter],
+          queryKey: matchKeys.list(filter),
           queryFn: async () => await matchService.getMatchByFilter(filter),
         });
 
@@ -194,8 +195,8 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
         if (match?.id === id) {
           setMatch(null);
         }
-        queryClient.removeQueries({ queryKey: ['match', 'byId', id] });
-        await queryClient.invalidateQueries({ queryKey: ['match', 'list'] });
+        queryClient.removeQueries({ queryKey: matchKeys.byId(id) });
+        await queryClient.invalidateQueries({ queryKey: matchKeys.list() });
       } catch (error: unknown) {
         handleUnknownError(error);
       }

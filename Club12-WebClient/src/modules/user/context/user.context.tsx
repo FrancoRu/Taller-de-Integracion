@@ -19,6 +19,7 @@ import {
   UserFilterRequest,
   UserResponse,
 } from '@/modules/user/type/user';
+import { userKeys } from '@/modules/user/queryKeys';
 
 export const UserContext = createContext<IUserContextProps | undefined>(
   undefined
@@ -61,7 +62,7 @@ export const UserProvider: React.FC<ProviderProps> = ({ children }) => {
     async (filters: UserFilterRequest) => {
       try {
         const res = await queryClient.fetchQuery({
-          queryKey: ['user', 'list', filters],
+          queryKey: userKeys.list(filters),
           queryFn: async () => await userService.getAllUsers(filters),
         });
 
@@ -80,7 +81,7 @@ export const UserProvider: React.FC<ProviderProps> = ({ children }) => {
     async (id: UserResponse['userId']) => {
       try {
         const res: AxiosResponse<UserResponse> = await queryClient.fetchQuery({
-          queryKey: ['user', 'byId', id],
+          queryKey: userKeys.byId(id),
           queryFn: async () => await userService.getById(id),
         });
 
@@ -164,8 +165,8 @@ export const UserProvider: React.FC<ProviderProps> = ({ children }) => {
         await userService.deleteUser(id);
         setUsers(prev => prev?.filter(u => u.userId !== id) ?? null);
         setUser(prev => (prev?.userId === id ? null : prev));
-        queryClient.removeQueries({ queryKey: ['user', 'byId', id] });
-        await queryClient.invalidateQueries({ queryKey: ['user', 'list'] });
+        queryClient.removeQueries({ queryKey: userKeys.byId(id) });
+        await queryClient.invalidateQueries({ queryKey: userKeys.list() });
         return true;
       } catch (error: unknown) {
         handleUnknownError(error);

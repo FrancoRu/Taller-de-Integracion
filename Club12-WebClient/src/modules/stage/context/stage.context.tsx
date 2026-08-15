@@ -20,6 +20,7 @@ import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
 import { AxiosError, AxiosResponse } from 'axios';
 import { stageService } from '@/modules/stage/service/stage.service';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
+import { stageKeys } from '@/modules/stage/queryKeys';
 
 export const StageContext = createContext<IStageContextProps | undefined>(
   undefined
@@ -81,8 +82,8 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
           await addStageMutation.mutateAsync(stage);
         if (res && res.data) {
           setStage(res.data);
-          queryClient.setQueryData(['stage', 'byId', res.data.id], res);
-          await queryClient.invalidateQueries({ queryKey: ['stage', 'list'] });
+          queryClient.setQueryData(stageKeys.byId(res.data.id), res);
+          await queryClient.invalidateQueries({ queryKey: stageKeys.list() });
           setMessage(res.status, ['Fase creada exitosamente']);
         }
         return res.data;
@@ -102,8 +103,8 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
         const res: AxiosResponse<IStageResponse> =
           await putStageMutation.mutateAsync({ id, stageRequest });
         setStage(res.data);
-        queryClient.setQueryData(['stage', 'byId', id], res);
-        await queryClient.invalidateQueries({ queryKey: ['stage', 'list'] });
+        queryClient.setQueryData(stageKeys.byId(id), res);
+        await queryClient.invalidateQueries({ queryKey: stageKeys.list() });
         return true;
       } catch (error: unknown) {
         handleUnknownError(error);
@@ -126,7 +127,7 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
 
         const res: AxiosResponse<IStageResponse> = await queryClient.fetchQuery(
           {
-            queryKey: ['stage', 'byId', id],
+            queryKey: stageKeys.byId(id),
             queryFn: async () => await stageService.getStagesById(id),
           }
         );
@@ -148,7 +149,7 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
     ): Promise<GenericResponsePagination<IStageResponse> | void> => {
       try {
         const res = await queryClient.fetchQuery({
-          queryKey: ['stage', 'list', filter],
+          queryKey: stageKeys.list(filter),
           queryFn: async () => await stageService.getStagesByFilters(filter),
         });
 
@@ -169,8 +170,8 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
         await deleteStageMutation.mutateAsync(id);
         setStage(null);
         setStages(prev => (prev ? prev.filter(e => e.id !== id) : null));
-        queryClient.removeQueries({ queryKey: ['stage', 'byId', id] });
-        await queryClient.invalidateQueries({ queryKey: ['stage', 'list'] });
+        queryClient.removeQueries({ queryKey: stageKeys.byId(id) });
+        await queryClient.invalidateQueries({ queryKey: stageKeys.list() });
         setMessage(204, ['La etapa ha sido eliminada.']);
       } catch (error: unknown) {
         handleUnknownError(error);
@@ -187,7 +188,7 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
 
         if (res && res.data) {
           setStages(res.data);
-          await queryClient.invalidateQueries({ queryKey: ['stage', 'list'] });
+          await queryClient.invalidateQueries({ queryKey: stageKeys.list() });
           return res.data;
         }
       } catch (error: unknown) {

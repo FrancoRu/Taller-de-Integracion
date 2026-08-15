@@ -27,6 +27,7 @@ import {
   JWT,
 } from '@/modules/core/constants/constants';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
+import { authKeys } from '@/modules/auth/queryKeys';
 
 export const AuthContext = createContext<IAuthContextProps | undefined>(
   undefined
@@ -113,7 +114,7 @@ export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
   const queryClient = useQueryClient();
 
   const { data: hasToken } = useQuery({
-    queryKey: ['auth', 'has-token'],
+    queryKey: authKeys.hasToken(),
     queryFn: async () => Boolean(Cookies.get(COOKIE_SIGNIN_TOKEN)),
     staleTime: Infinity,
   });
@@ -141,7 +142,7 @@ export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
     Cookies.remove(COOKIE_SIGNIN_TOKEN);
     localStorage.removeItem(JWT.REFRESH_TOKEN);
     setIsAuthenticated(false);
-    queryClient.setQueryData(['auth', 'has-token'], false);
+    queryClient.setQueryData(authKeys.hasToken(), false);
   }, [queryClient]);
 
   const applyAuthData = useCallback(
@@ -170,7 +171,7 @@ export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
       }
 
       setIsAuthenticated(true);
-      queryClient.setQueryData(['auth', 'has-token'], true);
+      queryClient.setQueryData(authKeys.hasToken(), true);
 
       return expiresInMs;
     },

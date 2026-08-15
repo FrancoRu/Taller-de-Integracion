@@ -21,6 +21,7 @@ import {
 } from '@/modules/division/type/division';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
+import { divisionKeys } from '@/modules/division/queryKeys';
 
 export const DivisionContext = createContext<IDivisionContextProps | undefined>(
   undefined
@@ -80,10 +81,10 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
           await addDivisionMutation.mutateAsync(divisionRequest);
         if (res && res.data) {
           setDivision(res.data);
-          queryClient.setQueryData(['division', 'byId', res.data.id], res);
+          queryClient.setQueryData(divisionKeys.byId(res.data.id), res);
           setMessage(res.status, ['Division creada exitosamente']);
           await queryClient.invalidateQueries({
-            queryKey: ['division', 'list'],
+            queryKey: divisionKeys.list(),
           });
           return res.data;
         }
@@ -128,17 +129,17 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
             'La información de la división fue actualizada correctamente',
           ]);
           await queryClient.invalidateQueries({
-            queryKey: ['division', 'list'],
+            queryKey: divisionKeys.list(),
           });
           return true;
         } else if (res && res.data) {
           setDivision(res.data);
-          queryClient.setQueryData(['division', 'byId', id], res);
+          queryClient.setQueryData(divisionKeys.byId(id), res);
           setMessage(res.status, [
             'La información de la división fue actualizada correctamente',
           ]);
           await queryClient.invalidateQueries({
-            queryKey: ['division', 'list'],
+            queryKey: divisionKeys.list(),
           });
           return true;
         }
@@ -163,7 +164,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
 
         const res: AxiosResponse<IDivisionResponse> =
           await queryClient.fetchQuery({
-            queryKey: ['division', 'byId', id],
+            queryKey: divisionKeys.byId(id),
             queryFn: async () => await divisionService.getDivisionsById(id),
           });
 
@@ -184,7 +185,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
     ): Promise<GenericResponsePagination<IDivisionResponse> | void> => {
       try {
         const res = await queryClient.fetchQuery({
-          queryKey: ['division', 'list', filter],
+          queryKey: divisionKeys.list(filter),
           queryFn: async () =>
             await divisionService.getDivisionsByFilters(filter),
         });
@@ -205,7 +206,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
       try {
         const res: AxiosResponse<DivisionTopScoreResponse[]> =
           await queryClient.fetchQuery({
-            queryKey: ['division', 'top-scorers', id],
+            queryKey: divisionKeys.topScorers(id),
             queryFn: async () =>
               await divisionService.getTopScoresByDivisionId(id),
           });
@@ -224,8 +225,8 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
         await deleteDivisionMutation.mutateAsync(id);
         setDivision(null);
         setDivisions(prev => (prev ? prev.filter(e => e.id !== id) : null));
-        queryClient.removeQueries({ queryKey: ['division', 'byId', id] });
-        await queryClient.invalidateQueries({ queryKey: ['division', 'list'] });
+        queryClient.removeQueries({ queryKey: divisionKeys.byId(id) });
+        await queryClient.invalidateQueries({ queryKey: divisionKeys.list() });
         setMessage(204, ['La división ha sido eliminada.']);
       } catch (error: unknown) {
         handleUnknownError(error);

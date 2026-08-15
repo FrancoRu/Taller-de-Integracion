@@ -11,6 +11,7 @@ import {
   IBlogPostContextProps,
   UpdateBlogPostRequest,
 } from '@/modules/blogPost/type/blogPost';
+import { blogPostKeys } from '@/modules/blogPost/queryKeys';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 
 export const BlogPostContext = createContext<IBlogPostContextProps | undefined>(
@@ -62,11 +63,11 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
         if (response && response.data) {
           setMessage(response.status, ['Blog Post created successfully']);
           queryClient.setQueryData(
-            ['blogPost', 'byId', response.data.id],
+            blogPostKeys.byId(response.data.id),
             response
           );
           await queryClient.invalidateQueries({
-            queryKey: ['blogPost', 'list'],
+            queryKey: blogPostKeys.list(),
           });
           return response.data;
         }
@@ -95,11 +96,11 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
           if (response.status === 204) {
             // NoContent: no returned body, cache invalidation is enough
           } else if (response.data) {
-            queryClient.setQueryData(['blogPost', 'byId', id], response);
+            queryClient.setQueryData(blogPostKeys.byId(id), response);
             return response.data;
           }
           await queryClient.invalidateQueries({
-            queryKey: ['blogPost', 'list'],
+            queryKey: blogPostKeys.list(),
           });
         }
       } catch (error: unknown) {
@@ -114,9 +115,9 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
       try {
         await putPhotoBlogPostMutation.mutateAsync({ id, photo });
         await queryClient.invalidateQueries({
-          queryKey: ['blogPost', 'byId', id],
+          queryKey: blogPostKeys.byId(id),
         });
-        await queryClient.invalidateQueries({ queryKey: ['blogPost', 'list'] });
+        await queryClient.invalidateQueries({ queryKey: blogPostKeys.list() });
       } catch (error: unknown) {
         handleUnknownError(error);
       }
@@ -128,7 +129,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
     async (id: GUID): Promise<BlogPostResponse | void> => {
       try {
         const response = await queryClient.fetchQuery({
-          queryKey: ['blogPost', 'byId', id],
+          queryKey: blogPostKeys.byId(id),
           queryFn: async () => await blogPostService.getBlogPostsById(id),
         });
 
@@ -146,7 +147,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
     ): Promise<GenericResponsePagination<BlogPostResponse> | void> => {
       try {
         const response = await queryClient.fetchQuery({
-          queryKey: ['blogPost', 'list', filter],
+          queryKey: blogPostKeys.list(filter),
           queryFn: async () =>
             await blogPostService.getBlogPostsByFilters(filter),
         });
@@ -163,8 +164,8 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
     async (id: GUID): Promise<void> => {
       try {
         await deleteBlogPostMutation.mutateAsync(id);
-        queryClient.removeQueries({ queryKey: ['blogPost', 'byId', id] });
-        await queryClient.invalidateQueries({ queryKey: ['blogPost', 'list'] });
+        queryClient.removeQueries({ queryKey: blogPostKeys.byId(id) });
+        await queryClient.invalidateQueries({ queryKey: blogPostKeys.list() });
       } catch (error: unknown) {
         handleUnknownError(error);
       }

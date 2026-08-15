@@ -18,6 +18,7 @@ import {
   IScorerContextProps,
   IScorerFiltered,
 } from '@/modules/scorer/type/scorer.d';
+import { scorerKeys } from '@/modules/scorer/queryKeys';
 
 export const ScorerContext = createContext<IScorerContextProps | undefined>(
   undefined
@@ -53,7 +54,7 @@ export const ScorerProvider: React.FC<{ children: ReactNode }> = ({
     ): Promise<GenericResponsePagination<IScorerByTeamResponse> | void> => {
       try {
         const response = await queryClient.fetchQuery({
-          queryKey: ['scorer', 'byTeam', filter],
+          queryKey: scorerKeys.byTeam(filter),
           queryFn: async () =>
             await scorerService.getScorersByTeamFiltered(filter),
         });
@@ -75,7 +76,7 @@ export const ScorerProvider: React.FC<{ children: ReactNode }> = ({
     ): Promise<GenericResponsePagination<IScorerByPlayerResponse> | void> => {
       try {
         const response = await queryClient.fetchQuery({
-          queryKey: ['scorer', 'byPlayer', filter],
+          queryKey: scorerKeys.byPlayer(filter),
           queryFn: async () =>
             await scorerService.getScorersByPlayerFiltered(filter),
         });

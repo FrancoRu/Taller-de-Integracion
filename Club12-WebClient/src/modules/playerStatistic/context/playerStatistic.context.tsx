@@ -18,6 +18,7 @@ import {
   PlayerStatisticResponse,
   PutPlayerStatisticRequest,
 } from '@/modules/playerStatistic/type/playerStatistic';
+import { playerStatisticKeys } from '@/modules/playerStatistic/queryKeys';
 
 export const PlayerStatisticContext = createContext<
   IPlayerStatisticContextProps | undefined
@@ -83,7 +84,7 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
             response
           );
           await queryClient.invalidateQueries({
-            queryKey: ['playerStatistic'],
+            queryKey: playerStatisticKeys.all,
           });
           return response.data;
         }
@@ -104,7 +105,9 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
           statisticid,
           playerStatistic,
         });
-        await queryClient.invalidateQueries({ queryKey: ['playerStatistic'] });
+        await queryClient.invalidateQueries({
+          queryKey: playerStatisticKeys.all,
+        });
       } catch (error: unknown) {
         handleUnknownError(error);
       }
@@ -162,7 +165,9 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
         queryClient.removeQueries({
           queryKey: ['playerStatistic', 'byId', id],
         });
-        await queryClient.invalidateQueries({ queryKey: ['playerStatistic'] });
+        await queryClient.invalidateQueries({
+          queryKey: playerStatisticKeys.all,
+        });
       } catch (error: unknown) {
         handleUnknownError(error);
       }
