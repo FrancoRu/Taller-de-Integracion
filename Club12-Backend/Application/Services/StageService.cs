@@ -256,7 +256,8 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
                 PageSize = availableSlots,
             };
             List<Team> teams = [.. await teamRepository.FindAsync(
-                team => !team.StageTeamMatches.Any(stm => stm.TeamId == team.Id && stm.StageId == stage.Id), filter: filter)];
+                team => team.TournamentId == stage.Division.TournamentId
+                    && !team.StageTeamMatches.Any(stm => stm.TeamId == team.Id && stm.StageId == stage.Id), filter: filter)];
 
             newItems = [.. teams.Select(t => new StageTeamMatch
             {

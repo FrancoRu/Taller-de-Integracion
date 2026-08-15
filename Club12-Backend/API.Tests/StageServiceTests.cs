@@ -296,6 +296,51 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         Assert.DoesNotContain(existingIds[0], newlyAssigned);
     }
 
+    [Fact]
+    public async Task AssignTeamsToStageAsync_AutoMode_OnlyAssignsTeamsFromStagesTournament()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
+
+        Tournament tournamentA = await SeedTournamentAsync(db);
+        Division divisionA = await SeedDivisionAsync(db, tournamentA);
+
+        Stage stage = new()
+        {
+            Name = $"Stage-{Guid.NewGuid()}",
+            StageType = StageType.SemiFinal,
+            IsActive = true,
+            StartDate = tournamentA.StartDate,
+            EndDate = tournamentA.StartDate.AddDays(StageTemplate.DurationDays),
+            DivisionId = divisionA.Id,
+            Division = divisionA,
+            Matches = [],
+            CreatedBy = "test",
+        };
+
+        db.Stages.Add(stage);
+        await db.SaveChangesAsync();
+
+        List<Team> teamsA = await SeedTeamsAsync(db, tournamentA, 2);
+
+        Tournament tournamentB = await SeedTournamentAsync(db);
+        List<Team> teamsB = await SeedTeamsAsync(db, tournamentB, 5);
+
+        await stageService.AssignTeamsToStageAsync(stage, null, auto: true);
+
+        List<StageTeamMatch> records = await db.StageTeamMatches.Where(stm => stm.StageId == stage.Id).ToListAsync();
+
+        Assert.Equal(2, records.Count);
+
+        List<Guid> assignedTeamIds = [.. records.Select(r => r.TeamId)];
+        List<Guid> teamAIds = [.. teamsA.Select(t => t.Id)];
+        List<Guid> teamBIds = [.. teamsB.Select(t => t.Id)];
+
+        Assert.All(assignedTeamIds, id => Assert.Contains(id, teamAIds));
+        Assert.DoesNotContain(assignedTeamIds, id => teamBIds.Contains(id));
+    }
+
     // ---------------------------------------------------------------
     // Seed helpers (local to this file — no shared/production code)
     // ---------------------------------------------------------------
