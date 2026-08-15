@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Grid,
   Card,
@@ -27,13 +27,16 @@ const ShowPosts: React.FC = () => {
   });
   const navigate = useNavigate();
 
-  const filterParams: GetBlogPostsFilteredRequest = {
-    pageNumber: pagination.page,
-    pageSize: pagination.pageSize,
-    author: '',
-    title: '',
-    keyword: '',
-  };
+  const filterParams: GetBlogPostsFilteredRequest = useMemo(
+    () => ({
+      pageNumber: pagination.page,
+      pageSize: pagination.pageSize,
+      author: '',
+      title: '',
+      keyword: '',
+    }),
+    [pagination.page, pagination.pageSize]
+  );
 
   useEffect(() => {
     const loadPosts = async () => {
@@ -54,7 +57,7 @@ const ShowPosts: React.FC = () => {
       }
     };
     loadPosts();
-  }, [pagination.page]);
+  }, [filterParams, getBlogPostsByFilters]);
 
   const handlePageChange = (direction: 'next' | 'previous') => {
     if (loading) return;

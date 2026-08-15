@@ -35,14 +35,17 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
   const { setError } = useError();
   const queryClient = useQueryClient();
 
-  const handleUnknownError = (error: unknown) => {
-    if (error instanceof AxiosError) {
-      setError(error);
-      return;
-    }
+  const handleUnknownError = useCallback(
+    (error: unknown) => {
+      if (error instanceof AxiosError) {
+        setError(error);
+        return;
+      }
 
-    setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-  };
+      setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+    },
+    [setError]
+  );
 
   const addTeamMutation = useMutation({
     mutationFn: teamService.addTeam,
@@ -82,7 +85,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [addTeamMutation, queryClient]
+    [addTeamMutation, queryClient, handleUnknownError]
   );
 
   const putTeamById = useCallback(
@@ -110,7 +113,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [putTeamMutation, queryClient]
+    [putTeamMutation, queryClient, handleUnknownError]
   );
 
   const putTeamLogoById = useCallback(
@@ -123,7 +126,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [putTeamLogoMutation, queryClient]
+    [putTeamLogoMutation, queryClient, handleUnknownError]
   );
 
   const getTeamsByFiltered = useCallback(
@@ -144,7 +147,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [queryClient]
+    [queryClient, handleUnknownError]
   );
 
   const getTeamById = useCallback(
@@ -163,7 +166,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [queryClient]
+    [queryClient, handleUnknownError]
   );
 
   const deleteTeamById = useCallback(
@@ -180,7 +183,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [deleteTeamMutation, queryClient, team]
+    [deleteTeamMutation, queryClient, team, handleUnknownError]
   );
 
   const container: ITeamContextProps = useMemo(

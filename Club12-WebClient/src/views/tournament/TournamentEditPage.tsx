@@ -119,7 +119,7 @@ const TournamentEditPage: React.FC = () => {
     };
 
     void fetchTournament();
-  }, [tournamentId, tournament?.id]);
+  }, [tournamentId, tournament?.id, getTournamentById]);
 
   useEffect(() => {
     if (!tournament) {

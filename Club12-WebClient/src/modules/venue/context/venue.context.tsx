@@ -34,14 +34,17 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
   const { setError, setMessage } = useError();
   const queryClient = useQueryClient();
 
-  const handleUnknownError = (error: unknown) => {
-    if (error instanceof AxiosError) {
-      setError(error);
-      return;
-    }
+  const handleUnknownError = useCallback(
+    (error: unknown) => {
+      if (error instanceof AxiosError) {
+        setError(error);
+        return;
+      }
 
-    setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-  };
+      setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+    },
+    [setError]
+  );
 
   const addVenueMutation = useMutation({
     mutationFn: venueService.addVenue,
@@ -79,7 +82,7 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [addVenueMutation, queryClient, setMessage]
+    [addVenueMutation, queryClient, setMessage, handleUnknownError]
   );
 
   const putVenueById = useCallback(
@@ -127,7 +130,7 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [putVenueMutation, queryClient, setMessage, venues]
+    [putVenueMutation, queryClient, setMessage, venues, handleUnknownError]
   );
 
   const getAllVenues = useCallback(async (): Promise<
@@ -148,7 +151,7 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
     } catch (error: unknown) {
       handleUnknownError(error);
     }
-  }, [queryClient]);
+  }, [queryClient, handleUnknownError]);
 
   const getVenueById = useCallback(
     async (id: GUID): Promise<IVenueResponse | void> => {
@@ -175,7 +178,7 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [venues, queryClient]
+    [venues, queryClient, handleUnknownError]
   );
 
   const deleteVenueById = useCallback(
@@ -191,7 +194,7 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [deleteVenueMutation, queryClient, setMessage]
+    [deleteVenueMutation, queryClient, setMessage, handleUnknownError]
   );
 
   const container: IVenueContextProps = useMemo(

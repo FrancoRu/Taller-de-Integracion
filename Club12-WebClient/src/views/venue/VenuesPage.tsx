@@ -23,10 +23,8 @@ import {
   IVenueResponse,
 } from '@/modules/venue/type/venue';
 import { useVenue } from '@/modules/venue/hook/venue.hook';
-import {
-  buildActionsColumn,
-  TableRowAction,
-} from '@/views/core/components/TableRowActions';
+import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
+import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import FormButtons from '@/views/core/components/FormButtons';
 import TeamLogo from '@/views/core/components/TeamLogo';

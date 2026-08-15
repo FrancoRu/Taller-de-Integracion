@@ -18,10 +18,8 @@ import {
 } from '@mui/material';
 import Swal from 'sweetalert2';
 import theme, { CANCEL_BUTTON_COLOR } from '@/theme';
-import {
-  buildActionsColumn,
-  TableRowAction,
-} from '@/views/core/components/TableRowActions';
+import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
+import { TableRowAction } from '@/views/core/components/TableRowActions';
 import {
   DeleteIcon,
   EditIcon,

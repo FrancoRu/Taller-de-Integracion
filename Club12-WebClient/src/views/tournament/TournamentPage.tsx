@@ -73,7 +73,7 @@ const TournamentPage: React.FC = () => {
     };
 
     void fetchTournament();
-  }, [tournamentId, tournament?.id]);
+  }, [tournamentId, tournament?.id, getTournamentById]);
 
   if (!tournamentId) {
     return (

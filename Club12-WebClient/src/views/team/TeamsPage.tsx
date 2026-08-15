@@ -11,10 +11,8 @@ import {
   ITeamResponse,
   IPutTeamRequest,
 } from '@/modules/team/type/team.d';
-import {
-  buildActionsColumn,
-  TableRowAction,
-} from '@/views/core/components/TableRowActions';
+import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
+import { TableRowAction } from '@/views/core/components/TableRowActions';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import {

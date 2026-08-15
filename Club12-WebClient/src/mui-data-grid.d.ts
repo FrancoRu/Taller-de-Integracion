@@ -3,7 +3,6 @@ import {
   ComponentsProps,
   ComponentsVariants,
 } from '@mui/material/styles';
-import { DataGridProps } from '@mui/x-data-grid';
 
 declare module '@mui/material/styles' {
   interface Components {

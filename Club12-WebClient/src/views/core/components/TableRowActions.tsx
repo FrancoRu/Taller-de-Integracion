@@ -1,5 +1,4 @@
 import { ReactNode } from 'react';
-import { GridColDef, GridValidRowModel } from '@mui/x-data-grid';
 import { IconButton, IconButtonProps, Stack, Tooltip } from '@mui/material';
 
 export interface TableRowAction<Row> {
@@ -14,22 +13,6 @@ export interface TableRowAction<Row> {
 interface TableRowActionsProps<Row> {
   row: Row;
   actions: TableRowAction<Row>[];
-  spacing?: number;
-}
-
-interface BuildActionsColumnOptions<Row extends GridValidRowModel>
-  extends Partial<
-    Pick<
-      GridColDef<Row>,
-      | 'field'
-      | 'headerName'
-      | 'minWidth'
-      | 'width'
-      | 'flex'
-      | 'align'
-      | 'headerAlign'
-    >
-  > {
   spacing?: number;
 }
 
@@ -77,27 +60,5 @@ const TableRowActions = <Row,>({
     </Stack>
   );
 };
-
-export const buildActionsColumn = <Row extends GridValidRowModel>(
-  actions: TableRowAction<Row>[],
-  options: BuildActionsColumnOptions<Row> = {}
-): GridColDef<Row> => ({
-  field: options.field ?? 'actions',
-  headerName: options.headerName ?? 'Acciones',
-  sortable: false,
-  filterable: false,
-  minWidth: options.minWidth ?? 120,
-  width: options.width,
-  flex: options.flex,
-  align: options.align,
-  headerAlign: options.headerAlign,
-  renderCell: params => (
-    <TableRowActions
-      row={params.row}
-      actions={actions}
-      spacing={options.spacing}
-    />
-  ),
-});
 
 export default TableRowActions;

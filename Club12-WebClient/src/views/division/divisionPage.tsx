@@ -48,7 +48,7 @@ const DivisionPage: React.FC = () => {
     }
 
     void getTournamentById(division.tournamentId);
-  }, [division?.tournamentId, tournament?.id]);
+  }, [division?.tournamentId, tournament?.id, getTournamentById]);
 
   const canGenerateStages = useMemo(() => {
     if (!division?.tournamentId || tournament?.id !== division.tournamentId) {

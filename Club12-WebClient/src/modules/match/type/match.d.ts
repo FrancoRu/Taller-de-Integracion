@@ -1,5 +1,4 @@
 import { Filtered, GUID } from '@/modules/core/types/types';
-import { IStageResponse } from '@/modules/stage/type/stage';
 import { ITeamMatchResponse } from '@/modules/team/type/team';
 import { IVenueResponse } from '@/modules/venue/type/venue';
 

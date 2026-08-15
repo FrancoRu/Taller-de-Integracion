@@ -22,10 +22,8 @@ import { useDivision } from '@/modules/division/hook/division.hook';
 import { useStage } from '@/modules/stage/hook/stage.hook';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import { usePlayer } from '@/modules/player/hook/player.hook';
-import {
-  buildActionsColumn,
-  TableRowAction,
-} from '@/views/core/components/TableRowActions';
+import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
+import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import {
   DeleteIcon,

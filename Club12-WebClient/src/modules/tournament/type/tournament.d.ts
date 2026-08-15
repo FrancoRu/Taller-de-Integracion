@@ -1,4 +1,3 @@
-import { IStageResponse } from '@/modules/stage/type/stage';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
 import {
   Filtered,

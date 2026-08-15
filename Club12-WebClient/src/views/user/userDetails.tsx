@@ -62,7 +62,7 @@ const UserDetails: React.FC = () => {
       await getById(userId as GUID);
       setLoading(false);
     })();
-  }, [userId]);
+  }, [userId, getById]);
 
   return (
     <Card sx={{ maxWidth: 600, mx: 'auto', mt: 3 }}>

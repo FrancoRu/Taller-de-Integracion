@@ -36,14 +36,17 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
   const { setError, setMessage } = useError();
   const queryClient = useQueryClient();
 
-  const handleUnknownError = (error: unknown) => {
-    if (error instanceof AxiosError) {
-      setError(error);
-      return;
-    }
+  const handleUnknownError = useCallback(
+    (error: unknown) => {
+      if (error instanceof AxiosError) {
+        setError(error);
+        return;
+      }
 
-    setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-  };
+      setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+    },
+    [setError]
+  );
 
   const addDivisionMutation = useMutation({
     mutationFn: divisionService.addDivision,
@@ -92,7 +95,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [addDivisionMutation, queryClient, setMessage]
+    [addDivisionMutation, queryClient, setMessage, handleUnknownError]
   );
 
   const generateFixtureByDivisionId = useCallback(
@@ -104,7 +107,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [generateFixtureMutation, setMessage]
+    [generateFixtureMutation, setMessage, handleUnknownError]
   );
 
   const putDivisionById = useCallback(
@@ -147,7 +150,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [putDivisionMutation, setDivision, setMessage, queryClient]
+    [putDivisionMutation, setDivision, setMessage, queryClient, handleUnknownError]
   );
 
   const getDivisionsById = useCallback(
@@ -176,7 +179,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [divisions, setDivision, queryClient]
+    [divisions, setDivision, queryClient, handleUnknownError]
   );
 
   const getDivisionsByFilters = useCallback(
@@ -198,7 +201,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [setDivisions, queryClient]
+    [setDivisions, queryClient, handleUnknownError]
   );
 
   const getTopScoresByDivisionId = useCallback(
@@ -216,7 +219,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [queryClient]
+    [queryClient, handleUnknownError]
   );
 
   const deleteDivisionsById = useCallback(
@@ -232,7 +235,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [deleteDivisionMutation, queryClient, setMessage]
+    [deleteDivisionMutation, queryClient, setMessage, handleUnknownError]
   );
 
   const container: IDivisionContextProps = useMemo(

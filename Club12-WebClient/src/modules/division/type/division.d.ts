@@ -1,10 +1,8 @@
-import { IStageResponse } from '@/modules/stage/type/stage.d';
 import {
   Filtered,
   GenericResponsePagination,
   GUID,
 } from '@/modules/core/types/types';
-import { IMatchResponse } from '@/modules/match/type/match.d';
 
 /**
  * Context properties and methods for managing divisions in a React application.

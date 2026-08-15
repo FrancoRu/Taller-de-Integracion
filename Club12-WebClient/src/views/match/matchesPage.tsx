@@ -20,10 +20,8 @@ import { MatchType } from '@/modules/core/enum/match/matchType';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { useStage } from '@/modules/stage/hook/stage.hook';
-import {
-  buildActionsColumn,
-  TableRowAction,
-} from '@/views/core/components/TableRowActions';
+import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
+import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import {

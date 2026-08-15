@@ -66,7 +66,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
         }
       }
     },
-    [setTournament, setError]
+    [setTournament, setError, setMessage]
   );
 
   const putTournamentById = useCallback(
@@ -153,7 +153,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
         }
       }
     },
-    [setTournaments, setError]
+    [setTournaments, setError, tournaments]
   );
 
   const deleteTournamentById = useCallback(
@@ -191,7 +191,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
         }
       }
     },
-    [setError]
+    [setError, setMessage]
   );
 
   const container: ITournamentContextProps = useMemo(
