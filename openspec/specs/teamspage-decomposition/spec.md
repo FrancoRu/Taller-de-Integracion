@@ -130,7 +130,7 @@ PR 1 MUST add `teams.types.ts` and the presentational components (`TeamsFilterBa
 
 - GIVEN PR 1 has already landed on `develop`
 - WHEN PR 2 rewrites `TeamsPage.tsx` to consume the new components
-- THEN the same characterization suite from PR 1, unmodified, passes against the decomposed tree
+- THEN the same characterization suite from PR1, unmodified, passes against the decomposed tree
 - AND no other `views/*Page.tsx` file changes
 
 ## Non-Goals

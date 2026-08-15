@@ -104,7 +104,7 @@ $ git diff --stat -- Club12-WebClient/src/views/
  Club12-WebClient/src/views/team/TeamsPage.tsx | 269 +++------------------
  1 file changed, 61 insertions, 208 deletions
 ```
-Only TeamsPage.tsx is touched under views. No other views star Page.tsx file changed, satisfying the Two-PR Delivery Split scenario for PR2. Note: this scope is limited by design to refactor-teamspage-decomposition; a separate concurrent change named scheduled-database-backups has its own uncommitted files elsewhere in the tree, correctly out of scope here and not flagged as leakage.
+Only TeamsPage.tsx is touched under views. No other views start Page.tsx file changed, satisfying the Two-PR Delivery Split scenario for PR2. Note: this scope is limited by design to refactor-teamspage-decomposition; a separate concurrent change named scheduled-database-backups has its own uncommitted files elsewhere in the tree, correctly out of scope here and not flagged as leakage.
 
 ### Backdrop and Escape Dismiss Deviation, Investigated
 Read Club12-WebClient/src/views/team/TeamFormDialog.tsx, a PR1 file, unmodified by this diff, directly.
