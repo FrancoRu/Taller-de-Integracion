@@ -10,14 +10,14 @@ using Xunit;
 namespace API.Tests.Backup;
 
 /// <summary>
-/// Tests <see cref="StartupExtensions.AddBackupConfig"/>'s storage-target
-/// branching by inspecting the resulting <see cref="ServiceDescriptor"/> for
-/// <see cref="IBackupStorage"/> — never calling <c>BuildServiceProvider</c>
+/// Tests StartupExtensions.AddBackupConfig's storage-target
+/// branching by inspecting the resulting ServiceDescriptor for
+/// IBackupStorage — never calling BuildServiceProvider
 /// or resolving anything. This keeps the test free of real Supabase network
-/// I/O (a <see cref="SupabaseBackupStorage"/> registration is type-based, so
-/// its <see cref="ServiceDescriptor.ImplementationType"/> is inspectable
+/// I/O (a SupabaseBackupStorage registration is type-based, so
+/// its ServiceDescriptor.ImplementationType is inspectable
 /// without constructing it) and free of local-filesystem side effects (a
-/// <c>LocalDirectoryBackupStorage</c> registration is factory-based and is
+/// LocalDirectoryBackupStorage registration is factory-based and is
 /// never invoked here either).
 /// </summary>
 public sealed class AddBackupConfigStorageSelectionTests

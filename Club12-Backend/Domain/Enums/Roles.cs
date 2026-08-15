@@ -1,10 +1,10 @@
 namespace Domain.Enums;
 
 /// <summary>
-/// Compile-time string constants for every <see cref="UserRoleType"/> value.
-/// Use these in <c>[Authorize(Roles = ...)]</c> to avoid magic strings.
+/// Compile-time string constants for every UserRoleType value.
+/// Use these in [Authorize(Roles = ...)] to avoid magic strings.
 /// <para>
-/// Constants use <c>nameof()</c> so a rename of the enum member produces
+/// Constants use nameof() so a rename of the enum member produces
 /// a compile error here instead of a silent runtime mismatch.
 /// </para>
 /// </summary>

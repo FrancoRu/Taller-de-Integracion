@@ -6,10 +6,10 @@ using Application.Interfaces.Backup;
 namespace API.Tests.Backup.Fakes;
 
 /// <summary>
-/// Test double for <see cref="IProcessRunner"/>. Records exactly what it was
+/// Test double for IProcessRunner. Records exactly what it was
 /// invoked with (file name, argument vector, environment variables) so tests
 /// can assert on those without a real subprocess, and returns a
-/// pre-configured <see cref="ProcessResult"/>.
+/// pre-configured ProcessResult.
 /// </summary>
 public sealed class FakeProcessRunner : IProcessRunner
 {

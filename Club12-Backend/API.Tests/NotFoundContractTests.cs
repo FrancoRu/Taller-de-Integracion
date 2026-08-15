@@ -28,7 +28,7 @@ namespace API.Tests;
 /// <summary>
 /// Characterization/contract test proving every "resource not found" lookup across the 9
 /// converted controllers returns 404 with a ProblemDetails-consistent body (matching the
-/// shape <see cref="API.Utils.GlobalExceptionHandler"/> already emits for unhandled
+/// shape GlobalExceptionHandler already emits for unhandled
 /// exceptions), instead of the legacy bare-string 400. Also proves the create-time FK
 /// validation (Player POST referencing a missing TeamId) deliberately stays 400 — it is
 /// invalid input, not a not-found lookup.
@@ -44,8 +44,8 @@ public class NotFoundContractTests : IClassFixture<CustomWebApplicationFactory>
 
     /// <summary>
     /// One GET-by-id route per controller, for the controllers whose full dependency graph
-    /// can boot through <see cref="CustomWebApplicationFactory"/> anonymously (7 of the 9 —
-    /// see <see cref="SupabaseDependentControllerNotFoundTests"/> for Team/Venue, which are
+    /// can boot through CustomWebApplicationFactory anonymously (7 of the 9 —
+    /// see SupabaseDependentControllerNotFoundTests for Team/Venue, which are
     /// covered via direct-controller unit tests instead; see that class' doc comment for why).
     /// </summary>
     public static readonly TheoryData<string> NotFoundGetByIdRoutes = new()
@@ -136,7 +136,7 @@ public class NotFoundContractTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     /// <summary>
-    /// Regression guard: the Player POST create-time FK check (missing <c>TeamId</c>) is
+    /// Regression guard: the Player POST create-time FK check (missing TeamId) is
     /// invalid input, not a "resource not found" lookup, and must stay 400 — this change
     /// must NOT touch it.
     /// </summary>
@@ -162,16 +162,16 @@ public class NotFoundContractTests : IClassFixture<CustomWebApplicationFactory>
 }
 
 /// <summary>
-/// Covers the 2 not-found sites (<c>TeamController.GetTeamById</c>,
-/// <c>VenueController.GetVenueById</c>) that cannot be exercised through
-/// <see cref="CustomWebApplicationFactory"/>'s full HTTP host: both controllers take a
-/// constructor-injected <c>SupabaseHelper</c>, whose constructor eagerly opens a Supabase
-/// Realtime websocket connection (<c>AutoConnectRealtime = true</c>) — this throws/hangs in
+/// Covers the 2 not-found sites (TeamController.GetTeamById,
+/// VenueController.GetVenueById) that cannot be exercised through
+/// CustomWebApplicationFactory's full HTTP host: both controllers take a
+/// constructor-injected SupabaseHelper, whose constructor eagerly opens a Supabase
+/// Realtime websocket connection (AutoConnectRealtime = true) — this throws/hangs in
 /// any sandboxed environment without live Supabase network access. That is a pre-existing
 /// production-code testability gap, unrelated to and out of scope for this 400→404 fix, so
 /// this test degrades to the next available layer per the TDD "Choosing Test Layer" rule:
 /// direct-controller unit tests with hand-rolled service fakes, bypassing DI entirely.
-/// <c>SupabaseHelper</c> is passed as <c>null!</c> because the not-found branch under test
+/// SupabaseHelper is passed as null! because the not-found branch under test
 /// never touches it.
 /// </summary>
 public class SupabaseDependentControllerNotFoundTests
@@ -201,9 +201,9 @@ public class SupabaseDependentControllerNotFoundTests
     /// <summary>
     /// Covers the spec's DELETE case ("PUT/DELETE or nested action against nonexistent parent
     /// returns 404") for the sites that hit the same Supabase testability gap as the GET cases
-    /// above: <c>TeamController.DeleteTeamById</c> checks for the entity via
-    /// <c>ITeamService.GetTeamByIdAsync</c> and returns 404 before ever touching
-    /// <c>SupabaseHelper</c>, so the same <c>null!</c>-SupabaseHelper direct-controller pattern
+    /// above: TeamController.DeleteTeamById checks for the entity via
+    /// ITeamService.GetTeamByIdAsync and returns 404 before ever touching
+    /// SupabaseHelper, so the same null!-SupabaseHelper direct-controller pattern
     /// applies here.
     /// </summary>
     [Fact]
@@ -229,8 +229,8 @@ public class SupabaseDependentControllerNotFoundTests
     }
 
     /// <summary>
-    /// Gives the controller just enough of an <see cref="HttpContext"/> for
-    /// <c>ControllerBase.Problem()</c> to resolve a real <see cref="ProblemDetailsFactory"/>
+    /// Gives the controller just enough of an HttpContext for
+    /// ControllerBase.Problem() to resolve a real ProblemDetailsFactory
     /// (the same one the full host uses), without booting the whole application.
     /// </summary>
     private static void ConfigureProblemDetailsFactory(ControllerBase controller)

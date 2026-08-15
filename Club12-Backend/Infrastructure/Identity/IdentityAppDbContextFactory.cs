@@ -8,7 +8,7 @@ using System.Linq;
 namespace Infrastructure.Identity;
 
 /// <summary>
-/// Provides a design-time instance of <see cref="IdentityAppDbContext"/> for EF Core CLI tools.
+/// Provides a design-time instance of IdentityAppDbContext for EF Core CLI tools.
 /// Loads all appsettings*.json files found in the API project directory,
 /// so developer-specific files (e.g. appsettings.Franco.json) are picked up automatically.
 /// </summary>

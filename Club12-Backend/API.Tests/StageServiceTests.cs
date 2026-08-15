@@ -15,9 +15,9 @@ using Xunit;
 namespace API.Tests;
 
 /// <summary>
-/// Characterization (approval) tests for <see cref="Application.Services.StageService"/>'s
-/// automated stage-chain generation (<see cref="IStageService.CreateAutomatedStagesAsync"/>) and
-/// team-assignment logic (<see cref="IStageService.AssignTeamsToStageAsync"/>). These tests pin
+/// Characterization (approval) tests for StageService's
+/// automated stage-chain generation (IStageService.CreateAutomatedStagesAsync) and
+/// team-assignment logic (IStageService.AssignTeamsToStageAsync). These tests pin
 /// the currently-correct behavior of the existing, unmodified service — they are pure test
 /// additions and assert no production code changes.
 /// </summary>

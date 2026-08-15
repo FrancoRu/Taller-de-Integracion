@@ -12,11 +12,11 @@ using Xunit;
 namespace API.Tests.Backup;
 
 /// <summary>
-/// Unit tests for <see cref="DatabaseBackupHostedService"/>: interval-trigger
-/// logic, the <c>Backup:Enabled</c> gate, the single-flight guard, and
-/// failure isolation. All tests use <see cref="DatabaseBackupHostedService.IntervalOverride"/>
+/// Unit tests for DatabaseBackupHostedService: interval-trigger
+/// logic, the Backup:Enabled gate, the single-flight guard, and
+/// failure isolation. All tests use DatabaseBackupHostedService.IntervalOverride
 /// (a short, deterministic interval) instead of sleeping for real
-/// <c>IntervalHours</c>-scale durations, and poll via <see cref="TestTiming"/>
+/// IntervalHours-scale durations, and poll via TestTiming
 /// rather than fixed sleeps to avoid flakiness.
 /// </summary>
 public class DatabaseBackupHostedServiceTests

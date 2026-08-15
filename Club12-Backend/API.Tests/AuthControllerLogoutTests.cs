@@ -15,11 +15,11 @@ using Xunit;
 namespace API.Tests;
 
 /// <summary>
-/// Regression test locking <c>AuthController.Logout</c>'s observable contract — <c>204 No
-/// Content</c> and refresh-token/expiry clearing for an existing user, no-op for a missing
+/// Regression test locking AuthController.Logout's observable contract — 204 No
+/// Content and refresh-token/expiry clearing for an existing user, no-op for a missing
 /// user — before the boundary fix that routes the side effect through the new
-/// <see cref="IAuthenticationService.LogoutAsync"/> instead of a direct
-/// <c>UserManager&lt;ApplicationUser&gt;</c> injection in the controller. Written first
+/// IAuthenticationService.LogoutAsync instead of a direct
+/// UserManager&lt;ApplicationUser&gt; injection in the controller. Written first
 /// (RED) against the pre-refactor controller so it proves behavior is unchanged (GREEN)
 /// after the refactor lands.
 /// </summary>

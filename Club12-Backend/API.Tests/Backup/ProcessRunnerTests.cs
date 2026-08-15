@@ -6,9 +6,9 @@ using Xunit;
 namespace API.Tests.Backup;
 
 /// <summary>
-/// Exercises the real <see cref="ProcessRunner"/> adapter (not a fake) —
+/// Exercises the real ProcessRunner adapter (not a fake) —
 /// proves the missing-binary path degrades to a failed
-/// <see cref="ProcessResult"/> instead of throwing an unhandled exception,
+/// ProcessResult instead of throwing an unhandled exception,
 /// and that a real successful invocation is captured correctly.
 /// </summary>
 public class ProcessRunnerTests

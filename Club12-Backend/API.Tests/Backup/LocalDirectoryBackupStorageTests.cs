@@ -13,9 +13,9 @@ using Xunit;
 namespace API.Tests.Backup;
 
 /// <summary>
-/// Tests <see cref="LocalDirectoryBackupStorage"/> against a real temporary
+/// Tests LocalDirectoryBackupStorage against a real temporary
 /// directory (safe: local filesystem only, no external dependency), plus an
-/// end-to-end integration with the real <see cref="KeepLastNRetentionPolicy"/>
+/// end-to-end integration with the real KeepLastNRetentionPolicy
 /// to prove retention actually deletes the correct files when invoked
 /// through the storage adapter.
 /// </summary>

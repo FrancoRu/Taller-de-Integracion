@@ -53,7 +53,7 @@ public class MatchController(IMatchService matchService, IStageTeamMatchService 
     /// </remarks>
     /// <param name="id">The unique identifier of the stage for which matches will be generated.</param>
     /// <returns>
-    /// Returns a list of <see cref="DetailedMatchResponse"/> objects representing the generated matches.
+    /// Returns a list of DetailedMatchResponse objects representing the generated matches.
     /// </returns>
     [HttpPost("generate/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<DetailedMatchResponse>))]

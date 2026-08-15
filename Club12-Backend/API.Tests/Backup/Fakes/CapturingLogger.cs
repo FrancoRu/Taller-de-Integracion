@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace API.Tests.Backup.Fakes;
 
 /// <summary>
-/// Minimal <see cref="ILogger{T}"/> test double that records every log entry
+/// Minimal ILogger{T} test double that records every log entry
 /// so tests can assert a failure was actually logged (spec requirement),
 /// without pulling in a logging test-framework dependency.
 /// </summary>

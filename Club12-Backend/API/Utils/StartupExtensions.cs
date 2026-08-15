@@ -87,7 +87,7 @@ public static class StartupExtensions
     }
 
     /// <summary>
-    /// Runs EF migrations for both <see cref="ApplicationDBContext"/> and <see cref="IdentityAppDbContext"/>,
+    /// Runs EF migrations for both ApplicationDBContext and IdentityAppDbContext,
     /// then seeds the initial admin user.
     /// </summary>
     public static async Task ExecuteMigrationsAndSeedAsync(this WebApplication app)
@@ -139,7 +139,7 @@ public static class StartupExtensions
     ];
 
     /// <summary>
-    /// Adds custom authorization policies based on <see cref="UserRoleType"/> domain roles.
+    /// Adds custom authorization policies based on UserRoleType domain roles.
     /// </summary>
     public static IServiceCollection AddCustomAuthorization(this IServiceCollection services)
     {
@@ -268,8 +268,8 @@ public static class StartupExtensions
     }
 
     /// <summary>
-    /// Registers Identity DbContext, ASP.NET Core Identity services, <see cref="IAuthenticationService"/>,
-    /// <see cref="IUserManagementService"/>, and <see cref="IdentitySeeder"/>.
+    /// Registers Identity DbContext, ASP.NET Core Identity services, IAuthenticationService,
+    /// IUserManagementService, and IdentitySeeder.
     /// </summary>
     public static IServiceCollection AddIdentityConfig(
         this IServiceCollection services, IConfiguration configuration)
@@ -354,8 +354,8 @@ public static class StartupExtensions
         }
     }
     /// <summary>
-    /// Registers FluentEmail with Mailgun and binds <see cref="IEmailService"/>
-    /// to <see cref="FluentEmailHelper"/>.
+    /// Registers FluentEmail with Mailgun and binds IEmailService
+    /// to FluentEmailHelper.
     /// </summary>
     public static IServiceCollection AddEmailConfig(
        this IServiceCollection services, IConfiguration configuration)
@@ -391,23 +391,23 @@ public static class StartupExtensions
 
     /// <summary>
     /// Registers the scheduled database backup feature: binds the
-    /// <c>Backup</c> config section into a <see cref="BackupOptions"/>
+    /// Backup config section into a BackupOptions
     /// singleton and registers its ports/adapters (pg_dump, retention,
-    /// <see cref="DatabaseBackupHostedService"/>) explicitly as singletons.
-    /// The <see cref="IBackupStorage"/> implementation is selected by
-    /// <see cref="BackupOptions.StorageTarget"/>: <c>Supabase</c> registers
-    /// <see cref="SupabaseBackupStorage"/> (reusing the existing
-    /// <see cref="SupabaseHelper"/> singleton as its raw-storage boundary);
-    /// anything else (including the default, <c>Local</c>) registers
-    /// <see cref="LocalDirectoryBackupStorage"/>.
+    /// DatabaseBackupHostedService) explicitly as singletons.
+    /// The IBackupStorage implementation is selected by
+    /// BackupOptions.StorageTarget: Supabase registers
+    /// SupabaseBackupStorage (reusing the existing
+    /// SupabaseHelper singleton as its raw-storage boundary);
+    /// anything else (including the default, Local) registers
+    /// LocalDirectoryBackupStorage.
     /// </summary>
     /// <remarks>
-    /// Deliberately NOT registered via <see cref="RegisterScoped"/>'s
+    /// Deliberately NOT registered via RegisterScoped's
     /// reflection scan: these live outside the
-    /// <c>Application.Interfaces.Services</c> namespace on purpose, because
+    /// Application.Interfaces.Services namespace on purpose, because
     /// that scanner auto-binds everything it finds as <b>Scoped</b> — a
     /// lifetime mismatch for a service consumed by a singleton
-    /// <see cref="BackgroundService"/>.
+    /// BackgroundService.
     /// </remarks>
     public static IServiceCollection AddBackupConfig(this IServiceCollection services, IConfiguration configuration)
     {

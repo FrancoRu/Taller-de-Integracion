@@ -7,9 +7,9 @@ using Application.Interfaces.Backup;
 namespace API.Tests.Backup.Fakes;
 
 /// <summary>
-/// Test double for <see cref="IDatabaseBackupService"/>. Supports simulating
-/// a slow/still-running dump (via <see cref="Gate"/>) for single-flight tests,
-/// and simulating the first N calls failing (via <see cref="FailFirstCalls"/>)
+/// Test double for IDatabaseBackupService. Supports simulating
+/// a slow/still-running dump (via Gate) for single-flight tests,
+/// and simulating the first N calls failing (via FailFirstCalls)
 /// for failure-isolation tests.
 /// </summary>
 public sealed class FakeDatabaseBackupService : IDatabaseBackupService
@@ -18,10 +18,14 @@ public sealed class FakeDatabaseBackupService : IDatabaseBackupService
 
     public int CallCount => _callCount;
 
-    /// <summary>When set, <see cref="CreateDumpAsync"/> awaits this before returning/throwing.</summary>
+    /// <summary>
+    /// When set, CreateDumpAsync awaits this before returning/throwing.
+    /// </summary>
     public TaskCompletionSource<bool>? Gate { get; set; }
 
-    /// <summary>The first N calls throw <see cref="BackupExecutionException"/>; subsequent calls succeed.</summary>
+    /// <summary>
+    /// The first N calls throw BackupExecutionException; subsequent calls succeed.
+    /// </summary>
     public int FailFirstCalls { get; set; }
 
     public string DumpContent { get; set; } = "-- fake dump --";

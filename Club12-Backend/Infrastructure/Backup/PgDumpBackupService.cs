@@ -11,13 +11,13 @@ using Npgsql;
 namespace Infrastructure.Backup;
 
 /// <summary>
-/// <see cref="IDatabaseBackupService"/> implementation that shells out to
-/// <c>pg_dump</c> via <see cref="IProcessRunner"/>. Connection details are
-/// read from <c>ConnectionStrings:DbConnection</c> (the same Npgsql
-/// connection string already used by EF Core) and passed to <c>pg_dump</c>
+/// IDatabaseBackupService implementation that shells out to
+/// pg_dump via IProcessRunner. Connection details are
+/// read from ConnectionStrings:DbConnection (the same Npgsql
+/// connection string already used by EF Core) and passed to pg_dump
 /// as a discrete argument vector (host/port/user/database flags) — never
 /// concatenated into a shell command string. The password is passed via the
-/// <c>PGPASSWORD</c> environment variable convention rather than as a
+/// PGPASSWORD environment variable convention rather than as a
 /// command-line argument, so it never appears in the process argument list
 /// (which would otherwise be visible via process listings).
 /// </summary>

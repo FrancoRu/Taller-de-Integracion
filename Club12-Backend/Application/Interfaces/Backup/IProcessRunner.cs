@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 namespace Application.Interfaces.Backup;
 
 /// <summary>
-/// Thin abstraction over external process execution (e.g. <c>pg_dump</c>).
-/// Exists so business logic (<see cref="IDatabaseBackupService"/>
-/// implementations) never calls <c>System.Diagnostics.Process.Start</c>
+/// Thin abstraction over external process execution (e.g. pg_dump).
+/// Exists so business logic (IDatabaseBackupService
+/// implementations) never calls System.Diagnostics.Process.Start
 /// directly and can be unit-tested with a fake runner instead of a real
 /// binary.
 /// </summary>
@@ -19,7 +19,7 @@ public interface IProcessRunner
     /// string), so no argument can be reinterpreted as shell syntax by the
     /// child process. <paramref name="environmentVariables"/> lets callers
     /// pass sensitive values (e.g. a database password via the
-    /// <c>PGPASSWORD</c> convention) without exposing them in the argument
+    /// PGPASSWORD convention) without exposing them in the argument
     /// vector, where they would otherwise be visible via process listings.
     /// </summary>
     Task<ProcessResult> RunAsync(

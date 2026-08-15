@@ -10,23 +10,23 @@ using Microsoft.Extensions.Logging;
 namespace API.BackgroundServices;
 
 /// <summary>
-/// Drives the scheduled database backup: a <see cref="PeriodicTimer"/> loop
-/// that, once per elapsed interval, creates a dump (<see cref="IDatabaseBackupService"/>),
-/// stores it (<see cref="IBackupStorage"/>), and prunes stale backups per the
-/// configured retention policy (<see cref="IBackupRetentionPolicy"/>).
+/// Drives the scheduled database backup: a PeriodicTimer loop
+/// that, once per elapsed interval, creates a dump (IDatabaseBackupService),
+/// stores it (IBackupStorage), and prunes stale backups per the
+/// configured retention policy (IBackupRetentionPolicy).
 ///
-/// No-ops entirely when <see cref="BackupOptions.Enabled"/> is <c>false</c>
+/// No-ops entirely when BackupOptions.Enabled is false
 /// (spec: "Backup Enabled Gate") — this is checked here, independent of
-/// whatever gates <c>Program.cs</c> applies before registering this as an
-/// <see cref="IHostedService"/>, so the gate is honored even if the service
+/// whatever gates Program.cs applies before registering this as an
+/// IHostedService, so the gate is honored even if the service
 /// is constructed/started directly.
 ///
 /// A tick is fired-and-forgotten from the timer loop (rather than awaited
 /// inline) so a slow/blocked dump never delays the loop's own timing; an
-/// <see cref="Interlocked"/>-guarded single-flight flag ensures an
+/// Interlocked-guarded single-flight flag ensures an
 /// already-running attempt is never started again by an overlapping tick
 /// (spec: proposal's "Long dump blocks/overlaps runs" risk). A failed
-/// attempt (<see cref="BackupExecutionException"/>, or any unexpected
+/// attempt (BackupExecutionException, or any unexpected
 /// exception from a port implementation) is logged and never propagates —
 /// it must not crash the host or stop later scheduled attempts (spec:
 /// "Backup Failure Isolation").
@@ -40,10 +40,10 @@ public sealed class DatabaseBackupHostedService(
 {
     /// <summary>
     /// Test-only hook: overrides the interval that would otherwise be
-    /// derived from <see cref="BackupOptions.IntervalHours"/>, letting tests
+    /// derived from BackupOptions.IntervalHours, letting tests
     /// use a short, deterministic interval instead of sleeping for real
-    /// hours-scale durations. Always <c>null</c> in production wiring (the
-    /// codebase has no <c>InternalsVisibleTo</c> convention, so this is
+    /// hours-scale durations. Always null in production wiring (the
+    /// codebase has no InternalsVisibleTo convention, so this is
     /// public rather than internal — it is not exercised by any production
     /// code path).
     /// </summary>

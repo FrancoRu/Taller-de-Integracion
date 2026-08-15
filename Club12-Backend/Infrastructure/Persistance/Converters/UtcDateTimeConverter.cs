@@ -13,7 +13,7 @@ public class UtcDateTimeConverter()
         v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
 
 /// <summary>
-/// Nullable variant of <see cref="UtcDateTimeConverter"/>.
+/// Nullable variant of UtcDateTimeConverter.
 /// </summary>
 public class NullableUtcDateTimeConverter()
     : ValueConverter<DateTime?, DateTime?>(

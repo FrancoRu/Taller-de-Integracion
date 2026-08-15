@@ -7,11 +7,10 @@ using Application.Utils.Helper.SupabaseHelper;
 namespace API.Tests.Backup.Fakes;
 
 /// <summary>
-/// Test double for <see cref="ISupabaseRawStorage"/>. Records the exact
+/// Test double for ISupabaseRawStorage. Records the exact
 /// object paths passed to each raw call and can be configured to throw
 /// (simulating a network/auth error from the real Supabase client), so
-/// <see cref="Infrastructure.Backup.SupabaseBackupStorage"/> can be unit
-/// tested without a real <c>SupabaseHelper</c> (whose constructor performs
+/// SupabaseBackupStorage can be unit tested without a real SupabaseHelper (whose constructor performs
 /// real network initialization) or any network call — per this change's spec
 /// Non-Goal on actual Supabase upload verification.
 /// </summary>

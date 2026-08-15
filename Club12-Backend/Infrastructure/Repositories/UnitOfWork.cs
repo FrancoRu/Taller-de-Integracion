@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 namespace Infrastructure.Repositories;
 
 /// <summary>
-/// Implements the <see cref="IUnitOfWork"/> interface, providing a centralized access point for all repository instances
+/// Implements the IUnitOfWork interface, providing a centralized access point for all repository instances
 /// and managing transactional operations within the application's data layer.
 /// </summary>
 /// <remarks>
-/// This class uses constructor injection to receive all repository dependencies and the <see cref="DbContext"/> instance.
+/// This class uses constructor injection to receive all repository dependencies and the DbContext instance.
 /// It exposes each repository via a public property, enabling coordinated data operations across multiple entities.
-/// The <see cref="SaveChangesAsync"/> method commits all changes to the database in a single transaction.
+/// The SaveChangesAsync method commits all changes to the database in a single transaction.
 /// </remarks>
 public class UnitOfWork(
     ApplicationDBContext context,

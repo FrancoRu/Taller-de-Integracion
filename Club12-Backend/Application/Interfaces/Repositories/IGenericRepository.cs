@@ -14,7 +14,7 @@ namespace Application.Interfaces.Repositories;
 /// Provides methods for retrieving, adding, updating, and removing entities,
 /// as well as querying and checking existence or count of entities.
 /// </summary>
-/// <typeparam name="TEntity">The entity type, which must inherit from <see cref="EntityBase"/>.</typeparam>
+/// <typeparam name="TEntity">The entity type, which must inherit from EntityBase.</typeparam>
 public interface IGenericRepository<TEntity> where TEntity : EntityBase
 {
     /// <summary>
@@ -31,7 +31,7 @@ public interface IGenericRepository<TEntity> where TEntity : EntityBase
     /// Returns a queryable collection of entities for advanced querying scenarios.
     /// </summary>
     /// <remarks>
-    /// This method exposes the underlying <see cref="IQueryable{TEntity}"/> for LINQ operations.
+    /// This method exposes the underlying IQueryable{TEntity} for LINQ operations.
     /// </remarks>
     IQueryable<TEntity> GetQueryable();
 

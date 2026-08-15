@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 namespace Infrastructure.Identity;
 
 /// <summary>
-/// Identity-backed implementation of <see cref="IUserManagementService"/>.
+/// Identity-backed implementation of IUserManagementService.
 /// All access-control rules are enforced here, keeping controllers thin.
 /// </summary>
 public sealed class IdentityUserManagementService(

@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 namespace Infrastructure.Identity;
 
 /// <summary>
-/// Infrastructure implementation of <see cref="IAuthenticationService"/> backed by ASP.NET Core Identity.
+/// Infrastructure implementation of IAuthenticationService backed by ASP.NET Core Identity.
 /// </summary>
 public sealed class IdentityAuthenticationService(
     UserManager<ApplicationUser> userManager,

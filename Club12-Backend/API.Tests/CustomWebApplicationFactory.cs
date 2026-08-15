@@ -13,20 +13,20 @@ using Microsoft.Extensions.DependencyInjection;
 namespace API.Tests;
 
 /// <summary>
-/// Boots the real <c>API</c> host for integration tests, replacing the
-/// production Npgsql-backed <see cref="ApplicationDBContext"/> and
-/// <see cref="IdentityAppDbContext"/> registrations with SQLite in-memory
+/// Boots the real API host for integration tests, replacing the
+/// production Npgsql-backed ApplicationDBContext and
+/// IdentityAppDbContext registrations with SQLite in-memory
 /// connections. No production code path is altered by this factory; it only
 /// intercepts service registration for the test host.
 ///
-/// The host's own startup code (<c>ExecuteMigrationsAndSeedAsync</c>) still
-/// runs for real and calls <c>Database.MigrateAsync()</c> against these
+/// The host's own startup code (ExecuteMigrationsAndSeedAsync) still
+/// runs for real and calls Database.MigrateAsync() against these
 /// SQLite connections — replaying the checked-in migration history (written
 /// for Npgsql) against SQLite is unreliable (schema-qualified raw SQL,
 /// provider-specific column types). To keep the harness reliable, schema is
-/// instead built once via <c>EnsureCreated()</c> directly from the current
+/// instead built once via EnsureCreated() directly from the current
 /// model, and the EF migrations-history table is pre-seeded so the host's
-/// own <c>MigrateAsync()</c> call sees nothing pending and becomes a no-op.
+/// own MigrateAsync() call sees nothing pending and becomes a no-op.
 /// </summary>
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
@@ -91,9 +91,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
     /// <summary>
     /// Pre-seeds the EF Core migrations-history table so that the host's own
-    /// startup <c>Database.MigrateAsync()</c> call finds nothing pending and
+    /// startup Database.MigrateAsync() call finds nothing pending and
     /// performs no schema changes against the SQLite database we already
-    /// built via <see cref="DatabaseFacade.EnsureCreated"/>.
+    /// built via DatabaseFacade.EnsureCreated.
     /// </summary>
     private static void MarkAllMigrationsAsApplied(DbContext db)
     {

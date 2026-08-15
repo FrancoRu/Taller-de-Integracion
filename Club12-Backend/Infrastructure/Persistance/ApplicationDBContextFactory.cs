@@ -8,7 +8,7 @@ using System.Linq;
 namespace Infrastructure.Persistance;
 
 /// <summary>
-/// Provides a design-time instance of <see cref="ApplicationDBContext"/> for EF Core CLI tools.
+/// Provides a design-time instance of ApplicationDBContext for EF Core CLI tools.
 /// Loads all appsettings*.json files found in the API project directory and environment
 /// variables, so the EF tooling can build the model without running the API host.
 /// </summary>

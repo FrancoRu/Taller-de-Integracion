@@ -8,7 +8,7 @@ namespace Application.Interfaces.Backup;
 /// Produces a single database dump. Implementations must never let an
 /// underlying failure crash the caller: a failed dump attempt (non-zero exit
 /// code, missing binary, ...) is logged and surfaced as a
-/// <see cref="BackupExecutionException"/>, not an unhandled exception.
+/// BackupExecutionException, not an unhandled exception.
 /// </summary>
 public interface IDatabaseBackupService
 {

@@ -8,14 +8,14 @@ using Application.Interfaces.Backup;
 namespace Infrastructure.Backup;
 
 /// <summary>
-/// <see cref="IProcessRunner"/> adapter backed by <see cref="Process"/>.
-/// Arguments are passed via <see cref="ProcessStartInfo.ArgumentList"/> —
+/// IProcessRunner adapter backed by Process.
+/// Arguments are passed via ProcessStartInfo.ArgumentList —
 /// never a concatenated shell command string — so no argument is
 /// interpretable as shell syntax by the child process
-/// (<c>UseShellExecute = false</c>, no shell is ever invoked). A
-/// missing/unresolvable executable surfaces as <see cref="Win32Exception"/>
+/// (UseShellExecute = false, no shell is ever invoked). A
+/// missing/unresolvable executable surfaces as Win32Exception
 /// from the runtime when starting the process; this is caught and converted
-/// into a failed <see cref="ProcessResult"/> (sentinel exit code -1) instead
+/// into a failed ProcessResult (sentinel exit code -1) instead
 /// of propagating, so callers always get a result to log/handle rather than
 /// an unhandled exception.
 /// </summary>

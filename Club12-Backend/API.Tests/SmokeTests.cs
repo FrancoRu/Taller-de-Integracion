@@ -7,7 +7,7 @@ namespace API.Tests;
 
 /// <summary>
 /// Proves the test harness itself works: boots the real API host via
-/// <see cref="CustomWebApplicationFactory"/> and issues an anonymous GET.
+/// CustomWebApplicationFactory and issues an anonymous GET.
 /// This is a harness smoke test, not business-logic coverage.
 /// </summary>
 public class SmokeTests : IClassFixture<CustomWebApplicationFactory>

@@ -10,22 +10,22 @@ using Application.Utils.Helper.SupabaseHelper;
 namespace Infrastructure.Backup;
 
 /// <summary>
-/// <see cref="IBackupStorage"/> implementation that reuses the existing
-/// Supabase client/credentials (via <see cref="ISupabaseRawStorage"/>,
-/// implemented by <see cref="SupabaseHelper"/>) instead of provisioning a
+/// IBackupStorage implementation that reuses the existing
+/// Supabase client/credentials (via ISupabaseRawStorage,
+/// implemented by SupabaseHelper) instead of provisioning a
 /// second Supabase client. Confines every backup object to the dedicated
-/// <c>backups/</c> prefix in the configured bucket. Backup names are
+/// backups/ prefix in the configured bucket. Backup names are
 /// expected to be server-generated (timestamp + guid, see
-/// <c>DatabaseBackupHostedService</c>), but every name is still validated to
-/// resolve strictly inside the <c>backups/</c> prefix before any raw call
-/// runs — mirroring <c>LocalDirectoryBackupStorage</c>'s traversal guard for
+/// DatabaseBackupHostedService), but every name is still validated to
+/// resolve strictly inside the backups/ prefix before any raw call
+/// runs — mirroring LocalDirectoryBackupStorage's traversal guard for
 /// this port's other adapter.
 ///
 /// Raw-storage failures (network error, auth error, or any other exception
 /// surfaced by the Supabase client) are wrapped into
-/// <see cref="BackupExecutionException"/> — the same failure type
-/// <c>PgDumpBackupService</c> throws and that
-/// <c>DatabaseBackupHostedService</c> already catches, logs, and recovers
+/// BackupExecutionException — the same failure type
+/// PgDumpBackupService throws and that
+/// DatabaseBackupHostedService already catches, logs, and recovers
 /// from without crashing the host.
 /// </summary>
 public sealed class SupabaseBackupStorage(ISupabaseRawStorage rawStorage) : IBackupStorage
@@ -79,10 +79,10 @@ public sealed class SupabaseBackupStorage(ISupabaseRawStorage rawStorage) : IBac
     }
 
     /// <summary>
-    /// Resolves <paramref name="name"/> against the <c>backups/</c> prefix
-    /// and throws <see cref="ArgumentException"/> unless it is a simple,
+    /// Resolves <paramref name="name"/> against the backups/ prefix
+    /// and throws ArgumentException unless it is a simple,
     /// non-rooted, non-traversing relative name — never forwarded to
-    /// <c>rawStorage</c> when invalid, so no raw call is attempted for
+    /// rawStorage when invalid, so no raw call is attempted for
     /// a rejected name.
     /// </summary>
     private static string ToObjectPath(string name)

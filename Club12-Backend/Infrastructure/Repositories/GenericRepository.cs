@@ -16,11 +16,11 @@ namespace Infrastructure.Repositories;
 /// Provides a generic repository implementation for CRUD operations and querying entities in the database.
 /// </summary>
 /// <typeparam name="TEntity">
-/// The entity type managed by the repository. Must inherit from <see cref="EntityBase"/>.
+/// The entity type managed by the repository. Must inherit from EntityBase.
 /// </typeparam>
 /// <remarks>
 /// This repository uses Entity Framework Core to interact with the database and supports asynchronous operations.
-/// It implements <see cref="IGenericRepository{TEntity}"/> and provides methods for adding, updating, removing,
+/// It implements IGenericRepository{TEntity} and provides methods for adding, updating, removing,
 /// and querying entities, including support for eager loading and pagination.
 /// </remarks>
 public class GenericRepository<TEntity>(ApplicationDBContext context)
@@ -32,7 +32,7 @@ public class GenericRepository<TEntity>(ApplicationDBContext context)
     protected readonly ApplicationDBContext _context = context;
 
     /// <summary>
-    /// The <see cref="DbSet{TEntity}"/> representing the collection of entities.
+    /// The DbSet{TEntity} representing the collection of entities.
     /// </summary>
     protected readonly DbSet<TEntity> _dbSet = context.Set<TEntity>();
 

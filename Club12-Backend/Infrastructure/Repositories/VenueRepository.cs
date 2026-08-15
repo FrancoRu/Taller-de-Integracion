@@ -5,9 +5,9 @@ using Infrastructure.Persistance;
 namespace Infrastructure.Repositories;
 
 /// <summary>
-/// Repository implementation for <see cref="Venue"/> entities.
-/// Inherits generic CRUD operations from <see cref="GenericRepository{Venue}"/> and implements <see cref="IVenueRepository"/> interface.
-/// Utilizes <see cref="ApplicationDBContext"/> for data access.
+/// Repository implementation for Venue entities.
+/// Inherits generic CRUD operations from GenericRepository{Venue} and implements IVenueRepository interface.
+/// Utilizes ApplicationDBContext for data access.
 /// </summary>
 /// <remarks>
 /// This repository provides data access logic specific to venues, enabling separation of concerns and testability.

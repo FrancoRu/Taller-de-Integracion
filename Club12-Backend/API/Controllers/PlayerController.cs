@@ -87,7 +87,7 @@ public class PlayerController(
     /// </summary>
     /// <param name="id">The unique identifier of the player.</param>
     /// <returns>
-    /// Returns <see cref="AdminPlayerResponse"/> if the player is found; otherwise, returns a 400 Bad Request.
+    /// Returns AdminPlayerResponse if the player is found; otherwise, returns a 400 Bad Request.
     /// </returns>
     [HttpGet("admin/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AdminPlayerResponse))]

@@ -69,7 +69,7 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
     /// </summary>
     /// <param name="filterRequest">The filtering parameters for player sanctions.</param>
     /// <returns>
-    /// Returns a <see cref="PaginatedResponse{PlayerSanctionResponse}"/> containing the filtered sanctions.
+    /// Returns a PaginatedResponse{PlayerSanctionResponse} containing the filtered sanctions.
     /// Possible HTTP responses:
     /// <list type="bullet">
     ///   <item><description>200 OK - The filtered sanctions were retrieved successfully.</description></item>

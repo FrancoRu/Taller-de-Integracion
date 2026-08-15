@@ -8,7 +8,7 @@ namespace Application.Utils.Helper.Email;
 
 /// <summary>
 /// Loads HTML email templates from embedded resources and replaces named tokens
-/// in the form <c>{{TokenName}}</c>.
+/// in the form {{TokenName}}.
 /// </summary>
 internal static class EmailTemplateLoader
 {
@@ -20,11 +20,11 @@ internal static class EmailTemplateLoader
     /// with its corresponding value.
     /// </summary>
     /// <param name="templateName">
-    /// File name without extension, e.g. <c>"PasswordResetTemplate"</c>.
-    /// The file must be at <c>Utils/Helper/Email/Templates/{templateName}.html</c>
-    /// and marked as <c>EmbeddedResource</c>.
+    /// File name without extension, e.g. "PasswordResetTemplate".
+    /// The file must be at Utils/Helper/Email/Templates/{templateName}.html
+    /// and marked as EmbeddedResource.
     /// </param>
-    /// <param name="tokens">Dictionary of <c>{{Token}}</c> → replacement value pairs.</param>
+    /// <param name="tokens">Dictionary of {{Token}} → replacement value pairs.</param>
     public static string Render(string templateName, Dictionary<string, string> tokens)
     {
         string resourceName =

@@ -3,7 +3,7 @@ namespace Application.DTOs.Player.Response;
 
 /// <summary>
 /// Represents a detailed response for an Admin to view player information.
-/// Inherits from <see cref="PublicPlayerResponse"/> and includes sensitive information.
+/// Inherits from PublicPlayerResponse and includes sensitive information.
 /// </summary>
 public class AdminPlayerResponse : PublicPlayerResponse
 {

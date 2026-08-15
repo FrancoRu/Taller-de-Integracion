@@ -5,9 +5,9 @@ using Infrastructure.Persistance;
 namespace Infrastructure.Repositories;
 
 /// <summary>
-/// Repository implementation for managing <see cref="PlayerStatistic"/> entities.
-/// Inherits generic CRUD operations from <see cref="GenericRepository{PlayerStatistic}"/> and implements <see cref="IPlayerStatisticRepository"/>.
-/// Utilizes <see cref="ApplicationDBContext"/> for data access.
+/// Repository implementation for managing PlayerStatistic entities.
+/// Inherits generic CRUD operations from GenericRepository{PlayerStatistic} and implements IPlayerStatisticRepository.
+/// Utilizes ApplicationDBContext for data access.
 /// </summary>
 public class PlayerStatisticRepository(ApplicationDBContext context)
     : GenericRepository<PlayerStatistic>(context), IPlayerStatisticRepository

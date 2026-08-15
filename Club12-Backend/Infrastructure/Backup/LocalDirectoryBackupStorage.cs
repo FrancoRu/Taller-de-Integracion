@@ -10,12 +10,12 @@ using Microsoft.Extensions.Logging;
 namespace Infrastructure.Backup;
 
 /// <summary>
-/// <see cref="IBackupStorage"/> implementation backed by a local/mounted
+/// IBackupStorage implementation backed by a local/mounted
 /// directory — the config-selected fallback for environments without
 /// Supabase storage configured (or the default until the Supabase adapter
 /// ships in a later work unit). Backup names are expected to be
 /// server-generated (timestamp + guid, see
-/// <c>DatabaseBackupHostedService</c>), but every name is still validated to
+/// DatabaseBackupHostedService), but every name is still validated to
 /// resolve strictly inside the configured directory before any file
 /// operation runs, defending against path traversal regardless of caller.
 /// </summary>
@@ -63,8 +63,8 @@ public sealed class LocalDirectoryBackupStorage : IBackupStorage
 
     /// <summary>
     /// Resolves <paramref name="name"/> against the configured directory and
-    /// throws <see cref="ArgumentException"/> unless the resolved path stays
-    /// strictly inside it (defends against <c>../</c> traversal and rooted
+    /// throws ArgumentException unless the resolved path stays
+    /// strictly inside it (defends against ../ traversal and rooted
     /// absolute paths escaping the configured backup directory).
     /// </summary>
     private string ResolveSafePath(string name)

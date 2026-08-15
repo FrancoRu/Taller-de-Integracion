@@ -19,7 +19,7 @@ public class SupabaseHelper : ISupabaseRawStorage
     private readonly string _baseUrl;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="SupabaseHelper"/> class using configuration values.
+    /// Initializes a new instance of the SupabaseHelper class using configuration values.
     /// </summary>
     /// <param name="configuration">The application configuration containing Supabase settings.</param>
     public SupabaseHelper(IConfiguration configuration)
@@ -91,10 +91,10 @@ public class SupabaseHelper : ISupabaseRawStorage
 
     /// <summary>
     /// Uploads raw content to an arbitrary object path in the bucket. Unlike
-    /// <see cref="UploadImageAsync{T}"/>, this is not image-shaped: no
+    /// UploadImageAsync{T}, this is not image-shaped: no
     /// per-type folder convention, no cache-control header, no public-URL
     /// return — the caller supplies the exact destination path. Additive:
-    /// <see cref="UploadImageAsync{T}"/>'s behavior and call sites are
+    /// UploadImageAsync{T}'s behavior and call sites are
     /// untouched.
     /// </summary>
     /// <param name="objectPath">The exact destination path within the bucket.</param>
@@ -116,8 +116,8 @@ public class SupabaseHelper : ISupabaseRawStorage
 
     /// <summary>
     /// Lists raw objects under <paramref name="prefix"/> in the bucket.
-    /// Additive: does not affect <see cref="UploadImageAsync{T}"/> or
-    /// <see cref="DeleteImageAsync{T}"/>.
+    /// Additive: does not affect UploadImageAsync{T} or
+    /// DeleteImageAsync{T}.
     /// </summary>
     /// <param name="prefix">The bucket-relative path prefix to list.</param>
     /// <exception cref="InvalidOperationException">Thrown when listing fails.</exception>
@@ -143,7 +143,7 @@ public class SupabaseHelper : ISupabaseRawStorage
 
     /// <summary>
     /// Removes the raw object at <paramref name="objectPath"/> in the bucket.
-    /// Additive: existing <see cref="DeleteImageAsync{T}"/> behavior and call
+    /// Additive: existing DeleteImageAsync{T} behavior and call
     /// sites are untouched.
     /// </summary>
     /// <param name="objectPath">The exact object path within the bucket.</param>
@@ -161,7 +161,7 @@ public class SupabaseHelper : ISupabaseRawStorage
     }
 
     /// <summary>
-    /// Reads all bytes from a given <see cref="Stream"/> using the <c>Stream.Read</c> method in chunks,
+    /// Reads all bytes from a given Stream using the Stream.Read method in chunks,
     /// and returns the entire content as a byte array.
     /// </summary>
     /// <param name="stream">The input stream to read from.</param>

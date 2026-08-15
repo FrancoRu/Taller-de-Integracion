@@ -8,15 +8,21 @@ public static class EntityConstants
 {
     // ── Schema ────────────────────────────────────────────────────────────────
 
-    /// <summary>Club12 database schema.</summary>
+    /// <summary>
+    /// Club12 database schema.
+    /// </summary>
     public const string Schema = "Club12";
 
     // ── Shared column types ───────────────────────────────────────────────────
 
-    /// <summary>SQL Server <c>datetime2</c> column type.</summary>
+    /// <summary>
+    /// SQL Server datetime2 column type.
+    /// </summary>
     public const string DateTime2 = "datetime2";
 
-    /// <summary>SQL Server <c>decimal(18,4)</c> column type.</summary>
+    /// <summary>
+    /// SQL Server decimal(18,4) column type.
+    /// </summary>
     public const string Decimal18x4 = "decimal(18,4)";
 
     // ── Tables ────────────────────────────────────────────────────────────────

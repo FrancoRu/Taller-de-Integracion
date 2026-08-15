@@ -5,11 +5,11 @@ using Infrastructure.Persistance;
 namespace Infrastructure.Repositories;
 
 /// <summary>
-/// Repository implementation for managing <see cref="Player"/> entities.
-/// Inherits generic CRUD operations from <see cref="GenericRepository{Player}"/> and implements <see cref="IPlayerRepository"/>.
+/// Repository implementation for managing Player entities.
+/// Inherits generic CRUD operations from GenericRepository{Player} and implements IPlayerRepository.
 /// </summary>
 /// <remarks>
-/// Utilizes <see cref="ApplicationDBContext"/> for data access.
+/// Utilizes ApplicationDBContext for data access.
 /// This repository is intended to encapsulate player-specific data operations.
 /// </remarks>
 public class PlayerRepository(ApplicationDBContext context)

@@ -12,8 +12,8 @@ using Xunit;
 namespace API.Tests.Backup;
 
 /// <summary>
-/// Unit tests for <see cref="PgDumpBackupService"/> using a
-/// <see cref="FakeProcessRunner"/> — no real <c>pg_dump</c> binary involved.
+/// Unit tests for PgDumpBackupService using a
+/// FakeProcessRunner — no real pg_dump binary involved.
 /// Covers: correct argument-vector construction from the connection string,
 /// subprocess argument-injection resistance, and failure handling
 /// (non-zero exit / missing binary → logged, handled exception, not a crash).

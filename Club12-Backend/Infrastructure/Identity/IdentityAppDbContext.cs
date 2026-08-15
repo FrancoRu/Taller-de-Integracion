@@ -8,7 +8,7 @@ namespace Infrastructure.Identity;
 
 /// <summary>
 /// EF Core context for ASP.NET Core Identity tables.
-/// Inherits <see cref="IdentityDbContext{TUser,TRole,TKey}"/> so EF generates
+/// Inherits IdentityDbContext{TUser,TRole,TKey} so EF generates
 /// AspNetUsers, AspNetRoles, AspNetUserRoles, etc.
 /// </summary>
 public class IdentityAppDbContext(DbContextOptions<IdentityAppDbContext> options)

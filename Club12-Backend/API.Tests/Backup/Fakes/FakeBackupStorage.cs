@@ -8,7 +8,7 @@ using Application.Interfaces.Backup;
 namespace API.Tests.Backup.Fakes;
 
 /// <summary>
-/// Test double for <see cref="IBackupStorage"/>. Records call counts and
+/// Test double for IBackupStorage. Records call counts and
 /// deleted names so hosted-service tests can assert on storage/retention
 /// interaction without any real I/O.
 /// </summary>

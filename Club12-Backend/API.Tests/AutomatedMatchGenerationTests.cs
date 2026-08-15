@@ -14,11 +14,10 @@ using MatchType = Domain.Enums.MatchType;
 namespace API.Tests;
 
 /// <summary>
-/// Characterization (approval) test for
-/// <see cref="Application.Services.MatchService.CreateAutomatedMatchesAsync"/>'s knockout and
-/// final-stage match generation. Written BEFORE the batch1 cleanup refactor (magic-number
+/// Characterization (approval) test for MatchService.CreateAutomatedMatchesAsync's
+/// knockout and final-stage match generation. Written BEFORE the batch1 cleanup refactor (magic-number
 /// extraction, CS1998 fix) to prove those edits stay behavior-preserving: match counts, stage
-/// assignment (via <see cref="MatchType.Playoff"/>), and date bounds must remain identical.
+/// assignment (via MatchType.Playoff), and date bounds must remain identical.
 /// </summary>
 public class AutomatedMatchGenerationTests : IClassFixture<CustomWebApplicationFactory>
 {

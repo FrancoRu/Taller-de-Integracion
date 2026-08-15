@@ -16,11 +16,11 @@ namespace API.Tests;
 
 /// <summary>
 /// Characterization tests for the sanction appeal state machine implemented in
-/// <see cref="API.Controllers.PlayerSanctionController.AppealPlayerSanction"/> and
-/// <see cref="API.Controllers.PlayerSanctionController.ResolvePlayerSanctionAppeal"/> — an
+/// PlayerSanctionController.AppealPlayerSanction and
+/// PlayerSanctionController.ResolvePlayerSanctionAppeal — an
 /// accepted architecture smell (business logic living in the controller rather than a
 /// dedicated service). Locks in the current guard clauses and persisted status transitions via
-/// a real HTTP round trip through <see cref="CustomWebApplicationFactory"/>; introduces no
+/// a real HTTP round trip through CustomWebApplicationFactory; introduces no
 /// behavior change.
 /// </summary>
 public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFactory>
@@ -163,9 +163,9 @@ public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFacto
     }
 
     /// <summary>
-    /// Seeds the full object graph a <see cref="PlayerSanction"/> requires under SQLite's
+    /// Seeds the full object graph a PlayerSanction requires under SQLite's
     /// enforced FKs: Team→Player and Tournament→Division→Stage→Match, mirroring the object-
-    /// graph depth of <c>AutomatedMatchGenerationTests.SeedStageAsync</c>.
+    /// graph depth of AutomatedMatchGenerationTests.SeedStageAsync.
     /// </summary>
     private static async Task<PlayerSanction> SeedSanctionAsync(
         ApplicationDBContext db, SanctionAppealStatus status)

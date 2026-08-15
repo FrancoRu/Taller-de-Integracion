@@ -13,10 +13,10 @@ using Xunit;
 namespace API.Tests;
 
 /// <summary>
-/// Characterization tests for <see cref="AuthService.GenerateJwtTokenAsync"/> — locks in the
+/// Characterization tests for AuthService.GenerateJwtTokenAsync — locks in the
 /// current claim shape, 24h expiry, signature verifiability, and refresh-token uniqueness of
 /// the JWT/refresh-token generation behavior before any future refactor.
-/// <see cref="AuthService"/> depends only on <see cref="IConfiguration"/>, so it is
+/// AuthService depends only on IConfiguration, so it is
 /// instantiated directly against an in-memory configuration — no host, no DB.
 /// </summary>
 public class AuthServiceJwtTests

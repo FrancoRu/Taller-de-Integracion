@@ -6,15 +6,15 @@ using Application.Interfaces.Backup;
 namespace Application.Backup;
 
 /// <summary>
-/// Pure keep-last-N retention policy: retains the newest <c>retainCount</c>
-/// entries (by <see cref="BackupFile.Timestamp"/>) and selects the rest for
+/// Pure keep-last-N retention policy: retains the newest retainCount
+/// entries (by BackupFile.Timestamp) and selects the rest for
 /// deletion. No I/O.
 /// </summary>
 /// <remarks>
 /// Tie-break rule (documented design decision, see design.md "Open
 /// Questions"): when two or more entries share the exact same timestamp at
 /// the retention boundary, entries are ordered newest-timestamp-first, then
-/// by <see cref="BackupFile.Name"/> in ascending ordinal order. This makes
+/// by BackupFile.Name in ascending ordinal order. This makes
 /// selection deterministic and independent of input order — the
 /// lexically-smallest name among tied entries is preferred for retention.
 /// </remarks>

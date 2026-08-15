@@ -9,7 +9,7 @@ namespace API.Tests.Backup;
 
 /// <summary>
 /// Unit tests for the pure keep-last-N retention decision. No I/O — the
-/// policy only selects which <see cref="BackupFile"/> entries to delete
+/// policy only selects which BackupFile entries to delete
 /// given an already-known list and a retain count.
 /// </summary>
 public class KeepLastNRetentionPolicyTests

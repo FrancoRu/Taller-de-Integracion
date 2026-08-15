@@ -11,58 +11,58 @@ namespace Infrastructure.Persistance;
 public interface IClub12DBContext
 {
     /// <summary>
-    /// <see cref="DbSet{Team}"/> of teams in the system.
+    /// DbSet{Team} of teams in the system.
     /// </summary>
     DbSet<Team> Teams { get; }
 
     /// <summary>
-    /// <see cref="DbSet{Player}"/> of players in the system.
+    /// DbSet{Player} of players in the system.
     /// </summary>
     DbSet<Player> Players { get; }
 
     /// <summary>
-    /// <see cref="DbSet{Tournament}"/> of tournaments in the system.
+    /// DbSet{Tournament} of tournaments in the system.
     /// </summary>
     DbSet<Tournament> Tournaments { get; }
 
     /// <summary>
-    /// <see cref="DbSet{Division}"/> of divisions in the system.
+    /// DbSet{Division} of divisions in the system.
     /// </summary>
     DbSet<Division> Divisions { get; }
 
     /// <summary>
-    /// <see cref="DbSet{Match}"/> of matches in the system.
+    /// DbSet{Match} of matches in the system.
     /// </summary>
     DbSet<Match> Matches { get; }
 
     /// <summary>
-    /// <see cref="DbSet{PlayerStatistic}"/> of player statistics in the system.
+    /// DbSet{PlayerStatistic} of player statistics in the system.
     /// </summary>
     DbSet<PlayerStatistic> PlayersStatistics { get; }
 
     /// <summary>
-    /// <see cref="DbSet{PlayerSanction}"/> of players involved in sanctions.
+    /// DbSet{PlayerSanction} of players involved in sanctions.
     /// </summary>
     DbSet<PlayerSanction> PlayerSanctions { get; }
 
     /// <summary>
-    /// <see cref="DbSet{Venue}"/> of venues in the system.
+    /// DbSet{Venue} of venues in the system.
     /// </summary>
     DbSet<Venue> Venues { get; }
 
     /// <summary>
-    /// <see cref="DbSet{BlogPosts}"/> of blog posts in the system.
+    /// DbSet{BlogPosts} of blog posts in the system.
     /// </summary>
     DbSet<BlogPost> BlogPosts { get; }
 
 
     /// <summary>
-    /// <see cref="DbSet{Stage}"/> of Stages in the system.
+    /// DbSet{Stage} of Stages in the system.
     /// </summary>
     DbSet<Stage> Stages { get; }
 
     /// <summary>
-    /// <see cref="DbSet{StageTeamMatch}"/> of StageTeamMatches in the system."/>
+    /// DbSet{StageTeamMatch} of StageTeamMatches in the system.
     /// </summary>
     DbSet<StageTeamMatch> StageTeamMatches { get; }
 }

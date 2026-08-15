@@ -14,7 +14,7 @@ namespace API.Controllers;
 
 /// <summary>
 /// User management endpoints (CRUD + logout).
-/// Access rules are enforced in <see cref="IUserManagementService"/>.
+/// Access rules are enforced in IUserManagementService.
 /// </summary>
 [ApiController]
 [Route("api/users")]

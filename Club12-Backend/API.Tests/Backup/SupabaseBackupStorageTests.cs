@@ -14,14 +14,14 @@ using Xunit;
 namespace API.Tests.Backup;
 
 /// <summary>
-/// Unit tests for <see cref="SupabaseBackupStorage"/> against a
-/// <see cref="FakeSupabaseRawStorage"/> — no real Supabase client, no
+/// Unit tests for SupabaseBackupStorage against a
+/// FakeSupabaseRawStorage — no real Supabase client, no
 /// network call (per this change's spec Non-Goal: actual Supabase upload is
-/// staging/manual verification only). Covers: the <c>backups/</c>
+/// staging/manual verification only). Covers: the backups/
 /// object-path builder, traversal rejection, list translation, and wrapping
 /// of raw-storage failures (network/auth errors) into
-/// <see cref="BackupExecutionException"/> — the same failure type
-/// <c>PgDumpBackupService</c> throws and <c>DatabaseBackupHostedService</c>
+/// BackupExecutionException — the same failure type
+/// PgDumpBackupService throws and DatabaseBackupHostedService
 /// already catches and logs without crashing the host.
 /// </summary>
 public sealed class SupabaseBackupStorageTests

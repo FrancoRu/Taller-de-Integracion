@@ -19,14 +19,14 @@ public interface IAuthenticationService
 
     /// <summary>
     /// Verifies the password-reset token from the email link, sets the new password,
-    /// clears <c>MustChangePassword</c>, and returns a ready-to-use JWT.
+    /// clears MustChangePassword, and returns a ready-to-use JWT.
     /// </summary>
     Task<TokenResponse> ConfirmPasswordResetAsync(
         PasswordResetConfirmRequest request, CancellationToken ct = default);
 
     /// <summary>
     /// Registers a new user. <paramref name="callerRole"/> determines permitted target roles;
-    /// <paramref name="callerId"/> is stored as <c>CreatedByOwnerId</c> when the caller is an OWNER.
+    /// <paramref name="callerId"/> is stored as CreatedByOwnerId when the caller is an OWNER.
     /// </summary>
     Task<RegisterUserResponse> RegisterAsync(
         RegisterUserRequest request,
@@ -35,7 +35,7 @@ public interface IAuthenticationService
         CancellationToken ct = default);
 
     /// <summary>
-    /// Clears the caller's stored <c>RefreshToken</c> and <c>RefreshTokenExpiryTime</c>.
+    /// Clears the caller's stored RefreshToken and RefreshTokenExpiryTime.
     /// A no-op if no user matches <paramref name="userId"/>.
     /// </summary>
     Task LogoutAsync(Guid userId, CancellationToken ct = default);

@@ -13,8 +13,8 @@ public interface IDomainDBContexts : IClub12DBContext { }
 
 /// <summary>
 /// Application's main EF Core database context.
-/// All entity mappings are defined in <c>Infrastructure.Persistance.Configurations</c>
-/// and applied via <see cref="ModelBuilder.ApplyConfigurationsFromAssembly"/>.
+/// All entity mappings are defined in Infrastructure.Persistance.Configurations
+/// and applied via ModelBuilder.ApplyConfigurationsFromAssembly.
 /// </summary>
 public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options)
     : DbContext(options), IDomainDBContexts

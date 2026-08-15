@@ -10,7 +10,7 @@ namespace Application.Utils.Helper.Email;
 /// <summary>
 /// Transactional email sender backed by FluentEmail + SendGrid.
 /// HTML bodies are loaded from embedded resource templates in
-/// <c>Utils/Helper/Email/Templates/</c>.
+/// Utils/Helper/Email/Templates/.
 /// </summary>
 public sealed class FluentEmailHelper(IFluentEmailFactory emailFactory) : IEmailService
 {

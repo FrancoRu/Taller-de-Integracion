@@ -5,11 +5,11 @@ using Infrastructure.Persistance;
 namespace Infrastructure.Repositories;
 
 /// <summary>
-/// Repository implementation for managing <see cref="Division"/> entities.
-/// Inherits generic CRUD operations from <see cref="GenericRepository{Division}"/> and implements <see cref="IDivisionRepository"/>.
+/// Repository implementation for managing Division entities.
+/// Inherits generic CRUD operations from GenericRepository{Division} and implements IDivisionRepository.
 /// </summary>
 /// <remarks>
-/// Utilizes <see cref="ApplicationDBContext"/> for data access.
+/// Utilizes ApplicationDBContext for data access.
 /// This repository is intended for use within the infrastructure layer to encapsulate
 /// data access logic specific to Division entities.
 /// </remarks>
