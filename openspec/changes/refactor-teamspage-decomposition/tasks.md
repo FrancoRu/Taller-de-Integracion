@@ -76,18 +76,18 @@ Chain strategy: stacked-to-main
 
 ### Phase 5: Container Rewire
 
-- [ ] 5.1 In `TeamsPage.tsx`, import types from `teams.types.ts`; delete local `TeamsSearchFilters`/`TeamFormState` declarations.
-- [ ] 5.2 Replace inline filter `Stack` JSX with `<TeamsFilterBar filters={filters} onFilterChange={handleFilterChange} />`.
-- [ ] 5.3 Replace inline `DataGrid` JSX with `<TeamsTable rows={rows} columns={columns} loading={loading} noRowsMessage={noRowsMessage} paginationModel={paginationModel} onPaginationModelChange={handlePaginationModelChange} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} />`.
-- [ ] 5.4 Add `handleTeamFieldChange(field, value)` applying the existing `threeLetterCode.toUpperCase()` transform; use it to replace both dialogs' inline `onChange` handlers.
-- [ ] 5.5 Add `handleLogoChange(file)` for the create-only logo field.
-- [ ] 5.6 Replace the create `Dialog` JSX with `<TeamFormDialog withLogo open={isCreateModalOpen} title="Nuevo equipo" confirmLabel="Crear" form={teamForm} submitting={submitting} onFieldChange={handleTeamFieldChange} onLogoChange={handleLogoChange} onClose={...} onConfirm={handleCreateSubmit} />`.
-- [ ] 5.7 Replace the edit `Dialog` JSX with `<TeamFormDialog withLogo={false} open={Boolean(editingTeam)} title="Editar equipo" confirmLabel="Guardar" .../>` (no `onLogoChange` usage).
-- [ ] 5.8 Remove now-unused imports (`TextField`, `InputAdornment`, `SearchIcon`, `Dialog`, `DialogTitle`, `DialogContent`, `DialogActions`, `Button` if unreferenced).
+- [x] 5.1 In `TeamsPage.tsx`, import types from `teams.types.ts`; delete local `TeamsSearchFilters`/`TeamFormState` declarations.
+- [x] 5.2 Replace inline filter `Stack` JSX with `<TeamsFilterBar filters={filters} onFilterChange={handleFilterChange} />`.
+- [x] 5.3 Replace inline `DataGrid` JSX with `<TeamsTable rows={rows} columns={columns} loading={loading} noRowsMessage={noRowsMessage} paginationModel={paginationModel} onPaginationModelChange={handlePaginationModelChange} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} />`.
+- [x] 5.4 Add `handleTeamFieldChange(field, value)` applying the existing `threeLetterCode.toUpperCase()` transform; use it to replace both dialogs' inline `onChange` handlers.
+- [x] 5.5 Add `handleLogoChange(file)` for the create-only logo field.
+- [x] 5.6 Replace the create `Dialog` JSX with `<TeamFormDialog withLogo open={isCreateModalOpen} title="Nuevo equipo" confirmLabel="Crear" form={teamForm} submitting={submitting} onFieldChange={handleTeamFieldChange} onLogoChange={handleLogoChange} onClose={...} onConfirm={handleCreateSubmit} />`.
+- [x] 5.7 Replace the edit `Dialog` JSX with `<TeamFormDialog withLogo={false} open={Boolean(editingTeam)} title="Editar equipo" confirmLabel="Guardar" .../>` (no `onLogoChange` usage).
+- [x] 5.8 Remove now-unused imports (`TextField`, `InputAdornment`, `SearchIcon`, `Dialog`, `DialogTitle`, `DialogContent`, `DialogActions`, `Button` if unreferenced).
 
 ### Phase 6: PR2 Verification
 
-- [ ] 6.1 Run `npm run test --prefix Club12-WebClient -- TeamsPage.test`: SAME characterization file, unmodified, passes against the decomposed tree (Req: Acceptance Evidence — decomposed scenario).
-- [ ] 6.2 Run full `npm run test --prefix Club12-WebClient`: all suites green.
-- [ ] 6.3 Run `npm run build --prefix Club12-WebClient`: compiles clean.
-- [ ] 6.4 Diff-check: no other `views/*Page.tsx` file changed.
+- [x] 6.1 Run `npm run test --prefix Club12-WebClient -- TeamsPage.test`: SAME characterization file, unmodified, passes against the decomposed tree (Req: Acceptance Evidence — decomposed scenario).
+- [x] 6.2 Run full `npm run test --prefix Club12-WebClient`: all suites green.
+- [x] 6.3 Run `npm run build --prefix Club12-WebClient`: compiles clean.
+- [x] 6.4 Diff-check: no other `views/*Page.tsx` file changed.

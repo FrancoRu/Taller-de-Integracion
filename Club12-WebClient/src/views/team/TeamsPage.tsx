@@ -1,30 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  InputAdornment,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { GridColDef, GridPaginationModel } from '@mui/x-data-grid';
+import { Box, Card, CardContent, Stack, Typography } from '@mui/material';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import theme, { CANCEL_BUTTON_COLOR } from '@/theme';
 import { GUID } from '@/modules/core/types/types';
 import { useTeam } from '@/modules/team/hook/team.hook';
-import FormButtons from '@/views/core/components/FormButtons';
 import {
   IAddTeamRequest,
   ITeamResponse,
   IPutTeamRequest,
-  TeamFiltered,
 } from '@/modules/team/type/team.d';
 import {
   buildActionsColumn,
@@ -35,13 +20,16 @@ import NewEntityButton from '@/views/core/components/NewEntityButton';
 import {
   DeleteIcon,
   EditIcon,
-  SearchIcon,
   VisibilityIcon,
 } from '@/views/core/MUI/icons/icons';
 import {
   TABLE_PAGE_SIZE_OPTIONS,
   TABLE_ROWS_PER_PAGE,
 } from '@/modules/core/constants/pagination';
+import TeamsFilterBar from '@/views/team/TeamsFilterBar';
+import TeamsTable from '@/views/team/TeamsTable';
+import TeamFormDialog from '@/views/team/TeamFormDialog';
+import type { TeamsSearchFilters, TeamFormState } from '@/views/team/teams.types';
 
 interface TeamsScreenProps {
   tournamentId?: GUID;
@@ -51,18 +39,6 @@ interface TeamsScreenProps {
   createType?: string;
   onCreate?: () => void;
 }
-
-type TeamsSearchFilters = Pick<
-  TeamFiltered,
-  'name' | 'threeLetterCode' | 'shirtColor'
->;
-
-type TeamFormState = {
-  name: string;
-  threeLetterCode: string;
-  shirtColor: string;
-  logo: File | null;
-};
 
 const EMPTY_FILTERS: TeamsSearchFilters = {};
 
@@ -166,6 +142,20 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
 
   const resetTeamForm = useCallback(() => {
     setTeamForm(INITIAL_TEAM_FORM);
+  }, []);
+
+  const handleTeamFieldChange = useCallback(
+    (field: 'name' | 'threeLetterCode' | 'shirtColor', value: string) => {
+      setTeamForm(prev => ({
+        ...prev,
+        [field]: field === 'threeLetterCode' ? value.toUpperCase() : value,
+      }));
+    },
+    []
+  );
+
+  const handleLogoChange = useCallback((file: File | null) => {
+    setTeamForm(prev => ({ ...prev, logo: file }));
   }, []);
 
   const handleView = useCallback(
@@ -405,186 +395,49 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
         </Stack>
       )}
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2}>
-        <TextField
-          label="Nombre"
-          name="name"
-          size="small"
-          value={filters.name ?? ''}
-          onChange={handleFilterChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-        />
-        <TextField
-          label="Código"
-          name="threeLetterCode"
-          size="small"
-          value={filters.threeLetterCode ?? ''}
-          onChange={handleFilterChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-        />
-        <TextField
-          label="Color camiseta"
-          name="shirtColor"
-          size="small"
-          value={filters.shirtColor ?? ''}
-          onChange={handleFilterChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-        />
-      </Stack>
+      <TeamsFilterBar filters={filters} onFilterChange={handleFilterChange} />
 
-      <Box sx={{ width: '100%' }}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          loading={loading}
-          getRowId={row => row.id}
-          autoHeight
-          disableRowSelectionOnClick
-          disableColumnMenu
-          localeText={{ noRowsLabel: noRowsMessage }}
-          pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
-          paginationModel={paginationModel}
-          onPaginationModelChange={handlePaginationModelChange}
-        />
-      </Box>
+      <TeamsTable
+        rows={rows}
+        columns={columns}
+        loading={loading}
+        noRowsMessage={noRowsMessage}
+        paginationModel={paginationModel}
+        onPaginationModelChange={handlePaginationModelChange}
+        pageSizeOptions={[...TABLE_PAGE_SIZE_OPTIONS]}
+      />
 
-      <Dialog
+      <TeamFormDialog
+        withLogo
         open={isCreateModalOpen}
-        onClose={() => !submitting && setIsCreateModalOpen(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>Nuevo equipo</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="Nombre"
-              value={teamForm.name}
-              onChange={e =>
-                setTeamForm(prev => ({ ...prev, name: e.target.value }))
-              }
-              required
-              fullWidth
-            />
-            <TextField
-              label="Código"
-              value={teamForm.threeLetterCode}
-              onChange={e =>
-                setTeamForm(prev => ({
-                  ...prev,
-                  threeLetterCode: e.target.value.toUpperCase(),
-                }))
-              }
-              required
-              fullWidth
-            />
-            <TextField
-              label="Color camiseta"
-              value={teamForm.shirtColor}
-              onChange={e =>
-                setTeamForm(prev => ({ ...prev, shirtColor: e.target.value }))
-              }
-              fullWidth
-            />
-            <Button variant="outlined" component="label">
-              {teamForm.logo
-                ? `Logo: ${teamForm.logo.name}`
-                : 'Seleccionar logo'}
-              <input
-                hidden
-                type="file"
-                accept="image/*"
-                onChange={event => {
-                  const selectedFile = event.target.files?.[0] ?? null;
-                  setTeamForm(prev => ({ ...prev, logo: selectedFile }));
-                }}
-              />
-            </Button>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <FormButtons
-            onCancel={() => {
-              setIsCreateModalOpen(false);
-              resetTeamForm();
-            }}
-            onConfirm={() => void handleCreateSubmit()}
-            confirmLabel="Crear"
-            disabled={submitting}
-          />
-        </DialogActions>
-      </Dialog>
+        title="Nuevo equipo"
+        confirmLabel="Crear"
+        form={teamForm}
+        submitting={submitting}
+        onFieldChange={handleTeamFieldChange}
+        onLogoChange={handleLogoChange}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          resetTeamForm();
+        }}
+        onConfirm={() => void handleCreateSubmit()}
+      />
 
-      <Dialog
+      <TeamFormDialog
+        withLogo={false}
         open={Boolean(editingTeam)}
-        onClose={() => !submitting && setEditingTeam(null)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>Editar equipo</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="Nombre"
-              value={teamForm.name}
-              onChange={e =>
-                setTeamForm(prev => ({ ...prev, name: e.target.value }))
-              }
-              required
-              fullWidth
-            />
-            <TextField
-              label="Código"
-              value={teamForm.threeLetterCode}
-              onChange={e =>
-                setTeamForm(prev => ({
-                  ...prev,
-                  threeLetterCode: e.target.value.toUpperCase(),
-                }))
-              }
-              required
-              fullWidth
-            />
-            <TextField
-              label="Color camiseta"
-              value={teamForm.shirtColor}
-              onChange={e =>
-                setTeamForm(prev => ({ ...prev, shirtColor: e.target.value }))
-              }
-              fullWidth
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <FormButtons
-            onCancel={() => {
-              setEditingTeam(null);
-              resetTeamForm();
-            }}
-            onConfirm={() => void handleEditSubmit()}
-            confirmLabel="Guardar"
-            disabled={submitting}
-          />
-        </DialogActions>
-      </Dialog>
+        title="Editar equipo"
+        confirmLabel="Guardar"
+        form={teamForm}
+        submitting={submitting}
+        onFieldChange={handleTeamFieldChange}
+        onLogoChange={handleLogoChange}
+        onClose={() => {
+          setEditingTeam(null);
+          resetTeamForm();
+        }}
+        onConfirm={() => void handleEditSubmit()}
+      />
     </>
   );
 
