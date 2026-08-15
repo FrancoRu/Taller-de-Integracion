@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using API.Utils;
 using Application.DTOs.Venue.Request;
 using Application.DTOs.Venue.Response;
 using Application.Interfaces.Services;
@@ -57,14 +58,14 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
     [AllowAnonymous]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(VenueResponse))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<VenueResponse>> GetVenueById(Guid id)
     {
         Venue? venue = await venueService.GetVenueByIdAsync(id);
 
         if (venue is null)
         {
-            return BadRequest($"Venue with id {id} not found.");
+            return this.NotFoundProblem(nameof(Venue), id);
         }
 
         VenueResponse venueResponse = mapper.Map<VenueResponse>(venue);
@@ -83,7 +84,7 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
     /// </returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> UpdateVenue(Guid id, UpdateVenueRequest venueRequest)
     {
@@ -91,7 +92,7 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
 
         if (existingVenue is null)
         {
-            return BadRequest($"Venue with id {id} not found.");
+            return this.NotFoundProblem(nameof(Venue), id);
         }
 
         mapper.Map(venueRequest, existingVenue);
@@ -112,7 +113,7 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
     /// </returns>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteVenueById(Guid id)
     {
@@ -120,7 +121,7 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
 
         if (venue is null)
         {
-            return BadRequest($"Venue with id {id} not found.");
+            return this.NotFoundProblem(nameof(Venue), id);
         }
 
         if (!string.IsNullOrWhiteSpace(venue.PhotoUrl))

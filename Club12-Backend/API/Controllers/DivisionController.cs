@@ -1,4 +1,5 @@
-﻿using Application.DTOs.Abstract.Response;
+﻿using API.Utils;
+using Application.DTOs.Abstract.Response;
 using Application.DTOs.Divisions.Request;
 using Application.DTOs.Divisions.Response;
 using Application.Interfaces.Services;
@@ -57,14 +58,14 @@ public class DivisionController(
     [AllowAnonymous]
     [HttpGet("{id:guid}/detail")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedDivisionResponse))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<DivisionResponse>> GetDivisionById(Guid id)
     {
         Division? division = await divisionService.GetSimpleDivisionByIdAsync(id);
 
         if (division is null)
         {
-            return BadRequest($"Division with id {id} not found.");
+            return this.NotFoundProblem(nameof(Division), id);
         }
 
         DivisionResponse divisionResponse = mapper.Map<DivisionResponse>(division);
@@ -105,7 +106,7 @@ public class DivisionController(
     /// </returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> UpdateDivisionById(Guid id, UpdateDivisionRequest divisionRequest)
     {
@@ -113,7 +114,7 @@ public class DivisionController(
 
         if (existingDivision is null)
         {
-            return BadRequest($"Division with id {id} not found.");
+            return this.NotFoundProblem(nameof(Division), id);
         }
 
         mapper.Map(divisionRequest, existingDivision);

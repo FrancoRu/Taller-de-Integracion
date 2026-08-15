@@ -271,17 +271,7 @@ export const sendGet = async <T>(
   resource: string,
   query?: object
 ): Promise<AxiosResponse<T>> => {
-  try {
-    const result: AxiosResponse<T> = await axios.request({
-      method: 'GET',
-      url: buildEndpoint(resource, query),
-      headers: getHeaders(),
-    });
-    return result;
-  } catch (error) {
-    console.error('Error in sendGet:', error); // Log any errors
-    throw error;
-  }
+  return await sendRequest<T>('GET', resource, {}, null, query);
 };
 
 /**

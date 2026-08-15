@@ -67,7 +67,7 @@ public class TeamController(
     /// </returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> UpdateTeam(Guid id, UpdateTeamRequest teamRequest)
     {
@@ -75,7 +75,7 @@ public class TeamController(
 
         if (existingTeam is null)
         {
-            return BadRequest($"Team with id {id} not found.");
+            return this.NotFoundProblem(nameof(Team), id);
         }
 
         mapper.Map(teamRequest, existingTeam);
@@ -104,7 +104,7 @@ public class TeamController(
         Team? team = await teamService.GetTeamByIdAsync(id);
         if (team is null)
         {
-            return BadRequest($"Team with id {id} not found.");
+            return this.NotFoundProblem(nameof(Team), id);
         }
 
         //string logoUrl = await _cloudflareService.UploadFileAsync(logoRequest.LogoFile.OpenReadStream(), logoRequest.LogoFile.FileName);
@@ -125,14 +125,14 @@ public class TeamController(
     [AllowAnonymous]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TeamResponse))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TeamResponse>> GetTeamById(Guid id)
     {
         Team? team = await teamService.GetTeamByIdAsync(id);
 
         if (team is null)
         {
-            return BadRequest($"Team with id {id} not found.");
+            return this.NotFoundProblem(nameof(Team), id);
         }
 
         TeamResponse teamResponse = mapper.Map<TeamResponse>(team);
@@ -150,7 +150,7 @@ public class TeamController(
     /// </returns>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteTeamById(Guid id)
     {
@@ -158,7 +158,7 @@ public class TeamController(
 
         if (team is null)
         {
-            return BadRequest($"Team with id {id} not found.");
+            return this.NotFoundProblem(nameof(Team), id);
         }
 
         if (!string.IsNullOrWhiteSpace(team.LogoUrl))

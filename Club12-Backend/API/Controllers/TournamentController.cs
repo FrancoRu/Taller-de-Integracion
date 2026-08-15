@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using API.Utils;
 using Application.DTOs.Abstract.Response;
 using Application.DTOs.Tournament.Request;
 using Application.DTOs.Tournament.Response;
@@ -57,14 +58,14 @@ public class TournamentController(
     [AllowAnonymous]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TournamentResponse))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TournamentResponse>> GetTournamentById(Guid id)
     {
         Tournament? tournament = await tournamentService.GetTournamentByIdAsync(id);
 
         if (tournament is null)
         {
-            return BadRequest($"Tournament with id {id} not found.");
+            return this.NotFoundProblem(nameof(Tournament), id);
         }
 
         TournamentResponse tournamentResponse = mapper.Map<TournamentResponse>(tournament);
@@ -83,7 +84,7 @@ public class TournamentController(
     /// </returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TournamentResponse))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> UpdateTournamentAsync(Guid id, UpdateTournamentRequest tournamentRequest)
     {
@@ -91,7 +92,7 @@ public class TournamentController(
 
         if (existingTournament is null)
         {
-            return BadRequest($"Tournament with id {id} not found.");
+            return this.NotFoundProblem(nameof(Tournament), id);
         }
 
         mapper.Map(tournamentRequest, existingTournament);
@@ -151,14 +152,14 @@ public class TournamentController(
     /// </returns>
     [HttpPost("register-teams/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> RegisterTeam(Guid id, RegisterTeamsInTournamentRequest registerTeamsRequest)
     {
         Tournament? tournament = await tournamentService.GetTournamentByIdAsync(id);
         if (tournament is null)
         {
-            return BadRequest($"Tournament with id {id} not found.");
+            return this.NotFoundProblem(nameof(Tournament), id);
         }
         await teamService.RegisterTeamsToTournamentAsync(tournament, registerTeamsRequest.TeamIds);
         return Ok();

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using API.Utils;
 using Application.DTOs.Abstract.Response;
 using Application.DTOs.Player.Request;
 using Application.DTOs.Player.Response;
@@ -67,14 +68,14 @@ public class PlayerController(
     [AllowAnonymous]
     [HttpGet("{id:guid}", Name = "GetPlayerById")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PublicPlayerResponse))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PublicPlayerResponse>> GetPlayerByIdAsync(Guid id)
     {
         Player? player = await playerService.GetPlayerByIdAsync(id);
 
         if (player is null)
         {
-            return BadRequest($"Player with id {id} not found.");
+            return this.NotFoundProblem(nameof(Player), id);
         }
 
         PublicPlayerResponse playerResponse = mapper.Map<PublicPlayerResponse>(player);
@@ -90,14 +91,14 @@ public class PlayerController(
     /// </returns>
     [HttpGet("admin/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AdminPlayerResponse))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<AdminPlayerResponse>> GetPlayerByIdCompleteDataAsync(Guid id)
     {
         Player? player = await playerService.GetPlayerByIdAsync(id);
 
         if (player is null)
         {
-            return BadRequest($"Player with id {id} not found.");
+            return this.NotFoundProblem(nameof(Player), id);
         }
 
         AdminPlayerResponse playerResponse = mapper.Map<AdminPlayerResponse>(player);
@@ -116,7 +117,7 @@ public class PlayerController(
     /// </returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> UpdatePlayerAsync(Guid id, UpdatePlayerRequest playerRequest)
     {
@@ -124,7 +125,7 @@ public class PlayerController(
 
         if (existingPlayer is null)
         {
-            return BadRequest($"Player with id {id} not found.");
+            return this.NotFoundProblem(nameof(Player), id);
         }
 
         mapper.Map(playerRequest, existingPlayer);

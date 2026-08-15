@@ -65,14 +65,14 @@ public class BlogPostController(
     /// <returns>Returns 200 (OK) with the updated blog post response if the update was successful, or 400 (Bad Request) if the blog post was not found.</returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BlogPostResponse))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> UpdateBlogPost(Guid id, UpdateBlogPostRequest blogPostRequest)
     {
         BlogPost? existingPost = await blogPostService.GetBlogPostByIdAsync(id);
 
         if (existingPost is null)
         {
-            return BadRequest($"Blog post with id {id} not found.");
+            return this.NotFoundProblem(nameof(BlogPost), id);
         }
 
         mapper.Map(blogPostRequest, existingPost);
@@ -100,7 +100,7 @@ public class BlogPostController(
         BlogPost? blogPost = await blogPostService.GetBlogPostByIdAsync(id);
         if (blogPost is null)
         {
-            return BadRequest($"Blog post with id {id} not found.");
+            return this.NotFoundProblem(nameof(BlogPost), id);
         }
 
         //string photoUrl = await _cloudflareService.UploadFileAsync(photoRequest.PhotoFile.OpenReadStream(), photoRequest.PhotoFile.FileName);
@@ -118,14 +118,14 @@ public class BlogPostController(
     [AllowAnonymous]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BlogPostResponse))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<BlogPostResponse>> GetBlogPostById(Guid id)
     {
         BlogPost? blogPost = await blogPostService.GetBlogPostByIdAsync(id);
 
         if (blogPost is null)
         {
-            return BadRequest($"Blog post with id {id} not found.");
+            return this.NotFoundProblem(nameof(BlogPost), id);
         }
 
         blogPost.Views++;

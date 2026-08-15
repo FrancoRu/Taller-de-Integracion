@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using API.Utils;
 using Application.DTOs.Abstract.Response;
 using Application.DTOs.Match.Request;
 using Application.DTOs.Match.Response;
@@ -69,14 +70,14 @@ public class MatchController(IMatchService matchService, IStageTeamMatchService 
     [AllowAnonymous]
     [HttpGet("{id:guid}/detail")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedMatchResponse))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<DetailedMatchResponse>> GetMatchByIdWithScorers(Guid id)
     {
         Match? match = await matchService.GetMatchByIdWithScorersAsync(id);
 
         if (match is null)
         {
-            return BadRequest($"Match with id {id} not found.");
+            return this.NotFoundProblem(nameof(Match), id);
         }
 
         DetailedMatchResponse matchResponse = mapper.Map<DetailedMatchResponse>(match);
@@ -91,14 +92,14 @@ public class MatchController(IMatchService matchService, IStageTeamMatchService 
     [AllowAnonymous]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedMatchResponse))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<DetailedMatchResponse>> GetMatchById(Guid id)
     {
         Match? match = await matchService.GetMatchByIdAsync(id);
 
         if (match is null)
         {
-            return BadRequest($"Match with id {id} not found.");
+            return this.NotFoundProblem(nameof(Match), id);
         }
 
         DetailedMatchResponse matchResponse = mapper.Map<DetailedMatchResponse>(match);
@@ -114,13 +115,14 @@ public class MatchController(IMatchService matchService, IStageTeamMatchService 
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type=typeof(DetailedMatchResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> UpdateMatchDate(Guid id, UpdateMatchRequest updateRequest)
     {
         Match? existingMatch = await matchService.GetMatchByIdAsync(id);
 
         if (existingMatch is null)
         {
-            return BadRequest($"Match with id {id} not found.");
+            return this.NotFoundProblem(nameof(Match), id);
         }
 
         if (existingMatch.IsFinished || existingMatch.MatchDate <= DateTime.Now)
@@ -196,12 +198,13 @@ public class MatchController(IMatchService matchService, IStageTeamMatchService 
     [HttpPut("{id:guid}/score")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedMatchResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> UpdateMatchScore(Guid id, UpdateMatchScoreRequest scoreRequest)
     {
         Match? existingMatch = await matchService.GetMatchByIdAsync(id);
         if (existingMatch is null)
         {
-            return BadRequest($"Match with ID {id} not found.");
+            return this.NotFoundProblem(nameof(Match), id);
         }
 
         mapper.Map(scoreRequest, existingMatch);

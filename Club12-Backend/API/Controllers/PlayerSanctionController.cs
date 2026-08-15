@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using API.Utils;
 using Application.DTOs.Abstract.Response;
 using Application.DTOs.PlayerSanction.Request;
 using Application.DTOs.PlayerSanction.Response;
@@ -49,14 +50,14 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
     [AllowAnonymous]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerSanctionResponse))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PlayerSanctionResponse>> GetPlayerSanctionById(Guid id)
     {
         PlayerSanction? sanction = await playerSanctionService.GetPlayerSanctionByIdAsync(id);
 
         if (sanction is null)
         {
-            return BadRequest($"Player sanction with id {id} not found.");
+            return this.NotFoundProblem(nameof(PlayerSanction), id);
         }
 
         PlayerSanctionResponse sanctionResponse = mapper.Map<PlayerSanctionResponse>(sanction);
@@ -96,14 +97,14 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
     /// <returns>Returns the result of the update operation.</returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerSanctionResponse))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> UpdatePlayerSanction(Guid id, UpdatePlayerSanctionRequest updateRequest)
     {
         PlayerSanction? existingSanction = await playerSanctionService.GetPlayerSanctionByIdAsync(id);
 
         if (existingSanction is null)
         {
-            return BadRequest($"Player sanction with id {id} not found.");
+            return this.NotFoundProblem(nameof(PlayerSanction), id);
         }
 
         mapper.Map(updateRequest, existingSanction);
@@ -120,6 +121,7 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
     [HttpPut("{id:guid}/appeal")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerSanctionResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PlayerSanctionResponse>> AppealPlayerSanction(
         Guid id, AppealPlayerSanctionRequest appealRequest)
     {
@@ -127,7 +129,7 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
 
         if (existingSanction is null)
         {
-            return BadRequest($"Player sanction with id {id} not found.");
+            return this.NotFoundProblem(nameof(PlayerSanction), id);
         }
 
         if (existingSanction.AppealStatus == SanctionAppealStatus.Pending)
@@ -154,6 +156,7 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
     [HttpPut("{id:guid}/appeal/resolve")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerSanctionResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PlayerSanctionResponse>> ResolvePlayerSanctionAppeal(
         Guid id, ResolveAppealRequest resolveRequest)
     {
@@ -161,7 +164,7 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
 
         if (existingSanction is null)
         {
-            return BadRequest($"Player sanction with id {id} not found.");
+            return this.NotFoundProblem(nameof(PlayerSanction), id);
         }
 
         if (existingSanction.AppealStatus != SanctionAppealStatus.Pending)

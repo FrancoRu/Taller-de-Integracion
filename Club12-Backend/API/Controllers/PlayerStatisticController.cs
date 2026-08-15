@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using API.Utils;
 using Application.DTOs.PlayerStatistic.Request;
 using Application.DTOs.PlayerStatistic.Response;
 using Application.Interfaces.Services;
@@ -70,14 +71,14 @@ public class PlayerStatisticController(IPlayerStatisticService playerStatisticSe
     [AllowAnonymous]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerStatisticResponse))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PlayerStatisticResponse>> GetPlayerStatisticById(Guid id)
     {
         PlayerStatistic? statistic = await playerStatisticService.GetPlayerStatisticByIdAsync(id);
 
         if (statistic is null)
         {
-            return BadRequest($"Player statistic with id {id} not found.");
+            return this.NotFoundProblem(nameof(PlayerStatistic), id);
         }
 
         PlayerStatisticResponse statisticResponse = mapper.Map<PlayerStatisticResponse>(statistic);
@@ -92,14 +93,14 @@ public class PlayerStatisticController(IPlayerStatisticService playerStatisticSe
     /// <returns>Returns the result of the update operation.</returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> UpdatePlayerStatistic(Guid id, UpdatePlayerStatisticRequest updateRequest)
     {
         PlayerStatistic? existingStatistic = await playerStatisticService.GetPlayerStatisticByIdAsync(id);
 
         if (existingStatistic is null)
         {
-            return BadRequest($"Player statistic with id {id} not found.");
+            return this.NotFoundProblem(nameof(PlayerStatistic), id);
         }
 
         mapper.Map(updateRequest, existingStatistic);

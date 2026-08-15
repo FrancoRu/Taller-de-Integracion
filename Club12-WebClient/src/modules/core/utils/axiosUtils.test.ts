@@ -1,7 +1,7 @@
 import { AxiosError } from 'axios';
 import axios from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { sendDelete } from './axiosUtils';
+import { sendDelete, sendGet } from './axiosUtils';
 
 const originalLocation = window.location;
 
@@ -75,5 +75,56 @@ describe('axiosUtils invalid-token redirect', () => {
     await expect(sendDelete('divisions/123')).rejects.toBeTruthy();
 
     expect(assignSpy).not.toHaveBeenCalled();
+  });
+});
+
+const buildNotFoundError = (): AxiosError =>
+  ({
+    isAxiosError: true,
+    name: 'AxiosError',
+    message: 'Request failed with status code 404',
+    config: { headers: {} },
+    response: {
+      status: 404,
+      data: {
+        title: 'Not Found: The specified resource could not be found.',
+        detail: 'Division with id 123 not found.',
+        status: 404,
+      },
+      statusText: 'Not Found',
+      headers: {},
+      config: { headers: {} },
+    },
+    toJSON: () => ({}),
+  }) as unknown as AxiosError;
+
+describe('sendGet error pipeline', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: originalLocation,
+    });
+  });
+
+  it('redirects to /token-invalido when a GET request gets a 401 with an Authorization header', async () => {
+    const assignSpy = mockAssign();
+    vi.mocked(axios.request).mockRejectedValueOnce(
+      buildUnauthorizedError(true)
+    );
+
+    await expect(sendGet('divisions/123')).rejects.toBeTruthy();
+
+    expect(assignSpy).toHaveBeenCalledWith('/token-invalido');
+  });
+
+  it('rejects with the same error shape as other verbs when a GET request gets a 404', async () => {
+    const notFoundError = buildNotFoundError();
+    vi.mocked(axios.request).mockRejectedValueOnce(notFoundError);
+
+    await expect(sendGet('divisions/123')).rejects.toBe(notFoundError);
   });
 });
