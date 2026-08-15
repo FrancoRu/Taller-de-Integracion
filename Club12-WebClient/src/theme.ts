@@ -1,31 +1,46 @@
-import { orange } from '@mui/material/colors';
 import { createTheme } from '@mui/material/styles';
 
 export const CANCEL_BUTTON_COLOR = '#d33';
 
+const NAVY = '#0F172A';
+const NAVY_LIGHT = '#1E293B';
+const ORANGE = '#FF5A1F';
+const ORANGE_DARK = '#C43E00';
+const LIVE_GREEN = '#00C853';
+
 const baseTheme = createTheme({
   palette: {
     primary: {
-      main: '#FD6B00',
-      light: '#E59700',
+      main: ORANGE,
+      light: '#FF8A50',
+      dark: ORANGE_DARK,
+      contrastText: '#fff',
     },
     secondary: {
-      main: '#2E2E2E',
+      main: NAVY,
+      light: NAVY_LIGHT,
+      contrastText: '#fff',
+    },
+    success: {
+      main: LIVE_GREEN,
     },
     background: {
-      default: '#ffa05b',
-      paper: '#ffe7d6',
+      default: '#F4F6F9',
+      paper: '#FFFFFF',
     },
     text: {
-      primary: '#333',
-      secondary: '#666',
+      primary: NAVY,
+      secondary: '#516072',
     },
   },
   typography: {
-    fontFamily: "'Kanit', sans-serif",
-    h6: {
-      fontWeight: 600,
-    },
+    fontFamily: "'Roboto', sans-serif",
+    h1: { fontFamily: "'Oswald', sans-serif", fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em' },
+    h2: { fontFamily: "'Oswald', sans-serif", fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em' },
+    h3: { fontFamily: "'Oswald', sans-serif", fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.02em' },
+    h4: { fontFamily: "'Oswald', sans-serif", fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.02em' },
+    h5: { fontFamily: "'Oswald', sans-serif", fontWeight: 600 },
+    h6: { fontFamily: "'Oswald', sans-serif", fontWeight: 600 },
   },
 });
 
@@ -38,15 +53,29 @@ const theme = createTheme(baseTheme, {
         },
       },
     },
+    MuiTableHead: {
+      styleOverrides: {
+        root: {
+          backgroundColor: NAVY,
+          '& .MuiTableCell-root': {
+            color: '#fff',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            fontSize: '0.8rem',
+            letterSpacing: '0.04em',
+          },
+        },
+      },
+    },
     MuiTableRow: {
       styleOverrides: {
         root: {
           '&:hover': {
-            backgroundColor: '#ffc79e',
-            transition: 'background-color 0.3s ease-in-out',
+            backgroundColor: '#FFE9DD',
+            transition: 'background-color 0.2s ease-in-out',
           },
           '&.MuiTableRow-head:hover': {
-            backgroundColor: '#E59700',
+            backgroundColor: NAVY,
           },
         },
       },
@@ -70,8 +99,15 @@ const theme = createTheme(baseTheme, {
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          backgroundColor: '#f4f6f8 !important',
-          border: '5px solid red !important',
+          backgroundColor: '#F4F6F9',
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: NAVY,
+          color: '#fff',
         },
       },
     },
@@ -93,9 +129,18 @@ const theme = createTheme(baseTheme, {
     },
     MuiDataGrid: {
       styleOverrides: {
+        columnHeader: {
+          backgroundColor: NAVY,
+          color: '#fff',
+        },
         columnHeaderTitle: {
-          fontWeight: 'bold',
-          fontSize: '1rem',
+          fontWeight: 700,
+          fontSize: '0.85rem',
+          textTransform: 'uppercase',
+          letterSpacing: '0.03em',
+        },
+        columnSeparator: {
+          color: NAVY_LIGHT,
         },
         cell: {
           fontSize: '0.95rem',
@@ -106,9 +151,10 @@ const theme = createTheme(baseTheme, {
       styleOverrides: {
         root: {
           '&.Mui-selected': {
-            backgroundColor: orange[700],
+            backgroundColor: ORANGE,
+            color: '#fff',
             '&:hover': {
-              backgroundColor: orange[600],
+              backgroundColor: ORANGE_DARK,
             },
           },
         },
@@ -118,9 +164,10 @@ const theme = createTheme(baseTheme, {
       styleOverrides: {
         root: {
           '&.Mui-selected': {
-            backgroundColor: orange[700],
+            backgroundColor: ORANGE,
+            color: '#fff',
             '&:hover': {
-              backgroundColor: orange[600],
+              backgroundColor: ORANGE_DARK,
             },
           },
         },
@@ -130,7 +177,19 @@ const theme = createTheme(baseTheme, {
       styleOverrides: {
         root: {
           padding: baseTheme.spacing(3),
-          boxShadow: baseTheme.shadows[5],
+          borderRadius: '10px',
+          borderTop: `4px solid ${ORANGE}`,
+          boxShadow: baseTheme.shadows[3],
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          fontWeight: 700,
+          textTransform: 'uppercase',
+          fontSize: '0.7rem',
+          letterSpacing: '0.03em',
         },
       },
     },

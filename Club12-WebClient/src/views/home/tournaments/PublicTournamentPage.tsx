@@ -17,11 +17,26 @@ import { useTeam } from '@/modules/team/hook/team.hook';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { divisionService } from '@/modules/division/service/division.service';
+import { stageService } from '@/modules/stage/service/stage.service';
+import { matchService } from '@/modules/match/service/match.service';
 import { IDivisionResponse } from '@/modules/division/type/division';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
+import { buildBracket } from '@/modules/playoff/buildBracket';
+import { BracketModel } from '@/modules/playoff/type/bracket.d';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import MatchCard from '@/views/home/matches/MatchCard';
 import DivisionStandings from '@/views/division/divisionStandings';
+import PlayoffBracket from '@/views/playoff/PlayoffBracket';
+
+/**
+ * Explicit pageSize for the "Llaves" tab's per-division Stage/Match fetch.
+ * The service default (TABLE_ROWS_PER_PAGE = 10, see pagination.ts) would
+ * silently truncate a deep elimination bracket (QF + SF + Final + 3rd
+ * place can already exceed 10 matches once both legs/replays exist), so
+ * this tab always requests a generously sized page instead of relying on
+ * the default.
+ */
+const BRACKET_FETCH_PAGE_SIZE = 100;
 
 const STATUS_LABEL: Record<TournamentStatus, string> = {
   Scheduled: 'Programado',
@@ -36,7 +51,7 @@ const formatDate = (value: Date | string) => {
   return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString('es-AR');
 };
 
-type Tab = 'info' | 'posiciones' | 'equipos' | 'partidos';
+type Tab = 'info' | 'posiciones' | 'equipos' | 'partidos' | 'llaves';
 
 export default function PublicTournamentPage() {
   const { tournamentId } = useParams<{ tournamentId: GUID }>();
@@ -49,6 +64,9 @@ export default function PublicTournamentPage() {
   const [tab, setTab] = useState<Tab>('info');
   const [standings, setStandings] = useState<IDivisionResponse[]>([]);
   const [standingsLoading, setStandingsLoading] = useState(false);
+  const [bracketDivisions, setBracketDivisions] = useState<IDivisionResponse[]>([]);
+  const [brackets, setBrackets] = useState<Record<GUID, BracketModel>>({});
+  const [bracketsLoading, setBracketsLoading] = useState(false);
 
   const getTournamentRef = useRef(getTournamentById);
   const getTeamsRef = useRef(getTeamsByFiltered);
@@ -102,6 +120,47 @@ export default function PublicTournamentPage() {
     void getMatchesRef.current({ tournamentId, pageSize: 50, pageNumber: 1 });
   }, [tab, tournamentId]);
 
+  useEffect(() => {
+    if (!tournamentId || tab !== 'llaves') return;
+    const fetchBrackets = async () => {
+      setBracketsLoading(true);
+      const divisionsResponse = await getDivisionsRef.current({
+        tournamentId,
+        pageSize: 100,
+        pageNumber: 1,
+      });
+      const divisionsList = divisionsResponse?.items ?? [];
+      setBracketDivisions(divisionsList);
+
+      const entries = await Promise.all(
+        divisionsList.map(async division => {
+          const [stagesResponse, matchesResponse] = await Promise.all([
+            stageService.getStagesByFilters({
+              divisionId: division.id,
+              isElimination: true,
+              pageSize: BRACKET_FETCH_PAGE_SIZE,
+            }),
+            matchService.getMatchByFilter({
+              divisionId: division.id,
+              pageSize: BRACKET_FETCH_PAGE_SIZE,
+            }),
+          ]);
+
+          const model = buildBracket(
+            stagesResponse.data?.items ?? [],
+            matchesResponse.data?.items ?? []
+          );
+
+          return [division.id, model] as const;
+        })
+      );
+
+      setBrackets(Object.fromEntries(entries));
+      setBracketsLoading(false);
+    };
+    void fetchBrackets();
+  }, [tab, tournamentId]);
+
   const teamRows = useMemo(() => teams ?? [], [teams]);
   const matchRows = useMemo(() => matches ?? [], [matches]);
 
@@ -148,6 +207,7 @@ export default function PublicTournamentPage() {
         <Tab label="Posiciones" value="posiciones" />
         <Tab label="Equipos" value="equipos" />
         <Tab label="Partidos" value="partidos" />
+        <Tab label="Llaves" value="llaves" />
       </Tabs>
 
       {tab === 'info' && (
@@ -191,7 +251,11 @@ export default function PublicTournamentPage() {
                 <Typography variant="h6" mb={1}>
                   {division.name}
                 </Typography>
-                <DivisionStandings positions={division.positions} />
+                <DivisionStandings
+                  positions={division.positions}
+                  divisionId={division.id}
+                  divisionName={division.name}
+                />
               </Box>
             ))}
           </Box>
@@ -247,6 +311,30 @@ export default function PublicTournamentPage() {
           </Box>
         )
       )}
+
+      {tab === 'llaves' &&
+        (bracketsLoading ? (
+          <Box display="flex" justifyContent="center" py={5}>
+            <CircularProgress />
+          </Box>
+        ) : bracketDivisions.length === 0 ? (
+          <Typography color="text.secondary">
+            No hay divisiones disponibles para este torneo.
+          </Typography>
+        ) : (
+          <Box display="flex" flexDirection="column" gap={5}>
+            {bracketDivisions.map(division => (
+              <Box key={division.id}>
+                <Typography variant="h6" mb={2}>
+                  {division.name}
+                </Typography>
+                <PlayoffBracket
+                  model={brackets[division.id] ?? { rounds: [], edges: [] }}
+                />
+              </Box>
+            ))}
+          </Box>
+        ))}
     </Container>
   );
 }

@@ -155,7 +155,11 @@ const DivisionPage: React.FC = () => {
         )}
 
         {tab === 'posiciones' && (
-          <DivisionStandings positions={division.positions} />
+          <DivisionStandings
+            positions={division.positions}
+            divisionId={targetDivisionId}
+            divisionName={division.name}
+          />
         )}
 
         {tab === 'fases' && (

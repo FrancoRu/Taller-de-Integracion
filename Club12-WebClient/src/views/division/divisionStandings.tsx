@@ -10,25 +10,21 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import { GUID } from '@/modules/core/types/types';
 import { Position } from '@/modules/division/type/division.d';
+import { sortPositions } from '@/modules/division/utils/sortPositions';
+import PrintableResultsSheet from '@/views/division/PrintableResultsSheet';
 
 interface DivisionStandingsProps {
   positions?: Position[];
+  divisionId?: GUID;
+  divisionName?: string;
 }
-
-const sortPositions = (positions: Position[]) =>
-  [...positions].sort((a, b) => {
-    if (b.points !== a.points) {
-      return b.points - a.points;
-    }
-    if (b.pointsDifference !== a.pointsDifference) {
-      return b.pointsDifference - a.pointsDifference;
-    }
-    return b.pointsFor - a.pointsFor;
-  });
 
 const DivisionStandings: React.FC<DivisionStandingsProps> = ({
   positions,
+  divisionId,
+  divisionName,
 }) => {
   const rows = useMemo(() => sortPositions(positions ?? []), [positions]);
 
@@ -41,58 +37,67 @@ const DivisionStandings: React.FC<DivisionStandingsProps> = ({
   }
 
   return (
-    <TableContainer>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell>#</TableCell>
-            <TableCell>Equipo</TableCell>
-            <Tooltip title="Partidos jugados">
-              <TableCell align="center">PJ</TableCell>
-            </Tooltip>
-            <Tooltip title="Partidos ganados">
-              <TableCell align="center">PG</TableCell>
-            </Tooltip>
-            <Tooltip title="Partidos perdidos">
-              <TableCell align="center">PP</TableCell>
-            </Tooltip>
-            <Tooltip title="Puntos a favor">
-              <TableCell align="center">GF</TableCell>
-            </Tooltip>
-            <Tooltip title="Puntos en contra">
-              <TableCell align="center">GC</TableCell>
-            </Tooltip>
-            <Tooltip title="Diferencia">
-              <TableCell align="center">DIF</TableCell>
-            </Tooltip>
-            <TableCell align="center">
-              <Box component="span" fontWeight={700}>
-                Pts
-              </Box>
-            </TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {rows.map((row, index) => (
-            <TableRow key={row.teamid} hover>
-              <TableCell>{index + 1}</TableCell>
-              <TableCell>{row.teamName}</TableCell>
-              <TableCell align="center">{row.matchesPlayed}</TableCell>
-              <TableCell align="center">{row.wins}</TableCell>
-              <TableCell align="center">{row.losses}</TableCell>
-              <TableCell align="center">{row.pointsFor}</TableCell>
-              <TableCell align="center">{row.pointsAgainst}</TableCell>
-              <TableCell align="center">{row.pointsDifference}</TableCell>
+    <Box>
+      {divisionId && (
+        <PrintableResultsSheet
+          divisionId={divisionId}
+          divisionName={divisionName}
+          positions={rows}
+        />
+      )}
+      <TableContainer>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>#</TableCell>
+              <TableCell>Equipo</TableCell>
+              <Tooltip title="Partidos jugados">
+                <TableCell align="center">PJ</TableCell>
+              </Tooltip>
+              <Tooltip title="Partidos ganados">
+                <TableCell align="center">PG</TableCell>
+              </Tooltip>
+              <Tooltip title="Partidos perdidos">
+                <TableCell align="center">PP</TableCell>
+              </Tooltip>
+              <Tooltip title="Puntos a favor">
+                <TableCell align="center">GF</TableCell>
+              </Tooltip>
+              <Tooltip title="Puntos en contra">
+                <TableCell align="center">GC</TableCell>
+              </Tooltip>
+              <Tooltip title="Diferencia">
+                <TableCell align="center">DIF</TableCell>
+              </Tooltip>
               <TableCell align="center">
                 <Box component="span" fontWeight={700}>
-                  {row.points}
+                  Pts
                 </Box>
               </TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {rows.map((row, index) => (
+              <TableRow key={row.teamid} hover>
+                <TableCell>{index + 1}</TableCell>
+                <TableCell>{row.teamName}</TableCell>
+                <TableCell align="center">{row.matchesPlayed}</TableCell>
+                <TableCell align="center">{row.wins}</TableCell>
+                <TableCell align="center">{row.losses}</TableCell>
+                <TableCell align="center">{row.pointsFor}</TableCell>
+                <TableCell align="center">{row.pointsAgainst}</TableCell>
+                <TableCell align="center">{row.pointsDifference}</TableCell>
+                <TableCell align="center">
+                  <Box component="span" fontWeight={700}>
+                    {row.points}
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   );
 };
 
