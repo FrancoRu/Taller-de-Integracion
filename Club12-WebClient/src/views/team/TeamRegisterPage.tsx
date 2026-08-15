@@ -18,6 +18,7 @@ import {
   Typography,
 } from '@mui/material';
 import Swal from 'sweetalert2';
+import theme from '@/theme';
 import { GUID } from '@/modules/core/types/types';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
 import { TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
@@ -113,7 +114,7 @@ const TeamRegisterPage: React.FC = () => {
         title: 'Sin equipos seleccionados',
         text: 'Seleccioná al menos un equipo para registrar.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -130,7 +131,7 @@ const TeamRegisterPage: React.FC = () => {
         title: 'Registro exitoso',
         text: 'Los equipos fueron registrados correctamente.',
         icon: 'success',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
     }
   };

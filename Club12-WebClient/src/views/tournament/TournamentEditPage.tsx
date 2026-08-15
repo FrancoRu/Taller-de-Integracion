@@ -11,6 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import Swal from 'sweetalert2';
+import theme from '@/theme';
 import { GUID } from '@/modules/core/types/types';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
@@ -297,7 +298,7 @@ const TournamentEditPage: React.FC = () => {
         title: 'No se pudo guardar',
         text: messages[0],
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }

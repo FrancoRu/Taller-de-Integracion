@@ -8,7 +8,7 @@ import {
 } from '@/modules/core/constants/constants';
 
 const TOKEN_KEY: string = COOKIE_SIGNIN_TOKEN;
-const INVALID_TOKEN_PATH = '/token-invalido';
+const INVALID_TOKEN_PATH = routes.tokenInvalido;
 
 type headersContent = {
   'Content-Type': string;

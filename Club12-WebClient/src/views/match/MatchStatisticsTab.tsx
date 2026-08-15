@@ -17,6 +17,7 @@ import {
   Typography,
 } from '@mui/material';
 import Swal from 'sweetalert2';
+import theme from '@/theme';
 import { GUID } from '@/modules/core/types/types';
 import { IMatchResponse } from '@/modules/match/type/match';
 import { IPublicPlayerResponse } from '@/modules/player/type/player.d';
@@ -180,7 +181,7 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
     await Swal.fire({
       title: 'Puntuaciones guardadas',
       icon: 'success',
-      confirmButtonColor: '#FD6B00',
+      confirmButtonColor: theme.palette.primary.main,
     });
   }, [
     assistsByPlayer,

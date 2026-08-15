@@ -1,7 +1,6 @@
 import { Box, Button } from '@mui/material';
 import { Link } from 'react-router-dom';
-
-const ORANGE = '#FD6B00';
+import theme from '@/theme';
 
 interface ErrorPageActionsProps {
   showLogin?: boolean;
@@ -16,8 +15,8 @@ const ErrorPageActions: React.FC<ErrorPageActionsProps> = ({
       to="/"
       variant="outlined"
       sx={{
-        borderColor: ORANGE,
-        color: ORANGE,
+        borderColor: theme.palette.primary.main,
+        color: theme.palette.primary.main,
         '&:hover': {
           borderColor: '#d45a00',
           backgroundColor: '#d45a00',
@@ -33,8 +32,8 @@ const ErrorPageActions: React.FC<ErrorPageActionsProps> = ({
         to="/login"
         variant="outlined"
         sx={{
-          borderColor: ORANGE,
-          color: ORANGE,
+          borderColor: theme.palette.primary.main,
+          color: theme.palette.primary.main,
           '&:hover': {
             borderColor: '#d45a00',
             backgroundColor: '#d45a00',

@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+import theme, { CANCEL_BUTTON_COLOR } from '@/theme';
 import {
   IAddVenueRequest,
   IPutVenueRequest,
@@ -158,8 +159,8 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
         text: '¡Usted no podrá revertir este cambio!',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#FD6B00',
-        cancelButtonColor: '#d33',
+        confirmButtonColor: theme.palette.primary.main,
+        cancelButtonColor: CANCEL_BUTTON_COLOR,
         confirmButtonText: 'Sí, eliminar',
         cancelButtonText: 'Cancelar',
       });
@@ -174,7 +175,7 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
         title: '¡Eliminada!',
         text: 'La cancha ha sido eliminada.',
         icon: 'success',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
 
       await fetchVenues();
@@ -241,7 +242,7 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
         title: 'Campos incompletos',
         text: 'Nombre y dirección son obligatorios.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -251,7 +252,7 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
         title: 'Imagen requerida',
         text: 'Debe seleccionar una imagen para crear la cancha.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -285,7 +286,7 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
         title: 'Campos incompletos',
         text: 'Nombre y dirección son obligatorios.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }

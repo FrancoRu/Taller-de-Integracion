@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+import theme, { CANCEL_BUTTON_COLOR } from '@/theme';
 import { GUID } from '@/modules/core/types/types';
 import { TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
 import { TABLE_PAGE_SIZE_OPTIONS } from '@/modules/core/constants/pagination';
@@ -237,8 +238,8 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         text: '¡Usted no podrá revertir este cambio!',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#FD6B00',
-        cancelButtonColor: '#d33',
+        confirmButtonColor: theme.palette.primary.main,
+        cancelButtonColor: CANCEL_BUTTON_COLOR,
         confirmButtonText: 'Sí, eliminar',
         cancelButtonText: 'Cancelar',
       });
@@ -252,7 +253,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         title: '¡Eliminado!',
         text: 'El jugador ha sido eliminado.',
         icon: 'success',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
     },
     [deletePlayerById]
@@ -347,7 +348,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         title: 'Campos incompletos',
         text: 'Nombre, segundo nombre, apellido y documento son obligatorios.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return false;
     }
@@ -357,7 +358,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         title: 'Equipo requerido',
         text: 'Debe seleccionar un equipo.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return false;
     }
@@ -413,7 +414,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       title: 'Jugador creado',
       text: 'El jugador se creó correctamente.',
       icon: 'success',
-      confirmButtonColor: '#FD6B00',
+      confirmButtonColor: theme.palette.primary.main,
     });
   };
 
@@ -454,7 +455,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       title: 'Jugador actualizado',
       text: 'El jugador se actualizó correctamente.',
       icon: 'success',
-      confirmButtonColor: '#FD6B00',
+      confirmButtonColor: theme.palette.primary.main,
     });
   };
 

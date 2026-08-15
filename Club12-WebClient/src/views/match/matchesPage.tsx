@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+import theme, { CANCEL_BUTTON_COLOR } from '@/theme';
 import { GUID } from '@/modules/core/types/types';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import { IMatchResponse, MatchFiltered } from '@/modules/match/type/match';
@@ -258,8 +259,8 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
         text: '¡Usted no podrá revertir este cambio!',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#FD6B00',
-        cancelButtonColor: '#d33',
+        confirmButtonColor: theme.palette.primary.main,
+        cancelButtonColor: CANCEL_BUTTON_COLOR,
         confirmButtonText: 'Sí, eliminar',
         cancelButtonText: 'Cancelar',
       });
@@ -273,7 +274,7 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
         title: '¡Eliminado!',
         text: 'El partido ha sido eliminado.',
         icon: 'success',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
     },
     [deleteMatchById]
@@ -452,7 +453,7 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
       title: 'Pendiente',
       text: 'La creación de partidos desde esta vista aún no está implementada.',
       icon: 'info',
-      confirmButtonColor: '#FD6B00',
+      confirmButtonColor: theme.palette.primary.main,
     });
   }, [onCreate]);
 

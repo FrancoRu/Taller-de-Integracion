@@ -16,6 +16,7 @@ import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import Swal from 'sweetalert2';
+import theme from '@/theme';
 
 const PlayerPage: React.FC = () => {
   const { playerId } = useParams<{ playerId: GUID }>();
@@ -96,7 +97,7 @@ const PlayerPage: React.FC = () => {
       title: 'Pendiente',
       text: 'La creación de puntuaciones desde esta vista aún no está implementada.',
       icon: 'info',
-      confirmButtonColor: '#FD6B00',
+      confirmButtonColor: theme.palette.primary.main,
     });
   };
 
@@ -105,7 +106,7 @@ const PlayerPage: React.FC = () => {
       title: 'Pendiente',
       text: 'La creación de sanciones desde esta vista aún no está implementada.',
       icon: 'info',
-      confirmButtonColor: '#FD6B00',
+      confirmButtonColor: theme.palette.primary.main,
     });
   };
 

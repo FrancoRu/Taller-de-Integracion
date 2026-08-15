@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import theme from '@/theme';
 import {
   buildActionsColumn,
   TableRowAction,
@@ -103,7 +104,7 @@ const UsersPage: React.FC = () => {
           title: 'Eliminado',
           text: 'El usuario fue eliminado correctamente.',
           icon: 'success',
-          confirmButtonColor: '#FD6B00',
+          confirmButtonColor: theme.palette.primary.main,
         });
       }
     },
@@ -135,7 +136,7 @@ const UsersPage: React.FC = () => {
         await Swal.fire({
           title: deactivating ? 'Usuario desactivado' : 'Usuario activado',
           icon: 'success',
-          confirmButtonColor: '#FD6B00',
+          confirmButtonColor: theme.palette.primary.main,
         });
       }
     },

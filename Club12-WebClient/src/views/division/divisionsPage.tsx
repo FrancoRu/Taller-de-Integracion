@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+import theme, { CANCEL_BUTTON_COLOR } from '@/theme';
 import { GUID } from '@/modules/core/types/types';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import {
@@ -151,8 +152,8 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
         text: '¡Usted no podrá revertir este cambio!',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#FD6B00',
-        cancelButtonColor: '#d33',
+        confirmButtonColor: theme.palette.primary.main,
+        cancelButtonColor: CANCEL_BUTTON_COLOR,
         confirmButtonText: 'Sí, eliminar',
         cancelButtonText: 'Cancelar',
       });
@@ -166,7 +167,7 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
         title: '¡Eliminada!',
         text: 'La división ha sido eliminada.',
         icon: 'success',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
     },
     [deleteDivisionsById]
@@ -241,7 +242,7 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
       title: 'Pendiente',
       text: 'La creación de divisiones desde esta vista aún no está implementada.',
       icon: 'info',
-      confirmButtonColor: '#FD6B00',
+      confirmButtonColor: theme.palette.primary.main,
     });
   }, [onCreate]);
 

@@ -1,6 +1,8 @@
 import { orange } from '@mui/material/colors';
 import { createTheme } from '@mui/material/styles';
 
+export const CANCEL_BUTTON_COLOR = '#d33';
+
 const baseTheme = createTheme({
   palette: {
     primary: {

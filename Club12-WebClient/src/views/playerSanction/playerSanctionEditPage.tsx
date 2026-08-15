@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import Swal from 'sweetalert2';
 import { useNavigate, useParams } from 'react-router-dom';
+import theme from '@/theme';
 import { GUID } from '@/modules/core/types/types';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import { IPlayerSanctionEditFormState } from '@/modules/playerSanction/type/playerSanction.d';
@@ -80,7 +81,7 @@ const PlayerSanctionEditPage: React.FC = () => {
         title: 'Duración inválida',
         text: 'La duración debe ser mayor a 0.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -90,7 +91,7 @@ const PlayerSanctionEditPage: React.FC = () => {
         title: 'Campos incompletos',
         text: 'Debes completar la descripción.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -110,7 +111,7 @@ const PlayerSanctionEditPage: React.FC = () => {
       title: 'Sanción actualizada',
       text: 'Los cambios se guardaron correctamente.',
       icon: 'success',
-      confirmButtonColor: '#FD6B00',
+      confirmButtonColor: theme.palette.primary.main,
     });
 
     navigate(`/panel/sanciones/${targetSanctionId}`);

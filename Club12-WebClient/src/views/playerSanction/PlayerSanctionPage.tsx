@@ -16,6 +16,7 @@ import {
   Typography,
 } from '@mui/material';
 import Swal from 'sweetalert2';
+import theme from '@/theme';
 import { GUID } from '@/modules/core/types/types';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import { SanctionAppealStatus } from '@/modules/playerSanction/type/playerSanction';
@@ -95,7 +96,7 @@ const PlayerSanctionPage: React.FC = () => {
       await Swal.fire({
         title: 'Apelación registrada',
         icon: 'success',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
     }
   };
@@ -116,7 +117,7 @@ const PlayerSanctionPage: React.FC = () => {
       await Swal.fire({
         title: 'Apelación resuelta',
         icon: 'success',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
     }
   };

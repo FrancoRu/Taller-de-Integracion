@@ -15,6 +15,7 @@ const routes = {
   users: 'users',
   auth: 'auth',
   venues: 'venues',
+  tokenInvalido: '/token-invalido',
 };
 
 export default routes;

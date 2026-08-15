@@ -12,6 +12,7 @@ import {
   Typography,
 } from '@mui/material';
 import Swal from 'sweetalert2';
+import theme from '@/theme';
 import { GUID } from '@/modules/core/types/types';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { useStage } from '@/modules/stage/hook/stage.hook';
@@ -88,7 +89,7 @@ const StageCreatePage: React.FC = () => {
         title: 'Campos incompletos',
         text: 'El nombre de la fase es obligatorio.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -98,7 +99,7 @@ const StageCreatePage: React.FC = () => {
         title: 'División requerida',
         text: 'Debes seleccionar una división.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -108,7 +109,7 @@ const StageCreatePage: React.FC = () => {
         title: 'Fechas requeridas',
         text: 'Debes completar fecha de inicio y de fin.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -118,7 +119,7 @@ const StageCreatePage: React.FC = () => {
         title: 'Fechas inválidas',
         text: 'La fecha de fin no puede ser anterior a la de inicio.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -147,7 +148,7 @@ const StageCreatePage: React.FC = () => {
       title: 'Fase creada',
       text: 'La fase se creó correctamente.',
       icon: 'success',
-      confirmButtonColor: '#FD6B00',
+      confirmButtonColor: theme.palette.primary.main,
     });
 
     handleCancel();

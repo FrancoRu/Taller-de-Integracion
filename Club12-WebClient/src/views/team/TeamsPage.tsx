@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+import theme, { CANCEL_BUTTON_COLOR } from '@/theme';
 import { GUID } from '@/modules/core/types/types';
 import { useTeam } from '@/modules/team/hook/team.hook';
 import FormButtons from '@/views/core/components/FormButtons';
@@ -191,8 +192,8 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
         text: '¡Usted no podrá revertir este cambio!',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#FD6B00',
-        cancelButtonColor: '#d33',
+        confirmButtonColor: theme.palette.primary.main,
+        cancelButtonColor: CANCEL_BUTTON_COLOR,
         confirmButtonText: 'Sí, eliminar',
         cancelButtonText: 'Cancelar',
       });
@@ -206,7 +207,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
         title: '¡Eliminado!',
         text: 'El equipo ha sido eliminado.',
         icon: 'success',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
     },
     [deleteTeamById]
@@ -300,7 +301,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
         title: 'Campos incompletos',
         text: 'Nombre y código son obligatorios.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return false;
     }
@@ -310,7 +311,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
         title: 'Logo requerido',
         text: 'Debe seleccionar un logo para crear el equipo.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return false;
     }
@@ -346,7 +347,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
       title: 'Equipo creado',
       text: 'El equipo se creó correctamente.',
       icon: 'success',
-      confirmButtonColor: '#FD6B00',
+      confirmButtonColor: theme.palette.primary.main,
     });
   };
 
@@ -360,7 +361,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
         title: 'Campos incompletos',
         text: 'Nombre y código son obligatorios.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -386,7 +387,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
       title: 'Equipo actualizado',
       text: 'El equipo se actualizó correctamente.',
       icon: 'success',
-      confirmButtonColor: '#FD6B00',
+      confirmButtonColor: theme.palette.primary.main,
     });
   };
 

@@ -10,6 +10,7 @@ import {
   Typography,
 } from '@mui/material';
 import Swal from 'sweetalert2';
+import theme from '@/theme';
 import { GUID } from '@/modules/core/types/types';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
@@ -126,7 +127,7 @@ const TournamentPage: React.FC = () => {
       title: 'Pendiente',
       text: 'La creación de divisiones desde esta vista aún no está implementada.',
       icon: 'info',
-      confirmButtonColor: '#FD6B00',
+      confirmButtonColor: theme.palette.primary.main,
     });
   };
 

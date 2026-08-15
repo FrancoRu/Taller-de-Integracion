@@ -12,6 +12,7 @@ import {
   Typography,
 } from '@mui/material';
 import Swal from 'sweetalert2';
+import theme from '@/theme';
 import { GUID } from '@/modules/core/types/types';
 import { useStage } from '@/modules/stage/hook/stage.hook';
 import { IStageEditFormState } from '@/modules/stage/type/stage.d';
@@ -103,7 +104,7 @@ const StageEditPage: React.FC = () => {
         title: 'Cambio no permitido',
         text: 'Solo podés modificar el estado Activa cuando la fecha de fin ya pasó.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -123,7 +124,7 @@ const StageEditPage: React.FC = () => {
       title: 'Fase actualizada',
       text: 'Los cambios se guardaron correctamente.',
       icon: 'success',
-      confirmButtonColor: '#FD6B00',
+      confirmButtonColor: theme.palette.primary.main,
     });
 
     navigate(`/panel/fases/${targetStageId}`);

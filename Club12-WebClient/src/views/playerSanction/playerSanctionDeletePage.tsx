@@ -7,6 +7,7 @@ import {
   Typography,
 } from '@mui/material';
 import Swal from 'sweetalert2';
+import theme from '@/theme';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import { IPlayerSanctionDeletePageProps } from '@/modules/playerSanction/type/playerSanction.d';
 import FormButtons from '@/views/core/components/FormButtons';
@@ -41,7 +42,7 @@ const PlayerSanctionDeletePage: React.FC<IPlayerSanctionDeletePageProps> = ({
       title: '¡Eliminada!',
       text: 'La sanción ha sido eliminada.',
       icon: 'success',
-      confirmButtonColor: '#FD6B00',
+      confirmButtonColor: theme.palette.primary.main,
     });
 
     onClose();

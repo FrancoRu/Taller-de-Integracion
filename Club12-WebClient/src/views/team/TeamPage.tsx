@@ -16,6 +16,7 @@ import TeamLogo from '@/views/core/components/TeamLogo';
 import PlayersPage from '@/views/player/PlayersPage';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import Swal from 'sweetalert2';
+import theme from '@/theme';
 
 interface TeamPageProps {
   teamIdOverride?: GUID;
@@ -106,7 +107,7 @@ const TeamPage: React.FC<TeamPageProps> = ({
       title: 'Pendiente',
       text: 'La creación de puntuaciones desde esta vista aún no está implementada.',
       icon: 'info',
-      confirmButtonColor: '#FD6B00',
+      confirmButtonColor: theme.palette.primary.main,
     });
   };
 
@@ -115,7 +116,7 @@ const TeamPage: React.FC<TeamPageProps> = ({
       title: 'Pendiente',
       text: 'La creación de sanciones desde esta vista aún no está implementada.',
       icon: 'info',
-      confirmButtonColor: '#FD6B00',
+      confirmButtonColor: theme.palette.primary.main,
     });
   };
 

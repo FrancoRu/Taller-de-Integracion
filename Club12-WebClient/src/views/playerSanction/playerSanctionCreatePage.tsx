@@ -10,6 +10,7 @@ import {
   Typography,
 } from '@mui/material';
 import Swal from 'sweetalert2';
+import theme from '@/theme';
 import { GUID } from '@/modules/core/types/types';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
@@ -158,7 +159,7 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
         title: 'Campos incompletos',
         text: 'Debes seleccionar un partido.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -168,7 +169,7 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
         title: 'Campos incompletos',
         text: 'Debes seleccionar un equipo.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -178,7 +179,7 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
         title: 'Campos incompletos',
         text: 'Debes seleccionar un jugador.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -188,7 +189,7 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
         title: 'Duración inválida',
         text: 'La duración debe ser mayor a 0.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -198,7 +199,7 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
         title: 'Campos incompletos',
         text: 'Debes completar la fecha de emisión.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -208,7 +209,7 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
         title: 'Campos incompletos',
         text: 'Debes completar la descripción.',
         icon: 'warning',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -234,7 +235,7 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
       title: 'Sanción creada',
       text: 'La sanción se creó correctamente.',
       icon: 'success',
-      confirmButtonColor: '#FD6B00',
+      confirmButtonColor: theme.palette.primary.main,
     });
 
     setForm(INITIAL_FORM);

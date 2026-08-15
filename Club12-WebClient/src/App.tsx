@@ -12,6 +12,7 @@ import PublicMatchesPage from './views/home/matches/PublicMatchesPage';
 import PublicTournamentsPage from './views/home/tournaments/PublicTournamentsPage';
 import PublicTournamentPage from './views/home/tournaments/PublicTournamentPage';
 import Login from './views/auth/login';
+import routes from './modules/core/constants/routes';
 import HowWeAre from './views/home/howWeAre/howWeAre';
 import NavMenu from './views/home/NavMenu/navMenu';
 import { useAuth } from './modules/auth/hook/auth.hook';
@@ -64,7 +65,7 @@ function App() {
   const location = useLocation();
 
   if (location.pathname === '/forbidden') return <Forbidden />;
-  if (location.pathname === '/token-invalido') return <InvalidToken />;
+  if (location.pathname === routes.tokenInvalido) return <InvalidToken />;
 
   if (isAuthenticated) {
     const defaultTab = FIRST_TAB_BY_ROLE[role] ?? '/panel/usuarios';

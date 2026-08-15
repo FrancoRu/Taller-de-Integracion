@@ -17,6 +17,7 @@ import {
   Typography,
 } from '@mui/material';
 import Swal from 'sweetalert2';
+import theme, { CANCEL_BUTTON_COLOR } from '@/theme';
 import {
   buildActionsColumn,
   TableRowAction,
@@ -135,8 +136,8 @@ const TournamentsPage: React.FC = () => {
         text: '¡Usted no podrá revertir este cambio!',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#FD6B00',
-        cancelButtonColor: '#d33',
+        confirmButtonColor: theme.palette.primary.main,
+        cancelButtonColor: CANCEL_BUTTON_COLOR,
         confirmButtonText: 'Sí, eliminar',
         cancelButtonText: 'Cancelar',
       });
@@ -150,7 +151,7 @@ const TournamentsPage: React.FC = () => {
         title: '¡Eliminado!',
         text: 'El torneo ha sido eliminado.',
         icon: 'success',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
     },
     [deleteTournamentById]
@@ -310,7 +311,7 @@ const TournamentsPage: React.FC = () => {
       title: 'Pendiente',
       text: 'La creación de torneos desde el panel aún no está implementada.',
       icon: 'info',
-      confirmButtonColor: '#FD6B00',
+      confirmButtonColor: theme.palette.primary.main,
     });
   }, []);
 

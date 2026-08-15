@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+import theme, { CANCEL_BUTTON_COLOR } from '@/theme';
 import { GUID } from '@/modules/core/types/types';
 import { useStage } from '@/modules/stage/hook/stage.hook';
 import {
@@ -234,8 +235,8 @@ const StagesPage: React.FC<StagesPageProps> = ({
         text: '¡Usted no podrá revertir este cambio!',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#FD6B00',
-        cancelButtonColor: '#d33',
+        confirmButtonColor: theme.palette.primary.main,
+        cancelButtonColor: CANCEL_BUTTON_COLOR,
         confirmButtonText: 'Sí, eliminar',
         cancelButtonText: 'Cancelar',
       });
@@ -249,7 +250,7 @@ const StagesPage: React.FC<StagesPageProps> = ({
         title: '¡Eliminada!',
         text: 'La fase ha sido eliminada.',
         icon: 'success',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
     },
     [deleteStagesById]
@@ -374,7 +375,7 @@ const StagesPage: React.FC<StagesPageProps> = ({
         title: 'Éxito',
         text: 'Las fases fueron generadas correctamente.',
         icon: 'success',
-        confirmButtonColor: '#FD6B00',
+        confirmButtonColor: theme.palette.primary.main,
       });
     } finally {
       setLoading(false);
