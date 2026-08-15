@@ -3,6 +3,7 @@ using Supabase;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Application.Utils.Helper.SupabaseHelper;
@@ -11,7 +12,7 @@ namespace Application.Utils.Helper.SupabaseHelper;
 /// Provides helper methods to interact with Supabase storage,
 /// including file upload and public URL generation.
 /// </summary>
-public class SupabaseHelper
+public class SupabaseHelper : ISupabaseRawStorage
 {
     private readonly Client _client;
     private readonly string _bucketName;
@@ -85,6 +86,76 @@ public class SupabaseHelper
         catch (Exception ex)
         {
             throw new InvalidOperationException($"Error uploading file: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Uploads raw content to an arbitrary object path in the bucket. Unlike
+    /// <see cref="UploadImageAsync{T}"/>, this is not image-shaped: no
+    /// per-type folder convention, no cache-control header, no public-URL
+    /// return — the caller supplies the exact destination path. Additive:
+    /// <see cref="UploadImageAsync{T}"/>'s behavior and call sites are
+    /// untouched.
+    /// </summary>
+    /// <param name="objectPath">The exact destination path within the bucket.</param>
+    /// <param name="content">The content stream to upload.</param>
+    /// <exception cref="InvalidOperationException">Thrown when the upload fails.</exception>
+    public async Task UploadRawAsync(string objectPath, Stream content)
+    {
+        try
+        {
+            await _client.Storage
+                .From(_bucketName)
+                .Upload(UseStreamDotReadMethod(content), objectPath, new() { Upsert = true });
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Error uploading file: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Lists raw objects under <paramref name="prefix"/> in the bucket.
+    /// Additive: does not affect <see cref="UploadImageAsync{T}"/> or
+    /// <see cref="DeleteImageAsync{T}"/>.
+    /// </summary>
+    /// <param name="prefix">The bucket-relative path prefix to list.</param>
+    /// <exception cref="InvalidOperationException">Thrown when listing fails.</exception>
+    public async Task<IReadOnlyList<SupabaseStorageEntry>> ListRawAsync(string prefix)
+    {
+        try
+        {
+            List<Supabase.Storage.FileObject> files = await _client.Storage.From(_bucketName).List(prefix);
+            return files
+                .Select(file => new SupabaseStorageEntry(
+                    file.Name,
+                    file.UpdatedAt.HasValue
+                        ? new DateTimeOffset(DateTime.SpecifyKind(file.UpdatedAt.Value, DateTimeKind.Utc))
+                        : null))
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Error listing files: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Removes the raw object at <paramref name="objectPath"/> in the bucket.
+    /// Additive: existing <see cref="DeleteImageAsync{T}"/> behavior and call
+    /// sites are untouched.
+    /// </summary>
+    /// <param name="objectPath">The exact object path within the bucket.</param>
+    /// <exception cref="InvalidOperationException">Thrown when the removal fails.</exception>
+    public async Task RemoveRawAsync(string objectPath)
+    {
+        try
+        {
+            await _client.Storage.From(_bucketName).Remove(objectPath);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Error removing file: {ex.Message}", ex);
         }
     }
 

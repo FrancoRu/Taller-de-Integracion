@@ -58,10 +58,10 @@ Chain strategy: pending
 
 ## Phase 6 — RED: Supabase storage tests (PR 3)
 
-- [ ] 6.1 `SupabaseBackupStorageTests.cs`: object-path builder confines names to `backups/` prefix, rejects/normalizes traversal input; storage-target factory selects Supabase vs Local from config
+- [x] 6.1 `SupabaseBackupStorageTests.cs`: object-path builder confines names to `backups/` prefix, rejects/normalizes traversal input; storage-target factory selects Supabase vs Local from config
 
 ## Phase 7 — GREEN: Supabase storage adapter (PR 3)
 
-- [ ] 7.1 Add additive raw upload/list/remove methods to `SupabaseHelper.cs` (existing `UploadImageAsync`/`DeleteImageAsync` behavior-frozen)
-- [ ] 7.2 Implement `Infrastructure/Backup/SupabaseBackupStorage.cs` using new raw methods under `backups/` prefix
-- [ ] 7.3 Extend `AddBackupConfig` Supabase branch of the `IBackupStorage` factory
+- [x] 7.1 Add additive raw upload/list/remove methods to `SupabaseHelper.cs` (existing `UploadImageAsync`/`DeleteImageAsync` behavior-frozen)
+- [x] 7.2 Implement `Infrastructure/Backup/SupabaseBackupStorage.cs` using new raw methods under `backups/` prefix
+- [x] 7.3 Extend `AddBackupConfig` Supabase branch of the `IBackupStorage` factory

@@ -393,8 +393,13 @@ public static class StartupExtensions
     /// Registers the scheduled database backup feature: binds the
     /// <c>Backup</c> config section into a <see cref="BackupOptions"/>
     /// singleton and registers its ports/adapters (pg_dump, retention,
-    /// local-directory storage) and <see cref="DatabaseBackupHostedService"/>
-    /// explicitly as singletons.
+    /// <see cref="DatabaseBackupHostedService"/>) explicitly as singletons.
+    /// The <see cref="IBackupStorage"/> implementation is selected by
+    /// <see cref="BackupOptions.StorageTarget"/>: <c>Supabase</c> registers
+    /// <see cref="SupabaseBackupStorage"/> (reusing the existing
+    /// <see cref="SupabaseHelper"/> singleton as its raw-storage boundary);
+    /// anything else (including the default, <c>Local</c>) registers
+    /// <see cref="LocalDirectoryBackupStorage"/>.
     /// </summary>
     /// <remarks>
     /// Deliberately NOT registered via <see cref="RegisterScoped"/>'s
@@ -415,15 +420,17 @@ public static class StartupExtensions
 
         if (string.Equals(options.StorageTarget, "Supabase", StringComparison.OrdinalIgnoreCase))
         {
-            // The Supabase-backed adapter ships in a later work unit. Fall back to
-            // local storage rather than fail startup so Backup:StorageTarget=Supabase
-            // doesn't crash the app before that adapter exists.
-            Log.Warning(
-                "Backup:StorageTarget=Supabase is not implemented yet; falling back to LocalDirectoryBackupStorage.");
+            // Reuses the existing SupabaseHelper singleton (registered by
+            // RegisterSingletons) as the raw-storage boundary — no second
+            // Supabase client is provisioned.
+            services.AddSingleton<ISupabaseRawStorage>(sp => sp.GetRequiredService<SupabaseHelper>());
+            services.AddSingleton<IBackupStorage, SupabaseBackupStorage>();
         }
-
-        services.AddSingleton<IBackupStorage>(sp => new LocalDirectoryBackupStorage(
-            options.LocalStoragePath, sp.GetRequiredService<ILogger<LocalDirectoryBackupStorage>>()));
+        else
+        {
+            services.AddSingleton<IBackupStorage>(sp => new LocalDirectoryBackupStorage(
+                options.LocalStoragePath, sp.GetRequiredService<ILogger<LocalDirectoryBackupStorage>>()));
+        }
 
         services.AddSingleton<DatabaseBackupHostedService>();
 
