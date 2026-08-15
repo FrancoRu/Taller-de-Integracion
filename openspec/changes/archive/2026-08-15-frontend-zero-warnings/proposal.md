@@ -59,5 +59,3 @@ Pure diff revert per slice; no data/schema/API impact. `git revert` the commit(s
 - [ ] `npm run lint` reports 0 errors, 0 warnings.
 - [ ] No new render loops; affected pages load once and behave unchanged.
 - [ ] `npm run build` passes.
-</content>
-</invoke>
