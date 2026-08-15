@@ -24,7 +24,5 @@ public interface IMatchService
 
     Task<PaginatedResponse<Match>> GetAllMatchesAsync(GetMatchesFilteredRequest filter);
 
-    Task GenerateFixtureAsync(Guid divisionId, IEnumerable<Team> teams);
-
     Task<List<Match>> CreateAutomatedMatchesAsync(Guid stageId);
 }

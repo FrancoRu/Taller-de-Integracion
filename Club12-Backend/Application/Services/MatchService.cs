@@ -9,7 +9,6 @@ using Domain.Enums;
 using LinqKit;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using MatchType = Domain.Enums.MatchType;
@@ -93,62 +92,6 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
             TotalCount = totalCount,
             Items = filteredMatches
         };
-    }
-
-    public async Task GenerateFixtureAsync(Guid divisionId, IEnumerable<Team> teams)
-    {
-        if (teams is null || !teams.Any() || teams.Count() < 2 || teams.Count() % 2 != 0)
-        {
-            throw new ArgumentException("The list must have at least two teams and an even number of teams to generate a fixture.");
-        }
-
-        int numberOfTeams = teams.Count();
-        int numberOfRounds = (numberOfTeams - 1) * 2;
-        DateTime currentMatchDate = DateTime.UtcNow;
-
-        List<List<(Team home, Team away)>> firstHalfRounds = [.. Enumerable.Range(0, numberOfRounds / 2)
-            .Select(round =>
-            {
-                List<Team> rotatedTeams = [.. teams.Skip(round), .. teams.Take(round)];
-                return rotatedTeams
-                    .Take(numberOfTeams / 2)
-                    .Zip(rotatedTeams.Skip(numberOfTeams / 2).Reverse(), (home, away) => (home, away))
-                    .ToList();
-            })];
-
-        List<Match> firstRoundMatches = [.. firstHalfRounds
-            .SelectMany((roundMatches, roundIndex) => roundMatches
-                .Select(match => new Match
-                {
-                    HomeTeamId = match.home.Id,
-                    VisitorTeamId = match.away.Id,
-                    HomeTeam = match.home,
-                    VisitorTeam = match.away,
-                    Type = MatchType.Regular,
-                    IsFinished = false,
-                    MatchDate = currentMatchDate,
-                    CreatedBy = "System",
-                }))];
-
-        currentMatchDate = currentMatchDate.AddDays(7 * firstRoundMatches.Count);
-
-        List<Match> secondRoundMatches = [.. firstHalfRounds
-            .SelectMany((roundMatches, roundIndex) => roundMatches
-                .Select(match => new Match
-                {
-                    HomeTeamId = match.away.Id,
-                    VisitorTeamId = match.home.Id,
-                    HomeTeam = match.away,
-                    VisitorTeam = match.home,
-                    Type = MatchType.Regular,
-                    IsFinished = false,
-                    MatchDate = currentMatchDate,
-                    CreatedBy = "System",
-                }))];
-
-        List<Match> allMatches = [.. firstRoundMatches, .. secondRoundMatches];
-
-        await matchRepository.AddRangeAsync(allMatches);
     }
 
     public async Task<List<Match>> CreateAutomatedMatchesAsync(Guid stageId)
