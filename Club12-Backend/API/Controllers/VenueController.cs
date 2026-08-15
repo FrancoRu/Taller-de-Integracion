@@ -19,6 +19,7 @@ namespace API.Controllers;
 /// Controller for managing Venues.
 /// </summary>
 /// <param name="venueService">The Venue service.</param>
+/// <param name="supabaseHelper">The Supabase helper for storage operations.</param>
 /// <param name="mapper">The AutoMapper instance.</param>
 //[Authorize(Roles = "SuperAdmin")]
 [Route("api/venues/")]

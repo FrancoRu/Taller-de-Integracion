@@ -19,6 +19,7 @@ namespace API.Controllers;
 /// Controller for managing Matches.
 /// </summary>
 /// <param name="matchService">The Match service.</param>
+/// <param name="stageTeamMatchService">The stage-team match service.</param>
 /// <param name="mapper">The AutoMapper instance.</param>
 //[Authorize(Roles = "SuperAdmin")]
 [Route("api/matches/")]

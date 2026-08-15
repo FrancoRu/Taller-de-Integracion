@@ -36,7 +36,6 @@ public interface IVenueService
     /// <summary>
     /// Retrieves all venues asynchronously.
     /// </summary>
-    /// <param name="filter">The filtering and pagination request.</param>
     /// <returns>A paginated response containing the venues.</returns>
     Task<IEnumerable<Venue>> GetAllVenuesAsync();
 }

@@ -125,10 +125,11 @@ public class SupabaseHelper : ISupabaseRawStorage
     {
         try
         {
-            List<Supabase.Storage.FileObject> files = await _client.Storage.From(_bucketName).List(prefix);
+            List<Supabase.Storage.FileObject> files = await _client.Storage.From(_bucketName).List(prefix)
+                ?? [];
             return files
                 .Select(file => new SupabaseStorageEntry(
-                    file.Name,
+                    file.Name ?? string.Empty,
                     file.UpdatedAt.HasValue
                         ? new DateTimeOffset(DateTime.SpecifyKind(file.UpdatedAt.Value, DateTimeKind.Utc))
                         : null))

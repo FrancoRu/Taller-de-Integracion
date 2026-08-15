@@ -38,7 +38,7 @@ public class ScorerRepository(ApplicationDBContext context)
         IQueryable<Scorer> scorersQuery = _dbSet;
 
         if (filter.TournamentId.HasValue)
-            scorersQuery = scorersQuery.Where(s => s.Match.Stage.Division.TournamentId == filter.TournamentId.Value);
+            scorersQuery = scorersQuery.Where(s => s.Match!.Stage.Division.TournamentId == filter.TournamentId.Value);
 
         if (filter.MatchId.HasValue)
             scorersQuery = scorersQuery.Where(s => s.MatchId == filter.MatchId.Value);

@@ -16,7 +16,6 @@ public interface IDivisionService
     /// Creates a new division asynchronously.
     /// </summary>
     /// <param name="divisionEntity">The division entity to create.</param>
-    /// <param name="userId">The ID of the user creating the division.</param>
     /// <returns>The created division.</returns>
     Task<Division> CreateDivisionAsync(Division divisionEntity);
 
@@ -35,7 +34,6 @@ public interface IDivisionService
     /// Updates a division asynchronously.
     /// </summary>
     /// <param name="divisionEntity">The division to update.</param>
-    /// <param name="userId">The ID of the user updating the division.</param>
     /// <returns>A boolean indicating whether the update was successful.</returns>
     Task UpdateDivisionAsync(Division divisionEntity);
 

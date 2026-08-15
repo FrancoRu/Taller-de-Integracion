@@ -138,16 +138,16 @@ public class MatchProfile : Profile
             .ForMember(dest => dest.MatchType, opt => opt.MapFrom(src => src.Type.ToString()))
             .ForMember(dest => dest.HomeTeam, opt => opt.MapFrom(src => src.HomeTeam))
             .ForMember(dest => dest.VisitorTeam, opt => opt.MapFrom(src => src.VisitorTeam))
-            .ForPath(dest => dest.HomeTeam.Score, opt => opt.MapFrom(src => src.HomeScore))
-            .ForPath(dest => dest.VisitorTeam.Score, opt => opt.MapFrom(src => src.VisitorScore))
+            .ForPath(dest => dest.HomeTeam!.Score, opt => opt.MapFrom(src => src.HomeScore))
+            .ForPath(dest => dest.VisitorTeam!.Score, opt => opt.MapFrom(src => src.VisitorScore))
             .ForMember(dest => dest.WinningTeamName, opt => opt.MapFrom(src => src.WinningTeam != null ? src.WinningTeam.Name : null))
             .ForMember(dest => dest.WinningTeamId, opt => opt.MapFrom(src => src.WinningTeam != null ? src.WinningTeam.Id : (Guid?)null))
             .ReverseMap();
 
         _ = CreateMap<Match, MinimalMatchResponse>()
             .ForMember(dest => dest.MatchType, opt => opt.MapFrom(src => src.Type.ToString()))
-            .ForMember(dest => dest.HomeTeamName, opt => opt.MapFrom(src => src.HomeTeam.Name))
-            .ForMember(dest => dest.VisitorTeamName, opt => opt.MapFrom(src => src.VisitorTeam.Name))
+            .ForMember(dest => dest.HomeTeamName, opt => opt.MapFrom(src => src.HomeTeam != null ? src.HomeTeam.Name : null))
+            .ForMember(dest => dest.VisitorTeamName, opt => opt.MapFrom(src => src.VisitorTeam != null ? src.VisitorTeam.Name : null))
             .ForMember(dest => dest.WinningTeamName, opt => opt.MapFrom(src => src.WinningTeam != null ? src.WinningTeam.Name : null))
             .ReverseMap();
 

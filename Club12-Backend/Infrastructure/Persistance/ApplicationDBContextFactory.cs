@@ -28,7 +28,7 @@ public sealed class ApplicationDBContextFactory : IDesignTimeDbContextFactory<Ap
 
         if (Directory.Exists(basePath))
         {
-            string[] extras = Directory
+            string?[] extras = Directory
                 .GetFiles(basePath, "appsettings.*.json")
                 .Select(Path.GetFileName)
                 .Where(f => !string.Equals(

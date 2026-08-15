@@ -82,7 +82,7 @@ public sealed class SupabaseBackupStorage(ISupabaseRawStorage rawStorage) : IBac
     /// Resolves <paramref name="name"/> against the <c>backups/</c> prefix
     /// and throws <see cref="ArgumentException"/> unless it is a simple,
     /// non-rooted, non-traversing relative name — never forwarded to
-    /// <see cref="rawStorage"/> when invalid, so no raw call is attempted for
+    /// <c>rawStorage</c> when invalid, so no raw call is attempted for
     /// a rejected name.
     /// </summary>
     private static string ToObjectPath(string name)

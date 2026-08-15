@@ -35,7 +35,7 @@ public interface ITournamentService
     /// <summary>
     /// Deletes a Tournament asynchronously.
     /// </summary>
-    /// <param name="tournamentEntity">The Tournament to delete.</param>
+    /// <param name="id">The id of the Tournament to delete.</param>
     /// <returns>A boolean indicating whether the deletion was successful.</returns>
     Task DeleteTournamentAsync(Guid id);
 

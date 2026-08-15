@@ -15,7 +15,6 @@ public interface IBlogPostService
     /// Creates a new blog post.
     /// </summary>
     /// <param name="blogPostEntity">The blog post entity to create.</param>
-    /// <param name="userId">The ID of the user creating the blog post.</param>
     /// <returns>The created blog post.</returns>
     Task<BlogPost> CreateBlogPostAsync(BlogPost blogPostEntity);
 
@@ -29,14 +28,13 @@ public interface IBlogPostService
     /// <summary>
     /// Deletes a blog post.
     /// </summary>
-    /// <param name="blogPostEntity">The blog post to delete.</param>
+    /// <param name="id">The id of the blog post to delete.</param>
     Task DeleteBlogPostAsync(Guid id);
 
     /// <summary>
     /// Updates a blog post asynchronously.
     /// </summary>
     /// <param name="blogPostEntity">The blog post to update.</param>
-    /// <param name="userId">The ID of the user updating the blog post.</param>
     /// <returns>A boolean indicating whether the update was successful.</returns>
     Task UpdateBlogPostAsync(BlogPost blogPostEntity);
 
