@@ -33,4 +33,10 @@ public interface IAuthenticationService
         string callerRole,
         Guid   callerId,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// Clears the caller's stored <c>RefreshToken</c> and <c>RefreshTokenExpiryTime</c>.
+    /// A no-op if no user matches <paramref name="userId"/>.
+    /// </summary>
+    Task LogoutAsync(Guid userId, CancellationToken ct = default);
 }

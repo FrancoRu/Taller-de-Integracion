@@ -225,6 +225,22 @@ public sealed class IdentityAuthenticationService(
     }
 
     // ─────────────────────────────────────────────────────────────
+    // Logout
+    // ─────────────────────────────────────────────────────────────
+
+    /// <inheritdoc/>
+    public async Task LogoutAsync(Guid userId, CancellationToken ct = default)
+    {
+        ApplicationUser? user = await userManager.FindByIdAsync(userId.ToString());
+        if (user is not null)
+        {
+            user.RefreshToken = null;
+            user.RefreshTokenExpiryTime = null;
+            await userManager.UpdateAsync(user);
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // Private helpers
     // ─────────────────────────────────────────────────────────────
 

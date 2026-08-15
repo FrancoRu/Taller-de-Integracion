@@ -3,10 +3,8 @@ using Application.DTOs.Auth.Request;
 using Application.DTOs.Auth.Response;
 using Application.Interfaces.Services;
 using Domain.Enums;
-using Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Security.Claims;
@@ -17,7 +15,7 @@ namespace API.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController(IAuthenticationService authenticationService, UserManager<ApplicationUser> userManager) : ControllerBase
+public class AuthController(IAuthenticationService authenticationService) : ControllerBase
 {
     [Authorize(Roles = Roles.AdminOrOwner)]
     [HttpPost("register")]
@@ -96,13 +94,7 @@ public class AuthController(IAuthenticationService authenticationService, UserMa
     public async Task<IActionResult> Logout(CancellationToken ct)
     {
         var (_, id) = User.GetCallerClaims();
-        ApplicationUser? user = await userManager.FindByIdAsync(id.ToString());
-        if (user is not null)
-        {
-            user.RefreshToken = null;
-            user.RefreshTokenExpiryTime = null;
-            await userManager.UpdateAsync(user);
-        }
+        await authenticationService.LogoutAsync(id, ct);
         return NoContent();
     }
 }
