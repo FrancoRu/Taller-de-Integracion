@@ -52,3 +52,5 @@ Chain strategy: pending
 
 - [x] 3.1 Run full `dotnet test` for `API.Tests` to confirm no regressions from either new file. — 106/106 passed, 1s (includes concurrently-added Batch A tests; no regressions).
 - [x] 3.2 Diff-review both files' authored line counts against the 800-line session review budget; confirm combined total lands within the ~300–420 estimate. — AuthServiceJwtTests.cs 126 lines, PlayerSanctionAppealTests.cs 284 lines; combined 410 authored lines (`wc -l`), within the ~300–420 estimate and well under the 800-line session budget.
+
+## STATUS: 18/18 tasks complete. All done.
