@@ -44,17 +44,17 @@ Chain strategy: pending
 
 ## Phase 4 — RED: Hosted service & local storage tests (PR 2)
 
-- [ ] 4.1 `DatabaseBackupHostedServiceTests.cs`: interval elapsed → 1 attempt; not elapsed → 0; `Backup:Enabled=false` → zero scheduling/dump/storage calls; dump failure logged, host + other services survive; single-flight skips overlapping tick
-- [ ] 4.2 `LocalDirectoryBackupStorageTests.cs`: store/list/delete round-trip; reject names outside configured dir (path traversal)
+- [x] 4.1 `DatabaseBackupHostedServiceTests.cs`: interval elapsed → 1 attempt; not elapsed → 0; `Backup:Enabled=false` → zero scheduling/dump/storage calls; dump failure logged, host + other services survive; single-flight skips overlapping tick
+- [x] 4.2 `LocalDirectoryBackupStorageTests.cs`: store/list/delete round-trip; reject names outside configured dir (path traversal)
 
 ## Phase 5 — GREEN: Hosted service, local storage, wiring (PR 2)
 
-- [ ] 5.1 Implement `Infrastructure/Backup/LocalDirectoryBackupStorage.cs`
-- [ ] 5.2 Implement `API/BackgroundServices/DatabaseBackupHostedService.cs` (PeriodicTimer loop, single-flight guard, per-tick try/catch, calls 3 ports + retention + delete)
-- [ ] 5.3 Add `AddBackupConfig` to `StartupExtensions.cs`: bind `Backup` options; register singletons explicitly (not scanner-visible)
-- [ ] 5.4 Wire `Program.cs`: `AddBackupConfig()` + `AddHostedService<DatabaseBackupHostedService>()` guarded by `Backup:Enabled`
-- [ ] 5.5 Add `Backup` section to `appsettings.json` (Enabled=false, IntervalHours, RetentionCount, StorageTarget=Local, LocalStoragePath, PgDumpPath)
-- [ ] 5.6 Integration smoke: host boots with `Backup:Enabled=false`, no side effects, other services unaffected
+- [x] 5.1 Implement `Infrastructure/Backup/LocalDirectoryBackupStorage.cs`
+- [x] 5.2 Implement `API/BackgroundServices/DatabaseBackupHostedService.cs` (PeriodicTimer loop, single-flight guard, per-tick try/catch, calls 3 ports + retention + delete)
+- [x] 5.3 Add `AddBackupConfig` to `StartupExtensions.cs`: bind `Backup` options; register singletons explicitly (not scanner-visible)
+- [x] 5.4 Wire `Program.cs`: `AddBackupConfig()` + `AddHostedService<DatabaseBackupHostedService>()` guarded by `Backup:Enabled`
+- [x] 5.5 Add `Backup` section to `appsettings.json` (Enabled=false, IntervalHours, RetentionCount, StorageTarget=Local, LocalStoragePath, PgDumpPath)
+- [x] 5.6 Integration smoke: host boots with `Backup:Enabled=false`, no side effects, other services unaffected (proven by `SmokeTests.GetDivisions_ReturnsOk` — full host boot via `Program.cs`, which now calls `AddBackupConfig`, still passes)
 
 ## Phase 6 — RED: Supabase storage tests (PR 3)
 

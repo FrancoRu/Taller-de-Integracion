@@ -1,6 +1,8 @@
-﻿using API.Utils;
+﻿using API.BackgroundServices;
+using API.Utils;
 using API.Utils.Middlewares;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System;
@@ -21,8 +23,15 @@ builder.Services
     .AddCustomSwagger(builder.Configuration);
 
 builder.Services.AddControllers().AddCustomJsonOptions();
-builder.Services.AddEmailConfig(builder.Configuration);   
-builder.Services.AddIdentityConfig(builder.Configuration); 
+builder.Services.AddEmailConfig(builder.Configuration);
+builder.Services.AddIdentityConfig(builder.Configuration);
+
+// Scheduled database backups (opt-in via Backup:Enabled, default false)
+builder.Services.AddBackupConfig(builder.Configuration);
+if (builder.Configuration.GetValue<bool>("Backup:Enabled"))
+{
+    builder.Services.AddHostedService(sp => sp.GetRequiredService<DatabaseBackupHostedService>());
+}
 
 // Exception Handler & Problem Details
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();

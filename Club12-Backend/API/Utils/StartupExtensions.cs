@@ -1,5 +1,8 @@
+using API.BackgroundServices;
 using API.Utils.Converters;
 using API.Utils.Middlewares;
+using Application.Backup;
+using Application.Interfaces.Backup;
 using Application.Interfaces.Mappers;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
@@ -9,6 +12,7 @@ using Application.Utils.Helper.SupabaseHelper;
 using Application.Utils.Mappers;
 using Domain.Enums;
 using FluentEmail.MailKitSmtp;
+using Infrastructure.Backup;
 using Infrastructure.Identity;
 using Infrastructure.Persistance;
 using Infrastructure.Repositories;
@@ -19,6 +23,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
@@ -380,6 +385,47 @@ public static class StartupExtensions
             });
 
         services.AddScoped<IEmailService, FluentEmailHelper>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registers the scheduled database backup feature: binds the
+    /// <c>Backup</c> config section into a <see cref="BackupOptions"/>
+    /// singleton and registers its ports/adapters (pg_dump, retention,
+    /// local-directory storage) and <see cref="DatabaseBackupHostedService"/>
+    /// explicitly as singletons.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately NOT registered via <see cref="RegisterScoped"/>'s
+    /// reflection scan: these live outside the
+    /// <c>Application.Interfaces.Services</c> namespace on purpose, because
+    /// that scanner auto-binds everything it finds as <b>Scoped</b> — a
+    /// lifetime mismatch for a service consumed by a singleton
+    /// <see cref="BackgroundService"/>.
+    /// </remarks>
+    public static IServiceCollection AddBackupConfig(this IServiceCollection services, IConfiguration configuration)
+    {
+        BackupOptions options = configuration.GetSection("Backup").Get<BackupOptions>() ?? new BackupOptions();
+        services.AddSingleton(options);
+
+        services.AddSingleton<IBackupRetentionPolicy, KeepLastNRetentionPolicy>();
+        services.AddSingleton<IProcessRunner, ProcessRunner>();
+        services.AddSingleton<IDatabaseBackupService, PgDumpBackupService>();
+
+        if (string.Equals(options.StorageTarget, "Supabase", StringComparison.OrdinalIgnoreCase))
+        {
+            // The Supabase-backed adapter ships in a later work unit. Fall back to
+            // local storage rather than fail startup so Backup:StorageTarget=Supabase
+            // doesn't crash the app before that adapter exists.
+            Log.Warning(
+                "Backup:StorageTarget=Supabase is not implemented yet; falling back to LocalDirectoryBackupStorage.");
+        }
+
+        services.AddSingleton<IBackupStorage>(sp => new LocalDirectoryBackupStorage(
+            options.LocalStoragePath, sp.GetRequiredService<ILogger<LocalDirectoryBackupStorage>>()));
+
+        services.AddSingleton<DatabaseBackupHostedService>();
 
         return services;
     }
