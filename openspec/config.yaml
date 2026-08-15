@@ -1,0 +1,52 @@
+schema: spec-driven
+
+context: |
+  Monorepo: Club12 (basketball tournament management, "Liga Club12").
+  Backend: Club12-Backend — .NET 8, ASP.NET Core Web API, Clean Architecture
+    (API / Application / Domain / Infrastructure), EF Core + Identity, JWT auth,
+    AutoMapper, Serilog. Solution at Club12-Backend/Solution/Club12.sln.
+  Frontend: Club12-WebClient — React 18 + TypeScript 5 + Vite 7, MUI 5,
+    TanStack Query 5, React Router 6, Axios, feature-module layout
+    (src/modules/{domain}, src/views/{domain}).
+  Testing: no test runner configured on either side (see testing-capabilities).
+  Style: backend uses PascalCase C# conventions, uppercase-underscore constants
+    (per Solution/.github/copilot-instructions.md); frontend uses ESLint
+    (standard config) + Prettier.
+
+strict_tdd: false
+
+testing:
+  backend:
+    test_runner: "none detected (no test .csproj, no xUnit/NUnit/MSTest package refs)"
+    command: ""
+  frontend:
+    test_runner: "none detected (no vitest/jest/cypress/playwright in package.json)"
+    command: ""
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - State whether a change touches backend, frontend, or both
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+    - For backend changes, respect Clean Architecture layering (API -> Application -> Domain, Infrastructure implements Application interfaces)
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+    - Split backend and frontend task groups when a change spans both projects
+  apply:
+    guidelines:
+      - Follow existing code patterns (Clean Architecture on backend, feature-module layout on frontend)
+    tdd: false           # No test runner detected on either side; see testing-capabilities risk note
+    test_command: ""
+  verify:
+    test_command: ""
+    build_command_backend: "dotnet build Club12-Backend/Solution/Club12.sln"
+    build_command_frontend: "cd Club12-WebClient && npm run build"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas

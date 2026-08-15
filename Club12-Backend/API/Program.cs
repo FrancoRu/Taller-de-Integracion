@@ -73,3 +73,8 @@ finally
 {
     await Log.CloseAndFlushAsync();
 }
+
+// Visibility-only shim: WebApplicationFactory<Program> (used by integration tests)
+// requires the top-level Program class to be a public partial type. This adds no
+// runtime behavior and does not alter any code path.
+public partial class Program { }

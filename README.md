@@ -87,3 +87,23 @@ Cada Sprint se dividirá en 4 secciones, las cuales serán de documentación de 
 ### Documentación
 - **Documentación de manual:** Instrucciones detalladas, consejos y ejemplos para que los usuarios comprendan y utilicen el software eficientemente.
 - **Documentación técnica:** Visión detallada y técnica de todo el sistema. Arquitectura, diseño, interfaces de programación, estructuras de datos y controladores.
+
+# Testing
+
+## Backend (Club12-Backend)
+
+Proyecto de tests: `Club12-Backend/API.Tests` (xUnit + `WebApplicationFactory`).
+
+```bash
+# desde la raíz del repositorio
+dotnet test Club12-Backend/Solution/Club12.sln
+```
+
+## Frontend (Club12-WebClient)
+
+Proyecto de tests: Vitest + Testing Library, configurado en `Club12-WebClient/vite.config.ts`.
+
+```bash
+cd Club12-WebClient
+npm run test
+```
