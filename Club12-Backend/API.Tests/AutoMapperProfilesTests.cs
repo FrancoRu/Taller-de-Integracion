@@ -4,6 +4,7 @@ using Application.DTOs.Match.Response;
 using AutoMapper;
 using Domain.Entities.Models;
 using Domain.Enums;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace API.Tests;
@@ -16,7 +17,7 @@ public class AutoMapperProfilesTests
 {
     private static IMapper CreateMapper()
     {
-        MapperConfiguration configuration = new(cfg => cfg.AddProfile<MatchProfile>());
+        MapperConfiguration configuration = new(cfg => cfg.AddProfile<MatchProfile>(), NullLoggerFactory.Instance);
         return configuration.CreateMapper();
     }
 

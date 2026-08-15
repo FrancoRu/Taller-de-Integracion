@@ -13,7 +13,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Host.AddSerilogConfig(builder.Configuration);
 
 builder.Services
-    .AddAutoMapper(typeof(Program))
+    .AddAutoMapper(cfg => { }, typeof(Program).Assembly)
     .AddDbContextConfig(builder.Configuration)
     .AddCorsConfig(builder.Configuration)
     .RegisterScoped()
