@@ -17,12 +17,12 @@ namespace API.Controllers;
 /// <summary>
 /// Controller for managing Matches.
 /// </summary>
-/// <param name="_matchService">The Match service.</param>
-/// <param name="_mapper">The AutoMapper instance.</param>
+/// <param name="matchService">The Match service.</param>
+/// <param name="mapper">The AutoMapper instance.</param>
 //[Authorize(Roles = "SuperAdmin")]
 [Route("api/matches/")]
 [ApiController]
-public class MatchController(IMatchService _matchService, IStageTeamMatchService _stageTeamMatchService ,IMapper _mapper) : ControllerBase
+public class MatchController(IMatchService matchService, IStageTeamMatchService stageTeamMatchService ,IMapper mapper) : ControllerBase
 {
     /// <summary>
     /// Creates a new match.
@@ -35,9 +35,9 @@ public class MatchController(IMatchService _matchService, IStageTeamMatchService
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<MinimalMatchResponse>> CreateMatch(CreateMatchRequest matchRequest)
     {
-        Match mappedMatch = _mapper.Map<Match>(matchRequest);
-        Match createdMatch = await _matchService.CreateMatchAsync(mappedMatch);
-        MinimalMatchResponse matchResponse = _mapper.Map<MinimalMatchResponse>(createdMatch);
+        Match mappedMatch = mapper.Map<Match>(matchRequest);
+        Match createdMatch = await matchService.CreateMatchAsync(mappedMatch);
+        MinimalMatchResponse matchResponse = mapper.Map<MinimalMatchResponse>(createdMatch);
 
         return new ObjectResult(matchResponse) { StatusCode = StatusCodes.Status201Created };
     }
@@ -57,8 +57,8 @@ public class MatchController(IMatchService _matchService, IStageTeamMatchService
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<DetailedMatchResponse>))]
     public async Task<ActionResult> GenerateMatches(Guid id)
     {
-        List<Match> response = await _matchService.CreateAutomatedMatchesAsync(stageId: id);
-        return Ok(_mapper.Map<List<DetailedMatchResponse>>(response));
+        List<Match> response = await matchService.CreateAutomatedMatchesAsync(stageId: id);
+        return Ok(mapper.Map<List<DetailedMatchResponse>>(response));
     }
 
     /// <summary>
@@ -72,14 +72,14 @@ public class MatchController(IMatchService _matchService, IStageTeamMatchService
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<DetailedMatchResponse>> GetMatchByIdWithScorers(Guid id)
     {
-        Match? match = await _matchService.GetMatchByIdWithScorersAsync(id);
+        Match? match = await matchService.GetMatchByIdWithScorersAsync(id);
 
         if (match is null)
         {
             return BadRequest($"Match with id {id} not found.");
         }
 
-        DetailedMatchResponse matchResponse = _mapper.Map<DetailedMatchResponse>(match);
+        DetailedMatchResponse matchResponse = mapper.Map<DetailedMatchResponse>(match);
         return Ok(matchResponse);
     }
 
@@ -94,14 +94,14 @@ public class MatchController(IMatchService _matchService, IStageTeamMatchService
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<DetailedMatchResponse>> GetMatchById(Guid id)
     {
-        Match? match = await _matchService.GetMatchByIdAsync(id);
+        Match? match = await matchService.GetMatchByIdAsync(id);
 
         if (match is null)
         {
             return BadRequest($"Match with id {id} not found.");
         }
 
-        DetailedMatchResponse matchResponse = _mapper.Map<DetailedMatchResponse>(match);
+        DetailedMatchResponse matchResponse = mapper.Map<DetailedMatchResponse>(match);
         return Ok(matchResponse);
     }
 
@@ -116,7 +116,7 @@ public class MatchController(IMatchService _matchService, IStageTeamMatchService
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> UpdateMatchDate(Guid id, UpdateMatchRequest updateRequest)
     {
-        Match? existingMatch = await _matchService.GetMatchByIdAsync(id);
+        Match? existingMatch = await matchService.GetMatchByIdAsync(id);
 
         if (existingMatch is null)
         {
@@ -141,16 +141,16 @@ public class MatchController(IMatchService _matchService, IStageTeamMatchService
             teamsId.Add(existingMatch.VisitorTeamId.Value);
         }
 
-        bool canUpdate = await _stageTeamMatchService.AllTeamsAssignedToStage(stageId: existingMatch.StageId, TeamIds: [.. teamsId.Distinct()]);
+        bool canUpdate = await stageTeamMatchService.AllTeamsAssignedToStage(stageId: existingMatch.StageId, TeamIds: [.. teamsId.Distinct()]);
 
         if (!canUpdate)
         {
             return BadRequest("Cannot update match date because one or both teams are not assigned to the stage.");
         }
 
-        _mapper.Map(updateRequest, existingMatch);
-        await _matchService.UpdateMatchAsync(existingMatch);
-        DetailedMatchResponse detailedMatch = _mapper.Map<DetailedMatchResponse>(existingMatch);
+        mapper.Map(updateRequest, existingMatch);
+        await matchService.UpdateMatchAsync(existingMatch);
+        DetailedMatchResponse detailedMatch = mapper.Map<DetailedMatchResponse>(existingMatch);
         return Ok(detailedMatch);
     }
 
@@ -165,7 +165,7 @@ public class MatchController(IMatchService _matchService, IStageTeamMatchService
     public async Task<ActionResult> DeleteMatchById(Guid id)
     {
         
-        await _matchService.DeleteMatchAsync(id);
+        await matchService.DeleteMatchAsync(id);
         return NoContent();
     }
 
@@ -180,9 +180,9 @@ public class MatchController(IMatchService _matchService, IStageTeamMatchService
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaginatedResponse<DetailedMatchResponse>>> GetFilteredMatches([FromQuery] GetMatchesFilteredRequest filterRequest)
     {
-        PaginatedResponse<Match> paginatedMatches = await _matchService.GetAllMatchesAsync(filterRequest);
+        PaginatedResponse<Match> paginatedMatches = await matchService.GetAllMatchesAsync(filterRequest);
 
-        PaginatedResponse<DetailedMatchResponse> response = _mapper.Map<PaginatedResponse<DetailedMatchResponse>>(paginatedMatches);
+        PaginatedResponse<DetailedMatchResponse> response = mapper.Map<PaginatedResponse<DetailedMatchResponse>>(paginatedMatches);
 
         return Ok(response);
     }
@@ -198,162 +198,17 @@ public class MatchController(IMatchService _matchService, IStageTeamMatchService
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> UpdateMatchScore(Guid id, UpdateMatchScoreRequest scoreRequest)
     {
-        Match? existingMatch = await _matchService.GetMatchByIdAsync(id);
+        Match? existingMatch = await matchService.GetMatchByIdAsync(id);
         if (existingMatch is null)
         {
             return BadRequest($"Match with ID {id} not found.");
         }
 
-        _mapper.Map(scoreRequest, existingMatch);
+        mapper.Map(scoreRequest, existingMatch);
 
-        await _matchService.UpdateMatchAsync(existingMatch);
+        await matchService.UpdateMatchAsync(existingMatch);
 
-        DetailedMatchResponse detailedMatch = _mapper.Map<DetailedMatchResponse>(existingMatch);
+        DetailedMatchResponse detailedMatch = mapper.Map<DetailedMatchResponse>(existingMatch);
         return Ok(detailedMatch);
     }
-
-    ///// <summary>
-    ///// Updates the score of a match and player statistics.
-    ///// </summary>
-    ///// <param name="match">The match to update.</param>
-    ///// <param name="scoreRequest">The request with updated scores.</param>
-    ///// <returns>True if the update was successful; otherwise, false.</returns>
-    //private async Task<bool> UpdateMatchScoreAsync(Match match, UpdateMatchScoreRequest scoreRequest)
-    //{
-    //    int homeTeamTotalScore = scoreRequest.HomeTeamPlayerScores.Sum(s => s.Points);
-    //    int visitorTeamTotalScore = scoreRequest.VisitorTeamPlayerScores.Sum(s => s.Points);
-
-    //    if (homeTeamTotalScore != scoreRequest.HomeScore || visitorTeamTotalScore != scoreRequest.VisitorScore)
-    //    {
-    //        return false; // Player points must sum up to the team score
-    //    }
-
-    //    _mapper.Map(scoreRequest, match);
-    //    UpdatePlayerStatistics(match, scoreRequest);
-
-    //    return await _matchService.UpdateMatchAsync(match); // Save the updated match
-    //}
-
-    ///// <summary>
-    ///// Updates player statistics for the match.
-    ///// </summary>
-    ///// <param name="match">The match to update.</param>
-    ///// <param name="scoreRequest">The request with updated scores.</param>
-    //private static void UpdatePlayerStatistics(Match match, UpdateMatchScoreRequest scoreRequest) => scoreRequest.HomeTeamPlayerScores
-    //        .Concat(scoreRequest.VisitorTeamPlayerScores)
-    //        .Select(playerScore => new PlayerStatistic
-    //        {
-    //            PlayerId = playerScore.PlayerId,
-    //            Value = playerScore.Points,
-    //            MatchId = match.Id,
-    //            DateCreated = DateTime.Now,
-    //            DateUpdated = DateTime.Now
-    //        })
-    //        .ToList()
-    //        .ForEach(match.PlayerStatistics.Add);
-
-    // <summary>
-    // Handles the playoff series logic after a match is updated.
-    // </summary>
-    // <param name="match">The match that was updated.</param>
-    // <returns>True if the playoff series was successfully updated; otherwise, false.</returns>
-    //private async Task<bool> HandlePlayoffSeriesAsync(Match match)
-    //{
-    //    PlayoffSerie? playoffSeries = await _playoffSeriesService.GetSeriesByIdAsync(match.PlayoffSeriesId.Value);
-    //    if (playoffSeries is null)
-    //    {
-    //        return false; // Playoff series not found
-    //    }
-
-    //    // Update series wins based on the match result
-    //    if (match.HomeScore > match.VisitorScore)
-    //    {
-    //        playoffSeries.HomeTeamWins++;
-    //    }
-    //    else
-    //    {
-    //        playoffSeries.VisitorTeamWins++;
-    //    }
-
-    //    // Check if the series is finished
-    //    if (playoffSeries.HomeTeamWins >= playoffSeries.GamesRequiredToWin || playoffSeries.VisitorTeamWins >= playoffSeries.GamesRequiredToWin)
-    //    {
-    //        playoffSeries.IsFinished = true;
-    //        playoffSeries.WinningTeamId = playoffSeries.HomeTeamWins >= playoffSeries.GamesRequiredToWin
-    //            ? match.HomeTeamId
-    //            : match.VisitorTeamId;
-
-    //        // Mark remaining matches in the series as finished (if any)
-    //        foreach (Match? remainingMatch in playoffSeries.Matches.Where(m => !m.IsFinished))
-    //        {
-    //            remainingMatch.IsFinished = true;
-    //            await _matchService.UpdateMatchAsync(remainingMatch);
-    //        }
-
-    //        // If there's a next series, assign the winning team based on seed
-    //        if (playoffSeries.NextSeriesId.HasValue)
-    //        {
-    //            PlayoffSerie? nextSeries = await _playoffSeriesService.GetSeriesByIdAsync(playoffSeries.NextSeriesId.Value);
-    //            if (nextSeries is null)
-    //            {
-    //                return false; // Next series not found
-    //            }
-
-    //            // Get the winning team from the current match
-    //            Team? winningTeam = playoffSeries.WinningTeamId == match.HomeTeamId
-    //                ? match.HomeTeam
-    //                : match.VisitorTeam;
-
-    //            if (winningTeam is null)
-    //            {
-    //                return false; // Winning team not found in the match
-    //            }
-
-    //            // Find the next match in the next series using GameNumber
-    //            Match? nextMatch = nextSeries.Matches.FirstOrDefault(m => m.GameNumber == match.GameNumber);
-    //            if (nextMatch is null)
-    //            {
-    //                return false; // Next match not found in the next series
-    //            }
-
-
-    //            Team? otherTeam = nextMatch.HomeTeam ?? nextMatch.VisitorTeam;
-
-    //            if (otherTeam is null)
-    //            {
-    //                if (nextMatch.HomeTeam is null)
-    //                {
-    //                    nextMatch.HomeTeam = winningTeam;
-    //                }
-    //                else
-    //                {
-    //                    nextMatch.VisitorTeam = winningTeam;
-    //                }
-    //            }
-    //            else
-    //            {
-    //                Team homeTeam = winningTeam.Seed < otherTeam.Seed ? winningTeam : otherTeam;
-    //                Team visitorTeam = winningTeam.Seed < otherTeam.Seed ? otherTeam : winningTeam;
-
-    //                nextMatch.HomeTeam = homeTeam;
-    //                nextMatch.VisitorTeam = visitorTeam;
-    //            }
-
-
-    //            bool matchUpdated = await _matchService.UpdateMatchAsync(nextMatch);
-    //            if (!matchUpdated)
-    //            {
-    //                return false;
-    //            }
-
-    //            bool seriesUpdated = await _playoffSeriesService.UpdateSeriesAsync(nextSeries);
-    //            if (!seriesUpdated)
-    //            {
-    //                return false;
-    //            }
-    //        }
-    //    }
-
-    //    return await _playoffSeriesService.UpdateSeriesAsync(playoffSeries);
-    //}
 }

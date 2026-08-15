@@ -2,6 +2,7 @@
 using Application.DTOs.Match.Request;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Utils.Constants.Stage;
 using Application.Utils.Extensions;
 using Domain.Entities.Models;
 using Domain.Enums;
@@ -43,53 +44,6 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
         {
             return null;
         }
-
-        var playerStats = match.PlayerStatistics
-            .Select(ps => new
-            {
-                ps.PlayerId,
-                ps.Player.FirstName,
-                ps.Player.LastName,
-                ps.Value,
-                ps.Player.TeamId,
-                TeamName = ps.Player.Team.Name,
-                MatchHomeTeamId = match.HomeTeamId,
-                MatchVisitorTeamId = match.VisitorTeamId
-            })
-            .OrderBy(ps => ps.Value)
-            .ToList();
-
-        List<Scorer> homeScorers =
-        [
-            //.. playerStats
-            //.Where(ps => ps.TeamId == match.HomeTeamId)
-            //.Select(ps => new Scorer
-            //{
-            //    PlayerId = ps.PlayerId,
-            //    Names = ps.FirstName,
-            //    LastName = ps.LastName,
-            //    Points = ps.Value,
-            //                TeamId = match.HomeTeamId ?? throw new MissingFieldException(""),
-            //                TeamName = match.HomeTeam?.Name ?? throw new MissingFieldException("")
-            //})
-            //.OrderByDescending(ps => ps.Points)
-        ];
-
-        List<Scorer> awayScorers =
-        [
-            //.. playerStats
-            //            .Where(ps => ps.TeamId == match.VisitorTeamId)
-            //            .Select(ps => new Scorer
-            //            {
-            //                PlayerId = ps.PlayerId,
-            //                Names = ps.FirstName,
-            //                LastName = ps.LastName,
-            //                Points = ps.Value,
-            //                TeamId = match.VisitorTeamId,
-            //                TeamName = match.VisitorTeam.Name
-            //            })
-            //            .OrderByDescending(ps => ps.Points)
-        ];
 
         return match;
     }
@@ -265,7 +219,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
         return teamsPerGroup;
     }
 
-    private static async Task<List<Match>> CreateGroupStageMatchesAsync(Stage stage, int totalTeams)
+    private static Task<List<Match>> CreateGroupStageMatchesAsync(Stage stage, int totalTeams)
     {
         List<Match> matches = [];
 
@@ -277,16 +231,16 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
             matches.Add(BuildMatch(stage, matchDates[i], MatchType.Regular));
         }
 
-        return matches;
+        return Task.FromResult(matches);
     }
 
-    private static async Task<List<Match>> CreateKnockoutStageMatchesAsync(Stage stage)
+    private static Task<List<Match>> CreateKnockoutStageMatchesAsync(Stage stage)
     {
         List<Match> matches = [];
         int matchCount = stage.StageType switch
         {
-            StageType.QuarterFinal => 4,
-            StageType.SemiFinal => 2,
+            StageType.QuarterFinal => KnockoutMatchCount.QUARTER_FINAL,
+            StageType.SemiFinal => KnockoutMatchCount.SEMI_FINAL,
             _ => throw new InvalidOperationException("Invalid knockout stage type.")
         };
 
@@ -297,17 +251,17 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
             matches.Add(BuildMatch(stage, matchDates[i]));
         }
 
-        return matches;
+        return Task.FromResult(matches);
     }
 
-    private static async Task<List<Match>> CreateFinalStageMatchesAsync(Stage stage)
+    private static Task<List<Match>> CreateFinalStageMatchesAsync(Stage stage)
     {
         List<Match> matches = [];
         List<DateTime> matchDates = DistributeMatchDates(stage.StartDate, stage.EndDate, 1);
 
         matches.Add(BuildMatch(stage, matchDates[0]));
 
-        return matches;
+        return Task.FromResult(matches);
     }
 
     private static List<DateTime> DistributeMatchDates(DateTime startDate, DateTime endDate, int matchCount)

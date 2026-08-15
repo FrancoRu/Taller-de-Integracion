@@ -12,6 +12,7 @@ using FluentEmail.MailKitSmtp;
 using Infrastructure.Identity;
 using Infrastructure.Persistance;
 using Infrastructure.Repositories;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -157,8 +158,8 @@ public static class StartupExtensions
 
         services.AddAuthentication(options =>
         {
-            options.DefaultScheme = "Bearer";
-        }).AddJwtBearer("Bearer", options =>
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
         {
             options.TokenValidationParameters = new TokenValidationParameters
             {

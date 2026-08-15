@@ -17,14 +17,14 @@ namespace API.Controllers;
 /// <summary>
 /// Controller for managing blog posts.
 /// </summary>
-/// <param name="_blogPostService">The blog post service.</param>
-/// <param name="_mapper">The AutoMapper instance.</param>
+/// <param name="blogPostService">The blog post service.</param>
+/// <param name="mapper">The AutoMapper instance.</param>
 //[Authorize(Roles = "SuperAdmin")]
 [Route("api/blogposts/")]
 [ApiController]
 public class BlogPostController(
-    IBlogPostService _blogPostService,
-    IMapper _mapper
+    IBlogPostService blogPostService,
+    IMapper mapper
     ) : ControllerBase
 {
     /// <summary>
@@ -48,11 +48,11 @@ public class BlogPostController(
 
         }
 
-        BlogPost blogPost = _mapper.Map<BlogPost>(blogPostRequest);
+        BlogPost blogPost = mapper.Map<BlogPost>(blogPostRequest);
         blogPost.PhotoUrl = photoUrl;
 
-        BlogPost createdBlogPost = await _blogPostService.CreateBlogPostAsync(blogPost);
-        BlogPostResponse blogPostResponse = _mapper.Map<BlogPostResponse>(createdBlogPost);
+        BlogPost createdBlogPost = await blogPostService.CreateBlogPostAsync(blogPost);
+        BlogPostResponse blogPostResponse = mapper.Map<BlogPostResponse>(createdBlogPost);
 
         return new ObjectResult(blogPostResponse) { StatusCode = StatusCodes.Status201Created };
     }
@@ -68,15 +68,15 @@ public class BlogPostController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> UpdateBlogPost(Guid id, UpdateBlogPostRequest blogPostRequest)
     {
-        BlogPost? existingPost = await _blogPostService.GetBlogPostByIdAsync(id);
+        BlogPost? existingPost = await blogPostService.GetBlogPostByIdAsync(id);
 
         if (existingPost is null)
         {
             return BadRequest($"Blog post with id {id} not found.");
         }
 
-        _mapper.Map(blogPostRequest, existingPost);
-        await _blogPostService.UpdateBlogPostAsync(existingPost);
+        mapper.Map(blogPostRequest, existingPost);
+        await blogPostService.UpdateBlogPostAsync(existingPost);
 
         return Ok();
     }
@@ -97,7 +97,7 @@ public class BlogPostController(
             return BadRequest("The photo file must be a valid JPEG/PNG image.");
         }
 
-        BlogPost? blogPost = await _blogPostService.GetBlogPostByIdAsync(id);
+        BlogPost? blogPost = await blogPostService.GetBlogPostByIdAsync(id);
         if (blogPost is null)
         {
             return BadRequest($"Blog post with id {id} not found.");
@@ -106,7 +106,7 @@ public class BlogPostController(
         //string photoUrl = await _cloudflareService.UploadFileAsync(photoRequest.PhotoFile.OpenReadStream(), photoRequest.PhotoFile.FileName);
         //blogPost.PhotoUrl = photoUrl;
 
-        await _blogPostService.UpdateBlogPostAsync(blogPost);
+        await blogPostService.UpdateBlogPostAsync(blogPost);
         return Ok();
     }
 
@@ -121,7 +121,7 @@ public class BlogPostController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<BlogPostResponse>> GetBlogPostById(Guid id)
     {
-        BlogPost? blogPost = await _blogPostService.GetBlogPostByIdAsync(id);
+        BlogPost? blogPost = await blogPostService.GetBlogPostByIdAsync(id);
 
         if (blogPost is null)
         {
@@ -129,10 +129,10 @@ public class BlogPostController(
         }
 
         blogPost.Views++;
-        await _blogPostService.UpdateBlogPostAsync(blogPost);
+        await blogPostService.UpdateBlogPostAsync(blogPost);
 
 
-        BlogPostResponse blogPostResponse = _mapper.Map<BlogPostResponse>(blogPost);
+        BlogPostResponse blogPostResponse = mapper.Map<BlogPostResponse>(blogPost);
         return Ok(blogPostResponse);
     }
 
@@ -146,7 +146,7 @@ public class BlogPostController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> DeleteBlogPostById(Guid id)
     {
-        await _blogPostService.DeleteBlogPostAsync(id);
+        await blogPostService.DeleteBlogPostAsync(id);
         return NoContent();
     }
 
@@ -161,8 +161,8 @@ public class BlogPostController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaginatedResponse<BlogPostResponse>>> GetFilteredBlogPosts([FromQuery] GetBlogPostsFilteredRequest filterRequest)
     {
-        PaginatedResponse<BlogPost> paginatedPosts = await _blogPostService.GetAllBlogPostsAsync(filterRequest);
-        PaginatedResponse<BlogPostResponse> response = _mapper.Map<PaginatedResponse<BlogPostResponse>>(paginatedPosts);
+        PaginatedResponse<BlogPost> paginatedPosts = await blogPostService.GetAllBlogPostsAsync(filterRequest);
+        PaginatedResponse<BlogPostResponse> response = mapper.Map<PaginatedResponse<BlogPostResponse>>(paginatedPosts);
 
         return Ok(response);
     }

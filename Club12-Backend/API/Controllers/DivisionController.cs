@@ -15,14 +15,14 @@ namespace API.Controllers;
 /// <summary>
 /// Controller for managing divisions.
 /// </summary>
-/// <param name="_divisionService">The division service.</param>
-/// <param name="_mapper">The AutoMapper instance.</param>
+/// <param name="divisionService">The division service.</param>
+/// <param name="mapper">The AutoMapper instance.</param>
 //[Authorize(Roles = "SuperAdmin")]
 [Route("api/divisions/")]
 [ApiController]
 public class DivisionController(
-    IDivisionService _divisionService,
-    IMapper _mapper
+    IDivisionService divisionService,
+    IMapper mapper
     ) : ControllerBase
 {
 
@@ -39,9 +39,9 @@ public class DivisionController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<DivisionResponse>> CreateDivision(CreateDivisionRequest divisionRequest)
     {
-        Division mappedDivision = _mapper.Map<Division>(divisionRequest);
-        Division createdDivision = await _divisionService.CreateDivisionAsync(mappedDivision);
-        DivisionResponse divisionResponse = _mapper.Map<DivisionResponse>(createdDivision);
+        Division mappedDivision = mapper.Map<Division>(divisionRequest);
+        Division createdDivision = await divisionService.CreateDivisionAsync(mappedDivision);
+        DivisionResponse divisionResponse = mapper.Map<DivisionResponse>(createdDivision);
 
         return CreatedAtAction(nameof(GetDivisionById),new { id = divisionResponse.Id }, divisionResponse);
     }
@@ -60,14 +60,14 @@ public class DivisionController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<DivisionResponse>> GetDivisionById(Guid id)
     {
-        Division? division = await _divisionService.GetSimpleDivisionByIdAsync(id);
+        Division? division = await divisionService.GetSimpleDivisionByIdAsync(id);
 
         if (division is null)
         {
             return BadRequest($"Division with id {id} not found.");
         }
 
-        DivisionResponse divisionResponse = _mapper.Map<DivisionResponse>(division);
+        DivisionResponse divisionResponse = mapper.Map<DivisionResponse>(division);
 
         return Ok(divisionResponse);
     }
@@ -88,7 +88,7 @@ public class DivisionController(
     public async Task<IActionResult> DeleteDivisionById(Guid id)
     {
         
-        await _divisionService.DeleteDivisionAsync(id);
+        await divisionService.DeleteDivisionAsync(id);
         return NoContent();
 
     }
@@ -109,15 +109,15 @@ public class DivisionController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> UpdateDivisionById(Guid id, UpdateDivisionRequest divisionRequest)
     {
-        Division? existingDivision = await _divisionService.GetFullDivisionByIdAsync(id);
+        Division? existingDivision = await divisionService.GetFullDivisionByIdAsync(id);
 
         if (existingDivision is null)
         {
             return BadRequest($"Division with id {id} not found.");
         }
 
-        _mapper.Map(divisionRequest, existingDivision);
-        await _divisionService.UpdateDivisionAsync(existingDivision);
+        mapper.Map(divisionRequest, existingDivision);
+        await divisionService.UpdateDivisionAsync(existingDivision);
 
         return Ok();
     }
@@ -133,9 +133,9 @@ public class DivisionController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaginatedResponse<DetailedDivisionResponse>>> GetFilteredDivisions([FromQuery] GetDivisionsFilteredRequest filterRequest)
     {
-        PaginatedResponse<Division> paginatedDivisions = await _divisionService.GetAllDivisionsAsync(filterRequest);
+        PaginatedResponse<Division> paginatedDivisions = await divisionService.GetAllDivisionsAsync(filterRequest);
 
-        PaginatedResponse<DivisionResponse> response = _mapper.Map<PaginatedResponse<DivisionResponse>>(paginatedDivisions);
+        PaginatedResponse<DivisionResponse> response = mapper.Map<PaginatedResponse<DivisionResponse>>(paginatedDivisions);
 
         return Ok(response);
     }

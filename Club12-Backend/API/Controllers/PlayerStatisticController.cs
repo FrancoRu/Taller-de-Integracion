@@ -15,12 +15,12 @@ namespace API.Controllers;
 /// <summary>
 /// Controller for managing Player Statistics.
 /// </summary>
-/// <param name="_playerStatisticService">The Player Statistic service.</param>
-/// <param name="_mapper">The Auto_mapper instance.</param>
+/// <param name="playerStatisticService">The Player Statistic service.</param>
+/// <param name="mapper">The Auto_mapper instance.</param>
 //[Authorize(Roles = "SuperAdmin")]
 [Route("api/player-statistics/")]
 [ApiController]
-public class PlayerStatisticController(IPlayerStatisticService _playerStatisticService, IMapper _mapper) : ControllerBase
+public class PlayerStatisticController(IPlayerStatisticService playerStatisticService, IMapper mapper) : ControllerBase
 {
 
     /// <summary>
@@ -34,9 +34,9 @@ public class PlayerStatisticController(IPlayerStatisticService _playerStatisticS
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<PlayerStatisticResponse>> CreatePlayerStatistic(CreatePlayerStatisticRequest playerStatisticRequest)
     {
-        PlayerStatistic mappedStatistic = _mapper.Map<PlayerStatistic>(playerStatisticRequest);
-        PlayerStatistic createdStatistic = await _playerStatisticService.CreatePlayerStatisticAsync(mappedStatistic);
-        PlayerStatisticResponse statisticResponse = _mapper.Map<PlayerStatisticResponse>(createdStatistic);
+        PlayerStatistic mappedStatistic = mapper.Map<PlayerStatistic>(playerStatisticRequest);
+        PlayerStatistic createdStatistic = await playerStatisticService.CreatePlayerStatisticAsync(mappedStatistic);
+        PlayerStatisticResponse statisticResponse = mapper.Map<PlayerStatisticResponse>(createdStatistic);
 
         return new ObjectResult(statisticResponse) { StatusCode = StatusCodes.Status201Created };
     }
@@ -54,10 +54,10 @@ public class PlayerStatisticController(IPlayerStatisticService _playerStatisticS
         [FromQuery] GetPlayerStatisticsFilteredRequest filterRequest)
     {
         PaginatedResponse<PlayerStatistic> paginatedStatistics =
-            await _playerStatisticService.GetPlayerStatisticsAsync(filterRequest);
+            await playerStatisticService.GetPlayerStatisticsAsync(filterRequest);
 
         PaginatedResponse<PlayerStatisticResponse> response =
-            _mapper.Map<PaginatedResponse<PlayerStatisticResponse>>(paginatedStatistics);
+            mapper.Map<PaginatedResponse<PlayerStatisticResponse>>(paginatedStatistics);
 
         return Ok(response);
     }
@@ -73,14 +73,14 @@ public class PlayerStatisticController(IPlayerStatisticService _playerStatisticS
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PlayerStatisticResponse>> GetPlayerStatisticById(Guid id)
     {
-        PlayerStatistic? statistic = await _playerStatisticService.GetPlayerStatisticByIdAsync(id);
+        PlayerStatistic? statistic = await playerStatisticService.GetPlayerStatisticByIdAsync(id);
 
         if (statistic is null)
         {
             return BadRequest($"Player statistic with id {id} not found.");
         }
 
-        PlayerStatisticResponse statisticResponse = _mapper.Map<PlayerStatisticResponse>(statistic);
+        PlayerStatisticResponse statisticResponse = mapper.Map<PlayerStatisticResponse>(statistic);
         return Ok(statisticResponse);
     }
 
@@ -95,15 +95,15 @@ public class PlayerStatisticController(IPlayerStatisticService _playerStatisticS
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> UpdatePlayerStatistic(Guid id, UpdatePlayerStatisticRequest updateRequest)
     {
-        PlayerStatistic? existingStatistic = await _playerStatisticService.GetPlayerStatisticByIdAsync(id);
+        PlayerStatistic? existingStatistic = await playerStatisticService.GetPlayerStatisticByIdAsync(id);
 
         if (existingStatistic is null)
         {
             return BadRequest($"Player statistic with id {id} not found.");
         }
 
-        _mapper.Map(updateRequest, existingStatistic);
-        await _playerStatisticService.UpdatePlayerStatisticAsync(existingStatistic);
+        mapper.Map(updateRequest, existingStatistic);
+        await playerStatisticService.UpdatePlayerStatisticAsync(existingStatistic);
 
         return NoContent();
     }
@@ -118,7 +118,7 @@ public class PlayerStatisticController(IPlayerStatisticService _playerStatisticS
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> DeletePlayerStatisticById(Guid id)
     {
-        await _playerStatisticService.DeletePlayerStatisticAsync(id);
+        await playerStatisticService.DeletePlayerStatisticAsync(id);
         return NoContent();
     }
 }

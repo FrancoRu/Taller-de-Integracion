@@ -17,12 +17,12 @@ namespace API.Controllers;
 /// <summary>
 /// Controller for managing Venues.
 /// </summary>
-/// <param name="_venueService">The Venue service.</param>
-/// <param name="_mapper">The AutoMapper instance.</param>
+/// <param name="venueService">The Venue service.</param>
+/// <param name="mapper">The AutoMapper instance.</param>
 //[Authorize(Roles = "SuperAdmin")]
 [Route("api/venues/")]
 [ApiController]
-public class VenueController(IVenueService _venueService, SupabaseHelper _supabaseHelper,IMapper _mapper) : ControllerBase
+public class VenueController(IVenueService venueService, SupabaseHelper supabaseHelper, IMapper mapper) : ControllerBase
 {
 
     /// <summary>
@@ -38,11 +38,11 @@ public class VenueController(IVenueService _venueService, SupabaseHelper _supaba
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<VenueResponse>> CreateVenue(CreateVenueRequest venueRequest)
     {
-        string logoUrl = await _supabaseHelper.UploadImageAsync<Venue>(venueRequest.ImageFile.OpenReadStream(), venueRequest.ImageFile.FileName);
-        Venue venue = _mapper.Map<Venue>(venueRequest);
+        string logoUrl = await supabaseHelper.UploadImageAsync<Venue>(venueRequest.ImageFile.OpenReadStream(), venueRequest.ImageFile.FileName);
+        Venue venue = mapper.Map<Venue>(venueRequest);
         venue.PhotoUrl = logoUrl;
-        await _venueService.CreateVenueAsync(venue);
-        VenueResponse venueResponse = _mapper.Map<VenueResponse>(venue);
+        await venueService.CreateVenueAsync(venue);
+        VenueResponse venueResponse = mapper.Map<VenueResponse>(venue);
         return CreatedAtAction(nameof(GetVenueById), new { venueResponse.Id }, venueResponse);
     }
 
@@ -60,14 +60,14 @@ public class VenueController(IVenueService _venueService, SupabaseHelper _supaba
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<VenueResponse>> GetVenueById(Guid id)
     {
-        Venue? venue = await _venueService.GetVenueByIdAsync(id);
+        Venue? venue = await venueService.GetVenueByIdAsync(id);
 
         if (venue is null)
         {
             return BadRequest($"Venue with id {id} not found.");
         }
 
-        VenueResponse venueResponse = _mapper.Map<VenueResponse>(venue);
+        VenueResponse venueResponse = mapper.Map<VenueResponse>(venue);
         return Ok(venueResponse);
     }
 
@@ -87,16 +87,16 @@ public class VenueController(IVenueService _venueService, SupabaseHelper _supaba
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> UpdateVenue(Guid id, UpdateVenueRequest venueRequest)
     {
-        Venue? existingVenue = await _venueService.GetVenueByIdAsync(id);
+        Venue? existingVenue = await venueService.GetVenueByIdAsync(id);
 
         if (existingVenue is null)
         {
             return BadRequest($"Venue with id {id} not found.");
         }
 
-        _mapper.Map(venueRequest, existingVenue);
+        mapper.Map(venueRequest, existingVenue);
 
-        await _venueService.UpdateVenueAsync(existingVenue);
+        await venueService.UpdateVenueAsync(existingVenue);
 
         return NoContent();
     }
@@ -116,7 +116,7 @@ public class VenueController(IVenueService _venueService, SupabaseHelper _supaba
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteVenueById(Guid id)
     {
-        Venue? venue = await _venueService.GetVenueByIdAsync(id);
+        Venue? venue = await venueService.GetVenueByIdAsync(id);
 
         if (venue is null)
         {
@@ -125,10 +125,10 @@ public class VenueController(IVenueService _venueService, SupabaseHelper _supaba
 
         if (!string.IsNullOrWhiteSpace(venue.PhotoUrl))
         {
-            await _supabaseHelper.DeleteImageAsync<Team>(venue.PhotoUrl.Split('/').Last());
+            await supabaseHelper.DeleteImageAsync<Team>(venue.PhotoUrl.Split('/').Last());
         }
-        
-        await _venueService.DeleteVenueAsync(id);
+
+        await venueService.DeleteVenueAsync(id);
         return NoContent();
     }
 
@@ -142,8 +142,8 @@ public class VenueController(IVenueService _venueService, SupabaseHelper _supaba
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<IEnumerable<VenueResponse>>> GetAllVenues()
     {
-        IEnumerable<Venue> venues = await _venueService.GetAllVenuesAsync();
-        IEnumerable<VenueResponse> response = _mapper.Map<IEnumerable<VenueResponse>>(venues);
+        IEnumerable<Venue> venues = await venueService.GetAllVenuesAsync();
+        IEnumerable<VenueResponse> response = mapper.Map<IEnumerable<VenueResponse>>(venues);
 
         return Ok(response);
     }

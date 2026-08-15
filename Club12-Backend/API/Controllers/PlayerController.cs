@@ -15,16 +15,16 @@ namespace API.Controllers;
 /// <summary>
 /// Controller for managing Players.
 /// </summary>
-/// <param name="_playerService">The Player service.</param>
-/// <param name="_teamService">The Team service.</param>
-/// <param name="_mapper">The AutoMapper instance.</param>
+/// <param name="playerService">The Player service.</param>
+/// <param name="teamService">The Team service.</param>
+/// <param name="mapper">The AutoMapper instance.</param>
 //[Authorize(Roles = "SuperAdmin")]
 [Route("api/players/")]
 [ApiController]
 public class PlayerController(
-    IPlayerService _playerService,
-    ITeamService _teamService,
-    IMapper _mapper
+    IPlayerService playerService,
+    ITeamService teamService,
+    IMapper mapper
     ) : ControllerBase
 {
     /// <summary>
@@ -43,16 +43,16 @@ public class PlayerController(
     public async Task<ActionResult<PublicPlayerResponse>> CreatePlayerAsync(CreatePlayerRequest playerRequest)
     {
         Guid TeamId = playerRequest.TeamId;
-        Team? existingTeam = await _teamService.GetTeamByIdAsync(TeamId);
+        Team? existingTeam = await teamService.GetTeamByIdAsync(TeamId);
 
         if (existingTeam is null)
         {
             return BadRequest($"There is no Team with id: {TeamId}.");
         }
 
-        Player mappedPlayer = _mapper.Map<Player>(playerRequest);
-        Player createdPlayer = await _playerService.CreatePlayerAsync(mappedPlayer);
-        PublicPlayerResponse playerResponse = _mapper.Map<PublicPlayerResponse>(createdPlayer);
+        Player mappedPlayer = mapper.Map<Player>(playerRequest);
+        Player createdPlayer = await playerService.CreatePlayerAsync(mappedPlayer);
+        PublicPlayerResponse playerResponse = mapper.Map<PublicPlayerResponse>(createdPlayer);
         return CreatedAtRoute("GetPlayerById", new { id = createdPlayer.Id }, playerResponse);
     }
 
@@ -70,14 +70,14 @@ public class PlayerController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PublicPlayerResponse>> GetPlayerByIdAsync(Guid id)
     {
-        Player? player = await _playerService.GetPlayerByIdAsync(id);
+        Player? player = await playerService.GetPlayerByIdAsync(id);
 
         if (player is null)
         {
             return BadRequest($"Player with id {id} not found.");
         }
 
-        PublicPlayerResponse playerResponse = _mapper.Map<PublicPlayerResponse>(player);
+        PublicPlayerResponse playerResponse = mapper.Map<PublicPlayerResponse>(player);
         return Ok(playerResponse);
     }
 
@@ -93,14 +93,14 @@ public class PlayerController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<AdminPlayerResponse>> GetPlayerByIdCompleteDataAsync(Guid id)
     {
-        Player? player = await _playerService.GetPlayerByIdAsync(id);
+        Player? player = await playerService.GetPlayerByIdAsync(id);
 
         if (player is null)
         {
             return BadRequest($"Player with id {id} not found.");
         }
 
-        AdminPlayerResponse playerResponse = _mapper.Map<AdminPlayerResponse>(player);
+        AdminPlayerResponse playerResponse = mapper.Map<AdminPlayerResponse>(player);
         return Ok(playerResponse);
     }
 
@@ -120,15 +120,15 @@ public class PlayerController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> UpdatePlayerAsync(Guid id, UpdatePlayerRequest playerRequest)
     {
-        Player? existingPlayer = await _playerService.GetPlayerByIdAsync(id);
+        Player? existingPlayer = await playerService.GetPlayerByIdAsync(id);
 
         if (existingPlayer is null)
         {
             return BadRequest($"Player with id {id} not found.");
         }
 
-        _mapper.Map(playerRequest, existingPlayer);
-        await _playerService.UpdatePlayerAsync(existingPlayer);
+        mapper.Map(playerRequest, existingPlayer);
+        await playerService.UpdatePlayerAsync(existingPlayer);
 
         return Ok(existingPlayer);
     }
@@ -148,7 +148,7 @@ public class PlayerController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeletePlayerByIdAsync(Guid id)
     {
-        await _playerService.DeletePlayerAsync(id);
+        await playerService.DeletePlayerAsync(id);
         return NoContent();
     }
 
@@ -163,9 +163,9 @@ public class PlayerController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaginatedResponse<PublicPlayerResponse>>> GetFilteredPlayersAsync([FromQuery] GetPublicPlayersFilteredRequest filterRequest)
     {
-        PaginatedResponse<Player> paginatedPlayers = await _playerService.GetAllPlayersAsync(filterRequest);
+        PaginatedResponse<Player> paginatedPlayers = await playerService.GetAllPlayersAsync(filterRequest);
 
-        PaginatedResponse<PublicPlayerResponse> response = _mapper.Map<PaginatedResponse<PublicPlayerResponse>>(paginatedPlayers);
+        PaginatedResponse<PublicPlayerResponse> response = mapper.Map<PaginatedResponse<PublicPlayerResponse>>(paginatedPlayers);
 
         return Ok(response);
     }
@@ -185,9 +185,9 @@ public class PlayerController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<PaginatedResponse<AdminPlayerResponse>>> GetFilteredPlayersPrivateAsync([FromQuery] GetPlayersFilteredRequest filterRequest)
     {
-        PaginatedResponse<Player> paginatedPlayers = await _playerService.GetAllPlayersAsync(filterRequest);
+        PaginatedResponse<Player> paginatedPlayers = await playerService.GetAllPlayersAsync(filterRequest);
 
-        PaginatedResponse<AdminPlayerResponse> response = _mapper.Map<PaginatedResponse<AdminPlayerResponse>>(paginatedPlayers);
+        PaginatedResponse<AdminPlayerResponse> response = mapper.Map<PaginatedResponse<AdminPlayerResponse>>(paginatedPlayers);
 
         return Ok(response);
     }

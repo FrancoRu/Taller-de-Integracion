@@ -16,12 +16,12 @@ namespace API.Controllers;
 /// <summary>
 /// Controller for managing Player Sanctions.
 /// </summary>
-/// <param name="_playerSanctionService">The Player Sanction service.</param>
-/// <param name="_mapper">The AutoMapper instance.</param>
+/// <param name="playerSanctionService">The Player Sanction service.</param>
+/// <param name="mapper">The AutoMapper instance.</param>
 //[Authorize(Roles = "SuperAdmin")]
 [Route("api/player-sanctions/")]
 [ApiController]
-public class PlayerSanctionController(IPlayerSanctionService _playerSanctionService, IMapper _mapper) : ControllerBase
+public class PlayerSanctionController(IPlayerSanctionService playerSanctionService, IMapper mapper) : ControllerBase
 {
     /// <summary>
     /// Creates a new player sanction.
@@ -34,9 +34,9 @@ public class PlayerSanctionController(IPlayerSanctionService _playerSanctionServ
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<PlayerSanctionResponse>> CreatePlayerSanction(CreatePlayerSanctionRequest playerSanctionRequest)
     {
-        PlayerSanction mappedSanction = _mapper.Map<PlayerSanction>(playerSanctionRequest);
-        PlayerSanction createdSanction = await _playerSanctionService.CreatePlayerSanctionAsync(mappedSanction);
-        PlayerSanctionResponse sanctionResponse = _mapper.Map<PlayerSanctionResponse>(createdSanction);
+        PlayerSanction mappedSanction = mapper.Map<PlayerSanction>(playerSanctionRequest);
+        PlayerSanction createdSanction = await playerSanctionService.CreatePlayerSanctionAsync(mappedSanction);
+        PlayerSanctionResponse sanctionResponse = mapper.Map<PlayerSanctionResponse>(createdSanction);
 
         return CreatedAtAction(nameof(GetPlayerSanctionById), new { id = sanctionResponse.Id }, sanctionResponse);
     }
@@ -52,14 +52,14 @@ public class PlayerSanctionController(IPlayerSanctionService _playerSanctionServ
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PlayerSanctionResponse>> GetPlayerSanctionById(Guid id)
     {
-        PlayerSanction? sanction = await _playerSanctionService.GetPlayerSanctionByIdAsync(id);
+        PlayerSanction? sanction = await playerSanctionService.GetPlayerSanctionByIdAsync(id);
 
         if (sanction is null)
         {
             return BadRequest($"Player sanction with id {id} not found.");
         }
 
-        PlayerSanctionResponse sanctionResponse = _mapper.Map<PlayerSanctionResponse>(sanction);
+        PlayerSanctionResponse sanctionResponse = mapper.Map<PlayerSanctionResponse>(sanction);
         return Ok(sanctionResponse);
     }
 
@@ -82,9 +82,9 @@ public class PlayerSanctionController(IPlayerSanctionService _playerSanctionServ
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<PaginatedResponse<PlayerSanctionResponse>>> GetFilteredPlayersPrivateAsync([FromQuery] GetPlayerSanctionsFilteredRequest filterRequest)
     {
-        PaginatedResponse<PlayerSanction> paginatedPlayerSanctions = await _playerSanctionService.GetPlayerSanctionsAsync(filterRequest);
+        PaginatedResponse<PlayerSanction> paginatedPlayerSanctions = await playerSanctionService.GetPlayerSanctionsAsync(filterRequest);
 
-        PaginatedResponse<PlayerSanctionResponse> response = _mapper.Map<PaginatedResponse<PlayerSanctionResponse>>(paginatedPlayerSanctions);
+        PaginatedResponse<PlayerSanctionResponse> response = mapper.Map<PaginatedResponse<PlayerSanctionResponse>>(paginatedPlayerSanctions);
 
         return Ok(response);
     }
@@ -99,16 +99,16 @@ public class PlayerSanctionController(IPlayerSanctionService _playerSanctionServ
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> UpdatePlayerSanction(Guid id, UpdatePlayerSanctionRequest updateRequest)
     {
-        PlayerSanction? existingSanction = await _playerSanctionService.GetPlayerSanctionByIdAsync(id);
+        PlayerSanction? existingSanction = await playerSanctionService.GetPlayerSanctionByIdAsync(id);
 
         if (existingSanction is null)
         {
             return BadRequest($"Player sanction with id {id} not found.");
         }
 
-        _mapper.Map(updateRequest, existingSanction);
-        await _playerSanctionService.UpdatePlayerSanctionAsync(existingSanction);
-        return Ok(_mapper.Map<PlayerSanctionResponse>(existingSanction));
+        mapper.Map(updateRequest, existingSanction);
+        await playerSanctionService.UpdatePlayerSanctionAsync(existingSanction);
+        return Ok(mapper.Map<PlayerSanctionResponse>(existingSanction));
     }
 
     /// <summary>
@@ -123,7 +123,7 @@ public class PlayerSanctionController(IPlayerSanctionService _playerSanctionServ
     public async Task<ActionResult<PlayerSanctionResponse>> AppealPlayerSanction(
         Guid id, AppealPlayerSanctionRequest appealRequest)
     {
-        PlayerSanction? existingSanction = await _playerSanctionService.GetPlayerSanctionByIdAsync(id);
+        PlayerSanction? existingSanction = await playerSanctionService.GetPlayerSanctionByIdAsync(id);
 
         if (existingSanction is null)
         {
@@ -141,8 +141,8 @@ public class PlayerSanctionController(IPlayerSanctionService _playerSanctionServ
         existingSanction.AppealResolution = null;
         existingSanction.AppealResolvedDate = null;
 
-        await _playerSanctionService.UpdatePlayerSanctionAsync(existingSanction);
-        return Ok(_mapper.Map<PlayerSanctionResponse>(existingSanction));
+        await playerSanctionService.UpdatePlayerSanctionAsync(existingSanction);
+        return Ok(mapper.Map<PlayerSanctionResponse>(existingSanction));
     }
 
     /// <summary>
@@ -157,7 +157,7 @@ public class PlayerSanctionController(IPlayerSanctionService _playerSanctionServ
     public async Task<ActionResult<PlayerSanctionResponse>> ResolvePlayerSanctionAppeal(
         Guid id, ResolveAppealRequest resolveRequest)
     {
-        PlayerSanction? existingSanction = await _playerSanctionService.GetPlayerSanctionByIdAsync(id);
+        PlayerSanction? existingSanction = await playerSanctionService.GetPlayerSanctionByIdAsync(id);
 
         if (existingSanction is null)
         {
@@ -175,8 +175,8 @@ public class PlayerSanctionController(IPlayerSanctionService _playerSanctionServ
         existingSanction.AppealResolution = resolveRequest.Resolution;
         existingSanction.AppealResolvedDate = DateTime.UtcNow;
 
-        await _playerSanctionService.UpdatePlayerSanctionAsync(existingSanction);
-        return Ok(_mapper.Map<PlayerSanctionResponse>(existingSanction));
+        await playerSanctionService.UpdatePlayerSanctionAsync(existingSanction);
+        return Ok(mapper.Map<PlayerSanctionResponse>(existingSanction));
     }
 
     /// <summary>
@@ -189,7 +189,7 @@ public class PlayerSanctionController(IPlayerSanctionService _playerSanctionServ
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> DeletePlayerSanctionById(Guid id)
     {
-        await _playerSanctionService.DeletePlayerSanctionAsync(id);
+        await playerSanctionService.DeletePlayerSanctionAsync(id);
         return NoContent();
     }
 }

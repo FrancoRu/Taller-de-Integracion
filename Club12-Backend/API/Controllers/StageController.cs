@@ -23,12 +23,12 @@ namespace API.Controllers;
 /// updating and deleting stages, and assigning or unassigning teams to stages.
 /// The controller leverages dependency injection for services and AutoMapper for DTO mapping.
 /// </remarks>
-/// <param name="_stageService">Service for Stage business logic and persistence operations.</param>
+/// <param name="stageService">Service for Stage business logic and persistence operations.</param>
 /// <param name="matchService">Service for Match business logic and automated match generation.</param>
-/// <param name="_mapper">AutoMapper instance for mapping between entities and DTOs.</param>
+/// <param name="mapper">AutoMapper instance for mapping between entities and DTOs.</param>
 [Route("api/stages/")]
 [ApiController]
-public class StageController(IStageService _stageService, IMatchService matchService, IMapper _mapper) : ControllerBase
+public class StageController(IStageService stageService, IMatchService matchService, IMapper mapper) : ControllerBase
 {
     /// <summary>
     /// Creates a new Stage.
@@ -41,9 +41,9 @@ public class StageController(IStageService _stageService, IMatchService matchSer
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<StageResponse>> CreateStage(CreateStageRequest stageRequest)
     {
-        Stage mappedStage = _mapper.Map<Stage>(stageRequest);
-        Stage createdStage = await _stageService.CreateStageAsync(mappedStage);
-        StageResponse stageResponse = _mapper.Map<StageResponse>(createdStage);
+        Stage mappedStage = mapper.Map<Stage>(stageRequest);
+        Stage createdStage = await stageService.CreateStageAsync(mappedStage);
+        StageResponse stageResponse = mapper.Map<StageResponse>(createdStage);
         return CreatedAtAction(nameof(GetStageById), new { createdStage.Id }, stageResponse);
     }
 
@@ -60,14 +60,14 @@ public class StageController(IStageService _stageService, IMatchService matchSer
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<StageResponse>))]
     public async Task<ActionResult> GenerateStagesAndMatches(Guid id)
     {
-        List<Stage> response = await _stageService.CreateAutomatedStagesAsync(divisionId: id);
+        List<Stage> response = await stageService.CreateAutomatedStagesAsync(divisionId: id);
 
         foreach (Stage stage in response)
         {
             stage.Matches = await matchService.CreateAutomatedMatchesAsync(stageId: stage.Id);
         }
 
-        return Ok(_mapper.Map<List<StageResponse>>(response));
+        return Ok(mapper.Map<List<StageResponse>>(response));
     }
 
     /// <summary>
@@ -81,12 +81,12 @@ public class StageController(IStageService _stageService, IMatchService matchSer
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<StageResponse>> GetStageById(Guid id)
     {
-        Stage? stage = await _stageService.GetStageByIdAsync(id);
+        Stage? stage = await stageService.GetStageByIdAsync(id);
 
         if (stage == null)
             return NotFound($"Stage with id {id} not found.");
 
-        StageResponse stageResponse = _mapper.Map<StageResponse>(stage);
+        StageResponse stageResponse = mapper.Map<StageResponse>(stage);
         return Ok(stageResponse);
     }
 
@@ -101,8 +101,8 @@ public class StageController(IStageService _stageService, IMatchService matchSer
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<PaginatedResponse<Stage>>> GetFilteredStages([FromQuery] GetStagesFilteredRequest filterRequest)
     {
-        PaginatedResponse<Stage> paginatedStages = await _stageService.GetAllStagesAsync(filterRequest);
-        PaginatedResponse<StageResponse> paginatedResponse = _mapper.Map<PaginatedResponse<StageResponse>>(paginatedStages);
+        PaginatedResponse<Stage> paginatedStages = await stageService.GetAllStagesAsync(filterRequest);
+        PaginatedResponse<StageResponse> paginatedResponse = mapper.Map<PaginatedResponse<StageResponse>>(paginatedStages);
         return Ok(paginatedResponse);
     }
 
@@ -119,12 +119,12 @@ public class StageController(IStageService _stageService, IMatchService matchSer
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<Stage>> UpdateStage(Guid id, UpdateStageRequest stageRequest)
     {
-        Stage? existingStage = await _stageService.GetStageByIdAsync(id);
+        Stage? existingStage = await stageService.GetStageByIdAsync(id);
         if (existingStage == null)
             return NotFound($"Stage with id {id} not found.");
 
-        _mapper.Map(stageRequest, existingStage);
-        await _stageService.UpdateStageAsync(existingStage);
+        mapper.Map(stageRequest, existingStage);
+        await stageService.UpdateStageAsync(existingStage);
 
         return Ok();
     }
@@ -140,7 +140,7 @@ public class StageController(IStageService _stageService, IMatchService matchSer
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> DeleteStage(Guid id)
     {
-        await _stageService.DeleteStageAsync(id);
+        await stageService.DeleteStageAsync(id);
         return NoContent();
     }
 
@@ -159,12 +159,12 @@ public class StageController(IStageService _stageService, IMatchService matchSer
     [HttpPost("{id:guid}/assign-team")]
     public async Task<ActionResult> AssignamentTeam(Guid id, AssignamentTeamRequest request)
     {
-        Stage? stage = await _stageService.GetStageByIdAsync(id);
+        Stage? stage = await stageService.GetStageByIdAsync(id);
 
         if (stage == null)
             return NotFound($"Stage with id {id} not found.");
 
-        await _stageService.AssignTeamsToStageAsync(stage, request.TeamIds, request.Auto);
+        await stageService.AssignTeamsToStageAsync(stage, request.TeamIds, request.Auto);
 
         return Ok();
     }
@@ -180,11 +180,11 @@ public class StageController(IStageService _stageService, IMatchService matchSer
     [HttpDelete("{id:guid}/unassign-team")]
     public async Task<ActionResult> UnassignamentTeam(Guid id, UnassignamentTeamRequest request)
     {
-        Stage? stage = await _stageService.GetStageByIdAsync(id);
+        Stage? stage = await stageService.GetStageByIdAsync(id);
 
         if (stage == null)
             return NotFound($"Stage with id {id} not found.");
-        await _stageService.UnassignTeamsFromStageAsync(stage, request.TeamIds);
+        await stageService.UnassignTeamsFromStageAsync(stage, request.TeamIds);
         return Ok();
     }
 }
