@@ -17,7 +17,6 @@ vi.mock('sweetalert2', () => ({
   },
 }));
 
-// eslint-disable-next-line import/first
 import Swal from 'sweetalert2';
 
 const mockedUseTeam = vi.mocked(useTeam);
