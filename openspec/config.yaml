@@ -8,20 +8,22 @@ context: |
   Frontend: Club12-WebClient — React 18 + TypeScript 5 + Vite 7, MUI 5,
     TanStack Query 5, React Router 6, Axios, feature-module layout
     (src/modules/{domain}, src/views/{domain}).
-  Testing: no test runner configured on either side (see testing-capabilities).
+  Testing: xUnit + WebApplicationFactory on the backend (Club12-Backend/API.Tests),
+    Vitest + Testing Library on the frontend (Club12-WebClient) — both set up in
+    the codebase-clean-architecture-audit change (2026-08-15).
   Style: backend uses PascalCase C# conventions, uppercase-underscore constants
     (per Solution/.github/copilot-instructions.md); frontend uses ESLint
     (standard config) + Prettier.
 
-strict_tdd: false
+strict_tdd: true
 
 testing:
   backend:
-    test_runner: "none detected (no test .csproj, no xUnit/NUnit/MSTest package refs)"
-    command: ""
+    test_runner: "xUnit + Microsoft.AspNetCore.Mvc.Testing (WebApplicationFactory), SQLite in-memory"
+    command: "dotnet test Club12-Backend/Solution/Club12.sln"
   frontend:
-    test_runner: "none detected (no vitest/jest/cypress/playwright in package.json)"
-    command: ""
+    test_runner: "Vitest + @testing-library/react (jsdom)"
+    command: "npm run test --prefix Club12-WebClient"
 
 rules:
   proposal:
@@ -41,10 +43,10 @@ rules:
   apply:
     guidelines:
       - Follow existing code patterns (Clean Architecture on backend, feature-module layout on frontend)
-    tdd: false           # No test runner detected on either side; see testing-capabilities risk note
-    test_command: ""
+    tdd: true
+    test_command: "dotnet test Club12-Backend/Solution/Club12.sln && npm run test --prefix Club12-WebClient"
   verify:
-    test_command: ""
+    test_command: "dotnet test Club12-Backend/Solution/Club12.sln && npm run test --prefix Club12-WebClient"
     build_command_backend: "dotnet build Club12-Backend/Solution/Club12.sln"
     build_command_frontend: "cd Club12-WebClient && npm run build"
     coverage_threshold: 0
