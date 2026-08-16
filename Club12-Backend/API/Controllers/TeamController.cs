@@ -11,18 +11,21 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Domain.Entities.Models;
+using Domain.Enums;
 using Application.Utils.Helper.SupabaseHelper;
 
 namespace API.Controllers;
 
 /// <summary>
-/// Controller for managing teams.
+/// Controller for managing teams. Reads are public; writes require
+/// TeamManager, TournamentManager, or Owner.
 /// </summary>
 /// <param name="teamService">The team service for handling team-related operations.</param>
 /// <param name="supabaseHelper">The Supabase helper for storage operations.</param>
 /// <param name="mapper">The AutoMapper instance for mapping data models.</param>
 [Route("api/teams/")]
 [ApiController]
+[Authorize(Roles = Roles.TeamManagerOrTournamentManagerOrOwner)]
 public class TeamController(
     ITeamService teamService,
     SupabaseHelper supabaseHelper,

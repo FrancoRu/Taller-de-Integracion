@@ -18,6 +18,7 @@ using Application.Interfaces.Services;
 using API.Controllers;
 using AutoMapper;
 using Domain.Entities.Models;
+using Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -92,7 +93,7 @@ public class NotFoundContractTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task UpdateDivisionById_MissingEntity_Returns404ProblemDetails()
     {
-        HttpClient client = _factory.CreateClient();
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Owner);
         Guid missingId = Guid.NewGuid();
         UpdateDivisionRequest request = new() { Name = "Nonexistent Division", IsFinished = false };
 
@@ -109,7 +110,7 @@ public class NotFoundContractTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task RegisterTeam_MissingTournament_Returns404ProblemDetails()
     {
-        HttpClient client = _factory.CreateClient();
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Owner);
         Guid missingTournamentId = Guid.NewGuid();
         RegisterTeamsInTournamentRequest request = new() { TeamIds = [Guid.NewGuid()] };
 
@@ -143,7 +144,7 @@ public class NotFoundContractTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task CreatePlayer_MissingTeamId_StaysBadRequest()
     {
-        HttpClient client = _factory.CreateClient();
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.TeamManager);
         CreatePlayerRequest request = new()
         {
             FirstName = "Test",

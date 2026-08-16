@@ -10,11 +10,13 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
 using Domain.Entities.Models;
+using Domain.Enums;
 
 namespace API.Controllers;
 
 /// <summary>
-/// Controller for managing Players.
+/// Controller for managing Players. Public reads return minimal data;
+/// full player details and every write require staff roles.
 /// </summary>
 /// <param name="playerService">The Player service.</param>
 /// <param name="teamService">The Team service.</param>
@@ -36,6 +38,7 @@ public class PlayerController(
     /// <para>Returns 400 (Bad Request) if the Team with the provided id was not found.</para>
     /// <para>Returns 403 (Forbidden) if the user is not authenticated.</para>
     /// </returns>
+    [Authorize(Roles = Roles.TeamManagerOrTournamentManagerOrOwner)]
     [HttpPost()]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(PublicPlayerResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -88,6 +91,7 @@ public class PlayerController(
     /// <returns>
     /// Returns AdminPlayerResponse if the player is found; otherwise, returns a 400 Bad Request.
     /// </returns>
+    [Authorize(Roles = Roles.AnyStaffRole)]
     [HttpGet("admin/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AdminPlayerResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -114,6 +118,7 @@ public class PlayerController(
     /// Returns 400 (Bad Request) if the Player with the provided id was not found.
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
+    [Authorize(Roles = Roles.TeamManagerOrTournamentManagerOrOwner)]
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -142,6 +147,7 @@ public class PlayerController(
     /// Returns 400 (Bad Request) if the Player with the provided id was not found.
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
+    [Authorize(Roles = Roles.TeamManagerOrTournamentManagerOrOwner)]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -179,6 +185,7 @@ public class PlayerController(
     /// <response code="200">Returns a paginated list of filtered players</response>
     /// <response code="400">Returns 400 if there is an invalid filter parameter or the filter results in no data</response>
     /// <response code="403">Returns 403 if the user does not have the required permissions (admin)</response>
+    [Authorize(Roles = Roles.AnyStaffRole)]
     [HttpGet("")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<AdminPlayerResponse>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

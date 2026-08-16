@@ -9,17 +9,20 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
 using Domain.Entities.Models;
+using Domain.Enums;
 using Application.DTOs.Abstract.Response;
 
 namespace API.Controllers;
 
 /// <summary>
-/// Controller for managing Player Statistics.
+/// Controller for managing Player Statistics. Reads are public; writes
+/// require Owner or TournamentManager.
 /// </summary>
 /// <param name="playerStatisticService">The Player Statistic service.</param>
 /// <param name="mapper">The Auto_mapper instance.</param>
 [Route("api/player-statistics/")]
 [ApiController]
+[Authorize(Roles = Roles.OwnerOrTournamentManager)]
 public class PlayerStatisticController(IPlayerStatisticService playerStatisticService, IMapper mapper) : ControllerBase
 {
 

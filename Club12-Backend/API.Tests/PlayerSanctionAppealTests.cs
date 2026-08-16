@@ -37,7 +37,7 @@ public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFacto
     {
         Guid sanctionId = await SeedSanctionIdAsync(SanctionAppealStatus.Pending);
 
-        HttpClient client = _factory.CreateClient();
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Owner);
         AppealPlayerSanctionRequest request = new() { Reason = "Second appeal while pending" };
 
         HttpResponseMessage response = await client.PutAsJsonAsync(
@@ -52,7 +52,7 @@ public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFacto
     {
         Guid sanctionId = await SeedSanctionIdAsync(SanctionAppealStatus.None);
 
-        HttpClient client = _factory.CreateClient();
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Owner);
         AppealPlayerSanctionRequest request = new() { Reason = "I was not at fault" };
 
         HttpResponseMessage response = await client.PutAsJsonAsync(
@@ -65,7 +65,7 @@ public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFacto
     [Fact]
     public async Task AppealPlayerSanction_MissingSanction_Returns404()
     {
-        HttpClient client = _factory.CreateClient();
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Owner);
         AppealPlayerSanctionRequest request = new() { Reason = "Does not matter" };
 
         HttpResponseMessage response = await client.PutAsJsonAsync(
@@ -88,7 +88,7 @@ public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFacto
     {
         Guid sanctionId = await SeedSanctionIdAsync(initialStatus);
 
-        HttpClient client = _factory.CreateClient();
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Owner);
         ResolveAppealRequest request = new() { Accepted = true, Resolution = "Reviewed" };
 
         HttpResponseMessage response = await client.PutAsJsonAsync(
@@ -103,7 +103,7 @@ public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFacto
     {
         Guid sanctionId = await SeedSanctionIdAsync(SanctionAppealStatus.Pending);
 
-        HttpClient client = _factory.CreateClient();
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Owner);
         ResolveAppealRequest request = new() { Accepted = true, Resolution = "Appeal accepted" };
 
         HttpResponseMessage response = await client.PutAsJsonAsync(
@@ -118,7 +118,7 @@ public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFacto
     {
         Guid sanctionId = await SeedSanctionIdAsync(SanctionAppealStatus.Pending);
 
-        HttpClient client = _factory.CreateClient();
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Owner);
         ResolveAppealRequest request = new() { Accepted = false, Resolution = "Appeal rejected" };
 
         HttpResponseMessage response = await client.PutAsJsonAsync(
@@ -131,7 +131,7 @@ public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFacto
     [Fact]
     public async Task ResolvePlayerSanctionAppeal_MissingSanction_Returns404()
     {
-        HttpClient client = _factory.CreateClient();
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Owner);
         ResolveAppealRequest request = new() { Accepted = true, Resolution = "Does not matter" };
 
         HttpResponseMessage response = await client.PutAsJsonAsync(

@@ -10,17 +10,21 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
 using Domain.Entities.Models;
+using Domain.Enums;
 
 namespace API.Controllers;
 
 
 /// <summary>
-/// Controller for managing blog posts.
+/// Controller for managing blog posts. Reads are public; writes require
+/// Admin or Owner (individual actions below opt back out with
+/// [AllowAnonymous] where the whole club should be able to read).
 /// </summary>
 /// <param name="blogPostService">The blog post service.</param>
 /// <param name="mapper">The AutoMapper instance.</param>
 [Route("api/blogposts/")]
 [ApiController]
+[Authorize(Roles = Roles.AdminOrOwner)]
 public class BlogPostController(
     IBlogPostService blogPostService,
     IMapper mapper

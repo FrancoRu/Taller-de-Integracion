@@ -5,13 +5,18 @@ using Application.DTOs.Scorer.Response;
 using Application.Interfaces.Mappers;
 using Application.Interfaces.Services;
 using Domain.Entities.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
 namespace API.Controllers;
 
+/// <summary>
+/// Read-only scorer ranking aggregations. Always public.
+/// </summary>
 [ApiController]
 [Route("api/[controller]/")]
+[AllowAnonymous]
 public class ScorerController(IScorerService scorerService, IMatchService matchService, IScorerMapper mapper) : ControllerBase
 {
     [HttpGet("by-team")]

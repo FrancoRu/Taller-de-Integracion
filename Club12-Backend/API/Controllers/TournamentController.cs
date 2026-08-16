@@ -10,16 +10,19 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
 using Domain.Entities.Models;
+using Domain.Enums;
 
 namespace API.Controllers;
 
 /// <summary>
 /// Controller responsible for managing tournament-related operations.
 /// Provides endpoints for creating, retrieving, updating, deleting, and filtering tournaments,
-/// as well as registering teams to tournaments.
+/// as well as registering teams to tournaments. Reads are public; writes require Owner or
+/// TournamentManager.
 /// </summary>
 [Route("api/tournaments/")]
 [ApiController]
+[Authorize(Roles = Roles.OwnerOrTournamentManager)]
 public class TournamentController(
     ITournamentService tournamentService,
     ITeamService teamService,
@@ -129,6 +132,7 @@ public class TournamentController(
     /// Returns 200 (OK) with paginated tournament results.
     /// Returns 400 (Bad Request) if parameters are invalid.
     /// </returns>
+    [AllowAnonymous]
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<TournamentResponse>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
