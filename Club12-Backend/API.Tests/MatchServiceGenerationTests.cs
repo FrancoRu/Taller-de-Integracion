@@ -68,9 +68,14 @@ public class MatchServiceGenerationTests : IClassFixture<CustomWebApplicationFac
             () => matchService.CreateAutomatedMatchesAsync(stages[0].Id));
     }
 
+    /// <summary>
+    /// Expected match counts follow the round-robin formula teamsPerGroup *
+    /// (teamsPerGroup - 1) / 2: 8 teams / 2 groups => 4 teams/group => 6
+    /// matches; 16 teams / 2 groups => 8 teams/group => 28 matches.
+    /// </summary>
     [Theory]
-    [InlineData(4, 2, 6)]  // 8 teams / 2 groups => 4 teams/group => 4*3/2 = 6 matches
-    [InlineData(8, 2, 28)] // 16 teams / 2 groups => 8 teams/group => 8*7/2 = 28 matches
+    [InlineData(4, 2, 6)]
+    [InlineData(8, 2, 28)]
     public async Task CreateAutomatedMatchesAsync_GroupStage_ValidDistribution_CreatesRoundRobinMatches(
         int teamsPerGroup, int groupCount, int expectedMatchCount)
     {
@@ -87,10 +92,10 @@ public class MatchServiceGenerationTests : IClassFixture<CustomWebApplicationFac
         Assert.All(matches, m => Assert.Equal(MatchType.Regular, m.Type));
     }
 
-    // ---------------------------------------------------------------------
-    // Phase 4: Match date distribution, reachable via the group path only
-    // ---------------------------------------------------------------------
-
+    /// <summary>
+    /// Match date distribution is reachable via the group stage path only.
+    /// teamsPerGroup=2 produces a single round-robin match (2*1/2 = 1).
+    /// </summary>
     [Fact]
     public async Task CreateAutomatedMatchesAsync_GroupStage_SingleMatch_UsesRangeMidpoint()
     {
@@ -101,7 +106,6 @@ public class MatchServiceGenerationTests : IClassFixture<CustomWebApplicationFac
         DateTime start = DateTime.UtcNow.Date;
         DateTime end = start.AddDays(10);
 
-        // teamsPerGroup=2 => totalMatches = 2*1/2 = 1
         (_, _, List<Stage> stages, _) = await SeedGroupStageWithTeamsAsync(db, teamsPerGroup: 2, groupCount: 1, start, end);
 
         List<Match> matches = await matchService.CreateAutomatedMatchesAsync(stages[0].Id);
@@ -111,6 +115,9 @@ public class MatchServiceGenerationTests : IClassFixture<CustomWebApplicationFac
         Assert.Equal(expectedDate, matches[0].MatchDate);
     }
 
+    /// <summary>
+    /// teamsPerGroup=3 produces 3 round-robin matches (3*2/2 = 3).
+    /// </summary>
     [Fact]
     public async Task CreateAutomatedMatchesAsync_GroupStage_MultipleMatches_SpreadEvenlyAcrossRange()
     {
@@ -121,7 +128,6 @@ public class MatchServiceGenerationTests : IClassFixture<CustomWebApplicationFac
         DateTime start = DateTime.UtcNow.Date;
         DateTime end = start.AddDays(10);
 
-        // teamsPerGroup=3 => totalMatches = 3*2/2 = 3
         (_, _, List<Stage> stages, _) = await SeedGroupStageWithTeamsAsync(db, teamsPerGroup: 3, groupCount: 1, start, end);
 
         List<Match> matches = await matchService.CreateAutomatedMatchesAsync(stages[0].Id);

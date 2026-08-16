@@ -11,26 +11,15 @@ import {
 import { MenuIcon } from '@/views/core/MUI/icons/icons';
 import DesktopNavItems from './desktop';
 import MobileNavItems from './mobile';
-// import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 
 const NavMenu = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  // const { tournaments } = useTournament();
 
   const toggleDrawer = () => setMobileOpen(!mobileOpen);
   const closeDrawer = () => setMobileOpen(false);
-
-  //TODO REVIEW THIS
-  // useEffect(() => {
-  //   if (!tournaments || tournaments.length === 0) {
-  //     (async () => {
-  //       await getAllTournamentsByFilter({});
-  //     })();
-  //   }
-  // }, [getAllTournamentsByFilter]);
 
   return (
     <AppBar position="static">
@@ -59,7 +48,9 @@ const NavMenu = () => {
           <DesktopNavItems />
         )}
 
-        <Typography variant="h6">Mi Aplicación</Typography>
+        <Typography variant="h6" component="div">
+          Mi Aplicación
+        </Typography>
       </Toolbar>
     </AppBar>
   );

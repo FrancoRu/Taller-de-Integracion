@@ -26,14 +26,16 @@ public class ProcessRunnerTests
         Assert.False(string.IsNullOrEmpty(result.StdErr));
     }
 
+    /// <summary>
+    /// "dotnet --version" is used because it is a safe, always-available
+    /// executable in this test environment (the test host itself runs via
+    /// dotnet), exits 0, and writes a version string to stdout.
+    /// </summary>
     [Fact]
     public async Task RunAsync_SuccessfulProcess_CapturesExitCodeAndStdOut()
     {
         ProcessRunner runner = new();
 
-        // "dotnet --version" is a safe, always-available executable in this
-        // test environment (the test host itself runs via dotnet), exits 0,
-        // and writes a version string to stdout.
         ProcessResult result = await runner.RunAsync("dotnet", args: ["--version"]);
 
         Assert.Equal(0, result.ExitCode);

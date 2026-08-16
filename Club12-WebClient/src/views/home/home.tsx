@@ -1,3 +1,5 @@
+import ShowPosts from '@/views/blogPost/showPosts';
+
 export default function Home() {
-  return <></>;
+  return <ShowPosts />;
 }

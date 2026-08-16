@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   TextField,
   Button,
@@ -10,6 +11,8 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
 import { CreateBlogPostRequest } from '@/modules/blogPost/type/blogPost';
+import { notifySuccess } from '@/modules/core/utils/confirmDialog';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const quillModules = {
   toolbar: {
@@ -33,6 +36,8 @@ const quillModules = {
 
 const AddBlogPostForm: React.FC = () => {
   const { addBlogPost } = useBlogPost();
+  const navigate = useNavigate();
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<CreateBlogPostRequest>({
     author: '',
     title: '',
@@ -52,18 +57,25 @@ const AddBlogPostForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    addBlogPost(formData);
+    setSubmitting(true);
+    const result = await addBlogPost(formData);
+    setSubmitting(false);
+
+    if (result) {
+      await notifySuccess({ title: 'La publicación fue creada exitosamente.' });
+      navigate(APP_ROUTES.home);
+    }
   };
 
   return (
     <Card sx={{ maxWidth: 600, margin: 'auto', padding: 3 }}>
       <CardContent>
-        <Typography variant="h5" gutterBottom>
-          Add New Blog Post
+        <Typography variant="h5" component="h1" gutterBottom>
+          Nueva publicación
         </Typography>
         <form onSubmit={handleSubmit}>
           <TextField
-            label="Author"
+            label="Autor"
             name="author"
             value={formData.author}
             onChange={handleInputChange}
@@ -72,7 +84,7 @@ const AddBlogPostForm: React.FC = () => {
             margin="normal"
           />
           <TextField
-            label="Title"
+            label="Título"
             name="title"
             value={formData.title}
             onChange={handleInputChange}
@@ -80,8 +92,8 @@ const AddBlogPostForm: React.FC = () => {
             required
             margin="normal"
           />
-          <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
-            Blog Content (HTML)
+          <Typography variant="subtitle1" component="p" sx={{ mt: 2, mb: 1 }}>
+            Contenido
           </Typography>
           <ReactQuill
             theme="snow"
@@ -90,8 +102,14 @@ const AddBlogPostForm: React.FC = () => {
             modules={quillModules}
             style={{ height: '200px', marginBottom: '20px' }}
           />
-          <Button type="submit" variant="contained" color="primary">
-            Submit
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            disabled={submitting}
+            sx={{ mt: 3 }}
+          >
+            {submitting ? 'Publicando...' : 'Publicar'}
           </Button>
         </form>
       </CardContent>

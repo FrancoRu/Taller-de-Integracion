@@ -9,9 +9,10 @@ import { BracketEdge, BracketModel, BracketRound } from '@/modules/playoff/type/
  * column in the main advancement line.
  */
 const ROUND_ORDER: Partial<Record<StageType, number>> = {
-  [StageType.QuarterFinal]: 1,
-  [StageType.SemiFinal]: 2,
-  [StageType.Final]: 3,
+  [StageType.RoundOf16]: 1,
+  [StageType.QuarterFinal]: 2,
+  [StageType.SemiFinal]: 3,
+  [StageType.Final]: 4,
 };
 
 const isMainRoundStage = (stage: IStageResponse): boolean =>

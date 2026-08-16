@@ -14,6 +14,7 @@ import { GUID } from '@/modules/core/types/types';
 import { useStage } from '@/modules/stage/hook/stage.hook';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import MatchesPage from '@/views/match/matchesPage';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const formatDate = (value?: string | null) => {
   if (!value) {
@@ -84,7 +85,7 @@ const StagePage: React.FC = () => {
           </Typography>
           <Typography
             component="button"
-            onClick={() => navigate('/panel/fases')}
+            onClick={() => navigate(APP_ROUTES.panelStages)}
             sx={{
               mt: 2,
               border: 0,
@@ -115,7 +116,7 @@ const StagePage: React.FC = () => {
           <Button
             variant="contained"
             color="primary"
-            onClick={() => navigate(`/panel/fases/editar/${targetStageId}`)}
+            onClick={() => navigate(APP_ROUTES.panelStageEdit.build(targetStageId))}
           >
             Editar
           </Button>

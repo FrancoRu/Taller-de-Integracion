@@ -22,6 +22,7 @@ import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import MatchStatisticsTab from '@/views/match/MatchStatisticsTab';
 import { VisibilityIcon } from '@/views/core/MUI/icons/icons';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const formatDateTime = (value?: string | null) => {
   if (!value) {
@@ -110,7 +111,7 @@ const MatchPage: React.FC = () => {
           </Typography>
           <Typography
             component="button"
-            onClick={() => navigate('/panel/partidos')}
+            onClick={() => navigate(APP_ROUTES.panelMatches)}
             sx={{
               mt: 2,
               border: 0,
@@ -155,7 +156,7 @@ const MatchPage: React.FC = () => {
             <IconButton
               size="small"
               color="primary"
-              onClick={() => navigate(`/panel/equipos/${team.id}`)}
+              onClick={() => navigate(APP_ROUTES.panelTeamDetail.build(team.id))}
             >
               <VisibilityIcon fontSize="small" />
             </IconButton>
@@ -296,7 +297,7 @@ const MatchPage: React.FC = () => {
                               variant="text"
                               onClick={() =>
                                 navigate(
-                                  `/panel/jugadores/${sanction.playerId}`
+                                  APP_ROUTES.panelPlayer.build(sanction.playerId)
                                 )
                               }
                             >

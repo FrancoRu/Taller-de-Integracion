@@ -48,10 +48,12 @@ public class KeepLastNRetentionPolicyTests
         Assert.Empty(result);
     }
 
+    /// <summary>
+    /// Entries are oldest-to-newest by minutesAgo: backup-5 (50m) ... backup-1 (10m).
+    /// </summary>
     [Fact]
     public void SelectForDeletion_CountExceedsLimit_SelectsOldestExcess_RetainsNewestN()
     {
-        // Oldest-to-newest by minutesAgo: backup-5 (50m) ... backup-1 (10m).
         List<BackupFile> existing =
         [
             File("backup-1", minutesAgo: 10),
@@ -67,10 +69,14 @@ public class KeepLastNRetentionPolicyTests
         Assert.Equal(
             new[] { "backup-3", "backup-4", "backup-5" },
             result.Select(f => f.Name).OrderBy(n => n, StringComparer.Ordinal).ToArray());
-        // Newest 2 (backup-1, backup-2) must be retained, i.e. absent from the deletion set.
         Assert.DoesNotContain(result, f => f.Name is "backup-1" or "backup-2");
     }
 
+    /// <summary>
+    /// Per the documented tie-break rule (design.md Open Questions), among
+    /// entries with identical timestamps the lexically-smallest name
+    /// (ordinal) is retained.
+    /// </summary>
     [Fact]
     public void SelectForDeletion_IdenticalTimestampsAtBoundary_IsDeterministicAndOrderIndependent()
     {
@@ -83,10 +89,8 @@ public class KeepLastNRetentionPolicyTests
             new BackupFile("backup-c", tiedTimestamp),
         ];
 
-        // Retain exactly 1 of the 3 tied entries — tie-break must be deterministic.
         IReadOnlyList<BackupFile> firstRun = Policy.SelectForDeletion(existing, retainCount: 1);
 
-        // Same input, different list order — result must not depend on input order.
         List<BackupFile> reordered = [existing[2], existing[0], existing[1]];
         IReadOnlyList<BackupFile> secondRun = Policy.SelectForDeletion(reordered, retainCount: 1);
 
@@ -95,8 +99,6 @@ public class KeepLastNRetentionPolicyTests
             firstRun.Select(f => f.Name).OrderBy(n => n, StringComparer.Ordinal),
             secondRun.Select(f => f.Name).OrderBy(n => n, StringComparer.Ordinal));
 
-        // Documented tie-break rule (design.md Open Questions): among entries with
-        // identical timestamps, the lexically-smallest name (ordinal) is retained.
         Assert.DoesNotContain(firstRun, f => f.Name == "backup-a");
         Assert.Contains(firstRun, f => f.Name == "backup-b");
         Assert.Contains(firstRun, f => f.Name == "backup-c");

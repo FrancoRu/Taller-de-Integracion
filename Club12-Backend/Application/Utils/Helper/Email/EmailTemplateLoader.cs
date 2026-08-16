@@ -12,7 +12,6 @@ namespace Application.Utils.Helper.Email;
 /// </summary>
 internal static class EmailTemplateLoader
 {
-    // Resolved once — typeof is guaranteed to resolve to the Application assembly.
     private static readonly Assembly _assembly = typeof(EmailTemplateLoader).Assembly;
 
     /// <summary>

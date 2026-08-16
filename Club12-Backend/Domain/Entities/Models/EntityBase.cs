@@ -1,4 +1,5 @@
 ﻿using System;
+using Domain.Constants;
 
 namespace Domain.Entities.Models;
 
@@ -20,6 +21,6 @@ public abstract class EntityBase
     /// </summary>
     public DateTime? DateUpdated { get; set; }
 
-    public required string CreatedBy { get; set; } = "system";
+    public required string CreatedBy { get; set; } = AuditConstants.SystemUser;
     public string? UpdatedBy { get; set; }
 }

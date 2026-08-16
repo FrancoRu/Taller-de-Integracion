@@ -1,7 +1,6 @@
-// src/components/MobileNavItems.tsx
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { List, ListItemButton, ListItemText, Collapse } from '@mui/material';
+import { Box, List, ListItemButton, ListItemText, Collapse } from '@mui/material';
 import { ExpandLessIcon, ExpandMoreIcon } from '@/views/core/MUI/icons/icons';
 import { RoutesNavigationViews } from '@/views/core/routes-const';
 import TournamentMenuItems from '@/views/home/tournaments/tournamentsMenuItems';
@@ -19,12 +18,13 @@ const MobileNavItems: React.FC<MobileNavItemsProps> = ({ onCloseDrawer }) => {
   };
 
   const handleNavigationAndCloseDrawer = (_: string) => {
-    onCloseDrawer(); // Cierra el drawer
+    onCloseDrawer();
   };
 
   const isSelected = (path: string) => location.pathname === path;
 
   return (
+    <Box component="nav">
     <List>
       <ListItemButton
         component={Link}
@@ -138,6 +138,7 @@ const MobileNavItems: React.FC<MobileNavItemsProps> = ({ onCloseDrawer }) => {
 
       <TournamentMenuItems onNavigate={handleNavigationAndCloseDrawer} />
     </List>
+    </Box>
   );
 };
 

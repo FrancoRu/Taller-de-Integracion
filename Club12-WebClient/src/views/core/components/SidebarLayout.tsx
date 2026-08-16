@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   AccountTreeSharpIcon,
   AppRegistrationIcon,
+  ArticleIcon,
   BadgeIcon,
   BarChartIcon,
   EmojiEventsIcon,
@@ -36,6 +37,7 @@ import {
 } from '@mui/material';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const DRAWER_WIDTH = 240;
 
@@ -60,6 +62,7 @@ const TAB_ICONS: Record<string, React.ReactNode> = {
   Fases: <AccountTreeSharpIcon />,
   Partidos: <SportsIcon />,
   Usuarios: <PeopleIcon />,
+  Blog: <ArticleIcon />,
   Configuracion: <SettingsIcon />,
   Estadisticas: <BarChartIcon />,
   CambiarPassword: <LockIcon />,
@@ -72,12 +75,12 @@ const TAB_ICONS: Record<string, React.ReactNode> = {
 const CONFIGURATION_CHILDREN: NavTab[] = [
   {
     label: 'Cambiar password',
-    path: '/panel/configuracion/cambiar-password',
+    path: APP_ROUTES.panelChangePassword,
     icon: TAB_ICONS['CambiarPassword'],
   },
   {
     label: 'Editar perfil',
-    path: '/panel/configuracion/editar-perfil',
+    path: APP_ROUTES.panelEditProfile,
     icon: TAB_ICONS['EditarPerfil'],
   },
 ];
@@ -85,37 +88,37 @@ const CONFIGURATION_CHILDREN: NavTab[] = [
 const ADMINISTRATION_CHILDREN: NavTab[] = [
   {
     label: 'Torneos',
-    path: '/panel/torneos',
+    path: APP_ROUTES.panelTournaments,
     icon: TAB_ICONS['Torneos'],
   },
   {
     label: 'Divisiones',
-    path: '/panel/divisiones',
+    path: APP_ROUTES.panelDivisions,
     icon: TAB_ICONS['Divisiones'],
   },
   {
     label: 'Fases',
-    path: '/panel/fases',
+    path: APP_ROUTES.panelStages,
     icon: TAB_ICONS['Fases'],
   },
   {
     label: 'Partidos',
-    path: '/panel/partidos',
+    path: APP_ROUTES.panelMatches,
     icon: TAB_ICONS['Partidos'],
   },
   {
     label: 'Sanciones',
-    path: '/panel/sanciones',
+    path: APP_ROUTES.panelSanctions,
     icon: TAB_ICONS['Sanciones'],
   },
   {
     label: 'Puntuaciones',
-    path: '/panel/puntuaciones',
+    path: APP_ROUTES.panelScorers,
     icon: TAB_ICONS['Puntuaciones'],
   },
   {
     label: 'Canchas',
-    path: '/panel/canchas',
+    path: APP_ROUTES.panelVenues,
     icon: TAB_ICONS['Canchas'],
   },
 ];
@@ -123,18 +126,18 @@ const ADMINISTRATION_CHILDREN: NavTab[] = [
 const TEAM_ADMINISTRATION_CHILDREN: NavTab[] = [
   {
     label: 'Equipos',
-    path: '/panel/equipos',
+    path: APP_ROUTES.panelTeams,
     icon: TAB_ICONS['Equipos'],
   },
   {
     label: 'Registro',
-    path: '/panel/registro-equipos',
+    path: APP_ROUTES.panelTeamRegister,
     icon: TAB_ICONS['Registro'],
   },
   {
     label: 'Jugadores',
     icon: TAB_ICONS['Jugadores'],
-    path: '/panel/jugadores',
+    path: APP_ROUTES.panelPlayers,
   },
 ];
 
@@ -142,10 +145,10 @@ const TABS_BY_ROLE: Record<UserRolesType, NavTab[]> = {
   [UserRolesType.TeamManager]: [
     {
       label: 'Jugadores',
-      path: '/panel/jugadores',
+      path: APP_ROUTES.panelPlayers,
       icon: TAB_ICONS['Jugadores'],
     },
-    { label: 'Equipo', path: '/panel/equipo', icon: TAB_ICONS['Equipo'] },
+    { label: 'Equipo', path: APP_ROUTES.panelTeam, icon: TAB_ICONS['Equipo'] },
   ],
   [UserRolesType.TournamentManager]: [
     {
@@ -170,7 +173,8 @@ const TABS_BY_ROLE: Record<UserRolesType, NavTab[]> = {
       icon: TAB_ICONS['AdministracionDeEquipos'],
       children: TEAM_ADMINISTRATION_CHILDREN,
     },
-    { label: 'Usuarios', path: '/panel/usuarios', icon: TAB_ICONS['Usuarios'] },
+    { label: 'Usuarios', path: APP_ROUTES.panelUsers, icon: TAB_ICONS['Usuarios'] },
+    { label: 'Blog', path: APP_ROUTES.panelBlogCreate, icon: TAB_ICONS['Blog'] },
     {
       label: 'Configuracion',
       icon: TAB_ICONS['Configuracion'],
@@ -178,7 +182,8 @@ const TABS_BY_ROLE: Record<UserRolesType, NavTab[]> = {
     },
   ],
   [UserRolesType.Admin]: [
-    { label: 'Usuarios', path: '/panel/usuarios', icon: TAB_ICONS['Usuarios'] },
+    { label: 'Usuarios', path: APP_ROUTES.panelUsers, icon: TAB_ICONS['Usuarios'] },
+    { label: 'Blog', path: APP_ROUTES.panelBlogCreate, icon: TAB_ICONS['Blog'] },
     {
       label: 'Configuracion',
       icon: TAB_ICONS['Configuracion'],
@@ -186,7 +191,7 @@ const TABS_BY_ROLE: Record<UserRolesType, NavTab[]> = {
     },
     {
       label: 'Estadisticas',
-      path: '/panel/estadisticas',
+      path: APP_ROUTES.panelStatistics,
       icon: TAB_ICONS['Estadisticas'],
     },
   ],
@@ -204,7 +209,7 @@ const SidebarLayout: React.FC<{ children: React.ReactNode }> = ({
   >({
     Administracion: true,
     'Gestion de Equipos': true,
-    Configuracion: location.pathname.startsWith('/panel/configuracion'),
+    Configuracion: location.pathname.startsWith(APP_ROUTES.panelSettings),
   });
 
   const tabs = TABS_BY_ROLE[role] ?? [];
@@ -212,12 +217,19 @@ const SidebarLayout: React.FC<{ children: React.ReactNode }> = ({
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Toolbar sx={{ px: 2 }}>
-        <Typography variant="h6" noWrap color="primary" fontWeight={700}>
+        <Typography
+          variant="h6"
+          component="div"
+          noWrap
+          color="primary"
+          fontWeight={700}
+        >
           Club 12
         </Typography>
       </Toolbar>
       <Divider />
-      <List sx={{ flexGrow: 1, pt: 1 }}>
+      <Box component="nav" sx={{ flexGrow: 1 }}>
+      <List sx={{ pt: 1 }}>
         {tabs.map(tab => {
           if (tab.children && tab.children.length > 0) {
             const isParentSelected = tab.children.some(
@@ -312,6 +324,7 @@ const SidebarLayout: React.FC<{ children: React.ReactNode }> = ({
           );
         })}
       </List>
+      </Box>
       <Divider />
       <List>
         <ListItemButton onClick={logOut} sx={{ mx: 1, borderRadius: 1, mb: 1 }}>

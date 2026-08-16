@@ -20,8 +20,6 @@ export interface IScorerContextProps {
 
 export interface IScorerFiltered extends Filtered {
   tournamentId?: GUID;
-  divisionId?: GUID;
-  stageId?: GUID;
   matchId?: GUID;
   teamId?: GUID;
   playerId?: GUID;

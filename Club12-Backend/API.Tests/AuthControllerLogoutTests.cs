@@ -32,6 +32,12 @@ public class AuthControllerLogoutTests : IClassFixture<CustomWebApplicationFacto
         _factory = factory;
     }
 
+    /// <summary>
+    /// Verifies token clearing through a fresh scope/DbContext: the request
+    /// pipeline persists through its own scoped DbContext, so re-querying with
+    /// a new one avoids reading a stale change-tracker snapshot instead of the
+    /// actual persisted row.
+    /// </summary>
     [Fact]
     public async Task Logout_ExistingUserWithRefreshToken_Returns204AndClearsToken()
     {
@@ -51,9 +57,6 @@ public class AuthControllerLogoutTests : IClassFixture<CustomWebApplicationFacto
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
-        // Fresh scope/DbContext — the request pipeline persists through its own
-        // scoped DbContext, so re-querying with a new one avoids reading a stale
-        // change-tracker snapshot instead of the actual persisted row.
         using IServiceScope verifyScope = _factory.Services.CreateScope();
         UserManager<ApplicationUser> verifyUserManager =
             verifyScope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();

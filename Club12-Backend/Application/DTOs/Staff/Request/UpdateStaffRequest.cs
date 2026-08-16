@@ -1,4 +1,5 @@
-﻿using Domain.Enums;
+﻿using Application.Utils.Constants.Validation;
+using Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.Staff.Request;
 
@@ -10,19 +11,19 @@ public class UpdateStaffRequest
     /// <summary>
     /// The first name of the staff member.
     /// </summary>
-    [MaxLength(50)]
+    [MaxLength(StaffFieldLengths.NameMaxLength)]
     public string? Names { get; set; }
 
     /// <summary>
     /// The last name of the staff member.
     /// </summary>
-    [MaxLength(50)]
+    [MaxLength(StaffFieldLengths.NameMaxLength)]
     public string? LastName { get; set; }
 
     /// <summary>
     /// The phone number of the staff member.
     /// </summary>
-    [MaxLength(15)]
+    [MaxLength(StaffFieldLengths.PhoneNumberMaxLength)]
     public string? PhoneNumber { get; set; }
 
     /// <summary>

@@ -56,11 +56,11 @@ public class PlayerSanctionServiceTests : IClassFixture<CustomWebApplicationFact
         DateTime issuedDate = Anchor;
         int duration = 10;
         DateTime expiry = issuedDate.AddDays(duration);
-        DateTime cutoffDate = expiry.AddDays(-1); // expiry is one day AFTER cutoff => not yet expired
+        DateTime cutoffDateBeforeExpiry = expiry.AddDays(-1);
 
         PlayerSanction sanction = await SeedSanctionAsync(db, issuedDate, duration);
 
-        IEnumerable<PlayerSanction> result = await sanctionService.GetExpiredSanctionsAsync(cutoffDate);
+        IEnumerable<PlayerSanction> result = await sanctionService.GetExpiredSanctionsAsync(cutoffDateBeforeExpiry);
 
         Assert.DoesNotContain(result, s => s.Id == sanction.Id);
     }
@@ -75,11 +75,11 @@ public class PlayerSanctionServiceTests : IClassFixture<CustomWebApplicationFact
         DateTime issuedDate = Anchor.AddDays(1000);
         int duration = 10;
         DateTime expiry = issuedDate.AddDays(duration);
-        DateTime cutoffDate = expiry; // exactly at the boundary
+        DateTime cutoffDateAtExpiryBoundary = expiry;
 
         PlayerSanction sanction = await SeedSanctionAsync(db, issuedDate, duration);
 
-        IEnumerable<PlayerSanction> result = await sanctionService.GetExpiredSanctionsAsync(cutoffDate);
+        IEnumerable<PlayerSanction> result = await sanctionService.GetExpiredSanctionsAsync(cutoffDateAtExpiryBoundary);
 
         Assert.Contains(result, s => s.Id == sanction.Id);
     }
@@ -94,15 +94,23 @@ public class PlayerSanctionServiceTests : IClassFixture<CustomWebApplicationFact
         DateTime issuedDate = Anchor.AddDays(2000);
         int duration = 5;
         DateTime expiry = issuedDate.AddDays(duration);
-        DateTime cutoffDate = expiry.AddDays(20); // expired several days before cutoff
+        DateTime cutoffDateWellAfterExpiry = expiry.AddDays(20);
 
         PlayerSanction sanction = await SeedSanctionAsync(db, issuedDate, duration);
 
-        IEnumerable<PlayerSanction> result = await sanctionService.GetExpiredSanctionsAsync(cutoffDate);
+        IEnumerable<PlayerSanction> result = await sanctionService.GetExpiredSanctionsAsync(cutoffDateWellAfterExpiry);
 
         Assert.Contains(result, s => s.Id == sanction.Id);
     }
 
+    /// <summary>
+    /// cutoffDate precedes Anchor, the earliest issuedDate used by any test in
+    /// this class (all others use Anchor plus a non-negative offset), so it
+    /// excludes both this test's own not-yet-expired sanction and every other
+    /// test's already-expired sanction. GetExpiredSanctionsAsync has no
+    /// tournament/player scoping, and the CustomWebApplicationFactory database
+    /// is shared across all tests in this class via IClassFixture.
+    /// </summary>
     [Fact]
     public async Task GetExpiredSanctionsAsync_NoMatches_ReturnsEmpty()
     {
@@ -112,11 +120,6 @@ public class PlayerSanctionServiceTests : IClassFixture<CustomWebApplicationFact
 
         DateTime issuedDate = Anchor.AddDays(3000);
         int duration = 10;
-        // cutoffDate precedes Anchor (the earliest issuedDate used by any test in this
-        // class, since all others use Anchor + a non-negative offset), so it excludes both
-        // this test's own not-yet-expired sanction AND every other test's already-expired
-        // sanction — the class-shared CustomWebApplicationFactory database has no
-        // tournament/player scoping to isolate on for this predicate-only query.
         DateTime cutoffDate = Anchor.AddDays(-1);
 
         await SeedSanctionAsync(db, issuedDate, duration);
@@ -136,7 +139,7 @@ public class PlayerSanctionServiceTests : IClassFixture<CustomWebApplicationFact
         DateTime issuedDate = Anchor.AddDays(4000);
         int duration = 10;
         DateTime expiry = issuedDate.AddDays(duration);
-        DateTime cutoffDate = expiry; // expired, must be returned with Player populated
+        DateTime cutoffDate = expiry;
 
         PlayerSanction sanction = await SeedSanctionAsync(db, issuedDate, duration);
 

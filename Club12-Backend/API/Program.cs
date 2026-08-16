@@ -1,4 +1,4 @@
-﻿using API.BackgroundServices;
+using API.BackgroundServices;
 using API.Utils;
 using API.Utils.Middlewares;
 using Microsoft.AspNetCore.Builder;
@@ -9,7 +9,6 @@ using System;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-// Serilog
 builder.Host.AddSerilogConfig(builder.Configuration);
 
 builder.Services
@@ -20,53 +19,45 @@ builder.Services
     .RegisterSingletons()
     .AddCustomAuthorization()
     .AddCustomAuthentication(builder.Configuration)
-    .AddCustomSwagger(builder.Configuration);
+    .AddCustomSwagger(builder.Configuration)
+    .AddEmailConfig(builder.Configuration)
+    .AddIdentityConfig(builder.Configuration)
+    .AddBackupConfig(builder.Configuration)
+    .AddExceptionHandler<GlobalExceptionHandler>()
+    .AddProblemDetails();
 
 builder.Services.AddControllers().AddCustomJsonOptions();
-builder.Services.AddEmailConfig(builder.Configuration);
-builder.Services.AddIdentityConfig(builder.Configuration);
 
-// Scheduled database backups (opt-in via Backup:Enabled, default false)
-builder.Services.AddBackupConfig(builder.Configuration);
-if (builder.Configuration.GetValue<bool>("Backup:Enabled"))
+if (builder.Configuration.GetValue<bool>(ConfigurationKeys.Backup.Enabled))
 {
     builder.Services.AddHostedService(sp => sp.GetRequiredService<DatabaseBackupHostedService>());
 }
 
-// Exception Handler & Problem Details
-builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-builder.Services.AddProblemDetails();
-
 WebApplication app = builder.Build();
 
-// Migrations (ApplicationDB + IdentityDB) + admin user seeding
 await app.ExecuteMigrationsAndSeedAsync();
 
-// Swagger
-app.UseSwaggerConfig(builder.Environment);
-
-// Logging, CORS, Auth, Controllers, Exception Handling
-app.UseSerilogRequestLogging()
+app.UseSwaggerConfig(builder.Environment)
+    .UseSerilogRequestLogging()
     .UseCors()
     .UseAuthentication()
     .UseAuthorization()
-    .UseMiddleware<MustChangePasswordMiddleware>();
+    .UseMiddleware<MustChangePasswordMiddleware>()
+    .UseExceptionHandlerConfig()
+    .UseLoggingToRequestContextMiddleware(builder.Configuration);
 
 app.MapControllers();
-app.UseExceptionHandlerConfig();
-app.UseLoggingToRequestContextMiddleware(builder.Configuration);
 
-// Startup logs
 Log.Information("----- Starting up -----");
 Log.Information(@"
-                                                               
-  ####    ##       ##  ##   #####               ##      ####   
- ##  ##   ##       ##  ##   ##  ##             ###     ##  ##  
- ##       ##       ##  ##   #####               ##        ##   
- ##       ##       ##  ##   ##  ##              ##       ##    
- ##  ##   ##       ##  ##   ##  ##              ##      ##     
-  ####    ######   ######   #####             ######   ######  
-                                                               
+
+  ####    ##       ##  ##   #####               ##      ####
+ ##  ##   ##       ##  ##   ##  ##             ###     ##  ##
+ ##       ##       ##  ##   #####               ##        ##
+ ##       ##       ##  ##   ##  ##              ##       ##
+ ##  ##   ##       ##  ##   ##  ##              ##      ##
+  ####    ######   ######   #####             ######   ######
+
 ");
 Log.Information("----- Started     -----");
 
@@ -83,7 +74,9 @@ finally
     await Log.CloseAndFlushAsync();
 }
 
-// Visibility-only shim: WebApplicationFactory<Program> (used by integration tests)
-// requires the top-level Program class to be a public partial type. This adds no
-// runtime behavior and does not alter any code path.
+/// <summary>
+/// Visibility-only shim: WebApplicationFactory&lt;Program&gt; (used by integration
+/// tests) requires the top-level Program class to be a public partial type.
+/// This adds no runtime behavior and does not alter any code path.
+/// </summary>
 public partial class Program { }

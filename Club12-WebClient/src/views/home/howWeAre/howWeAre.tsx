@@ -7,7 +7,7 @@ export default function HowWeAre() {
         
         <Container maxWidth="md" sx={{ py: 5 }}>
             <Box textAlign="left" mb={4}>
-                <Typography variant="h3" fontWeight="bold" gutterBottom>
+                <Typography variant="h3" component="h1" fontWeight="bold" gutterBottom>
                     ¿Quiénes Somos?
                 </Typography>
             </Box>

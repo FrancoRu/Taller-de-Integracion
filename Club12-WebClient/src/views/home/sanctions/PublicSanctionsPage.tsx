@@ -17,7 +17,9 @@ import { SearchIcon } from '@/views/core/MUI/icons/icons';
 import {
   TABLE_PAGE_SIZE_OPTIONS,
   TABLE_ROWS_PER_PAGE,
+  FILTER_OPTIONS_PAGE_SIZE,
 } from '@/modules/core/constants/pagination';
+import { FILTERS_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/constants';
 
 const formatDate = (value?: string | Date | null) => {
   if (!value) return '—';
@@ -79,11 +81,14 @@ export default function PublicSanctionsPage() {
   }, [getPlayerSanctionByFilter]);
 
   useEffect(() => {
-    void getAllTournamentsRef.current({ pageSize: 300 });
+    void getAllTournamentsRef.current({ pageSize: FILTER_OPTIONS_PAGE_SIZE });
   }, []);
 
   useEffect(() => {
-    const timeout = setTimeout(() => setDebouncedDescription(description), 500);
+    const timeout = setTimeout(
+      () => setDebouncedDescription(description),
+      FILTERS_DEBOUNCE_DELAY_MS
+    );
     return () => clearTimeout(timeout);
   }, [description]);
 
@@ -139,7 +144,7 @@ export default function PublicSanctionsPage() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
-      <Typography variant="h4" fontWeight="bold" mb={1}>
+      <Typography variant="h4" component="h1" fontWeight="bold" mb={1}>
         Sanciones
       </Typography>
       <Typography variant="body1" color="text.secondary" mb={3}>

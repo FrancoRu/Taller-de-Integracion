@@ -63,11 +63,11 @@ const Regulation: React.FC = () => {
               esta liga.
             </Typography>
 
-            <Typography variant="h5" component="h3" gutterBottom>
+            <Typography variant="h5" component="h2" gutterBottom>
               <u>REGLAMENTO GENERAL</u>
             </Typography>
 
-            <Typography variant="h5" component="h3" gutterBottom>
+            <Typography variant="h5" component="h2" gutterBottom>
               <u>AFILIACIONES</u>
             </Typography>
             <Typography paragraph>
@@ -95,7 +95,7 @@ const Regulation: React.FC = () => {
               </ListItem>
             </List>
 
-            <Typography variant="h5" component="h3" gutterBottom>
+            <Typography variant="h5" component="h2" gutterBottom>
               <u>INSCRIPCIONES</u>
             </Typography>
             <Typography paragraph>
@@ -121,7 +121,7 @@ const Regulation: React.FC = () => {
               </ListItem>
             </List>
 
-            <Typography variant="h5" component="h3" gutterBottom>
+            <Typography variant="h5" component="h2" gutterBottom>
               <u>DE LAS AGRUPACIONES Y/O EQUIPOS</u>
             </Typography>
             <Typography paragraph>
@@ -333,7 +333,7 @@ const Regulation: React.FC = () => {
               </ListItem>
             </List>
 
-            <Typography variant="h5" component="h3" gutterBottom>
+            <Typography variant="h5" component="h2" gutterBottom>
               <u>DE LOS JUGADORES</u>
             </Typography>
 
@@ -472,7 +472,7 @@ const Regulation: React.FC = () => {
               sanciones hasta expulsión de la liga.
             </Typography>
 
-            <Typography variant="h5" component="h3" gutterBottom>
+            <Typography variant="h5" component="h2" gutterBottom>
               <u>SUSTITUCIÓN DE JUGADORES</u>
             </Typography>
 
@@ -496,7 +496,7 @@ const Regulation: React.FC = () => {
               personal.
             </Typography>
 
-            <Typography variant="h5" component="h3" gutterBottom>
+            <Typography variant="h5" component="h2" gutterBottom>
               <u>ACTA Y REUNIONES</u>
             </Typography>
 
@@ -540,7 +540,7 @@ const Regulation: React.FC = () => {
               quedará automáticamente suspendido para el siguiente cotejo.
             </Typography>
 
-            <Typography variant="h5" component="h3" gutterBottom>
+            <Typography variant="h5" component="h2" gutterBottom>
               <u>PLANILLA Y VEEDOR</u>
             </Typography>
 
@@ -582,7 +582,7 @@ const Regulation: React.FC = () => {
               a conocer en forma definitiva la sanción impuesta.
             </Typography>
 
-            <Typography variant="h5" component="h3" gutterBottom>
+            <Typography variant="h5" component="h2" gutterBottom>
               <u>PROTESTAS</u>
             </Typography>
 
@@ -636,7 +636,7 @@ const Regulation: React.FC = () => {
               despacho y dictamen.
             </Typography>
 
-            <Typography variant="h5" component="h3" gutterBottom>
+            <Typography variant="h5" component="h2" gutterBottom>
               <u>PREMIOS</u>
             </Typography>
 
@@ -704,7 +704,7 @@ const Regulation: React.FC = () => {
               </ListItem>
             </List>
 
-            <Typography variant="h5" component="h3" gutterBottom>
+            <Typography variant="h5" component="h2" gutterBottom>
               <u>ARANCELES</u>
             </Typography>
 
@@ -814,7 +814,7 @@ const Regulation: React.FC = () => {
               de uno nuevo.
             </Typography>
 
-            <Typography variant="h5" component="h3" gutterBottom>
+            <Typography variant="h5" component="h2" gutterBottom>
               <u>MODALIDAD DE JUEGO</u>
             </Typography>
 

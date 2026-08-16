@@ -262,13 +262,13 @@ export interface IPutPlayerSanction {
    * The updated duration of the sanction (unit depends on business rules, e.g., games, minutes).
    * @type {number}
    */
-  duration: number;
+  duration?: number;
 
   /**
    * The updated description or reason for the sanction.
    * @type {string}
    */
-  description: string;
+  description?: string;
 }
 
 /**

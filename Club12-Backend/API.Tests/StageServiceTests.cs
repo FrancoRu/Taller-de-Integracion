@@ -30,10 +30,11 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         _factory = factory;
     }
 
-    // ---------------------------------------------------------------
-    // CreateAutomatedStagesAsync
-    // ---------------------------------------------------------------
-
+    /// <summary>
+    /// Both groups run in parallel with identical start/end dates. The chain
+    /// gaps asserted below (e.g. groupA.EndDate.AddDays(2) for semiFinal.StartDate)
+    /// are the ones documented in StageService.CreateAutomatedStagesAsync.
+    /// </summary>
     [Fact]
     public async Task CreateAutomatedStagesAsync_EightTeams_CreatesTwoGroupsWithoutQuarterFinal()
     {
@@ -55,13 +56,11 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         Stage thirdPlace = Assert.Single(stages, s => s.StageType == StageType.ThirdPlace);
         Stage final = Assert.Single(stages, s => s.StageType == StageType.Final);
 
-        // Both groups run in parallel: identical start/end dates.
         Assert.Equal(tournament.StartDate, groupA.StartDate);
         Assert.Equal(tournament.StartDate, groupB.StartDate);
         Assert.Equal(tournament.StartDate.AddDays(StageTemplate.DurationDays * 2), groupA.EndDate);
         Assert.Equal(groupA.EndDate, groupB.EndDate);
 
-        // Documented chain gaps taken from StageService.CreateAutomatedStagesAsync.
         Assert.Equal(groupA.EndDate.AddDays(2), semiFinal.StartDate);
         Assert.Equal(semiFinal.StartDate.AddDays(StageTemplate.DurationDays), semiFinal.EndDate);
         Assert.Equal(semiFinal.EndDate.AddDays(1), thirdPlace.StartDate);
@@ -168,10 +167,6 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
             () => stageService.CreateAutomatedStagesAsync(division.Id));
     }
 
-    // ---------------------------------------------------------------
-    // AssignTeamsToStageAsync
-    // ---------------------------------------------------------------
-
     [Fact]
     public async Task AssignTeamsToStageAsync_ExactSlotMatch_AssignsAllTeams()
     {
@@ -193,6 +188,9 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal(expectedIds, actualIds);
     }
 
+    /// <summary>
+    /// ThirdPlace capacity is 2; 1 existing assignment leaves exactly 1 available slot.
+    /// </summary>
     [Fact]
     public async Task AssignTeamsToStageAsync_TooManyTeamsForSlots_ThrowsAndCreatesNoRecords()
     {
@@ -200,7 +198,6 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
         IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
 
-        // ThirdPlace capacity is 2; 1 existing assignment leaves exactly 1 available slot.
         (Stage stage, Tournament tournament, _) = await SeedStageWithSlotsAsync(db, StageType.ThirdPlace, existingAssignmentCount: 1);
         List<Team> poolTeams = await SeedTeamsAsync(db, tournament, 3);
         List<Guid> teamIds = [.. poolTeams.Select(t => t.Id)];
@@ -232,6 +229,9 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal(2, maxTeams - recordCount);
     }
 
+    /// <summary>
+    /// ThirdPlace capacity is 2; 2 existing assignments fill the stage.
+    /// </summary>
     [Fact]
     public async Task AssignTeamsToStageAsync_StageAlreadyAtCapacity_ThrowsForManualAndAuto()
     {
@@ -239,7 +239,6 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
         IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
 
-        // ThirdPlace capacity is 2; 2 existing assignments fill the stage.
         (Stage stage, Tournament tournament, _) = await SeedStageWithSlotsAsync(db, StageType.ThirdPlace, existingAssignmentCount: 2);
         List<Team> poolTeams = await SeedTeamsAsync(db, tournament, 1);
         List<Guid> teamIds = [.. poolTeams.Select(t => t.Id)];
@@ -253,6 +252,9 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal(2, recordCount);
     }
 
+    /// <summary>
+    /// SemiFinal capacity is 4; 1 existing assignment leaves 3 available slots.
+    /// </summary>
     [Fact]
     public async Task AssignTeamsToStageAsync_DuplicateAndAlreadyAssignedIds_AreFilteredOut()
     {
@@ -260,7 +262,6 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
         IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
 
-        // SemiFinal capacity is 4; 1 existing assignment leaves 3 available slots.
         (Stage stage, Tournament tournament, List<Guid> existingIds) = await SeedStageWithSlotsAsync(db, StageType.SemiFinal, existingAssignmentCount: 1);
         List<Team> poolTeams = await SeedTeamsAsync(db, tournament, 2);
 
@@ -275,6 +276,11 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Single(records, r => r.TeamId == existingIds[0]);
     }
 
+    /// <summary>
+    /// SemiFinal capacity is 4; 1 existing assignment leaves 3 available slots.
+    /// The eligible pool of 5 seeded teams is kept larger than the available
+    /// slots so auto-assignment has more candidates than it can place.
+    /// </summary>
     [Fact]
     public async Task AssignTeamsToStageAsync_AutoMode_AssignsUpToAvailableSlots()
     {
@@ -282,9 +288,8 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
         IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
 
-        // SemiFinal capacity is 4; 1 existing assignment leaves 3 available slots.
         (Stage stage, Tournament tournament, List<Guid> existingIds) = await SeedStageWithSlotsAsync(db, StageType.SemiFinal, existingAssignmentCount: 1);
-        await SeedTeamsAsync(db, tournament, 5); // ensure eligible pool >= available slots
+        await SeedTeamsAsync(db, tournament, 5);
 
         await stageService.AssignTeamsToStageAsync(stage, null, auto: true);
 
@@ -340,10 +345,6 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         Assert.All(assignedTeamIds, id => Assert.Contains(id, teamAIds));
         Assert.DoesNotContain(assignedTeamIds, id => teamBIds.Contains(id));
     }
-
-    // ---------------------------------------------------------------
-    // Seed helpers (local to this file — no shared/production code)
-    // ---------------------------------------------------------------
 
     private static async Task<Tournament> SeedTournamentAsync(ApplicationDBContext db, int maxTeams = 64)
     {

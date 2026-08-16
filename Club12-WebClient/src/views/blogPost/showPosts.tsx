@@ -15,6 +15,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { GUID } from '@/modules/core/types/types';
 import { TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const ShowPosts: React.FC = () => {
   const { getBlogPostsByFilters, getBlogPostsById } = useBlogPost();
@@ -72,7 +73,7 @@ const ShowPosts: React.FC = () => {
     try {
       const postDetails = await getBlogPostsById(id);
       if (postDetails) {
-        navigate(`/blog/${id}`, { state: { post: postDetails } });
+        navigate(APP_ROUTES.blogPost.build(id), { state: { post: postDetails } });
       }
     } catch (error) {
       console.error('Error fetching detailed post:', error);

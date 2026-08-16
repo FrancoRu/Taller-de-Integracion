@@ -4,7 +4,7 @@ import {
   GenericResponsePagination,
   GUID,
 } from '@/modules/core/types/types';
-import { IDivisionResponse } from '@/modules/division/type/division';
+import { IMinimalDivisionResponse } from '@/modules/division/type/division';
 
 /**
  * Context properties and methods for managing tournaments.
@@ -111,13 +111,6 @@ export interface IAddTournamentRequest {
    * @type {number}
    */
   minTeams: number;
-
-  /**
-   * The current status of the tournament.
-   * Defaults to Scheduled when omitted.
-   * @type {TournamentStatus}
-   */
-  status?: TournamentStatus;
 }
 
 /**
@@ -145,9 +138,9 @@ export interface ITournamentResponse {
 
   /**
    * The divisions associated with the tournament.
-   * @type {IDivisionResponse[]}
+   * @type {IMinimalDivisionResponse[]}
    */
-  divisions?: IDivisionResponse[];
+  divisions: IMinimalDivisionResponse[];
 
   /**
    * The deadline for team registrations.

@@ -62,9 +62,6 @@ public class DivisionProfile : Profile
     /// </summary>
     public DivisionProfile()
     {
-        //_ = CreateMap<Division, DetailedDivisionResponse>()
-        //    .ForMember(dest => dest.MatchesByWeek, opt => opt.MapFrom<MatchesByWeekResolver>())
-        //    .ReverseMap();
         _ = CreateMap<Division, DivisionResponse>()
             .ReverseMap();
 

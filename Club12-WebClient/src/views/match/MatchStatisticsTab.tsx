@@ -16,8 +16,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import Swal from 'sweetalert2';
-import theme from '@/theme';
+import { notifySuccess } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { IMatchResponse } from '@/modules/match/type/match';
 import { IPublicPlayerResponse } from '@/modules/player/type/player.d';
@@ -27,6 +26,7 @@ import {
   StatisticType,
 } from '@/modules/playerStatistic/type/playerStatistic';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 
 interface MatchStatisticsTabProps {
   match: IMatchResponse;
@@ -84,7 +84,7 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
     setLoading(true);
     const response = await getStatisticsRef.current({
       matchId: match.id,
-      pageSize: 300,
+      pageSize: FILTER_OPTIONS_PAGE_SIZE,
       pageNumber: 1,
     });
     setStatistics(response?.items ?? []);
@@ -178,11 +178,7 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
     setSubmitting(false);
     setDialogOpen(false);
     await loadStatistics();
-    await Swal.fire({
-      title: 'Puntuaciones guardadas',
-      icon: 'success',
-      confirmButtonColor: theme.palette.primary.main,
-    });
+    await notifySuccess({ title: 'Puntuaciones guardadas' });
   }, [
     assistsByPlayer,
     form,

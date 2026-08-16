@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Application.Utils.Constants.Validation;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Application.DTOs.PlayerSanction.Request;
@@ -24,7 +25,7 @@ public class CreatePlayerSanctionRequest
     /// A description of the sanction.
     /// </summary>
     [Required(ErrorMessage = "The Description field is required.")]
-    [MaxLength(255)]
+    [MaxLength(SanctionFieldLengths.DescriptionMaxLength)]
     public required string Description { get; set; }
 
     /// <summary>

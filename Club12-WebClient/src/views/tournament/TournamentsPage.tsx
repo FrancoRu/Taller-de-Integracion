@@ -16,8 +16,11 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import Swal from 'sweetalert2';
-import theme, { CANCEL_BUTTON_COLOR } from '@/theme';
+import {
+  confirmDelete,
+  notifyInfo,
+  notifySuccess,
+} from '@/modules/core/utils/confirmDialog';
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import {
@@ -41,6 +44,7 @@ import {
   TABLE_PAGE_SIZE_OPTIONS,
   TABLE_ROWS_PER_PAGE,
 } from '@/modules/core/constants/pagination';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const EMPTY_FILTERS: ITournamentFiltered = {};
 
@@ -115,41 +119,33 @@ const TournamentsPage: React.FC = () => {
 
   const handleView = useCallback(
     (row: ITournamentResponse) => {
-      navigate(`/panel/torneos/${row.id}`);
+      navigate(APP_ROUTES.panelTournamentDetail.build(row.id));
     },
     [navigate]
   );
 
   const handleEdit = useCallback(
     (row: ITournamentResponse) => {
-      navigate(`/panel/torneos/${row.id}/editar`);
+      navigate(APP_ROUTES.panelTournamentEdit.build(row.id));
     },
     [navigate]
   );
 
   const handleDelete = useCallback(
     async (row: ITournamentResponse) => {
-      const result = await Swal.fire({
+      const confirmed = await confirmDelete({
         title: '¿Está usted seguro de querer eliminar este torneo?',
         text: '¡Usted no podrá revertir este cambio!',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: theme.palette.primary.main,
-        cancelButtonColor: CANCEL_BUTTON_COLOR,
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar',
       });
 
-      if (!result.isConfirmed) {
+      if (!confirmed) {
         return;
       }
 
       await deleteTournamentById(row.id);
-      await Swal.fire({
+      await notifySuccess({
         title: '¡Eliminado!',
         text: 'El torneo ha sido eliminado.',
-        icon: 'success',
-        confirmButtonColor: theme.palette.primary.main,
       });
     },
     [deleteTournamentById]
@@ -273,7 +269,7 @@ const TournamentsPage: React.FC = () => {
 
   useEffect(() => {
     if (!canLoadTournaments) {
-      navigate('/forbidden', { replace: true });
+      navigate(APP_ROUTES.forbidden, { replace: true });
     }
   }, [canLoadTournaments, navigate]);
 
@@ -305,11 +301,9 @@ const TournamentsPage: React.FC = () => {
   const rows = useMemo(() => tournaments ?? [], [tournaments]);
 
   const handleCreateTournament = useCallback(() => {
-    void Swal.fire({
+    void notifyInfo({
       title: 'Pendiente',
       text: 'La creación de torneos desde el panel aún no está implementada.',
-      icon: 'info',
-      confirmButtonColor: theme.palette.primary.main,
     });
   }, []);
 

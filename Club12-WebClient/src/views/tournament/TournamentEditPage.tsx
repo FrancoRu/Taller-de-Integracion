@@ -10,8 +10,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import Swal from 'sweetalert2';
-import theme from '@/theme';
+import { notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
@@ -19,6 +18,7 @@ import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import { IPutTournamentRequest } from '@/modules/tournament/type/tournament';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const TOURNAMENT_STATUS_LABELS: Record<TournamentStatus, string> = {
   [TournamentStatus.Scheduled]: 'Programado',
@@ -206,7 +206,7 @@ const TournamentEditPage: React.FC = () => {
           </Typography>
           <Typography
             component="button"
-            onClick={() => navigate('/panel/torneos')}
+            onClick={() => navigate(APP_ROUTES.panelTournaments)}
             sx={{
               mt: 2,
               border: 0,
@@ -259,7 +259,7 @@ const TournamentEditPage: React.FC = () => {
   };
 
   const handleCancel = () => {
-    navigate(`/panel/torneos/${tournamentId}`);
+    navigate(APP_ROUTES.panelTournamentDetail.build(tournamentId));
   };
 
   const handleSave = async () => {
@@ -294,11 +294,9 @@ const TournamentEditPage: React.FC = () => {
     }
 
     if (messages.length > 0) {
-      await Swal.fire({
+      await notifyWarning({
         title: 'No se pudo guardar',
         text: messages[0],
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -322,7 +320,7 @@ const TournamentEditPage: React.FC = () => {
     setSaving(true);
     try {
       await putTournamentById(tournamentId, payload);
-      navigate(`/panel/torneos/${tournamentId}`);
+      navigate(APP_ROUTES.panelTournamentDetail.build(tournamentId));
     } finally {
       setSaving(false);
     }

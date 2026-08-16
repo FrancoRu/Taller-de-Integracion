@@ -9,8 +9,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import Swal from 'sweetalert2';
-import theme from '@/theme';
+import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
@@ -24,6 +23,7 @@ import {
   IPlayerSanctionCreatePageProps,
 } from '@/modules/playerSanction/type/playerSanction.d';
 import FormButtons from '@/views/core/components/FormButtons';
+import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 
 const INITIAL_FORM: IPlayerSanctionCreateFormState = {
   duration: '',
@@ -73,7 +73,7 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
       return;
     }
 
-    void getAllTournamentsByFilter({ pageSize: 300 });
+    void getAllTournamentsByFilter({ pageSize: FILTER_OPTIONS_PAGE_SIZE });
   }, [getAllTournamentsByFilter, open]);
 
   useEffect(() => {
@@ -83,7 +83,7 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
 
     void getDivisionsByFilters({
       tournamentId: form.tournamentId,
-      pageSize: 300,
+      pageSize: FILTER_OPTIONS_PAGE_SIZE,
     });
   }, [form.tournamentId, getDivisionsByFilters, open]);
 
@@ -94,7 +94,7 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
 
     void getStagesByFilters({
       divisionId: form.divisionId,
-      pageSize: 300,
+      pageSize: FILTER_OPTIONS_PAGE_SIZE,
     });
   }, [form.divisionId, getStagesByFilters, open]);
 
@@ -105,7 +105,7 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
 
     void getMatchByFilter({
       stageId: form.stageId,
-      pageSize: 300,
+      pageSize: FILTER_OPTIONS_PAGE_SIZE,
     });
   }, [form.stageId, getMatchByFilter, open]);
 
@@ -116,7 +116,7 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
 
     void getPlayersByFilter({
       teamId: form.teamId,
-      pageSize: 300,
+      pageSize: FILTER_OPTIONS_PAGE_SIZE,
     });
   }, [form.teamId, getPlayersByFilter, open]);
 
@@ -155,61 +155,49 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
 
   const handleCreate = useCallback(async () => {
     if (!form.matchId) {
-      await Swal.fire({
+      await notifyWarning({
         title: 'Campos incompletos',
         text: 'Debes seleccionar un partido.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
 
     if (!form.teamId) {
-      await Swal.fire({
+      await notifyWarning({
         title: 'Campos incompletos',
         text: 'Debes seleccionar un equipo.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
 
     if (!form.playerId) {
-      await Swal.fire({
+      await notifyWarning({
         title: 'Campos incompletos',
         text: 'Debes seleccionar un jugador.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
 
     if (!form.duration || Number(form.duration) <= 0) {
-      await Swal.fire({
+      await notifyWarning({
         title: 'Duración inválida',
         text: 'La duración debe ser mayor a 0.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
 
     if (!form.issuedDate) {
-      await Swal.fire({
+      await notifyWarning({
         title: 'Campos incompletos',
         text: 'Debes completar la fecha de emisión.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
 
     if (!form.description.trim()) {
-      await Swal.fire({
+      await notifyWarning({
         title: 'Campos incompletos',
         text: 'Debes completar la descripción.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -231,11 +219,9 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
       return;
     }
 
-    await Swal.fire({
+    await notifySuccess({
       title: 'Sanción creada',
       text: 'La sanción se creó correctamente.',
-      icon: 'success',
-      confirmButtonColor: theme.palette.primary.main,
     });
 
     setForm(INITIAL_FORM);

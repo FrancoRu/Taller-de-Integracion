@@ -18,7 +18,6 @@ namespace API.Controllers;
 /// </summary>
 /// <param name="divisionService">The division service.</param>
 /// <param name="mapper">The AutoMapper instance.</param>
-//[Authorize(Roles = "SuperAdmin")]
 [Route("api/divisions/")]
 [ApiController]
 public class DivisionController(

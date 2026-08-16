@@ -6,14 +6,10 @@
 /// </summary>
 public static class EntityConstants
 {
-    // ── Schema ────────────────────────────────────────────────────────────────
-
     /// <summary>
     /// Club12 database schema.
     /// </summary>
     public const string Schema = "Club12";
-
-    // ── Shared column types ───────────────────────────────────────────────────
 
     /// <summary>
     /// SQL Server datetime2 column type.
@@ -25,42 +21,41 @@ public static class EntityConstants
     /// </summary>
     public const string Decimal18x4 = "decimal(18,4)";
 
-    // ── Tables ────────────────────────────────────────────────────────────────
-
     public static class Tables
     {
-        public const string BlogPost        = "BlogPosts";
-        public const string Division        = "Divisions";
-        public const string Match           = "Matches";
-        public const string Player          = "Players";
-        public const string PlayerSanction  = "PlayerSanctions";
-        public const string PlayerStatistic = "PlayersStatistics";   // matches existing migration
-        public const string Position        = "Positions";
-        public const string Scorer          = "Scorers";
-        public const string Stage           = "Stages";
-        public const string StageTeamMatch  = "StageTeamMatches";
-        public const string Staff           = "Staffs";
-        public const string Team            = "Teams";
-        public const string Tournament      = "Tournaments";
-        public const string User            = "Users";
-        public const string Venue           = "Venues";
-    }
+        public const string BlogPost       = "BlogPosts";
+        public const string Division       = "Divisions";
+        public const string Match          = "Matches";
+        public const string Player         = "Players";
+        public const string PlayerSanction = "PlayerSanctions";
 
-    // ── Indexes ───────────────────────────────────────────────────────────────
+        /// <summary>
+        /// Plural form ("PlayersStatistics") matches the value already baked
+        /// into existing migrations; it intentionally does not follow the
+        /// singular naming used by the other table constants.
+        /// </summary>
+        public const string PlayerStatistic = "PlayersStatistics";
+
+        public const string Position       = "Positions";
+        public const string Scorer         = "Scorers";
+        public const string Stage          = "Stages";
+        public const string StageTeamMatch = "StageTeamMatches";
+        public const string Staff          = "Staffs";
+        public const string Team           = "Teams";
+        public const string Tournament     = "Tournaments";
+        public const string User           = "Users";
+        public const string Venue          = "Venues";
+    }
 
     public static class Indexes
     {
         public const string UniqueStageNameDivision = "CONSTRAINT_UNIQUE_STAGE_NAME_AND_DIVISIONID";
     }
 
-    // ── Check constraints ─────────────────────────────────────────────────────
-
     public static class CheckConstraints
     {
         public const string TournamentDeadlineBeforeStart = "CK_Tournament_DeadlineBeforeStart";
     }
-
-    // ── Index filter expressions ──────────────────────────────────────────────
 
     public static class Filters { }
 }

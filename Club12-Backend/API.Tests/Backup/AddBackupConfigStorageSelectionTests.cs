@@ -61,6 +61,12 @@ public sealed class AddBackupConfigStorageSelectionTests
         Assert.Equal(typeof(SupabaseBackupStorage), descriptor.ImplementationType);
     }
 
+    /// <summary>
+    /// Local storage is registered via a factory (it needs the plain
+    /// LocalStoragePath string, not a DI-resolvable type), so this asserts
+    /// it is NOT the type-based Supabase registration rather than invoking
+    /// the factory, which would touch the local filesystem.
+    /// </summary>
     [Theory]
     [InlineData("Local")]
     [InlineData("")]
@@ -71,10 +77,6 @@ public sealed class AddBackupConfigStorageSelectionTests
 
         ServiceDescriptor descriptor = services.Single(d => d.ServiceType == typeof(IBackupStorage));
 
-        // Local storage is registered via a factory (it needs the plain
-        // LocalStoragePath string, not a DI-resolvable type), so we assert
-        // it is NOT the type-based Supabase registration rather than
-        // invoking the factory (which would touch the local filesystem).
         Assert.NotEqual(typeof(SupabaseBackupStorage), descriptor.ImplementationType);
         Assert.Null(descriptor.ImplementationType);
         Assert.NotNull(descriptor.ImplementationFactory);

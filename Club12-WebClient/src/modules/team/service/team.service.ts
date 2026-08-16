@@ -45,18 +45,6 @@ export const teamService = {
   },
 
   /**
-   * Adds a batch of teams to a division.
-   * @param {File} teamFile - The file containing team data.
-   * @param {File} logoFile - The file containing team logos.
-   * @returns {Promise<AxiosResponse<ITeamResponse>>} The server response.
-   */
-  addTeamToDivisionIdBatch: async (
-    teamFile: File,
-    logoFile: File
-  ): Promise<AxiosResponse<ITeamResponse>> =>
-    await sendPost(`${routes.teams}/${1}`, { teamFile, logoFile }),
-
-  /**
    * Updates an existing team.
    * @param {string} id - The ID of the team to update.
    * @param {IPutTeamRequest} data - The updated team details.

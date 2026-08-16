@@ -1,4 +1,6 @@
-﻿namespace Application.DTOs.Abstract.Request;
+﻿using Application.Utils.Constants.Pagination;
+
+namespace Application.DTOs.Abstract.Request;
 
 /// <summary>
 /// Represents a request for paginated and filtered data.
@@ -10,7 +12,7 @@ public class PaginatedFilterRequest : IPaginationRequest, IOrderRequest
     /// </summary>
     public int PageNumber { get; set; } = 1;
 
-    private int _pageSize = 100;
+    private int _pageSize = PaginationDefaults.DefaultPageSize;
 
     /// <summary>
     /// The page size for pagination. Default is 10.
@@ -18,7 +20,9 @@ public class PaginatedFilterRequest : IPaginationRequest, IOrderRequest
     public int PageSize
     {
         get => _pageSize;
-        set => _pageSize = value < 1 ? 100 : value > 100 ? 100 : value;
+        set => _pageSize = value < 1
+            ? PaginationDefaults.DefaultPageSize
+            : value > PaginationDefaults.MaxPageSize ? PaginationDefaults.MaxPageSize : value;
     }
 
     /// <summary>

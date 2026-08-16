@@ -2,6 +2,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { ReactNode } from 'react';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 /**
  * PrivateRoute component that ensures only authenticated users can access the route.
@@ -19,11 +20,11 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({
   const { isAuthenticated, role } = useAuth();
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={APP_ROUTES.login} replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(role)) {
-    return <Navigate to="/forbidden" replace />;
+    return <Navigate to={APP_ROUTES.forbidden} replace />;
   }
 
   return <>{children || <Outlet />}</>;

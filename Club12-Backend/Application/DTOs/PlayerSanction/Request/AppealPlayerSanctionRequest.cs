@@ -1,3 +1,4 @@
+using Application.Utils.Constants.Validation;
 using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.PlayerSanction.Request;
 
@@ -10,6 +11,6 @@ public class AppealPlayerSanctionRequest
     /// The reason the sanction is being appealed.
     /// </summary>
     [Required]
-    [StringLength(1000, MinimumLength = 1)]
+    [StringLength(SanctionFieldLengths.LongTextMaxLength, MinimumLength = SanctionFieldLengths.LongTextMinLength)]
     public required string Reason { get; set; }
 }

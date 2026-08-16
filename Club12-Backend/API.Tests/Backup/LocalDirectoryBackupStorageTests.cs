@@ -80,12 +80,14 @@ public sealed class LocalDirectoryBackupStorageTests : IDisposable
         await Assert.ThrowsAsync<ArgumentException>(() => _storage.DeleteAsync("../../escape.sql"));
     }
 
+    /// <summary>
+    /// retainCount = 2; 4 files stored (N+2). One tied pair straddles the
+    /// retention boundary to exercise the documented tie-break rule (newest
+    /// timestamp first, then lexically-smallest name retained).
+    /// </summary>
     [Fact]
     public async Task RetentionIntegration_StoresNPlus2_RetainsNewestN_DeletesExactlyTwoPerTieBreak()
     {
-        // retainCount = 2; 4 files stored (N+2). One tied pair straddles the
-        // retention boundary to exercise unit 1's documented tie-break rule
-        // (newest timestamp first, then lexically-smallest name retained).
         const int retainCount = 2;
         DateTime tied = DateTime.UtcNow.AddMinutes(-10);
 

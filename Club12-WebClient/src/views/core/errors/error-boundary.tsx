@@ -1,4 +1,3 @@
-// ErrorBoundary.tsx
 import React, { Component, ErrorInfo } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import { Link } from 'react-router-dom';

@@ -40,9 +40,15 @@ describe('ShowPosts — bounded fetch on pagination changes', () => {
     } as unknown as ReturnType<typeof useBlogPost>);
   });
 
+  /**
+   * The first response echoes a pageSize different from the one requested,
+   * simulating the server confirming a different page size than the client
+   * sent. Several unrelated re-render passes are then forced and must not
+   * trigger extra fetches. Only once the pagination state carries that
+   * server-confirmed pageSize (25) instead of the one first requested (10)
+   * should the effect refetch with the new value.
+   */
   it('stays at one call across unrelated re-renders, then refetches once the server-confirmed pageSize changes', async () => {
-    // First response echoes a pageSize different from the one requested,
-    // simulating the server confirming a different page size than the client sent.
     getBlogPostsByFilters.mockResolvedValueOnce({
       items: [buildPost()],
       page: 1,
@@ -66,7 +72,6 @@ describe('ShowPosts — bounded fetch on pagination changes', () => {
       expect.objectContaining({ pageNumber: 1, pageSize: 10 })
     );
 
-    // Force several unrelated re-render passes — must not trigger extra fetches.
     for (let i = 0; i < 3; i += 1) {
       rerender(
         <MemoryRouter>
@@ -75,8 +80,6 @@ describe('ShowPosts — bounded fetch on pagination changes', () => {
       );
     }
 
-    // The pagination state now carries a different pageSize (25) than the
-    // one first requested (10); the effect must refetch with the new value.
     await waitFor(() =>
       expect(getBlogPostsByFilters).toHaveBeenCalledTimes(2)
     );

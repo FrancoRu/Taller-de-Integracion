@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { Box, Card, CardContent, Stack, Typography } from '@mui/material';
-import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
-import theme, { CANCEL_BUTTON_COLOR } from '@/theme';
+import {
+  confirmDelete,
+  notifySuccess,
+  notifyWarning,
+} from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { useTeam } from '@/modules/team/hook/team.hook';
 import {
@@ -28,6 +31,8 @@ import TeamsFilterBar from '@/views/team/TeamsFilterBar';
 import TeamsTable from '@/views/team/TeamsTable';
 import TeamFormDialog from '@/views/team/TeamFormDialog';
 import type { TeamsSearchFilters, TeamFormState } from '@/views/team/teams.types';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import { FILTERS_DEBOUNCE_DELAY_LONG_MS } from '@/modules/core/constants/constants';
 
 interface TeamsScreenProps {
   tournamentId?: GUID;
@@ -104,7 +109,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       setDebouncedFilters(filters);
-    }, 1000);
+    }, FILTERS_DEBOUNCE_DELAY_LONG_MS);
 
     return () => clearTimeout(timeoutId);
   }, [filters]);
@@ -158,7 +163,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
 
   const handleView = useCallback(
     (row: ITeamResponse) => {
-      navigate(`/panel/equipos/${row.id}`);
+      navigate(APP_ROUTES.panelTeamDetail.build(row.id));
     },
     [navigate]
   );
@@ -175,27 +180,19 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
 
   const handleDelete = useCallback(
     async (row: ITeamResponse) => {
-      const result = await Swal.fire({
+      const confirmed = await confirmDelete({
         title: '¿Está usted seguro de querer eliminar este equipo?',
         text: '¡Usted no podrá revertir este cambio!',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: theme.palette.primary.main,
-        cancelButtonColor: CANCEL_BUTTON_COLOR,
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar',
       });
 
-      if (!result.isConfirmed) {
+      if (!confirmed) {
         return;
       }
 
       await deleteTeamById(row.id);
-      await Swal.fire({
+      await notifySuccess({
         title: '¡Eliminado!',
         text: 'El equipo ha sido eliminado.',
-        icon: 'success',
-        confirmButtonColor: theme.palette.primary.main,
       });
     },
     [deleteTeamById]
@@ -285,21 +282,17 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
 
   const validateCreateForm = () => {
     if (!teamForm.name.trim() || !teamForm.threeLetterCode.trim()) {
-      void Swal.fire({
+      void notifyWarning({
         title: 'Campos incompletos',
         text: 'Nombre y código son obligatorios.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return false;
     }
 
     if (!teamForm.logo) {
-      void Swal.fire({
+      void notifyWarning({
         title: 'Logo requerido',
         text: 'Debe seleccionar un logo para crear el equipo.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return false;
     }
@@ -318,7 +311,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
       threeLetterCode: teamForm.threeLetterCode.trim(),
       shirtColor: teamForm.shirtColor.trim(),
       logo: teamForm.logo as File,
-      tournamentId: tournamentId ?? null,
+      tournamentId,
     };
 
     const createdTeam = await addTeam(payload);
@@ -331,11 +324,9 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
     setIsCreateModalOpen(false);
     resetTeamForm();
     await fetchTeams(debouncedFilters, paginationModel);
-    await Swal.fire({
+    await notifySuccess({
       title: 'Equipo creado',
       text: 'El equipo se creó correctamente.',
-      icon: 'success',
-      confirmButtonColor: theme.palette.primary.main,
     });
   };
 
@@ -345,11 +336,9 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
     }
 
     if (!teamForm.name.trim() || !teamForm.threeLetterCode.trim()) {
-      void Swal.fire({
+      void notifyWarning({
         title: 'Campos incompletos',
         text: 'Nombre y código son obligatorios.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -371,11 +360,9 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
     setEditingTeam(null);
     resetTeamForm();
     await fetchTeams(debouncedFilters, paginationModel);
-    await Swal.fire({
+    await notifySuccess({
       title: 'Equipo actualizado',
       text: 'El equipo se actualizó correctamente.',
-      icon: 'success',
-      confirmButtonColor: theme.palette.primary.main,
     });
   };
 

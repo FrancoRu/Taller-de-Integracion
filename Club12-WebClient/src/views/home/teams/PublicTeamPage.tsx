@@ -19,6 +19,7 @@ import {
 import { useTeam } from '@/modules/team/hook/team.hook';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import { GUID } from '@/modules/core/types/types';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 export default function PublicTeamPage() {
   const { teamId } = useParams<{ teamId: GUID }>();
@@ -47,8 +48,8 @@ export default function PublicTeamPage() {
   if (!team || team.id !== teamId) {
     return (
       <Container maxWidth="md" sx={{ py: 5 }}>
-        <Typography variant="h5" mb={2}>Equipo no encontrado</Typography>
-        <Button onClick={() => navigate('/equipos')}>Volver a equipos</Button>
+        <Typography variant="h5" component="h1" mb={2}>Equipo no encontrado</Typography>
+        <Button onClick={() => navigate(APP_ROUTES.publicTeams)}>Volver a equipos</Button>
       </Container>
     );
   }
@@ -56,7 +57,7 @@ export default function PublicTeamPage() {
   return (
     <Container maxWidth="md" sx={{ py: 5 }}>
       <Button
-        onClick={() => navigate('/equipos')}
+        onClick={() => navigate(APP_ROUTES.publicTeams)}
         sx={{ mb: 3, pl: 0 }}
         color="inherit"
       >
@@ -66,10 +67,10 @@ export default function PublicTeamPage() {
       <Box display="flex" alignItems="center" gap={3} mb={3}>
         <TeamLogo teamName={team.name} logoUrl={team.logoUrl} size={72} />
         <Box>
-          <Typography variant="h4" fontWeight="bold">
+          <Typography variant="h4" component="h1" fontWeight="bold">
             {team.name}
           </Typography>
-          <Typography variant="subtitle1" color="text.secondary">
+          <Typography variant="subtitle1" component="p" color="text.secondary">
             {team.threeLetterCode}
           </Typography>
         </Box>
@@ -79,20 +80,20 @@ export default function PublicTeamPage() {
 
       <Grid container spacing={3} mb={4}>
         <Grid item xs={12} sm={4}>
-          <Typography variant="subtitle2" color="text.secondary">
+          <Typography variant="subtitle2" component="p" color="text.secondary">
             Color de camiseta
           </Typography>
           <Typography>{team.shirtColor || '—'}</Typography>
         </Grid>
         <Grid item xs={12} sm={4}>
-          <Typography variant="subtitle2" color="text.secondary">
+          <Typography variant="subtitle2" component="p" color="text.secondary">
             Jugadores inscriptos
           </Typography>
           <Typography>{team.players?.length ?? 0}</Typography>
         </Grid>
       </Grid>
 
-      <Typography variant="h6" mb={2}>
+      <Typography variant="h6" component="h2" mb={2}>
         Plantel
       </Typography>
 

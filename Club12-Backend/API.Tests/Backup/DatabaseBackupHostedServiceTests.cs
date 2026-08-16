@@ -48,6 +48,9 @@ public class DatabaseBackupHostedServiceTests
         Assert.True(storage.StoreCallCount >= 1);
     }
 
+    /// <summary>
+    /// The 100ms delay is well short of the 5s interval used here.
+    /// </summary>
     [Fact]
     public async Task ExecuteAsync_IntervalNotYetElapsed_NoBackupAttemptTriggered()
     {
@@ -61,7 +64,7 @@ public class DatabaseBackupHostedServiceTests
         };
 
         await service.StartAsync(CancellationToken.None);
-        await Task.Delay(100); // well short of the 5s interval
+        await Task.Delay(100);
         await service.StopAsync(CancellationToken.None);
 
         Assert.Equal(0, backupService.CallCount);

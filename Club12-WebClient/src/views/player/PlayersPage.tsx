@@ -17,9 +17,12 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
-import theme, { CANCEL_BUTTON_COLOR } from '@/theme';
+import {
+  confirmDelete,
+  notifySuccess,
+  notifyWarning,
+} from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
 import { TABLE_PAGE_SIZE_OPTIONS } from '@/modules/core/constants/pagination';
@@ -41,10 +44,12 @@ import {
   VisibilityIcon,
 } from '@/views/core/MUI/icons/icons';
 import { useTeam } from '@/modules/team/hook/team.hook';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import { FILTERS_DEBOUNCE_DELAY_LONG_MS } from '@/modules/core/constants/constants';
 
 type PlayersSearchFilters = Pick<
   PlayerFiltered,
-  'firstName' | 'lastName' | 'documentNumber' | 'phoneNumber'
+  'names' | 'lastName' | 'documentNumber' | 'phoneNumber'
 >;
 
 type PlayerFormState = {
@@ -159,7 +164,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       setDebouncedFilters(filters);
-    }, 1000);
+    }, FILTERS_DEBOUNCE_DELAY_LONG_MS);
 
     return () => clearTimeout(timeoutId);
   }, [filters]);
@@ -206,7 +211,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
 
   const handleView = useCallback(
     (row: IPlayerResponse) => {
-      navigate(`/panel/jugadores/${row.id}`);
+      navigate(APP_ROUTES.panelPlayer.build(row.id));
     },
     [navigate]
   );
@@ -216,7 +221,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       setEditingPlayer(row);
       setPlayerForm({
         firstName: row.firstName,
-        secondName: row.secondName,
+        secondName: row.secondName ?? '',
         lastName: row.lastName,
         documentNumber: row.documentNumber,
         birthDate: getDateValue(row.birthDate),
@@ -231,27 +236,19 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
 
   const handleDelete = useCallback(
     async (row: IPlayerResponse) => {
-      const result = await Swal.fire({
+      const confirmed = await confirmDelete({
         title: '¿Está usted seguro de querer eliminar este jugador?',
         text: '¡Usted no podrá revertir este cambio!',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: theme.palette.primary.main,
-        cancelButtonColor: CANCEL_BUTTON_COLOR,
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar',
       });
 
-      if (!result.isConfirmed) {
+      if (!confirmed) {
         return;
       }
 
       await deletePlayerById(row.id);
-      await Swal.fire({
+      await notifySuccess({
         title: '¡Eliminado!',
         text: 'El jugador ha sido eliminado.',
-        icon: 'success',
-        confirmButtonColor: theme.palette.primary.main,
       });
     },
     [deletePlayerById]
@@ -319,13 +316,13 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
 
   const hasActiveFilters = useMemo(
     () =>
-      Boolean(filters.firstName) ||
+      Boolean(filters.names) ||
       Boolean(filters.lastName) ||
       Boolean(filters.documentNumber) ||
       Boolean(filters.phoneNumber),
     [
       filters.documentNumber,
-      filters.firstName,
+      filters.names,
       filters.lastName,
       filters.phoneNumber,
     ]
@@ -340,23 +337,22 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       !playerForm.firstName.trim() ||
       !playerForm.secondName.trim() ||
       !playerForm.lastName.trim() ||
-      !playerForm.documentNumber.trim()
+      !playerForm.documentNumber.trim() ||
+      !playerForm.birthDate.trim() ||
+      !playerForm.phoneNumber.trim() ||
+      !playerForm.socialSecurity.trim()
     ) {
-      void Swal.fire({
+      void notifyWarning({
         title: 'Campos incompletos',
-        text: 'Nombre, segundo nombre, apellido y documento son obligatorios.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
+        text: 'Nombre, segundo nombre, apellido, documento, fecha de nacimiento, teléfono y seguro social son obligatorios.',
       });
       return false;
     }
 
     if (!resolvedTeamId) {
-      void Swal.fire({
+      void notifyWarning({
         title: 'Equipo requerido',
         text: 'Debe seleccionar un equipo.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return false;
     }
@@ -390,11 +386,9 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       secondName: playerForm.secondName.trim(),
       lastName: playerForm.lastName.trim(),
       documentNumber: playerForm.documentNumber.trim(),
-      birthDate: playerForm.birthDate
-        ? new Date(playerForm.birthDate)
-        : undefined,
-      phoneNumber: playerForm.phoneNumber.trim() || undefined,
-      socialSecurity: playerForm.socialSecurity.trim() || undefined,
+      birthDate: new Date(playerForm.birthDate),
+      phoneNumber: playerForm.phoneNumber.trim(),
+      socialSecurity: playerForm.socialSecurity.trim(),
       teamId: resolvedTeamId as GUID,
     };
 
@@ -408,11 +402,9 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     setIsCreateModalOpen(false);
     resetPlayerForm();
     await fetchPlayers(debouncedFilters, paginationModel);
-    await Swal.fire({
+    await notifySuccess({
       title: 'Jugador creado',
       text: 'El jugador se creó correctamente.',
-      icon: 'success',
-      confirmButtonColor: theme.palette.primary.main,
     });
   };
 
@@ -449,11 +441,9 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     setEditingPlayer(null);
     resetPlayerForm();
     await fetchPlayers(debouncedFilters, paginationModel);
-    await Swal.fire({
+    await notifySuccess({
       title: 'Jugador actualizado',
       text: 'El jugador se actualizó correctamente.',
-      icon: 'success',
-      confirmButtonColor: theme.palette.primary.main,
     });
   };
 
@@ -474,9 +464,9 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2}>
         <TextField
           label="Nombre"
-          name="firstName"
+          name="names"
           size="small"
-          value={filters.firstName ?? ''}
+          value={filters.names ?? ''}
           onChange={handleFilterChange}
           InputProps={{
             startAdornment: (

@@ -19,7 +19,6 @@ namespace API.Controllers;
 /// </summary>
 /// <param name="blogPostService">The blog post service.</param>
 /// <param name="mapper">The AutoMapper instance.</param>
-//[Authorize(Roles = "SuperAdmin")]
 [Route("api/blogposts/")]
 [ApiController]
 public class BlogPostController(
@@ -102,9 +101,6 @@ public class BlogPostController(
         {
             return this.NotFoundProblem(nameof(BlogPost), id);
         }
-
-        //string photoUrl = await _cloudflareService.UploadFileAsync(photoRequest.PhotoFile.OpenReadStream(), photoRequest.PhotoFile.FileName);
-        //blogPost.PhotoUrl = photoUrl;
 
         await blogPostService.UpdateBlogPostAsync(blogPost);
         return Ok();

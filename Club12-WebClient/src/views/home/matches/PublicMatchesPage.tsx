@@ -13,6 +13,7 @@ import { GUID } from '@/modules/core/types/types';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import MatchCard from './MatchCard';
+import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 
 const PAGE_SIZE = 12;
 
@@ -37,7 +38,7 @@ export default function PublicMatchesPage() {
   }, [getMatchByFilter]);
 
   useEffect(() => {
-    void getAllTournamentsRef.current({ pageSize: 300 });
+    void getAllTournamentsRef.current({ pageSize: FILTER_OPTIONS_PAGE_SIZE });
   }, []);
 
   const fetchMatches = useCallback(
@@ -81,7 +82,7 @@ export default function PublicMatchesPage() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
-      <Typography variant="h4" fontWeight="bold" mb={1}>
+      <Typography variant="h4" component="h1" fontWeight="bold" mb={1}>
         Partidos
       </Typography>
       <Typography variant="body1" color="text.secondary" mb={3}>

@@ -25,6 +25,7 @@ const buildTournament = (
   id: 'guid-a-aaaa-bbbb-cccc' as unknown as GUID,
   description: 'Torneo de prueba',
   name: 'Apertura',
+  divisions: [],
   teamRegistrationDeadline: new Date('2026-01-01'),
   startDate: new Date('2026-02-01'),
   maxTeams: 10,
@@ -44,11 +45,15 @@ beforeEach(() => {
 });
 
 describe('TournamentProvider — getAllTournamentsByFilter dedup guard', () => {
+  /**
+   * Each mocked call resolves a brand-new array reference (same ids/data),
+   * so this test can only pass if the dedup guard's id-comparison genuinely
+   * skips `setState` — not because React bails out on an identical object
+   * reference on its own. The guard must also read the current `tournaments`
+   * state (not a stale, mount-time closure) so it skips `setState` when the
+   * fetched ids are unchanged on the second call.
+   */
   it('keeps the tournaments reference stable when a repeated filter fetch returns the same items', async () => {
-    // Each call resolves a BRAND NEW array reference (same ids/data) so the
-    // test can only pass if the dedup guard's id-comparison genuinely skips
-    // `setState` — not because React bails out on an identical object
-    // reference on its own.
     mockedGetAllTournamentsByFilter.mockResolvedValueOnce({
       data: { items: [buildTournament()], page: 1, pageSize: 100, totalCount: 1 },
     } as never);
@@ -69,9 +74,6 @@ describe('TournamentProvider — getAllTournamentsByFilter dedup guard', () => {
       await result.current.getAllTournamentsByFilter({});
     });
 
-    // The dedup guard inside fetchAndSetList should see the current
-    // `tournaments` state (not a stale, mount-time closure) and therefore
-    // skip `setState` when the fetched ids are unchanged.
     expect(result.current.tournaments).toBe(firstReference);
   });
 });

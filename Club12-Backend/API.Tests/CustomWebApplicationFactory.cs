@@ -33,12 +33,16 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     private readonly SqliteConnection _appConnection;
     private readonly SqliteConnection _identityConnection;
 
+    /// <summary>
+    /// Sets these environment variables first because startup config binding
+    /// (ConnectionStrings, AllowedOrigins, JWT, Smtp) throws before the host is
+    /// even built otherwise — these values are read from configuration before
+    /// WebApplicationFactory gets a chance to override services. The two SQLite
+    /// connections are then kept open for the lifetime of the factory, since an
+    /// in-memory SQLite database is destroyed as soon as its connection closes.
+    /// </summary>
     public CustomWebApplicationFactory()
     {
-        // Required, otherwise startup config binding (ConnectionStrings,
-        // AllowedOrigins, JWT, Smtp) throws before the host is even built —
-        // these values are read from configuration before WebApplicationFactory
-        // gets a chance to override services.
         Environment.SetEnvironmentVariable("ConnectionStrings__DbConnection", "Host=localhost;Database=club12_test;Username=test;Password=test");
         Environment.SetEnvironmentVariable("AllowedOrigins__0", "http://localhost:5173");
         Environment.SetEnvironmentVariable("JWT__Key", "test-signing-key-at-least-32-characters-long");
@@ -50,9 +54,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("Smtp__Password", "test");
         Environment.SetEnvironmentVariable("Smtp__UseSsl", "false");
 
-        // Keep one open connection per context alive for the lifetime of the
-        // factory — an in-memory SQLite database is destroyed when its
-        // connection closes.
         _appConnection = new SqliteConnection("DataSource=:memory:");
         _appConnection.Open();
 

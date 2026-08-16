@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { LogInUserRequest } from '@/modules/auth/type/auth';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 export default function Login() {
   const theme = useTheme();
@@ -29,7 +30,7 @@ export default function Login() {
   const handleLogin = async () => {
     const success = await signIn(credentials);
     if (success) {
-      navigate('/panel');
+      navigate(APP_ROUTES.panel);
     } else {
       setError('Usuario o contraseña incorrectos');
     }

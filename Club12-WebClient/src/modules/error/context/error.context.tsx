@@ -1,10 +1,9 @@
-// src/error/context/error.context.tsx
-
 import { createContext, useEffect, useState } from 'react';
 import { AxiosError } from 'axios';
 import Swal from 'sweetalert2';
 import { ProviderProps } from '@/modules/core/types/types';
 import { BadRequestResponse, IErrorContextProp } from '@/modules/error/type/error.d';
+import { HttpStatus } from '@/modules/core/constants/httpStatus';
 
 export const ErrorContext = createContext<IErrorContextProp | undefined>(
   undefined
@@ -23,14 +22,17 @@ export const ErrorProvider: React.FC<ProviderProps> = ({ children }) => {
     );
   };
 
+  /**
+   * Only adds the new error message if it isn't already present, to avoid
+   * showing duplicate error messages for the same underlying failure.
+   */
   const setError = (error: AxiosError) => {
     const data = error.response?.data;
     if (isBadRequestResponse(data)) {
       const message = data.detail ?? 'Error in the request';
-      const status = data.statusCode ?? error.response?.status ?? 400;
+      const status =
+        data.statusCode ?? error.response?.status ?? HttpStatus.BadRequest;
 
-      // Only add new errors if they're not already present to avoid duplicates
-      // Or if you want to show all errors, just use: setErrors(prevErrors => [...prevErrors, message]);
       setErrors(prevErrors => {
         if (!prevErrors.includes(message)) {
           return [...prevErrors, message];
@@ -46,7 +48,9 @@ export const ErrorProvider: React.FC<ProviderProps> = ({ children }) => {
         }
         return prevErrors;
       });
-      setMessage(error.response?.status ?? 500, [fallbackMessage]);
+      setMessage(error.response?.status ?? HttpStatus.InternalServerError, [
+        fallbackMessage,
+      ]);
     }
   };
 
@@ -70,7 +74,7 @@ export const ErrorProvider: React.FC<ProviderProps> = ({ children }) => {
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [errors]); // Dependency: `errors` state
+  }, [errors]);
 
   return (
     <ErrorContext.Provider value={{ errors, setError, setMessage }}>

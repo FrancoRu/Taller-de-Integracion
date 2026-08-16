@@ -1,6 +1,8 @@
 ﻿using Application.DTOs.Auth.Request;
 using Application.DTOs.Auth.Response;
 using Application.Interfaces.Services;
+using Application.Utils.Constants.Auth;
+using Application.Utils.Constants.Configuration;
 using Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -43,10 +45,6 @@ public sealed class IdentityAuthenticationService(
             }
         };
 
-    // ─────────────────────────────────────────────────────────────
-    // Register
-    // ─────────────────────────────────────────────────────────────
-
     /// <inheritdoc/>
     public async Task<RegisterUserResponse> RegisterAsync(
         RegisterUserRequest request, string callerRole, Guid callerId, CancellationToken ct = default)
@@ -81,8 +79,9 @@ public sealed class IdentityAuthenticationService(
 
         string token = await userManager.GeneratePasswordResetTokenAsync(user);
 
-        string frontendUrl = configuration["Frontend:PasswordResetUrl"]
-            ?? throw new InvalidOperationException("Frontend:PasswordResetUrl is not configured.");
+        string frontendUrl = configuration[ConfigurationKeys.Frontend.PasswordResetUrl]
+            ?? throw new InvalidOperationException(
+                $"{ConfigurationKeys.Frontend.PasswordResetUrl} is not configured.");
 
         string setPasswordLink =
             $"{frontendUrl}" +
@@ -94,10 +93,6 @@ public sealed class IdentityAuthenticationService(
         return new RegisterUserResponse(
             user.Id, user.Email!, user.UserName!, request.Role.ToUpperInvariant(), user.PhoneNumber);
     }
-
-    // ─────────────────────────────────────────────────────────────
-    // Password login  (ADMIN | OWNER | TOURNAMENT_MANAGER)
-    // ─────────────────────────────────────────────────────────────
 
     /// <inheritdoc/>
     public async Task<TokenResponse> LoginAsync(LogInUserRequest request, CancellationToken ct = default)
@@ -119,10 +114,6 @@ public sealed class IdentityAuthenticationService(
 
         return await BuildTokenResponseAsync(user, roles, ct);
     }
-
-    // ─────────────────────────────────────────────────────────────
-    // Magic-link  (TEAM_MANAGER only)
-    // ─────────────────────────────────────────────────────────────
 
     /// <inheritdoc/>
     public async Task<MagicLinkResponse> RequestMagicLinkAsync(
@@ -168,10 +159,6 @@ public sealed class IdentityAuthenticationService(
         return await BuildTokenResponseAsync(user, roles, ct);
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Password reset confirm  (from email link)
-    // ─────────────────────────────────────────────────────────────
-
     /// <inheritdoc/>
     public async Task<TokenResponse> ConfirmPasswordResetAsync(
         PasswordResetConfirmRequest request, CancellationToken ct = default)
@@ -193,10 +180,6 @@ public sealed class IdentityAuthenticationService(
         return await BuildTokenResponseAsync(user, roles, ct);
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Guest  (no DB interaction)
-    // ─────────────────────────────────────────────────────────────
-
     /// <inheritdoc/>
     public async Task<TokenResponse> GuestAsync(CancellationToken ct = default)
     {
@@ -204,10 +187,6 @@ public sealed class IdentityAuthenticationService(
         TokenResponse response = await authService.GenerateJwtTokenAsync(claims, ct);
         return new TokenResponse(response.AccessToken, response.ExpiresIn, refreshToken: null);
     }
-
-    // ─────────────────────────────────────────────────────────────
-    // Refresh token
-    // ─────────────────────────────────────────────────────────────
 
     /// <inheritdoc/>
     public async Task<TokenResponse> RefreshAsync(
@@ -224,10 +203,6 @@ public sealed class IdentityAuthenticationService(
         return await BuildTokenResponseAsync(user, roles, ct);
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Logout
-    // ─────────────────────────────────────────────────────────────
-
     /// <inheritdoc/>
     public async Task LogoutAsync(Guid userId, CancellationToken ct = default)
     {
@@ -240,10 +215,6 @@ public sealed class IdentityAuthenticationService(
         }
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Private helpers
-    // ─────────────────────────────────────────────────────────────
-
     private async Task<TokenResponse> BuildTokenResponseAsync(
         ApplicationUser user, IList<string> roles, CancellationToken ct)
     {
@@ -255,7 +226,7 @@ public sealed class IdentityAuthenticationService(
         ];
 
         if (user.MustChangePassword)
-            claims.Add(new Claim("must_change_password", "true"));
+            claims.Add(new Claim(CustomClaimTypes.MustChangePassword, "true"));
 
         TokenResponse response = await authService.GenerateJwtTokenAsync(claims, ct);
 

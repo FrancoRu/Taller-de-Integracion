@@ -1,3 +1,4 @@
+using Application.Utils.Constants.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace Application.DTOs.User.Request;
@@ -10,7 +11,7 @@ namespace Application.DTOs.User.Request;
 public sealed class ChangePasswordRequest
 {
     [Required]
-    [MinLength(8)]
+    [MinLength(UserFieldLengths.PasswordMinLength)]
     public string NewPassword { get; set; } = string.Empty;
 
     /// <summary>

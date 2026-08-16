@@ -70,7 +70,7 @@ export const blogPostService = {
     photo: File
   ): Promise<AxiosResponse<void>> => {
     const formData = new FormData();
-    formData.append('PhotoFile', photo); // Add photo as FormData
+    formData.append('PhotoFile', photo);
 
     return sendPut<void>(`${routes.blogposts}/${id}/photo`, formData);
   },

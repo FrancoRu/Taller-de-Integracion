@@ -120,14 +120,14 @@ export default function PrintableResultsSheet({
 
       <Box data-print="sheet" sx={{ display: 'none' }}>
         {divisionName && (
-          <Typography variant="h6" gutterBottom>
+          <Typography variant="h6" component="h1" gutterBottom>
             {divisionName}
           </Typography>
         )}
 
         {showStandings && (
           <Box sx={{ mb: showGoleadores ? 4 : 0 }}>
-            <Typography variant="subtitle1" gutterBottom>
+            <Typography variant="subtitle1" component="h2" gutterBottom>
               Posiciones
             </Typography>
             <TableContainer>
@@ -144,7 +144,7 @@ export default function PrintableResultsSheet({
                 </TableHead>
                 <TableBody>
                   {standingsRows.map((row, index) => (
-                    <TableRow key={row.teamid}>
+                    <TableRow key={row.teamId}>
                       <TableCell>{index + 1}</TableCell>
                       <TableCell>{row.teamName}</TableCell>
                       <TableCell align="center">{row.matchesPlayed}</TableCell>
@@ -161,7 +161,7 @@ export default function PrintableResultsSheet({
 
         {showGoleadores && (
           <Box>
-            <Typography variant="subtitle1" gutterBottom>
+            <Typography variant="subtitle1" component="h2" gutterBottom>
               Goleadores
             </Typography>
             <TableContainer>
@@ -175,7 +175,7 @@ export default function PrintableResultsSheet({
                 </TableHead>
                 <TableBody>
                   {topScoreRows.map((row, index) => (
-                    <TableRow key={row.playerid}>
+                    <TableRow key={row.playerId}>
                       <TableCell>{index + 1}</TableCell>
                       <TableCell>{`${row.firstName} ${row.lastName}`}</TableCell>
                       <TableCell align="center">{row.totalPoints}</TableCell>

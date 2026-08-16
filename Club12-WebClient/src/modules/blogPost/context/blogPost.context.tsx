@@ -3,6 +3,7 @@ import React, { createContext, ReactNode, useCallback, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
 import { useError } from '@/modules/error/hooks/error.hock';
+import { useUnknownErrorHandler } from '@/modules/error/hooks/useUnknownErrorHandler';
 import { blogPostService } from '@/modules/blogPost/service/blogPost.service';
 import {
   BlogPostResponse,
@@ -12,7 +13,7 @@ import {
   UpdateBlogPostRequest,
 } from '@/modules/blogPost/type/blogPost';
 import { blogPostKeys } from '@/modules/blogPost/queryKeys';
-import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
+import { HttpStatus } from '@/modules/core/constants/httpStatus';
 
 export const BlogPostContext = createContext<IBlogPostContextProps | undefined>(
   undefined
@@ -21,20 +22,10 @@ export const BlogPostContext = createContext<IBlogPostContextProps | undefined>(
 export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const { setError, setMessage } = useError();
+  const { setMessage } = useError();
   const queryClient = useQueryClient();
 
-  const handleUnknownError = useCallback(
-    (error: unknown) => {
-      if (error instanceof AxiosError) {
-        setError(error);
-        return;
-      }
-
-      setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-    },
-    [setError]
-  );
+  const handleUnknownError = useUnknownErrorHandler();
 
   const addBlogPostMutation = useMutation({
     mutationFn: blogPostService.addBlogPost,
@@ -85,6 +76,10 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
     [addBlogPostMutation, setMessage, queryClient, handleUnknownError]
   );
 
+  /**
+   * Updates a blog post by id. When the response is 204 No Content there is
+   * no body to cache — the invalidation below is enough to refresh callers.
+   */
   const putBlogPostById = useCallback(
     async (
       id: GUID,
@@ -93,8 +88,8 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
       try {
         const response = await putBlogPostMutation.mutateAsync({ id, post });
         if (response) {
-          if (response.status === 204) {
-            // NoContent: no returned body, cache invalidation is enough
+          if (response.status === HttpStatus.NoContent) {
+            // no-op
           } else if (response.data) {
             queryClient.setQueryData(blogPostKeys.byId(id), response);
             return response.data;

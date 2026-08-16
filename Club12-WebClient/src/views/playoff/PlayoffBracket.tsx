@@ -38,6 +38,7 @@ export default function PlayoffBracket({ model }: PlayoffBracketProps) {
           <Stack key={round.stageId} spacing={3} sx={{ minWidth: 220 }}>
             <Typography
               variant="subtitle2"
+              component="h3"
               sx={{
                 fontFamily: "'Oswald', sans-serif",
                 textTransform: 'uppercase',
@@ -63,6 +64,7 @@ export default function PlayoffBracket({ model }: PlayoffBracketProps) {
           <Stack spacing={3} sx={{ minWidth: 220, alignSelf: 'flex-end' }}>
             <Typography
               variant="subtitle2"
+              component="h3"
               sx={{
                 fontFamily: "'Oswald', sans-serif",
                 textTransform: 'uppercase',

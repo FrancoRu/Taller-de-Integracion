@@ -21,7 +21,6 @@ namespace API.Controllers;
 /// <param name="venueService">The Venue service.</param>
 /// <param name="supabaseHelper">The Supabase helper for storage operations.</param>
 /// <param name="mapper">The AutoMapper instance.</param>
-//[Authorize(Roles = "SuperAdmin")]
 [Route("api/venues/")]
 [ApiController]
 public class VenueController(IVenueService venueService, SupabaseHelper supabaseHelper, IMapper mapper) : ControllerBase

@@ -78,7 +78,7 @@ const DivisionStandings: React.FC<DivisionStandingsProps> = ({
           </TableHead>
           <TableBody>
             {rows.map((row, index) => (
-              <TableRow key={row.teamid} hover>
+              <TableRow key={row.teamId} hover>
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>{row.teamName}</TableCell>
                 <TableCell align="center">{row.matchesPlayed}</TableCell>

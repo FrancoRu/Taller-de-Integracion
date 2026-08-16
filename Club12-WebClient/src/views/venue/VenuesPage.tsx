@@ -14,9 +14,12 @@ import {
   Typography,
   Button,
 } from '@mui/material';
-import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
-import theme, { CANCEL_BUTTON_COLOR } from '@/theme';
+import {
+  confirmDelete,
+  notifySuccess,
+  notifyWarning,
+} from '@/modules/core/utils/confirmDialog';
 import {
   IAddVenueRequest,
   IPutVenueRequest,
@@ -34,6 +37,8 @@ import {
   SearchIcon,
   VisibilityIcon,
 } from '@/views/core/MUI/icons/icons';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import { FILTERS_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/constants';
 
 interface VenuesPageProps {
   emptyMessage?: string;
@@ -92,7 +97,7 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       setDebouncedFilters(filters);
-    }, 500);
+    }, FILTERS_DEBOUNCE_DELAY_MS);
 
     return () => clearTimeout(timeoutId);
   }, [filters]);
@@ -136,7 +141,7 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
 
   const handleView = useCallback(
     (row: IVenueResponse) => {
-      navigate(`/panel/canchas/${row.id}`);
+      navigate(APP_ROUTES.panelVenue.build(row.id));
     },
     [navigate]
   );
@@ -152,28 +157,20 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
 
   const handleDelete = useCallback(
     async (row: IVenueResponse) => {
-      const result = await Swal.fire({
+      const confirmed = await confirmDelete({
         title: '¿Está usted seguro de querer eliminar esta cancha?',
         text: '¡Usted no podrá revertir este cambio!',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: theme.palette.primary.main,
-        cancelButtonColor: CANCEL_BUTTON_COLOR,
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar',
       });
 
-      if (!result.isConfirmed) {
+      if (!confirmed) {
         return;
       }
 
       await deleteVenueById(row.id);
 
-      await Swal.fire({
+      await notifySuccess({
         title: '¡Eliminada!',
         text: 'La cancha ha sido eliminada.',
-        icon: 'success',
-        confirmButtonColor: theme.palette.primary.main,
       });
 
       await fetchVenues();
@@ -236,21 +233,17 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
 
   const handleCreateSubmit = async () => {
     if (!venueForm.name.trim() || !venueForm.address.trim()) {
-      await Swal.fire({
+      await notifyWarning({
         title: 'Campos incompletos',
         text: 'Nombre y dirección son obligatorios.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
 
     if (!venueForm.imageFile) {
-      await Swal.fire({
+      await notifyWarning({
         title: 'Imagen requerida',
         text: 'Debe seleccionar una imagen para crear la cancha.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -280,11 +273,9 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
     }
 
     if (!venueForm.name.trim() || !venueForm.address.trim()) {
-      await Swal.fire({
+      await notifyWarning({
         title: 'Campos incompletos',
         text: 'Nombre y dirección son obligatorios.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }

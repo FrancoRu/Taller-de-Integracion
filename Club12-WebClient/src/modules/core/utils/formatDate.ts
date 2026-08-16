@@ -54,10 +54,6 @@ export function formatDateTimeInput(date: Date): string {
  * @returns {boolean} - 'true' if the deadline has not yet passed, 'false' if it has already passed.
  */
 export const isDeadlineInTheFuture = (deadline: Date): boolean => {
-  // Creates a new Date object for the current time
   const now = new Date();
-
-  // Compares whether the deadline date is greater than the current date
-  // The comparison is made in milliseconds since the Unix epoch.
   return new Date(deadline) > now;
 };

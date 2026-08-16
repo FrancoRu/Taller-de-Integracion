@@ -1,4 +1,4 @@
-import { AxiosError, AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
 import {
   createContext,
   useCallback,
@@ -7,14 +7,14 @@ import {
   useState,
 } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 import { ProviderProps } from '@/modules/core/types/types';
-import { useError } from '@/modules/error/hooks/error.hock';
+import { useUnknownErrorHandler } from '@/modules/error/hooks/useUnknownErrorHandler';
 import { userService } from '@/modules/user/service/user.service';
 import { IUserContextProps } from '@/modules/user/type/user';
 import {
   ChangePasswordRequest,
   RegisterUserRequest,
+  RegisterUserResponse,
   UpdateUserRequest,
   UserFilterRequest,
   UserResponse,
@@ -28,20 +28,9 @@ export const UserContext = createContext<IUserContextProps | undefined>(
 export const UserProvider: React.FC<ProviderProps> = ({ children }) => {
   const [user, setUser] = useState<UserResponse | null>(null);
   const [users, setUsers] = useState<UserResponse[] | null>(null);
-  const { setError } = useError();
   const queryClient = useQueryClient();
 
-  const handleUnknownError = useCallback(
-    (error: unknown) => {
-      if (error instanceof AxiosError) {
-        setError(error);
-        return;
-      }
-
-      setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-    },
-    [setError]
-  );
+  const handleUnknownError = useUnknownErrorHandler();
 
   useEffect(() => {
     if (!user) {
@@ -99,10 +88,9 @@ export const UserProvider: React.FC<ProviderProps> = ({ children }) => {
   const createUser = useCallback(
     async (data: RegisterUserRequest) => {
       try {
-        const res: AxiosResponse<UserResponse> =
+        const res: AxiosResponse<RegisterUserResponse> =
           await userService.createUser(data);
         if (res?.data) {
-          setUser(res.data);
           return res.data;
         }
       } catch (error: unknown) {

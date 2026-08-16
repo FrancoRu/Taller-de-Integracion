@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Application.Utils.Constants.Validation;
+using System.ComponentModel.DataAnnotations;
 
 namespace Application.DTOs.Auth.Request;
 
@@ -14,6 +15,6 @@ public sealed class PasswordResetConfirmRequest
     [Required]
     public string Token { get; set; } = string.Empty;
 
-    [Required, MinLength(8)]
+    [Required, MinLength(UserFieldLengths.PasswordMinLength)]
     public string NewPassword { get; set; } = string.Empty;
 }

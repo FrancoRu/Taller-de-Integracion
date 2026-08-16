@@ -18,8 +18,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import Swal from 'sweetalert2';
-import theme from '@/theme';
+import { confirmAction, notifySuccess } from '@/modules/core/utils/confirmDialog';
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
@@ -39,6 +38,7 @@ import {
   TABLE_PAGE_SIZE_OPTIONS,
   TABLE_ROWS_PER_PAGE,
 } from '@/modules/core/constants/pagination';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const ROLE_LABELS: Record<UserRolesType, string> = {
   ADMIN: 'Admin',
@@ -67,42 +67,38 @@ const UsersPage: React.FC = () => {
 
   const handleView = useCallback(
     (row: UserResponse) => {
-      navigate(`/panel/usuarios/${row.userId}`);
+      navigate(APP_ROUTES.panelUser.build(row.userId));
     },
     [navigate]
   );
 
   const handleEdit = useCallback(
     (row: UserResponse) => {
-      navigate(`/panel/usuarios/${row.userId}/editar`);
+      navigate(APP_ROUTES.panelUserEdit.build(row.userId));
     },
     [navigate]
   );
 
   const handleDelete = useCallback(
     async (row: UserResponse) => {
-      const result = await Swal.fire({
+      const confirmed = await confirmAction({
         title: '¿Eliminar usuario?',
         text: `Se eliminará a "${row.username}" de forma permanente.`,
-        icon: 'warning',
-        showCancelButton: true,
         confirmButtonText: 'Eliminar',
         cancelButtonText: 'Cancelar',
         confirmButtonColor: '#d32f2f',
         cancelButtonColor: '#6e6e6e',
       });
 
-      if (!result.isConfirmed) {
+      if (!confirmed) {
         return;
       }
 
       const deleted = await deleteUser(row.userId);
       if (deleted) {
-        await Swal.fire({
+        await notifySuccess({
           title: 'Eliminado',
           text: 'El usuario fue eliminado correctamente.',
-          icon: 'success',
-          confirmButtonColor: theme.palette.primary.main,
         });
       }
     },
@@ -112,29 +108,25 @@ const UsersPage: React.FC = () => {
   const handleToggleActive = useCallback(
     async (row: UserResponse) => {
       const deactivating = row.isActive;
-      const result = await Swal.fire({
+      const confirmed = await confirmAction({
         title: deactivating ? '¿Desactivar usuario?' : '¿Activar usuario?',
         text: deactivating
           ? `"${row.username}" no podrá iniciar sesión hasta reactivarlo.`
           : `"${row.username}" podrá volver a iniciar sesión.`,
-        icon: 'warning',
-        showCancelButton: true,
         confirmButtonText: deactivating ? 'Desactivar' : 'Activar',
         cancelButtonText: 'Cancelar',
         confirmButtonColor: deactivating ? '#d32f2f' : '#2e7d32',
         cancelButtonColor: '#6e6e6e',
       });
 
-      if (!result.isConfirmed) {
+      if (!confirmed) {
         return;
       }
 
       const updated = await setUserActive(row.userId, !row.isActive);
       if (updated) {
-        await Swal.fire({
+        await notifySuccess({
           title: deactivating ? 'Usuario desactivado' : 'Usuario activado',
-          icon: 'success',
-          confirmButtonColor: theme.palette.primary.main,
         });
       }
     },
@@ -282,7 +274,7 @@ const UsersPage: React.FC = () => {
           <Typography variant="h6">Usuarios</Typography>
           <NewEntityButton
             type="Usuario"
-            onClick={() => navigate('/panel/usuarios/crear')}
+            onClick={() => navigate(APP_ROUTES.panelUserCreate)}
           />
         </Stack>
 

@@ -12,6 +12,7 @@ import {
   IAddMatchRequest,
   MatchFiltered,
   IMatchResponse,
+  IMinimalMatchResponse,
   IPutMatchRequest,
   IPutMatchScoreRequest,
 } from '@/modules/match/type/match';
@@ -23,12 +24,12 @@ export const matchService = {
   /**
    * Adds a new match.
    * @param {IAddMatchRequest} match - The match data to be added.
-   * @returns {Promise<AxiosResponse<IMatchResponse>>} - A promise that resolves with the server response.
+   * @returns {Promise<AxiosResponse<IMinimalMatchResponse>>} - A promise that resolves with the server response.
    */
   addMatch: async (
     match: IAddMatchRequest
-  ): Promise<AxiosResponse<IMatchResponse>> =>
-    sendPost<IMatchResponse>(routes.matches, match),
+  ): Promise<AxiosResponse<IMinimalMatchResponse>> =>
+    sendPost<IMinimalMatchResponse>(routes.matches, match),
 
   /**
    * Updates the score of an existing match.

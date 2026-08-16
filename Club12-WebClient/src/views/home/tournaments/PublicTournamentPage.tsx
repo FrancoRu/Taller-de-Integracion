@@ -27,6 +27,8 @@ import TeamLogo from '@/views/core/components/TeamLogo';
 import MatchCard from '@/views/home/matches/MatchCard';
 import DivisionStandings from '@/views/division/divisionStandings';
 import PlayoffBracket from '@/views/playoff/PlayoffBracket';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
 
 /**
  * Explicit pageSize for the "Llaves" tab's per-division Stage/Match fetch.
@@ -94,7 +96,7 @@ export default function PublicTournamentPage() {
       setStandingsLoading(true);
       const response = await getDivisionsRef.current({
         tournamentId,
-        pageSize: 100,
+        pageSize: PUBLIC_LISTING_PAGE_SIZE,
         pageNumber: 1,
       });
       const divisionsList = response?.items ?? [];
@@ -112,7 +114,7 @@ export default function PublicTournamentPage() {
 
   useEffect(() => {
     if (!tournamentId || tab !== 'equipos') return;
-    void getTeamsRef.current({ tournamentId, pageSize: 100, pageNumber: 1 });
+    void getTeamsRef.current({ tournamentId, pageSize: PUBLIC_LISTING_PAGE_SIZE, pageNumber: 1 });
   }, [tab, tournamentId]);
 
   useEffect(() => {
@@ -126,7 +128,7 @@ export default function PublicTournamentPage() {
       setBracketsLoading(true);
       const divisionsResponse = await getDivisionsRef.current({
         tournamentId,
-        pageSize: 100,
+        pageSize: PUBLIC_LISTING_PAGE_SIZE,
         pageNumber: 1,
       });
       const divisionsList = divisionsResponse?.items ?? [];
@@ -175,8 +177,8 @@ export default function PublicTournamentPage() {
   if (!tournament || tournament.id !== tournamentId) {
     return (
       <Container maxWidth="md" sx={{ py: 5 }}>
-        <Typography variant="h5" mb={2}>Torneo no encontrado</Typography>
-        <Button onClick={() => navigate('/torneos')}>Volver a torneos</Button>
+        <Typography variant="h5" component="h1" mb={2}>Torneo no encontrado</Typography>
+        <Button onClick={() => navigate(APP_ROUTES.publicTournaments)}>Volver a torneos</Button>
       </Container>
     );
   }
@@ -185,14 +187,14 @@ export default function PublicTournamentPage() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
-      <Button onClick={() => navigate('/torneos')} sx={{ mb: 3, pl: 0 }} color="inherit">
+      <Button onClick={() => navigate(APP_ROUTES.publicTournaments)} sx={{ mb: 3, pl: 0 }} color="inherit">
         ← Volver a torneos
       </Button>
 
-      <Typography variant="h4" fontWeight="bold" mb={0.5}>
+      <Typography variant="h4" component="h1" fontWeight="bold" mb={0.5}>
         {tournament.name}
       </Typography>
-      <Typography variant="subtitle1" color="text.secondary" mb={3}>
+      <Typography variant="subtitle1" component="p" color="text.secondary" mb={3}>
         {STATUS_LABEL[status] ?? status}
       </Typography>
 
@@ -213,23 +215,23 @@ export default function PublicTournamentPage() {
       {tab === 'info' && (
         <Grid container spacing={3}>
           <Grid item xs={12}>
-            <Typography variant="subtitle2" color="text.secondary">Descripción</Typography>
+            <Typography variant="subtitle2" component="p" color="text.secondary">Descripción</Typography>
             <Typography>{tournament.description || '—'}</Typography>
           </Grid>
           <Grid item xs={12} sm={6}>
-            <Typography variant="subtitle2" color="text.secondary">Fecha de inicio</Typography>
+            <Typography variant="subtitle2" component="p" color="text.secondary">Fecha de inicio</Typography>
             <Typography>{formatDate(tournament.startDate)}</Typography>
           </Grid>
           <Grid item xs={12} sm={6}>
-            <Typography variant="subtitle2" color="text.secondary">Cierre de inscripción</Typography>
+            <Typography variant="subtitle2" component="p" color="text.secondary">Cierre de inscripción</Typography>
             <Typography>{formatDate(tournament.teamRegistrationDeadline)}</Typography>
           </Grid>
           <Grid item xs={12} sm={6}>
-            <Typography variant="subtitle2" color="text.secondary">Equipos mínimos</Typography>
+            <Typography variant="subtitle2" component="p" color="text.secondary">Equipos mínimos</Typography>
             <Typography>{tournament.minTeams}</Typography>
           </Grid>
           <Grid item xs={12} sm={6}>
-            <Typography variant="subtitle2" color="text.secondary">Equipos máximos</Typography>
+            <Typography variant="subtitle2" component="p" color="text.secondary">Equipos máximos</Typography>
             <Typography>{tournament.maxTeams}</Typography>
           </Grid>
         </Grid>
@@ -248,7 +250,7 @@ export default function PublicTournamentPage() {
           <Box display="flex" flexDirection="column" gap={4}>
             {standings.map(division => (
               <Box key={division.id}>
-                <Typography variant="h6" mb={1}>
+                <Typography variant="h6" component="h2" mb={1}>
                   {division.name}
                 </Typography>
                 <DivisionStandings
@@ -280,7 +282,7 @@ export default function PublicTournamentPage() {
                     cursor: 'pointer',
                     '&:hover': { bgcolor: 'action.hover' },
                   }}
-                  onClick={() => navigate(`/equipos/${team.id}`)}
+                  onClick={() => navigate(APP_ROUTES.publicTeam.build(team.id))}
                 >
                   <TeamLogo teamName={team.name} logoUrl={team.logoUrl} size={36} />
                   <Box>
@@ -325,7 +327,7 @@ export default function PublicTournamentPage() {
           <Box display="flex" flexDirection="column" gap={5}>
             {bracketDivisions.map(division => (
               <Box key={division.id}>
-                <Typography variant="h6" mb={2}>
+                <Typography variant="h6" component="h2" mb={2}>
                   {division.name}
                 </Typography>
                 <PlayoffBracket

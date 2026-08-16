@@ -46,6 +46,9 @@ public class TeamServiceRegisterTests : IClassFixture<CustomWebApplicationFactor
         Assert.Equal(tournament.Id, persisted!.TournamentId);
     }
 
+    /// <summary>
+    /// team.Id is deliberately omitted from the registration list.
+    /// </summary>
     [Fact]
     public async Task RegisterTeamsToTournamentAsync_DroppedTeam_IsUnassigned()
     {
@@ -55,7 +58,6 @@ public class TeamServiceRegisterTests : IClassFixture<CustomWebApplicationFactor
         Tournament tournament = await SeedTournamentAsync(seedDb);
         Team team = await SeedTeamAsync(seedDb, tournamentId: tournament.Id);
 
-        // team.Id deliberately absent from teamIds
         await RegisterAsync(tournament, []);
 
         Team? persisted = await ReadTeamAsync(team.Id);
@@ -114,6 +116,11 @@ public class TeamServiceRegisterTests : IClassFixture<CustomWebApplicationFactor
         Assert.Equal(targetTournament.Id, persisted!.TournamentId);
     }
 
+    /// <summary>
+    /// uninvolvedTeam belongs to a different tournament and is deliberately
+    /// left out of the registration list, so it must remain assigned to its
+    /// original (non-target) tournament rather than becoming unassigned.
+    /// </summary>
     [Fact]
     public async Task RegisterTeamsToTournamentAsync_UninvolvedTeam_IsUntouched()
     {
@@ -125,8 +132,6 @@ public class TeamServiceRegisterTests : IClassFixture<CustomWebApplicationFactor
         Team uninvolvedTeam = await SeedTeamAsync(seedDb, tournamentId: otherTournament.Id);
         Team unrelatedTeam = await SeedTeamAsync(seedDb, tournamentId: null);
 
-        // uninvolvedTeam.Id deliberately absent from teamIds, and its current
-        // TournamentId is neither null nor targetTournament.Id.
         await RegisterAsync(targetTournament, [unrelatedTeam.Id]);
 
         Team? persisted = await ReadTeamAsync(uninvolvedTeam.Id);

@@ -3,6 +3,7 @@ using Application.DTOs.Abstract.Response;
 using Application.DTOs.Stage.Request;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Domain.Constants;
 using Application.Utils.Constants.Stage;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.StageHelper;
@@ -123,7 +124,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
             DivisionId = division.Id,
             Matches = [],
             DateCreated = DateTime.UtcNow,
-            CreatedBy = "System",
+            CreatedBy = AuditConstants.SystemUser,
         };
     }
 
@@ -148,7 +149,9 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
         if (!IsValidTournamentSize(registeredTeams))
         {
             throw new InvalidOperationException(
-                $"Invalid number of registered teams: {registeredTeams}. Valid sizes are 8, 16, 32, or 64 teams.");
+                $"Invalid number of registered teams: {registeredTeams}. Valid sizes are " +
+                $"{TournamentBracketSize.EIGHT}, {TournamentBracketSize.SIXTEEN}, " +
+                $"{TournamentBracketSize.THIRTY_TWO}, or {TournamentBracketSize.SIXTY_FOUR} teams.");
         }
 
         if (registeredTeams % MaxTeams.GROUP != 0)
@@ -176,25 +179,25 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
             stages.Add(groupStage);
         }
 
-        startDate = stages.First().EndDate.AddDays(2);
+        startDate = stages.First().EndDate.AddDays(StageTemplate.StandardGapDays);
 
-        if (registeredTeams >= 16)
+        if (registeredTeams >= TournamentBracketSize.SIXTEEN)
         {
             Stage quarterFinalStage = BuildStage(StageType.QuarterFinal, StageTemplate.QuarterFinal, startDate, division);
             stages.Add(quarterFinalStage);
             quarterFinalStage.Order = order++;
-            startDate = quarterFinalStage.EndDate.AddDays(2);
+            startDate = quarterFinalStage.EndDate.AddDays(StageTemplate.StandardGapDays);
         }
 
         Stage semiFinalStage = BuildStage(StageType.SemiFinal, StageTemplate.SemiFinal, startDate, division);
         stages.Add(semiFinalStage);
         semiFinalStage.Order = order++;
-        startDate = semiFinalStage.EndDate.AddDays(1);
+        startDate = semiFinalStage.EndDate.AddDays(StageTemplate.ThirdPlaceGapDays);
 
         Stage thirdPlaceStage = BuildStage(StageType.ThirdPlace, StageTemplate.ThirdPlace, startDate, division);
         stages.Add(thirdPlaceStage);
         thirdPlaceStage.Order = order++;
-        startDate = thirdPlaceStage.EndDate.AddDays(2);
+        startDate = thirdPlaceStage.EndDate.AddDays(StageTemplate.StandardGapDays);
 
         Stage finalStage = BuildStage(StageType.Final, StageTemplate.Final, startDate, division);
         stages.Add(finalStage);
@@ -246,7 +249,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
                 StageId = stage.Id,
                 TeamId = teamId,
                 DateCreated = DateTime.UtcNow,
-                CreatedBy = "System",
+                CreatedBy = AuditConstants.SystemUser,
             })];
         }
         else
@@ -264,7 +267,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
                 Id = Guid.Empty,
                 StageId = stage.Id,
                 TeamId = t.Id,
-                CreatedBy = "System",
+                CreatedBy = AuditConstants.SystemUser,
                 DateCreated = DateTime.UtcNow,
             })];
         }
@@ -295,5 +298,8 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     /// <param name="teamCount">The number of teams.</param>
     /// <returns>True if valid tournament size, false otherwise.</returns>
     private static bool IsValidTournamentSize(int teamCount)
-        => teamCount == 8 || teamCount == 16 || teamCount == 32 || teamCount == 64;
+        => teamCount == TournamentBracketSize.EIGHT
+        || teamCount == TournamentBracketSize.SIXTEEN
+        || teamCount == TournamentBracketSize.THIRTY_TWO
+        || teamCount == TournamentBracketSize.SIXTY_FOUR;
 }

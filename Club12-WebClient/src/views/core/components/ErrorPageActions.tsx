@@ -1,6 +1,7 @@
 import { Box, Button } from '@mui/material';
 import { Link } from 'react-router-dom';
 import theme from '@/theme';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 interface ErrorPageActionsProps {
   showLogin?: boolean;
@@ -12,7 +13,7 @@ const ErrorPageActions: React.FC<ErrorPageActionsProps> = ({
   <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
     <Button
       component={Link}
-      to="/"
+      to={APP_ROUTES.home}
       variant="outlined"
       sx={{
         borderColor: theme.palette.primary.main,
@@ -29,7 +30,7 @@ const ErrorPageActions: React.FC<ErrorPageActionsProps> = ({
     {showLogin && (
       <Button
         component={Link}
-        to="/login"
+        to={APP_ROUTES.login}
         variant="outlined"
         sx={{
           borderColor: theme.palette.primary.main,

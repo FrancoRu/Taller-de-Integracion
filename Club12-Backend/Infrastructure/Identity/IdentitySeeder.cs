@@ -1,3 +1,4 @@
+using Application.Utils.Constants.Configuration;
 using Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -24,8 +25,8 @@ public sealed class IdentitySeeder(
 
     private async Task SeedAdminAsync()
     {
-        string? email    = configuration["AdminUser:Email"];
-        string? password = configuration["AdminUser:Password"];
+        string? email    = configuration[ConfigurationKeys.AdminUser.Email];
+        string? password = configuration[ConfigurationKeys.AdminUser.Password];
 
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {

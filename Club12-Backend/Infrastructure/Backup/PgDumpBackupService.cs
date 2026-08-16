@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Application.Interfaces.Backup;
+using Application.Utils.Constants.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Npgsql;
@@ -28,10 +29,11 @@ public sealed class PgDumpBackupService(
 {
     public async Task<Stream> CreateDumpAsync(CancellationToken ct = default)
     {
-        string connectionString = configuration.GetConnectionString("DbConnection")
-            ?? throw new BackupExecutionException("ConnectionStrings:DbConnection is not configured.");
+        string connectionString = configuration.GetConnectionString(ConfigurationKeys.DbConnection)
+            ?? throw new BackupExecutionException(
+                $"ConnectionStrings:{ConfigurationKeys.DbConnection} is not configured.");
 
-        string? configuredPgDumpPath = configuration["Backup:PgDumpPath"];
+        string? configuredPgDumpPath = configuration[ConfigurationKeys.Backup.PgDumpPath];
         string pgDumpPath = string.IsNullOrWhiteSpace(configuredPgDumpPath) ? "pg_dump" : configuredPgDumpPath;
 
         NpgsqlConnectionStringBuilder builder = new(connectionString);

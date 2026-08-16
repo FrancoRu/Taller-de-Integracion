@@ -15,7 +15,12 @@ import { useUser } from '@/modules/user/hook/user.hook';
 import { GUID } from '@/modules/core/types/types';
 import { UpdateUserRequest } from '@/modules/user/type/user';
 import { useError } from '@/modules/error/hooks/error.hock';
-import { COOKIE_SIGNIN_TOKEN } from '@/modules/core/constants/constants';
+import {
+  COOKIE_SIGNIN_TOKEN,
+  USERNAME_LENGTH,
+} from '@/modules/core/constants/constants';
+import { HttpStatus } from '@/modules/core/constants/httpStatus';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const GUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -77,7 +82,7 @@ const EditUser: React.FC = () => {
 
   useEffect(() => {
     if (!targetUserId) {
-      navigate('/panel', { replace: true });
+      navigate(APP_ROUTES.panel, { replace: true });
       return;
     }
 
@@ -112,7 +117,9 @@ const EditUser: React.FC = () => {
     };
 
     if (!payload.username && !payload.email && !payload.phone) {
-      setMessage(400, ['Debes completar al menos un campo para actualizar.']);
+      setMessage(HttpStatus.BadRequest, [
+        'Debes completar al menos un campo para actualizar.',
+      ]);
       return;
     }
 
@@ -122,9 +129,9 @@ const EditUser: React.FC = () => {
 
     if (result) {
       if (isSelfProfileMode) {
-        setMessage(200, ['Perfil actualizado correctamente.']);
+        setMessage(HttpStatus.Ok, ['Perfil actualizado correctamente.']);
       } else {
-        navigate(`/panel/usuarios/${targetUserId}`);
+        navigate(APP_ROUTES.panelUser.build(targetUserId));
       }
     }
   };
@@ -177,7 +184,10 @@ const EditUser: React.FC = () => {
             name="username"
             value={form.username ?? ''}
             onChange={handleChange}
-            inputProps={{ minLength: 3, maxLength: 50 }}
+            inputProps={{
+              minLength: USERNAME_LENGTH.Min,
+              maxLength: USERNAME_LENGTH.Max,
+            }}
           />
 
           <TextField
@@ -203,8 +213,8 @@ const EditUser: React.FC = () => {
               onClick={() =>
                 navigate(
                   isSelfProfileMode
-                    ? '/panel/configuracion/editar-perfil'
-                    : `/panel/usuarios/${targetUserId}`
+                    ? APP_ROUTES.panelEditProfile
+                    : APP_ROUTES.panelUser.build(targetUserId as string)
                 )
               }
               disabled={submitting}

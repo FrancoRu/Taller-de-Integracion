@@ -1,4 +1,4 @@
-import { AxiosError, AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
 import React, {
   createContext,
   ReactNode,
@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
-import { useError } from '@/modules/error/hooks/error.hock';
+import { useUnknownErrorHandler } from '@/modules/error/hooks/useUnknownErrorHandler';
 import { playerService } from '@/modules/player/service/player.service';
 import {
   IAddPlayerRequest,
@@ -19,8 +19,8 @@ import {
   IPutPlayerRequest,
 } from '@/modules/player/type/player.d';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
-import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 import { playerKeys } from '@/modules/player/queryKeys';
+import { HttpStatus } from '@/modules/core/constants/httpStatus';
 
 export const PlayerContext = createContext<IPlayerContextProps | undefined>(
   undefined
@@ -32,20 +32,9 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
   const [player, setPlayer] = useState<IPlayerResponse | null>(null);
   const [players, setPlayers] = useState<IPlayerResponse[] | null>(null);
 
-  const { setError } = useError();
   const queryClient = useQueryClient();
 
-  const handleUnknownError = useCallback(
-    (error: unknown) => {
-      if (error instanceof AxiosError) {
-        setError(error);
-        return;
-      }
-
-      setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-    },
-    [setError]
-  );
+  const handleUnknownError = useUnknownErrorHandler();
 
   const addPlayerMutation = useMutation({
     mutationFn: playerService.addPlayer,
@@ -136,7 +125,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
         const res: AxiosResponse<IPlayerResponse> =
           await putPlayerMutation.mutateAsync({ id, player });
         if (res) {
-          if (res.status === 204) {
+          if (res.status === HttpStatus.NoContent) {
             setPlayer(prev =>
               prev && prev.id === id ? { ...prev, ...player } : prev
             );

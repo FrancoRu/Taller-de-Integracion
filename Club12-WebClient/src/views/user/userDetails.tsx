@@ -21,6 +21,8 @@ import { useError } from '@/modules/error/hooks/error.hock';
 import { useUser } from '@/modules/user/hook/user.hook';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 import { GUID } from '@/modules/core/types/types';
+import { HttpStatus } from '@/modules/core/constants/httpStatus';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const ROLE_LABELS: Record<UserRolesType, string> = {
   ADMIN: 'Admin',
@@ -51,7 +53,7 @@ const UserDetails: React.FC = () => {
     setResetting(false);
 
     if (ok) {
-      setMessage(200, ['Password blanqueado correctamente.']);
+      setMessage(HttpStatus.Ok, ['Password blanqueado correctamente.']);
     }
   };
 
@@ -77,7 +79,7 @@ const UserDetails: React.FC = () => {
             <Tooltip title="Volver">
               <IconButton
                 size="small"
-                onClick={() => navigate('/panel/usuarios')}
+                onClick={() => navigate(APP_ROUTES.panelUsers)}
               >
                 <ArrowBackIcon fontSize="small" />
               </IconButton>
@@ -101,7 +103,9 @@ const UserDetails: React.FC = () => {
               <Tooltip title="Editar">
                 <IconButton
                   color="primary"
-                  onClick={() => navigate(`/panel/usuarios/${userId}/editar`)}
+                  onClick={() =>
+                    navigate(APP_ROUTES.panelUserEdit.build(userId as string))
+                  }
                 >
                   <EditIcon />
                 </IconButton>

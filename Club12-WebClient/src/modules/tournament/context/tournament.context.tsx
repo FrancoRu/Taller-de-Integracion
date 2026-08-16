@@ -5,7 +5,7 @@ import {
   useState,
   useCallback,
   useMemo,
-} from 'react'; // Import useCallback and useMemo
+} from 'react';
 import {
   GenericResponsePagination,
   GUID,
@@ -23,6 +23,7 @@ import {
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 import { fetchAndSetList } from '@/modules/core/utils/comparator';
+import { HttpStatus } from '@/modules/core/constants/httpStatus';
 
 export const TournamentContext = createContext<
   ITournamentContextProps | undefined
@@ -77,7 +78,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       try {
         const res: AxiosResponse<void> =
           await tournamentService.putTournamentById(id, tournamentRequest);
-        if (res && res.status === 204) {
+        if (res && res.status === HttpStatus.NoContent) {
           setTournament(prev => {
             const fallbackFromList =
               tournaments?.find(e => e.id === id) ?? null;
@@ -182,7 +183,9 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
         if (res) {
           setMessage(res.status, ['Registro de equipo exitoso']);
         }
-        return res.status === 200 || res.status === 204;
+        return (
+          res.status === HttpStatus.Ok || res.status === HttpStatus.NoContent
+        );
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
           setError(error);

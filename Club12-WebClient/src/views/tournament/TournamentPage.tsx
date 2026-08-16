@@ -9,8 +9,7 @@ import {
   Tabs,
   Typography,
 } from '@mui/material';
-import Swal from 'sweetalert2';
-import theme from '@/theme';
+import { notifyInfo } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
@@ -19,6 +18,7 @@ import { useAuth } from '@/modules/auth/hook/auth.hook';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import DivisionsPage from '@/views/division/divisionsPage';
 import TeamsPage from '@/views/team/TeamsPage';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const TOURNAMENT_STATUS_LABELS: Record<TournamentStatus, string> = {
   [TournamentStatus.Scheduled]: 'Programado',
@@ -102,7 +102,7 @@ const TournamentPage: React.FC = () => {
           </Typography>
           <Typography
             component="button"
-            onClick={() => navigate('/panel/torneos')}
+            onClick={() => navigate(APP_ROUTES.panelTournaments)}
             sx={{
               mt: 2,
               border: 0,
@@ -123,11 +123,9 @@ const TournamentPage: React.FC = () => {
     role === UserRolesType.Owner || role === UserRolesType.TournamentManager;
 
   const handleCreateDivision = () => {
-    void Swal.fire({
+    void notifyInfo({
       title: 'Pendiente',
       text: 'La creación de divisiones desde esta vista aún no está implementada.',
-      icon: 'info',
-      confirmButtonColor: theme.palette.primary.main,
     });
   };
 
@@ -148,7 +146,7 @@ const TournamentPage: React.FC = () => {
               <Button
                 variant="contained"
                 onClick={() =>
-                  navigate(`/panel/torneos/${tournamentId}/editar`)
+                  navigate(APP_ROUTES.panelTournamentEdit.build(tournamentId))
                 }
               >
                 Editar torneo

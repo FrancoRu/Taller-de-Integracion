@@ -1,4 +1,4 @@
-import { AxiosError, AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
 import React, {
   createContext,
   ReactNode,
@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
-import { useError } from '@/modules/error/hooks/error.hock';
+import { useUnknownErrorHandler } from '@/modules/error/hooks/useUnknownErrorHandler';
 import { playerSanctionService } from '@/modules/playerSanction/service/playerSanction.service';
 import {
   IAddPlayerSanction,
@@ -21,8 +21,8 @@ import {
   IResolveAppeal,
 } from '@/modules/playerSanction/type/playerSanction.d';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
-import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 import { playerSanctionKeys } from '@/modules/playerSanction/queryKeys';
+import { HttpStatus } from '@/modules/core/constants/httpStatus';
 
 export const PlayerSanctionContext = createContext<
   IPlayerSanctionContextProps | undefined
@@ -37,20 +37,9 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
     IPlayerSanctionResponse[] | null
   >(null);
 
-  const { setError } = useError();
   const queryClient = useQueryClient();
 
-  const handleUnknownError = useCallback(
-    (error: unknown) => {
-      if (error instanceof AxiosError) {
-        setError(error);
-        return;
-      }
-
-      setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-    },
-    [setError]
-  );
+  const handleUnknownError = useUnknownErrorHandler();
 
   const addPlayerSanctionMutation = useMutation({
     mutationFn: playerSanctionService.addPlayerSanction,
@@ -152,7 +141,7 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
         const res: AxiosResponse<IPlayerSanctionResponse> =
           await putPlayerSanctionMutation.mutateAsync({ id, sanction });
         if (res) {
-          if (res.status === 204) {
+          if (res.status === HttpStatus.NoContent) {
             setPlayerSanction(prev =>
               prev && prev.id === id ? { ...prev, ...sanction } : prev
             );

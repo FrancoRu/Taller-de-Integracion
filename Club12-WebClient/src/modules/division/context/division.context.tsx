@@ -1,4 +1,4 @@
-import { AxiosError, AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
 import {
   createContext,
   ReactNode,
@@ -10,6 +10,7 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
 import { useError } from '@/modules/error/hooks/error.hock';
+import { useUnknownErrorHandler } from '@/modules/error/hooks/useUnknownErrorHandler';
 import { divisionService } from '@/modules/division/service/division.service';
 import {
   AddDivisionRequest,
@@ -20,8 +21,8 @@ import {
   IPutDivisionRequest,
 } from '@/modules/division/type/division';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
-import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 import { divisionKeys } from '@/modules/division/queryKeys';
+import { HttpStatus } from '@/modules/core/constants/httpStatus';
 
 export const DivisionContext = createContext<IDivisionContextProps | undefined>(
   undefined
@@ -33,20 +34,10 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
   const [division, setDivision] = useState<IDivisionResponse | null>(null);
   const [divisions, setDivisions] = useState<IDivisionResponse[] | null>(null);
 
-  const { setError, setMessage } = useError();
+  const { setMessage } = useError();
   const queryClient = useQueryClient();
 
-  const handleUnknownError = useCallback(
-    (error: unknown) => {
-      if (error instanceof AxiosError) {
-        setError(error);
-        return;
-      }
-
-      setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-    },
-    [setError]
-  );
+  const handleUnknownError = useUnknownErrorHandler();
 
   const addDivisionMutation = useMutation({
     mutationFn: divisionService.addDivision,
@@ -102,7 +93,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
     async (id: GUID): Promise<void> => {
       try {
         await generateFixtureMutation.mutateAsync(id);
-        setMessage(200, ['Fixture generado exitosamente']);
+        setMessage(HttpStatus.Ok, ['Fixture generado exitosamente']);
       } catch (error: unknown) {
         handleUnknownError(error);
       }
@@ -119,7 +110,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
         const res: AxiosResponse<IDivisionResponse> =
           await putDivisionMutation.mutateAsync({ id, divisionRequest });
 
-        if (res && res.status === 204) {
+        if (res && res.status === HttpStatus.NoContent) {
           setDivision(prev => {
             if (!prev || prev.id !== id) return prev;
 
@@ -230,7 +221,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
         setDivisions(prev => (prev ? prev.filter(e => e.id !== id) : null));
         queryClient.removeQueries({ queryKey: divisionKeys.byId(id) });
         await queryClient.invalidateQueries({ queryKey: divisionKeys.list() });
-        setMessage(204, ['La división ha sido eliminada.']);
+        setMessage(HttpStatus.NoContent, ['La división ha sido eliminada.']);
       } catch (error: unknown) {
         handleUnknownError(error);
       }

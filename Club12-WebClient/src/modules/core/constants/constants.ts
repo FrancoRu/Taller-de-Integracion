@@ -19,3 +19,12 @@ export const JWT = {
   REFRESH_TOKEN: 'refreshToken',
   EXPIRES_IN: 'expiresIn',
 };
+
+export const FILTERS_DEBOUNCE_DELAY_MS = 500;
+export const FILTERS_DEBOUNCE_DELAY_LONG_MS = 1000;
+export const PUBLIC_SEARCH_DEBOUNCE_DELAY_MS = 600;
+
+export const USERNAME_LENGTH = {
+  Min: 3,
+  Max: 50,
+} as const;

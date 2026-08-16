@@ -3,10 +3,8 @@ import {
   GenericResponsePagination,
   GUID,
 } from '@/modules/core/types/types';
-import {
-  IPublicPlayerResponse,
-  IPlayerResponse,
-} from '@/modules/player/type/player.d';
+import { IPublicPlayerResponse } from '@/modules/player/type/player.d';
+import { IScorerByPlayerResponse } from '@/modules/scorer/type/scorer.d';
 
 /**
  * Context properties and methods for managing teams in a sports system.
@@ -94,9 +92,9 @@ export interface IAddTeamRequest {
 
   /**
    * The ID of the tournament the team belongs to.
-   * @type {GUID | null}
+   * @type {GUID}
    */
-  tournamentId?: GUID | null;
+  tournamentId?: GUID;
 }
 
 /**
@@ -136,9 +134,9 @@ export interface ITeamResponse {
 
   /**
    * A list of players on the team.
-   * @type {IPlayerResponse[]}
+   * @type {IPublicPlayerResponse[]}
    */
-  players: IPlayerResponse[];
+  players: IPublicPlayerResponse[];
 
   tournamentId: GUID | null;
 }
@@ -194,6 +192,11 @@ export interface ITeamMatchResponse {
   score: number;
 
   players: IPublicPlayerResponse[];
+
+  /**
+   * @property {IScorerByPlayerResponse[]} scorers - The scorers for the team in the match.
+   */
+  scorers: IScorerByPlayerResponse[];
 }
 /**
  * The filters for fetching teams.

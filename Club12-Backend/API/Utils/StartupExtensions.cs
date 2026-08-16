@@ -56,7 +56,7 @@ public static class StartupExtensions
     /// </summary>
     public static IServiceCollection AddDbContextConfig(this IServiceCollection services, IConfiguration configuration)
     {
-        string? connectionString = configuration.GetConnectionString("DbConnection");
+        string? connectionString = configuration.GetConnectionString(ConfigurationKeys.DbConnection);
         if (connectionString is null)
         {
             Log.Fatal("Connection string is missing. Using default or fallback connection string.");
@@ -77,7 +77,7 @@ public static class StartupExtensions
         {
             options.AddDefaultPolicy(policy =>
             {
-                policy.WithOrigins(configuration.GetSection("AllowedOrigins").Get<string[]>()!)
+                policy.WithOrigins(configuration.GetSection(ConfigurationKeys.AllowedOrigins).Get<string[]>()!)
                       .AllowAnyHeader()
                       .AllowAnyMethod();
             });
@@ -94,15 +94,12 @@ public static class StartupExtensions
     {
         await using AsyncServiceScope scope = app.Services.CreateAsyncScope();
 
-        // Main domain DB
         ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
         await db.Database.MigrateAsync();
 
-        // Identity DB
         IdentityAppDbContext identityDb = scope.ServiceProvider.GetRequiredService<IdentityAppDbContext>();
         await identityDb.Database.MigrateAsync();
 
-        // Seed admin user
         IdentitySeeder seeder = scope.ServiceProvider.GetRequiredService<IdentitySeeder>();
         await seeder.SeedAsync();
     }
@@ -110,25 +107,31 @@ public static class StartupExtensions
     /// <summary>
     /// Configures Swagger middleware for API documentation in non-production environments.
     /// </summary>
-    public static void UseSwaggerConfig(this WebApplication app, IHostEnvironment env)
+    public static IApplicationBuilder UseSwaggerConfig(this IApplicationBuilder app, IHostEnvironment env)
     {
         if (!env.IsProduction())
         {
             app.UseSwagger();
             app.UseSwaggerUI();
         }
+
+        return app;
     }
 
     /// <summary>
     /// Configures exception handling and status code pages middleware.
     /// </summary>
-    public static void UseExceptionHandlerConfig(this WebApplication app)
+    public static IApplicationBuilder UseExceptionHandlerConfig(this IApplicationBuilder app)
     {
         app.UseStatusCodePages();
         app.UseExceptionHandler();
+
+        return app;
     }
 
-    // One policy per domain role — single source of truth via UserRoleType enum.
+    /// <summary>
+    /// One policy per domain role — single source of truth via UserRoleType enum.
+    /// </summary>
     private static readonly string[] _roleNames =
     [
         UserRoleType.ADMIN.ToRoleName(),
@@ -157,7 +160,7 @@ public static class StartupExtensions
     /// </summary>
     public static IServiceCollection AddCustomAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
-        string? jwtSecret = configuration.GetSection("JWT:Key")?.Value;
+        string? jwtSecret = configuration.GetSection(ConfigurationKeys.Jwt.Key)?.Value;
         if (string.IsNullOrEmpty(jwtSecret))
             throw new ArgumentException("The JWT is missing or empty in configuration.");
 
@@ -172,8 +175,8 @@ public static class StartupExtensions
                 ValidateAudience         = true,
                 ValidateLifetime         = true,
                 ValidateIssuerSigningKey = true,
-                ValidIssuer              = configuration["JWT:Issuer"],
-                ValidAudience            = configuration["JWT:Audience"],
+                ValidIssuer              = configuration[ConfigurationKeys.Jwt.Issuer],
+                ValidAudience            = configuration[ConfigurationKeys.Jwt.Audience],
                 IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
             };
         });
@@ -184,9 +187,9 @@ public static class StartupExtensions
     /// <summary>
     /// Adds middleware for logging requests to the request context if enabled in configuration.
     /// </summary>
-    public static WebApplication UseLoggingToRequestContextMiddleware(this WebApplication app, IConfiguration configuration)
+    public static IApplicationBuilder UseLoggingToRequestContextMiddleware(this IApplicationBuilder app, IConfiguration configuration)
     {
-        bool useLoggingMiddleware = configuration.GetValue<bool>("UseLoggingMiddleware", false);
+        bool useLoggingMiddleware = configuration.GetValue(ConfigurationKeys.UseLoggingMiddleware, false);
         if (useLoggingMiddleware)
         {
             app.UseMiddleware<RequestLoggingMiddleware>();
@@ -217,25 +220,28 @@ public static class StartupExtensions
     /// </summary>
     public static IServiceCollection AddCustomSwagger(this IServiceCollection services, IConfiguration configuration)
     {
+        const string bearerScheme = "Bearer";
+        const string swaggerDocVersion = "v1";
+
         services.AddSwaggerGen(context =>
         {
-            context.SwaggerDoc("v1", new OpenApiInfo
+            context.SwaggerDoc(swaggerDocVersion, new OpenApiInfo
             {
-                Title   = configuration["Swagger:Title"],
-                Version = configuration["Swagger:Version"],
+                Title   = configuration[ConfigurationKeys.Swagger.Title],
+                Version = configuration[ConfigurationKeys.Swagger.Version],
             });
 
             string xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
             context.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
             context.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
 
-            context.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            context.AddSecurityDefinition(bearerScheme, new OpenApiSecurityScheme
             {
                 Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below.",
                 Name        = "Authorization",
                 In          = ParameterLocation.Header,
                 Type        = SecuritySchemeType.ApiKey,
-                Scheme      = "Bearer"
+                Scheme      = bearerScheme
             });
 
             context.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -243,9 +249,9 @@ public static class StartupExtensions
                 {
                     new OpenApiSecurityScheme
                     {
-                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" },
+                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = bearerScheme },
                         Scheme    = "oauth2",
-                        Name      = "Bearer",
+                        Name      = bearerScheme,
                         In        = ParameterLocation.Header
                     },
                     new List<string>()
@@ -274,7 +280,7 @@ public static class StartupExtensions
     public static IServiceCollection AddIdentityConfig(
         this IServiceCollection services, IConfiguration configuration)
     {
-        string? connectionString = configuration.GetConnectionString("DbConnection");
+        string? connectionString = configuration.GetConnectionString(ConfigurationKeys.DbConnection);
         if (string.IsNullOrWhiteSpace(connectionString))
             throw new ArgumentException("The connection string should be initialized already.");
 
@@ -360,17 +366,17 @@ public static class StartupExtensions
     public static IServiceCollection AddEmailConfig(
        this IServiceCollection services, IConfiguration configuration)
     {
-        string smtpHost = configuration["Smtp:Host"]
-            ?? throw new ArgumentException("Smtp:Host is missing from configuration.");
-        int smtpPort = int.Parse(configuration["Smtp:Port"]
-            ?? throw new ArgumentException("Smtp:Port is missing from configuration."));
-        string username = configuration["Smtp:Username"]
-            ?? throw new ArgumentException("Smtp:Username is missing from configuration.");
-        string password = configuration["Smtp:Password"]
-            ?? throw new ArgumentException("Smtp:Password is missing from configuration.");
-        bool useSsl = bool.Parse(configuration["Smtp:UseSsl"] ?? "true");
-        string fromEmail = configuration["Smtp:FromEmail"] ?? "noreply@club12.com";
-        string fromName = configuration["Smtp:FromName"] ?? "Club12";
+        string smtpHost = configuration[ConfigurationKeys.Smtp.Host]
+            ?? throw new ArgumentException($"{ConfigurationKeys.Smtp.Host} is missing from configuration.");
+        int smtpPort = int.Parse(configuration[ConfigurationKeys.Smtp.Port]
+            ?? throw new ArgumentException($"{ConfigurationKeys.Smtp.Port} is missing from configuration."));
+        string username = configuration[ConfigurationKeys.Smtp.Username]
+            ?? throw new ArgumentException($"{ConfigurationKeys.Smtp.Username} is missing from configuration.");
+        string password = configuration[ConfigurationKeys.Smtp.Password]
+            ?? throw new ArgumentException($"{ConfigurationKeys.Smtp.Password} is missing from configuration.");
+        bool useSsl = configuration.GetValue(ConfigurationKeys.Smtp.UseSsl, true);
+        string fromEmail = configuration[ConfigurationKeys.Smtp.FromEmail] ?? "noreply@club12.com";
+        string fromName = configuration[ConfigurationKeys.Smtp.FromName] ?? "Club12";
 
         services
             .AddFluentEmail(fromEmail, fromName)
@@ -378,7 +384,7 @@ public static class StartupExtensions
             {
                 Server = smtpHost,
                 Port = smtpPort,
-                UseSsl = true,
+                UseSsl = useSsl,
                 User = username,
                 Password = password,
                 RequiresAuthentication = true
@@ -411,7 +417,7 @@ public static class StartupExtensions
     /// </remarks>
     public static IServiceCollection AddBackupConfig(this IServiceCollection services, IConfiguration configuration)
     {
-        BackupOptions options = configuration.GetSection("Backup").Get<BackupOptions>() ?? new BackupOptions();
+        BackupOptions options = configuration.GetSection(ConfigurationKeys.Backup.Section).Get<BackupOptions>() ?? new BackupOptions();
         services.AddSingleton(options);
 
         services.AddSingleton<IBackupRetentionPolicy, KeepLastNRetentionPolicy>();
@@ -420,9 +426,6 @@ public static class StartupExtensions
 
         if (string.Equals(options.StorageTarget, "Supabase", StringComparison.OrdinalIgnoreCase))
         {
-            // Reuses the existing SupabaseHelper singleton (registered by
-            // RegisterSingletons) as the raw-storage boundary — no second
-            // Supabase client is provisioned.
             services.AddSingleton<ISupabaseRawStorage>(sp => sp.GetRequiredService<SupabaseHelper>());
             services.AddSingleton<IBackupStorage, SupabaseBackupStorage>();
         }

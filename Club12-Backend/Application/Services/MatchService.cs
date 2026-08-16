@@ -2,6 +2,7 @@
 using Application.DTOs.Match.Request;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Domain.Constants;
 using Application.Utils.Constants.Stage;
 using Application.Utils.Extensions;
 using Domain.Entities.Models;
@@ -126,7 +127,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
             Type = matchType,
             IsFinished = false,
             MatchDate = matchDate,
-            CreatedBy = "System"
+            CreatedBy = AuditConstants.SystemUser
         };
 
     private async Task<int> ResolveGroupTeamCountAsync(Stage stage)

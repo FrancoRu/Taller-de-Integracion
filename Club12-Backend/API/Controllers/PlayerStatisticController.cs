@@ -18,7 +18,6 @@ namespace API.Controllers;
 /// </summary>
 /// <param name="playerStatisticService">The Player Statistic service.</param>
 /// <param name="mapper">The Auto_mapper instance.</param>
-//[Authorize(Roles = "SuperAdmin")]
 [Route("api/player-statistics/")]
 [ApiController]
 public class PlayerStatisticController(IPlayerStatisticService playerStatisticService, IMapper mapper) : ControllerBase

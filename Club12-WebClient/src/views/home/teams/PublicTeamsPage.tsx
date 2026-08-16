@@ -15,6 +15,9 @@ import {
 import { useTeam } from '@/modules/team/hook/team.hook';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import { SearchIcon } from '@/views/core/MUI/icons/icons';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import { PUBLIC_SEARCH_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/constants';
+import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
 
 export default function PublicTeamsPage() {
   const navigate = useNavigate();
@@ -25,7 +28,11 @@ export default function PublicTeamsPage() {
   const fetchTeams = useCallback(
     async (name?: string) => {
       setLoading(true);
-      await getTeamsByFiltered({ name, pageSize: 100, pageNumber: 1 });
+      await getTeamsByFiltered({
+        name,
+        pageSize: PUBLIC_LISTING_PAGE_SIZE,
+        pageNumber: 1,
+      });
       setLoading(false);
     },
     [getTeamsByFiltered]
@@ -38,13 +45,13 @@ export default function PublicTeamsPage() {
   useEffect(() => {
     const timeout = setTimeout(() => {
       void fetchTeams(search || undefined);
-    }, 600);
+    }, PUBLIC_SEARCH_DEBOUNCE_DELAY_MS);
     return () => clearTimeout(timeout);
   }, [search, fetchTeams]);
 
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
-      <Typography variant="h4" fontWeight="bold" mb={1}>
+      <Typography variant="h4" component="h1" fontWeight="bold" mb={1}>
         Equipos
       </Typography>
       <Typography variant="body1" color="text.secondary" mb={3}>
@@ -78,14 +85,14 @@ export default function PublicTeamsPage() {
             <Grid item xs={12} sm={6} md={4} key={team.id}>
               <Card sx={{ height: '100%' }}>
                 <CardActionArea
-                  onClick={() => navigate(`/equipos/${team.id}`)}
+                  onClick={() => navigate(APP_ROUTES.publicTeam.build(team.id))}
                   sx={{ height: '100%' }}
                 >
                   <CardContent>
                     <Box display="flex" alignItems="center" gap={2} mb={1.5}>
                       <TeamLogo teamName={team.name} logoUrl={team.logoUrl} size={48} />
                       <Box>
-                        <Typography variant="h6" lineHeight={1.2}>
+                        <Typography variant="h6" component="h2" lineHeight={1.2}>
                           {team.name}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">

@@ -19,7 +19,6 @@ namespace API.Controllers;
 /// </summary>
 /// <param name="playerSanctionService">The Player Sanction service.</param>
 /// <param name="mapper">The AutoMapper instance.</param>
-//[Authorize(Roles = "SuperAdmin")]
 [Route("api/player-sanctions/")]
 [ApiController]
 public class PlayerSanctionController(IPlayerSanctionService playerSanctionService, IMapper mapper) : ControllerBase

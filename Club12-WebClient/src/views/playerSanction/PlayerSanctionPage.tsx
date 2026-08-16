@@ -15,14 +15,14 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import Swal from 'sweetalert2';
-import theme from '@/theme';
+import { notifySuccess } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import { SanctionAppealStatus } from '@/modules/playerSanction/type/playerSanction';
 import { usePlayer } from '@/modules/player/hook/player.hook';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const APPEAL_STATUS_LABEL: Record<SanctionAppealStatus, string> = {
   None: 'Sin apelación',
@@ -93,11 +93,7 @@ const PlayerSanctionPage: React.FC = () => {
     if (result) {
       setAppealDialogOpen(false);
       setReasonText('');
-      await Swal.fire({
-        title: 'Apelación registrada',
-        icon: 'success',
-        confirmButtonColor: theme.palette.primary.main,
-      });
+      await notifySuccess({ title: 'Apelación registrada' });
     }
   };
 
@@ -114,11 +110,7 @@ const PlayerSanctionPage: React.FC = () => {
     if (result) {
       setResolveDialogOpen(false);
       setResolutionText('');
-      await Swal.fire({
-        title: 'Apelación resuelta',
-        icon: 'success',
-        confirmButtonColor: theme.palette.primary.main,
-      });
+      await notifySuccess({ title: 'Apelación resuelta' });
     }
   };
 
@@ -200,7 +192,7 @@ const PlayerSanctionPage: React.FC = () => {
           </Typography>
           <Typography
             component="button"
-            onClick={() => navigate('/panel/sanciones')}
+            onClick={() => navigate(APP_ROUTES.panelSanctions)}
             sx={{
               mt: 2,
               border: 0,

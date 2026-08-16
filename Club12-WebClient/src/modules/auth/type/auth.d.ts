@@ -31,9 +31,9 @@ export interface TokenResponse {
 export interface RefreshTokenRequest {
   /**
    * The refresh token used to get a new access token.
-   * @type {string | null}
+   * @type {string}
    */
-  refreshToken: string | null;
+  refreshToken: string;
 }
 
 /**

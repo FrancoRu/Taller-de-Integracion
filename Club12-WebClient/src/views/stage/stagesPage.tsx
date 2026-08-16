@@ -11,9 +11,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
-import theme, { CANCEL_BUTTON_COLOR } from '@/theme';
+import { confirmDelete, notifySuccess } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { useStage } from '@/modules/stage/hook/stage.hook';
 import {
@@ -35,7 +34,10 @@ import {
 import {
   TABLE_PAGE_SIZE_OPTIONS,
   TABLE_ROWS_PER_PAGE,
+  FILTER_OPTIONS_PAGE_SIZE,
 } from '@/modules/core/constants/pagination';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import { FILTERS_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/constants';
 
 interface StagesPageProps {
   divisionId?: GUID;
@@ -115,7 +117,7 @@ const StagesPage: React.FC<StagesPageProps> = ({
       return;
     }
 
-    void getAllTournamentsByFilterRef.current({ pageSize: 300 });
+    void getAllTournamentsByFilterRef.current({ pageSize: FILTER_OPTIONS_PAGE_SIZE });
   }, [divisionId]);
 
   useEffect(() => {
@@ -129,7 +131,7 @@ const StagesPage: React.FC<StagesPageProps> = ({
 
     void getDivisionsByFiltersRef.current({
       tournamentId: filters.tournamentId,
-      pageSize: 300,
+      pageSize: FILTER_OPTIONS_PAGE_SIZE,
     });
   }, [divisionId, filters.tournamentId]);
 
@@ -161,7 +163,7 @@ const StagesPage: React.FC<StagesPageProps> = ({
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       setDebouncedFilters(filters);
-    }, 500);
+    }, FILTERS_DEBOUNCE_DELAY_MS);
 
     return () => clearTimeout(timeoutId);
   }, [filters]);
@@ -214,41 +216,33 @@ const StagesPage: React.FC<StagesPageProps> = ({
 
   const handleView = useCallback(
     (row: IStageResponse) => {
-      navigate(`/panel/fases/${row.id}`);
+      navigate(APP_ROUTES.panelStage.build(row.id));
     },
     [navigate]
   );
 
   const handleEdit = useCallback(
     (row: IStageResponse) => {
-      navigate(`/panel/fases/editar/${row.id}`);
+      navigate(APP_ROUTES.panelStageEdit.build(row.id));
     },
     [navigate]
   );
 
   const handleDelete = useCallback(
     async (row: IStageResponse) => {
-      const result = await Swal.fire({
+      const confirmed = await confirmDelete({
         title: '¿Está usted seguro de querer eliminar esta fase?',
         text: '¡Usted no podrá revertir este cambio!',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: theme.palette.primary.main,
-        cancelButtonColor: CANCEL_BUTTON_COLOR,
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar',
       });
 
-      if (!result.isConfirmed) {
+      if (!confirmed) {
         return;
       }
 
       await deleteStagesById(row.id);
-      await Swal.fire({
+      await notifySuccess({
         title: '¡Eliminada!',
         text: 'La fase ha sido eliminada.',
-        icon: 'success',
-        confirmButtonColor: theme.palette.primary.main,
       });
     },
     [deleteStagesById]
@@ -369,11 +363,9 @@ const StagesPage: React.FC<StagesPageProps> = ({
         pageNumber: paginationModel.page + 1,
         pageSize: paginationModel.pageSize,
       });
-      await Swal.fire({
+      await notifySuccess({
         title: 'Éxito',
         text: 'Las fases fueron generadas correctamente.',
-        icon: 'success',
-        confirmButtonColor: theme.palette.primary.main,
       });
     } finally {
       setLoading(false);
@@ -393,7 +385,7 @@ const StagesPage: React.FC<StagesPageProps> = ({
     }
 
     const query = divisionId ? `?divisionId=${divisionId}` : '';
-    navigate(`/panel/fases/crear${query}`);
+    navigate(`${APP_ROUTES.panelStageCreate}${query}`);
   }, [divisionId, navigate, onCreate]);
 
   const content = (

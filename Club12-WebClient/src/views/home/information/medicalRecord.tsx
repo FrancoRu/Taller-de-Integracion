@@ -13,7 +13,7 @@ export default function MedicalRecord() {
       }}
     >
       <Box width="100%" maxWidth="lg" sx={{ p: 4 }}>
-        <Typography variant="h3" fontWeight="bold" gutterBottom>
+        <Typography variant="h3" component="h1" fontWeight="bold" gutterBottom>
           Ficha Médica
         </Typography>
         <Typography>

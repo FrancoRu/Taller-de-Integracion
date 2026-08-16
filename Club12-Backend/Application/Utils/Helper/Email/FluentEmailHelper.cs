@@ -14,10 +14,6 @@ namespace Application.Utils.Helper.Email;
 /// </summary>
 public sealed class FluentEmailHelper(IFluentEmailFactory emailFactory) : IEmailService
 {
-    // ─────────────────────────────────────────────────────────────
-    // Password reset
-    // ─────────────────────────────────────────────────────────────
-
     public async Task SendPasswordResetAsync(
         string toEmail, string toUsername, string resetLink,
         CancellationToken ct = default)
@@ -36,10 +32,6 @@ public sealed class FluentEmailHelper(IFluentEmailFactory emailFactory) : IEmail
 
         ThrowIfFailed(result, "password reset");
     }
-
-    // ─────────────────────────────────────────────────────────────
-    // Welcome + set password (newly created users)
-    // ─────────────────────────────────────────────────────────────
 
     public async Task SendWelcomeSetPasswordAsync(
         string toEmail, string toUsername, string setPasswordLink,
@@ -60,10 +52,6 @@ public sealed class FluentEmailHelper(IFluentEmailFactory emailFactory) : IEmail
         ThrowIfFailed(result, "welcome set-password");
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Magic link (TeamManager)
-    // ─────────────────────────────────────────────────────────────
-
     public async Task SendMagicLinkAsync(
         string toEmail, string toUsername, string magicLink,
         CancellationToken ct = default)
@@ -82,10 +70,6 @@ public sealed class FluentEmailHelper(IFluentEmailFactory emailFactory) : IEmail
 
         ThrowIfFailed(result, "magic link");
     }
-
-    // ─────────────────────────────────────────────────────────────
-    // Helpers
-    // ─────────────────────────────────────────────────────────────
 
     private static void ThrowIfFailed(SendResponse result, string context)
     {

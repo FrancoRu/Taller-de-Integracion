@@ -15,8 +15,8 @@ import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
-import Swal from 'sweetalert2';
-import theme from '@/theme';
+import { notifyInfo } from '@/modules/core/utils/confirmDialog';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const PlayerPage: React.FC = () => {
   const { playerId } = useParams<{ playerId: GUID }>();
@@ -75,7 +75,7 @@ const PlayerPage: React.FC = () => {
           </Typography>
           <Typography
             component="button"
-            onClick={() => navigate('/panel/jugadores')}
+            onClick={() => navigate(APP_ROUTES.panelPlayers)}
             sx={{
               mt: 2,
               border: 0,
@@ -93,20 +93,16 @@ const PlayerPage: React.FC = () => {
   }
 
   const handleCreateScore = () => {
-    void Swal.fire({
+    void notifyInfo({
       title: 'Pendiente',
       text: 'La creación de puntuaciones desde esta vista aún no está implementada.',
-      icon: 'info',
-      confirmButtonColor: theme.palette.primary.main,
     });
   };
 
   const handleCreateSanction = () => {
-    void Swal.fire({
+    void notifyInfo({
       title: 'Pendiente',
       text: 'La creación de sanciones desde esta vista aún no está implementada.',
-      icon: 'info',
-      confirmButtonColor: theme.palette.primary.main,
     });
   };
 

@@ -9,6 +9,7 @@ import { GUID } from '@/modules/core/types/types';
 import { useScorer } from '@/modules/scorer/hook/scorer.hook';
 import { IScorerByTeamResponse } from '@/modules/scorer/type/scorer.d';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
+import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 
 const TeamScorersTab: React.FC = () => {
   const { tournaments, getAllTournamentsByFilter } = useTournament();
@@ -34,7 +35,7 @@ const TeamScorersTab: React.FC = () => {
   }, [getScorersByTeamFiltered]);
 
   useEffect(() => {
-    void getAllTournamentsByFilterRef.current({ pageSize: 300 });
+    void getAllTournamentsByFilterRef.current({ pageSize: FILTER_OPTIONS_PAGE_SIZE });
   }, []);
 
   const fetchScorers = useCallback(

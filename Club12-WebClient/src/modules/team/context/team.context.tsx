@@ -1,4 +1,4 @@
-import { AxiosError, AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
 import {
   createContext,
   ReactNode,
@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
-import { useError } from '@/modules/error/hooks/error.hock';
+import { useUnknownErrorHandler } from '@/modules/error/hooks/useUnknownErrorHandler';
 import { teamService } from '@/modules/team/service/team.service';
 import {
   IAddTeamRequest,
@@ -19,8 +19,8 @@ import {
   ITeamResponse,
 } from '@/modules/team/type/team.d';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
-import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 import { teamKeys } from '@/modules/team/queryKeys';
+import { HttpStatus } from '@/modules/core/constants/httpStatus';
 
 export const TeamContext = createContext<ITeamContextProps | undefined>(
   undefined
@@ -32,20 +32,9 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
   const [team, setTeam] = useState<ITeamResponse | null>(null);
   const [teams, setTeams] = useState<ITeamResponse[] | null>(null);
 
-  const { setError } = useError();
   const queryClient = useQueryClient();
 
-  const handleUnknownError = useCallback(
-    (error: unknown) => {
-      if (error instanceof AxiosError) {
-        setError(error);
-        return;
-      }
-
-      setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-    },
-    [setError]
-  );
+  const handleUnknownError = useUnknownErrorHandler();
 
   const addTeamMutation = useMutation({
     mutationFn: teamService.addTeam,
@@ -98,7 +87,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
           });
 
         if (res) {
-          if (res.status === 204) {
+          if (res.status === HttpStatus.NoContent) {
             setTeam(prev =>
               prev && prev.id === id ? { ...prev, ...data } : prev
             );

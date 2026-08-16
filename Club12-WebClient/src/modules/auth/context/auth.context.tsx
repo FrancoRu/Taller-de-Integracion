@@ -28,6 +28,7 @@ import {
 } from '@/modules/core/constants/constants';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 import { authKeys } from '@/modules/auth/queryKeys';
+import { HttpStatus } from '@/modules/core/constants/httpStatus';
 
 export const AuthContext = createContext<IAuthContextProps | undefined>(
   undefined
@@ -188,7 +189,7 @@ export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
 
     try {
       const res = await refreshTokenMutation.mutateAsync({ refreshToken });
-      if (res?.status === 200 && res?.data) {
+      if (res?.status === HttpStatus.Ok && res?.data) {
         const expiresInMs = applyAuthData(res.data as AuthResponse);
 
         clearAuthTimeout();
@@ -224,7 +225,7 @@ export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
     async (userData: LogInUserRequest): Promise<boolean> => {
       try {
         const res = await signInMutation.mutateAsync(userData);
-        if (res?.status === 200 && res?.data) {
+        if (res?.status === HttpStatus.Ok && res?.data) {
           const authData = res.data as AuthResponse;
           const expiresInMs = applyAuthData(authData, userData.email);
 

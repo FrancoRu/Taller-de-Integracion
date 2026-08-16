@@ -34,6 +34,19 @@ public static class StageTemplate
     /// The default duration in days for a stage.
     /// </summary>
     public static readonly int DurationDays = 7;
+
+    /// <summary>
+    /// Standard rest gap, in days, inserted between two consecutive
+    /// automated stages (e.g. group stage to quarter-final, quarter-final
+    /// to semi-final, third place to final).
+    /// </summary>
+    public static readonly int StandardGapDays = 2;
+
+    /// <summary>
+    /// Shorter rest gap, in days, inserted between the semi-final and the
+    /// third place match.
+    /// </summary>
+    public static readonly int ThirdPlaceGapDays = 1;
 }
 
 /// <summary>

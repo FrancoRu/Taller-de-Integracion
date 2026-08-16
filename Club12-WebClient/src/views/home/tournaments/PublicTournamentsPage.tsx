@@ -14,6 +14,8 @@ import {
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { ITournamentResponse } from '@/modules/tournament/type/tournament';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
 
 const STATUS_LABEL: Record<TournamentStatus, string> = {
   Scheduled: 'Programado',
@@ -43,12 +45,12 @@ function TournamentCard({ tournament }: { tournament: ITournamentResponse }) {
   return (
     <Card sx={{ height: '100%' }}>
       <CardActionArea
-        onClick={() => navigate(`/torneos/${tournament.id}`)}
+        onClick={() => navigate(APP_ROUTES.publicTournament.build(tournament.id))}
         sx={{ height: '100%', alignItems: 'flex-start', display: 'flex', flexDirection: 'column' }}
       >
         <CardContent sx={{ width: '100%' }}>
           <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-            <Typography variant="h6" lineHeight={1.3} sx={{ flex: 1, mr: 1 }}>
+            <Typography variant="h6" component="h2" lineHeight={1.3} sx={{ flex: 1, mr: 1 }}>
               {tournament.name}
             </Typography>
             <Chip
@@ -93,7 +95,7 @@ export default function PublicTournamentsPage() {
 
   const fetchTournaments = useCallback(async () => {
     setLoading(true);
-    await getAllTournamentsRef.current({ pageSize: 100, pageNumber: 1 });
+    await getAllTournamentsRef.current({ pageSize: PUBLIC_LISTING_PAGE_SIZE, pageNumber: 1 });
     setLoading(false);
   }, []);
 
@@ -105,7 +107,7 @@ export default function PublicTournamentsPage() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
-      <Typography variant="h4" fontWeight="bold" mb={1}>
+      <Typography variant="h4" component="h1" fontWeight="bold" mb={1}>
         Torneos
       </Typography>
       <Typography variant="body1" color="text.secondary" mb={4}>

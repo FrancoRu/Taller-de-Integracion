@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Application.Utils.Constants.Auth;
+using Microsoft.AspNetCore.Http;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -15,7 +16,7 @@ public class MustChangePasswordMiddleware(RequestDelegate next)
 
     public async Task InvokeAsync(HttpContext context)
     {
-        bool mustChange = context.User.FindFirstValue("must_change_password") == "true";
+        bool mustChange = context.User.FindFirstValue(CustomClaimTypes.MustChangePassword) == "true";
 
         if (mustChange && !AllowedPaths.Any(p => context.Request.Path.StartsWithSegments(p)))
         {

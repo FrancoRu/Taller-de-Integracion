@@ -1,6 +1,7 @@
 import { MutableRefObject, RefObject, useLayoutEffect, useState } from 'react';
 import { BracketEdge } from '@/modules/playoff/type/bracket.d';
 import { GUID } from '@/modules/core/types/types';
+import theme from '@/theme';
 
 interface BracketConnectorsProps {
   edges: BracketEdge[];
@@ -86,7 +87,13 @@ export default function BracketConnectors({
       }}
     >
       {paths.map(path => (
-        <path key={path.id} d={path.d} fill="none" stroke="#FF5A1F" strokeWidth={2} />
+        <path
+          key={path.id}
+          d={path.d}
+          fill="none"
+          stroke={theme.palette.primary.main}
+          strokeWidth={2}
+        />
       ))}
     </svg>
   );

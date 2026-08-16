@@ -6,6 +6,7 @@ import {
   COOKIE_SIGNIN_TOKEN,
   JWT,
 } from '@/modules/core/constants/constants';
+import { HttpStatus } from '@/modules/core/constants/httpStatus';
 
 const TOKEN_KEY: string = COOKIE_SIGNIN_TOKEN;
 const INVALID_TOKEN_PATH = routes.tokenInvalido;
@@ -63,7 +64,7 @@ const triggerStatusCodeHandlers = (response: AxiosResponse): void => {
 
 const handleUnauthorizedToken = (error: AxiosError): void => {
   const statusCode = error.response?.status;
-  if (statusCode !== 401) {
+  if (statusCode !== HttpStatus.Unauthorized) {
     return;
   }
 
@@ -327,5 +328,5 @@ export const onStatusCode = (statusCode: number, callback: () => unknown) => {
  * @param {() => unknown} callback - Function to execute when a 401 status code is received.
  */
 export const onUnauthorized = (callback: () => unknown) => {
-  onStatusCode(401, callback);
+  onStatusCode(HttpStatus.Unauthorized, callback);
 };

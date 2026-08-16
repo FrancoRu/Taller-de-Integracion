@@ -1,4 +1,4 @@
-import { AxiosError, AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
 import {
   createContext,
   ReactNode,
@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useError } from '@/modules/error/hooks/error.hock';
+import { useUnknownErrorHandler } from '@/modules/error/hooks/useUnknownErrorHandler';
 import { venueService } from '@/modules/venue/service/venue.service';
 import {
   IAddVenueRequest,
@@ -18,8 +19,8 @@ import {
 } from '@/modules/venue/type/venue';
 import { GUID } from '@/modules/core/types/types';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
-import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 import { venueKeys } from '@/modules/venue/queryKeys';
+import { HttpStatus } from '@/modules/core/constants/httpStatus';
 
 export const VenueContext = createContext<IVenueContextProps | undefined>(
   undefined
@@ -31,20 +32,10 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
   const [venue, setVenue] = useState<IVenueResponse | null>(null);
   const [venues, setVenues] = useState<IVenueResponse[] | null>(null);
 
-  const { setError, setMessage } = useError();
+  const { setMessage } = useError();
   const queryClient = useQueryClient();
 
-  const handleUnknownError = useCallback(
-    (error: unknown) => {
-      if (error instanceof AxiosError) {
-        setError(error);
-        return;
-      }
-
-      setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-    },
-    [setError]
-  );
+  const handleUnknownError = useUnknownErrorHandler();
 
   const addVenueMutation = useMutation({
     mutationFn: venueService.addVenue,
@@ -95,7 +86,7 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
           await putVenueMutation.mutateAsync({ id, venue });
 
         if (res) {
-          if (res.status === 204) {
+          if (res.status === HttpStatus.NoContent) {
             const currentVenue =
               venues?.find(existingVenue => existingVenue.id === id) ?? null;
             const updatedVenue: IVenueResponse = {
@@ -189,7 +180,7 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
         setVenues(prev => (prev ? prev.filter(e => e.id !== id) : null));
         queryClient.removeQueries({ queryKey: venueKeys.byId(id) });
         await queryClient.invalidateQueries({ queryKey: venueKeys.list() });
-        setMessage(204, ['La cancha ha sido eliminada.']);
+        setMessage(HttpStatus.NoContent, ['La cancha ha sido eliminada.']);
       } catch (error: unknown) {
         handleUnknownError(error);
       }

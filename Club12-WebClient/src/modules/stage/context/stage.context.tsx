@@ -15,12 +15,13 @@ import {
   StageFiltered,
 } from '@/modules/stage/type/stage.d';
 import { useError } from '@/modules/error/hooks/error.hock';
+import { useUnknownErrorHandler } from '@/modules/error/hooks/useUnknownErrorHandler';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
-import { AxiosError, AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
 import { stageService } from '@/modules/stage/service/stage.service';
-import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 import { stageKeys } from '@/modules/stage/queryKeys';
+import { HttpStatus } from '@/modules/core/constants/httpStatus';
 
 export const StageContext = createContext<IStageContextProps | undefined>(
   undefined
@@ -32,20 +33,10 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
   const [stage, setStage] = useState<IStageResponse | null>(null);
   const [stages, setStages] = useState<IStageResponse[] | null>(null);
 
-  const { setError, setMessage } = useError();
+  const { setMessage } = useError();
   const queryClient = useQueryClient();
 
-  const handleUnknownError = useCallback(
-    (error: unknown) => {
-      if (error instanceof AxiosError) {
-        setError(error);
-        return;
-      }
-
-      setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-    },
-    [setError]
-  );
+  const handleUnknownError = useUnknownErrorHandler();
 
   const addStageMutation = useMutation({
     mutationFn: stageService.addStage,
@@ -172,7 +163,7 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
         setStages(prev => (prev ? prev.filter(e => e.id !== id) : null));
         queryClient.removeQueries({ queryKey: stageKeys.byId(id) });
         await queryClient.invalidateQueries({ queryKey: stageKeys.list() });
-        setMessage(204, ['La etapa ha sido eliminada.']);
+        setMessage(HttpStatus.NoContent, ['La etapa ha sido eliminada.']);
       } catch (error: unknown) {
         handleUnknownError(error);
       }

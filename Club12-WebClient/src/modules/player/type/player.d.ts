@@ -64,16 +64,10 @@ export interface IPlayerContextProps {
  */
 export interface PlayerFiltered extends Filtered {
   /**
-   * The first name of the player.
+   * The name(s) of the player to filter by.
    * @type {string}
    */
-  firstName?: string;
-
-  /**
-   * The second name of the player (if applicable).
-   * @type {string}
-   */
-  secondName?: string;
+  names?: string;
 
   /**
    * The last name of the player.
@@ -98,6 +92,12 @@ export interface PlayerFiltered extends Filtered {
   phoneNumber?: string;
 
   socialSecurity?: string;
+
+  isFederated?: boolean;
+
+  club?: string;
+
+  category?: string;
 }
 
 /**
@@ -115,7 +115,7 @@ export interface IAddPlayerRequest {
    * The second name of the player (if applicable).
    * @type {string}
    */
-  secondName: string;
+  secondName?: string;
 
   /**
    * The last name of the player.
@@ -135,11 +135,11 @@ export interface IAddPlayerRequest {
    */
   teamId: GUID;
 
-  birthDate?: Date;
+  birthDate: Date;
 
-  phoneNumber?: string;
+  phoneNumber: string;
 
-  socialSecurity?: string;
+  socialSecurity: string;
 }
 
 /**
@@ -155,6 +155,12 @@ export interface IPlayerResponse extends IAddPlayerRequest {
   id: GUID;
 
   fullName: string;
+
+  isFederated: boolean;
+
+  club: string;
+
+  category: string;
 }
 
 export interface IPublicPlayerResponse {
@@ -210,7 +216,7 @@ export interface IPutPlayerRequest {
    * The second name of the player (if applicable).
    * @type {string}
    */
-  secondName: string;
+  secondName?: string;
 
   /**
    * The last name of the player.
@@ -230,5 +236,11 @@ export interface IPutPlayerRequest {
 
   socialSecurity?: string;
 
-  teamId: GUID;
+  teamId?: GUID;
+
+  isFederated?: boolean;
+
+  club?: string;
+
+  category?: string;
 }

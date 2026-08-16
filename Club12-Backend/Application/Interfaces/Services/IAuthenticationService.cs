@@ -11,9 +11,21 @@ namespace Application.Interfaces.Services;
 /// </summary>
 public interface IAuthenticationService
 {
+    /// <summary>
+    /// Password login restricted to ADMIN, OWNER, and TOURNAMENT_MANAGER accounts.
+    /// TEAM_MANAGER accounts must authenticate via the magic-link flow instead.
+    /// </summary>
     Task<TokenResponse>        LoginAsync(LogInUserRequest request, CancellationToken ct = default);
+
+    /// <summary>
+    /// Generates a magic-link token for TEAM_MANAGER accounts only.
+    /// </summary>
     Task<MagicLinkResponse>    RequestMagicLinkAsync(MagicLinkRequest request, CancellationToken ct = default);
     Task<TokenResponse>        MagicLinkLoginAsync(MagicLinkLoginRequest request, CancellationToken ct = default);
+
+    /// <summary>
+    /// Issues a guest JWT without any database interaction.
+    /// </summary>
     Task<TokenResponse>        GuestAsync(CancellationToken ct = default);
     Task<TokenResponse>        RefreshAsync(RefreshTokenRequest request, CancellationToken ct = default);
 

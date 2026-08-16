@@ -1,3 +1,4 @@
+using Application.Utils.Constants.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
@@ -42,10 +43,10 @@ public sealed class ApplicationDBContextFactory : IDesignTimeDbContextFactory<Ap
 
         IConfigurationRoot config = builder.Build();
 
-        string connectionString = config.GetConnectionString("DbConnection")
-            ?? Environment.GetEnvironmentVariable("ConnectionStrings__DbConnection")
+        string connectionString = config.GetConnectionString(ConfigurationKeys.DbConnection)
+            ?? Environment.GetEnvironmentVariable($"ConnectionStrings__{ConfigurationKeys.DbConnection}")
             ?? throw new InvalidOperationException(
-                $"Connection string 'DbConnection' not found.\n" +
+                $"Connection string '{ConfigurationKeys.DbConnection}' not found.\n" +
                 $"Searched in: {basePath}\n" +
                 $"Files loaded: appsettings.json, appsettings.{aspNetEnv}.json + all appsettings.*.json");
 

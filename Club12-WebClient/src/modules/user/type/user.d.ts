@@ -11,6 +11,7 @@ export interface UserResponse {
   email: string;
   phoneNumber?: string;
   role: UserRolesType;
+  createdByOwnerId?: GUID;
   isActive: boolean;
 }
 
@@ -19,6 +20,14 @@ export interface RegisterUserRequest {
   username: string;
   phone?: string;
   role: string;
+}
+
+export interface RegisterUserResponse {
+  userId: GUID;
+  email: string;
+  username: string;
+  role: string;
+  phoneNumber?: string;
 }
 
 export interface UpdateUserRequest {
@@ -39,7 +48,9 @@ export interface IUserContextProps {
     filters: UserFilterRequest
   ) => Promise<GenericResponsePagination<UserResponse> | void>;
   getById: (id: GUID) => Promise<UserResponse | void>;
-  createUser: (data: RegisterUserRequest) => Promise<UserResponse | void>;
+  createUser: (
+    data: RegisterUserRequest
+  ) => Promise<RegisterUserResponse | void>;
   updateUser: (
     id: GUID,
     data: UpdateUserRequest

@@ -7,14 +7,14 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import Swal from 'sweetalert2';
 import { useNavigate, useParams } from 'react-router-dom';
-import theme from '@/theme';
+import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import { IPlayerSanctionEditFormState } from '@/modules/playerSanction/type/playerSanction.d';
 import FormButtons from '@/views/core/components/FormButtons';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const INITIAL_FORM: IPlayerSanctionEditFormState = {
   duration: '',
@@ -65,7 +65,7 @@ const PlayerSanctionEditPage: React.FC = () => {
       return;
     }
 
-    navigate(`/panel/sanciones/${targetSanctionId}`);
+    navigate(APP_ROUTES.panelSanction.build(targetSanctionId));
   }, [navigate, submitting, targetSanctionId]);
 
   const handleSave = useCallback(async () => {
@@ -77,21 +77,17 @@ const PlayerSanctionEditPage: React.FC = () => {
     const description = form.description.trim();
 
     if (!Number.isFinite(duration) || duration <= 0) {
-      await Swal.fire({
+      await notifyWarning({
         title: 'Duración inválida',
         text: 'La duración debe ser mayor a 0.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
 
     if (!description) {
-      await Swal.fire({
+      await notifyWarning({
         title: 'Campos incompletos',
         text: 'Debes completar la descripción.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -107,14 +103,12 @@ const PlayerSanctionEditPage: React.FC = () => {
       return;
     }
 
-    await Swal.fire({
+    await notifySuccess({
       title: 'Sanción actualizada',
       text: 'Los cambios se guardaron correctamente.',
-      icon: 'success',
-      confirmButtonColor: theme.palette.primary.main,
     });
 
-    navigate(`/panel/sanciones/${targetSanctionId}`);
+    navigate(APP_ROUTES.panelSanction.build(targetSanctionId));
   }, [
     form.description,
     form.duration,

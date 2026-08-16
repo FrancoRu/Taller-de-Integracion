@@ -15,8 +15,8 @@ import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import PlayersPage from '@/views/player/PlayersPage';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
-import Swal from 'sweetalert2';
-import theme from '@/theme';
+import { notifyInfo } from '@/modules/core/utils/confirmDialog';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 interface TeamPageProps {
   teamIdOverride?: GUID;
@@ -84,7 +84,7 @@ const TeamPage: React.FC<TeamPageProps> = ({
           {!hideBackLink && (
             <Typography
               component="button"
-              onClick={() => navigate('/panel/equipos')}
+              onClick={() => navigate(APP_ROUTES.panelTeams)}
               sx={{
                 mt: 2,
                 border: 0,
@@ -103,20 +103,16 @@ const TeamPage: React.FC<TeamPageProps> = ({
   }
 
   const handleCreateScore = () => {
-    void Swal.fire({
+    void notifyInfo({
       title: 'Pendiente',
       text: 'La creación de puntuaciones desde esta vista aún no está implementada.',
-      icon: 'info',
-      confirmButtonColor: theme.palette.primary.main,
     });
   };
 
   const handleCreateSanction = () => {
-    void Swal.fire({
+    void notifyInfo({
       title: 'Pendiente',
       text: 'La creación de sanciones desde esta vista aún no está implementada.',
-      icon: 'info',
-      confirmButtonColor: theme.palette.primary.main,
     });
   };
 

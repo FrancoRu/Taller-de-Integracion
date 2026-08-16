@@ -168,10 +168,10 @@ public class ScorerRepositoryTests : IClassFixture<CustomWebApplicationFactory>
         List<ScorerByPlayerResponse> page = [.. items];
         Assert.Equal(5, totalCount);
         Assert.Equal(2, page.Count);
-        // Full ranking (desc): Rank0=50, Rank1=40, Rank2=30, Rank3=20, Rank4=10.
-        // Page 2 (size 2) => skip 2, take 2 => 3rd and 4th place: 30 and 20.
-        Assert.Equal(30, page[0].Points);
-        Assert.Equal(20, page[1].Points);
+        ScorerByPlayerResponse thirdPlace = page[0];
+        ScorerByPlayerResponse fourthPlace = page[1];
+        Assert.Equal(30, thirdPlace.Points);
+        Assert.Equal(20, fourthPlace.Points);
     }
 
     [Fact]
@@ -225,7 +225,6 @@ public class ScorerRepositoryTests : IClassFixture<CustomWebApplicationFactory>
         await AddScorerAsync(db, visitorPlayer.Id, sharedMatch.Id, points: 6);
         await AddScorerAsync(db, unrelatedPlayer.Id, otherMatch.Id, points: 9);
 
-        // MatchId filter: only players whose team appears in sharedMatch.
         GetScorerFilteredRequest matchFilter = new() { MatchId = sharedMatch.Id };
         (IEnumerable<ScorerByPlayerResponse> matchItems, int matchTotal) = await scorerRepository.GetPlayerScoresAsync(matchFilter);
         List<Guid> matchPlayerIds = [.. matchItems.Select(i => i.PlayerId)];
@@ -234,14 +233,12 @@ public class ScorerRepositoryTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Contains(visitorPlayer.Id, matchPlayerIds);
         Assert.DoesNotContain(unrelatedPlayer.Id, matchPlayerIds);
 
-        // TeamId filter: only the requested team's player.
         GetScorerFilteredRequest teamFilter = new() { TeamId = homeTeam.Id };
         (IEnumerable<ScorerByPlayerResponse> teamItems, int teamTotal) = await scorerRepository.GetPlayerScoresAsync(teamFilter);
         ScorerByPlayerResponse teamResult = Assert.Single(teamItems);
         Assert.Equal(1, teamTotal);
         Assert.Equal(homePlayer.Id, teamResult.PlayerId);
 
-        // PlayerId filter: only the requested player.
         GetScorerFilteredRequest playerFilter = new() { PlayerId = visitorPlayer.Id };
         (IEnumerable<ScorerByPlayerResponse> playerItems, int playerTotal) = await scorerRepository.GetPlayerScoresAsync(playerFilter);
         ScorerByPlayerResponse playerResult = Assert.Single(playerItems);
@@ -249,10 +246,6 @@ public class ScorerRepositoryTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal(visitorPlayer.Id, playerResult.PlayerId);
         Assert.Equal(6, playerResult.Points);
     }
-
-    // ---------------------------------------------------------------
-    // Seed helpers (local to this file — no shared/production code)
-    // ---------------------------------------------------------------
 
     private static async Task<Tournament> SeedTournamentAsync(ApplicationDBContext db)
     {

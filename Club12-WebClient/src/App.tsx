@@ -5,7 +5,9 @@ import '@fontsource/roboto/700.css';
 import '@fontsource/oswald/500.css';
 import '@fontsource/oswald/600.css';
 import '@fontsource/oswald/700.css';
+import { ReactElement } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Box } from '@mui/material';
 import Home from './views/home/home';
 import PublicTeamsPage from './views/home/teams/PublicTeamsPage';
 import PublicTeamPage from './views/home/teams/PublicTeamPage';
@@ -14,8 +16,11 @@ import PublicSanctionsPage from './views/home/sanctions/PublicSanctionsPage';
 import PublicMatchesPage from './views/home/matches/PublicMatchesPage';
 import PublicTournamentsPage from './views/home/tournaments/PublicTournamentsPage';
 import PublicTournamentPage from './views/home/tournaments/PublicTournamentPage';
+import BlogPostDetailPage from './views/blogPost/BlogPostDetailPage';
+import AddBlogPostForm from './views/blogPost/addBlogPostForm';
 import Login from './views/auth/login';
 import routes from './modules/core/constants/routes';
+import { APP_ROUTES } from './modules/core/constants/appRoutes';
 import HowWeAre from './views/home/howWeAre/howWeAre';
 import NavMenu from './views/home/NavMenu/navMenu';
 import { useAuth } from './modules/auth/hook/auth.hook';
@@ -45,6 +50,7 @@ import StatisticsPage from './views/panel/StatisticsPage';
 import { UserRolesType } from './modules/core/enum/user/userRolesType';
 import InvalidToken from './views/core/errors/invalidToken';
 import Forbidden from './views/core/errors/forbidden';
+import NotFound from './views/core/errors/NotFound';
 import PasswordReset from './views/auth/passwordReset';
 import PrivateRoute from './views/core/privateRoute';
 import TeamsPage from './views/team/TeamsPage';
@@ -57,406 +63,265 @@ import VenuePage from './views/venue/venuePage';
 import ScorersPage from './views/scorer/scorersPage';
 
 const FIRST_TAB_BY_ROLE: Partial<Record<UserRolesType, string>> = {
-  [UserRolesType.TeamManager]: '/panel/jugadores',
-  [UserRolesType.TournamentManager]: '/panel/torneos',
-  [UserRolesType.Owner]: '/panel/torneos',
-  [UserRolesType.Admin]: '/panel/usuarios',
+  [UserRolesType.TeamManager]: APP_ROUTES.panelPlayers,
+  [UserRolesType.TournamentManager]: APP_ROUTES.panelTournaments,
+  [UserRolesType.Owner]: APP_ROUTES.panelTournaments,
+  [UserRolesType.Admin]: APP_ROUTES.panelUsers,
 };
+
+interface AdminRouteConfig {
+  path: string;
+  element: ReactElement;
+  allowedRoles?: UserRolesType[];
+}
+
+const ADMIN_ROUTES: AdminRouteConfig[] = [
+  { path: APP_ROUTES.passwordReset, element: <PasswordReset /> },
+  {
+    path: APP_ROUTES.panelPlayers,
+    allowedRoles: [UserRolesType.TeamManager, UserRolesType.Owner],
+    element: <PlayersPage />,
+  },
+  {
+    path: APP_ROUTES.panelPlayer.pattern,
+    allowedRoles: [
+      UserRolesType.Admin,
+      UserRolesType.Owner,
+      UserRolesType.TournamentManager,
+      UserRolesType.TeamManager,
+    ],
+    element: <PlayerPage />,
+  },
+  {
+    path: APP_ROUTES.panelTeam,
+    allowedRoles: [UserRolesType.TeamManager],
+    element: <TeamPage />,
+  },
+  {
+    path: APP_ROUTES.panelTeamDetail.pattern,
+    allowedRoles: [
+      UserRolesType.TeamManager,
+      UserRolesType.TournamentManager,
+      UserRolesType.Owner,
+    ],
+    element: <TeamPage />,
+  },
+  {
+    path: APP_ROUTES.panelTournament,
+    allowedRoles: [UserRolesType.TournamentManager],
+    element: <TournamentPage />,
+  },
+  {
+    path: APP_ROUTES.panelTournamentDetail.pattern,
+    allowedRoles: [
+      UserRolesType.Admin,
+      UserRolesType.Owner,
+      UserRolesType.TournamentManager,
+    ],
+    element: <TournamentPage />,
+  },
+  {
+    path: APP_ROUTES.panelTournamentEdit.pattern,
+    allowedRoles: [
+      UserRolesType.Admin,
+      UserRolesType.Owner,
+      UserRolesType.TournamentManager,
+    ],
+    element: <TournamentEditPage />,
+  },
+  {
+    path: APP_ROUTES.panelTeams,
+    allowedRoles: [UserRolesType.TournamentManager, UserRolesType.Owner],
+    element: <TeamsPage title="Equipos" wrapInCard />,
+  },
+  {
+    path: APP_ROUTES.panelTeamRegister,
+    allowedRoles: [UserRolesType.TournamentManager, UserRolesType.Owner],
+    element: <TeamRegisterPage />,
+  },
+  {
+    path: APP_ROUTES.panelSanctions,
+    allowedRoles: [UserRolesType.TournamentManager, UserRolesType.Owner],
+    element: <PlayerSanctionsPage />,
+  },
+  {
+    path: APP_ROUTES.panelSanction.pattern,
+    allowedRoles: [UserRolesType.TournamentManager, UserRolesType.Owner],
+    element: <PlayerSanctionPage />,
+  },
+  {
+    path: APP_ROUTES.panelSanctionEdit.pattern,
+    allowedRoles: [UserRolesType.TournamentManager, UserRolesType.Owner],
+    element: <PlayerSanctionEditPage />,
+  },
+  {
+    path: APP_ROUTES.panelScorers,
+    allowedRoles: [UserRolesType.TournamentManager, UserRolesType.Owner],
+    element: <ScorersPage />,
+  },
+  {
+    path: APP_ROUTES.panelVenues,
+    allowedRoles: [UserRolesType.TournamentManager, UserRolesType.Owner],
+    element: <VenuesPage />,
+  },
+  {
+    path: APP_ROUTES.panelVenue.pattern,
+    allowedRoles: [UserRolesType.TournamentManager, UserRolesType.Owner],
+    element: <VenuePage />,
+  },
+  {
+    path: APP_ROUTES.panelTournaments,
+    allowedRoles: [
+      UserRolesType.Admin,
+      UserRolesType.Owner,
+      UserRolesType.TournamentManager,
+    ],
+    element: <TournamentsPage />,
+  },
+  {
+    path: APP_ROUTES.panelDivisions,
+    allowedRoles: [UserRolesType.Owner, UserRolesType.TournamentManager],
+    element: <DivisionsPage wrapInCard />,
+  },
+  {
+    path: APP_ROUTES.panelDivision.pattern,
+    allowedRoles: [UserRolesType.Owner, UserRolesType.TournamentManager],
+    element: <DivisionPage />,
+  },
+  {
+    path: APP_ROUTES.panelStages,
+    allowedRoles: [UserRolesType.Owner, UserRolesType.TournamentManager],
+    element: <StagesPage wrapInCard />,
+  },
+  {
+    path: APP_ROUTES.panelStageCreate,
+    allowedRoles: [UserRolesType.Owner, UserRolesType.TournamentManager],
+    element: <StageCreatePage />,
+  },
+  {
+    path: APP_ROUTES.panelStageEdit.pattern,
+    allowedRoles: [UserRolesType.Owner, UserRolesType.TournamentManager],
+    element: <StageEditPage />,
+  },
+  {
+    path: APP_ROUTES.panelStage.pattern,
+    allowedRoles: [UserRolesType.Owner, UserRolesType.TournamentManager],
+    element: <StagePage />,
+  },
+  {
+    path: APP_ROUTES.panelMatches,
+    allowedRoles: [UserRolesType.Owner, UserRolesType.TournamentManager],
+    element: <MatchesPage wrapInCard />,
+  },
+  {
+    path: APP_ROUTES.panelMatch.pattern,
+    allowedRoles: [UserRolesType.Owner, UserRolesType.TournamentManager],
+    element: <MatchPage />,
+  },
+  {
+    path: APP_ROUTES.panelBlogCreate,
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
+    element: <AddBlogPostForm />,
+  },
+  {
+    path: APP_ROUTES.panelUsers,
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
+    element: <UsersPage />,
+  },
+  {
+    path: APP_ROUTES.panelUserCreate,
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
+    element: <CreateUser />,
+  },
+  {
+    path: APP_ROUTES.panelUserEdit.pattern,
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
+    element: <EditUser />,
+  },
+  {
+    path: APP_ROUTES.panelUser.pattern,
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
+    element: <UserDetails />,
+  },
+  {
+    path: APP_ROUTES.panelSettings,
+    element: <Navigate to={APP_ROUTES.panelChangePassword} replace />,
+  },
+  {
+    path: APP_ROUTES.panelChangePassword,
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
+    element: <ChangePasswordPage />,
+  },
+  {
+    path: APP_ROUTES.panelEditProfile,
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
+    element: <EditUser />,
+  },
+  {
+    path: APP_ROUTES.panelStatistics,
+    allowedRoles: [UserRolesType.Admin],
+    element: <StatisticsPage />,
+  },
+  { path: '*', element: <NotFound /> },
+];
+
+interface PublicRouteConfig {
+  path: string;
+  element: ReactElement;
+}
+
+const PUBLIC_ROUTES: PublicRouteConfig[] = [
+  { path: APP_ROUTES.passwordReset, element: <PasswordReset /> },
+  { path: APP_ROUTES.home, element: <Home /> },
+  { path: APP_ROUTES.quienesSomos, element: <HowWeAre /> },
+  { path: APP_ROUTES.fichaMedica, element: <MedicalRecord /> },
+  { path: APP_ROUTES.reglamento, element: <Regulation /> },
+  { path: APP_ROUTES.publicTeams, element: <PublicTeamsPage /> },
+  { path: APP_ROUTES.publicTeam.pattern, element: <PublicTeamPage /> },
+  { path: APP_ROUTES.publicScorers, element: <PublicScorersPage /> },
+  { path: APP_ROUTES.publicSanctions, element: <PublicSanctionsPage /> },
+  { path: APP_ROUTES.publicMatches, element: <PublicMatchesPage /> },
+  { path: APP_ROUTES.publicTournaments, element: <PublicTournamentsPage /> },
+  {
+    path: APP_ROUTES.publicTournament.pattern,
+    element: <PublicTournamentPage />,
+  },
+  { path: APP_ROUTES.blogPost.pattern, element: <BlogPostDetailPage /> },
+  { path: APP_ROUTES.login, element: <Login /> },
+  { path: '*', element: <NotFound /> },
+];
 
 function App() {
   const { isAuthenticated, role } = useAuth();
   const location = useLocation();
 
-  if (location.pathname === '/forbidden') return <Forbidden />;
+  if (location.pathname === APP_ROUTES.forbidden) return <Forbidden />;
   if (location.pathname === routes.tokenInvalido) return <InvalidToken />;
 
   if (isAuthenticated) {
-    const defaultTab = FIRST_TAB_BY_ROLE[role] ?? '/panel/usuarios';
+    const defaultTab = FIRST_TAB_BY_ROLE[role] ?? APP_ROUTES.panelUsers;
     return (
       <SidebarLayout>
         <Routes>
-          <Route path="/auth/password-reset" element={<PasswordReset />} />
+          {ADMIN_ROUTES.map(({ path, element, allowedRoles }) => (
+            <Route
+              key={path}
+              path={path}
+              element={
+                allowedRoles ? (
+                  <PrivateRoute allowedRoles={allowedRoles}>
+                    {element}
+                  </PrivateRoute>
+                ) : (
+                  element
+                )
+              }
+            />
+          ))}
           <Route
-            path="/panel/jugadores"
-            element={
-              <PrivateRoute
-                allowedRoles={[UserRolesType.TeamManager, UserRolesType.Owner]}
-              >
-                <PlayersPage />
-              </PrivateRoute>
-            }
+            path={APP_ROUTES.panel}
+            element={<Navigate to={defaultTab} replace />}
           />
-          <Route
-            path="/panel/jugadores/:playerId"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.Admin,
-                  UserRolesType.Owner,
-                  UserRolesType.TournamentManager,
-                  UserRolesType.TeamManager,
-                ]}
-              >
-                <PlayerPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/equipo"
-            element={
-              <PrivateRoute allowedRoles={[UserRolesType.TeamManager]}>
-                <TeamPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/equipos/:teamId"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.TeamManager,
-                  UserRolesType.TournamentManager,
-                  UserRolesType.Owner,
-                ]}
-              >
-                <TeamPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/torneo"
-            element={
-              <PrivateRoute allowedRoles={[UserRolesType.TournamentManager]}>
-                <TournamentPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/torneos/:tournamentId"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.Admin,
-                  UserRolesType.Owner,
-                  UserRolesType.TournamentManager,
-                ]}
-              >
-                <TournamentPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/torneos/:tournamentId/editar"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.Admin,
-                  UserRolesType.Owner,
-                  UserRolesType.TournamentManager,
-                ]}
-              >
-                <TournamentEditPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/equipos"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.TournamentManager,
-                  UserRolesType.Owner,
-                ]}
-              >
-                <TeamsPage title="Equipos" wrapInCard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/registro-equipos"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.TournamentManager,
-                  UserRolesType.Owner,
-                ]}
-              >
-                <TeamRegisterPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/sanciones"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.TournamentManager,
-                  UserRolesType.Owner,
-                ]}
-              >
-                <PlayerSanctionsPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/sanciones/:playerSanctionId"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.TournamentManager,
-                  UserRolesType.Owner,
-                ]}
-              >
-                <PlayerSanctionPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/sanciones/editar/:playerSanctionId"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.TournamentManager,
-                  UserRolesType.Owner,
-                ]}
-              >
-                <PlayerSanctionEditPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/puntuaciones"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.TournamentManager,
-                  UserRolesType.Owner,
-                ]}
-              >
-                <ScorersPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/canchas"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.TournamentManager,
-                  UserRolesType.Owner,
-                ]}
-              >
-                <VenuesPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/canchas/:venueId"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.TournamentManager,
-                  UserRolesType.Owner,
-                ]}
-              >
-                <VenuePage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/torneos"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.Admin,
-                  UserRolesType.Owner,
-                  UserRolesType.TournamentManager,
-                ]}
-              >
-                <TournamentsPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/divisiones"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.Owner,
-                  UserRolesType.TournamentManager,
-                ]}
-              >
-                <DivisionsPage wrapInCard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/divisiones/:divisionId"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.Owner,
-                  UserRolesType.TournamentManager,
-                ]}
-              >
-                <DivisionPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/fases"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.Owner,
-                  UserRolesType.TournamentManager,
-                ]}
-              >
-                <StagesPage wrapInCard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/fases/crear"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.Owner,
-                  UserRolesType.TournamentManager,
-                ]}
-              >
-                <StageCreatePage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/fases/editar/:stageId"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.Owner,
-                  UserRolesType.TournamentManager,
-                ]}
-              >
-                <StageEditPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/fases/:stageId"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.Owner,
-                  UserRolesType.TournamentManager,
-                ]}
-              >
-                <StagePage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/partidos"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.Owner,
-                  UserRolesType.TournamentManager,
-                ]}
-              >
-                <MatchesPage wrapInCard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/partidos/:matchId"
-            element={
-              <PrivateRoute
-                allowedRoles={[
-                  UserRolesType.Owner,
-                  UserRolesType.TournamentManager,
-                ]}
-              >
-                <MatchPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/usuarios"
-            element={
-              <PrivateRoute
-                allowedRoles={[UserRolesType.Admin, UserRolesType.Owner]}
-              >
-                <UsersPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/usuarios/crear"
-            element={
-              <PrivateRoute
-                allowedRoles={[UserRolesType.Admin, UserRolesType.Owner]}
-              >
-                <CreateUser />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/usuarios/:userId/editar"
-            element={
-              <PrivateRoute
-                allowedRoles={[UserRolesType.Admin, UserRolesType.Owner]}
-              >
-                <EditUser />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/usuarios/:userId"
-            element={
-              <PrivateRoute
-                allowedRoles={[UserRolesType.Admin, UserRolesType.Owner]}
-              >
-                <UserDetails />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/configuracion"
-            element={
-              <Navigate to="/panel/configuracion/cambiar-password" replace />
-            }
-          />
-          <Route
-            path="/panel/configuracion/cambiar-password"
-            element={
-              <PrivateRoute
-                allowedRoles={[UserRolesType.Admin, UserRolesType.Owner]}
-              >
-                <ChangePasswordPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/configuracion/editar-perfil"
-            element={
-              <PrivateRoute
-                allowedRoles={[UserRolesType.Admin, UserRolesType.Owner]}
-              >
-                <EditUser />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/panel/estadisticas"
-            element={
-              <PrivateRoute allowedRoles={[UserRolesType.Admin]}>
-                <StatisticsPage />
-              </PrivateRoute>
-            }
-          />
-          <Route path="/panel" element={<Navigate to={defaultTab} replace />} />
-          <Route path="*" element={<Navigate to={defaultTab} replace />} />
         </Routes>
       </SidebarLayout>
     );
@@ -465,22 +330,13 @@ function App() {
   return (
     <>
       <NavMenu />
-      <Routes>
-        <Route path="/auth/password-reset" element={<PasswordReset />} />
-        <Route path="/" element={<Home />} />
-        <Route path="/quienes-somos" element={<HowWeAre />} />
-        <Route path="/ficha-medica" element={<MedicalRecord />} />
-        <Route path="/reglamento" element={<Regulation />} />
-        <Route path="/equipos" element={<PublicTeamsPage />} />
-        <Route path="/equipos/:teamId" element={<PublicTeamPage />} />
-        <Route path="/goleadores" element={<PublicScorersPage />} />
-        <Route path="/sanciones" element={<PublicSanctionsPage />} />
-        <Route path="/partidos" element={<PublicMatchesPage />} />
-        <Route path="/torneos" element={<PublicTournamentsPage />} />
-        <Route path="/torneos/:tournamentId" element={<PublicTournamentPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <Box component="main">
+        <Routes>
+          {PUBLIC_ROUTES.map(({ path, element }) => (
+            <Route key={path} path={path} element={element} />
+          ))}
+        </Routes>
+      </Box>
     </>
   );
 }

@@ -6,8 +6,7 @@ import {
   DialogTitle,
   Typography,
 } from '@mui/material';
-import Swal from 'sweetalert2';
-import theme from '@/theme';
+import { notifySuccess } from '@/modules/core/utils/confirmDialog';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import { IPlayerSanctionDeletePageProps } from '@/modules/playerSanction/type/playerSanction.d';
 import FormButtons from '@/views/core/components/FormButtons';
@@ -38,11 +37,9 @@ const PlayerSanctionDeletePage: React.FC<IPlayerSanctionDeletePageProps> = ({
     await deletePlayerSanction(sanction.id);
     setSubmitting(false);
 
-    await Swal.fire({
+    await notifySuccess({
       title: '¡Eliminada!',
       text: 'La sanción ha sido eliminada.',
-      icon: 'success',
-      confirmButtonColor: theme.palette.primary.main,
     });
 
     onClose();

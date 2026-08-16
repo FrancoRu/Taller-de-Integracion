@@ -1,4 +1,5 @@
 import { Filtered, GUID } from '@/modules/core/types/types';
+import { MatchType } from '@/modules/core/enum/match/matchType';
 import { ITeamMatchResponse } from '@/modules/team/type/team';
 import { IVenueResponse } from '@/modules/venue/type/venue';
 
@@ -15,7 +16,7 @@ export interface IMatchContextProps {
    * @param match The details of the match to add.
    * @returns A promise that resolves with the response containing the newly added match.
    */
-  addMatch(match: IAddMatchRequest): Promise<IMatchResponse | void>;
+  addMatch(match: IAddMatchRequest): Promise<IMinimalMatchResponse | void>;
 
   /**
    * Updates the score of an existing match.
@@ -84,21 +85,21 @@ export interface IAddMatchRequest {
 
   /**
    * The type of match (e.g., Regular, Playoff).
-   * @type {TypeMatch}
+   * @type {MatchType}
    */
-  type: TypeMatch;
+  type?: MatchType;
 
   /**
    * The ID of the home team.
    * @type {string}
    */
-  homeTeamid: GUID;
+  homeTeamId: GUID;
 
   /**
    * The ID of the visitor team.
    * @type {string}
    */
-  visitorTeamid: GUID;
+  visitorTeamId: GUID;
 
   /**
    * The ID of the division the match belongs to.
@@ -110,7 +111,7 @@ export interface IAddMatchRequest {
    * The ID of the venue where the match will take place.
    * @type {GUID}
    */
-  venueid: GUID;
+  venueId?: GUID;
 }
 
 /**
@@ -140,9 +141,9 @@ export interface IMatchResponse {
   matchDate: string;
 
   /**
-   * @property {TypeMatch} matchType - The category or type of the match (e.g., Regular Season, Playoff).
+   * @property {MatchType} matchType - The category or type of the match (e.g., Regular Season, Playoff).
    */
-  matchType: TypeMatch;
+  matchType: MatchType;
 
   /**
    * @property {ITeamMatchResponse} homeTeam - Details of the home team participating in the match.
@@ -170,9 +171,33 @@ export interface IMatchResponse {
   venue: IVenueResponse | null;
 
   /**
-   * @property {GUID} stageId - The unique identifier of the stage to which the match belongs.
+   * @property {GUID | null} stageId - The unique identifier of the stage to which the match belongs, or null if not assigned.
    */
-  stageId: GUID;
+  stageId: GUID | null;
+
+  /**
+   * @property {string | null} winningTeamName - The name of the winning team, or null if the match is not finished or was a draw.
+   */
+  winningTeamName: string | null;
+}
+
+/**
+ * The minimal response structure for a match, tailored for divisions
+ * (e.g. the create-match endpoint and a division's week schedule).
+ * Unlike {@link IMatchResponse}, teams are flat name strings rather than
+ * nested team objects.
+ * @interface IMinimalMatchResponse
+ */
+export interface IMinimalMatchResponse {
+  id: GUID;
+  matchDate: string;
+  homeTeamName: string;
+  visitorTeamName: string;
+  homeScore: number | null;
+  visitorScore: number | null;
+  winningTeamName: string | null;
+  isFinished: boolean;
+  matchType: MatchType;
 }
 
 /**
@@ -213,9 +238,9 @@ export interface MatchFiltered extends Filtered {
 
   /**
    * The type of match (Regular or Playoff).
-   * @type {TypeMatch}
+   * @type {MatchType}
    */
-  type?: TypeMatch;
+  type?: MatchType;
 
   /**
    * Indicates whether the match is finished.
@@ -243,10 +268,34 @@ export interface IPutMatchScoreRequest {
 }
 
 /**
- * The request body structure for updating the date and venue of a match.
+ * The request body structure for updating the date, venue and teams of a match.
  * @interface IPutMatchRequest
  */
-export interface IPutMatchRequest extends Partial<IAddMatchRequest> {}
+export interface IPutMatchRequest {
+  /**
+   * The new match date.
+   * @type {string}
+   */
+  matchDate?: string;
+
+  /**
+   * The id of the venue where the match will be played.
+   * @type {GUID}
+   */
+  venueId?: GUID;
+
+  /**
+   * The ID of the home team.
+   * @type {GUID}
+   */
+  homeTeamId?: GUID;
+
+  /**
+   * The ID of the visitor team.
+   * @type {GUID}
+   */
+  visitorTeamId?: GUID;
+}
 
 /**
  * @interface IMatchStatusChipProps

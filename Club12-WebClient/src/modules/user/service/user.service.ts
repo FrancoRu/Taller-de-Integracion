@@ -11,6 +11,7 @@ import {
 import {
   ChangePasswordRequest,
   RegisterUserRequest,
+  RegisterUserResponse,
   UpdateUserRequest,
   UserFilterRequest,
   UserResponse,
@@ -27,8 +28,8 @@ export const userService = {
 
   createUser: async (
     data: RegisterUserRequest
-  ): Promise<AxiosResponse<UserResponse>> =>
-    await sendPost<UserResponse>(`${routes.auth}/register`, data),
+  ): Promise<AxiosResponse<RegisterUserResponse>> =>
+    await sendPost<RegisterUserResponse>(`${routes.auth}/register`, data),
 
   updateUser: async (
     id: GUID,

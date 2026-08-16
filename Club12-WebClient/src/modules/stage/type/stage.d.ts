@@ -261,6 +261,11 @@ export enum StageType {
   Group = 'Group',
 
   /**
+   * A knockout stage with 16 teams (Round of 16).
+   */
+  RoundOf16 = 'RoundOf16',
+
+  /**
    * A knockout stage with 8 teams (Quarterfinals).
    */
   QuarterFinal = 'QuarterFinal',

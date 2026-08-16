@@ -49,9 +49,16 @@ public sealed class DatabaseBackupHostedService(
     /// </summary>
     public TimeSpan? IntervalOverride { get; init; }
 
-    private int _isRunning; // 0 = idle, 1 = a backup attempt is in flight.
+    /// <summary>
+    /// 0 = idle, 1 = a backup attempt is in flight.
+    /// </summary>
+    private int _isRunning;
     private Task? _inFlightRun;
 
+    /// <summary>
+    /// Ticks on a PeriodicTimer for the lifetime of the host. Cancellation via
+    /// stoppingToken during host shutdown is the expected exit path, not an error.
+    /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         if (!options.Enabled)
@@ -73,7 +80,6 @@ public sealed class DatabaseBackupHostedService(
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
-            // Normal shutdown via StopAsync.
         }
         finally
         {
@@ -126,9 +132,6 @@ public sealed class DatabaseBackupHostedService(
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            // Defense-in-depth: any unexpected failure from a port implementation
-            // (e.g. an unhandled storage upload error) must not crash the host or
-            // stop future scheduled attempts.
             logger.LogError(ex, "Unexpected error during scheduled backup attempt.");
         }
         finally

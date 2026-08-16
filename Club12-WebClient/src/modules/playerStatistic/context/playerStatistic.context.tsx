@@ -1,4 +1,4 @@
-import { AxiosError, AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
 import {
   createContext,
   ReactNode,
@@ -7,9 +7,8 @@ import {
   useState,
 } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useError } from '@/modules/error/hooks/error.hock';
+import { useUnknownErrorHandler } from '@/modules/error/hooks/useUnknownErrorHandler';
 import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
-import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 import { playerStatisticService } from '@/modules/playerStatistic/service/playerStatistic.service';
 import {
   AddPlayerStatisticRequest,
@@ -32,20 +31,9 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
   const [playerStatistics, setPlayerStatistics] = useState<
     PlayerStatisticResponse[] | null
   >(null);
-  const { setError } = useError();
   const queryClient = useQueryClient();
 
-  const handleUnknownError = useCallback(
-    (error: unknown) => {
-      if (error instanceof AxiosError) {
-        setError(error);
-        return;
-      }
-
-      setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-    },
-    [setError]
-  );
+  const handleUnknownError = useUnknownErrorHandler();
 
   const addPlayerStatisticMutation = useMutation({
     mutationFn: playerStatisticService.addPlayerStatistic,

@@ -13,6 +13,7 @@ const makeTeam = (
   logoUrl: '',
   score: 0,
   players: [],
+  scorers: [],
   ...overrides,
 });
 
@@ -34,6 +35,7 @@ const makeMatch = (overrides: Partial<IMatchResponse> & { id: GUID; stageId: GUI
   visitorTeam: null,
   isFinished: false,
   winningTeamId: null,
+  winningTeamName: null,
   venue: null,
   ...overrides,
 });
@@ -45,15 +47,14 @@ describe('buildBracket — round ordering and grouping', () => {
     const finalStage = makeStage({ id: guid('final'), stageType: StageType.Final, order: 3 });
     const groupStage = makeStage({ id: guid('group'), stageType: StageType.Group, isElimination: false, order: 0 });
 
-    // Input intentionally out of order to prove sorting.
-    const stages = [finalStage, groupStage, qfStage, sfStage];
+    const unsortedInputStages = [finalStage, groupStage, qfStage, sfStage];
 
     const qfMatch = makeMatch({ id: guid('m-qf'), stageId: qfStage.id });
     const sfMatch = makeMatch({ id: guid('m-sf'), stageId: sfStage.id });
     const finalMatch = makeMatch({ id: guid('m-final'), stageId: finalStage.id });
     const groupMatch = makeMatch({ id: guid('m-group'), stageId: groupStage.id });
 
-    const model = buildBracket(stages, [qfMatch, sfMatch, finalMatch, groupMatch]);
+    const model = buildBracket(unsortedInputStages, [qfMatch, sfMatch, finalMatch, groupMatch]);
 
     expect(model.rounds.map(round => round.stageType)).toEqual([
       StageType.QuarterFinal,
@@ -211,6 +212,27 @@ describe('buildBracket — graceful degradation on ambiguous inference', () => {
     expect(model.rounds.find(round => round.stageType === StageType.SemiFinal)?.matches).toEqual(
       []
     );
+  });
+});
+
+describe('buildBracket — RoundOf16', () => {
+  it('includes a manually-created RoundOf16 stage as the round before Cuartos', () => {
+    const r16Stage = makeStage({ id: guid('r16'), stageType: StageType.RoundOf16, order: 1 });
+    const qfStage = makeStage({ id: guid('qf'), stageType: StageType.QuarterFinal, order: 2 });
+    const sfStage = makeStage({ id: guid('sf'), stageType: StageType.SemiFinal, order: 3 });
+    const finalStage = makeStage({ id: guid('final'), stageType: StageType.Final, order: 4 });
+
+    const model = buildBracket(
+      [finalStage, sfStage, qfStage, r16Stage],
+      []
+    );
+
+    expect(model.rounds.map(round => round.stageType)).toEqual([
+      StageType.RoundOf16,
+      StageType.QuarterFinal,
+      StageType.SemiFinal,
+      StageType.Final,
+    ]);
   });
 });
 

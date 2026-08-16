@@ -3,6 +3,7 @@ using Application.DTOs.Abstract.Response;
 using Application.DTOs.User.Request;
 using Application.DTOs.User.Response;
 using Application.Interfaces.Services;
+using Application.Utils.Constants.Configuration;
 using Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -26,23 +27,17 @@ public sealed class IdentityUserManagementService(
     IEmailService                emailService,
     IConfiguration               configuration) : IUserManagementService
 {
-    // ─────────────────────────────────────────────────────────────
-    // GetAll  (paginated + filtered)
-    // ─────────────────────────────────────────────────────────────
-
     public async Task<PaginatedResponse<UserResponse>> GetAllAsync(
         string callerRole, Guid callerId,
         UserFilteredRequest filter,
         CancellationToken ct)
     {
-        // 1. Base scope.
         IQueryable<ApplicationUser> query = IsAdmin(callerRole)
             ? userManager.Users
             : IsOwner(callerRole)
                 ? userManager.Users.Where(u => u.CreatedByOwnerId == callerId)
                 : throw new UnauthorizedAccessException("Insufficient permissions to list users.");
 
-        // 2. Text filters.
         if (!string.IsNullOrWhiteSpace(filter.UserName))
             query = query.Where(u => u.UserName != null &&
                                      u.UserName.ToLower().Contains(filter.UserName.ToLower()));
@@ -55,7 +50,6 @@ public sealed class IdentityUserManagementService(
             query = query.Where(u => u.PhoneNumber != null &&
                                      u.PhoneNumber.Contains(filter.PhoneNumber));
 
-        // 3. Role filter via UserRoles join.
         if (filter.Role.HasValue)
         {
             string roleName = filter.Role.Value.ToRoleName();
@@ -69,10 +63,8 @@ public sealed class IdentityUserManagementService(
             query = query.Where(u => userIdsWithRole.Contains(u.Id));
         }
 
-        // 4. Total count before pagination.
         int totalCount = await query.CountAsync(ct);
 
-        // 5. Ordering.
         query = filter.OrderBy?.ToLower() switch
         {
             "username" => filter.Order == SortOrder.Descending
@@ -88,11 +80,9 @@ public sealed class IdentityUserManagementService(
                 : query.OrderBy(u => u.DateCreated),
         };
 
-        // 6. Pagination.
         int skip = (filter.PageNumber - 1) * filter.PageSize;
         List<ApplicationUser> users = await query.Skip(skip).Take(filter.PageSize).ToListAsync(ct);
 
-        // 7. Map.
         IReadOnlyList<UserResponse> items = await MapManyAsync(users);
 
         return new PaginatedResponse<UserResponse>
@@ -104,10 +94,6 @@ public sealed class IdentityUserManagementService(
         };
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // GetById
-    // ─────────────────────────────────────────────────────────────
-
     public async Task<UserResponse> GetByIdAsync(
         string callerRole, Guid callerId, Guid userId, CancellationToken ct)
     {
@@ -115,10 +101,6 @@ public sealed class IdentityUserManagementService(
         EnforceReadAccess(user, callerRole, callerId);
         return await MapOneAsync(user);
     }
-
-    // ─────────────────────────────────────────────────────────────
-    // Update  (profile only — no password)
-    // ─────────────────────────────────────────────────────────────
 
     public async Task<UserResponse> UpdateAsync(
         string callerRole, Guid callerId, Guid userId,
@@ -138,10 +120,6 @@ public sealed class IdentityUserManagementService(
 
         return await MapOneAsync(user);
     }
-
-    // ─────────────────────────────────────────────────────────────
-    // ChangePassword  (self-service or privileged)
-    // ─────────────────────────────────────────────────────────────
 
     public async Task ChangePasswordAsync(
         string callerRole, Guid callerId, Guid userId,
@@ -166,30 +144,30 @@ public sealed class IdentityUserManagementService(
             ThrowIfFailed(await userManager.AddPasswordAsync(user, request.NewPassword));
         }
 
-        user.MustChangePassword = false;                       // ← nuevo
-        ThrowIfFailed(await userManager.UpdateAsync(user));    // ← nuevo
+        user.MustChangePassword = false;
+        ThrowIfFailed(await userManager.UpdateAsync(user));
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // ResetPassword  (admin/owner → sends email with reset link)
-    // ─────────────────────────────────────────────────────────────
-
+    /// <summary>
+    /// Generates a standard Identity password reset token, later verified by
+    /// ConfirmPasswordResetAsync, and flags the account so that
+    /// MustChangePasswordMiddleware blocks all endpoints until the user
+    /// completes the reset. Requires admin/owner privileges.
+    /// </summary>
     public async Task<ResetPasswordResponse> ResetPasswordAsync(
         string callerRole, Guid callerId, Guid userId, CancellationToken ct)
     {
         ApplicationUser user = await FindOrThrowAsync(userId);
         EnforceResetPasswordAccess(user, callerRole, callerId);
 
-        // Standard Identity reset token (verified later by ConfirmPasswordResetAsync).
         string token = await userManager.GeneratePasswordResetTokenAsync(user);
 
-        // Flag the account — MustChangePasswordMiddleware blocks all endpoints until resolved.
         user.MustChangePassword = true;
         ThrowIfFailed(await userManager.UpdateAsync(user));
 
-        // Build the frontend link; token MUST be URL-encoded.
-        string frontendUrl = configuration["Frontend:PasswordResetUrl"]
-            ?? throw new InvalidOperationException("Frontend:PasswordResetUrl is not configured.");
+        string frontendUrl = configuration[ConfigurationKeys.Frontend.PasswordResetUrl]
+            ?? throw new InvalidOperationException(
+                $"{ConfigurationKeys.Frontend.PasswordResetUrl} is not configured.");
 
         string resetLink =
             $"{frontendUrl}" +
@@ -201,10 +179,6 @@ public sealed class IdentityUserManagementService(
         return new ResetPasswordResponse(user.Id);
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Delete
-    // ─────────────────────────────────────────────────────────────
-
     public async Task DeleteAsync(
         string callerRole, Guid callerId, Guid userId, CancellationToken ct)
     {
@@ -212,10 +186,6 @@ public sealed class IdentityUserManagementService(
         EnforceDeleteAccess(user, callerRole, callerId);
         ThrowIfFailed(await userManager.DeleteAsync(user));
     }
-
-    // ─────────────────────────────────────────────────────────────
-    // Activate / Deactivate  (Identity lockout)
-    // ─────────────────────────────────────────────────────────────
 
     public async Task<UserResponse> SetActiveAsync(
         string callerRole, Guid callerId, Guid userId, bool isActive, CancellationToken ct)
@@ -238,10 +208,6 @@ public sealed class IdentityUserManagementService(
 
         return await MapOneAsync(user);
     }
-
-    // ─────────────────────────────────────────────────────────────
-    // Access-control helpers
-    // ─────────────────────────────────────────────────────────────
 
     private static void EnforceReadAccess(ApplicationUser target, string callerRole, Guid callerId)
     {
@@ -274,10 +240,6 @@ public sealed class IdentityUserManagementService(
         throw new UnauthorizedAccessException("Insufficient permissions to delete this user.");
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Mapping helpers
-    // ─────────────────────────────────────────────────────────────
-
     private async Task<UserResponse> MapOneAsync(ApplicationUser user)
     {
         IList<string> roles = await userManager.GetRolesAsync(user);
@@ -294,10 +256,6 @@ public sealed class IdentityUserManagementService(
             results.Add(await MapOneAsync(user));
         return results;
     }
-
-    // ─────────────────────────────────────────────────────────────
-    // Find / throw helpers
-    // ─────────────────────────────────────────────────────────────
 
     private async Task<ApplicationUser> FindOrThrowAsync(Guid userId)
     {

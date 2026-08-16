@@ -148,11 +148,13 @@ public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFacto
         return sanction.Id;
     }
 
+    /// <summary>
+    /// Uses a fresh scope/DbContext because the request pipeline persists through
+    /// its own scoped DbContext; re-querying with a new one avoids reading a
+    /// stale change-tracker snapshot instead of the actual persisted row.
+    /// </summary>
     private async Task<SanctionAppealStatus> ReadAppealStatusAsync(Guid sanctionId)
     {
-        // Fresh scope/DbContext — the request pipeline persists through its own scoped
-        // DbContext, so re-querying with a new one avoids reading a stale change-tracker
-        // snapshot instead of the actual persisted row.
         using IServiceScope verifyScope = _factory.Services.CreateScope();
         ApplicationDBContext db = verifyScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
 

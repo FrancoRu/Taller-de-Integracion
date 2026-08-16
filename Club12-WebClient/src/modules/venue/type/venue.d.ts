@@ -92,7 +92,7 @@ export interface IVenueResponse {
    */
   address: string;
 
-  photoUrl: string;
+  photoUrl?: string;
 }
 
 /**
@@ -105,13 +105,13 @@ export interface IPutVenueRequest {
    * The name of the venue.
    * @type {string}
    */
-  name?: string;
+  name: string;
 
   /**
    * The address of the venue.
    * @type {string}
    */
-  address?: string;
+  address: string;
 
   /**
    * The URL of the venue's photo.

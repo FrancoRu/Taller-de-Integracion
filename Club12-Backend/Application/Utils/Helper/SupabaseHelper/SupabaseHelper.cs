@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Application.Utils.Constants.Configuration;
+using Microsoft.Extensions.Configuration;
 using Supabase;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,13 @@ namespace Application.Utils.Helper.SupabaseHelper;
 /// </summary>
 public class SupabaseHelper : ISupabaseRawStorage
 {
+    /// <summary>
+    /// Cache-Control max-age, in seconds, applied to uploaded images (1 year —
+    /// uploaded files are content-addressed by a fresh GUID name, so they
+    /// never need to be invalidated).
+    /// </summary>
+    private const string ImageCacheControlMaxAgeSeconds = "31536000";
+
     private readonly Client _client;
     private readonly string _bucketName;
     private readonly string _baseUrl;
@@ -24,10 +32,10 @@ public class SupabaseHelper : ISupabaseRawStorage
     /// <param name="configuration">The application configuration containing Supabase settings.</param>
     public SupabaseHelper(IConfiguration configuration)
     {
-        IConfigurationSection section = configuration.GetSection("SupaBase");
-        _baseUrl = section["ProjectUrl"]!;
-        string serviceRole = section["ServiceRole"]!;
-        _bucketName = section["BucketName"]!;
+        IConfigurationSection section = configuration.GetSection(ConfigurationKeys.Supabase.Section);
+        _baseUrl = section[ConfigurationKeys.Supabase.ProjectUrl]!;
+        string serviceRole = section[ConfigurationKeys.Supabase.ServiceRole]!;
+        _bucketName = section[ConfigurationKeys.Supabase.BucketName]!;
 
         SupabaseOptions options = new()
         {
@@ -57,7 +65,7 @@ public class SupabaseHelper : ISupabaseRawStorage
                 .Upload(UseStreamDotReadMethod(fileStream), fullPathInBucket,
                     new()
                     {
-                        CacheControl= "31536000",
+                        CacheControl= ImageCacheControlMaxAgeSeconds,
                         Upsert = true
                     }
                 );

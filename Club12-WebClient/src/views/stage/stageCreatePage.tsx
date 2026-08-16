@@ -11,8 +11,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import Swal from 'sweetalert2';
-import theme from '@/theme';
+import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { useStage } from '@/modules/stage/hook/stage.hook';
@@ -22,6 +21,8 @@ import {
   StageType,
 } from '@/modules/stage/type/stage.d';
 import FormButtons from '@/views/core/components/FormButtons';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 
 const INITIAL_STAGE_FORM: IStageCreateFormState = {
   name: '',
@@ -61,7 +62,7 @@ const StageCreatePage: React.FC = () => {
       return;
     }
 
-    await getDivisionsByFilters({ pageSize: 300 });
+    await getDivisionsByFilters({ pageSize: FILTER_OPTIONS_PAGE_SIZE });
   }, [getDivisionsByFilters, isDivisionContext]);
 
   useEffect(() => {
@@ -72,11 +73,11 @@ const StageCreatePage: React.FC = () => {
 
   const handleCancel = () => {
     if (queryDivisionId) {
-      navigate(`/panel/divisiones/${queryDivisionId}`);
+      navigate(APP_ROUTES.panelDivision.build(queryDivisionId));
       return;
     }
 
-    navigate('/panel/fases');
+    navigate(APP_ROUTES.panelStages);
   };
 
   const handleCreate = async () => {
@@ -85,41 +86,33 @@ const StageCreatePage: React.FC = () => {
       | '';
 
     if (!stageForm.name.trim()) {
-      await Swal.fire({
+      await notifyWarning({
         title: 'Campos incompletos',
         text: 'El nombre de la fase es obligatorio.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
 
     if (!resolvedDivisionId) {
-      await Swal.fire({
+      await notifyWarning({
         title: 'División requerida',
         text: 'Debes seleccionar una división.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
 
     if (!stageForm.startDate || !stageForm.endDate) {
-      await Swal.fire({
+      await notifyWarning({
         title: 'Fechas requeridas',
         text: 'Debes completar fecha de inicio y de fin.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
 
     if (new Date(stageForm.endDate) < new Date(stageForm.startDate)) {
-      await Swal.fire({
+      await notifyWarning({
         title: 'Fechas inválidas',
         text: 'La fecha de fin no puede ser anterior a la de inicio.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -144,11 +137,9 @@ const StageCreatePage: React.FC = () => {
       return;
     }
 
-    await Swal.fire({
+    await notifySuccess({
       title: 'Fase creada',
       text: 'La fase se creó correctamente.',
-      icon: 'success',
-      confirmButtonColor: theme.palette.primary.main,
     });
 
     handleCancel();

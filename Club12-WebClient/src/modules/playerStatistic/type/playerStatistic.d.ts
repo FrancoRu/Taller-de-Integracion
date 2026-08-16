@@ -61,10 +61,8 @@ export type StatisticType = 'Points' | 'Assists';
 
 export interface PlayerStatisticFiltered extends Filtered {
   playerId?: GUID;
-  teamId?: GUID;
   matchId?: GUID;
   type?: StatisticType;
-  isByPlayer?: boolean | null;
 }
 
 /**
@@ -142,7 +140,7 @@ export interface PutPlayerStatisticRequest {
    * The updated value of the player statistic.
    * @type {number}
    */
-  value?: number;
+  value: number;
 }
 
 export type PlayerStatisticsViewMode = 'team' | 'player';

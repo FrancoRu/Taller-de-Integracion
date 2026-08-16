@@ -32,6 +32,7 @@ import GavelIcon from '@mui/icons-material/Gavel';
 import StarIcon from '@mui/icons-material/Star';
 import StadiumIcon from '@mui/icons-material/Stadium';
 import ShieldIcon from '@mui/icons-material/Shield';
+import ArticleIcon from '@mui/icons-material/Article';
 
 export {
   DeleteIcon,
@@ -68,4 +69,5 @@ export {
   StarIcon,
   StadiumIcon,
   ShieldIcon,
+  ArticleIcon,
 };

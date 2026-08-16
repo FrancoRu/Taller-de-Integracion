@@ -17,8 +17,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import Swal from 'sweetalert2';
-import theme from '@/theme';
+import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
 import { TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
@@ -54,7 +53,7 @@ const TeamRegisterPage: React.FC = () => {
     void fetch();
   }, [getAllTournamentsByFilter]);
 
-  // When tournament selection changes, load all teams and filter client-side
+  /** When tournament selection changes, load all teams and filter client-side. */
   useEffect(() => {
     if (!selectedTournamentId) {
       return;
@@ -69,7 +68,7 @@ const TeamRegisterPage: React.FC = () => {
     void fetch();
   }, [selectedTournamentId, getTeamsByFiltered]);
 
-  // Visible teams: those whose tournamentId is the selected one OR null/undefined
+  /** Teams whose tournamentId is the selected one, or unassigned (null/undefined). */
   const visibleTeams = useMemo<ITeamResponse[]>(() => {
     if (!selectedTournamentId || !teams) {
       return [];
@@ -79,7 +78,7 @@ const TeamRegisterPage: React.FC = () => {
     );
   }, [teams, selectedTournamentId]);
 
-  // Sync checkboxes when visible teams change: pre-check those already in the tournament
+  /** Sync checkboxes when visible teams change: pre-check those already in the tournament. */
   useEffect(() => {
     if (!selectedTournamentId) {
       return;
@@ -110,11 +109,9 @@ const TeamRegisterPage: React.FC = () => {
     }
 
     if (checkedTeamIds.size === 0) {
-      void Swal.fire({
+      void notifyWarning({
         title: 'Sin equipos seleccionados',
         text: 'Seleccioná al menos un equipo para registrar.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -127,11 +124,9 @@ const TeamRegisterPage: React.FC = () => {
     setSubmitting(false);
 
     if (success) {
-      await Swal.fire({
+      await notifySuccess({
         title: 'Registro exitoso',
         text: 'Los equipos fueron registrados correctamente.',
-        icon: 'success',
-        confirmButtonColor: theme.palette.primary.main,
       });
     }
   };

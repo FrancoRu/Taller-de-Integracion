@@ -50,6 +50,11 @@ public class PgDumpBackupServiceTests
         Assert.Equal("-- pg_dump output --", content);
     }
 
+    /// <summary>
+    /// The password must never appear in the argument vector, since it would
+    /// otherwise leak via `ps`/task list; it is instead passed through the
+    /// PGPASSWORD environment variable.
+    /// </summary>
     [Fact]
     public async Task CreateDumpAsync_BuildsArgumentVectorFromConnectionString_PasswordNeverInArgs()
     {
@@ -66,23 +71,24 @@ public class PgDumpBackupServiceTests
         Assert.Contains("5433", runner.CapturedArgs!);
         Assert.Contains("app_user", runner.CapturedArgs!);
         Assert.Contains("club12", runner.CapturedArgs!);
-        // Password must never appear in the argument vector (would leak via `ps`/task list).
         Assert.DoesNotContain("s3cret", runner.CapturedArgs!);
         Assert.NotNull(runner.CapturedEnvironmentVariables);
         Assert.Equal("s3cret", runner.CapturedEnvironmentVariables!["PGPASSWORD"]);
     }
 
+    /// <summary>
+    /// maliciousDbName is crafted to look like a shell-injection payload and
+    /// must survive as one literal argument-vector element, never concatenated
+    /// into a shell command string that a shell could re-tokenize/expand. ';'
+    /// and '=' are reserved separators in the ADO connection-string format
+    /// itself — a different boundary than the subprocess argument vector under
+    /// test here — so the payload avoids those two characters and instead uses
+    /// shell metacharacters: $(), backticks, pipes, and &.
+    /// </summary>
     [Fact]
     public async Task CreateDumpAsync_ArgumentInjectionAttempt_PassedAsLiteralArgVectorElement()
     {
         FakeProcessRunner runner = new() { ResultToReturn = new ProcessResult(0, "ok", string.Empty) };
-        // A database name crafted to look like a shell-injection payload — must
-        // survive as one literal argument-vector element, never concatenated
-        // into a shell command string that a shell could re-tokenize/expand.
-        // (';' and '=' are reserved separators in the ADO connection-string
-        // format itself — a different boundary than the subprocess argument
-        // vector under test here — so the payload avoids those two chars and
-        // instead uses shell metacharacters: `$()`, backticks, pipes, `&`.)
         const string maliciousDbName = "club12$(touch pwned)`whoami`|evil&";
         IConfiguration configuration = BuildConfiguration(
             $"Host=localhost;Port=5432;Database={maliciousDbName};Username=app;Password=x");
@@ -113,11 +119,13 @@ public class PgDumpBackupServiceTests
         Assert.Contains("connection failed", ex.Message);
     }
 
+    /// <summary>
+    /// Simulates what ProcessRunner returns when Process.Start fails for a
+    /// missing executable: sentinel exit code -1, detail in StdErr.
+    /// </summary>
     [Fact]
     public async Task CreateDumpAsync_MissingBinary_ThrowsHandledExceptionWithActionableMessage()
     {
-        // Simulates what ProcessRunner returns when Process.Start fails for a
-        // missing executable: sentinel exit code -1, detail in StdErr.
         FakeProcessRunner runner = new()
         {
             ResultToReturn = new ProcessResult(

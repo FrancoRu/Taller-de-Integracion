@@ -14,6 +14,9 @@ import { useUser } from '@/modules/user/hook/user.hook';
 import { RegisterUserRequest } from '@/modules/user/type/user';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 import { useError } from '@/modules/error/hooks/error.hock';
+import { HttpStatus } from '@/modules/core/constants/httpStatus';
+import { USERNAME_LENGTH } from '@/modules/core/constants/constants';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const ROLE_LABELS: Partial<Record<UserRolesType, string>> = {
   [UserRolesType.Owner]: 'Owner',
@@ -21,7 +24,6 @@ const ROLE_LABELS: Partial<Record<UserRolesType, string>> = {
   [UserRolesType.TeamManager]: 'Responsable de Equipo',
 };
 
-// Roles that Admin can assign
 const ADMIN_ASSIGNABLE_ROLES: UserRolesType[] = [UserRolesType.Owner];
 
 const OWNER_ASSIGNABLE_ROLES: UserRolesType[] = [
@@ -46,10 +48,9 @@ const CreateUser: React.FC = () => {
   const isAdmin = loggedRole === UserRolesType.Admin;
   const isOwner = loggedRole === UserRolesType.Owner;
 
-  // Redirect roles that can't create users
   useEffect(() => {
     if (!isAdmin && !isOwner) {
-      navigate('/', { replace: true });
+      navigate(APP_ROUTES.home, { replace: true });
     }
   }, [isAdmin, isOwner, navigate]);
 
@@ -78,7 +79,7 @@ const CreateUser: React.FC = () => {
     if (!form.role) messages.push('El rol es requerido.');
 
     if (messages.length > 0) {
-      setMessage(400, messages);
+      setMessage(HttpStatus.BadRequest, messages);
       return;
     }
 
@@ -94,7 +95,7 @@ const CreateUser: React.FC = () => {
     setSubmitting(false);
 
     if (result) {
-      navigate('/panel/usuarios');
+      navigate(APP_ROUTES.panelUsers);
     }
   };
 
@@ -133,7 +134,10 @@ const CreateUser: React.FC = () => {
             name="username"
             value={form.username}
             onChange={handleChange}
-            inputProps={{ minLength: 3, maxLength: 50 }}
+            inputProps={{
+              minLength: USERNAME_LENGTH.Min,
+              maxLength: USERNAME_LENGTH.Max,
+            }}
           />
 
           <TextField
@@ -165,7 +169,7 @@ const CreateUser: React.FC = () => {
           <Stack direction="row" spacing={2} justifyContent="flex-end">
             <Button
               variant="outlined"
-              onClick={() => navigate('/panel/usuarios')}
+              onClick={() => navigate(APP_ROUTES.panelUsers)}
               disabled={submitting}
             >
               Cancelar

@@ -79,9 +79,11 @@ class ResizeObserverStub {
   disconnect() {}
 }
 
-// MUI DataGrid virtualizes rows/columns based on measured container size.
-// jsdom reports zero layout dimensions, which hides columns like the
-// actions column entirely. Stub non-zero dimensions so all columns render.
+/**
+ * MUI DataGrid virtualizes rows/columns based on measured container size.
+ * jsdom reports zero layout dimensions, which hides columns like the actions
+ * column entirely. Stub non-zero dimensions so all columns render.
+ */
 const stubLayoutDimensions = () => {
   Object.defineProperties(window.HTMLElement.prototype, {
     offsetWidth: {

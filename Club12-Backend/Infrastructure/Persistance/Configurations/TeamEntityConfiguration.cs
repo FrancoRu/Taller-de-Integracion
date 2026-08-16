@@ -4,6 +4,10 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Persistance.Configurations;
 
+/// <summary>
+/// TournamentId is an optional FK since a Team may exist without a tournament.
+/// Deleting a Team cascades to its Players.
+/// </summary>
 public class TeamEntityConfiguration : BaseEntityConfiguration<Team>
 {
     protected override void ConfigureEntity(EntityTypeBuilder<Team> builder)
@@ -15,13 +19,11 @@ public class TeamEntityConfiguration : BaseEntityConfiguration<Team>
         builder.Property(t => t.LogoUrl).IsRequired();
         builder.Property(t => t.ShirtColor).IsRequired();
 
-        // TournamentId: optional FK (Team may belong to a tournament or not)
         builder.HasOne(t => t.Tournament)
             .WithMany(tourn => tourn.Teams)
             .HasForeignKey(t => t.TournamentId)
             .IsRequired(false);
 
-        // Cascade: deleting a Team removes its Players
         builder.HasMany(t => t.Players)
             .WithOne(p => p.Team)
             .HasForeignKey(p => p.TeamId)

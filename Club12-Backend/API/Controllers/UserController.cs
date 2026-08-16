@@ -22,10 +22,6 @@ namespace API.Controllers;
 public class UserController(
     IUserManagementService userManagementService) : ControllerBase
 {
-    // ─────────────────────────────────────────────────────────────
-    // GET /api/users
-    // ─────────────────────────────────────────────────────────────
-
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK,        Type = typeof(PaginatedResponse<UserResponse>))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -35,10 +31,6 @@ public class UserController(
         var (role, id) = User.GetCallerClaims();  
         return Ok(await userManagementService.GetAllAsync(role, id, filter, ct));
     }
-
-    // ─────────────────────────────────────────────────────────────
-    // GET /api/users/{userId}
-    // ─────────────────────────────────────────────────────────────
 
     [HttpGet("{userId:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK,        Type = typeof(UserResponse))]
@@ -50,10 +42,6 @@ public class UserController(
         return Ok(await userManagementService.GetByIdAsync(role, id, userId, ct));
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // PUT /api/users/{userId}   — profile fields only
-    // ─────────────────────────────────────────────────────────────
-
     [HttpPut("{userId:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK,        Type = typeof(UserResponse))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -64,10 +52,6 @@ public class UserController(
         var (role, id) = User.GetCallerClaims();  
         return Ok(await userManagementService.UpdateAsync(role, id, userId, request, ct));
     }
-
-    // ─────────────────────────────────────────────────────────────
-    // PUT /api/users/{userId}/password   — password change (known current)
-    // ─────────────────────────────────────────────────────────────
 
     [HttpPut("{userId:guid}/password")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -82,10 +66,6 @@ public class UserController(
         return NoContent();
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // POST /api/users/{userId}/password/reset   — forced reset (Admin / Owner only)
-    // ─────────────────────────────────────────────────────────────
-
     [HttpPost("{userId:guid}/password/reset")]
     [ProducesResponseType(StatusCodes.Status200OK,        Type = typeof(ResetPasswordResponse))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -97,10 +77,6 @@ public class UserController(
         return Ok(await userManagementService.ResetPasswordAsync(role, id, userId, ct));
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // DELETE /api/users/{userId}
-    // ─────────────────────────────────────────────────────────────
-
     [HttpDelete("{userId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -111,10 +87,6 @@ public class UserController(
         await userManagementService.DeleteAsync(role, id, userId, ct);
         return NoContent();
     }
-
-    // ─────────────────────────────────────────────────────────────
-    // PUT /api/users/{userId}/active   — activate / deactivate account
-    // ─────────────────────────────────────────────────────────────
 
     [HttpPut("{userId:guid}/active")]
     [ProducesResponseType(StatusCodes.Status200OK,        Type = typeof(UserResponse))]

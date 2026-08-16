@@ -14,6 +14,8 @@ import {
 import { authService } from '@/modules/auth/service/auth.service';
 import { useError } from '@/modules/error/hooks/error.hock';
 import InvalidToken from '@/views/core/errors/invalidToken';
+import { HttpStatus } from '@/modules/core/constants/httpStatus';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const getPasswordPolicyState = (password: string) => {
   const uniqueCharsCount = new Set(password).size;
@@ -109,7 +111,7 @@ export default function PasswordReset() {
     }
 
     if (messages.length > 0) {
-      setMessage(400, messages);
+      setMessage(HttpStatus.BadRequest, messages);
       return;
     }
 
@@ -121,11 +123,11 @@ export default function PasswordReset() {
         newPassword,
       });
 
-      if (response?.status === 200) {
-        setMessage(200, [
+      if (response?.status === HttpStatus.Ok) {
+        setMessage(HttpStatus.Ok, [
           'Contraseña actualizada correctamente. Iniciá sesión.',
         ]);
-        navigate('/login', { replace: true });
+        navigate(APP_ROUTES.login, { replace: true });
       }
     } catch (error: unknown) {
       setError(error as AxiosError);
@@ -242,7 +244,7 @@ export default function PasswordReset() {
             <Stack direction="row" spacing={2} justifyContent="flex-end">
               <Button
                 variant="outlined"
-                onClick={() => navigate('/login', { replace: true })}
+                onClick={() => navigate(APP_ROUTES.login, { replace: true })}
                 disabled={submitting}
               >
                 Cancelar

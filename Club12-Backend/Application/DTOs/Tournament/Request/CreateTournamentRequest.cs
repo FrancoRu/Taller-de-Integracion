@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Application.Utils.Constants.Validation;
+using System;
 using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.Tournament.Request;
 
@@ -36,13 +37,15 @@ public class CreateTournamentRequest
     /// The maximum number of teams allowed to participate in the tournament.
     /// </summary>
     [Required(ErrorMessage = "Max teams is required.")]
-    [Range(4, 32, ErrorMessage = "Max teams must be between 4 and 32.")]
+    [Range(TournamentFieldRange.MinAllowedTeams, TournamentFieldRange.MaxAllowedTeams,
+        ErrorMessage = "Max teams must be between 4 and 32.")]
     public required int MaxTeams { get; set; }
 
     /// <summary>
     /// The minimum number of teams required to hold the tournament.
     /// </summary>
     [Required(ErrorMessage = "Min teams is required.")]
-    [Range(4, 32, ErrorMessage = "Min teams must be between 4 and 32.")]
+    [Range(TournamentFieldRange.MinAllowedTeams, TournamentFieldRange.MaxAllowedTeams,
+        ErrorMessage = "Min teams must be between 4 and 32.")]
     public required int MinTeams { get; set; }
 }

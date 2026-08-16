@@ -1,5 +1,7 @@
 ﻿using Application.DTOs.Auth.Response;
 using Application.Interfaces.Services;
+using Application.Utils.Constants.Auth;
+using Application.Utils.Constants.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -18,11 +20,11 @@ namespace Application.Services;
 /// </summary>
 public class AuthService(IConfiguration configuration) : IAuthService
 {
-    private readonly string _jwtSecret = configuration.GetSection("JWT:Key").Value
+    private readonly string _jwtSecret = configuration.GetSection(ConfigurationKeys.Jwt.Key).Value
         ?? throw new ArgumentNullException(nameof(configuration), "The JWT Key should be initialized");
-    private readonly string _issuer = configuration.GetSection("JWT:Issuer").Value
+    private readonly string _issuer = configuration.GetSection(ConfigurationKeys.Jwt.Issuer).Value
         ?? throw new ArgumentNullException(nameof(configuration), "The JWT Issuer should be initialized");
-    private readonly string _audience = configuration.GetSection("JWT:Audience").Value
+    private readonly string _audience = configuration.GetSection(ConfigurationKeys.Jwt.Audience).Value
         ?? throw new ArgumentNullException(nameof(configuration), "The JWT Audience should be initialized");
 
     public Task<TokenResponse> GenerateJwtTokenAsync(IEnumerable<Claim> claims, CancellationToken ct = default)
@@ -33,7 +35,7 @@ public class AuthService(IConfiguration configuration) : IAuthService
         SecurityTokenDescriptor tokenDescriptor = new()
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddHours(24),
+            Expires = DateTime.UtcNow.AddHours(TokenLifetime.AccessTokenExpiryHours),
             Issuer = _issuer,
             Audience = _audience,
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -43,12 +45,13 @@ public class AuthService(IConfiguration configuration) : IAuthService
         string accessToken = tokenHandler.WriteToken(token);
 
         string refreshToken = GenerateRefreshToken();
-        return Task.FromResult(new TokenResponse(accessToken, TimeSpan.FromHours(24), refreshToken));
+        return Task.FromResult(new TokenResponse(
+            accessToken, TimeSpan.FromHours(TokenLifetime.AccessTokenExpiryHours), refreshToken));
     }
 
     private static string GenerateRefreshToken()
     {
-        byte[] randomBytes = new byte[64];
+        byte[] randomBytes = new byte[TokenLifetime.RefreshTokenByteLength];
         using RandomNumberGenerator rng = RandomNumberGenerator.Create();
         rng.GetBytes(randomBytes);
         return Convert.ToBase64String(randomBytes);

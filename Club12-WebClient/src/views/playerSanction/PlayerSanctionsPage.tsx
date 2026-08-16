@@ -36,7 +36,10 @@ import PlayerSanctionDeletePage from '@/views/playerSanction/playerSanctionDelet
 import {
   TABLE_PAGE_SIZE_OPTIONS,
   TABLE_ROWS_PER_PAGE,
+  FILTER_OPTIONS_PAGE_SIZE,
 } from '@/modules/core/constants/pagination';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import { FILTERS_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/constants';
 
 const EMPTY_FILTERS: PlayerSanctionsSearchFilters = {};
 
@@ -108,7 +111,7 @@ const PlayerSanctionsPage: React.FC = () => {
   }, [getPlayersByFilter]);
 
   useEffect(() => {
-    void getAllTournamentsByFilterRef.current({ pageSize: 300 });
+    void getAllTournamentsByFilterRef.current({ pageSize: FILTER_OPTIONS_PAGE_SIZE });
   }, []);
 
   useEffect(() => {
@@ -118,7 +121,7 @@ const PlayerSanctionsPage: React.FC = () => {
 
     void getDivisionsByFiltersRef.current({
       tournamentId: filters.tournamentId,
-      pageSize: 300,
+      pageSize: FILTER_OPTIONS_PAGE_SIZE,
     });
   }, [filters.tournamentId]);
 
@@ -129,7 +132,7 @@ const PlayerSanctionsPage: React.FC = () => {
 
     void getStagesByFiltersRef.current({
       divisionId: filters.divisionId,
-      pageSize: 300,
+      pageSize: FILTER_OPTIONS_PAGE_SIZE,
     });
   }, [filters.divisionId]);
 
@@ -140,7 +143,7 @@ const PlayerSanctionsPage: React.FC = () => {
 
     void getMatchByFilterRef.current({
       stageId: filters.stageId,
-      pageSize: 300,
+      pageSize: FILTER_OPTIONS_PAGE_SIZE,
     });
   }, [filters.stageId]);
 
@@ -151,7 +154,7 @@ const PlayerSanctionsPage: React.FC = () => {
 
     void getPlayersByFilterRef.current({
       teamId: filters.teamId,
-      pageSize: 300,
+      pageSize: FILTER_OPTIONS_PAGE_SIZE,
     });
   }, [filters.teamId]);
 
@@ -174,7 +177,7 @@ const PlayerSanctionsPage: React.FC = () => {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       setDebouncedFilters(filters);
-    }, 500);
+    }, FILTERS_DEBOUNCE_DELAY_MS);
 
     return () => clearTimeout(timeoutId);
   }, [filters]);
@@ -255,14 +258,14 @@ const PlayerSanctionsPage: React.FC = () => {
 
   const handleView = useCallback(
     (row: IPlayerSanctionResponse) => {
-      navigate(`/panel/sanciones/${row.id}`);
+      navigate(APP_ROUTES.panelSanction.build(row.id));
     },
     [navigate]
   );
 
   const handleEdit = useCallback(
     (row: IPlayerSanctionResponse) => {
-      navigate(`/panel/sanciones/editar/${row.id}`);
+      navigate(APP_ROUTES.panelSanctionEdit.build(row.id));
     },
     [navigate]
   );

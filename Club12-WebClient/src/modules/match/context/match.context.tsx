@@ -1,4 +1,4 @@
-import { AxiosError, AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
 import {
   createContext,
   ReactNode,
@@ -10,17 +10,18 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
 import { useError } from '@/modules/error/hooks/error.hock';
+import { useUnknownErrorHandler } from '@/modules/error/hooks/useUnknownErrorHandler';
 import { matchService } from '@/modules/match/service/match.service';
 import {
   IAddMatchRequest,
   IMatchContextProps,
   MatchFiltered,
   IMatchResponse,
+  IMinimalMatchResponse,
   IPutMatchRequest,
   IPutMatchScoreRequest,
 } from '@/modules/match/type/match';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
-import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 import { matchKeys } from '@/modules/match/queryKeys';
 
 export const MatchContext = createContext<IMatchContextProps | undefined>(
@@ -33,20 +34,10 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
   const [match, setMatch] = useState<IMatchResponse | null>(null);
   const [matches, setMatches] = useState<IMatchResponse[] | null>(null);
 
-  const { setError, setMessage } = useError();
+  const { setMessage } = useError();
   const queryClient = useQueryClient();
 
-  const handleUnknownError = useCallback(
-    (error: unknown) => {
-      if (error instanceof AxiosError) {
-        setError(error);
-        return;
-      }
-
-      setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-    },
-    [setError]
-  );
+  const handleUnknownError = useUnknownErrorHandler();
 
   const addMatchMutation = useMutation({
     mutationFn: matchService.addMatch,
@@ -83,13 +74,11 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
   }, [match]);
 
   const addMatch = useCallback(
-    async (match: IAddMatchRequest): Promise<IMatchResponse | void> => {
+    async (match: IAddMatchRequest): Promise<IMinimalMatchResponse | void> => {
       try {
-        const res: AxiosResponse<IMatchResponse> =
+        const res: AxiosResponse<IMinimalMatchResponse> =
           await addMatchMutation.mutateAsync(match);
         if (res) {
-          setMatch(res.data);
-          queryClient.setQueryData(matchKeys.byId(res.data.id), res);
           await queryClient.invalidateQueries({ queryKey: matchKeys.list() });
           setMessage(res.status, ['El partido fue creado satisfactoriamente.']);
         }

@@ -1,3 +1,4 @@
+using Application.Utils.Constants.Validation;
 using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.PlayerSanction.Request;
 
@@ -16,6 +17,6 @@ public class ResolveAppealRequest
     /// The decision notes recorded for the appeal resolution.
     /// </summary>
     [Required]
-    [StringLength(1000, MinimumLength = 1)]
+    [StringLength(SanctionFieldLengths.LongTextMaxLength, MinimumLength = SanctionFieldLengths.LongTextMinLength)]
     public required string Resolution { get; set; }
 }

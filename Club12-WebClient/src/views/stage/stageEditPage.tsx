@@ -11,19 +11,23 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import Swal from 'sweetalert2';
-import theme from '@/theme';
+import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { useStage } from '@/modules/stage/hook/stage.hook';
 import { IStageEditFormState } from '@/modules/stage/type/stage.d';
 import FormButtons from '@/views/core/components/FormButtons';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const INITIAL_FORM: IStageEditFormState = {
   description: '',
   isActive: false,
 };
 
+/**
+ * If the backend sends a date-only format (no time component), the end date
+ * is treated as passed only after that whole day ends, not at midnight.
+ */
 const hasEndDatePassed = (endDateValue?: string | null): boolean => {
   if (!endDateValue) {
     return false;
@@ -34,7 +38,6 @@ const hasEndDatePassed = (endDateValue?: string | null): boolean => {
     return false;
   }
 
-  // If backend sends date-only format, allow change after that day ends.
   if (!endDateValue.includes('T')) {
     parsed.setHours(23, 59, 59, 999);
   }
@@ -87,11 +90,11 @@ const StageEditPage: React.FC = () => {
 
   const handleCancel = useCallback(() => {
     if (!targetStageId) {
-      navigate('/panel/fases');
+      navigate(APP_ROUTES.panelStages);
       return;
     }
 
-    navigate(`/panel/fases/${targetStageId}`);
+    navigate(APP_ROUTES.panelStage.build(targetStageId));
   }, [navigate, targetStageId]);
 
   const handleSave = useCallback(async () => {
@@ -100,11 +103,9 @@ const StageEditPage: React.FC = () => {
     }
 
     if (!canEditIsActive && stageForm.isActive !== stage.isActive) {
-      await Swal.fire({
+      await notifyWarning({
         title: 'Cambio no permitido',
         text: 'Solo podés modificar el estado Activa cuando la fecha de fin ya pasó.',
-        icon: 'warning',
-        confirmButtonColor: theme.palette.primary.main,
       });
       return;
     }
@@ -120,14 +121,12 @@ const StageEditPage: React.FC = () => {
       return;
     }
 
-    await Swal.fire({
+    await notifySuccess({
       title: 'Fase actualizada',
       text: 'Los cambios se guardaron correctamente.',
-      icon: 'success',
-      confirmButtonColor: theme.palette.primary.main,
     });
 
-    navigate(`/panel/fases/${targetStageId}`);
+    navigate(APP_ROUTES.panelStage.build(targetStageId));
   }, [
     canEditIsActive,
     navigate,

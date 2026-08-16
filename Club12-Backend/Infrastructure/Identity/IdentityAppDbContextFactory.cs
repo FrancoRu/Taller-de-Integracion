@@ -1,3 +1,4 @@
+using Application.Utils.Constants.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
@@ -14,12 +15,16 @@ namespace Infrastructure.Identity;
 /// </summary>
 public sealed class IdentityAppDbContextFactory : IDesignTimeDbContextFactory<IdentityAppDbContext>
 {
+    /// <summary>
+    /// Builds configuration the same way WebApplication.CreateBuilder does at
+    /// runtime: base appsettings.json first, then the environment-specific
+    /// file, then every other appsettings.*.json found, with later files
+    /// overriding earlier ones (last writer wins).
+    /// </summary>
     public IdentityAppDbContext CreateDbContext(string[] args)
     {
         string basePath = ResolveBasePath();
 
-        // Load base settings first, then let any *.json file override (last writer wins).
-        // This mirrors what WebApplication.CreateBuilder does at runtime.
         string aspNetEnv = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
                            ?? "Development";
 
@@ -28,7 +33,6 @@ public sealed class IdentityAppDbContextFactory : IDesignTimeDbContextFactory<Id
         builder.AddJsonFile("appsettings.json",                       optional: true);
         builder.AddJsonFile($"appsettings.{aspNetEnv}.json",         optional: true);
 
-        // Scan every remaining appsettings.*.json (catches appsettings.Franco.json, etc.)
         if (Directory.Exists(basePath))
         {
             string?[] extras = Directory
@@ -45,9 +49,9 @@ public sealed class IdentityAppDbContextFactory : IDesignTimeDbContextFactory<Id
 
         IConfigurationRoot config = builder.Build();
 
-        string connectionString = config.GetConnectionString("DbConnection")
+        string connectionString = config.GetConnectionString(ConfigurationKeys.DbConnection)
             ?? throw new InvalidOperationException(
-                $"Connection string 'DbConnection' not found.\n" +
+                $"Connection string '{ConfigurationKeys.DbConnection}' not found.\n" +
                 $"Searched in: {basePath}\n" +
                 $"Files loaded: appsettings.json, appsettings.{aspNetEnv}.json + all appsettings.*.json");
 

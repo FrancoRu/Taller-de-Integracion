@@ -1,3 +1,4 @@
+using Application.Utils.Constants.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace Application.DTOs.Auth.Request;
@@ -15,7 +16,8 @@ public sealed class RegisterUserRequest
     /// Unique display name for the user. Stored in AspNetUsers.UserName.
     /// </summary>
     [Required(ErrorMessage = "Username is required.")]
-    [StringLength(50, MinimumLength = 3, ErrorMessage = "Username must be between 3 and 50 characters.")]
+    [StringLength(UserFieldLengths.UsernameMaxLength, MinimumLength = UserFieldLengths.UsernameMinLength,
+        ErrorMessage = "Username must be between 3 and 50 characters.")]
     public required string Username { get; set; }
 
     /// <summary>

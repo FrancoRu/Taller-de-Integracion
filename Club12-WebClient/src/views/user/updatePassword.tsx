@@ -15,6 +15,8 @@ import { useError } from '@/modules/error/hooks/error.hock';
 import { useUser } from '@/modules/user/hook/user.hook';
 import { COOKIE_SIGNIN_TOKEN } from '@/modules/core/constants/constants';
 import { GUID } from '@/modules/core/types/types';
+import { HttpStatus } from '@/modules/core/constants/httpStatus';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 interface PasswordForm {
   currentPassword: string;
@@ -186,7 +188,7 @@ const UpdatePassword: React.FC<UpdatePasswordProps> = ({
     }
 
     if (messages.length > 0) {
-      setMessage(400, messages);
+      setMessage(HttpStatus.BadRequest, messages);
       return;
     }
 
@@ -200,9 +202,9 @@ const UpdatePassword: React.FC<UpdatePasswordProps> = ({
     setSubmitting(false);
 
     if (ok) {
-      setMessage(200, ['Contraseña actualizada correctamente.']);
+      setMessage(HttpStatus.Ok, ['Contraseña actualizada correctamente.']);
       setForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      navigate('/panel/configuracion/cambiar-password');
+      navigate(APP_ROUTES.panelChangePassword);
     }
   };
 
@@ -323,7 +325,7 @@ const UpdatePassword: React.FC<UpdatePasswordProps> = ({
           <Stack direction="row" spacing={2} justifyContent="flex-end">
             <Button
               variant="outlined"
-              onClick={() => navigate('/panel')}
+              onClick={() => navigate(APP_ROUTES.panel)}
               disabled={submitting}
             >
               Cancelar

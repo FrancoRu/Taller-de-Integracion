@@ -40,11 +40,11 @@ export default function MatchCard({ match }: { match: IMatchResponse }) {
 
           <Box textAlign="center" sx={{ minWidth: 64 }}>
             {finished ? (
-              <Typography variant="h5" fontWeight="bold">
+              <Typography variant="h5" component="span" fontWeight="bold">
                 {home?.score ?? 0} – {visitor?.score ?? 0}
               </Typography>
             ) : (
-              <Typography variant="h6" color="text.secondary">
+              <Typography variant="h6" component="span" color="text.secondary">
                 vs
               </Typography>
             )}

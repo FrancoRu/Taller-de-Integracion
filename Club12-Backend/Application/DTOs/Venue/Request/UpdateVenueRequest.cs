@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Application.Utils.Constants.Validation;
+using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.Venue.Request;
 
 /// <summary>
@@ -10,14 +11,14 @@ public class UpdateVenueRequest
     /// The name of the venue.
     /// </summary>
     [Required(ErrorMessage = "The Name field is required.")]
-    [MaxLength(50)]
+    [MaxLength(VenueFieldLengths.NameMaxLength)]
     public required string Name { get; set; }
 
     /// <summary>
     /// The address of the venue.
     /// </summary>
     [Required(ErrorMessage = "The Address field is required.")]
-    [MaxLength(200)]
+    [MaxLength(VenueFieldLengths.AddressMaxLength)]
     public required string Address { get; set; }
 
     /// <summary>

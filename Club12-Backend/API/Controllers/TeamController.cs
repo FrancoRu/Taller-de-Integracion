@@ -21,7 +21,6 @@ namespace API.Controllers;
 /// <param name="teamService">The team service for handling team-related operations.</param>
 /// <param name="supabaseHelper">The Supabase helper for storage operations.</param>
 /// <param name="mapper">The AutoMapper instance for mapping data models.</param>
-//[Authorize(Roles = "SuperAdmin")]
 [Route("api/teams/")]
 [ApiController]
 public class TeamController(
@@ -107,9 +106,6 @@ public class TeamController(
         {
             return this.NotFoundProblem(nameof(Team), id);
         }
-
-        //string logoUrl = await _cloudflareService.UploadFileAsync(logoRequest.LogoFile.OpenReadStream(), logoRequest.LogoFile.FileName);
-        //team.LogoUrl = logoUrl;
 
         await teamService.UpdateTeamAsync(team);
         return Ok();

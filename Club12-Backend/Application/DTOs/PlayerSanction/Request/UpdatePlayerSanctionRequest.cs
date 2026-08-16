@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Application.Utils.Constants.Validation;
+using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.PlayerSanction.Request;
 
 /// <summary>
@@ -14,6 +15,6 @@ public class UpdatePlayerSanctionRequest
     /// <summary>
     /// A description of the sanction.
     /// </summary>
-    [MaxLength(255)]
+    [MaxLength(SanctionFieldLengths.DescriptionMaxLength)]
     public string? Description { get; set; }
 }

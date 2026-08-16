@@ -19,7 +19,6 @@ namespace API.Controllers;
 /// <param name="playerService">The Player service.</param>
 /// <param name="teamService">The Team service.</param>
 /// <param name="mapper">The AutoMapper instance.</param>
-//[Authorize(Roles = "SuperAdmin")]
 [Route("api/players/")]
 [ApiController]
 public class PlayerController(

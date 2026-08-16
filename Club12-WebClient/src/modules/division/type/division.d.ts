@@ -133,7 +133,7 @@ export interface DivisionTopScoreResponse {
    * The unique identifier of the player.
    * @type {string}
    */
-  playerid: GUID;
+  playerId: GUID;
 
   /**
    * The first name of the player.
@@ -148,10 +148,10 @@ export interface DivisionTopScoreResponse {
   lastName: string;
 
   /**
-   * An array of the player's weekly scores.
-   * @type {number[]}
+   * The player's scores keyed by week number.
+   * @type {Record<number, number>}
    */
-  weeklyScores: number[];
+  weeklyScores: Record<number, number>;
 
   /**
    * The total points accumulated by the player.
@@ -169,7 +169,7 @@ export type Position = {
    * The unique identifier of the team.
    * @type {string}
    */
-  teamid: GUID;
+  teamId: GUID;
 
   /**
    * The name of the team.
@@ -259,4 +259,28 @@ export interface IPutDivisionRequest {
 
 export interface IDivisionPropsView {
   name: string;
+}
+
+/**
+ * The minimal response structure for a division, as embedded within a tournament response.
+ * @interface IMinimalDivisionResponse
+ */
+export interface IMinimalDivisionResponse {
+  /**
+   * The unique identifier of the division.
+   * @type {GUID}
+   */
+  id: GUID;
+
+  /**
+   * The name of the division.
+   * @type {string}
+   */
+  name: string;
+
+  /**
+   * Indicates whether the division has finished.
+   * @type {boolean}
+   */
+  isFinished: boolean;
 }

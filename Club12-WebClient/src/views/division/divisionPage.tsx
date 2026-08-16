@@ -8,6 +8,7 @@ import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatu
 import StagesPage from '@/views/stage/stagesPage';
 import DivisionStandings from '@/views/division/divisionStandings';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const DivisionPage: React.FC = () => {
   const { divisionId } = useParams<{ divisionId: GUID }>();
@@ -95,7 +96,7 @@ const DivisionPage: React.FC = () => {
           </Typography>
           <Typography
             component="button"
-            onClick={() => navigate('/panel/divisiones')}
+            onClick={() => navigate(APP_ROUTES.panelDivisions)}
             sx={{
               mt: 2,
               border: 0,

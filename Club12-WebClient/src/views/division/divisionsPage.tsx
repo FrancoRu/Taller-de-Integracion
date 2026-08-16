@@ -9,9 +9,12 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
-import theme, { CANCEL_BUTTON_COLOR } from '@/theme';
+import {
+  confirmDelete,
+  notifyInfo,
+  notifySuccess,
+} from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import {
@@ -31,6 +34,8 @@ import {
   TABLE_PAGE_SIZE_OPTIONS,
   TABLE_ROWS_PER_PAGE,
 } from '@/modules/core/constants/pagination';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import { FILTERS_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/constants';
 
 interface DivisionsPageProps {
   tournamentId?: GUID;
@@ -98,7 +103,7 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       setDebouncedFilters(filters);
-    }, 500);
+    }, FILTERS_DEBOUNCE_DELAY_MS);
 
     return () => clearTimeout(timeoutId);
   }, [filters]);
@@ -134,38 +139,29 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
 
   const handleView = useCallback(
     (row: IDivisionResponse) => {
-      navigate(`/panel/divisiones/${row.id}`);
+      navigate(APP_ROUTES.panelDivision.build(row.id));
     },
     [navigate]
   );
 
-  const handleEdit = useCallback((_row: IDivisionResponse) => {
-    // Pending panel route for division edit by id.
-  }, []);
+  /** No-op until the panel route for editing a division by id is implemented. */
+  const handleEdit = useCallback((_row: IDivisionResponse) => {}, []);
 
   const handleDelete = useCallback(
     async (row: IDivisionResponse) => {
-      const result = await Swal.fire({
+      const confirmed = await confirmDelete({
         title: '¿Está usted seguro de querer eliminar esta división?',
         text: '¡Usted no podrá revertir este cambio!',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: theme.palette.primary.main,
-        cancelButtonColor: CANCEL_BUTTON_COLOR,
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar',
       });
 
-      if (!result.isConfirmed) {
+      if (!confirmed) {
         return;
       }
 
       await deleteDivisionsById(row.id);
-      await Swal.fire({
+      await notifySuccess({
         title: '¡Eliminada!',
         text: 'La división ha sido eliminada.',
-        icon: 'success',
-        confirmButtonColor: theme.palette.primary.main,
       });
     },
     [deleteDivisionsById]
@@ -236,11 +232,9 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
       return;
     }
 
-    void Swal.fire({
+    void notifyInfo({
       title: 'Pendiente',
       text: 'La creación de divisiones desde esta vista aún no está implementada.',
-      icon: 'info',
-      confirmButtonColor: theme.palette.primary.main,
     });
   }, [onCreate]);
 

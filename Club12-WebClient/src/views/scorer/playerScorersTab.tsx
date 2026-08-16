@@ -13,6 +13,7 @@ import { IScorerByPlayerResponse } from '@/modules/scorer/type/scorer.d';
 import { useTeam } from '@/modules/team/hook/team.hook';
 import { ITeamResponse } from '@/modules/team/type/team';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
+import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 
 const formatMatchLabel = (match: IMatchResponse) => {
   const homeTeamName = match.homeTeam?.name ?? 'Equipo local';
@@ -65,7 +66,7 @@ const PlayerScorersTab: React.FC = () => {
   }, [getScorersByPlayerFiltered]);
 
   useEffect(() => {
-    void getAllTournamentsByFilterRef.current({ pageSize: 300 });
+    void getAllTournamentsByFilterRef.current({ pageSize: FILTER_OPTIONS_PAGE_SIZE });
   }, []);
 
   useEffect(() => {
@@ -79,11 +80,11 @@ const PlayerScorersTab: React.FC = () => {
       const [matchesResponse, teamsResponse] = await Promise.all([
         getMatchByFilterRef.current({
           tournamentId: selectedTournamentId,
-          pageSize: 300,
+          pageSize: FILTER_OPTIONS_PAGE_SIZE,
         }),
         getTeamsByFilteredRef.current({
           tournamentId: selectedTournamentId,
-          pageSize: 300,
+          pageSize: FILTER_OPTIONS_PAGE_SIZE,
         }),
       ]);
 

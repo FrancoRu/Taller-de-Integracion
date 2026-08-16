@@ -13,6 +13,7 @@ import {
 import { GUID } from '@/modules/core/types/types';
 import { IVenueResponse } from '@/modules/venue/type/venue';
 import { useVenue } from '@/modules/venue/hook/venue.hook';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const VenuePage: React.FC = () => {
   const { venueId } = useParams<{ venueId: GUID }>();
@@ -64,7 +65,7 @@ const VenuePage: React.FC = () => {
               <Button
                 variant="contained"
                 color="primary"
-                onClick={() => navigate('/panel/canchas')}
+                onClick={() => navigate(APP_ROUTES.panelVenues)}
               >
                 Volver
               </Button>
@@ -89,7 +90,7 @@ const VenuePage: React.FC = () => {
             <Button
               variant="contained"
               color="primary"
-              onClick={() => navigate('/panel/canchas')}
+              onClick={() => navigate(APP_ROUTES.panelVenues)}
             >
               Volver
             </Button>

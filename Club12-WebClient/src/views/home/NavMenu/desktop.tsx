@@ -42,7 +42,7 @@ const DesktopNavItems: React.FC<DesktopNavItemsProps> = ({
   const isSelected = (path: string) => location.pathname === path;
 
   return (
-    <Box sx={{ display: 'flex', gap: 2 }}>
+    <Box component="nav" sx={{ display: 'flex', gap: 2 }}>
       <ListItemButton
         component={Link}
         to={RoutesNavigationViews.Home}
