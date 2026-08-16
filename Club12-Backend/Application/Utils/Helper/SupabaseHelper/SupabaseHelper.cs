@@ -1,6 +1,9 @@
 ﻿using Application.Utils.Constants.Configuration;
+
 using Microsoft.Extensions.Configuration;
+
 using Supabase;
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -65,7 +68,7 @@ public class SupabaseHelper : ISupabaseRawStorage
                 .Upload(UseStreamDotReadMethod(fileStream), fullPathInBucket,
                     new()
                     {
-                        CacheControl= ImageCacheControlMaxAgeSeconds,
+                        CacheControl = ImageCacheControlMaxAgeSeconds,
                         Upsert = true
                     }
                 );

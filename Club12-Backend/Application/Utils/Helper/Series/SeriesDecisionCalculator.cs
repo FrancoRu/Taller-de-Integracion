@@ -1,6 +1,7 @@
+using Domain.Entities.Models;
+
 using System;
 using System.Linq;
-using Domain.Entities.Models;
 
 namespace Application.Utils.Helper.Series;
 
@@ -16,7 +17,7 @@ public static class SeriesDecisionCalculator
     /// </summary>
     public static Guid? DetermineWinner(MatchSeries series)
     {
-        int winsNeeded = series.BestOf / 2 + 1;
+        int winsNeeded = (series.BestOf / 2) + 1;
 
         int homeWins = series.Matches.Count(game => game.IsFinished && game.WinningTeamId == series.HomeTeamId);
         if (homeWins >= winsNeeded)
@@ -25,11 +26,6 @@ public static class SeriesDecisionCalculator
         }
 
         int visitorWins = series.Matches.Count(game => game.IsFinished && game.WinningTeamId == series.VisitorTeamId);
-        if (visitorWins >= winsNeeded)
-        {
-            return series.VisitorTeamId;
-        }
-
-        return null;
+        return visitorWins >= winsNeeded ? series.VisitorTeamId : null;
     }
 }

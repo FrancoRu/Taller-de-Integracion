@@ -1,13 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
 using API.Tests.Backup.Fakes;
+
 using Application.Interfaces.Backup;
+
 using Infrastructure.Backup;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
-using Xunit;
 
 namespace API.Tests.Backup;
 
@@ -27,7 +25,9 @@ public class PgDumpBackupServiceTests
             ["ConnectionStrings:DbConnection"] = connectionString,
         };
         if (pgDumpPath is not null)
+        {
             values["Backup:PgDumpPath"] = pgDumpPath;
+        }
 
         return new ConfigurationBuilder().AddInMemoryCollection(values).Build();
     }
@@ -148,7 +148,7 @@ public class PgDumpBackupServiceTests
     {
         FakeProcessRunner runner = new();
         IConfiguration configuration = new ConfigurationBuilder().AddInMemoryCollection(
-            new Dictionary<string, string?>()).Build();
+            []).Build();
         PgDumpBackupService service = new(runner, configuration, NullLogger<PgDumpBackupService>.Instance);
 
         await Assert.ThrowsAsync<BackupExecutionException>(() => service.CreateDumpAsync());

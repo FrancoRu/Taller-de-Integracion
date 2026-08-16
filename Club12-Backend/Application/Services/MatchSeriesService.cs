@@ -4,14 +4,15 @@ using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.Series;
+
 using Domain.Constants;
 using Domain.Entities.Models;
-using Domain.Enums;
+
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+
 using MatchType = Domain.Enums.MatchType;
 
 namespace Application.Services;
@@ -28,8 +29,10 @@ public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
     private readonly IStageTeamMatchRepository stageTeamMatchRepository = unitOfWork.StageTeamMatchRepository;
 
     public async Task<MatchSeries?> GetSeriesByIdAsync(Guid seriesId)
-        => await matchSeriesRepository.GetByIdAsync(seriesId,
-            includes: [s => s.HomeTeam!, s => s.VisitorTeam!, s => s.WinningTeam!, s => s.Matches]);
+    {
+        return await matchSeriesRepository.GetByIdAsync(seriesId,
+                includes: [s => s.HomeTeam!, s => s.VisitorTeam!, s => s.WinningTeam!, s => s.Matches]);
+    }
 
     public async Task<PaginatedResponse<MatchSeries>> GetAllSeriesAsync(GetMatchSeriesFilteredRequest filter)
     {

@@ -45,17 +45,14 @@ public class DateOnlyJsonConverter : JsonConverter<DateTime>
     {
         string? dateString = reader.GetString();
 
-        if (DateTime.TryParseExact(
+        return DateTime.TryParseExact(
                 dateString,
                 _formats,
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
-                out DateTime parsedDate))
-        {
-            return DateTime.SpecifyKind(parsedDate, DateTimeKind.Unspecified);
-        }
-
-        throw new JsonException($"Invalid date: '{dateString}'.");
+                out DateTime parsedDate)
+            ? DateTime.SpecifyKind(parsedDate, DateTimeKind.Unspecified)
+            : throw new JsonException($"Invalid date: '{dateString}'.");
     }
 
     /// <summary>

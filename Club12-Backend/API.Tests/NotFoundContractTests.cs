@@ -1,12 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Text.Json;
-using System.Threading.Tasks;
+using API.Controllers;
+
 using Application.DTOs.Abstract.Response;
 using Application.DTOs.Divisions.Request;
 using Application.DTOs.Player.Request;
@@ -15,14 +8,20 @@ using Application.DTOs.Team.Response;
 using Application.DTOs.Tournament.Request;
 using Application.DTOs.Venue.Response;
 using Application.Interfaces.Services;
-using API.Controllers;
+
 using AutoMapper;
+
 using Domain.Entities.Models;
 using Domain.Enums;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
+
+using System.Linq.Expressions;
+using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace API.Tests;
 
@@ -49,8 +48,8 @@ public class NotFoundContractTests : IClassFixture<CustomWebApplicationFactory>
     /// see SupabaseDependentControllerNotFoundTests for Team/Venue, which are
     /// covered via direct-controller unit tests instead; see that class' doc comment for why).
     /// </summary>
-    public static readonly TheoryData<string> NotFoundGetByIdRoutes = new()
-    {
+    public static readonly TheoryData<string> NotFoundGetByIdRoutes =
+    [
         "api/matches/{0}",
         "api/blogposts/{0}",
         "api/divisions/{0}/detail",
@@ -58,7 +57,7 @@ public class NotFoundContractTests : IClassFixture<CustomWebApplicationFactory>
         "api/player-sanctions/{0}",
         "api/player-statistics/{0}",
         "api/tournaments/{0}",
-    };
+    ];
 
     [Theory]
     [MemberData(nameof(NotFoundGetByIdRoutes))]
@@ -249,22 +248,68 @@ public class SupabaseDependentControllerNotFoundTests
 
     private sealed class NotFoundTeamService : ITeamService
     {
-        public Task<Team> CreateTeamAsync(Team teamEntity) => throw new NotImplementedException();
-        public Task<Team?> GetTeamByIdAsync(Guid teamId) => Task.FromResult<Team?>(null);
-        public Task UpdateTeamAsync(Team teamEntity) => throw new NotImplementedException();
-        public Task UpdateTeamsAsync(IEnumerable<Team> teams) => throw new NotImplementedException();
-        public Task DeleteTeamAsync(Guid id) => throw new NotImplementedException();
-        public Task<PaginatedResponse<Team>> GetAllTeamsAsync(GetTeamsFilteredRequest filter) => throw new NotImplementedException();
-        public Task RegisterTeamsToTournamentAsync(Tournament tournament, List<Guid> teamIds) => throw new NotImplementedException();
+        public Task<Team> CreateTeamAsync(Team teamEntity)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Team?> GetTeamByIdAsync(Guid teamId)
+        {
+            return Task.FromResult<Team?>(null);
+        }
+
+        public Task UpdateTeamAsync(Team teamEntity)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task UpdateTeamsAsync(IEnumerable<Team> teams)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task DeleteTeamAsync(Guid id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<PaginatedResponse<Team>> GetAllTeamsAsync(GetTeamsFilteredRequest filter)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task RegisterTeamsToTournamentAsync(Tournament tournament, List<Guid> teamIds)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     private sealed class NotFoundVenueService : IVenueService
     {
-        public Task<Venue> CreateVenueAsync(Venue venueEntity) => throw new NotImplementedException();
-        public Task<Venue?> GetVenueByIdAsync(Guid venueId) => Task.FromResult<Venue?>(null);
-        public Task UpdateVenueAsync(Venue venueEntity) => throw new NotImplementedException();
-        public Task DeleteVenueAsync(Guid id) => throw new NotImplementedException();
-        public Task<IEnumerable<Venue>> GetAllVenuesAsync() => throw new NotImplementedException();
+        public Task<Venue> CreateVenueAsync(Venue venueEntity)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Venue?> GetVenueByIdAsync(Guid venueId)
+        {
+            return Task.FromResult<Venue?>(null);
+        }
+
+        public Task UpdateVenueAsync(Venue venueEntity)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task DeleteVenueAsync(Guid id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IEnumerable<Venue>> GetAllVenuesAsync()
+        {
+            throw new NotImplementedException();
+        }
     }
 
     /// <summary>
@@ -273,18 +318,69 @@ public class SupabaseDependentControllerNotFoundTests
     private sealed class NotUsedMapper : IMapper
     {
         public IConfigurationProvider ConfigurationProvider => throw new NotImplementedException();
-        public TDestination Map<TDestination>(object source) => throw new NotImplementedException();
-        public TDestination Map<TDestination>(object source, Action<IMappingOperationOptions<object, TDestination>> opts) => throw new NotImplementedException();
-        public TDestination Map<TSource, TDestination>(TSource source) => throw new NotImplementedException();
-        public TDestination Map<TSource, TDestination>(TSource source, Action<IMappingOperationOptions<TSource, TDestination>> opts) => throw new NotImplementedException();
-        public TDestination Map<TSource, TDestination>(TSource source, TDestination destination) => throw new NotImplementedException();
-        public TDestination Map<TSource, TDestination>(TSource source, TDestination destination, Action<IMappingOperationOptions<TSource, TDestination>> opts) => throw new NotImplementedException();
-        public object Map(object source, Type sourceType, Type destinationType) => throw new NotImplementedException();
-        public object Map(object source, Type sourceType, Type destinationType, Action<IMappingOperationOptions<object, object>> opts) => throw new NotImplementedException();
-        public object Map(object source, object destination, Type sourceType, Type destinationType) => throw new NotImplementedException();
-        public object Map(object source, object destination, Type sourceType, Type destinationType, Action<IMappingOperationOptions<object, object>> opts) => throw new NotImplementedException();
-        public IQueryable<TDestination> ProjectTo<TDestination>(IQueryable source, object? parameters = null, params Expression<Func<TDestination, object>>[] membersToExpand) => throw new NotImplementedException();
-        public IQueryable<TDestination> ProjectTo<TDestination>(IQueryable source, IDictionary<string, object> parameters, params string[] membersToExpand) => throw new NotImplementedException();
-        public IQueryable ProjectTo(IQueryable source, Type destinationType, IDictionary<string, object>? parameters = null, params string[] membersToExpand) => throw new NotImplementedException();
+        public TDestination Map<TDestination>(object source)
+        {
+            throw new NotImplementedException();
+        }
+
+        public TDestination Map<TDestination>(object source, Action<IMappingOperationOptions<object, TDestination>> opts)
+        {
+            throw new NotImplementedException();
+        }
+
+        public TDestination Map<TSource, TDestination>(TSource source)
+        {
+            throw new NotImplementedException();
+        }
+
+        public TDestination Map<TSource, TDestination>(TSource source, Action<IMappingOperationOptions<TSource, TDestination>> opts)
+        {
+            throw new NotImplementedException();
+        }
+
+        public TDestination Map<TSource, TDestination>(TSource source, TDestination destination)
+        {
+            throw new NotImplementedException();
+        }
+
+        public TDestination Map<TSource, TDestination>(TSource source, TDestination destination, Action<IMappingOperationOptions<TSource, TDestination>> opts)
+        {
+            throw new NotImplementedException();
+        }
+
+        public object Map(object source, Type sourceType, Type destinationType)
+        {
+            throw new NotImplementedException();
+        }
+
+        public object Map(object source, Type sourceType, Type destinationType, Action<IMappingOperationOptions<object, object>> opts)
+        {
+            throw new NotImplementedException();
+        }
+
+        public object Map(object source, object destination, Type sourceType, Type destinationType)
+        {
+            throw new NotImplementedException();
+        }
+
+        public object Map(object source, object destination, Type sourceType, Type destinationType, Action<IMappingOperationOptions<object, object>> opts)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IQueryable<TDestination> ProjectTo<TDestination>(IQueryable source, object? parameters = null, params Expression<Func<TDestination, object>>[] membersToExpand)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IQueryable<TDestination> ProjectTo<TDestination>(IQueryable source, IDictionary<string, object> parameters, params string[] membersToExpand)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IQueryable ProjectTo(IQueryable source, Type destinationType, IDictionary<string, object>? parameters = null, params string[] membersToExpand)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -1,17 +1,21 @@
-﻿using AutoMapper;
-using Application.DTOs.Abstract.Response;
+﻿using Application.DTOs.Abstract.Response;
 using Application.DTOs.Match.Response;
 using Application.DTOs.Stage.Request;
 using Application.DTOs.Stage.Response;
 using Application.Interfaces.Services;
+
+using AutoMapper;
+
+using Domain.Entities.Models;
+using Domain.Enums;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Domain.Entities.Models;
-using Domain.Enums;
 
 namespace API.Controllers;
 
@@ -89,7 +93,9 @@ public class StageController(IStageService stageService, IMatchService matchServ
         Stage? stage = await stageService.GetStageByIdAsync(id);
 
         if (stage == null)
+        {
             return NotFound($"Stage with id {id} not found.");
+        }
 
         StageResponse stageResponse = mapper.Map<StageResponse>(stage);
         return Ok(stageResponse);
@@ -126,7 +132,9 @@ public class StageController(IStageService stageService, IMatchService matchServ
     {
         Stage? existingStage = await stageService.GetStageByIdAsync(id);
         if (existingStage == null)
+        {
             return NotFound($"Stage with id {id} not found.");
+        }
 
         mapper.Map(stageRequest, existingStage);
         await stageService.UpdateStageAsync(existingStage);
@@ -167,7 +175,9 @@ public class StageController(IStageService stageService, IMatchService matchServ
         Stage? stage = await stageService.GetStageByIdAsync(id);
 
         if (stage == null)
+        {
             return NotFound($"Stage with id {id} not found.");
+        }
 
         await stageService.AssignTeamsToStageAsync(stage, request.TeamIds, request.Auto);
 
@@ -188,7 +198,10 @@ public class StageController(IStageService stageService, IMatchService matchServ
         Stage? stage = await stageService.GetStageByIdAsync(id);
 
         if (stage == null)
+        {
             return NotFound($"Stage with id {id} not found.");
+        }
+
         await stageService.UnassignTeamsFromStageAsync(stage, request.TeamIds);
         return Ok();
     }
@@ -213,7 +226,9 @@ public class StageController(IStageService stageService, IMatchService matchServ
         Stage? stage = await stageService.GetStageByIdAsync(id);
 
         if (stage == null)
+        {
             return NotFound($"Stage with id {id} not found.");
+        }
 
         List<Match> seededMatches = await stageService.SeedKnockoutStageAsync(id);
 

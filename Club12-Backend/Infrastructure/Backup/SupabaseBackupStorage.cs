@@ -1,11 +1,12 @@
+using Application.Interfaces.Backup;
+using Application.Utils.Helper.SupabaseHelper;
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Application.Interfaces.Backup;
-using Application.Utils.Helper.SupabaseHelper;
 
 namespace Infrastructure.Backup;
 
@@ -88,18 +89,21 @@ public sealed class SupabaseBackupStorage(ISupabaseRawStorage rawStorage) : IBac
     private static string ToObjectPath(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
+        {
             throw new ArgumentException("Backup file name must be non-empty.", nameof(name));
+        }
 
         if (Path.IsPathRooted(name))
+        {
             throw new ArgumentException(
                 $"Backup file name '{name}' must be a relative name, not a rooted path.", nameof(name));
+        }
 
         string normalized = name.Replace('\\', '/');
         string[] segments = normalized.Split('/', StringSplitOptions.RemoveEmptyEntries);
-        if (segments.Length == 0 || segments.Any(segment => segment == ".." || segment == "."))
-            throw new ArgumentException(
-                $"Backup file name '{name}' resolves outside the configured '{Prefix}' prefix.", nameof(name));
-
-        return Prefix + normalized;
+        return segments.Length == 0 || segments.Any(segment => segment is ".." or ".")
+            ? throw new ArgumentException(
+                $"Backup file name '{name}' resolves outside the configured '{Prefix}' prefix.", nameof(name))
+            : Prefix + normalized;
     }
 }

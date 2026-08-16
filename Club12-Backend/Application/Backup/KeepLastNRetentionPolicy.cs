@@ -1,7 +1,8 @@
+using Application.Interfaces.Backup;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Application.Interfaces.Backup;
 
 namespace Application.Backup;
 
@@ -23,13 +24,11 @@ public sealed class KeepLastNRetentionPolicy : IBackupRetentionPolicy
     public IReadOnlyList<BackupFile> SelectForDeletion(IReadOnlyList<BackupFile> existing, int retainCount)
     {
         ArgumentNullException.ThrowIfNull(existing);
-        if (retainCount < 0)
-            throw new ArgumentOutOfRangeException(nameof(retainCount), "Retention count cannot be negative.");
-
-        if (existing.Count <= retainCount)
-            return [];
-
-        return existing
+        return retainCount < 0
+            ? throw new ArgumentOutOfRangeException(nameof(retainCount), "Retention count cannot be negative.")
+            : existing.Count <= retainCount
+            ? []
+            : (IReadOnlyList<BackupFile>) existing
             .OrderByDescending(f => f.Timestamp)
             .ThenBy(f => f.Name, StringComparer.Ordinal)
             .Skip(retainCount)

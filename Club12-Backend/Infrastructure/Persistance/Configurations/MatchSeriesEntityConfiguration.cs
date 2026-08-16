@@ -1,5 +1,5 @@
 using Domain.Entities.Models;
-using Infrastructure.Persistance;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

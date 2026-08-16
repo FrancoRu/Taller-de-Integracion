@@ -1,7 +1,9 @@
+using Domain.Enums;
+
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+
 using System;
 
 namespace Infrastructure.Identity;

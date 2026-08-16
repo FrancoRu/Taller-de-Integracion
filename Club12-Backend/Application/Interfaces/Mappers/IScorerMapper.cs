@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.Abstract.Response;
 using Application.DTOs.Scorer.Response;
+
 using Domain.Entities.Models;
 
 namespace Application.Interfaces.Mappers;

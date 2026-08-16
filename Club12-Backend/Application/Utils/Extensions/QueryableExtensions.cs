@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.Abstract.Request;
+
 using System;
 using System.Linq;
 using System.Linq.Expressions;
@@ -28,12 +29,7 @@ public static class QueryableExtensions
         bool allNullOrEmpty = filterProperties.All(property =>
         {
             object? value = property.GetValue(filter);
-            if (value == null) return true;
-            if (property.PropertyType == typeof(string))
-            {
-                return string.IsNullOrWhiteSpace((string)value);
-            }
-            return false;
+            return value == null || (property.PropertyType == typeof(string) && string.IsNullOrWhiteSpace((string) value));
         });
 
         if (allNullOrEmpty)
@@ -56,8 +52,15 @@ public static class QueryableExtensions
         {
             object? filterValue = property.GetValue(filter);
 
-            if (filterValue == null) continue;
-            if (property.PropertyType == typeof(string) && string.IsNullOrWhiteSpace((string)filterValue)) continue;
+            if (filterValue == null)
+            {
+                continue;
+            }
+
+            if (property.PropertyType == typeof(string) && string.IsNullOrWhiteSpace((string) filterValue))
+            {
+                continue;
+            }
 
             MemberExpression propertyAccess = Expression.Property(parameterExpr, property.Name);
             Expression currentExpr;
@@ -91,7 +94,10 @@ public static class QueryableExtensions
     /// <summary>
     /// Paginates the given source sequence based on the specified page number and page size.
     /// </summary>
-    public static IQueryable<T> Paginate<T>(this IQueryable<T> source, int pageNumber, int pageSize) => source.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+    public static IQueryable<T> Paginate<T>(this IQueryable<T> source, int pageNumber, int pageSize)
+    {
+        return source.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+    }
 
     /// <summary>
     /// Sorts the source sequence by the specified property name in either ascending or descending order.
@@ -113,12 +119,15 @@ public static class QueryableExtensions
 
         MethodInfo genericMethod = method.MakeGenericMethod(typeof(T), property.Type);
 
-        return (IQueryable<T>)genericMethod.Invoke(null, [source, lambda])!;
+        return (IQueryable<T>) genericMethod.Invoke(null, [source, lambda])!;
     }
 
-    private static bool ShouldSkipProperty(string propertyName) => propertyName is
+    private static bool ShouldSkipProperty(string propertyName)
+    {
+        return propertyName is
             nameof(PaginatedFilterRequest.PageSize) or
             nameof(PaginatedFilterRequest.PageNumber) or
             nameof(PaginatedFilterRequest.OrderBy) or
             nameof(PaginatedFilterRequest.Order);
+    }
 }

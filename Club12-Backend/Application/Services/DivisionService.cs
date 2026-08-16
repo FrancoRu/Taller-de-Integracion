@@ -7,8 +7,10 @@ using Application.Interfaces.Services;
 using Application.Utils.Constants.Pagination;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.Standings;
+
 using Domain.Entities.Models;
 using Domain.Enums;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,14 +47,18 @@ public class DivisionService(
     /// </summary>
     /// <param name="id">The unique identifier of the division to delete.</param>
     public async Task DeleteDivisionAsync(Guid id)
-        => await divisionRepository.RemoveAsync(division => division.Id == id);
-    
+    {
+        await divisionRepository.RemoveAsync(division => division.Id == id);
+    }
+
     /// <summary>
     /// Updates an existing division entity asynchronously.
     /// </summary>
     /// <param name="divisionEntity">The division entity with updated values.</param>
     public async Task UpdateDivisionAsync(Division divisionEntity)
-        => await divisionRepository.UpdateAsync(divisionEntity);
+    {
+        await divisionRepository.UpdateAsync(divisionEntity);
+    }
 
     /// <summary>
     /// Retrieves a division entity by its unique identifier asynchronously.
@@ -61,7 +67,9 @@ public class DivisionService(
     /// <param name="divisionId">The unique identifier of the division.</param>
     /// <returns>The Division entity if found; otherwise, null.</returns>
     public async Task<Division?> GetSimpleDivisionByIdAsync(Guid divisionId)
-        => await divisionRepository.GetByIdAsync(divisionId);
+    {
+        return await divisionRepository.GetByIdAsync(divisionId);
+    }
 
     /// <summary>
     /// Retrieves a division entity by its unique identifier asynchronously,
@@ -70,7 +78,9 @@ public class DivisionService(
     /// <param name="divisionId">The unique identifier of the division.</param>
     /// <returns>The Division entity with related data if found; otherwise, null.</returns>
     public async Task<Division?> GetFullDivisionByIdAsync(Guid divisionId)
-        => await divisionRepository.GetByIdAsync(divisionId, includes: [division => division.Tournament, division => division.Stages]);
+    {
+        return await divisionRepository.GetByIdAsync(divisionId, includes: [division => division.Tournament, division => division.Stages]);
+    }
 
     /// <summary>
     /// Retrieves a paginated and filtered list of division entities asynchronously.

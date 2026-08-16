@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -78,17 +79,20 @@ public class GlobalExceptionHandler : IExceptionHandler
     /// A tuple containing the HTTP status code, a corresponding title for the response,
     /// and whether the exception's message is safe to expose to the client.
     /// </returns>
-    private static (int StatusCode, string Title, bool ExposeMessage) MapException(Exception exception) => exception switch
+    private static (int StatusCode, string Title, bool ExposeMessage) MapException(Exception exception)
     {
-        ArgumentNullException => (StatusCodes.Status400BadRequest, "Bad Request: Required argument is missing.", true),
-        UnauthorizedAccessException => (StatusCodes.Status403Forbidden, "Forbidden: You do not have permission to access this resource.", true),
-        KeyNotFoundException => (StatusCodes.Status404NotFound, "Not Found: The specified resource could not be found.", true),
-        InvalidOperationException => (StatusCodes.Status409Conflict, "Conflict: The operation is invalid in the current state.", true),
-        TimeoutException => (StatusCodes.Status408RequestTimeout, "Request Timeout: The operation took too long to complete.", false),
-        FormatException => (StatusCodes.Status400BadRequest, "Bad Request: Invalid format encountered.", true),
-        NotImplementedException => (StatusCodes.Status501NotImplemented, "Not Implemented: The requested functionality is not available.", true),
-        StackOverflowException => (StatusCodes.Status500InternalServerError, "Internal Server Error: Stack overflow occurred.", false),
-        OperationCanceledException => (StatusCodes.Status499ClientClosedRequest, "Client Closed Request: Operation was cancelled by the client.", true),
-        _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred.", false)
-    };
+        return exception switch
+        {
+            ArgumentNullException => (StatusCodes.Status400BadRequest, "Bad Request: Required argument is missing.", true),
+            UnauthorizedAccessException => (StatusCodes.Status403Forbidden, "Forbidden: You do not have permission to access this resource.", true),
+            KeyNotFoundException => (StatusCodes.Status404NotFound, "Not Found: The specified resource could not be found.", true),
+            InvalidOperationException => (StatusCodes.Status409Conflict, "Conflict: The operation is invalid in the current state.", true),
+            TimeoutException => (StatusCodes.Status408RequestTimeout, "Request Timeout: The operation took too long to complete.", false),
+            FormatException => (StatusCodes.Status400BadRequest, "Bad Request: Invalid format encountered.", true),
+            NotImplementedException => (StatusCodes.Status501NotImplemented, "Not Implemented: The requested functionality is not available.", true),
+            StackOverflowException => (StatusCodes.Status500InternalServerError, "Internal Server Error: Stack overflow occurred.", false),
+            OperationCanceledException => (StatusCodes.Status499ClientClosedRequest, "Client Closed Request: Operation was cancelled by the client.", true),
+            _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred.", false)
+        };
+    }
 }

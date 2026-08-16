@@ -1,16 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Application.Interfaces.Services;
 using Application.Utils.Constants.Stage;
 using Application.Utils.Helper.StageHelper;
+
 using Domain.Entities.Models;
 using Domain.Enums;
+
 using Infrastructure.Persistance;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
 
 namespace API.Tests;
 
@@ -103,7 +101,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
 
         for (int i = 0; i < expectedGroupCount; i++)
         {
-            char expectedLetter = (char)('A' + i);
+            char expectedLetter = (char) ('A' + i);
             Assert.Equal($"{StageTemplate.Group.Name} - Grupo {expectedLetter}", groupStages[i].Name);
             Assert.Equal(i, groupStages[i].Order);
             Assert.Equal(tournament.StartDate, groupStages[i].StartDate);
@@ -343,7 +341,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         List<Guid> teamBIds = [.. teamsB.Select(t => t.Id)];
 
         Assert.All(assignedTeamIds, id => Assert.Contains(id, teamAIds));
-        Assert.DoesNotContain(assignedTeamIds, id => teamBIds.Contains(id));
+        Assert.DoesNotContain(assignedTeamIds, teamBIds.Contains);
     }
 
     private static async Task<Tournament> SeedTournamentAsync(ApplicationDBContext db, int maxTeams = 64)

@@ -1,5 +1,7 @@
 ﻿using Application.Interfaces.Mappers;
+
 using Domain.Entities.Models;
+
 using Riok.Mapperly.Abstractions;
 
 namespace Application.Utils.Mappers;

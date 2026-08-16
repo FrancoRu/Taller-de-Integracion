@@ -3,8 +3,11 @@ using Application.DTOs.PlayerStatistic.Request;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Utils.Extensions;
+
 using Domain.Entities.Models;
+
 using LinqKit;
+
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -20,14 +23,20 @@ public class PlayerStatisticService(IPlayerStatisticRepository playerStatisticRe
         return playerStatisticEntity;
     }
 
-    public async Task<PlayerStatistic?> GetPlayerStatisticByIdAsync(Guid playerStatisticId) 
-        => await playerStatisticRepository.GetByIdAsync(playerStatisticId);
+    public async Task<PlayerStatistic?> GetPlayerStatisticByIdAsync(Guid playerStatisticId)
+    {
+        return await playerStatisticRepository.GetByIdAsync(playerStatisticId);
+    }
 
     public async Task DeletePlayerStatisticAsync(Guid id)
-        => await playerStatisticRepository.RemoveAsync(playerStatistic => playerStatistic.Id == id);
+    {
+        await playerStatisticRepository.RemoveAsync(playerStatistic => playerStatistic.Id == id);
+    }
 
     public async Task UpdatePlayerStatisticAsync(PlayerStatistic playerStatisticEntity)
-        => await playerStatisticRepository.UpdateAsync(playerStatisticEntity);
+    {
+        await playerStatisticRepository.UpdateAsync(playerStatisticEntity);
+    }
 
     public async Task<PaginatedResponse<PlayerStatistic>> GetPlayerStatisticsAsync(GetPlayerStatisticsFilteredRequest filter)
     {

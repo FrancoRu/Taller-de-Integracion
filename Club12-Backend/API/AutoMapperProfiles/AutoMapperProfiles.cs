@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Application.DTOs.Abstract.Response;
+﻿using Application.DTOs.Abstract.Response;
 using Application.DTOs.BlogPosts.Request;
 using Application.DTOs.BlogPosts.Response;
 using Application.DTOs.Divisions.Request;
@@ -13,20 +12,22 @@ using Application.DTOs.PlayerSanction.Request;
 using Application.DTOs.PlayerSanction.Response;
 using Application.DTOs.PlayerStatistic.Request;
 using Application.DTOs.PlayerStatistic.Response;
-using Application.DTOs.Scorer.Response;
 using Application.DTOs.Stage.Request;
 using Application.DTOs.Stage.Response;
 using Application.DTOs.Team.Request;
 using Application.DTOs.Team.Response;
-using Application.DTOs.TopScorer.Response;
 using Application.DTOs.Tournament.Request;
 using Application.DTOs.Tournament.Response;
 using Application.DTOs.Venue.Request;
 using Application.DTOs.Venue.Response;
+
+using AutoMapper;
+
+using Domain.Entities.Models;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Domain.Entities.Models;
 
 namespace API.AutoMapperProfiles;
 
@@ -142,7 +143,7 @@ public class MatchProfile : Profile
             .ForPath(dest => dest.HomeTeam!.Score, opt => opt.MapFrom(src => src.HomeScore))
             .ForPath(dest => dest.VisitorTeam!.Score, opt => opt.MapFrom(src => src.VisitorScore))
             .ForMember(dest => dest.WinningTeamName, opt => opt.MapFrom(src => src.WinningTeam != null ? src.WinningTeam.Name : null))
-            .ForMember(dest => dest.WinningTeamId, opt => opt.MapFrom(src => src.WinningTeam != null ? src.WinningTeam.Id : (Guid?)null))
+            .ForMember(dest => dest.WinningTeamId, opt => opt.MapFrom(src => src.WinningTeam != null ? src.WinningTeam.Id : (Guid?) null))
             .ReverseMap();
 
         _ = CreateMap<Match, MinimalMatchResponse>()
@@ -217,7 +218,7 @@ public class PlayerStatisticProfile : Profile
         _ = CreateMap<CreatePlayerStatisticRequest, PlayerStatistic>();
 
         _ = CreateMap<PlayerStatistic, PlayerStatisticResponse>()
-            .ForMember(dest => dest.MatchDate, opt => opt.MapFrom(src => src.Match != null ? (DateTime?)src.Match.MatchDate : null))
+            .ForMember(dest => dest.MatchDate, opt => opt.MapFrom(src => src.Match != null ? (DateTime?) src.Match.MatchDate : null))
             .ReverseMap();
 
         _ = CreateMap<UpdatePlayerStatisticRequest, PlayerStatistic>();
@@ -253,7 +254,7 @@ public class ScorerProfile : Profile
     /// </summary>
     public ScorerProfile()
     {
-        
+
     }
 }
 
@@ -280,7 +281,7 @@ public class BlogPostProfile : Profile
 /// <summary>
 /// AutoMapper profile for stage mappings.
 /// </summary>
-public class StageProfile: Profile
+public class StageProfile : Profile
 {
     /// <summary>
     /// Initializes mapping configuration for stage entities.
@@ -341,13 +342,16 @@ public class PaginatedResponseConverter<TSource, TDestination>
     public PaginatedResponse<TDestination> Convert(
         PaginatedResponse<TSource> source,
         PaginatedResponse<TDestination> destination,
-        ResolutionContext context) => new()
+        ResolutionContext context)
+    {
+        return new()
         {
             Page = source.Page,
             PageSize = source.PageSize,
             TotalCount = source.TotalCount,
             Items = context.Mapper.Map<List<TDestination>>(source.Items)
         };
+    }
 }
 
 

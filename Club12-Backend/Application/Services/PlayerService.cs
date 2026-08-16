@@ -3,7 +3,9 @@ using Application.DTOs.Player.Request;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Utils.Extensions;
+
 using Domain.Entities.Models;
+
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -19,15 +21,20 @@ public class PlayerService(IPlayerRepository playerRepository) : IPlayerService
         return playerEntity;
     }
 
-    public async Task<Player?> GetPlayerByIdAsync(Guid playerId) 
-        => await playerRepository.GetByIdAsync(playerId);
+    public async Task<Player?> GetPlayerByIdAsync(Guid playerId)
+    {
+        return await playerRepository.GetByIdAsync(playerId);
+    }
 
     public async Task DeletePlayerAsync(Guid id)
-        => await playerRepository.RemoveAsync(player => player.Id == id);
-   
+    {
+        await playerRepository.RemoveAsync(player => player.Id == id);
+    }
 
     public async Task UpdatePlayerAsync(Player playerEntity)
-        => await playerRepository.UpdateAsync(playerEntity);
+    {
+        await playerRepository.UpdateAsync(playerEntity);
+    }
 
     public async Task<PaginatedResponse<Player>> GetAllPlayersAsync(PlayerFilterRequestBase filter)
     {

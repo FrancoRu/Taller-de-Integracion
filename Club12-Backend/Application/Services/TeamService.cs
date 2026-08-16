@@ -3,8 +3,11 @@ using Application.DTOs.Team.Request;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Utils.Extensions;
+
 using Domain.Entities.Models;
+
 using LinqKit;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,7 +44,9 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
     /// <param name="teamId">The unique identifier of the team.</param>
     /// <returns>The team entity if found; otherwise, null.</returns>
     public async Task<Team?> GetTeamByIdAsync(Guid teamId)
-        => await teamRepository.GetByIdAsync(teamId, includes: [team => team.Players]);
+    {
+        return await teamRepository.GetByIdAsync(teamId, includes: [team => team.Players]);
+    }
 
     /// <summary>
     /// Deletes a team entity by its unique identifier.
@@ -49,7 +54,9 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
     /// <param name="id">The unique identifier of the team to delete.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task DeleteTeamAsync(Guid id)
-        => await teamRepository.RemoveAsync(team => team.Id == id);
+    {
+        await teamRepository.RemoveAsync(team => team.Id == id);
+    }
 
     /// <summary>
     /// Updates an existing team entity in the repository.
@@ -57,7 +64,9 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
     /// <param name="teamEntity">The team entity with updated information.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task UpdateTeamAsync(Team teamEntity)
-        => await teamRepository.UpdateAsync(teamEntity);
+    {
+        await teamRepository.UpdateAsync(teamEntity);
+    }
 
     /// <summary>
     /// Updates a collection of team entities in bulk.
@@ -65,7 +74,9 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
     /// <param name="teams">The collection of team entities to update.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task UpdateTeamsAsync(IEnumerable<Team> teams)
-        => await teamRepository.UpdateRangeAsync(teams);
+    {
+        await teamRepository.UpdateRangeAsync(teams);
+    }
 
     /// <summary>
     /// Retrieves a paginated list of teams based on the provided filter criteria.
@@ -119,9 +130,18 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
 
         teamsToRegister.AsParallel().ForAll(team =>
         {
-            if (!teamIds.Contains(team.Id)) team.TournamentId = null;
-            else if (team.TournamentId == tournament.Id) return;
-            else team.Tournament = tournament;
+            if (!teamIds.Contains(team.Id))
+            {
+                team.TournamentId = null;
+            }
+            else if (team.TournamentId == tournament.Id)
+            {
+                return;
+            }
+            else
+            {
+                team.Tournament = tournament;
+            }
         });
 
         await teamRepository.UpdateRangeAsync(teamsToRegister);

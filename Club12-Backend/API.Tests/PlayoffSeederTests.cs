@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Application.Utils.Helper.Playoff;
-using Xunit;
 
 namespace API.Tests;
 
@@ -21,10 +17,10 @@ public class PlayoffSeederTests
 
         List<(Guid HomeTeamId, Guid? VisitorTeamId)> pairs = PlayoffSeeder.SeedPairs(seeds);
 
-        Assert.Equal((seeds[0], (Guid?)seeds[7]), pairs[0]);
-        Assert.Equal((seeds[3], (Guid?)seeds[4]), pairs[1]);
-        Assert.Equal((seeds[1], (Guid?)seeds[6]), pairs[2]);
-        Assert.Equal((seeds[2], (Guid?)seeds[5]), pairs[3]);
+        Assert.Equal((seeds[0], (Guid?) seeds[7]), pairs[0]);
+        Assert.Equal((seeds[3], (Guid?) seeds[4]), pairs[1]);
+        Assert.Equal((seeds[1], (Guid?) seeds[6]), pairs[2]);
+        Assert.Equal((seeds[2], (Guid?) seeds[5]), pairs[3]);
     }
 
     [Fact]
@@ -34,8 +30,8 @@ public class PlayoffSeederTests
 
         List<(Guid HomeTeamId, Guid? VisitorTeamId)> pairs = PlayoffSeeder.SeedPairs(seeds);
 
-        Assert.Equal((seeds[0], (Guid?)seeds[3]), pairs[0]);
-        Assert.Equal((seeds[1], (Guid?)seeds[2]), pairs[1]);
+        Assert.Equal((seeds[0], (Guid?) seeds[3]), pairs[0]);
+        Assert.Equal((seeds[1], (Guid?) seeds[2]), pairs[1]);
     }
 
     [Fact]
@@ -45,7 +41,7 @@ public class PlayoffSeederTests
 
         List<(Guid HomeTeamId, Guid? VisitorTeamId)> pairs = PlayoffSeeder.SeedPairs(seeds);
 
-        Assert.Equal([(seeds[0], (Guid?)seeds[1])], pairs);
+        Assert.Equal([(seeds[0], (Guid?) seeds[1])], pairs);
     }
 
     [Fact]
@@ -63,8 +59,8 @@ public class PlayoffSeederTests
         List<(Guid HomeTeamId, Guid? VisitorTeamId)> pairs = PlayoffSeeder.SeedPairs(seeds);
 
         Assert.Equal(2, pairs.Count);
-        Assert.Equal((seeds[0], (Guid?)null), pairs[0]);
-        Assert.Equal((seeds[1], (Guid?)seeds[2]), pairs[1]);
+        Assert.Equal((seeds[0], null), pairs[0]);
+        Assert.Equal((seeds[1], (Guid?) seeds[2]), pairs[1]);
     }
 
     [Fact]

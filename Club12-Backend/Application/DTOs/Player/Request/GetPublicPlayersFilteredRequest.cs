@@ -1,5 +1,4 @@
-﻿using System;
-namespace Application.DTOs.Player.Request;
+﻿namespace Application.DTOs.Player.Request;
 
 /// <summary>
 /// Represents a request to get filtered players for public access.

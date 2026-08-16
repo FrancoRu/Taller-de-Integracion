@@ -3,15 +3,18 @@ using Application.DTOs.Abstract.Response;
 using Application.DTOs.Stage.Request;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
-using Domain.Constants;
 using Application.Utils.Constants.Stage;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.Playoff;
 using Application.Utils.Helper.StageHelper;
 using Application.Utils.Helper.Standings;
+
+using Domain.Constants;
 using Domain.Entities.Models;
 using Domain.Enums;
+
 using LinqKit;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,7 +41,9 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     /// <param name="stageId">The unique identifier of the stage.</param>
     /// <returns>The stage entity if found; otherwise, null.</returns>
     public async Task<Stage?> GetStageByIdAsync(Guid stageId)
-        => await stageRepository.GetByIdAsync(stageId);
+    {
+        return await stageRepository.GetByIdAsync(stageId);
+    }
 
     /// <summary>
     /// Retrieves a paginated list of stages based on the provided filter criteria.
@@ -73,14 +78,18 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     /// </summary>
     /// <param name="id">The unique identifier of the stage to delete.</param>
     public async Task DeleteStageAsync(Guid id)
-        => await stageRepository.RemoveAsync(stage => stage.Id == id);
+    {
+        await stageRepository.RemoveAsync(stage => stage.Id == id);
+    }
 
     /// <summary>
     /// Updates an existing stage entity.
     /// </summary>
     /// <param name="stageEntity">The stage entity to update.</param>
     public async Task UpdateStageAsync(Stage stageEntity)
-        => await stageRepository.UpdateAsync(stageEntity);
+    {
+        await stageRepository.UpdateAsync(stageEntity);
+    }
 
     /// <summary>
     /// Creates a new stage entity if it does not already exist in the specified division.
@@ -175,7 +184,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
         {
             Stage groupStage = BuildStage(StageType.Group, StageTemplate.Group, startDate, division, daysMultiplier: 2);
 
-            char groupLetter = (char)(i + 64);
+            char groupLetter = (char) (i + 64);
 
             groupStage.Name = $"{StageTemplate.Group.Name} - Grupo {groupLetter}";
             groupStage.Order = order++;
@@ -235,7 +244,10 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
 
         if (!auto)
         {
-            if (teamIds == null || teamIds.Count == 0) return;
+            if (teamIds == null || teamIds.Count == 0)
+            {
+                return;
+            }
 
             List<Guid> filteredIds = [.. teamIds
                 .Distinct()
@@ -298,7 +310,10 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     /// </summary>
     private async Task EnsureNoCrossDivisionConflictAsync(Stage stage, IEnumerable<Guid> teamIds)
     {
-        if (stage.Division.IsCrossDivisionCup) return;
+        if (stage.Division.IsCrossDivisionCup)
+        {
+            return;
+        }
 
         List<Guid> conflictingTeamIds = await FindTeamsInAnotherDivisionAsync(stage, teamIds);
 
@@ -317,7 +332,10 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     private async Task<List<Guid>> FindTeamsInAnotherDivisionAsync(Stage stage, IEnumerable<Guid> teamIds)
     {
         List<Guid> teamIdList = [.. teamIds];
-        if (teamIdList.Count == 0) return [];
+        if (teamIdList.Count == 0)
+        {
+            return [];
+        }
 
         IEnumerable<StageTeamMatch> conflicting = await stageTeamMatchRepository.FindAsync(stm =>
             teamIdList.Contains(stm.TeamId)
@@ -335,7 +353,10 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     /// <param name="teamIds">List of team IDs to unassign.</param>
     public async Task UnassignTeamsFromStageAsync(Stage stage, List<Guid> teamIds)
     {
-        if (teamIds == null || teamIds.Count == 0) return;
+        if (teamIds == null || teamIds.Count == 0)
+        {
+            return;
+        }
 
         await stageTeamMatchRepository.RemoveAsync(stm =>
             stm.StageId == stage.Id && teamIds.Contains(stm.TeamId)
@@ -417,8 +438,10 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     /// <param name="teamCount">The number of teams.</param>
     /// <returns>True if valid tournament size, false otherwise.</returns>
     private static bool IsValidTournamentSize(int teamCount)
-        => teamCount == TournamentBracketSize.EIGHT
-        || teamCount == TournamentBracketSize.SIXTEEN
-        || teamCount == TournamentBracketSize.THIRTY_TWO
-        || teamCount == TournamentBracketSize.SIXTY_FOUR;
+    {
+        return teamCount is TournamentBracketSize.EIGHT
+            or TournamentBracketSize.SIXTEEN
+            or TournamentBracketSize.THIRTY_TWO
+            or TournamentBracketSize.SIXTY_FOUR;
+    }
 }

@@ -4,10 +4,13 @@ using Application.DTOs.User.Request;
 using Application.DTOs.User.Response;
 using Application.Interfaces.Services;
 using Application.Utils.Constants.Configuration;
+
 using Domain.Enums;
+
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -23,9 +26,9 @@ namespace Infrastructure.Identity;
 /// </summary>
 public sealed class IdentityUserManagementService(
     UserManager<ApplicationUser> userManager,
-    IdentityAppDbContext          identityDbContext,
-    IEmailService                emailService,
-    IConfiguration               configuration) : IUserManagementService
+    IdentityAppDbContext identityDbContext,
+    IEmailService emailService,
+    IConfiguration configuration) : IUserManagementService
 {
     public async Task<PaginatedResponse<UserResponse>> GetAllAsync(
         string callerRole, Guid callerId,
@@ -39,16 +42,22 @@ public sealed class IdentityUserManagementService(
                 : throw new UnauthorizedAccessException("Insufficient permissions to list users.");
 
         if (!string.IsNullOrWhiteSpace(filter.UserName))
+        {
             query = query.Where(u => u.UserName != null &&
                                      u.UserName.ToLower().Contains(filter.UserName.ToLower()));
+        }
 
         if (!string.IsNullOrWhiteSpace(filter.Email))
+        {
             query = query.Where(u => u.Email != null &&
                                      u.Email.ToLower().Contains(filter.Email.ToLower()));
+        }
 
         if (!string.IsNullOrWhiteSpace(filter.PhoneNumber))
+        {
             query = query.Where(u => u.PhoneNumber != null &&
                                      u.PhoneNumber.Contains(filter.PhoneNumber));
+        }
 
         if (filter.Role.HasValue)
         {
@@ -56,7 +65,7 @@ public sealed class IdentityUserManagementService(
 
             IQueryable<Guid> userIdsWithRole =
                 from ur in identityDbContext.UserRoles
-                join r  in identityDbContext.Roles on ur.RoleId equals r.Id
+                join r in identityDbContext.Roles on ur.RoleId equals r.Id
                 where r.Name == roleName
                 select ur.UserId;
 
@@ -87,9 +96,9 @@ public sealed class IdentityUserManagementService(
 
         return new PaginatedResponse<UserResponse>
         {
-            Items      = items,
-            Page       = filter.PageNumber,
-            PageSize   = filter.PageSize,
+            Items = items,
+            Page = filter.PageNumber,
+            PageSize = filter.PageSize,
             TotalCount = totalCount,
         };
     }
@@ -110,13 +119,19 @@ public sealed class IdentityUserManagementService(
         EnforceWriteAccess(user, callerRole, callerId);
 
         if (!string.IsNullOrWhiteSpace(request.Username))
+        {
             ThrowIfFailed(await userManager.SetUserNameAsync(user, request.Username));
+        }
 
         if (!string.IsNullOrWhiteSpace(request.Email))
+        {
             ThrowIfFailed(await userManager.SetEmailAsync(user, request.Email));
+        }
 
         if (request.Phone is not null)
+        {
             ThrowIfFailed(await userManager.SetPhoneNumberAsync(user, request.Phone));
+        }
 
         return await MapOneAsync(user);
     }
@@ -133,7 +148,9 @@ public sealed class IdentityUserManagementService(
         if (isSelfUpdate)
         {
             if (string.IsNullOrWhiteSpace(request.CurrentPassword))
+            {
                 throw new ArgumentException("CurrentPassword is required when changing your own password.");
+            }
 
             ThrowIfFailed(await userManager.ChangePasswordAsync(
                 user, request.CurrentPassword, request.NewPassword));
@@ -194,7 +211,9 @@ public sealed class IdentityUserManagementService(
         EnforceDeleteAccess(user, callerRole, callerId);
 
         if (user.Id == callerId)
+        {
             throw new InvalidOperationException("You cannot change the active state of your own account.");
+        }
 
         if (isActive)
         {
@@ -211,32 +230,72 @@ public sealed class IdentityUserManagementService(
 
     private static void EnforceReadAccess(ApplicationUser target, string callerRole, Guid callerId)
     {
-        if (IsAdmin(callerRole)) return;
-        if (IsOwner(callerRole) && (target.Id == callerId || target.CreatedByOwnerId == callerId)) return;
-        if (target.Id == callerId) return;
+        if (IsAdmin(callerRole))
+        {
+            return;
+        }
+
+        if (IsOwner(callerRole) && (target.Id == callerId || target.CreatedByOwnerId == callerId))
+        {
+            return;
+        }
+
+        if (target.Id == callerId)
+        {
+            return;
+        }
+
         throw new UnauthorizedAccessException("Access denied.");
     }
 
     private static void EnforceWriteAccess(ApplicationUser target, string callerRole, Guid callerId)
     {
-        if (IsAdmin(callerRole)) return;
-        if (IsOwner(callerRole) && (target.Id == callerId || target.CreatedByOwnerId == callerId)) return;
-        if (target.Id == callerId) return;
+        if (IsAdmin(callerRole))
+        {
+            return;
+        }
+
+        if (IsOwner(callerRole) && (target.Id == callerId || target.CreatedByOwnerId == callerId))
+        {
+            return;
+        }
+
+        if (target.Id == callerId)
+        {
+            return;
+        }
+
         throw new UnauthorizedAccessException("Access denied.");
     }
 
     private static void EnforceResetPasswordAccess(ApplicationUser target, string callerRole, Guid callerId)
     {
-        if (IsAdmin(callerRole)) return;
-        if (IsOwner(callerRole) && target.CreatedByOwnerId == callerId) return;
+        if (IsAdmin(callerRole))
+        {
+            return;
+        }
+
+        if (IsOwner(callerRole) && target.CreatedByOwnerId == callerId)
+        {
+            return;
+        }
+
         throw new UnauthorizedAccessException(
             "Only Admins and Owners (for their own subordinates) can reset passwords.");
     }
 
     private static void EnforceDeleteAccess(ApplicationUser target, string callerRole, Guid callerId)
     {
-        if (IsAdmin(callerRole)) return;
-        if (IsOwner(callerRole) && target.CreatedByOwnerId == callerId) return;
+        if (IsAdmin(callerRole))
+        {
+            return;
+        }
+
+        if (IsOwner(callerRole) && target.CreatedByOwnerId == callerId)
+        {
+            return;
+        }
+
         throw new UnauthorizedAccessException("Insufficient permissions to delete this user.");
     }
 
@@ -251,9 +310,12 @@ public sealed class IdentityUserManagementService(
 
     private async Task<IReadOnlyList<UserResponse>> MapManyAsync(IEnumerable<ApplicationUser> users)
     {
-        var results = new List<UserResponse>();
+        List<UserResponse> results = [];
         foreach (ApplicationUser user in users)
+        {
             results.Add(await MapOneAsync(user));
+        }
+
         return results;
     }
 
@@ -266,10 +328,19 @@ public sealed class IdentityUserManagementService(
     private static void ThrowIfFailed(IdentityResult result)
     {
         if (!result.Succeeded)
+        {
             throw new InvalidOperationException(
                 string.Join("; ", result.Errors.Select(e => e.Description)));
+        }
     }
 
-    private static bool IsAdmin(string role) => role == Roles.Admin;
-    private static bool IsOwner(string role) => role == Roles.Owner;
+    private static bool IsAdmin(string role)
+    {
+        return role == Roles.Admin;
+    }
+
+    private static bool IsOwner(string role)
+    {
+        return role == Roles.Owner;
+    }
 }

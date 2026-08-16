@@ -1,16 +1,14 @@
-using System;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Security.Claims;
-using System.Threading.Tasks;
 using Application.DTOs.Auth.Response;
 using Application.Interfaces.Services;
+
 using Infrastructure.Identity;
+
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
+
+using System.Net;
+using System.Net.Http.Headers;
+using System.Security.Claims;
 
 namespace API.Tests;
 

@@ -23,11 +23,11 @@ public static class EntityConstants
 
     public static class Tables
     {
-        public const string BlogPost       = "BlogPosts";
-        public const string Division       = "Divisions";
-        public const string Match          = "Matches";
-        public const string MatchSeries    = "MatchSeries";
-        public const string Player         = "Players";
+        public const string BlogPost = "BlogPosts";
+        public const string Division = "Divisions";
+        public const string Match = "Matches";
+        public const string MatchSeries = "MatchSeries";
+        public const string Player = "Players";
         public const string PlayerSanction = "PlayerSanctions";
 
         /// <summary>
@@ -37,15 +37,15 @@ public static class EntityConstants
         /// </summary>
         public const string PlayerStatistic = "PlayersStatistics";
 
-        public const string Position       = "Positions";
-        public const string Scorer         = "Scorers";
-        public const string Stage          = "Stages";
+        public const string Position = "Positions";
+        public const string Scorer = "Scorers";
+        public const string Stage = "Stages";
         public const string StageTeamMatch = "StageTeamMatches";
-        public const string Staff          = "Staffs";
-        public const string Team           = "Teams";
-        public const string Tournament     = "Tournaments";
-        public const string User           = "Users";
-        public const string Venue          = "Venues";
+        public const string Staff = "Staffs";
+        public const string Team = "Teams";
+        public const string Tournament = "Tournaments";
+        public const string User = "Users";
+        public const string Venue = "Venues";
     }
 
     public static class Indexes

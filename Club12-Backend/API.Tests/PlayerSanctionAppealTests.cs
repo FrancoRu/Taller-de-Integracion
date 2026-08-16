@@ -1,15 +1,16 @@
-using System;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
 using Application.DTOs.PlayerSanction.Request;
+
 using Domain.Entities.Models;
 using Domain.Enums;
+
 using Infrastructure.Persistance;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
+
+using System.Net;
+using System.Net.Http.Json;
+
 using MatchType = Domain.Enums.MatchType;
 
 namespace API.Tests;
@@ -74,12 +75,12 @@ public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFacto
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    public static readonly TheoryData<SanctionAppealStatus> NotPendingStatuses = new()
-    {
+    public static readonly TheoryData<SanctionAppealStatus> NotPendingStatuses =
+    [
         SanctionAppealStatus.None,
         SanctionAppealStatus.Accepted,
         SanctionAppealStatus.Rejected,
-    };
+    ];
 
     [Theory]
     [MemberData(nameof(NotPendingStatuses))]

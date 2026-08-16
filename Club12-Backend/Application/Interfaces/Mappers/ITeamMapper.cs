@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace Application.Interfaces.Mappers;
 
-namespace Application.Interfaces.Mappers
+internal interface ITeamMapper
 {
-    internal interface ITeamMapper
-    {
-    }
 }

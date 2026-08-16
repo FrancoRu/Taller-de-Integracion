@@ -2,8 +2,11 @@
 using Application.DTOs.Scorer.Response;
 using Application.Interfaces.Mappers;
 using Application.Utils.Constants.Scorer;
+
 using Domain.Entities.Models;
+
 using Riok.Mapperly.Abstractions;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -44,7 +47,9 @@ public partial class ScorerMapper : IScorerMapper
         foreach (Match match in paginatedMatches.Items)
         {
             if (match.HomeTeamId is null || match.VisitorTeamId is null)
+            {
                 continue;
+            }
 
             Guid homeTeamId = match.HomeTeamId.Value;
             Guid visitorTeamId = match.VisitorTeamId.Value;
@@ -75,7 +80,9 @@ public partial class ScorerMapper : IScorerMapper
             }
 
             if (!match.IsFinished)
+            {
                 continue;
+            }
 
             bool isDraw = match.HomeScore == match.VisitorScore;
             bool homeWon = match.HomeScore > match.VisitorScore;

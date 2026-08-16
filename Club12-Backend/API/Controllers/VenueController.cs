@@ -1,18 +1,23 @@
-﻿using AutoMapper;
-using API.Utils;
+﻿using API.Utils;
+
 using Application.DTOs.Venue.Request;
 using Application.DTOs.Venue.Response;
 using Application.Interfaces.Services;
+using Application.Utils.Helper.SupabaseHelper;
+
+using AutoMapper;
+
+using Domain.Entities.Models;
+using Domain.Enums;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using Domain.Entities.Models;
-using Domain.Enums;
 using System.Linq;
-using Application.Utils.Helper.SupabaseHelper;
+using System.Threading.Tasks;
 
 namespace API.Controllers;
 

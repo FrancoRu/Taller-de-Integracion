@@ -1,7 +1,9 @@
 ﻿using Domain.Entities.Models;
+
 using Infrastructure.Persistance.Converters;
+
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
 using System;
 
 namespace Infrastructure.Persistance;
@@ -40,17 +42,17 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
         base.OnModelCreating(modelBuilder);
     }
 
-    public virtual required DbSet<Team>            Teams             { get; set; }
-    public virtual required DbSet<Player>          Players           { get; set; }
-    public virtual required DbSet<Tournament>      Tournaments       { get; set; }
-    public virtual required DbSet<Division>        Divisions         { get; set; }
-    public virtual required DbSet<Match>           Matches           { get; set; }
-    public virtual required DbSet<MatchSeries>     MatchSeries       { get; set; }
+    public virtual required DbSet<Team> Teams { get; set; }
+    public virtual required DbSet<Player> Players { get; set; }
+    public virtual required DbSet<Tournament> Tournaments { get; set; }
+    public virtual required DbSet<Division> Divisions { get; set; }
+    public virtual required DbSet<Match> Matches { get; set; }
+    public virtual required DbSet<MatchSeries> MatchSeries { get; set; }
     public virtual required DbSet<PlayerStatistic> PlayersStatistics { get; set; }
-    public virtual required DbSet<PlayerSanction>  PlayerSanctions   { get; set; }
-    public virtual required DbSet<Venue>           Venues            { get; set; }
-    public virtual required DbSet<BlogPost>        BlogPosts         { get; set; }
-    public virtual required DbSet<Stage>           Stages            { get; set; }
-    public virtual required DbSet<StageTeamMatch>  StageTeamMatches  { get; set; }
-    public virtual required DbSet<Scorer>          Scorers           { get; set; }
+    public virtual required DbSet<PlayerSanction> PlayerSanctions { get; set; }
+    public virtual required DbSet<Venue> Venues { get; set; }
+    public virtual required DbSet<BlogPost> BlogPosts { get; set; }
+    public virtual required DbSet<Stage> Stages { get; set; }
+    public virtual required DbSet<StageTeamMatch> StageTeamMatches { get; set; }
+    public virtual required DbSet<Scorer> Scorers { get; set; }
 }

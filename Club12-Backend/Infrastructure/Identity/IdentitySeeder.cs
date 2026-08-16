@@ -1,8 +1,11 @@
 using Application.Utils.Constants.Configuration;
+
 using Domain.Enums;
+
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -15,8 +18,8 @@ namespace Infrastructure.Identity;
 /// </summary>
 public sealed class IdentitySeeder(
     UserManager<ApplicationUser> userManager,
-    IConfiguration               configuration,
-    ILogger<IdentitySeeder>      logger)
+    IConfiguration configuration,
+    ILogger<IdentitySeeder> logger)
 {
     public async Task SeedAsync()
     {
@@ -25,7 +28,7 @@ public sealed class IdentitySeeder(
 
     private async Task SeedAdminAsync()
     {
-        string? email    = configuration[ConfigurationKeys.AdminUser.Email];
+        string? email = configuration[ConfigurationKeys.AdminUser.Email];
         string? password = configuration[ConfigurationKeys.AdminUser.Password];
 
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
@@ -43,8 +46,8 @@ public sealed class IdentitySeeder(
 
         ApplicationUser admin = new()
         {
-            UserName       = email,
-            Email          = email,
+            UserName = email,
+            Email = email,
             EmailConfirmed = true,
         };
 

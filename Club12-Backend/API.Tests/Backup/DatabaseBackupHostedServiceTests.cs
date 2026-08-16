@@ -1,13 +1,11 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using API.BackgroundServices;
 using API.Tests.Backup.Fakes;
+
 using Application.Backup;
 using Application.Interfaces.Backup;
+
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Xunit;
 
 namespace API.Tests.Backup;
 
@@ -21,12 +19,15 @@ namespace API.Tests.Backup;
 /// </summary>
 public class DatabaseBackupHostedServiceTests
 {
-    private static BackupOptions EnabledOptions() => new()
+    private static BackupOptions EnabledOptions()
     {
-        Enabled = true,
-        IntervalHours = 24,
-        RetentionCount = 7,
-    };
+        return new()
+        {
+            Enabled = true,
+            IntervalHours = 24,
+            RetentionCount = 7,
+        };
+    }
 
     [Fact]
     public async Task ExecuteAsync_IntervalElapses_TriggersOneBackupAttempt()

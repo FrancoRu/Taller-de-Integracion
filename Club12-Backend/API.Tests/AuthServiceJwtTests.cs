@@ -1,14 +1,12 @@
-using System;
-using System.Collections.Generic;
+using Application.DTOs.Auth.Response;
+using Application.Services;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
-using Application.DTOs.Auth.Response;
-using Application.Services;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using Xunit;
 
 namespace API.Tests;
 
@@ -98,17 +96,20 @@ public class AuthServiceJwtTests
         return handler.ValidateToken(accessToken, BuildValidationParameters(), out _);
     }
 
-    private static TokenValidationParameters BuildValidationParameters() => new()
+    private static TokenValidationParameters BuildValidationParameters()
     {
-        ValidateIssuer = true,
-        ValidIssuer = Issuer,
-        ValidateAudience = true,
-        ValidAudience = Audience,
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SigningKey)),
-        ValidateLifetime = true,
-        ClockSkew = TimeSpan.FromSeconds(30),
-    };
+        return new()
+        {
+            ValidateIssuer = true,
+            ValidIssuer = Issuer,
+            ValidateAudience = true,
+            ValidAudience = Audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SigningKey)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromSeconds(30),
+        };
+    }
 
     private static IConfiguration BuildConfig()
     {

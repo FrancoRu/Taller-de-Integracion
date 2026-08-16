@@ -1,6 +1,7 @@
 using Application.Interfaces.Repositories;
+
 using Infrastructure.Persistance;
-using Microsoft.EntityFrameworkCore;
+
 using System.Threading.Tasks;
 
 namespace Infrastructure.Repositories;
@@ -95,6 +96,8 @@ public class UnitOfWork(
     /// Commits all tracked changes to the database asynchronously.
     /// </summary>
     /// <returns>The number of state entries written to the database.</returns>
-    public async Task<int> SaveChangesAsync() 
-        => await context.SaveChangesAsync();
+    public async Task<int> SaveChangesAsync()
+    {
+        return await context.SaveChangesAsync();
+    }
 }

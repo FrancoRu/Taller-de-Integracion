@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.Auth.Request;
 using Application.DTOs.Auth.Response;
+
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,19 +16,19 @@ public interface IAuthenticationService
     /// Password login restricted to ADMIN, OWNER, and TOURNAMENT_MANAGER accounts.
     /// TEAM_MANAGER accounts must authenticate via the magic-link flow instead.
     /// </summary>
-    Task<TokenResponse>        LoginAsync(LogInUserRequest request, CancellationToken ct = default);
+    Task<TokenResponse> LoginAsync(LogInUserRequest request, CancellationToken ct = default);
 
     /// <summary>
     /// Generates a magic-link token for TEAM_MANAGER accounts only.
     /// </summary>
-    Task<MagicLinkResponse>    RequestMagicLinkAsync(MagicLinkRequest request, CancellationToken ct = default);
-    Task<TokenResponse>        MagicLinkLoginAsync(MagicLinkLoginRequest request, CancellationToken ct = default);
+    Task<MagicLinkResponse> RequestMagicLinkAsync(MagicLinkRequest request, CancellationToken ct = default);
+    Task<TokenResponse> MagicLinkLoginAsync(MagicLinkLoginRequest request, CancellationToken ct = default);
 
     /// <summary>
     /// Issues a guest JWT without any database interaction.
     /// </summary>
-    Task<TokenResponse>        GuestAsync(CancellationToken ct = default);
-    Task<TokenResponse>        RefreshAsync(RefreshTokenRequest request, CancellationToken ct = default);
+    Task<TokenResponse> GuestAsync(CancellationToken ct = default);
+    Task<TokenResponse> RefreshAsync(RefreshTokenRequest request, CancellationToken ct = default);
 
     /// <summary>
     /// Verifies the password-reset token from the email link, sets the new password,
@@ -43,7 +44,7 @@ public interface IAuthenticationService
     Task<RegisterUserResponse> RegisterAsync(
         RegisterUserRequest request,
         string callerRole,
-        Guid   callerId,
+        Guid callerId,
         CancellationToken ct = default);
 
     /// <summary>

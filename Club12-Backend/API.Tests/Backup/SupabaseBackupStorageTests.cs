@@ -1,15 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 using API.Tests.Backup.Fakes;
+
 using Application.Interfaces.Backup;
-using Application.Utils.Helper.SupabaseHelper;
+
 using Infrastructure.Backup;
-using Xunit;
+
+using System.Text;
 
 namespace API.Tests.Backup;
 
@@ -26,7 +21,10 @@ namespace API.Tests.Backup;
 /// </summary>
 public sealed class SupabaseBackupStorageTests
 {
-    private static Stream ContentStream(string text) => new MemoryStream(Encoding.UTF8.GetBytes(text));
+    private static Stream ContentStream(string text)
+    {
+        return new MemoryStream(Encoding.UTF8.GetBytes(text));
+    }
 
     [Fact]
     public async Task StoreAsync_ValidName_UploadsUnderBackupsPrefix()
@@ -95,11 +93,11 @@ public sealed class SupabaseBackupStorageTests
         DateTimeOffset updated = DateTimeOffset.UtcNow.AddMinutes(-5);
         FakeSupabaseRawStorage raw = new()
         {
-            EntriesToList = new List<SupabaseStorageEntry>
-            {
+            EntriesToList =
+            [
                 new("backup-1.sql", updated),
                 new("backup-2.sql", null),
-            },
+            ],
         };
         SupabaseBackupStorage storage = new(raw);
 

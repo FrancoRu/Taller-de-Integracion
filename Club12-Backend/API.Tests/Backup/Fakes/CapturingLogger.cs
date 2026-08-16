@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 
 namespace API.Tests.Backup.Fakes;
@@ -17,9 +15,15 @@ public sealed class CapturingLogger<T> : ILogger<T>
 
     public IReadOnlyList<Entry> Entries => _entries;
 
-    public IDisposable BeginScope<TState>(TState state) where TState : notnull => NullScope.Instance;
+    public IDisposable BeginScope<TState>(TState state) where TState : notnull
+    {
+        return NullScope.Instance;
+    }
 
-    public bool IsEnabled(LogLevel logLevel) => true;
+    public bool IsEnabled(LogLevel logLevel)
+    {
+        return true;
+    }
 
     public void Log<TState>(
         LogLevel logLevel,

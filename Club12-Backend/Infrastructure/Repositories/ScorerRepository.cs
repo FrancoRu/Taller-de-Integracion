@@ -1,9 +1,13 @@
 ﻿using Application.DTOs.Scorer.Request;
 using Application.DTOs.Scorer.Response;
 using Application.Interfaces.Repositories;
+
 using Domain.Entities.Models;
+
 using Infrastructure.Persistance;
+
 using Microsoft.EntityFrameworkCore;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +23,9 @@ public class ScorerRepository(ApplicationDBContext context)
         IQueryable<Player> playersQuery = _context.Set<Player>();
 
         if (filter.TournamentId.HasValue)
+        {
             playersQuery = playersQuery.Where(p => p.Team.TournamentId == filter.TournamentId.Value);
+        }
 
         if (filter.MatchId.HasValue)
         {
@@ -30,10 +36,14 @@ public class ScorerRepository(ApplicationDBContext context)
         }
 
         if (filter.TeamId.HasValue)
+        {
             playersQuery = playersQuery.Where(p => p.TeamId == filter.TeamId.Value);
+        }
 
         if (filter.PlayerId.HasValue)
+        {
             playersQuery = playersQuery.Where(p => p.Id == filter.PlayerId.Value);
+        }
 
         if (filter.DivisionId.HasValue)
         {
@@ -52,16 +62,24 @@ public class ScorerRepository(ApplicationDBContext context)
         IQueryable<Scorer> scorersQuery = _dbSet;
 
         if (filter.TournamentId.HasValue)
+        {
             scorersQuery = scorersQuery.Where(s => s.Match!.Stage.Division.TournamentId == filter.TournamentId.Value);
+        }
 
         if (filter.DivisionId.HasValue)
+        {
             scorersQuery = scorersQuery.Where(s => s.Match!.Stage.DivisionId == filter.DivisionId.Value);
+        }
 
         if (filter.StageId.HasValue)
+        {
             scorersQuery = scorersQuery.Where(s => s.Match!.StageId == filter.StageId.Value);
+        }
 
         if (filter.MatchId.HasValue)
+        {
             scorersQuery = scorersQuery.Where(s => s.MatchId == filter.MatchId.Value);
+        }
 
         IQueryable<ScorerByPlayerResponse> query = playersQuery.Select(player => new ScorerByPlayerResponse
         {
@@ -71,7 +89,7 @@ public class ScorerRepository(ApplicationDBContext context)
                 : player.LastName.ToUpper() + " " + player.FirstName + " " + player.SecondName,
             Points = scorersQuery
                 .Where(s => s.PlayerId == player.Id)
-                .Sum(s => (int?)s.Points) ?? 0
+                .Sum(s => (int?) s.Points) ?? 0
         });
 
         int totalCount = await query.CountAsync();

@@ -1,9 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Application.Backup;
 using Application.Interfaces.Backup;
-using Xunit;
 
 namespace API.Tests.Backup;
 
@@ -16,8 +12,10 @@ public class KeepLastNRetentionPolicyTests
 {
     private static readonly KeepLastNRetentionPolicy Policy = new();
 
-    private static BackupFile File(string name, int minutesAgo) =>
-        new(name, DateTimeOffset.UtcNow.AddMinutes(-minutesAgo));
+    private static BackupFile File(string name, int minutesAgo)
+    {
+        return new(name, DateTimeOffset.UtcNow.AddMinutes(-minutesAgo));
+    }
 
     [Fact]
     public void SelectForDeletion_CountWithinLimit_SelectsNone()

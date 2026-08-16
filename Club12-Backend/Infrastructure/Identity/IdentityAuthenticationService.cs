@@ -3,10 +3,13 @@ using Application.DTOs.Auth.Response;
 using Application.Interfaces.Services;
 using Application.Utils.Constants.Auth;
 using Application.Utils.Constants.Configuration;
+
 using Domain.Enums;
+
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -53,7 +56,9 @@ public sealed class IdentityAuthenticationService(
 
         ApplicationUser? existing = await userManager.FindByEmailAsync(request.Email);
         if (existing is not null)
+        {
             throw new InvalidOperationException("A user with this email already exists.");
+        }
 
         ApplicationUser user = new()
         {
@@ -101,18 +106,21 @@ public sealed class IdentityAuthenticationService(
             ?? throw new UnauthorizedAccessException("Invalid credentials.");
 
         if (!await userManager.CheckPasswordAsync(user, request.Password))
+        {
             throw new UnauthorizedAccessException("Invalid credentials.");
+        }
 
         if (await userManager.IsLockedOutAsync(user))
+        {
             throw new UnauthorizedAccessException("This account is deactivated.");
+        }
 
         IList<string> roles = await userManager.GetRolesAsync(user);
 
-        if (roles.Contains(UserRoleType.TEAM_MANAGER.ToRoleName()))
-            throw new UnauthorizedAccessException(
-                "TeamManager accounts must authenticate via the magic-link flow.");
-
-        return await BuildTokenResponseAsync(user, roles, ct);
+        return roles.Contains(UserRoleType.TEAM_MANAGER.ToRoleName())
+            ? throw new UnauthorizedAccessException(
+                "TeamManager accounts must authenticate via the magic-link flow.")
+            : await BuildTokenResponseAsync(user, roles, ct);
     }
 
     /// <inheritdoc/>
@@ -125,8 +133,10 @@ public sealed class IdentityAuthenticationService(
         IList<string> roles = await userManager.GetRolesAsync(user);
 
         if (!roles.Contains(UserRoleType.TEAM_MANAGER.ToRoleName()))
+        {
             throw new UnauthorizedAccessException(
                 "Magic-link is only available for TeamManager accounts.");
+        }
 
         string token = await userManager.GenerateUserTokenAsync(
             user, TokenOptions.DefaultEmailProvider, MagicLinkPurpose);
@@ -150,10 +160,14 @@ public sealed class IdentityAuthenticationService(
             user, TokenOptions.DefaultEmailProvider, MagicLinkPurpose, request.Token);
 
         if (!valid)
+        {
             throw new UnauthorizedAccessException("Magic-link is invalid or has already been used.");
+        }
 
         if (await userManager.IsLockedOutAsync(user))
+        {
             throw new UnauthorizedAccessException("This account is deactivated.");
+        }
 
         IList<string> roles = await userManager.GetRolesAsync(user);
         return await BuildTokenResponseAsync(user, roles, ct);
@@ -170,8 +184,10 @@ public sealed class IdentityAuthenticationService(
             user, request.Token, request.NewPassword);
 
         if (!result.Succeeded)
+        {
             throw new InvalidOperationException(
                 string.Join("; ", result.Errors.Select(e => e.Description)));
+        }
 
         user.MustChangePassword = false;
         await userManager.UpdateAsync(user);
@@ -197,7 +213,9 @@ public sealed class IdentityAuthenticationService(
             ?? throw new UnauthorizedAccessException("Refresh token is invalid.");
 
         if (user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+        {
             throw new UnauthorizedAccessException("Refresh token has expired. Please log in again.");
+        }
 
         IList<string> roles = await userManager.GetRolesAsync(user);
         return await BuildTokenResponseAsync(user, roles, ct);
@@ -226,7 +244,9 @@ public sealed class IdentityAuthenticationService(
         ];
 
         if (user.MustChangePassword)
+        {
             claims.Add(new Claim(CustomClaimTypes.MustChangePassword, "true"));
+        }
 
         TokenResponse response = await authService.GenerateJwtTokenAsync(claims, ct);
 
@@ -240,7 +260,9 @@ public sealed class IdentityAuthenticationService(
     private static string GenerateTemporaryPassword(int length = 16)
     {
         if (length < 8)
+        {
             length = 8;
+        }
 
         const string upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
         const string lower = "abcdefghijkmnopqrstuvwxyz";
@@ -255,7 +277,9 @@ public sealed class IdentityAuthenticationService(
         chars[3] = special[RandomNumberGenerator.GetInt32(special.Length)];
 
         for (int i = 4; i < chars.Length; i++)
+        {
             chars[i] = all[RandomNumberGenerator.GetInt32(all.Length)];
+        }
 
         for (int i = chars.Length - 1; i > 0; i--)
         {
@@ -272,10 +296,14 @@ public sealed class IdentityAuthenticationService(
                        && permitted.Contains(targetRole);
 
         if (!allowed)
+        {
             throw new UnauthorizedAccessException(
                 $"Role '{callerRole}' is not allowed to create users with role '{targetRole}'.");
+        }
     }
 
-    private static bool IsOwner(string role) =>
-        role.Equals(UserRoleType.OWNER.ToRoleName(), StringComparison.OrdinalIgnoreCase);
+    private static bool IsOwner(string role)
+    {
+        return role.Equals(UserRoleType.OWNER.ToRoleName(), StringComparison.OrdinalIgnoreCase);
+    }
 }

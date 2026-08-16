@@ -1,11 +1,15 @@
 ﻿using API.Utils.Helpers;
+
 using Application.DTOs.Auth.Request;
 using Application.DTOs.Auth.Response;
 using Application.Interfaces.Services;
+
 using Domain.Enums;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+
 using System;
 using System.Security.Claims;
 using System.Threading;
@@ -19,7 +23,7 @@ public class AuthController(IAuthenticationService authenticationService) : Cont
 {
     [Authorize(Roles = Roles.AdminOrOwner)]
     [HttpPost("register")]
-    [ProducesResponseType(StatusCodes.Status201Created,   Type = typeof(RegisterUserResponse))]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(RegisterUserResponse))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<RegisterUserResponse>> Register(
@@ -40,40 +44,50 @@ public class AuthController(IAuthenticationService authenticationService) : Cont
 
     [AllowAnonymous]
     [HttpPost("login")]
-    [ProducesResponseType(StatusCodes.Status200OK,          Type = typeof(TokenResponse))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokenResponse))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<TokenResponse>> Login(
         [FromBody] LogInUserRequest request, CancellationToken ct)
-        => Ok(await authenticationService.LoginAsync(request, ct));
+    {
+        return Ok(await authenticationService.LoginAsync(request, ct));
+    }
 
     [AllowAnonymous]
     [HttpPost("magic-link/request")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MagicLinkResponse))]
     public async Task<ActionResult<MagicLinkResponse>> RequestMagicLink(
         [FromBody] MagicLinkRequest request, CancellationToken ct)
-        => Ok(await authenticationService.RequestMagicLinkAsync(request, ct));
+    {
+        return Ok(await authenticationService.RequestMagicLinkAsync(request, ct));
+    }
 
     [AllowAnonymous]
     [HttpPost("magic-link/login")]
-    [ProducesResponseType(StatusCodes.Status200OK,          Type = typeof(TokenResponse))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokenResponse))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<TokenResponse>> MagicLinkLogin(
         [FromBody] MagicLinkLoginRequest request, CancellationToken ct)
-        => Ok(await authenticationService.MagicLinkLoginAsync(request, ct));
+    {
+        return Ok(await authenticationService.MagicLinkLoginAsync(request, ct));
+    }
 
     [AllowAnonymous]
     [HttpPost("guest")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokenResponse))]
     public async Task<ActionResult<TokenResponse>> Guest(CancellationToken ct)
-        => Ok(await authenticationService.GuestAsync(ct));
+    {
+        return Ok(await authenticationService.GuestAsync(ct));
+    }
 
     [AllowAnonymous]
     [HttpPost("refresh")]
-    [ProducesResponseType(StatusCodes.Status200OK,          Type = typeof(TokenResponse))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokenResponse))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<TokenResponse>> Refresh(
         [FromBody] RefreshTokenRequest request, CancellationToken ct)
-        => Ok(await authenticationService.RefreshAsync(request, ct));
+    {
+        return Ok(await authenticationService.RefreshAsync(request, ct));
+    }
 
     /// <summary>
     /// Verifies the password-reset token from the email link, sets the new password,
@@ -86,14 +100,16 @@ public class AuthController(IAuthenticationService authenticationService) : Cont
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<TokenResponse>> ConfirmPasswordReset(
         [FromBody] PasswordResetConfirmRequest request, CancellationToken ct)
-        => Ok(await authenticationService.ConfirmPasswordResetAsync(request, ct));
+    {
+        return Ok(await authenticationService.ConfirmPasswordResetAsync(request, ct));
+    }
 
     [AllowAnonymous]
     [HttpPost("logout")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Logout(CancellationToken ct)
     {
-        var (_, id) = User.GetCallerClaims();
+        (string _, Guid id) = User.GetCallerClaims();
         await authenticationService.LogoutAsync(id, ct);
         return NoContent();
     }

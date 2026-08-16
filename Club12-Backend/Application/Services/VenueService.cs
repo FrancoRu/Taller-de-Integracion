@@ -1,6 +1,8 @@
 ﻿using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+
 using Domain.Entities.Models;
+
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -16,7 +18,9 @@ public class VenueService(IVenueRepository venueRepository) : IVenueService
     }
 
     public async Task<Venue?> GetVenueByIdAsync(Guid venueId)
-        => await venueRepository.GetByIdAsync(venueId);
+    {
+        return await venueRepository.GetByIdAsync(venueId);
+    }
 
     public async Task DeleteVenueAsync(Guid id)
     {
@@ -24,7 +28,12 @@ public class VenueService(IVenueRepository venueRepository) : IVenueService
     }
 
     public async Task UpdateVenueAsync(Venue venueEntity)
-        => await venueRepository.UpdateAsync(venueEntity);
+    {
+        await venueRepository.UpdateAsync(venueEntity);
+    }
 
-    public async Task<IEnumerable<Venue>> GetAllVenuesAsync() => await venueRepository.FindAsync(venue => true);
+    public async Task<IEnumerable<Venue>> GetAllVenuesAsync()
+    {
+        return await venueRepository.FindAsync(venue => true);
+    }
 }

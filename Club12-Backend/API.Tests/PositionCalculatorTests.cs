@@ -1,43 +1,46 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Application.Utils.Helper.Standings;
+
 using Domain.Entities.Models;
-using Domain.Enums;
-using Xunit;
+
 using MatchType = Domain.Enums.MatchType;
 
 namespace API.Tests;
 
 public class PositionCalculatorTests
 {
-    private static Team MakeTeam(string name) => new()
+    private static Team MakeTeam(string name)
     {
-        Id = Guid.NewGuid(),
-        CreatedBy = "system",
-        Name = name,
-        ThreeLetterCode = name[..Math.Min(3, name.Length)].ToUpperInvariant(),
-        LogoUrl = "https://example.com/logo.png",
-        ShirtColor = "red",
-        Players = [],
-    };
+        return new()
+        {
+            Id = Guid.NewGuid(),
+            CreatedBy = "system",
+            Name = name,
+            ThreeLetterCode = name[..Math.Min(3, name.Length)].ToUpperInvariant(),
+            LogoUrl = "https://example.com/logo.png",
+            ShirtColor = "red",
+            Players = [],
+        };
+    }
 
-    private static Match MakeFinishedMatch(Team home, Team visitor, int homeScore, int visitorScore) => new()
+    private static Match MakeFinishedMatch(Team home, Team visitor, int homeScore, int visitorScore)
     {
-        Id = Guid.NewGuid(),
-        CreatedBy = "system",
-        MatchDate = new DateTime(2026, 1, 1),
-        Type = MatchType.Regular,
-        HomeTeam = home,
-        HomeTeamId = home.Id,
-        VisitorTeam = visitor,
-        VisitorTeamId = visitor.Id,
-        HomeScore = homeScore,
-        VisitorScore = visitorScore,
-        IsFinished = true,
-        WinningTeam = homeScore > visitorScore ? home : visitor,
-        WinningTeamId = homeScore > visitorScore ? home.Id : visitor.Id,
-    };
+        return new()
+        {
+            Id = Guid.NewGuid(),
+            CreatedBy = "system",
+            MatchDate = new DateTime(2026, 1, 1),
+            Type = MatchType.Regular,
+            HomeTeam = home,
+            HomeTeamId = home.Id,
+            VisitorTeam = visitor,
+            VisitorTeamId = visitor.Id,
+            HomeScore = homeScore,
+            VisitorScore = visitorScore,
+            IsFinished = true,
+            WinningTeam = homeScore > visitorScore ? home : visitor,
+            WinningTeamId = homeScore > visitorScore ? home.Id : visitor.Id,
+        };
+    }
 
     [Fact]
     public void CalculatePositions_TwoTeamsOneMatch_AwardsTwoPointsForWinOneForLoss()

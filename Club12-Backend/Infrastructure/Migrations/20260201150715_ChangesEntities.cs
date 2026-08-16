@@ -1,65 +1,66 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+
+using System;
 
 #nullable disable
 
-namespace Persistance.Migrations
+namespace Persistance.Migrations;
+
+/// <inheritdoc />
+public partial class ChangesEntities : Migration
 {
     /// <inheritdoc />
-    public partial class ChangesEntities : Migration
+    protected override void Up(MigrationBuilder migrationBuilder)
     {
-        /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Matches_Divisions_DivisionId",
-                schema: "Club12",
-                table: "Matches");
+        migrationBuilder.DropForeignKey(
+            name: "FK_Matches_Divisions_DivisionId",
+            schema: "Club12",
+            table: "Matches");
 
-            migrationBuilder.DropForeignKey(
-                name: "FK_Teams_Divisions_DivisionId",
-                schema: "Club12",
-                table: "Teams");
+        migrationBuilder.DropForeignKey(
+            name: "FK_Teams_Divisions_DivisionId",
+            schema: "Club12",
+            table: "Teams");
 
-            migrationBuilder.DropCheckConstraint(
-                name: "CK_Tournament_DeadlineBeforeStart",
-                schema: "Club12",
-                table: "Tournaments");
+        migrationBuilder.DropCheckConstraint(
+            name: "CK_Tournament_DeadlineBeforeStart",
+            schema: "Club12",
+            table: "Tournaments");
 
-            migrationBuilder.DropIndex(
-                name: "IX_Teams_DivisionId",
-                schema: "Club12",
-                table: "Teams");
+        migrationBuilder.DropIndex(
+            name: "IX_Teams_DivisionId",
+            schema: "Club12",
+            table: "Teams");
 
-            migrationBuilder.DropIndex(
-                name: "IX_Matches_DivisionId",
-                schema: "Club12",
-                table: "Matches");
+        migrationBuilder.DropIndex(
+            name: "IX_Matches_DivisionId",
+            schema: "Club12",
+            table: "Matches");
 
-            migrationBuilder.DropColumn(
-                name: "DivisionId",
-                schema: "Club12",
-                table: "Teams");
+        migrationBuilder.DropColumn(
+            name: "DivisionId",
+            schema: "Club12",
+            table: "Teams");
 
-            migrationBuilder.DropColumn(
-                name: "DivisionId",
-                schema: "Club12",
-                table: "Matches");
+        migrationBuilder.DropColumn(
+            name: "DivisionId",
+            schema: "Club12",
+            table: "Matches");
 
-            migrationBuilder.RenameColumn(
-                name: "PlayoffsGenerated",
-                schema: "Club12",
-                table: "Divisions",
-                newName: "CanGenerateStageAutomated");
+        migrationBuilder.RenameColumn(
+            name: "PlayoffsGenerated",
+            schema: "Club12",
+            table: "Divisions",
+            newName: "CanGenerateStageAutomated");
 
-            migrationBuilder.AddCheckConstraint(
-                name: "CK_Tournament_DeadlineBeforeStart",
-                schema: "Club12",
-                table: "Tournaments",
-                sql: "\"TeamRegistrationDeadline\" < \"StartDate\"");
+        migrationBuilder.AddCheckConstraint(
+            name: "CK_Tournament_DeadlineBeforeStart",
+            schema: "Club12",
+            table: "Tournaments",
+            sql: "\"TeamRegistrationDeadline\" < \"StartDate\"");
 
-            migrationBuilder.Sql(
-                @"
+        migrationBuilder.Sql(
+            @"
                     UPDATE                 
                     ""Club12"".""Divisions"" 
                     SET                
@@ -68,72 +69,71 @@ namespace Persistance.Migrations
                         ELSE FALSE
                     END
                     "
-                );
-        }
+            );
+    }
 
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DropCheckConstraint(
-                name: "CK_Tournament_DeadlineBeforeStart",
-                schema: "Club12",
-                table: "Tournaments");
+    /// <inheritdoc />
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.DropCheckConstraint(
+            name: "CK_Tournament_DeadlineBeforeStart",
+            schema: "Club12",
+            table: "Tournaments");
 
-            migrationBuilder.RenameColumn(
-                name: "CanGenerateStageAutomated",
-                schema: "Club12",
-                table: "Divisions",
-                newName: "PlayoffsGenerated");
+        migrationBuilder.RenameColumn(
+            name: "CanGenerateStageAutomated",
+            schema: "Club12",
+            table: "Divisions",
+            newName: "PlayoffsGenerated");
 
-            migrationBuilder.AddColumn<Guid>(
-                name: "DivisionId",
-                schema: "Club12",
-                table: "Teams",
-                type: "uuid",
-                nullable: true);
+        migrationBuilder.AddColumn<Guid>(
+            name: "DivisionId",
+            schema: "Club12",
+            table: "Teams",
+            type: "uuid",
+            nullable: true);
 
-            migrationBuilder.AddColumn<Guid>(
-                name: "DivisionId",
-                schema: "Club12",
-                table: "Matches",
-                type: "uuid",
-                nullable: true);
+        migrationBuilder.AddColumn<Guid>(
+            name: "DivisionId",
+            schema: "Club12",
+            table: "Matches",
+            type: "uuid",
+            nullable: true);
 
-            migrationBuilder.AddCheckConstraint(
-                name: "CK_Tournament_DeadlineBeforeStart",
-                schema: "Club12",
-                table: "Tournaments",
-                sql: "\"TeamRegistrationDeadline\" < \"StartDate\"");
+        migrationBuilder.AddCheckConstraint(
+            name: "CK_Tournament_DeadlineBeforeStart",
+            schema: "Club12",
+            table: "Tournaments",
+            sql: "\"TeamRegistrationDeadline\" < \"StartDate\"");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Teams_DivisionId",
-                schema: "Club12",
-                table: "Teams",
-                column: "DivisionId");
+        migrationBuilder.CreateIndex(
+            name: "IX_Teams_DivisionId",
+            schema: "Club12",
+            table: "Teams",
+            column: "DivisionId");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Matches_DivisionId",
-                schema: "Club12",
-                table: "Matches",
-                column: "DivisionId");
+        migrationBuilder.CreateIndex(
+            name: "IX_Matches_DivisionId",
+            schema: "Club12",
+            table: "Matches",
+            column: "DivisionId");
 
-            migrationBuilder.AddForeignKey(
-                name: "FK_Matches_Divisions_DivisionId",
-                schema: "Club12",
-                table: "Matches",
-                column: "DivisionId",
-                principalSchema: "Club12",
-                principalTable: "Divisions",
-                principalColumn: "Id");
+        migrationBuilder.AddForeignKey(
+            name: "FK_Matches_Divisions_DivisionId",
+            schema: "Club12",
+            table: "Matches",
+            column: "DivisionId",
+            principalSchema: "Club12",
+            principalTable: "Divisions",
+            principalColumn: "Id");
 
-            migrationBuilder.AddForeignKey(
-                name: "FK_Teams_Divisions_DivisionId",
-                schema: "Club12",
-                table: "Teams",
-                column: "DivisionId",
-                principalSchema: "Club12",
-                principalTable: "Divisions",
-                principalColumn: "Id");
-        }
+        migrationBuilder.AddForeignKey(
+            name: "FK_Teams_Divisions_DivisionId",
+            schema: "Club12",
+            table: "Teams",
+            column: "DivisionId",
+            principalSchema: "Club12",
+            principalTable: "Divisions",
+            principalColumn: "Id");
     }
 }

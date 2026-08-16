@@ -1,11 +1,12 @@
-using System;
 using API.AutoMapperProfiles;
+
 using Application.DTOs.Match.Response;
+
 using AutoMapper;
+
 using Domain.Entities.Models;
-using Domain.Enums;
+
 using Microsoft.Extensions.Logging.Abstractions;
-using Xunit;
 
 namespace API.Tests;
 
@@ -21,27 +22,33 @@ public class AutoMapperProfilesTests
         return configuration.CreateMapper();
     }
 
-    private static Team CreateTeam(string name) => new()
+    private static Team CreateTeam(string name)
     {
-        Id = Guid.NewGuid(),
-        CreatedBy = "system",
-        Name = name,
-        ThreeLetterCode = name[..Math.Min(3, name.Length)].ToUpperInvariant(),
-        LogoUrl = "https://example.com/logo.png",
-        ShirtColor = "red",
-        Players = [],
-    };
+        return new()
+        {
+            Id = Guid.NewGuid(),
+            CreatedBy = "system",
+            Name = name,
+            ThreeLetterCode = name[..Math.Min(3, name.Length)].ToUpperInvariant(),
+            LogoUrl = "https://example.com/logo.png",
+            ShirtColor = "red",
+            Players = [],
+        };
+    }
 
-    private static Match CreateMatch(Team? homeTeam, Team? visitorTeam) => new()
+    private static Match CreateMatch(Team? homeTeam, Team? visitorTeam)
     {
-        Id = Guid.NewGuid(),
-        CreatedBy = "system",
-        MatchDate = new DateTime(2026, 1, 1),
-        Type = Domain.Enums.MatchType.Regular,
-        HomeTeam = homeTeam,
-        VisitorTeam = visitorTeam,
-        IsFinished = false,
-    };
+        return new()
+        {
+            Id = Guid.NewGuid(),
+            CreatedBy = "system",
+            MatchDate = new DateTime(2026, 1, 1),
+            Type = Domain.Enums.MatchType.Regular,
+            HomeTeam = homeTeam,
+            VisitorTeam = visitorTeam,
+            IsFinished = false,
+        };
+    }
 
     [Fact]
     public void Map_ToMinimalMatchResponse_WithAssignedTeams_ResolvesRealTeamNames()

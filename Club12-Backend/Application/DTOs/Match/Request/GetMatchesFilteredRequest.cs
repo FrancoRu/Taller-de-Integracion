@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.Abstract.Request;
-using Domain.Entities.Models;
+
 using Domain.Enums;
+
 using System;
 
 namespace Application.DTOs.Match.Request;

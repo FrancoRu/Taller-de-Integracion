@@ -2,30 +2,29 @@
 
 #nullable disable
 
-namespace Infrastructure.Migrations
+namespace Infrastructure.Migrations;
+
+/// <inheritdoc />
+public partial class AddPlayerStatisticType : Migration
 {
     /// <inheritdoc />
-    public partial class AddPlayerStatisticType : Migration
+    protected override void Up(MigrationBuilder migrationBuilder)
     {
-        /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.AddColumn<string>(
-                name: "Type",
-                schema: "Club12",
-                table: "PlayersStatistics",
-                type: "text",
-                nullable: false,
-                defaultValue: "Points");
-        }
+        migrationBuilder.AddColumn<string>(
+            name: "Type",
+            schema: "Club12",
+            table: "PlayersStatistics",
+            type: "text",
+            nullable: false,
+            defaultValue: "Points");
+    }
 
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DropColumn(
-                name: "Type",
-                schema: "Club12",
-                table: "PlayersStatistics");
-        }
+    /// <inheritdoc />
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.DropColumn(
+            name: "Type",
+            schema: "Club12",
+            table: "PlayersStatistics");
     }
 }

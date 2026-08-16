@@ -1,7 +1,8 @@
-﻿using Application.DTOs.Abstract.Response;
-using Application.DTOs.Scorer.Request;
+﻿using Application.DTOs.Scorer.Request;
 using Application.DTOs.Scorer.Response;
+
 using Domain.Entities.Models;
+
 using System.Threading.Tasks;
 
 namespace Application.Interfaces.Repositories;

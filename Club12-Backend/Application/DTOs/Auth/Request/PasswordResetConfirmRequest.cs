@@ -1,4 +1,5 @@
 ﻿using Application.Utils.Constants.Validation;
+
 using System.ComponentModel.DataAnnotations;
 
 namespace Application.DTOs.Auth.Request;

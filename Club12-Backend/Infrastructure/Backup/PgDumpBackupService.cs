@@ -1,13 +1,16 @@
+using Application.Interfaces.Backup;
+using Application.Utils.Constants.Configuration;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+
+using Npgsql;
+
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Application.Interfaces.Backup;
-using Application.Utils.Constants.Configuration;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Npgsql;
 
 namespace Infrastructure.Backup;
 

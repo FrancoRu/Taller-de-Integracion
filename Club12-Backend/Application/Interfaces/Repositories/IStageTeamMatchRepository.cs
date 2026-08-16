@@ -2,6 +2,6 @@
 
 namespace Application.Interfaces.Repositories;
 
-public interface IStageTeamMatchRepository: IGenericRepository<StageTeamMatch>
+public interface IStageTeamMatchRepository : IGenericRepository<StageTeamMatch>
 {
 }

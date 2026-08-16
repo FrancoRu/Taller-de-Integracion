@@ -2,18 +2,22 @@
 using Application.DTOs.Match.Request;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
-using Domain.Constants;
 using Application.Utils.Constants.Stage;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.RoundRobin;
+
+using Domain.Constants;
 using Domain.Entities.Models;
 using Domain.Enums;
+
 using LinqKit;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+
 using MatchType = Domain.Enums.MatchType;
 
 namespace Application.Services;
@@ -32,7 +36,9 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
     }
 
     public async Task<Match?> GetMatchByIdAsync(Guid matchId)
-        => await matchRepository.GetByIdAsync(matchId, includes: [m => m.HomeTeam!, m=> m.VisitorTeam!]);
+    {
+        return await matchRepository.GetByIdAsync(matchId, includes: [m => m.HomeTeam!, m => m.VisitorTeam!]);
+    }
 
     public async Task<Match?> GetMatchByIdWithScorersAsync(Guid matchId)
     {
@@ -43,19 +49,18 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
                         m => m.Venue!]
             );
 
-        if (match is null)
-        {
-            return null;
-        }
-
-        return match;
+        return match is null ? null : match;
     }
 
     public async Task DeleteMatchAsync(Guid id)
-        => await matchRepository.RemoveAsync(match => match.Id == id);
+    {
+        await matchRepository.RemoveAsync(match => match.Id == id);
+    }
 
-    public async Task UpdateMatchAsync(Match matchEntity) =>
+    public async Task UpdateMatchAsync(Match matchEntity)
+    {
         await matchRepository.UpdateAsync(matchEntity);
+    }
 
     public async Task<PaginatedResponse<Match>> GetAllMatchesAsync(GetMatchesFilteredRequest filter)
     {
@@ -77,7 +82,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
             Expression<Func<Match, bool>> homeTeamExpression = match => match.HomeTeam != null && match.HomeTeam.Name.ToLower().Contains(filter.HomeTeamName.ToLower());
             expression = expression.And(homeTeamExpression);
         }
-        if(!string.IsNullOrWhiteSpace(filter.VisitorTeamName))
+        if (!string.IsNullOrWhiteSpace(filter.VisitorTeamName))
         {
             Expression<Func<Match, bool>> visitorTeamExpression = match => match.VisitorTeam != null && match.VisitorTeam.Name.ToLower().Contains(filter.VisitorTeamName.ToLower());
             expression = expression.And(visitorTeamExpression);
@@ -123,8 +128,9 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
         return matches;
     }
 
-    private static Match BuildMatch(Stage stage, DateTime matchDate, MatchType matchType = MatchType.Playoff) =>
-        new()
+    private static Match BuildMatch(Stage stage, DateTime matchDate, MatchType matchType = MatchType.Playoff)
+    {
+        return new()
         {
             StageId = stage.Id,
             Type = matchType,
@@ -132,6 +138,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
             MatchDate = matchDate,
             CreatedBy = AuditConstants.SystemUser
         };
+    }
 
     private async Task<int> ResolveGroupTeamCountAsync(Stage stage)
     {
@@ -158,12 +165,9 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
 
         int teamsPerGroup = registeredTeams / totalGroups;
 
-        if (teamsPerGroup < 2)
-        {
-            throw new InvalidOperationException("At least 2 teams per group are required to generate matches.");
-        }
-
-        return teamsPerGroup;
+        return teamsPerGroup < 2
+            ? throw new InvalidOperationException("At least 2 teams per group are required to generate matches.")
+            : teamsPerGroup;
     }
 
     /// <summary>
@@ -306,5 +310,5 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
         return matchDates;
     }
 
-    
+
 }

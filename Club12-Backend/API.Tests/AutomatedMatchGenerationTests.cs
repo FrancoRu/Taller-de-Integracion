@@ -1,14 +1,13 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Application.Interfaces.Services;
 using Application.Utils.Constants.Stage;
+
 using Domain.Entities.Models;
 using Domain.Enums;
+
 using Infrastructure.Persistance;
-using Microsoft.EntityFrameworkCore;
+
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
+
 using MatchType = Domain.Enums.MatchType;
 
 namespace API.Tests;

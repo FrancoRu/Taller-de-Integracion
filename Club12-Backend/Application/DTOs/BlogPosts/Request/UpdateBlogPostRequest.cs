@@ -1,6 +1,4 @@
-﻿
-using System;
-namespace Application.DTOs.BlogPosts.Request;
+﻿namespace Application.DTOs.BlogPosts.Request;
 
 
 /// <summary>

@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
 using Application.Utils.Helper.SupabaseHelper;
 
 namespace API.Tests.Backup.Fakes;
@@ -32,7 +28,9 @@ public sealed class FakeSupabaseRawStorage : ISupabaseRawStorage
     public Task UploadRawAsync(string objectPath, Stream content)
     {
         if (ExceptionToThrow is not null)
+        {
             throw ExceptionToThrow;
+        }
 
         UploadedPaths.Add(objectPath);
         return Task.CompletedTask;
@@ -41,7 +39,9 @@ public sealed class FakeSupabaseRawStorage : ISupabaseRawStorage
     public Task<IReadOnlyList<SupabaseStorageEntry>> ListRawAsync(string prefix)
     {
         if (ExceptionToThrow is not null)
+        {
             throw ExceptionToThrow;
+        }
 
         LastListedPrefix = prefix;
         return Task.FromResult(EntriesToList);
@@ -50,7 +50,9 @@ public sealed class FakeSupabaseRawStorage : ISupabaseRawStorage
     public Task RemoveRawAsync(string objectPath)
     {
         if (ExceptionToThrow is not null)
+        {
             throw ExceptionToThrow;
+        }
 
         RemovedPaths.Add(objectPath);
         return Task.CompletedTask;

@@ -2,29 +2,28 @@
 
 #nullable disable
 
-namespace Persistance.Migrations
+namespace Persistance.Migrations;
+
+/// <inheritdoc />
+public partial class AddUniqueNameAndDivisionIdInsideStageTable : Migration
 {
     /// <inheritdoc />
-    public partial class AddUniqueNameAndDivisionIdInsideStageTable : Migration
+    protected override void Up(MigrationBuilder migrationBuilder)
     {
-        /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.CreateIndex(
-                name: "CONSTRAINT_UNIQUE_STAGE_NAME_AND_DIVISIONID",
-                schema: "Club12",
-                table: "Stages",
-                columns: new[] { "Name", "DivisionId" },
-                unique: true);
-        }
+        migrationBuilder.CreateIndex(
+            name: "CONSTRAINT_UNIQUE_STAGE_NAME_AND_DIVISIONID",
+            schema: "Club12",
+            table: "Stages",
+            columns: new[] { "Name", "DivisionId" },
+            unique: true);
+    }
 
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DropIndex(
-                name: "CONSTRAINT_UNIQUE_STAGE_NAME_AND_DIVISIONID",
-                schema: "Club12",
-                table: "Stages");
-        }
+    /// <inheritdoc />
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.DropIndex(
+            name: "CONSTRAINT_UNIQUE_STAGE_NAME_AND_DIVISIONID",
+            schema: "Club12",
+            table: "Stages");
     }
 }

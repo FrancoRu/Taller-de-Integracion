@@ -1,7 +1,6 @@
-using System.Threading.Tasks;
 using Application.Interfaces.Backup;
+
 using Infrastructure.Backup;
-using Xunit;
 
 namespace API.Tests.Backup;
 

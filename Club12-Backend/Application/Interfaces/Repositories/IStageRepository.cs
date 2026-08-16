@@ -5,6 +5,6 @@ namespace Application.Interfaces.Repositories;
 /// <summary>
 /// Repository interface for managing Stage entities.
 /// </summary>
-public interface IStageRepository: IGenericRepository<Stage>
+public interface IStageRepository : IGenericRepository<Stage>
 {
 }

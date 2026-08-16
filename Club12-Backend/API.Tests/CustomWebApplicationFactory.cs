@@ -1,7 +1,6 @@
-using System;
-using System.Linq;
 using Infrastructure.Identity;
 using Infrastructure.Persistance;
+
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;

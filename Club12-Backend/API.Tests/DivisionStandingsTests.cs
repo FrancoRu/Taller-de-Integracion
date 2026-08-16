@@ -1,13 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Application.Interfaces.Services;
+
 using Domain.Entities.Models;
 using Domain.Enums;
+
 using Infrastructure.Persistance;
+
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
+
 using MatchType = Domain.Enums.MatchType;
 
 namespace API.Tests;
@@ -152,8 +151,10 @@ public class DivisionStandingsTests : IClassFixture<CustomWebApplicationFactory>
         return division;
     }
 
-    private static async Task<Stage> SeedGroupStageAsync(ApplicationDBContext db, Division division, Tournament tournament) =>
-        await SeedEliminationStageAsync(db, division, tournament, StageType.Group, isElimination: false);
+    private static async Task<Stage> SeedGroupStageAsync(ApplicationDBContext db, Division division, Tournament tournament)
+    {
+        return await SeedEliminationStageAsync(db, division, tournament, StageType.Group, isElimination: false);
+    }
 
     private static async Task<Stage> SeedEliminationStageAsync(
         ApplicationDBContext db, Division division, Tournament tournament, StageType stageType, bool isElimination = true)

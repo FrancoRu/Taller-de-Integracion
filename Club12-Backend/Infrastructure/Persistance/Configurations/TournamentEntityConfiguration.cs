@@ -1,6 +1,6 @@
 ﻿using Domain.Entities.Models;
 using Domain.Enums;
-using Infrastructure.Persistance;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

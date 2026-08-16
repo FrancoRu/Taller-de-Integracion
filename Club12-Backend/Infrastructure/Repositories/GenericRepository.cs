@@ -1,9 +1,13 @@
 using Application.DTOs.Abstract.Request;
 using Application.Interfaces.Repositories;
 using Application.Utils.Extensions;
+
 using Domain.Entities.Models;
+
 using Infrastructure.Persistance;
+
 using Microsoft.EntityFrameworkCore;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -64,14 +68,20 @@ public class GenericRepository<TEntity>(ApplicationDBContext context)
     }
 
     ///<inheritdoc />
-    public virtual IQueryable<TEntity> GetQueryable() => _dbSet;
+    public virtual IQueryable<TEntity> GetQueryable()
+    {
+        return _dbSet;
+    }
 
     ///<inheritdoc />
-    public virtual async Task<IEnumerable<TEntity>> GetAllAsync() => await _dbSet.ToListAsync();
+    public virtual async Task<IEnumerable<TEntity>> GetAllAsync()
+    {
+        return await _dbSet.ToListAsync();
+    }
 
     ///<inheritdoc />
     public virtual async Task<IEnumerable<TEntity>> FindAsync(
-        Expression<Func<TEntity, bool>> predicate, 
+        Expression<Func<TEntity, bool>> predicate,
         IEnumerable<Expression<Func<TEntity, object>>>? includes = null,
         PaginatedFilterRequest? filter = null)
     {
@@ -107,17 +117,26 @@ public class GenericRepository<TEntity>(ApplicationDBContext context)
     }
 
     ///<inheritdoc />
-    public virtual void Remove(TEntity entity) => _dbSet.Remove(entity);
+    public virtual void Remove(TEntity entity)
+    {
+        _dbSet.Remove(entity);
+    }
 
     ///<inheritdoc />
     public virtual async Task<int> RemoveAsync(Expression<Func<TEntity, bool>> expression)
-        => await _dbSet.Where(expression).ExecuteDeleteAsync();
+    {
+        return await _dbSet.Where(expression).ExecuteDeleteAsync();
+    }
 
     ///<inheritdoc />
-    public virtual async Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null) =>
-        predicate == null ? await _dbSet.CountAsync() : await _dbSet.CountAsync(predicate);
+    public virtual async Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null)
+    {
+        return predicate == null ? await _dbSet.CountAsync() : await _dbSet.CountAsync(predicate);
+    }
 
     ///<inheritdoc />
-    public virtual async Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate) =>
-        await _dbSet.AnyAsync(predicate);
+    public virtual async Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate)
+    {
+        return await _dbSet.AnyAsync(predicate);
+    }
 }

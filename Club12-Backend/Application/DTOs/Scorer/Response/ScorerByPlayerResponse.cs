@@ -4,7 +4,7 @@ namespace Application.DTOs.Scorer.Response;
 /// <summary>
 /// Response model representing a scorer's performance in a match.
 /// </summary>
-public class ScorerByPlayerResponse: ScorerBaseResponse
+public class ScorerByPlayerResponse : ScorerBaseResponse
 {
     /// <summary>
     /// Unique identifier of the player.

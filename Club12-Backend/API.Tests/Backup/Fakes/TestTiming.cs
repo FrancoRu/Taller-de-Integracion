@@ -1,6 +1,3 @@
-using System;
-using System.Threading.Tasks;
-
 namespace API.Tests.Backup.Fakes;
 
 /// <summary>
@@ -16,7 +13,10 @@ internal static class TestTiming
         while (DateTime.UtcNow < deadline)
         {
             if (condition())
+            {
                 return true;
+            }
+
             await Task.Delay(10);
         }
         return condition();

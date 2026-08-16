@@ -1,9 +1,10 @@
+using Application.Interfaces.Backup;
+
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using Application.Interfaces.Backup;
 
 namespace Infrastructure.Backup;
 
@@ -37,12 +38,16 @@ public sealed class ProcessRunner : IProcessRunner
         };
 
         foreach (string arg in args)
+        {
             startInfo.ArgumentList.Add(arg);
+        }
 
         if (environmentVariables is not null)
         {
             foreach (KeyValuePair<string, string> kvp in environmentVariables)
+            {
                 startInfo.Environment[kvp.Key] = kvp.Value;
+            }
         }
 
         using Process process = new() { StartInfo = startInfo };

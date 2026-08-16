@@ -3,7 +3,9 @@ using Application.DTOs.Tournament.Request;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Utils.Extensions;
+
 using Domain.Entities.Models;
+
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -19,15 +21,21 @@ public class TournamentService(ITournamentRepository tournamentRepository) : ITo
         return tournamentEntity;
     }
 
-    public async Task<Tournament?> GetTournamentByIdAsync(Guid tournamentId) 
-        => await tournamentRepository.GetByIdAsync(tournamentId, includes: [tournament => tournament.Divisions]);
+    public async Task<Tournament?> GetTournamentByIdAsync(Guid tournamentId)
+    {
+        return await tournamentRepository.GetByIdAsync(tournamentId, includes: [tournament => tournament.Divisions]);
+    }
 
     public async Task DeleteTournamentAsync(Guid id)
-            => await tournamentRepository.RemoveAsync(tournament => tournament.Id == id);
+    {
+        await tournamentRepository.RemoveAsync(tournament => tournament.Id == id);
+    }
 
     public async Task UpdateTournamentAsync(Tournament tournamentEntity)
-           => await tournamentRepository.UpdateAsync(tournamentEntity);
-   
+    {
+        await tournamentRepository.UpdateAsync(tournamentEntity);
+    }
+
     public async Task<PaginatedResponse<Tournament>> GetAllTournamentsAsync(GetTournamentsFilteredRequest filter)
     {
         Expression<Func<Tournament, bool>> expression = QueryableExtensions.ConstructFilterExpression<Tournament, GetTournamentsFilteredRequest>(filter);

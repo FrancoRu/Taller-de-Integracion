@@ -1,14 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Application.Backup;
 using Application.Interfaces.Backup;
+
 using Infrastructure.Backup;
+
 using Microsoft.Extensions.Logging.Abstractions;
-using Xunit;
+
+using System.Text;
 
 namespace API.Tests.Backup;
 
@@ -30,7 +27,10 @@ public sealed class LocalDirectoryBackupStorageTests : IDisposable
         _storage = new LocalDirectoryBackupStorage(_tempDir, NullLogger<LocalDirectoryBackupStorage>.Instance);
     }
 
-    private static Stream ContentStream(string text) => new MemoryStream(Encoding.UTF8.GetBytes(text));
+    private static Stream ContentStream(string text)
+    {
+        return new MemoryStream(Encoding.UTF8.GetBytes(text));
+    }
 
     [Fact]
     public async Task StoreAsync_ThenListAsync_ReturnsStoredFile()
@@ -108,7 +108,9 @@ public sealed class LocalDirectoryBackupStorageTests : IDisposable
             toDelete.Select(f => f.Name).OrderBy(n => n, StringComparer.Ordinal).ToArray());
 
         foreach (BackupFile stale in toDelete)
+        {
             await _storage.DeleteAsync(stale.Name);
+        }
 
         IReadOnlyList<BackupFile> remaining = await _storage.ListAsync();
         Assert.Equal(2, remaining.Count);
@@ -125,6 +127,8 @@ public sealed class LocalDirectoryBackupStorageTests : IDisposable
     public void Dispose()
     {
         if (Directory.Exists(_tempDir))
+        {
             Directory.Delete(_tempDir, recursive: true);
+        }
     }
 }

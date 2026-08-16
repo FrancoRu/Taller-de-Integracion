@@ -1,14 +1,19 @@
 ﻿using API.Utils;
+
 using Application.DTOs.Abstract.Response;
 using Application.DTOs.Divisions.Request;
 using Application.DTOs.Divisions.Response;
 using Application.Interfaces.Services;
+
 using AutoMapper;
+
 using Domain.Entities.Models;
 using Domain.Enums;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -47,7 +52,7 @@ public class DivisionController(
         Division createdDivision = await divisionService.CreateDivisionAsync(mappedDivision);
         DivisionResponse divisionResponse = mapper.Map<DivisionResponse>(createdDivision);
 
-        return CreatedAtAction(nameof(GetDivisionById),new { id = divisionResponse.Id }, divisionResponse);
+        return CreatedAtAction(nameof(GetDivisionById), new { id = divisionResponse.Id }, divisionResponse);
     }
 
     /// <summary>
@@ -93,7 +98,7 @@ public class DivisionController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteDivisionById(Guid id)
     {
-        
+
         await divisionService.DeleteDivisionAsync(id);
         return NoContent();
 

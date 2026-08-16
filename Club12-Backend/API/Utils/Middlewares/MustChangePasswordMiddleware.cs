@@ -1,5 +1,7 @@
 ﻿using Application.Utils.Constants.Auth;
+
 using Microsoft.AspNetCore.Http;
+
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -10,7 +12,7 @@ public class MustChangePasswordMiddleware(RequestDelegate next)
 {
     private static readonly string[] AllowedPaths =
     [
-        "/api/users/", 
+        "/api/users/",
         "/api/auth/logout",
     ];
 
@@ -23,7 +25,7 @@ public class MustChangePasswordMiddleware(RequestDelegate next)
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             await context.Response.WriteAsJsonAsync(new
             {
-                error  = "Password change required.",
+                error = "Password change required.",
                 action = "PUT /api/users/{your-id}/password"
             });
             return;

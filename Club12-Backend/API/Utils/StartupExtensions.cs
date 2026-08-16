@@ -1,6 +1,7 @@
 using API.BackgroundServices;
 using API.Utils.Converters;
 using API.Utils.Middlewares;
+
 using Application.Backup;
 using Application.Interfaces.Backup;
 using Application.Interfaces.Mappers;
@@ -10,12 +11,16 @@ using Application.Services;
 using Application.Utils.Helper.Email;
 using Application.Utils.Helper.SupabaseHelper;
 using Application.Utils.Mappers;
+
 using Domain.Enums;
+
 using FluentEmail.MailKitSmtp;
+
 using Infrastructure.Backup;
 using Infrastructure.Identity;
 using Infrastructure.Persistance;
 using Infrastructure.Repositories;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
@@ -26,7 +31,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+
 using Serilog;
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -160,7 +167,9 @@ public static class StartupExtensions
         services.AddAuthorization(options =>
         {
             foreach (string role in _roleNames)
+            {
                 options.AddPolicy(role, policy => policy.RequireRole(role));
+            }
         });
 
         return services;
@@ -173,7 +182,9 @@ public static class StartupExtensions
     {
         string? jwtSecret = configuration.GetSection(ConfigurationKeys.Jwt.Key)?.Value;
         if (string.IsNullOrEmpty(jwtSecret))
+        {
             throw new ArgumentException("The JWT is missing or empty in configuration.");
+        }
 
         services.AddAuthentication(options =>
         {
@@ -182,13 +193,13 @@ public static class StartupExtensions
         {
             options.TokenValidationParameters = new TokenValidationParameters
             {
-                ValidateIssuer           = true,
-                ValidateAudience         = true,
-                ValidateLifetime         = true,
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
-                ValidIssuer              = configuration[ConfigurationKeys.Jwt.Issuer],
-                ValidAudience            = configuration[ConfigurationKeys.Jwt.Audience],
-                IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
+                ValidIssuer = configuration[ConfigurationKeys.Jwt.Issuer],
+                ValidAudience = configuration[ConfigurationKeys.Jwt.Audience],
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
             };
         });
 
@@ -238,7 +249,7 @@ public static class StartupExtensions
         {
             context.SwaggerDoc(swaggerDocVersion, new OpenApiInfo
             {
-                Title   = configuration[ConfigurationKeys.Swagger.Title],
+                Title = configuration[ConfigurationKeys.Swagger.Title],
                 Version = configuration[ConfigurationKeys.Swagger.Version],
             });
 
@@ -249,10 +260,10 @@ public static class StartupExtensions
             context.AddSecurityDefinition(bearerScheme, new OpenApiSecurityScheme
             {
                 Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below.",
-                Name        = "Authorization",
-                In          = ParameterLocation.Header,
-                Type        = SecuritySchemeType.ApiKey,
-                Scheme      = bearerScheme
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Scheme = bearerScheme
             });
 
             context.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -293,7 +304,9 @@ public static class StartupExtensions
     {
         string? connectionString = configuration.GetConnectionString(ConfigurationKeys.DbConnection);
         if (string.IsNullOrWhiteSpace(connectionString))
+        {
             throw new ArgumentException("The connection string should be initialized already.");
+        }
 
         services.AddDbContext<IdentityAppDbContext>(options => options.UseNpgsql(connectionString));
 
@@ -306,8 +319,8 @@ public static class StartupExtensions
             .AddSignInManager()
             .AddDefaultTokenProviders();
 
-        services.AddScoped<IAuthenticationService,  IdentityAuthenticationService>();
-        services.AddScoped<IUserManagementService,  IdentityUserManagementService>();
+        services.AddScoped<IAuthenticationService, IdentityAuthenticationService>();
+        services.AddScoped<IUserManagementService, IdentityUserManagementService>();
         services.AddScoped<IdentitySeeder>();
 
         return services;
@@ -318,29 +331,29 @@ public static class StartupExtensions
     /// </summary>
     public static IServiceCollection RegisterScoped(this IServiceCollection services)
     {
-        string? serviceInterfaceNamespace   = typeof(IDivisionService).Namespace;
-        string? serviceImplNamespace        = typeof(DivisionService).Namespace;
+        string? serviceInterfaceNamespace = typeof(IDivisionService).Namespace;
+        string? serviceImplNamespace = typeof(DivisionService).Namespace;
         string? repositoryInterfaceNamespace = typeof(IBlogPostRepository).Namespace;
-        string? repositoryImplNamespace     = typeof(BlogPostRepository).Namespace;
+        string? repositoryImplNamespace = typeof(BlogPostRepository).Namespace;
         string? mapperInterfaceNamespace = typeof(IScorerMapper).Namespace;
         string? mapperImplNamespace = typeof(ScorerMapper).Namespace;
-        string  serviceSuffix               = "Service";
-        string  repositorySuffix            = "Repository";
-        string  mapperSuffix = "Mapper";
+        string serviceSuffix = "Service";
+        string repositorySuffix = "Repository";
+        string mapperSuffix = "Mapper";
 
-        ArgumentNullException.ThrowIfNull(serviceInterfaceNamespace,    "Service interface namespace cannot be null.");
-        ArgumentNullException.ThrowIfNull(serviceImplNamespace,         "Service implementation namespace cannot be null.");
+        ArgumentNullException.ThrowIfNull(serviceInterfaceNamespace, "Service interface namespace cannot be null.");
+        ArgumentNullException.ThrowIfNull(serviceImplNamespace, "Service implementation namespace cannot be null.");
         ArgumentNullException.ThrowIfNull(repositoryInterfaceNamespace, "Repository interface namespace cannot be null.");
-        ArgumentNullException.ThrowIfNull(repositoryImplNamespace,      "Repository implementation namespace cannot be null.");
+        ArgumentNullException.ThrowIfNull(repositoryImplNamespace, "Repository implementation namespace cannot be null.");
         ArgumentNullException.ThrowIfNull(mapperInterfaceNamespace, "Mapper interface namespace cannot be null.");
-        ArgumentNullException.ThrowIfNull(mapperImplNamespace,      "Mapper implementation namespace cannot be null.");
+        ArgumentNullException.ThrowIfNull(mapperImplNamespace, "Mapper implementation namespace cannot be null.");
 
-        Assembly serviceAssembly  = typeof(AuthService).Assembly;
+        Assembly serviceAssembly = typeof(AuthService).Assembly;
         Assembly IServiceAssembly = typeof(IAuthService).Assembly;
-        Assembly repoAssembly     = typeof(BlogPostRepository).Assembly;
-        Assembly IRepoAssembly    = typeof(IBlogPostRepository).Assembly;
-        Assembly mapperAssembly   = typeof(ScorerMapper).Assembly;
-        Assembly IMapperAssembly  = typeof(IScorerMapper).Assembly;
+        Assembly repoAssembly = typeof(BlogPostRepository).Assembly;
+        Assembly IRepoAssembly = typeof(IBlogPostRepository).Assembly;
+        Assembly mapperAssembly = typeof(ScorerMapper).Assembly;
+        Assembly IMapperAssembly = typeof(IScorerMapper).Assembly;
 
         services.HelperRegisterScoped(serviceAssembly, IServiceAssembly, serviceSuffix, serviceInterfaceNamespace, serviceImplNamespace);
         services.HelperRegisterScoped(repoAssembly, IRepoAssembly, repositorySuffix, repositoryInterfaceNamespace, repositoryImplNamespace);
@@ -367,7 +380,9 @@ public static class StartupExtensions
                                   && t.Name == iface.Name[1..]);
 
             if (implementation is not null)
+            {
                 services.AddScoped(iface, implementation);
+            }
         }
     }
     /// <summary>

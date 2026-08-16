@@ -1,6 +1,6 @@
 ﻿using Application.DTOs.Abstract.Request;
+
 using Domain.Enums;
-using System;
 namespace Application.DTOs.Tournament.Request;
 
 /// <summary>

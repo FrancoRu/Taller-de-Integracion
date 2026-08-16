@@ -1,7 +1,9 @@
 using Application.Utils.Constants.Configuration;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
+
 using System;
 using System.IO;
 using System.Linq;
@@ -24,8 +26,8 @@ public sealed class ApplicationDBContextFactory : IDesignTimeDbContextFactory<Ap
 
         ConfigurationBuilder builder = new();
         builder.SetBasePath(basePath);
-        builder.AddJsonFile("appsettings.json",               optional: true);
-        builder.AddJsonFile($"appsettings.{aspNetEnv}.json",  optional: true);
+        builder.AddJsonFile("appsettings.json", optional: true);
+        builder.AddJsonFile($"appsettings.{aspNetEnv}.json", optional: true);
 
         if (Directory.Exists(basePath))
         {
@@ -38,7 +40,9 @@ public sealed class ApplicationDBContextFactory : IDesignTimeDbContextFactory<Ap
                 .ToArray();
 
             foreach (string? file in extras)
+            {
                 builder.AddJsonFile(file!, optional: true);
+            }
         }
 
         IConfigurationRoot config = builder.Build();
@@ -55,19 +59,19 @@ public sealed class ApplicationDBContextFactory : IDesignTimeDbContextFactory<Ap
 
         return new ApplicationDBContext(optionsBuilder.Options)
         {
-            Teams             = null!,
-            Players           = null!,
-            Tournaments       = null!,
-            Divisions         = null!,
-            Matches           = null!,
-            MatchSeries       = null!,
+            Teams = null!,
+            Players = null!,
+            Tournaments = null!,
+            Divisions = null!,
+            Matches = null!,
+            MatchSeries = null!,
             PlayersStatistics = null!,
-            PlayerSanctions   = null!,
-            Venues            = null!,
-            BlogPosts         = null!,
-            Stages            = null!,
-            StageTeamMatches  = null!,
-            Scorers           = null!,
+            PlayerSanctions = null!,
+            Venues = null!,
+            BlogPosts = null!,
+            Stages = null!,
+            StageTeamMatches = null!,
+            Scorers = null!,
         };
     }
 
@@ -85,7 +89,9 @@ public sealed class ApplicationDBContextFactory : IDesignTimeDbContextFactory<Ap
         foreach (string path in candidates)
         {
             if (File.Exists(Path.Combine(path, "appsettings.json")))
+            {
                 return Path.GetFullPath(path);
+            }
         }
 
         return current;

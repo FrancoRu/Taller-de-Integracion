@@ -1,6 +1,7 @@
-﻿using System;
+﻿using Domain.Enums;
+
+using System;
 using System.ComponentModel.DataAnnotations;
-using Domain.Enums;
 namespace Application.DTOs.PlayerStatistic.Request;
 
 /// <summary>

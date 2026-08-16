@@ -1,11 +1,13 @@
+using Application.Interfaces.Backup;
+
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Application.Interfaces.Backup;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace API.BackgroundServices;
 
@@ -84,7 +86,9 @@ public sealed class DatabaseBackupHostedService(
         finally
         {
             if (_inFlightRun is not null)
+            {
                 await _inFlightRun.ConfigureAwait(false);
+            }
         }
     }
 

@@ -93,5 +93,7 @@ public static class RoundRobinScheduler
     }
 
     private static List<T> Shuffle<T>(List<T> items, Random random)
-        => [.. items.OrderBy(_ => random.Next())];
+    {
+        return [.. items.OrderBy(_ => random.Next())];
+    }
 }

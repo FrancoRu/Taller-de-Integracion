@@ -1,27 +1,28 @@
-using System;
-using System.Collections.Generic;
 using Application.Utils.Helper.Series;
+
 using Domain.Entities.Models;
-using Domain.Enums;
-using Xunit;
+
 using MatchType = Domain.Enums.MatchType;
 
 namespace API.Tests;
 
 public class SeriesDecisionCalculatorTests
 {
-    private static Match MakeGame(Guid homeTeamId, Guid visitorTeamId, int gameNumber, Guid? winningTeamId, bool isFinished = true) => new()
+    private static Match MakeGame(Guid homeTeamId, Guid visitorTeamId, int gameNumber, Guid? winningTeamId, bool isFinished = true)
     {
-        Id = Guid.NewGuid(),
-        CreatedBy = "test",
-        MatchDate = new DateTime(2026, 1, gameNumber),
-        Type = MatchType.Playoff,
-        HomeTeamId = homeTeamId,
-        VisitorTeamId = visitorTeamId,
-        IsFinished = isFinished,
-        WinningTeamId = winningTeamId,
-        GameNumber = gameNumber,
-    };
+        return new()
+        {
+            Id = Guid.NewGuid(),
+            CreatedBy = "test",
+            MatchDate = new DateTime(2026, 1, gameNumber),
+            Type = MatchType.Playoff,
+            HomeTeamId = homeTeamId,
+            VisitorTeamId = visitorTeamId,
+            IsFinished = isFinished,
+            WinningTeamId = winningTeamId,
+            GameNumber = gameNumber,
+        };
+    }
 
     [Fact]
     public void DetermineWinner_BestOfThree_TwoWinsForOneTeam_DecidesTheSeriesEarly()

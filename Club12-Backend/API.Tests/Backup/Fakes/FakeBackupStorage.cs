@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using Application.Interfaces.Backup;
 
 namespace API.Tests.Backup.Fakes;
@@ -41,7 +36,10 @@ public sealed class FakeBackupStorage : IBackupStorage
     {
         Interlocked.Increment(ref _deleteCallCount);
         lock (DeletedNames)
+        {
             DeletedNames.Add(name);
+        }
+
         return Task.CompletedTask;
     }
 }

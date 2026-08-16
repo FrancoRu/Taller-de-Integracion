@@ -7,5 +7,5 @@ namespace Application.DTOs.User.Response;
 /// Must be communicated to the user out-of-band.
 /// </summary>
 public sealed record ResetPasswordResponse(
-    Guid   UserId
+    Guid UserId
 );

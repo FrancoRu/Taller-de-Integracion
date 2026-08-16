@@ -1,16 +1,21 @@
-﻿using AutoMapper;
-using API.Utils;
+﻿using API.Utils;
+
 using Application.DTOs.Abstract.Response;
 using Application.DTOs.PlayerSanction.Request;
 using Application.DTOs.PlayerSanction.Response;
 using Application.Interfaces.Services;
+
+using AutoMapper;
+
+using Domain.Entities.Models;
+using Domain.Enums;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+
 using System;
 using System.Threading.Tasks;
-using Domain.Entities.Models;
-using Domain.Enums;
 
 namespace API.Controllers;
 

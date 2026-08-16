@@ -1,11 +1,13 @@
+using Application.Interfaces.Backup;
+
+using Microsoft.Extensions.Logging;
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Application.Interfaces.Backup;
-using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Backup;
 
@@ -54,9 +56,13 @@ public sealed class LocalDirectoryBackupStorage : IBackupStorage
     {
         string path = ResolveSafePath(name);
         if (File.Exists(path))
+        {
             File.Delete(path);
+        }
         else
+        {
             _logger.LogWarning("DeleteAsync called for a backup that no longer exists: {Name}", name);
+        }
 
         return Task.CompletedTask;
     }
@@ -70,17 +76,18 @@ public sealed class LocalDirectoryBackupStorage : IBackupStorage
     private string ResolveSafePath(string name)
     {
         if (string.IsNullOrWhiteSpace(name) || Path.IsPathRooted(name))
+        {
             throw new ArgumentException("Backup file name must be a non-empty, relative name.", nameof(name));
+        }
 
         string fullPath = Path.GetFullPath(Path.Combine(_directoryPath, name));
         string prefix = _directoryPath.EndsWith(Path.DirectorySeparatorChar)
             ? _directoryPath
             : _directoryPath + Path.DirectorySeparatorChar;
 
-        if (!fullPath.StartsWith(prefix, StringComparison.Ordinal))
-            throw new ArgumentException(
-                $"Backup file name '{name}' resolves outside the configured backup directory.", nameof(name));
-
-        return fullPath;
+        return !fullPath.StartsWith(prefix, StringComparison.Ordinal)
+            ? throw new ArgumentException(
+                $"Backup file name '{name}' resolves outside the configured backup directory.", nameof(name))
+            : fullPath;
     }
 }

@@ -1,5 +1,6 @@
-﻿using System;
-using Domain.Constants;
+﻿using Domain.Constants;
+
+using System;
 
 namespace Domain.Entities.Models;
 

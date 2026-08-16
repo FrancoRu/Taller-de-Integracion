@@ -18,9 +18,11 @@ public static class ControllerBaseExtensions
     /// <param name="entity">The entity type that could not be found (e.g. nameof(Player)).</param>
     /// <param name="id">The identifier that was looked up.</param>
     /// <returns>An ObjectResult with a 404 status and ProblemDetails body.</returns>
-    public static ObjectResult NotFoundProblem(this ControllerBase controller, string entity, object id) =>
-        controller.Problem(
+    public static ObjectResult NotFoundProblem(this ControllerBase controller, string entity, object id)
+    {
+        return controller.Problem(
             detail: $"{entity} with id {id} not found.",
             statusCode: StatusCodes.Status404NotFound,
             title: "Not Found: The specified resource could not be found.");
+    }
 }

@@ -1,11 +1,9 @@
-using System;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
 using Application.DTOs.Tournament.Request;
+
 using Domain.Enums;
-using Xunit;
+
+using System.Net;
+using System.Net.Http.Json;
 
 namespace API.Tests;
 

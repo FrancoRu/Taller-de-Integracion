@@ -29,8 +29,8 @@ public static class PlayoffSeeder
         }
 
         int bracketSize = NextPowerOfTwo(count);
-        List<Guid?> paddedSeeds = [.. orderedTeamIds.Select(id => (Guid?)id)];
-        paddedSeeds.AddRange(Enumerable.Repeat((Guid?)null, bracketSize - count));
+        List<Guid?> paddedSeeds = [.. orderedTeamIds.Select(id => (Guid?) id)];
+        paddedSeeds.AddRange(Enumerable.Repeat((Guid?) null, bracketSize - count));
 
         List<int> bracketOrder = BuildSeedOrder(bracketSize);
 

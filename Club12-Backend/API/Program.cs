@@ -1,10 +1,13 @@
 using API.BackgroundServices;
 using API.Utils;
 using API.Utils.Middlewares;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 using Serilog;
+
 using System;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);

@@ -1,6 +1,4 @@
 ﻿using Application.DTOs.Abstract.Response;
-
-using System;
 namespace Application.DTOs.Venue.Response;
 
 /// <summary>

@@ -2,43 +2,42 @@
 
 #nullable disable
 
-namespace Persistance.Migrations
+namespace Persistance.Migrations;
+
+/// <inheritdoc />
+public partial class changeTournamentEntity : Migration
 {
     /// <inheritdoc />
-    public partial class changeTournamentEntity : Migration
+    protected override void Up(MigrationBuilder migrationBuilder)
     {
-        /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DropColumn(
-                name: "IsFinished",
-                schema: "Club12",
-                table: "Tournaments");
+        migrationBuilder.DropColumn(
+            name: "IsFinished",
+            schema: "Club12",
+            table: "Tournaments");
 
-            migrationBuilder.AddColumn<int>(
-                name: "Status",
-                schema: "Club12",
-                table: "Tournaments",
-                type: "integer",
-                nullable: false,
-                defaultValue: 0);
-        }
+        migrationBuilder.AddColumn<int>(
+            name: "Status",
+            schema: "Club12",
+            table: "Tournaments",
+            type: "integer",
+            nullable: false,
+            defaultValue: 0);
+    }
 
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DropColumn(
-                name: "Status",
-                schema: "Club12",
-                table: "Tournaments");
+    /// <inheritdoc />
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.DropColumn(
+            name: "Status",
+            schema: "Club12",
+            table: "Tournaments");
 
-            migrationBuilder.AddColumn<bool>(
-                name: "IsFinished",
-                schema: "Club12",
-                table: "Tournaments",
-                type: "boolean",
-                nullable: false,
-                defaultValue: false);
-        }
+        migrationBuilder.AddColumn<bool>(
+            name: "IsFinished",
+            schema: "Club12",
+            table: "Tournaments",
+            type: "boolean",
+            nullable: false,
+            defaultValue: false);
     }
 }

@@ -1,6 +1,8 @@
 ﻿using Application.Interfaces.Services;
+
 using FluentEmail.Core;
 using FluentEmail.Core.Models;
+
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -74,7 +76,9 @@ public sealed class FluentEmailHelper(IFluentEmailFactory emailFactory) : IEmail
     private static void ThrowIfFailed(SendResponse result, string context)
     {
         if (!result.Successful)
+        {
             throw new InvalidOperationException(
                 $"Failed to send {context} email: {string.Join(", ", result.ErrorMessages)}");
+        }
     }
 }

@@ -1,6 +1,7 @@
+using Domain.Entities.Models;
+
 using System.Collections.Generic;
 using System.Linq;
-using Domain.Entities.Models;
 
 namespace Application.Utils.Helper.Standings;
 

@@ -1,4 +1,3 @@
-using Domain.Entities.Models;
 using System.Threading.Tasks;
 
 namespace Application.Interfaces.Repositories;

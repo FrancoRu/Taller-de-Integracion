@@ -1,15 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Application.DTOs.Scorer.Request;
 using Application.DTOs.Scorer.Response;
 using Application.Interfaces.Repositories;
+
 using Domain.Entities.Models;
 using Domain.Enums;
+
 using Infrastructure.Persistance;
+
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
+
 using MatchType = Domain.Enums.MatchType;
 
 namespace API.Tests;

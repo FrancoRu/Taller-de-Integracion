@@ -1,14 +1,18 @@
-using AutoMapper;
 using Application.DTOs.Abstract.Response;
 using Application.DTOs.MatchSeries.Request;
 using Application.DTOs.MatchSeries.Response;
 using Application.Interfaces.Services;
+
+using AutoMapper;
+
+using Domain.Entities.Models;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+
 using System;
 using System.Threading.Tasks;
-using Domain.Entities.Models;
 
 namespace API.Controllers;
 
@@ -50,10 +54,7 @@ public class MatchSeriesController(IMatchSeriesService matchSeriesService, IMapp
     {
         MatchSeries? series = await matchSeriesService.GetSeriesByIdAsync(id);
 
-        if (series is null)
-            return NotFound($"Series with id {id} not found.");
-
-        return Ok(mapper.Map<MatchSeriesResponse>(series));
+        return series is null ? (ActionResult<MatchSeriesResponse>) NotFound($"Series with id {id} not found.") : (ActionResult<MatchSeriesResponse>) Ok(mapper.Map<MatchSeriesResponse>(series));
     }
 
     /// <summary>

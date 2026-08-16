@@ -1,8 +1,6 @@
-using System.IO;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Application.Interfaces.Backup;
+
+using System.Text;
 
 namespace API.Tests.Backup.Fakes;
 
@@ -35,11 +33,12 @@ public sealed class FakeDatabaseBackupService : IDatabaseBackupService
         int call = Interlocked.Increment(ref _callCount);
 
         if (Gate is not null)
+        {
             await Gate.Task;
+        }
 
-        if (call <= FailFirstCalls)
-            throw new BackupExecutionException($"Simulated backup failure on call {call}.");
-
-        return new MemoryStream(Encoding.UTF8.GetBytes(DumpContent));
+        return call <= FailFirstCalls
+            ? throw new BackupExecutionException($"Simulated backup failure on call {call}.")
+            : (Stream) new MemoryStream(Encoding.UTF8.GetBytes(DumpContent));
     }
 }

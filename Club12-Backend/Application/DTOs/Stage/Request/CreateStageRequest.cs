@@ -1,8 +1,10 @@
 ﻿
+using Application.Utils.Constants.Stage;
+
+using Domain.Enums;
+
 using System;
 using System.ComponentModel.DataAnnotations;
-using Application.Utils.Constants.Stage;
-using Domain.Enums;
 
 namespace Application.DTOs.Stage.Request;
 

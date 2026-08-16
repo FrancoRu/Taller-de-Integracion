@@ -1,18 +1,23 @@
-﻿using AutoMapper;
-using API.Utils;
+﻿using API.Utils;
+
 using Application.DTOs.Abstract.Response;
 using Application.DTOs.Match.Request;
 using Application.DTOs.Match.Response;
 using Application.Interfaces.Services;
+
+using AutoMapper;
+
+using Domain.Entities.Models;
+using Domain.Enums;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Domain.Entities.Models;
-using Domain.Enums;
 
 namespace API.Controllers;
 
@@ -117,7 +122,7 @@ public class MatchController(IMatchService matchService, IStageTeamMatchService 
     /// <param name="updateRequest">The request containing the new match date.</param>
     /// <returns>Returns the result of the date update operation.</returns>
     [HttpPut("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type=typeof(DetailedMatchResponse))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedMatchResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> UpdateMatchDate(Guid id, UpdateMatchRequest updateRequest)
@@ -137,12 +142,12 @@ public class MatchController(IMatchService matchService, IStageTeamMatchService 
 
         List<Guid> teamsId = [];
 
-        if(existingMatch.HomeTeamId.HasValue)
+        if (existingMatch.HomeTeamId.HasValue)
         {
             teamsId.Add(existingMatch.HomeTeamId.Value);
         }
 
-        if(existingMatch.VisitorTeamId.HasValue )
+        if (existingMatch.VisitorTeamId.HasValue)
         {
             teamsId.Add(existingMatch.VisitorTeamId.Value);
         }
@@ -170,7 +175,7 @@ public class MatchController(IMatchService matchService, IStageTeamMatchService 
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> DeleteMatchById(Guid id)
     {
-        
+
         await matchService.DeleteMatchAsync(id);
         return NoContent();
     }

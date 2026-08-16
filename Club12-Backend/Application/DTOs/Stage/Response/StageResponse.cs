@@ -1,5 +1,7 @@
 ﻿using Application.DTOs.Abstract.Response;
+
 using Domain.Enums;
+
 using System;
 
 namespace Application.DTOs.Stage.Response;

@@ -1,18 +1,23 @@
-﻿using AutoMapper;
-using API.Utils;
+﻿using API.Utils;
+
 using Application.DTOs.Abstract.Response;
 using Application.DTOs.Team.Request;
 using Application.DTOs.Team.Response;
 using Application.Interfaces.Services;
+using Application.Utils.Helper.SupabaseHelper;
+
+using AutoMapper;
+
+using Domain.Entities.Models;
+using Domain.Enums;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Domain.Entities.Models;
-using Domain.Enums;
-using Application.Utils.Helper.SupabaseHelper;
 
 namespace API.Controllers;
 
@@ -82,7 +87,7 @@ public class TeamController(
         }
 
         mapper.Map(teamRequest, existingTeam);
-        
+
         await teamService.UpdateTeamAsync(existingTeam);
 
         return NoContent();

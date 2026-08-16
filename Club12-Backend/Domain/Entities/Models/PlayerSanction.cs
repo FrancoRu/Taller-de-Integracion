@@ -1,5 +1,6 @@
-﻿using System;
-using Domain.Enums;
+﻿using Domain.Enums;
+
+using System;
 
 namespace Domain.Entities.Models;
 
