@@ -6,38 +6,20 @@ import {
   TABLE_ROWS_PER_PAGE,
 } from '@/modules/core/constants/pagination';
 import { GUID } from '@/modules/core/types/types';
-import { useMatch } from '@/modules/match/hook/match.hook';
-import { IMatchResponse } from '@/modules/match/type/match';
 import { useScorer } from '@/modules/scorer/hook/scorer.hook';
 import { IScorerByPlayerResponse } from '@/modules/scorer/type/scorer.d';
-import { useTeam } from '@/modules/team/hook/team.hook';
-import { ITeamResponse } from '@/modules/team/type/team';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
+import DivisionStagePicker from '@/views/core/components/DivisionStagePicker';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
-
-const formatMatchLabel = (match: IMatchResponse) => {
-  const homeTeamName = match.homeTeam?.name ?? 'Equipo local';
-  const visitorTeamName = match.visitorTeam?.name ?? 'Equipo visitante';
-  const matchDate = new Date(match.matchDate);
-  const formattedDate = Number.isNaN(matchDate.getTime())
-    ? ''
-    : ` · ${matchDate.toLocaleDateString('es-AR')}`;
-
-  return `${homeTeamName} vs ${visitorTeamName}${formattedDate}`;
-};
 
 const PlayerScorersTab: React.FC = () => {
   const { tournaments, getAllTournamentsByFilter } = useTournament();
-  const { getMatchByFilter } = useMatch();
-  const { getTeamsByFiltered } = useTeam();
   const { scorersByPlayer, getScorersByPlayerFiltered } = useScorer();
   const [selectedTournamentId, setSelectedTournamentId] = useState<GUID | ''>(
     ''
   );
-  const [selectedMatchId, setSelectedMatchId] = useState<GUID | ''>('');
-  const [selectedTeamId, setSelectedTeamId] = useState<GUID | ''>('');
-  const [matchOptions, setMatchOptions] = useState<IMatchResponse[]>([]);
-  const [teamOptions, setTeamOptions] = useState<ITeamResponse[]>([]);
+  const [selectedDivisionId, setSelectedDivisionId] = useState<GUID | ''>('');
+  const [selectedStageId, setSelectedStageId] = useState<GUID | ''>('');
   const [loading, setLoading] = useState(false);
   const [rowCount, setRowCount] = useState(0);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
@@ -45,21 +27,11 @@ const PlayerScorersTab: React.FC = () => {
     pageSize: TABLE_ROWS_PER_PAGE,
   });
   const getAllTournamentsByFilterRef = useRef(getAllTournamentsByFilter);
-  const getMatchByFilterRef = useRef(getMatchByFilter);
-  const getTeamsByFilteredRef = useRef(getTeamsByFiltered);
   const getScorersByPlayerFilteredRef = useRef(getScorersByPlayerFiltered);
 
   useEffect(() => {
     getAllTournamentsByFilterRef.current = getAllTournamentsByFilter;
   }, [getAllTournamentsByFilter]);
-
-  useEffect(() => {
-    getMatchByFilterRef.current = getMatchByFilter;
-  }, [getMatchByFilter]);
-
-  useEffect(() => {
-    getTeamsByFilteredRef.current = getTeamsByFiltered;
-  }, [getTeamsByFiltered]);
 
   useEffect(() => {
     getScorersByPlayerFilteredRef.current = getScorersByPlayerFiltered;
@@ -69,45 +41,19 @@ const PlayerScorersTab: React.FC = () => {
     void getAllTournamentsByFilterRef.current({ pageSize: FILTER_OPTIONS_PAGE_SIZE });
   }, []);
 
-  useEffect(() => {
-    if (!selectedTournamentId) {
-      setMatchOptions([]);
-      setTeamOptions([]);
-      return;
-    }
-
-    const loadPlayerFilterOptions = async () => {
-      const [matchesResponse, teamsResponse] = await Promise.all([
-        getMatchByFilterRef.current({
-          tournamentId: selectedTournamentId,
-          pageSize: FILTER_OPTIONS_PAGE_SIZE,
-        }),
-        getTeamsByFilteredRef.current({
-          tournamentId: selectedTournamentId,
-          pageSize: FILTER_OPTIONS_PAGE_SIZE,
-        }),
-      ]);
-
-      setMatchOptions(matchesResponse?.items ?? []);
-      setTeamOptions(teamsResponse?.items ?? []);
-    };
-
-    void loadPlayerFilterOptions();
-  }, [selectedTournamentId]);
-
   const fetchScorers = useCallback(
     async (
       activePaginationModel: GridPaginationModel,
       activeTournamentId: GUID | '',
-      activeMatchId: GUID | '',
-      activeTeamId: GUID | ''
+      activeDivisionId: GUID | '',
+      activeStageId: GUID | ''
     ) => {
       setLoading(true);
 
       const response = await getScorersByPlayerFilteredRef.current({
         tournamentId: activeTournamentId || undefined,
-        matchId: activeMatchId || undefined,
-        teamId: activeTeamId || undefined,
+        divisionId: activeDivisionId || undefined,
+        stageId: activeStageId || undefined,
         pageNumber: activePaginationModel.page + 1,
         pageSize: activePaginationModel.pageSize,
       });
@@ -122,14 +68,14 @@ const PlayerScorersTab: React.FC = () => {
     void fetchScorers(
       paginationModel,
       selectedTournamentId,
-      selectedMatchId,
-      selectedTeamId
+      selectedDivisionId,
+      selectedStageId
     );
   }, [
     fetchScorers,
     paginationModel,
-    selectedMatchId,
-    selectedTeamId,
+    selectedDivisionId,
+    selectedStageId,
     selectedTournamentId,
   ]);
 
@@ -140,24 +86,24 @@ const PlayerScorersTab: React.FC = () => {
   const handleTournamentChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       setSelectedTournamentId(event.target.value as GUID | '');
-      setSelectedMatchId('');
-      setSelectedTeamId('');
+      setSelectedDivisionId('');
+      setSelectedStageId('');
       resetToFirstPage();
     },
     [resetToFirstPage]
   );
 
-  const handleMatchChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setSelectedMatchId(event.target.value as GUID | '');
+  const handleDivisionChange = useCallback(
+    (divisionId: GUID | '') => {
+      setSelectedDivisionId(divisionId);
       resetToFirstPage();
     },
     [resetToFirstPage]
   );
 
-  const handleTeamChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setSelectedTeamId(event.target.value as GUID | '');
+  const handleStageChange = useCallback(
+    (stageId: GUID | '') => {
+      setSelectedStageId(stageId);
       resetToFirstPage();
     },
     [resetToFirstPage]
@@ -195,7 +141,7 @@ const PlayerScorersTab: React.FC = () => {
 
   return (
     <>
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2} flexWrap="wrap">
         <TextField
           select
           label="Torneo"
@@ -212,39 +158,13 @@ const PlayerScorersTab: React.FC = () => {
           ))}
         </TextField>
 
-        <TextField
-          select
-          label="Partido"
-          size="small"
-          value={selectedMatchId}
-          onChange={handleMatchChange}
-          sx={{ minWidth: 280 }}
-          disabled={!selectedTournamentId}
-        >
-          <MenuItem value="">Todos</MenuItem>
-          {matchOptions.map(match => (
-            <MenuItem key={match.id} value={match.id}>
-              {formatMatchLabel(match)}
-            </MenuItem>
-          ))}
-        </TextField>
-
-        <TextField
-          select
-          label="Equipo"
-          size="small"
-          value={selectedTeamId}
-          onChange={handleTeamChange}
-          sx={{ minWidth: 220 }}
-          disabled={!selectedTournamentId}
-        >
-          <MenuItem value="">Todos</MenuItem>
-          {teamOptions.map(team => (
-            <MenuItem key={team.id} value={team.id}>
-              {team.name}
-            </MenuItem>
-          ))}
-        </TextField>
+        <DivisionStagePicker
+          tournamentId={selectedTournamentId}
+          divisionId={selectedDivisionId}
+          stageId={selectedStageId}
+          onDivisionChange={handleDivisionChange}
+          onStageChange={handleStageChange}
+        />
       </Stack>
 
       <DataGrid

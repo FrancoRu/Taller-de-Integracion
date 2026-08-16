@@ -247,6 +247,57 @@ public class ScorerRepositoryTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal(6, playerResult.Points);
     }
 
+    [Fact]
+    public async Task GetPlayerScoresAsync_DivisionFilter_RestrictsToThatDivisionsScorers()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IScorerRepository scorerRepository = scope.ServiceProvider.GetRequiredService<IScorerRepository>();
+
+        Tournament tournament = await SeedTournamentAsync(db);
+        (Division divisionA, Stage stageA) = await SeedDivisionAndStageAsync(db, tournament);
+        (Division divisionB, Stage stageB) = await SeedDivisionAndStageAsync(db, tournament);
+
+        Team teamA = await SeedTeamAsync(db, tournament.Id);
+        Team teamB = await SeedTeamAsync(db, tournament.Id);
+        await AssignTeamToStageAsync(db, stageA, teamA);
+        await AssignTeamToStageAsync(db, stageB, teamB);
+
+        Player playerA = await SeedPlayerAsync(db, teamA, "Alpha", "Player", null);
+        Player playerB = await SeedPlayerAsync(db, teamB, "Bravo", "Player", null);
+
+        Match matchA = await SeedMatchAsync(db, stageA, homeTeamId: teamA.Id, visitorTeamId: null);
+        Match matchB = await SeedMatchAsync(db, stageB, homeTeamId: teamB.Id, visitorTeamId: null);
+        await AddScorerAsync(db, playerA.Id, matchA.Id, points: 8);
+        await AddScorerAsync(db, playerB.Id, matchB.Id, points: 3);
+
+        GetScorerFilteredRequest divisionFilter = new() { DivisionId = divisionA.Id };
+        (IEnumerable<ScorerByPlayerResponse> divisionItems, int divisionTotal) = await scorerRepository.GetPlayerScoresAsync(divisionFilter);
+        ScorerByPlayerResponse divisionResult = Assert.Single(divisionItems);
+        Assert.Equal(1, divisionTotal);
+        Assert.Equal(playerA.Id, divisionResult.PlayerId);
+        Assert.Equal(8, divisionResult.Points);
+
+        GetScorerFilteredRequest stageFilter = new() { StageId = stageB.Id };
+        (IEnumerable<ScorerByPlayerResponse> stageItems, int stageTotal) = await scorerRepository.GetPlayerScoresAsync(stageFilter);
+        ScorerByPlayerResponse stageResult = Assert.Single(stageItems);
+        Assert.Equal(1, stageTotal);
+        Assert.Equal(playerB.Id, stageResult.PlayerId);
+        Assert.Equal(3, stageResult.Points);
+    }
+
+    private static async Task AssignTeamToStageAsync(ApplicationDBContext db, Stage stage, Team team)
+    {
+        db.StageTeamMatches.Add(new StageTeamMatch
+        {
+            StageId = stage.Id,
+            TeamId = team.Id,
+            CreatedBy = "test",
+        });
+
+        await db.SaveChangesAsync();
+    }
+
     private static async Task<Tournament> SeedTournamentAsync(ApplicationDBContext db)
     {
         DateTime startDate = DateTime.UtcNow.Date.AddDays(30);

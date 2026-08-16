@@ -27,6 +27,7 @@ export const APP_ROUTES = {
     pattern: '/torneos/:tournamentId',
     build: (tournamentId: string) => `/torneos/${tournamentId}`,
   },
+  publicBlog: '/blog',
   blogPost: {
     pattern: '/blog/:id',
     build: (id: string) => `/blog/${id}`,
@@ -71,7 +72,9 @@ export const APP_ROUTES = {
     build: (venueId: string) => `/panel/canchas/${venueId}`,
   },
   panelTournaments: '/panel/torneos',
+  panelTournamentWizard: '/panel/torneos/asistente',
   panelDivisions: '/panel/divisiones',
+  panelDivisionCreate: '/panel/divisiones/crear',
   panelDivision: {
     pattern: '/panel/divisiones/:divisionId',
     build: (divisionId: string) => `/panel/divisiones/${divisionId}`,
@@ -87,11 +90,17 @@ export const APP_ROUTES = {
     build: (stageId: string) => `/panel/fases/${stageId}`,
   },
   panelMatches: '/panel/partidos',
+  panelMatchCreate: '/panel/partidos/crear',
   panelMatch: {
     pattern: '/panel/partidos/:matchId',
     build: (matchId: string) => `/panel/partidos/${matchId}`,
   },
+  panelBlog: '/panel/blog',
   panelBlogCreate: '/panel/blog/crear',
+  panelBlogEdit: {
+    pattern: '/panel/blog/:blogPostId/editar',
+    build: (blogPostId: string) => `/panel/blog/${blogPostId}/editar`,
+  },
   panelUsers: '/panel/usuarios',
   panelUserCreate: '/panel/usuarios/crear',
   panelUserEdit: {

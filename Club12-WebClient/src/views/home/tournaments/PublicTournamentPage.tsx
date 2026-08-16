@@ -14,31 +14,27 @@ import {
 import { GUID } from '@/modules/core/types/types';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useTeam } from '@/modules/team/hook/team.hook';
-import { useMatch } from '@/modules/match/hook/match.hook';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { divisionService } from '@/modules/division/service/division.service';
 import { stageService } from '@/modules/stage/service/stage.service';
 import { matchService } from '@/modules/match/service/match.service';
+import { matchSeriesService } from '@/modules/matchSeries/service/matchSeries.service';
 import { IDivisionResponse } from '@/modules/division/type/division';
+import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
+import { IStageResponse } from '@/modules/stage/type/stage.d';
+import { IMatchResponse } from '@/modules/match/type/match.d';
+import { stageLabel } from '@/modules/stage/utils/stageLabel';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
-import { buildBracket } from '@/modules/playoff/buildBracket';
-import { BracketModel } from '@/modules/playoff/type/bracket.d';
+import { buildBrackets } from '@/modules/playoff/buildBracket';
+import { BracketGroup } from '@/modules/playoff/type/bracket.d';
 import TeamLogo from '@/views/core/components/TeamLogo';
-import MatchCard from '@/views/home/matches/MatchCard';
+import MatchFixtureList from '@/views/home/matches/MatchFixtureList';
 import DivisionStandings from '@/views/division/divisionStandings';
-import PlayoffBracket from '@/views/playoff/PlayoffBracket';
+import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
 
-/**
- * Explicit pageSize for the "Llaves" tab's per-division Stage/Match fetch.
- * The service default (TABLE_ROWS_PER_PAGE = 10, see pagination.ts) would
- * silently truncate a deep elimination bracket (QF + SF + Final + 3rd
- * place can already exceed 10 matches once both legs/replays exist), so
- * this tab always requests a generously sized page instead of relying on
- * the default.
- */
-const BRACKET_FETCH_PAGE_SIZE = 100;
+const STRUCTURAL_FETCH_PAGE_SIZE = 100;
 
 const STATUS_LABEL: Record<TournamentStatus, string> = {
   Scheduled: 'Programado',
@@ -55,29 +51,40 @@ const formatDate = (value: Date | string) => {
 
 type Tab = 'info' | 'posiciones' | 'equipos' | 'partidos' | 'llaves';
 
+interface DivisionSections {
+  zones: IDivisionResponse[];
+  cups: IDivisionResponse[];
+}
+
+const splitDivisions = (divisions: IDivisionResponse[]): DivisionSections => ({
+  zones: divisions.filter(d => !d.isCrossDivisionCup),
+  cups: divisions.filter(d => d.isCrossDivisionCup),
+});
+
 export default function PublicTournamentPage() {
   const { tournamentId } = useParams<{ tournamentId: GUID }>();
   const navigate = useNavigate();
   const { tournament, getTournamentById } = useTournament();
   const { teams, getTeamsByFiltered } = useTeam();
-  const { matches, getMatchByFilter } = useMatch();
   const { getDivisionsByFilters } = useDivision();
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<Tab>('info');
   const [standings, setStandings] = useState<IDivisionResponse[]>([]);
   const [standingsLoading, setStandingsLoading] = useState(false);
-  const [bracketDivisions, setBracketDivisions] = useState<IDivisionResponse[]>([]);
-  const [brackets, setBrackets] = useState<Record<GUID, BracketModel>>({});
-  const [bracketsLoading, setBracketsLoading] = useState(false);
+  const [structuralDivisions, setStructuralDivisions] = useState<IDivisionResponse[]>([]);
+  const [stagesByDivision, setStagesByDivision] = useState<Record<GUID, IStageResponse[]>>({});
+  const [matchesByDivision, setMatchesByDivision] = useState<Record<GUID, IMatchResponse[]>>({});
+  const [bracketsByDivision, setBracketsByDivision] = useState<Record<GUID, BracketGroup[]>>({});
+  const [seriesById, setSeriesById] = useState<Map<GUID, IMatchSeriesResponse>>(new Map());
+  const [structuralLoading, setStructuralLoading] = useState(false);
+  const [structuralLoaded, setStructuralLoaded] = useState(false);
 
   const getTournamentRef = useRef(getTournamentById);
   const getTeamsRef = useRef(getTeamsByFiltered);
-  const getMatchesRef = useRef(getMatchByFilter);
   const getDivisionsRef = useRef(getDivisionsByFilters);
 
   useEffect(() => { getTournamentRef.current = getTournamentById; }, [getTournamentById]);
   useEffect(() => { getTeamsRef.current = getTeamsByFiltered; }, [getTeamsByFiltered]);
-  useEffect(() => { getMatchesRef.current = getMatchByFilter; }, [getMatchByFilter]);
   useEffect(() => { getDivisionsRef.current = getDivisionsByFilters; }, [getDivisionsByFilters]);
 
   useEffect(() => {
@@ -118,53 +125,81 @@ export default function PublicTournamentPage() {
   }, [tab, tournamentId]);
 
   useEffect(() => {
-    if (!tournamentId || tab !== 'partidos') return;
-    void getMatchesRef.current({ tournamentId, pageSize: 50, pageNumber: 1 });
-  }, [tab, tournamentId]);
+    if (!tournamentId || structuralLoaded || (tab !== 'partidos' && tab !== 'llaves')) return;
 
-  useEffect(() => {
-    if (!tournamentId || tab !== 'llaves') return;
-    const fetchBrackets = async () => {
-      setBracketsLoading(true);
+    const fetchStructure = async () => {
+      setStructuralLoading(true);
+
       const divisionsResponse = await getDivisionsRef.current({
         tournamentId,
         pageSize: PUBLIC_LISTING_PAGE_SIZE,
         pageNumber: 1,
       });
       const divisionsList = divisionsResponse?.items ?? [];
-      setBracketDivisions(divisionsList);
+      setStructuralDivisions(divisionsList);
 
-      const entries = await Promise.all(
+      const nextSeriesById = new Map<GUID, IMatchSeriesResponse>();
+      const nextStagesByDivision: Record<GUID, IStageResponse[]> = {};
+      const nextMatchesByDivision: Record<GUID, IMatchResponse[]> = {};
+      const nextBracketsByDivision: Record<GUID, BracketGroup[]> = {};
+
+      await Promise.all(
         divisionsList.map(async division => {
           const [stagesResponse, matchesResponse] = await Promise.all([
             stageService.getStagesByFilters({
               divisionId: division.id,
-              isElimination: true,
-              pageSize: BRACKET_FETCH_PAGE_SIZE,
+              pageSize: STRUCTURAL_FETCH_PAGE_SIZE,
             }),
             matchService.getMatchByFilter({
               divisionId: division.id,
-              pageSize: BRACKET_FETCH_PAGE_SIZE,
+              pageSize: STRUCTURAL_FETCH_PAGE_SIZE,
             }),
           ]);
 
-          const model = buildBracket(
-            stagesResponse.data?.items ?? [],
-            matchesResponse.data?.items ?? []
-          );
+          const stages = stagesResponse.data?.items ?? [];
+          const matches = matchesResponse.data?.items ?? [];
+          nextStagesByDivision[division.id] = stages;
+          nextMatchesByDivision[division.id] = matches;
 
-          return [division.id, model] as const;
+          const eliminationStages = stages.filter(stage => stage.isElimination);
+          const seriesStages = eliminationStages.filter(stage => stage.bestOf > 1);
+
+          const seriesByStageId = new Map<GUID, IMatchSeriesResponse[]>();
+          if (seriesStages.length > 0) {
+            const seriesResponses = await Promise.all(
+              seriesStages.map(stage =>
+                matchSeriesService.getMatchSeriesByFilters({
+                  stageId: stage.id,
+                  pageSize: STRUCTURAL_FETCH_PAGE_SIZE,
+                })
+              )
+            );
+
+            seriesStages.forEach((stage, index) => {
+              const seriesList = seriesResponses[index].data?.items ?? [];
+              seriesByStageId.set(stage.id, seriesList);
+              seriesList.forEach(series => nextSeriesById.set(series.id, series));
+            });
+          }
+
+          nextBracketsByDivision[division.id] = buildBrackets(eliminationStages, matches, seriesByStageId);
         })
       );
 
-      setBrackets(Object.fromEntries(entries));
-      setBracketsLoading(false);
+      setStagesByDivision(nextStagesByDivision);
+      setMatchesByDivision(nextMatchesByDivision);
+      setBracketsByDivision(nextBracketsByDivision);
+      setSeriesById(nextSeriesById);
+      setStructuralLoading(false);
+      setStructuralLoaded(true);
     };
-    void fetchBrackets();
-  }, [tab, tournamentId]);
+
+    void fetchStructure();
+  }, [tab, tournamentId, structuralLoaded]);
 
   const teamRows = useMemo(() => teams ?? [], [teams]);
-  const matchRows = useMemo(() => matches ?? [], [matches]);
+  const standingsSections = useMemo(() => splitDivisions(standings), [standings]);
+  const structuralSections = useMemo(() => splitDivisions(structuralDivisions), [structuralDivisions]);
 
   if (loading) {
     return (
@@ -184,6 +219,79 @@ export default function PublicTournamentPage() {
   }
 
   const status = tournament.status as TournamentStatus;
+
+  const renderDivisionMatches = (division: IDivisionResponse) => {
+    const stages = stagesByDivision[division.id] ?? [];
+    const matches = matchesByDivision[division.id] ?? [];
+    const stageIdsInOrder = [...stages].sort((a, b) => a.order - b.order);
+
+    const sections = stageIdsInOrder
+      .map(stage => ({
+        stage,
+        matches: matches.filter(match => match.stageId === stage.id),
+      }))
+      .filter(section => section.matches.length > 0);
+
+    if (sections.length === 0) {
+      return (
+        <Typography color="text.secondary" mb={2}>
+          No hay partidos registrados en esta división.
+        </Typography>
+      );
+    }
+
+    return (
+      <Box display="flex" flexDirection="column" gap={3}>
+        {sections.map(({ stage, matches: stageMatches }) => (
+          <Box key={stage.id}>
+            <Typography variant="subtitle1" component="h3" mb={1.5}>
+              {stageLabel(stage)}
+            </Typography>
+            <MatchFixtureList matches={stageMatches} />
+          </Box>
+        ))}
+      </Box>
+    );
+  };
+
+  const renderDivisionSections = (
+    sections: DivisionSections,
+    renderDivision: (division: IDivisionResponse) => React.ReactNode
+  ) => (
+    <Box display="flex" flexDirection="column" gap={5}>
+      {sections.zones.length > 0 && (
+        <Box display="flex" flexDirection="column" gap={4}>
+          <Typography variant="overline" color="text.secondary">
+            Divisiones
+          </Typography>
+          {sections.zones.map(division => (
+            <Box key={division.id}>
+              <Typography variant="h6" component="h2" mb={2}>
+                {division.name}
+              </Typography>
+              {renderDivision(division)}
+            </Box>
+          ))}
+        </Box>
+      )}
+
+      {sections.cups.length > 0 && (
+        <Box display="flex" flexDirection="column" gap={4}>
+          <Typography variant="overline" color="text.secondary">
+            Copa
+          </Typography>
+          {sections.cups.map(division => (
+            <Box key={division.id}>
+              <Typography variant="h6" component="h2" mb={2}>
+                {division.name}
+              </Typography>
+              {renderDivision(division)}
+            </Box>
+          ))}
+        </Box>
+      )}
+    </Box>
+  );
 
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
@@ -247,20 +355,13 @@ export default function PublicTournamentPage() {
             No hay posiciones disponibles para este torneo.
           </Typography>
         ) : (
-          <Box display="flex" flexDirection="column" gap={4}>
-            {standings.map(division => (
-              <Box key={division.id}>
-                <Typography variant="h6" component="h2" mb={1}>
-                  {division.name}
-                </Typography>
-                <DivisionStandings
-                  positions={division.positions}
-                  divisionId={division.id}
-                  divisionName={division.name}
-                />
-              </Box>
-            ))}
-          </Box>
+          renderDivisionSections(standingsSections, division => (
+            <DivisionStandings
+              positions={division.positions}
+              divisionId={division.id}
+              divisionName={division.name}
+            />
+          ))
         ))}
 
       {tab === 'equipos' && (
@@ -296,46 +397,35 @@ export default function PublicTournamentPage() {
         )
       )}
 
-      {tab === 'partidos' && (
-        matchRows.length === 0 ? (
-          <Typography color="text.secondary">No hay partidos registrados en este torneo.</Typography>
-        ) : (
-          <Box
-            sx={{
-              display: 'grid',
-              gap: 2,
-              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
-            }}
-          >
-            {matchRows.map(match => (
-              <MatchCard key={match.id} match={match} />
-            ))}
-          </Box>
-        )
-      )}
-
-      {tab === 'llaves' &&
-        (bracketsLoading ? (
+      {tab === 'partidos' &&
+        (structuralLoading ? (
           <Box display="flex" justifyContent="center" py={5}>
             <CircularProgress />
           </Box>
-        ) : bracketDivisions.length === 0 ? (
+        ) : structuralDivisions.length === 0 ? (
           <Typography color="text.secondary">
             No hay divisiones disponibles para este torneo.
           </Typography>
         ) : (
-          <Box display="flex" flexDirection="column" gap={5}>
-            {bracketDivisions.map(division => (
-              <Box key={division.id}>
-                <Typography variant="h6" component="h2" mb={2}>
-                  {division.name}
-                </Typography>
-                <PlayoffBracket
-                  model={brackets[division.id] ?? { rounds: [], edges: [] }}
-                />
-              </Box>
-            ))}
+          renderDivisionSections(structuralSections, renderDivisionMatches)
+        ))}
+
+      {tab === 'llaves' &&
+        (structuralLoading ? (
+          <Box display="flex" justifyContent="center" py={5}>
+            <CircularProgress />
           </Box>
+        ) : structuralDivisions.length === 0 ? (
+          <Typography color="text.secondary">
+            No hay divisiones disponibles para este torneo.
+          </Typography>
+        ) : (
+          renderDivisionSections(structuralSections, division => (
+            <PlayoffBrackets
+              groups={bracketsByDivision[division.id] ?? []}
+              seriesById={seriesById}
+            />
+          ))
         ))}
     </Container>
   );

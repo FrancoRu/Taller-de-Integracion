@@ -169,6 +169,17 @@ const DesktopNavItems: React.FC<DesktopNavItemsProps> = ({
         <ListItemText primary="Sanciones" />
       </ListItemButton>
 
+      <ListItemButton
+        component={Link}
+        to={`/${RoutesNavigationViews.Blog}`}
+        selected={isSelected(`/${RoutesNavigationViews.Blog}`)}
+        onClick={() =>
+          handleNavigationAndCloseMenu(`/${RoutesNavigationViews.Blog}`)
+        }
+      >
+        <ListItemText primary="Novedades" />
+      </ListItemButton>
+
       <TournamentMenuItems onNavigate={handleNavigationAndCloseMenu} />
     </Box>
   );

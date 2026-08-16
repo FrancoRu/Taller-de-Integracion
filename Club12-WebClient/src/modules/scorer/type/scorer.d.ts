@@ -20,6 +20,10 @@ export interface IScorerContextProps {
 
 export interface IScorerFiltered extends Filtered {
   tournamentId?: GUID;
+  /** Scopes the ranking to one division (a zone or the cross-division cup) — every stage in it. */
+  divisionId?: GUID;
+  /** Scopes the ranking to a single stage (e.g. just the group phase, or one named playoff bracket's round). */
+  stageId?: GUID;
   matchId?: GUID;
   teamId?: GUID;
   playerId?: GUID;

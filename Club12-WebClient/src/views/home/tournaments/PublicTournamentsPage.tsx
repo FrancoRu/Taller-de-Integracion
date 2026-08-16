@@ -16,29 +16,13 @@ import { ITournamentResponse } from '@/modules/tournament/type/tournament';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
+import {
+  TOURNAMENT_STATUS_LABEL,
+  TOURNAMENT_STATUS_COLOR,
+  formatTournamentDate,
+} from '@/modules/tournament/utils/tournamentDisplay';
 
-const STATUS_LABEL: Record<TournamentStatus, string> = {
-  Scheduled: 'Programado',
-  OpenForRegistration: 'Inscripción abierta',
-  Ongoing: 'En curso',
-  Finished: 'Finalizado',
-  Canceled: 'Cancelado',
-};
-
-const STATUS_COLOR: Record<TournamentStatus, 'default' | 'info' | 'warning' | 'success' | 'error'> = {
-  Scheduled: 'default',
-  OpenForRegistration: 'info',
-  Ongoing: 'warning',
-  Finished: 'success',
-  Canceled: 'error',
-};
-
-const formatDate = (value: Date | string) => {
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString('es-AR');
-};
-
-function TournamentCard({ tournament }: { tournament: ITournamentResponse }) {
+export function TournamentCard({ tournament }: { tournament: ITournamentResponse }) {
   const navigate = useNavigate();
   const status = tournament.status as TournamentStatus;
 
@@ -54,8 +38,8 @@ function TournamentCard({ tournament }: { tournament: ITournamentResponse }) {
               {tournament.name}
             </Typography>
             <Chip
-              label={STATUS_LABEL[status] ?? status}
-              color={STATUS_COLOR[status] ?? 'default'}
+              label={TOURNAMENT_STATUS_LABEL[status] ?? status}
+              color={TOURNAMENT_STATUS_COLOR[status] ?? 'default'}
               size="small"
               variant={status === 'Scheduled' ? 'outlined' : 'filled'}
             />
@@ -73,7 +57,7 @@ function TournamentCard({ tournament }: { tournament: ITournamentResponse }) {
           )}
 
           <Typography variant="caption" color="text.secondary" display="block">
-            Inicio: {formatDate(tournament.startDate)}
+            Inicio: {formatTournamentDate(tournament.startDate)}
           </Typography>
           <Typography variant="caption" color="text.secondary" display="block">
             Equipos: {tournament.minTeams}–{tournament.maxTeams}

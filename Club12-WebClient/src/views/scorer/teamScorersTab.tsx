@@ -9,6 +9,7 @@ import { GUID } from '@/modules/core/types/types';
 import { useScorer } from '@/modules/scorer/hook/scorer.hook';
 import { IScorerByTeamResponse } from '@/modules/scorer/type/scorer.d';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
+import DivisionStagePicker from '@/views/core/components/DivisionStagePicker';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 
 const TeamScorersTab: React.FC = () => {
@@ -17,6 +18,8 @@ const TeamScorersTab: React.FC = () => {
   const [selectedTournamentId, setSelectedTournamentId] = useState<GUID | ''>(
     ''
   );
+  const [selectedDivisionId, setSelectedDivisionId] = useState<GUID | ''>('');
+  const [selectedStageId, setSelectedStageId] = useState<GUID | ''>('');
   const [loading, setLoading] = useState(false);
   const [rowCount, setRowCount] = useState(0);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
@@ -41,12 +44,16 @@ const TeamScorersTab: React.FC = () => {
   const fetchScorers = useCallback(
     async (
       activePaginationModel: GridPaginationModel,
-      activeTournamentId: GUID | ''
+      activeTournamentId: GUID | '',
+      activeDivisionId: GUID | '',
+      activeStageId: GUID | ''
     ) => {
       setLoading(true);
 
       const response = await getScorersByTeamFilteredRef.current({
         tournamentId: activeTournamentId || undefined,
+        divisionId: activeDivisionId || undefined,
+        stageId: activeStageId || undefined,
         pageNumber: activePaginationModel.page + 1,
         pageSize: activePaginationModel.pageSize,
       });
@@ -58,17 +65,48 @@ const TeamScorersTab: React.FC = () => {
   );
 
   useEffect(() => {
-    void fetchScorers(paginationModel, selectedTournamentId);
-  }, [fetchScorers, paginationModel, selectedTournamentId]);
+    void fetchScorers(
+      paginationModel,
+      selectedTournamentId,
+      selectedDivisionId,
+      selectedStageId
+    );
+  }, [
+    fetchScorers,
+    paginationModel,
+    selectedDivisionId,
+    selectedStageId,
+    selectedTournamentId,
+  ]);
+
+  const resetToFirstPage = useCallback(() => {
+    setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
+  }, []);
 
   const handleTournamentChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       setSelectedTournamentId(event.target.value as GUID | '');
-      setPaginationModel(prev =>
-        prev.page === 0 ? prev : { ...prev, page: 0 }
-      );
+      setSelectedDivisionId('');
+      setSelectedStageId('');
+      resetToFirstPage();
     },
-    []
+    [resetToFirstPage]
+  );
+
+  const handleDivisionChange = useCallback(
+    (divisionId: GUID | '') => {
+      setSelectedDivisionId(divisionId);
+      resetToFirstPage();
+    },
+    [resetToFirstPage]
+  );
+
+  const handleStageChange = useCallback(
+    (stageId: GUID | '') => {
+      setSelectedStageId(stageId);
+      resetToFirstPage();
+    },
+    [resetToFirstPage]
   );
 
   const handlePaginationModelChange = useCallback(
@@ -103,7 +141,7 @@ const TeamScorersTab: React.FC = () => {
 
   return (
     <>
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2} flexWrap="wrap">
         <TextField
           select
           label="Torneo"
@@ -119,6 +157,14 @@ const TeamScorersTab: React.FC = () => {
             </MenuItem>
           ))}
         </TextField>
+
+        <DivisionStagePicker
+          tournamentId={selectedTournamentId}
+          divisionId={selectedDivisionId}
+          stageId={selectedStageId}
+          onDivisionChange={handleDivisionChange}
+          onStageChange={handleStageChange}
+        />
       </Stack>
 
       <DataGrid

@@ -35,10 +35,30 @@ public class ScorerRepository(ApplicationDBContext context)
         if (filter.PlayerId.HasValue)
             playersQuery = playersQuery.Where(p => p.Id == filter.PlayerId.Value);
 
+        if (filter.DivisionId.HasValue)
+        {
+            Guid divisionId = filter.DivisionId.Value;
+            playersQuery = playersQuery.Where(p =>
+                _context.Set<StageTeamMatch>().Any(stm => stm.TeamId == p.TeamId && stm.Stage!.DivisionId == divisionId));
+        }
+
+        if (filter.StageId.HasValue)
+        {
+            Guid stageId = filter.StageId.Value;
+            playersQuery = playersQuery.Where(p =>
+                _context.Set<StageTeamMatch>().Any(stm => stm.TeamId == p.TeamId && stm.StageId == stageId));
+        }
+
         IQueryable<Scorer> scorersQuery = _dbSet;
 
         if (filter.TournamentId.HasValue)
             scorersQuery = scorersQuery.Where(s => s.Match!.Stage.Division.TournamentId == filter.TournamentId.Value);
+
+        if (filter.DivisionId.HasValue)
+            scorersQuery = scorersQuery.Where(s => s.Match!.Stage.DivisionId == filter.DivisionId.Value);
+
+        if (filter.StageId.HasValue)
+            scorersQuery = scorersQuery.Where(s => s.Match!.StageId == filter.StageId.Value);
 
         if (filter.MatchId.HasValue)
             scorersQuery = scorersQuery.Where(s => s.MatchId == filter.MatchId.Value);

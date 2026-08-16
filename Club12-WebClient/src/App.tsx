@@ -17,7 +17,10 @@ import PublicMatchesPage from './views/home/matches/PublicMatchesPage';
 import PublicTournamentsPage from './views/home/tournaments/PublicTournamentsPage';
 import PublicTournamentPage from './views/home/tournaments/PublicTournamentPage';
 import BlogPostDetailPage from './views/blogPost/BlogPostDetailPage';
+import BlogListPage from './views/blogPost/BlogListPage';
 import AddBlogPostForm from './views/blogPost/addBlogPostForm';
+import BlogPostsPage from './views/blogPost/BlogPostsPage';
+import BlogPostEditPage from './views/blogPost/BlogPostEditPage';
 import Login from './views/auth/login';
 import routes from './modules/core/constants/routes';
 import { APP_ROUTES } from './modules/core/constants/appRoutes';
@@ -33,14 +36,17 @@ import TeamPage from './views/team/TeamPage';
 import TournamentPage from './views/tournament/TournamentPage';
 import TournamentEditPage from './views/tournament/TournamentEditPage';
 import TournamentsPage from './views/tournament/TournamentsPage';
+import TournamentWizardPage from './views/tournament/wizard/TournamentWizardPage';
 import DivisionPage from './views/division/divisionPage';
 import DivisionsPage from './views/division/divisionsPage';
+import DivisionCreatePage from './views/division/divisionCreatePage';
 import StagePage from './views/stage/stagePage';
 import StageCreatePage from './views/stage/stageCreatePage';
 import StageEditPage from './views/stage/stageEditPage';
 import StagesPage from '@/views/stage/stagesPage';
 import MatchPage from './views/match/matchPage';
 import MatchesPage from './views/match/matchesPage';
+import MatchCreatePage from './views/match/matchCreatePage';
 import UsersPage from './views/panel/UsersPage';
 import UserDetails from './views/user/userDetails';
 import CreateUser from './views/user/createUser';
@@ -179,9 +185,19 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
     element: <TournamentsPage />,
   },
   {
+    path: APP_ROUTES.panelTournamentWizard,
+    allowedRoles: [UserRolesType.Owner, UserRolesType.TournamentManager],
+    element: <TournamentWizardPage />,
+  },
+  {
     path: APP_ROUTES.panelDivisions,
     allowedRoles: [UserRolesType.Owner, UserRolesType.TournamentManager],
     element: <DivisionsPage wrapInCard />,
+  },
+  {
+    path: APP_ROUTES.panelDivisionCreate,
+    allowedRoles: [UserRolesType.Owner, UserRolesType.TournamentManager],
+    element: <DivisionCreatePage />,
   },
   {
     path: APP_ROUTES.panelDivision.pattern,
@@ -214,14 +230,29 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
     element: <MatchesPage wrapInCard />,
   },
   {
+    path: APP_ROUTES.panelMatchCreate,
+    allowedRoles: [UserRolesType.Owner, UserRolesType.TournamentManager],
+    element: <MatchCreatePage />,
+  },
+  {
     path: APP_ROUTES.panelMatch.pattern,
     allowedRoles: [UserRolesType.Owner, UserRolesType.TournamentManager],
     element: <MatchPage />,
   },
   {
+    path: APP_ROUTES.panelBlog,
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
+    element: <BlogPostsPage />,
+  },
+  {
     path: APP_ROUTES.panelBlogCreate,
     allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <AddBlogPostForm />,
+  },
+  {
+    path: APP_ROUTES.panelBlogEdit.pattern,
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
+    element: <BlogPostEditPage />,
   },
   {
     path: APP_ROUTES.panelUsers,
@@ -286,6 +317,7 @@ const PUBLIC_ROUTES: PublicRouteConfig[] = [
     path: APP_ROUTES.publicTournament.pattern,
     element: <PublicTournamentPage />,
   },
+  { path: APP_ROUTES.publicBlog, element: <BlogListPage /> },
   { path: APP_ROUTES.blogPost.pattern, element: <BlogPostDetailPage /> },
   { path: APP_ROUTES.login, element: <Login /> },
   { path: '*', element: <NotFound /> },

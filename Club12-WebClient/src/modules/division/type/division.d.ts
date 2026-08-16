@@ -86,6 +86,15 @@ export interface AddDivisionRequest {
    * @type {GUID}
    */
   tournamentId: GUID;
+
+  /**
+   * Marks this division as a cross-division cup that intentionally draws
+   * teams from every other division in the tournament (e.g. an
+   * admin-named "Copa Club12"), exempt from the "one team, one division"
+   * rule. Defaults to false.
+   * @type {boolean}
+   */
+  isCrossDivisionCup?: boolean;
 }
 
 /**
@@ -122,6 +131,13 @@ export interface IDivisionResponse {
    * @type {GUID}
    */
   tournamentId: GUID;
+
+  /**
+   * Whether this division is a cross-division cup (exempt from the "one
+   * team, one division" rule).
+   * @type {boolean}
+   */
+  isCrossDivisionCup: boolean;
 }
 
 /**

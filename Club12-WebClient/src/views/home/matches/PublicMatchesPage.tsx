@@ -12,7 +12,8 @@ import {
 import { GUID } from '@/modules/core/types/types';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
-import MatchCard from './MatchCard';
+import DivisionStagePicker from '@/views/core/components/DivisionStagePicker';
+import MatchFixtureList from './MatchFixtureList';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 
 const PAGE_SIZE = 12;
@@ -21,6 +22,8 @@ export default function PublicMatchesPage() {
   const { matches, getMatchByFilter } = useMatch();
   const { tournaments, getAllTournamentsByFilter } = useTournament();
   const [selectedTournamentId, setSelectedTournamentId] = useState<GUID | ''>('');
+  const [selectedDivisionId, setSelectedDivisionId] = useState<GUID | ''>('');
+  const [selectedStageId, setSelectedStageId] = useState<GUID | ''>('');
   const [isFinished, setIsFinished] = useState<'' | 'true' | 'false'>('');
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -42,10 +45,18 @@ export default function PublicMatchesPage() {
   }, []);
 
   const fetchMatches = useCallback(
-    async (tournamentId: GUID | '', finished: '' | 'true' | 'false', currentPage: number) => {
+    async (
+      tournamentId: GUID | '',
+      divisionId: GUID | '',
+      stageId: GUID | '',
+      finished: '' | 'true' | 'false',
+      currentPage: number
+    ) => {
       setLoading(true);
       const response = await getMatchByFilterRef.current({
         tournamentId: tournamentId || undefined,
+        divisionId: divisionId || undefined,
+        stageId: stageId || undefined,
         isFinished: finished === '' ? undefined : finished === 'true',
         pageNumber: currentPage,
         pageSize: PAGE_SIZE,
@@ -57,16 +68,28 @@ export default function PublicMatchesPage() {
   );
 
   useEffect(() => {
-    void fetchMatches(selectedTournamentId, isFinished, page);
-  }, [fetchMatches, selectedTournamentId, isFinished, page]);
+    void fetchMatches(selectedTournamentId, selectedDivisionId, selectedStageId, isFinished, page);
+  }, [fetchMatches, selectedTournamentId, selectedDivisionId, selectedStageId, isFinished, page]);
 
   const handleTournamentChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setSelectedTournamentId(e.target.value as GUID | '');
+      setSelectedDivisionId('');
+      setSelectedStageId('');
       setPage(1);
     },
     []
   );
+
+  const handleDivisionChange = useCallback((divisionId: GUID | '') => {
+    setSelectedDivisionId(divisionId);
+    setPage(1);
+  }, []);
+
+  const handleStageChange = useCallback((stageId: GUID | '') => {
+    setSelectedStageId(stageId);
+    setPage(1);
+  }, []);
 
   const handleStatusChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,7 +112,7 @@ export default function PublicMatchesPage() {
         Fixture y resultados de la liga.
       </Typography>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={4}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={4} flexWrap="wrap">
         <TextField
           select
           label="Torneo"
@@ -105,6 +128,14 @@ export default function PublicMatchesPage() {
             </MenuItem>
           ))}
         </TextField>
+
+        <DivisionStagePicker
+          tournamentId={selectedTournamentId}
+          divisionId={selectedDivisionId}
+          stageId={selectedStageId}
+          onDivisionChange={handleDivisionChange}
+          onStageChange={handleStageChange}
+        />
 
         <TextField
           select
@@ -128,21 +159,7 @@ export default function PublicMatchesPage() {
         <Typography color="text.secondary">No hay partidos disponibles.</Typography>
       ) : (
         <>
-          <Box
-            sx={{
-              display: 'grid',
-              gap: 2,
-              gridTemplateColumns: {
-                xs: '1fr',
-                sm: 'repeat(2, 1fr)',
-                md: 'repeat(3, 1fr)',
-              },
-            }}
-          >
-            {rows.map(match => (
-              <MatchCard key={match.id} match={match} />
-            ))}
-          </Box>
+          <MatchFixtureList matches={rows} />
 
           {pageCount > 1 && (
             <Box display="flex" justifyContent="center" mt={4}>
