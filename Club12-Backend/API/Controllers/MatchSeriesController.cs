@@ -59,12 +59,7 @@ public class MatchSeriesController(IMatchSeriesService matchSeriesService, IMapp
     {
         MatchSeries? series = await matchSeriesService.GetSeriesByIdAsync(id);
 
-        if (series is null)
-        {
-            return NotFound(ErrorMessages.MatchSeries.NotFoundById(id));
-        }
-
-        return Ok(mapper.Map<MatchSeriesResponse>(series));
+        return series is null ? (ActionResult<MatchSeriesResponse>) NotFound(ErrorMessages.MatchSeries.NotFoundById(id)) : (ActionResult<MatchSeriesResponse>) Ok(mapper.Map<MatchSeriesResponse>(series));
     }
 
     /// <summary>

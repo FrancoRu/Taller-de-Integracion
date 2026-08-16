@@ -16,7 +16,6 @@ using Microsoft.AspNetCore.Mvc;
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace API.Controllers;
@@ -135,7 +134,7 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
         if (!string.IsNullOrWhiteSpace(venue.PhotoUrl))
         {
             string[] photoUrlSegments = venue.PhotoUrl.Split('/');
-            await supabaseHelper.DeleteImageAsync<Team>(photoUrlSegments[^1]);
+            await supabaseHelper.DeleteImageAsync<Venue>(photoUrlSegments[^1]);
         }
 
         await venueService.DeleteVenueAsync(id);

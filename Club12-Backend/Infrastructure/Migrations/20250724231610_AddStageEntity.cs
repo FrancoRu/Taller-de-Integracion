@@ -76,7 +76,7 @@ public partial class AddStageEntity : Migration
             table: "Matches",
             type: "uuid",
             nullable: false,
-            defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
+            defaultValue: Guid.Empty);
 
         migrationBuilder.CreateTable(
             name: "Stages",
@@ -172,7 +172,7 @@ public partial class AddStageEntity : Migration
             table: "Matches",
             type: "uuid",
             nullable: false,
-            defaultValue: new Guid("00000000-0000-0000-0000-000000000000"),
+            defaultValue: Guid.Empty,
             oldClrType: typeof(Guid),
             oldType: "uuid",
             oldNullable: true);

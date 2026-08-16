@@ -28,9 +28,15 @@ public static class ErrorMessages
         public const string TeamManagerMustUseMagicLink = "TeamManager accounts must authenticate via the magic-link flow.";
         public const string MagicLinkOnlyForTeamManager = "Magic-link is only available for TeamManager accounts.";
 
-        public static string UserCreationFailed(string errors) => $"User creation failed: {errors}";
-        public static string RoleNotAllowedToCreate(string callerRole, string targetRole) =>
-            $"Role '{callerRole}' is not allowed to create users with role '{targetRole}'.";
+        public static string UserCreationFailed(string errors)
+        {
+            return $"User creation failed: {errors}";
+        }
+
+        public static string RoleNotAllowedToCreate(string callerRole, string targetRole)
+        {
+            return $"Role '{callerRole}' is not allowed to create users with role '{targetRole}'.";
+        }
     }
 
     public static class User
@@ -41,12 +47,18 @@ public static class ErrorMessages
         public const string InsufficientPermissionsToDelete = "Insufficient permissions to delete this user.";
         public const string PasswordResetRestricted = "Only Admins and Owners (for their own subordinates) can reset passwords.";
 
-        public static string NotFound(string userId) => $"User '{userId}' not found.";
+        public static string NotFound(string userId)
+        {
+            return $"User '{userId}' not found.";
+        }
     }
 
     public static class Team
     {
-        public static string NotFound(System.Guid teamId) => $"There is no Team with id: {teamId}.";
+        public static string NotFound(System.Guid teamId)
+        {
+            return $"There is no Team with id: {teamId}.";
+        }
     }
 
     public static class Stage
@@ -59,23 +71,46 @@ public static class ErrorMessages
         public const string InvalidStageType = "Invalid stage type";
         public const string SeedMissingStandings = "Cannot seed: not every team assigned to this stage has a finished-group-stage position yet.";
 
-        public static string NotFoundById(System.Guid id) => $"Stage with id {id} not found.";
-        public static string AlreadyExistsInDivision(string stageName) => $"Stage with name '{stageName}' already exists in the current division.";
-        public static string MaxTeamsReached(int maxTeams) => $"This Stage already has the maximum of {maxTeams} teams.";
-        public static string NotEnoughSlots(int requested, int available) => $"Cannot add {requested} teams. Only {available} slots available.";
+        public static string NotFoundById(System.Guid id)
+        {
+            return $"Stage with id {id} not found.";
+        }
 
-        public static string InvalidTournamentSize(int registeredTeams, string validSizes) =>
-            $"Invalid number of registered teams: {registeredTeams}. Valid sizes are {validSizes} teams.";
+        public static string AlreadyExistsInDivision(string stageName)
+        {
+            return $"Stage with name '{stageName}' already exists in the current division.";
+        }
 
-        public static string TeamsNotDivisibleForGroups(int registeredTeams, int groupSize) =>
-            $"The number of registered teams ({registeredTeams}) must be divisible by {groupSize} to generate group stages.";
+        public static string MaxTeamsReached(int maxTeams)
+        {
+            return $"This Stage already has the maximum of {maxTeams} teams.";
+        }
 
-        public static string ConflictingTeamAssignment(string teamIds) =>
-            $"Cannot assign team(s) {teamIds} to this division: already assigned to another division of the same tournament.";
+        public static string NotEnoughSlots(int requested, int available)
+        {
+            return $"Cannot add {requested} teams. Only {available} slots available.";
+        }
 
-        public static string SeedTeamCountOutOfRange(int assignedCount, int slotCapacity) =>
-            $"Cannot seed: {assignedCount} team(s) assigned to this stage, expected between 2 and {slotCapacity}. " +
+        public static string InvalidTournamentSize(int registeredTeams, string validSizes)
+        {
+            return $"Invalid number of registered teams: {registeredTeams}. Valid sizes are {validSizes} teams.";
+        }
+
+        public static string TeamsNotDivisibleForGroups(int registeredTeams, int groupSize)
+        {
+            return $"The number of registered teams ({registeredTeams}) must be divisible by {groupSize} to generate group stages.";
+        }
+
+        public static string ConflictingTeamAssignment(string teamIds)
+        {
+            return $"Cannot assign team(s) {teamIds} to this division: already assigned to another division of the same tournament.";
+        }
+
+        public static string SeedTeamCountOutOfRange(int assignedCount, int slotCapacity)
+        {
+            return $"Cannot seed: {assignedCount} team(s) assigned to this stage, expected between 2 and {slotCapacity}. " +
             "A team count below the full bracket is fine (the strongest seeds get a bye), but it cannot exceed the generated slots.";
+        }
     }
 
     public static class Match
@@ -91,8 +126,10 @@ public static class ErrorMessages
         public const string EndDateBeforeStartDate = "End date must be after start date.";
         public const string StageTypeNotSupportedForAutomatedCreation = "Stage type not supported for automated match creation.";
 
-        public static string TeamsNotDistributableAcrossGroups(int registeredTeams, int totalGroups) =>
-            $"Registered teams ({registeredTeams}) cannot be distributed evenly across {totalGroups} groups.";
+        public static string TeamsNotDistributableAcrossGroups(int registeredTeams, int totalGroups)
+        {
+            return $"Registered teams ({registeredTeams}) cannot be distributed evenly across {totalGroups} groups.";
+        }
     }
 
     public static class MatchSeries
@@ -102,9 +139,20 @@ public static class ErrorMessages
         public const string NotFound = "Series not found.";
         public const string AlreadyDecided = "Cannot add a game to a series that has already been decided.";
 
-        public static string NotFoundById(System.Guid id) => $"Series with id {id} not found.";
-        public static string MaxGamesReached(int bestOf) => $"This series already has the maximum of {bestOf} games.";
-        public static string TeamNotAssignedToStage(System.Guid teamId) => $"Team {teamId} is not assigned to this stage.";
+        public static string NotFoundById(System.Guid id)
+        {
+            return $"Series with id {id} not found.";
+        }
+
+        public static string MaxGamesReached(int bestOf)
+        {
+            return $"This series already has the maximum of {bestOf} games.";
+        }
+
+        public static string TeamNotAssignedToStage(System.Guid teamId)
+        {
+            return $"Team {teamId} is not assigned to this stage.";
+        }
     }
 
     public static class PlayerSanction
@@ -128,16 +176,38 @@ public static class ErrorMessages
         public const string ConnectionStringMissing = "The connection string should be initialized already.";
         public const string JwtMissing = "The JWT is missing or empty in configuration.";
 
-        public static string SmtpKeyMissing(string key) => $"{key} is missing from configuration.";
-        public static string KeyNotConfigured(string key) => $"{key} is not configured.";
+        public static string SmtpKeyMissing(string key)
+        {
+            return $"{key} is missing from configuration.";
+        }
+
+        public static string KeyNotConfigured(string key)
+        {
+            return $"{key} is not configured.";
+        }
     }
 
     public static class Storage
     {
-        public static string UploadFailed(string reason) => $"Error uploading file: {reason}";
-        public static string DeleteFailed(string reason) => $"Error deleting file: {reason}";
-        public static string ListFailed(string reason) => $"Error listing files: {reason}";
-        public static string RemoveFailed(string reason) => $"Error removing file: {reason}";
+        public static string UploadFailed(string reason)
+        {
+            return $"Error uploading file: {reason}";
+        }
+
+        public static string DeleteFailed(string reason)
+        {
+            return $"Error deleting file: {reason}";
+        }
+
+        public static string ListFailed(string reason)
+        {
+            return $"Error listing files: {reason}";
+        }
+
+        public static string RemoveFailed(string reason)
+        {
+            return $"Error removing file: {reason}";
+        }
     }
 
     public static class Query
@@ -148,6 +218,9 @@ public static class ErrorMessages
 
     public static class Serialization
     {
-        public static string InvalidDate(string? rawValue) => $"Invalid date: '{rawValue}'.";
+        public static string InvalidDate(string? rawValue)
+        {
+            return $"Invalid date: '{rawValue}'.";
+        }
     }
 }

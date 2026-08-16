@@ -26,17 +26,11 @@ public sealed class KeepLastNRetentionPolicy : IBackupRetentionPolicy
     {
         ArgumentNullException.ThrowIfNull(existing);
 
-        if (retainCount < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(retainCount), ErrorMessages.Backup.RetentionCountNegative);
-        }
-
-        if (existing.Count <= retainCount)
-        {
-            return [];
-        }
-
-        return existing
+        return retainCount < 0
+            ? throw new ArgumentOutOfRangeException(nameof(retainCount), ErrorMessages.Backup.RetentionCountNegative)
+            : existing.Count <= retainCount
+            ? []
+            : (IReadOnlyList<BackupFile>) existing
             .OrderByDescending(f => f.Timestamp)
             .ThenBy(f => f.Name, StringComparer.Ordinal)
             .Skip(retainCount)
