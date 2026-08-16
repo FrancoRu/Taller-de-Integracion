@@ -48,18 +48,7 @@ app.UseSwaggerConfig(builder.Environment)
 
 app.MapControllers();
 
-Log.Information("----- Starting up -----");
-Log.Information(@"
-
-  ####    ##       ##  ##   #####               ##      ####
- ##  ##   ##       ##  ##   ##  ##             ###     ##  ##
- ##       ##       ##  ##   #####               ##        ##
- ##       ##       ##  ##   ##  ##              ##       ##
- ##  ##   ##       ##  ##   ##  ##              ##      ##
-  ####    ######   ######   #####             ######   ######
-
-");
-Log.Information("----- Started     -----");
+app.LogStartupBanner();
 
 try
 {
@@ -67,7 +56,7 @@ try
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "Application terminated unexpectedly");
+    Log.Fatal(ex, LogMessages.TerminatedUnexpectedly);
 }
 finally
 {
@@ -77,6 +66,11 @@ finally
 /// <summary>
 /// Visibility-only shim: WebApplicationFactory&lt;Program&gt; (used by integration
 /// tests) requires the top-level Program class to be a public partial type.
-/// This adds no runtime behavior and does not alter any code path.
+/// This adds no runtime behavior and does not alter any code path. The
+/// constructor is protected rather than the implicit public one so the
+/// type isn't mistaken for one meant to be instantiated directly.
 /// </summary>
-public partial class Program { }
+public partial class Program
+{
+    protected Program() { }
+}

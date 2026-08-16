@@ -105,6 +105,17 @@ public static class StartupExtensions
     }
 
     /// <summary>
+    /// Logs the startup banner once the app is fully configured and about to
+    /// start listening for requests.
+    /// </summary>
+    public static void LogStartupBanner(this WebApplication app)
+    {
+        Log.Information(LogMessages.StartingUp);
+        Log.Information(LogMessages.Banner);
+        Log.Information(LogMessages.Started);
+    }
+
+    /// <summary>
     /// Configures Swagger middleware for API documentation in non-production environments.
     /// </summary>
     public static IApplicationBuilder UseSwaggerConfig(this IApplicationBuilder app, IHostEnvironment env)
