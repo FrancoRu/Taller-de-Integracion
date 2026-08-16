@@ -59,6 +59,28 @@ export interface IStageContextProps {
    * @returns {Promise<IStageResponse[] | void>} A promise that resolves to true if the stages are successfully generated, otherwise false.
    */
   generateStagesAutomatically(id: GUID): Promise<IStageResponse[] | void>;
+
+  /**
+   * Assigns one or more teams to a stage, either manually by team id or
+   * automatically based on available slots.
+   * @param {GUID} id - The unique identifier of the stage.
+   * @param {GUID[]} teamIds - The teams to assign (ignored when auto is true).
+   * @param {boolean} auto - When true, fills available slots automatically.
+   * @returns {Promise<boolean | void>} A promise resolving to true if the assignment succeeded, or void on failure.
+   */
+  assignTeamsToStage(
+    id: GUID,
+    teamIds: GUID[],
+    auto?: boolean
+  ): Promise<boolean | void>;
+
+  /**
+   * Seeds an elimination stage's already-generated matches from the
+   * division's group-stage standings, in classic bracket seed order.
+   * @param {GUID} id - The elimination stage to seed.
+   * @returns {Promise<boolean | void>} A promise resolving to true if seeding succeeded, or void on failure.
+   */
+  seedKnockoutStage(id: GUID): Promise<boolean | void>;
 }
 
 /**
@@ -124,6 +146,30 @@ export interface IStageResponse {
    * @type {number}
    */
   order: number;
+
+  /**
+   * Groups multiple parallel elimination brackets under the same division
+   * (e.g. an admin-named "Copa de Oro" / "Copa de Plata" pair). Null means
+   * the stage belongs to the division's single/default bracket. This name
+   * is entirely admin-defined — never hardcoded.
+   * @type {string | null}
+   */
+  bracketName?: string | null;
+
+  /**
+   * Number of games in a series between two teams at this round
+   * (1, 3, 5, or 7). 1 means a single match decides the round.
+   * @type {number}
+   */
+  bestOf: number;
+
+  /**
+   * How many times each pair of teams plays within this group stage
+   * (1 = single round-robin, 2 = double, ...). Only meaningful for a
+   * Group stage.
+   * @type {number}
+   */
+  roundRobinLegs: number;
 }
 
 /**
@@ -196,6 +242,28 @@ export interface IAddStageRequest {
    * @type {GUID}
    */
   divisionId: GUID;
+
+  /**
+   * Groups multiple parallel elimination brackets under the same division
+   * (e.g. an admin-named "Copa de Oro" / "Copa de Plata" pair). Free text,
+   * admin-defined; omit for the division's single/default bracket.
+   * @type {string | null}
+   */
+  bracketName?: string | null;
+
+  /**
+   * Number of games in a series between two teams at this round
+   * (1, 3, 5, or 7). Defaults to 1 (single match decides the round).
+   * @type {number}
+   */
+  bestOf?: number;
+
+  /**
+   * How many times each pair of teams plays within this group stage
+   * (1 = single round-robin, 2 = double, ...). Defaults to 1.
+   * @type {number}
+   */
+  roundRobinLegs?: number;
 }
 /**
  * Represents the filter and pagination parameters
@@ -299,6 +367,9 @@ export interface IStageCreateFormState {
   isActive: boolean;
   isElimination: boolean;
   divisionId: GUID | '';
+  bracketName: string;
+  bestOf: number;
+  roundRobinLegs: number;
 }
 
 export interface IStageEditFormState {

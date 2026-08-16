@@ -5,6 +5,7 @@ const routes = {
   divisions: 'divisions',
   stages: 'stages',
   matches: 'matches',
+  matchSeries: 'match-series',
   players: 'players',
   scorer: 'scorer',
   playerSanctions: 'player-sanctions',

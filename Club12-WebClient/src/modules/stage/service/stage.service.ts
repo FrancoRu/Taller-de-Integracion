@@ -72,4 +72,27 @@ export const stageService = {
    */
   generateStages: async (id: GUID): Promise<AxiosResponse<IStageResponse[]>> =>
     sendPost(`${routes.stages}/generate/${id}`),
+
+  /**
+   * Assigns one or more teams to a stage.
+   * @param {GUID} id - The unique identifier of the stage.
+   * @param {GUID[]} teamIds - The teams to assign (ignored when auto is true).
+   * @param {boolean} auto - When true, fills available slots automatically.
+   * @returns {Promise<AxiosResponse<void>>} The response confirming the assignment.
+   */
+  assignTeamsToStage: async (
+    id: GUID,
+    teamIds: GUID[],
+    auto = false
+  ): Promise<AxiosResponse<void>> =>
+    sendPost(`${routes.stages}/${id}/assign-team`, { teamIds, auto }),
+
+  /**
+   * Seeds an elimination stage's already-generated matches from the
+   * division's group-stage standings.
+   * @param {GUID} id - The elimination stage to seed.
+   * @returns {Promise<AxiosResponse<void>>} The response confirming the seeding.
+   */
+  seedKnockoutStage: async (id: GUID): Promise<AxiosResponse<void>> =>
+    sendPost(`${routes.stages}/${id}/seed`),
 };

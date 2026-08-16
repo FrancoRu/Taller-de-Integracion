@@ -4,6 +4,7 @@ import {
   AccountTreeSharpIcon,
   AppRegistrationIcon,
   ArticleIcon,
+  AutoAwesomeIcon,
   BadgeIcon,
   BarChartIcon,
   EmojiEventsIcon,
@@ -58,6 +59,7 @@ const TAB_ICONS: Record<string, React.ReactNode> = {
   Equipos: <ShieldIcon />,
   Registro: <AppRegistrationIcon />,
   Torneos: <EmojiEventsIcon />,
+  AsistenteDeTorneo: <AutoAwesomeIcon />,
   Divisiones: <SportsBasketballSharpIcon />,
   Fases: <AccountTreeSharpIcon />,
   Partidos: <SportsIcon />,
@@ -90,6 +92,11 @@ const ADMINISTRATION_CHILDREN: NavTab[] = [
     label: 'Torneos',
     path: APP_ROUTES.panelTournaments,
     icon: TAB_ICONS['Torneos'],
+  },
+  {
+    label: 'Asistente de torneo',
+    path: APP_ROUTES.panelTournamentWizard,
+    icon: TAB_ICONS['AsistenteDeTorneo'],
   },
   {
     label: 'Divisiones',
@@ -174,7 +181,7 @@ const TABS_BY_ROLE: Record<UserRolesType, NavTab[]> = {
       children: TEAM_ADMINISTRATION_CHILDREN,
     },
     { label: 'Usuarios', path: APP_ROUTES.panelUsers, icon: TAB_ICONS['Usuarios'] },
-    { label: 'Blog', path: APP_ROUTES.panelBlogCreate, icon: TAB_ICONS['Blog'] },
+    { label: 'Blog', path: APP_ROUTES.panelBlog, icon: TAB_ICONS['Blog'] },
     {
       label: 'Configuracion',
       icon: TAB_ICONS['Configuracion'],
@@ -183,7 +190,7 @@ const TABS_BY_ROLE: Record<UserRolesType, NavTab[]> = {
   ],
   [UserRolesType.Admin]: [
     { label: 'Usuarios', path: APP_ROUTES.panelUsers, icon: TAB_ICONS['Usuarios'] },
-    { label: 'Blog', path: APP_ROUTES.panelBlogCreate, icon: TAB_ICONS['Blog'] },
+    { label: 'Blog', path: APP_ROUTES.panelBlog, icon: TAB_ICONS['Blog'] },
     {
       label: 'Configuracion',
       icon: TAB_ICONS['Configuracion'],

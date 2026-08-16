@@ -33,6 +33,7 @@ import StarIcon from '@mui/icons-material/Star';
 import StadiumIcon from '@mui/icons-material/Stadium';
 import ShieldIcon from '@mui/icons-material/Shield';
 import ArticleIcon from '@mui/icons-material/Article';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
 export {
   DeleteIcon,
@@ -70,4 +71,5 @@ export {
   StadiumIcon,
   ShieldIcon,
   ArticleIcon,
+  AutoAwesomeIcon,
 };

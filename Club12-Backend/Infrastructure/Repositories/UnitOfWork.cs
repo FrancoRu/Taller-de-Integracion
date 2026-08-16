@@ -20,6 +20,7 @@ public class UnitOfWork(
     ITeamRepository teamRepository,
     IDivisionRepository divisionRepository,
     IMatchRepository matchRepository,
+    IMatchSeriesRepository matchSeriesRepository,
     ITournamentRepository tournamentRepository,
     IBlogPostRepository blogPostRepository,
     IPlayerSanctionRepository playerSanctionRepository,
@@ -74,6 +75,11 @@ public class UnitOfWork(
     /// Gets the repository for match entities.
     /// </summary>
     public IMatchRepository MatchRepository { get; } = matchRepository;
+
+    /// <summary>
+    /// Gets the repository for match series entities.
+    /// </summary>
+    public IMatchSeriesRepository MatchSeriesRepository { get; } = matchSeriesRepository;
 
     /// <summary>
     /// Gets the repository for division entities.

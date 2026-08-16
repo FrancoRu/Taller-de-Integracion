@@ -32,4 +32,13 @@ public class Division : EntityBase
     /// The list of Stages in this division.
     /// </summary>
     public virtual required ICollection<Stage> Stages { get; set; }
+
+    /// <summary>
+    /// Marks a division that intentionally draws teams from across every
+    /// other division in the tournament (e.g. "Copa Club12"), rather than
+    /// a team's single competitive tier. Team-assignment consistency
+    /// checks exempt cross-division-cup divisions from the "one team, one
+    /// division" rule so the same team can belong to its zone AND the cup.
+    /// </summary>
+    public bool IsCrossDivisionCup { get; set; } = false;
 }

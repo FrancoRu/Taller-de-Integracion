@@ -18,4 +18,28 @@ public class Stage : EntityBase
     public virtual required ICollection<Match> Matches { get; set; } = [];
     public int Order { get; set; }
     public virtual ICollection<StageTeamMatch> StageTeamMatches { get; set; } = [];
+
+    /// <summary>
+    /// Groups multiple parallel elimination brackets under the same
+    /// division (e.g. "Copa de Oro", "Copa de Plata"). Null means the
+    /// stage belongs to the division's single/default bracket.
+    /// </summary>
+    public string? BracketName { get; set; }
+
+    /// <summary>
+    /// Number of games in a series between two teams at this round
+    /// (1, 3, 5, or 7). 1 means a single match decides the round, matching
+    /// all pre-existing elimination stages. Greater values group each
+    /// pairing's games into a MatchSeries decided by whichever team wins
+    /// the majority.
+    /// </summary>
+    public int BestOf { get; set; } = 1;
+    public virtual ICollection<MatchSeries> MatchSeries { get; set; } = [];
+
+    /// <summary>
+    /// How many times each pair of teams plays within this group stage
+    /// (1 = single round-robin, 2 = double, ...). Only meaningful for
+    /// StageType.Group; ignored for elimination rounds.
+    /// </summary>
+    public int RoundRobinLegs { get; set; } = 1;
 }

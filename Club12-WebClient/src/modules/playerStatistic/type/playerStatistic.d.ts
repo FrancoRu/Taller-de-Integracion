@@ -61,6 +61,7 @@ export type StatisticType = 'Points' | 'Assists';
 
 export interface PlayerStatisticFiltered extends Filtered {
   playerId?: GUID;
+  teamId?: GUID;
   matchId?: GUID;
   type?: StatisticType;
 }
@@ -129,6 +130,12 @@ export interface PlayerStatisticResponse {
    * @type {StatisticType}
    */
   type: StatisticType;
+
+  /**
+   * The date of the associated match, for display without a separate lookup.
+   * @type {string | null}
+   */
+  matchDate: string | null;
 }
 
 /**
@@ -144,6 +151,23 @@ export interface PutPlayerStatisticRequest {
 }
 
 export type PlayerStatisticsViewMode = 'team' | 'player';
+
+export interface IPlayerStatisticCreatePageProps {
+  open: boolean;
+  onClose: () => void;
+  onCreated?: () => void;
+}
+
+export interface IPlayerStatisticCreateFormState {
+  value: string;
+  type: StatisticType;
+  tournamentId: GUID | '';
+  divisionId: GUID | '';
+  stageId: GUID | '';
+  matchId: GUID | '';
+  teamId: GUID | '';
+  playerId: GUID | '';
+}
 
 export interface ITeamStatisticTableRow {
   id: string;

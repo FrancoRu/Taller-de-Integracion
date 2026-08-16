@@ -17,6 +17,7 @@ public interface IUnitOfWork
     IPlayerSanctionRepository PlayerSanctionRepository { get; }
     IPlayerRepository PlayerRepository { get; }
     IMatchRepository MatchRepository { get; }
+    IMatchSeriesRepository MatchSeriesRepository { get; }
     IDivisionRepository DivisionRepository { get; }
     IStageTeamMatchRepository StageTeamMatchRepository { get; }
     Task<int> SaveChangesAsync();

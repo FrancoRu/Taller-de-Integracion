@@ -12,18 +12,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Domain.Entities.Models;
+using Domain.Enums;
 
 namespace API.Controllers;
 
 /// <summary>
-/// Controller for managing Matches.
+/// Controller for managing Matches. Reads are public; writes require
+/// Owner or TournamentManager.
 /// </summary>
 /// <param name="matchService">The Match service.</param>
 /// <param name="stageTeamMatchService">The stage-team match service.</param>
+/// <param name="matchSeriesService">The playoff series service.</param>
 /// <param name="mapper">The AutoMapper instance.</param>
 [Route("api/matches/")]
 [ApiController]
-public class MatchController(IMatchService matchService, IStageTeamMatchService stageTeamMatchService ,IMapper mapper) : ControllerBase
+[Authorize(Roles = Roles.OwnerOrTournamentManager)]
+public class MatchController(IMatchService matchService, IStageTeamMatchService stageTeamMatchService, IMatchSeriesService matchSeriesService, IMapper mapper) : ControllerBase
 {
     /// <summary>
     /// Creates a new match.
@@ -210,6 +214,11 @@ public class MatchController(IMatchService matchService, IStageTeamMatchService 
         mapper.Map(scoreRequest, existingMatch);
 
         await matchService.UpdateMatchAsync(existingMatch);
+
+        if (existingMatch.SeriesId.HasValue)
+        {
+            await matchSeriesService.RecalculateSeriesWinnerAsync(existingMatch.SeriesId.Value);
+        }
 
         DetailedMatchResponse detailedMatch = mapper.Map<DetailedMatchResponse>(existingMatch);
         return Ok(detailedMatch);

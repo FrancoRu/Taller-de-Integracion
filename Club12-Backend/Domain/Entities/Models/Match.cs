@@ -93,4 +93,17 @@ public class Match : EntityBase
     /// Represents the collection of scorer statistics associated with the match.
     /// </summary>
     public virtual ICollection<Scorer> Scorers { get; set; } = [];
+
+    /// <summary>
+    /// The best-of-N series this game belongs to, when the stage's BestOf
+    /// is greater than 1. Null for single-game rounds (BestOf == 1).
+    /// </summary>
+    public Guid? SeriesId { get; set; }
+    public MatchSeries? Series { get; set; }
+
+    /// <summary>
+    /// The game number within its series (1-based). Null when the match
+    /// does not belong to a series.
+    /// </summary>
+    public int? GameNumber { get; set; }
 }

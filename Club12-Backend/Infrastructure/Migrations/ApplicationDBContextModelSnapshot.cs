@@ -17,7 +17,7 @@ namespace Persistance.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.25")
+                .HasAnnotation("ProductVersion", "8.0.30")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -85,6 +85,9 @@ namespace Persistance.Migrations
                     b.Property<DateTime?>("DateUpdated")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<bool>("IsCrossDivisionCup")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsFinished")
                         .HasColumnType("boolean");
 
@@ -125,6 +128,9 @@ namespace Persistance.Migrations
                     b.Property<DateTime?>("DateUpdated")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<int?>("GameNumber")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("HomeScore")
                         .HasColumnType("integer");
 
@@ -136,6 +142,9 @@ namespace Persistance.Migrations
 
                     b.Property<DateTime>("MatchDate")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid?>("SeriesId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("StageId")
                         .HasColumnType("uuid");
@@ -166,6 +175,8 @@ namespace Persistance.Migrations
 
                     b.HasIndex("HomeTeamId");
 
+                    b.HasIndex("SeriesId");
+
                     b.HasIndex("StageId");
 
                     b.HasIndex("VenueId");
@@ -175,6 +186,56 @@ namespace Persistance.Migrations
                     b.HasIndex("WinningTeamId");
 
                     b.ToTable("Matches", "Club12");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Models.MatchSeries", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("BestOf")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("DateUpdated")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("HomeTeamId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("VisitorTeamId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("WinningTeamId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DateCreated")
+                        .HasDatabaseName("IX_MatchSeries_CreatedAt");
+
+                    b.HasIndex("HomeTeamId");
+
+                    b.HasIndex("StageId");
+
+                    b.HasIndex("VisitorTeamId");
+
+                    b.HasIndex("WinningTeamId");
+
+                    b.ToTable("MatchSeries", "Club12");
                 });
 
             modelBuilder.Entity("Domain.Entities.Models.Player", b =>
@@ -401,6 +462,15 @@ namespace Persistance.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<int>("BestOf")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<string>("BracketName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("CreatedBy")
                         .IsRequired()
                         .HasColumnType("text");
@@ -434,6 +504,11 @@ namespace Persistance.Migrations
 
                     b.Property<int>("Order")
                         .HasColumnType("integer");
+
+                    b.Property<int>("RoundRobinLegs")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
 
                     b.Property<string>("StageType")
                         .IsRequired()
@@ -656,6 +731,10 @@ namespace Persistance.Migrations
                         .WithMany()
                         .HasForeignKey("HomeTeamId");
 
+                    b.HasOne("Domain.Entities.Models.MatchSeries", "Series")
+                        .WithMany("Matches")
+                        .HasForeignKey("SeriesId");
+
                     b.HasOne("Domain.Entities.Models.Stage", "Stage")
                         .WithMany("Matches")
                         .HasForeignKey("StageId")
@@ -676,9 +755,44 @@ namespace Persistance.Migrations
 
                     b.Navigation("HomeTeam");
 
+                    b.Navigation("Series");
+
                     b.Navigation("Stage");
 
                     b.Navigation("Venue");
+
+                    b.Navigation("VisitorTeam");
+
+                    b.Navigation("WinningTeam");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Models.MatchSeries", b =>
+                {
+                    b.HasOne("Domain.Entities.Models.Team", "HomeTeam")
+                        .WithMany()
+                        .HasForeignKey("HomeTeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Models.Stage", "Stage")
+                        .WithMany("MatchSeries")
+                        .HasForeignKey("StageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Models.Team", "VisitorTeam")
+                        .WithMany()
+                        .HasForeignKey("VisitorTeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Models.Team", "WinningTeam")
+                        .WithMany()
+                        .HasForeignKey("WinningTeamId");
+
+                    b.Navigation("HomeTeam");
+
+                    b.Navigation("Stage");
 
                     b.Navigation("VisitorTeam");
 
@@ -804,6 +918,11 @@ namespace Persistance.Migrations
                     b.Navigation("Scorers");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Models.MatchSeries", b =>
+                {
+                    b.Navigation("Matches");
+                });
+
             modelBuilder.Entity("Domain.Entities.Models.Player", b =>
                 {
                     b.Navigation("Scorers");
@@ -811,6 +930,8 @@ namespace Persistance.Migrations
 
             modelBuilder.Entity("Domain.Entities.Models.Stage", b =>
                 {
+                    b.Navigation("MatchSeries");
+
                     b.Navigation("Matches");
 
                     b.Navigation("StageTeamMatches");

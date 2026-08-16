@@ -6,6 +6,7 @@ using Application.DTOs.Divisions.Request;
 using Application.DTOs.Divisions.Response;
 using Application.DTOs.Match.Request;
 using Application.DTOs.Match.Response;
+using Application.DTOs.MatchSeries.Response;
 using Application.DTOs.Player.Request;
 using Application.DTOs.Player.Response;
 using Application.DTOs.PlayerSanction.Request;
@@ -24,6 +25,7 @@ using Application.DTOs.Venue.Request;
 using Application.DTOs.Venue.Response;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Domain.Entities.Models;
 
 namespace API.AutoMapperProfiles;
@@ -64,6 +66,8 @@ public class DivisionProfile : Profile
     {
         _ = CreateMap<Division, DivisionResponse>()
             .ReverseMap();
+
+        _ = CreateMap<Position, PositionResponse>();
 
         _ = CreateMap<Division, MinimalDivisionResponse>()
             .ReverseMap();
@@ -160,6 +164,28 @@ public class MatchProfile : Profile
 }
 
 /// <summary>
+/// AutoMapper profile for best-of-N playoff series mappings.
+/// </summary>
+public class MatchSeriesProfile : Profile
+{
+    /// <summary>
+    /// Initializes mapping configuration for series entities.
+    /// </summary>
+    public MatchSeriesProfile()
+    {
+        _ = CreateMap<Domain.Entities.Models.MatchSeries, MatchSeriesResponse>()
+            .ForMember(dest => dest.HomeTeamName, opt => opt.MapFrom(src => src.HomeTeam != null ? src.HomeTeam.Name : string.Empty))
+            .ForMember(dest => dest.VisitorTeamName, opt => opt.MapFrom(src => src.VisitorTeam != null ? src.VisitorTeam.Name : string.Empty))
+            .ForMember(dest => dest.WinningTeamName, opt => opt.MapFrom(src => src.WinningTeam != null ? src.WinningTeam.Name : null))
+            .ForMember(dest => dest.Games, opt => opt.MapFrom(src => src.Matches.OrderBy(m => m.GameNumber)));
+
+        _ = CreateMap<Match, SeriesGameResponse>()
+            .IncludeBase<Match, MinimalMatchResponse>()
+            .ForMember(dest => dest.GameNumber, opt => opt.MapFrom(src => src.GameNumber ?? 0));
+    }
+}
+
+/// <summary>
 /// AutoMapper profile for venue mappings.
 /// </summary>
 public class VenueProfile : Profile
@@ -191,6 +217,7 @@ public class PlayerStatisticProfile : Profile
         _ = CreateMap<CreatePlayerStatisticRequest, PlayerStatistic>();
 
         _ = CreateMap<PlayerStatistic, PlayerStatisticResponse>()
+            .ForMember(dest => dest.MatchDate, opt => opt.MapFrom(src => src.Match != null ? (DateTime?)src.Match.MatchDate : null))
             .ReverseMap();
 
         _ = CreateMap<UpdatePlayerStatisticRequest, PlayerStatistic>();

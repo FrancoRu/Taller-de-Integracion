@@ -18,4 +18,26 @@ public static class Roles
 
     // ── Composite constants for multi-role [Authorize] attributes ──
     public const string AdminOrOwner = $"{Admin},{Owner}";
+
+    /// <summary>
+    /// Tournament/division/stage/match/series/venue/sanction/statistic
+    /// management — the two roles that run a tournament's competitive
+    /// structure day to day.
+    /// </summary>
+    public const string OwnerOrTournamentManager = $"{Owner},{TournamentManager}";
+
+    /// <summary>
+    /// Team and player roster management — a team's own manager, plus the
+    /// tournament-level roles that oversee registration.
+    /// </summary>
+    public const string TeamManagerOrTournamentManagerOrOwner =
+        $"{TeamManager},{TournamentManager},{Owner}";
+
+    /// <summary>
+    /// Every non-guest staff role — used for read endpoints that expose a
+    /// player's private details (document number, birth date, etc.) to
+    /// whichever staff role is looking them up.
+    /// </summary>
+    public const string AnyStaffRole =
+        $"{Admin},{Owner},{TournamentManager},{TeamManager}";
 }

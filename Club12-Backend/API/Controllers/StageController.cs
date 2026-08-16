@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Application.DTOs.Abstract.Response;
+using Application.DTOs.Match.Response;
 using Application.DTOs.Stage.Request;
 using Application.DTOs.Stage.Response;
 using Application.Interfaces.Services;
@@ -10,12 +11,14 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Domain.Entities.Models;
+using Domain.Enums;
 
 namespace API.Controllers;
 
 /// <summary>
 /// Controller for managing Stage entities, providing endpoints for creation, retrieval, update, deletion,
-/// automated generation of stages and matches, and team assignment operations.
+/// automated generation of stages and matches, and team assignment operations. Reads are public; writes
+/// require Owner or TournamentManager.
 /// </summary>
 /// <remarks>
 /// This controller exposes RESTful endpoints for handling Stage-related operations in the tournament system.
@@ -28,6 +31,7 @@ namespace API.Controllers;
 /// <param name="mapper">AutoMapper instance for mapping between entities and DTOs.</param>
 [Route("api/stages/")]
 [ApiController]
+[Authorize(Roles = Roles.OwnerOrTournamentManager)]
 public class StageController(IStageService stageService, IMatchService matchService, IMapper mapper) : ControllerBase
 {
     /// <summary>
@@ -75,6 +79,7 @@ public class StageController(IStageService stageService, IMatchService matchServ
     /// </summary>
     /// <param name="id">The id of the Stage.</param>
     /// <returns>The Stage entity.</returns>
+    [AllowAnonymous]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Stage))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -186,5 +191,32 @@ public class StageController(IStageService stageService, IMatchService matchServ
             return NotFound($"Stage with id {id} not found.");
         await stageService.UnassignTeamsFromStageAsync(stage, request.TeamIds);
         return Ok();
+    }
+
+    /// <summary>
+    /// Seeds an elimination stage's already-generated matches from the
+    /// division's group-stage standings, using the classic bracket seed
+    /// order (1v8, 4v5, 2v7, 3v6) so the top two seeds only meet in the
+    /// final.
+    /// </summary>
+    /// <param name="id">The elimination stage to seed.</param>
+    /// <returns>
+    /// Returns HTTP 200 OK with the now-seeded matches, or 404 Not Found
+    /// if the stage does not exist.
+    /// </returns>
+    [HttpPost("{id:guid}/seed")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<DetailedMatchResponse>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> SeedKnockoutStage(Guid id)
+    {
+        Stage? stage = await stageService.GetStageByIdAsync(id);
+
+        if (stage == null)
+            return NotFound($"Stage with id {id} not found.");
+
+        List<Match> seededMatches = await stageService.SeedKnockoutStageAsync(id);
+
+        return Ok(mapper.Map<List<DetailedMatchResponse>>(seededMatches));
     }
 }

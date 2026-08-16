@@ -202,7 +202,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         List<Team> poolTeams = await SeedTeamsAsync(db, tournament, 3);
         List<Guid> teamIds = [.. poolTeams.Select(t => t.Id)];
 
-        await Assert.ThrowsAsync<Exception>(
+        await Assert.ThrowsAsync<InvalidOperationException>(
             () => stageService.AssignTeamsToStageAsync(stage, teamIds, auto: false));
 
         int recordCount = await db.StageTeamMatches.CountAsync(stm => stm.StageId == stage.Id);
@@ -243,9 +243,9 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         List<Team> poolTeams = await SeedTeamsAsync(db, tournament, 1);
         List<Guid> teamIds = [.. poolTeams.Select(t => t.Id)];
 
-        await Assert.ThrowsAsync<Exception>(
+        await Assert.ThrowsAsync<InvalidOperationException>(
             () => stageService.AssignTeamsToStageAsync(stage, teamIds, auto: false));
-        await Assert.ThrowsAsync<Exception>(
+        await Assert.ThrowsAsync<InvalidOperationException>(
             () => stageService.AssignTeamsToStageAsync(stage, null, auto: true));
 
         int recordCount = await db.StageTeamMatches.CountAsync(stm => stm.StageId == stage.Id);

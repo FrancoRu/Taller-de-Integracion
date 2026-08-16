@@ -34,3 +34,15 @@ export interface BracketModel {
   thirdPlace?: BracketRound;
   edges: BracketEdge[];
 }
+
+/**
+ * One named parallel bracket within a division (e.g. an admin-defined
+ * "Copa de Oro" / "Copa de Plata" pair, or a single unnamed bracket when
+ * the division only has one elimination path). `bracketName` is free
+ * text, entirely admin-defined; null means the stage(s) carry no
+ * BracketName and form the division's single/default bracket.
+ */
+export interface BracketGroup {
+  bracketName: string | null;
+  model: BracketModel;
+}

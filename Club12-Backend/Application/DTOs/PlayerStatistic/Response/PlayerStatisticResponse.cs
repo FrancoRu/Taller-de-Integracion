@@ -27,4 +27,9 @@ public class PlayerStatisticResponse : BaseEntityResponse
     /// The ID of the associated match.
     /// </summary>
     public Guid MatchId { get; set; }
+
+    /// <summary>
+    /// The date of the associated match, for display without a separate lookup.
+    /// </summary>
+    public DateTime? MatchDate { get; set; }
 }

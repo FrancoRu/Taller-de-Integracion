@@ -2,12 +2,19 @@ import { useRef } from 'react';
 import { Box, Stack, Typography } from '@mui/material';
 import { BracketModel } from '@/modules/playoff/type/bracket.d';
 import { GUID } from '@/modules/core/types/types';
+import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
 import { translateStageType } from '@/modules/core/utils/translateStageType';
 import BracketMatchNode from '@/views/playoff/BracketMatchNode';
 import BracketConnectors from '@/views/playoff/BracketConnectors';
 
 interface PlayoffBracketProps {
   model: BracketModel;
+  /**
+   * Maps a bracket node's id to its full series data (only relevant for
+   * BestOf > 1 rounds, where the node id is the MatchSeries id) so
+   * BracketMatchNode can show the per-game breakdown.
+   */
+  seriesById?: Map<GUID, IMatchSeriesResponse>;
 }
 
 /**
@@ -16,7 +23,7 @@ interface PlayoffBracketProps {
  * node, ThirdPlace as a side match beside it, and SVG connectors inferred
  * client-side from `model.edges`.
  */
-export default function PlayoffBracket({ model }: PlayoffBracketProps) {
+export default function PlayoffBracket({ model, seriesById }: PlayoffBracketProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef<Map<GUID, HTMLDivElement | null>>(new Map());
 
@@ -53,6 +60,7 @@ export default function PlayoffBracket({ model }: PlayoffBracketProps) {
                 <BracketMatchNode
                   key={match.id}
                   match={match}
+                  series={seriesById?.get(match.id)}
                   ref={node => nodeRefs.current.set(match.id, node)}
                 />
               ))}
@@ -79,6 +87,7 @@ export default function PlayoffBracket({ model }: PlayoffBracketProps) {
                 <BracketMatchNode
                   key={match.id}
                   match={match}
+                  series={seriesById?.get(match.id)}
                   ref={node => nodeRefs.current.set(match.id, node)}
                 />
               ))}

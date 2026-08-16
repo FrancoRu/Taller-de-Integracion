@@ -4,6 +4,7 @@ using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Utils.Extensions;
 using Domain.Entities.Models;
+using LinqKit;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -33,8 +34,16 @@ public class PlayerStatisticService(IPlayerStatisticRepository playerStatisticRe
         Expression<Func<PlayerStatistic, bool>> expression =
             QueryableExtensions.ConstructFilterExpression<PlayerStatistic, GetPlayerStatisticsFilteredRequest>(filter);
 
+        if (filter.TeamId.HasValue)
+        {
+            Expression<Func<PlayerStatistic, bool>> teamExpression =
+                playerStatistic => playerStatistic.Player != null && playerStatistic.Player.TeamId == filter.TeamId.Value;
+            expression = expression.And(teamExpression);
+        }
+
         IEnumerable<PlayerStatistic> filteredStatistics = await playerStatisticRepository.FindAsync(
             expression,
+            includes: [playerStatistic => playerStatistic.Match!, playerStatistic => playerStatistic.Player!],
             filter: filter);
 
         int totalCount = await playerStatisticRepository.CountAsync(expression);

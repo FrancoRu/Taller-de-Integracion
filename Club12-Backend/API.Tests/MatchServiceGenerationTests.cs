@@ -147,6 +147,48 @@ public class MatchServiceGenerationTests : IClassFixture<CustomWebApplicationFac
     }
 
     [Fact]
+    public async Task CreateAutomatedMatchesAsync_GroupStage_SingleGroupDivision_SeedsEachMatchWithARealPairing()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IMatchService matchService = scope.ServiceProvider.GetRequiredService<IMatchService>();
+
+        (_, _, List<Stage> stages, List<Team> teams) = await SeedGroupStageWithTeamsAsync(db, teamsPerGroup: 4, groupCount: 1);
+
+        List<Match> matches = await matchService.CreateAutomatedMatchesAsync(stages[0].Id);
+
+        Assert.Equal(6, matches.Count);
+        Assert.All(matches, m =>
+        {
+            Assert.NotNull(m.HomeTeamId);
+            Assert.NotNull(m.VisitorTeamId);
+            Assert.Contains(m.HomeTeamId!.Value, teams.Select(t => t.Id));
+            Assert.Contains(m.VisitorTeamId!.Value, teams.Select(t => t.Id));
+            Assert.NotEqual(m.HomeTeamId, m.VisitorTeamId);
+        });
+
+        foreach (Team team in teams)
+        {
+            int appearances = matches.Count(m => m.HomeTeamId == team.Id || m.VisitorTeamId == team.Id);
+            Assert.Equal(3, appearances);
+        }
+    }
+
+    [Fact]
+    public async Task CreateAutomatedMatchesAsync_GroupStage_MultipleGroupsInDivision_LeavesMatchesUnseeded()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IMatchService matchService = scope.ServiceProvider.GetRequiredService<IMatchService>();
+
+        (_, _, List<Stage> stages, _) = await SeedGroupStageWithTeamsAsync(db, teamsPerGroup: 4, groupCount: 2);
+
+        List<Match> matches = await matchService.CreateAutomatedMatchesAsync(stages[0].Id);
+
+        Assert.All(matches, m => Assert.Null(m.HomeTeamId));
+    }
+
+    [Fact]
     public async Task CreateAutomatedMatchesAsync_GroupStage_EndDateBeforeStartDate_ThrowsArgumentException()
     {
         using IServiceScope scope = _factory.Services.CreateScope();

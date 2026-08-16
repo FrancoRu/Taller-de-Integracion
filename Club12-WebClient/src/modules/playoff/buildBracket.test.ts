@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { buildBracket } from '@/modules/playoff/buildBracket';
+import {
+  buildBracket,
+  buildBrackets,
+  countSeriesWins,
+  groupStagesByBracket,
+  seriesToRepresentativeMatch,
+} from '@/modules/playoff/buildBracket';
 import { IStageResponse, StageType } from '@/modules/stage/type/stage.d';
 import { IMatchResponse } from '@/modules/match/type/match.d';
 import { ITeamMatchResponse } from '@/modules/team/type/team.d';
+import { IMatchSeriesResponse, ISeriesGameResponse } from '@/modules/matchSeries/type/matchSeries.d';
 import { GUID } from '@/modules/core/types/types';
 
 const guid = (seed: string): GUID => `${seed}-0000-0000-0000-000000000000` as GUID;
@@ -25,6 +32,8 @@ const makeStage = (overrides: Partial<IStageResponse> & { id: GUID; stageType: S
   endDate: '2026-01-31',
   divisionId: guid('division'),
   order: 0,
+  bestOf: 1,
+  roundRobinLegs: 1,
   ...overrides,
 });
 
@@ -38,6 +47,157 @@ const makeMatch = (overrides: Partial<IMatchResponse> & { id: GUID; stageId: GUI
   winningTeamName: null,
   venue: null,
   ...overrides,
+});
+
+const makeGame = (
+  overrides: Partial<ISeriesGameResponse> & { id: GUID }
+): ISeriesGameResponse => ({
+  matchDate: '2026-01-01T18:00:00Z',
+  homeTeamName: 'Home',
+  visitorTeamName: 'Visitor',
+  homeScore: null,
+  visitorScore: null,
+  winningTeamName: null,
+  isFinished: false,
+  matchType: 'Playoff' as ISeriesGameResponse['matchType'],
+  gameNumber: 1,
+  ...overrides,
+});
+
+const makeSeries = (
+  overrides: Partial<IMatchSeriesResponse> & { id: GUID; stageId: GUID }
+): IMatchSeriesResponse => ({
+  homeTeamId: guid('home'),
+  homeTeamName: 'Home',
+  visitorTeamId: guid('visitor'),
+  visitorTeamName: 'Visitor',
+  bestOf: 3,
+  winningTeamId: null,
+  winningTeamName: null,
+  games: [],
+  ...overrides,
+});
+
+describe('groupStagesByBracket', () => {
+  it('groups stages with no BracketName into one default group', () => {
+    const stageA = makeStage({ id: guid('sf'), stageType: StageType.SemiFinal });
+    const stageB = makeStage({ id: guid('final'), stageType: StageType.Final });
+
+    const groups = groupStagesByBracket([stageA, stageB]);
+
+    expect(groups.size).toBe(1);
+    expect([...groups.values()][0]).toEqual([stageA, stageB]);
+  });
+
+  it('separates stages by their admin-defined BracketName', () => {
+    const goldStage = makeStage({ id: guid('gold-sf'), stageType: StageType.SemiFinal, bracketName: 'Copa de Oro' });
+    const silverStage = makeStage({ id: guid('silver-sf'), stageType: StageType.SemiFinal, bracketName: 'Copa de Plata' });
+
+    const groups = groupStagesByBracket([goldStage, silverStage]);
+
+    expect(groups.size).toBe(2);
+    expect(groups.get('Copa de Oro')).toEqual([goldStage]);
+    expect(groups.get('Copa de Plata')).toEqual([silverStage]);
+  });
+});
+
+describe('countSeriesWins', () => {
+  it('tallies finished games by matching winner name to home/visitor', () => {
+    const series = makeSeries({
+      id: guid('series'),
+      stageId: guid('sf'),
+      homeTeamName: 'Home',
+      visitorTeamName: 'Visitor',
+      games: [
+        makeGame({ id: guid('g1'), isFinished: true, winningTeamName: 'Home', gameNumber: 1 }),
+        makeGame({ id: guid('g2'), isFinished: true, winningTeamName: 'Visitor', gameNumber: 2 }),
+        makeGame({ id: guid('g3'), isFinished: false, gameNumber: 3 }),
+      ],
+    });
+
+    expect(countSeriesWins(series)).toEqual({ home: 1, visitor: 1 });
+  });
+});
+
+describe('seriesToRepresentativeMatch', () => {
+  it('shows the game tally as the score once at least one game is finished, without marking a winner mid-series', () => {
+    const series = makeSeries({
+      id: guid('series'),
+      stageId: guid('sf'),
+      games: [makeGame({ id: guid('g1'), isFinished: true, winningTeamName: 'Home', gameNumber: 1 })],
+    });
+
+    const representative = seriesToRepresentativeMatch(series);
+
+    expect(representative.isFinished).toBe(true);
+    expect(representative.homeTeam?.score).toBe(1);
+    expect(representative.visitorTeam?.score).toBe(0);
+    expect(representative.winningTeamId).toBeNull();
+  });
+
+  it('sets the winner once the series has been decided', () => {
+    const winnerId = guid('home');
+    const series = makeSeries({
+      id: guid('series'),
+      stageId: guid('sf'),
+      homeTeamId: winnerId,
+      winningTeamId: winnerId,
+      winningTeamName: 'Home',
+      games: [
+        makeGame({ id: guid('g1'), isFinished: true, winningTeamName: 'Home', gameNumber: 1 }),
+        makeGame({ id: guid('g2'), isFinished: true, winningTeamName: 'Home', gameNumber: 2 }),
+      ],
+    });
+
+    const representative = seriesToRepresentativeMatch(series);
+
+    expect(representative.winningTeamId).toBe(winnerId);
+    expect(representative.homeTeam?.score).toBe(2);
+  });
+});
+
+describe('buildBrackets — multi-bracket + series grouping', () => {
+  it('builds one BracketModel per BracketName group', () => {
+    const goldStage = makeStage({ id: guid('gold-final'), stageType: StageType.Final, bracketName: 'Copa de Oro' });
+    const silverStage = makeStage({ id: guid('silver-final'), stageType: StageType.Final, bracketName: 'Copa de Plata' });
+    const goldMatch = makeMatch({ id: guid('m-gold'), stageId: goldStage.id });
+    const silverMatch = makeMatch({ id: guid('m-silver'), stageId: silverStage.id });
+
+    const groups = buildBrackets([goldStage, silverStage], [goldMatch, silverMatch]);
+
+    expect(groups).toHaveLength(2);
+    expect(groups.map(g => g.bracketName).sort()).toEqual(['Copa de Oro', 'Copa de Plata']);
+    expect(groups.find(g => g.bracketName === 'Copa de Oro')?.model.rounds[0].matches).toEqual([goldMatch]);
+  });
+
+  it('returns a single group with bracketName null when no stage carries a BracketName', () => {
+    const finalStage = makeStage({ id: guid('final'), stageType: StageType.Final });
+
+    const groups = buildBrackets([finalStage], []);
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0].bracketName).toBeNull();
+  });
+
+  it('renders a BestOf>1 round as one node per series instead of one per game', () => {
+    const sfStage = makeStage({ id: guid('sf'), stageType: StageType.SemiFinal, bestOf: 3 });
+    const series = makeSeries({
+      id: guid('series'),
+      stageId: sfStage.id,
+      games: [
+        makeGame({ id: guid('g1'), isFinished: true, winningTeamName: 'Home', gameNumber: 1 }),
+        makeGame({ id: guid('g2'), isFinished: true, winningTeamName: 'Home', gameNumber: 2 }),
+      ],
+    });
+    const seriesByStageId = new Map([[sfStage.id, [series]]]);
+
+    const groups = buildBrackets([sfStage], [], seriesByStageId);
+
+    const sfRound = groups[0].model.rounds[0];
+    expect(sfRound.matches).toHaveLength(1);
+    expect(sfRound.matches[0].id).toBe(series.id);
+    expect(sfRound.matches[0].homeTeam?.score).toBe(2);
+  });
 });
 
 describe('buildBracket — round ordering and grouping', () => {

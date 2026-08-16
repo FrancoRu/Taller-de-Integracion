@@ -60,6 +60,22 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
     mutationFn: stageService.generateStages,
   });
 
+  const assignTeamsMutation = useMutation({
+    mutationFn: ({
+      id,
+      teamIds,
+      auto,
+    }: {
+      id: GUID;
+      teamIds: GUID[];
+      auto: boolean;
+    }) => stageService.assignTeamsToStage(id, teamIds, auto),
+  });
+
+  const seedKnockoutStageMutation = useMutation({
+    mutationFn: stageService.seedKnockoutStage,
+  });
+
   useEffect(() => {
     if (!stage) return;
 
@@ -189,6 +205,36 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
     [generateStagesMutation, queryClient, handleUnknownError]
   );
 
+  const assignTeamsToStage = useCallback(
+    async (id: GUID, teamIds: GUID[], auto = false): Promise<boolean | void> => {
+      try {
+        const res = await assignTeamsMutation.mutateAsync({ id, teamIds, auto });
+        if (res) {
+          await queryClient.invalidateQueries({ queryKey: stageKeys.list() });
+          return true;
+        }
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [assignTeamsMutation, queryClient, handleUnknownError]
+  );
+
+  const seedKnockoutStage = useCallback(
+    async (id: GUID): Promise<boolean | void> => {
+      try {
+        const res = await seedKnockoutStageMutation.mutateAsync(id);
+        if (res) {
+          await queryClient.invalidateQueries({ queryKey: stageKeys.list() });
+          return true;
+        }
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [seedKnockoutStageMutation, queryClient, handleUnknownError]
+  );
+
   const container: IStageContextProps = useMemo(
     () => ({
       stage,
@@ -199,6 +245,8 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
       getStageById,
       deleteStagesById,
       generateStagesAutomatically,
+      assignTeamsToStage,
+      seedKnockoutStage,
     }),
     [
       stage,
@@ -209,6 +257,8 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
       getStageById,
       deleteStagesById,
       generateStagesAutomatically,
+      assignTeamsToStage,
+      seedKnockoutStage,
     ]
   );
 

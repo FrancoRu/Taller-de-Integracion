@@ -43,5 +43,10 @@ public class MatchEntityConfiguration : BaseEntityConfiguration<Match>
             .WithMany()
             .HasForeignKey(m => m.VenueId)
             .IsRequired(false);
+
+        builder.HasOne(m => m.Series)
+            .WithMany(ms => ms.Matches)
+            .HasForeignKey(m => m.SeriesId)
+            .IsRequired(false);
     }
 }

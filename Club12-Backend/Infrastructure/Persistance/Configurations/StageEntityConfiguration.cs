@@ -18,6 +18,9 @@ public class StageEntityConfiguration : BaseEntityConfiguration<Stage>
         builder.Property(s => s.StartDate).IsRequired();
         builder.Property(s => s.EndDate).IsRequired();
         builder.Property(s => s.DivisionId).IsRequired();
+        builder.Property(s => s.BracketName).HasMaxLength(100);
+        builder.Property(s => s.BestOf).IsRequired().HasDefaultValue(1);
+        builder.Property(s => s.RoundRobinLegs).IsRequired().HasDefaultValue(1);
 
         builder.HasIndex(s => new { s.Name, s.DivisionId })
             .IsUnique()

@@ -5,21 +5,25 @@ using Application.DTOs.Divisions.Response;
 using Application.Interfaces.Services;
 using AutoMapper;
 using Domain.Entities.Models;
+using Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace API.Controllers;
 
 /// <summary>
-/// Controller for managing divisions.
+/// Controller for managing divisions. Reads are public; writes require
+/// Owner or TournamentManager.
 /// </summary>
 /// <param name="divisionService">The division service.</param>
 /// <param name="mapper">The AutoMapper instance.</param>
 [Route("api/divisions/")]
 [ApiController]
+[Authorize(Roles = Roles.OwnerOrTournamentManager)]
 public class DivisionController(
     IDivisionService divisionService,
     IMapper mapper
@@ -68,6 +72,8 @@ public class DivisionController(
         }
 
         DivisionResponse divisionResponse = mapper.Map<DivisionResponse>(division);
+        List<Position> positions = await divisionService.GetPositionsByDivisionIdAsync(id);
+        divisionResponse.Positions = mapper.Map<List<PositionResponse>>(positions);
 
         return Ok(divisionResponse);
     }

@@ -1,6 +1,7 @@
 ﻿
 using System;
 using System.ComponentModel.DataAnnotations;
+using Application.Utils.Constants.Stage;
 using Domain.Enums;
 
 namespace Application.DTOs.Stage.Request;
@@ -57,4 +58,26 @@ public class CreateStageRequest
     /// </summary>
     [Required(ErrorMessage = "Division ID field is required.")]
     public required Guid DivisionId { get; set; }
+
+    /// <summary>
+    /// Optional label grouping this stage with other parallel elimination
+    /// brackets in the same division (e.g. "Copa de Oro", "Copa de Plata").
+    /// Null means the stage belongs to the division's single/default bracket.
+    /// </summary>
+    public string? BracketName { get; set; }
+
+    /// <summary>
+    /// Number of games in a series between two teams at this round: 1, 3,
+    /// 5, or 7. Defaults to 1 (a single match decides the round).
+    /// </summary>
+    [AllowedValues(1, 3, 5, 7)]
+    public int BestOf { get; set; } = 1;
+
+    /// <summary>
+    /// How many times each pair of teams plays within this group stage
+    /// (1 = single round-robin, 2 = double, ...). Only meaningful for a
+    /// Group stage.
+    /// </summary>
+    [Range(RoundRobinFormat.MIN_LEGS, RoundRobinFormat.MAX_LEGS)]
+    public int RoundRobinLegs { get; set; } = RoundRobinFormat.MIN_LEGS;
 }

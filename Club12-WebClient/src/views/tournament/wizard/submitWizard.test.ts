@@ -1,0 +1,169 @@
+import { describe, expect, it, vi } from 'vitest';
+import { GUID } from '@/modules/core/types/types';
+import { StageType } from '@/modules/stage/type/stage.d';
+import { WizardState, createInitialWizardState } from './types';
+import { WizardServices, submitWizard } from './submitWizard';
+
+const guid = (seed: string): GUID => `${seed}-0000-0000-0000-000000000000` as GUID;
+
+const makeState = (): WizardState => {
+  const state = createInitialWizardState();
+  state.tournament = {
+    name: 'Apertura 2026',
+    description: 'Torneo de prueba',
+    startDate: '2026-03-01',
+    teamRegistrationDeadline: '2026-02-15',
+    minTeams: 2,
+    maxTeams: 8,
+  };
+  state.selectedTeamIds = [guid('a'), guid('b')];
+  state.zones = [
+    {
+      id: 'zone-1',
+      name: 'Zona A',
+      teamIds: [guid('a'), guid('b')],
+      hasGroupStage: true,
+      roundRobinLegs: 2,
+      cups: [
+        {
+          id: 'cup-1',
+          name: 'Copa de Oro',
+          rounds: [
+            { id: 'r1', stageType: StageType.SemiFinal, bestOf: 3 },
+            { id: 'r2', stageType: StageType.Final, bestOf: 5 },
+          ],
+        },
+      ],
+    },
+  ];
+  return state;
+};
+
+const makeServices = (
+  overrides: Partial<WizardServices> = {}
+): WizardServices & Record<keyof WizardServices, ReturnType<typeof vi.fn>> => ({
+  addTournament: vi.fn(async () => ({ id: guid('tournament') }) as never),
+  registerTeams: vi.fn(async () => true),
+  addDivision: vi.fn(async ({ name, tournamentId, isCrossDivisionCup }: never) => ({
+    id: guid('division'),
+    name,
+    tournamentId,
+    isCrossDivisionCup,
+  }) as never),
+  addStage: vi.fn(async () => ({ id: guid('stage') }) as never),
+  assignTeamsToStage: vi.fn(async () => true),
+  generateMatches: vi.fn(async () => true),
+  ...overrides,
+}) as unknown as WizardServices & Record<keyof WizardServices, ReturnType<typeof vi.fn>>;
+
+describe('submitWizard', () => {
+  it('creates the tournament, registers teams, and reports success', async () => {
+    const services = makeServices();
+    const result = await submitWizard(makeState(), services);
+
+    expect(result.success).toBe(true);
+    expect(result.tournamentId).toBe(guid('tournament'));
+    expect(result.warnings).toEqual([]);
+    expect(services.addTournament).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Apertura 2026', minTeams: 2, maxTeams: 8 })
+    );
+    expect(services.registerTeams).toHaveBeenCalledWith(guid('tournament'), [guid('a'), guid('b')]);
+  });
+
+  it('creates one division per zone with isCrossDivisionCup false', async () => {
+    const services = makeServices();
+    await submitWizard(makeState(), services);
+
+    expect(services.addDivision).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Zona A', tournamentId: guid('tournament'), isCrossDivisionCup: false })
+    );
+  });
+
+  it('creates the group stage with the configured RoundRobinLegs and assigns the zone teams to it', async () => {
+    const services = makeServices();
+    await submitWizard(makeState(), services);
+
+    expect(services.addStage).toHaveBeenCalledWith(
+      expect.objectContaining({ stageType: StageType.Group, isElimination: false, roundRobinLegs: 2 })
+    );
+    expect(services.assignTeamsToStage).toHaveBeenCalledWith(guid('stage'), [guid('a'), guid('b')], false);
+    expect(services.generateMatches).toHaveBeenCalledWith(guid('stage'));
+  });
+
+  it('creates one stage per cup round with the bracket name and best-of, but never assigns teams to them', async () => {
+    const services = makeServices();
+    await submitWizard(makeState(), services);
+
+    const cupStageCalls = services.addStage.mock.calls.filter(
+      call => (call[0] as { isElimination: boolean }).isElimination
+    );
+    expect(cupStageCalls).toHaveLength(2);
+    expect(cupStageCalls[0][0]).toMatchObject({
+      stageType: StageType.SemiFinal,
+      bracketName: 'Copa de Oro',
+      bestOf: 3,
+    });
+    expect(cupStageCalls[1][0]).toMatchObject({
+      stageType: StageType.Final,
+      bracketName: 'Copa de Oro',
+      bestOf: 5,
+    });
+
+    // assignTeamsToStage was called exactly once — for the group stage, not the cup rounds.
+    expect(services.assignTeamsToStage).toHaveBeenCalledTimes(1);
+  });
+
+  it('aborts immediately and reports an error when tournament creation fails', async () => {
+    const services = makeServices({ addTournament: vi.fn(async () => undefined) });
+    const result = await submitWizard(makeState(), services);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
+    expect(services.addDivision).not.toHaveBeenCalled();
+  });
+
+  it('keeps going and records a warning when team registration fails', async () => {
+    const services = makeServices({ registerTeams: vi.fn(async () => undefined) });
+    const result = await submitWizard(makeState(), services);
+
+    expect(result.success).toBe(true);
+    expect(result.warnings.some(w => w.includes('registrar'))).toBe(true);
+    expect(services.addDivision).toHaveBeenCalled();
+  });
+
+  it('records a warning and skips stage creation when a zone division fails to create', async () => {
+    const services = makeServices({ addDivision: vi.fn(async () => undefined) });
+    const result = await submitWizard(makeState(), services);
+
+    expect(result.success).toBe(true);
+    expect(result.warnings.some(w => w.includes('Zona A'))).toBe(true);
+    expect(services.addStage).not.toHaveBeenCalled();
+  });
+
+  it('creates a cross-division cup division with isCrossDivisionCup true when enabled', async () => {
+    const services = makeServices();
+    const state = makeState();
+    state.crossCup = {
+      enabled: true,
+      name: 'Copa Club12',
+      includeAllTeams: true,
+      teamIds: [],
+      hasGroupStage: false,
+      roundRobinLegs: 1,
+      cups: [],
+    };
+
+    await submitWizard(state, services);
+
+    expect(services.addDivision).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Copa Club12', isCrossDivisionCup: true })
+    );
+  });
+
+  it('does not create a cross-division cup division when disabled', async () => {
+    const services = makeServices();
+    await submitWizard(makeState(), services);
+
+    expect(services.addDivision).toHaveBeenCalledTimes(1);
+  });
+});

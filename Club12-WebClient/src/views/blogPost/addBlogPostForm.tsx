@@ -63,7 +63,7 @@ const AddBlogPostForm: React.FC = () => {
 
     if (result) {
       await notifySuccess({ title: 'La publicación fue creada exitosamente.' });
-      navigate(APP_ROUTES.home);
+      navigate(APP_ROUTES.panelBlog);
     }
   };
 

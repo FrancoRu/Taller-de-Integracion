@@ -83,4 +83,15 @@ export const matchService = {
    */
   deleteMatchById: async (id: GUID): Promise<AxiosResponse<void>> =>
     sendDelete<void>(`${routes.matches}/${id}`),
+
+  /**
+   * Automatically generates matches for a stage (e.g. a round-robin group
+   * fixture, or the empty slots of an elimination round).
+   * @param {string} id - The ID of the stage to generate matches for.
+   * @returns {Promise<AxiosResponse<IMatchResponse[]>>} - A promise that resolves with the generated matches.
+   */
+  generateMatches: async (
+    id: GUID
+  ): Promise<AxiosResponse<IMatchResponse[]>> =>
+    sendPost<IMatchResponse[]>(`${routes.matches}/generate/${id}`),
 };

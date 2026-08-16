@@ -12,7 +12,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import {
   confirmDelete,
-  notifyInfo,
   notifySuccess,
 } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
@@ -232,11 +231,8 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
       return;
     }
 
-    void notifyInfo({
-      title: 'Pendiente',
-      text: 'La creación de divisiones desde esta vista aún no está implementada.',
-    });
-  }, [onCreate]);
+    navigate(APP_ROUTES.panelDivisionCreate);
+  }, [onCreate, navigate]);
 
   const content = (
     <>

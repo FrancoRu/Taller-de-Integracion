@@ -19,6 +19,12 @@ public class GetPlayerStatisticsFilteredRequest : PaginatedFilterRequest
     public Guid? PlayerId { get; set; }
 
     /// <summary>
+    /// The unique identifier of the team to filter statistics by (matches
+    /// the statistic's player's team).
+    /// </summary>
+    public Guid? TeamId { get; set; }
+
+    /// <summary>
     /// The type of statistic to filter by (Points or Assists).
     /// </summary>
     public StatisticType? Type { get; set; }

@@ -18,4 +18,12 @@ public class CreateDivisionRequest
     /// </summary>
     [Required(ErrorMessage = "The TournamentId field is required.")]
     public required Guid TournamentId { get; set; }
+
+    /// <summary>
+    /// Marks this division as a cross-division cup (e.g. "Copa Club12")
+    /// that intentionally draws teams from every other division in the
+    /// tournament, rather than being a team's single competitive tier.
+    /// Defaults to false.
+    /// </summary>
+    public bool IsCrossDivisionCup { get; set; } = false;
 }

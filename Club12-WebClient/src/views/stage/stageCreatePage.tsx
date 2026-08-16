@@ -33,7 +33,13 @@ const INITIAL_STAGE_FORM: IStageCreateFormState = {
   isActive: true,
   isElimination: false,
   divisionId: '',
+  bracketName: '',
+  bestOf: 1,
+  roundRobinLegs: 1,
 };
+
+const BEST_OF_OPTIONS = [1, 3, 5, 7];
+const ROUND_ROBIN_LEGS_OPTIONS = [1, 2, 3];
 
 const formatStageType = (value: string) =>
   value
@@ -128,6 +134,11 @@ const StageCreatePage: React.FC = () => {
       startDate: new Date(stageForm.startDate),
       endDate: new Date(stageForm.endDate),
       divisionId: resolvedDivisionId as GUID,
+      bracketName: stageForm.isElimination
+        ? stageForm.bracketName.trim() || undefined
+        : undefined,
+      bestOf: stageForm.isElimination ? stageForm.bestOf : undefined,
+      roundRobinLegs: !stageForm.isElimination ? stageForm.roundRobinLegs : undefined,
     };
 
     const response = await addStage(payload);
@@ -245,6 +256,29 @@ const StageCreatePage: React.FC = () => {
               />
             </Grid>
 
+            {!stageForm.isElimination && (
+              <Grid item xs={12} md={6}>
+                <TextField
+                  select
+                  label="Veces que se enfrenta cada par (round robin)"
+                  value={stageForm.roundRobinLegs}
+                  onChange={e =>
+                    setStageForm(prev => ({
+                      ...prev,
+                      roundRobinLegs: Number(e.target.value),
+                    }))
+                  }
+                  fullWidth
+                >
+                  {ROUND_ROBIN_LEGS_OPTIONS.map(option => (
+                    <MenuItem key={option} value={option}>
+                      {option === 1 ? 'Una vez (simple)' : `${option} veces`}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+            )}
+
             <Grid item xs={12} md={6}>
               <TextField
                 label="Inicio"
@@ -289,6 +323,46 @@ const StageCreatePage: React.FC = () => {
                 label="Eliminación"
               />
             </Grid>
+
+            {stageForm.isElimination && (
+              <>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    label="Nombre del bracket (opcional)"
+                    helperText="Para agrupar rondas paralelas dentro de la misma división (nombre libre, definido por el admin)."
+                    value={stageForm.bracketName}
+                    onChange={e =>
+                      setStageForm(prev => ({
+                        ...prev,
+                        bracketName: e.target.value,
+                      }))
+                    }
+                    fullWidth
+                  />
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    select
+                    label="Formato de la serie (Best of)"
+                    value={stageForm.bestOf}
+                    onChange={e =>
+                      setStageForm(prev => ({
+                        ...prev,
+                        bestOf: Number(e.target.value),
+                      }))
+                    }
+                    fullWidth
+                  >
+                    {BEST_OF_OPTIONS.map(option => (
+                      <MenuItem key={option} value={option}>
+                        {option === 1 ? 'Partido único' : `Al mejor de ${option}`}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+              </>
+            )}
           </Grid>
 
           <Stack direction="row" justifyContent="flex-end">

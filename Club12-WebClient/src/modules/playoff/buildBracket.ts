@@ -1,7 +1,8 @@
 import { GUID } from '@/modules/core/types/types';
 import { IMatchResponse } from '@/modules/match/type/match.d';
 import { IStageResponse, StageType } from '@/modules/stage/type/stage.d';
-import { BracketEdge, BracketModel, BracketRound } from '@/modules/playoff/type/bracket.d';
+import { BracketEdge, BracketGroup, BracketModel, BracketRound } from '@/modules/playoff/type/bracket.d';
+import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
 
 /**
  * Canonical bracket depth order for the "main path" stage types. ThirdPlace
@@ -86,4 +87,125 @@ export function buildBracket(
     .flatMap((round, index) => buildEdgesForRoundPair(round, rounds[index + 1]));
 
   return { rounds, thirdPlace, edges };
+}
+
+/**
+ * Groups admin-defined free text used to key stages that carry no
+ * BracketName into the division's single/default bracket.
+ */
+const DEFAULT_BRACKET_KEY = '__default__';
+
+/**
+ * Groups a division's stages by their (admin-defined, free-text)
+ * BracketName. Stages with no BracketName share one default group, so a
+ * division with a single elimination path still renders as one bracket.
+ */
+export function groupStagesByBracket(
+  stages: IStageResponse[]
+): Map<string, IStageResponse[]> {
+  const groups = new Map<string, IStageResponse[]>();
+
+  for (const stage of stages) {
+    const key = stage.bracketName?.trim() || DEFAULT_BRACKET_KEY;
+    const group = groups.get(key) ?? [];
+    group.push(stage);
+    groups.set(key, group);
+  }
+
+  return groups;
+}
+
+/**
+ * Tallies how many games of a series each side has won so far, by
+ * matching each finished game's winner name against the series'
+ * home/visitor team names.
+ */
+export function countSeriesWins(series: IMatchSeriesResponse): {
+  home: number;
+  visitor: number;
+} {
+  let home = 0;
+  let visitor = 0;
+
+  for (const game of series.games) {
+    if (!game.isFinished) continue;
+    if (game.winningTeamName === series.homeTeamName) home += 1;
+    else if (game.winningTeamName === series.visitorTeamName) visitor += 1;
+  }
+
+  return { home, visitor };
+}
+
+/**
+ * Collapses a best-of-N series into a single bracket node: an
+ * IMatchResponse-shaped object carrying the aggregate game-win tally as
+ * each side's "score", so the existing bracket rendering (built for one
+ * match per pairing) can display series without any changes. The series
+ * is only shown as "finished" (enabling the win highlight) once it has
+ * actually been decided — an in-progress 1-0 lead never falsely reads as
+ * a completed round.
+ */
+export function seriesToRepresentativeMatch(series: IMatchSeriesResponse): IMatchResponse {
+  const { home, visitor } = countSeriesWins(series);
+
+  return {
+    id: series.id,
+    matchDate: series.games[0]?.matchDate ?? '',
+    matchType: (series.games[0]?.matchType ?? 'Playoff') as IMatchResponse['matchType'],
+    homeTeam: {
+      id: series.homeTeamId,
+      name: series.homeTeamName,
+      logoUrl: '',
+      score: home,
+      players: [],
+      scorers: [],
+    },
+    visitorTeam: {
+      id: series.visitorTeamId,
+      name: series.visitorTeamName,
+      logoUrl: '',
+      score: visitor,
+      players: [],
+      scorers: [],
+    },
+    isFinished: home + visitor > 0,
+    winningTeamId: series.winningTeamId,
+    winningTeamName: series.winningTeamName,
+    venue: null,
+    stageId: series.stageId,
+  };
+}
+
+/**
+ * Builds one BracketModel per named bracket in a division (grouped by
+ * BracketName — free text, admin-defined, optional). Stages with
+ * BestOf > 1 are rendered as one node per series (using
+ * `seriesByStageId`) rather than one node per individual game.
+ */
+export function buildBrackets(
+  stages: IStageResponse[],
+  matches: IMatchResponse[],
+  seriesByStageId: Map<GUID, IMatchSeriesResponse[]> = new Map()
+): BracketGroup[] {
+  const stageGroups = groupStagesByBracket(stages);
+
+  return [...stageGroups.entries()].map(([key, groupStages]) => {
+    const seriesStageIds = new Set(
+      groupStages.filter(stage => stage.bestOf > 1).map(stage => stage.id)
+    );
+
+    const effectiveMatches = seriesStageIds.size === 0
+      ? matches
+      : [
+          ...matches.filter(match => !match.stageId || !seriesStageIds.has(match.stageId)),
+          ...[...seriesStageIds].flatMap(stageId =>
+            (seriesByStageId.get(stageId) ?? []).map(seriesToRepresentativeMatch)
+          ),
+        ];
+
+    return {
+      bracketName: key === DEFAULT_BRACKET_KEY ? null : key,
+      model: buildBracket(groupStages, effectiveMatches),
+    };
+  });
 }

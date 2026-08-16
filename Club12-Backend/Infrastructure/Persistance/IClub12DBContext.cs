@@ -36,6 +36,11 @@ public interface IClub12DBContext
     DbSet<Match> Matches { get; }
 
     /// <summary>
+    /// DbSet{MatchSeries} of best-of-N playoff series in the system.
+    /// </summary>
+    DbSet<MatchSeries> MatchSeries { get; }
+
+    /// <summary>
     /// DbSet{PlayerStatistic} of player statistics in the system.
     /// </summary>
     DbSet<PlayerStatistic> PlayersStatistics { get; }

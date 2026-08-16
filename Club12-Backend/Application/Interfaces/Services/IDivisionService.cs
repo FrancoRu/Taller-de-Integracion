@@ -43,4 +43,22 @@ public interface IDivisionService
     /// <param name="filter">The filtering and pagination request.</param>
     /// <returns>A paginated response containing the divisions.</returns>
     Task<PaginatedResponse<Division>> GetAllDivisionsAsync(GetDivisionsFilteredRequest filter);
+
+    /// <summary>
+    /// Computes standings for a division from its Group stage's finished
+    /// matches. Elimination-stage matches do not feed a standings table.
+    /// </summary>
+    /// <param name="divisionId">The id of the division.</param>
+    /// <returns>One Position per team with at least one finished Group-stage match; empty if the division has no Group stage or no finished matches yet.</returns>
+    Task<List<Position>> GetPositionsByDivisionIdAsync(Guid divisionId);
+
+    /// <summary>
+    /// Returns every team registered to the tournament that does not yet
+    /// belong to any division (regular or cross-division-cup). A readiness
+    /// signal for the tournament-builder UI, not a hard database
+    /// constraint — a team is expected to be unassigned while the admin is
+    /// still building the tournament out.
+    /// </summary>
+    /// <param name="tournamentId">The id of the tournament.</param>
+    Task<List<Team>> GetUnassignedTeamsAsync(Guid tournamentId);
 }

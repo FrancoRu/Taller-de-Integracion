@@ -67,6 +67,10 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
     mutationFn: matchService.deleteMatchById,
   });
 
+  const generateMatchesMutation = useMutation({
+    mutationFn: matchService.generateMatches,
+  });
+
   useEffect(() => {
     if (!match) return;
 
@@ -196,14 +200,20 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
   const generateMatchesAutomatically = useCallback(
     async (id: GUID): Promise<boolean> => {
       try {
-        console.log(id);
+        const res: AxiosResponse<IMatchResponse[]> =
+          await generateMatchesMutation.mutateAsync(id);
+        if (res) {
+          setMatches(prev => [...(prev ?? []), ...res.data]);
+          await queryClient.invalidateQueries({ queryKey: matchKeys.list() });
+          setMessage(res.status, ['Partidos generados correctamente']);
+        }
         return true;
       } catch (error: unknown) {
         handleUnknownError(error);
         return false;
       }
     },
-    [handleUnknownError]
+    [generateMatchesMutation, queryClient, setMessage, handleUnknownError]
   );
 
   const container: IMatchContextProps = useMemo(

@@ -33,4 +33,9 @@ public class DivisionResponse
     /// </summary>
     public Guid TournamentId { get; set; }
 
+    /// <summary>
+    /// Whether this division is a cross-division cup that intentionally
+    /// draws teams from every other division in the tournament.
+    /// </summary>
+    public bool IsCrossDivisionCup { get; set; }
 }

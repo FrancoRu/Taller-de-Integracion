@@ -49,7 +49,7 @@ describe('AddBlogPostForm', () => {
     mockNavigate.mockClear();
   });
 
-  it('shows a success message and navigates home after a successful submit', async () => {
+  it('shows a success message and navigates to the admin blog list after a successful submit', async () => {
     const addBlogPost = vi.fn().mockResolvedValue(buildPost());
     mockedUseBlogPost.mockReturnValue({
       addBlogPost,
@@ -74,7 +74,7 @@ describe('AddBlogPostForm', () => {
 
     await waitFor(() => expect(addBlogPost).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(notifySuccessSpy).toHaveBeenCalled());
-    expect(mockNavigate).toHaveBeenCalledWith('/');
+    expect(mockNavigate).toHaveBeenCalledWith('/panel/blog');
   });
 
   it('does not navigate away when the submission fails', async () => {

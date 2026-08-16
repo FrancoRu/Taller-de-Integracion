@@ -5,11 +5,13 @@ using Application.Interfaces.Services;
 using Domain.Constants;
 using Application.Utils.Constants.Stage;
 using Application.Utils.Extensions;
+using Application.Utils.Helper.RoundRobin;
 using Domain.Entities.Models;
 using Domain.Enums;
 using LinqKit;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using MatchType = Domain.Enums.MatchType;
@@ -21,6 +23,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
     private readonly IMatchRepository matchRepository = unitOfWork.MatchRepository;
     private readonly IStageRepository stageRepository = unitOfWork.StageRepository;
     private readonly ITeamRepository teamRepository = unitOfWork.TeamRepository;
+    private readonly IStageTeamMatchRepository stageTeamMatchRepository = unitOfWork.StageTeamMatchRepository;
 
     public async Task<Match> CreateMatchAsync(Match matchEntity)
     {
@@ -107,7 +110,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
 
         List<Match> matches = stage.StageType switch
         {
-            StageType.Group => await CreateGroupStageMatchesAsync(stage, await ResolveGroupTeamCountAsync(stage)),
+            StageType.Group => await BuildGroupStageMatchesAsync(stage),
             StageType.QuarterFinal => await CreateKnockoutStageMatchesAsync(stage),
             StageType.SemiFinal => await CreateKnockoutStageMatchesAsync(stage),
             StageType.ThirdPlace => await CreateFinalStageMatchesAsync(stage),
@@ -163,16 +166,79 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
         return teamsPerGroup;
     }
 
-    private static Task<List<Match>> CreateGroupStageMatchesAsync(Stage stage, int totalTeams)
+    /// <summary>
+    /// Resolves the concrete team identities to pair for this group stage,
+    /// so the generated matches can actually be seeded (not left empty).
+    /// Prefers teams explicitly assigned to this stage via StageTeamMatch;
+    /// falls back to the tournament's full roster only when the division
+    /// has a single group stage (otherwise there is no way to know which
+    /// specific teams belong to this stage). Returns an empty list when
+    /// neither source unambiguously yields exactly <paramref name="expectedTeamCount"/>
+    /// teams — the matches are still created, just left unseeded, exactly
+    /// like before this pairing logic existed.
+    /// </summary>
+    private async Task<List<Guid>> ResolveGroupTeamIdsAsync(Stage stage, int expectedTeamCount)
+    {
+        List<Guid> assignedTeamIds = [.. (await stageTeamMatchRepository.FindAsync(stm => stm.StageId == stage.Id))
+            .Select(stm => stm.TeamId)];
+
+        if (assignedTeamIds.Count == expectedTeamCount)
+        {
+            return assignedTeamIds;
+        }
+
+        int totalGroups = await stageRepository.CountAsync(s =>
+            s.DivisionId == stage.DivisionId && s.StageType == StageType.Group);
+
+        if (totalGroups != 1)
+        {
+            return [];
+        }
+
+        List<Team> registeredTeams = [.. await teamRepository.FindAsync(team => team.TournamentId == stage.Division.TournamentId)];
+
+        return registeredTeams.Count == expectedTeamCount
+            ? [.. registeredTeams.Select(t => t.Id)]
+            : [];
+    }
+
+    private async Task<List<Match>> BuildGroupStageMatchesAsync(Stage stage)
+    {
+        int teamCount = await ResolveGroupTeamCountAsync(stage);
+        List<Guid> teamIds = await ResolveGroupTeamIdsAsync(stage, teamCount);
+        return await CreateGroupStageMatchesAsync(stage, teamCount, teamIds);
+    }
+
+    /// <summary>
+    /// Creates the group stage's matches. When <paramref name="teamIds"/>
+    /// unambiguously matches <paramref name="totalTeams"/>, each match is
+    /// actually seeded with a home/visitor pair from a freshly randomized
+    /// round-robin fixture (repeated per Stage.RoundRobinLegs); otherwise
+    /// the matches are created empty, exactly as before this pairing logic
+    /// existed, for the admin to assign manually.
+    /// </summary>
+    private static Task<List<Match>> CreateGroupStageMatchesAsync(Stage stage, int totalTeams, List<Guid> teamIds)
     {
         List<Match> matches = [];
 
-        int totalMatches = totalTeams * (totalTeams - 1) / 2;
+        int totalMatches = totalTeams * (totalTeams - 1) / 2 * stage.RoundRobinLegs;
         List<DateTime> matchDates = DistributeMatchDates(stage.StartDate, stage.EndDate, totalMatches);
+
+        List<(Guid HomeTeamId, Guid VisitorTeamId)> fixture = teamIds.Count == totalTeams
+            ? RoundRobinScheduler.GenerateFixture(teamIds, stage.RoundRobinLegs)
+            : [];
 
         for (int i = 0; i < totalMatches; i++)
         {
-            matches.Add(BuildMatch(stage, matchDates[i], MatchType.Regular));
+            Match match = BuildMatch(stage, matchDates[i], MatchType.Regular);
+
+            if (i < fixture.Count)
+            {
+                match.HomeTeamId = fixture[i].HomeTeamId;
+                match.VisitorTeamId = fixture[i].VisitorTeamId;
+            }
+
+            matches.Add(match);
         }
 
         return Task.FromResult(matches);

@@ -51,5 +51,18 @@ public interface IStageService
 
     Task AssignTeamsToStageAsync(Stage stage, List<Guid>? teamIds = null, bool auto = false);
     Task UnassignTeamsFromStageAsync(Stage stage, List<Guid> teamIds);
+
+    /// <summary>
+    /// Seeds the first-round matches of an elimination stage using the
+    /// division's group-stage standings and the classic bracket seed order
+    /// (1 vs 8, 4 vs 5, 2 vs 7, 3 vs 6 for 8 teams), so the top seeds only
+    /// meet in the final. Requires the stage's matches to already exist
+    /// (via CreateAutomatedMatchesAsync) and be unseeded, and every team
+    /// assigned to the stage to already have a finished-group-stage
+    /// position — a power-of-two number of ranked teams is required.
+    /// </summary>
+    /// <param name="stageId">The elimination stage to seed.</param>
+    /// <returns>The stage's matches, now seeded with home/visitor teams.</returns>
+    Task<List<Match>> SeedKnockoutStageAsync(Guid stageId);
 }
 

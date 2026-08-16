@@ -18,6 +18,11 @@ public class PositionResponse
     public required string TeamName { get; set; }
 
     /// <summary>
+    /// The URL of the team's logo.
+    /// </summary>
+    public required string LogoUrl { get; set; }
+
+    /// <summary>
     /// The total number of matches the team has played.
     /// </summary>
     public required int MatchesPlayed { get; set; }

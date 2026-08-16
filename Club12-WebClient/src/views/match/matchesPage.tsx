@@ -13,7 +13,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import {
   confirmDelete,
-  notifyInfo,
   notifySuccess,
 } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
@@ -444,11 +443,12 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
       return;
     }
 
-    void notifyInfo({
-      title: 'Pendiente',
-      text: 'La creación de partidos desde esta vista aún no está implementada.',
-    });
-  }, [onCreate]);
+    navigate(
+      stageId
+        ? `${APP_ROUTES.panelMatchCreate}?stageId=${stageId}`
+        : APP_ROUTES.panelMatchCreate
+    );
+  }, [onCreate, navigate, stageId]);
 
   const content = (
     <>

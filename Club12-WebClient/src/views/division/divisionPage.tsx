@@ -1,14 +1,28 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Card, CardContent, Grid, Tab, Tabs, Typography } from '@mui/material';
+import { Box, Card, CardContent, CircularProgress, Grid, Tab, Tabs, Typography } from '@mui/material';
 import { GUID } from '@/modules/core/types/types';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
+import { stageService } from '@/modules/stage/service/stage.service';
+import { matchService } from '@/modules/match/service/match.service';
+import { matchSeriesService } from '@/modules/matchSeries/service/matchSeries.service';
+import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
+import { buildBrackets } from '@/modules/playoff/buildBracket';
+import { BracketGroup } from '@/modules/playoff/type/bracket.d';
 import StagesPage from '@/views/stage/stagesPage';
 import DivisionStandings from '@/views/division/divisionStandings';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+
+/**
+ * Explicit pageSize for the "Llaves" tab's Stage/Match fetch — the same
+ * generous size PublicTournamentPage uses, so a deep elimination bracket
+ * is never silently truncated by the default table page size.
+ */
+const BRACKET_FETCH_PAGE_SIZE = 100;
 
 const DivisionPage: React.FC = () => {
   const { divisionId } = useParams<{ divisionId: GUID }>();
@@ -16,9 +30,12 @@ const DivisionPage: React.FC = () => {
   const { division, getDivisionsById } = useDivision();
   const { tournament, getTournamentById } = useTournament();
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState<'detalle' | 'posiciones' | 'fases'>(
+  const [tab, setTab] = useState<'detalle' | 'posiciones' | 'fases' | 'llaves'>(
     'detalle'
   );
+  const [bracketGroups, setBracketGroups] = useState<BracketGroup[]>([]);
+  const [seriesById, setSeriesById] = useState<Map<GUID, IMatchSeriesResponse>>(new Map());
+  const [bracketsLoading, setBracketsLoading] = useState(false);
 
   const targetDivisionId = useMemo(
     () => divisionId ?? division?.id,
@@ -50,6 +67,58 @@ const DivisionPage: React.FC = () => {
 
     void getTournamentById(division.tournamentId);
   }, [division?.tournamentId, tournament?.id, getTournamentById]);
+
+  useEffect(() => {
+    if (tab !== 'llaves' || !targetDivisionId) {
+      return;
+    }
+
+    const fetchBrackets = async () => {
+      setBracketsLoading(true);
+
+      const [stagesResponse, matchesResponse] = await Promise.all([
+        stageService.getStagesByFilters({
+          divisionId: targetDivisionId,
+          isElimination: true,
+          pageSize: BRACKET_FETCH_PAGE_SIZE,
+        }),
+        matchService.getMatchByFilter({
+          divisionId: targetDivisionId,
+          pageSize: BRACKET_FETCH_PAGE_SIZE,
+        }),
+      ]);
+
+      const stages = stagesResponse.data?.items ?? [];
+      const matches = matchesResponse.data?.items ?? [];
+      const seriesStages = stages.filter(stage => stage.bestOf > 1);
+
+      const seriesByStageId = new Map<GUID, IMatchSeriesResponse[]>();
+      const nextSeriesById = new Map<GUID, IMatchSeriesResponse>();
+
+      if (seriesStages.length > 0) {
+        const seriesResponses = await Promise.all(
+          seriesStages.map(stage =>
+            matchSeriesService.getMatchSeriesByFilters({
+              stageId: stage.id,
+              pageSize: BRACKET_FETCH_PAGE_SIZE,
+            })
+          )
+        );
+
+        seriesStages.forEach((stage, index) => {
+          const seriesList = seriesResponses[index].data?.items ?? [];
+          seriesByStageId.set(stage.id, seriesList);
+          seriesList.forEach(series => nextSeriesById.set(series.id, series));
+        });
+      }
+
+      setBracketGroups(buildBrackets(stages, matches, seriesByStageId));
+      setSeriesById(nextSeriesById);
+      setBracketsLoading(false);
+    };
+
+    void fetchBrackets();
+  }, [tab, targetDivisionId]);
 
   const canGenerateStages = useMemo(() => {
     if (!division?.tournamentId || tournament?.id !== division.tournamentId) {
@@ -128,6 +197,7 @@ const DivisionPage: React.FC = () => {
           <Tab label="Detalle" value="detalle" />
           <Tab label="Posiciones" value="posiciones" />
           <Tab label="Fases" value="fases" />
+          <Tab label="Llaves" value="llaves" />
         </Tabs>
 
         {tab === 'detalle' && (
@@ -171,6 +241,15 @@ const DivisionPage: React.FC = () => {
             wrapInCard={false}
           />
         )}
+
+        {tab === 'llaves' &&
+          (bracketsLoading ? (
+            <Box display="flex" justifyContent="center" py={5}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <PlayoffBrackets groups={bracketGroups} seriesById={seriesById} />
+          ))}
       </CardContent>
     </Card>
   );

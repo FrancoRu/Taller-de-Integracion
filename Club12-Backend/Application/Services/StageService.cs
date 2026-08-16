@@ -6,7 +6,9 @@ using Application.Interfaces.Services;
 using Domain.Constants;
 using Application.Utils.Constants.Stage;
 using Application.Utils.Extensions;
+using Application.Utils.Helper.Playoff;
 using Application.Utils.Helper.StageHelper;
+using Application.Utils.Helper.Standings;
 using Domain.Entities.Models;
 using Domain.Enums;
 using LinqKit;
@@ -28,6 +30,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     private readonly IDivisionRepository divisionRepository = unitOfWork.DivisionRepository;
     private readonly IStageTeamMatchRepository stageTeamMatchRepository = unitOfWork.StageTeamMatchRepository;
     private readonly ITeamRepository teamRepository = unitOfWork.TeamRepository;
+    private readonly IMatchRepository matchRepository = unitOfWork.MatchRepository;
 
     /// <summary>
     /// Retrieves a stage by its unique identifier.
@@ -215,7 +218,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     /// <param name="stage">The stage to assign teams to.</param>
     /// <param name="teamIds">Optional list of team IDs to assign.</param>
     /// <param name="auto">If true, assigns teams automatically based on available slots.</param>
-    /// <exception cref="Exception">Thrown if the stage already has the maximum number of teams or if too many teams are assigned.</exception>
+    /// <exception cref="InvalidOperationException">Thrown if the stage already has the maximum number of teams or if too many teams are assigned.</exception>
     public async Task AssignTeamsToStageAsync(Stage stage, List<Guid>? teamIds = null, bool auto = false)
     {
         IEnumerable<StageTeamMatch> existingMatches = await stageTeamMatchRepository.FindAsync(stageTeamMatch => stageTeamMatch.StageId == stage.Id);
@@ -225,7 +228,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
 
         if (availableSlots <= 0)
         {
-            throw new Exception($"This Stage already has the maximum of {maxTeams} teams.");
+            throw new InvalidOperationException($"This Stage already has the maximum of {maxTeams} teams.");
         }
 
         List<StageTeamMatch> newItems = [];
@@ -240,8 +243,10 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
 
             if (filteredIds.Count > availableSlots)
             {
-                throw new Exception($"Cannot add {filteredIds.Count} teams. Only {availableSlots} slots available.");
+                throw new InvalidOperationException($"Cannot add {filteredIds.Count} teams. Only {availableSlots} slots available.");
             }
+
+            await EnsureNoCrossDivisionConflictAsync(stage, filteredIds);
 
             newItems = [.. filteredIds.Select(teamId => new StageTeamMatch
             {
@@ -262,6 +267,12 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
                 team => team.TournamentId == stage.Division.TournamentId
                     && !team.StageTeamMatches.Any(stm => stm.TeamId == team.Id && stm.StageId == stage.Id), filter: filter)];
 
+            if (!stage.Division.IsCrossDivisionCup)
+            {
+                List<Guid> conflictingTeamIds = await FindTeamsInAnotherDivisionAsync(stage, [.. teams.Select(t => t.Id)]);
+                teams = [.. teams.Where(t => !conflictingTeamIds.Contains(t.Id))];
+            }
+
             newItems = [.. teams.Select(t => new StageTeamMatch
             {
                 Id = Guid.Empty,
@@ -279,6 +290,45 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     }
 
     /// <summary>
+    /// Throws if any of the given teams is already assigned to a stage in a
+    /// different, non-cross-division-cup division of the same tournament as
+    /// <paramref name="stage"/>'s division. Skips the check entirely when
+    /// <paramref name="stage"/>'s own division is itself a cross-division
+    /// cup, since that division is expected to share teams with every zone.
+    /// </summary>
+    private async Task EnsureNoCrossDivisionConflictAsync(Stage stage, IEnumerable<Guid> teamIds)
+    {
+        if (stage.Division.IsCrossDivisionCup) return;
+
+        List<Guid> conflictingTeamIds = await FindTeamsInAnotherDivisionAsync(stage, teamIds);
+
+        if (conflictingTeamIds.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"Cannot assign team(s) {string.Join(", ", conflictingTeamIds)} to this division: " +
+                "already assigned to another division of the same tournament.");
+        }
+    }
+
+    /// <summary>
+    /// Returns the subset of teamIds already assigned to a stage in a
+    /// different, non-cross-division-cup division of the same tournament.
+    /// </summary>
+    private async Task<List<Guid>> FindTeamsInAnotherDivisionAsync(Stage stage, IEnumerable<Guid> teamIds)
+    {
+        List<Guid> teamIdList = [.. teamIds];
+        if (teamIdList.Count == 0) return [];
+
+        IEnumerable<StageTeamMatch> conflicting = await stageTeamMatchRepository.FindAsync(stm =>
+            teamIdList.Contains(stm.TeamId)
+            && stm.Stage!.DivisionId != stage.DivisionId
+            && stm.Stage!.Division.TournamentId == stage.Division.TournamentId
+            && !stm.Stage!.Division.IsCrossDivisionCup);
+
+        return [.. conflicting.Select(stm => stm.TeamId).Distinct()];
+    }
+
+    /// <summary>
     /// Unassigns teams from a stage based on the provided team IDs.
     /// </summary>
     /// <param name="stage">The stage to unassign teams from.</param>
@@ -290,6 +340,75 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
         await stageTeamMatchRepository.RemoveAsync(stm =>
             stm.StageId == stage.Id && teamIds.Contains(stm.TeamId)
         );
+    }
+
+    /// <summary>
+    /// Seeds an elimination stage's already-generated, still-empty matches
+    /// using the division's group-stage standings, pairing seeds in the
+    /// classic bracket order (1v8, 4v5, 2v7, 3v6) so the top two seeds can
+    /// only meet in the final.
+    /// </summary>
+    public async Task<List<Match>> SeedKnockoutStageAsync(Guid stageId)
+    {
+        Stage stage = await stageRepository.GetByIdAsync(stageId,
+            includes: [s => s.Matches, s => s.StageTeamMatches, s => s.Division])
+            ?? throw new InvalidOperationException("Stage not found.");
+
+        if (stage.Matches.Count == 0)
+        {
+            throw new InvalidOperationException("Generate this stage's matches before seeding it.");
+        }
+
+        if (stage.Matches.Any(m => m.HomeTeamId.HasValue || m.VisitorTeamId.HasValue))
+        {
+            throw new InvalidOperationException("This stage has already been seeded.");
+        }
+
+        List<Guid> assignedTeamIds = [.. stage.StageTeamMatches.Select(stm => stm.TeamId)];
+        int slotCapacity = stage.Matches.Count * 2;
+
+        if (assignedTeamIds.Count < 2 || assignedTeamIds.Count > slotCapacity)
+        {
+            throw new InvalidOperationException(
+                $"Cannot seed: {assignedTeamIds.Count} team(s) assigned to this stage, expected between 2 and {slotCapacity}. " +
+                "A team count below the full bracket is fine (the strongest seeds get a bye), but it cannot exceed the generated slots.");
+        }
+
+        List<Match> groupMatches = [.. await matchRepository.FindAsync(m =>
+            m.Stage.DivisionId == stage.DivisionId && m.Stage.StageType == StageType.Group,
+            includes: [m => m.HomeTeam!, m => m.VisitorTeam!, m => m.WinningTeam!])];
+
+        List<Position> standings = PositionCalculator.CalculatePositions(groupMatches);
+
+        List<Guid> orderedTeamIds = [.. standings
+            .Where(position => assignedTeamIds.Contains(position.TeamId))
+            .Select(position => position.TeamId)];
+
+        if (orderedTeamIds.Count != assignedTeamIds.Count)
+        {
+            throw new InvalidOperationException(
+                "Cannot seed: not every team assigned to this stage has a finished-group-stage position yet.");
+        }
+
+        List<(Guid HomeTeamId, Guid? VisitorTeamId)> pairs = PlayoffSeeder.SeedPairs(orderedTeamIds);
+
+        List<Match> orderedMatches = [.. stage.Matches.OrderBy(m => m.MatchDate).ThenBy(m => m.Id)];
+
+        for (int i = 0; i < pairs.Count; i++)
+        {
+            orderedMatches[i].HomeTeamId = pairs[i].HomeTeamId;
+            orderedMatches[i].VisitorTeamId = pairs[i].VisitorTeamId;
+
+            if (pairs[i].VisitorTeamId is null)
+            {
+                orderedMatches[i].IsFinished = true;
+                orderedMatches[i].WinningTeamId = pairs[i].HomeTeamId;
+            }
+        }
+
+        await matchRepository.UpdateRangeAsync(orderedMatches);
+
+        return orderedMatches;
     }
 
     /// <summary>

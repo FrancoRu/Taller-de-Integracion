@@ -18,7 +18,6 @@ import {
 } from '@mui/material';
 import {
   confirmDelete,
-  notifyInfo,
   notifySuccess,
 } from '@/modules/core/utils/confirmDialog';
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
@@ -301,11 +300,8 @@ const TournamentsPage: React.FC = () => {
   const rows = useMemo(() => tournaments ?? [], [tournaments]);
 
   const handleCreateTournament = useCallback(() => {
-    void notifyInfo({
-      title: 'Pendiente',
-      text: 'La creación de torneos desde el panel aún no está implementada.',
-    });
-  }, []);
+    navigate(APP_ROUTES.panelTournamentWizard);
+  }, [navigate]);
 
   if (!canLoadTournaments) {
     return null;

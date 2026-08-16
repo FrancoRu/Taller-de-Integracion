@@ -9,7 +9,6 @@ import {
   Tabs,
   Typography,
 } from '@mui/material';
-import { notifyInfo } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
@@ -123,10 +122,11 @@ const TournamentPage: React.FC = () => {
     role === UserRolesType.Owner || role === UserRolesType.TournamentManager;
 
   const handleCreateDivision = () => {
-    void notifyInfo({
-      title: 'Pendiente',
-      text: 'La creación de divisiones desde esta vista aún no está implementada.',
-    });
+    if (!tournamentId) {
+      return;
+    }
+
+    navigate(`${APP_ROUTES.panelDivisionCreate}?tournamentId=${tournamentId}`);
   };
 
   return (

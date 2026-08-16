@@ -3,7 +3,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   Card,
   CardContent,
+  Chip,
   Grid,
+  List,
+  ListItem,
+  ListItemText,
   Stack,
   Tab,
   Tabs,
@@ -11,28 +15,69 @@ import {
 } from '@mui/material';
 import { GUID } from '@/modules/core/types/types';
 import { usePlayer } from '@/modules/player/hook/player.hook';
+import { usePlayerStatistic } from '@/modules/playerStatistic/hook/playerStatistic.hook';
+import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
-import { notifyInfo } from '@/modules/core/utils/confirmDialog';
+import PlayerStatisticCreatePage from '@/views/playerStatistic/playerStatisticCreatePage';
+import PlayerSanctionCreatePage from '@/views/playerSanction/playerSanctionCreatePage';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
+
+const STATISTIC_TYPE_LABELS: Record<string, string> = {
+  Points: 'Puntos',
+  Assists: 'Asistencias',
+};
+
+const formatDate = (value?: string | Date | null) => {
+  if (!value) {
+    return '—';
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString('es-AR');
+};
 
 const PlayerPage: React.FC = () => {
   const { playerId } = useParams<{ playerId: GUID }>();
   const navigate = useNavigate();
   const { role } = useAuth();
   const { player, getPlayerById } = usePlayer();
+  const { playerStatistics, getPlayerStatisticsByFilter } = usePlayerStatistic();
+  const { playerSanctions, getPlayerSanctionByFilter } = usePlayerSanction();
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<'detalle' | 'puntuaciones' | 'sanciones'>(
     'detalle'
   );
+  const [statisticDialogOpen, setStatisticDialogOpen] = useState(false);
+  const [sanctionDialogOpen, setSanctionDialogOpen] = useState(false);
 
   const targetPlayerId = useMemo(
     () => playerId ?? player?.id,
     [player?.id, playerId]
   );
   const isAdministrative = role !== UserRolesType.Guest;
+
+  const refreshStatistics = () => {
+    if (!targetPlayerId) return;
+    void getPlayerStatisticsByFilter({ playerId: targetPlayerId, pageSize: FILTER_OPTIONS_PAGE_SIZE });
+  };
+
+  const refreshSanctions = () => {
+    if (!targetPlayerId) return;
+    void getPlayerSanctionByFilter({ playerId: targetPlayerId, pageSize: FILTER_OPTIONS_PAGE_SIZE });
+  };
+
+  useEffect(() => {
+    if (tab === 'puntuaciones') {
+      refreshStatistics();
+    } else if (tab === 'sanciones') {
+      refreshSanctions();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, targetPlayerId]);
 
   useEffect(() => {
     if (!targetPlayerId) {
@@ -91,20 +136,6 @@ const PlayerPage: React.FC = () => {
       </Card>
     );
   }
-
-  const handleCreateScore = () => {
-    void notifyInfo({
-      title: 'Pendiente',
-      text: 'La creación de puntuaciones desde esta vista aún no está implementada.',
-    });
-  };
-
-  const handleCreateSanction = () => {
-    void notifyInfo({
-      title: 'Pendiente',
-      text: 'La creación de sanciones desde esta vista aún no está implementada.',
-    });
-  };
 
   return (
     <Card>
@@ -173,25 +204,76 @@ const PlayerPage: React.FC = () => {
         {tab === 'puntuaciones' && (
           <>
             <Stack direction="row" justifyContent="flex-end" mb={2}>
-              <NewEntityButton type="Puntuación" onClick={handleCreateScore} />
+              <NewEntityButton
+                type="Puntuación"
+                onClick={() => setStatisticDialogOpen(true)}
+              />
             </Stack>
-            <Typography variant="body2" color="text.secondary">
-              Próximamente: puntuaciones del jugador.
-            </Typography>
+            {playerStatistics && playerStatistics.length > 0 ? (
+              <List disablePadding>
+                {playerStatistics.map(statistic => (
+                  <ListItem
+                    key={statistic.id}
+                    divider
+                    secondaryAction={<Chip size="small" label={statistic.value} />}
+                  >
+                    <ListItemText
+                      primary={STATISTIC_TYPE_LABELS[statistic.type] ?? statistic.type}
+                      secondary={formatDate(statistic.matchDate)}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                Este jugador todavía no tiene puntuaciones registradas.
+              </Typography>
+            )}
           </>
         )}
 
         {tab === 'sanciones' && (
           <>
             <Stack direction="row" justifyContent="flex-end" mb={2}>
-              <NewEntityButton type="Sanción" onClick={handleCreateSanction} />
+              <NewEntityButton
+                type="Sanción"
+                onClick={() => setSanctionDialogOpen(true)}
+              />
             </Stack>
-            <Typography variant="body2" color="text.secondary">
-              Próximamente: sanciones del jugador.
-            </Typography>
+            {playerSanctions && playerSanctions.length > 0 ? (
+              <List disablePadding>
+                {playerSanctions.map(sanction => (
+                  <ListItem
+                    key={sanction.id}
+                    divider
+                    secondaryAction={<Chip size="small" label={`${sanction.duration} partidos`} />}
+                  >
+                    <ListItemText
+                      primary={sanction.description}
+                      secondary={formatDate(sanction.issuedDate)}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                Este jugador todavía no tiene sanciones registradas.
+              </Typography>
+            )}
           </>
         )}
       </CardContent>
+
+      <PlayerStatisticCreatePage
+        open={statisticDialogOpen}
+        onClose={() => setStatisticDialogOpen(false)}
+        onCreated={refreshStatistics}
+      />
+      <PlayerSanctionCreatePage
+        open={sanctionDialogOpen}
+        onClose={() => setSanctionDialogOpen(false)}
+        onCreated={refreshSanctions}
+      />
     </Card>
   );
 };
