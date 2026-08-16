@@ -36,10 +36,12 @@ public class AuthorizationGatingTests : IClassFixture<CustomWebApplicationFactor
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    /// <summary>
+    /// Guest is not one of the staff roles that may see full player details.
+    /// </summary>
     [Fact]
     public async Task GetPlayerCompleteData_WrongRole_ReturnsForbidden()
     {
-        // Guest is not one of the staff roles that may see full player details.
         HttpClient client = _factory.CreateAuthenticatedClient(Roles.Guest);
 
         HttpResponseMessage response = await client.GetAsync($"api/players/admin/{Guid.NewGuid()}");
@@ -47,6 +49,10 @@ public class AuthorizationGatingTests : IClassFixture<CustomWebApplicationFactor
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
+    /// <summary>
+    /// Expects not-found (missing player), never a permission error —
+    /// proves the role check passed and the request reached the handler.
+    /// </summary>
     [Fact]
     public async Task GetPlayerCompleteData_StaffRole_IsAuthorized()
     {
@@ -54,8 +60,6 @@ public class AuthorizationGatingTests : IClassFixture<CustomWebApplicationFactor
 
         HttpResponseMessage response = await client.GetAsync($"api/players/admin/{Guid.NewGuid()}");
 
-        // Not-found (missing player), never a permission error — proves the
-        // role check passed and the request reached the handler.
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
@@ -102,12 +106,14 @@ public class AuthorizationGatingTests : IClassFixture<CustomWebApplicationFactor
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    /// <summary>
+    /// Public reads must remain anonymous — this is a regression guard, not
+    /// a gap: 404 (not 401/403) proves the request reached the handler
+    /// without a role check blocking it.
+    /// </summary>
     [Fact]
     public async Task GetTournamentById_Anonymous_StillAllowed()
     {
-        // Public reads must remain anonymous — this is a regression guard,
-        // not a gap: 404 (not 401/403) proves the request reached the
-        // handler without a role check blocking it.
         HttpClient client = _factory.CreateClient();
 
         HttpResponseMessage response = await client.GetAsync($"api/tournaments/{Guid.NewGuid()}");

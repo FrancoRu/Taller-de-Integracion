@@ -35,6 +35,7 @@ public static class TestAuthHelper
             .. roles.Select(role => new Claim(ClaimTypes.Role, role)),
         ];
 
+#pragma warning disable S6781
         SecurityTokenDescriptor tokenDescriptor = new()
         {
             Subject = new ClaimsIdentity(claims),
@@ -43,6 +44,7 @@ public static class TestAuthHelper
             Audience = Audience,
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
         };
+#pragma warning restore S6781
 
         SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);

@@ -1,4 +1,5 @@
-﻿using Application.Utils.Constants.Stage;
+﻿using Application.Utils.Constants;
+using Application.Utils.Constants.Stage;
 
 using Domain.Enums;
 
@@ -25,7 +26,7 @@ public static class StageHelper
             StageType.SemiFinal => MaxTeams.SEMI_FINAL,
             StageType.ThirdPlace => MaxTeams.THIRD_PLACE,
             StageType.Final => MaxTeams.FINAL,
-            _ => throw new ArgumentException("Invalid stage type")
+            _ => throw new ArgumentException(ErrorMessages.Stage.InvalidStageType)
         };
     }
 }

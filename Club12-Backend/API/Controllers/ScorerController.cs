@@ -15,12 +15,17 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Read-only scorer ranking aggregations. Always public.
+/// Read-only scorer ranking aggregations. Always public. Both actions
+/// serve the same "Goleadores" feature (ranking by team vs. by player) and
+/// are kept together rather than split across controllers, even though
+/// they pull from different services.
 /// </summary>
 [ApiController]
 [Route("api/[controller]/")]
 [AllowAnonymous]
+#pragma warning disable S6960
 public class ScorerController(IScorerService scorerService, IMatchService matchService, IScorerMapper mapper) : ControllerBase
+#pragma warning restore S6960
 {
     [HttpGet("by-team")]
     public async Task<ActionResult> GetFilteredScorerByTeam([FromQuery] GetMatchesFilteredRequest filter)

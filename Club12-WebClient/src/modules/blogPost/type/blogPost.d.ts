@@ -186,10 +186,4 @@ export interface GetBlogPostsFilteredRequest extends Filtered {
    * @type {string}
    */
   title?: string;
-
-  /**
-   * A keyword to search within the markdown text content of the blog post.
-   * @type {string}
-   */
-  keyword?: string;
 }

@@ -98,6 +98,7 @@ public class AuthServiceJwtTests
 
     private static TokenValidationParameters BuildValidationParameters()
     {
+#pragma warning disable S6781
         return new()
         {
             ValidateIssuer = true,
@@ -109,6 +110,7 @@ public class AuthServiceJwtTests
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromSeconds(30),
         };
+#pragma warning restore S6781
     }
 
     private static IConfiguration BuildConfig()

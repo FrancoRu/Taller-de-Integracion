@@ -4,6 +4,7 @@ using Application.DTOs.Abstract.Response;
 using Application.DTOs.Team.Request;
 using Application.DTOs.Team.Response;
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 using Application.Utils.Helper.SupabaseHelper;
 
 using AutoMapper;
@@ -49,7 +50,7 @@ public class TeamController(
     {
         if (!teamRequest.LogoFile.IsValidImageFile())
         {
-            return BadRequest("The logo file must be a valid JPEG/PNG image.");
+            return BadRequest(ErrorMessages.Media.InvalidImageFile);
         }
 
         string logoUrl = await supabaseHelper.UploadImageAsync<Team>(teamRequest.LogoFile.OpenReadStream(), teamRequest.LogoFile.FileName);
@@ -106,7 +107,7 @@ public class TeamController(
     {
         if (!logoRequest.LogoFile.IsValidImageFile())
         {
-            return BadRequest("The logo file must be a valid JPEG/PNG image.");
+            return BadRequest(ErrorMessages.Media.InvalidImageFile);
         }
 
         Team? team = await teamService.GetTeamByIdAsync(id);
@@ -168,7 +169,8 @@ public class TeamController(
 
         if (!string.IsNullOrWhiteSpace(team.LogoUrl))
         {
-            await supabaseHelper.DeleteImageAsync<Team>(team.LogoUrl.Split('/').Last());
+            string[] logoUrlSegments = team.LogoUrl.Split('/');
+            await supabaseHelper.DeleteImageAsync<Team>(logoUrlSegments[^1]);
         }
         await teamService.DeleteTeamAsync(id);
         return NoContent();

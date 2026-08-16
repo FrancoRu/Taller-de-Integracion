@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Application.Utils.Constants;
+
+using System;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -52,7 +54,7 @@ public class DateOnlyJsonConverter : JsonConverter<DateTime>
                 DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
                 out DateTime parsedDate)
             ? DateTime.SpecifyKind(parsedDate, DateTimeKind.Unspecified)
-            : throw new JsonException($"Invalid date: '{dateString}'.");
+            : throw new JsonException(ErrorMessages.Serialization.InvalidDate(dateString));
     }
 
     /// <summary>

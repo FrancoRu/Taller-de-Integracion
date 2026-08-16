@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Application.Utils.Constants;
 
 namespace Application.Utils.Helper.Playoff;
 
@@ -25,7 +26,7 @@ public static class PlayoffSeeder
 
         if (count < 2)
         {
-            throw new InvalidOperationException("Seeding requires at least two ranked teams.");
+            throw new InvalidOperationException(ErrorMessages.Playoff.NotEnoughRankedTeams);
         }
 
         int bracketSize = NextPowerOfTwo(count);

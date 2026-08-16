@@ -80,8 +80,9 @@ public sealed class DatabaseBackupHostedService(
                 _inFlightRun = TryStartBackupAttempt(stoppingToken);
             }
         }
-        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        catch (OperationCanceledException ex) when (stoppingToken.IsCancellationRequested)
         {
+            logger.LogInformation(ex, "Backup hosted service stopping: cancellation requested.");
         }
         finally
         {
@@ -114,6 +115,7 @@ public sealed class DatabaseBackupHostedService(
             IReadOnlyList<BackupFile> existing = await backupStorage.ListAsync(ct);
             IReadOnlyList<BackupFile> toDelete = retentionPolicy.SelectForDeletion(existing, options.RetentionCount);
 
+#pragma warning disable S3267
             foreach (BackupFile stale in toDelete)
             {
                 try
@@ -125,6 +127,7 @@ public sealed class DatabaseBackupHostedService(
                     logger.LogError(ex, "Failed to delete stale backup {Name} during retention pruning.", stale.Name);
                 }
             }
+#pragma warning restore S3267
 
             logger.LogInformation(
                 "Scheduled backup completed: stored {Name}, pruned {PrunedCount} stale backup(s).",

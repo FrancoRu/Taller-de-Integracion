@@ -69,7 +69,9 @@ public class GlobalExceptionHandlerTests
     [Fact]
     public async Task TryHandleAsync_ArgumentNullException_StillExposesValidationMessage()
     {
+#pragma warning disable S3928
         ArgumentNullException validationException = new("teamId", "Team id is required.");
+#pragma warning restore S3928
 
         using JsonDocument document = await InvokeAsync(validationException);
 

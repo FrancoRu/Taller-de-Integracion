@@ -75,7 +75,6 @@ export default function Home() {
         pageSize: LATEST_POSTS_COUNT,
         author: '',
         title: '',
-        keyword: '',
       });
       setPosts(response?.items ?? []);
       setPostsLoading(false);

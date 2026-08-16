@@ -25,7 +25,6 @@ namespace Application.Services;
 public class TeamService(IUnitOfWork unitOfWork) : ITeamService
 {
     private readonly ITeamRepository teamRepository = unitOfWork.TeamRepository;
-    private readonly IStageTeamMatchRepository stageTeamMatchRepository = unitOfWork.StageTeamMatchRepository;
 
     /// <summary>
     /// Creates a new team entity and persists it to the repository.
@@ -134,11 +133,7 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
             {
                 team.TournamentId = null;
             }
-            else if (team.TournamentId == tournament.Id)
-            {
-                return;
-            }
-            else
+            else if (team.TournamentId != tournament.Id)
             {
                 team.Tournament = tournament;
             }

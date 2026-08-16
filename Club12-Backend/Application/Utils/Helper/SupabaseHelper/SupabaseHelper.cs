@@ -1,4 +1,5 @@
-﻿using Application.Utils.Constants.Configuration;
+﻿using Application.Utils.Constants;
+using Application.Utils.Constants.Configuration;
 
 using Microsoft.Extensions.Configuration;
 
@@ -27,7 +28,6 @@ public class SupabaseHelper : ISupabaseRawStorage
 
     private readonly Client _client;
     private readonly string _bucketName;
-    private readonly string _baseUrl;
 
     /// <summary>
     /// Initializes a new instance of the SupabaseHelper class using configuration values.
@@ -36,7 +36,7 @@ public class SupabaseHelper : ISupabaseRawStorage
     public SupabaseHelper(IConfiguration configuration)
     {
         IConfigurationSection section = configuration.GetSection(ConfigurationKeys.Supabase.Section);
-        _baseUrl = section[ConfigurationKeys.Supabase.ProjectUrl]!;
+        string baseUrl = section[ConfigurationKeys.Supabase.ProjectUrl]!;
         string serviceRole = section[ConfigurationKeys.Supabase.ServiceRole]!;
         _bucketName = section[ConfigurationKeys.Supabase.BucketName]!;
 
@@ -46,7 +46,7 @@ public class SupabaseHelper : ISupabaseRawStorage
             AutoConnectRealtime = true
         };
 
-        _client = new Client(_baseUrl, serviceRole, options);
+        _client = new Client(baseUrl, serviceRole, options);
         _client.InitializeAsync().Wait();
     }
 
@@ -76,7 +76,7 @@ public class SupabaseHelper : ISupabaseRawStorage
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"Error uploading file: {ex.Message}", ex);
+            throw new InvalidOperationException(ErrorMessages.Storage.UploadFailed(ex.Message), ex);
         }
     }
 
@@ -96,7 +96,7 @@ public class SupabaseHelper : ISupabaseRawStorage
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"Error uploading file: {ex.Message}", ex);
+            throw new InvalidOperationException(ErrorMessages.Storage.DeleteFailed(ex.Message), ex);
         }
     }
 
@@ -121,7 +121,7 @@ public class SupabaseHelper : ISupabaseRawStorage
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"Error uploading file: {ex.Message}", ex);
+            throw new InvalidOperationException(ErrorMessages.Storage.UploadFailed(ex.Message), ex);
         }
     }
 
@@ -148,7 +148,7 @@ public class SupabaseHelper : ISupabaseRawStorage
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"Error listing files: {ex.Message}", ex);
+            throw new InvalidOperationException(ErrorMessages.Storage.ListFailed(ex.Message), ex);
         }
     }
 
@@ -167,7 +167,7 @@ public class SupabaseHelper : ISupabaseRawStorage
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"Error removing file: {ex.Message}", ex);
+            throw new InvalidOperationException(ErrorMessages.Storage.RemoveFailed(ex.Message), ex);
         }
     }
 

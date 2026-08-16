@@ -16,10 +16,4 @@ public class GetBlogPostsFilteredRequest : PaginatedFilterRequest
     /// The title to filter blog posts by.
     /// </summary>
     public string? Title { get; set; }
-
-    //TODO: Figure out how to do this.
-    /// <summary>
-    /// A keyword to search within the markdown text content of the blog post.
-    /// </summary>
-    public string? Keyword { get; set; }
 }

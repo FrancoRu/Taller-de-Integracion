@@ -45,7 +45,6 @@ Body:
 
         string method = context.Request.Method;
         string url = context.Request.Path + context.Request.QueryString;
-        string protocol = context.Request.Protocol;
         string scheme = context.Request.Scheme;
         string host = context.Request.Host.ToString();
         string fullUrl = $"{scheme}://{host}{url}";

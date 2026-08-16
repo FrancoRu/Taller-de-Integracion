@@ -4,6 +4,7 @@ using Application.DTOs.Abstract.Response;
 using Application.DTOs.Player.Request;
 using Application.DTOs.Player.Response;
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 
 using AutoMapper;
 
@@ -50,12 +51,12 @@ public class PlayerController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<PublicPlayerResponse>> CreatePlayerAsync(CreatePlayerRequest playerRequest)
     {
-        Guid TeamId = playerRequest.TeamId;
-        Team? existingTeam = await teamService.GetTeamByIdAsync(TeamId);
+        Guid teamId = playerRequest.TeamId;
+        Team? existingTeam = await teamService.GetTeamByIdAsync(teamId);
 
         if (existingTeam is null)
         {
-            return BadRequest($"There is no Team with id: {TeamId}.");
+            return BadRequest(ErrorMessages.Team.NotFound(teamId));
         }
 
         Player mappedPlayer = mapper.Map<Player>(playerRequest);
@@ -172,7 +173,7 @@ public class PlayerController(
     [HttpGet("public")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<PublicPlayerResponse>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<PaginatedResponse<PublicPlayerResponse>>> GetFilteredPlayersAsync([FromQuery] GetPublicPlayersFilteredRequest filterRequest)
+    public async Task<ActionResult<PaginatedResponse<PublicPlayerResponse>>> GetFilteredPlayersAsync([FromQuery] PlayerFilterRequestBase filterRequest)
     {
         PaginatedResponse<Player> paginatedPlayers = await playerService.GetAllPlayersAsync(filterRequest);
 

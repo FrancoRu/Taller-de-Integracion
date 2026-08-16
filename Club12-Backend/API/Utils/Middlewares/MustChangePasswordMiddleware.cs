@@ -2,7 +2,7 @@
 
 using Microsoft.AspNetCore.Http;
 
-using System.Linq;
+using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -20,7 +20,7 @@ public class MustChangePasswordMiddleware(RequestDelegate next)
     {
         bool mustChange = context.User.FindFirstValue(CustomClaimTypes.MustChangePassword) == "true";
 
-        if (mustChange && !AllowedPaths.Any(p => context.Request.Path.StartsWithSegments(p)))
+        if (mustChange && !Array.Exists(AllowedPaths, p => context.Request.Path.StartsWithSegments(p)))
         {
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             await context.Response.WriteAsJsonAsync(new

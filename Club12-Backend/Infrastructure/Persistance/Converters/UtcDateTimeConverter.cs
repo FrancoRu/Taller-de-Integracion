@@ -12,11 +12,3 @@ public class UtcDateTimeConverter()
     : ValueConverter<DateTime, DateTime>(
         v => DateTime.SpecifyKind(v, DateTimeKind.Unspecified),
         v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
-
-/// <summary>
-/// Nullable variant of UtcDateTimeConverter.
-/// </summary>
-public class NullableUtcDateTimeConverter()
-    : ValueConverter<DateTime?, DateTime?>(
-        v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Unspecified) : null,
-        v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : null);

@@ -28,7 +28,7 @@ public class PositionCalculatorTests
         {
             Id = Guid.NewGuid(),
             CreatedBy = "system",
-            MatchDate = new DateTime(2026, 1, 1),
+            MatchDate = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
             Type = MatchType.Regular,
             HomeTeam = home,
             HomeTeamId = home.Id,
@@ -105,7 +105,7 @@ public class PositionCalculatorTests
         {
             Id = Guid.NewGuid(),
             CreatedBy = "system",
-            MatchDate = new DateTime(2026, 1, 1),
+            MatchDate = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
             Type = MatchType.Regular,
             HomeTeam = null,
             VisitorTeam = null,

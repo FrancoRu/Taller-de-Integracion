@@ -101,7 +101,7 @@ public sealed class SupabaseBackupStorage(ISupabaseRawStorage rawStorage) : IBac
 
         string normalized = name.Replace('\\', '/');
         string[] segments = normalized.Split('/', StringSplitOptions.RemoveEmptyEntries);
-        return segments.Length == 0 || segments.Any(segment => segment is ".." or ".")
+        return segments.Length == 0 || Array.Exists(segments, segment => segment is ".." or ".")
             ? throw new ArgumentException(
                 $"Backup file name '{name}' resolves outside the configured '{Prefix}' prefix.", nameof(name))
             : Prefix + normalized;

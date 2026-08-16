@@ -104,7 +104,7 @@ public class PlayerStatisticFilterTests : IClassFixture<CustomWebApplicationFact
             LastName = $"Player-{Guid.NewGuid()}",
             DocumentNumber = Guid.NewGuid().ToString("N")[..8],
             IsSanctioned = false,
-            BirthDate = new DateTime(2000, 1, 1),
+            BirthDate = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc),
             SocialSecurity = "N/A",
             Team = team,
             TeamId = team.Id,

@@ -30,7 +30,7 @@ public class MatchServiceGenerationTests : IClassFixture<CustomWebApplicationFac
         ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
         IMatchService matchService = scope.ServiceProvider.GetRequiredService<IMatchService>();
 
-        (Tournament tournament, Division division) = await SeedDivisionAsync(db);
+        (_, Division division) = await SeedDivisionAsync(db);
         List<Stage> stages = await SeedGroupStagesAsync(db, division, groupCount: 1);
 
         await Assert.ThrowsAsync<InvalidOperationException>(

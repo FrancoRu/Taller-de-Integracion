@@ -3,6 +3,7 @@ using Application.DTOs.Abstract.Response;
 using Application.DTOs.Stage.Request;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 using Application.Utils.Constants.Stage;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.Playoff;
@@ -108,7 +109,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
             return stageEntity;
         }
 
-        throw new InvalidOperationException($"Stage with name '{stageEntity.Name}' already exists in the current division.");
+        throw new InvalidOperationException(ErrorMessages.Stage.AlreadyExistsInDivision(stageEntity.Name));
     }
 
     /// <summary>
@@ -149,11 +150,11 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     public async Task<List<Stage>> CreateAutomatedStagesAsync(Guid divisionId)
     {
         Division division = await divisionRepository.GetByIdAsync(divisionId, includes: [division => division.Stages, division => division.Tournament])
-            ?? throw new InvalidOperationException("Division not found.");
+            ?? throw new InvalidOperationException(ErrorMessages.Stage.DivisionNotFound);
 
         if (division.Stages.Count > 0)
         {
-            throw new InvalidOperationException("Cannot process the current request because the current division already has some stage.");
+            throw new InvalidOperationException(ErrorMessages.Stage.DivisionAlreadyHasStages);
         }
 
         int registeredTeams = await teamRepository.CountAsync(team => team.TournamentId == division.TournamentId);
@@ -161,15 +162,15 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
         if (!IsValidTournamentSize(registeredTeams))
         {
             throw new InvalidOperationException(
-                $"Invalid number of registered teams: {registeredTeams}. Valid sizes are " +
-                $"{TournamentBracketSize.EIGHT}, {TournamentBracketSize.SIXTEEN}, " +
-                $"{TournamentBracketSize.THIRTY_TWO}, or {TournamentBracketSize.SIXTY_FOUR} teams.");
+                ErrorMessages.Stage.InvalidTournamentSize(
+                    registeredTeams,
+                    $"{TournamentBracketSize.EIGHT}, {TournamentBracketSize.SIXTEEN}, {TournamentBracketSize.THIRTY_TWO}, or {TournamentBracketSize.SIXTY_FOUR}"));
         }
 
         if (registeredTeams % MaxTeams.GROUP != 0)
         {
             throw new InvalidOperationException(
-                $"The number of registered teams ({registeredTeams}) must be divisible by {MaxTeams.GROUP} to generate group stages.");
+                ErrorMessages.Stage.TeamsNotDivisibleForGroups(registeredTeams, MaxTeams.GROUP));
         }
 
         List<Stage> stages = [];
@@ -191,7 +192,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
             stages.Add(groupStage);
         }
 
-        startDate = stages.First().EndDate.AddDays(StageTemplate.StandardGapDays);
+        startDate = stages[0].EndDate.AddDays(StageTemplate.StandardGapDays);
 
         if (registeredTeams >= TournamentBracketSize.SIXTEEN)
         {
@@ -214,7 +215,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
         Stage finalStage = BuildStage(StageType.Final, StageTemplate.Final, startDate, division);
         stages.Add(finalStage);
 
-        finalStage.Order = order++;
+        finalStage.Order = order;
 
         await stageRepository.AddRangeAsync(stages);
 
@@ -237,10 +238,10 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
 
         if (availableSlots <= 0)
         {
-            throw new InvalidOperationException($"This Stage already has the maximum of {maxTeams} teams.");
+            throw new InvalidOperationException(ErrorMessages.Stage.MaxTeamsReached(maxTeams));
         }
 
-        List<StageTeamMatch> newItems = [];
+        List<StageTeamMatch> newItems;
 
         if (!auto)
         {
@@ -255,7 +256,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
 
             if (filteredIds.Count > availableSlots)
             {
-                throw new InvalidOperationException($"Cannot add {filteredIds.Count} teams. Only {availableSlots} slots available.");
+                throw new InvalidOperationException(ErrorMessages.Stage.NotEnoughSlots(filteredIds.Count, availableSlots));
             }
 
             await EnsureNoCrossDivisionConflictAsync(stage, filteredIds);
@@ -320,8 +321,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
         if (conflictingTeamIds.Count > 0)
         {
             throw new InvalidOperationException(
-                $"Cannot assign team(s) {string.Join(", ", conflictingTeamIds)} to this division: " +
-                "already assigned to another division of the same tournament.");
+                ErrorMessages.Stage.ConflictingTeamAssignment(string.Join(", ", conflictingTeamIds)));
         }
     }
 
@@ -373,16 +373,16 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     {
         Stage stage = await stageRepository.GetByIdAsync(stageId,
             includes: [s => s.Matches, s => s.StageTeamMatches, s => s.Division])
-            ?? throw new InvalidOperationException("Stage not found.");
+            ?? throw new InvalidOperationException(ErrorMessages.Stage.NotFoundGeneric);
 
         if (stage.Matches.Count == 0)
         {
-            throw new InvalidOperationException("Generate this stage's matches before seeding it.");
+            throw new InvalidOperationException(ErrorMessages.Stage.GenerateMatchesBeforeSeeding);
         }
 
         if (stage.Matches.Any(m => m.HomeTeamId.HasValue || m.VisitorTeamId.HasValue))
         {
-            throw new InvalidOperationException("This stage has already been seeded.");
+            throw new InvalidOperationException(ErrorMessages.Stage.AlreadySeeded);
         }
 
         List<Guid> assignedTeamIds = [.. stage.StageTeamMatches.Select(stm => stm.TeamId)];
@@ -391,8 +391,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
         if (assignedTeamIds.Count < 2 || assignedTeamIds.Count > slotCapacity)
         {
             throw new InvalidOperationException(
-                $"Cannot seed: {assignedTeamIds.Count} team(s) assigned to this stage, expected between 2 and {slotCapacity}. " +
-                "A team count below the full bracket is fine (the strongest seeds get a bye), but it cannot exceed the generated slots.");
+                ErrorMessages.Stage.SeedTeamCountOutOfRange(assignedTeamIds.Count, slotCapacity));
         }
 
         List<Match> groupMatches = [.. await matchRepository.FindAsync(m =>
@@ -407,8 +406,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
 
         if (orderedTeamIds.Count != assignedTeamIds.Count)
         {
-            throw new InvalidOperationException(
-                "Cannot seed: not every team assigned to this stage has a finished-group-stage position yet.");
+            throw new InvalidOperationException(ErrorMessages.Stage.SeedMissingStandings);
         }
 
         List<(Guid HomeTeamId, Guid? VisitorTeamId)> pairs = PlayoffSeeder.SeedPairs(orderedTeamIds);

@@ -4,6 +4,7 @@ using Application.DTOs.Abstract.Response;
 using Application.DTOs.Match.Request;
 using Application.DTOs.Match.Response;
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 
 using AutoMapper;
 
@@ -136,7 +137,7 @@ public class MatchController(IMatchService matchService, IStageTeamMatchService 
 
         if (existingMatch.IsFinished || existingMatch.MatchDate <= DateTime.Now)
         {
-            return BadRequest("Cannot update a match that has already started or finished.");
+            return BadRequest(ErrorMessages.Match.CannotUpdateStartedOrFinished);
         }
 
 
@@ -156,7 +157,7 @@ public class MatchController(IMatchService matchService, IStageTeamMatchService 
 
         if (!canUpdate)
         {
-            return BadRequest("Cannot update match date because one or both teams are not assigned to the stage.");
+            return BadRequest(ErrorMessages.Match.TeamsNotAssignedToStage);
         }
 
         mapper.Map(updateRequest, existingMatch);

@@ -9,11 +9,9 @@ namespace API.Tests.Backup.Fakes;
 /// </summary>
 public sealed class CapturingLogger<T> : ILogger<T>
 {
-    public sealed record Entry(LogLevel Level, string Message, Exception? Exception);
+    private readonly List<CapturingLogEntry> _entries = [];
 
-    private readonly List<Entry> _entries = [];
-
-    public IReadOnlyList<Entry> Entries => _entries;
+    public IReadOnlyList<CapturingLogEntry> Entries => _entries;
 
     public IDisposable BeginScope<TState>(TState state) where TState : notnull
     {
@@ -34,13 +32,7 @@ public sealed class CapturingLogger<T> : ILogger<T>
     {
         lock (_entries)
         {
-            _entries.Add(new Entry(logLevel, formatter(state, exception), exception));
+            _entries.Add(new CapturingLogEntry(logLevel, formatter(state, exception), exception));
         }
-    }
-
-    private sealed class NullScope : IDisposable
-    {
-        public static readonly NullScope Instance = new();
-        public void Dispose() { }
     }
 }

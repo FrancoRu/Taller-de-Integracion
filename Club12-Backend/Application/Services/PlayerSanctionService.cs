@@ -38,10 +38,10 @@ public class PlayerSanctionService(IPlayerSanctionRepository playerSanctionRepos
         await playerSanctionRepository.UpdateAsync(playerSanctionEntity);
     }
 
-    public async Task<IEnumerable<PlayerSanction>> GetExpiredSanctionsAsync(DateTime cutoffDate)
+    public async Task<IEnumerable<PlayerSanction>> GetExpiredSanctionsAsync(DateTime date)
     {
         return await playerSanctionRepository.FindAsync(
-                playerSanction => playerSanction.IssuedDate.AddDays(playerSanction.Duration) <= cutoffDate,
+                playerSanction => playerSanction.IssuedDate.AddDays(playerSanction.Duration) <= date,
                 includes: [playerSanction => playerSanction.Player]);
     }
 

@@ -14,7 +14,7 @@ public class SeriesDecisionCalculatorTests
         {
             Id = Guid.NewGuid(),
             CreatedBy = "test",
-            MatchDate = new DateTime(2026, 1, gameNumber),
+            MatchDate = new DateTime(2026, 1, gameNumber, 0, 0, 0, DateTimeKind.Utc),
             Type = MatchType.Playoff,
             HomeTeamId = homeTeamId,
             VisitorTeamId = visitorTeamId,

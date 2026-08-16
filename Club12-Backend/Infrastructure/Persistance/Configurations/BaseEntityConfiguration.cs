@@ -3,6 +3,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
+namespace Infrastructure.Persistance.Configurations;
+
+/// <summary>
+/// Base EF Core configuration shared by every entity: primary key, audit
+/// timestamp columns, and an index on DateCreated.
+/// </summary>
 public abstract class BaseEntityConfiguration<TEntity> : IEntityTypeConfiguration<TEntity>
     where TEntity : EntityBase
 {

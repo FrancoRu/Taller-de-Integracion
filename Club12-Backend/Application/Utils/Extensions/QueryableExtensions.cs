@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.Abstract.Request;
+using Application.Utils.Constants;
 
 using System;
 using System.Linq;
@@ -26,7 +27,7 @@ public static class QueryableExtensions
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => !ShouldSkipProperty(p.Name) && typeof(TEntity).GetProperty(p.Name) != null)];
 
-        bool allNullOrEmpty = filterProperties.All(property =>
+        bool allNullOrEmpty = Array.TrueForAll(filterProperties, property =>
         {
             object? value = property.GetValue(filter);
             return value == null || (property.PropertyType == typeof(string) && string.IsNullOrWhiteSpace((string) value));
@@ -43,10 +44,10 @@ public static class QueryableExtensions
         Expression? finalExpression = null;
 
         MethodInfo containsMethod = typeof(string).GetMethod("Contains", [typeof(string)])
-            ?? throw new InvalidOperationException("The 'Contains' method could not be found on the string class.");
+            ?? throw new InvalidOperationException(ErrorMessages.Query.ContainsMethodNotFound);
 
         MethodInfo toLowerMethod = typeof(string).GetMethod("ToLower", Type.EmptyTypes)
-            ?? throw new InvalidCastException("The 'ToLower' method could not be found on the string class.");
+            ?? throw new InvalidCastException(ErrorMessages.Query.ToLowerMethodNotFound);
 
         foreach (PropertyInfo property in filterProperties)
         {

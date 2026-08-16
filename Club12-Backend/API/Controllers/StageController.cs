@@ -3,6 +3,7 @@ using Application.DTOs.Match.Response;
 using Application.DTOs.Stage.Request;
 using Application.DTOs.Stage.Response;
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 
 using AutoMapper;
 
@@ -94,7 +95,7 @@ public class StageController(IStageService stageService, IMatchService matchServ
 
         if (stage == null)
         {
-            return NotFound($"Stage with id {id} not found.");
+            return NotFound(ErrorMessages.Stage.NotFoundById(id));
         }
 
         StageResponse stageResponse = mapper.Map<StageResponse>(stage);
@@ -133,7 +134,7 @@ public class StageController(IStageService stageService, IMatchService matchServ
         Stage? existingStage = await stageService.GetStageByIdAsync(id);
         if (existingStage == null)
         {
-            return NotFound($"Stage with id {id} not found.");
+            return NotFound(ErrorMessages.Stage.NotFoundById(id));
         }
 
         mapper.Map(stageRequest, existingStage);
@@ -176,7 +177,7 @@ public class StageController(IStageService stageService, IMatchService matchServ
 
         if (stage == null)
         {
-            return NotFound($"Stage with id {id} not found.");
+            return NotFound(ErrorMessages.Stage.NotFoundById(id));
         }
 
         await stageService.AssignTeamsToStageAsync(stage, request.TeamIds, request.Auto);
@@ -199,7 +200,7 @@ public class StageController(IStageService stageService, IMatchService matchServ
 
         if (stage == null)
         {
-            return NotFound($"Stage with id {id} not found.");
+            return NotFound(ErrorMessages.Stage.NotFoundById(id));
         }
 
         await stageService.UnassignTeamsFromStageAsync(stage, request.TeamIds);
@@ -227,7 +228,7 @@ public class StageController(IStageService stageService, IMatchService matchServ
 
         if (stage == null)
         {
-            return NotFound($"Stage with id {id} not found.");
+            return NotFound(ErrorMessages.Stage.NotFoundById(id));
         }
 
         List<Match> seededMatches = await stageService.SeedKnockoutStageAsync(id);

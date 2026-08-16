@@ -57,6 +57,4 @@ public static class EntityConstants
     {
         public const string TournamentDeadlineBeforeStart = "CK_Tournament_DeadlineBeforeStart";
     }
-
-    public static class Filters { }
 }

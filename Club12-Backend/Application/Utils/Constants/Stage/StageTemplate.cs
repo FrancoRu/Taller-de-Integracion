@@ -48,10 +48,3 @@ public static class StageTemplate
     /// </summary>
     public static readonly int ThirdPlaceGapDays = 1;
 }
-
-/// <summary>
-/// Represents a stage template with a name and description.
-/// </summary>
-/// <param name="Name">The name of the stage.</param>
-/// <param name="Description">The description of the stage.</param>
-public record Template(string Name, string Description);

@@ -207,7 +207,7 @@ public class ScorerRepositoryTests : IClassFixture<CustomWebApplicationFactory>
         IScorerRepository scorerRepository = scope.ServiceProvider.GetRequiredService<IScorerRepository>();
 
         Tournament tournament = await SeedTournamentAsync(db);
-        (Division division, Stage stage) = await SeedDivisionAndStageAsync(db, tournament);
+        (_, Stage stage) = await SeedDivisionAndStageAsync(db, tournament);
 
         Team homeTeam = await SeedTeamAsync(db, tournament.Id);
         Team visitorTeam = await SeedTeamAsync(db, tournament.Id);
@@ -255,7 +255,7 @@ public class ScorerRepositoryTests : IClassFixture<CustomWebApplicationFactory>
 
         Tournament tournament = await SeedTournamentAsync(db);
         (Division divisionA, Stage stageA) = await SeedDivisionAndStageAsync(db, tournament);
-        (Division divisionB, Stage stageB) = await SeedDivisionAndStageAsync(db, tournament);
+        (_, Stage stageB) = await SeedDivisionAndStageAsync(db, tournament);
 
         Team teamA = await SeedTeamAsync(db, tournament.Id);
         Team teamB = await SeedTeamAsync(db, tournament.Id);
@@ -381,7 +381,7 @@ public class ScorerRepositoryTests : IClassFixture<CustomWebApplicationFactory>
             SecondName = secondName,
             DocumentNumber = Guid.NewGuid().ToString("N")[..10],
             IsSanctioned = false,
-            BirthDate = new DateTime(2000, 1, 1),
+            BirthDate = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc),
             SocialSecurity = "OSDE",
             Team = team,
             TeamId = team.Id,

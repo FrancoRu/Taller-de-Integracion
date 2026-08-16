@@ -134,7 +134,8 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
 
         if (!string.IsNullOrWhiteSpace(venue.PhotoUrl))
         {
-            await supabaseHelper.DeleteImageAsync<Team>(venue.PhotoUrl.Split('/').Last());
+            string[] photoUrlSegments = venue.PhotoUrl.Split('/');
+            await supabaseHelper.DeleteImageAsync<Team>(photoUrlSegments[^1]);
         }
 
         await venueService.DeleteVenueAsync(id);

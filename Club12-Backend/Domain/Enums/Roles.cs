@@ -16,7 +16,10 @@ public static class Roles
     public const string TeamManager = nameof(UserRoleType.TEAM_MANAGER);
     public const string Guest = nameof(UserRoleType.GUEST);
 
-    // ── Composite constants for multi-role [Authorize] attributes ──
+    /// <summary>
+    /// Blog and user management — the two roles that administer
+    /// site-wide, non-tournament content and accounts.
+    /// </summary>
     public const string AdminOrOwner = $"{Admin},{Owner}";
 
     /// <summary>

@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 
+using System;
 using System.IO;
-using System.Linq;
 
 namespace API.Utils;
 
@@ -10,8 +10,22 @@ namespace API.Utils;
 /// </summary>
 public static class FileExtensions
 {
+    private static readonly ImageFileExtension[] _validImageExtensions =
+    [
+        ImageFileExtension.Jpg,
+        ImageFileExtension.Jpeg,
+        ImageFileExtension.Png,
+        ImageFileExtension.Webp,
+    ];
+
+    private static readonly SpreadsheetFileExtension[] _validSpreadsheetExtensions =
+    [
+        SpreadsheetFileExtension.Xls,
+        SpreadsheetFileExtension.Xlsx,
+    ];
+
     /// <summary>
-    /// Checks if the provided file is a valid image (JPEG or PNG).
+    /// Checks if the provided file is a valid image (JPEG, PNG, or WEBP).
     /// </summary>
     /// <param name="file">The uploaded file to check.</param>
     /// <returns>True if the file is a valid image, otherwise false.</returns>
@@ -22,10 +36,9 @@ public static class FileExtensions
             return false;
         }
 
-        string[] validExtensions = [".jpg", ".jpeg", ".png", ".webp"];
-        string fileExtension = Path.GetExtension(file.FileName).ToLower();
+        string fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
 
-        return validExtensions.Contains(fileExtension);
+        return Array.Exists(_validImageExtensions, extension => extension.ToExtensionString() == fileExtension);
     }
 
     /// <summary>
@@ -40,9 +53,8 @@ public static class FileExtensions
             return false;
         }
 
-        string[] validExtensions = [".xls", ".xlsx"];
-        string fileExtension = Path.GetExtension(file.FileName).ToLower();
+        string fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
 
-        return validExtensions.Contains(fileExtension);
+        return Array.Exists(_validSpreadsheetExtensions, extension => extension.ToExtensionString() == fileExtension);
     }
 }

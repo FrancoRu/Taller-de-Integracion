@@ -4,6 +4,7 @@ using Application.DTOs.Abstract.Response;
 using Application.DTOs.PlayerSanction.Request;
 using Application.DTOs.PlayerSanction.Response;
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 
 using AutoMapper;
 
@@ -140,7 +141,7 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
 
         if (existingSanction.AppealStatus == SanctionAppealStatus.Pending)
         {
-            return BadRequest("This sanction already has a pending appeal.");
+            return BadRequest(ErrorMessages.PlayerSanction.AppealAlreadyPending);
         }
 
         existingSanction.AppealStatus = SanctionAppealStatus.Pending;
@@ -175,7 +176,7 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
 
         if (existingSanction.AppealStatus != SanctionAppealStatus.Pending)
         {
-            return BadRequest("There is no pending appeal to resolve for this sanction.");
+            return BadRequest(ErrorMessages.PlayerSanction.NoPendingAppealToResolve);
         }
 
         existingSanction.AppealStatus = resolveRequest.Accepted

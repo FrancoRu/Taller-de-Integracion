@@ -215,7 +215,7 @@ public class PlayerSanctionServiceTests : IClassFixture<CustomWebApplicationFact
             LastName = "Tester",
             DocumentNumber = Guid.NewGuid().ToString("N")[..10],
             IsSanctioned = true,
-            BirthDate = new DateTime(2000, 1, 1),
+            BirthDate = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc),
             SocialSecurity = "OSDE",
             Team = team,
             TeamId = teamId,

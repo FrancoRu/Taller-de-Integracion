@@ -26,6 +26,10 @@ public class StageSeedingTests : IClassFixture<CustomWebApplicationFactory>
         _factory = factory;
     }
 
+    /// <summary>
+    /// Seeds a 6-match round robin among 4 teams that produces the standings
+    /// A(3-0) > B(2-1) > C(1-2) > D(0-3).
+    /// </summary>
     [Fact]
     public async Task SeedKnockoutStageAsync_FourTeams_PairsBestSeedAgainstWorst()
     {
@@ -38,7 +42,6 @@ public class StageSeedingTests : IClassFixture<CustomWebApplicationFactory>
         List<Team> teams = await SeedTeamsAsync(db, tournament, 4);
 
         Stage groupStage = await SeedStageAsync(db, division, tournament, StageType.Group);
-        // Standings after round robin: A(3-0) > B(2-1) > C(1-2) > D(0-3).
         await SeedFinishedMatchAsync(db, groupStage, teams[0], teams[1], 90, 80);
         await SeedFinishedMatchAsync(db, groupStage, teams[0], teams[2], 90, 80);
         await SeedFinishedMatchAsync(db, groupStage, teams[0], teams[3], 90, 80);
@@ -63,6 +66,10 @@ public class StageSeedingTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal(teams[2].Id, ordered[1].VisitorTeamId);
     }
 
+    /// <summary>
+    /// Seeds a 3-match round robin among 3 teams that produces the standings
+    /// A(2-0) > B(1-1) > C(0-2).
+    /// </summary>
     [Fact]
     public async Task SeedKnockoutStageAsync_ThreeTeams_BestSeedGetsAByeAndIsMarkedAsAWalkoverWin()
     {
@@ -75,7 +82,6 @@ public class StageSeedingTests : IClassFixture<CustomWebApplicationFactory>
         List<Team> teams = await SeedTeamsAsync(db, tournament, 3);
 
         Stage groupStage = await SeedStageAsync(db, division, tournament, StageType.Group);
-        // Standings: A(2-0) > B(1-1) > C(0-2).
         await SeedFinishedMatchAsync(db, groupStage, teams[0], teams[1], 90, 80);
         await SeedFinishedMatchAsync(db, groupStage, teams[0], teams[2], 90, 80);
         await SeedFinishedMatchAsync(db, groupStage, teams[1], teams[2], 90, 80);

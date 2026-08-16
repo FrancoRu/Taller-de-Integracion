@@ -2,6 +2,7 @@
 using Application.DTOs.Match.Request;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 using Application.Utils.Constants.Stage;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.RoundRobin;
@@ -106,11 +107,11 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
     public async Task<List<Match>> CreateAutomatedMatchesAsync(Guid stageId)
     {
         Stage stage = await stageRepository.GetByIdAsync(stageId, includes: [s => s.Matches, s => s.Division])
-            ?? throw new InvalidOperationException("Stage not found.");
+            ?? throw new InvalidOperationException(ErrorMessages.Stage.NotFoundGeneric);
 
         if (stage.Matches.Count > 0)
         {
-            throw new InvalidOperationException("Cannot process the current request because the current stage already has some matches.");
+            throw new InvalidOperationException(ErrorMessages.Match.StageAlreadyHasMatches);
         }
 
         List<Match> matches = stage.StageType switch
@@ -120,7 +121,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
             StageType.SemiFinal => await CreateKnockoutStageMatchesAsync(stage),
             StageType.ThirdPlace => await CreateFinalStageMatchesAsync(stage),
             StageType.Final => await CreateFinalStageMatchesAsync(stage),
-            _ => throw new NotSupportedException("Stage type not supported for automated match creation.")
+            _ => throw new NotSupportedException(ErrorMessages.Match.StageTypeNotSupportedForAutomatedCreation)
         };
 
 
@@ -147,26 +148,26 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
 
         if (totalGroups <= 0)
         {
-            throw new InvalidOperationException("No group stages found for the division.");
+            throw new InvalidOperationException(ErrorMessages.Match.NoGroupStagesForDivision);
         }
 
         int registeredTeams = await teamRepository.CountAsync(team => team.TournamentId == stage.Division.TournamentId);
 
         if (registeredTeams <= 0)
         {
-            throw new InvalidOperationException("No teams are registered in the tournament.");
+            throw new InvalidOperationException(ErrorMessages.Match.NoTeamsRegistered);
         }
 
         if (registeredTeams % totalGroups != 0)
         {
             throw new InvalidOperationException(
-                $"Registered teams ({registeredTeams}) cannot be distributed evenly across {totalGroups} groups.");
+                ErrorMessages.Match.TeamsNotDistributableAcrossGroups(registeredTeams, totalGroups));
         }
 
         int teamsPerGroup = registeredTeams / totalGroups;
 
         return teamsPerGroup < 2
-            ? throw new InvalidOperationException("At least 2 teams per group are required to generate matches.")
+            ? throw new InvalidOperationException(ErrorMessages.Match.NotEnoughTeamsPerGroup)
             : teamsPerGroup;
     }
 
@@ -255,7 +256,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
         {
             StageType.QuarterFinal => KnockoutMatchCount.QUARTER_FINAL,
             StageType.SemiFinal => KnockoutMatchCount.SEMI_FINAL,
-            _ => throw new InvalidOperationException("Invalid knockout stage type.")
+            _ => throw new InvalidOperationException(ErrorMessages.Match.InvalidKnockoutStageType)
         };
 
         List<DateTime> matchDates = DistributeMatchDates(stage.StartDate, stage.EndDate, matchCount);
@@ -282,12 +283,12 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
     {
         if (matchCount <= 0)
         {
-            throw new ArgumentException("Match count must be greater than zero.", nameof(matchCount));
+            throw new ArgumentException(ErrorMessages.Match.MatchCountMustBePositive, nameof(matchCount));
         }
 
         if (endDate < startDate)
         {
-            throw new ArgumentException("End date must be after start date.");
+            throw new ArgumentException(ErrorMessages.Match.EndDateBeforeStartDate);
         }
 
         List<DateTime> matchDates = [];

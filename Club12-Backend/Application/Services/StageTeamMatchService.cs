@@ -27,9 +27,9 @@ public class StageTeamMatchService(IStageTeamMatchRepository stageTeamMatchRepos
         await stageTeamMatchRepository.RemoveAsync(predicate);
     }
 
-    public async Task<bool> AllTeamsAssignedToStage(Guid stageId, List<Guid> teamsId)
+    public async Task<bool> AllTeamsAssignedToStage(Guid stageId, List<Guid> TeamIds)
     {
         return await stageTeamMatchRepository.CountAsync(stm => stm.StageId == stageId
-                && teamsId.Contains(stm.TeamId)) == teamsId.Count;
+                && TeamIds.Contains(stm.TeamId)) == TeamIds.Count;
     }
 }

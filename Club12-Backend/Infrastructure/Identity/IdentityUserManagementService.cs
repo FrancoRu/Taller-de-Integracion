@@ -3,6 +3,7 @@ using Application.DTOs.Abstract.Response;
 using Application.DTOs.User.Request;
 using Application.DTOs.User.Response;
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 using Application.Utils.Constants.Configuration;
 
 using Domain.Enums;
@@ -33,13 +34,9 @@ public sealed class IdentityUserManagementService(
     public async Task<PaginatedResponse<UserResponse>> GetAllAsync(
         string callerRole, Guid callerId,
         UserFilteredRequest filter,
-        CancellationToken ct)
+        CancellationToken ct = default)
     {
-        IQueryable<ApplicationUser> query = IsAdmin(callerRole)
-            ? userManager.Users
-            : IsOwner(callerRole)
-                ? userManager.Users.Where(u => u.CreatedByOwnerId == callerId)
-                : throw new UnauthorizedAccessException("Insufficient permissions to list users.");
+        IQueryable<ApplicationUser> query = ResolveVisibleUsersQuery(callerRole, callerId);
 
         if (!string.IsNullOrWhiteSpace(filter.UserName))
         {
@@ -104,7 +101,7 @@ public sealed class IdentityUserManagementService(
     }
 
     public async Task<UserResponse> GetByIdAsync(
-        string callerRole, Guid callerId, Guid userId, CancellationToken ct)
+        string callerRole, Guid callerId, Guid userId, CancellationToken ct = default)
     {
         ApplicationUser user = await FindOrThrowAsync(userId);
         EnforceReadAccess(user, callerRole, callerId);
@@ -113,7 +110,7 @@ public sealed class IdentityUserManagementService(
 
     public async Task<UserResponse> UpdateAsync(
         string callerRole, Guid callerId, Guid userId,
-        UpdateUserRequest request, CancellationToken ct)
+        UpdateUserRequest request, CancellationToken ct = default)
     {
         ApplicationUser user = await FindOrThrowAsync(userId);
         EnforceWriteAccess(user, callerRole, callerId);
@@ -138,7 +135,7 @@ public sealed class IdentityUserManagementService(
 
     public async Task ChangePasswordAsync(
         string callerRole, Guid callerId, Guid userId,
-        ChangePasswordRequest request, CancellationToken ct)
+        ChangePasswordRequest request, CancellationToken ct = default)
     {
         ApplicationUser user = await FindOrThrowAsync(userId);
         EnforceWriteAccess(user, callerRole, callerId);
@@ -149,7 +146,7 @@ public sealed class IdentityUserManagementService(
         {
             if (string.IsNullOrWhiteSpace(request.CurrentPassword))
             {
-                throw new ArgumentException("CurrentPassword is required when changing your own password.");
+                throw new ArgumentException(ErrorMessages.User.CurrentPasswordRequired);
             }
 
             ThrowIfFailed(await userManager.ChangePasswordAsync(
@@ -172,7 +169,7 @@ public sealed class IdentityUserManagementService(
     /// completes the reset. Requires admin/owner privileges.
     /// </summary>
     public async Task<ResetPasswordResponse> ResetPasswordAsync(
-        string callerRole, Guid callerId, Guid userId, CancellationToken ct)
+        string callerRole, Guid callerId, Guid userId, CancellationToken ct = default)
     {
         ApplicationUser user = await FindOrThrowAsync(userId);
         EnforceResetPasswordAccess(user, callerRole, callerId);
@@ -184,7 +181,7 @@ public sealed class IdentityUserManagementService(
 
         string frontendUrl = configuration[ConfigurationKeys.Frontend.PasswordResetUrl]
             ?? throw new InvalidOperationException(
-                $"{ConfigurationKeys.Frontend.PasswordResetUrl} is not configured.");
+                ErrorMessages.Configuration.KeyNotConfigured(ConfigurationKeys.Frontend.PasswordResetUrl));
 
         string resetLink =
             $"{frontendUrl}" +
@@ -197,7 +194,7 @@ public sealed class IdentityUserManagementService(
     }
 
     public async Task DeleteAsync(
-        string callerRole, Guid callerId, Guid userId, CancellationToken ct)
+        string callerRole, Guid callerId, Guid userId, CancellationToken ct = default)
     {
         ApplicationUser user = await FindOrThrowAsync(userId);
         EnforceDeleteAccess(user, callerRole, callerId);
@@ -205,14 +202,14 @@ public sealed class IdentityUserManagementService(
     }
 
     public async Task<UserResponse> SetActiveAsync(
-        string callerRole, Guid callerId, Guid userId, bool isActive, CancellationToken ct)
+        string callerRole, Guid callerId, Guid userId, bool isActive, CancellationToken ct = default)
     {
         ApplicationUser user = await FindOrThrowAsync(userId);
         EnforceDeleteAccess(user, callerRole, callerId);
 
         if (user.Id == callerId)
         {
-            throw new InvalidOperationException("You cannot change the active state of your own account.");
+            throw new InvalidOperationException(ErrorMessages.User.CannotChangeOwnActiveState);
         }
 
         if (isActive)
@@ -245,27 +242,18 @@ public sealed class IdentityUserManagementService(
             return;
         }
 
-        throw new UnauthorizedAccessException("Access denied.");
+        throw new UnauthorizedAccessException(ErrorMessages.Auth.AccessDenied);
     }
 
+    /// <summary>
+    /// Write access currently follows the exact same rule as read access
+    /// (Admin, the target's owner, or the target themselves). Kept as its
+    /// own named method so a future divergence between the two policies
+    /// doesn't require renaming call sites.
+    /// </summary>
     private static void EnforceWriteAccess(ApplicationUser target, string callerRole, Guid callerId)
     {
-        if (IsAdmin(callerRole))
-        {
-            return;
-        }
-
-        if (IsOwner(callerRole) && (target.Id == callerId || target.CreatedByOwnerId == callerId))
-        {
-            return;
-        }
-
-        if (target.Id == callerId)
-        {
-            return;
-        }
-
-        throw new UnauthorizedAccessException("Access denied.");
+        EnforceReadAccess(target, callerRole, callerId);
     }
 
     private static void EnforceResetPasswordAccess(ApplicationUser target, string callerRole, Guid callerId)
@@ -280,8 +268,7 @@ public sealed class IdentityUserManagementService(
             return;
         }
 
-        throw new UnauthorizedAccessException(
-            "Only Admins and Owners (for their own subordinates) can reset passwords.");
+        throw new UnauthorizedAccessException(ErrorMessages.User.PasswordResetRestricted);
     }
 
     private static void EnforceDeleteAccess(ApplicationUser target, string callerRole, Guid callerId)
@@ -296,7 +283,7 @@ public sealed class IdentityUserManagementService(
             return;
         }
 
-        throw new UnauthorizedAccessException("Insufficient permissions to delete this user.");
+        throw new UnauthorizedAccessException(ErrorMessages.User.InsufficientPermissionsToDelete);
     }
 
     private async Task<UserResponse> MapOneAsync(ApplicationUser user)
@@ -322,7 +309,7 @@ public sealed class IdentityUserManagementService(
     private async Task<ApplicationUser> FindOrThrowAsync(Guid userId)
     {
         ApplicationUser? user = await userManager.FindByIdAsync(userId.ToString());
-        return user ?? throw new KeyNotFoundException($"User '{userId}' not found.");
+        return user ?? throw new KeyNotFoundException(ErrorMessages.User.NotFound(userId.ToString()));
     }
 
     private static void ThrowIfFailed(IdentityResult result)
@@ -332,6 +319,21 @@ public sealed class IdentityUserManagementService(
             throw new InvalidOperationException(
                 string.Join("; ", result.Errors.Select(e => e.Description)));
         }
+    }
+
+    private IQueryable<ApplicationUser> ResolveVisibleUsersQuery(string callerRole, Guid callerId)
+    {
+        if (IsAdmin(callerRole))
+        {
+            return userManager.Users;
+        }
+
+        if (IsOwner(callerRole))
+        {
+            return userManager.Users.Where(u => u.CreatedByOwnerId == callerId);
+        }
+
+        throw new UnauthorizedAccessException(ErrorMessages.User.InsufficientPermissionsToListUsers);
     }
 
     private static bool IsAdmin(string role)

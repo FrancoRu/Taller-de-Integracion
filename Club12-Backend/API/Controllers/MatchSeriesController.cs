@@ -2,10 +2,12 @@ using Application.DTOs.Abstract.Response;
 using Application.DTOs.MatchSeries.Request;
 using Application.DTOs.MatchSeries.Response;
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 
 using AutoMapper;
 
 using Domain.Entities.Models;
+using Domain.Enums;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -18,12 +20,14 @@ namespace API.Controllers;
 
 /// <summary>
 /// Controller for managing best-of-N playoff series between two teams at a
-/// single bracket round.
+/// single bracket round. Reads are public; writes require Owner or
+/// TournamentManager.
 /// </summary>
 /// <param name="matchSeriesService">Service for series business logic and persistence operations.</param>
 /// <param name="mapper">AutoMapper instance for mapping between entities and DTOs.</param>
 [Route("api/match-series/")]
 [ApiController]
+[Authorize(Roles = Roles.OwnerOrTournamentManager)]
 public class MatchSeriesController(IMatchSeriesService matchSeriesService, IMapper mapper) : ControllerBase
 {
     /// <summary>
@@ -47,6 +51,7 @@ public class MatchSeriesController(IMatchSeriesService matchSeriesService, IMapp
     /// </summary>
     /// <param name="id">The id of the series.</param>
     /// <returns>The series entity, including its games.</returns>
+    [AllowAnonymous]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatchSeriesResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -54,7 +59,12 @@ public class MatchSeriesController(IMatchSeriesService matchSeriesService, IMapp
     {
         MatchSeries? series = await matchSeriesService.GetSeriesByIdAsync(id);
 
-        return series is null ? (ActionResult<MatchSeriesResponse>) NotFound($"Series with id {id} not found.") : (ActionResult<MatchSeriesResponse>) Ok(mapper.Map<MatchSeriesResponse>(series));
+        if (series is null)
+        {
+            return NotFound(ErrorMessages.MatchSeries.NotFoundById(id));
+        }
+
+        return Ok(mapper.Map<MatchSeriesResponse>(series));
     }
 
     /// <summary>

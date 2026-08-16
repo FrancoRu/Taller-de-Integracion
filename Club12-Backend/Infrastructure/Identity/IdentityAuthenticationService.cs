@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.Auth.Request;
 using Application.DTOs.Auth.Response;
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 using Application.Utils.Constants.Auth;
 using Application.Utils.Constants.Configuration;
 
@@ -57,7 +58,7 @@ public sealed class IdentityAuthenticationService(
         ApplicationUser? existing = await userManager.FindByEmailAsync(request.Email);
         if (existing is not null)
         {
-            throw new InvalidOperationException("A user with this email already exists.");
+            throw new InvalidOperationException(ErrorMessages.Auth.EmailAlreadyExists);
         }
 
         ApplicationUser user = new()
@@ -77,7 +78,7 @@ public sealed class IdentityAuthenticationService(
         if (!result.Succeeded)
         {
             string errors = string.Join(" | ", result.Errors.Select(e => e.Description));
-            throw new InvalidOperationException($"User creation failed: {errors}");
+            throw new InvalidOperationException(ErrorMessages.Auth.UserCreationFailed(errors));
         }
 
         await userManager.AddToRoleAsync(user, request.Role.ToUpperInvariant());
@@ -86,7 +87,7 @@ public sealed class IdentityAuthenticationService(
 
         string frontendUrl = configuration[ConfigurationKeys.Frontend.PasswordResetUrl]
             ?? throw new InvalidOperationException(
-                $"{ConfigurationKeys.Frontend.PasswordResetUrl} is not configured.");
+                ErrorMessages.Configuration.KeyNotConfigured(ConfigurationKeys.Frontend.PasswordResetUrl));
 
         string setPasswordLink =
             $"{frontendUrl}" +
@@ -103,23 +104,22 @@ public sealed class IdentityAuthenticationService(
     public async Task<TokenResponse> LoginAsync(LogInUserRequest request, CancellationToken ct = default)
     {
         ApplicationUser user = await userManager.FindByEmailAsync(request.Email)
-            ?? throw new UnauthorizedAccessException("Invalid credentials.");
+            ?? throw new UnauthorizedAccessException(ErrorMessages.Auth.InvalidCredentials);
 
         if (!await userManager.CheckPasswordAsync(user, request.Password))
         {
-            throw new UnauthorizedAccessException("Invalid credentials.");
+            throw new UnauthorizedAccessException(ErrorMessages.Auth.InvalidCredentials);
         }
 
         if (await userManager.IsLockedOutAsync(user))
         {
-            throw new UnauthorizedAccessException("This account is deactivated.");
+            throw new UnauthorizedAccessException(ErrorMessages.Auth.AccountDeactivated);
         }
 
         IList<string> roles = await userManager.GetRolesAsync(user);
 
         return roles.Contains(UserRoleType.TEAM_MANAGER.ToRoleName())
-            ? throw new UnauthorizedAccessException(
-                "TeamManager accounts must authenticate via the magic-link flow.")
+            ? throw new UnauthorizedAccessException(ErrorMessages.Auth.TeamManagerMustUseMagicLink)
             : await BuildTokenResponseAsync(user, roles, ct);
     }
 
@@ -128,14 +128,13 @@ public sealed class IdentityAuthenticationService(
         MagicLinkRequest request, CancellationToken ct = default)
     {
         ApplicationUser user = await userManager.FindByEmailAsync(request.Email)
-            ?? throw new KeyNotFoundException("No account found for that email.");
+            ?? throw new KeyNotFoundException(ErrorMessages.Auth.NoAccountForEmail);
 
         IList<string> roles = await userManager.GetRolesAsync(user);
 
         if (!roles.Contains(UserRoleType.TEAM_MANAGER.ToRoleName()))
         {
-            throw new UnauthorizedAccessException(
-                "Magic-link is only available for TeamManager accounts.");
+            throw new UnauthorizedAccessException(ErrorMessages.Auth.MagicLinkOnlyForTeamManager);
         }
 
         string token = await userManager.GenerateUserTokenAsync(
@@ -154,19 +153,19 @@ public sealed class IdentityAuthenticationService(
         MagicLinkLoginRequest request, CancellationToken ct = default)
     {
         ApplicationUser user = await userManager.FindByEmailAsync(request.Email)
-            ?? throw new UnauthorizedAccessException("Invalid magic-link.");
+            ?? throw new UnauthorizedAccessException(ErrorMessages.Auth.InvalidMagicLink);
 
         bool valid = await userManager.VerifyUserTokenAsync(
             user, TokenOptions.DefaultEmailProvider, MagicLinkPurpose, request.Token);
 
         if (!valid)
         {
-            throw new UnauthorizedAccessException("Magic-link is invalid or has already been used.");
+            throw new UnauthorizedAccessException(ErrorMessages.Auth.MagicLinkAlreadyUsed);
         }
 
         if (await userManager.IsLockedOutAsync(user))
         {
-            throw new UnauthorizedAccessException("This account is deactivated.");
+            throw new UnauthorizedAccessException(ErrorMessages.Auth.AccountDeactivated);
         }
 
         IList<string> roles = await userManager.GetRolesAsync(user);
@@ -178,7 +177,7 @@ public sealed class IdentityAuthenticationService(
         PasswordResetConfirmRequest request, CancellationToken ct = default)
     {
         ApplicationUser user = await userManager.FindByEmailAsync(request.Email)
-            ?? throw new UnauthorizedAccessException("Invalid password reset request.");
+            ?? throw new UnauthorizedAccessException(ErrorMessages.Auth.InvalidPasswordResetRequest);
 
         IdentityResult result = await userManager.ResetPasswordAsync(
             user, request.Token, request.NewPassword);
@@ -210,11 +209,11 @@ public sealed class IdentityAuthenticationService(
     {
         ApplicationUser user = await userManager.Users
             .FirstOrDefaultAsync(u => u.RefreshToken == request.RefreshToken, ct)
-            ?? throw new UnauthorizedAccessException("Refresh token is invalid.");
+            ?? throw new UnauthorizedAccessException(ErrorMessages.Auth.InvalidRefreshToken);
 
         if (user.RefreshTokenExpiryTime <= DateTime.UtcNow)
         {
-            throw new UnauthorizedAccessException("Refresh token has expired. Please log in again.");
+            throw new UnauthorizedAccessException(ErrorMessages.Auth.RefreshTokenExpired);
         }
 
         IList<string> roles = await userManager.GetRolesAsync(user);
@@ -297,8 +296,7 @@ public sealed class IdentityAuthenticationService(
 
         if (!allowed)
         {
-            throw new UnauthorizedAccessException(
-                $"Role '{callerRole}' is not allowed to create users with role '{targetRole}'.");
+            throw new UnauthorizedAccessException(ErrorMessages.Auth.RoleNotAllowedToCreate(callerRole, targetRole));
         }
     }
 

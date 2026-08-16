@@ -3,6 +3,7 @@
 using Application.DTOs.Auth.Request;
 using Application.DTOs.Auth.Response;
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 
 using Domain.Enums;
 
@@ -30,11 +31,11 @@ public class AuthController(IAuthenticationService authenticationService) : Cont
         [FromBody] RegisterUserRequest request, CancellationToken ct)
     {
         string callerRole = User.FindFirst(ClaimTypes.Role)?.Value
-            ?? throw new UnauthorizedAccessException("Role claim is missing from the token.");
+            ?? throw new UnauthorizedAccessException(ErrorMessages.Auth.RoleClaimMissing);
 
         Guid callerId = Guid.Parse(
             User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-            ?? throw new UnauthorizedAccessException("Id claim is missing from the token."));
+            ?? throw new UnauthorizedAccessException(ErrorMessages.Auth.IdClaimMissing));
 
         RegisterUserResponse response =
             await authenticationService.RegisterAsync(request, callerRole, callerId, ct);

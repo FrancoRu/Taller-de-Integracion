@@ -9,17 +9,12 @@ using System;
 namespace Infrastructure.Persistance;
 
 /// <summary>
-/// Placeholder interface aggregating all domain DbContext interfaces.
-/// </summary>
-public interface IDomainDBContexts : IClub12DBContext { }
-
-/// <summary>
 /// Application's main EF Core database context.
 /// All entity mappings are defined in Infrastructure.Persistance.Configurations
 /// and applied via ModelBuilder.ApplyConfigurationsFromAssembly.
 /// </summary>
 public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options)
-    : DbContext(options), IDomainDBContexts
+    : DbContext(options), IClub12DBContext
 {
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {

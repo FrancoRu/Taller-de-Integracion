@@ -34,7 +34,6 @@ const ShowPosts: React.FC = () => {
       pageSize: pagination.pageSize,
       author: '',
       title: '',
-      keyword: '',
     }),
     [pagination.page, pagination.pageSize]
   );

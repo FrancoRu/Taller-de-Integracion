@@ -20,9 +20,19 @@ public class PaginatedFilterRequest : IPaginationRequest, IOrderRequest
     public int PageSize
     {
         get => _pageSize;
-        set => _pageSize = value < 1
-            ? PaginationDefaults.DefaultPageSize
-            : value > PaginationDefaults.MaxPageSize ? PaginationDefaults.MaxPageSize : value;
+        set => _pageSize = ClampPageSize(value);
+    }
+
+    private static int ClampPageSize(int requestedPageSize)
+    {
+        if (requestedPageSize < 1)
+        {
+            return PaginationDefaults.DefaultPageSize;
+        }
+
+        return requestedPageSize > PaginationDefaults.MaxPageSize
+            ? PaginationDefaults.MaxPageSize
+            : requestedPageSize;
     }
 
     /// <summary>

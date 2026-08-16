@@ -2,6 +2,7 @@ using Application.DTOs.Abstract.Response;
 using Application.DTOs.MatchSeries.Request;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.Series;
 
@@ -56,11 +57,11 @@ public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
     {
         if (homeTeamId == visitorTeamId)
         {
-            throw new InvalidOperationException("A series requires two different teams.");
+            throw new InvalidOperationException(ErrorMessages.MatchSeries.RequiresTwoDifferentTeams);
         }
 
         Stage stage = await stageRepository.GetByIdAsync(stageId)
-            ?? throw new InvalidOperationException("Stage not found.");
+            ?? throw new InvalidOperationException(ErrorMessages.Stage.NotFoundGeneric);
 
         await EnsureTeamAssignedToStageAsync(stageId, homeTeamId);
         await EnsureTeamAssignedToStageAsync(stageId, visitorTeamId);
@@ -72,7 +73,7 @@ public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
 
         if (alreadyExists)
         {
-            throw new InvalidOperationException("A series between these two teams already exists for this stage.");
+            throw new InvalidOperationException(ErrorMessages.MatchSeries.AlreadyExistsForStage);
         }
 
         MatchSeries seriesEntity = new()
@@ -91,16 +92,16 @@ public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
     public async Task<Match> AddGameToSeriesAsync(Guid seriesId, DateTime matchDate, Guid? venueId)
     {
         MatchSeries series = await matchSeriesRepository.GetByIdAsync(seriesId, includes: [s => s.Matches])
-            ?? throw new InvalidOperationException("Series not found.");
+            ?? throw new InvalidOperationException(ErrorMessages.MatchSeries.NotFound);
 
         if (series.WinningTeamId.HasValue)
         {
-            throw new InvalidOperationException("Cannot add a game to a series that has already been decided.");
+            throw new InvalidOperationException(ErrorMessages.MatchSeries.AlreadyDecided);
         }
 
         if (series.Matches.Count >= series.BestOf)
         {
-            throw new InvalidOperationException($"This series already has the maximum of {series.BestOf} games.");
+            throw new InvalidOperationException(ErrorMessages.MatchSeries.MaxGamesReached(series.BestOf));
         }
 
         Match game = new()
@@ -146,7 +147,7 @@ public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
 
         if (!isAssigned)
         {
-            throw new InvalidOperationException($"Team {teamId} is not assigned to this stage.");
+            throw new InvalidOperationException(ErrorMessages.MatchSeries.TeamNotAssignedToStage(teamId));
         }
     }
 }

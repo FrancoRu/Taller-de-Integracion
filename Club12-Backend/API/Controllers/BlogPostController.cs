@@ -4,6 +4,7 @@ using Application.DTOs.Abstract.Response;
 using Application.DTOs.BlogPosts.Request;
 using Application.DTOs.BlogPosts.Response;
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 
 using AutoMapper;
 
@@ -47,13 +48,9 @@ public class BlogPostController(
     {
         string? photoUrl = null;
 
-        if (blogPostRequest.PhotoFile is not null)
+        if (blogPostRequest.PhotoFile is not null && !blogPostRequest.PhotoFile.IsValidImageFile())
         {
-            if (!blogPostRequest.PhotoFile.IsValidImageFile())
-            {
-                return BadRequest("The photo file must be a valid JPEG/PNG image.");
-            }
-
+            return BadRequest(ErrorMessages.Media.InvalidImageFile);
         }
 
         BlogPost blogPost = mapper.Map<BlogPost>(blogPostRequest);
@@ -102,7 +99,7 @@ public class BlogPostController(
     {
         if (!photoRequest.PhotoFile.IsValidImageFile())
         {
-            return BadRequest("The photo file must be a valid JPEG/PNG image.");
+            return BadRequest(ErrorMessages.Media.InvalidImageFile);
         }
 
         BlogPost? blogPost = await blogPostService.GetBlogPostByIdAsync(id);

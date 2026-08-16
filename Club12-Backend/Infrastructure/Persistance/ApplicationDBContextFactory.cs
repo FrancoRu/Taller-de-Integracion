@@ -86,14 +86,8 @@ public sealed class ApplicationDBContextFactory : IDesignTimeDbContextFactory<Ap
             Path.Combine(current, "..", "API"),
         ];
 
-        foreach (string path in candidates)
-        {
-            if (File.Exists(Path.Combine(path, "appsettings.json")))
-            {
-                return Path.GetFullPath(path);
-            }
-        }
+        string? match = Array.Find(candidates, path => File.Exists(Path.Combine(path, "appsettings.json")));
 
-        return current;
+        return match is null ? current : Path.GetFullPath(match);
     }
 }

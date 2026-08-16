@@ -3,6 +3,7 @@ using API.Utils.Converters;
 using API.Utils.Middlewares;
 
 using Application.Backup;
+using Application.Utils.Constants;
 using Application.Interfaces.Backup;
 using Application.Interfaces.Mappers;
 using Application.Interfaces.Repositories;
@@ -67,7 +68,7 @@ public static class StartupExtensions
         if (connectionString is null)
         {
             Log.Fatal("Connection string is missing. Using default or fallback connection string.");
-            throw new ArgumentException("The connection string should be initialized already.");
+            throw new ArgumentException(ErrorMessages.Configuration.ConnectionStringMissing);
         }
         services.AddDbContext<ApplicationDBContext>(options => options.UseNpgsql(connectionString));
         services.AddScoped<IClub12DBContext, ApplicationDBContext>();
@@ -183,7 +184,7 @@ public static class StartupExtensions
         string? jwtSecret = configuration.GetSection(ConfigurationKeys.Jwt.Key)?.Value;
         if (string.IsNullOrEmpty(jwtSecret))
         {
-            throw new ArgumentException("The JWT is missing or empty in configuration.");
+            throw new ArgumentException(ErrorMessages.Configuration.JwtMissing);
         }
 
         services.AddAuthentication(options =>
@@ -305,7 +306,7 @@ public static class StartupExtensions
         string? connectionString = configuration.GetConnectionString(ConfigurationKeys.DbConnection);
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            throw new ArgumentException("The connection string should be initialized already.");
+            throw new ArgumentException(ErrorMessages.Configuration.ConnectionStringMissing);
         }
 
         services.AddDbContext<IdentityAppDbContext>(options => options.UseNpgsql(connectionString));
@@ -341,12 +342,12 @@ public static class StartupExtensions
         string repositorySuffix = "Repository";
         string mapperSuffix = "Mapper";
 
-        ArgumentNullException.ThrowIfNull(serviceInterfaceNamespace, "Service interface namespace cannot be null.");
-        ArgumentNullException.ThrowIfNull(serviceImplNamespace, "Service implementation namespace cannot be null.");
-        ArgumentNullException.ThrowIfNull(repositoryInterfaceNamespace, "Repository interface namespace cannot be null.");
-        ArgumentNullException.ThrowIfNull(repositoryImplNamespace, "Repository implementation namespace cannot be null.");
-        ArgumentNullException.ThrowIfNull(mapperInterfaceNamespace, "Mapper interface namespace cannot be null.");
-        ArgumentNullException.ThrowIfNull(mapperImplNamespace, "Mapper implementation namespace cannot be null.");
+        ArgumentNullException.ThrowIfNull(serviceInterfaceNamespace);
+        ArgumentNullException.ThrowIfNull(serviceImplNamespace);
+        ArgumentNullException.ThrowIfNull(repositoryInterfaceNamespace);
+        ArgumentNullException.ThrowIfNull(repositoryImplNamespace);
+        ArgumentNullException.ThrowIfNull(mapperInterfaceNamespace);
+        ArgumentNullException.ThrowIfNull(mapperImplNamespace);
 
         Assembly serviceAssembly = typeof(AuthService).Assembly;
         Assembly IServiceAssembly = typeof(IAuthService).Assembly;
@@ -374,10 +375,10 @@ public static class StartupExtensions
 
         foreach (Type iface in interfaces)
         {
-            Type? implementation = implementationAssembly.GetTypes()
-                .FirstOrDefault(t => t.IsClass && !t.IsAbstract
-                                  && t.Namespace == implNamespace
-                                  && t.Name == iface.Name[1..]);
+            Type? implementation = Array.Find(implementationAssembly.GetTypes(),
+                t => t.IsClass && !t.IsAbstract
+                     && t.Namespace == implNamespace
+                     && t.Name == iface.Name[1..]);
 
             if (implementation is not null)
             {
@@ -393,13 +394,13 @@ public static class StartupExtensions
        this IServiceCollection services, IConfiguration configuration)
     {
         string smtpHost = configuration[ConfigurationKeys.Smtp.Host]
-            ?? throw new ArgumentException($"{ConfigurationKeys.Smtp.Host} is missing from configuration.");
+            ?? throw new ArgumentException(ErrorMessages.Configuration.SmtpKeyMissing(ConfigurationKeys.Smtp.Host));
         int smtpPort = int.Parse(configuration[ConfigurationKeys.Smtp.Port]
-            ?? throw new ArgumentException($"{ConfigurationKeys.Smtp.Port} is missing from configuration."));
+            ?? throw new ArgumentException(ErrorMessages.Configuration.SmtpKeyMissing(ConfigurationKeys.Smtp.Port)));
         string username = configuration[ConfigurationKeys.Smtp.Username]
-            ?? throw new ArgumentException($"{ConfigurationKeys.Smtp.Username} is missing from configuration.");
+            ?? throw new ArgumentException(ErrorMessages.Configuration.SmtpKeyMissing(ConfigurationKeys.Smtp.Username));
         string password = configuration[ConfigurationKeys.Smtp.Password]
-            ?? throw new ArgumentException($"{ConfigurationKeys.Smtp.Password} is missing from configuration.");
+            ?? throw new ArgumentException(ErrorMessages.Configuration.SmtpKeyMissing(ConfigurationKeys.Smtp.Password));
         bool useSsl = configuration.GetValue(ConfigurationKeys.Smtp.UseSsl, true);
         string fromEmail = configuration[ConfigurationKeys.Smtp.FromEmail] ?? "noreply@club12.com";
         string fromName = configuration[ConfigurationKeys.Smtp.FromName] ?? "Club12";
@@ -450,7 +451,7 @@ public static class StartupExtensions
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IDatabaseBackupService, PgDumpBackupService>();
 
-        if (string.Equals(options.StorageTarget, "Supabase", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(options.StorageTarget, BackupStorageTargets.Supabase, StringComparison.OrdinalIgnoreCase))
         {
             services.AddSingleton<ISupabaseRawStorage>(sp => sp.GetRequiredService<SupabaseHelper>());
             services.AddSingleton<IBackupStorage, SupabaseBackupStorage>();
