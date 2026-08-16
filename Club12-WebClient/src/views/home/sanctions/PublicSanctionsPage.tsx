@@ -64,6 +64,7 @@ export default function PublicSanctionsPage() {
   const [description, setDescription] = useState('');
   const [debouncedDescription, setDebouncedDescription] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
     page: 0,
     pageSize: TABLE_ROWS_PER_PAGE,
@@ -99,12 +100,13 @@ export default function PublicSanctionsPage() {
       pagination: GridPaginationModel
     ) => {
       setLoading(true);
-      await getPlayerSanctionByFilterRef.current({
+      const response = await getPlayerSanctionByFilterRef.current({
         tournamentId: tournamentId || undefined,
         description: desc || undefined,
         pageNumber: pagination.page + 1,
         pageSize: pagination.pageSize,
       });
+      setRowCount(response?.totalCount ?? 0);
       setLoading(false);
     },
     []
@@ -193,6 +195,8 @@ export default function PublicSanctionsPage() {
           autoHeight
           disableRowSelectionOnClick
           disableColumnMenu
+          paginationMode="server"
+          rowCount={rowCount}
           pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
           paginationModel={paginationModel}
           onPaginationModelChange={handlePaginationModelChange}

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import {
   Box,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -14,6 +15,7 @@ import { GUID } from '@/modules/core/types/types';
 import { Position } from '@/modules/division/type/division.d';
 import { sortPositions } from '@/modules/division/utils/sortPositions';
 import PrintableResultsSheet from '@/views/division/PrintableResultsSheet';
+import TeamLogo from '@/views/core/components/TeamLogo';
 
 interface DivisionStandingsProps {
   positions?: Position[];
@@ -80,7 +82,12 @@ const DivisionStandings: React.FC<DivisionStandingsProps> = ({
             {rows.map((row, index) => (
               <TableRow key={row.teamId} hover>
                 <TableCell>{index + 1}</TableCell>
-                <TableCell>{row.teamName}</TableCell>
+                <TableCell>
+                  <Stack direction="row" alignItems="center" spacing={1.5}>
+                    <TeamLogo teamName={row.teamName} logoUrl={row.logoUrl} size={24} />
+                    <Box component="span">{row.teamName}</Box>
+                  </Stack>
+                </TableCell>
                 <TableCell align="center">{row.matchesPlayed}</TableCell>
                 <TableCell align="center">{row.wins}</TableCell>
                 <TableCell align="center">{row.losses}</TableCell>

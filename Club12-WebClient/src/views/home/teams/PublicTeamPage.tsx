@@ -8,12 +8,7 @@ import {
   Divider,
   Grid,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
+  Stack,
   Typography,
 } from '@mui/material';
 import { useTeam } from '@/modules/team/hook/team.hook';
@@ -102,24 +97,39 @@ export default function PublicTeamPage() {
           Este equipo no tiene jugadores registrados.
         </Typography>
       ) : (
-        <TableContainer component={Paper} variant="outlined">
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>#</TableCell>
-                <TableCell>Nombre</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {team.players.map((player, index) => (
-                <TableRow key={player.id} hover>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>{player.fullName}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <Grid container spacing={1.5}>
+          {team.players.map((player, index) => (
+            <Grid item xs={12} sm={6} key={player.id}>
+              <Paper
+                variant="outlined"
+                sx={{ px: 2, py: 1.25 }}
+              >
+                <Stack direction="row" alignItems="center" spacing={2}>
+                  <Box
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: '50%',
+                      bgcolor: 'secondary.main',
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {index + 1}
+                  </Box>
+                  <Typography variant="body2" fontWeight={500} noWrap>
+                    {player.fullName}
+                  </Typography>
+                </Stack>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
       )}
     </Container>
   );

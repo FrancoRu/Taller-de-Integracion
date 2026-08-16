@@ -194,6 +194,12 @@ export type Position = {
   teamName: string;
 
   /**
+   * The URL of the team's logo.
+   * @type {string}
+   */
+  logoUrl: string;
+
+  /**
    * The number of matches the team has played.
    * @type {number}
    */
