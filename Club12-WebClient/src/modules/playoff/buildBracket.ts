@@ -3,6 +3,7 @@ import { IMatchResponse } from '@/modules/match/type/match.d';
 import { IStageResponse, StageType } from '@/modules/stage/type/stage';
 import { BracketEdge, BracketGroup, BracketModel, BracketRound } from '@/modules/playoff/type/bracket.d';
 import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
+import { aggregateLegScores, aggregateTieWinner } from '@/modules/playoff/matchStatus';
 
 /**
  * Canonical bracket depth order for the "main path" stage types. ThirdPlace
@@ -27,11 +28,109 @@ const sortMainStages = (stages: IStageResponse[]): IStageResponse[] =>
     return a.order - b.order;
   });
 
-const buildRound = (stage: IStageResponse, matches: IMatchResponse[]): BracketRound => ({
-  stageId: stage.id,
-  stageType: stage.stageType,
-  matches: matches.filter(match => match.stageId === stage.id),
-});
+/**
+ * Groups a stage's raw matches by the (unordered) pair of team ids
+ * involved, so that legs of the same tie played by the same two teams —
+ * e.g. a home-and-away semifinal recorded as separate `Match` rows —
+ * share one key. A match missing either team id (a TBD slot or bye) gets
+ * a key unique to itself, so it's never merged with anything.
+ */
+const pairKey = (match: IMatchResponse): string => {
+  const homeId = match.homeTeam?.id;
+  const visitorId = match.visitorTeam?.id;
+  if (!homeId || !visitorId) return `single:${match.id}`;
+  return [homeId, visitorId].sort().join('|');
+};
+
+/**
+ * Collapses every raw match sharing the same team pair into one
+ * aggregate `IMatchResponse`-shaped tie node: each side's score is the
+ * sum of its finished legs (see {@link aggregateLegScores}), and the tie
+ * counts as finished, with a winner, only once every leg has been played
+ * and the aggregate isn't level (see {@link aggregateTieWinner}). Team
+ * identity, logo, players and scorers are carried over from the first
+ * (chronologically earliest) leg, since only the score differs per leg.
+ */
+const buildTieMatch = (stageId: GUID, legs: IMatchResponse[]): IMatchResponse => {
+  const first = legs[0];
+  const totals = aggregateLegScores(legs);
+  const winner = aggregateTieWinner(legs);
+
+  const withAggregateScore = (
+    team: IMatchResponse['homeTeam']
+  ): IMatchResponse['homeTeam'] => (team ? { ...team, score: totals.get(team.id) ?? 0 } : team);
+
+  return {
+    id: `tie:${stageId}:${pairKey(first)}`,
+    matchDate: first.matchDate,
+    matchType: first.matchType,
+    slug: '',
+    homeTeam: withAggregateScore(first.homeTeam),
+    visitorTeam: withAggregateScore(first.visitorTeam),
+    isFinished: legs.every(leg => leg.isFinished),
+    winningTeamId: winner?.winningTeamId ?? null,
+    winningTeamName: winner?.winningTeamName ?? null,
+    venue: null,
+    stageId,
+  };
+};
+
+/**
+ * Groups a stage's matches by team pair (see {@link pairKey}). A pair
+ * with a single row passes through unchanged — the common case of one
+ * match per bracket slot. A pair with more than one row (multiple legs
+ * of the same tie) collapses into one aggregate tie node via
+ * {@link buildTieMatch}, with its legs recorded in the returned
+ * `legsByMatchId` map (chronologically ordered) so the view can render a
+ * per-leg breakdown alongside the aggregate score.
+ */
+const groupTiesByTeamPair = (
+  stageId: GUID,
+  matches: IMatchResponse[]
+): { matches: IMatchResponse[]; legsByMatchId: Map<GUID, IMatchResponse[]> } => {
+  const groups = new Map<string, IMatchResponse[]>();
+  const order: string[] = [];
+
+  for (const match of matches) {
+    const key = pairKey(match);
+    const group = groups.get(key);
+    if (group) group.push(match);
+    else {
+      groups.set(key, [match]);
+      order.push(key);
+    }
+  }
+
+  const groupedMatches: IMatchResponse[] = [];
+  const legsByMatchId = new Map<GUID, IMatchResponse[]>();
+
+  for (const key of order) {
+    const legs = groups.get(key)!;
+    if (legs.length === 1) {
+      groupedMatches.push(legs[0]);
+      continue;
+    }
+
+    const orderedLegs = [...legs].sort((a, b) => a.matchDate.localeCompare(b.matchDate));
+    const tie = buildTieMatch(stageId, orderedLegs);
+    groupedMatches.push(tie);
+    legsByMatchId.set(tie.id, orderedLegs);
+  }
+
+  return { matches: groupedMatches, legsByMatchId };
+};
+
+const buildRound = (stage: IStageResponse, matches: IMatchResponse[]): BracketRound => {
+  const stageMatches = matches.filter(match => match.stageId === stage.id);
+  const { matches: groupedMatches, legsByMatchId } = groupTiesByTeamPair(stage.id, stageMatches);
+
+  return {
+    stageId: stage.id,
+    stageType: stage.stageType,
+    matches: groupedMatches,
+    legsByMatchId,
+  };
+};
 
 const participantIds = (match: IMatchResponse): GUID[] =>
   [match.homeTeam?.id, match.visitorTeam?.id].filter((id): id is GUID => Boolean(id));

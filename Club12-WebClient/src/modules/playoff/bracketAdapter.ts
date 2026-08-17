@@ -24,6 +24,13 @@ export interface PlayoffLibraryMatch extends LibraryMatch {
   id: GUID;
   nextMatchId: GUID | null;
   raw: IMatchResponse;
+  /**
+   * The individual legs this node aggregates (chronologically ordered),
+   * when `raw` collapses more than one raw `Match` row between the same
+   * two teams — see `buildBracket.ts`'s tie grouping. Undefined for the
+   * common case of one match per bracket slot.
+   */
+  legs?: IMatchResponse[];
 }
 
 const toParticipant = (match: IMatchResponse, side: 'home' | 'visitor'): LibraryParticipant => {
@@ -144,6 +151,7 @@ export function toLibraryMatches(model: BracketModel): PlayoffLibraryMatch[] {
       state: matchState(match),
       participants: [toParticipant(match, 'home'), toParticipant(match, 'visitor')],
       raw: match,
+      legs: round.legsByMatchId?.get(match.id),
     }));
   });
 }

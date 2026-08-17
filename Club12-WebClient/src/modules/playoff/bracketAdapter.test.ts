@@ -161,6 +161,41 @@ describe('toLibraryMatches', () => {
     expect(libraryRoundLabels(model)).toEqual(['SEMIFINAL', 'FINAL']);
   });
 
+  it("carries a round's legsByMatchId entry as the library match's legs, for multi-leg ties", () => {
+    const tieMatch = makeMatch({ id: guid('tie'), stageId: guid('sf') });
+    const leg1 = makeMatch({ id: guid('leg1'), stageId: guid('sf') });
+    const leg2 = makeMatch({ id: guid('leg2'), stageId: guid('sf') });
+
+    const model: BracketModel = {
+      rounds: [
+        {
+          stageId: guid('sf'),
+          stageType: StageType.SemiFinal,
+          matches: [tieMatch],
+          legsByMatchId: new Map([[tieMatch.id, [leg1, leg2]]]),
+        },
+      ],
+      edges: [],
+    };
+
+    const [match] = toLibraryMatches(model);
+
+    expect(match.legs).toEqual([leg1, leg2]);
+  });
+
+  it('leaves legs undefined when the round carries no legsByMatchId entry for a match', () => {
+    const finalMatch = makeMatch({ id: guid('m-final'), stageId: guid('final') });
+
+    const model: BracketModel = {
+      rounds: [{ stageId: guid('final'), stageType: StageType.Final, matches: [finalMatch] }],
+      edges: [],
+    };
+
+    const [match] = toLibraryMatches(model);
+
+    expect(match.legs).toBeUndefined();
+  });
+
   it('carries the raw match and per-side participant ids for a TBD slot', () => {
     const finalMatch = makeMatch({
       id: guid('m-final'),

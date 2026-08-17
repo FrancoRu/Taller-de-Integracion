@@ -19,6 +19,6 @@ interface BracketMatchLibraryAdapterProps extends Pick<LibraryMatchComponentProp
  * carried on `match.raw` by {@link toLibraryMatches}.
  */
 export default function BracketMatchLibraryAdapter({ match, seriesById }: BracketMatchLibraryAdapterProps) {
-  const { raw } = match as unknown as PlayoffLibraryMatch;
-  return <BracketMatchNode match={raw} series={seriesById?.get(raw.id)} />;
+  const { raw, legs } = match as unknown as PlayoffLibraryMatch;
+  return <BracketMatchNode match={raw} series={seriesById?.get(raw.id)} legs={legs} />;
 }

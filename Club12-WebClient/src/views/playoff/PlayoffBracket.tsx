@@ -94,7 +94,11 @@ export default function PlayoffBracket({ model, seriesById }: PlayoffBracketProp
             <Stack spacing={2}>
               {model.thirdPlace.matches.map(match => (
                 <Box key={match.id} sx={{ height: PLAYOFF_BRACKET_BOX_HEIGHT }}>
-                  <BracketMatchNode match={match} series={seriesById?.get(match.id)} />
+                  <BracketMatchNode
+                    match={match}
+                    series={seriesById?.get(match.id)}
+                    legs={model.thirdPlace?.legsByMatchId?.get(match.id)}
+                  />
                 </Box>
               ))}
             </Stack>
