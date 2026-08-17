@@ -34,6 +34,12 @@ export interface UpdateUserRequest {
   username?: string;
   email?: string;
   phone?: string;
+  /**
+   * Optional. When set, replaces the target user's role. Only ADMIN and
+   * OWNER may set this, and the caller's exact assignment policy (plus the
+   * guard against changing your own role) is enforced server-side.
+   */
+  role?: UserRolesType;
 }
 
 export interface ChangePasswordRequest {

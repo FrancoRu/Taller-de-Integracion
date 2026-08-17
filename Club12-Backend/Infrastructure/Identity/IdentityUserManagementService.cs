@@ -130,6 +130,11 @@ public sealed class IdentityUserManagementService(
             ThrowIfFailed(await userManager.SetPhoneNumberAsync(user, request.Phone));
         }
 
+        if (request.Role.HasValue)
+        {
+            await ChangeRoleAsync(user, request.Role.Value, callerRole, callerId);
+        }
+
         return await MapOneAsync(user);
     }
 
@@ -284,6 +289,87 @@ public sealed class IdentityUserManagementService(
         }
 
         throw new UnauthorizedAccessException(ErrorMessages.User.InsufficientPermissionsToDelete);
+    }
+
+    /// <summary>
+    /// Which roles each caller role may assign to another user. Mirrors the
+    /// account-creation policy: ADMIN can assign any role, OWNER can only
+    /// promote/demote a subordinate to TOURNAMENT_MANAGER (the only role an
+    /// OWNER is ever allowed to create). Keeping this separate from
+    /// EnforceRoleChangeAccess's ownership check means a privilege-escalation
+    /// attempt fails even if the ownership check were ever loosened.
+    /// </summary>
+    private static readonly Dictionary<string, HashSet<string>> _roleChangePolicy =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            [Roles.Admin] = new(StringComparer.OrdinalIgnoreCase)
+            {
+                Roles.Admin, Roles.Owner, Roles.TournamentManager, Roles.TeamManager
+            },
+            [Roles.Owner] = new(StringComparer.OrdinalIgnoreCase)
+            {
+                Roles.TournamentManager
+            }
+        };
+
+    /// <summary>
+    /// Replaces the target user's role with <paramref name="newRole"/> so they
+    /// end up in exactly one role (never accumulating multiple). Validates the
+    /// role value itself, then delegates to EnforceRoleChangeAccess for the
+    /// privilege-escalation and ownership checks before touching Identity.
+    /// </summary>
+    private async Task ChangeRoleAsync(
+        ApplicationUser user, UserRoleType newRole, string callerRole, Guid callerId)
+    {
+        if (!Enum.IsDefined(newRole))
+        {
+            throw new ArgumentException(ErrorMessages.User.InvalidRole(newRole));
+        }
+
+        string targetRoleName = newRole.ToRoleName();
+        EnforceRoleChangeAccess(user, callerRole, callerId, targetRoleName);
+
+        IList<string> currentRoles = await userManager.GetRolesAsync(user);
+        if (currentRoles.Count > 0)
+        {
+            ThrowIfFailed(await userManager.RemoveFromRolesAsync(user, currentRoles));
+        }
+
+        ThrowIfFailed(await userManager.AddToRoleAsync(user, targetRoleName));
+    }
+
+    /// <summary>
+    /// A user may never change their own role — even an ADMIN — since that is
+    /// the one path that could otherwise let someone grant themselves a more
+    /// privileged role. Beyond that: ADMIN may change any user's role; OWNER
+    /// may only change a role for their own subordinates, and only to a role
+    /// <see cref="_roleChangePolicy"/> allows OWNER to assign.
+    /// </summary>
+    private static void EnforceRoleChangeAccess(
+        ApplicationUser target, string callerRole, Guid callerId, string targetRoleName)
+    {
+        if (target.Id == callerId)
+        {
+            throw new InvalidOperationException(ErrorMessages.User.CannotChangeOwnRole);
+        }
+
+        bool hasJurisdictionOverTarget =
+            IsAdmin(callerRole) || (IsOwner(callerRole) && target.CreatedByOwnerId == callerId);
+
+        if (!hasJurisdictionOverTarget)
+        {
+            throw new UnauthorizedAccessException(ErrorMessages.User.InsufficientPermissionsToChangeRole);
+        }
+
+        bool allowedToAssignTargetRole =
+            _roleChangePolicy.TryGetValue(callerRole, out HashSet<string>? permittedRoles)
+            && permittedRoles.Contains(targetRoleName);
+
+        if (!allowedToAssignTargetRole)
+        {
+            throw new UnauthorizedAccessException(
+                ErrorMessages.User.RoleNotAllowedToAssign(callerRole, targetRoleName));
+        }
     }
 
     private async Task<UserResponse> MapOneAsync(ApplicationUser user)

@@ -32,21 +32,16 @@ import {
 } from '@/views/core/MUI/icons/icons';
 import { useUser } from '@/modules/user/hook/user.hook';
 import { UserFilterRequest, UserResponse } from '@/modules/user/type/user';
-import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
+import {
+  USER_ROLE_LABELS,
+  UserRolesType,
+} from '@/modules/core/enum/user/userRolesType';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import {
   TABLE_PAGE_SIZE_OPTIONS,
   TABLE_ROWS_PER_PAGE,
 } from '@/modules/core/constants/pagination';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
-
-const ROLE_LABELS: Record<UserRolesType, string> = {
-  ADMIN: 'Admin',
-  OWNER: 'Owner',
-  TOURNAMENT_MANAGER: 'Responsable del Torneo',
-  TEAM_MANAGER: 'Responsable de Equipo',
-  GUEST: 'Invitado',
-};
 
 const EMPTY_FILTERS: UserFilterRequest = {};
 
@@ -198,7 +193,7 @@ const UsersPage: React.FC = () => {
         flex: 1,
         minWidth: 160,
         renderCell: params =>
-          ROLE_LABELS[params.row.role as UserRolesType] ?? params.row.role,
+          USER_ROLE_LABELS[params.row.role as UserRolesType] ?? params.row.role,
       },
       {
         field: 'isActive',
@@ -331,7 +326,7 @@ const UsersPage: React.FC = () => {
               )
               .map(role => (
                 <MenuItem key={role} value={role}>
-                  {ROLE_LABELS[role]}
+                  {USER_ROLE_LABELS[role]}
                 </MenuItem>
               ))}
           </TextField>

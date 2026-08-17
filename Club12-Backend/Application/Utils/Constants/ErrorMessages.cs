@@ -46,10 +46,22 @@ public static class ErrorMessages
         public const string CannotChangeOwnActiveState = "You cannot change the active state of your own account.";
         public const string InsufficientPermissionsToDelete = "Insufficient permissions to delete this user.";
         public const string PasswordResetRestricted = "Only Admins and Owners (for their own subordinates) can reset passwords.";
+        public const string CannotChangeOwnRole = "You cannot change your own role.";
+        public const string InsufficientPermissionsToChangeRole = "Insufficient permissions to change this user's role.";
 
         public static string NotFound(string userId)
         {
             return $"User '{userId}' not found.";
+        }
+
+        public static string InvalidRole(object role)
+        {
+            return $"'{role}' is not a valid role.";
+        }
+
+        public static string RoleNotAllowedToAssign(string callerRole, string targetRole)
+        {
+            return $"Role '{callerRole}' is not allowed to assign role '{targetRole}'.";
         }
     }
 
