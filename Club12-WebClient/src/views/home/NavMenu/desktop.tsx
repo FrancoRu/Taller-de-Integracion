@@ -117,28 +117,6 @@ const DesktopNavItems: React.FC<DesktopNavItemsProps> = ({
 
       <ListItemButton
         component={Link}
-        to={`/${RoutesNavigationViews.Teams}`}
-        selected={isSelected(`/${RoutesNavigationViews.Teams}`)}
-        onClick={() =>
-          handleNavigationAndCloseMenu(`/${RoutesNavigationViews.Teams}`)
-        }
-      >
-        <ListItemText primary="Equipos" />
-      </ListItemButton>
-
-      <ListItemButton
-        component={Link}
-        to={`/${RoutesNavigationViews.Scorers}`}
-        selected={isSelected(`/${RoutesNavigationViews.Scorers}`)}
-        onClick={() =>
-          handleNavigationAndCloseMenu(`/${RoutesNavigationViews.Scorers}`)
-        }
-      >
-        <ListItemText primary="Goleadores" />
-      </ListItemButton>
-
-      <ListItemButton
-        component={Link}
         to={`/${RoutesNavigationViews.Tournaments}`}
         selected={location.pathname.startsWith('/torneos')}
         onClick={() =>
@@ -146,17 +124,6 @@ const DesktopNavItems: React.FC<DesktopNavItemsProps> = ({
         }
       >
         <ListItemText primary="Torneos" />
-      </ListItemButton>
-
-      <ListItemButton
-        component={Link}
-        to={`/${RoutesNavigationViews.Matches}`}
-        selected={isSelected(`/${RoutesNavigationViews.Matches}`)}
-        onClick={() =>
-          handleNavigationAndCloseMenu(`/${RoutesNavigationViews.Matches}`)
-        }
-      >
-        <ListItemText primary="Partidos" />
       </ListItemButton>
 
       <ListItemButton

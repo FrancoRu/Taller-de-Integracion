@@ -33,11 +33,8 @@ interface QuickNavItem {
 }
 
 const QUICK_NAV_ITEMS: QuickNavItem[] = [
-  { label: 'Torneos', description: 'Divisiones, posiciones y copa', path: APP_ROUTES.publicTournaments },
-  { label: 'Partidos', description: 'Fixture y resultados', path: APP_ROUTES.publicMatches },
-  { label: 'Goleadores', description: 'Ranking por división y copa', path: APP_ROUTES.publicScorers },
+  { label: 'Torneos', description: 'Divisiones, posiciones, goleadores, partidos y copa', path: APP_ROUTES.publicTournaments },
   { label: 'Sanciones', description: 'Suspensiones vigentes', path: APP_ROUTES.publicSanctions },
-  { label: 'Equipos', description: 'Planteles de la liga', path: APP_ROUTES.publicTeams },
 ];
 
 const stripHtml = (html: string) => {
@@ -177,8 +174,7 @@ export default function Home() {
               key={item.path}
               size={{
                 xs: 12,
-                sm: 6,
-                md: 2.4
+                sm: 6
               }}>
               <Card sx={{ height: '100%' }}>
                 <CardActionArea sx={{ height: '100%' }} component={Link} to={item.path}>
