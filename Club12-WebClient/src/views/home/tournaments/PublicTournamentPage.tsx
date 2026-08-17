@@ -379,7 +379,12 @@ export default function PublicTournamentPage() {
             <CircularProgress />
           </Box>
         ) : activeDivision ? (
-          <PublicDivisionPanel division={activeDivision} />
+          // key forces a fresh mount per division — without it React reuses
+          // the same instance across division switches and its lazy-loaded
+          // state (stages/matches/brackets/top scorers) never resets, so a
+          // different division's Partidos/Llaves/Goleadores view would keep
+          // showing whichever division's data loaded first.
+          <PublicDivisionPanel key={activeDivision.id} division={activeDivision} />
         ) : null
       )}
       </Box>
