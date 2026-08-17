@@ -481,3 +481,8 @@ appsettings.Tomi.json
 # Local tooling cache
 .atl/
 /Club12-Backend/API/appsettings.Facundo.json
+
+# Playwright E2E artifacts
+/Club12-WebClient/test-results/
+/Club12-WebClient/playwright-report/
+/Club12-WebClient/blob-report/
