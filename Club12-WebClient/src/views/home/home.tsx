@@ -152,15 +152,6 @@ export default function Home() {
             >
               Ver torneos
             </Button>
-            <Button
-              variant="outlined"
-              size="large"
-              sx={{ color: '#fff', borderColor: '#fff', '&:hover': { borderColor: '#fff', bgcolor: 'rgba(255,255,255,0.08)' } }}
-              component={Link}
-              to={APP_ROUTES.publicMatches}
-            >
-              Ver partidos
-            </Button>
           </Stack>
         </Container>
       </Box>

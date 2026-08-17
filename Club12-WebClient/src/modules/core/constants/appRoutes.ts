@@ -14,13 +14,11 @@ export const APP_ROUTES = {
   reglamento: '/reglamento',
   forbidden: '/forbidden',
 
-  publicTeams: '/equipos',
   publicTeam: {
     pattern: '/equipos/:teamId',
     build: (teamId: string) => `/equipos/${teamId}`,
   },
   publicSanctions: '/sanciones',
-  publicMatches: '/partidos',
   publicMatch: {
     pattern: '/partidos/:matchId',
     build: (matchId: string) => `/partidos/${matchId}`,

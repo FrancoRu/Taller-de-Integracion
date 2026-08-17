@@ -50,7 +50,7 @@ export default function PublicTeamPage() {
         <Typography variant="h5" component="h1" sx={{
           mb: 2
         }}>Equipo no encontrado</Typography>
-        <Button onClick={() => navigate(APP_ROUTES.publicTeams)}>Volver a equipos</Button>
+        <Button onClick={() => navigate(APP_ROUTES.publicTournaments)}>Volver a torneos</Button>
       </Container>
     );
   }
@@ -58,11 +58,11 @@ export default function PublicTeamPage() {
   return (
     <Container maxWidth="md" sx={{ py: 5 }}>
       <Button
-        onClick={() => navigate(APP_ROUTES.publicTeams)}
+        onClick={() => navigate(APP_ROUTES.publicTournaments)}
         sx={{ mb: 3, pl: 0 }}
         color="inherit"
       >
-        ← Volver a equipos
+        ← Volver a torneos
       </Button>
 
       <Box
