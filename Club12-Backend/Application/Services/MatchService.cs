@@ -269,26 +269,19 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
     }
 
     /// <summary>
-    /// Resolves the concrete team identities to pair for this group stage,
-    /// so the generated matches can actually be seeded (not left empty).
-    /// Prefers teams explicitly assigned to this stage via StageTeamMatch;
-    /// falls back to the tournament's full roster only when the division
-    /// has a single group stage (otherwise there is no way to know which
-    /// specific teams belong to this stage). Returns an empty list when
-    /// neither source unambiguously yields exactly <paramref name="expectedTeamCount"/>
-    /// teams — the matches are still created, just left unseeded, exactly
-    /// like before this pairing logic existed.
+    /// Resolves the concrete team identities to pair for a group stage that
+    /// has NOT had teams explicitly assigned via StageTeamMatch yet (see
+    /// <see cref="BuildGroupStageMatchesAsync"/>, which only calls this as a
+    /// fallback). Guesses the roster from the tournament's full team list,
+    /// but only when the division has a single group stage — otherwise
+    /// there is no way to know which specific teams belong to this one.
+    /// Returns an empty list when that guess doesn't unambiguously yield
+    /// exactly <paramref name="expectedTeamCount"/> teams — the matches are
+    /// still created, just left unseeded, exactly like before this pairing
+    /// logic existed.
     /// </summary>
     private async Task<List<Guid>> ResolveGroupTeamIdsAsync(Stage stage, int expectedTeamCount)
     {
-        List<Guid> assignedTeamIds = [.. (await _stageTeamMatchRepository.FindAsync(stm => stm.StageId == stage.Id))
-            .Select(stm => stm.TeamId)];
-
-        if (assignedTeamIds.Count == expectedTeamCount)
-        {
-            return assignedTeamIds;
-        }
-
         int totalGroups = await _stageRepository.CountAsync(s =>
             s.DivisionId == stage.DivisionId && s.StageType == StageType.Group);
 
@@ -304,8 +297,31 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
             : [];
     }
 
+    /// <summary>
+    /// A stage that already has teams explicitly assigned via StageTeamMatch
+    /// (the tournament wizard's flow: register every team to the tournament,
+    /// then assign each zone's own subset to its own group stage) always
+    /// uses exactly those teams — never the tournament-wide/single-group
+    /// guess in <see cref="ResolveGroupTeamCountAsync"/>/<see
+    /// cref="ResolveGroupTeamIdsAsync"/>, which assumes the whole
+    /// tournament is one division. Without this short-circuit, a
+    /// multi-division tournament (any real one with more than one
+    /// zone/group) would silently pair every zone's matches from the
+    /// tournament's ENTIRE team list instead of that zone's own assigned
+    /// teams, because "registered teams ÷ groups in this division" (=
+    /// "registered teams ÷ 1") always equals the tournament-wide total, not
+    /// this stage's actual roster.
+    /// </summary>
     private async Task<List<Match>> BuildGroupStageMatchesAsync(Stage stage)
     {
+        List<Guid> assignedTeamIds = [.. (await _stageTeamMatchRepository.FindAsync(stm => stm.StageId == stage.Id))
+            .Select(stm => stm.TeamId)];
+
+        if (assignedTeamIds.Count >= 2)
+        {
+            return await CreateGroupStageMatchesAsync(stage, assignedTeamIds.Count, assignedTeamIds);
+        }
+
         int teamCount = await ResolveGroupTeamCountAsync(stage);
         List<Guid> teamIds = await ResolveGroupTeamIdsAsync(stage, teamCount);
         return await CreateGroupStageMatchesAsync(stage, teamCount, teamIds);

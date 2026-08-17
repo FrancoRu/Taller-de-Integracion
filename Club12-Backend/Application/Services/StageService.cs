@@ -5,6 +5,7 @@ using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Utils.Constants;
 using Application.Utils.Constants.Stage;
+using Application.Utils.Constants.Validation;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.Playoff;
 using Application.Utils.Helper.StageHelper;
@@ -233,7 +234,17 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     {
         IEnumerable<StageTeamMatch> existingMatches = await _stageTeamMatchRepository.FindAsync(stageTeamMatch => stageTeamMatch.StageId == stage.Id);
 
-        int maxTeams = StageHelper.GetMaxTeamsForStage(stage.StageType);
+        // MaxTeams.GROUP (4) is the auto-bracket-generator's fixed group
+        // SIZE (see CreateAutomatedStagesAsync below), not a general cap on
+        // how many teams a Group-type stage may ever hold. A single Group
+        // stage manually built by the tournament wizard represents a whole
+        // zone's round-robin phase and can legitimately need far more than
+        // 4 teams (e.g. a 9- or 14-team zone), so it's capped at the same
+        // ceiling the tournament itself enforces instead of the
+        // auto-generator's per-group size.
+        int maxTeams = stage.StageType == StageType.Group
+            ? TournamentFieldRange.MaxAllowedTeams
+            : StageHelper.GetMaxTeamsForStage(stage.StageType);
         int availableSlots = maxTeams - existingMatches.Count();
 
         if (availableSlots <= 0)

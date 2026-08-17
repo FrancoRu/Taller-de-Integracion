@@ -6,7 +6,15 @@
 public static class MaxTeams
 {
     /// <summary>
-    /// Maximum number of teams in the group stage.
+    /// Standard number of teams per group used by
+    /// <see cref="Application.Services.StageService.CreateAutomatedStagesAsync"/>
+    /// to partition a division's registered teams into same-sized Group
+    /// stages (registeredTeams / GROUP groups). NOT a general "how many
+    /// teams can a Group-type stage ever hold" cap — a single Group stage
+    /// manually built by the tournament wizard (one per zone, arbitrary
+    /// team count) is a different shape entirely and is intentionally NOT
+    /// bounded by this constant; see the Group case carved out in
+    /// StageService.AssignTeamsToStageAsync.
     /// </summary>
     public const int GROUP = 4;
 
