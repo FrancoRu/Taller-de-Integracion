@@ -1,4 +1,6 @@
+import { useMemo } from 'react';
 import {
+  Alert,
   Box,
   Chip,
   Divider,
@@ -49,14 +51,39 @@ export default function DivisionesStep({ teams, zones, onChange }: DivisionesSte
   const teamName = (teamId: GUID): string =>
     teams.find(team => team.id === teamId)?.name ?? teamId;
 
+  /** The zone each team currently belongs to, if any — a team is in at most one zone at a time. */
+  const zoneByTeamId = useMemo(() => {
+    const map = new Map<GUID, ZoneConfig>();
+    zones.forEach(zone => {
+      zone.teamIds.forEach(teamId => map.set(teamId, zone));
+    });
+    return map;
+  }, [zones]);
+
+  const unassignedTeams = useMemo(
+    () => teams.filter(team => !zoneByTeamId.has(team.id)),
+    [teams, zoneByTeamId]
+  );
+
   return (
     <Stack spacing={3}>
       <Typography variant="body2" sx={{
         color: "text.secondary"
       }}>
         Cada zona tiene un nombre libre, sus equipos, una fase de grupos opcional y tantas copas
-        paralelas como quieras (cada una con su propio nombre y formato por ronda).
+        paralelas como quieras (cada una con su propio nombre y formato por ronda). Hacé clic en
+        un equipo para asignarlo a una zona: si ya estaba en otra, se mueve automáticamente.
       </Typography>
+
+      {zones.length > 0 && (
+        <Alert severity={unassignedTeams.length > 0 ? 'warning' : 'success'}>
+          {unassignedTeams.length > 0
+            ? `${unassignedTeams.length} equipo(s) todavía sin zona: ${unassignedTeams
+                .map(team => team.name)
+                .join(', ')}.`
+            : 'Todos los equipos inscriptos ya tienen una zona asignada.'}
+        </Alert>
+      )}
 
       {zones.map(zone => (
         <Box key={zone.id} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>
@@ -82,7 +109,8 @@ export default function DivisionesStep({ teams, zones, onChange }: DivisionesSte
           <Typography variant="caption" sx={{
             color: "text.secondary"
           }}>
-            Equipos de esta zona ({zone.teamIds.length})
+            Equipos de esta zona ({zone.teamIds.length}) — clic para agregar/quitar, o para
+            traer un equipo desde otra zona
           </Typography>
           <Stack
             direction="row"
@@ -92,15 +120,25 @@ export default function DivisionesStep({ teams, zones, onChange }: DivisionesSte
               mb: 2,
               mt: 0.5
             }}>
-            {teams.map(team => (
-              <Chip
-                key={team.id}
-                label={teamName(team.id)}
-                color={zone.teamIds.includes(team.id) ? 'primary' : 'default'}
-                variant={zone.teamIds.includes(team.id) ? 'filled' : 'outlined'}
-                onClick={() => onChange(toggleTeamInZone(zones, zone.id, team.id))}
-              />
-            ))}
+            {teams.map(team => {
+              const inThisZone = zone.teamIds.includes(team.id);
+              const otherZone = !inThisZone ? zoneByTeamId.get(team.id) : undefined;
+              const isInOtherZone = Boolean(otherZone && otherZone.id !== zone.id);
+
+              return (
+                <Chip
+                  key={team.id}
+                  label={
+                    isInOtherZone
+                      ? `${teamName(team.id)} · en "${otherZone!.name || '(sin nombre)'}"`
+                      : teamName(team.id)
+                  }
+                  color={inThisZone ? 'primary' : isInOtherZone ? 'warning' : 'default'}
+                  variant={inThisZone ? 'filled' : 'outlined'}
+                  onClick={() => onChange(toggleTeamInZone(zones, zone.id, team.id))}
+                />
+              );
+            })}
           </Stack>
 
           <Stack
