@@ -115,8 +115,8 @@ La API queda disponible con Swagger UI para explorar y probar todos los endpoint
 
 ```bash
 cd Club12-WebClient
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 
 ### Tests
@@ -126,7 +126,7 @@ npm run dev
 dotnet test Club12-Backend/Solution/Club12.sln
 
 # frontend — Vitest + Testing Library
-cd Club12-WebClient && npm run test
+cd Club12-WebClient && pnpm run test
 ```
 
 ## Estado del proyecto
