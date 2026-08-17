@@ -21,6 +21,7 @@ using Infrastructure.Backup;
 using Infrastructure.Identity;
 using Infrastructure.Persistance;
 using Infrastructure.Repositories;
+using Infrastructure.Storage;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;

@@ -1,5 +1,6 @@
-﻿using Application.Utils.Constants;
+using Application.Utils.Constants;
 using Application.Utils.Constants.Configuration;
+using Application.Utils.Helper.SupabaseHelper;
 
 using Microsoft.Extensions.Configuration;
 
@@ -11,7 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Application.Utils.Helper.SupabaseHelper;
+namespace Infrastructure.Storage;
 
 /// <summary>
 /// Provides helper methods to interact with Supabase storage,
