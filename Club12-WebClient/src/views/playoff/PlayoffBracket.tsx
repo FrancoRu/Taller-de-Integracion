@@ -1,11 +1,18 @@
-import { useRef } from 'react';
+import { useMemo } from 'react';
 import { Box, Stack, Typography } from '@mui/material';
+import { SingleEliminationBracket } from '@g-loot/react-tournament-brackets';
+import type { LibraryMatchComponentProps } from '@/modules/playoff/type/gLootBracketTypes.d';
 import { BracketModel } from '@/modules/playoff/type/bracket.d';
 import { GUID } from '@/modules/core/types/types';
 import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
-import { translateStageType } from '@/modules/core/utils/translateStageType';
+import { toLibraryMatches, libraryRoundLabels } from '@/modules/playoff/bracketAdapter';
 import BracketMatchNode from '@/views/playoff/BracketMatchNode';
-import BracketConnectors from '@/views/playoff/BracketConnectors';
+import BracketMatchLibraryAdapter from '@/views/playoff/BracketMatchLibraryAdapter';
+import {
+  PLAYOFF_BRACKET_BOX_HEIGHT,
+  PLAYOFF_BRACKET_OPTIONS,
+  PLAYOFF_BRACKET_THEME,
+} from '@/views/playoff/playoffBracketTheme';
 
 interface PlayoffBracketProps {
   model: BracketModel;
@@ -18,17 +25,19 @@ interface PlayoffBracketProps {
 }
 
 /**
- * Renders one division's elimination bracket: round columns left-to-right
- * (Cuartos -> Semifinal -> Final), the Final as the rightmost/terminal
- * node, ThirdPlace as a side match beside it, and SVG connectors inferred
- * client-side from `model.edges`.
+ * Renders one division's elimination bracket using
+ * `@g-loot/react-tournament-brackets` for round layout and connector
+ * lines (Cuartos -> Semifinal -> Final), with the ThirdPlace match shown
+ * as an unconnected side slot beside the Final. `BracketMatchLibraryAdapter`
+ * swaps in this app's own `BracketMatchNode` card (team logos, best-of-N
+ * series breakdown, dark theme) in place of the library's default look.
  */
 export default function PlayoffBracket({ model, seriesById }: PlayoffBracketProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const nodeRefs = useRef<Map<GUID, HTMLDivElement | null>>(new Map());
+  const matches = useMemo(() => toLibraryMatches(model), [model]);
+  const roundLabels = useMemo(() => libraryRoundLabels(model), [model]);
 
   const hasThirdPlace = Boolean(model.thirdPlace && model.thirdPlace.matches.length > 0);
-  const isEmpty = model.rounds.length === 0 && !hasThirdPlace;
+  const isEmpty = matches.length === 0 && !hasThirdPlace;
 
   if (isEmpty) {
     return (
@@ -39,39 +48,34 @@ export default function PlayoffBracket({ model, seriesById }: PlayoffBracketProp
     );
   }
 
+  const matchComponent = ({ match }: LibraryMatchComponentProps) => (
+    <BracketMatchLibraryAdapter match={match} seriesById={seriesById} />
+  );
+
   return (
-    <Box ref={containerRef} sx={{ position: 'relative', overflowX: 'auto', py: 2 }}>
-      <Stack direction="row" spacing={5} sx={{
-        alignItems: "flex-start"
-      }}>
-        {model.rounds.map(round => (
-          <Stack key={round.stageId} spacing={3} sx={{ minWidth: 220 }}>
-            <Typography
-              variant="subtitle2"
-              component="h3"
-              sx={{
-                fontFamily: "'Oswald', sans-serif",
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-                color: 'secondary.main',
+    <Box sx={{ overflowX: 'auto', py: 2 }}>
+      <Stack direction="row" spacing={5} sx={{ alignItems: 'flex-start' }}>
+        {matches.length > 0 && (
+          <Box>
+            <SingleEliminationBracket
+              matches={matches}
+              matchComponent={matchComponent}
+              theme={PLAYOFF_BRACKET_THEME}
+              options={{
+                style: {
+                  ...PLAYOFF_BRACKET_OPTIONS,
+                  roundHeader: {
+                    ...PLAYOFF_BRACKET_OPTIONS.roundHeader,
+                    roundTextGenerator: (roundNumber: number) => roundLabels[roundNumber - 1],
+                  },
+                },
               }}
-            >
-              {translateStageType(round.stageType)}
-            </Typography>
-            <Stack spacing={4}>
-              {round.matches.map(match => (
-                <BracketMatchNode
-                  key={match.id}
-                  match={match}
-                  series={seriesById?.get(match.id)}
-                  ref={node => {
-                    nodeRefs.current.set(match.id, node);
-                  }}
-                />
-              ))}
-            </Stack>
-          </Stack>
-        ))}
+              svgWrapper={({ children, bracketWidth, bracketHeight }) => (
+                <Box sx={{ width: bracketWidth, height: bracketHeight }}>{children}</Box>
+              )}
+            />
+          </Box>
+        )}
 
         {hasThirdPlace && model.thirdPlace && (
           <Stack spacing={3} sx={{ minWidth: 220, alignSelf: 'flex-end' }}>
@@ -89,21 +93,14 @@ export default function PlayoffBracket({ model, seriesById }: PlayoffBracketProp
             </Typography>
             <Stack spacing={2}>
               {model.thirdPlace.matches.map(match => (
-                <BracketMatchNode
-                  key={match.id}
-                  match={match}
-                  series={seriesById?.get(match.id)}
-                  ref={node => {
-                    nodeRefs.current.set(match.id, node);
-                  }}
-                />
+                <Box key={match.id} sx={{ height: PLAYOFF_BRACKET_BOX_HEIGHT }}>
+                  <BracketMatchNode match={match} series={seriesById?.get(match.id)} />
+                </Box>
               ))}
             </Stack>
           </Stack>
         )}
       </Stack>
-
-      <BracketConnectors edges={model.edges} containerRef={containerRef} nodeRefs={nodeRefs} />
     </Box>
   );
 }
