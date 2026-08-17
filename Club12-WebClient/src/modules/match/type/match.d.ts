@@ -1,4 +1,4 @@
-import { Filtered, GUID } from '@/modules/core/types/types';
+import { Filtered, GenericResponsePagination, GUID } from '@/modules/core/types/types';
 import { MatchType } from '@/modules/core/enum/match/matchType';
 import { ITeamMatchResponse } from '@/modules/team/type/team';
 import { IVenueResponse } from '@/modules/venue/type/venue';

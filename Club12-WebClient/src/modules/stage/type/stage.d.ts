@@ -1,4 +1,4 @@
-import { Filtered, GUID } from '@/modules/core/types/types';
+import { Filtered, GenericResponsePagination, GUID } from '@/modules/core/types/types';
 
 /**
  * Represents the context properties and operations available for managing stages.
