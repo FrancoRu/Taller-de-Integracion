@@ -29,6 +29,16 @@ const formatDate = (value?: string | Date | null) => {
     : parsed.toLocaleDateString('es-AR', { dateStyle: 'short' });
 };
 
+/**
+ * Sanctions recorded as a permanent/indefinite ban (e.g. expulsion) are
+ * stored with an arbitrarily large duration rather than a real match-day
+ * count — show it as "Permanente" instead of a literal, meaningless number.
+ */
+const PERMANENT_SANCTION_DURATION_THRESHOLD = 999;
+
+const formatSanctionDuration = (duration: number) =>
+  duration >= PERMANENT_SANCTION_DURATION_THRESHOLD ? 'Permanente' : duration;
+
 const columns: GridColDef<IPlayerSanctionResponse>[] = [
   {
     field: 'playerFullName',
@@ -41,6 +51,7 @@ const columns: GridColDef<IPlayerSanctionResponse>[] = [
     headerName: 'Duración (fechas)',
     flex: 0.7,
     minWidth: 130,
+    renderCell: params => formatSanctionDuration(params.row.duration),
   },
   {
     field: 'issuedDate',
