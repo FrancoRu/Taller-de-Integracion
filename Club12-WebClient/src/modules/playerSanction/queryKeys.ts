@@ -1,4 +1,3 @@
-import { GUID } from '@/modules/core/types/types';
 import { IPlayerSanctionFiltered } from '@/modules/playerSanction/type/playerSanction.d';
 
 export const playerSanctionKeys = {
@@ -6,5 +5,5 @@ export const playerSanctionKeys = {
     filter === undefined
       ? (['playerSanction', 'list'] as const)
       : (['playerSanction', 'list', filter] as const),
-  byId: (id: GUID) => ['playerSanction', 'byId', id] as const,
+  byId: (idOrSlug: string) => ['playerSanction', 'byId', idOrSlug] as const,
 };

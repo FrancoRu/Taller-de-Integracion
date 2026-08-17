@@ -90,13 +90,13 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const getPlayerSanctionById = useCallback(
-    async (id: GUID): Promise<IPlayerSanctionResponse | void> => {
+    async (idOrSlug: string): Promise<IPlayerSanctionResponse | void> => {
       try {
         const res: AxiosResponse<IPlayerSanctionResponse> =
           await queryClient.fetchQuery({
-            queryKey: playerSanctionKeys.byId(id),
+            queryKey: playerSanctionKeys.byId(idOrSlug),
             queryFn: async () =>
-              await playerSanctionService.getPlayerSanctionById(id),
+              await playerSanctionService.getPlayerSanctionById(idOrSlug),
           });
 
         if (res) {
