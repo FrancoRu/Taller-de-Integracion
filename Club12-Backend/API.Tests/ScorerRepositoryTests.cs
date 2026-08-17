@@ -402,6 +402,7 @@ public class ScorerRepositoryTests : IClassFixture<CustomWebApplicationFactory>
         {
             MatchDate = stage.StartDate,
             Type = MatchType.Regular,
+            Slug = $"match-{Guid.NewGuid()}",
             IsFinished = true,
             Stage = stage,
             StageId = stage.Id,

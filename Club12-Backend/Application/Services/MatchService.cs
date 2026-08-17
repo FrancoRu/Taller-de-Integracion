@@ -6,6 +6,7 @@ using Application.Utils.Constants;
 using Application.Utils.Constants.Stage;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.RoundRobin;
+using Application.Utils.Helper.Slug;
 
 using Domain.Constants;
 using Domain.Entities.Models;
@@ -32,6 +33,13 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
 
     public async Task<Match> CreateMatchAsync(Match matchEntity)
     {
+        string homeTeamName = await ResolveTeamNameAsync(matchEntity.HomeTeamId);
+        string visitorTeamName = await ResolveTeamNameAsync(matchEntity.VisitorTeamId);
+
+        matchEntity.Slug = await SlugGenerator.GenerateUniqueSlugAsync(
+            MatchSlugSourceBuilder.Build(homeTeamName, visitorTeamName, matchEntity.MatchDate),
+            candidate => _matchRepository.ExistsAsync(match => match.Slug == candidate));
+
         await _matchRepository.AddAsync(matchEntity);
         return matchEntity;
     }
@@ -39,6 +47,27 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
     public async Task<Match?> GetMatchByIdAsync(Guid matchId)
     {
         return await _matchRepository.GetByIdAsync(matchId, includes: [m => m.HomeTeam!, m => m.VisitorTeam!]);
+    }
+
+    /// <summary>
+    /// Retrieves a match by its id or its slug, including its home/visitor
+    /// teams. The value is treated as an id when it parses as a GUID,
+    /// otherwise it is looked up as a slug.
+    /// </summary>
+    /// <param name="idOrSlug">The match's GUID id or its slug.</param>
+    /// <returns>The match entity if found; otherwise, null.</returns>
+    public async Task<Match?> GetMatchByIdOrSlugAsync(string idOrSlug)
+    {
+        if (Guid.TryParse(idOrSlug, out Guid matchId))
+        {
+            return await GetMatchByIdAsync(matchId);
+        }
+
+        IEnumerable<Match> matches = await _matchRepository.FindAsync(
+            match => match.Slug == idOrSlug,
+            includes: [match => match.HomeTeam!, match => match.VisitorTeam!]);
+
+        return matches.FirstOrDefault();
     }
 
     public async Task<Match?> GetMatchByIdWithScorersAsync(Guid matchId)
@@ -124,17 +153,85 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
             _ => throw new NotSupportedException(ErrorMessages.Match.StageTypeNotSupportedForAutomatedCreation)
         };
 
+        await AssignMatchSlugsAsync(matches);
 
         await _matchRepository.AddRangeAsync(matches);
         return matches;
     }
 
+    /// <summary>
+    /// Resolves a team's name for slug composition, without requiring the
+    /// caller to have loaded the Team navigation property.
+    /// </summary>
+    /// <param name="teamId">The team's id, or null when no team is assigned.</param>
+    /// <returns>The team's name, or <see cref="MatchSlugSourceBuilder.UnassignedTeamPlaceholder"/>
+    /// when <paramref name="teamId"/> is null or does not resolve to a team.</returns>
+    private async Task<string> ResolveTeamNameAsync(Guid? teamId)
+    {
+        if (!teamId.HasValue)
+        {
+            return MatchSlugSourceBuilder.UnassignedTeamPlaceholder;
+        }
+
+        Team? team = await _teamRepository.GetByIdAsync(teamId.Value);
+        return team?.Name ?? MatchSlugSourceBuilder.UnassignedTeamPlaceholder;
+    }
+
+    /// <summary>
+    /// Assigns a unique slug to every match in a freshly built batch (e.g. a
+    /// stage's full fixture) before it is persisted. Team names are
+    /// prefetched once for the whole batch to avoid N+1 queries. Uniqueness
+    /// is checked against both already-persisted matches and the slugs
+    /// already assigned earlier in this same batch, since none of the
+    /// batch's matches exist in the repository yet when this runs.
+    /// </summary>
+    private async Task AssignMatchSlugsAsync(List<Match> matches)
+    {
+        List<Guid> teamIds = [.. matches
+            .SelectMany(match => new[] { match.HomeTeamId, match.VisitorTeamId })
+            .Where(teamId => teamId.HasValue)
+            .Select(teamId => teamId!.Value)
+            .Distinct()];
+
+        Dictionary<Guid, string> teamNamesById = teamIds.Count == 0
+            ? []
+            : (await _teamRepository.FindAsync(team => teamIds.Contains(team.Id)))
+                .ToDictionary(team => team.Id, team => team.Name);
+
+        HashSet<string> slugsAssignedInBatch = [];
+
+        foreach (Match match in matches)
+        {
+            string homeTeamName = ResolveTeamNameFromMap(match.HomeTeamId, teamNamesById);
+            string visitorTeamName = ResolveTeamNameFromMap(match.VisitorTeamId, teamNamesById);
+
+            match.Slug = await SlugGenerator.GenerateUniqueSlugAsync(
+                MatchSlugSourceBuilder.Build(homeTeamName, visitorTeamName, match.MatchDate),
+                async candidate => slugsAssignedInBatch.Contains(candidate)
+                    || await _matchRepository.ExistsAsync(m => m.Slug == candidate));
+
+            slugsAssignedInBatch.Add(match.Slug);
+        }
+    }
+
+    private static string ResolveTeamNameFromMap(Guid? teamId, IReadOnlyDictionary<Guid, string> teamNamesById) =>
+        teamId.HasValue && teamNamesById.TryGetValue(teamId.Value, out string? name)
+            ? name
+            : MatchSlugSourceBuilder.UnassignedTeamPlaceholder;
+
+    /// <summary>
+    /// Builds an unpersisted match for a stage's automated fixture. Slug is
+    /// a placeholder here — every match built this way is later persisted
+    /// only via CreateAutomatedMatchesAsync, which overwrites it with a real
+    /// one in AssignMatchSlugsAsync before the batch is saved.
+    /// </summary>
     private static Match BuildMatch(Stage stage, DateTime matchDate, MatchType matchType = MatchType.Playoff)
     {
         return new()
         {
             StageId = stage.Id,
             Type = matchType,
+            Slug = string.Empty,
             IsFinished = false,
             MatchDate = matchDate,
             CreatedBy = AuditConstants.SystemUser

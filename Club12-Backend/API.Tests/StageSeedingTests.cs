@@ -257,6 +257,7 @@ public class StageSeedingTests : IClassFixture<CustomWebApplicationFactory>
         {
             StageId = stage.Id,
             Type = MatchType.Regular,
+            Slug = $"match-{Guid.NewGuid()}",
             MatchDate = stage.StartDate,
             HomeTeamId = home.Id,
             VisitorTeamId = visitor.Id,
@@ -277,6 +278,7 @@ public class StageSeedingTests : IClassFixture<CustomWebApplicationFactory>
         {
             StageId = stage.Id,
             Type = MatchType.Playoff,
+            Slug = $"match-{Guid.NewGuid()}",
             MatchDate = stage.StartDate.AddMinutes(db.Matches.Count(m => m.StageId == stage.Id)),
             IsFinished = false,
             CreatedBy = "test",

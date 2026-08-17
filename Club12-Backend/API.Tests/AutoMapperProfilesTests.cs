@@ -45,6 +45,7 @@ public class AutoMapperProfilesTests
             CreatedBy = "system",
             MatchDate = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
             Type = Domain.Enums.MatchType.Regular,
+            Slug = $"match-{Guid.NewGuid()}",
             HomeTeam = homeTeam,
             VisitorTeam = visitorTeam,
             IsFinished = false,

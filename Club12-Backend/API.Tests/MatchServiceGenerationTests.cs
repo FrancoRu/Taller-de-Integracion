@@ -187,6 +187,39 @@ public class MatchServiceGenerationTests : IClassFixture<CustomWebApplicationFac
         Assert.All(matches, m => Assert.Null(m.HomeTeamId));
     }
 
+    /// <summary>
+    /// Every match built in one CreateAutomatedMatchesAsync call is unpersisted
+    /// until the whole batch is saved together, so a naive uniqueness check
+    /// against the repository alone would miss collisions between matches in
+    /// the same batch. Forcing a single-day stage range collapses every
+    /// unseeded match's slug source ("TBD vs TBD {date}") to the same base
+    /// slug, proving the batch-local dedup in AssignMatchSlugsAsync actually
+    /// catches it and resolves it via the usual -2/-3 suffixing.
+    /// </summary>
+    [Fact]
+    public async Task CreateAutomatedMatchesAsync_GroupStage_UnseededMatchesShareSameDate_AssignsUniqueSlugsViaSuffix()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IMatchService matchService = scope.ServiceProvider.GetRequiredService<IMatchService>();
+
+        DateTime sameDate = DateTime.UtcNow.Date;
+        (_, _, List<Stage> stages, _) = await SeedGroupStageWithTeamsAsync(db, teamsPerGroup: 4, groupCount: 2, sameDate, sameDate);
+
+        List<Match> matches = await matchService.CreateAutomatedMatchesAsync(stages[0].Id);
+
+        // Assertions intentionally avoid pinning exact suffix values: this test
+        // class shares one SQLite database across its fixture, so an earlier
+        // test may already own the bare (unsuffixed) slug for "today" — the
+        // point under test is that all 6 in-batch collisions resolve to
+        // distinct slugs, not which exact suffix each one lands on.
+        string expectedBasePrefix = $"tbd-vs-tbd-{sameDate:yyyy-MM-dd}";
+
+        Assert.Equal(6, matches.Count);
+        Assert.All(matches, m => Assert.StartsWith(expectedBasePrefix, m.Slug));
+        Assert.Equal(matches.Count, matches.Select(m => m.Slug).Distinct().Count());
+    }
+
     [Fact]
     public async Task CreateAutomatedMatchesAsync_GroupStage_EndDateBeforeStartDate_ThrowsArgumentException()
     {

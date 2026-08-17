@@ -95,21 +95,21 @@ public class MatchController(IMatchService matchService, IStageTeamMatchService 
     }
 
     /// <summary>
-    /// Retrieves a match by its id.
+    /// Retrieves a match by its id or its public slug.
     /// </summary>
-    /// <param name="id">The id of the match.</param>
+    /// <param name="idOrSlug">Match identifier (GUID) or slug.</param>
     /// <returns>The match response DTO.</returns>
     [AllowAnonymous]
-    [HttpGet("{id:guid}")]
+    [HttpGet("{idOrSlug}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedMatchResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<DetailedMatchResponse>> GetMatchById(Guid id)
+    public async Task<ActionResult<DetailedMatchResponse>> GetMatchById(string idOrSlug)
     {
-        Match? match = await matchService.GetMatchByIdAsync(id);
+        Match? match = await matchService.GetMatchByIdOrSlugAsync(idOrSlug);
 
         if (match is null)
         {
-            return this.NotFoundProblem(nameof(Match), id);
+            return this.NotFoundProblem(nameof(Match), idOrSlug);
         }
 
         DetailedMatchResponse matchResponse = mapper.Map<DetailedMatchResponse>(match);
