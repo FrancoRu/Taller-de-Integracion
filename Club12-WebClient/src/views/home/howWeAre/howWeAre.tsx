@@ -8,30 +8,31 @@ const paragraphs = [
 
 export default function HowWeAre() {
   return (
-    <Box sx={{ bgcolor: 'secondary.main', color: '#fff', py: { xs: 6, md: 8 } }}>
-      <Container maxWidth="md">
-        <Typography
-          variant="h3"
-          component="h1"
-          sx={{ fontWeight: 700, mb: 2 }}
-        >
-          ¿Quiénes somos?
-        </Typography>
-        <Typography
-          sx={{
-            fontSize: '1.15rem',
-            color: 'rgba(255,255,255,0.85)',
-            mb: 5,
-            maxWidth: 640,
-          }}
-        >
-          Una liga de básquet amateur hecha por y para quienes aman este
-          deporte: competencia, compañerismo y buena onda dentro y fuera de
-          la cancha.
-        </Typography>
-      </Container>
+    <Box>
+      <Box sx={{ bgcolor: 'secondary.main', color: '#fff', py: { xs: 6, md: 8 } }}>
+        <Container maxWidth="md">
+          <Typography
+            variant="h3"
+            component="h1"
+            sx={{ fontWeight: 700, mb: 2 }}
+          >
+            ¿Quiénes somos?
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '1.15rem',
+              color: 'rgba(255,255,255,0.85)',
+              maxWidth: 640,
+            }}
+          >
+            Una liga de básquet amateur hecha por y para quienes aman este
+            deporte: competencia, compañerismo y buena onda dentro y fuera de
+            la cancha.
+          </Typography>
+        </Container>
+      </Box>
 
-      <Box sx={{ bgcolor: 'background.default', color: 'text.primary', pt: { xs: 5, md: 6 } }}>
+      <Box sx={{ bgcolor: 'background.default', color: 'text.primary', py: { xs: 5, md: 6 } }}>
         <Container maxWidth="md">
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {paragraphs.map((text, index) => (
