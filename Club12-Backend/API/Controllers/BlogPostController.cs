@@ -125,21 +125,21 @@ public class BlogPostController(
     }
 
     /// <summary>
-    /// Retrieves a blog post by its id.
+    /// Retrieves a blog post by its id or its public slug.
     /// </summary>
-    /// <param name="id">The id of the blog post to retrieve.</param>
-    /// <returns>The blog post with the specified id.</returns>
+    /// <param name="idOrSlug">Blog post identifier (GUID) or slug.</param>
+    /// <returns>The blog post with the specified id or slug.</returns>
     [AllowAnonymous]
-    [HttpGet("{id:guid}")]
+    [HttpGet("{idOrSlug}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BlogPostResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<BlogPostResponse>> GetBlogPostById(Guid id)
+    public async Task<ActionResult<BlogPostResponse>> GetBlogPostById(string idOrSlug)
     {
-        BlogPost? blogPost = await blogPostService.GetBlogPostByIdAsync(id);
+        BlogPost? blogPost = await blogPostService.GetBlogPostByIdOrSlugAsync(idOrSlug);
 
         if (blogPost is null)
         {
-            return this.NotFoundProblem(nameof(BlogPost), id);
+            return this.NotFoundProblem(nameof(BlogPost), idOrSlug);
         }
 
         blogPost.Views++;

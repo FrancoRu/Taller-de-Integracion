@@ -82,7 +82,7 @@ public class SupabaseDependentControllerNotFoundTests
         BlogPostController controller = new(new NotFoundBlogPostService(), null!, new NotUsedMapper());
         ConfigureProblemDetailsFactory(controller);
 
-        ActionResult<BlogPostResponse> result = await controller.GetBlogPostById(Guid.NewGuid());
+        ActionResult<BlogPostResponse> result = await controller.GetBlogPostById(Guid.NewGuid().ToString());
 
         AssertNotFoundProblem(result.Result, "BlogPost");
     }
@@ -195,6 +195,11 @@ public class SupabaseDependentControllerNotFoundTests
         }
 
         public Task<BlogPost?> GetBlogPostByIdAsync(Guid blogPostId)
+        {
+            return Task.FromResult<BlogPost?>(null);
+        }
+
+        public Task<BlogPost?> GetBlogPostByIdOrSlugAsync(string idOrSlug)
         {
             return Task.FromResult<BlogPost?>(null);
         }

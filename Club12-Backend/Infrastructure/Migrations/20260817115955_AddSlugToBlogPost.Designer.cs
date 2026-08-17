@@ -3,17 +3,20 @@ using System;
 using Infrastructure.Persistance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Persistance.Migrations
+namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260817115955_AddSlugToBlogPost")]
+    partial class AddSlugToBlogPost
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -373,11 +376,6 @@ namespace Persistance.Migrations
                     b.Property<Guid>("PlayerId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Slug")
-                        .IsRequired()
-                        .HasMaxLength(220)
-                        .HasColumnType("character varying(220)");
-
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("text");
 
@@ -389,9 +387,6 @@ namespace Persistance.Migrations
                     b.HasIndex("MatchId");
 
                     b.HasIndex("PlayerId");
-
-                    b.HasIndex("Slug")
-                        .IsUnique();
 
                     b.ToTable("PlayerSanctions", "Club12");
                 });

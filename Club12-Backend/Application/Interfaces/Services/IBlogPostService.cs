@@ -28,6 +28,15 @@ public interface IBlogPostService
     Task<BlogPost?> GetBlogPostByIdAsync(Guid blogPostId);
 
     /// <summary>
+    /// Retrieves a blog post by its id or its public slug. The value is
+    /// treated as an id when it parses as a GUID, otherwise it is looked up
+    /// as a slug.
+    /// </summary>
+    /// <param name="idOrSlug">The blog post's GUID id or its slug.</param>
+    /// <returns>The blog post with the specified id or slug, or null if not found.</returns>
+    Task<BlogPost?> GetBlogPostByIdOrSlugAsync(string idOrSlug);
+
+    /// <summary>
     /// Deletes a blog post.
     /// </summary>
     /// <param name="id">The id of the blog post to delete.</param>
