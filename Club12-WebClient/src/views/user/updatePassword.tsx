@@ -214,7 +214,7 @@ const UpdatePassword: React.FC<UpdatePasswordProps> = ({
         <Typography variant="h6" sx={{
           mb: 2
         }}>
-          Cambiar password
+          Cambiar contraseña
         </Typography>
 
         {errors && errors.length > 0 && (

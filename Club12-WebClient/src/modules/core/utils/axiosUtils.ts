@@ -12,7 +12,7 @@ const TOKEN_KEY: string = COOKIE_SIGNIN_TOKEN;
 const INVALID_TOKEN_PATH = routes.tokenInvalido;
 
 type headersContent = {
-  'Content-Type': string;
+  'Content-Type'?: string;
   Authorization?: string;
 };
 
@@ -189,6 +189,9 @@ const sendRequest = async <T>(
   query?: object
 ): Promise<AxiosResponse<T>> => {
   const headers = getHeaders(configOverride);
+  if (body instanceof FormData) {
+    delete headers['Content-Type'];
+  }
   const url = buildEndpoint(resource, query);
   try {
     const result: AxiosResponse<T> = await axios.request({

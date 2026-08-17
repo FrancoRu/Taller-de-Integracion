@@ -3,7 +3,6 @@ import { Link, useLocation } from 'react-router-dom';
 import { Box, List, ListItemButton, ListItemText, Collapse } from '@mui/material';
 import { ExpandLessIcon, ExpandMoreIcon } from '@/views/core/MUI/icons/icons';
 import { RoutesNavigationViews } from '@/views/core/routes-const';
-import TournamentMenuItems from '@/views/home/tournaments/tournamentsMenuItems';
 
 interface MobileNavItemsProps {
   onCloseDrawer: () => void;
@@ -146,8 +145,6 @@ const MobileNavItems: React.FC<MobileNavItemsProps> = ({ onCloseDrawer }) => {
       >
         <ListItemText primary="Novedades" />
       </ListItemButton>
-
-      <TournamentMenuItems onNavigate={handleNavigationAndCloseDrawer} />
     </List>
     </Box>
   );

@@ -1,5 +1,9 @@
 import Swal from 'sweetalert2';
-import theme, { CANCEL_BUTTON_COLOR } from '@/theme';
+import { CANCEL_BUTTON_COLOR, getTheme } from '@/theme';
+
+const theme = getTheme('dark');
+const DIALOG_BACKGROUND = theme.palette.background.paper;
+const DIALOG_TEXT_COLOR = theme.palette.text.primary;
 
 type NotifyIcon = 'success' | 'error' | 'warning' | 'info';
 
@@ -30,6 +34,8 @@ async function notify(icon: NotifyIcon, options: NotifyOptions): Promise<void> {
     text: options.text,
     icon,
     confirmButtonColor: theme.palette.primary.main,
+    background: DIALOG_BACKGROUND,
+    color: DIALOG_TEXT_COLOR,
   });
 }
 
@@ -79,6 +85,8 @@ export async function confirmAction(options: ConfirmActionOptions): Promise<bool
     cancelButtonColor: options.cancelButtonColor ?? CANCEL_BUTTON_COLOR,
     confirmButtonText: options.confirmButtonText ?? 'Confirmar',
     cancelButtonText: options.cancelButtonText ?? 'Cancelar',
+    background: DIALOG_BACKGROUND,
+    color: DIALOG_TEXT_COLOR,
   });
 
   return result.isConfirmed;

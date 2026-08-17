@@ -4,6 +4,12 @@ import Swal from 'sweetalert2';
 import { ProviderProps } from '@/modules/core/types/types';
 import { BadRequestResponse, IErrorContextProp } from '@/modules/error/type/error.d';
 import { HttpStatus } from '@/modules/core/constants/httpStatus';
+import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
+import { getTheme } from '@/theme';
+
+const theme = getTheme('dark');
+const DIALOG_BACKGROUND = theme.palette.background.paper;
+const DIALOG_TEXT_COLOR = theme.palette.text.primary;
 
 export const ErrorContext = createContext<IErrorContextProp | undefined>(
   undefined
@@ -13,13 +19,21 @@ export const ErrorProvider: React.FC<ProviderProps> = ({ children }) => {
   const [errors, setErrors] = useState<string[]>([]);
 
   const isBadRequestResponse = (data: unknown): data is BadRequestResponse => {
-    return (
-      typeof data === 'object' &&
-      data !== null &&
-      'detail' in data &&
-      'title' in data &&
-      'status' in data
-    );
+    return typeof data === 'object' && data !== null && 'title' in data;
+  };
+
+  /**
+   * ASP.NET returns two shapes of problem response: a plain ProblemDetails
+   * with a `detail` string, or a ValidationProblemDetails with an `errors`
+   * dictionary of field -> messages. This flattens either into one
+   * human-readable message instead of falling back to the raw axios error
+   * text (e.g. "Network Error", "Request failed with status code 400").
+   */
+  const extractMessage = (data: BadRequestResponse): string => {
+    if (data.errors) {
+      return Object.values(data.errors).flat().join(' ');
+    }
+    return data.detail ?? data.title ?? ERROR_MESSAGES.GENERIC_ERROR;
   };
 
   /**
@@ -28,30 +42,23 @@ export const ErrorProvider: React.FC<ProviderProps> = ({ children }) => {
    */
   const setError = (error: AxiosError) => {
     const data = error.response?.data;
-    if (isBadRequestResponse(data)) {
-      const message = data.detail ?? 'Error in the request';
-      const status =
-        data.statusCode ?? error.response?.status ?? HttpStatus.BadRequest;
+    const message = isBadRequestResponse(data)
+      ? extractMessage(data)
+      : error.response
+        ? ERROR_MESSAGES.GENERIC_ERROR
+        : ERROR_MESSAGES.NETWORK_ERROR;
+    const status =
+      (isBadRequestResponse(data) ? (data.statusCode ?? data.status) : undefined) ??
+      error.response?.status ??
+      HttpStatus.InternalServerError;
 
-      setErrors(prevErrors => {
-        if (!prevErrors.includes(message)) {
-          return [...prevErrors, message];
-        }
-        return prevErrors;
-      });
-      setMessage(status, [message]);
-    } else {
-      const fallbackMessage = error.message || 'Unknown error';
-      setErrors(prevErrors => {
-        if (!prevErrors.includes(fallbackMessage)) {
-          return [...prevErrors, fallbackMessage];
-        }
-        return prevErrors;
-      });
-      setMessage(error.response?.status ?? HttpStatus.InternalServerError, [
-        fallbackMessage,
-      ]);
-    }
+    setErrors(prevErrors => {
+      if (!prevErrors.includes(message)) {
+        return [...prevErrors, message];
+      }
+      return prevErrors;
+    });
+    setMessage(status, [message]);
   };
 
   const setMessage = (status: number, message: string[]) => {
@@ -63,7 +70,8 @@ export const ErrorProvider: React.FC<ProviderProps> = ({ children }) => {
       title: messages,
       showConfirmButton: false,
       timer: 1500,
-      color: 'black',
+      background: DIALOG_BACKGROUND,
+      color: DIALOG_TEXT_COLOR,
     });
   };
 

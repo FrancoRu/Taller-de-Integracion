@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -23,13 +23,13 @@ import {
 } from '@/modules/tournament/utils/tournamentDisplay';
 
 export function TournamentCard({ tournament }: { tournament: ITournamentResponse }) {
-  const navigate = useNavigate();
   const status = tournament.status as TournamentStatus;
 
   return (
     <Card sx={{ height: '100%' }}>
       <CardActionArea
-        onClick={() => navigate(APP_ROUTES.publicTournament.build(tournament.id))}
+        component={Link}
+        to={APP_ROUTES.publicTournament.build(tournament.id)}
         sx={{ height: '100%', alignItems: 'flex-start', display: 'flex', flexDirection: 'column' }}
       >
         <CardContent sx={{ width: '100%' }}>

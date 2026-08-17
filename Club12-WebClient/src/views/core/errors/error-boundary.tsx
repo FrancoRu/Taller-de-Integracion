@@ -1,7 +1,6 @@
 import React, { Component, ErrorInfo } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import { Link } from 'react-router-dom';
-import { orange, grey } from '@mui/material/colors';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -44,36 +43,30 @@ class ErrorBoundary extends Component<
             justifyContent: 'center',
             height: '100vh',
             textAlign: 'center',
-            backgroundColor: grey[200],
+            backgroundColor: 'background.default',
             padding: 3,
           }}
         >
           <Typography
             variant="h2"
-            sx={{ color: orange[500], fontWeight: 'bold' }}
+            sx={{ color: 'primary.main', fontWeight: 'bold' }}
           >
-            Something Went Wrong
+            Algo salió mal
           </Typography>
-          <Typography variant="h5" sx={{ marginTop: 2, fontStyle: 'italic' }}>
-            We encountered an unexpected error.
+          <Typography variant="h5" sx={{ marginTop: 2, fontStyle: 'italic', color: 'text.primary' }}>
+            Ocurrió un error inesperado.
           </Typography>
-          <Typography variant="body1" sx={{ marginTop: 2, color: grey[800] }}>
-            <i>{this.state.error?.message || 'Unknown error occurred.'}</i>
+          <Typography variant="body1" sx={{ marginTop: 2, color: 'text.secondary' }}>
+            <i>{this.state.error?.message || 'Error desconocido.'}</i>
           </Typography>
           <Box sx={{ marginTop: 4 }}>
             <Button
               component={Link}
               to="/"
               variant="contained"
-              sx={{
-                backgroundColor: orange[500],
-                color: grey[900],
-                '&:hover': {
-                  backgroundColor: orange[700],
-                },
-              }}
+              color="primary"
             >
-              Back to Home
+              Volver al inicio
             </Button>
           </Box>
         </Box>

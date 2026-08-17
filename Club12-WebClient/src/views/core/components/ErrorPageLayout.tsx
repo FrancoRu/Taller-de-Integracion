@@ -1,6 +1,5 @@
 import { Box, Divider, Typography } from '@mui/material';
 import { ReactNode } from 'react';
-import theme from '@/theme';
 
 interface ErrorPageLayoutProps {
   code: string | number;
@@ -19,7 +18,7 @@ const ErrorPageLayout: React.FC<ErrorPageLayoutProps> = ({
       justifyContent: 'center',
       minHeight: '100vh',
       textAlign: 'center',
-      backgroundColor: '#fff',
+      backgroundColor: 'background.default',
       padding: 3,
     }}
   >
@@ -28,7 +27,7 @@ const ErrorPageLayout: React.FC<ErrorPageLayoutProps> = ({
       sx={{
         fontSize: { xs: '6rem', sm: '9rem' },
         fontWeight: 700,
-        color: theme.palette.primary.main,
+        color: 'primary.main',
         lineHeight: 1,
       }}
     >
@@ -39,7 +38,7 @@ const ErrorPageLayout: React.FC<ErrorPageLayoutProps> = ({
       sx={{
         width: 60,
         borderBottomWidth: 3,
-        borderColor: theme.palette.primary.main,
+        borderColor: 'primary.main',
         my: 3,
       }}
     />

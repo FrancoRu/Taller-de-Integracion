@@ -33,12 +33,12 @@ import {
   ListItemIcon,
   ListItemText,
   Toolbar,
-  Typography,
   Divider,
 } from '@mui/material';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import { LOGO_BACKGROUND_COLOR } from '@/theme';
 
 const DRAWER_WIDTH = 240;
 
@@ -76,7 +76,7 @@ const TAB_ICONS: Record<string, React.ReactNode> = {
 
 const CONFIGURATION_CHILDREN: NavTab[] = [
   {
-    label: 'Cambiar password',
+    label: 'Cambiar contraseña',
     path: APP_ROUTES.panelChangePassword,
     icon: TAB_ICONS['CambiarPassword'],
   },
@@ -183,7 +183,7 @@ const TABS_BY_ROLE: Record<UserRolesType, NavTab[]> = {
     { label: 'Usuarios', path: APP_ROUTES.panelUsers, icon: TAB_ICONS['Usuarios'] },
     { label: 'Blog', path: APP_ROUTES.panelBlog, icon: TAB_ICONS['Blog'] },
     {
-      label: 'Configuracion',
+      label: 'Configuración',
       icon: TAB_ICONS['Configuracion'],
       children: CONFIGURATION_CHILDREN,
     },
@@ -192,7 +192,7 @@ const TABS_BY_ROLE: Record<UserRolesType, NavTab[]> = {
     { label: 'Usuarios', path: APP_ROUTES.panelUsers, icon: TAB_ICONS['Usuarios'] },
     { label: 'Blog', path: APP_ROUTES.panelBlog, icon: TAB_ICONS['Blog'] },
     {
-      label: 'Configuracion',
+      label: 'Configuración',
       icon: TAB_ICONS['Configuracion'],
       children: CONFIGURATION_CHILDREN,
     },
@@ -223,18 +223,23 @@ const SidebarLayout: React.FC<{ children: React.ReactNode }> = ({
 
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Toolbar sx={{ px: 2 }}>
-        <Typography
-          variant="h6"
-          component="div"
-          noWrap
-          color="primary"
+      <Toolbar sx={{ px: 2, display: 'flex', alignItems: 'center' }}>
+        <Box
           sx={{
-            fontWeight: 700
+            display: 'flex',
+            alignItems: 'center',
+            bgcolor: LOGO_BACKGROUND_COLOR,
+            borderRadius: 1.5,
+            p: 0.5,
           }}
         >
-          Club 12
-        </Typography>
+          <Box
+            component="img"
+            src="/assets/logo-club12.png"
+            alt="Club 12"
+            sx={{ height: 40, width: 'auto', display: 'block' }}
+          />
+        </Box>
       </Toolbar>
       <Divider />
       <Box component="nav" sx={{ flexGrow: 1 }}>

@@ -26,6 +26,7 @@ import routes from './modules/core/constants/routes';
 import { APP_ROUTES } from './modules/core/constants/appRoutes';
 import HowWeAre from './views/home/howWeAre/howWeAre';
 import NavMenu from './views/home/NavMenu/navMenu';
+import Footer from './views/home/Footer/Footer';
 import { useAuth } from './modules/auth/hook/auth.hook';
 import MedicalRecord from './views/home/information/medicalRecord';
 import Regulation from './views/home/information/regulation';
@@ -360,16 +361,17 @@ function App() {
   }
 
   return (
-    <>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <NavMenu />
-      <Box component="main">
+      <Box component="main" sx={{ flex: 1 }}>
         <Routes>
           {PUBLIC_ROUTES.map(({ path, element }) => (
             <Route key={path} path={path} element={element} />
           ))}
         </Routes>
       </Box>
-    </>
+      <Footer />
+    </Box>
   );
 }
 

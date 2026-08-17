@@ -1,7 +1,9 @@
 export interface BadRequestResponse {
-  title: string;
-  detail: string;
-  statusCode: number;
+  title?: string;
+  detail?: string;
+  statusCode?: number;
+  status?: number;
+  errors?: Record<string, string[]>;
 }
 
 interface IErrorContextProp {

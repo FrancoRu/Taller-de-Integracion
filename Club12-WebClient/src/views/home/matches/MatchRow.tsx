@@ -1,6 +1,7 @@
 import { Box, Chip, Stack, Typography } from '@mui/material';
 import { IMatchResponse } from '@/modules/match/type/match.d';
 import TeamLogo from '@/views/core/components/TeamLogo';
+import { getMatchStatusColor, getMatchStatusLabel } from '@/modules/match/utils/matchDisplay';
 
 const formatTime = (value: string) => {
   const parsed = new Date(value);
@@ -54,7 +55,7 @@ export default function MatchRow({ match }: { match: IMatchResponse }) {
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: { xs: '48px 1fr auto 1fr', sm: '56px 1fr auto 1fr 140px' },
+        gridTemplateColumns: { xs: '40px 1fr auto 1fr auto', sm: '56px 1fr auto 1fr 140px' },
         alignItems: 'center',
         gap: { xs: 1, sm: 2 },
         px: 2,
@@ -91,22 +92,26 @@ export default function MatchRow({ match }: { match: IMatchResponse }) {
 
       <TeamSide name={visitor?.name ?? '—'} logoUrl={visitor?.logoUrl} align="left" />
 
-      <Box sx={{ display: { xs: 'none', sm: 'flex' }, justifyContent: 'flex-end' }}>
-        {match.venue ? (
-          <Typography variant="caption" noWrap sx={{
-            color: "text.secondary"
-          }}>
+      <Stack
+        spacing={0.5}
+        sx={{ alignItems: 'flex-end', justifyContent: 'center' }}
+      >
+        <Chip
+          label={getMatchStatusLabel(finished)}
+          size="small"
+          color={getMatchStatusColor(finished)}
+          variant="outlined"
+        />
+        {match.venue && (
+          <Typography
+            variant="caption"
+            noWrap
+            sx={{ color: 'text.secondary', display: { xs: 'none', sm: 'block' } }}
+          >
             {match.venue.name}
           </Typography>
-        ) : (
-          <Chip
-            label={finished ? 'Finalizado' : 'Programado'}
-            size="small"
-            color={finished ? 'success' : 'default'}
-            variant="outlined"
-          />
         )}
-      </Box>
+      </Stack>
     </Box>
   );
 }

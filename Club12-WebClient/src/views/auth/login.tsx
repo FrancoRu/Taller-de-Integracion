@@ -83,6 +83,11 @@ export default function Login() {
             margin="normal"
             value={credentials.password}
             onChange={handleChange}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                void handleLogin();
+              }
+            }}
           />
           <Button
             fullWidth
@@ -90,7 +95,7 @@ export default function Login() {
             color="primary"
             onClick={handleLogin}
           >
-            Iniciar Sesion
+            Iniciar Sesión
           </Button>
         </CardContent>
       </Card>

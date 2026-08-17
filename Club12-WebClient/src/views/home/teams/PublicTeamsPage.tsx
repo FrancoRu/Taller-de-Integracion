@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -20,7 +20,6 @@ import { PUBLIC_SEARCH_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/consta
 import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
 
 export default function PublicTeamsPage() {
-  const navigate = useNavigate();
   const { teams, getTeamsByFiltered } = useTeam();
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
@@ -111,7 +110,8 @@ export default function PublicTeamsPage() {
               }}>
               <Card sx={{ height: '100%' }}>
                 <CardActionArea
-                  onClick={() => navigate(APP_ROUTES.publicTeam.build(team.id))}
+                  component={Link}
+                  to={APP_ROUTES.publicTeam.build(team.id)}
                   sx={{ height: '100%' }}
                 >
                   <CardContent>

@@ -9,7 +9,6 @@ import {
 } from '@mui/material';
 import { ExpandLessIcon, ExpandMoreIcon } from '@/views/core/MUI/icons/icons';
 import { RoutesNavigationViews } from '@/views/core/routes-const';
-import TournamentMenuItems from '@/views/home/tournaments/tournamentsMenuItems';
 
 interface DesktopNavItemsProps {
   onCloseAnyMenu?: () => void;
@@ -181,8 +180,6 @@ const DesktopNavItems: React.FC<DesktopNavItemsProps> = ({
       >
         <ListItemText primary="Novedades" />
       </ListItemButton>
-
-      <TournamentMenuItems onNavigate={handleNavigationAndCloseMenu} />
     </Box>
   );
 };

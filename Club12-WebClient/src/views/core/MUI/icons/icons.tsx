@@ -34,6 +34,10 @@ import StadiumIcon from '@mui/icons-material/Stadium';
 import ShieldIcon from '@mui/icons-material/Shield';
 import ArticleIcon from '@mui/icons-material/Article';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import InstagramIcon from '@mui/icons-material/Instagram';
+import FacebookIcon from '@mui/icons-material/Facebook';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
 
 export {
   DeleteIcon,
@@ -72,4 +76,8 @@ export {
   ShieldIcon,
   ArticleIcon,
   AutoAwesomeIcon,
+  InstagramIcon,
+  FacebookIcon,
+  LightModeIcon,
+  DarkModeIcon,
 };

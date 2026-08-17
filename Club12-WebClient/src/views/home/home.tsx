@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -18,6 +18,7 @@ import { BlogPostResponse } from '@/modules/blogPost/type/blogPost';
 import { GUID } from '@/modules/core/types/types';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
+import { BLOG_HOME_EXCERPT_LENGTH } from '@/modules/blogPost/constants/blogPost';
 import { TournamentCard } from '@/views/home/tournaments/PublicTournamentsPage';
 
 const FEATURED_TOURNAMENTS_COUNT = 3;
@@ -37,7 +38,12 @@ const QUICK_NAV_ITEMS: QuickNavItem[] = [
   { label: 'Equipos', description: 'Planteles de la liga', path: APP_ROUTES.publicTeams },
 ];
 
-const stripHtml = (html: string) => html.replace(/<[^>]*>/g, '');
+const stripHtml = (html: string) => {
+  const withoutTags = html.replace(/<[^>]*>/g, ' ');
+  const decoder = document.createElement('textarea');
+  decoder.innerHTML = withoutTags;
+  return decoder.value.replace(/\s+/g, ' ').trim();
+};
 
 const formatPostDate = (value: Date | string) => {
   const parsed = new Date(value);
@@ -125,7 +131,8 @@ export default function Home() {
             <Button
               variant="contained"
               size="large"
-              onClick={() => navigate(APP_ROUTES.publicTournaments)}
+              component={Link}
+              to={APP_ROUTES.publicTournaments}
             >
               Ver torneos
             </Button>
@@ -133,7 +140,8 @@ export default function Home() {
               variant="outlined"
               size="large"
               sx={{ color: '#fff', borderColor: '#fff', '&:hover': { borderColor: '#fff', bgcolor: 'rgba(255,255,255,0.08)' } }}
-              onClick={() => navigate(APP_ROUTES.publicMatches)}
+              component={Link}
+              to={APP_ROUTES.publicMatches}
             >
               Ver partidos
             </Button>
@@ -154,7 +162,7 @@ export default function Home() {
                 md: 2.4
               }}>
               <Card sx={{ height: '100%' }}>
-                <CardActionArea sx={{ height: '100%' }} onClick={() => navigate(item.path)}>
+                <CardActionArea sx={{ height: '100%' }} component={Link} to={item.path}>
                   <CardContent>
                     <Typography variant="h6" component="h2" sx={{
                       mb: 0.5
@@ -186,7 +194,7 @@ export default function Home() {
             <Typography variant="h4" component="h2">
               Torneos destacados
             </Typography>
-            <Button onClick={() => navigate(APP_ROUTES.publicTournaments)} color="secondary">
+            <Button component={Link} to={APP_ROUTES.publicTournaments} color="secondary">
               Ver todos
             </Button>
           </Box>
@@ -232,7 +240,7 @@ export default function Home() {
             <Typography variant="h4" component="h2">
               Últimas noticias
             </Typography>
-            <Button onClick={() => navigate(APP_ROUTES.publicBlog)} color="secondary">
+            <Button component={Link} to={APP_ROUTES.publicBlog} color="secondary">
               Ver todas
             </Button>
           </Box>
@@ -285,7 +293,7 @@ export default function Home() {
                             WebkitBoxOrient: 'vertical',
                             overflow: 'hidden'
                           }}>
-                          {stripHtml(post.markdownText).slice(0, 160)}
+                          {stripHtml(post.markdownText).slice(0, BLOG_HOME_EXCERPT_LENGTH)}
                         </Typography>
                         <Typography variant="caption" sx={{
                           color: "text.secondary"

@@ -1,11 +1,13 @@
 export const COOKIE_SIGNIN_TOKEN = 'Club12_SignInToken';
 
 export const SUCCESS_MESSAGES = {
-  LOGIN_SUCCESS: 'Logged in successfully',
+  LOGIN_SUCCESS: 'Sesión iniciada correctamente',
 };
 
 export const ERROR_MESSAGES = {
-  GENERIC_ERROR: 'An error occurred. Please try again later.',
+  GENERIC_ERROR: 'Ocurrió un error. Por favor, intentá nuevamente.',
+  NETWORK_ERROR:
+    'No se pudo conectar con el servidor. Verificá tu conexión e intentá nuevamente.',
 };
 
 export const EXPIRATION_TIME = {

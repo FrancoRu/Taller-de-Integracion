@@ -6,6 +6,7 @@ import {
   Typography,
   Button,
   CircularProgress,
+  Stack,
 } from '@mui/material';
 import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
 import {
@@ -16,6 +17,15 @@ import { useNavigate } from 'react-router-dom';
 import { GUID } from '@/modules/core/types/types';
 import { TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import { BLOG_EXCERPT_LENGTH } from '@/modules/blogPost/constants/blogPost';
+
+const stripHtmlToExcerpt = (html: string, maxLength: number): string => {
+  const withoutTags = html.replace(/<[^>]*>/g, ' ');
+  const decoder = document.createElement('textarea');
+  decoder.innerHTML = withoutTags;
+  const text = decoder.value.replace(/\s+/g, ' ').trim();
+  return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
+};
 
 const ShowPosts: React.FC = () => {
   const { getBlogPostsByFilters, getBlogPostsById } = useBlogPost();
@@ -45,18 +55,14 @@ const ShowPosts: React.FC = () => {
         const response = await getBlogPostsByFilters(filterParams);
         if (response) {
           const { items, page, pageSize, totalCount } = response;
-          if (items.length > 0) {
-            setPosts(items);
-            setPagination({ page, pageSize, totalCount });
-          }
+          setPosts(items);
+          setPagination({ page, pageSize, totalCount });
         }
-      } catch (error) {
-        console.error('Error loading blog posts:', error);
       } finally {
         setLoading(false);
       }
     };
-    loadPosts();
+    void loadPosts();
   }, [filterParams, getBlogPostsByFilters]);
 
   const handlePageChange = (direction: 'next' | 'previous') => {
@@ -69,13 +75,9 @@ const ShowPosts: React.FC = () => {
   };
 
   const handleReadMore = async (id: GUID) => {
-    try {
-      const postDetails = await getBlogPostsById(id);
-      if (postDetails) {
-        navigate(APP_ROUTES.blogPost.build(id), { state: { post: postDetails } });
-      }
-    } catch (error) {
-      console.error('Error fetching detailed post:', error);
+    const postDetails = await getBlogPostsById(id);
+    if (postDetails) {
+      navigate(APP_ROUTES.blogPost.build(id), { state: { post: postDetails } });
     }
   };
 
@@ -93,33 +95,32 @@ const ShowPosts: React.FC = () => {
                 sm: 6,
                 md: 4
               }}>
-              <Card sx={{ maxWidth: 345 }}>
-                <CardContent>
-                  <Typography variant="h6">{post.title}</Typography>
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: post.markdownText.substring(0, 150) + '...',
-                    }}
-                  />
+              <Card sx={{ maxWidth: 345, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                  <Typography variant="h6" sx={{ mb: 1 }}>{post.title}</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
+                    {stripHtmlToExcerpt(post.markdownText, BLOG_EXCERPT_LENGTH)}
+                  </Typography>
                   <Button
                     variant="outlined"
                     color="primary"
                     onClick={() => handleReadMore(post.id)}
+                    sx={{ alignSelf: 'flex-start' }}
                   >
-                    Read More
+                    Leer más
                   </Button>
                 </CardContent>
               </Card>
             </Grid>
           ))
         ) : (
-          <Typography variant="body1" color="textSecondary">
-            No posts available.
+          <Typography variant="body1" color="text.secondary">
+            No hay novedades disponibles.
           </Typography>
         )}
       </Grid>
 
-      <div style={{ textAlign: 'center', marginTop: 20 }}>
+      <Stack direction="row" spacing={2} sx={{ justifyContent: 'center', mt: 3 }}>
         {loading ? (
           <CircularProgress />
         ) : (
@@ -129,9 +130,8 @@ const ShowPosts: React.FC = () => {
                 variant="contained"
                 color="secondary"
                 onClick={() => handlePageChange('previous')}
-                sx={{ marginTop: 3, marginRight: 2 }}
               >
-                Previous
+                Anterior
               </Button>
             )}
 
@@ -140,14 +140,13 @@ const ShowPosts: React.FC = () => {
                 variant="contained"
                 color="primary"
                 onClick={() => handlePageChange('next')}
-                sx={{ marginTop: 3 }}
               >
-                Next
+                Siguiente
               </Button>
             )}
           </>
         )}
-      </div>
+      </Stack>
     </div>
   );
 };
