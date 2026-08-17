@@ -20,6 +20,16 @@ export interface BracketRound {
   stageId: GUID;
   stageType: StageType;
   matches: IMatchResponse[];
+  /**
+   * Maps a bracket node's id to its individual legs (chronologically
+   * ordered) when that node aggregates more than one raw `Match` row
+   * between the same two teams in this round — e.g. a historical
+   * home-and-away tie with no `MatchSeries` behind it (see
+   * `buildBracket.ts`'s tie grouping). Optional and absent/undefined for
+   * the common case of one match per bracket slot, so existing
+   * `BracketRound` literals (tests, callers) stay valid without it.
+   */
+  legsByMatchId?: Map<GUID, IMatchResponse[]>;
 }
 
 /**

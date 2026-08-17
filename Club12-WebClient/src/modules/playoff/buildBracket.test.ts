@@ -376,6 +376,172 @@ describe('buildBracket — graceful degradation on ambiguous inference', () => {
   });
 });
 
+describe('buildBracket — raw-match tie grouping (home-and-away legs with no MatchSeries)', () => {
+  it('collapses two raw matches between the same team pair into one aggregate tie node', () => {
+    const sfStage = makeStage({ id: guid('sf'), stageType: StageType.SemiFinal });
+    const teamA = guid('2k');
+    const teamB = guid('nn');
+
+    const leg1 = makeMatch({
+      id: guid('leg1'),
+      stageId: sfStage.id,
+      matchDate: '2026-06-28T18:00:00Z',
+      homeTeam: makeTeam({ id: teamA, name: '2K', score: 41 }),
+      visitorTeam: makeTeam({ id: teamB, name: 'NN', score: 64 }),
+      isFinished: true,
+      winningTeamId: teamB,
+      winningTeamName: 'NN',
+    });
+    const leg2 = makeMatch({
+      id: guid('leg2'),
+      stageId: sfStage.id,
+      matchDate: '2026-07-05T18:00:00Z',
+      homeTeam: makeTeam({ id: teamB, name: 'NN', score: 54 }),
+      visitorTeam: makeTeam({ id: teamA, name: '2K', score: 57 }),
+      isFinished: true,
+      winningTeamId: teamA,
+      winningTeamName: '2K',
+    });
+
+    const model = buildBracket([sfStage], [leg1, leg2]);
+    const sfRound = model.rounds[0];
+
+    // One node per pairing, not one per raw Match row.
+    expect(sfRound.matches).toHaveLength(1);
+
+    const tie = sfRound.matches[0];
+    // Aggregate score summed by team id, not by home/visitor slot (legs swap sides).
+    expect(tie.homeTeam?.id).toBe(teamA);
+    expect(tie.homeTeam?.score).toBe(41 + 57);
+    expect(tie.visitorTeam?.id).toBe(teamB);
+    expect(tie.visitorTeam?.score).toBe(64 + 54);
+    expect(tie.isFinished).toBe(true);
+    // Aggregate: 2K 41+57=98, NN 64+54=118 — NN wins on aggregate despite
+    // 2K winning the second leg outright.
+    expect(tie.winningTeamId).toBe(teamB);
+
+    // Legs are recorded for the view's per-leg breakdown, in chronological order.
+    expect(sfRound.legsByMatchId?.get(tie.id)).toEqual([leg1, leg2]);
+  });
+
+  it('does not collapse two matches between different team pairs in the same stage', () => {
+    const sfStage = makeStage({ id: guid('sf'), stageType: StageType.SemiFinal });
+    const matchOne = makeMatch({
+      id: guid('m1'),
+      stageId: sfStage.id,
+      homeTeam: makeTeam({ id: guid('a'), name: 'A' }),
+      visitorTeam: makeTeam({ id: guid('b'), name: 'B' }),
+    });
+    const matchTwo = makeMatch({
+      id: guid('m2'),
+      stageId: sfStage.id,
+      homeTeam: makeTeam({ id: guid('c'), name: 'C' }),
+      visitorTeam: makeTeam({ id: guid('d'), name: 'D' }),
+    });
+
+    const model = buildBracket([sfStage], [matchOne, matchTwo]);
+
+    expect(model.rounds[0].matches).toEqual([matchOne, matchTwo]);
+    expect(model.rounds[0].legsByMatchId?.size).toBe(0);
+  });
+
+  it('leaves a single match per pairing unaffected (the normal, non-grouped case)', () => {
+    const finalStage = makeStage({ id: guid('final'), stageType: StageType.Final });
+    const finalMatch = makeMatch({
+      id: guid('m-final'),
+      stageId: finalStage.id,
+      homeTeam: makeTeam({ id: guid('a'), name: 'A' }),
+      visitorTeam: makeTeam({ id: guid('b'), name: 'B' }),
+    });
+
+    const model = buildBracket([finalStage], [finalMatch]);
+
+    expect(model.rounds[0].matches).toEqual([finalMatch]);
+    expect(model.rounds[0].legsByMatchId?.get(finalMatch.id)).toBeUndefined();
+  });
+
+  it('does not group TBD slots or byes together even when several share the same stage', () => {
+    const sfStage = makeStage({ id: guid('sf'), stageType: StageType.SemiFinal });
+    const tbdOne = makeMatch({ id: guid('tbd1'), stageId: sfStage.id, homeTeam: null, visitorTeam: null });
+    const tbdTwo = makeMatch({ id: guid('tbd2'), stageId: sfStage.id, homeTeam: null, visitorTeam: null });
+
+    const model = buildBracket([sfStage], [tbdOne, tbdTwo]);
+
+    expect(model.rounds[0].matches).toEqual([tbdOne, tbdTwo]);
+  });
+
+  it('does not require exactly two legs — groups however many rows share the pairing', () => {
+    const sfStage = makeStage({ id: guid('sf'), stageType: StageType.SemiFinal });
+    const teamA = guid('a');
+    const teamB = guid('b');
+    const legs = [
+      makeMatch({
+        id: guid('leg1'),
+        stageId: sfStage.id,
+        matchDate: '2026-01-01T18:00:00Z',
+        homeTeam: makeTeam({ id: teamA, name: 'A', score: 10 }),
+        visitorTeam: makeTeam({ id: teamB, name: 'B', score: 8 }),
+        isFinished: true,
+      }),
+      makeMatch({
+        id: guid('leg2'),
+        stageId: sfStage.id,
+        matchDate: '2026-01-08T18:00:00Z',
+        homeTeam: makeTeam({ id: teamB, name: 'B', score: 12 }),
+        visitorTeam: makeTeam({ id: teamA, name: 'A', score: 9 }),
+        isFinished: true,
+      }),
+      makeMatch({
+        id: guid('leg3'),
+        stageId: sfStage.id,
+        matchDate: '2026-01-15T18:00:00Z',
+        homeTeam: makeTeam({ id: teamA, name: 'A', score: 15 }),
+        visitorTeam: makeTeam({ id: teamB, name: 'B', score: 5 }),
+        isFinished: true,
+      }),
+    ];
+
+    const model = buildBracket([sfStage], legs);
+    const sfRound = model.rounds[0];
+
+    expect(sfRound.matches).toHaveLength(1);
+    expect(sfRound.legsByMatchId?.get(sfRound.matches[0].id)).toHaveLength(3);
+    // A: 10 + 9 + 15 = 34, B: 8 + 12 + 5 = 25
+    expect(sfRound.matches[0].homeTeam?.score).toBe(34);
+    expect(sfRound.matches[0].winningTeamId).toBe(teamA);
+  });
+
+  it('does not mark the tie finished (or decided) while any leg is still pending', () => {
+    const sfStage = makeStage({ id: guid('sf'), stageType: StageType.SemiFinal });
+    const teamA = guid('a');
+    const teamB = guid('b');
+    const leg1 = makeMatch({
+      id: guid('leg1'),
+      stageId: sfStage.id,
+      matchDate: '2026-01-01T18:00:00Z',
+      homeTeam: makeTeam({ id: teamA, name: 'A', score: 41 }),
+      visitorTeam: makeTeam({ id: teamB, name: 'B', score: 64 }),
+      isFinished: true,
+      winningTeamId: teamB,
+      winningTeamName: 'B',
+    });
+    const leg2 = makeMatch({
+      id: guid('leg2'),
+      stageId: sfStage.id,
+      matchDate: '2026-01-08T18:00:00Z',
+      homeTeam: makeTeam({ id: teamB, name: 'B' }),
+      visitorTeam: makeTeam({ id: teamA, name: 'A' }),
+      isFinished: false,
+    });
+
+    const model = buildBracket([sfStage], [leg1, leg2]);
+    const tie = model.rounds[0].matches[0];
+
+    expect(tie.isFinished).toBe(false);
+    expect(tie.winningTeamId).toBeNull();
+  });
+});
+
 describe('buildBracket — RoundOf16', () => {
   it('includes a manually-created RoundOf16 stage as the round before Cuartos', () => {
     const r16Stage = makeStage({ id: guid('r16'), stageType: StageType.RoundOf16, order: 1 });

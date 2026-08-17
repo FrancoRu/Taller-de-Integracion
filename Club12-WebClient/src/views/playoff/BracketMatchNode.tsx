@@ -15,6 +15,16 @@ interface BracketMatchNodeProps {
    * aggregate score.
    */
   series?: IMatchSeriesResponse;
+  /**
+   * When this node aggregates more than one raw `Match` row between the
+   * same two teams (e.g. a historical home-and-away tie with no
+   * `MatchSeries` behind it — see `buildBracket.ts`'s tie grouping), the
+   * individual legs in chronological order — enables showing a per-leg
+   * breakdown below the aggregate score. Mutually exclusive with
+   * `series` in practice: a node is either an admin-defined series or a
+   * client-inferred tie, never both.
+   */
+  legs?: IMatchResponse[];
 }
 
 type Participant = IMatchResponse['homeTeam'];
@@ -34,22 +44,49 @@ const gameSummaryLine = (series: IMatchSeriesResponse): string =>
     .join(' · ');
 
 /**
+ * Formats a multi-leg tie's finished legs as a single-line, non-wrapping
+ * summary (e.g. "P1 41-64 · P2 57-54") — the raw score as it was recorded
+ * on each leg (home/visitor may swap between legs), mirroring
+ * {@link gameSummaryLine}'s one-line convention for the same fixed-height
+ * card. Numbered by chronological position, not by filtered index, so a
+ * still-unfinished middle leg doesn't shift later legs' numbers.
+ */
+const legSummaryLine = (legs: IMatchResponse[]): string =>
+  legs
+    .map((leg, index) => ({ leg, index }))
+    .filter(({ leg }) => leg.isFinished && leg.homeTeam && leg.visitorTeam)
+    .map(({ leg, index }) => `P${index + 1} ${leg.homeTeam!.score}-${leg.visitorTeam!.score}`)
+    .join(' · ');
+
+/**
+ * The caption shown above a tie's aggregate score. "Ida y vuelta" (the
+ * conventional Spanish term for a two-legged home-and-away tie) for the
+ * common two-leg case; a generic leg count otherwise, since grouping
+ * doesn't assume exactly two legs.
+ */
+const tieCaption = (legCount: number): string =>
+  legCount === 2 ? 'Ida y vuelta' : `${legCount} partidos`;
+
+/**
  * A single bracket slot: home team on top, visitor team below, each with
  * its logo. Shows the recorded score when the match is finished and
  * highlights the winning side. A missing participant renders as "A
  * definir" (TBD) while the slot still awaits a previous round's winner, or
  * as "BYE" once the match is already decided with only one side ever
- * assigned (a seeding walkover). When `series` is provided (a best-of-N /
- * two-legged tie), the score shown is the aggregate game tally and a
- * compact one-line summary of each individual game is shown underneath.
+ * assigned (a seeding walkover). When `series` is provided (an
+ * admin-defined best-of-N series) or `legs` is provided (a client-inferred
+ * multi-leg tie — see `buildBracket.ts`), the score shown is the aggregate
+ * tally and a compact one-line summary of each individual game/leg is
+ * shown underneath.
  */
-export default function BracketMatchNode({ match, series }: BracketMatchNodeProps) {
+export default function BracketMatchNode({ match, series, legs }: BracketMatchNodeProps) {
   const sides: Array<{ key: string; team: Participant }> = [
     { key: 'home', team: match.homeTeam },
     { key: 'visitor', team: match.visitorTeam },
   ];
 
-  const summaryLine = series ? gameSummaryLine(series) : '';
+  const isTie = !series && Boolean(legs && legs.length > 1);
+  const summaryLine = series ? gameSummaryLine(series) : isTie ? legSummaryLine(legs!) : '';
 
   return (
     <Paper
@@ -72,6 +109,12 @@ export default function BracketMatchNode({ match, series }: BracketMatchNodeProp
       {series && (
         <Typography variant="caption" sx={{ color: 'text.secondary', lineHeight: 1.2 }}>
           Al mejor de {series.bestOf}
+        </Typography>
+      )}
+
+      {isTie && (
+        <Typography variant="caption" sx={{ color: 'text.secondary', lineHeight: 1.2 }}>
+          {tieCaption(legs!.length)}
         </Typography>
       )}
 
@@ -112,7 +155,7 @@ export default function BracketMatchNode({ match, series }: BracketMatchNodeProp
         );
       })}
 
-      {series && summaryLine && (
+      {(series || isTie) && summaryLine && (
         <Typography
           variant="caption"
           title={summaryLine}

@@ -116,6 +116,62 @@ describe('BracketMatchNode', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
+  it('shows the aggregate score and a per-leg summary for a client-inferred multi-leg tie (no MatchSeries)', () => {
+    const homeId = guid('home');
+    const visitorId = guid('visitor');
+    const tieMatch: IMatchResponse = {
+      ...baseMatch,
+      homeTeam: { id: homeId, name: '2K', logoUrl: '', score: 98, players: [], scorers: [] },
+      visitorTeam: { id: visitorId, name: 'NN', logoUrl: '', score: 118, players: [], scorers: [] },
+      isFinished: true,
+      winningTeamId: visitorId,
+      winningTeamName: 'NN',
+    };
+    const legs: IMatchResponse[] = [
+      {
+        ...baseMatch,
+        id: guid('leg1'),
+        homeTeam: { id: homeId, name: '2K', logoUrl: '', score: 41, players: [], scorers: [] },
+        visitorTeam: { id: visitorId, name: 'NN', logoUrl: '', score: 64, players: [], scorers: [] },
+        isFinished: true,
+        winningTeamId: visitorId,
+        winningTeamName: 'NN',
+      },
+      {
+        ...baseMatch,
+        id: guid('leg2'),
+        homeTeam: { id: visitorId, name: 'NN', logoUrl: '', score: 54, players: [], scorers: [] },
+        visitorTeam: { id: homeId, name: '2K', logoUrl: '', score: 57, players: [], scorers: [] },
+        isFinished: true,
+        winningTeamId: homeId,
+        winningTeamName: '2K',
+      },
+    ];
+
+    render(<BracketMatchNode match={tieMatch} legs={legs} />);
+
+    expect(screen.getByText('Ida y vuelta')).toBeInTheDocument();
+    expect(screen.getByText('98')).toBeInTheDocument();
+    expect(screen.getByText('118')).toBeInTheDocument();
+    // Raw per-leg score as recorded on each leg (home/visitor swap between legs).
+    expect(screen.getByText('P1 41-64 · P2 54-57')).toBeInTheDocument();
+  });
+
+  it('does not show a tie caption/summary for the normal single-match case (no legs, no series)', () => {
+    const decidedMatch: IMatchResponse = {
+      ...baseMatch,
+      visitorTeam: { id: guid('visitor'), name: 'Cóndores', logoUrl: '', score: 70, players: [], scorers: [] },
+      isFinished: true,
+      winningTeamId: baseMatch.homeTeam!.id,
+      winningTeamName: 'Halcones',
+    };
+
+    render(<BracketMatchNode match={decidedMatch} />);
+
+    expect(screen.queryByText('Ida y vuelta')).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Al mejor de/)).not.toBeInTheDocument();
+  });
+
   it("renders each side's TeamLogo", () => {
     const decidedMatch: IMatchResponse = {
       ...baseMatch,

@@ -1,3 +1,4 @@
+import { GUID } from '@/modules/core/types/types';
 import { IMatchResponse } from '@/modules/match/type/match.d';
 
 /**
@@ -50,3 +51,48 @@ export const bracketParticipantId = (
 };
 
 export type BracketSide = 'home' | 'visitor';
+
+/**
+ * Sums each team's score across every leg of a multi-leg tie (e.g. a
+ * historical home-and-away semifinal recorded as separate `Match` rows
+ * rather than a `BestOf` `MatchSeries`), keyed by team id rather than by
+ * home/visitor slot — legs commonly swap which side is "home". Only
+ * finished legs contribute to either total.
+ */
+export const aggregateLegScores = (legs: IMatchResponse[]): Map<GUID, number> => {
+  const totals = new Map<GUID, number>();
+
+  for (const leg of legs) {
+    if (!leg.isFinished) continue;
+    for (const team of [leg.homeTeam, leg.visitorTeam]) {
+      if (!team) continue;
+      totals.set(team.id, (totals.get(team.id) ?? 0) + team.score);
+    }
+  }
+
+  return totals;
+};
+
+/**
+ * Decides the winner of a multi-leg tie by aggregate score — extending
+ * {@link isBracketMatchWinner}'s single-match "isFinished && winningTeamId"
+ * rule to a tie of N legs instead of forking a parallel decision rule.
+ * Returns null while any leg is still unplayed, or if the aggregate is
+ * level (undecided even though every leg has been played).
+ */
+export const aggregateTieWinner = (
+  legs: IMatchResponse[]
+): { winningTeamId: GUID; winningTeamName: string } | null => {
+  if (legs.length === 0 || legs.some(leg => !leg.isFinished)) return null;
+
+  const totals = aggregateLegScores(legs);
+  const [first, second] = [...totals.entries()];
+  if (!first || !second || first[1] === second[1]) return null;
+
+  const [winningTeamId] = first[1] > second[1] ? first : second;
+  const winningTeam = legs
+    .flatMap(leg => [leg.homeTeam, leg.visitorTeam])
+    .find(team => team?.id === winningTeamId);
+
+  return winningTeam ? { winningTeamId: winningTeam.id, winningTeamName: winningTeam.name } : null;
+};
