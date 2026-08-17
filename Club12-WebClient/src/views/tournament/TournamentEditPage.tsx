@@ -19,14 +19,7 @@ import { useAuth } from '@/modules/auth/hook/auth.hook';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import { IPutTournamentRequest } from '@/modules/tournament/type/tournament';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
-
-const TOURNAMENT_STATUS_LABELS: Record<TournamentStatus, string> = {
-  [TournamentStatus.Scheduled]: 'Programado',
-  [TournamentStatus.OpenForRegistration]: 'Inscripción abierta',
-  [TournamentStatus.Ongoing]: 'En curso',
-  [TournamentStatus.Finished]: 'Finalizado',
-  [TournamentStatus.Canceled]: 'Cancelado',
-};
+import { TOURNAMENT_STATUS_LABEL } from '@/modules/tournament/utils/tournamentDisplay';
 
 const STATUS_FLOW_ORDER: Record<TournamentStatus, number> = {
   [TournamentStatus.Scheduled]: 0,
@@ -390,7 +383,7 @@ const TournamentEditPage: React.FC = () => {
             >
               {statusOptions.map(status => (
                 <MenuItem key={status} value={status}>
-                  {TOURNAMENT_STATUS_LABELS[status]}
+                  {TOURNAMENT_STATUS_LABEL[status]}
                 </MenuItem>
               ))}
             </TextField>

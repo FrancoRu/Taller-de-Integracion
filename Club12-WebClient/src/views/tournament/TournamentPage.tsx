@@ -18,14 +18,7 @@ import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import DivisionsPage from '@/views/division/divisionsPage';
 import TeamsPage from '@/views/team/TeamsPage';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
-
-const TOURNAMENT_STATUS_LABELS: Record<TournamentStatus, string> = {
-  [TournamentStatus.Scheduled]: 'Programado',
-  [TournamentStatus.OpenForRegistration]: 'Inscripción abierta',
-  [TournamentStatus.Ongoing]: 'En curso',
-  [TournamentStatus.Finished]: 'Finalizado',
-  [TournamentStatus.Canceled]: 'Cancelado',
-};
+import { TOURNAMENT_STATUS_LABEL } from '@/modules/tournament/utils/tournamentDisplay';
 
 const resolveTournamentStatus = (status: unknown): TournamentStatus => {
   if (typeof status === 'string') {
@@ -202,7 +195,7 @@ const TournamentPage: React.FC = () => {
               </Typography>
               <Typography>
                 {
-                  TOURNAMENT_STATUS_LABELS[
+                  TOURNAMENT_STATUS_LABEL[
                     resolveTournamentStatus(tournament.status)
                   ]
                 }

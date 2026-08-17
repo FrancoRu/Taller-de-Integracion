@@ -44,27 +44,12 @@ import {
   TABLE_ROWS_PER_PAGE,
 } from '@/modules/core/constants/pagination';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import {
+  TOURNAMENT_STATUS_LABEL,
+  TOURNAMENT_STATUS_COLOR,
+} from '@/modules/tournament/utils/tournamentDisplay';
 
 const EMPTY_FILTERS: ITournamentFiltered = {};
-
-const TOURNAMENT_STATUS_LABELS: Record<TournamentStatus, string> = {
-  [TournamentStatus.Scheduled]: 'Programado',
-  [TournamentStatus.OpenForRegistration]: 'Inscripción abierta',
-  [TournamentStatus.Ongoing]: 'En curso',
-  [TournamentStatus.Finished]: 'Finalizado',
-  [TournamentStatus.Canceled]: 'Cancelado',
-};
-
-const TOURNAMENT_STATUS_CHIP_COLOR: Record<
-  TournamentStatus,
-  'default' | 'success' | 'warning' | 'info' | 'error'
-> = {
-  [TournamentStatus.Scheduled]: 'default',
-  [TournamentStatus.OpenForRegistration]: 'info',
-  [TournamentStatus.Ongoing]: 'warning',
-  [TournamentStatus.Finished]: 'success',
-  [TournamentStatus.Canceled]: 'error',
-};
 
 const resolveTournamentStatus = (status: unknown): TournamentStatus => {
   if (typeof status === 'string') {
@@ -224,8 +209,8 @@ const TournamentsPage: React.FC = () => {
           return (
             <Chip
               size="small"
-              label={TOURNAMENT_STATUS_LABELS[status]}
-              color={TOURNAMENT_STATUS_CHIP_COLOR[status]}
+              label={TOURNAMENT_STATUS_LABEL[status]}
+              color={TOURNAMENT_STATUS_COLOR[status]}
               variant={
                 status === TournamentStatus.Scheduled ? 'outlined' : 'filled'
               }
