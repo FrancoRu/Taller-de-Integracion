@@ -125,11 +125,11 @@ public class StageController(IStageService stageService, IMatchService matchServ
     /// <param name="stageRequest">The updated Stage data.</param>
     /// <returns>The updated Stage entity.</returns>
     [HttpPut("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Stage))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(StageResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<Stage>> UpdateStage(Guid id, UpdateStageRequest stageRequest)
+    public async Task<ActionResult<StageResponse>> UpdateStage(Guid id, UpdateStageRequest stageRequest)
     {
         Stage? existingStage = await stageService.GetStageByIdAsync(id);
         if (existingStage == null)
@@ -140,7 +140,8 @@ public class StageController(IStageService stageService, IMatchService matchServ
         mapper.Map(stageRequest, existingStage);
         await stageService.UpdateStageAsync(existingStage);
 
-        return Ok();
+        StageResponse stageResponse = mapper.Map<StageResponse>(existingStage);
+        return Ok(stageResponse);
     }
 
     /// <summary>
