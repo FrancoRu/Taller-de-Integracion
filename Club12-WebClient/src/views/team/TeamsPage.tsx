@@ -163,7 +163,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
 
   const handleView = useCallback(
     (row: ITeamResponse) => {
-      navigate(APP_ROUTES.panelTeamDetail.build(row.id));
+      navigate(APP_ROUTES.panelTeamDetail.build(row.slug));
     },
     [navigate]
   );

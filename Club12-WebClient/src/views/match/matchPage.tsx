@@ -106,7 +106,7 @@ const MatchPage: React.FC = () => {
     return <LoadingIndicator />;
   }
 
-  if (!match || match.id !== targetMatchId) {
+  if (!match || (match.id !== targetMatchId && match.slug !== targetMatchId)) {
     return (
       <Card>
         <CardContent>

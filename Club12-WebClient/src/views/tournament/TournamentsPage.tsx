@@ -103,7 +103,7 @@ const TournamentsPage: React.FC = () => {
 
   const handleView = useCallback(
     (row: ITournamentResponse) => {
-      navigate(APP_ROUTES.panelTournamentDetail.build(row.id));
+      navigate(APP_ROUTES.panelTournamentDetail.build(row.slug));
     },
     [navigate]
   );

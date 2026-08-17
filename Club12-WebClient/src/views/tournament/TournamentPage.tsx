@@ -51,7 +51,7 @@ const TournamentPage: React.FC = () => {
       return;
     }
 
-    if (tournament?.id === tournamentId) {
+    if (tournament?.id === tournamentId || tournament?.slug === tournamentId) {
       return;
     }
 
@@ -65,7 +65,7 @@ const TournamentPage: React.FC = () => {
     };
 
     void fetchTournament();
-  }, [tournamentId, tournament?.id, getTournamentById]);
+  }, [tournamentId, tournament?.id, tournament?.slug, getTournamentById]);
 
   if (!tournamentId) {
     return (
@@ -89,7 +89,7 @@ const TournamentPage: React.FC = () => {
     return <LoadingIndicator />;
   }
 
-  if (!tournament || tournament.id !== tournamentId) {
+  if (!tournament || (tournament.id !== tournamentId && tournament.slug !== tournamentId)) {
     return (
       <Card>
         <CardContent>
@@ -125,11 +125,7 @@ const TournamentPage: React.FC = () => {
     role === UserRolesType.Owner || role === UserRolesType.TournamentManager;
 
   const handleCreateDivision = () => {
-    if (!tournamentId) {
-      return;
-    }
-
-    navigate(`${APP_ROUTES.panelDivisionCreate}?tournamentId=${tournamentId}`);
+    navigate(`${APP_ROUTES.panelDivisionCreate}?tournamentId=${tournament.id}`);
   };
 
   return (
@@ -150,7 +146,7 @@ const TournamentPage: React.FC = () => {
               <Button
                 variant="contained"
                 onClick={() =>
-                  navigate(APP_ROUTES.panelTournamentEdit.build(tournamentId))
+                  navigate(APP_ROUTES.panelTournamentEdit.build(tournament.id))
                 }
               >
                 Editar torneo
