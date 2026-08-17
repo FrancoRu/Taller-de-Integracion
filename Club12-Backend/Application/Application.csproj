@@ -3,7 +3,6 @@
 		<PackageReference Include="AutoMapper" Version="16.2.0">
 			<NoWarn>NU1903</NoWarn>
 		</PackageReference>
-		<PackageReference Include="FluentEmail.MailKit" Version="3.0.2" />
 		<PackageReference Include="LinqKit.Microsoft.EntityFrameworkCore" Version="8.1.11" />
 		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.12" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
@@ -12,9 +11,6 @@
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Domain\Domain.csproj" />
-	</ItemGroup>
-	<ItemGroup>
-		<EmbeddedResource Include="Utils\Helper\Email\Templates\*.html" />
 	</ItemGroup>
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
