@@ -14,6 +14,14 @@ public class PlayerSanction : EntityBase
     public required Match Match { get; set; }
     public Guid MatchId { get; set; }
 
+    /// <summary>
+    /// The unique, URL-friendly identifier used in public/admin sanction
+    /// links. Generated once from the sanctioned player's name and the
+    /// sanction's issued date at creation time and never changed afterward,
+    /// so shared links keep working even if the player is renamed.
+    /// </summary>
+    public required string Slug { get; set; }
+
     public SanctionAppealStatus AppealStatus { get; set; } = SanctionAppealStatus.None;
     public string? AppealReason { get; set; }
     public DateTime? AppealDate { get; set; }

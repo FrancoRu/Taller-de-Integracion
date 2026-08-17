@@ -14,9 +14,12 @@ public class PlayerSanctionEntityConfiguration : BaseEntityConfiguration<PlayerS
         builder.Property(ps => ps.Duration).IsRequired();
         builder.Property(ps => ps.IssuedDate).IsRequired();
         builder.Property(ps => ps.Description).IsRequired().HasMaxLength(255);
+        builder.Property(ps => ps.Slug).IsRequired().HasMaxLength(220);
         builder.Property(ps => ps.AppealStatus).IsRequired().HasConversion<string>();
         builder.Property(ps => ps.AppealReason).HasMaxLength(1000);
         builder.Property(ps => ps.AppealResolution).HasMaxLength(1000);
+
+        builder.HasIndex(ps => ps.Slug).IsUnique();
 
         builder.HasOne(ps => ps.Player)
             .WithMany()

@@ -26,6 +26,11 @@ public class PlayerSanctionResponse : BaseEntityResponse
     public required string Description { get; set; }
 
     /// <summary>
+    /// The unique, URL-friendly identifier used in sanction links.
+    /// </summary>
+    public required string Slug { get; set; }
+
+    /// <summary>
     /// The unique identifier of the player who has the sanction.
     /// </summary>
     public required Guid PlayerId { get; set; }
