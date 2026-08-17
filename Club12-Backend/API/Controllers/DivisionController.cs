@@ -108,10 +108,13 @@ public class DivisionController(
     /// Updates a division by its id.
     /// </summary>
     /// <param name="id">The id of the division to update.</param>
-    /// <param name="divisionRequest">The updated division information.</param>
+    /// <param name="divisionRequest">
+    /// The updated division information. If <see cref="UpdateDivisionRequest.TournamentId"/>
+    /// is set, the division (and everything under it) is moved to that tournament.
+    /// </param>
     /// <returns>
     /// Returns 200 (Ok) with the updated division response if the update was successful.
-    /// Returns 400 (Bad Request) if the division with the provided id was not found.
+    /// Returns 404 (Not Found) if the division, or the target tournament when reassigning, was not found.
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
     [HttpPut("{id:guid}")]
@@ -128,6 +131,16 @@ public class DivisionController(
         }
 
         mapper.Map(divisionRequest, existingDivision);
+
+        if (divisionRequest.TournamentId is Guid tournamentId)
+        {
+            bool tournamentAssigned = await divisionService.TryAssignTournamentAsync(existingDivision, tournamentId);
+            if (!tournamentAssigned)
+            {
+                return this.NotFoundProblem(nameof(Tournament), tournamentId);
+            }
+        }
+
         await divisionService.UpdateDivisionAsync(existingDivision);
 
         return Ok();
