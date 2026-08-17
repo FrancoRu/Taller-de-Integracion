@@ -90,10 +90,11 @@ const CONFIGURATION_CHILDREN: NavTab[] = [
 /**
  * Tournament-structure pages: Admin, Owner and TournamentManager can all
  * reach these (mirrors the AdminOwnerOrTournamentManager backend policy on
- * TournamentController/DivisionController/StageController/MatchController).
- * Kept separate from the rest of ADMINISTRATION_CHILDREN below, which
- * covers Sanciones/Puntuaciones/Canchas — routes Admin is NOT authorized
- * for — so Admin's sidebar never links to a page that bounces to /forbidden.
+ * TournamentController/DivisionController/StageController/MatchController/
+ * PlayerSanctionController/VenueController). Kept separate from
+ * ADMINISTRATION_CHILDREN below, which also includes Puntuaciones — Admin
+ * is not authorized for that one — so Admin's sidebar never links to a
+ * page that bounces to /forbidden.
  */
 const TOURNAMENT_STRUCTURE_CHILDREN: NavTab[] = [
   {
@@ -121,24 +122,24 @@ const TOURNAMENT_STRUCTURE_CHILDREN: NavTab[] = [
     path: APP_ROUTES.panelMatches,
     icon: TAB_ICONS['Partidos'],
   },
-];
-
-const ADMINISTRATION_CHILDREN: NavTab[] = [
-  ...TOURNAMENT_STRUCTURE_CHILDREN,
   {
     label: 'Sanciones',
     path: APP_ROUTES.panelSanctions,
     icon: TAB_ICONS['Sanciones'],
   },
   {
-    label: 'Puntuaciones',
-    path: APP_ROUTES.panelScorers,
-    icon: TAB_ICONS['Puntuaciones'],
-  },
-  {
     label: 'Canchas',
     path: APP_ROUTES.panelVenues,
     icon: TAB_ICONS['Canchas'],
+  },
+];
+
+const ADMINISTRATION_CHILDREN: NavTab[] = [
+  ...TOURNAMENT_STRUCTURE_CHILDREN,
+  {
+    label: 'Puntuaciones',
+    path: APP_ROUTES.panelScorers,
+    icon: TAB_ICONS['Puntuaciones'],
   },
 ];
 

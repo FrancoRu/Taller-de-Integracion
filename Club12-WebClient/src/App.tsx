@@ -146,17 +146,17 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
   },
   {
     path: APP_ROUTES.panelSanctions,
-    allowedRoles: [UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.TournamentManager, UserRolesType.Owner],
     element: <PlayerSanctionsPage />,
   },
   {
     path: APP_ROUTES.panelSanction.pattern,
-    allowedRoles: [UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.TournamentManager, UserRolesType.Owner],
     element: <PlayerSanctionPage />,
   },
   {
     path: APP_ROUTES.panelSanctionEdit.pattern,
-    allowedRoles: [UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.TournamentManager, UserRolesType.Owner],
     element: <PlayerSanctionEditPage />,
   },
   {
@@ -166,12 +166,12 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
   },
   {
     path: APP_ROUTES.panelVenues,
-    allowedRoles: [UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.TournamentManager, UserRolesType.Owner],
     element: <VenuesPage />,
   },
   {
     path: APP_ROUTES.panelVenue.pattern,
-    allowedRoles: [UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.TournamentManager, UserRolesType.Owner],
     element: <VenuePage />,
   },
   {
