@@ -1,23 +1,27 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  Box,
   Grid,
   Card,
   CardContent,
+  CardMedia,
   Typography,
   Button,
   CircularProgress,
   Stack,
 } from '@mui/material';
+import SportsBasketballIcon from '@mui/icons-material/SportsBasketball';
 import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
 import {
   BlogPostResponse,
   GetBlogPostsFilteredRequest,
 } from '@/modules/blogPost/type/blogPost';
 import { useNavigate } from 'react-router-dom';
-import { GUID } from '@/modules/core/types/types';
 import { TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { BLOG_EXCERPT_LENGTH } from '@/modules/blogPost/constants/blogPost';
+
+const CARD_IMAGE_HEIGHT = 160;
 
 const stripHtmlToExcerpt = (html: string, maxLength: number): string => {
   const withoutTags = html.replace(/<[^>]*>/g, ' ');
@@ -28,7 +32,7 @@ const stripHtmlToExcerpt = (html: string, maxLength: number): string => {
 };
 
 const ShowPosts: React.FC = () => {
-  const { getBlogPostsByFilters, getBlogPostsById } = useBlogPost();
+  const { getBlogPostsByFilters } = useBlogPost();
   const [posts, setPosts] = useState<BlogPostResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
@@ -74,11 +78,15 @@ const ShowPosts: React.FC = () => {
     setPagination(prev => ({ ...prev, page: newPage }));
   };
 
-  const handleReadMore = async (id: GUID) => {
-    const postDetails = await getBlogPostsById(id);
-    if (postDetails) {
-      navigate(APP_ROUTES.blogPost.build(id), { state: { post: postDetails } });
-    }
+  /**
+   * The list response already carries each post's full markdownText (it's
+   * truncated client-side for the excerpt above), so navigating can reuse
+   * the post already in memory instead of re-fetching it by id first —
+   * that redundant fetch was the whole reason "Leer más" felt unresponsive,
+   * since navigation only happened once it resolved.
+   */
+  const handleReadMore = (post: BlogPostResponse) => {
+    navigate(APP_ROUTES.blogPost.build(post.id), { state: { post } });
   };
 
   return (
@@ -96,6 +104,27 @@ const ShowPosts: React.FC = () => {
                 md: 4
               }}>
               <Card sx={{ maxWidth: 345, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                {post.photoUrl ? (
+                  <CardMedia
+                    component="img"
+                    image={post.photoUrl}
+                    alt={post.title}
+                    sx={{ height: CARD_IMAGE_HEIGHT, objectFit: 'cover' }}
+                  />
+                ) : (
+                  <Box
+                    sx={{
+                      height: CARD_IMAGE_HEIGHT,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: 'action.hover',
+                      color: 'text.disabled',
+                    }}
+                  >
+                    <SportsBasketballIcon sx={{ fontSize: 48 }} />
+                  </Box>
+                )}
                 <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                   <Typography variant="h6" sx={{ mb: 1 }}>{post.title}</Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
@@ -104,7 +133,7 @@ const ShowPosts: React.FC = () => {
                   <Button
                     variant="outlined"
                     color="primary"
-                    onClick={() => handleReadMore(post.id)}
+                    onClick={() => handleReadMore(post)}
                     sx={{ alignSelf: 'flex-start' }}
                   >
                     Leer más
