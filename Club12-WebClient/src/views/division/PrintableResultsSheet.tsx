@@ -127,7 +127,7 @@ export default function PrintableResultsSheet({
           onChange={(_, value: PrintTarget | null) => {
             if (value) setTarget(value);
           }}
-          sx={{ height: 32 }}
+          sx={{ height: 32, '& .MuiToggleButton-root': { height: 32 } }}
         >
           <ToggleButton value="standings">Posiciones</ToggleButton>
           <ToggleButton value="goleadores">Goleadores</ToggleButton>
@@ -138,7 +138,7 @@ export default function PrintableResultsSheet({
           size="small"
           startIcon={<PrintIcon />}
           onClick={() => setIsPrintTarget(true)}
-          sx={{ height: 32 }}
+          sx={{ height: 32, minHeight: 32 }}
         >
           Imprimir
         </Button>

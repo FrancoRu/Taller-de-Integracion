@@ -6,6 +6,7 @@ import {
   Card,
   CardActionArea,
   CardContent,
+  CardMedia,
   CircularProgress,
   Container,
   Grid,
@@ -25,6 +26,7 @@ import BasketballCourtPattern from '@/views/core/components/BasketballCourtPatte
 
 const FEATURED_TOURNAMENTS_COUNT = 3;
 const LATEST_POSTS_COUNT = 3;
+const CARD_IMAGE_HEIGHT = 160;
 
 interface QuickNavItem {
   label: string;
@@ -274,11 +276,39 @@ export default function Home() {
                     sm: 6,
                     md: 4
                   }}>
-                  <Card sx={{ height: '100%' }}>
+                  <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <CardActionArea
                       onClick={() => void handleReadMore(post.id)}
                       sx={{ height: '100%', alignItems: 'flex-start', display: 'flex', flexDirection: 'column' }}
                     >
+                      {post.photoUrl ? (
+                        <CardMedia
+                          component="img"
+                          image={post.photoUrl}
+                          alt={post.title}
+                          loading="lazy"
+                          sx={{
+                            width: '100%',
+                            height: CARD_IMAGE_HEIGHT,
+                            objectFit: 'cover',
+                            bgcolor: 'action.hover',
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          sx={{
+                            width: '100%',
+                            height: CARD_IMAGE_HEIGHT,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: 'action.hover',
+                            color: 'text.disabled',
+                          }}
+                        >
+                          <SportsBasketballIcon sx={{ fontSize: 48 }} />
+                        </Box>
+                      )}
                       <CardContent sx={{ width: '100%' }}>
                         <Typography
                           variant="h6"

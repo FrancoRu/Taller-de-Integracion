@@ -176,7 +176,7 @@ export default function PublicTournamentPage() {
     return { groups, unassigned };
   }, [divisions, teamRows]);
 
-  if (loading) {
+  if (loading || (divisionsLoading && divisions.length === 0)) {
     return (
       <Box
         sx={{
