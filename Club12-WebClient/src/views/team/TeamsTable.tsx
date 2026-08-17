@@ -10,6 +10,7 @@ interface TeamsTableProps {
   paginationModel: GridPaginationModel;
   onPaginationModelChange: (model: GridPaginationModel) => void;
   pageSizeOptions: number[];
+  rowCount: number;
 }
 
 const TeamsTable: React.FC<TeamsTableProps> = ({
@@ -20,6 +21,7 @@ const TeamsTable: React.FC<TeamsTableProps> = ({
   paginationModel,
   onPaginationModelChange,
   pageSizeOptions,
+  rowCount,
 }) => (
   <Box sx={{ width: '100%' }}>
     <DataGrid
@@ -34,6 +36,8 @@ const TeamsTable: React.FC<TeamsTableProps> = ({
       pageSizeOptions={pageSizeOptions}
       paginationModel={paginationModel}
       onPaginationModelChange={onPaginationModelChange}
+      paginationMode="server"
+      rowCount={rowCount}
     />
   </Box>
 );

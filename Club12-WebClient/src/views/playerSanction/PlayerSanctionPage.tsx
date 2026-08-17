@@ -226,11 +226,23 @@ const PlayerSanctionPage: React.FC = () => {
   return (
     <Card>
       <CardContent>
-        <Typography variant="h6" sx={{
-          mb: 2
-        }}>
-          Sanción
-        </Typography>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={2}
+          sx={{
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            justifyContent: "space-between",
+            mb: 2
+          }}>
+          <Typography variant="h6">Sanción</Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate(APP_ROUTES.panelSanctions)}
+          >
+            Volver
+          </Button>
+        </Stack>
 
         <Tabs
           value={tab}

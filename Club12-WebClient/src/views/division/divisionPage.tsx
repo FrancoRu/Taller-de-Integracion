@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Box, Card, CardContent, CircularProgress, Grid, Tab, Tabs, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, CircularProgress, Grid, Stack, Tab, Tabs, Typography } from '@mui/material';
 import { GUID } from '@/modules/core/types/types';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
@@ -195,11 +195,23 @@ const DivisionPage: React.FC = () => {
   return (
     <Card>
       <CardContent>
-        <Typography variant="h6" sx={{
-          mb: 2
-        }}>
-          {division.name}
-        </Typography>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={2}
+          sx={{
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            justifyContent: "space-between",
+            mb: 2
+          }}>
+          <Typography variant="h6">{division.name}</Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate(APP_ROUTES.panelDivisions)}
+          >
+            Volver
+          </Button>
+        </Stack>
 
         <Tabs
           value={tab}

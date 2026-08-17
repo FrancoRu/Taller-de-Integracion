@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
+  Button,
   Card,
   CardContent,
   Chip,
@@ -146,11 +147,23 @@ const PlayerPage: React.FC = () => {
   return (
     <Card>
       <CardContent>
-        <Typography variant="h6" sx={{
-          mb: 2
-        }}>
-          {player.fullName}
-        </Typography>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={2}
+          sx={{
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            justifyContent: "space-between",
+            mb: 2
+          }}>
+          <Typography variant="h6">{player.fullName}</Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate(APP_ROUTES.panelPlayers)}
+          >
+            Volver
+          </Button>
+        </Stack>
 
         <Tabs
           value={tab}

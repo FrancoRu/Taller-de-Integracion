@@ -68,6 +68,7 @@ const PlayerSanctionsPage: React.FC = () => {
   const { matches, getMatchByFilter } = useMatch();
   const { players, getPlayersByFilter } = usePlayer();
   const [loading, setLoading] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
   const [filters, setFilters] =
     useState<PlayerSanctionsSearchFilters>(EMPTY_FILTERS);
   const [debouncedFilters, setDebouncedFilters] =
@@ -164,11 +165,12 @@ const PlayerSanctionsPage: React.FC = () => {
       activePaginationModel: GridPaginationModel
     ) => {
       setLoading(true);
-      await getPlayerSanctionByFilterRef.current({
+      const response = await getPlayerSanctionByFilterRef.current({
         ...activeFilters,
         pageNumber: activePaginationModel.page + 1,
         pageSize: activePaginationModel.pageSize,
       });
+      setRowCount(response?.totalCount ?? 0);
       setLoading(false);
     },
     []
@@ -567,6 +569,8 @@ const PlayerSanctionsPage: React.FC = () => {
             pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
             paginationModel={paginationModel}
             onPaginationModelChange={handlePaginationModelChange}
+            paginationMode="server"
+            rowCount={rowCount}
           />
         </Box>
 

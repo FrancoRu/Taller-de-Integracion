@@ -91,7 +91,8 @@ public class BlogPostController(
         mapper.Map(blogPostRequest, existingPost);
         await blogPostService.UpdateBlogPostAsync(existingPost);
 
-        return Ok();
+        BlogPostResponse blogPostResponse = mapper.Map<BlogPostResponse>(existingPost);
+        return Ok(blogPostResponse);
     }
 
     /// <summary>

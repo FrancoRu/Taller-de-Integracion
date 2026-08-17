@@ -92,6 +92,7 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
   const { divisions, getDivisionsByFilters } = useDivision();
   const { stages, getStagesByFilters } = useStage();
   const [loading, setLoading] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
   const [filters, setFilters] = useState<MatchesSearchFilters>(EMPTY_FILTERS);
   const [debouncedFilters, setDebouncedFilters] =
     useState<MatchesSearchFilters>(EMPTY_FILTERS);
@@ -156,7 +157,7 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
       activePaginationModel: GridPaginationModel
     ) => {
       setLoading(true);
-      await getMatchByFilterRef.current(
+      const response = await getMatchByFilterRef.current(
         stageId
           ? {
               stageId,
@@ -173,6 +174,7 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
               pageSize: activePaginationModel.pageSize,
             }
       );
+      setRowCount(response?.totalCount ?? 0);
       setLoading(false);
     },
     [stageId]
@@ -619,6 +621,8 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
           pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
           paginationModel={paginationModel}
           onPaginationModelChange={handlePaginationModelChange}
+          paginationMode="server"
+          rowCount={rowCount}
         />
       </Box>
     </>

@@ -61,6 +61,7 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
   const { divisions, getDivisionsByFilters, deleteDivisionsById } =
     useDivision();
   const [loading, setLoading] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
   const [filters, setFilters] = useState<DivisionSearchFilters>(EMPTY_FILTERS);
   const [debouncedFilters, setDebouncedFilters] =
     useState<DivisionSearchFilters>(EMPTY_FILTERS);
@@ -80,7 +81,7 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
       activePaginationModel: GridPaginationModel
     ) => {
       setLoading(true);
-      await getDivisionsByFiltersRef.current(
+      const response = await getDivisionsByFiltersRef.current(
         tournamentId
           ? {
               tournamentId,
@@ -94,6 +95,7 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
               pageSize: activePaginationModel.pageSize,
             }
       );
+      setRowCount(response?.totalCount ?? 0);
       setLoading(false);
     },
     [tournamentId]
@@ -283,6 +285,8 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
           pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
           paginationModel={paginationModel}
           onPaginationModelChange={handlePaginationModelChange}
+          paginationMode="server"
+          rowCount={rowCount}
         />
       </Box>
     </>

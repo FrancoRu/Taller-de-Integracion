@@ -118,7 +118,7 @@ public class DivisionController(
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
     [HttpPut("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DivisionResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> UpdateDivisionById(Guid id, UpdateDivisionRequest divisionRequest)
@@ -143,7 +143,8 @@ public class DivisionController(
 
         await divisionService.UpdateDivisionAsync(existingDivision);
 
-        return Ok();
+        DivisionResponse divisionResponse = mapper.Map<DivisionResponse>(existingDivision);
+        return Ok(divisionResponse);
     }
 
     /// <summary>

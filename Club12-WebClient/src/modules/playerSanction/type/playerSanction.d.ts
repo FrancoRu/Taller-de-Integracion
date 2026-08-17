@@ -3,6 +3,7 @@ import {
   GenericResponsePagination,
   GUID,
 } from '@/modules/core/types/types';
+import { IMatchResponse } from '@/modules/match/type/match';
 
 /**
  * Context properties and methods for managing player sanctions in a sports system.
@@ -325,6 +326,14 @@ export interface IPlayerSanctionCreatePageProps {
   open: boolean;
   onClose: () => void;
   onCreated?: () => void;
+
+  /**
+   * When creating a sanction from a specific match's context (e.g. the
+   * match detail page's Sanciones tab), pass the already-loaded match so
+   * the form can skip the Torneo/División/Fase/Partido cascade and go
+   * straight to picking the team and player involved in that match.
+   */
+  presetMatch?: IMatchResponse | null;
 }
 
 export interface IPlayerSanctionCreateFormState {

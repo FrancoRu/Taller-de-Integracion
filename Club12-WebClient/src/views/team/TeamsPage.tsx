@@ -65,6 +65,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
     useTeam();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
   const [filters, setFilters] = useState<TeamsSearchFilters>(EMPTY_FILTERS);
   const [debouncedFilters, setDebouncedFilters] =
     useState<TeamsSearchFilters>(EMPTY_FILTERS);
@@ -87,7 +88,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
       activePaginationModel: GridPaginationModel
     ) => {
       setLoading(true);
-      await getTeamsByFilteredRef.current(
+      const response = await getTeamsByFilteredRef.current(
         tournamentId
           ? {
               tournamentId,
@@ -101,6 +102,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
               pageSize: activePaginationModel.pageSize,
             }
       );
+      setRowCount(response?.totalCount ?? 0);
       setLoading(false);
     },
     [tournamentId]
@@ -393,6 +395,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
         paginationModel={paginationModel}
         onPaginationModelChange={handlePaginationModelChange}
         pageSizeOptions={[...TABLE_PAGE_SIZE_OPTIONS]}
+        rowCount={rowCount}
       />
 
       <TeamFormDialog
