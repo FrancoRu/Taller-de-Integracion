@@ -1,6 +1,8 @@
 using API.Controllers;
 
 using Application.DTOs.Abstract.Response;
+using Application.DTOs.BlogPosts.Request;
+using Application.DTOs.BlogPosts.Response;
 using Application.DTOs.Team.Request;
 using Application.DTOs.Team.Response;
 using Application.DTOs.Venue.Response;
@@ -19,10 +21,10 @@ using System.Linq.Expressions;
 namespace API.Tests;
 
 /// <summary>
-/// Covers the 2 not-found sites (TeamController.GetTeamById,
-/// VenueController.GetVenueById) that cannot be exercised through
-/// CustomWebApplicationFactory's full HTTP host: both controllers take a
-/// constructor-injected SupabaseHelper, whose constructor eagerly opens a Supabase
+/// Covers the 3 not-found sites (TeamController.GetTeamById,
+/// VenueController.GetVenueById, BlogPostController.GetBlogPostById) that cannot be
+/// exercised through CustomWebApplicationFactory's full HTTP host: all three controllers
+/// take a constructor-injected SupabaseHelper, whose constructor eagerly opens a Supabase
 /// Realtime websocket connection (AutoConnectRealtime = true) — this throws/hangs in
 /// any sandboxed environment without live Supabase network access. That is a pre-existing
 /// production-code testability gap, unrelated to and out of scope for this 400→404 fix, so
@@ -72,6 +74,17 @@ public class SupabaseDependentControllerNotFoundTests
         IActionResult result = await controller.DeleteTeamById(Guid.NewGuid());
 
         AssertNotFoundProblem(result as ActionResult, "Team");
+    }
+
+    [Fact]
+    public async Task BlogPostController_GetBlogPostById_MissingEntity_Returns404ProblemDetails()
+    {
+        BlogPostController controller = new(new NotFoundBlogPostService(), null!, new NotUsedMapper());
+        ConfigureProblemDetailsFactory(controller);
+
+        ActionResult<BlogPostResponse> result = await controller.GetBlogPostById(Guid.NewGuid());
+
+        AssertNotFoundProblem(result.Result, "BlogPost");
     }
 
     private static void AssertNotFoundProblem(ActionResult? actionResult, string expectedEntity)
@@ -169,6 +182,34 @@ public class SupabaseDependentControllerNotFoundTests
         }
 
         public Task<IEnumerable<Venue>> GetAllVenuesAsync()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    private sealed class NotFoundBlogPostService : IBlogPostService
+    {
+        public Task<BlogPost> CreateBlogPostAsync(BlogPost blogPostEntity)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<BlogPost?> GetBlogPostByIdAsync(Guid blogPostId)
+        {
+            return Task.FromResult<BlogPost?>(null);
+        }
+
+        public Task DeleteBlogPostAsync(Guid id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task UpdateBlogPostAsync(BlogPost blogPostEntity)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<PaginatedResponse<BlogPost>> GetAllBlogPostsAsync(GetBlogPostsFilteredRequest filter)
         {
             throw new NotImplementedException();
         }

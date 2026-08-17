@@ -115,6 +115,10 @@ public class TeamController(
             return this.NotFoundProblem(nameof(Team), id);
         }
 
+        team.LogoUrl = await supabaseHelper.UploadImageAsync<Team>(
+            logoRequest.LogoFile.OpenReadStream(),
+            logoRequest.LogoFile.FileName);
+
         await teamService.UpdateTeamAsync(team);
         return Ok();
     }

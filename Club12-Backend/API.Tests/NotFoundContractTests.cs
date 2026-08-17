@@ -29,14 +29,13 @@ public class NotFoundContractTests : IClassFixture<CustomWebApplicationFactory>
 
     /// <summary>
     /// One GET-by-id route per controller, for the controllers whose full dependency graph
-    /// can boot through CustomWebApplicationFactory anonymously (7 of the 9 —
-    /// see SupabaseDependentControllerNotFoundTests for Team/Venue, which are
+    /// can boot through CustomWebApplicationFactory anonymously (6 of the 9 —
+    /// see SupabaseDependentControllerNotFoundTests for Team/Venue/BlogPost, which are
     /// covered via direct-controller unit tests instead; see that class' doc comment for why).
     /// </summary>
     public static readonly TheoryData<string> NotFoundGetByIdRoutes =
     [
         "api/matches/{0}",
-        "api/blogposts/{0}",
         "api/divisions/{0}/detail",
         "api/players/{0}",
         "api/player-sanctions/{0}",

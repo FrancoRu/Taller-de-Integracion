@@ -5,6 +5,7 @@ using Application.DTOs.BlogPosts.Request;
 using Application.DTOs.BlogPosts.Response;
 using Application.Interfaces.Services;
 using Application.Utils.Constants;
+using Application.Utils.Helper.SupabaseHelper;
 
 using AutoMapper;
 
@@ -27,12 +28,14 @@ namespace API.Controllers;
 /// [AllowAnonymous] where the whole club should be able to read).
 /// </summary>
 /// <param name="blogPostService">The blog post service.</param>
+/// <param name="supabaseHelper">The Supabase helper for storage operations.</param>
 /// <param name="mapper">The AutoMapper instance.</param>
 [Route("api/blogposts/")]
 [ApiController]
 [Authorize(Roles = Roles.AdminOrOwner)]
 public class BlogPostController(
     IBlogPostService blogPostService,
+    SupabaseHelper supabaseHelper,
     IMapper mapper
     ) : ControllerBase
 {
@@ -46,12 +49,16 @@ public class BlogPostController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<BlogPostResponse>> CreateBlogPost([FromForm] CreateBlogPostRequest blogPostRequest)
     {
-        string? photoUrl = null;
-
         if (blogPostRequest.PhotoFile is not null && !blogPostRequest.PhotoFile.IsValidImageFile())
         {
             return BadRequest(ErrorMessages.Media.InvalidImageFile);
         }
+
+        string? photoUrl = blogPostRequest.PhotoFile is null
+            ? null
+            : await supabaseHelper.UploadImageAsync<BlogPost>(
+                blogPostRequest.PhotoFile.OpenReadStream(),
+                blogPostRequest.PhotoFile.FileName);
 
         BlogPost blogPost = mapper.Map<BlogPost>(blogPostRequest);
         blogPost.PhotoUrl = photoUrl;
@@ -107,6 +114,10 @@ public class BlogPostController(
         {
             return this.NotFoundProblem(nameof(BlogPost), id);
         }
+
+        blogPost.PhotoUrl = await supabaseHelper.UploadImageAsync<BlogPost>(
+            photoRequest.PhotoFile.OpenReadStream(),
+            photoRequest.PhotoFile.FileName);
 
         await blogPostService.UpdateBlogPostAsync(blogPost);
         return Ok();
