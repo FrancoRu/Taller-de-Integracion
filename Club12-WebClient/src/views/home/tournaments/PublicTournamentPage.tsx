@@ -14,6 +14,7 @@ import {
 import { GUID } from '@/modules/core/types/types';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useTeam } from '@/modules/team/hook/team.hook';
+import { ITeamResponse } from '@/modules/team/type/team.d';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { divisionService } from '@/modules/division/service/division.service';
 import { IDivisionResponse } from '@/modules/division/type/division';
@@ -139,6 +140,28 @@ export default function PublicTournamentPage() {
     [divisions, tab]
   );
 
+  /**
+   * A team has no direct division field — membership only exists through
+   * its stage assignments, already surfaced in each division's `positions`.
+   * A team can legitimately appear under more than one group (e.g. its
+   * home zone AND a cross-division cup), so this groups rather than picks
+   * a single owner. Anything not assigned to any division yet (newly
+   * registered, not placed in a group) falls into "Sin división asignada".
+   */
+  const teamsByDivision = useMemo(() => {
+    const groups = divisions
+      .map(division => {
+        const teamIds = new Set((division.positions ?? []).map(p => p.teamId));
+        return { division, teams: teamRows.filter(team => teamIds.has(team.id)) };
+      })
+      .filter(group => group.teams.length > 0);
+
+    const assignedTeamIds = new Set(groups.flatMap(g => g.teams.map(t => t.id)));
+    const unassigned = teamRows.filter(team => !assignedTeamIds.has(team.id));
+
+    return { groups, unassigned };
+  }, [divisions, teamRows]);
+
   if (loading) {
     return (
       <Box
@@ -164,6 +187,44 @@ export default function PublicTournamentPage() {
   }
 
   const status = tournament.status as TournamentStatus;
+
+  const renderTeamGrid = (teamsToRender: ITeamResponse[]) => (
+    <Grid container spacing={2}>
+      {teamsToRender.map(team => (
+        <Grid
+          key={team.id}
+          size={{
+            xs: 12,
+            sm: 6,
+            md: 4
+          }}>
+          <Box
+            onClick={() => navigate(APP_ROUTES.publicTeam.build(team.slug ?? team.id))}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              p: 1.5,
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 1,
+              cursor: 'pointer',
+              '&:hover': { bgcolor: 'action.hover' }
+            }}>
+            <TeamLogo teamName={team.name} logoUrl={team.logoUrl} size={36} />
+            <Box>
+              <Typography variant="body2" sx={{
+                fontWeight: 500
+              }}>{team.name}</Typography>
+              <Typography variant="caption" sx={{
+                color: "text.secondary"
+              }}>{team.threeLetterCode}</Typography>
+            </Box>
+          </Box>
+        </Grid>
+      ))}
+    </Grid>
+  );
 
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
@@ -263,41 +324,25 @@ export default function PublicTournamentPage() {
             color: "text.secondary"
           }}>No hay equipos inscriptos en este torneo.</Typography>
         ) : (
-          <Grid container spacing={2}>
-            {teamRows.map(team => (
-              <Grid
-                key={team.id}
-                size={{
-                  xs: 12,
-                  sm: 6,
-                  md: 4
-                }}>
-                <Box
-                  onClick={() => navigate(APP_ROUTES.publicTeam.build(team.slug ?? team.id))}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1.5,
-                    p: 1.5,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    borderRadius: 1,
-                    cursor: 'pointer',
-                    '&:hover': { bgcolor: 'action.hover' }
-                  }}>
-                  <TeamLogo teamName={team.name} logoUrl={team.logoUrl} size={36} />
-                  <Box>
-                    <Typography variant="body2" sx={{
-                      fontWeight: 500
-                    }}>{team.name}</Typography>
-                    <Typography variant="caption" sx={{
-                      color: "text.secondary"
-                    }}>{team.threeLetterCode}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {teamsByDivision.groups.map(({ division, teams: divisionTeams }) => (
+              <Box key={division.id}>
+                <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
+                  {division.name}
+                </Typography>
+                {renderTeamGrid(divisionTeams)}
+              </Box>
             ))}
-          </Grid>
+
+            {teamsByDivision.unassigned.length > 0 && (
+              <Box>
+                <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
+                  Sin división asignada
+                </Typography>
+                {renderTeamGrid(teamsByDivision.unassigned)}
+              </Box>
+            )}
+          </Box>
         )
       )}
 

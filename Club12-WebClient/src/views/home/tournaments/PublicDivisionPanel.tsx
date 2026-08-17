@@ -30,12 +30,26 @@ import MatchFixtureList from '@/views/home/matches/MatchFixtureList';
 import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
 
 const FETCH_PAGE_SIZE = 100;
+const STAGE_NAME_DIVISION_SEPARATOR = ' - ';
 
 type DivisionSubTab = 'posiciones' | 'goleadores' | 'partidos' | 'llaves';
 
 interface PublicDivisionPanelProps {
   division: IDivisionResponse;
 }
+
+/**
+ * Stage names follow a "{Division} - {Specific}" convention (e.g.
+ * "Copa Club12 - ZONA 3"). We're already inside that division's tab, so
+ * strip the redundant prefix and show the specific part — this is what
+ * distinguishes stages sharing the same type (e.g. a cup division with
+ * several parallel group stages, all "Group" type with no bracketName,
+ * which stageLabel() alone can't tell apart).
+ */
+const stageSectionLabel = (stage: IStageResponse, divisionName: string): string => {
+  const prefix = `${divisionName}${STAGE_NAME_DIVISION_SEPARATOR}`;
+  return stage.name.startsWith(prefix) ? stage.name.slice(prefix.length) : stageLabel(stage);
+};
 
 /**
  * A single division's public content, scoped behind its own tournament-level
@@ -138,7 +152,9 @@ export default function PublicDivisionPanel({ division }: PublicDivisionPanelPro
   }, [subTab, structureLoaded, division.id]);
 
   const matchSections = useMemo(() => {
-    const stageIdsInOrder = [...stages].sort((a, b) => a.order - b.order);
+    const stageIdsInOrder = [...stages].sort(
+      (a, b) => a.order - b.order || a.name.localeCompare(b.name, 'es', { numeric: true })
+    );
     return stageIdsInOrder
       .map(stage => ({ stage, matches: matches.filter(match => match.stageId === stage.id) }))
       .filter(section => section.matches.length > 0);
@@ -211,7 +227,7 @@ export default function PublicDivisionPanel({ division }: PublicDivisionPanelPro
             {matchSections.map(({ stage, matches: stageMatches }) => (
               <Box key={stage.id}>
                 <Typography variant="subtitle1" component="h3" sx={{ mb: 1.5 }}>
-                  {stageLabel(stage)}
+                  {stageSectionLabel(stage, division.name)}
                 </Typography>
                 <MatchFixtureList matches={stageMatches} />
               </Box>
