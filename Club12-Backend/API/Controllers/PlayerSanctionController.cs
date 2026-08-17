@@ -46,7 +46,7 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
         PlayerSanction createdSanction = await playerSanctionService.CreatePlayerSanctionAsync(mappedSanction);
         PlayerSanctionResponse sanctionResponse = mapper.Map<PlayerSanctionResponse>(createdSanction);
 
-        return CreatedAtAction(nameof(GetPlayerSanctionById), new { id = sanctionResponse.Id }, sanctionResponse);
+        return CreatedAtAction(nameof(GetPlayerSanctionById), new { idOrSlug = sanctionResponse.Id }, sanctionResponse);
     }
 
     /// <summary>
