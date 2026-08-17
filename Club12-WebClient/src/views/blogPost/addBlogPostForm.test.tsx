@@ -39,6 +39,7 @@ const buildPost = (): BlogPostResponse => ({
   id: 'guid-a-aaaa-bbbb-cccc' as unknown as GUID,
   author: 'Autor',
   title: 'Titulo',
+  slug: 'titulo',
   views: 0,
   markdownText: 'contenido',
   createdAt: new Date(),

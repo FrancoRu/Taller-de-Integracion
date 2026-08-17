@@ -121,11 +121,11 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const getBlogPostsById = useCallback(
-    async (id: GUID): Promise<BlogPostResponse | void> => {
+    async (idOrSlug: string): Promise<BlogPostResponse | void> => {
       try {
         const response = await queryClient.fetchQuery({
-          queryKey: blogPostKeys.byId(id),
-          queryFn: async () => await blogPostService.getBlogPostsById(id),
+          queryKey: blogPostKeys.byId(idOrSlug),
+          queryFn: async () => await blogPostService.getBlogPostsById(idOrSlug),
         });
 
         return response?.data;

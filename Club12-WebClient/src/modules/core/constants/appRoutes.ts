@@ -30,8 +30,8 @@ export const APP_ROUTES = {
   },
   publicBlog: '/blog',
   blogPost: {
-    pattern: '/blog/:id',
-    build: (id: string) => `/blog/${id}`,
+    pattern: '/blog/:idOrSlug',
+    build: (idOrSlug: string) => `/blog/${idOrSlug}`,
   },
 
   panel: '/panel',

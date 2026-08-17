@@ -95,7 +95,7 @@ const BlogPostsPage: React.FC = () => {
 
   const handleView = useCallback(
     (row: BlogPostResponse) => {
-      navigate(APP_ROUTES.blogPost.build(row.id), { state: { post: row } });
+      navigate(APP_ROUTES.blogPost.build(row.slug), { state: { post: row } });
     },
     [navigate]
   );

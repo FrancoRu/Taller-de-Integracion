@@ -16,6 +16,7 @@ const buildPost = (
   id: 'guid-a-aaaa-bbbb-cccc' as unknown as GUID,
   author: 'Autor',
   title: 'Titulo',
+  slug: 'titulo',
   views: 0,
   markdownText: 'contenido',
   createdAt: new Date('2026-01-01'),
@@ -26,7 +27,7 @@ const renderAt = (path: string, state?: unknown) =>
   render(
     <MemoryRouter initialEntries={[{ pathname: path, state }]}>
       <Routes>
-        <Route path="/blog/:id" element={<BlogPostDetailPage />} />
+        <Route path="/blog/:idOrSlug" element={<BlogPostDetailPage />} />
       </Routes>
     </MemoryRouter>
   );

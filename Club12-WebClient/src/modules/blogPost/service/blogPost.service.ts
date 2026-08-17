@@ -76,14 +76,14 @@ export const blogPostService = {
   },
 
   /**
-   * Gets a blog post by its ID.
-   * @param {string} id - The ID of the blog post to retrieve.
+   * Gets a blog post by its ID or its public slug.
+   * @param {string} idOrSlug - The ID or slug of the blog post to retrieve.
    * @returns {Promise<AxiosResponse<BlogPostResponse>>} - A promise that resolves with the blog post data.
    */
   getBlogPostsById: async (
-    id: GUID
+    idOrSlug: string
   ): Promise<AxiosResponse<BlogPostResponse>> =>
-    sendGet<BlogPostResponse>(`${routes.blogposts}/${id}`),
+    sendGet<BlogPostResponse>(`${routes.blogposts}/${idOrSlug}`),
 
   /**
    * Fetches blog posts based on filters and pagination.
