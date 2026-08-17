@@ -51,13 +51,20 @@ public interface IGenericRepository<TEntity> where TEntity : EntityBase
     /// <param name="predicate">The filter expression to match entities.</param>
     /// <param name="includes">Optional navigation property expressions to include related data.</param>
     /// <param name="filter">Optional pagination and filtering request.</param>
+    /// <param name="asSplitQuery">
+    /// Set true when including 2+ collection navigations in the same query —
+    /// otherwise EF Core joins them into one cartesian-product result set,
+    /// which is both slow and, combined with pagination, can return
+    /// incorrect rows.
+    /// </param>
     /// <returns>
     /// A task representing the asynchronous operation. The task result contains a collection of matching entities.
     /// </returns>
     Task<IEnumerable<TEntity>> FindAsync(
         Expression<Func<TEntity, bool>> predicate,
         IEnumerable<Expression<Func<TEntity, object>>>? includes = null,
-        PaginatedFilterRequest? filter = null);
+        PaginatedFilterRequest? filter = null,
+        bool asSplitQuery = false);
 
     /// <summary>
     /// Adds a new entity to the repository.

@@ -83,13 +83,19 @@ public class GenericRepository<TEntity>(ApplicationDBContext context)
     public virtual async Task<IEnumerable<TEntity>> FindAsync(
         Expression<Func<TEntity, bool>> predicate,
         IEnumerable<Expression<Func<TEntity, object>>>? includes = null,
-        PaginatedFilterRequest? filter = null)
+        PaginatedFilterRequest? filter = null,
+        bool asSplitQuery = false)
     {
         IQueryable<TEntity> query = _dbSet.Where(predicate);
 
         foreach (Expression<Func<TEntity, object>> include in includes ?? [])
         {
             query = query.Include(include);
+        }
+
+        if (asSplitQuery)
+        {
+            query = query.AsSplitQuery();
         }
 
         if (filter != null)

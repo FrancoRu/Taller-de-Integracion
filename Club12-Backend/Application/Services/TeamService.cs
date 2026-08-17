@@ -124,7 +124,8 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
         IEnumerable<Team> filteredTeams = await _teamRepository.FindAsync(
             expression,
             includes: [team => team.Players, team => team.StageTeamMatches],
-            filter: filter);
+            filter: filter,
+            asSplitQuery: true);
 
         int totalCount = await _teamRepository.CountAsync(expression);
 
