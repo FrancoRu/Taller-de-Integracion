@@ -7,13 +7,19 @@ import {
   Card,
   CardContent,
   CircularProgress,
+  MenuItem,
   Stack,
   TextField,
   Typography,
 } from '@mui/material';
+import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { useUser } from '@/modules/user/hook/user.hook';
 import { GUID } from '@/modules/core/types/types';
 import { UpdateUserRequest } from '@/modules/user/type/user';
+import {
+  USER_ROLE_LABELS,
+  UserRolesType,
+} from '@/modules/core/enum/user/userRolesType';
 import { useError } from '@/modules/error/hooks/error.hock';
 import {
   COOKIE_SIGNIN_TOKEN,
@@ -21,6 +27,23 @@ import {
 } from '@/modules/core/constants/constants';
 import { HttpStatus } from '@/modules/core/constants/httpStatus';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+
+/**
+ * Roles each caller may assign via the edit form, mirroring the backend's
+ * role-change policy in IdentityUserManagementService exactly: ADMIN can
+ * set any role, OWNER can only promote/demote a subordinate to
+ * TOURNAMENT_MANAGER. The backend re-enforces this regardless of what the
+ * form sends — this only keeps the UI from offering choices that would be
+ * rejected anyway.
+ */
+const ADMIN_ASSIGNABLE_ROLES: UserRolesType[] = [
+  UserRolesType.Admin,
+  UserRolesType.Owner,
+  UserRolesType.TournamentManager,
+  UserRolesType.TeamManager,
+];
+
+const OWNER_ASSIGNABLE_ROLES: UserRolesType[] = [UserRolesType.TournamentManager];
 
 const GUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -64,6 +87,7 @@ const getUserIdFromToken = (): GUID | null => {
 const EditUser: React.FC = () => {
   const { userId: routeUserId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
+  const { role: loggedRole } = useAuth();
   const { user, getById, updateUser } = useUser();
   const { errors, setMessage } = useError();
   const [loading, setLoading] = useState(true);
@@ -74,11 +98,21 @@ const EditUser: React.FC = () => {
       : getUserIdFromToken();
   const isSelfProfileMode = !routeUserId;
 
+  const isAdmin = loggedRole === UserRolesType.Admin;
+  const isOwner = loggedRole === UserRolesType.Owner;
+  // A caller can never change their own role (enforced server-side too), so
+  // the field is only offered when editing someone else's account.
+  const canChangeRole = !isSelfProfileMode && (isAdmin || isOwner);
+  const assignableRoles = isAdmin
+    ? ADMIN_ASSIGNABLE_ROLES
+    : OWNER_ASSIGNABLE_ROLES;
+
   const [form, setForm] = useState<UpdateUserRequest>({
     username: '',
     email: '',
     phone: '',
   });
+  const [initialRole, setInitialRole] = useState<UserRolesType | undefined>();
 
   useEffect(() => {
     if (!targetUserId) {
@@ -94,7 +128,9 @@ const EditUser: React.FC = () => {
           username: data.username ?? '',
           email: data.email ?? '',
           phone: data.phoneNumber ?? '',
+          role: data.role,
         });
+        setInitialRole(data.role);
       }
       setLoading(false);
     })();
@@ -110,13 +146,16 @@ const EditUser: React.FC = () => {
   const handleSubmit = async () => {
     if (!targetUserId) return;
 
+    const roleChanged = canChangeRole && !!form.role && form.role !== initialRole;
+
     const payload: UpdateUserRequest = {
       username: form.username?.trim() || undefined,
       email: form.email?.trim() || undefined,
       phone: form.phone?.trim() || undefined,
+      role: roleChanged ? form.role : undefined,
     };
 
-    if (!payload.username && !payload.email && !payload.phone) {
+    if (!payload.username && !payload.email && !payload.phone && !payload.role) {
       setMessage(HttpStatus.BadRequest, [
         'Debes completar al menos un campo para actualizar.',
       ]);
@@ -218,6 +257,28 @@ const EditUser: React.FC = () => {
             value={form.phone ?? ''}
             onChange={handleChange}
           />
+
+          {canChangeRole && (
+            <TextField
+              select
+              fullWidth
+              label="Rol"
+              name="role"
+              value={form.role ?? ''}
+              onChange={handleChange}
+            >
+              {assignableRoles.map(r => (
+                <MenuItem key={r} value={r}>
+                  {USER_ROLE_LABELS[r]}
+                </MenuItem>
+              ))}
+              {initialRole && !assignableRoles.includes(initialRole) && (
+                <MenuItem value={initialRole}>
+                  {USER_ROLE_LABELS[initialRole]}
+                </MenuItem>
+              )}
+            </TextField>
+          )}
 
           <Stack direction="row" spacing={2} sx={{
             justifyContent: "flex-end"

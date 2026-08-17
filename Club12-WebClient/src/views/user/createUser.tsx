@@ -12,17 +12,14 @@ import {
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { useUser } from '@/modules/user/hook/user.hook';
 import { RegisterUserRequest } from '@/modules/user/type/user';
-import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
+import {
+  USER_ROLE_LABELS,
+  UserRolesType,
+} from '@/modules/core/enum/user/userRolesType';
 import { useError } from '@/modules/error/hooks/error.hock';
 import { HttpStatus } from '@/modules/core/constants/httpStatus';
 import { USERNAME_LENGTH } from '@/modules/core/constants/constants';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
-
-const ROLE_LABELS: Partial<Record<UserRolesType, string>> = {
-  [UserRolesType.Owner]: 'Owner',
-  [UserRolesType.TournamentManager]: 'Responsable del Torneo',
-  [UserRolesType.TeamManager]: 'Responsable de Equipo',
-};
 
 const ADMIN_ASSIGNABLE_ROLES: UserRolesType[] = [UserRolesType.Owner];
 
@@ -166,7 +163,7 @@ const CreateUser: React.FC = () => {
             {(isAdmin ? ADMIN_ASSIGNABLE_ROLES : OWNER_ASSIGNABLE_ROLES).map(
               r => (
                 <MenuItem key={r} value={r}>
-                  {ROLE_LABELS[r] ?? r}
+                  {USER_ROLE_LABELS[r]}
                 </MenuItem>
               )
             )}
