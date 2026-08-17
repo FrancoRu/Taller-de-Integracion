@@ -37,6 +37,7 @@ public static class EntityConstants
         /// </summary>
         public const string PlayerStatistic = "PlayersStatistics";
 
+        public const string PlayerTeamRegistration = "PlayerTeamRegistrations";
         public const string Position = "Positions";
         public const string Scorer = "Scorers";
         public const string Stage = "Stages";
