@@ -27,7 +27,7 @@ namespace API.Controllers;
 /// <param name="mapper">AutoMapper instance for mapping between entities and DTOs.</param>
 [Route("api/match-series/")]
 [ApiController]
-[Authorize(Roles = Roles.OwnerOrTournamentManager)]
+[Authorize(Roles = Roles.AdminOwnerOrTournamentManager)]
 public class MatchSeriesController(IMatchSeriesService matchSeriesService, IMapper mapper) : ControllerBase
 {
     /// <summary>

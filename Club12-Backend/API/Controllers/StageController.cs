@@ -36,7 +36,7 @@ namespace API.Controllers;
 /// <param name="mapper">AutoMapper instance for mapping between entities and DTOs.</param>
 [Route("api/stages/")]
 [ApiController]
-[Authorize(Roles = Roles.OwnerOrTournamentManager)]
+[Authorize(Roles = Roles.AdminOwnerOrTournamentManager)]
 public class StageController(IStageService stageService, IMatchService matchService, IMapper mapper) : ControllerBase
 {
     /// <summary>

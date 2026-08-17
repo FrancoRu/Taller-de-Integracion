@@ -28,7 +28,7 @@ namespace API.Controllers;
 /// <param name="mapper">The AutoMapper instance.</param>
 [Route("api/divisions/")]
 [ApiController]
-[Authorize(Roles = Roles.OwnerOrTournamentManager)]
+[Authorize(Roles = Roles.AdminOwnerOrTournamentManager)]
 public class DivisionController(
     IDivisionService divisionService,
     IMapper mapper

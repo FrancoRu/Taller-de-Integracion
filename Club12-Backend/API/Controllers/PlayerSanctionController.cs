@@ -28,7 +28,7 @@ namespace API.Controllers;
 /// <param name="mapper">The AutoMapper instance.</param>
 [Route("api/player-sanctions/")]
 [ApiController]
-[Authorize(Roles = Roles.OwnerOrTournamentManager)]
+[Authorize(Roles = Roles.AdminOwnerOrTournamentManager)]
 public class PlayerSanctionController(IPlayerSanctionService playerSanctionService, IMapper mapper) : ControllerBase
 {
     /// <summary>

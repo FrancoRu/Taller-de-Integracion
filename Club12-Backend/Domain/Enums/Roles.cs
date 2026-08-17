@@ -24,10 +24,10 @@ public static class Roles
 
     /// <summary>
     /// Tournament/division/stage/match/series/venue/sanction/statistic
-    /// management — the two roles that run a tournament's competitive
-    /// structure day to day.
+    /// management — the roles that run a tournament's competitive
+    /// structure day to day, plus Admin as the top-privilege role.
     /// </summary>
-    public const string OwnerOrTournamentManager = $"{Owner},{TournamentManager}";
+    public const string AdminOwnerOrTournamentManager = $"{Admin},{Owner},{TournamentManager}";
 
     /// <summary>
     /// Team and player roster management — a team's own manager, plus the

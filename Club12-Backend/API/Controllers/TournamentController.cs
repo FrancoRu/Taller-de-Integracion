@@ -27,7 +27,7 @@ namespace API.Controllers;
 /// </summary>
 [Route("api/tournaments/")]
 [ApiController]
-[Authorize(Roles = Roles.OwnerOrTournamentManager)]
+[Authorize(Roles = Roles.AdminOwnerOrTournamentManager)]
 public class TournamentController(
     ITournamentService tournamentService,
     ITeamService teamService,

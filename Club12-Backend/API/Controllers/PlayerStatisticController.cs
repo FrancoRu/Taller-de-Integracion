@@ -27,7 +27,7 @@ namespace API.Controllers;
 /// <param name="mapper">The Auto_mapper instance.</param>
 [Route("api/player-statistics/")]
 [ApiController]
-[Authorize(Roles = Roles.OwnerOrTournamentManager)]
+[Authorize(Roles = Roles.AdminOwnerOrTournamentManager)]
 public class PlayerStatisticController(IPlayerStatisticService playerStatisticService, IMapper mapper) : ControllerBase
 {
 
