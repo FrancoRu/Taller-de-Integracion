@@ -480,3 +480,4 @@ appsettings.Tomi.json
 
 # Local tooling cache
 .atl/
+/Club12-Backend/API/appsettings.Facundo.json
