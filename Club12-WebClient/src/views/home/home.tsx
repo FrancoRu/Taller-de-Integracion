@@ -12,6 +12,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import SportsBasketballIcon from '@mui/icons-material/SportsBasketball';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
 import { BlogPostResponse } from '@/modules/blogPost/type/blogPost';
@@ -20,6 +21,7 @@ import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { BLOG_HOME_EXCERPT_LENGTH } from '@/modules/blogPost/constants/blogPost';
 import { TournamentCard } from '@/views/home/tournaments/PublicTournamentsPage';
+import BasketballCourtPattern from '@/views/core/components/BasketballCourtPattern';
 
 const FEATURED_TOURNAMENTS_COUNT = 3;
 const LATEST_POSTS_COUNT = 3;
@@ -104,12 +106,29 @@ export default function Home() {
     <>
       <Box
         sx={{
+          position: 'relative',
+          overflow: 'hidden',
           bgcolor: 'secondary.main',
           color: '#fff',
           py: { xs: 8, md: 12 },
         }}
       >
-        <Container maxWidth="lg">
+        <BasketballCourtPattern
+          sx={{ color: 'primary.main', opacity: 0.12, strokeWidth: 3 }}
+        />
+        <SportsBasketballIcon
+          sx={{
+            position: 'absolute',
+            top: { xs: -60, md: -80 },
+            right: { xs: -60, md: -40 },
+            fontSize: { xs: 240, md: 340 },
+            color: 'primary.main',
+            opacity: 0.16,
+            transform: 'rotate(18deg)',
+          }}
+        />
+
+        <Container maxWidth="lg" sx={{ position: 'relative' }}>
           <Typography variant="h2" component="h1" sx={{
             mb: 2
           }}>
