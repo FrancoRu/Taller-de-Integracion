@@ -24,12 +24,9 @@ import {
 } from '@/modules/playerStatistic/type/playerStatistic.d';
 import FormButtons from '@/views/core/components/FormButtons';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
+import { STATISTIC_TYPE_LABELS } from '@/modules/playerStatistic/utils/playerStatisticDisplay';
 
 const STATISTIC_TYPE_OPTIONS: StatisticType[] = ['Points', 'Assists'];
-const STATISTIC_TYPE_LABELS: Record<StatisticType, string> = {
-  Points: 'Puntos',
-  Assists: 'Asistencias',
-};
 
 const INITIAL_FORM: IPlayerStatisticCreateFormState = {
   value: '',
