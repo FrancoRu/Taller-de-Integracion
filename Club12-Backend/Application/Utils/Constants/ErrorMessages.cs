@@ -71,6 +71,11 @@ public static class ErrorMessages
         {
             return $"There is no Team with id: {teamId}.";
         }
+
+        public static string NotInTournament(System.Guid teamId)
+        {
+            return $"Team '{teamId}' is not currently registered to any tournament, so players cannot be registered to it.";
+        }
     }
 
     public static class Stage

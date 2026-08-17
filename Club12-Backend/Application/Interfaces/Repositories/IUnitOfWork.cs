@@ -19,5 +19,6 @@ public interface IUnitOfWork
     IMatchSeriesRepository MatchSeriesRepository { get; }
     IDivisionRepository DivisionRepository { get; }
     IStageTeamMatchRepository StageTeamMatchRepository { get; }
+    IPlayerTeamRegistrationRepository PlayerTeamRegistrationRepository { get; }
     Task<int> SaveChangesAsync();
 }

@@ -20,8 +20,22 @@ public class Player : EntityBase
     public string? PhoneNumber { get; set; }
     public required DateTime BirthDate { get; set; }
     public required string SocialSecurity { get; set; }
+
+    /// <summary>
+    /// Denormalized convenience pointer to the player's CURRENT team, always
+    /// kept in sync with their latest <see cref="PlayerTeamRegistration"/>.
+    /// This is NOT the source of truth for season-scoped roster membership —
+    /// use <see cref="PlayerTeamRegistrations"/> (filtered by TournamentId)
+    /// for "was this player on team X during season Y" questions.
+    /// </summary>
     public required Team Team { get; set; }
     public Guid TeamId { get; set; }
 
     public virtual ICollection<Scorer> Scorers { get; set; } = [];
+
+    /// <summary>
+    /// Every season this player was registered to a team. The source of
+    /// truth for roster membership — see <see cref="PlayerTeamRegistration"/>.
+    /// </summary>
+    public virtual ICollection<PlayerTeamRegistration> PlayerTeamRegistrations { get; set; } = [];
 }
