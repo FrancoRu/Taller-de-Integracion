@@ -53,10 +53,22 @@ const formatDateTime = (value?: string | null) => {
   });
 };
 
+const buildInitialForm = (
+  presetMatch?: IPlayerSanctionCreatePageProps['presetMatch']
+): IPlayerSanctionCreateFormState =>
+  presetMatch
+    ? {
+        ...INITIAL_FORM,
+        stageId: presetMatch.stageId ?? '',
+        matchId: presetMatch.id,
+      }
+    : INITIAL_FORM;
+
 const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
   open,
   onClose,
   onCreated,
+  presetMatch,
 }) => {
   const { tournaments, getAllTournamentsByFilter } = useTournament();
   const { divisions, getDivisionsByFilters } = useDivision();
@@ -65,19 +77,31 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
   const { players, getPlayersByFilter } = usePlayer();
   const { addPlayerSanction } = usePlayerSanction();
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] =
-    useState<IPlayerSanctionCreateFormState>(INITIAL_FORM);
+  const [form, setForm] = useState<IPlayerSanctionCreateFormState>(() =>
+    buildInitialForm(presetMatch)
+  );
 
+  // Re-seed the form whenever the dialog (re)opens, so a preset match is
+  // always applied and a plain create keeps starting from a blank slate.
   useEffect(() => {
     if (!open) {
       return;
     }
 
-    void getAllTournamentsByFilter({ pageSize: FILTER_OPTIONS_PAGE_SIZE });
-  }, [getAllTournamentsByFilter, open]);
+    setForm(buildInitialForm(presetMatch));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, presetMatch?.id]);
 
   useEffect(() => {
-    if (!open || !form.tournamentId) {
+    if (!open || presetMatch) {
+      return;
+    }
+
+    void getAllTournamentsByFilter({ pageSize: FILTER_OPTIONS_PAGE_SIZE });
+  }, [getAllTournamentsByFilter, open, presetMatch]);
+
+  useEffect(() => {
+    if (!open || presetMatch || !form.tournamentId) {
       return;
     }
 
@@ -85,10 +109,10 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
       tournamentId: form.tournamentId,
       pageSize: FILTER_OPTIONS_PAGE_SIZE,
     });
-  }, [form.tournamentId, getDivisionsByFilters, open]);
+  }, [form.tournamentId, getDivisionsByFilters, open, presetMatch]);
 
   useEffect(() => {
-    if (!open || !form.divisionId) {
+    if (!open || presetMatch || !form.divisionId) {
       return;
     }
 
@@ -96,10 +120,10 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
       divisionId: form.divisionId,
       pageSize: FILTER_OPTIONS_PAGE_SIZE,
     });
-  }, [form.divisionId, getStagesByFilters, open]);
+  }, [form.divisionId, getStagesByFilters, open, presetMatch]);
 
   useEffect(() => {
-    if (!open || !form.stageId) {
+    if (!open || presetMatch || !form.stageId) {
       return;
     }
 
@@ -107,7 +131,7 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
       stageId: form.stageId,
       pageSize: FILTER_OPTIONS_PAGE_SIZE,
     });
-  }, [form.stageId, getMatchByFilter, open]);
+  }, [form.stageId, getMatchByFilter, open, presetMatch]);
 
   useEffect(() => {
     if (!open || !form.teamId) {
@@ -126,8 +150,10 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
   const matchOptions = useMemo(() => matches ?? [], [matches]);
 
   const selectedMatch = useMemo(
-    () => matchOptions.find(matchOption => matchOption.id === form.matchId),
-    [form.matchId, matchOptions]
+    () =>
+      presetMatch ??
+      matchOptions.find(matchOption => matchOption.id === form.matchId),
+    [form.matchId, matchOptions, presetMatch]
   );
 
   const teamOptions = useMemo(() => {
@@ -149,9 +175,9 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
       return;
     }
 
-    setForm(INITIAL_FORM);
+    setForm(buildInitialForm(presetMatch));
     onClose();
-  }, [onClose, submitting]);
+  }, [onClose, presetMatch, submitting]);
 
   const handleCreate = useCallback(async () => {
     if (!form.matchId) {
@@ -224,10 +250,10 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
       text: 'La sanción se creó correctamente.',
     });
 
-    setForm(INITIAL_FORM);
+    setForm(buildInitialForm(presetMatch));
     onClose();
     onCreated?.();
-  }, [addPlayerSanction, form, onClose, onCreated]);
+  }, [addPlayerSanction, form, onClose, onCreated, presetMatch]);
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
@@ -237,6 +263,20 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
           mt: 0.5
         }}>
           <Grid container spacing={2}>
+            {presetMatch && (
+              <Grid size={12}>
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>
+                  Partido: {presetMatch.homeTeam?.name ?? '—'} vs{' '}
+                  {presetMatch.visitorTeam?.name ?? '—'} ·{' '}
+                  {formatDateTime(presetMatch.matchDate)}
+                </Typography>
+              </Grid>
+            )}
+
+            {!presetMatch && (
+            <>
             <Grid
               size={{
                 xs: 12,
@@ -372,6 +412,8 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
                 ))}
               </TextField>
             </Grid>
+            </>
+            )}
 
             <Grid
               size={{

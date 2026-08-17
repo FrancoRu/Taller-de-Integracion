@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -21,6 +21,8 @@ import { formatMatchDateToString } from '@/modules/core/utils/formatDate';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import MatchStatisticsTab from '@/views/match/MatchStatisticsTab';
+import NewEntityButton from '@/views/core/components/NewEntityButton';
+import PlayerSanctionCreatePage from '@/views/playerSanction/playerSanctionCreatePage';
 import { VisibilityIcon } from '@/views/core/MUI/icons/icons';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
@@ -50,6 +52,7 @@ const MatchPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [sanctionsLoading, setSanctionsLoading] = useState(false);
   const [tab, setTab] = useState<MatchTab>('detalle');
+  const [sanctionDialogOpen, setSanctionDialogOpen] = useState(false);
 
   const targetMatchId = useMemo(
     () => matchId ?? match?.id,
@@ -70,19 +73,25 @@ const MatchPage: React.FC = () => {
     void fetchMatch();
   }, [getMatchById, targetMatchId]);
 
+  const refreshSanctions = useCallback(() => {
+    if (!targetMatchId) {
+      return;
+    }
+
+    setSanctionsLoading(true);
+    void getPlayerSanctionByFilter({ matchId: targetMatchId }).finally(() => {
+      setSanctionsLoading(false);
+    });
+  }, [getPlayerSanctionByFilter, targetMatchId]);
+
   useEffect(() => {
     if (tab !== 'sanciones' || !targetMatchId) {
       return;
     }
 
-    const fetchSanctions = async () => {
-      setSanctionsLoading(true);
-      await getPlayerSanctionByFilter({ matchId: targetMatchId });
-      setSanctionsLoading(false);
-    };
-
-    void fetchSanctions();
-  }, [getPlayerSanctionByFilter, tab, targetMatchId]);
+    refreshSanctions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, targetMatchId]);
 
   if (!targetMatchId) {
     return (
@@ -185,11 +194,23 @@ const MatchPage: React.FC = () => {
   return (
     <Card>
       <CardContent>
-        <Typography variant="h6" sx={{
-          mb: 3
-        }}>
-          Partido
-        </Typography>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={2}
+          sx={{
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            justifyContent: "space-between",
+            mb: 3
+          }}>
+          <Typography variant="h6">Partido</Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate(APP_ROUTES.panelMatches)}
+          >
+            Volver
+          </Button>
+        </Stack>
 
         <Tabs
           value={tab}
@@ -335,6 +356,16 @@ const MatchPage: React.FC = () => {
 
         {tab === 'sanciones' && (
           <>
+            <Stack direction="row" sx={{
+              justifyContent: "flex-end",
+              mb: 2
+            }}>
+              <NewEntityButton
+                type="Sanción"
+                onClick={() => setSanctionDialogOpen(true)}
+              />
+            </Stack>
+
             {sanctionsLoading ? (
               <LoadingIndicator />
             ) : sanctions.length > 0 ? (
@@ -396,6 +427,13 @@ const MatchPage: React.FC = () => {
           </>
         )}
       </CardContent>
+
+      <PlayerSanctionCreatePage
+        open={sanctionDialogOpen}
+        onClose={() => setSanctionDialogOpen(false)}
+        onCreated={refreshSanctions}
+        presetMatch={match}
+      />
     </Card>
   );
 };
