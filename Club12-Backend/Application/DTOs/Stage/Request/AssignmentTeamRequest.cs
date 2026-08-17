@@ -1,6 +1,6 @@
 ﻿namespace Application.DTOs.Stage.Request;
 
-public class AssignamentTeamRequest : UnassignamentTeamRequest
+public class AssignmentTeamRequest : UnassignmentTeamRequest
 {
     public bool Auto { get; set; } = false;
 }
