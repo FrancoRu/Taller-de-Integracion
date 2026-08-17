@@ -45,6 +45,7 @@ const buildPost = (
   id: POST_ID as unknown as GUID,
   author: 'Autor',
   title: 'Titulo',
+  slug: 'titulo',
   views: 0,
   markdownText: 'contenido',
   createdAt: new Date('2026-01-01'),
