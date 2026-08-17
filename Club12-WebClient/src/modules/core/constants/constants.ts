@@ -26,6 +26,13 @@ export const FILTERS_DEBOUNCE_DELAY_MS = 500;
 export const FILTERS_DEBOUNCE_DELAY_LONG_MS = 1000;
 export const PUBLIC_SEARCH_DEBOUNCE_DELAY_MS = 600;
 
+/**
+ * Applied to tabbed content areas (tournament/division tabs) so switching
+ * between a short tab (e.g. Información) and a long one (e.g. Partidos)
+ * doesn't visibly jump the page height and the footer position with it.
+ */
+export const TAB_CONTENT_MIN_HEIGHT = 400;
+
 export const USERNAME_LENGTH = {
   Min: 3,
   Max: 50,

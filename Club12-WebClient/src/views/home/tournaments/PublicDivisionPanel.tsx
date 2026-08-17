@@ -13,6 +13,7 @@ import {
   Typography,
 } from '@mui/material';
 import { GUID } from '@/modules/core/types/types';
+import { TAB_CONTENT_MIN_HEIGHT } from '@/modules/core/constants/constants';
 import { IDivisionResponse } from '@/modules/division/type/division';
 import { IScorerByPlayerResponse } from '@/modules/scorer/type/scorer.d';
 import { scorerService } from '@/modules/scorer/service/scorer.service';
@@ -173,6 +174,7 @@ export default function PublicDivisionPanel({ division }: PublicDivisionPanelPro
         <Tab label="Llaves" value="llaves" />
       </Tabs>
 
+      <Box sx={{ minHeight: TAB_CONTENT_MIN_HEIGHT }}>
       {subTab === 'posiciones' && (
         <DivisionStandings
           positions={division.positions}
@@ -243,6 +245,7 @@ export default function PublicDivisionPanel({ division }: PublicDivisionPanelPro
         ) : (
           <PlayoffBrackets groups={bracketGroups} seriesById={seriesById} />
         ))}
+      </Box>
     </Box>
   );
 }

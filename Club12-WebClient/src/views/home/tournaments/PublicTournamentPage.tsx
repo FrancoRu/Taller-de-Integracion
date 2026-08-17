@@ -23,6 +23,7 @@ import TeamLogo from '@/views/core/components/TeamLogo';
 import PublicDivisionPanel from '@/views/home/tournaments/PublicDivisionPanel';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
+import { TAB_CONTENT_MIN_HEIGHT } from '@/modules/core/constants/constants';
 
 const STATUS_LABEL: Record<TournamentStatus, string> = {
   Scheduled: 'Programado',
@@ -267,6 +268,7 @@ export default function PublicTournamentPage() {
         ))}
       </Tabs>
 
+      <Box sx={{ minHeight: TAB_CONTENT_MIN_HEIGHT }}>
       {tab === INFO_TAB && (
         <Grid container spacing={3}>
           <Grid size={12}>
@@ -360,6 +362,7 @@ export default function PublicTournamentPage() {
           <PublicDivisionPanel division={activeDivision} />
         ) : null
       )}
+      </Box>
     </Container>
   );
 }
