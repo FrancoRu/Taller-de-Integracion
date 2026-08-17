@@ -26,6 +26,7 @@ namespace Application.Services;
 public class TeamService(IUnitOfWork unitOfWork) : ITeamService
 {
     private readonly ITeamRepository _teamRepository = unitOfWork.TeamRepository;
+    private readonly IPlayerTeamRegistrationRepository _registrationRepository = unitOfWork.PlayerTeamRegistrationRepository;
 
     /// <summary>
     /// Creates a new team entity and persists it to the repository.
@@ -43,34 +44,56 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
     }
 
     /// <summary>
-    /// Retrieves a team by its unique identifier, including its associated players.
+    /// Retrieves a team by its unique identifier, with its roster (Players)
+    /// scoped to one season.
     /// </summary>
     /// <param name="teamId">The unique identifier of the team.</param>
+    /// <param name="tournamentId">
+    /// The season whose roster to attach; defaults to the team's own current
+    /// TournamentId when omitted.
+    /// </param>
     /// <returns>The team entity if found; otherwise, null.</returns>
-    public async Task<Team?> GetTeamByIdAsync(Guid teamId)
+    public async Task<Team?> GetTeamByIdAsync(Guid teamId, Guid? tournamentId = null)
     {
-        return await _teamRepository.GetByIdAsync(teamId, includes: [team => team.Players]);
+        Team? team = await _teamRepository.GetByIdAsync(teamId);
+
+        if (team is null)
+        {
+            return null;
+        }
+
+        await AttachSeasonRostersAsync([team], tournamentId);
+        return team;
     }
 
     /// <summary>
-    /// Retrieves a team by its id or its slug, including its associated players.
-    /// The value is treated as an id when it parses as a GUID, otherwise it is
-    /// looked up as a slug.
+    /// Retrieves a team by its id or its slug, with its roster (Players)
+    /// scoped to one season. The value is treated as an id when it parses as
+    /// a GUID, otherwise it is looked up as a slug.
     /// </summary>
     /// <param name="idOrSlug">The team's GUID id or its slug.</param>
+    /// <param name="tournamentId">
+    /// The season whose roster to attach; defaults to the team's own current
+    /// TournamentId when omitted.
+    /// </param>
     /// <returns>The team entity if found; otherwise, null.</returns>
-    public async Task<Team?> GetTeamByIdOrSlugAsync(string idOrSlug)
+    public async Task<Team?> GetTeamByIdOrSlugAsync(string idOrSlug, Guid? tournamentId = null)
     {
         if (Guid.TryParse(idOrSlug, out Guid teamId))
         {
-            return await GetTeamByIdAsync(teamId);
+            return await GetTeamByIdAsync(teamId, tournamentId);
         }
 
-        IEnumerable<Team> matches = await _teamRepository.FindAsync(
-            team => team.Slug == idOrSlug,
-            includes: [team => team.Players]);
+        IEnumerable<Team> matches = await _teamRepository.FindAsync(team => team.Slug == idOrSlug);
+        Team? team = matches.FirstOrDefault();
 
-        return matches.FirstOrDefault();
+        if (team is null)
+        {
+            return null;
+        }
+
+        await AttachSeasonRostersAsync([team], tournamentId);
+        return team;
     }
 
     /// <summary>
@@ -121,11 +144,13 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
             expression = expression.And(stageExpression);
         }
 
-        IEnumerable<Team> filteredTeams = await _teamRepository.FindAsync(
+        List<Team> filteredTeams = [.. await _teamRepository.FindAsync(
             expression,
-            includes: [team => team.Players, team => team.StageTeamMatches],
+            includes: [team => team.StageTeamMatches],
             filter: filter,
-            asSplitQuery: true);
+            asSplitQuery: true)];
+
+        await AttachSeasonRostersAsync(filteredTeams, filter.TournamentId);
 
         int totalCount = await _teamRepository.CountAsync(expression);
 
@@ -136,6 +161,49 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
             TotalCount = totalCount,
             Items = filteredTeams
         };
+    }
+
+    /// <summary>
+    /// Populates each team's Players collection with the roster registered
+    /// for one season, so a Team returned from this service never shows
+    /// players from a season it no longer belongs to (the bug this replaces:
+    /// Team.Players used to be the raw, permanent Player.TeamId FK
+    /// collection, which kept showing a prior season's roster after the team
+    /// was reassigned to a new tournament). Fetches every registration for
+    /// the given teams in one batched query — avoids N+1 — then filters and
+    /// groups in memory per team.
+    /// </summary>
+    /// <param name="teams">The teams to attach a roster to, mutated in place.</param>
+    /// <param name="tournamentIdOverride">
+    /// When set, every team's roster is scoped to this season instead of its
+    /// own current TournamentId (used when the caller already filtered teams
+    /// by a specific tournament, or explicitly asked to view a past season).
+    /// </param>
+    private async Task AttachSeasonRostersAsync(List<Team> teams, Guid? tournamentIdOverride)
+    {
+        List<Guid> teamIds = [.. teams.Select(t => t.Id)];
+
+        if (teamIds.Count == 0)
+        {
+            return;
+        }
+
+        List<PlayerTeamRegistration> registrations = [.. await _registrationRepository.FindAsync(
+            registration => teamIds.Contains(registration.TeamId),
+            includes: [registration => registration.Player!])];
+
+        ILookup<Guid, PlayerTeamRegistration> registrationsByTeam = registrations.ToLookup(r => r.TeamId);
+
+        foreach (Team team in teams)
+        {
+            Guid? season = tournamentIdOverride ?? team.TournamentId;
+
+            team.Players = season is null
+                ? []
+                : [.. registrationsByTeam[team.Id]
+                    .Where(r => r.TournamentId == season.Value)
+                    .Select(r => r.Player!)];
+        }
     }
 
     /// <summary>

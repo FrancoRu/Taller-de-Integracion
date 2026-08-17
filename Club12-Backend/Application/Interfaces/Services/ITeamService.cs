@@ -22,19 +22,31 @@ public interface ITeamService
     Task<Team> CreateTeamAsync(Team teamEntity);
 
     /// <summary>
-    /// Retrieves a team by its id.
+    /// Retrieves a team by its id, with its roster (Players) scoped to one
+    /// season — see <see cref="Domain.Entities.Models.PlayerTeamRegistration"/>.
     /// </summary>
     /// <param name="teamId">The id of the team to retrieve.</param>
+    /// <param name="tournamentId">
+    /// The season whose roster to attach. Defaults to the team's own current
+    /// TournamentId when omitted, so callers get "today's roster" by default.
+    /// A team with no current tournament (TournamentId null) and no explicit
+    /// <paramref name="tournamentId"/> gets an empty roster.
+    /// </param>
     /// <returns>The team with the specified id, or null if not found.</returns>
-    Task<Team?> GetTeamByIdAsync(Guid teamId);
+    Task<Team?> GetTeamByIdAsync(Guid teamId, Guid? tournamentId = null);
 
     /// <summary>
-    /// Retrieves a team by its id or its slug. The value is treated as an id
-    /// when it parses as a GUID, otherwise it is looked up as a slug.
+    /// Retrieves a team by its id or its slug, with its roster (Players)
+    /// scoped to one season. The value is treated as an id when it parses as
+    /// a GUID, otherwise it is looked up as a slug.
     /// </summary>
     /// <param name="idOrSlug">The team's GUID id or its slug.</param>
+    /// <param name="tournamentId">
+    /// The season whose roster to attach. Defaults to the team's own current
+    /// TournamentId when omitted.
+    /// </param>
     /// <returns>The matching team, or null if not found.</returns>
-    Task<Team?> GetTeamByIdOrSlugAsync(string idOrSlug);
+    Task<Team?> GetTeamByIdOrSlugAsync(string idOrSlug, Guid? tournamentId = null);
 
     /// <summary>
     /// Updates a team asynchronously.

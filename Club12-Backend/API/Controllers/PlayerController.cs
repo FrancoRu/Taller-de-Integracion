@@ -59,8 +59,13 @@ public class PlayerController(
             return BadRequest(ErrorMessages.Team.NotFound(teamId));
         }
 
+        if (existingTeam.TournamentId is null)
+        {
+            return BadRequest(ErrorMessages.Team.NotInTournament(teamId));
+        }
+
         Player mappedPlayer = mapper.Map<Player>(playerRequest);
-        Player createdPlayer = await playerService.CreatePlayerAsync(mappedPlayer);
+        Player createdPlayer = await playerService.CreatePlayerAsync(mappedPlayer, existingTeam.TournamentId.Value);
         PublicPlayerResponse playerResponse = mapper.Map<PublicPlayerResponse>(createdPlayer);
         return CreatedAtRoute("GetPlayerById", new { id = createdPlayer.Id }, playerResponse);
     }
@@ -139,7 +144,20 @@ public class PlayerController(
         }
 
         mapper.Map(playerRequest, existingPlayer);
-        await playerService.UpdatePlayerAsync(existingPlayer);
+
+        Team? currentTeam = await teamService.GetTeamByIdAsync(existingPlayer.TeamId);
+
+        if (currentTeam is null)
+        {
+            return BadRequest(ErrorMessages.Team.NotFound(existingPlayer.TeamId));
+        }
+
+        if (currentTeam.TournamentId is null)
+        {
+            return BadRequest(ErrorMessages.Team.NotInTournament(existingPlayer.TeamId));
+        }
+
+        await playerService.UpdatePlayerAsync(existingPlayer, currentTeam.TournamentId.Value);
 
         return Ok(existingPlayer);
     }

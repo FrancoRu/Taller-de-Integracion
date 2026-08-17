@@ -124,9 +124,15 @@ public class TeamController(
     }
 
     /// <summary>
-    /// Retrieves a team by its id or its public slug.
+    /// Retrieves a team by its id or its public slug. The embedded player
+    /// roster is scoped to one season.
     /// </summary>
     /// <param name="idOrSlug">The id (GUID) or slug of the team to retrieve.</param>
+    /// <param name="tournamentId">
+    /// Optional: the season whose roster to embed. Defaults to the team's
+    /// own current tournament (i.e. today's roster) when omitted — pass this
+    /// to look up the roster the team had during a past season instead.
+    /// </param>
     /// <returns>The team with the specified id or slug.
     /// <para>Returns 200 (OK) with the team response if it was found.</para>
     /// <para>Returns 404 (Not Found) if the team with the provided id or slug was not found.</para>
@@ -135,9 +141,9 @@ public class TeamController(
     [HttpGet("{idOrSlug}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TeamResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<TeamResponse>> GetTeamById(string idOrSlug)
+    public async Task<ActionResult<TeamResponse>> GetTeamById(string idOrSlug, [FromQuery] Guid? tournamentId = null)
     {
-        Team? team = await teamService.GetTeamByIdOrSlugAsync(idOrSlug);
+        Team? team = await teamService.GetTeamByIdOrSlugAsync(idOrSlug, tournamentId);
 
         if (team is null)
         {

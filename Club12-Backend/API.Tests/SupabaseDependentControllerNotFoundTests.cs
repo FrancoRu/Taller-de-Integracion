@@ -123,12 +123,12 @@ public class SupabaseDependentControllerNotFoundTests
             throw new NotImplementedException();
         }
 
-        public Task<Team?> GetTeamByIdAsync(Guid teamId)
+        public Task<Team?> GetTeamByIdAsync(Guid teamId, Guid? tournamentId = null)
         {
             return Task.FromResult<Team?>(null);
         }
 
-        public Task<Team?> GetTeamByIdOrSlugAsync(string idOrSlug)
+        public Task<Team?> GetTeamByIdOrSlugAsync(string idOrSlug, Guid? tournamentId = null)
         {
             return Task.FromResult<Team?>(null);
         }
