@@ -1,4 +1,5 @@
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 using Application.Utils.Constants.Stage;
 using Application.Utils.Helper.StageHelper;
 
@@ -163,6 +164,77 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => stageService.CreateAutomatedStagesAsync(division.Id));
+    }
+
+    /// <summary>
+    /// Regression test for a real bug found driving the manual "Nueva Fase"
+    /// admin form live: creating a second Group-type stage in a division
+    /// that already has one was silently allowed as long as the new stage's
+    /// name differed from the existing one's (CreateStageAsync only ever
+    /// checked for an exact name collision). A division's Group stage
+    /// represents its whole round-robin phase, so a second one is an
+    /// orphaned, ambiguous fixture — this must be rejected regardless of
+    /// the new stage's name.
+    /// </summary>
+    [Fact]
+    public async Task CreateStageAsync_DivisionAlreadyHasGroupStage_ThrowsEvenWithDifferentName()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
+
+        Tournament tournament = await SeedTournamentAsync(db);
+        Division division = await SeedDivisionAsync(db, tournament, withStages: true);
+
+        Stage secondGroupStage = new()
+        {
+            Name = $"Totally-Different-Name-{Guid.NewGuid()}",
+            StageType = StageType.Group,
+            IsActive = true,
+            StartDate = tournament.StartDate,
+            EndDate = tournament.StartDate.AddDays(StageTemplate.DurationDays),
+            DivisionId = division.Id,
+            Division = division,
+            Matches = [],
+            CreatedBy = "test",
+        };
+
+        InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => stageService.CreateStageAsync(secondGroupStage));
+
+        Assert.Equal(ErrorMessages.Stage.GroupStageAlreadyExistsInDivision, exception.Message);
+    }
+
+    /// <summary>
+    /// Non-Group stage types (elimination rounds) are unaffected by the
+    /// one-Group-stage-per-division rule: a division can have many.
+    /// </summary>
+    [Fact]
+    public async Task CreateStageAsync_DivisionAlreadyHasGroupStage_StillAllowsNonGroupStage()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
+
+        Tournament tournament = await SeedTournamentAsync(db);
+        Division division = await SeedDivisionAsync(db, tournament, withStages: true);
+
+        Stage semiFinalStage = new()
+        {
+            Name = $"Semifinal-{Guid.NewGuid()}",
+            StageType = StageType.SemiFinal,
+            IsActive = true,
+            StartDate = tournament.StartDate,
+            EndDate = tournament.StartDate.AddDays(StageTemplate.DurationDays),
+            DivisionId = division.Id,
+            Division = division,
+            Matches = [],
+            CreatedBy = "test",
+        };
+
+        Stage created = await stageService.CreateStageAsync(semiFinalStage);
+
+        Assert.Equal(StageType.SemiFinal, created.StageType);
     }
 
     [Fact]

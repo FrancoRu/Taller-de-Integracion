@@ -98,19 +98,36 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     /// </summary>
     /// <param name="stageEntity">The stage entity to create.</param>
     /// <returns>The created stage entity.</returns>
-    /// <exception cref="InvalidOperationException">Thrown if a stage with the same name already exists in the division.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if a stage with the same name already exists in the division, or if the
+    /// division already has a Group stage and <paramref name="stageEntity"/> is also a
+    /// Group stage (a division's round-robin phase is a single stage — see
+    /// <see cref="AssignTeamsToStageAsync"/>'s comment on why a Group stage can hold an
+    /// entire zone's teams — so a second one would be an orphaned, ambiguous fixture).
+    /// </exception>
     public async Task<Stage> CreateStageAsync(Stage stageEntity)
     {
         bool existStage = await _stageRepository.ExistsAsync(
             s => s.Name == stageEntity.Name && s.DivisionId == stageEntity.DivisionId);
 
-        if (!existStage)
+        if (existStage)
         {
-            await _stageRepository.AddAsync(stageEntity);
-            return stageEntity;
+            throw new InvalidOperationException(ErrorMessages.Stage.AlreadyExistsInDivision(stageEntity.Name));
         }
 
-        throw new InvalidOperationException(ErrorMessages.Stage.AlreadyExistsInDivision(stageEntity.Name));
+        if (stageEntity.StageType == StageType.Group)
+        {
+            bool hasGroupStage = await _stageRepository.ExistsAsync(
+                s => s.DivisionId == stageEntity.DivisionId && s.StageType == StageType.Group);
+
+            if (hasGroupStage)
+            {
+                throw new InvalidOperationException(ErrorMessages.Stage.GroupStageAlreadyExistsInDivision);
+            }
+        }
+
+        await _stageRepository.AddAsync(stageEntity);
+        return stageEntity;
     }
 
     /// <summary>
