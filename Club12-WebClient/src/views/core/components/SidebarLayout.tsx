@@ -87,7 +87,15 @@ const CONFIGURATION_CHILDREN: NavTab[] = [
   },
 ];
 
-const ADMINISTRATION_CHILDREN: NavTab[] = [
+/**
+ * Tournament-structure pages: Admin, Owner and TournamentManager can all
+ * reach these (mirrors the AdminOwnerOrTournamentManager backend policy on
+ * TournamentController/DivisionController/StageController/MatchController).
+ * Kept separate from the rest of ADMINISTRATION_CHILDREN below, which
+ * covers Sanciones/Puntuaciones/Canchas — routes Admin is NOT authorized
+ * for — so Admin's sidebar never links to a page that bounces to /forbidden.
+ */
+const TOURNAMENT_STRUCTURE_CHILDREN: NavTab[] = [
   {
     label: 'Torneos',
     path: APP_ROUTES.panelTournaments,
@@ -113,6 +121,10 @@ const ADMINISTRATION_CHILDREN: NavTab[] = [
     path: APP_ROUTES.panelMatches,
     icon: TAB_ICONS['Partidos'],
   },
+];
+
+const ADMINISTRATION_CHILDREN: NavTab[] = [
+  ...TOURNAMENT_STRUCTURE_CHILDREN,
   {
     label: 'Sanciones',
     path: APP_ROUTES.panelSanctions,
@@ -189,6 +201,11 @@ const TABS_BY_ROLE: Record<UserRolesType, NavTab[]> = {
     },
   ],
   [UserRolesType.Admin]: [
+    {
+      label: 'Administracion',
+      icon: TAB_ICONS['Administracion'],
+      children: TOURNAMENT_STRUCTURE_CHILDREN,
+    },
     { label: 'Usuarios', path: APP_ROUTES.panelUsers, icon: TAB_ICONS['Usuarios'] },
     { label: 'Blog', path: APP_ROUTES.panelBlog, icon: TAB_ICONS['Blog'] },
     {
