@@ -22,6 +22,7 @@ const TeamLogo: React.FC<TeamLogoProps> = ({
         width: size,
         height: size,
         fontSize: size * 0.42,
+        bgcolor: 'primary.dark',
       }}
     >
       {initial}

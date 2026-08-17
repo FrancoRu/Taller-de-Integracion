@@ -14,6 +14,7 @@ import PublicTeamPage from './views/home/teams/PublicTeamPage';
 import PublicScorersPage from './views/home/scorers/PublicScorersPage';
 import PublicSanctionsPage from './views/home/sanctions/PublicSanctionsPage';
 import PublicMatchesPage from './views/home/matches/PublicMatchesPage';
+import PublicMatchPage from './views/home/matches/PublicMatchPage';
 import PublicTournamentsPage from './views/home/tournaments/PublicTournamentsPage';
 import PublicTournamentPage from './views/home/tournaments/PublicTournamentPage';
 import BlogPostDetailPage from './views/blogPost/BlogPostDetailPage';
@@ -313,6 +314,7 @@ const PUBLIC_ROUTES: PublicRouteConfig[] = [
   { path: APP_ROUTES.publicScorers, element: <PublicScorersPage /> },
   { path: APP_ROUTES.publicSanctions, element: <PublicSanctionsPage /> },
   { path: APP_ROUTES.publicMatches, element: <PublicMatchesPage /> },
+  { path: APP_ROUTES.publicMatch.pattern, element: <PublicMatchPage /> },
   { path: APP_ROUTES.publicTournaments, element: <PublicTournamentsPage /> },
   {
     path: APP_ROUTES.publicTournament.pattern,

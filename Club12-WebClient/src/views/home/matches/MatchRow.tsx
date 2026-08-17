@@ -1,7 +1,9 @@
 import { Box, Chip, Stack, Typography } from '@mui/material';
+import { Link } from 'react-router-dom';
 import { IMatchResponse } from '@/modules/match/type/match.d';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import { getMatchStatusColor, getMatchStatusLabel } from '@/modules/match/utils/matchDisplay';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const formatTime = (value: string) => {
   const parsed = new Date(value);
@@ -53,6 +55,8 @@ export default function MatchRow({ match }: { match: IMatchResponse }) {
 
   return (
     <Box
+      component={Link}
+      to={APP_ROUTES.publicMatch.build(match.id)}
       sx={{
         display: 'grid',
         gridTemplateColumns: { xs: '40px 1fr auto 1fr auto', sm: '56px 1fr auto 1fr 140px' },
@@ -60,6 +64,11 @@ export default function MatchRow({ match }: { match: IMatchResponse }) {
         gap: { xs: 1, sm: 2 },
         px: 2,
         py: 1.25,
+        textDecoration: 'none',
+        color: 'inherit',
+        borderRadius: 1,
+        transition: 'background-color 0.15s ease',
+        '&:hover': { bgcolor: 'action.hover' },
       }}
     >
       <Typography variant="caption" sx={{

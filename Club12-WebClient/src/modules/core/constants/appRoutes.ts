@@ -22,6 +22,10 @@ export const APP_ROUTES = {
   publicScorers: '/goleadores',
   publicSanctions: '/sanciones',
   publicMatches: '/partidos',
+  publicMatch: {
+    pattern: '/partidos/:matchId',
+    build: (matchId: string) => `/partidos/${matchId}`,
+  },
   publicTournaments: '/torneos',
   publicTournament: {
     pattern: '/torneos/:tournamentId',
