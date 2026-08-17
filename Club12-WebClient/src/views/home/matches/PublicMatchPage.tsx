@@ -13,7 +13,7 @@ import {
 import { useMatch } from '@/modules/match/hook/match.hook';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
-import { getMatchStatusColor, getMatchStatusLabel } from '@/modules/match/utils/matchDisplay';
+import { formatMatchScore, getMatchStatusColor, getMatchStatusLabel } from '@/modules/match/utils/matchDisplay';
 
 const formatMatchDateTime = (value: string) => {
   const parsed = new Date(value);
@@ -101,7 +101,7 @@ export default function PublicMatchPage() {
         </Stack>
 
         <Typography variant="h3" component="p" sx={{ fontWeight: 700, px: 2 }}>
-          {isFinished ? `${homeTeam?.score ?? 0} – ${visitorTeam?.score ?? 0}` : 'vs'}
+          {isFinished ? formatMatchScore(homeTeam?.score ?? 0, visitorTeam?.score ?? 0) : 'vs'}
         </Typography>
 
         <Stack sx={{ alignItems: 'center', flex: 1 }} spacing={1}>

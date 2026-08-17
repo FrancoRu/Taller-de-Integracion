@@ -2,7 +2,7 @@ import { Box, Chip, Stack, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { IMatchResponse } from '@/modules/match/type/match.d';
 import TeamLogo from '@/views/core/components/TeamLogo';
-import { getMatchStatusColor, getMatchStatusLabel } from '@/modules/match/utils/matchDisplay';
+import { formatMatchScore, getMatchStatusColor, getMatchStatusLabel } from '@/modules/match/utils/matchDisplay';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const formatTime = (value: string) => {
@@ -89,7 +89,7 @@ export default function MatchRow({ match }: { match: IMatchResponse }) {
           <Typography variant="body1" sx={{
             fontWeight: "bold"
           }}>
-            {home?.score ?? 0} – {visitor?.score ?? 0}
+            {formatMatchScore(home?.score ?? 0, visitor?.score ?? 0)}
           </Typography>
         ) : (
           <Typography variant="body2" sx={{
