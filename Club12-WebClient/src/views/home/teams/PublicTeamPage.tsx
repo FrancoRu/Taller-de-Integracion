@@ -13,11 +13,10 @@ import {
 } from '@mui/material';
 import { useTeam } from '@/modules/team/hook/team.hook';
 import TeamLogo from '@/views/core/components/TeamLogo';
-import { GUID } from '@/modules/core/types/types';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 export default function PublicTeamPage() {
-  const { teamId } = useParams<{ teamId: GUID }>();
+  const { teamId } = useParams<{ teamId: string }>();
   const navigate = useNavigate();
   const { team, getTeamById } = useTeam();
   const [loading, setLoading] = useState(false);
@@ -45,7 +44,7 @@ export default function PublicTeamPage() {
     );
   }
 
-  if (!team || team.id !== teamId) {
+  if (!team || (team.id !== teamId && team.slug !== teamId)) {
     return (
       <Container maxWidth="md" sx={{ py: 5 }}>
         <Typography variant="h5" component="h1" sx={{

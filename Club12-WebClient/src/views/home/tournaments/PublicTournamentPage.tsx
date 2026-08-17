@@ -62,7 +62,7 @@ const splitDivisions = (divisions: IDivisionResponse[]): DivisionSections => ({
 });
 
 export default function PublicTournamentPage() {
-  const { tournamentId } = useParams<{ tournamentId: GUID }>();
+  const { tournamentId } = useParams<{ tournamentId: string }>();
   const navigate = useNavigate();
   const { tournament, getTournamentById } = useTournament();
   const { teams, getTeamsByFiltered } = useTeam();
@@ -83,6 +83,14 @@ export default function PublicTournamentPage() {
   const getTeamsRef = useRef(getTeamsByFiltered);
   const getDivisionsRef = useRef(getDivisionsByFilters);
 
+  /**
+   * The URL param can be either the tournament's real id or its slug, but
+   * every downstream filter call (divisions/teams by tournament) needs the
+   * real GUID foreign key, so those calls key off the resolved tournament
+   * instead of the raw route param.
+   */
+  const tournamentGuid = tournament?.id;
+
   useEffect(() => { getTournamentRef.current = getTournamentById; }, [getTournamentById]);
   useEffect(() => { getTeamsRef.current = getTeamsByFiltered; }, [getTeamsByFiltered]);
   useEffect(() => { getDivisionsRef.current = getDivisionsByFilters; }, [getDivisionsByFilters]);
@@ -98,11 +106,11 @@ export default function PublicTournamentPage() {
   }, [tournamentId]);
 
   useEffect(() => {
-    if (!tournamentId || tab !== 'posiciones') return;
+    if (!tournamentGuid || tab !== 'posiciones') return;
     const fetchStandings = async () => {
       setStandingsLoading(true);
       const response = await getDivisionsRef.current({
-        tournamentId,
+        tournamentId: tournamentGuid,
         pageSize: PUBLIC_LISTING_PAGE_SIZE,
         pageNumber: 1,
       });
@@ -117,21 +125,21 @@ export default function PublicTournamentPage() {
       setStandingsLoading(false);
     };
     void fetchStandings();
-  }, [tab, tournamentId]);
+  }, [tab, tournamentGuid]);
 
   useEffect(() => {
-    if (!tournamentId || tab !== 'equipos') return;
-    void getTeamsRef.current({ tournamentId, pageSize: PUBLIC_LISTING_PAGE_SIZE, pageNumber: 1 });
-  }, [tab, tournamentId]);
+    if (!tournamentGuid || tab !== 'equipos') return;
+    void getTeamsRef.current({ tournamentId: tournamentGuid, pageSize: PUBLIC_LISTING_PAGE_SIZE, pageNumber: 1 });
+  }, [tab, tournamentGuid]);
 
   useEffect(() => {
-    if (!tournamentId || structuralLoaded || (tab !== 'partidos' && tab !== 'llaves')) return;
+    if (!tournamentGuid || structuralLoaded || (tab !== 'partidos' && tab !== 'llaves')) return;
 
     const fetchStructure = async () => {
       setStructuralLoading(true);
 
       const divisionsResponse = await getDivisionsRef.current({
-        tournamentId,
+        tournamentId: tournamentGuid,
         pageSize: PUBLIC_LISTING_PAGE_SIZE,
         pageNumber: 1,
       });
@@ -195,7 +203,7 @@ export default function PublicTournamentPage() {
     };
 
     void fetchStructure();
-  }, [tab, tournamentId, structuralLoaded]);
+  }, [tab, tournamentGuid, structuralLoaded]);
 
   const teamRows = useMemo(() => teams ?? [], [teams]);
   const standingsSections = useMemo(() => splitDivisions(standings), [standings]);
@@ -214,7 +222,7 @@ export default function PublicTournamentPage() {
     );
   }
 
-  if (!tournament || tournament.id !== tournamentId) {
+  if (!tournament || (tournament.id !== tournamentId && tournament.slug !== tournamentId)) {
     return (
       <Container maxWidth="md" sx={{ py: 5 }}>
         <Typography variant="h5" component="h1" sx={{
@@ -465,7 +473,7 @@ export default function PublicTournamentPage() {
                   md: 4
                 }}>
                 <Box
-                  onClick={() => navigate(APP_ROUTES.publicTeam.build(team.id))}
+                  onClick={() => navigate(APP_ROUTES.publicTeam.build(team.slug ?? team.id))}
                   sx={{
                     display: "flex",
                     alignItems: "center",

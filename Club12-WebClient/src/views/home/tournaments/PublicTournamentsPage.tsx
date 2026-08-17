@@ -29,7 +29,7 @@ export function TournamentCard({ tournament }: { tournament: ITournamentResponse
     <Card sx={{ height: '100%' }}>
       <CardActionArea
         component={Link}
-        to={APP_ROUTES.publicTournament.build(tournament.id)}
+        to={APP_ROUTES.publicTournament.build(tournament.slug ?? tournament.id)}
         sx={{ height: '100%', alignItems: 'flex-start', display: 'flex', flexDirection: 'column' }}
       >
         <CardContent sx={{ width: '100%' }}>

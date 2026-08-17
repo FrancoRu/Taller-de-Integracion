@@ -25,6 +25,7 @@ const buildTournament = (
   id: 'guid-a-aaaa-bbbb-cccc' as unknown as GUID,
   description: 'Torneo de prueba',
   name: 'Apertura',
+  slug: 'apertura',
   divisions: [],
   teamRegistrationDeadline: new Date('2026-01-01'),
   startDate: new Date('2026-02-01'),

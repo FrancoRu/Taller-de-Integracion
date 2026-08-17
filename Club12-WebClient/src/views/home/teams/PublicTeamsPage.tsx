@@ -111,7 +111,7 @@ export default function PublicTeamsPage() {
               <Card sx={{ height: '100%' }}>
                 <CardActionArea
                   component={Link}
-                  to={APP_ROUTES.publicTeam.build(team.id)}
+                  to={APP_ROUTES.publicTeam.build(team.slug ?? team.id)}
                   sx={{ height: '100%' }}
                 >
                   <CardContent>

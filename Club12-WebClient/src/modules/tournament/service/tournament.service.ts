@@ -42,14 +42,14 @@ export const tournamentService = {
     await sendPut<void>(`${routes.tournaments}/${id}`, tournament),
 
   /**
-   * Retrieves a tournament by its ID.
-   * @param {string} id - The ID of the tournament to retrieve.
+   * Retrieves a tournament by its ID or its public slug.
+   * @param {string} idOrSlug - The ID or slug of the tournament to retrieve.
    * @returns {Promise<AxiosResponse<ITournamentResponse>>} The server response containing the tournament details.
    */
   getTournamentById: async (
-    id: GUID
+    idOrSlug: string
   ): Promise<AxiosResponse<ITournamentResponse>> =>
-    await sendGet(`${routes.tournaments}/${id}`),
+    await sendGet(`${routes.tournaments}/${idOrSlug}`),
 
   /**
    * Retrieves tournaments based on the provided filters.

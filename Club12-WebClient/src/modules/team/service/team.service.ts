@@ -76,12 +76,14 @@ export const teamService = {
     await sendGet(routes.teams, withTablePageSize(filters)),
 
   /**
-   * Retrieves a specific team by its ID.
-   * @param {string} id - The ID of the team to retrieve.
+   * Retrieves a specific team by its ID or its public slug.
+   * @param {string} idOrSlug - The ID or slug of the team to retrieve.
    * @returns {Promise<AxiosResponse<ITeamResponse>>} The server response containing the team details.
    */
-  getTeamById: async (id: GUID): Promise<AxiosResponse<ITeamResponse>> =>
-    await sendGet(`${routes.teams}/${id}`),
+  getTeamById: async (
+    idOrSlug: string
+  ): Promise<AxiosResponse<ITeamResponse>> =>
+    await sendGet(`${routes.teams}/${idOrSlug}`),
 
   /**
    * Deletes a team by its ID.

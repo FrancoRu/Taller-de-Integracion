@@ -140,7 +140,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const getTeamById = useCallback(
-    async (id: GUID): Promise<ITeamResponse | void> => {
+    async (id: string): Promise<ITeamResponse | void> => {
       try {
         const res: AxiosResponse<ITeamResponse> = await queryClient.fetchQuery({
           queryKey: teamKeys.byId(id),

@@ -108,9 +108,11 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
   );
 
   const getTournamentById = useCallback(
-    async (id: GUID): Promise<ITournamentResponse | void> => {
+    async (id: string): Promise<ITournamentResponse | void> => {
       try {
-        const existTournament = tournaments?.find(e => e.id === id);
+        const existTournament = tournaments?.find(
+          e => e.id === id || e.slug === id
+        );
 
         if (existTournament) {
           setTournament(existTournament);
