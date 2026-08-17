@@ -56,24 +56,24 @@ public class TournamentController(
     }
 
     /// <summary>
-    /// Retrieves a tournament by its unique identifier.
+    /// Retrieves a tournament by its unique identifier or its public slug.
     /// </summary>
-    /// <param name="id">Tournament identifier (GUID).</param>
+    /// <param name="idOrSlug">Tournament identifier (GUID) or slug.</param>
     /// <returns>
     /// Returns 200 (OK) with tournament details if found.
-    /// Returns 400 (Bad Request) if not found.
+    /// Returns 404 (Not Found) if not found.
     /// </returns>
     [AllowAnonymous]
-    [HttpGet("{id:guid}")]
+    [HttpGet("{idOrSlug}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TournamentResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<TournamentResponse>> GetTournamentById(Guid id)
+    public async Task<ActionResult<TournamentResponse>> GetTournamentById(string idOrSlug)
     {
-        Tournament? tournament = await tournamentService.GetTournamentByIdAsync(id);
+        Tournament? tournament = await tournamentService.GetTournamentByIdOrSlugAsync(idOrSlug);
 
         if (tournament is null)
         {
-            return this.NotFoundProblem(nameof(Tournament), id);
+            return this.NotFoundProblem(nameof(Tournament), idOrSlug);
         }
 
         TournamentResponse tournamentResponse = mapper.Map<TournamentResponse>(tournament);
