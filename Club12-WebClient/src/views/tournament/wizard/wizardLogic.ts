@@ -1,5 +1,11 @@
 import { GUID } from '@/modules/core/types/types';
-import { CupConfig, STAGE_TYPE_LABELS, WizardState } from './types';
+import {
+  CupConfig,
+  MAX_ALLOWED_TOURNAMENT_TEAMS,
+  MIN_ALLOWED_TOURNAMENT_TEAMS,
+  STAGE_TYPE_LABELS,
+  WizardState,
+} from './types';
 
 /**
  * A single step's validation result: empty when valid, otherwise the list
@@ -31,8 +37,22 @@ export const validateTournamentStep = (state: WizardState): ValidationResult => 
     errors.push('La fecha límite de inscripción debe ser anterior a la fecha de inicio.');
   }
 
-  if (tournament.minTeams < 2) {
-    errors.push('El mínimo de equipos debe ser al menos 2.');
+  if (
+    tournament.minTeams < MIN_ALLOWED_TOURNAMENT_TEAMS ||
+    tournament.minTeams > MAX_ALLOWED_TOURNAMENT_TEAMS
+  ) {
+    errors.push(
+      `El mínimo de equipos debe estar entre ${MIN_ALLOWED_TOURNAMENT_TEAMS} y ${MAX_ALLOWED_TOURNAMENT_TEAMS}.`
+    );
+  }
+
+  if (
+    tournament.maxTeams < MIN_ALLOWED_TOURNAMENT_TEAMS ||
+    tournament.maxTeams > MAX_ALLOWED_TOURNAMENT_TEAMS
+  ) {
+    errors.push(
+      `El máximo de equipos debe estar entre ${MIN_ALLOWED_TOURNAMENT_TEAMS} y ${MAX_ALLOWED_TOURNAMENT_TEAMS}.`
+    );
   }
 
   if (tournament.minTeams > tournament.maxTeams) {

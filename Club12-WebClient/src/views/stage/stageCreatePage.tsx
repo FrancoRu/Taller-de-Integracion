@@ -53,13 +53,14 @@ const StageCreatePage: React.FC = () => {
   const queryDivisionId = (searchParams.get('divisionId') ?? '') as GUID | '';
 
   const { divisions, getDivisionsByFilters } = useDivision();
-  const { addStage } = useStage();
+  const { addStage, getStagesByFilters } = useStage();
 
   const [submitting, setSubmitting] = useState(false);
   const [stageForm, setStageForm] = useState<IStageCreateFormState>({
     ...INITIAL_STAGE_FORM,
     divisionId: queryDivisionId || '',
   });
+  const [divisionHasGroupStage, setDivisionHasGroupStage] = useState(false);
 
   const isDivisionContext = Boolean(queryDivisionId);
 
@@ -77,6 +78,40 @@ const StageCreatePage: React.FC = () => {
 
   const divisionOptions = useMemo(() => divisions ?? [], [divisions]);
 
+  const resolvedDivisionId = (queryDivisionId || stageForm.divisionId) as GUID | '';
+
+  /**
+   * A division's Group stage represents its whole round-robin phase, so the
+   * backend (StageService.CreateStageAsync) rejects a second one regardless
+   * of name — mirrored here so the admin sees it before submitting instead
+   * of after a 400.
+   */
+  useEffect(() => {
+    if (!resolvedDivisionId) {
+      setDivisionHasGroupStage(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      const result = await getStagesByFilters({
+        divisionId: resolvedDivisionId,
+        stageType: StageType.Group,
+        pageSize: FILTER_OPTIONS_PAGE_SIZE,
+      });
+
+      if (!cancelled) {
+        setDivisionHasGroupStage(Boolean(result?.items.length));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolvedDivisionId]);
+
   const handleCancel = () => {
     if (queryDivisionId) {
       navigate(APP_ROUTES.panelDivision.build(queryDivisionId));
@@ -87,10 +122,6 @@ const StageCreatePage: React.FC = () => {
   };
 
   const handleCreate = async () => {
-    const resolvedDivisionId = (queryDivisionId || stageForm.divisionId) as
-      | GUID
-      | '';
-
     if (!stageForm.name.trim()) {
       await notifyWarning({
         title: 'Campos incompletos',
@@ -103,6 +134,14 @@ const StageCreatePage: React.FC = () => {
       await notifyWarning({
         title: 'División requerida',
         text: 'Debes seleccionar una división.',
+      });
+      return;
+    }
+
+    if (stageForm.stageType === StageType.Group && divisionHasGroupStage) {
+      await notifyWarning({
+        title: 'La división ya tiene fase de grupos',
+        text: 'Esta división ya tiene una fase de tipo "Fase de grupos". Elegí otro tipo o editá la existente.',
       });
       return;
     }
@@ -233,10 +272,20 @@ const StageCreatePage: React.FC = () => {
                     stageType: e.target.value as StageType,
                   }))
                 }
+                error={stageForm.stageType === StageType.Group && divisionHasGroupStage}
+                helperText={
+                  divisionHasGroupStage
+                    ? 'Esta división ya tiene una fase de grupos: no se puede crear otra.'
+                    : undefined
+                }
                 fullWidth
               >
                 {Object.values(StageType).map(stageType => (
-                  <MenuItem key={stageType} value={stageType}>
+                  <MenuItem
+                    key={stageType}
+                    value={stageType}
+                    disabled={stageType === StageType.Group && divisionHasGroupStage}
+                  >
                     {formatStageType(stageType)}
                   </MenuItem>
                 ))}

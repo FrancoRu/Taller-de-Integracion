@@ -87,6 +87,7 @@ public static class ErrorMessages
         public const string AlreadySeeded = "This stage has already been seeded.";
         public const string InvalidStageType = "Invalid stage type";
         public const string SeedMissingStandings = "Cannot seed: not every team assigned to this stage has a finished-group-stage position yet.";
+        public const string GroupStageAlreadyExistsInDivision = "This division already has a Group stage. A division can only have one Group stage.";
 
         public static string NotFoundById(System.Guid id)
         {
