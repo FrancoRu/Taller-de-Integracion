@@ -120,7 +120,15 @@ const ShowPosts: React.FC = () => {
         )}
       </Grid>
 
-      <Stack direction="row" spacing={2} sx={{ justifyContent: 'center', mt: 3 }}>
+      {!loading && pagination.totalCount > 0 && (
+        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 3 }}>
+          Mostrando {(pagination.page - 1) * pagination.pageSize + 1}
+          –{Math.min(pagination.page * pagination.pageSize, pagination.totalCount)} de{' '}
+          {pagination.totalCount}
+        </Typography>
+      )}
+
+      <Stack direction="row" spacing={2} sx={{ justifyContent: 'center', mt: 1 }}>
         {loading ? (
           <CircularProgress />
         ) : (

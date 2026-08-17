@@ -185,12 +185,23 @@ export default function PublicMatchesPage() {
         <>
           <MatchFixtureList matches={rows} />
 
+          {totalCount > 0 && (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ textAlign: 'center', mt: 3 }}
+            >
+              Mostrando {(page - 1) * PAGE_SIZE + 1}
+              –{Math.min(page * PAGE_SIZE, totalCount)} de {totalCount}
+            </Typography>
+          )}
+
           {pageCount > 1 && (
             <Box
               sx={{
                 display: "flex",
                 justifyContent: "center",
-                mt: 4
+                mt: 2
               }}>
               <Pagination
                 count={pageCount}

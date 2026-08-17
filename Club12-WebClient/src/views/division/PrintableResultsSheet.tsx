@@ -117,9 +117,8 @@ export default function PrintableResultsSheet({
           flexWrap: "wrap",
           mb: 2
         }}>
-        <PrintIcon fontSize="small" sx={{ color: 'text.secondary' }} />
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Imprimir:
+          Incluir en la impresión:
         </Typography>
         <ToggleButtonGroup
           exclusive
@@ -128,6 +127,7 @@ export default function PrintableResultsSheet({
           onChange={(_, value: PrintTarget | null) => {
             if (value) setTarget(value);
           }}
+          sx={{ height: 32 }}
         >
           <ToggleButton value="standings">Posiciones</ToggleButton>
           <ToggleButton value="goleadores">Goleadores</ToggleButton>
@@ -138,6 +138,7 @@ export default function PrintableResultsSheet({
           size="small"
           startIcon={<PrintIcon />}
           onClick={() => setIsPrintTarget(true)}
+          sx={{ height: 32 }}
         >
           Imprimir
         </Button>
