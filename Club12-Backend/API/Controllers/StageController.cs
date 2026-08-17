@@ -171,7 +171,7 @@ public class StageController(IStageService stageService, IMatchService matchServ
     /// Returns HTTP 200 OK if the assignment is successful, or 404 Not Found if the stage does not exist.
     /// </returns>
     [HttpPost("{id:guid}/assign-team")]
-    public async Task<ActionResult> AssignamentTeam(Guid id, AssignamentTeamRequest request)
+    public async Task<ActionResult> AssignmentTeam(Guid id, AssignmentTeamRequest request)
     {
         Stage? stage = await stageService.GetStageByIdAsync(id);
 
@@ -194,7 +194,7 @@ public class StageController(IStageService stageService, IMatchService matchServ
     /// Returns HTTP 200 OK if the unassignment is successful, or 404 Not Found if the stage does not exist.
     /// </returns>
     [HttpDelete("{id:guid}/unassign-team")]
-    public async Task<ActionResult> UnassignamentTeam(Guid id, UnassignamentTeamRequest request)
+    public async Task<ActionResult> UnassignmentTeam(Guid id, UnassignmentTeamRequest request)
     {
         Stage? stage = await stageService.GetStageByIdAsync(id);
 

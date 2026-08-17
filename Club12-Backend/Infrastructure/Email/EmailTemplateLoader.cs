@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 
-namespace Application.Utils.Helper.Email;
+namespace Infrastructure.Email;
 
 /// <summary>
 /// Loads HTML email templates from embedded resources and replaces named tokens
@@ -27,12 +27,12 @@ internal static class EmailTemplateLoader
     public static string Render(string templateName, Dictionary<string, string> tokens)
     {
         string resourceName =
-            $"Application.Utils.Helper.Email.Templates.{templateName}.html";
+            $"Infrastructure.Email.Templates.{templateName}.html";
 
         using Stream? stream = _assembly.GetManifestResourceStream(resourceName) ?? throw new InvalidOperationException(
                 $"Email template '{templateName}' not found as embedded resource. " +
-                $"Ensure the file exists at 'Utils/Helper/Email/Templates/{templateName}.html' " +
-                $"and is marked as <EmbeddedResource> in the Application.csproj.");
+                $"Ensure the file exists at 'Email/Templates/{templateName}.html' " +
+                $"and is marked as <EmbeddedResource> in the Infrastructure.csproj.");
         using StreamReader reader = new(stream);
         string template = reader.ReadToEnd();
 

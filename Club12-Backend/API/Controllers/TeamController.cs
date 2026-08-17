@@ -5,12 +5,13 @@ using Application.DTOs.Team.Request;
 using Application.DTOs.Team.Response;
 using Application.Interfaces.Services;
 using Application.Utils.Constants;
-using Application.Utils.Helper.SupabaseHelper;
 
 using AutoMapper;
 
 using Domain.Entities.Models;
 using Domain.Enums;
+
+using Infrastructure.Storage;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;

@@ -7,7 +7,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Application.Utils.Helper.Email;
+namespace Infrastructure.Email;
 
 /// <summary>
 /// Transactional email sender backed by FluentEmail + SendGrid.

@@ -3,12 +3,13 @@
 using Application.DTOs.Venue.Request;
 using Application.DTOs.Venue.Response;
 using Application.Interfaces.Services;
-using Application.Utils.Helper.SupabaseHelper;
 
 using AutoMapper;
 
 using Domain.Entities.Models;
 using Domain.Enums;
+
+using Infrastructure.Storage;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;

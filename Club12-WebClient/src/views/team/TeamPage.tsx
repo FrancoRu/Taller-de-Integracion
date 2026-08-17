@@ -25,11 +25,7 @@ import PlayerStatisticCreatePage from '@/views/playerStatistic/playerStatisticCr
 import PlayerSanctionCreatePage from '@/views/playerSanction/playerSanctionCreatePage';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
-
-const STATISTIC_TYPE_LABELS: Record<string, string> = {
-  Points: 'Puntos',
-  Assists: 'Asistencias',
-};
+import { STATISTIC_TYPE_LABELS } from '@/modules/playerStatistic/utils/playerStatisticDisplay';
 
 const formatDate = (value?: string | Date | null) => {
   if (!value) {

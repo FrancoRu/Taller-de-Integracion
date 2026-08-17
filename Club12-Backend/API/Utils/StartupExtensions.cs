@@ -9,7 +9,6 @@ using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Services;
 using Application.Utils.Constants;
-using Application.Utils.Helper.Email;
 using Application.Utils.Helper.SupabaseHelper;
 using Application.Utils.Mappers;
 
@@ -18,9 +17,11 @@ using Domain.Enums;
 using FluentEmail.MailKitSmtp;
 
 using Infrastructure.Backup;
+using Infrastructure.Email;
 using Infrastructure.Identity;
 using Infrastructure.Persistance;
 using Infrastructure.Repositories;
+using Infrastructure.Storage;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;

@@ -24,14 +24,7 @@ import PublicDivisionPanel from '@/views/home/tournaments/PublicDivisionPanel';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { TAB_CONTENT_MIN_HEIGHT } from '@/modules/core/constants/constants';
-
-const STATUS_LABEL: Record<TournamentStatus, string> = {
-  Scheduled: 'Programado',
-  OpenForRegistration: 'Inscripción abierta',
-  Ongoing: 'En curso',
-  Finished: 'Finalizado',
-  Canceled: 'Cancelado',
-};
+import { TOURNAMENT_STATUS_LABEL } from '@/modules/tournament/utils/tournamentDisplay';
 
 const formatDate = (value: Date | string) => {
   const parsed = new Date(value);
@@ -269,7 +262,7 @@ export default function PublicTournamentPage() {
           color: "text.secondary",
           mb: 3
         }}>
-        {STATUS_LABEL[status] ?? status}
+        {TOURNAMENT_STATUS_LABEL[status] ?? status}
       </Typography>
 
       <Divider sx={{ mb: 3 }} />
