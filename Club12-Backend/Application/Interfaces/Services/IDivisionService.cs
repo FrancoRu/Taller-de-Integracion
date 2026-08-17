@@ -63,4 +63,17 @@ public interface IDivisionService
     /// </summary>
     /// <param name="tournamentId">The id of the tournament.</param>
     Task<List<Team>> GetUnassignedTeamsAsync(Guid tournamentId);
+
+    /// <summary>
+    /// Reassigns a division to a different tournament, moving everything
+    /// under it — stages, matches, and team assignments — along with it,
+    /// since none of that data carries its own tournament reference. Only
+    /// the target tournament's existence is validated here; the mutated
+    /// entity is not persisted by this method, so the caller must still
+    /// call <see cref="UpdateDivisionAsync"/> to save the change.
+    /// </summary>
+    /// <param name="division">The division to reassign. Its Tournament navigation and TournamentId are mutated in place.</param>
+    /// <param name="tournamentId">The id of the tournament the division should belong to.</param>
+    /// <returns>True if the target tournament exists and the division was reassigned in memory; false if no tournament with that id exists.</returns>
+    Task<bool> TryAssignTournamentAsync(Division division, Guid tournamentId);
 }
