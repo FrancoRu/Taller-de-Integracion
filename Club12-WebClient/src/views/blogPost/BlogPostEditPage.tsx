@@ -9,6 +9,8 @@ import { UpdateBlogPostRequest } from '@/modules/blogPost/type/blogPost';
 import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import FormButtons from '@/views/core/components/FormButtons';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import BlogPostImageField from '@/views/blogPost/BlogPostImageField';
+import BlogPostPreviewDialog from '@/views/blogPost/BlogPostPreviewDialog';
 
 const quillModules = {
   toolbar: {
@@ -33,7 +35,7 @@ const quillModules = {
 const BlogPostEditPage: React.FC = () => {
   const { blogPostId } = useParams<{ blogPostId: GUID }>();
   const navigate = useNavigate();
-  const { getBlogPostsById, putBlogPostById } = useBlogPost();
+  const { getBlogPostsById, putBlogPostById, putPhotoBlogPostById } = useBlogPost();
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -42,6 +44,9 @@ const BlogPostEditPage: React.FC = () => {
     title: '',
     markdownText: '',
   });
+  const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
+  const [photoFile, setPhotoFile] = useState<File | undefined>(undefined);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
@@ -59,6 +64,7 @@ const BlogPostEditPage: React.FC = () => {
           title: post.title,
           markdownText: post.markdownText,
         });
+        setPhotoUrl(post.photoUrl);
       } else {
         setNotFound(true);
       }
@@ -67,6 +73,21 @@ const BlogPostEditPage: React.FC = () => {
 
     void fetchPost();
   }, [blogPostId, getBlogPostsById]);
+
+  const [objectUrl, setObjectUrl] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!photoFile) {
+      setObjectUrl(undefined);
+      return;
+    }
+
+    const url = URL.createObjectURL(photoFile);
+    setObjectUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [photoFile]);
+
+  const displayedImageUrl = objectUrl ?? photoUrl;
 
   const handleCancel = useCallback(() => {
     navigate(APP_ROUTES.panelBlog);
@@ -93,15 +114,20 @@ const BlogPostEditPage: React.FC = () => {
       author: form.author.trim(),
       markdownText: form.markdownText,
     });
-    setSubmitting(false);
 
     if (!updated) {
+      setSubmitting(false);
       return;
     }
 
+    if (photoFile) {
+      await putPhotoBlogPostById(blogPostId, photoFile);
+    }
+    setSubmitting(false);
+
     await notifySuccess({ title: 'Publicación actualizada', text: 'Los cambios se guardaron correctamente.' });
     navigate(APP_ROUTES.panelBlog);
-  }, [blogPostId, form, putBlogPostById, navigate]);
+  }, [blogPostId, form, photoFile, putBlogPostById, putPhotoBlogPostById, navigate]);
 
   if (loading) {
     return (
@@ -167,6 +193,12 @@ const BlogPostEditPage: React.FC = () => {
             fullWidth
           />
 
+          <BlogPostImageField
+            previewUrl={displayedImageUrl}
+            hasImage={Boolean(displayedImageUrl)}
+            onFileSelect={setPhotoFile}
+          />
+
           <Typography variant="subtitle1">Contenido</Typography>
           <ReactQuill
             theme="snow"
@@ -177,8 +209,11 @@ const BlogPostEditPage: React.FC = () => {
           />
 
           <Stack direction="row" sx={{
-            justifyContent: "flex-end"
+            justifyContent: "space-between"
           }}>
+            <Button variant="outlined" onClick={() => setPreviewOpen(true)}>
+              Vista previa
+            </Button>
             <FormButtons
               onCancel={handleCancel}
               onConfirm={() => void handleSave()}
@@ -188,6 +223,15 @@ const BlogPostEditPage: React.FC = () => {
           </Stack>
         </Stack>
       </CardContent>
+
+      <BlogPostPreviewDialog
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        title={form.title ?? ''}
+        author={form.author ?? ''}
+        photoUrl={displayedImageUrl}
+        markdownText={form.markdownText ?? ''}
+      />
     </Card>
   );
 };

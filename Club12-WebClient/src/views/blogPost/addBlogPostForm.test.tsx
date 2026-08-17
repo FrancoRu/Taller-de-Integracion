@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import AddBlogPostForm from '@/views/blogPost/addBlogPostForm';
 import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
 import * as confirmDialog from '@/modules/core/utils/confirmDialog';
@@ -35,6 +35,9 @@ vi.mock('react-router-dom', async () => {
 
 const mockedUseBlogPost = vi.mocked(useBlogPost);
 
+const originalCreateObjectURL = URL.createObjectURL;
+const originalRevokeObjectURL = URL.revokeObjectURL;
+
 const buildPost = (): BlogPostResponse => ({
   id: 'guid-a-aaaa-bbbb-cccc' as unknown as GUID,
   author: 'Autor',
@@ -47,6 +50,13 @@ const buildPost = (): BlogPostResponse => ({
 describe('AddBlogPostForm', () => {
   beforeEach(() => {
     mockNavigate.mockClear();
+    URL.createObjectURL = vi.fn().mockReturnValue('blob:preview-url');
+    URL.revokeObjectURL = vi.fn();
+  });
+
+  afterEach(() => {
+    URL.createObjectURL = originalCreateObjectURL;
+    URL.revokeObjectURL = originalRevokeObjectURL;
   });
 
   it('shows a success message and navigates to the admin blog list after a successful submit', async () => {
@@ -99,5 +109,63 @@ describe('AddBlogPostForm', () => {
 
     await waitFor(() => expect(addBlogPost).toHaveBeenCalledTimes(1));
     expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('includes the selected photo file in the create request', async () => {
+    const addBlogPost = vi.fn().mockResolvedValue(buildPost());
+    mockedUseBlogPost.mockReturnValue({
+      addBlogPost,
+    } as unknown as ReturnType<typeof useBlogPost>);
+    vi.spyOn(confirmDialog, 'notifySuccess').mockResolvedValue(undefined);
+
+    render(
+      <MemoryRouter>
+        <AddBlogPostForm />
+      </MemoryRouter>
+    );
+
+    const file = new File(['content'], 'foto.png', { type: 'image/png' });
+    const input = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
+    fireEvent.change(input, { target: { files: [file] } });
+
+    expect(
+      screen.getByRole('button', { name: 'Cambiar imagen' })
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole('textbox', { name: /autor/i }), {
+      target: { value: 'Juan' },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: /título/i }), {
+      target: { value: 'Gran final' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar' }));
+
+    await waitFor(() =>
+      expect(addBlogPost).toHaveBeenCalledWith(
+        expect.objectContaining({ photoFile: file })
+      )
+    );
+  });
+
+  it('opens a preview with the current form content without submitting', async () => {
+    mockedUseBlogPost.mockReturnValue({
+      addBlogPost: vi.fn(),
+    } as unknown as ReturnType<typeof useBlogPost>);
+
+    render(
+      <MemoryRouter>
+        <AddBlogPostForm />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByRole('textbox', { name: /título/i }), {
+      target: { value: 'Gran final' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Vista previa' }));
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.getAllByText('Gran final').length).toBeGreaterThan(0);
   });
 });

@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   TextField,
   Button,
   Card,
   CardContent,
+  Stack,
   Typography,
 } from '@mui/material';
 import ReactQuill from 'react-quill-new';
@@ -13,6 +14,8 @@ import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
 import { CreateBlogPostRequest } from '@/modules/blogPost/type/blogPost';
 import { notifySuccess } from '@/modules/core/utils/confirmDialog';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import BlogPostImageField from '@/views/blogPost/BlogPostImageField';
+import BlogPostPreviewDialog from '@/views/blogPost/BlogPostPreviewDialog';
 
 const quillModules = {
   toolbar: {
@@ -43,6 +46,19 @@ const AddBlogPostForm: React.FC = () => {
     title: '',
     markdownText: '',
   });
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [photoObjectUrl, setPhotoObjectUrl] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!formData.photoFile) {
+      setPhotoObjectUrl(undefined);
+      return;
+    }
+
+    const url = URL.createObjectURL(formData.photoFile);
+    setPhotoObjectUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [formData.photoFile]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -53,6 +69,10 @@ const AddBlogPostForm: React.FC = () => {
 
   const handleQuillChange = (content: string) => {
     setFormData({ ...formData, markdownText: content });
+  };
+
+  const handlePhotoSelect = (file: File) => {
+    setFormData(prev => ({ ...prev, photoFile: file }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -92,6 +112,11 @@ const AddBlogPostForm: React.FC = () => {
             required
             margin="normal"
           />
+          <BlogPostImageField
+            previewUrl={photoObjectUrl}
+            hasImage={Boolean(formData.photoFile)}
+            onFileSelect={handlePhotoSelect}
+          />
           <Typography variant="subtitle1" component="p" sx={{ mt: 2, mb: 1 }}>
             Contenido
           </Typography>
@@ -102,17 +127,30 @@ const AddBlogPostForm: React.FC = () => {
             modules={quillModules}
             style={{ height: '200px', marginBottom: '20px' }}
           />
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            disabled={submitting}
-            sx={{ mt: 3 }}
-          >
-            {submitting ? 'Publicando...' : 'Publicar'}
-          </Button>
+          <Stack direction="row" spacing={2} sx={{ mt: 3, justifyContent: 'space-between' }}>
+            <Button type="button" variant="outlined" onClick={() => setPreviewOpen(true)}>
+              Vista previa
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={submitting}
+            >
+              {submitting ? 'Publicando...' : 'Publicar'}
+            </Button>
+          </Stack>
         </form>
       </CardContent>
+
+      <BlogPostPreviewDialog
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        title={formData.title}
+        author={formData.author}
+        photoUrl={photoObjectUrl}
+        markdownText={formData.markdownText}
+      />
     </Card>
   );
 };
