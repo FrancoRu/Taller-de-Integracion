@@ -41,10 +41,24 @@ const TEAMS_TAB = 'equipos';
 
 type Tab = typeof INFO_TAB | typeof TEAMS_TAB | GUID;
 
-const orderDivisions = (divisions: IDivisionResponse[]): IDivisionResponse[] => [
-  ...divisions.filter(d => !d.isCrossDivisionCup),
-  ...divisions.filter(d => d.isCrossDivisionCup),
-];
+const ZONA_NAME_PATTERN = /^zona\s/i;
+
+/**
+ * Backend list order is arbitrary (insertion order), not display order.
+ * "Zona X" divisions sort alphabetically first (A, B, C, D...), then any
+ * other regular division (e.g. "Femenino"), then cross-division cups last.
+ */
+const orderDivisions = (divisions: IDivisionResponse[]): IDivisionResponse[] => {
+  const zones = divisions.filter(d => !d.isCrossDivisionCup);
+  const cups = divisions.filter(d => d.isCrossDivisionCup);
+
+  const namedZones = zones
+    .filter(d => ZONA_NAME_PATTERN.test(d.name))
+    .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+  const otherZones = zones.filter(d => !ZONA_NAME_PATTERN.test(d.name));
+
+  return [...namedZones, ...otherZones, ...cups];
+};
 
 export default function PublicTournamentPage() {
   const { tournamentId } = useParams<{ tournamentId: string }>();
