@@ -39,6 +39,10 @@ import {
 } from '@/views/core/MUI/icons/icons';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { FILTERS_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/constants';
+import {
+  TABLE_PAGE_SIZE_OPTIONS,
+  TABLE_ROWS_PER_PAGE,
+} from '@/modules/core/constants/pagination';
 
 interface VenuesPageProps {
   emptyMessage?: string;
@@ -368,9 +372,9 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
           disableRowSelectionOnClick
           disableColumnMenu
           localeText={{ noRowsLabel: noRowsMessage }}
-          pageSizeOptions={[10, 25, 50]}
+          pageSizeOptions={[...TABLE_PAGE_SIZE_OPTIONS]}
           initialState={{
-            pagination: { paginationModel: { pageSize: 10 } },
+            pagination: { paginationModel: { pageSize: TABLE_ROWS_PER_PAGE } },
           }}
         />
       </Box>
