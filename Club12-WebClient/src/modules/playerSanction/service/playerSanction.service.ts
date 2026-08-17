@@ -32,14 +32,14 @@ export const playerSanctionService = {
     sendPost(routes.playerSanctions, playerSanction),
 
   /**
-   * Fetches a player sanction by its unique identifier.
-   * @param {GUID} id - The unique identifier of the player sanction to retrieve.
+   * Fetches a player sanction by its unique identifier or its slug.
+   * @param {string} idOrSlug - The id or slug of the player sanction to retrieve.
    * @returns {Promise<IPlayerSanctionResponse | void>} A promise that resolves with the sanction response or void if not found.
    */
   getPlayerSanctionById: async (
-    id: GUID
+    idOrSlug: string
   ): Promise<AxiosResponse<IPlayerSanctionResponse>> =>
-    sendGet(`${routes.playerSanctions}/${id}`),
+    sendGet(`${routes.playerSanctions}/${idOrSlug}`),
 
   /**
    * Retrieves a list of player sanctions based on a filter.

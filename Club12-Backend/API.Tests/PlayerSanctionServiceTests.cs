@@ -240,6 +240,7 @@ public class PlayerSanctionServiceTests : IClassFixture<CustomWebApplicationFact
             Duration = duration,
             IssuedDate = issuedDate,
             Description = "Sanction expiry characterization test",
+            Slug = $"sanction-{Guid.NewGuid()}",
             Player = player,
             Match = match,
             CreatedBy = "test",

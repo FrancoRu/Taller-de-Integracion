@@ -28,6 +28,15 @@ public interface IPlayerSanctionService
     /// <returns>The player sanction with the specified ID, or null if not found.</returns>
     Task<PlayerSanction?> GetPlayerSanctionByIdAsync(Guid playerSanctionId);
 
+    /// <summary>
+    /// Retrieves a player sanction by its id or its slug. The value is
+    /// treated as an id when it parses as a GUID, otherwise it is looked up
+    /// as a slug.
+    /// </summary>
+    /// <param name="idOrSlug">The sanction's GUID id or its slug.</param>
+    /// <returns>The matching player sanction, or null if not found.</returns>
+    Task<PlayerSanction?> GetPlayerSanctionByIdOrSlugAsync(string idOrSlug);
+
     Task DeletePlayerSanctionAsync(Guid id);
 
     Task UpdatePlayerSanctionAsync(PlayerSanction playerSanctionEntity);

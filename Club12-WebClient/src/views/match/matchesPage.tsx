@@ -246,7 +246,7 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
 
   const handleView = useCallback(
     (row: IMatchResponse) => {
-      navigate(APP_ROUTES.panelMatch.build(row.id));
+      navigate(APP_ROUTES.panelMatch.build(row.slug));
     },
     [navigate]
   );

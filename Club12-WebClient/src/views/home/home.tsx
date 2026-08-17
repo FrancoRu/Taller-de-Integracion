@@ -17,7 +17,6 @@ import SportsBasketballIcon from '@mui/icons-material/SportsBasketball';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
 import { BlogPostResponse } from '@/modules/blogPost/type/blogPost';
-import { GUID } from '@/modules/core/types/types';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { BLOG_HOME_EXCERPT_LENGTH } from '@/modules/blogPost/constants/blogPost';
@@ -94,10 +93,10 @@ export default function Home() {
     [tournaments]
   );
 
-  const handleReadMore = async (id: GUID) => {
-    const postDetails = await getBlogPostsById(id);
+  const handleReadMore = async (idOrSlug: string) => {
+    const postDetails = await getBlogPostsById(idOrSlug);
     if (postDetails) {
-      navigate(APP_ROUTES.blogPost.build(id), { state: { post: postDetails } });
+      navigate(APP_ROUTES.blogPost.build(idOrSlug), { state: { post: postDetails } });
     }
   };
 
@@ -278,7 +277,7 @@ export default function Home() {
                   }}>
                   <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <CardActionArea
-                      onClick={() => void handleReadMore(post.id)}
+                      onClick={() => void handleReadMore(post.slug)}
                       sx={{ height: '100%', alignItems: 'flex-start', display: 'flex', flexDirection: 'column' }}
                     >
                       {post.photoUrl ? (

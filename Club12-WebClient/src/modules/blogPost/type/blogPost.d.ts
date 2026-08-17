@@ -33,11 +33,11 @@ export interface IBlogPostContextProps {
   putPhotoBlogPostById(id: GUID, photo: File): Promise<void>;
 
   /**
-   * Fetches a blog post by its ID.
-   * @param id The ID of the blog post to fetch.
+   * Fetches a blog post by its ID or its public slug.
+   * @param idOrSlug The ID or slug of the blog post to fetch.
    * @returns A promise that resolves with the blog post data.
    */
-  getBlogPostsById(id: GUID): Promise<BlogPostResponse | void>;
+  getBlogPostsById(idOrSlug: string): Promise<BlogPostResponse | void>;
 
   /**
    * Fetches blog posts based on filters and pagination.
@@ -144,6 +144,12 @@ export interface BlogPostResponse {
    * @type {string}
    */
   title: string;
+
+  /**
+   * The unique, URL-friendly identifier used in public blog post links.
+   * @type {string}
+   */
+  slug: string;
 
   /**
    * The number of views the blog post has received.

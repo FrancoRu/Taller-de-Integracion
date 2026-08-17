@@ -20,6 +20,11 @@ public class BlogPostResponse : BaseEntityResponse
     public required string Title { get; set; }
 
     /// <summary>
+    /// The unique, URL-friendly identifier used in public blog post links.
+    /// </summary>
+    public required string Slug { get; set; }
+
+    /// <summary>
     /// The number of views the blog post has received.
     /// </summary>
     public int Views { get; set; }

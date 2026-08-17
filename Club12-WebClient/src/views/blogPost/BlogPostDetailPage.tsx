@@ -11,7 +11,7 @@ interface BlogPostLocationState {
 }
 
 const BlogPostDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { idOrSlug } = useParams<{ idOrSlug: string }>();
   const location = useLocation();
   const { getBlogPostsById } = useBlogPost();
   const [post, setPost] = useState<BlogPostResponse | undefined>(
@@ -20,12 +20,12 @@ const BlogPostDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(!post);
 
   useEffect(() => {
-    if (post || !id) return;
+    if (post || !idOrSlug) return;
 
     const loadPost = async () => {
       setLoading(true);
       try {
-        const fetchedPost = await getBlogPostsById(id);
+        const fetchedPost = await getBlogPostsById(idOrSlug);
         setPost(fetchedPost ?? undefined);
       } finally {
         setLoading(false);
@@ -33,7 +33,7 @@ const BlogPostDetailPage: React.FC = () => {
     };
 
     loadPost();
-  }, [id, post, getBlogPostsById]);
+  }, [idOrSlug, post, getBlogPostsById]);
 
   if (loading) {
     return (

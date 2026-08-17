@@ -86,7 +86,7 @@ const ShowPosts: React.FC = () => {
    * since navigation only happened once it resolved.
    */
   const handleReadMore = (post: BlogPostResponse) => {
-    navigate(APP_ROUTES.blogPost.build(post.id), { state: { post } });
+    navigate(APP_ROUTES.blogPost.build(post.slug), { state: { post } });
   };
 
   return (

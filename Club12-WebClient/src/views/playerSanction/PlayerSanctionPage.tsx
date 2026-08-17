@@ -187,7 +187,11 @@ const PlayerSanctionPage: React.FC = () => {
     return <LoadingIndicator />;
   }
 
-  if (!playerSanction || playerSanction.id !== targetSanctionId) {
+  if (
+    !playerSanction ||
+    (playerSanction.id !== targetSanctionId &&
+      playerSanction.slug !== targetSanctionId)
+  ) {
     return (
       <Card>
         <CardContent>

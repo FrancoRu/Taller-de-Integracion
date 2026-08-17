@@ -125,7 +125,7 @@ const TeamPage: React.FC<TeamPageProps> = ({
     return <LoadingIndicator />;
   }
 
-  if (!team || team.id !== targetTeamId) {
+  if (!team || (team.id !== targetTeamId && team.slug !== targetTeamId)) {
     return (
       <Card>
         <CardContent>

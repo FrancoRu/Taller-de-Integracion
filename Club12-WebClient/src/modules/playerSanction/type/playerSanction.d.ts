@@ -32,11 +32,11 @@ export interface IPlayerSanctionContextProps {
   ): Promise<IPlayerSanctionResponse | void>;
 
   /**
-   * Fetches a player sanction by its unique identifier.
-   * @param {GUID} id - The unique identifier of the player sanction to retrieve.
+   * Fetches a player sanction by its unique identifier or its slug.
+   * @param {string} idOrSlug - The id or slug of the player sanction to retrieve.
    * @returns {Promise<IPlayerSanctionResponse | void>} A promise that resolves with the sanction response or void if not found.
    */
-  getPlayerSanctionById(id: GUID): Promise<IPlayerSanctionResponse | void>;
+  getPlayerSanctionById(idOrSlug: string): Promise<IPlayerSanctionResponse | void>;
 
   /**
    * Fetches player sanctions based on filter criteria and pagination.
@@ -110,6 +110,12 @@ export interface IPlayerSanctionResponse {
    * @type {string}
    */
   description: string;
+
+  /**
+   * The unique, URL-friendly identifier used in sanction links.
+   * @type {string}
+   */
+  slug: string;
 
   /**
    * The unique identifier of the player who received the sanction.

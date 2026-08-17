@@ -258,6 +258,7 @@ public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFacto
             Duration = 1,
             IssuedDate = startDate,
             Description = "Sanction appeal characterization test",
+            Slug = $"sanction-{Guid.NewGuid()}",
             Player = player,
             Match = match,
             AppealStatus = status,

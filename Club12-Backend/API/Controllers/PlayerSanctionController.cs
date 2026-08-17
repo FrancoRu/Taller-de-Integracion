@@ -50,21 +50,21 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
     }
 
     /// <summary>
-    /// Retrieves a player sanction by its id.
+    /// Retrieves a player sanction by its id or its slug.
     /// </summary>
-    /// <param name="id">The id of the player sanction.</param>
+    /// <param name="idOrSlug">Player sanction identifier (GUID) or slug.</param>
     /// <returns>The player sanction response DTO.</returns>
     [AllowAnonymous]
-    [HttpGet("{id:guid}")]
+    [HttpGet("{idOrSlug}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerSanctionResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PlayerSanctionResponse>> GetPlayerSanctionById(Guid id)
+    public async Task<ActionResult<PlayerSanctionResponse>> GetPlayerSanctionById(string idOrSlug)
     {
-        PlayerSanction? sanction = await playerSanctionService.GetPlayerSanctionByIdAsync(id);
+        PlayerSanction? sanction = await playerSanctionService.GetPlayerSanctionByIdOrSlugAsync(idOrSlug);
 
         if (sanction is null)
         {
-            return this.NotFoundProblem(nameof(PlayerSanction), id);
+            return this.NotFoundProblem(nameof(PlayerSanction), idOrSlug);
         }
 
         PlayerSanctionResponse sanctionResponse = mapper.Map<PlayerSanctionResponse>(sanction);
