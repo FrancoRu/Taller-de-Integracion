@@ -22,6 +22,11 @@ public class DetailedMatchResponse : BaseEntityResponse
     public required string MatchType { get; set; }
 
     /// <summary>
+    /// The unique, URL-friendly identifier used in public match links.
+    /// </summary>
+    public required string Slug { get; set; }
+
+    /// <summary>
     /// The team details for the home team.
     /// </summary>
     public TeamDetailedMatchResponse? HomeTeam { get; set; }

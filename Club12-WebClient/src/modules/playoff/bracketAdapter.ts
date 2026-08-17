@@ -77,6 +77,7 @@ const placeholderRawMatch = (round: BracketRound): IMatchResponse => ({
   id: round.stageId,
   matchDate: '',
   matchType: 'Playoff' as IMatchResponse['matchType'],
+  slug: '',
   homeTeam: null,
   visitorTeam: null,
   isFinished: false,

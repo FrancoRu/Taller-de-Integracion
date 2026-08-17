@@ -246,6 +246,7 @@ public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFacto
         {
             MatchDate = startDate,
             Type = MatchType.Regular,
+            Slug = $"match-{Guid.NewGuid()}",
             IsFinished = true,
             Stage = stage,
             StageId = stageId,

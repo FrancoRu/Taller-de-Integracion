@@ -40,6 +40,7 @@ const makeStage = (overrides: Partial<IStageResponse> & { id: GUID; stageType: S
 const makeMatch = (overrides: Partial<IMatchResponse> & { id: GUID; stageId: GUID }): IMatchResponse => ({
   matchDate: '2026-01-01T18:00:00Z',
   matchType: 'Regular' as IMatchResponse['matchType'],
+  slug: '',
   homeTeam: null,
   visitorTeam: null,
   isFinished: false,

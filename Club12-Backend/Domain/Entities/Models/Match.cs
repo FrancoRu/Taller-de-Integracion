@@ -21,6 +21,14 @@ public class Match : EntityBase
     public required MatchType Type { get; set; }
 
     /// <summary>
+    /// The unique, URL-friendly identifier used in public match links.
+    /// Generated once from the home/visitor team names and match date at
+    /// creation time and never changed afterward, so shared links keep
+    /// working even if a team is renamed.
+    /// </summary>
+    public required string Slug { get; set; }
+
+    /// <summary>
     /// Represents the home team in the match.
     /// </summary>
     public Team? HomeTeam { get; set; }

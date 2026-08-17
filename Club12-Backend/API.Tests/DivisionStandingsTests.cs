@@ -188,6 +188,7 @@ public class DivisionStandingsTests : IClassFixture<CustomWebApplicationFactory>
         {
             MatchDate = stage.StartDate,
             Type = MatchType.Regular,
+            Slug = $"match-{Guid.NewGuid()}",
             HomeTeam = home,
             HomeTeamId = home.Id,
             VisitorTeam = visitor,

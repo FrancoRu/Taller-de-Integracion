@@ -152,6 +152,7 @@ export function seriesToRepresentativeMatch(series: IMatchSeriesResponse): IMatc
     id: series.id,
     matchDate: series.games[0]?.matchDate ?? '',
     matchType: (series.games[0]?.matchType ?? 'Playoff') as IMatchResponse['matchType'],
+    slug: '',
     homeTeam: {
       id: series.homeTeamId,
       name: series.homeTeamName,

@@ -12,7 +12,6 @@ import {
 } from '@mui/material';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import TeamLogo from '@/views/core/components/TeamLogo';
-import { GUID } from '@/modules/core/types/types';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { getMatchStatusColor, getMatchStatusLabel } from '@/modules/match/utils/matchDisplay';
 
@@ -30,7 +29,7 @@ const formatMatchDateTime = (value: string) => {
 };
 
 export default function PublicMatchPage() {
-  const { matchId } = useParams<{ matchId: GUID }>();
+  const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
   const { match, getMatchById } = useMatch();
   const [loading, setLoading] = useState(false);
@@ -53,7 +52,7 @@ export default function PublicMatchPage() {
     );
   }
 
-  if (!match || match.id !== matchId) {
+  if (!match || (match.id !== matchId && match.slug !== matchId)) {
     return (
       <Container maxWidth="md" sx={{ py: 5 }}>
         <Typography variant="h5" component="h1" sx={{ mb: 2 }}>

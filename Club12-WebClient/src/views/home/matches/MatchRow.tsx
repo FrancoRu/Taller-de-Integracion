@@ -56,7 +56,7 @@ export default function MatchRow({ match }: { match: IMatchResponse }) {
   return (
     <Box
       component={Link}
-      to={APP_ROUTES.publicMatch.build(match.id)}
+      to={APP_ROUTES.publicMatch.build(match.slug ?? match.id)}
       sx={{
         display: 'grid',
         gridTemplateColumns: { xs: '56px 1fr auto 1fr', sm: '56px 1fr auto 1fr 140px' },

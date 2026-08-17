@@ -21,6 +21,7 @@ const makeTeam = (
 const makeMatch = (overrides: Partial<IMatchResponse> & { id: GUID; stageId: GUID }): IMatchResponse => ({
   matchDate: '2026-01-01T18:00:00Z',
   matchType: 'Playoff' as IMatchResponse['matchType'],
+  slug: '',
   homeTeam: null,
   visitorTeam: null,
   isFinished: false,

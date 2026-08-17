@@ -5,6 +5,7 @@ using Application.Interfaces.Services;
 using Application.Utils.Constants;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.Series;
+using Application.Utils.Helper.Slug;
 
 using Domain.Constants;
 using Domain.Entities.Models;
@@ -28,6 +29,7 @@ public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
     private readonly IMatchRepository _matchRepository = unitOfWork.MatchRepository;
     private readonly IStageRepository _stageRepository = unitOfWork.StageRepository;
     private readonly IStageTeamMatchRepository _stageTeamMatchRepository = unitOfWork.StageTeamMatchRepository;
+    private readonly ITeamRepository _teamRepository = unitOfWork.TeamRepository;
 
     public async Task<MatchSeries?> GetSeriesByIdAsync(Guid seriesId)
     {
@@ -104,6 +106,9 @@ public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
             throw new InvalidOperationException(ErrorMessages.MatchSeries.MaxGamesReached(series.BestOf));
         }
 
+        Team? homeTeam = await _teamRepository.GetByIdAsync(series.HomeTeamId);
+        Team? visitorTeam = await _teamRepository.GetByIdAsync(series.VisitorTeamId);
+
         Match game = new()
         {
             StageId = series.StageId,
@@ -114,9 +119,14 @@ public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
             MatchDate = matchDate,
             VenueId = venueId,
             Type = MatchType.Playoff,
+            Slug = string.Empty,
             IsFinished = false,
             CreatedBy = AuditConstants.SystemUser,
         };
+
+        game.Slug = await SlugGenerator.GenerateUniqueSlugAsync(
+            MatchSlugSourceBuilder.Build(homeTeam?.Name, visitorTeam?.Name, game.MatchDate),
+            candidate => _matchRepository.ExistsAsync(match => match.Slug == candidate));
 
         await _matchRepository.AddAsync(game);
         return game;

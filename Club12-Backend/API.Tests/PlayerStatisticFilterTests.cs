@@ -164,6 +164,7 @@ public class PlayerStatisticFilterTests : IClassFixture<CustomWebApplicationFact
         {
             StageId = stage.Id,
             Type = MatchType.Regular,
+            Slug = $"match-{Guid.NewGuid()}",
             MatchDate = stage.StartDate,
             HomeTeamId = home.Id,
             VisitorTeamId = visitor.Id,

@@ -40,6 +40,7 @@ const baseMatch: IMatchResponse = {
   id: guid('match'),
   matchDate: '2026-01-01T18:00:00Z',
   matchType: 'Playoff' as IMatchResponse['matchType'],
+  slug: 'halcones-vs-tbd-2026-01-01',
   homeTeam: { id: guid('home'), name: 'Halcones', logoUrl: '', score: 0, players: [], scorers: [] },
   visitorTeam: null,
   isFinished: false,

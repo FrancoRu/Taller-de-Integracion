@@ -16,8 +16,11 @@ public class MatchEntityConfiguration : BaseEntityConfiguration<Match>
         builder.ToTable(EntityConstants.Tables.Match, EntityConstants.Schema);
 
         builder.Property(m => m.Type).IsRequired().HasConversion<string>();
+        builder.Property(m => m.Slug).IsRequired().HasMaxLength(220);
         builder.Property(m => m.IsFinished).IsRequired();
         builder.Property(m => m.StageId).IsRequired();
+
+        builder.HasIndex(m => m.Slug).IsUnique();
 
         builder.HasOne(m => m.Stage)
             .WithMany(s => s.Matches)
