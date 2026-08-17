@@ -16,25 +16,12 @@ import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useTeam } from '@/modules/team/hook/team.hook';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { divisionService } from '@/modules/division/service/division.service';
-import { stageService } from '@/modules/stage/service/stage.service';
-import { matchService } from '@/modules/match/service/match.service';
-import { matchSeriesService } from '@/modules/matchSeries/service/matchSeries.service';
 import { IDivisionResponse } from '@/modules/division/type/division';
-import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
-import { IStageResponse } from '@/modules/stage/type/stage';
-import { IMatchResponse } from '@/modules/match/type/match.d';
-import { stageLabel } from '@/modules/stage/utils/stageLabel';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
-import { buildBrackets } from '@/modules/playoff/buildBracket';
-import { BracketGroup } from '@/modules/playoff/type/bracket.d';
 import TeamLogo from '@/views/core/components/TeamLogo';
-import MatchFixtureList from '@/views/home/matches/MatchFixtureList';
-import DivisionStandings from '@/views/division/divisionStandings';
-import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
+import PublicDivisionPanel from '@/views/home/tournaments/PublicDivisionPanel';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
-
-const STRUCTURAL_FETCH_PAGE_SIZE = 100;
 
 const STATUS_LABEL: Record<TournamentStatus, string> = {
   Scheduled: 'Programado',
@@ -49,17 +36,15 @@ const formatDate = (value: Date | string) => {
   return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString('es-AR');
 };
 
-type Tab = 'info' | 'posiciones' | 'equipos' | 'partidos' | 'llaves';
+const INFO_TAB = 'info';
+const TEAMS_TAB = 'equipos';
 
-interface DivisionSections {
-  zones: IDivisionResponse[];
-  cups: IDivisionResponse[];
-}
+type Tab = typeof INFO_TAB | typeof TEAMS_TAB | GUID;
 
-const splitDivisions = (divisions: IDivisionResponse[]): DivisionSections => ({
-  zones: divisions.filter(d => !d.isCrossDivisionCup),
-  cups: divisions.filter(d => d.isCrossDivisionCup),
-});
+const orderDivisions = (divisions: IDivisionResponse[]): IDivisionResponse[] => [
+  ...divisions.filter(d => !d.isCrossDivisionCup),
+  ...divisions.filter(d => d.isCrossDivisionCup),
+];
 
 export default function PublicTournamentPage() {
   const { tournamentId } = useParams<{ tournamentId: GUID }>();
@@ -68,16 +53,9 @@ export default function PublicTournamentPage() {
   const { teams, getTeamsByFiltered } = useTeam();
   const { getDivisionsByFilters } = useDivision();
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState<Tab>('info');
-  const [standings, setStandings] = useState<IDivisionResponse[]>([]);
-  const [standingsLoading, setStandingsLoading] = useState(false);
-  const [structuralDivisions, setStructuralDivisions] = useState<IDivisionResponse[]>([]);
-  const [stagesByDivision, setStagesByDivision] = useState<Record<GUID, IStageResponse[]>>({});
-  const [matchesByDivision, setMatchesByDivision] = useState<Record<GUID, IMatchResponse[]>>({});
-  const [bracketsByDivision, setBracketsByDivision] = useState<Record<GUID, BracketGroup[]>>({});
-  const [seriesById, setSeriesById] = useState<Map<GUID, IMatchSeriesResponse>>(new Map());
-  const [structuralLoading, setStructuralLoading] = useState(false);
-  const [structuralLoaded, setStructuralLoaded] = useState(false);
+  const [tab, setTab] = useState<Tab>(INFO_TAB);
+  const [divisions, setDivisions] = useState<IDivisionResponse[]>([]);
+  const [divisionsLoading, setDivisionsLoading] = useState(false);
 
   const getTournamentRef = useRef(getTournamentById);
   const getTeamsRef = useRef(getTeamsByFiltered);
@@ -98,108 +76,46 @@ export default function PublicTournamentPage() {
   }, [tournamentId]);
 
   useEffect(() => {
-    if (!tournamentId || tab !== 'posiciones') return;
-    const fetchStandings = async () => {
-      setStandingsLoading(true);
-      const response = await getDivisionsRef.current({
-        tournamentId,
-        pageSize: PUBLIC_LISTING_PAGE_SIZE,
-        pageNumber: 1,
-      });
-      const divisionsList = response?.items ?? [];
-      const detailed = await Promise.all(
-        divisionsList.map(async division => {
-          const detail = await divisionService.getDivisionsById(division.id);
-          return detail?.data ?? division;
-        })
-      );
-      setStandings(detailed);
-      setStandingsLoading(false);
+    if (!tournamentId) return;
+    let cancelled = false;
+
+    const fetchDivisions = async () => {
+      setDivisionsLoading(true);
+      try {
+        const response = await getDivisionsRef.current({
+          tournamentId,
+          pageSize: PUBLIC_LISTING_PAGE_SIZE,
+          pageNumber: 1,
+        });
+        const divisionsList = response?.items ?? [];
+        const detailed = await Promise.all(
+          divisionsList.map(async division => {
+            const detail = await divisionService.getDivisionsById(division.id);
+            return detail?.data ?? division;
+          })
+        );
+        if (!cancelled) setDivisions(orderDivisions(detailed));
+      } finally {
+        if (!cancelled) setDivisionsLoading(false);
+      }
     };
-    void fetchStandings();
-  }, [tab, tournamentId]);
+
+    void fetchDivisions();
+    return () => {
+      cancelled = true;
+    };
+  }, [tournamentId]);
 
   useEffect(() => {
-    if (!tournamentId || tab !== 'equipos') return;
+    if (!tournamentId || tab !== TEAMS_TAB) return;
     void getTeamsRef.current({ tournamentId, pageSize: PUBLIC_LISTING_PAGE_SIZE, pageNumber: 1 });
   }, [tab, tournamentId]);
 
-  useEffect(() => {
-    if (!tournamentId || structuralLoaded || (tab !== 'partidos' && tab !== 'llaves')) return;
-
-    const fetchStructure = async () => {
-      setStructuralLoading(true);
-
-      const divisionsResponse = await getDivisionsRef.current({
-        tournamentId,
-        pageSize: PUBLIC_LISTING_PAGE_SIZE,
-        pageNumber: 1,
-      });
-      const divisionsList = divisionsResponse?.items ?? [];
-      setStructuralDivisions(divisionsList);
-
-      const nextSeriesById = new Map<GUID, IMatchSeriesResponse>();
-      const nextStagesByDivision: Record<GUID, IStageResponse[]> = {};
-      const nextMatchesByDivision: Record<GUID, IMatchResponse[]> = {};
-      const nextBracketsByDivision: Record<GUID, BracketGroup[]> = {};
-
-      await Promise.all(
-        divisionsList.map(async division => {
-          const [stagesResponse, matchesResponse] = await Promise.all([
-            stageService.getStagesByFilters({
-              divisionId: division.id,
-              pageSize: STRUCTURAL_FETCH_PAGE_SIZE,
-            }),
-            matchService.getMatchByFilter({
-              divisionId: division.id,
-              pageSize: STRUCTURAL_FETCH_PAGE_SIZE,
-            }),
-          ]);
-
-          const stages = stagesResponse.data?.items ?? [];
-          const matches = matchesResponse.data?.items ?? [];
-          nextStagesByDivision[division.id] = stages;
-          nextMatchesByDivision[division.id] = matches;
-
-          const eliminationStages = stages.filter(stage => stage.isElimination);
-          const seriesStages = eliminationStages.filter(stage => stage.bestOf > 1);
-
-          const seriesByStageId = new Map<GUID, IMatchSeriesResponse[]>();
-          if (seriesStages.length > 0) {
-            const seriesResponses = await Promise.all(
-              seriesStages.map(stage =>
-                matchSeriesService.getMatchSeriesByFilters({
-                  stageId: stage.id,
-                  pageSize: STRUCTURAL_FETCH_PAGE_SIZE,
-                })
-              )
-            );
-
-            seriesStages.forEach((stage, index) => {
-              const seriesList = seriesResponses[index].data?.items ?? [];
-              seriesByStageId.set(stage.id, seriesList);
-              seriesList.forEach(series => nextSeriesById.set(series.id, series));
-            });
-          }
-
-          nextBracketsByDivision[division.id] = buildBrackets(eliminationStages, matches, seriesByStageId);
-        })
-      );
-
-      setStagesByDivision(nextStagesByDivision);
-      setMatchesByDivision(nextMatchesByDivision);
-      setBracketsByDivision(nextBracketsByDivision);
-      setSeriesById(nextSeriesById);
-      setStructuralLoading(false);
-      setStructuralLoaded(true);
-    };
-
-    void fetchStructure();
-  }, [tab, tournamentId, structuralLoaded]);
-
   const teamRows = useMemo(() => teams ?? [], [teams]);
-  const standingsSections = useMemo(() => splitDivisions(standings), [standings]);
-  const structuralSections = useMemo(() => splitDivisions(structuralDivisions), [structuralDivisions]);
+  const activeDivision = useMemo(
+    () => divisions.find(division => division.id === tab),
+    [divisions, tab]
+  );
 
   if (loading) {
     return (
@@ -226,112 +142,6 @@ export default function PublicTournamentPage() {
   }
 
   const status = tournament.status as TournamentStatus;
-
-  const renderDivisionMatches = (division: IDivisionResponse) => {
-    const stages = stagesByDivision[division.id] ?? [];
-    const matches = matchesByDivision[division.id] ?? [];
-    const stageIdsInOrder = [...stages].sort((a, b) => a.order - b.order);
-
-    const sections = stageIdsInOrder
-      .map(stage => ({
-        stage,
-        matches: matches.filter(match => match.stageId === stage.id),
-      }))
-      .filter(section => section.matches.length > 0);
-
-    if (sections.length === 0) {
-      return (
-        <Typography
-          sx={{
-            color: "text.secondary",
-            mb: 2
-          }}>No hay partidos registrados en esta división.
-                  </Typography>
-      );
-    }
-
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 3
-        }}>
-        {sections.map(({ stage, matches: stageMatches }) => (
-          <Box key={stage.id}>
-            <Typography variant="subtitle1" component="h3" sx={{
-              mb: 1.5
-            }}>
-              {stageLabel(stage)}
-            </Typography>
-            <MatchFixtureList matches={stageMatches} />
-          </Box>
-        ))}
-      </Box>
-    );
-  };
-
-  const renderDivisionSections = (
-    sections: DivisionSections,
-    renderDivision: (division: IDivisionResponse) => React.ReactNode
-  ) => (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 5
-      }}>
-      {sections.zones.length > 0 && (
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 4
-          }}>
-          <Typography variant="overline" sx={{
-            color: "text.secondary"
-          }}>
-            Divisiones
-          </Typography>
-          {sections.zones.map(division => (
-            <Box key={division.id}>
-              <Typography variant="h6" component="h2" sx={{
-                mb: 2
-              }}>
-                {division.name}
-              </Typography>
-              {renderDivision(division)}
-            </Box>
-          ))}
-        </Box>
-      )}
-
-      {sections.cups.length > 0 && (
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 4
-          }}>
-          <Typography variant="overline" sx={{
-            color: "text.secondary"
-          }}>
-            Copa
-          </Typography>
-          {sections.cups.map(division => (
-            <Box key={division.id}>
-              <Typography variant="h6" component="h2" sx={{
-                mb: 2
-              }}>
-                {division.name}
-              </Typography>
-              {renderDivision(division)}
-            </Box>
-          ))}
-        </Box>
-      )}
-    </Box>
-  );
 
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
@@ -363,16 +173,18 @@ export default function PublicTournamentPage() {
       <Tabs
         value={tab}
         onChange={(_, value: Tab) => setTab(value)}
+        variant="scrollable"
+        scrollButtons="auto"
         sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}
       >
-        <Tab label="Información" value="info" />
-        <Tab label="Posiciones" value="posiciones" />
-        <Tab label="Equipos" value="equipos" />
-        <Tab label="Partidos" value="partidos" />
-        <Tab label="Llaves" value="llaves" />
+        <Tab label="Información" value={INFO_TAB} />
+        <Tab label="Equipos" value={TEAMS_TAB} />
+        {divisions.map(division => (
+          <Tab key={division.id} label={division.name} value={division.id} />
+        ))}
       </Tabs>
 
-      {tab === 'info' && (
+      {tab === INFO_TAB && (
         <Grid container spacing={3}>
           <Grid size={12}>
             <Typography variant="subtitle2" component="p" sx={{
@@ -423,33 +235,7 @@ export default function PublicTournamentPage() {
         </Grid>
       )}
 
-      {tab === 'posiciones' &&
-        (standingsLoading ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              py: 5
-            }}>
-            <CircularProgress />
-          </Box>
-        ) : standings.length === 0 ? (
-          <Typography sx={{
-            color: "text.secondary"
-          }}>
-            No hay posiciones disponibles para este torneo.
-          </Typography>
-        ) : (
-          renderDivisionSections(standingsSections, division => (
-            <DivisionStandings
-              positions={division.positions}
-              divisionId={division.id}
-              divisionName={division.name}
-            />
-          ))
-        ))}
-
-      {tab === 'equipos' && (
+      {tab === TEAMS_TAB && (
         teamRows.length === 0 ? (
           <Typography sx={{
             color: "text.secondary"
@@ -493,8 +279,8 @@ export default function PublicTournamentPage() {
         )
       )}
 
-      {tab === 'partidos' &&
-        (structuralLoading ? (
+      {tab !== INFO_TAB && tab !== TEAMS_TAB && (
+        divisionsLoading && !activeDivision ? (
           <Box
             sx={{
               display: "flex",
@@ -503,40 +289,10 @@ export default function PublicTournamentPage() {
             }}>
             <CircularProgress />
           </Box>
-        ) : structuralDivisions.length === 0 ? (
-          <Typography sx={{
-            color: "text.secondary"
-          }}>
-            No hay divisiones disponibles para este torneo.
-          </Typography>
-        ) : (
-          renderDivisionSections(structuralSections, renderDivisionMatches)
-        ))}
-
-      {tab === 'llaves' &&
-        (structuralLoading ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              py: 5
-            }}>
-            <CircularProgress />
-          </Box>
-        ) : structuralDivisions.length === 0 ? (
-          <Typography sx={{
-            color: "text.secondary"
-          }}>
-            No hay divisiones disponibles para este torneo.
-          </Typography>
-        ) : (
-          renderDivisionSections(structuralSections, division => (
-            <PlayoffBrackets
-              groups={bracketsByDivision[division.id] ?? []}
-              seriesById={seriesById}
-            />
-          ))
-        ))}
+        ) : activeDivision ? (
+          <PublicDivisionPanel division={activeDivision} />
+        ) : null
+      )}
     </Container>
   );
 }
