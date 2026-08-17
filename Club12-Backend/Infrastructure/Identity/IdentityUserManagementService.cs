@@ -323,11 +323,17 @@ public sealed class IdentityUserManagementService(
 
     private IQueryable<ApplicationUser> ResolveVisibleUsersQuery(string callerRole, Guid callerId)
     {
-        return IsAdmin(callerRole)
-            ? userManager.Users
-            : IsOwner(callerRole)
-            ? userManager.Users.Where(u => u.CreatedByOwnerId == callerId)
-            : throw new UnauthorizedAccessException(ErrorMessages.User.InsufficientPermissionsToListUsers);
+        if (IsAdmin(callerRole))
+        {
+            return userManager.Users;
+        }
+
+        if (IsOwner(callerRole))
+        {
+            return userManager.Users.Where(u => u.CreatedByOwnerId == callerId);
+        }
+
+        throw new UnauthorizedAccessException(ErrorMessages.User.InsufficientPermissionsToListUsers);
     }
 
     private static bool IsAdmin(string role)

@@ -25,11 +25,17 @@ public class PaginatedFilterRequest : IPaginationRequest, IOrderRequest
 
     private static int ClampPageSize(int requestedPageSize)
     {
-        return requestedPageSize < 1
-            ? PaginationDefaults.DefaultPageSize
-            : requestedPageSize > PaginationDefaults.MaxPageSize
-            ? PaginationDefaults.MaxPageSize
-            : requestedPageSize;
+        if (requestedPageSize < 1)
+        {
+            return PaginationDefaults.DefaultPageSize;
+        }
+
+        if (requestedPageSize > PaginationDefaults.MaxPageSize)
+        {
+            return PaginationDefaults.MaxPageSize;
+        }
+
+        return requestedPageSize;
     }
 
     /// <summary>
