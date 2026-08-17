@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
+  Button,
   Card,
   CardContent,
   Chip,
@@ -162,14 +163,26 @@ const TeamPage: React.FC<TeamPageProps> = ({
   const content = (
     <>
       <Stack
-        direction="row"
+        direction={{ xs: 'column', sm: 'row' }}
         spacing={1.5}
         sx={{
-          alignItems: "center",
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          justifyContent: "space-between",
           mb: 2
         }}>
-        <TeamLogo teamName={team.name} logoUrl={team.logoUrl} size={44} />
-        <Typography variant="h6">{team.name}</Typography>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+          <TeamLogo teamName={team.name} logoUrl={team.logoUrl} size={44} />
+          <Typography variant="h6">{team.name}</Typography>
+        </Stack>
+        {!hideBackLink && (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate(APP_ROUTES.panelTeams)}
+          >
+            Volver
+          </Button>
+        )}
       </Stack>
 
       <Tabs

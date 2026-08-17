@@ -5,6 +5,7 @@ import {
   Card,
   CardContent,
   Grid,
+  Stack,
   Tab,
   Tabs,
   Typography,
@@ -146,16 +147,24 @@ const TournamentPage: React.FC = () => {
             <Typography variant="h6">{tournament.name}</Typography>
           </Grid>
           <Grid>
-            {canEditTournament && (
+            <Stack direction="row" spacing={1}>
+              {canEditTournament && (
+                <Button
+                  variant="contained"
+                  onClick={() =>
+                    navigate(APP_ROUTES.panelTournamentEdit.build(tournamentId))
+                  }
+                >
+                  Editar torneo
+                </Button>
+              )}
               <Button
-                variant="contained"
-                onClick={() =>
-                  navigate(APP_ROUTES.panelTournamentEdit.build(tournamentId))
-                }
+                variant="outlined"
+                onClick={() => navigate(APP_ROUTES.panelTournaments)}
               >
-                Editar torneo
+                Volver
               </Button>
-            )}
+            </Stack>
           </Grid>
         </Grid>
 

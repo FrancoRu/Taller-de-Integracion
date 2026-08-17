@@ -124,13 +124,21 @@ const StagePage: React.FC = () => {
             gap: 1
           }}>
           <Typography variant="h6">{stage.name}</Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => navigate(APP_ROUTES.panelStageEdit.build(targetStageId))}
-          >
-            Editar
-          </Button>
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => navigate(APP_ROUTES.panelStageEdit.build(targetStageId))}
+            >
+              Editar
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => navigate(APP_ROUTES.panelStages)}
+            >
+              Volver
+            </Button>
+          </Stack>
         </Stack>
 
         <Tabs
