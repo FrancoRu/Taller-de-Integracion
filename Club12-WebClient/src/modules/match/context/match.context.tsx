@@ -139,12 +139,12 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const getMatchById = useCallback(
-    async (id: GUID): Promise<IMatchResponse | void> => {
+    async (idOrSlug: string): Promise<IMatchResponse | void> => {
       try {
         const res: AxiosResponse<IMatchResponse> = await queryClient.fetchQuery(
           {
-            queryKey: matchKeys.byId(id),
-            queryFn: async () => await matchService.getMatchById(id),
+            queryKey: matchKeys.byId(idOrSlug),
+            queryFn: async () => await matchService.getMatchById(idOrSlug),
           }
         );
 

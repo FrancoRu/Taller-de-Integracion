@@ -41,11 +41,11 @@ export interface IMatchContextProps {
   ): Promise<IMatchResponse | void>;
 
   /**
-   * Fetches a match by its ID.
-   * @param id The ID of the match to fetch.
+   * Fetches a match by its ID or its public slug.
+   * @param idOrSlug The ID or slug of the match to fetch.
    * @returns A promise that resolves with the match details.
    */
-  getMatchById(id: GUID): Promise<IMatchResponse | void>;
+  getMatchById(idOrSlug: string): Promise<IMatchResponse | void>;
 
   /**
    * Fetches matches based on filters and pagination.
@@ -144,6 +144,11 @@ export interface IMatchResponse {
    * @property {MatchType} matchType - The category or type of the match (e.g., Regular Season, Playoff).
    */
   matchType: MatchType;
+
+  /**
+   * @property {string} slug - The unique, URL-friendly identifier used in public match links.
+   */
+  slug: string;
 
   /**
    * @property {ITeamMatchResponse} homeTeam - Details of the home team participating in the match.

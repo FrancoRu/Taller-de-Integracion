@@ -56,12 +56,14 @@ export const matchService = {
     sendPut<IMatchResponse>(`${routes.matches}/${id}`, matchDate),
 
   /**
-   * Retrieves a match by its ID.
-   * @param {string} id - The ID of the match to retrieve.
+   * Retrieves a match by its ID or its public slug.
+   * @param {string} idOrSlug - The ID or slug of the match to retrieve.
    * @returns {Promise<AxiosResponse<IMatchResponse>>} - A promise that resolves with the match data.
    */
-  getMatchById: async (id: GUID): Promise<AxiosResponse<IMatchResponse>> =>
-    sendGet<IMatchResponse>(`${routes.matches}/${id}`),
+  getMatchById: async (
+    idOrSlug: string
+  ): Promise<AxiosResponse<IMatchResponse>> =>
+    sendGet<IMatchResponse>(`${routes.matches}/${idOrSlug}`),
 
   /**
    * Retrieves matches based on the provided filter.
