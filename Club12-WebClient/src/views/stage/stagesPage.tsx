@@ -89,6 +89,7 @@ const StagesPage: React.FC<StagesPageProps> = ({
     generateStagesAutomatically,
   } = useStage();
   const [loading, setLoading] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
   const [filters, setFilters] = useState<IStageListFilters>(EMPTY_FILTERS);
   const [debouncedFilters, setDebouncedFilters] =
     useState<IStageListFilters>(EMPTY_FILTERS);
@@ -141,7 +142,7 @@ const StagesPage: React.FC<StagesPageProps> = ({
       activePaginationModel: GridPaginationModel
     ) => {
       setLoading(true);
-      await getStagesByFiltersRef.current(
+      const response = await getStagesByFiltersRef.current(
         divisionId
           ? {
               divisionId,
@@ -155,6 +156,7 @@ const StagesPage: React.FC<StagesPageProps> = ({
               pageSize: activePaginationModel.pageSize,
             }
       );
+      setRowCount(response?.totalCount ?? 0);
       setLoading(false);
     },
     [divisionId]
@@ -358,11 +360,12 @@ const StagesPage: React.FC<StagesPageProps> = ({
         return;
       }
 
-      await getStagesByFilters({
+      const response = await getStagesByFilters({
         divisionId,
         pageNumber: paginationModel.page + 1,
         pageSize: paginationModel.pageSize,
       });
+      setRowCount(response?.totalCount ?? 0);
       await notifySuccess({
         title: 'Éxito',
         text: 'Las fases fueron generadas correctamente.',
@@ -515,6 +518,8 @@ const StagesPage: React.FC<StagesPageProps> = ({
           pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
           paginationModel={paginationModel}
           onPaginationModelChange={handlePaginationModelChange}
+          paginationMode="server"
+          rowCount={rowCount}
         />
       </Box>
     </>

@@ -85,6 +85,7 @@ describe('TeamsTable', () => {
         paginationModel={paginationModel}
         onPaginationModelChange={vi.fn()}
         pageSizeOptions={[10, 25, 50]}
+        rowCount={rows.length}
       />
     );
 
@@ -101,6 +102,7 @@ describe('TeamsTable', () => {
         paginationModel={paginationModel}
         onPaginationModelChange={vi.fn()}
         pageSizeOptions={[10, 25, 50]}
+        rowCount={rows.length}
       />
     );
 
@@ -129,6 +131,7 @@ describe('TeamsTable', () => {
         paginationModel={paginationModel}
         onPaginationModelChange={onPaginationModelChange}
         pageSizeOptions={[10, 25, 50]}
+        rowCount={manyRows.length}
       />
     );
 

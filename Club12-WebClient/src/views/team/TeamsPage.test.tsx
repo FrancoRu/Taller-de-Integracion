@@ -45,7 +45,12 @@ let deleteTeamById: Mock<ITeamContextProps['deleteTeamById']>;
 
 const setupHook = (teams: ITeamResponse[] = [buildTeam()]) => {
   getTeamsByFiltered = vi.fn<ITeamContextProps['getTeamsByFiltered']>();
-  getTeamsByFiltered.mockResolvedValue(undefined);
+  getTeamsByFiltered.mockResolvedValue({
+    items: teams,
+    page: 1,
+    pageSize: TABLE_ROWS_PER_PAGE,
+    totalCount: teams.length,
+  });
   addTeam = vi.fn<ITeamContextProps['addTeam']>();
   addTeam.mockResolvedValue(buildTeam());
   putTeamById = vi.fn<ITeamContextProps['putTeamById']>();
@@ -190,8 +195,14 @@ describe('TeamsPage — pagination', () => {
     let resolveFetch: () => void = () => {};
     getTeamsByFiltered.mockImplementation(
       () =>
-        new Promise<void>(resolve => {
-          resolveFetch = () => resolve(undefined);
+        new Promise(resolve => {
+          resolveFetch = () =>
+            resolve({
+              items: rows,
+              page: 1,
+              pageSize: TABLE_ROWS_PER_PAGE,
+              totalCount: rows.length,
+            });
         })
     );
 

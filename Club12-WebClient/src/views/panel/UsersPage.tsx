@@ -49,6 +49,7 @@ const UsersPage: React.FC = () => {
   const { users, getAllUsers, deleteUser, setUserActive } = useUser();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
   const [filters, setFilters] = useState<UserFilterRequest>(EMPTY_FILTERS);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
     page: 0,
@@ -220,11 +221,12 @@ const UsersPage: React.FC = () => {
       activePaginationModel: GridPaginationModel
     ) => {
       setLoading(true);
-      await getAllUsersRef.current({
+      const response = await getAllUsersRef.current({
         ...activeFilters,
         pageNumber: activePaginationModel.page + 1,
         pageSize: activePaginationModel.pageSize,
       });
+      setRowCount(response?.totalCount ?? 0);
       setLoading(false);
     },
     []
@@ -346,6 +348,8 @@ const UsersPage: React.FC = () => {
               pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
               paginationModel={paginationModel}
               onPaginationModelChange={handlePaginationModelChange}
+              paginationMode="server"
+              rowCount={rowCount}
             />
           </Box>
         )}

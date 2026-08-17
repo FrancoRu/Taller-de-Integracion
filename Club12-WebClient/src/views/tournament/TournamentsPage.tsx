@@ -73,6 +73,7 @@ const TournamentsPage: React.FC = () => {
   const { role } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
   const [filters, setFilters] = useState<ITournamentFiltered>(EMPTY_FILTERS);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
     page: 0,
@@ -233,11 +234,12 @@ const TournamentsPage: React.FC = () => {
       }
 
       setLoading(true);
-      await getAllTournamentsByFilterRef.current({
+      const response = await getAllTournamentsByFilterRef.current({
         ...activeFilters,
         pageNumber: activePaginationModel.page + 1,
         pageSize: activePaginationModel.pageSize,
       });
+      setRowCount(response?.totalCount ?? 0);
       setLoading(false);
     },
     [canLoadTournaments]
@@ -357,6 +359,8 @@ const TournamentsPage: React.FC = () => {
               pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
               paginationModel={paginationModel}
               onPaginationModelChange={handlePaginationModelChange}
+              paginationMode="server"
+              rowCount={rowCount}
             />
           </Box>
         )}

@@ -117,6 +117,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   const { teams, getTeamsByFiltered } = useTeam();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
   const [filters, setFilters] = useState<PlayersSearchFilters>(EMPTY_FILTERS);
   const [debouncedFilters, setDebouncedFilters] =
     useState<PlayersSearchFilters>(EMPTY_FILTERS);
@@ -142,7 +143,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       activePaginationModel: GridPaginationModel
     ) => {
       setLoading(true);
-      await getPlayersByFilterRef.current(
+      const response = await getPlayersByFilterRef.current(
         teamId
           ? {
               teamId,
@@ -156,6 +157,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               pageSize: activePaginationModel.pageSize,
             }
       );
+      setRowCount(response?.totalCount ?? 0);
       setLoading(false);
     },
     [teamId]
@@ -544,6 +546,8 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
           pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
           paginationModel={paginationModel}
           onPaginationModelChange={handlePaginationModelChange}
+          paginationMode="server"
+          rowCount={rowCount}
         />
       </Box>
 

@@ -44,6 +44,7 @@ const BlogPostsPage: React.FC = () => {
   const navigate = useNavigate();
   const [posts, setPosts] = useState<BlogPostResponse[]>([]);
   const [loading, setLoading] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
   const [filters, setFilters] = useState<GetBlogPostsFilteredRequest>(EMPTY_FILTERS);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
     page: 0,
@@ -65,6 +66,7 @@ const BlogPostsPage: React.FC = () => {
       });
       if (response) {
         setPosts(response.items);
+        setRowCount(response.totalCount);
       }
       setLoading(false);
     },
@@ -222,6 +224,8 @@ const BlogPostsPage: React.FC = () => {
               pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
               paginationModel={paginationModel}
               onPaginationModelChange={handlePaginationModelChange}
+              paginationMode="server"
+              rowCount={rowCount}
             />
           </Box>
         )}
