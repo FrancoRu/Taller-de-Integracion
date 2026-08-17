@@ -214,10 +214,12 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
         }
     }
 
-    private static string ResolveTeamNameFromMap(Guid? teamId, IReadOnlyDictionary<Guid, string> teamNamesById) =>
-        teamId.HasValue && teamNamesById.TryGetValue(teamId.Value, out string? name)
+    private static string ResolveTeamNameFromMap(Guid? teamId, IReadOnlyDictionary<Guid, string> teamNamesById)
+    {
+        return teamId.HasValue && teamNamesById.TryGetValue(teamId.Value, out string? name)
             ? name
             : MatchSlugSourceBuilder.UnassignedTeamPlaceholder;
+    }
 
     /// <summary>
     /// Builds an unpersisted match for a stage's automated fixture. Slug is

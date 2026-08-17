@@ -1,7 +1,6 @@
 using Application.Interfaces.Services;
 
 using Domain.Entities.Models;
-using Domain.Enums;
 
 using Infrastructure.Persistance;
 

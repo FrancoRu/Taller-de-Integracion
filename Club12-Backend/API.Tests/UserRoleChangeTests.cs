@@ -144,7 +144,7 @@ public class UserRoleChangeTests : IClassFixture<CustomWebApplicationFactory>
         await Assert.ThrowsAsync<ArgumentException>(() =>
             userManagementService.UpdateAsync(
                 Roles.Admin, adminId, targetId,
-                new UpdateUserRequest { Role = (UserRoleType)999 }));
+                new UpdateUserRequest { Role = (UserRoleType) 999 }));
     }
 
     /// <summary>
