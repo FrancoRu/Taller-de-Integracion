@@ -3,14 +3,12 @@
 		<PackageReference Include="AutoMapper" Version="16.2.0">
 			<NoWarn>NU1903</NoWarn>
 		</PackageReference>
-		<PackageReference Include="EPPlusFree" Version="4.5.3.8" />
 		<PackageReference Include="FluentEmail.MailKit" Version="3.0.2" />
 		<PackageReference Include="LinqKit.Microsoft.EntityFrameworkCore" Version="8.1.11" />
 		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.12" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
 		<PackageReference Include="MimeKit" Version="4.17.0" />
 		<PackageReference Include="Riok.Mapperly" Version="4.3.1" />
-		<PackageReference Include="System.Drawing.Common" Version="8.0.30" />
 		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.22.0" />
 	</ItemGroup>
 	<ItemGroup>
