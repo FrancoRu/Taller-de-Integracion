@@ -21,7 +21,7 @@ const makeValidState = (): WizardState => {
     description: '',
     startDate: '2026-03-01',
     teamRegistrationDeadline: '2026-02-15',
-    minTeams: 2,
+    minTeams: 4,
     maxTeams: 8,
   };
   state.selectedTeamIds = [guid('a'), guid('b'), guid('c'), guid('d')];
@@ -63,9 +63,15 @@ describe('validateTournamentStep', () => {
     expect(validateTournamentStep(state).length).toBeGreaterThan(0);
   });
 
-  it('rejects minTeams below 2', () => {
+  it('rejects minTeams below the backend-allowed minimum (4)', () => {
     const state = makeValidState();
-    state.tournament.minTeams = 1;
+    state.tournament.minTeams = 3;
+    expect(validateTournamentStep(state).length).toBeGreaterThan(0);
+  });
+
+  it('rejects maxTeams above the backend-allowed maximum (32)', () => {
+    const state = makeValidState();
+    state.tournament.maxTeams = 33;
     expect(validateTournamentStep(state).length).toBeGreaterThan(0);
   });
 
@@ -74,6 +80,12 @@ describe('validateTournamentStep', () => {
     state.tournament.minTeams = 10;
     state.tournament.maxTeams = 8;
     expect(validateTournamentStep(state).length).toBeGreaterThan(0);
+  });
+
+  it('accepts the wizard defaults (min 4, max 32) as a valid, submittable range', () => {
+    const state = createInitialWizardState();
+    expect(state.tournament.minTeams).toBe(4);
+    expect(state.tournament.maxTeams).toBe(32);
   });
 });
 
