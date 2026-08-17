@@ -173,6 +173,77 @@ public class MatchServiceGenerationTests : IClassFixture<CustomWebApplicationFac
         }
     }
 
+    /// <summary>
+    /// Reproduces a real bug found while driving the tournament wizard
+    /// end-to-end: a multi-zone tournament registers every selected team to
+    /// the TOURNAMENT first, then assigns each zone's own subset to that
+    /// zone's own Group stage (via AssignTeamsToStageAsync/StageTeamMatch)
+    /// — exactly what submitWizard.ts does. Before this fix,
+    /// ResolveGroupTeamCountAsync computed "registered teams ÷ groups in
+    /// THIS division" (always ÷ 1, since each zone has exactly one Group
+    /// stage), which equals the TOURNAMENT-WIDE team total, not this
+    /// zone's assigned team count — so whenever the two coincidentally
+    /// differed, matches were silently generated for the wrong pool
+    /// (mixing in teams from every other zone) instead of the teams
+    /// actually assigned to this stage.
+    /// </summary>
+    [Fact]
+    public async Task CreateAutomatedMatchesAsync_GroupStage_ExplicitAssignmentDiffersFromTournamentTotal_UsesOnlyAssignedTeams()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IMatchService matchService = scope.ServiceProvider.GetRequiredService<IMatchService>();
+
+        (Tournament tournament, Division zoneA) = await SeedDivisionAsync(db);
+        Division zoneB = new()
+        {
+            Name = $"Division-{Guid.NewGuid()}",
+            Tournament = tournament,
+            Stages = [],
+            CreatedBy = "test",
+        };
+        db.Divisions.Add(zoneB);
+        await db.SaveChangesAsync();
+
+        // 8 teams registered to the TOURNAMENT as a whole (4 per zone) —
+        // the wizard's "register every selected team up front" step.
+        List<Team> zoneATeams = await SeedTeamsAsync(db, 4, tournament.Id);
+        List<Team> zoneBTeams = await SeedTeamsAsync(db, 4, tournament.Id);
+
+        List<Stage> zoneAStages = await SeedGroupStagesAsync(db, zoneA, groupCount: 1);
+        List<Stage> zoneBStages = await SeedGroupStagesAsync(db, zoneB, groupCount: 1);
+        Stage zoneAGroupStage = zoneAStages[0];
+
+        // Only zoneA's own 4 teams are explicitly assigned to zoneA's group
+        // stage (zoneB's stage is left unassigned, mirroring "the other
+        // zones haven't been processed by the wizard yet").
+        db.StageTeamMatches.AddRange(zoneATeams.Select(t => new StageTeamMatch
+        {
+            StageId = zoneAGroupStage.Id,
+            TeamId = t.Id,
+            CreatedBy = "test",
+        }));
+        await db.SaveChangesAsync();
+
+        List<Match> matches = await matchService.CreateAutomatedMatchesAsync(zoneAGroupStage.Id);
+
+        Assert.Equal(6, matches.Count);
+        Assert.All(matches, m =>
+        {
+            Assert.NotNull(m.HomeTeamId);
+            Assert.NotNull(m.VisitorTeamId);
+            Assert.Contains(m.HomeTeamId!.Value, zoneATeams.Select(t => t.Id));
+            Assert.Contains(m.VisitorTeamId!.Value, zoneATeams.Select(t => t.Id));
+            Assert.DoesNotContain(m.HomeTeamId!.Value, zoneBTeams.Select(t => t.Id));
+            Assert.DoesNotContain(m.VisitorTeamId!.Value, zoneBTeams.Select(t => t.Id));
+        });
+
+        // zoneB's stage existing (unassigned) is itself part of what makes
+        // this reproduce the bug: it proves the fix isn't just "there's
+        // only one Group stage in the tournament".
+        Assert.Single(zoneBStages);
+    }
+
     [Fact]
     public async Task CreateAutomatedMatchesAsync_GroupStage_MultipleGroupsInDivision_LeavesMatchesUnseeded()
     {

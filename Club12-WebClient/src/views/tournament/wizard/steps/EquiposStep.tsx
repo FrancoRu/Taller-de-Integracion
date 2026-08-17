@@ -4,16 +4,22 @@ import { ITeamResponse } from '@/modules/team/type/team.d';
 
 interface EquiposStepProps {
   availableTeams: ITeamResponse[];
+  /** Tournament name by id, used to flag teams currently playing elsewhere. */
+  tournamentNameById?: Map<string, string>;
   selectedTeamIds: GUID[];
   onChange: (teamIds: GUID[]) => void;
 }
 
 /**
- * Lets the admin pick which teams from the club's general roster (teams
- * not yet registered in any tournament) participate in this one.
+ * Lets the admin pick which teams from the club's general roster participate
+ * in this tournament. A team already registered in another tournament is
+ * still selectable — that's the normal way a team moves from one season to
+ * the next — but it's flagged with its current tournament name so the
+ * reassignment is a knowing choice, not a surprise.
  */
 export default function EquiposStep({
   availableTeams,
+  tournamentNameById,
   selectedTeamIds,
   onChange,
 }: EquiposStepProps) {
@@ -29,7 +35,7 @@ export default function EquiposStep({
     return (
       <Typography sx={{
         color: "text.secondary"
-      }}>No hay equipos disponibles en el padrón general (todos ya están inscriptos en otro torneo).
+      }}>No hay equipos cargados en el padrón general todavía.
               </Typography>
     );
   }
@@ -40,6 +46,7 @@ export default function EquiposStep({
         color: "text.secondary"
       }}>
         Seleccioná los equipos que participan en este torneo ({selectedTeamIds.length} seleccionados).
+        Un equipo ya inscripto en otro torneo puede elegirse igual: pasa a jugar este torneo.
       </Typography>
       <Stack
         direction="row"
@@ -47,15 +54,21 @@ export default function EquiposStep({
           flexWrap: "wrap",
           gap: 1
         }}>
-        {availableTeams.map(team => (
-          <Chip
-            key={team.id}
-            label={team.name}
-            color={selectedTeamIds.includes(team.id) ? 'primary' : 'default'}
-            variant={selectedTeamIds.includes(team.id) ? 'filled' : 'outlined'}
-            onClick={() => toggle(team.id)}
-          />
-        ))}
+        {availableTeams.map(team => {
+          const currentTournamentName = team.tournamentId
+            ? tournamentNameById?.get(team.tournamentId)
+            : undefined;
+          const isSelected = selectedTeamIds.includes(team.id);
+          return (
+            <Chip
+              key={team.id}
+              label={currentTournamentName ? `${team.name} (${currentTournamentName})` : team.name}
+              color={isSelected ? 'primary' : currentTournamentName ? 'warning' : 'default'}
+              variant={isSelected ? 'filled' : 'outlined'}
+              onClick={() => toggle(team.id)}
+            />
+          );
+        })}
       </Stack>
     </Stack>
   );

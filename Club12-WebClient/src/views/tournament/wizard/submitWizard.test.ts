@@ -74,6 +74,50 @@ describe('submitWizard', () => {
     expect(services.registerTeams).toHaveBeenCalledWith(guid('tournament'), [guid('a'), guid('b')]);
   });
 
+  /**
+   * Regression test for a real bug found by driving the actual wizard
+   * against a live backend: the server infers an unassigned stage's
+   * round-robin pool from "how many teams are currently registered to the
+   * tournament" when it has no better signal. Registering every zone's
+   * teams in one batch up front (before any zone-specific assignment)
+   * meant that signal was always the TOURNAMENT-WIDE team count, never a
+   * single zone's own count, so every zone but the last ended up with the
+   * wrong fixture. Registering only each zone's own teams right before its
+   * own assignment/generation step keeps that signal correct per zone; the
+   * final call restores everyone's registration once every fixture exists.
+   */
+  it('registers only each zone\'s own teams before assigning/generating its fixture, then registers everyone at the end', async () => {
+    const registerCalls: unknown[][] = [];
+    const services = makeServices({
+      registerTeams: vi.fn(async (...args: unknown[]) => {
+        registerCalls.push(args);
+        return true;
+      }),
+    });
+
+    const state = makeState();
+    state.selectedTeamIds = [guid('a'), guid('b'), guid('c'), guid('d')];
+    state.zones = [
+      { ...state.zones[0], teamIds: [guid('a'), guid('b')] },
+      {
+        id: 'zone-2',
+        name: 'Zona B',
+        teamIds: [guid('c'), guid('d')],
+        hasGroupStage: true,
+        roundRobinLegs: 1,
+        cups: [],
+      },
+    ];
+
+    await submitWizard(state, services);
+
+    expect(registerCalls).toEqual([
+      [guid('tournament'), [guid('a'), guid('b')]],
+      [guid('tournament'), [guid('c'), guid('d')]],
+      [guid('tournament'), [guid('a'), guid('b'), guid('c'), guid('d')]],
+    ]);
+  });
+
   it('creates one division per zone with isCrossDivisionCup false', async () => {
     const services = makeServices();
     await submitWizard(makeState(), services);

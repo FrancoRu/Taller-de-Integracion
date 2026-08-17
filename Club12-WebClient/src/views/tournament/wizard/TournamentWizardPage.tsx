@@ -37,7 +37,8 @@ const STEP_LABELS = ['Torneo', 'Equipos', 'Divisiones', 'Copa cruzada', 'RevisiÃ
 
 export default function TournamentWizardPage() {
   const navigate = useNavigate();
-  const { addTournament, registerTeamsByTournamentId } = useTournament();
+  const { addTournament, registerTeamsByTournamentId, tournaments, getAllTournamentsByFilter } =
+    useTournament();
   const { teams, getTeamsByFiltered } = useTeam();
   const { addDivision } = useDivision();
   const { addStage, assignTeamsToStage } = useStage();
@@ -49,17 +50,28 @@ export default function TournamentWizardPage() {
 
   useEffect(() => {
     void getTeamsByFiltered({ pageSize: FILTER_OPTIONS_PAGE_SIZE });
+    void getAllTournamentsByFilter({ pageSize: FILTER_OPTIONS_PAGE_SIZE });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const unregisteredTeams = useMemo(
-    () => (teams ?? []).filter(team => !team.tournamentId),
-    [teams]
+  /**
+   * Every club team is selectable here, not just ones with no current
+   * tournament: a team's `tournamentId` is reassigned every season (see
+   * `TeamService.RegisterTeamsToTournamentAsync`), so picking a team that
+   * already played a prior/other tournament simply moves it to this one.
+   * `tournamentNameById` lets the step show where a team currently plays
+   * so the admin can make that reassignment knowingly.
+   */
+  const availableTeams = useMemo(() => teams ?? [], [teams]);
+
+  const tournamentNameById = useMemo(
+    () => new Map((tournaments ?? []).map(t => [t.id, t.name])),
+    [tournaments]
   );
 
   const selectedTeams = useMemo(
-    () => unregisteredTeams.filter(team => state.selectedTeamIds.includes(team.id)),
-    [unregisteredTeams, state.selectedTeamIds]
+    () => availableTeams.filter(team => state.selectedTeamIds.includes(team.id)),
+    [availableTeams, state.selectedTeamIds]
   );
 
   const treeNodes = useMemo(() => buildWizardTree(state), [state]);
@@ -170,7 +182,8 @@ export default function TournamentWizardPage() {
           )}
           {activeStep === 1 && (
             <EquiposStep
-              availableTeams={unregisteredTeams}
+              availableTeams={availableTeams}
+              tournamentNameById={tournamentNameById}
               selectedTeamIds={state.selectedTeamIds}
               onChange={selectedTeamIds => setState(prev => ({ ...prev, selectedTeamIds }))}
             />

@@ -1,5 +1,5 @@
 // vite.config.ts
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 import { loadEnv } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import tsconfigPaths from 'vite-tsconfig-paths';
@@ -26,6 +26,11 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: './src/test/setup.ts',
       css: true,
+      // e2e/ holds @playwright/test specs (run via `pnpm test:e2e`), which
+      // use an incompatible test()/describe() API — without this exclude,
+      // vitest's default include glob picks up *.spec.ts too and fails
+      // trying to run them as unit tests.
+      exclude: [...configDefaults.exclude, 'e2e/**'],
     },
   };
 });
