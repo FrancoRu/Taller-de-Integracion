@@ -98,7 +98,7 @@ const TournamentEditPage: React.FC = () => {
       return;
     }
 
-    if (tournament?.id === tournamentId) {
+    if (tournament?.id === tournamentId || tournament?.slug === tournamentId) {
       return;
     }
 
@@ -112,7 +112,7 @@ const TournamentEditPage: React.FC = () => {
     };
 
     void fetchTournament();
-  }, [tournamentId, tournament?.id, getTournamentById]);
+  }, [tournamentId, tournament?.id, tournament?.slug, getTournamentById]);
 
   useEffect(() => {
     if (!tournament) {
@@ -194,7 +194,7 @@ const TournamentEditPage: React.FC = () => {
     return <LoadingIndicator />;
   }
 
-  if (!tournament || tournament.id !== tournamentId) {
+  if (!tournament || (tournament.id !== tournamentId && tournament.slug !== tournamentId)) {
     return (
       <Card>
         <CardContent>
@@ -322,8 +322,8 @@ const TournamentEditPage: React.FC = () => {
 
     setSaving(true);
     try {
-      await putTournamentById(tournamentId, payload);
-      navigate(APP_ROUTES.panelTournamentDetail.build(tournamentId));
+      await putTournamentById(tournament.id, payload);
+      navigate(APP_ROUTES.panelTournamentDetail.build(tournament.id));
     } finally {
       setSaving(false);
     }

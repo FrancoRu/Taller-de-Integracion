@@ -273,7 +273,7 @@ const TournamentPage: React.FC = () => {
 
         {tab === 'divisiones' && (
           <DivisionsPage
-            tournamentId={tournamentId}
+            tournamentId={tournament.id}
             title={undefined}
             wrapInCard={false}
             createType="División"
@@ -281,7 +281,7 @@ const TournamentPage: React.FC = () => {
           />
         )}
 
-        {tab === 'equipos' && <TeamsPage tournamentId={tournamentId} />}
+        {tab === 'equipos' && <TeamsPage tournamentId={tournament.id} />}
       </CardContent>
     </Card>
   );

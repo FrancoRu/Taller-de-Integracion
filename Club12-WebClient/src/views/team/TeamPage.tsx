@@ -79,14 +79,17 @@ const TeamPage: React.FC<TeamPageProps> = ({
     void fetchTeam();
   }, [getTeamById, targetTeamId]);
 
+  // These filter by a real GUID teamId — unlike the team fetch itself,
+  // they can never accept the route's idOrSlug value, so they must wait
+  // for `team` to resolve rather than using targetTeamId.
   const refreshStatistics = () => {
-    if (!targetTeamId) return;
-    void getPlayerStatisticsByFilter({ teamId: targetTeamId, pageSize: FILTER_OPTIONS_PAGE_SIZE });
+    if (!team?.id) return;
+    void getPlayerStatisticsByFilter({ teamId: team.id, pageSize: FILTER_OPTIONS_PAGE_SIZE });
   };
 
   const refreshSanctions = () => {
-    if (!targetTeamId) return;
-    void getPlayerSanctionByFilter({ teamId: targetTeamId, pageSize: FILTER_OPTIONS_PAGE_SIZE });
+    if (!team?.id) return;
+    void getPlayerSanctionByFilter({ teamId: team.id, pageSize: FILTER_OPTIONS_PAGE_SIZE });
   };
 
   useEffect(() => {
@@ -96,7 +99,7 @@ const TeamPage: React.FC<TeamPageProps> = ({
       refreshSanctions();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, targetTeamId]);
+  }, [tab, team?.id]);
 
   const playerNameById = useMemo(() => {
     const map = new Map<GUID, string>();
@@ -249,9 +252,9 @@ const TeamPage: React.FC<TeamPageProps> = ({
         </Grid>
       )}
 
-      {tab === 'jugadores' && (
+      {tab === 'jugadores' && team.id && (
         <PlayersPage
-          teamId={targetTeamId}
+          teamId={team.id}
           title={undefined}
           emptyMessage="Este equipo no tiene jugadores cargados."
           wrapInCard={false}

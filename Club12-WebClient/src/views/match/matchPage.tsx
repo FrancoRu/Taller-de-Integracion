@@ -73,25 +73,28 @@ const MatchPage: React.FC = () => {
     void fetchMatch();
   }, [getMatchById, targetMatchId]);
 
+  // Sanctions are filtered server-side by a real GUID MatchId — unlike the
+  // match fetch itself, this can never accept the route's idOrSlug value,
+  // so it must wait for `match` to resolve rather than using targetMatchId.
   const refreshSanctions = useCallback(() => {
-    if (!targetMatchId) {
+    if (!match?.id) {
       return;
     }
 
     setSanctionsLoading(true);
-    void getPlayerSanctionByFilter({ matchId: targetMatchId }).finally(() => {
+    void getPlayerSanctionByFilter({ matchId: match.id }).finally(() => {
       setSanctionsLoading(false);
     });
-  }, [getPlayerSanctionByFilter, targetMatchId]);
+  }, [getPlayerSanctionByFilter, match?.id]);
 
   useEffect(() => {
-    if (tab !== 'sanciones' || !targetMatchId) {
+    if (tab !== 'sanciones' || !match?.id) {
       return;
     }
 
     refreshSanctions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, targetMatchId]);
+  }, [tab, match?.id]);
 
   if (!targetMatchId) {
     return (
