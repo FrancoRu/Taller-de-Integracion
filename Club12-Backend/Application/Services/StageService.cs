@@ -43,7 +43,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     /// <returns>The stage entity if found; otherwise, null.</returns>
     public async Task<Stage?> GetStageByIdAsync(Guid stageId)
     {
-        return await stageRepository.GetByIdAsync(stageId);
+        return await stageRepository.GetByIdAsync(stageId, includes: [stage => stage.Division]);
     }
 
     /// <summary>

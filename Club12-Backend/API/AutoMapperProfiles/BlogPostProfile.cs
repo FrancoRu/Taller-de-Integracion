@@ -20,6 +20,7 @@ public class BlogPostProfile : Profile
         _ = CreateMap<CreateBlogPostRequest, BlogPost>();
 
         _ = CreateMap<BlogPost, BlogPostResponse>()
+            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.DateCreated))
             .ReverseMap();
 
         _ = CreateMap<UpdateBlogPostRequest, BlogPost>();

@@ -187,6 +187,43 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     /// <summary>
+    /// Regression test for a NullReferenceException at
+    /// StageService.EnsureNoCrossDivisionConflictAsync (stage.Division.IsCrossDivisionCup)
+    /// that only reproduced when the stage came from GetStageByIdAsync's real EF Core
+    /// round-trip in a fresh scope — every other test seeds a Stage with Division set
+    /// directly in-memory, which masked the missing repository include.
+    /// </summary>
+    [Fact]
+    public async Task AssignTeamsToStageAsync_StageFetchedByIdInFreshScope_DoesNotThrow()
+    {
+        Guid stageId;
+        Guid tournamentId;
+        using (IServiceScope seedScope = _factory.Services.CreateScope())
+        {
+            ApplicationDBContext seedDb = seedScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+            (Stage stage, Tournament tournament, _) = await SeedStageWithSlotsAsync(seedDb, StageType.SemiFinal, existingAssignmentCount: 0);
+            stageId = stage.Id;
+            tournamentId = tournament.Id;
+        }
+
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
+
+        Tournament tournament2 = await db.Tournaments.FirstAsync(t => t.Id == tournamentId);
+        List<Team> poolTeams = await SeedTeamsAsync(db, tournament2, 4);
+        List<Guid> teamIds = [.. poolTeams.Select(t => t.Id)];
+
+        Stage? fetchedStage = await stageService.GetStageByIdAsync(stageId);
+        Assert.NotNull(fetchedStage);
+
+        await stageService.AssignTeamsToStageAsync(fetchedStage, teamIds, auto: false);
+
+        int recordCount = await db.StageTeamMatches.CountAsync(stm => stm.StageId == stageId);
+        Assert.Equal(4, recordCount);
+    }
+
+    /// <summary>
     /// ThirdPlace capacity is 2; 1 existing assignment leaves exactly 1 available slot.
     /// </summary>
     [Fact]
