@@ -30,11 +30,11 @@ namespace Application.Services;
 /// </summary>
 public class StageService(IUnitOfWork unitOfWork) : IStageService
 {
-    private readonly IStageRepository stageRepository = unitOfWork.StageRepository;
-    private readonly IDivisionRepository divisionRepository = unitOfWork.DivisionRepository;
-    private readonly IStageTeamMatchRepository stageTeamMatchRepository = unitOfWork.StageTeamMatchRepository;
-    private readonly ITeamRepository teamRepository = unitOfWork.TeamRepository;
-    private readonly IMatchRepository matchRepository = unitOfWork.MatchRepository;
+    private readonly IStageRepository _stageRepository = unitOfWork.StageRepository;
+    private readonly IDivisionRepository _divisionRepository = unitOfWork.DivisionRepository;
+    private readonly IStageTeamMatchRepository _stageTeamMatchRepository = unitOfWork.StageTeamMatchRepository;
+    private readonly ITeamRepository _teamRepository = unitOfWork.TeamRepository;
+    private readonly IMatchRepository _matchRepository = unitOfWork.MatchRepository;
 
     /// <summary>
     /// Retrieves a stage by its unique identifier.
@@ -43,7 +43,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     /// <returns>The stage entity if found; otherwise, null.</returns>
     public async Task<Stage?> GetStageByIdAsync(Guid stageId)
     {
-        return await stageRepository.GetByIdAsync(stageId, includes: [stage => stage.Division]);
+        return await _stageRepository.GetByIdAsync(stageId, includes: [stage => stage.Division]);
     }
 
     /// <summary>
@@ -61,9 +61,9 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
             expression = expression.And(tournamentExpression);
         }
 
-        IEnumerable<Stage> filteredPlayers = await stageRepository.FindAsync(expression, filter: filter);
+        IEnumerable<Stage> filteredPlayers = await _stageRepository.FindAsync(expression, filter: filter);
 
-        int totalCount = await stageRepository.CountAsync(expression);
+        int totalCount = await _stageRepository.CountAsync(expression);
 
         return new PaginatedResponse<Stage>
         {
@@ -80,7 +80,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     /// <param name="id">The unique identifier of the stage to delete.</param>
     public async Task DeleteStageAsync(Guid id)
     {
-        await stageRepository.RemoveAsync(stage => stage.Id == id);
+        await _stageRepository.RemoveAsync(stage => stage.Id == id);
     }
 
     /// <summary>
@@ -89,7 +89,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     /// <param name="stageEntity">The stage entity to update.</param>
     public async Task UpdateStageAsync(Stage stageEntity)
     {
-        await stageRepository.UpdateAsync(stageEntity);
+        await _stageRepository.UpdateAsync(stageEntity);
     }
 
     /// <summary>
@@ -100,12 +100,12 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     /// <exception cref="InvalidOperationException">Thrown if a stage with the same name already exists in the division.</exception>
     public async Task<Stage> CreateStageAsync(Stage stageEntity)
     {
-        bool existStage = await stageRepository.ExistsAsync(
+        bool existStage = await _stageRepository.ExistsAsync(
             s => s.Name == stageEntity.Name && s.DivisionId == stageEntity.DivisionId);
 
         if (!existStage)
         {
-            await stageRepository.AddAsync(stageEntity);
+            await _stageRepository.AddAsync(stageEntity);
             return stageEntity;
         }
 
@@ -149,7 +149,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     /// <exception cref="InvalidOperationException">Thrown if the division is not found, already has stages, or has an invalid tournament size.</exception>
     public async Task<List<Stage>> CreateAutomatedStagesAsync(Guid divisionId)
     {
-        Division division = await divisionRepository.GetByIdAsync(divisionId, includes: [division => division.Stages, division => division.Tournament])
+        Division division = await _divisionRepository.GetByIdAsync(divisionId, includes: [division => division.Stages, division => division.Tournament])
             ?? throw new InvalidOperationException(ErrorMessages.Stage.DivisionNotFound);
 
         if (division.Stages.Count > 0)
@@ -157,7 +157,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
             throw new InvalidOperationException(ErrorMessages.Stage.DivisionAlreadyHasStages);
         }
 
-        int registeredTeams = await teamRepository.CountAsync(team => team.TournamentId == division.TournamentId);
+        int registeredTeams = await _teamRepository.CountAsync(team => team.TournamentId == division.TournamentId);
 
         if (!IsValidTournamentSize(registeredTeams))
         {
@@ -217,7 +217,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
 
         finalStage.Order = order;
 
-        await stageRepository.AddRangeAsync(stages);
+        await _stageRepository.AddRangeAsync(stages);
 
         return stages;
     }
@@ -231,7 +231,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     /// <exception cref="InvalidOperationException">Thrown if the stage already has the maximum number of teams or if too many teams are assigned.</exception>
     public async Task AssignTeamsToStageAsync(Stage stage, List<Guid>? teamIds = null, bool auto = false)
     {
-        IEnumerable<StageTeamMatch> existingMatches = await stageTeamMatchRepository.FindAsync(stageTeamMatch => stageTeamMatch.StageId == stage.Id);
+        IEnumerable<StageTeamMatch> existingMatches = await _stageTeamMatchRepository.FindAsync(stageTeamMatch => stageTeamMatch.StageId == stage.Id);
 
         int maxTeams = StageHelper.GetMaxTeamsForStage(stage.StageType);
         int availableSlots = maxTeams - existingMatches.Count();
@@ -276,7 +276,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
             {
                 PageSize = availableSlots,
             };
-            List<Team> teams = [.. await teamRepository.FindAsync(
+            List<Team> teams = [.. await _teamRepository.FindAsync(
                 team => team.TournamentId == stage.Division.TournamentId
                     && !team.StageTeamMatches.Any(stm => stm.TeamId == team.Id && stm.StageId == stage.Id), filter: filter)];
 
@@ -298,7 +298,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
 
         if (newItems.Count != 0)
         {
-            await stageTeamMatchRepository.AddRangeAsync(newItems);
+            await _stageTeamMatchRepository.AddRangeAsync(newItems);
         }
     }
 
@@ -337,7 +337,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
             return [];
         }
 
-        IEnumerable<StageTeamMatch> conflicting = await stageTeamMatchRepository.FindAsync(stm =>
+        IEnumerable<StageTeamMatch> conflicting = await _stageTeamMatchRepository.FindAsync(stm =>
             teamIdList.Contains(stm.TeamId)
             && stm.Stage!.DivisionId != stage.DivisionId
             && stm.Stage!.Division.TournamentId == stage.Division.TournamentId
@@ -358,7 +358,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
             return;
         }
 
-        await stageTeamMatchRepository.RemoveAsync(stm =>
+        await _stageTeamMatchRepository.RemoveAsync(stm =>
             stm.StageId == stage.Id && teamIds.Contains(stm.TeamId)
         );
     }
@@ -371,7 +371,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     /// </summary>
     public async Task<List<Match>> SeedKnockoutStageAsync(Guid stageId)
     {
-        Stage stage = await stageRepository.GetByIdAsync(stageId,
+        Stage stage = await _stageRepository.GetByIdAsync(stageId,
             includes: [s => s.Matches, s => s.StageTeamMatches, s => s.Division])
             ?? throw new InvalidOperationException(ErrorMessages.Stage.NotFoundGeneric);
 
@@ -394,7 +394,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
                 ErrorMessages.Stage.SeedTeamCountOutOfRange(assignedTeamIds.Count, slotCapacity));
         }
 
-        List<Match> groupMatches = [.. await matchRepository.FindAsync(m =>
+        List<Match> groupMatches = [.. await _matchRepository.FindAsync(m =>
             m.Stage.DivisionId == stage.DivisionId && m.Stage.StageType == StageType.Group,
             includes: [m => m.HomeTeam!, m => m.VisitorTeam!, m => m.WinningTeam!])];
 
@@ -425,7 +425,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
             }
         }
 
-        await matchRepository.UpdateRangeAsync(orderedMatches);
+        await _matchRepository.UpdateRangeAsync(orderedMatches);
 
         return orderedMatches;
     }

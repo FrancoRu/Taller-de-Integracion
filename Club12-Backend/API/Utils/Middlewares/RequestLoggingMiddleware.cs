@@ -1,83 +1,52 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 using System;
-using System.IO;
-using System.Linq;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace API.Utils.Middlewares;
 
 /// <summary>
-/// Middleware that logs HTTP request details including method, path, query parameters, body, and correlation ID.
+/// Middleware that logs one compact, structured line per HTTP request: method,
+/// path (including query string), status code, elapsed time, and correlation
+/// id. Never logs the request body, since routes like login/register would
+/// otherwise write plaintext credentials to the log stream.
 /// </summary>
 public class RequestLoggingMiddleware(RequestDelegate next, ILogger<RequestLoggingMiddleware> logger)
 {
-    private const string LogTemplate = @"
-───────────────────────────────────────────────
+    private const string LogTemplate =
+        "HTTP {Method} {PathAndQuery} responded {StatusCode} in {ElapsedMs} ms [{CorrelationId}]";
 
-[{Timestamp1} INF]
-───────────────────────────────────────────────
-HTTP REQUEST LOG [{Timestamp2}]
-───────────────────────────────────────────────
-Method:        {Method}
-Path:          {Path}
-Full URL:      {FullUrl}
-CorrelationId: {CorrelationId}
-
-Query Parameters:
-{QueryParams}
-
-Body:
-{Body}
-
-───────────────────────────────────────────────
-";
-
-    /// <summary>   
-    /// Logs the HTTP request details and invokes the next middleware in the pipeline.
+    /// <summary>
+    /// Times the request, invokes the rest of the pipeline, and logs the
+    /// outcome at a level matched to the response status code.
     /// </summary>
     /// <param name="context">The current HTTP context.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task InvokeAsync(HttpContext context)
     {
-        System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
-
-        string method = context.Request.Method;
-        string url = context.Request.Path + context.Request.QueryString;
-        string scheme = context.Request.Scheme;
-        string host = context.Request.Host.ToString();
-        string fullUrl = $"{scheme}://{host}{url}";
-        string correlationId = context.TraceIdentifier;
-
-        string queryParams = context.Request.Query.Count != 0
-            ? string.Join(Environment.NewLine, context.Request.Query.Select(q => $"  {q.Key}: {q.Value}"))
-            : "  (none)";
-
-        string body = "";
-        if (context.Request.ContentLength > 0 && context.Request.Body.CanSeek)
-        {
-            context.Request.Body.Position = 0;
-            using StreamReader reader = new(context.Request.Body, leaveOpen: true);
-            body = await reader.ReadToEndAsync();
-            context.Request.Body.Position = 0;
-        }
+        Stopwatch stopwatch = Stopwatch.StartNew();
 
         await next(context);
 
         stopwatch.Stop();
 
-        string timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ");
+        int statusCode = context.Response.StatusCode;
+        LogLevel level = statusCode switch
+        {
+            >= 500 => LogLevel.Error,
+            >= 400 => LogLevel.Warning,
+            _ => LogLevel.Information,
+        };
 
-        logger.LogInformation(
+        logger.Log(
+            level,
             LogTemplate,
-            timestamp,
-            timestamp,
-            method,
-            context.Request.Path,
-            fullUrl,
-            correlationId,
-            queryParams,
-            body);
+            context.Request.Method,
+            context.Request.Path + context.Request.QueryString,
+            statusCode,
+            stopwatch.ElapsedMilliseconds,
+            context.TraceIdentifier);
     }
 }

@@ -24,7 +24,7 @@ namespace Application.Services;
 /// </summary>
 public class TeamService(IUnitOfWork unitOfWork) : ITeamService
 {
-    private readonly ITeamRepository teamRepository = unitOfWork.TeamRepository;
+    private readonly ITeamRepository _teamRepository = unitOfWork.TeamRepository;
 
     /// <summary>
     /// Creates a new team entity and persists it to the repository.
@@ -33,7 +33,7 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
     /// <returns>The created team entity.</returns>
     public async Task<Team> CreateTeamAsync(Team teamEntity)
     {
-        await teamRepository.AddAsync(teamEntity);
+        await _teamRepository.AddAsync(teamEntity);
         return teamEntity;
     }
 
@@ -44,7 +44,7 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
     /// <returns>The team entity if found; otherwise, null.</returns>
     public async Task<Team?> GetTeamByIdAsync(Guid teamId)
     {
-        return await teamRepository.GetByIdAsync(teamId, includes: [team => team.Players]);
+        return await _teamRepository.GetByIdAsync(teamId, includes: [team => team.Players]);
     }
 
     /// <summary>
@@ -54,7 +54,7 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task DeleteTeamAsync(Guid id)
     {
-        await teamRepository.RemoveAsync(team => team.Id == id);
+        await _teamRepository.RemoveAsync(team => team.Id == id);
     }
 
     /// <summary>
@@ -64,7 +64,7 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task UpdateTeamAsync(Team teamEntity)
     {
-        await teamRepository.UpdateAsync(teamEntity);
+        await _teamRepository.UpdateAsync(teamEntity);
     }
 
     /// <summary>
@@ -74,7 +74,7 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task UpdateTeamsAsync(IEnumerable<Team> teams)
     {
-        await teamRepository.UpdateRangeAsync(teams);
+        await _teamRepository.UpdateRangeAsync(teams);
     }
 
     /// <summary>
@@ -95,12 +95,12 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
             expression = expression.And(stageExpression);
         }
 
-        IEnumerable<Team> filteredTeams = await teamRepository.FindAsync(
+        IEnumerable<Team> filteredTeams = await _teamRepository.FindAsync(
             expression,
             includes: [team => team.Players, team => team.StageTeamMatches],
             filter: filter);
 
-        int totalCount = await teamRepository.CountAsync(expression);
+        int totalCount = await _teamRepository.CountAsync(expression);
 
         return new PaginatedResponse<Team>
         {
@@ -124,7 +124,7 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task RegisterTeamsToTournamentAsync(Tournament tournament, List<Guid> teamIds)
     {
-        List<Team> teamsToRegister = [.. await teamRepository.FindAsync(team => teamIds.Contains(team.Id)
+        List<Team> teamsToRegister = [.. await _teamRepository.FindAsync(team => teamIds.Contains(team.Id)
             || team.TournamentId == tournament.Id)];
 
         teamsToRegister.AsParallel().ForAll(team =>
@@ -139,7 +139,7 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
             }
         });
 
-        await teamRepository.UpdateRangeAsync(teamsToRegister);
+        await _teamRepository.UpdateRangeAsync(teamsToRegister);
 
     }
 }

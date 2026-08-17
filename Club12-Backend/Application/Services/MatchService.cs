@@ -25,25 +25,25 @@ namespace Application.Services;
 
 public class MatchService(IUnitOfWork unitOfWork) : IMatchService
 {
-    private readonly IMatchRepository matchRepository = unitOfWork.MatchRepository;
-    private readonly IStageRepository stageRepository = unitOfWork.StageRepository;
-    private readonly ITeamRepository teamRepository = unitOfWork.TeamRepository;
-    private readonly IStageTeamMatchRepository stageTeamMatchRepository = unitOfWork.StageTeamMatchRepository;
+    private readonly IMatchRepository _matchRepository = unitOfWork.MatchRepository;
+    private readonly IStageRepository _stageRepository = unitOfWork.StageRepository;
+    private readonly ITeamRepository _teamRepository = unitOfWork.TeamRepository;
+    private readonly IStageTeamMatchRepository _stageTeamMatchRepository = unitOfWork.StageTeamMatchRepository;
 
     public async Task<Match> CreateMatchAsync(Match matchEntity)
     {
-        await matchRepository.AddAsync(matchEntity);
+        await _matchRepository.AddAsync(matchEntity);
         return matchEntity;
     }
 
     public async Task<Match?> GetMatchByIdAsync(Guid matchId)
     {
-        return await matchRepository.GetByIdAsync(matchId, includes: [m => m.HomeTeam!, m => m.VisitorTeam!]);
+        return await _matchRepository.GetByIdAsync(matchId, includes: [m => m.HomeTeam!, m => m.VisitorTeam!]);
     }
 
     public async Task<Match?> GetMatchByIdWithScorersAsync(Guid matchId)
     {
-        Match? match = await matchRepository.GetByIdAsync(matchId,
+        Match? match = await _matchRepository.GetByIdAsync(matchId,
             includes: [m => m.HomeTeam!,
                         m => m.VisitorTeam!,
                         m => m.PlayerStatistics,
@@ -55,12 +55,12 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
 
     public async Task DeleteMatchAsync(Guid id)
     {
-        await matchRepository.RemoveAsync(match => match.Id == id);
+        await _matchRepository.RemoveAsync(match => match.Id == id);
     }
 
     public async Task UpdateMatchAsync(Match matchEntity)
     {
-        await matchRepository.UpdateAsync(matchEntity);
+        await _matchRepository.UpdateAsync(matchEntity);
     }
 
     public async Task<PaginatedResponse<Match>> GetAllMatchesAsync(GetMatchesFilteredRequest filter)
@@ -89,11 +89,11 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
             expression = expression.And(visitorTeamExpression);
         }
 
-        IEnumerable<Match> filteredMatches = await matchRepository.FindAsync(expression, filter: filter, includes: [match => match.HomeTeam!,
+        IEnumerable<Match> filteredMatches = await _matchRepository.FindAsync(expression, filter: filter, includes: [match => match.HomeTeam!,
                                                                                                                       match => match.VisitorTeam!,
                                                                                                                       match => match.Venue!]);
 
-        int totalCount = await matchRepository.CountAsync(expression);
+        int totalCount = await _matchRepository.CountAsync(expression);
 
         return new PaginatedResponse<Match>
         {
@@ -106,7 +106,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
 
     public async Task<List<Match>> CreateAutomatedMatchesAsync(Guid stageId)
     {
-        Stage stage = await stageRepository.GetByIdAsync(stageId, includes: [s => s.Matches, s => s.Division])
+        Stage stage = await _stageRepository.GetByIdAsync(stageId, includes: [s => s.Matches, s => s.Division])
             ?? throw new InvalidOperationException(ErrorMessages.Stage.NotFoundGeneric);
 
         if (stage.Matches.Count > 0)
@@ -125,7 +125,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
         };
 
 
-        await matchRepository.AddRangeAsync(matches);
+        await _matchRepository.AddRangeAsync(matches);
         return matches;
     }
 
@@ -143,7 +143,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
 
     private async Task<int> ResolveGroupTeamCountAsync(Stage stage)
     {
-        int totalGroups = await stageRepository.CountAsync(s =>
+        int totalGroups = await _stageRepository.CountAsync(s =>
             s.DivisionId == stage.DivisionId && s.StageType == StageType.Group);
 
         if (totalGroups <= 0)
@@ -151,7 +151,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
             throw new InvalidOperationException(ErrorMessages.Match.NoGroupStagesForDivision);
         }
 
-        int registeredTeams = await teamRepository.CountAsync(team => team.TournamentId == stage.Division.TournamentId);
+        int registeredTeams = await _teamRepository.CountAsync(team => team.TournamentId == stage.Division.TournamentId);
 
         if (registeredTeams <= 0)
         {
@@ -184,7 +184,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
     /// </summary>
     private async Task<List<Guid>> ResolveGroupTeamIdsAsync(Stage stage, int expectedTeamCount)
     {
-        List<Guid> assignedTeamIds = [.. (await stageTeamMatchRepository.FindAsync(stm => stm.StageId == stage.Id))
+        List<Guid> assignedTeamIds = [.. (await _stageTeamMatchRepository.FindAsync(stm => stm.StageId == stage.Id))
             .Select(stm => stm.TeamId)];
 
         if (assignedTeamIds.Count == expectedTeamCount)
@@ -192,7 +192,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
             return assignedTeamIds;
         }
 
-        int totalGroups = await stageRepository.CountAsync(s =>
+        int totalGroups = await _stageRepository.CountAsync(s =>
             s.DivisionId == stage.DivisionId && s.StageType == StageType.Group);
 
         if (totalGroups != 1)
@@ -200,7 +200,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
             return [];
         }
 
-        List<Team> registeredTeams = [.. await teamRepository.FindAsync(team => team.TournamentId == stage.Division.TournamentId)];
+        List<Team> registeredTeams = [.. await _teamRepository.FindAsync(team => team.TournamentId == stage.Division.TournamentId)];
 
         return registeredTeams.Count == expectedTeamCount
             ? [.. registeredTeams.Select(t => t.Id)]

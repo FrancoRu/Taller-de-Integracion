@@ -24,14 +24,14 @@ namespace Application.Services;
 /// </summary>
 public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
 {
-    private readonly IMatchSeriesRepository matchSeriesRepository = unitOfWork.MatchSeriesRepository;
-    private readonly IMatchRepository matchRepository = unitOfWork.MatchRepository;
-    private readonly IStageRepository stageRepository = unitOfWork.StageRepository;
-    private readonly IStageTeamMatchRepository stageTeamMatchRepository = unitOfWork.StageTeamMatchRepository;
+    private readonly IMatchSeriesRepository _matchSeriesRepository = unitOfWork.MatchSeriesRepository;
+    private readonly IMatchRepository _matchRepository = unitOfWork.MatchRepository;
+    private readonly IStageRepository _stageRepository = unitOfWork.StageRepository;
+    private readonly IStageTeamMatchRepository _stageTeamMatchRepository = unitOfWork.StageTeamMatchRepository;
 
     public async Task<MatchSeries?> GetSeriesByIdAsync(Guid seriesId)
     {
-        return await matchSeriesRepository.GetByIdAsync(seriesId,
+        return await _matchSeriesRepository.GetByIdAsync(seriesId,
                 includes: [s => s.HomeTeam!, s => s.VisitorTeam!, s => s.WinningTeam!, s => s.Matches]);
     }
 
@@ -39,10 +39,10 @@ public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
     {
         Expression<Func<MatchSeries, bool>> expression = QueryableExtensions.ConstructFilterExpression<MatchSeries, GetMatchSeriesFilteredRequest>(filter);
 
-        IEnumerable<MatchSeries> filteredSeries = await matchSeriesRepository.FindAsync(expression, filter: filter,
+        IEnumerable<MatchSeries> filteredSeries = await _matchSeriesRepository.FindAsync(expression, filter: filter,
             includes: [s => s.HomeTeam!, s => s.VisitorTeam!, s => s.WinningTeam!, s => s.Matches]);
 
-        int totalCount = await matchSeriesRepository.CountAsync(expression);
+        int totalCount = await _matchSeriesRepository.CountAsync(expression);
 
         return new PaginatedResponse<MatchSeries>
         {
@@ -60,13 +60,13 @@ public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
             throw new InvalidOperationException(ErrorMessages.MatchSeries.RequiresTwoDifferentTeams);
         }
 
-        Stage stage = await stageRepository.GetByIdAsync(stageId)
+        Stage stage = await _stageRepository.GetByIdAsync(stageId)
             ?? throw new InvalidOperationException(ErrorMessages.Stage.NotFoundGeneric);
 
         await EnsureTeamAssignedToStageAsync(stageId, homeTeamId);
         await EnsureTeamAssignedToStageAsync(stageId, visitorTeamId);
 
-        bool alreadyExists = await matchSeriesRepository.ExistsAsync(series =>
+        bool alreadyExists = await _matchSeriesRepository.ExistsAsync(series =>
             series.StageId == stageId
             && ((series.HomeTeamId == homeTeamId && series.VisitorTeamId == visitorTeamId)
                 || (series.HomeTeamId == visitorTeamId && series.VisitorTeamId == homeTeamId)));
@@ -85,13 +85,13 @@ public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
             CreatedBy = AuditConstants.SystemUser,
         };
 
-        await matchSeriesRepository.AddAsync(seriesEntity);
+        await _matchSeriesRepository.AddAsync(seriesEntity);
         return seriesEntity;
     }
 
     public async Task<Match> AddGameToSeriesAsync(Guid seriesId, DateTime matchDate, Guid? venueId)
     {
-        MatchSeries series = await matchSeriesRepository.GetByIdAsync(seriesId, includes: [s => s.Matches])
+        MatchSeries series = await _matchSeriesRepository.GetByIdAsync(seriesId, includes: [s => s.Matches])
             ?? throw new InvalidOperationException(ErrorMessages.MatchSeries.NotFound);
 
         if (series.WinningTeamId.HasValue)
@@ -118,13 +118,13 @@ public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
             CreatedBy = AuditConstants.SystemUser,
         };
 
-        await matchRepository.AddAsync(game);
+        await _matchRepository.AddAsync(game);
         return game;
     }
 
     public async Task RecalculateSeriesWinnerAsync(Guid seriesId)
     {
-        MatchSeries? series = await matchSeriesRepository.GetByIdAsync(seriesId, includes: [s => s.Matches]);
+        MatchSeries? series = await _matchSeriesRepository.GetByIdAsync(seriesId, includes: [s => s.Matches]);
 
         if (series is null || series.WinningTeamId.HasValue)
         {
@@ -136,13 +136,13 @@ public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
         if (winningTeamId.HasValue)
         {
             series.WinningTeamId = winningTeamId;
-            await matchSeriesRepository.UpdateAsync(series);
+            await _matchSeriesRepository.UpdateAsync(series);
         }
     }
 
     private async Task EnsureTeamAssignedToStageAsync(Guid stageId, Guid teamId)
     {
-        bool isAssigned = await stageTeamMatchRepository.ExistsAsync(stm =>
+        bool isAssigned = await _stageTeamMatchRepository.ExistsAsync(stm =>
             stm.StageId == stageId && stm.TeamId == teamId);
 
         if (!isAssigned)
