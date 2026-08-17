@@ -88,8 +88,14 @@ public class UserRoleChangeTests : IClassFixture<CustomWebApplicationFactory>
                 new UpdateUserRequest { Role = UserRoleType.OWNER }));
     }
 
+    /// <summary>
+    /// OWNER is a super-admin role, same as ADMIN — it is never scoped to
+    /// only the users/roles it personally created. Targeting a user it
+    /// didn't create, and assigning any role (including OWNER/ADMIN), must
+    /// both succeed.
+    /// </summary>
     [Fact]
-    public async Task UpdateAsync_OwnerTargetingUserTheyDidNotCreate_IsRejected()
+    public async Task UpdateAsync_OwnerTargetingUserTheyDidNotCreate_Succeeds()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
         UserManager<ApplicationUser> userManager =
@@ -101,14 +107,15 @@ public class UserRoleChangeTests : IClassFixture<CustomWebApplicationFactory>
         // Not created by this owner (CreatedByOwnerId left null).
         (Guid targetId, _) = await SeedUserWithRoleAsync(userManager, UserRoleType.TOURNAMENT_MANAGER);
 
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
-            userManagementService.UpdateAsync(
-                Roles.Owner, ownerId, targetId,
-                new UpdateUserRequest { Role = UserRoleType.TOURNAMENT_MANAGER }));
+        UserResponse result = await userManagementService.UpdateAsync(
+            Roles.Owner, ownerId, targetId,
+            new UpdateUserRequest { Role = UserRoleType.TEAM_MANAGER });
+
+        Assert.Equal(Roles.TeamManager, result.Role);
     }
 
     [Fact]
-    public async Task UpdateAsync_OwnerAssigningRoleOutsideItsPolicy_IsRejected()
+    public async Task UpdateAsync_OwnerAssigningAnyRole_Succeeds()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
         UserManager<ApplicationUser> userManager =
@@ -122,11 +129,11 @@ public class UserRoleChangeTests : IClassFixture<CustomWebApplicationFactory>
         subordinate.CreatedByOwnerId = ownerId;
         await userManager.UpdateAsync(subordinate);
 
-        // OWNER may only assign TOURNAMENT_MANAGER — never OWNER or ADMIN.
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
-            userManagementService.UpdateAsync(
-                Roles.Owner, ownerId, subordinateId,
-                new UpdateUserRequest { Role = UserRoleType.OWNER }));
+        UserResponse result = await userManagementService.UpdateAsync(
+            Roles.Owner, ownerId, subordinateId,
+            new UpdateUserRequest { Role = UserRoleType.OWNER });
+
+        Assert.Equal(Roles.Owner, result.Role);
     }
 
     [Fact]

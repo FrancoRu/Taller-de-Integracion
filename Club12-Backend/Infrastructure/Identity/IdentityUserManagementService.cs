@@ -36,7 +36,7 @@ public sealed class IdentityUserManagementService(
         UserFilteredRequest filter,
         CancellationToken ct = default)
     {
-        IQueryable<ApplicationUser> query = ResolveVisibleUsersQuery(callerRole, callerId);
+        IQueryable<ApplicationUser> query = ResolveVisibleUsersQuery(callerRole);
 
         if (!string.IsNullOrWhiteSpace(filter.UserName))
         {
@@ -177,7 +177,7 @@ public sealed class IdentityUserManagementService(
         string callerRole, Guid callerId, Guid userId, CancellationToken ct = default)
     {
         ApplicationUser user = await FindOrThrowAsync(userId);
-        EnforceResetPasswordAccess(user, callerRole, callerId);
+        EnforceResetPasswordAccess(callerRole);
 
         string token = await userManager.GeneratePasswordResetTokenAsync(user);
 
@@ -202,7 +202,7 @@ public sealed class IdentityUserManagementService(
         string callerRole, Guid callerId, Guid userId, CancellationToken ct = default)
     {
         ApplicationUser user = await FindOrThrowAsync(userId);
-        EnforceDeleteAccess(user, callerRole, callerId);
+        EnforceDeleteAccess(callerRole);
         ThrowIfFailed(await userManager.DeleteAsync(user));
     }
 
@@ -210,7 +210,7 @@ public sealed class IdentityUserManagementService(
         string callerRole, Guid callerId, Guid userId, bool isActive, CancellationToken ct = default)
     {
         ApplicationUser user = await FindOrThrowAsync(userId);
-        EnforceDeleteAccess(user, callerRole, callerId);
+        EnforceDeleteAccess(callerRole);
 
         if (user.Id == callerId)
         {
@@ -232,12 +232,7 @@ public sealed class IdentityUserManagementService(
 
     private static void EnforceReadAccess(ApplicationUser target, string callerRole, Guid callerId)
     {
-        if (IsAdmin(callerRole))
-        {
-            return;
-        }
-
-        if (IsOwner(callerRole) && (target.Id == callerId || target.CreatedByOwnerId == callerId))
+        if (IsAdmin(callerRole) || IsOwner(callerRole))
         {
             return;
         }
@@ -261,14 +256,9 @@ public sealed class IdentityUserManagementService(
         EnforceReadAccess(target, callerRole, callerId);
     }
 
-    private static void EnforceResetPasswordAccess(ApplicationUser target, string callerRole, Guid callerId)
+    private static void EnforceResetPasswordAccess(string callerRole)
     {
-        if (IsAdmin(callerRole))
-        {
-            return;
-        }
-
-        if (IsOwner(callerRole) && target.CreatedByOwnerId == callerId)
+        if (IsAdmin(callerRole) || IsOwner(callerRole))
         {
             return;
         }
@@ -276,14 +266,9 @@ public sealed class IdentityUserManagementService(
         throw new UnauthorizedAccessException(ErrorMessages.User.PasswordResetRestricted);
     }
 
-    private static void EnforceDeleteAccess(ApplicationUser target, string callerRole, Guid callerId)
+    private static void EnforceDeleteAccess(string callerRole)
     {
-        if (IsAdmin(callerRole))
-        {
-            return;
-        }
-
-        if (IsOwner(callerRole) && target.CreatedByOwnerId == callerId)
+        if (IsAdmin(callerRole) || IsOwner(callerRole))
         {
             return;
         }
@@ -292,12 +277,11 @@ public sealed class IdentityUserManagementService(
     }
 
     /// <summary>
-    /// Which roles each caller role may assign to another user. Mirrors the
-    /// account-creation policy: ADMIN can assign any role, OWNER can only
-    /// promote/demote a subordinate to TOURNAMENT_MANAGER (the only role an
-    /// OWNER is ever allowed to create). Keeping this separate from
-    /// EnforceRoleChangeAccess's ownership check means a privilege-escalation
-    /// attempt fails even if the ownership check were ever loosened.
+    /// Which roles each caller role may assign to another user. OWNER is the
+    /// super-admin role and, like ADMIN, may assign any role — the two are
+    /// deliberately kept as separate dictionary entries (rather than one
+    /// shared "top-privilege" set) so a future divergence between them
+    /// doesn't require restructuring this policy.
     /// </summary>
     private static readonly Dictionary<string, HashSet<string>> _roleChangePolicy =
         new(StringComparer.OrdinalIgnoreCase)
@@ -308,7 +292,7 @@ public sealed class IdentityUserManagementService(
             },
             [Roles.Owner] = new(StringComparer.OrdinalIgnoreCase)
             {
-                Roles.TournamentManager
+                Roles.Admin, Roles.Owner, Roles.TournamentManager, Roles.TeamManager
             }
         };
 
@@ -339,11 +323,11 @@ public sealed class IdentityUserManagementService(
     }
 
     /// <summary>
-    /// A user may never change their own role — even an ADMIN — since that is
-    /// the one path that could otherwise let someone grant themselves a more
-    /// privileged role. Beyond that: ADMIN may change any user's role; OWNER
-    /// may only change a role for their own subordinates, and only to a role
-    /// <see cref="_roleChangePolicy"/> allows OWNER to assign.
+    /// A user may never change their own role — even an ADMIN or OWNER —
+    /// since that is the one path that could otherwise let someone grant
+    /// themselves a more privileged role. Beyond that: both ADMIN and OWNER
+    /// may change any user's role, to any role <see cref="_roleChangePolicy"/>
+    /// allows their caller role to assign.
     /// </summary>
     private static void EnforceRoleChangeAccess(
         ApplicationUser target, string callerRole, Guid callerId, string targetRoleName)
@@ -353,8 +337,7 @@ public sealed class IdentityUserManagementService(
             throw new InvalidOperationException(ErrorMessages.User.CannotChangeOwnRole);
         }
 
-        bool hasJurisdictionOverTarget =
-            IsAdmin(callerRole) || (IsOwner(callerRole) && target.CreatedByOwnerId == callerId);
+        bool hasJurisdictionOverTarget = IsAdmin(callerRole) || IsOwner(callerRole);
 
         if (!hasJurisdictionOverTarget)
         {
@@ -407,12 +390,10 @@ public sealed class IdentityUserManagementService(
         }
     }
 
-    private IQueryable<ApplicationUser> ResolveVisibleUsersQuery(string callerRole, Guid callerId)
+    private IQueryable<ApplicationUser> ResolveVisibleUsersQuery(string callerRole)
     {
-        return IsAdmin(callerRole)
+        return IsAdmin(callerRole) || IsOwner(callerRole)
             ? userManager.Users
-            : IsOwner(callerRole)
-            ? userManager.Users.Where(u => u.CreatedByOwnerId == callerId)
             : throw new UnauthorizedAccessException(ErrorMessages.User.InsufficientPermissionsToListUsers);
     }
 

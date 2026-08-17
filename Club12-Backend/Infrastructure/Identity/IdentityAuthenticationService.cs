@@ -45,7 +45,10 @@ public sealed class IdentityAuthenticationService(
             },
             [UserRoleType.OWNER.ToRoleName()] = new(StringComparer.OrdinalIgnoreCase)
             {
-                UserRoleType.TOURNAMENT_MANAGER.ToRoleName()
+                UserRoleType.ADMIN.ToRoleName(),
+                UserRoleType.OWNER.ToRoleName(),
+                UserRoleType.TOURNAMENT_MANAGER.ToRoleName(),
+                UserRoleType.TEAM_MANAGER.ToRoleName()
             }
         };
 

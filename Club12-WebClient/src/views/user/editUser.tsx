@@ -30,20 +30,17 @@ import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 /**
  * Roles each caller may assign via the edit form, mirroring the backend's
- * role-change policy in IdentityUserManagementService exactly: ADMIN can
- * set any role, OWNER can only promote/demote a subordinate to
- * TOURNAMENT_MANAGER. The backend re-enforces this regardless of what the
- * form sends — this only keeps the UI from offering choices that would be
- * rejected anyway.
+ * role-change policy in IdentityUserManagementService exactly: ADMIN and
+ * OWNER are both super-admin roles and may set any role. The backend
+ * re-enforces this regardless of what the form sends — this only keeps the
+ * UI from offering choices that would be rejected anyway.
  */
-const ADMIN_ASSIGNABLE_ROLES: UserRolesType[] = [
+const SUPER_ADMIN_ASSIGNABLE_ROLES: UserRolesType[] = [
   UserRolesType.Admin,
   UserRolesType.Owner,
   UserRolesType.TournamentManager,
   UserRolesType.TeamManager,
 ];
-
-const OWNER_ASSIGNABLE_ROLES: UserRolesType[] = [UserRolesType.TournamentManager];
 
 const GUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -103,9 +100,7 @@ const EditUser: React.FC = () => {
   // A caller can never change their own role (enforced server-side too), so
   // the field is only offered when editing someone else's account.
   const canChangeRole = !isSelfProfileMode && (isAdmin || isOwner);
-  const assignableRoles = isAdmin
-    ? ADMIN_ASSIGNABLE_ROLES
-    : OWNER_ASSIGNABLE_ROLES;
+  const assignableRoles = SUPER_ADMIN_ASSIGNABLE_ROLES;
 
   const [form, setForm] = useState<UpdateUserRequest>({
     username: '',

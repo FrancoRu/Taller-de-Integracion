@@ -21,9 +21,14 @@ import { HttpStatus } from '@/modules/core/constants/httpStatus';
 import { USERNAME_LENGTH } from '@/modules/core/constants/constants';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
-const ADMIN_ASSIGNABLE_ROLES: UserRolesType[] = [UserRolesType.Owner];
-
-const OWNER_ASSIGNABLE_ROLES: UserRolesType[] = [
+/**
+ * Roles each caller may create, mirroring the backend's account-creation
+ * policy in IdentityAuthenticationService exactly: ADMIN and OWNER are
+ * both super-admin roles and may create an account with any role.
+ */
+const SUPER_ADMIN_ASSIGNABLE_ROLES: UserRolesType[] = [
+  UserRolesType.Admin,
+  UserRolesType.Owner,
   UserRolesType.TournamentManager,
   UserRolesType.TeamManager,
 ];
@@ -160,7 +165,7 @@ const CreateUser: React.FC = () => {
             onChange={handleChange}
           >
             <MenuItem value="">Seleccionar rol</MenuItem>
-            {(isAdmin ? ADMIN_ASSIGNABLE_ROLES : OWNER_ASSIGNABLE_ROLES).map(
+            {SUPER_ADMIN_ASSIGNABLE_ROLES.map(
               r => (
                 <MenuItem key={r} value={r}>
                   {USER_ROLE_LABELS[r]}
