@@ -72,7 +72,8 @@ export default function MatchRow({ match }: { match: IMatchResponse }) {
       }}
     >
       <Typography variant="caption" sx={{
-        color: "text.secondary"
+        color: "text.secondary",
+        whiteSpace: 'nowrap'
       }}>
         {formatTime(match.matchDate)}
       </Typography>
