@@ -11,7 +11,6 @@ import { Box } from '@mui/material';
 import Home from './views/home/home';
 import PublicTeamsPage from './views/home/teams/PublicTeamsPage';
 import PublicTeamPage from './views/home/teams/PublicTeamPage';
-import PublicScorersPage from './views/home/scorers/PublicScorersPage';
 import PublicSanctionsPage from './views/home/sanctions/PublicSanctionsPage';
 import PublicMatchesPage from './views/home/matches/PublicMatchesPage';
 import PublicMatchPage from './views/home/matches/PublicMatchPage';
@@ -311,7 +310,6 @@ const PUBLIC_ROUTES: PublicRouteConfig[] = [
   { path: APP_ROUTES.reglamento, element: <Regulation /> },
   { path: APP_ROUTES.publicTeams, element: <PublicTeamsPage /> },
   { path: APP_ROUTES.publicTeam.pattern, element: <PublicTeamPage /> },
-  { path: APP_ROUTES.publicScorers, element: <PublicScorersPage /> },
   { path: APP_ROUTES.publicSanctions, element: <PublicSanctionsPage /> },
   { path: APP_ROUTES.publicMatches, element: <PublicMatchesPage /> },
   { path: APP_ROUTES.publicMatch.pattern, element: <PublicMatchPage /> },

@@ -19,7 +19,6 @@ export const APP_ROUTES = {
     pattern: '/equipos/:teamId',
     build: (teamId: string) => `/equipos/${teamId}`,
   },
-  publicScorers: '/goleadores',
   publicSanctions: '/sanciones',
   publicMatches: '/partidos',
   publicMatch: {
