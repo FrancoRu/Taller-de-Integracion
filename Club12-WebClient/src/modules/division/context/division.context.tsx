@@ -195,6 +195,15 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
     [setDivisions, queryClient, handleUnknownError]
   );
 
+  /**
+   * Fails silently rather than through handleUnknownError: this enriches
+   * the printable results sheet with a supplementary, non-critical
+   * per-week scorer breakdown, and the backend endpoint it targets isn't
+   * implemented yet. Surfacing an error toast to every visitor viewing
+   * division standings would be worse than the sheet simply omitting the
+   * breakdown, which PrintableResultsSheet already handles by defaulting
+   * to an empty list.
+   */
   const getTopScoresByDivisionId = useCallback(
     async (id: GUID): Promise<DivisionTopScoreResponse[] | void> => {
       try {
@@ -206,11 +215,11 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
           });
 
         return res.data;
-      } catch (error: unknown) {
-        handleUnknownError(error);
+      } catch {
+        return undefined;
       }
     },
-    [queryClient, handleUnknownError]
+    [queryClient]
   );
 
   const deleteDivisionsById = useCallback(
