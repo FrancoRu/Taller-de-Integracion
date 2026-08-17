@@ -108,8 +108,27 @@ const getUserRoleFromToken = (accessToken: string): UserRolesType => {
 };
 
 export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<IUser | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  // Both `user` (which drives `role`) and `isAuthenticated` are seeded
+  // synchronously from the cookie so route guards never see a false
+  // "not authenticated" / wrong-role flash on first render or hard reload
+  // while the async `hasToken` query below is still settling. That flash
+  // was pushing an extra /login or /forbidden history entry via
+  // PrivateRoute, breaking the browser back button.
+  const [user, setUser] = useState<IUser | null>(() => {
+    const token = Cookies.get(COOKIE_SIGNIN_TOKEN);
+    if (!token) {
+      return null;
+    }
+
+    return {
+      username: '',
+      accessToken: { accessToken: token, expiresIn: '00:00:00', refreshToken: null },
+      role: getUserRoleFromToken(token),
+    };
+  });
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() =>
+    Boolean(Cookies.get(COOKIE_SIGNIN_TOKEN))
+  );
   const authTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { setError, setMessage } = useError();
   const queryClient = useQueryClient();
@@ -118,6 +137,7 @@ export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
     queryKey: authKeys.hasToken(),
     queryFn: async () => Boolean(Cookies.get(COOKIE_SIGNIN_TOKEN)),
     staleTime: Infinity,
+    initialData: () => Boolean(Cookies.get(COOKIE_SIGNIN_TOKEN)),
   });
 
   const signInMutation = useMutation({
