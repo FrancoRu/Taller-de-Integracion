@@ -184,6 +184,7 @@ public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFacto
         {
             Description = "Sanction appeal characterization tournament",
             Name = $"Tournament-{Guid.NewGuid()}",
+            Slug = $"tournament-{Guid.NewGuid()}",
             TeamRegistrationDeadline = startDate.AddDays(-1),
             StartDate = startDate,
             MaxTeams = 8,
@@ -220,6 +221,7 @@ public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFacto
         {
             Id = teamId,
             Name = $"Team-{Guid.NewGuid()}",
+            Slug = $"team-{Guid.NewGuid()}",
             ThreeLetterCode = "SAT",
             LogoUrl = "https://example.test/logo.png",
             ShirtColor = "Red",

@@ -169,6 +169,7 @@ public class StageSeedingTests : IClassFixture<CustomWebApplicationFactory>
         {
             Description = "Seeding test tournament",
             Name = $"Tournament-{Guid.NewGuid()}",
+            Slug = $"tournament-{Guid.NewGuid()}",
             TeamRegistrationDeadline = startDate.AddDays(-1),
             StartDate = startDate,
             MaxTeams = 32,
@@ -211,6 +212,7 @@ public class StageSeedingTests : IClassFixture<CustomWebApplicationFactory>
             Team team = new()
             {
                 Name = $"Team-{Guid.NewGuid()}",
+                Slug = $"team-{Guid.NewGuid()}",
                 ThreeLetterCode = Guid.NewGuid().ToString("N")[..3].ToUpperInvariant(),
                 LogoUrl = "http://example.com/logo.png",
                 ShirtColor = "Red",

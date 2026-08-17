@@ -305,6 +305,7 @@ public class ScorerRepositoryTests : IClassFixture<CustomWebApplicationFactory>
         {
             Description = "Scorer ranking characterization tournament",
             Name = $"Tournament-{Guid.NewGuid()}",
+            Slug = $"tournament-{Guid.NewGuid()}",
             TeamRegistrationDeadline = startDate.AddDays(-1),
             StartDate = startDate,
             MaxTeams = 16,
@@ -358,6 +359,7 @@ public class ScorerRepositoryTests : IClassFixture<CustomWebApplicationFactory>
         Team team = new()
         {
             Name = $"Team-{Guid.NewGuid()}",
+            Slug = $"team-{Guid.NewGuid()}",
             ThreeLetterCode = Guid.NewGuid().ToString("N")[..3].ToUpperInvariant(),
             LogoUrl = "https://example.test/logo.png",
             ShirtColor = "Yellow",

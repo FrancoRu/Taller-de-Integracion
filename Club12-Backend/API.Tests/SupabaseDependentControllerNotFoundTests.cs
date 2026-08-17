@@ -39,7 +39,7 @@ public class SupabaseDependentControllerNotFoundTests
         TeamController controller = new(new NotFoundTeamService(), null!, new NotUsedMapper());
         ConfigureProblemDetailsFactory(controller);
 
-        ActionResult<TeamResponse> result = await controller.GetTeamById(Guid.NewGuid());
+        ActionResult<TeamResponse> result = await controller.GetTeamById(Guid.NewGuid().ToString());
 
         AssertNotFoundProblem(result.Result, "Team");
     }
@@ -111,6 +111,11 @@ public class SupabaseDependentControllerNotFoundTests
         }
 
         public Task<Team?> GetTeamByIdAsync(Guid teamId)
+        {
+            return Task.FromResult<Team?>(null);
+        }
+
+        public Task<Team?> GetTeamByIdOrSlugAsync(string idOrSlug)
         {
             return Task.FromResult<Team?>(null);
         }

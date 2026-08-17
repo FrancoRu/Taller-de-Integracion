@@ -211,6 +211,7 @@ public class MatchServiceGenerationTests : IClassFixture<CustomWebApplicationFac
             teams.Add(new Team
             {
                 Name = $"Team-{i}-{Guid.NewGuid()}",
+                Slug = $"team-{i}-{Guid.NewGuid()}",
                 ThreeLetterCode = $"T{i:D2}",
                 LogoUrl = "https://example.com/logo.png",
                 ShirtColor = "Red",
@@ -237,6 +238,7 @@ public class MatchServiceGenerationTests : IClassFixture<CustomWebApplicationFac
         {
             Description = "Characterization test tournament",
             Name = $"Tournament-{Guid.NewGuid()}",
+            Slug = $"tournament-{Guid.NewGuid()}",
             TeamRegistrationDeadline = start.AddDays(-1),
             StartDate = start,
             MaxTeams = 64,

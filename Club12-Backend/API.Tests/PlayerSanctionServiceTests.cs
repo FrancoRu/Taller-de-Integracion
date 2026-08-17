@@ -166,6 +166,7 @@ public class PlayerSanctionServiceTests : IClassFixture<CustomWebApplicationFact
         {
             Description = "Sanction expiry characterization tournament",
             Name = $"Tournament-{Guid.NewGuid()}",
+            Slug = $"tournament-{Guid.NewGuid()}",
             TeamRegistrationDeadline = issuedDate.AddDays(-1),
             StartDate = issuedDate,
             MaxTeams = 8,
@@ -202,6 +203,7 @@ public class PlayerSanctionServiceTests : IClassFixture<CustomWebApplicationFact
         {
             Id = teamId,
             Name = $"Team-{Guid.NewGuid()}",
+            Slug = $"team-{Guid.NewGuid()}",
             ThreeLetterCode = "SEX",
             LogoUrl = "https://example.test/logo.png",
             ShirtColor = "Blue",

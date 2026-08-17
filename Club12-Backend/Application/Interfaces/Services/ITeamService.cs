@@ -29,6 +29,14 @@ public interface ITeamService
     Task<Team?> GetTeamByIdAsync(Guid teamId);
 
     /// <summary>
+    /// Retrieves a team by its id or its slug. The value is treated as an id
+    /// when it parses as a GUID, otherwise it is looked up as a slug.
+    /// </summary>
+    /// <param name="idOrSlug">The team's GUID id or its slug.</param>
+    /// <returns>The matching team, or null if not found.</returns>
+    Task<Team?> GetTeamByIdOrSlugAsync(string idOrSlug);
+
+    /// <summary>
     /// Updates a team asynchronously.
     /// </summary>
     /// <param name="teamEntity">The team entity to update.</param>

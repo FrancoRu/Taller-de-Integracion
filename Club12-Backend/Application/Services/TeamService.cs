@@ -3,6 +3,7 @@ using Application.DTOs.Team.Request;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Utils.Extensions;
+using Application.Utils.Helper.Slug;
 
 using Domain.Entities.Models;
 
@@ -33,6 +34,10 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
     /// <returns>The created team entity.</returns>
     public async Task<Team> CreateTeamAsync(Team teamEntity)
     {
+        teamEntity.Slug = await SlugGenerator.GenerateUniqueSlugAsync(
+            teamEntity.Name,
+            candidate => teamRepository.ExistsAsync(team => team.Slug == candidate));
+
         await teamRepository.AddAsync(teamEntity);
         return teamEntity;
     }
@@ -45,6 +50,27 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
     public async Task<Team?> GetTeamByIdAsync(Guid teamId)
     {
         return await teamRepository.GetByIdAsync(teamId, includes: [team => team.Players]);
+    }
+
+    /// <summary>
+    /// Retrieves a team by its id or its slug, including its associated players.
+    /// The value is treated as an id when it parses as a GUID, otherwise it is
+    /// looked up as a slug.
+    /// </summary>
+    /// <param name="idOrSlug">The team's GUID id or its slug.</param>
+    /// <returns>The team entity if found; otherwise, null.</returns>
+    public async Task<Team?> GetTeamByIdOrSlugAsync(string idOrSlug)
+    {
+        if (Guid.TryParse(idOrSlug, out Guid teamId))
+        {
+            return await GetTeamByIdAsync(teamId);
+        }
+
+        IEnumerable<Team> matches = await teamRepository.FindAsync(
+            team => team.Slug == idOrSlug,
+            includes: [team => team.Players]);
+
+        return matches.FirstOrDefault();
     }
 
     /// <summary>
