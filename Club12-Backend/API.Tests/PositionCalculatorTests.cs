@@ -15,6 +15,7 @@ public class PositionCalculatorTests
             Id = Guid.NewGuid(),
             CreatedBy = "system",
             Name = name,
+            Slug = $"{name}-{Guid.NewGuid()}",
             ThreeLetterCode = name[..Math.Min(3, name.Length)].ToUpperInvariant(),
             LogoUrl = "https://example.com/logo.png",
             ShirtColor = "red",

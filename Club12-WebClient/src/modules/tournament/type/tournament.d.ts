@@ -33,11 +33,11 @@ export interface ITournamentContextProps {
   putTournamentById(id: GUID, tournament: IPutTournamentRequest): Promise<void>;
 
   /**
-   * Fetches a tournament by its ID.
-   * @param id The ID of the tournament to fetch.
+   * Fetches a tournament by its ID or its public slug.
+   * @param idOrSlug The ID or slug of the tournament to fetch.
    * @returns A promise that resolves with the tournament details.
    */
-  getTournamentById(id: GUID): Promise<ITournamentResponse | void>;
+  getTournamentById(idOrSlug: string): Promise<ITournamentResponse | void>;
 
   /**
    * Fetches tournaments based on filters.
@@ -135,6 +135,12 @@ export interface ITournamentResponse {
    * @type {string}
    */
   name: string;
+
+  /**
+   * The unique, URL-friendly identifier used in public tournament links.
+   * @type {string}
+   */
+  slug: string;
 
   /**
    * The divisions associated with the tournament.

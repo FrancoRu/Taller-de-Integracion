@@ -29,6 +29,7 @@ const nextGuid = (): GUID =>
 const buildTeam = (overrides: Partial<ITeamResponse> = {}): ITeamResponse => ({
   id: nextGuid(),
   name: 'River',
+  slug: 'river',
   threeLetterCode: 'RIV',
   shirtColor: 'Rojo',
   logoUrl: '',

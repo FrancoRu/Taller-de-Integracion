@@ -28,6 +28,14 @@ public interface ITournamentService
     Task<Tournament?> GetTournamentByIdAsync(Guid tournamentId);
 
     /// <summary>
+    /// Retrieves a Tournament by its id or its slug asynchronously. The value is
+    /// treated as an id when it parses as a GUID, otherwise it is looked up as a slug.
+    /// </summary>
+    /// <param name="idOrSlug">The Tournament's GUID id or its slug.</param>
+    /// <returns>The matching Tournament, or null if not found.</returns>
+    Task<Tournament?> GetTournamentByIdOrSlugAsync(string idOrSlug);
+
+    /// <summary>
     /// Updates a Tournament asynchronously.
     /// </summary>
     /// <param name="tournamentEntity">The Tournament to update.</param>

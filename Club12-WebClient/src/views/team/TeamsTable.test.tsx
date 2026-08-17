@@ -59,6 +59,7 @@ const rows: ITeamResponse[] = [
   {
     id: 'guid-1-aaaa-bbbb-cccc' as unknown as GUID,
     name: 'River',
+    slug: 'river',
     threeLetterCode: 'RIV',
     shirtColor: 'Rojo',
     logoUrl: '',
@@ -111,6 +112,7 @@ describe('TeamsTable', () => {
     const manyRows: ITeamResponse[] = Array.from({ length: 15 }, (_, i) => ({
       id: `guid-row-${i}-bbbb-cccc` as unknown as GUID,
       name: `Team ${i}`,
+      slug: `team-${i}`,
       threeLetterCode: `T${i}`,
       shirtColor: 'Rojo',
       logoUrl: '',

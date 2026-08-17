@@ -17,6 +17,11 @@ public class TeamResponse : BaseEntityResponse
     public required string Name { get; set; }
 
     /// <summary>
+    /// The unique, URL-friendly identifier used in public team links.
+    /// </summary>
+    public required string Slug { get; set; }
+
+    /// <summary>
     /// The three-letter code of the team.
     /// </summary>
     public required string ThreeLetterCode { get; set; }

@@ -21,6 +21,13 @@ public class Tournament : EntityBase
     public required string Name { get; set; }
 
     /// <summary>
+    /// The unique, URL-friendly identifier used in public tournament links.
+    /// Generated once from the name at creation time and never changed afterward,
+    /// so shared links keep working even if the tournament is renamed.
+    /// </summary>
+    public required string Slug { get; set; }
+
+    /// <summary>
     /// The deadline for team registrations.
     /// Must be earlier than the tournament start date.
     /// </summary>

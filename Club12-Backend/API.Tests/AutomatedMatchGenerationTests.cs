@@ -71,6 +71,7 @@ public class AutomatedMatchGenerationTests : IClassFixture<CustomWebApplicationF
         {
             Description = "Characterization test tournament",
             Name = $"Tournament-{Guid.NewGuid()}",
+            Slug = $"tournament-{Guid.NewGuid()}",
             TeamRegistrationDeadline = startDate.AddDays(-1),
             StartDate = startDate,
             MaxTeams = 8,

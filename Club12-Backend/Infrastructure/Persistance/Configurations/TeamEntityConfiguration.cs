@@ -16,9 +16,12 @@ public class TeamEntityConfiguration : BaseEntityConfiguration<Team>
         builder.ToTable(EntityConstants.Tables.Team, EntityConstants.Schema);
 
         builder.Property(t => t.Name).IsRequired();
+        builder.Property(t => t.Slug).IsRequired().HasMaxLength(220);
         builder.Property(t => t.ThreeLetterCode).IsRequired();
         builder.Property(t => t.LogoUrl).IsRequired();
         builder.Property(t => t.ShirtColor).IsRequired();
+
+        builder.HasIndex(t => t.Slug).IsUnique();
 
         builder.HasOne(t => t.Tournament)
             .WithMany(tourn => tourn.Teams)

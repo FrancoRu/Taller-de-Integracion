@@ -47,11 +47,11 @@ export interface ITeamContextProps {
   ): Promise<GenericResponsePagination<ITeamResponse> | void>;
 
   /**
-   * Fetches a team by its ID.
-   * @param id The ID of the team to fetch.
+   * Fetches a team by its ID or its public slug.
+   * @param idOrSlug The ID or slug of the team to fetch.
    * @returns A promise that resolves with the team details.
    */
-  getTeamById(id: GUID): Promise<ITeamResponse | void>;
+  getTeamById(idOrSlug: string): Promise<ITeamResponse | void>;
 
   /**
    * Deletes a team by its ID.
@@ -113,6 +113,12 @@ export interface ITeamResponse {
    * @type {string}
    */
   name: string;
+
+  /**
+   * The unique, URL-friendly identifier used in public team links.
+   * @type {string}
+   */
+  slug: string;
 
   /**
    * The three-letter code representing the team.

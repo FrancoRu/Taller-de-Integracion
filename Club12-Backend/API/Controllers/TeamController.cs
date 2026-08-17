@@ -60,7 +60,7 @@ public class TeamController(
         Team createdTeam = await teamService.CreateTeamAsync(team);
         TeamResponse teamResponse = mapper.Map<TeamResponse>(createdTeam);
 
-        return CreatedAtAction(nameof(GetTeamById), new { id = createdTeam.Id }, teamResponse);
+        return CreatedAtAction(nameof(GetTeamById), new { idOrSlug = createdTeam.Id }, teamResponse);
     }
 
     /// <summary>
@@ -120,24 +120,24 @@ public class TeamController(
     }
 
     /// <summary>
-    /// Retrieves a team by its id.
+    /// Retrieves a team by its id or its public slug.
     /// </summary>
-    /// <param name="id">The id of the team to retrieve.</param>
-    /// <returns>The team with the specified id.
+    /// <param name="idOrSlug">The id (GUID) or slug of the team to retrieve.</param>
+    /// <returns>The team with the specified id or slug.
     /// <para>Returns 200 (OK) with the team response if it was found.</para>
-    /// <para>Returns 400 (Bad Request) if the team with the provided id was not found.</para>
+    /// <para>Returns 404 (Not Found) if the team with the provided id or slug was not found.</para>
     /// </returns>
     [AllowAnonymous]
-    [HttpGet("{id:guid}")]
+    [HttpGet("{idOrSlug}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TeamResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<TeamResponse>> GetTeamById(Guid id)
+    public async Task<ActionResult<TeamResponse>> GetTeamById(string idOrSlug)
     {
-        Team? team = await teamService.GetTeamByIdAsync(id);
+        Team? team = await teamService.GetTeamByIdOrSlugAsync(idOrSlug);
 
         if (team is null)
         {
-            return this.NotFoundProblem(nameof(Team), id);
+            return this.NotFoundProblem(nameof(Team), idOrSlug);
         }
 
         TeamResponse teamResponse = mapper.Map<TeamResponse>(team);

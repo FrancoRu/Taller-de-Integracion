@@ -23,6 +23,11 @@ public class TournamentResponse : BaseEntityResponse
     public required string Name { get; set; }
 
     /// <summary>
+    /// The unique, URL-friendly identifier used in public tournament links.
+    /// </summary>
+    public required string Slug { get; set; }
+
+    /// <summary>
     /// The divisions associated with the tournament.
     /// </summary>
     public required IEnumerable<MinimalDivisionResponse> Divisions { get; set; }
