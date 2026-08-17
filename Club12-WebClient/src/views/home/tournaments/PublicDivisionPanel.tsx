@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Box,
   CircularProgress,
@@ -32,6 +33,8 @@ import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
 
 const FETCH_PAGE_SIZE = 100;
 const STAGE_NAME_DIVISION_SEPARATOR = ' - ';
+const DEFAULT_SUB_TAB: DivisionSubTab = 'posiciones';
+const VIEW_QUERY_PARAM = 'view';
 
 type DivisionSubTab = 'posiciones' | 'goleadores' | 'partidos' | 'llaves';
 
@@ -52,6 +55,10 @@ const stageSectionLabel = (stage: IStageResponse, divisionName: string): string 
   return stage.name.startsWith(prefix) ? stage.name.slice(prefix.length) : stageLabel(stage);
 };
 
+const VALID_SUB_TABS: readonly DivisionSubTab[] = ['posiciones', 'goleadores', 'partidos', 'llaves'];
+const isDivisionSubTab = (value: string | null): value is DivisionSubTab =>
+  VALID_SUB_TABS.includes(value as DivisionSubTab);
+
 /**
  * A single division's public content, scoped behind its own tournament-level
  * tab: standings, top scorers, fixtures and playoff bracket. Match/stage/
@@ -60,7 +67,25 @@ const stageSectionLabel = (stage: IStageResponse, divisionName: string): string 
  * a `finally` so a failed request can't leave the spinner running forever.
  */
 export default function PublicDivisionPanel({ division }: PublicDivisionPanelProps) {
-  const [subTab, setSubTab] = useState<DivisionSubTab>('posiciones');
+  /**
+   * Lives in the URL for the same reason the parent tournament tab does:
+   * the browser back button should undo one sub-tab switch at a time
+   * instead of jumping out of the page entirely, and the exact view should
+   * survive a refresh or a shared link.
+   */
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawSubTab = searchParams.get(VIEW_QUERY_PARAM);
+  const subTab = isDivisionSubTab(rawSubTab) ? rawSubTab : DEFAULT_SUB_TAB;
+  const setSubTab = (value: DivisionSubTab) => {
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev);
+        next.set(VIEW_QUERY_PARAM, value);
+        return next;
+      },
+      { replace: true }
+    );
+  };
 
   const [topScores, setTopScores] = useState<IScorerByPlayerResponse[]>([]);
   const [topScoresLoading, setTopScoresLoading] = useState(false);

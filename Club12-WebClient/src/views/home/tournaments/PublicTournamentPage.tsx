@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -40,6 +40,7 @@ const formatDate = (value: Date | string) => {
 
 const INFO_TAB = 'info';
 const TEAMS_TAB = 'equipos';
+const TAB_QUERY_PARAM = 'tab';
 
 type Tab = typeof INFO_TAB | typeof TEAMS_TAB | GUID;
 
@@ -69,9 +70,28 @@ export default function PublicTournamentPage() {
   const { teams, getTeamsByFiltered } = useTeam();
   const { getDivisionsByFilters } = useDivision();
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState<Tab>(INFO_TAB);
   const [divisions, setDivisions] = useState<IDivisionResponse[]>([]);
   const [divisionsLoading, setDivisionsLoading] = useState(false);
+
+  /**
+   * The active tab lives in the URL (not local state) so the browser back
+   * button undoes one tab switch at a time instead of jumping straight out
+   * of the page, and reloading/sharing a link lands on the same tab. Uses
+   * `replace` so clicking through tabs doesn't pile up a history entry per
+   * click — only the page navigation itself does.
+   */
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = (searchParams.get(TAB_QUERY_PARAM) ?? INFO_TAB) as Tab;
+  const setTab = (value: Tab) => {
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev);
+        next.set(TAB_QUERY_PARAM, value);
+        return next;
+      },
+      { replace: true }
+    );
+  };
 
   const getTournamentRef = useRef(getTournamentById);
   const getTeamsRef = useRef(getTeamsByFiltered);
