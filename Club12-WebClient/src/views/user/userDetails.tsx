@@ -19,18 +19,13 @@ import {
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { useError } from '@/modules/error/hooks/error.hock';
 import { useUser } from '@/modules/user/hook/user.hook';
-import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
+import {
+  UserRolesType,
+  USER_ROLE_LABELS,
+} from '@/modules/core/enum/user/userRolesType';
 import { GUID } from '@/modules/core/types/types';
 import { HttpStatus } from '@/modules/core/constants/httpStatus';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
-
-const ROLE_LABELS: Record<UserRolesType, string> = {
-  ADMIN: 'Admin',
-  OWNER: 'Owner',
-  TOURNAMENT_MANAGER: 'Responsable del Torneo',
-  TEAM_MANAGER: 'Responsable de Equipo',
-  GUEST: 'Invitado',
-};
 
 const UserDetails: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -141,7 +136,9 @@ const UserDetails: React.FC = () => {
             <Field label="Teléfono" value={user.phoneNumber ?? '—'} />
             <Field
               label="Rol"
-              value={ROLE_LABELS[user.role as UserRolesType] ?? user.role}
+              value={
+                USER_ROLE_LABELS[user.role as UserRolesType] ?? user.role
+              }
             />
           </Stack>
         )}
