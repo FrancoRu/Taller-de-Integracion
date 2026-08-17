@@ -118,6 +118,23 @@ const createZoneStructure = async (
     if (!groupStage) {
       warnings.push(`No se pudo crear la fase de grupos de "${zoneName}".`);
     } else {
+      // Registers *only this zone's* teams to the tournament right before
+      // assigning/generating its fixture (rather than relying on the
+      // upfront, whole-tournament registration in submitWizard below).
+      // The backend infers an unassigned stage's round-robin pool from
+      // "teams registered to the tournament" when it can't otherwise tell
+      // which teams belong to which zone; scoping registration this
+      // tightly keeps that inference correct for every zone regardless of
+      // how many other zones/teams the tournament ends up with. Final,
+      // full registration of every selected team happens once at the end
+      // of submitWizard, after every zone's fixture already exists.
+      if (teamIds.length > 0) {
+        const registered = await services.registerTeams(tournamentId, teamIds);
+        if (!registered) {
+          warnings.push(`No se pudieron registrar los equipos de "${zoneName}" en el torneo.`);
+        }
+      }
+
       const assigned = await services.assignTeamsToStage(groupStage.id, teamIds, false);
       if (!assigned) {
         warnings.push(`No se pudieron asignar los equipos a la fase de grupos de "${zoneName}".`);
@@ -166,13 +183,6 @@ export const submitWizard = async (
     return { success: false, error: 'No se pudo crear el torneo.', warnings };
   }
 
-  if (state.selectedTeamIds.length > 0) {
-    const registered = await services.registerTeams(tournament.id, state.selectedTeamIds);
-    if (!registered) {
-      warnings.push('No se pudieron registrar los equipos en el torneo.');
-    }
-  }
-
   const startDate = new Date(state.tournament.startDate);
 
   for (const zone of state.zones as ZoneConfig[]) {
@@ -203,6 +213,18 @@ export const submitWizard = async (
       true,
       warnings
     );
+  }
+
+  // Every zone above already registered (and re-registered, since each
+  // zone's registerTeams call replaces the tournament's whole roster —
+  // see TeamService.RegisterTeamsToTournamentAsync) just its own teams
+  // right before generating its fixture. This final call restores the
+  // full, correct roster now that every zone's matches already exist.
+  if (state.selectedTeamIds.length > 0) {
+    const registered = await services.registerTeams(tournament.id, state.selectedTeamIds);
+    if (!registered) {
+      warnings.push('No se pudieron registrar los equipos en el torneo.');
+    }
   }
 
   return { success: true, tournamentId: tournament.id, warnings };
