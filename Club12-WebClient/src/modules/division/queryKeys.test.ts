@@ -18,12 +18,4 @@ describe('divisionKeys', () => {
   it('byId(id) returns the by-id literal', () => {
     expect(divisionKeys.byId(id)).toEqual(['division', 'byId', id]);
   });
-
-  it('topScorers(id) returns the top-scorers literal', () => {
-    expect(divisionKeys.topScorers(id)).toEqual([
-      'division',
-      'top-scorers',
-      id,
-    ]);
-  });
 });

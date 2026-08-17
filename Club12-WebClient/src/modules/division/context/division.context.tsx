@@ -16,7 +16,6 @@ import {
   AddDivisionRequest,
   DivisionFiltered,
   IDivisionResponse,
-  DivisionTopScoreResponse,
   IDivisionContextProps,
   IPutDivisionRequest,
 } from '@/modules/division/type/division';
@@ -195,33 +194,6 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
     [setDivisions, queryClient, handleUnknownError]
   );
 
-  /**
-   * Fails silently rather than through handleUnknownError: this enriches
-   * the printable results sheet with a supplementary, non-critical
-   * per-week scorer breakdown, and the backend endpoint it targets isn't
-   * implemented yet. Surfacing an error toast to every visitor viewing
-   * division standings would be worse than the sheet simply omitting the
-   * breakdown, which PrintableResultsSheet already handles by defaulting
-   * to an empty list.
-   */
-  const getTopScoresByDivisionId = useCallback(
-    async (id: GUID): Promise<DivisionTopScoreResponse[] | void> => {
-      try {
-        const res: AxiosResponse<DivisionTopScoreResponse[]> =
-          await queryClient.fetchQuery({
-            queryKey: divisionKeys.topScorers(id),
-            queryFn: async () =>
-              await divisionService.getTopScoresByDivisionId(id),
-          });
-
-        return res.data;
-      } catch {
-        return undefined;
-      }
-    },
-    [queryClient]
-  );
-
   const deleteDivisionsById = useCallback(
     async (id: GUID): Promise<void> => {
       try {
@@ -247,7 +219,6 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
       putDivisionById,
       getDivisionsByFilters,
       getDivisionsById,
-      getTopScoresByDivisionId,
       deleteDivisionsById,
     }),
     [
@@ -258,7 +229,6 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
       putDivisionById,
       getDivisionsByFilters,
       getDivisionsById,
-      getTopScoresByDivisionId,
       deleteDivisionsById,
     ]
   );

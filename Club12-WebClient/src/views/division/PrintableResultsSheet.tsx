@@ -13,13 +13,14 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material';
+import PrintIcon from '@mui/icons-material/Print';
 import { GUID } from '@/modules/core/types/types';
-import {
-  DivisionTopScoreResponse,
-  Position,
-} from '@/modules/division/type/division.d';
-import { useDivision } from '@/modules/division/hook/division.hook';
+import { Position } from '@/modules/division/type/division.d';
 import { sortPositions } from '@/modules/division/utils/sortPositions';
+import { scorerService } from '@/modules/scorer/service/scorer.service';
+import { IScorerByPlayerResponse } from '@/modules/scorer/type/scorer.d';
+
+const TOP_SCORES_PAGE_SIZE = 100;
 
 type PrintTarget = 'standings' | 'goleadores' | 'both';
 
@@ -28,9 +29,6 @@ interface PrintableResultsSheetProps {
   divisionName?: string;
   positions: Position[];
 }
-
-const sortTopScores = (scores: DivisionTopScoreResponse[]) =>
-  [...scores].sort((a, b) => b.totalPoints - a.totalPoints);
 
 /**
  * `@media print` isolation: hide every element on the page except this
@@ -70,21 +68,38 @@ export default function PrintableResultsSheet({
   divisionName,
   positions,
 }: PrintableResultsSheetProps) {
-  const { getTopScoresByDivisionId } = useDivision();
   const [target, setTarget] = useState<PrintTarget>('standings');
-  const [topScores, setTopScores] = useState<DivisionTopScoreResponse[]>([]);
+  const [topScores, setTopScores] = useState<IScorerByPlayerResponse[]>([]);
+  const [isPrintTarget, setIsPrintTarget] = useState(false);
 
   useEffect(() => {
     if (!divisionId) return;
     const fetchTopScores = async () => {
-      const response = await getTopScoresByDivisionId(divisionId);
-      setTopScores(response ?? []);
+      const response = await scorerService.getScorersByPlayerFiltered({
+        divisionId,
+        pageSize: TOP_SCORES_PAGE_SIZE,
+        pageNumber: 1,
+      });
+      setTopScores(response.data?.items ?? []);
     };
     void fetchTopScores();
-  }, [divisionId, getTopScoresByDivisionId]);
+  }, [divisionId]);
+
+  /**
+   * A tournament page renders one PrintableResultsSheet per division, each
+   * with its own `[data-print="sheet"]` node. If every instance carried that
+   * attribute at once, the print stylesheet would make ALL of them visible
+   * and absolutely-positioned at the same top-left corner simultaneously,
+   * producing overlapping/garbled output. Only the instance whose "Imprimir"
+   * button was clicked gets the attribute, so it's the only one printed.
+   */
+  useEffect(() => {
+    if (!isPrintTarget) return;
+    window.print();
+    setIsPrintTarget(false);
+  }, [isPrintTarget]);
 
   const standingsRows = useMemo(() => sortPositions(positions), [positions]);
-  const topScoreRows = useMemo(() => sortTopScores(topScores), [topScores]);
 
   const showStandings = target === 'standings' || target === 'both';
   const showGoleadores = target === 'goleadores' || target === 'both';
@@ -98,10 +113,14 @@ export default function PrintableResultsSheet({
         sx={{
           display: "flex",
           alignItems: "center",
-          gap: 2,
+          gap: 1.5,
           flexWrap: "wrap",
           mb: 2
         }}>
+        <PrintIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          Imprimir:
+        </Typography>
         <ToggleButtonGroup
           exclusive
           size="small"
@@ -114,12 +133,17 @@ export default function PrintableResultsSheet({
           <ToggleButton value="goleadores">Goleadores</ToggleButton>
           <ToggleButton value="both">Ambos</ToggleButton>
         </ToggleButtonGroup>
-        <Button variant="contained" onClick={() => window.print()}>
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={<PrintIcon />}
+          onClick={() => setIsPrintTarget(true)}
+        >
           Imprimir
         </Button>
       </Box>
 
-      <Box data-print="sheet" sx={{ display: 'none' }}>
+      <Box data-print={isPrintTarget ? 'sheet' : undefined} sx={{ display: 'none' }}>
         {divisionName && (
           <Typography variant="h6" component="h1" gutterBottom>
             {divisionName}
@@ -175,11 +199,11 @@ export default function PrintableResultsSheet({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {topScoreRows.map((row, index) => (
+                  {topScores.map((row, index) => (
                     <TableRow key={row.playerId}>
                       <TableCell>{index + 1}</TableCell>
-                      <TableCell>{`${row.firstName} ${row.lastName}`}</TableCell>
-                      <TableCell align="center">{row.totalPoints}</TableCell>
+                      <TableCell>{row.fullName}</TableCell>
+                      <TableCell align="center">{row.points}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

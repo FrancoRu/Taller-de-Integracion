@@ -12,7 +12,6 @@ import {
   AddDivisionRequest,
   DivisionFiltered,
   IDivisionResponse,
-  DivisionTopScoreResponse,
   IPutDivisionRequest,
 } from '@/modules/division/type/division';
 
@@ -71,18 +70,6 @@ export const divisionService = {
     sendGet<GenericResponsePagination<IDivisionResponse>>(
       routes.divisions,
       withTablePageSize(filter)
-    ),
-
-  /**
-   * Retrieves the top scorers for a division by its ID.
-   * @param {string} id - The ID of the division to retrieve top scorers for.
-   * @returns {Promise<AxiosResponse<DivisionTopScoreResponse>>} - A promise that resolves with the top scorers for the division.
-   */
-  getTopScoresByDivisionId: async (
-    id: GUID
-  ): Promise<AxiosResponse<DivisionTopScoreResponse[]>> =>
-    sendGet<DivisionTopScoreResponse[]>(
-      `${routes.divisions}/top-scorers/${id}`
     ),
 
   /**

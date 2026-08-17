@@ -54,15 +54,6 @@ export interface IDivisionContextProps {
   ): Promise<GenericResponsePagination<IDivisionResponse> | void>;
 
   /**
-   * Fetches the top scores for a division by its ID.
-   * @param id The ID of the division to fetch top scores for.
-   * @returns A promise that resolves with an array of top score responses for the division.
-   */
-  getTopScoresByDivisionId(
-    id: GUID
-  ): Promise<DivisionTopScoreResponse[] | void>;
-
-  /**
    * Deletes a division by its ID.
    * @param id The ID of the division to delete.
    * @returns A promise that resolves when the division is successfully deleted.
@@ -138,42 +129,6 @@ export interface IDivisionResponse {
    * @type {boolean}
    */
   isCrossDivisionCup: boolean;
-}
-
-/**
- * The response structure for the top scores in a division, including the player details and weekly scores.
- * @interface DivisionTopScoreResponse
- */
-export interface DivisionTopScoreResponse {
-  /**
-   * The unique identifier of the player.
-   * @type {string}
-   */
-  playerId: GUID;
-
-  /**
-   * The first name of the player.
-   * @type {string}
-   */
-  firstName: string;
-
-  /**
-   * The last name of the player.
-   * @type {string}
-   */
-  lastName: string;
-
-  /**
-   * The player's scores keyed by week number.
-   * @type {Record<number, number>}
-   */
-  weeklyScores: Record<number, number>;
-
-  /**
-   * The total points accumulated by the player.
-   * @type {number}
-   */
-  totalPoints: number;
 }
 
 /**

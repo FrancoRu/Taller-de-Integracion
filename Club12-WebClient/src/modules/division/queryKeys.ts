@@ -7,5 +7,4 @@ export const divisionKeys = {
       ? (['division', 'list'] as const)
       : (['division', 'list', filter] as const),
   byId: (id: GUID) => ['division', 'byId', id] as const,
-  topScorers: (id: GUID) => ['division', 'top-scorers', id] as const,
 };
