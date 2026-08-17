@@ -267,10 +267,11 @@ const UsersPage: React.FC = () => {
       <CardContent>
         <Stack
           direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={2}
-        >
+          sx={{
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2
+          }}>
           <Typography variant="h6">Usuarios</Typography>
           <NewEntityButton
             type="Usuario"
@@ -278,19 +279,23 @@ const UsersPage: React.FC = () => {
           />
         </Stack>
 
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{
+          mb: 2
+        }}>
           <TextField
             label="Usuario"
             name="username"
             size="small"
             value={filters.username ?? ''}
             onChange={handleFilterChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              }
             }}
           />
           <TextField
@@ -299,12 +304,14 @@ const UsersPage: React.FC = () => {
             size="small"
             value={filters.email ?? ''}
             onChange={handleFilterChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              }
             }}
           />
           <TextField

@@ -1,6 +1,6 @@
 import { Box, Button, IconButton, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import { AddIcon, DeleteIcon } from '@/views/core/MUI/icons/icons';
-import { StageType } from '@/modules/stage/type/stage.d';
+import { StageType } from '@/modules/stage/type/stage';
 import {
   BEST_OF_OPTIONS,
   CupConfig,
@@ -46,7 +46,13 @@ export default function CupsEditor({ cups, onChange }: CupsEditorProps) {
     <Stack spacing={2}>
       {cups.map(cup => (
         <Box key={cup.id} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>
-          <Stack direction="row" spacing={1} alignItems="center" mb={1.5}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{
+              alignItems: "center",
+              mb: 1.5
+            }}>
             <TextField
               label="Nombre de la copa (libre)"
               size="small"
@@ -65,7 +71,9 @@ export default function CupsEditor({ cups, onChange }: CupsEditorProps) {
 
           <Stack spacing={1}>
             {cup.rounds.map(round => (
-              <Stack key={round.id} direction="row" spacing={1} alignItems="center">
+              <Stack key={round.id} direction="row" spacing={1} sx={{
+                alignItems: "center"
+              }}>
                 <TextField
                   select
                   size="small"
@@ -133,7 +141,9 @@ export default function CupsEditor({ cups, onChange }: CupsEditorProps) {
       ))}
 
       {cups.length === 0 && (
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{
+          color: "text.secondary"
+        }}>
           Sin copas configuradas. Podés agregar una o más — cada una con su propio nombre libre y formato por ronda.
         </Typography>
       )}

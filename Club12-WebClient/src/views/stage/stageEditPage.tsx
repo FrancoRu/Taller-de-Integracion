@@ -14,7 +14,7 @@ import {
 import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { useStage } from '@/modules/stage/hook/stage.hook';
-import { IStageEditFormState } from '@/modules/stage/type/stage.d';
+import { IStageEditFormState } from '@/modules/stage/type/stage';
 import FormButtons from '@/views/core/components/FormButtons';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
@@ -142,7 +142,12 @@ const StageEditPage: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="h6">Editar fase</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No se recibió una fase para editar.
           </Typography>
         </CardContent>
@@ -159,7 +164,12 @@ const StageEditPage: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="h6">Fase no encontrada</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No fue posible cargar la información de la fase.
           </Typography>
         </CardContent>
@@ -181,11 +191,11 @@ const StageEditPage: React.FC = () => {
           )}
 
           <Grid container spacing={2}>
-            <Grid item xs={12}>
+            <Grid size={12}>
               <TextField label="Nombre" value={stage.name} disabled fullWidth />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={12}>
               <TextField
                 label="Descripción"
                 value={stageForm.description}
@@ -201,7 +211,7 @@ const StageEditPage: React.FC = () => {
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={12}>
               <FormControlLabel
                 control={
                   <Switch
@@ -220,7 +230,9 @@ const StageEditPage: React.FC = () => {
             </Grid>
           </Grid>
 
-          <Stack direction="row" justifyContent="flex-end">
+          <Stack direction="row" sx={{
+            justifyContent: "flex-end"
+          }}>
             <FormButtons
               onCancel={handleCancel}
               onConfirm={() => void handleSave()}

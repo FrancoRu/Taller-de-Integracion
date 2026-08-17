@@ -140,7 +140,11 @@ const EditUser: React.FC = () => {
     return (
       <Card sx={{ maxWidth: 520, mx: 'auto', mt: 3 }}>
         <CardContent>
-          <Stack alignItems="center" py={3}>
+          <Stack
+            sx={{
+              alignItems: "center",
+              py: 3
+            }}>
             <CircularProgress />
           </Stack>
         </CardContent>
@@ -152,7 +156,9 @@ const EditUser: React.FC = () => {
     return (
       <Card sx={{ maxWidth: 520, mx: 'auto', mt: 3 }}>
         <CardContent>
-          <Typography color="text.secondary">
+          <Typography sx={{
+            color: "text.secondary"
+          }}>
             No se encontró el usuario.
           </Typography>
         </CardContent>
@@ -163,12 +169,16 @@ const EditUser: React.FC = () => {
   return (
     <Card sx={{ maxWidth: 520, mx: 'auto', mt: 3 }}>
       <CardContent>
-        <Typography variant="h6" mb={2}>
+        <Typography variant="h6" sx={{
+          mb: 2
+        }}>
           {isSelfProfileMode ? 'Editar perfil' : 'Editar usuario'}
         </Typography>
 
         {errors && errors.length > 0 && (
-          <Stack spacing={0.5} mb={2}>
+          <Stack spacing={0.5} sx={{
+            mb: 2
+          }}>
             {errors.map((e, i) => (
               <Typography key={i} color="error" variant="body2">
                 {e}
@@ -184,9 +194,11 @@ const EditUser: React.FC = () => {
             name="username"
             value={form.username ?? ''}
             onChange={handleChange}
-            inputProps={{
-              minLength: USERNAME_LENGTH.Min,
-              maxLength: USERNAME_LENGTH.Max,
+            slotProps={{
+              htmlInput: {
+                minLength: USERNAME_LENGTH.Min,
+                maxLength: USERNAME_LENGTH.Max,
+              }
             }}
           />
 
@@ -207,7 +219,9 @@ const EditUser: React.FC = () => {
             onChange={handleChange}
           />
 
-          <Stack direction="row" spacing={2} justifyContent="flex-end">
+          <Stack direction="row" spacing={2} sx={{
+            justifyContent: "flex-end"
+          }}>
             <Button
               variant="outlined"
               onClick={() =>

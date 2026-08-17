@@ -98,7 +98,12 @@ const PlayerPage: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="h6">Jugador</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No se recibió un jugador para visualizar.
           </Typography>
         </CardContent>
@@ -115,7 +120,12 @@ const PlayerPage: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="h6">Jugador no encontrado</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No fue posible cargar la información del jugador.
           </Typography>
           <Typography
@@ -140,7 +150,9 @@ const PlayerPage: React.FC = () => {
   return (
     <Card>
       <CardContent>
-        <Typography variant="h6" mb={2}>
+        <Typography variant="h6" sx={{
+          mb: 2
+        }}>
           {player.fullName}
         </Typography>
 
@@ -156,20 +168,38 @@ const PlayerPage: React.FC = () => {
 
         {tab === 'detalle' && (
           <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Nombre completo
               </Typography>
               <Typography>{player.fullName}</Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Documento
               </Typography>
               <Typography>{player.documentNumber}</Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Fecha de nacimiento
               </Typography>
               <Typography>
@@ -178,20 +208,38 @@ const PlayerPage: React.FC = () => {
                   : '—'}
               </Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Teléfono
               </Typography>
               <Typography>{player.phoneNumber || '—'}</Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Obra social
               </Typography>
               <Typography>{player.socialSecurity || '—'}</Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Estado de equipo
               </Typography>
               <Typography>
@@ -203,7 +251,12 @@ const PlayerPage: React.FC = () => {
 
         {tab === 'puntuaciones' && (
           <>
-            <Stack direction="row" justifyContent="flex-end" mb={2}>
+            <Stack
+              direction="row"
+              sx={{
+                justifyContent: "flex-end",
+                mb: 2
+              }}>
               <NewEntityButton
                 type="Puntuación"
                 onClick={() => setStatisticDialogOpen(true)}
@@ -225,7 +278,9 @@ const PlayerPage: React.FC = () => {
                 ))}
               </List>
             ) : (
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{
+                color: "text.secondary"
+              }}>
                 Este jugador todavía no tiene puntuaciones registradas.
               </Typography>
             )}
@@ -234,7 +289,12 @@ const PlayerPage: React.FC = () => {
 
         {tab === 'sanciones' && (
           <>
-            <Stack direction="row" justifyContent="flex-end" mb={2}>
+            <Stack
+              direction="row"
+              sx={{
+                justifyContent: "flex-end",
+                mb: 2
+              }}>
               <NewEntityButton
                 type="Sanción"
                 onClick={() => setSanctionDialogOpen(true)}
@@ -256,7 +316,9 @@ const PlayerPage: React.FC = () => {
                 ))}
               </List>
             ) : (
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{
+                color: "text.secondary"
+              }}>
                 Este jugador todavía no tiene sanciones registradas.
               </Typography>
             )}

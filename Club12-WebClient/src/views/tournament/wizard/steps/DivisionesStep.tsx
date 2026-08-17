@@ -51,14 +51,22 @@ export default function DivisionesStep({ teams, zones, onChange }: DivisionesSte
 
   return (
     <Stack spacing={3}>
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="body2" sx={{
+        color: "text.secondary"
+      }}>
         Cada zona tiene un nombre libre, sus equipos, una fase de grupos opcional y tantas copas
         paralelas como quieras (cada una con su propio nombre y formato por ronda).
       </Typography>
 
       {zones.map(zone => (
         <Box key={zone.id} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>
-          <Stack direction="row" spacing={1} alignItems="center" mb={1.5}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{
+              alignItems: "center",
+              mb: 1.5
+            }}>
             <TextField
               label="Nombre de la zona (libre)"
               size="small"
@@ -71,10 +79,19 @@ export default function DivisionesStep({ teams, zones, onChange }: DivisionesSte
             </IconButton>
           </Stack>
 
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" sx={{
+            color: "text.secondary"
+          }}>
             Equipos de esta zona ({zone.teamIds.length})
           </Typography>
-          <Stack direction="row" flexWrap="wrap" gap={1} mb={2} mt={0.5}>
+          <Stack
+            direction="row"
+            sx={{
+              flexWrap: "wrap",
+              gap: 1,
+              mb: 2,
+              mt: 0.5
+            }}>
             {teams.map(team => (
               <Chip
                 key={team.id}
@@ -86,7 +103,13 @@ export default function DivisionesStep({ teams, zones, onChange }: DivisionesSte
             ))}
           </Stack>
 
-          <Stack direction="row" spacing={2} alignItems="center" mb={2}>
+          <Stack
+            direction="row"
+            spacing={2}
+            sx={{
+              alignItems: "center",
+              mb: 2
+            }}>
             <FormControlLabel
               control={
                 <Switch
@@ -116,7 +139,9 @@ export default function DivisionesStep({ teams, zones, onChange }: DivisionesSte
 
           <Divider sx={{ mb: 2 }} />
 
-          <Typography variant="subtitle2" mb={1}>
+          <Typography variant="subtitle2" sx={{
+            mb: 1
+          }}>
             Playoffs de {zone.name || 'esta zona'}
           </Typography>
           <CupsEditor

@@ -112,7 +112,12 @@ const TeamPage: React.FC<TeamPageProps> = ({
       <Card>
         <CardContent>
           <Typography variant="h6">Equipo</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No se recibió un equipo para visualizar.
           </Typography>
         </CardContent>
@@ -129,7 +134,12 @@ const TeamPage: React.FC<TeamPageProps> = ({
       <Card>
         <CardContent>
           <Typography variant="h6">Equipo no encontrado</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No fue posible cargar la información del equipo.
           </Typography>
           {!hideBackLink && (
@@ -155,7 +165,13 @@ const TeamPage: React.FC<TeamPageProps> = ({
 
   const content = (
     <>
-      <Stack direction="row" alignItems="center" spacing={1.5} mb={2}>
+      <Stack
+        direction="row"
+        spacing={1.5}
+        sx={{
+          alignItems: "center",
+          mb: 2
+        }}>
         <TeamLogo teamName={team.name} logoUrl={team.logoUrl} size={44} />
         <Typography variant="h6">{team.name}</Typography>
       </Stack>
@@ -173,26 +189,50 @@ const TeamPage: React.FC<TeamPageProps> = ({
 
       {tab === 'detalle' && (
         <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
-            <Typography variant="subtitle2" color="text.secondary">
+          <Grid
+            size={{
+              xs: 12,
+              md: 6
+            }}>
+            <Typography variant="subtitle2" sx={{
+              color: "text.secondary"
+            }}>
               Nombre
             </Typography>
             <Typography>{team.name}</Typography>
           </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography variant="subtitle2" color="text.secondary">
+          <Grid
+            size={{
+              xs: 12,
+              md: 6
+            }}>
+            <Typography variant="subtitle2" sx={{
+              color: "text.secondary"
+            }}>
               Código
             </Typography>
             <Typography>{team.threeLetterCode}</Typography>
           </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography variant="subtitle2" color="text.secondary">
+          <Grid
+            size={{
+              xs: 12,
+              md: 6
+            }}>
+            <Typography variant="subtitle2" sx={{
+              color: "text.secondary"
+            }}>
               Color camiseta
             </Typography>
             <Typography>{team.shirtColor || '—'}</Typography>
           </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography variant="subtitle2" color="text.secondary">
+          <Grid
+            size={{
+              xs: 12,
+              md: 6
+            }}>
+            <Typography variant="subtitle2" sx={{
+              color: "text.secondary"
+            }}>
               Jugadores registrados
             </Typography>
             <Typography>{team.players?.length ?? 0}</Typography>
@@ -211,7 +251,12 @@ const TeamPage: React.FC<TeamPageProps> = ({
 
       {tab === 'puntuaciones' && (
         <>
-          <Stack direction="row" justifyContent="flex-end" mb={2}>
+          <Stack
+            direction="row"
+            sx={{
+              justifyContent: "flex-end",
+              mb: 2
+            }}>
             <NewEntityButton
               type="Puntuación"
               onClick={() => setStatisticDialogOpen(true)}
@@ -233,7 +278,9 @@ const TeamPage: React.FC<TeamPageProps> = ({
               ))}
             </List>
           ) : (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               Este equipo todavía no tiene puntuaciones registradas.
             </Typography>
           )}
@@ -242,7 +289,12 @@ const TeamPage: React.FC<TeamPageProps> = ({
 
       {tab === 'sanciones' && (
         <>
-          <Stack direction="row" justifyContent="flex-end" mb={2}>
+          <Stack
+            direction="row"
+            sx={{
+              justifyContent: "flex-end",
+              mb: 2
+            }}>
             <NewEntityButton
               type="Sanción"
               onClick={() => setSanctionDialogOpen(true)}
@@ -264,7 +316,9 @@ const TeamPage: React.FC<TeamPageProps> = ({
               ))}
             </List>
           ) : (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               Este equipo todavía no tiene sanciones registradas.
             </Typography>
           )}

@@ -19,7 +19,7 @@ import {
   IAddStageRequest,
   IStageCreateFormState,
   StageType,
-} from '@/modules/stage/type/stage.d';
+} from '@/modules/stage/type/stage';
 import FormButtons from '@/views/core/components/FormButtons';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
@@ -164,7 +164,7 @@ const StageCreatePage: React.FC = () => {
 
           <Grid container spacing={2}>
             {!isDivisionContext && (
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <TextField
                   select
                   required
@@ -190,7 +190,7 @@ const StageCreatePage: React.FC = () => {
               </Grid>
             )}
 
-            <Grid item xs={12}>
+            <Grid size={12}>
               <TextField
                 label="Nombre"
                 value={stageForm.name}
@@ -202,7 +202,7 @@ const StageCreatePage: React.FC = () => {
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={12}>
               <TextField
                 label="Descripción"
                 value={stageForm.description}
@@ -218,7 +218,11 @@ const StageCreatePage: React.FC = () => {
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 select
                 label="Tipo"
@@ -239,7 +243,11 @@ const StageCreatePage: React.FC = () => {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -257,7 +265,11 @@ const StageCreatePage: React.FC = () => {
             </Grid>
 
             {!stageForm.isElimination && (
-              <Grid item xs={12} md={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  md: 6
+                }}>
                 <TextField
                   select
                   label="Veces que se enfrenta cada par (round robin)"
@@ -279,7 +291,11 @@ const StageCreatePage: React.FC = () => {
               </Grid>
             )}
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 label="Inicio"
                 type="date"
@@ -287,13 +303,19 @@ const StageCreatePage: React.FC = () => {
                 onChange={e =>
                   setStageForm(prev => ({ ...prev, startDate: e.target.value }))
                 }
-                InputLabelProps={{ shrink: true }}
                 required
                 fullWidth
+                slotProps={{
+                  inputLabel: { shrink: true }
+                }}
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 label="Fin"
                 type="date"
@@ -301,13 +323,15 @@ const StageCreatePage: React.FC = () => {
                 onChange={e =>
                   setStageForm(prev => ({ ...prev, endDate: e.target.value }))
                 }
-                InputLabelProps={{ shrink: true }}
                 required
                 fullWidth
+                slotProps={{
+                  inputLabel: { shrink: true }
+                }}
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={12}>
               <FormControlLabel
                 control={
                   <Switch
@@ -326,7 +350,11 @@ const StageCreatePage: React.FC = () => {
 
             {stageForm.isElimination && (
               <>
-                <Grid item xs={12} md={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 6
+                  }}>
                   <TextField
                     label="Nombre del bracket (opcional)"
                     helperText="Para agrupar rondas paralelas dentro de la misma división (nombre libre, definido por el admin)."
@@ -341,7 +369,11 @@ const StageCreatePage: React.FC = () => {
                   />
                 </Grid>
 
-                <Grid item xs={12} md={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 6
+                  }}>
                   <TextField
                     select
                     label="Formato de la serie (Best of)"
@@ -365,7 +397,9 @@ const StageCreatePage: React.FC = () => {
             )}
           </Grid>
 
-          <Stack direction="row" justifyContent="flex-end">
+          <Stack direction="row" sx={{
+            justifyContent: "flex-end"
+          }}>
             <FormButtons
               onCancel={handleCancel}
               onConfirm={() => void handleCreate()}

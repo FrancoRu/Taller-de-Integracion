@@ -104,12 +104,16 @@ const CreateUser: React.FC = () => {
   return (
     <Card sx={{ maxWidth: 520, mx: 'auto', mt: 3 }}>
       <CardContent>
-        <Typography variant="h6" mb={2}>
+        <Typography variant="h6" sx={{
+          mb: 2
+        }}>
           Registrar nuevo usuario
         </Typography>
 
         {errors && errors.length > 0 && (
-          <Stack spacing={0.5} mb={2}>
+          <Stack spacing={0.5} sx={{
+            mb: 2
+          }}>
             {errors.map((e, i) => (
               <Typography key={i} color="error" variant="body2">
                 {e}
@@ -134,9 +138,11 @@ const CreateUser: React.FC = () => {
             name="username"
             value={form.username}
             onChange={handleChange}
-            inputProps={{
-              minLength: USERNAME_LENGTH.Min,
-              maxLength: USERNAME_LENGTH.Max,
+            slotProps={{
+              htmlInput: {
+                minLength: USERNAME_LENGTH.Min,
+                maxLength: USERNAME_LENGTH.Max,
+              }
             }}
           />
 
@@ -166,7 +172,9 @@ const CreateUser: React.FC = () => {
             )}
           </TextField>
 
-          <Stack direction="row" spacing={2} justifyContent="flex-end">
+          <Stack direction="row" spacing={2} sx={{
+            justifyContent: "flex-end"
+          }}>
             <Button
               variant="outlined"
               onClick={() => navigate(APP_ROUTES.panelUsers)}

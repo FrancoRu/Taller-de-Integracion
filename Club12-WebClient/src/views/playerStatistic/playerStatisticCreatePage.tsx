@@ -211,9 +211,15 @@ const PlayerStatisticCreatePage: React.FC<IPlayerStatisticCreatePageProps> = ({
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>Nueva puntuación</DialogTitle>
       <DialogContent>
-        <Stack spacing={2} mt={0.5}>
+        <Stack spacing={2} sx={{
+          mt: 0.5
+        }}>
           <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 select
                 required
@@ -243,7 +249,11 @@ const PlayerStatisticCreatePage: React.FC<IPlayerStatisticCreatePageProps> = ({
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 select
                 required
@@ -273,7 +283,11 @@ const PlayerStatisticCreatePage: React.FC<IPlayerStatisticCreatePageProps> = ({
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 select
                 required
@@ -302,7 +316,11 @@ const PlayerStatisticCreatePage: React.FC<IPlayerStatisticCreatePageProps> = ({
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 select
                 required
@@ -330,7 +348,11 @@ const PlayerStatisticCreatePage: React.FC<IPlayerStatisticCreatePageProps> = ({
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 select
                 required
@@ -353,7 +375,11 @@ const PlayerStatisticCreatePage: React.FC<IPlayerStatisticCreatePageProps> = ({
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 select
                 required
@@ -374,7 +400,11 @@ const PlayerStatisticCreatePage: React.FC<IPlayerStatisticCreatePageProps> = ({
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 select
                 required
@@ -393,20 +423,28 @@ const PlayerStatisticCreatePage: React.FC<IPlayerStatisticCreatePageProps> = ({
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 label="Valor"
                 type="number"
                 value={form.value}
                 onChange={e => setForm(prev => ({ ...prev, value: e.target.value }))}
                 required
-                inputProps={{ min: 1 }}
                 fullWidth
+                slotProps={{
+                  htmlInput: { min: 1 }
+                }}
               />
             </Grid>
           </Grid>
 
-          <Stack direction="row" justifyContent="flex-end" spacing={1}>
+          <Stack direction="row" spacing={1} sx={{
+            justifyContent: "flex-end"
+          }}>
             <FormButtons
               onCancel={handleClose}
               onConfirm={() => void handleCreate()}

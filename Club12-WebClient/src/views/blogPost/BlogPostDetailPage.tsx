@@ -62,7 +62,13 @@ const BlogPostDetailPage: React.FC = () => {
       <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 1 }}>
         {post.title}
       </Typography>
-      <Typography variant="subtitle1" component="p" color="text.secondary" sx={{ mb: 3 }}>
+      <Typography
+        variant="subtitle1"
+        component="p"
+        sx={{
+          color: "text.secondary",
+          mb: 3
+        }}>
         {post.author} · {new Date(post.createdAt).toLocaleDateString()}
       </Typography>
       {post.photoUrl && (

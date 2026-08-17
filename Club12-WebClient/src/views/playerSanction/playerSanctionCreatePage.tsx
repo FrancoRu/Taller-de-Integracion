@@ -233,9 +233,15 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>Nueva sanción</DialogTitle>
       <DialogContent>
-        <Stack spacing={2} mt={0.5}>
+        <Stack spacing={2} sx={{
+          mt: 0.5
+        }}>
           <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 select
                 required
@@ -268,7 +274,11 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 select
                 required
@@ -298,7 +308,11 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 select
                 required
@@ -327,7 +341,11 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 select
                 required
@@ -355,7 +373,11 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 select
                 required
@@ -382,7 +404,11 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 select
                 required
@@ -408,7 +434,11 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 4
+              }}>
               <TextField
                 label="Duración"
                 type="number"
@@ -417,12 +447,18 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
                   setForm(prev => ({ ...prev, duration: e.target.value }))
                 }
                 required
-                inputProps={{ min: 1 }}
                 fullWidth
+                slotProps={{
+                  htmlInput: { min: 1 }
+                }}
               />
             </Grid>
 
-            <Grid item xs={12} md={8}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 8
+              }}>
               <TextField
                 label="Fecha de emisión"
                 type="datetime-local"
@@ -430,13 +466,15 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
                 onChange={e =>
                   setForm(prev => ({ ...prev, issuedDate: e.target.value }))
                 }
-                InputLabelProps={{ shrink: true }}
                 required
                 fullWidth
+                slotProps={{
+                  inputLabel: { shrink: true }
+                }}
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={12}>
               <TextField
                 label="Descripción"
                 value={form.description}
@@ -451,11 +489,15 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
             </Grid>
           </Grid>
 
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             La duración se expresa en cantidad de partidos.
           </Typography>
 
-          <Stack direction="row" justifyContent="flex-end" spacing={1}>
+          <Stack direction="row" spacing={1} sx={{
+            justifyContent: "flex-end"
+          }}>
             <FormButtons
               onCancel={handleClose}
               onConfirm={() => void handleCreate()}

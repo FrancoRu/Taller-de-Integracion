@@ -452,28 +452,33 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       {(title || createType) && (
         <Stack
           direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={2}
-        >
+          sx={{
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2
+          }}>
           {title ? <Typography variant="h6">{title}</Typography> : <Box />}
           <NewEntityButton type={createType} onClick={handleCreatePlayer} />
         </Stack>
       )}
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{
+        mb: 2
+      }}>
         <TextField
           label="Nombre"
           name="names"
           size="small"
           value={filters.names ?? ''}
           onChange={handleFilterChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }
           }}
         />
         <TextField
@@ -482,12 +487,14 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
           size="small"
           value={filters.lastName ?? ''}
           onChange={handleFilterChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }
           }}
         />
         <TextField
@@ -496,12 +503,14 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
           size="small"
           value={filters.documentNumber ?? ''}
           onChange={handleFilterChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }
           }}
         />
         <TextField
@@ -510,12 +519,14 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
           size="small"
           value={filters.phoneNumber ?? ''}
           onChange={handleFilterChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }
           }}
         />
       </Stack>
@@ -591,8 +602,10 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               onChange={e =>
                 setPlayerForm(prev => ({ ...prev, birthDate: e.target.value }))
               }
-              InputLabelProps={{ shrink: true }}
               fullWidth
+              slotProps={{
+                inputLabel: { shrink: true }
+              }}
             />
             <TextField
               label="Teléfono"
@@ -708,8 +721,10 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               onChange={e =>
                 setPlayerForm(prev => ({ ...prev, birthDate: e.target.value }))
               }
-              InputLabelProps={{ shrink: true }}
               fullWidth
+              slotProps={{
+                inputLabel: { shrink: true }
+              }}
             />
             <TextField
               label="Teléfono"

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Box, Button, Card, CardContent, CircularProgress, Stack, TextField, Typography } from '@mui/material';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 import { GUID } from '@/modules/core/types/types';
 import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
 import { UpdateBlogPostRequest } from '@/modules/blogPost/type/blogPost';
@@ -107,7 +107,12 @@ const BlogPostEditPage: React.FC = () => {
     return (
       <Card>
         <CardContent>
-          <Stack alignItems="center" spacing={2} py={4}>
+          <Stack
+            spacing={2}
+            sx={{
+              alignItems: "center",
+              py: 4
+            }}>
             <CircularProgress />
             <Typography>Cargando publicación...</Typography>
           </Stack>
@@ -121,10 +126,17 @@ const BlogPostEditPage: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="h6">Publicación no encontrada</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No fue posible cargar la publicación solicitada.
           </Typography>
-          <Box mt={2}>
+          <Box sx={{
+            mt: 2
+          }}>
             <Button variant="contained" onClick={handleCancel}>
               Volver
             </Button>
@@ -164,7 +176,9 @@ const BlogPostEditPage: React.FC = () => {
             style={{ height: 200, marginBottom: 40 }}
           />
 
-          <Stack direction="row" justifyContent="flex-end">
+          <Stack direction="row" sx={{
+            justifyContent: "flex-end"
+          }}>
             <FormButtons
               onCancel={handleCancel}
               onConfirm={() => void handleSave()}

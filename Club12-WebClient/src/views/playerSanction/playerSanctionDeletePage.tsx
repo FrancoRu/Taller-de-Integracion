@@ -50,7 +50,9 @@ const PlayerSanctionDeletePage: React.FC<IPlayerSanctionDeletePageProps> = ({
     <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
       <DialogTitle>Eliminar sanción</DialogTitle>
       <DialogContent>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{
+          color: "text.secondary"
+        }}>
           ¿Está usted seguro de querer eliminar esta sanción? Usted no podrá
           revertir este cambio.
         </Typography>

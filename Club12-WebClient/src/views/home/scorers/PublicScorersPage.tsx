@@ -16,10 +16,21 @@ export default function PublicScorersPage() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
-      <Typography variant="h4" component="h1" fontWeight="bold" mb={1}>
+      <Typography
+        variant="h4"
+        component="h1"
+        sx={{
+          fontWeight: "bold",
+          mb: 1
+        }}>
         Goleadores
       </Typography>
-      <Typography variant="body1" color="text.secondary" mb={3}>
+      <Typography
+        variant="body1"
+        sx={{
+          color: "text.secondary",
+          mb: 3
+        }}>
         Ranking de puntos por jugador y por equipo.
       </Typography>
 

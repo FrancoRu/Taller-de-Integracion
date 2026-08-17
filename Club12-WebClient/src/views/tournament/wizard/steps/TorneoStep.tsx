@@ -9,7 +9,7 @@ interface TorneoStepProps {
 export default function TorneoStep({ value, onChange }: TorneoStepProps) {
   return (
     <Grid container spacing={2}>
-      <Grid item xs={12}>
+      <Grid size={12}>
         <TextField
           label="Nombre"
           value={value.name}
@@ -19,7 +19,7 @@ export default function TorneoStep({ value, onChange }: TorneoStepProps) {
         />
       </Grid>
 
-      <Grid item xs={12}>
+      <Grid size={12}>
         <TextField
           label="Descripción"
           value={value.description}
@@ -30,31 +30,47 @@ export default function TorneoStep({ value, onChange }: TorneoStepProps) {
         />
       </Grid>
 
-      <Grid item xs={12} md={6}>
+      <Grid
+        size={{
+          xs: 12,
+          md: 6
+        }}>
         <TextField
           label="Inicio"
           type="date"
           value={value.startDate}
           onChange={e => onChange({ ...value, startDate: e.target.value })}
-          InputLabelProps={{ shrink: true }}
           required
           fullWidth
+          slotProps={{
+            inputLabel: { shrink: true }
+          }}
         />
       </Grid>
 
-      <Grid item xs={12} md={6}>
+      <Grid
+        size={{
+          xs: 12,
+          md: 6
+        }}>
         <TextField
           label="Límite de inscripción"
           type="date"
           value={value.teamRegistrationDeadline}
           onChange={e => onChange({ ...value, teamRegistrationDeadline: e.target.value })}
-          InputLabelProps={{ shrink: true }}
           required
           fullWidth
+          slotProps={{
+            inputLabel: { shrink: true }
+          }}
         />
       </Grid>
 
-      <Grid item xs={12} md={6}>
+      <Grid
+        size={{
+          xs: 12,
+          md: 6
+        }}>
         <TextField
           label="Mín. equipos"
           type="number"
@@ -64,7 +80,11 @@ export default function TorneoStep({ value, onChange }: TorneoStepProps) {
         />
       </Grid>
 
-      <Grid item xs={12} md={6}>
+      <Grid
+        size={{
+          xs: 12,
+          md: 6
+        }}>
         <TextField
           label="Máx. equipos"
           type="number"

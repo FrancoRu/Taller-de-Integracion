@@ -13,19 +13,23 @@ const TeamsFilterBar: React.FC<TeamsFilterBarProps> = ({
   filters,
   onFilterChange,
 }) => (
-  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2}>
+  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{
+    mb: 2
+  }}>
     <TextField
       label="Nombre"
       name="name"
       size="small"
       value={filters.name ?? ''}
       onChange={onFilterChange}
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start">
-            <SearchIcon fontSize="small" />
-          </InputAdornment>
-        ),
+      slotProps={{
+        input: {
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon fontSize="small" />
+            </InputAdornment>
+          ),
+        }
       }}
     />
     <TextField
@@ -34,12 +38,14 @@ const TeamsFilterBar: React.FC<TeamsFilterBarProps> = ({
       size="small"
       value={filters.threeLetterCode ?? ''}
       onChange={onFilterChange}
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start">
-            <SearchIcon fontSize="small" />
-          </InputAdornment>
-        ),
+      slotProps={{
+        input: {
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon fontSize="small" />
+            </InputAdornment>
+          ),
+        }
       }}
     />
     <TextField
@@ -48,12 +54,14 @@ const TeamsFilterBar: React.FC<TeamsFilterBarProps> = ({
       size="small"
       value={filters.shirtColor ?? ''}
       onChange={onFilterChange}
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start">
-            <SearchIcon fontSize="small" />
-          </InputAdornment>
-        ),
+      slotProps={{
+        input: {
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon fontSize="small" />
+            </InputAdornment>
+          ),
+        }
       }}
     />
   </Stack>

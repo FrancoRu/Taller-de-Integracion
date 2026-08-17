@@ -143,7 +143,12 @@ const DivisionPage: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="h6">División</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No se recibió una división para visualizar.
           </Typography>
         </CardContent>
@@ -160,7 +165,12 @@ const DivisionPage: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="h6">División no encontrada</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No fue posible cargar la información de la división.
           </Typography>
           <Typography
@@ -185,7 +195,9 @@ const DivisionPage: React.FC = () => {
   return (
     <Card>
       <CardContent>
-        <Typography variant="h6" mb={2}>
+        <Typography variant="h6" sx={{
+          mb: 2
+        }}>
           {division.name}
         </Typography>
 
@@ -202,22 +214,40 @@ const DivisionPage: React.FC = () => {
 
         {tab === 'detalle' && (
           <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Nombre
               </Typography>
               <Typography>{division.name}</Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Estado
               </Typography>
               <Typography>
                 {division.isFinished ? 'Finalizada' : 'Activa'}
               </Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Equipos posicionados
               </Typography>
               <Typography>{division.positions?.length ?? 0}</Typography>
@@ -244,7 +274,12 @@ const DivisionPage: React.FC = () => {
 
         {tab === 'llaves' &&
           (bracketsLoading ? (
-            <Box display="flex" justifyContent="center" py={5}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                py: 5
+              }}>
               <CircularProgress />
             </Box>
           ) : (

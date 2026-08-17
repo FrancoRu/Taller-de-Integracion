@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { GUID } from '@/modules/core/types/types';
-import { StageType } from '@/modules/stage/type/stage.d';
+import { StageType } from '@/modules/stage/type/stage';
 import { WizardState, createInitialWizardState } from './types';
 import { WizardServices, submitWizard } from './submitWizard';
 
@@ -42,15 +42,19 @@ const makeState = (): WizardState => {
 const makeServices = (
   overrides: Partial<WizardServices> = {}
 ): WizardServices & Record<keyof WizardServices, ReturnType<typeof vi.fn>> => ({
-  addTournament: vi.fn(async () => ({ id: guid('tournament') }) as never),
+  addTournament: vi.fn(async () => (({
+    id: guid('tournament')
+  }) as never)),
   registerTeams: vi.fn(async () => true),
-  addDivision: vi.fn(async ({ name, tournamentId, isCrossDivisionCup }: never) => ({
+  addDivision: vi.fn(async ({ name, tournamentId, isCrossDivisionCup }: never) => (({
     id: guid('division'),
     name,
     tournamentId,
-    isCrossDivisionCup,
-  }) as never),
-  addStage: vi.fn(async () => ({ id: guid('stage') }) as never),
+    isCrossDivisionCup
+  }) as never)),
+  addStage: vi.fn(async () => (({
+    id: guid('stage')
+  }) as never)),
   assignTeamsToStage: vi.fn(async () => true),
   generateMatches: vi.fn(async () => true),
   ...overrides,

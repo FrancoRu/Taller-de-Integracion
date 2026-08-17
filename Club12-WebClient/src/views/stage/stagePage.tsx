@@ -63,7 +63,12 @@ const StagePage: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="h6">Fase</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No se recibió una fase para visualizar.
           </Typography>
         </CardContent>
@@ -80,7 +85,12 @@ const StagePage: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="h6">Fase no encontrada</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No fue posible cargar la información de la fase.
           </Typography>
           <Typography
@@ -107,11 +117,12 @@ const StagePage: React.FC = () => {
       <CardContent>
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
-          justifyContent="space-between"
-          alignItems={{ xs: 'flex-start', sm: 'center' }}
-          mb={2}
-          gap={1}
-        >
+          sx={{
+            justifyContent: "space-between",
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            mb: 2,
+            gap: 1
+          }}>
           <Typography variant="h6">{stage.name}</Typography>
           <Button
             variant="contained"
@@ -133,50 +144,94 @@ const StagePage: React.FC = () => {
 
         {tab === 'detalle' && (
           <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Nombre
               </Typography>
               <Typography>{stage.name}</Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Tipo
               </Typography>
               <Typography>{formatStageType(stage.stageType)}</Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Activa
               </Typography>
               <Typography>{stage.isActive ? 'Sí' : 'No'}</Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Eliminación
               </Typography>
               <Typography>{stage.isElimination ? 'Sí' : 'No'}</Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Inicio
               </Typography>
               <Typography>{formatDate(stage.startDate)}</Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Fin
               </Typography>
               <Typography>{formatDate(stage.endDate)}</Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Orden
               </Typography>
               <Typography>{stage.order}</Typography>
             </Grid>
-            <Grid item xs={12}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid size={12}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Descripción
               </Typography>
               <Typography>{stage.description || '—'}</Typography>

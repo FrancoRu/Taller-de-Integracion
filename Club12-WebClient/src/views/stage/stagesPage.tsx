@@ -18,7 +18,7 @@ import { useStage } from '@/modules/stage/hook/stage.hook';
 import {
   IStageListFilters,
   IStageResponse,
-} from '@/modules/stage/type/stage.d';
+} from '@/modules/stage/type/stage';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
@@ -393,10 +393,11 @@ const StagesPage: React.FC<StagesPageProps> = ({
       {(title || createType) && (
         <Stack
           direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={2}
-        >
+          sx={{
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2
+          }}>
           {title ? <Typography variant="h6">{title}</Typography> : <Box />}
           <Stack direction="row" spacing={1}>
             {canGenerateStages && (
@@ -419,19 +420,23 @@ const StagesPage: React.FC<StagesPageProps> = ({
         </Stack>
       )}
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{
+        mb: 2
+      }}>
         <TextField
           label="Nombre"
           name="name"
           size="small"
           value={filters.name ?? ''}
           onChange={handleFilterChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }
           }}
         />
 

@@ -33,8 +33,21 @@ export function TournamentCard({ tournament }: { tournament: ITournamentResponse
         sx={{ height: '100%', alignItems: 'flex-start', display: 'flex', flexDirection: 'column' }}
       >
         <CardContent sx={{ width: '100%' }}>
-          <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-            <Typography variant="h6" component="h2" lineHeight={1.3} sx={{ flex: 1, mr: 1 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              mb: 1
+            }}>
+            <Typography
+              variant="h6"
+              component="h2"
+              sx={{
+                lineHeight: 1.3,
+                flex: 1,
+                mr: 1
+              }}>
               {tournament.name}
             </Typography>
             <Chip
@@ -46,20 +59,34 @@ export function TournamentCard({ tournament }: { tournament: ITournamentResponse
           </Box>
 
           {tournament.description && (
-            <Typography variant="body2" color="text.secondary" mb={1.5} sx={{
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-            }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+                mb: 1.5,
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden'
+              }}>
               {tournament.description}
             </Typography>
           )}
 
-          <Typography variant="caption" color="text.secondary" display="block">
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+              display: "block"
+            }}>
             Inicio: {formatTournamentDate(tournament.startDate)}
           </Typography>
-          <Typography variant="caption" color="text.secondary" display="block">
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+              display: "block"
+            }}>
             Equipos: {tournament.minTeams}–{tournament.maxTeams}
           </Typography>
         </CardContent>
@@ -91,23 +118,47 @@ export default function PublicTournamentsPage() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
-      <Typography variant="h4" component="h1" fontWeight="bold" mb={1}>
+      <Typography
+        variant="h4"
+        component="h1"
+        sx={{
+          fontWeight: "bold",
+          mb: 1
+        }}>
         Torneos
       </Typography>
-      <Typography variant="body1" color="text.secondary" mb={4}>
+      <Typography
+        variant="body1"
+        sx={{
+          color: "text.secondary",
+          mb: 4
+        }}>
         Todos los torneos de la liga Club 12.
       </Typography>
 
       {loading ? (
-        <Box display="flex" justifyContent="center" py={8}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            py: 8
+          }}>
           <CircularProgress />
         </Box>
       ) : rows.length === 0 ? (
-        <Typography color="text.secondary">No hay torneos disponibles.</Typography>
+        <Typography sx={{
+          color: "text.secondary"
+        }}>No hay torneos disponibles.</Typography>
       ) : (
         <Grid container spacing={3}>
           {rows.map(tournament => (
-            <Grid item xs={12} sm={6} md={4} key={tournament.id}>
+            <Grid
+              key={tournament.id}
+              size={{
+                xs: 12,
+                sm: 6,
+                md: 4
+              }}>
               <TournamentCard tournament={tournament} />
             </Grid>
           ))}

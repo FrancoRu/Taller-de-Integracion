@@ -1,5 +1,5 @@
 import { GUID } from '@/modules/core/types/types';
-import { StageFiltered } from '@/modules/stage/type/stage.d';
+import { StageFiltered } from '@/modules/stage/type/stage';
 
 export const stageKeys = {
   list: (filter?: StageFiltered) =>

@@ -32,15 +32,18 @@ export default function PlayoffBracket({ model, seriesById }: PlayoffBracketProp
 
   if (isEmpty) {
     return (
-      <Typography color="text.secondary">
-        No hay fases de eliminación disponibles para esta división.
-      </Typography>
+      <Typography sx={{
+        color: "text.secondary"
+      }}>No hay fases de eliminación disponibles para esta división.
+              </Typography>
     );
   }
 
   return (
     <Box ref={containerRef} sx={{ position: 'relative', overflowX: 'auto', py: 2 }}>
-      <Stack direction="row" spacing={5} alignItems="flex-start">
+      <Stack direction="row" spacing={5} sx={{
+        alignItems: "flex-start"
+      }}>
         {model.rounds.map(round => (
           <Stack key={round.stageId} spacing={3} sx={{ minWidth: 220 }}>
             <Typography
@@ -61,7 +64,9 @@ export default function PlayoffBracket({ model, seriesById }: PlayoffBracketProp
                   key={match.id}
                   match={match}
                   series={seriesById?.get(match.id)}
-                  ref={node => nodeRefs.current.set(match.id, node)}
+                  ref={node => {
+                    nodeRefs.current.set(match.id, node);
+                  }}
                 />
               ))}
             </Stack>
@@ -88,7 +93,9 @@ export default function PlayoffBracket({ model, seriesById }: PlayoffBracketProp
                   key={match.id}
                   match={match}
                   series={seriesById?.get(match.id)}
-                  ref={node => nodeRefs.current.set(match.id, node)}
+                  ref={node => {
+                    nodeRefs.current.set(match.id, node);
+                  }}
                 />
               ))}
             </Stack>

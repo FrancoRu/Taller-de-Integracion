@@ -8,7 +8,7 @@ import type { BlogPostResponse } from '@/modules/blogPost/type/blogPost';
 import type { GUID } from '@/modules/core/types/types';
 
 vi.mock('@/modules/blogPost/hook/blogPost.hook');
-vi.mock('react-quill', () => ({
+vi.mock('react-quill-new', () => ({
   default: ({
     value,
     onChange,

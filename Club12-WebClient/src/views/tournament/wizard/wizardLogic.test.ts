@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GUID } from '@/modules/core/types/types';
-import { StageType } from '@/modules/stage/type/stage.d';
+import { StageType } from '@/modules/stage/type/stage';
 import { CrossCupConfig, CupConfig, WizardState, ZoneConfig, createInitialWizardState } from './types';
 import {
   buildWizardTree,

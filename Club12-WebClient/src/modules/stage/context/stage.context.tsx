@@ -13,7 +13,7 @@ import {
   IStageContextProps,
   IStageResponse,
   StageFiltered,
-} from '@/modules/stage/type/stage.d';
+} from '@/modules/stage/type/stage';
 import { useError } from '@/modules/error/hooks/error.hock';
 import { useUnknownErrorHandler } from '@/modules/error/hooks/useUnknownErrorHandler';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';

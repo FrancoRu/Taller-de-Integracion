@@ -75,9 +75,6 @@ const DesktopNavItems: React.FC<DesktopNavItemsProps> = ({
       </ListItemButton>
       <Menu
         id="information-menu"
-        MenuListProps={{
-          'aria-labelledby': 'information-button',
-        }}
         anchorEl={anchorElInfoMenu}
         open={openInfoMenu}
         onClose={handleCloseInfoMenu}
@@ -88,6 +85,11 @@ const DesktopNavItems: React.FC<DesktopNavItemsProps> = ({
         transformOrigin={{
           vertical: 'top',
           horizontal: 'left',
+        }}
+        slotProps={{
+          list: {
+            'aria-labelledby': 'information-button',
+          }
         }}
       >
         <Link

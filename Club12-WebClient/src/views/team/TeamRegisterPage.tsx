@@ -142,17 +142,26 @@ const TeamRegisterPage: React.FC = () => {
   return (
     <Card>
       <CardContent>
-        <Typography variant="h6" mb={3}>
+        <Typography variant="h6" sx={{
+          mb: 3
+        }}>
           Registro de Equipo
         </Typography>
 
         <Stack spacing={3}>
           {loadingTournaments ? (
-            <Box display="flex" justifyContent="center" py={1}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                py: 1
+              }}>
               <CircularProgress size={20} />
             </Box>
           ) : tournamentOptions.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               No hay torneos con la inscripcion abierta
             </Typography>
           ) : (
@@ -180,16 +189,25 @@ const TeamRegisterPage: React.FC = () => {
 
           {selectedTournamentId && (
             <>
-              <Typography variant="subtitle2" color="text.secondary">
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Equipos disponibles para registrar
               </Typography>
 
               {loadingTeams ? (
-                <Box display="flex" justifyContent="center" py={3}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    py: 3
+                  }}>
                   <CircularProgress />
                 </Box>
               ) : visibleTeams.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>
                   No hay equipos disponibles para este torneo.
                 </Typography>
               ) : (
@@ -233,7 +251,11 @@ const TeamRegisterPage: React.FC = () => {
                 </List>
               )}
 
-              <Box display="flex" justifyContent="flex-end">
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "flex-end"
+                }}>
                 <Button
                   variant="contained"
                   disabled={

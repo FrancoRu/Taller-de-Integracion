@@ -33,7 +33,7 @@ const stubLayoutDimensions = () => {
     },
   });
   window.HTMLElement.prototype.getBoundingClientRect = () =>
-    ({
+    (({
       width: 1000,
       height: 1000,
       top: 0,
@@ -42,8 +42,8 @@ const stubLayoutDimensions = () => {
       bottom: 1000,
       x: 0,
       y: 0,
-      toJSON() {},
-    }) as DOMRect;
+      toJSON() {}
+    }) as DOMRect);
 };
 
 if (!window.ResizeObserver) {

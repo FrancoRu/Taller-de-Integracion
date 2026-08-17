@@ -230,7 +230,9 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
         flex: 1.3,
         minWidth: 220,
         renderCell: params => (
-          <Stack direction="row" alignItems="center" spacing={1}>
+          <Stack direction="row" spacing={1} sx={{
+            alignItems: "center"
+          }}>
             <TeamLogo
               teamName={params.row.name}
               logoUrl={params.row.logoUrl}
@@ -371,10 +373,11 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
       {(title || createType) && (
         <Stack
           direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={2}
-        >
+          sx={{
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2
+          }}>
           {title ? <Typography variant="h6">{title}</Typography> : <Box />}
           <NewEntityButton type={createType} onClick={handleCreateTeam} />
         </Stack>

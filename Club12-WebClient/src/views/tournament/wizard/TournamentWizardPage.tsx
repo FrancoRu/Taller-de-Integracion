@@ -147,7 +147,9 @@ export default function TournamentWizardPage() {
   return (
     <Card>
       <CardContent>
-        <Typography variant="h6" mb={2}>
+        <Typography variant="h6" sx={{
+          mb: 2
+        }}>
           Asistente de creación de torneo
         </Typography>
 
@@ -190,7 +192,11 @@ export default function TournamentWizardPage() {
           {activeStep === 4 && <RevisionStep nodes={treeNodes} />}
         </Box>
 
-        <Box display="flex" justifyContent="space-between">
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between"
+          }}>
           <Button onClick={activeStep === 0 ? handleCancel : handleBack} disabled={submitting}>
             {activeStep === 0 ? 'Cancelar' : 'Atrás'}
           </Button>

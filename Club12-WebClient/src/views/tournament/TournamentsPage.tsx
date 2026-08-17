@@ -312,27 +312,32 @@ const TournamentsPage: React.FC = () => {
       <CardContent>
         <Stack
           direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={2}
-        >
+          sx={{
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2
+          }}>
           <Typography variant="h6">Torneos</Typography>
           <NewEntityButton type="Torneo" onClick={handleCreateTournament} />
         </Stack>
 
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{
+          mb: 2
+        }}>
           <TextField
             label="Nombre"
             name="name"
             size="small"
             value={filters.name ?? ''}
             onChange={handleFilterChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              }
             }}
           />
           <TextField
@@ -341,12 +346,14 @@ const TournamentsPage: React.FC = () => {
             size="small"
             value={filters.description ?? ''}
             onChange={handleFilterChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              }
             }}
           />
         </Stack>

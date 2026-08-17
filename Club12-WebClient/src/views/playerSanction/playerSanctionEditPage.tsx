@@ -122,7 +122,12 @@ const PlayerSanctionEditPage: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="h6">Editar sanción</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No se recibió una sanción para editar.
           </Typography>
         </CardContent>
@@ -139,7 +144,12 @@ const PlayerSanctionEditPage: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="h6">Sanción no encontrada</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No fue posible cargar la información de la sanción.
           </Typography>
         </CardContent>
@@ -154,7 +164,11 @@ const PlayerSanctionEditPage: React.FC = () => {
           <Typography variant="h6">Editar sanción</Typography>
 
           <Grid container spacing={2}>
-            <Grid item xs={12} md={4}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 4
+              }}>
               <TextField
                 label="Duración"
                 type="number"
@@ -163,12 +177,14 @@ const PlayerSanctionEditPage: React.FC = () => {
                   setForm(prev => ({ ...prev, duration: e.target.value }))
                 }
                 required
-                inputProps={{ min: 1 }}
                 fullWidth
+                slotProps={{
+                  htmlInput: { min: 1 }
+                }}
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={12}>
               <TextField
                 label="Descripción"
                 value={form.description}
@@ -183,7 +199,9 @@ const PlayerSanctionEditPage: React.FC = () => {
             </Grid>
           </Grid>
 
-          <Stack direction="row" justifyContent="flex-end">
+          <Stack direction="row" sx={{
+            justifyContent: "flex-end"
+          }}>
             <FormButtons
               onCancel={handleClose}
               onConfirm={() => void handleSave()}

@@ -322,7 +322,9 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
           }
 
           return (
-            <Stack direction="row" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{
+              alignItems: "center"
+            }}>
               <TeamLogo teamName={team.name} logoUrl={team.logoUrl} size={28} />
               <Typography variant="body2">{team.name}</Typography>
             </Stack>
@@ -343,7 +345,9 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
           }
 
           return (
-            <Stack direction="row" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{
+              alignItems: "center"
+            }}>
               <TeamLogo teamName={team.name} logoUrl={team.logoUrl} size={28} />
               <Typography variant="body2">{team.name}</Typography>
             </Stack>
@@ -455,16 +459,19 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
       {(title || createType) && (
         <Stack
           direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={2}
-        >
+          sx={{
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2
+          }}>
           {title ? <Typography variant="h6">{title}</Typography> : <Box />}
           <NewEntityButton type={createType} onClick={handleCreateMatch} />
         </Stack>
       )}
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{
+        mb: 2
+      }}>
         {!stageId && (
           <TextField
             select
@@ -571,12 +578,14 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
           size="small"
           value={filters.homeTeamName ?? ''}
           onChange={handleFilterChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }
           }}
         />
         <TextField
@@ -585,12 +594,14 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
           size="small"
           value={filters.visitorTeamName ?? ''}
           onChange={handleFilterChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }
           }}
         />
       </Stack>

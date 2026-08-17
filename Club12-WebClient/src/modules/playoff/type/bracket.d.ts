@@ -1,6 +1,6 @@
 import { GUID } from '@/modules/core/types/types';
 import { IMatchResponse } from '@/modules/match/type/match.d';
-import { StageType } from '@/modules/stage/type/stage.d';
+import { StageType } from '@/modules/stage/type/stage';
 
 /**
  * A single inferred connector between a source match and the next-round

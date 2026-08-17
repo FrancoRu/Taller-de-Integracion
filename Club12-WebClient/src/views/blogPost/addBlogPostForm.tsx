@@ -7,8 +7,8 @@ import {
   CardContent,
   Typography,
 } from '@mui/material';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
 import { CreateBlogPostRequest } from '@/modules/blogPost/type/blogPost';
 import { notifySuccess } from '@/modules/core/utils/confirmDialog';

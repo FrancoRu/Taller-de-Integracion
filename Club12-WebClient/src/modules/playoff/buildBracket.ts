@@ -1,6 +1,6 @@
 import { GUID } from '@/modules/core/types/types';
 import { IMatchResponse } from '@/modules/match/type/match.d';
-import { IStageResponse, StageType } from '@/modules/stage/type/stage.d';
+import { IStageResponse, StageType } from '@/modules/stage/type/stage';
 import { BracketEdge, BracketGroup, BracketModel, BracketRound } from '@/modules/playoff/type/bracket.d';
 import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
 

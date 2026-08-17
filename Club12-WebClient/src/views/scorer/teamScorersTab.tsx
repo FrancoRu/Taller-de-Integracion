@@ -141,7 +141,13 @@ const TeamScorersTab: React.FC = () => {
 
   return (
     <>
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2} flexWrap="wrap">
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={2}
+        sx={{
+          mb: 2,
+          flexWrap: "wrap"
+        }}>
         <TextField
           select
           label="Torneo"

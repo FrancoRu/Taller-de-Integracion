@@ -32,9 +32,10 @@ const DivisionStandings: React.FC<DivisionStandingsProps> = ({
 
   if (rows.length === 0) {
     return (
-      <Typography variant="body2" color="text.secondary">
-        Todavía no hay posiciones para esta división.
-      </Typography>
+      <Typography variant="body2" sx={{
+        color: "text.secondary"
+      }}>Todavía no hay posiciones para esta división.
+              </Typography>
     );
   }
 
@@ -72,7 +73,9 @@ const DivisionStandings: React.FC<DivisionStandingsProps> = ({
                 <TableCell align="center">DIF</TableCell>
               </Tooltip>
               <TableCell align="center">
-                <Box component="span" fontWeight={700}>
+                <Box component="span" sx={{
+                  fontWeight: 700
+                }}>
                   Pts
                 </Box>
               </TableCell>
@@ -83,7 +86,9 @@ const DivisionStandings: React.FC<DivisionStandingsProps> = ({
               <TableRow key={row.teamId} hover>
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>
-                  <Stack direction="row" alignItems="center" spacing={1.5}>
+                  <Stack direction="row" spacing={1.5} sx={{
+                    alignItems: "center"
+                  }}>
                     <TeamLogo teamName={row.teamName} logoUrl={row.logoUrl} size={24} />
                     <Box component="span">{row.teamName}</Box>
                   </Stack>
@@ -95,7 +100,9 @@ const DivisionStandings: React.FC<DivisionStandingsProps> = ({
                 <TableCell align="center">{row.pointsAgainst}</TableCell>
                 <TableCell align="center">{row.pointsDifference}</TableCell>
                 <TableCell align="center">
-                  <Box component="span" fontWeight={700}>
+                  <Box component="span" sx={{
+                    fontWeight: 700
+                  }}>
                     {row.points}
                   </Box>
                 </TableCell>

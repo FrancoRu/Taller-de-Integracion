@@ -49,7 +49,9 @@ export default function CopaCruzadaStep({ teams, value, onChange }: CopaCruzadaS
       />
 
       {!value.enabled && (
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{
+          color: "text.secondary"
+        }}>
           Opcional — podés dejarla desactivada y el torneo se arma solo con las zonas del paso anterior.
         </Typography>
       )}
@@ -77,10 +79,23 @@ export default function CopaCruzadaStep({ teams, value, onChange }: CopaCruzadaS
 
           {!value.includeAllTeams && (
             <>
-              <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.secondary",
+                  display: "block",
+                  mt: 1
+                }}>
                 Equipos de la copa ({value.teamIds.length})
               </Typography>
-              <Stack direction="row" flexWrap="wrap" gap={1} mt={0.5} mb={2}>
+              <Stack
+                direction="row"
+                sx={{
+                  flexWrap: "wrap",
+                  gap: 1,
+                  mt: 0.5,
+                  mb: 2
+                }}>
                 {teams.map(team => (
                   <Chip
                     key={team.id}
@@ -94,7 +109,13 @@ export default function CopaCruzadaStep({ teams, value, onChange }: CopaCruzadaS
             </>
           )}
 
-          <Stack direction="row" spacing={2} alignItems="center" my={2}>
+          <Stack
+            direction="row"
+            spacing={2}
+            sx={{
+              alignItems: "center",
+              my: 2
+            }}>
             <FormControlLabel
               control={
                 <Switch
@@ -124,7 +145,9 @@ export default function CopaCruzadaStep({ teams, value, onChange }: CopaCruzadaS
 
           <Divider sx={{ mb: 2 }} />
 
-          <Typography variant="subtitle2" mb={1}>
+          <Typography variant="subtitle2" sx={{
+            mb: 1
+          }}>
             Playoffs de la copa cruzada
           </Typography>
           <CupsEditor cups={value.cups} onChange={cups => onChange({ ...value, cups })} />

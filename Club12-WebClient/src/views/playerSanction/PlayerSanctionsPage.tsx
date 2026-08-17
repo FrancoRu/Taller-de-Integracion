@@ -399,15 +399,18 @@ const PlayerSanctionsPage: React.FC = () => {
       <CardContent>
         <Stack
           direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={2}
-        >
+          sx={{
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2
+          }}>
           <Typography variant="h6">Sanciones</Typography>
           <NewEntityButton type="Sanción" onClick={handleCreateSanction} />
         </Stack>
 
-        <Stack spacing={2} mb={2}>
+        <Stack spacing={2} sx={{
+          mb: 2
+        }}>
           <Box
             sx={{
               display: 'grid',
@@ -537,15 +540,17 @@ const PlayerSanctionsPage: React.FC = () => {
               value={filters.description ?? ''}
               onChange={handleFilterChange}
               sx={{ minWidth: 240, width: { xs: '100%', sm: 320 } }}
-              inputProps={{ 'aria-label': 'Descripción' }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-              }}
-            />
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
+
+                htmlInput: { 'aria-label': 'Descripción' }
+              }} />
           </Stack>
         </Stack>
 

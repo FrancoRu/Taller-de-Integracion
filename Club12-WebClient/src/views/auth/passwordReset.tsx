@@ -142,14 +142,17 @@ export default function PasswordReset() {
 
   return (
     <Box
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      minHeight="90vh"
-    >
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "90vh"
+      }}>
       <Card sx={{ maxWidth: 520, width: '100%' }}>
         <CardContent>
-          <Typography variant="h5" mb={2}>
+          <Typography variant="h5" sx={{
+            mb: 2
+          }}>
             Restablecer contraseña
           </Typography>
 
@@ -241,7 +244,9 @@ export default function PasswordReset() {
               onChange={e => setConfirmPassword(e.target.value)}
             />
 
-            <Stack direction="row" spacing={2} justifyContent="flex-end">
+            <Stack direction="row" spacing={2} sx={{
+              justifyContent: "flex-end"
+            }}>
               <Button
                 variant="outlined"
                 onClick={() => navigate(APP_ROUTES.login, { replace: true })}

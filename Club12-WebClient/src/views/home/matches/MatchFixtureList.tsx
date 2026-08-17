@@ -55,10 +55,11 @@ export default function MatchFixtureList({ matches }: { matches: IMatchResponse[
         <Box key={round.key}>
           <Typography
             variant="overline"
-            color="text.secondary"
-            display="block"
-            mb={1}
-          >
+            sx={{
+              color: "text.secondary",
+              display: "block",
+              mb: 1
+            }}>
             {round.label}
           </Typography>
           <Paper variant="outlined">

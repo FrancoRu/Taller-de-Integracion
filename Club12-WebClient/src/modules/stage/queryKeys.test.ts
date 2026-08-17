@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { stageKeys } from './queryKeys';
 import { GUID } from '@/modules/core/types/types';
-import { StageFiltered } from '@/modules/stage/type/stage.d';
+import { StageFiltered } from '@/modules/stage/type/stage';
 
 describe('stageKeys', () => {
   const id: GUID = '55555555-5555-5555-5555-555555555555';

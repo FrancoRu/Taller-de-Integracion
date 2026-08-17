@@ -103,7 +103,7 @@ const DivisionCreatePage: React.FC = () => {
 
           <Grid container spacing={2}>
             {!isTournamentContext && (
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <TextField
                   select
                   required
@@ -124,7 +124,7 @@ const DivisionCreatePage: React.FC = () => {
               </Grid>
             )}
 
-            <Grid item xs={12}>
+            <Grid size={12}>
               <TextField
                 label="Nombre"
                 value={name}
@@ -134,7 +134,7 @@ const DivisionCreatePage: React.FC = () => {
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={12}>
               <FormControlLabel
                 control={
                   <Switch
@@ -147,7 +147,9 @@ const DivisionCreatePage: React.FC = () => {
             </Grid>
           </Grid>
 
-          <Stack direction="row" justifyContent="flex-end">
+          <Stack direction="row" sx={{
+            justifyContent: "flex-end"
+          }}>
             <FormButtons
               onCancel={handleCancel}
               onConfirm={() => void handleCreate()}

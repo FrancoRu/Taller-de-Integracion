@@ -1,4 +1,4 @@
-import { StageType } from '@/modules/stage/type/stage.d';
+import { StageType } from '@/modules/stage/type/stage';
 
 /**
  * Spanish translations for each StageType value.

@@ -23,9 +23,10 @@ export default function PlayoffBrackets({ groups, seriesById }: PlayoffBracketsP
 
   if (!hasContent) {
     return (
-      <Typography color="text.secondary">
-        No hay fases de eliminación disponibles para esta división.
-      </Typography>
+      <Typography sx={{
+        color: "text.secondary"
+      }}>No hay fases de eliminación disponibles para esta división.
+              </Typography>
     );
   }
 

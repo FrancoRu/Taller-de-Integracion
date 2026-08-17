@@ -89,7 +89,12 @@ const MatchPage: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="h6">Partido</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No se recibió un partido para visualizar.
           </Typography>
         </CardContent>
@@ -106,7 +111,12 @@ const MatchPage: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="h6">Partido no encontrado</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No fue posible cargar la información del partido.
           </Typography>
           <Typography
@@ -143,11 +153,17 @@ const MatchPage: React.FC = () => {
     fallbackLabel: string,
     roleLabel: string
   ) => (
-    <Stack alignItems="center" spacing={0.5}>
-      <Typography variant="body2" color="text.secondary">
+    <Stack spacing={0.5} sx={{
+      alignItems: "center"
+    }}>
+      <Typography variant="body2" sx={{
+        color: "text.secondary"
+      }}>
         {roleLabel}
       </Typography>
-      <Stack direction="row" alignItems="center" spacing={0.5}>
+      <Stack direction="row" spacing={0.5} sx={{
+        alignItems: "center"
+      }}>
         <Typography variant="subtitle1">
           {team?.name || fallbackLabel}
         </Typography>
@@ -169,7 +185,9 @@ const MatchPage: React.FC = () => {
   return (
     <Card>
       <CardContent>
-        <Typography variant="h6" mb={3}>
+        <Typography variant="h6" sx={{
+          mb: 3
+        }}>
           Partido
         </Typography>
 
@@ -190,11 +208,17 @@ const MatchPage: React.FC = () => {
             <Stack
               direction={{ xs: 'column', md: 'row' }}
               spacing={3}
-              justifyContent="space-between"
-              alignItems="center"
-              mb={3}
-            >
-              <Stack alignItems="center" spacing={1} minWidth={180}>
+              sx={{
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 3
+              }}>
+              <Stack
+                spacing={1}
+                sx={{
+                  alignItems: "center",
+                  minWidth: 180
+                }}>
                 <TeamLogo
                   teamName={homeTeam?.name || 'Local'}
                   logoUrl={homeTeam?.logoUrl}
@@ -204,11 +228,18 @@ const MatchPage: React.FC = () => {
                 <Typography variant="h4">{homeTeam?.score ?? '—'}</Typography>
               </Stack>
 
-              <Typography variant="h5" color="text.secondary">
+              <Typography variant="h5" sx={{
+                color: "text.secondary"
+              }}>
                 VS
               </Typography>
 
-              <Stack alignItems="center" spacing={1} minWidth={180}>
+              <Stack
+                spacing={1}
+                sx={{
+                  alignItems: "center",
+                  minWidth: 180
+                }}>
                 <TeamLogo
                   teamName={visitorTeam?.name || 'Visitante'}
                   logoUrl={visitorTeam?.logoUrl}
@@ -222,40 +253,76 @@ const MatchPage: React.FC = () => {
             </Stack>
 
             <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" color="text.secondary">
+              <Grid
+                size={{
+                  xs: 12,
+                  md: 6
+                }}>
+                <Typography variant="subtitle2" sx={{
+                  color: "text.secondary"
+                }}>
                   Fecha
                 </Typography>
                 <Typography>{formatDateTime(match.matchDate)}</Typography>
               </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" color="text.secondary">
+              <Grid
+                size={{
+                  xs: 12,
+                  md: 6
+                }}>
+                <Typography variant="subtitle2" sx={{
+                  color: "text.secondary"
+                }}>
                   Tipo
                 </Typography>
                 <Typography>{match.matchType}</Typography>
               </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" color="text.secondary">
+              <Grid
+                size={{
+                  xs: 12,
+                  md: 6
+                }}>
+                <Typography variant="subtitle2" sx={{
+                  color: "text.secondary"
+                }}>
                   Estado
                 </Typography>
                 <Typography>
                   {match.isFinished ? 'Finalizado' : 'Programado'}
                 </Typography>
               </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" color="text.secondary">
+              <Grid
+                size={{
+                  xs: 12,
+                  md: 6
+                }}>
+                <Typography variant="subtitle2" sx={{
+                  color: "text.secondary"
+                }}>
                   Ganador
                 </Typography>
                 <Typography>{winningTeamName}</Typography>
               </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" color="text.secondary">
+              <Grid
+                size={{
+                  xs: 12,
+                  md: 6
+                }}>
+                <Typography variant="subtitle2" sx={{
+                  color: "text.secondary"
+                }}>
                   Cancha
                 </Typography>
                 <Typography>{match.venue?.name || '—'}</Typography>
               </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" color="text.secondary">
+              <Grid
+                size={{
+                  xs: 12,
+                  md: 6
+                }}>
+                <Typography variant="subtitle2" sx={{
+                  color: "text.secondary"
+                }}>
                   Dirección
                 </Typography>
                 <Typography>{match.venue?.address || '—'}</Typography>
@@ -273,17 +340,26 @@ const MatchPage: React.FC = () => {
             ) : sanctions.length > 0 ? (
               <Grid container spacing={2}>
                 {sanctions.map((sanction: IPlayerSanctionResponse) => (
-                  <Grid item xs={12} md={6} key={sanction.id}>
+                  <Grid
+                    key={sanction.id}
+                    size={{
+                      xs: 12,
+                      md: 6
+                    }}>
                     <Card variant="outlined">
                       <CardContent>
                         <Stack spacing={1.5}>
                           <Typography variant="h6">
                             {sanction.playerFullName}
                           </Typography>
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography variant="body2" sx={{
+                            color: "text.secondary"
+                          }}>
                             Duración: {sanction.duration} partidos
                           </Typography>
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography variant="body2" sx={{
+                            color: "text.secondary"
+                          }}>
                             Fecha:{' '}
                             {formatMatchDateToString(
                               new Date(sanction.issuedDate).toISOString()
@@ -311,7 +387,9 @@ const MatchPage: React.FC = () => {
                 ))}
               </Grid>
             ) : (
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{
+                color: "text.secondary"
+              }}>
                 Este partido no tiene sanciones registradas.
               </Typography>
             )}

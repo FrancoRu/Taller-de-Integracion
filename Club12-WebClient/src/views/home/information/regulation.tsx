@@ -31,20 +31,26 @@ const Regulation: React.FC = () => {
           </Typography>
           <Typography variant="body1" component="div" sx={{ mt: 2 }}>
             <blockquote>
-              <Typography paragraph>
+              <Typography sx={{
+                marginBottom: "16px"
+              }}>
                 <strong>
                   <u>Liga de Básquet Libre Club 12 "La Vuelta"</u>
                 </strong>
               </Typography>
             </blockquote>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>
                 <em>
                   <u>REGLAMENTO</u>
                 </em>
               </strong>
             </Typography>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               Los torneos consisten en la realización, armonización,
               confraternización desinteresada y leal, y principalmente el
               acercamiento entre quienes integran distintos equipos y por
@@ -70,7 +76,9 @@ const Regulation: React.FC = () => {
             <Typography variant="h5" component="h2" gutterBottom>
               <u>AFILIACIONES</u>
             </Typography>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.1:</strong> En cualquier época del año una agrupación
               y/o equipo puede solicitar su afiliación al Torneo de Básquet.
               Para que dicha afiliación acuerde derecho a inscribir un equipo en
@@ -78,7 +86,9 @@ const Regulation: React.FC = () => {
               expuesto en el Artículo 3 quedando a consideración de los
               organizadores si es viable la incorporación.
             </Typography>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.2:</strong> La solicitud de inscripción debe ser
               presentada por escrito y ser rubricada por las autoridades de la
               agrupación y/o equipo, indicando en la misma:
@@ -98,7 +108,9 @@ const Regulation: React.FC = () => {
             <Typography variant="h5" component="h2" gutterBottom>
               <u>INSCRIPCIONES</u>
             </Typography>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.3:</strong> La inscripción de equipos deberá hacerse
               al comienzo de cada torneo de Club 12 "La Vuelta" y en caso de
               nuevos equipos de acuerdo al Art.1 adjuntando a la misma:
@@ -124,7 +136,9 @@ const Regulation: React.FC = () => {
             <Typography variant="h5" component="h2" gutterBottom>
               <u>DE LAS AGRUPACIONES Y/O EQUIPOS</u>
             </Typography>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.4:</strong>
             </Typography>
             <List>
@@ -135,12 +149,16 @@ const Regulation: React.FC = () => {
                 <ListItemText primary="b) Función del Director Técnico (DT): Es responsable por el ingreso de los jugadores en el campo de juego, cambio de jugadores y banco de suplentes." />
               </ListItem>
             </List>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               Los delegados y el DT podrán, aparte de sus funciones específicas,
               integrar sus respectivos equipos como jugadores.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.5:</strong>
             </Typography>
             <List>
@@ -152,7 +170,9 @@ const Regulation: React.FC = () => {
               </ListItem>
             </List>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.6:</strong> Las agrupaciones y/o equipos no podrán
               alegar ignorancia con respecto a las resoluciones que se hagan
               conocer por medio de este reglamento y sus actualizaciones las
@@ -160,7 +180,9 @@ const Regulation: React.FC = () => {
               oficial de la liga, facebook y twitter) como así también a los
               delegados de cada equipo en las reuniones.
             </Typography>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               Las agrupaciones y/o equipos podrán presentar dentro de la cancha
               3 jugadores federados y 5 en la lista de buena fe (en actividad),
               el resto se completará con jugadores de 20 años en adelante. Los
@@ -169,22 +191,30 @@ const Regulation: React.FC = () => {
               así los que cumplan con anterioridad que no serán tenidos en
               cuenta.
             </Typography>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               Los jugadores que estén federados pero no se encuentren en
               actividad no serán tenidos en cuenta como federados y podrán ser
               parte de la agrupación y/o equipo de manera normal.
             </Typography>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               Si se contata que se esta jugando con 4 federados en cancha, el
               árbitro sancionara con una falta técnica al banco.
             </Typography>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               El equipo que presente más jugadores que lo reglamentado (dentro
               de la cancha) perderá el partido en disputa otorgándosele los
               puntos al otro equipo. En caso de reincidir será expulsado del
               campeonato.
             </Typography>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               El equipo que saque una ventaja antirreglamentaria (ganar el
               partido), ya sea por incluir mal un jugador, jugar con mas de 3
               federados en cancha, jugar con un jugador sancionado, etc. Perderá
@@ -192,7 +222,9 @@ const Regulation: React.FC = () => {
               fecha de suspensión su delegado.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.7:</strong>
             </Typography>
             <List>
@@ -204,7 +236,9 @@ const Regulation: React.FC = () => {
               </ListItem>
             </List>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.8:</strong> Los partidos se jugarán con las leyes del
               organismo internacional del Basquet (FIBA), AAB Y Liga Paranaense
               y por las reglas que estos reglamentos determinen, no así la forma
@@ -224,7 +258,9 @@ const Regulation: React.FC = () => {
               </ListItem>
             </List>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.9:</strong>
             </Typography>
             <List>
@@ -245,7 +281,9 @@ const Regulation: React.FC = () => {
               </ListItem>
             </List>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.10:</strong> Quince minutos antes de la hora designada
               por el fixture para el inicio del partido deberán presentarse los
               jugadores con los correspondientes carnets, siendo un mínimo de
@@ -254,7 +292,9 @@ const Regulation: React.FC = () => {
               partido que debía disputarse.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.11:</strong> Los partidos tendrán una duración de
               Cuarenta (40) minutos divididos en cuatro (4) cuartos de diez (10)
               minutos cada uno, donde no se parara el reloj en ningún momento
@@ -267,7 +307,9 @@ const Regulation: React.FC = () => {
               </ListItem>
             </List>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.12:</strong> Si por causas ajenas a las respectivas
               agrupaciones y/o equipos se suspendiera un partido una vez
               empezado, subsistirá el resultado que se hubiera producido y se
@@ -278,7 +320,9 @@ const Regulation: React.FC = () => {
               mismo se dará por finalizado.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.13:</strong> Si la suspensión de un partido resultare
               imputable a una de las agrupaciones y/o equipos actuante, ya sea
               por acción de sus jugadores, directivos, público, etc. se
@@ -288,7 +332,9 @@ const Regulation: React.FC = () => {
               reemplace de acuerdo al reglamento.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.14:</strong> Si la suspensión de un partido resultare
               imputable a las dos agrupaciones y/o equipos actuantes, ya sea por
               acción de sus jugadores, directivos, público, etc., se declarará
@@ -298,7 +344,9 @@ const Regulation: React.FC = () => {
               al reglamento.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.15:</strong> Cuando se complete el tiempo
               reglamentario de un partido suspendido del cual el referee hubiera
               expulsado uno o mas jugadores, los equipos deberán continuar con
@@ -308,7 +356,9 @@ const Regulation: React.FC = () => {
               pena.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.16:</strong> Para suspender un partido deberá
               solicitarse por escrito con cinco (5) días de anticipación,
               debiendo hacerse cargo de los gastos que demande el equipo que lo
@@ -318,7 +368,9 @@ const Regulation: React.FC = () => {
             </Typography>
             <List>
               <ListItem sx={{ display: 'block' }}>
-                <Typography paragraph>
+                <Typography sx={{
+                  marginBottom: "16px"
+                }}>
                   a) Si una agrupación abandona el torneo una vez comenzado, se
                   precederá de la siguiente manera:
                 </Typography>
@@ -337,7 +389,9 @@ const Regulation: React.FC = () => {
               <u>DE LOS JUGADORES</u>
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.17:</strong> Los organizadores de la Liga Club 12 "La
               Vuelta", tendrán un registro en el que deberán inscribirse todos
               los jugadores debiendo para ello estar físicamente habilitados
@@ -346,7 +400,9 @@ const Regulation: React.FC = () => {
               ocasionarse durante la disputa de la Liga de Basquet Club 12 "La
               Vuelta".
             </Typography>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               Deberán cumplir previamente las exigencias que a continuación se
               detallan:
             </Typography>
@@ -368,7 +424,9 @@ const Regulation: React.FC = () => {
               </ListItem>
             </List>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.18:</strong> Todo jugador que haya registrado su firma
               en la Liga Club 12 "La Vuelta", no podrá alegar que hubo error y
               será jugador de la agrupación y/o equipo por la cual haya
@@ -382,7 +440,9 @@ const Regulation: React.FC = () => {
               </ListItem>
             </List>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.19:</strong>
             </Typography>
             <List>
@@ -403,7 +463,9 @@ const Regulation: React.FC = () => {
               </ListItem>
             </List>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.20:</strong>
             </Typography>
             <List>
@@ -415,7 +477,9 @@ const Regulation: React.FC = () => {
               </ListItem>
             </List>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.21:</strong> En los partidos oficiales es obligatorio
               el uso del correspondiente uniforme, la camisa o camiseta deberá
               llevar el número correspondiente en forma bien visible, la
@@ -425,7 +489,9 @@ const Regulation: React.FC = () => {
               similar.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.22:</strong> Los capitanes de equipo
               independientemente de los derechos y deberes que le corresponden
               según los reglamentos del juego y disposiciones pertinentes de
@@ -436,7 +502,9 @@ const Regulation: React.FC = () => {
               severamente toda infracción, bajo pena de ser personalmente
               responsable.
             </Typography>
-            <Typography paragraph>Está prohibido a los jugadores:</Typography>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>Está prohibido a los jugadores:</Typography>
             <List>
               <ListItem>
                 <ListItemText primary="a) Agredir a algún miembro de otra agrupación con insultos, amenazas y/o agresión física, siendo la sanción correspondiente fechas de suspensión y hasta la expulsión permanente de esta Liga." />
@@ -464,7 +532,9 @@ const Regulation: React.FC = () => {
               </ListItem>
             </List>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.22 Bis:</strong> Club 12 "La Vuelta" se reserva el
               derecho de admisión a todo jugador que protagonice o participe en
               cualquier hecho de violencia en sus respectivos clubes dentro del
@@ -476,19 +546,25 @@ const Regulation: React.FC = () => {
               <u>SUSTITUCIÓN DE JUGADORES</u>
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.23:</strong> En encuentros de certámenes oficiales se
               podrán hacer tantas sustituciones como jugadores suplentes haya en
               el banco.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.24:</strong> Se permitirá en cualquier momento antes
               de finalizar el encuentro registrar jugadores en la planilla y
               participar del partido.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.25:</strong> El equipo que antes de haber comenzado el
               partido no haya presentado la totalidad de los carnets de los
               jugadores registrados en la planilla perderá puntos. La
@@ -500,7 +576,9 @@ const Regulation: React.FC = () => {
               <u>ACTA Y REUNIONES</u>
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.26:</strong> Los organizadores de la Liga Club 12 "La
               Vuelta", se reunirán junto con los delegados cuando estos lo crean
               conveniente para poder evacuar dudas, consultas, pago de
@@ -521,18 +599,24 @@ const Regulation: React.FC = () => {
               </ListItem>
             </List>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.27:</strong> Forma de disputa: La Liga se realizará
               con el sistema de todos contra todos solamente ida, y definiendo
               en la modalidad de Play Off.
             </Typography>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               En caso de igualdad en alguna de las posiciones prevalecerá el
               partido disputado entre ellos resultando el ganador el que acceda
               a la mejor posición.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.28:</strong> Las jornadas que se adelanten por
               feriados posteriores a los días habituales -domingos- y no
               existiendo posibilidad de reunirse el tribunal de disciplina, el
@@ -544,7 +628,9 @@ const Regulation: React.FC = () => {
               <u>PLANILLA Y VEEDOR</u>
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.29:</strong> La mesa de control y el veedor
               presentarán, en forma separada, ante los organizadores de la Liga,
               exclusivamente, un informe con respecto a lo acontecido en la
@@ -553,24 +639,32 @@ const Regulation: React.FC = () => {
               (jugadores), y/o cualquier hecho que ellos consideren necesario
               informar.
             </Typography>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               Bajo ningún punto de vista el informe de veedor y/o mesa de
               control podrá modificar los fallos de los jueces.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.30:</strong> Una vez finalizada la jornada el árbitro
               presentará ante los organizadores de la Liga Club 12 "La Vuelta",
               un informe de los hechos ocurridos en el desarrollo de los
               partidos.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.31:</strong> El jugador expulsado por el árbitro podrá
               presentar un descargo personal ante el Tribunal de Disciplina.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.32:</strong> El jugador informado por los jueces,
               veedor, mesa de control u organizadores de la Liga será publicado
               en los sitios oficiales de la liga y sancionados; podrá presentar
@@ -586,19 +680,25 @@ const Regulation: React.FC = () => {
               <u>PROTESTAS</u>
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.33:</strong> Se considera protesta toda solicitud
               formal escrita de agrupación y/o equipo que tiendan a modificar el
               resultado de un partido en que hubiera intervenido.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.34:</strong> El escrito deberá presentarse hasta el
               segundo día hábil siguiente al del que se jugó el partido. Vencido
               dicho plazo caducará todo derecho a presentar el mismo.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.35:</strong> El escrito de protesta deberá contener:
             </Typography>
             <List>
@@ -613,19 +713,25 @@ const Regulation: React.FC = () => {
               </ListItem>
             </List>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.36:</strong> Todas las solicitudes de protesta deberán
               estar acompañadas de una fotocopia la cual será entregada y
               quedará otra a disposición de la agrupación y/o equipo que la
               presente.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.37:</strong> Las resoluciones del árbitro, en lo que
               se refiere al juego no podrán ser causa de protestas.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.38:</strong> La presentación que reúna los requisitos
               exigidos será considerada por los organizadores del Torneo de
               Basquet Club 12 "La Vuelta" quiénes trasladará por el término de
@@ -640,14 +746,18 @@ const Regulation: React.FC = () => {
               <u>PREMIOS</u>
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.39:</strong> Los organizadores de la Liga Club 12 "La
               Vuelta" establecerán los premios a otorgarse en el presente
               torneo.
             </Typography>
             <List>
               <ListItem sx={{ display: 'block' }}>
-                <Typography paragraph>* Campeón Copa de Oro</Typography>
+                <Typography sx={{
+                  marginBottom: "16px"
+                }}>* Campeón Copa de Oro</Typography>
                 <List>
                   <ListItem>
                     <ListItemText primary="- Inscripción Gratuita para la próxima temporada." />
@@ -662,7 +772,9 @@ const Regulation: React.FC = () => {
               </ListItem>
 
               <ListItem sx={{ display: 'block' }}>
-                <Typography paragraph>* Sub-Campeón Copa de Oro</Typography>
+                <Typography sx={{
+                  marginBottom: "16px"
+                }}>* Sub-Campeón Copa de Oro</Typography>
                 <List>
                   <ListItem>
                     <ListItemText primary="- 8 Kg de Carne, más 1 cajón de cervezas." />
@@ -671,7 +783,9 @@ const Regulation: React.FC = () => {
               </ListItem>
 
               <ListItem sx={{ display: 'block' }}>
-                <Typography paragraph>* Campeón Copa de Plata</Typography>
+                <Typography sx={{
+                  marginBottom: "16px"
+                }}>* Campeón Copa de Plata</Typography>
                 <List>
                   <ListItem>
                     <ListItemText primary="- 24 Chorizos, más 1 cajón de cervezas." />
@@ -683,7 +797,9 @@ const Regulation: React.FC = () => {
               </ListItem>
 
               <ListItem sx={{ display: 'block' }}>
-                <Typography paragraph>* Campeón Zona Ascenso</Typography>
+                <Typography sx={{
+                  marginBottom: "16px"
+                }}>* Campeón Zona Ascenso</Typography>
                 <List>
                   <ListItem>
                     <ListItemText primary="- 24 Chorizos, más 1 cajón de cervezas." />
@@ -695,7 +811,9 @@ const Regulation: React.FC = () => {
               </ListItem>
 
               <ListItem sx={{ display: 'block' }}>
-                <Typography paragraph>* Campeón Final Four</Typography>
+                <Typography sx={{
+                  marginBottom: "16px"
+                }}>* Campeón Final Four</Typography>
                 <List>
                   <ListItem>
                     <ListItemText primary="- 2 Combos de Fernet con Coca" />
@@ -708,7 +826,9 @@ const Regulation: React.FC = () => {
               <u>ARANCELES</u>
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.40:</strong> Deberá abonarse en concepto de arancel el
               importe que oportunamente determinen los organizadores de la Liga
               Club 12 "La Vuelta". El no cumplimiento de los pagos
@@ -716,7 +836,9 @@ const Regulation: React.FC = () => {
               determinen los organizadores.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.40 bis:</strong> Cada agrupación y/o equipo deberá
               abonar una inscripción correspondiente a la estipulada por la
               organización de Club 12 por equipo, por única vez al comienzo de
@@ -725,7 +847,9 @@ const Regulation: React.FC = () => {
               con pérdida de puntos hasta que paguen lo adeudado.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.41:</strong> El arancel será abonado abonadas del 1 al
               15 de cada mes (lugar a confirmar). El pago fuera de término
               producirá automáticamente la suspensión del equipo y la
@@ -733,19 +857,25 @@ const Regulation: React.FC = () => {
               organizadores del torneo.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.42:</strong> Bajo ningún concepto se devolverá el
               dinero abonado a las agrupaciones y/o equipos que ya se hayan
               comprometido a jugar y a los cuales se los haya fixturado.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.43:</strong> La organización del Torneo se reserva el
               derecho de reglamentar todo lo que no esté contemplado en este
               reglamento.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.44:</strong> En caso de surgir anomalías antes de
               iniciarse el partido, por cualquier causa de las contempladas en
               el presente reglamento, el Árbitro a solicitud del Delegado del
@@ -759,7 +889,9 @@ const Regulation: React.FC = () => {
               supuestamente perjudicado perderá cualquier derecho a la protesta.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.45:</strong> Ante la situación de que al momento de
               iniciarse el encuentro los dos equipos tengan vestimentas de
               colores similares, el Árbitro llamará a los Delegados y sorteará
@@ -767,7 +899,9 @@ const Regulation: React.FC = () => {
               deben tener el correspondiente juego alternativo.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.46:</strong> Se deja habilitado el pase de un jugador
               de un equipo a otro entre un torneo a otro una vez finalizado, o
               durante el mismo en el caso que no haya disputado ningún encuentro
@@ -775,7 +909,9 @@ const Regulation: React.FC = () => {
               equipo anterior (dándolo de baja).
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.47:</strong> Queda habilitada la incorporación después
               del comienzo del Torneo en reemplazo de un jugador lesionado
               (lesión temporaria comprobable).
@@ -786,14 +922,18 @@ const Regulation: React.FC = () => {
               </ListItem>
             </List>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.48:</strong> Toda Agrupación que transgreda la
               Reglamentación de este Torneo, haciendo jugar a personas que no
               integran la lista de buena fe (falsificando firma y carnet) será
               EXPULSADA DEL TORNEO.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.49:</strong> Los jugadores que hayan integrado
               agrupaciones que fueron expulsadas del Torneo, no podrán integrar
               otra agrupación durante el transcurso del mismo. Pudiendo elevar
@@ -801,14 +941,18 @@ const Regulation: React.FC = () => {
               que quedará a criterio de los organizadores.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.50:</strong> Las agrupaciones y/o equipos no podrán
               alegar ignorancia con respecto a las resoluciones que se hagan
               conocer por medio de los sitios oficiales, disponible
               semanalmente.
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.51:</strong> Jugador que pierda o rompa su carnet
               correspondiente a la liga, deberá abonar 20 $ para la realización
               de uno nuevo.
@@ -818,7 +962,9 @@ const Regulation: React.FC = () => {
               <u>MODALIDAD DE JUEGO</u>
             </Typography>
 
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <strong>Art.52:</strong> Ascenso y Descenso
             </Typography>
 
@@ -847,10 +993,14 @@ const Regulation: React.FC = () => {
             </List>
 
             {/* Sección de Descensos */}
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <u>Descensos:</u>
             </Typography>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               Los perdedores de la reclasificación de la A, jugarán un
               cuadrangular todos contra todos a un solo partido donde los dos
               peores posicionados descienden.
@@ -862,10 +1012,14 @@ const Regulation: React.FC = () => {
             </List>
 
             {/* Sección de Ascensos */}
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               <u>Ascenso:</u>
             </Typography>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               El Campeón y el Sub Campeón de la zona Ascenso.
             </Typography>
           </Typography>

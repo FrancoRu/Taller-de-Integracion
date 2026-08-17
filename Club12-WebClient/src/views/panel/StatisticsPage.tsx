@@ -59,10 +59,14 @@ const StatCard = ({
 }) => (
   <Card sx={{ borderTop: `4px solid ${color}`, height: '100%' }}>
     <CardContent>
-      <Typography variant="h3" fontWeight="bold">
+      <Typography variant="h3" sx={{
+        fontWeight: "bold"
+      }}>
         {value}
       </Typography>
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="body2" sx={{
+        color: "text.secondary"
+      }}>
         {label}
       </Typography>
     </CardContent>
@@ -143,7 +147,12 @@ const StatisticsPage = () => {
 
   if (loading || !summary) {
     return (
-      <Box display="flex" justifyContent="center" py={10}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          py: 10
+        }}>
         <CircularProgress />
       </Box>
     );
@@ -156,33 +165,56 @@ const StatisticsPage = () => {
 
   return (
     <Box>
-      <Typography variant="h5" fontWeight="bold" mb={3}>
+      <Typography
+        variant="h5"
+        sx={{
+          fontWeight: "bold",
+          mb: 3
+        }}>
         Estadísticas
       </Typography>
 
-      <Grid container spacing={2} mb={1}>
-        <Grid item xs={6} md={3}>
+      <Grid container spacing={2} sx={{
+        mb: 1
+      }}>
+        <Grid
+          size={{
+            xs: 6,
+            md: 3
+          }}>
           <StatCard
             label="Torneos"
             value={summary.tournamentsTotal}
             color="#1976d2"
           />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid
+          size={{
+            xs: 6,
+            md: 3
+          }}>
           <StatCard
             label="Equipos"
             value={summary.teamsTotal}
             color="#2e7d32"
           />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid
+          size={{
+            xs: 6,
+            md: 3
+          }}>
           <StatCard
             label="Partidos jugados"
             value={summary.matchesPlayed}
             color="#ed6c02"
           />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid
+          size={{
+            xs: 6,
+            md: 3
+          }}>
           <StatCard
             label="Sanciones"
             value={summary.sanctionsTotal}
@@ -191,11 +223,19 @@ const StatisticsPage = () => {
         </Grid>
       </Grid>
 
-      <Grid container spacing={2} mt={1}>
-        <Grid item xs={12} md={4}>
+      <Grid container spacing={2} sx={{
+        mt: 1
+      }}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 4
+          }}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
-              <Typography variant="h6" mb={2}>
+              <Typography variant="h6" sx={{
+                mb: 2
+              }}>
                 Torneos por estado
               </Typography>
               <Stack spacing={1.5}>
@@ -203,11 +243,17 @@ const StatisticsPage = () => {
                   ([status, count]) => (
                     <Box
                       key={status}
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="space-between"
-                    >
-                      <Box display="flex" alignItems="center" gap={1}>
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between"
+                      }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1
+                        }}>
                         <Box
                           sx={{
                             width: 12,
@@ -220,7 +266,9 @@ const StatisticsPage = () => {
                           {STATUS_LABEL[status as TournamentStatus]}
                         </Typography>
                       </Box>
-                      <Typography variant="body2" fontWeight={600}>
+                      <Typography variant="body2" sx={{
+                        fontWeight: 600
+                      }}>
                         {count}
                       </Typography>
                     </Box>
@@ -231,21 +279,30 @@ const StatisticsPage = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 4
+          }}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
-              <Typography variant="h6" mb={2}>
+              <Typography variant="h6" sx={{
+                mb: 2
+              }}>
                 Partidos
               </Typography>
               <Stack spacing={2}>
                 <Box>
                   <Box
-                    display="flex"
-                    justifyContent="space-between"
-                    mb={0.5}
-                  >
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      mb: 0.5
+                    }}>
                     <Typography variant="body2">Jugados</Typography>
-                    <Typography variant="body2" fontWeight={600}>
+                    <Typography variant="body2" sx={{
+                      fontWeight: 600
+                    }}>
                       {summary.matchesPlayed} / {matchesTotal}
                     </Typography>
                   </Box>
@@ -256,13 +313,18 @@ const StatisticsPage = () => {
                   />
                 </Box>
                 <Box
-                  display="flex"
-                  justifyContent="space-between"
-                >
-                  <Typography variant="body2" color="text.secondary">
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between"
+                  }}>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>
                     Programados
                   </Typography>
-                  <Typography variant="body2" fontWeight={600}>
+                  <Typography variant="body2" sx={{
+                    fontWeight: 600
+                  }}>
                     {summary.matchesScheduled}
                   </Typography>
                 </Box>
@@ -271,14 +333,22 @@ const StatisticsPage = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 4
+          }}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
-              <Typography variant="h6" mb={2}>
+              <Typography variant="h6" sx={{
+                mb: 2
+              }}>
                 Top goleadores
               </Typography>
               {summary.topScorers.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>
                   Sin datos de goleadores.
                 </Typography>
               ) : (
@@ -309,7 +379,9 @@ const StatisticsPage = () => {
                           />
                         </TableCell>
                         <TableCell align="right">
-                          <Typography variant="body2" fontWeight={600}>
+                          <Typography variant="body2" sx={{
+                            fontWeight: 600
+                          }}>
                             {scorer.points}
                           </Typography>
                         </TableCell>

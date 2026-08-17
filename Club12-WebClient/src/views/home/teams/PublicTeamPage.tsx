@@ -34,7 +34,12 @@ export default function PublicTeamPage() {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" py={10}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          py: 10
+        }}>
         <CircularProgress />
       </Box>
     );
@@ -43,7 +48,9 @@ export default function PublicTeamPage() {
   if (!team || team.id !== teamId) {
     return (
       <Container maxWidth="md" sx={{ py: 5 }}>
-        <Typography variant="h5" component="h1" mb={2}>Equipo no encontrado</Typography>
+        <Typography variant="h5" component="h1" sx={{
+          mb: 2
+        }}>Equipo no encontrado</Typography>
         <Button onClick={() => navigate(APP_ROUTES.publicTeams)}>Volver a equipos</Button>
       </Container>
     );
@@ -59,13 +66,23 @@ export default function PublicTeamPage() {
         ← Volver a equipos
       </Button>
 
-      <Box display="flex" alignItems="center" gap={3} mb={3}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 3,
+          mb: 3
+        }}>
         <TeamLogo teamName={team.name} logoUrl={team.logoUrl} size={72} />
         <Box>
-          <Typography variant="h4" component="h1" fontWeight="bold">
+          <Typography variant="h4" component="h1" sx={{
+            fontWeight: "bold"
+          }}>
             {team.name}
           </Typography>
-          <Typography variant="subtitle1" component="p" color="text.secondary">
+          <Typography variant="subtitle1" component="p" sx={{
+            color: "text.secondary"
+          }}>
             {team.threeLetterCode}
           </Typography>
         </Box>
@@ -73,38 +90,63 @@ export default function PublicTeamPage() {
 
       <Divider sx={{ mb: 3 }} />
 
-      <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} sm={4}>
-          <Typography variant="subtitle2" component="p" color="text.secondary">
+      <Grid container spacing={3} sx={{
+        mb: 4
+      }}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 4
+          }}>
+          <Typography variant="subtitle2" component="p" sx={{
+            color: "text.secondary"
+          }}>
             Color de camiseta
           </Typography>
           <Typography>{team.shirtColor || '—'}</Typography>
         </Grid>
-        <Grid item xs={12} sm={4}>
-          <Typography variant="subtitle2" component="p" color="text.secondary">
+        <Grid
+          size={{
+            xs: 12,
+            sm: 4
+          }}>
+          <Typography variant="subtitle2" component="p" sx={{
+            color: "text.secondary"
+          }}>
             Jugadores inscriptos
           </Typography>
           <Typography>{team.players?.length ?? 0}</Typography>
         </Grid>
       </Grid>
 
-      <Typography variant="h6" component="h2" mb={2}>
+      <Typography variant="h6" component="h2" sx={{
+        mb: 2
+      }}>
         Plantel
       </Typography>
 
       {!team.players || team.players.length === 0 ? (
-        <Typography color="text.secondary">
+        <Typography sx={{
+          color: "text.secondary"
+        }}>
           Este equipo no tiene jugadores registrados.
         </Typography>
       ) : (
         <Grid container spacing={1.5}>
           {team.players.map((player, index) => (
-            <Grid item xs={12} sm={6} key={player.id}>
+            <Grid
+              key={player.id}
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <Paper
                 variant="outlined"
                 sx={{ px: 2, py: 1.25 }}
               >
-                <Stack direction="row" alignItems="center" spacing={2}>
+                <Stack direction="row" spacing={2} sx={{
+                  alignItems: "center"
+                }}>
                   <Box
                     sx={{
                       width: 32,
@@ -122,7 +164,9 @@ export default function PublicTeamPage() {
                   >
                     {index + 1}
                   </Box>
-                  <Typography variant="body2" fontWeight={500} noWrap>
+                  <Typography variant="body2" noWrap sx={{
+                    fontWeight: 500
+                  }}>
                     {player.fullName}
                   </Typography>
                 </Stack>

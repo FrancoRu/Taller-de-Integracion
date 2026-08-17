@@ -197,11 +197,15 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
     return (
       <Card variant="outlined">
         <CardContent>
-          <Typography variant="subtitle1" mb={1}>
+          <Typography variant="subtitle1" sx={{
+            mb: 1
+          }}>
             {team?.name || fallbackLabel}
           </Typography>
           {teamPlayers.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               Sin jugadores registrados.
             </Typography>
           ) : (
@@ -241,9 +245,10 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
     <Stack spacing={2}>
       <Stack
         direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-      >
+        sx={{
+          justifyContent: "space-between",
+          alignItems: "center"
+        }}>
         <Typography variant="body1">
           Goles y asistencias por jugador.
         </Typography>
@@ -296,7 +301,9 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
                           },
                         }))
                       }
-                      inputProps={{ min: 0, style: { width: 64 } }}
+                      slotProps={{
+                        htmlInput: { min: 0, style: { width: 64 } }
+                      }}
                     />
                   </TableCell>
                   <TableCell align="center">
@@ -313,7 +320,9 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
                           },
                         }))
                       }
-                      inputProps={{ min: 0, style: { width: 64 } }}
+                      slotProps={{
+                        htmlInput: { min: 0, style: { width: 64 } }
+                      }}
                     />
                   </TableCell>
                 </TableRow>
@@ -321,7 +330,13 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
             </TableBody>
           </Table>
 
-          <Stack direction="row" justifyContent="flex-end" spacing={1} mt={2}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{
+              justifyContent: "flex-end",
+              mt: 2
+            }}>
             <Button onClick={closeDialog} disabled={submitting} color="inherit">
               Cancelar
             </Button>

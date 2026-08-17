@@ -160,24 +160,34 @@ const BlogPostsPage: React.FC = () => {
   return (
     <Card>
       <CardContent>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+        <Stack
+          direction="row"
+          sx={{
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2
+          }}>
           <Typography variant="h6">Blog</Typography>
           <NewEntityButton type="Publicación" onClick={handleCreate} />
         </Stack>
 
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{
+          mb: 2
+        }}>
           <TextField
             label="Título"
             name="title"
             size="small"
             value={filters.title ?? ''}
             onChange={handleFilterChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              }
             }}
           />
           <TextField
@@ -186,12 +196,14 @@ const BlogPostsPage: React.FC = () => {
             size="small"
             value={filters.author ?? ''}
             onChange={handleFilterChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              }
             }}
           />
         </Stack>

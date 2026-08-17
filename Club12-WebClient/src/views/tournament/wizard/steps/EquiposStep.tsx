@@ -27,18 +27,26 @@ export default function EquiposStep({
 
   if (availableTeams.length === 0) {
     return (
-      <Typography color="text.secondary">
-        No hay equipos disponibles en el padrón general (todos ya están inscriptos en otro torneo).
-      </Typography>
+      <Typography sx={{
+        color: "text.secondary"
+      }}>No hay equipos disponibles en el padrón general (todos ya están inscriptos en otro torneo).
+              </Typography>
     );
   }
 
   return (
     <Stack spacing={1.5}>
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="body2" sx={{
+        color: "text.secondary"
+      }}>
         Seleccioná los equipos que participan en este torneo ({selectedTeamIds.length} seleccionados).
       </Typography>
-      <Stack direction="row" flexWrap="wrap" gap={1}>
+      <Stack
+        direction="row"
+        sx={{
+          flexWrap: "wrap",
+          gap: 1
+        }}>
         {availableTeams.map(team => (
           <Chip
             key={team.id}

@@ -81,10 +81,18 @@ const ShowPosts: React.FC = () => {
 
   return (
     <div>
-      <Grid container spacing={3} justifyContent="center">
+      <Grid container spacing={3} sx={{
+        justifyContent: "center"
+      }}>
         {posts.length > 0 ? (
           posts.map(post => (
-            <Grid item xs={12} sm={6} md={4} key={post.id}>
+            <Grid
+              key={post.id}
+              size={{
+                xs: 12,
+                sm: 6,
+                md: 4
+              }}>
               <Card sx={{ maxWidth: 345 }}>
                 <CardContent>
                   <Typography variant="h6">{post.title}</Typography>

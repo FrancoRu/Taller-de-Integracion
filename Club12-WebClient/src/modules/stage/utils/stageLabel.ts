@@ -1,4 +1,4 @@
-import { IStageResponse } from '@/modules/stage/type/stage.d';
+import { IStageResponse } from '@/modules/stage/type/stage';
 import { translateStageType } from '@/modules/core/utils/translateStageType';
 
 export const stageLabel = (stage: IStageResponse): string => {

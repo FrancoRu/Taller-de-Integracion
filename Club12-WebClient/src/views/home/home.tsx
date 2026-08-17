@@ -104,10 +104,20 @@ export default function Home() {
         }}
       >
         <Container maxWidth="lg">
-          <Typography variant="h2" component="h1" mb={2}>
+          <Typography variant="h2" component="h1" sx={{
+            mb: 2
+          }}>
             Club 12
           </Typography>
-          <Typography variant="h6" component="p" fontWeight={400} maxWidth={640} mb={4} sx={{ opacity: 0.9 }}>
+          <Typography
+            variant="h6"
+            component="p"
+            sx={{
+              fontWeight: 400,
+              maxWidth: 640,
+              mb: 4,
+              opacity: 0.9
+            }}>
             La liga de básquet amateur con más historia de la zona. Torneos, resultados
             y estadísticas de todas las divisiones en un solo lugar.
           </Typography>
@@ -132,16 +142,28 @@ export default function Home() {
       </Box>
 
       <Container maxWidth="lg" sx={{ py: 6 }}>
-        <Grid container spacing={2} mb={6}>
+        <Grid container spacing={2} sx={{
+          mb: 6
+        }}>
           {QUICK_NAV_ITEMS.map(item => (
-            <Grid item xs={12} sm={6} md={2.4} key={item.path}>
+            <Grid
+              key={item.path}
+              size={{
+                xs: 12,
+                sm: 6,
+                md: 2.4
+              }}>
               <Card sx={{ height: '100%' }}>
                 <CardActionArea sx={{ height: '100%' }} onClick={() => navigate(item.path)}>
                   <CardContent>
-                    <Typography variant="h6" component="h2" mb={0.5}>
+                    <Typography variant="h6" component="h2" sx={{
+                      mb: 0.5
+                    }}>
                       {item.label}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" sx={{
+                      color: "text.secondary"
+                    }}>
                       {item.description}
                     </Typography>
                   </CardContent>
@@ -151,8 +173,16 @@ export default function Home() {
           ))}
         </Grid>
 
-        <Box mb={6}>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Box sx={{
+          mb: 6
+        }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3
+            }}>
             <Typography variant="h4" component="h2">
               Torneos destacados
             </Typography>
@@ -162,15 +192,28 @@ export default function Home() {
           </Box>
 
           {tournamentsLoading ? (
-            <Box display="flex" justifyContent="center" py={4}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                py: 4
+              }}>
               <CircularProgress />
             </Box>
           ) : featuredTournaments.length === 0 ? (
-            <Typography color="text.secondary">No hay torneos disponibles.</Typography>
+            <Typography sx={{
+              color: "text.secondary"
+            }}>No hay torneos disponibles.</Typography>
           ) : (
             <Grid container spacing={3}>
               {featuredTournaments.map(tournament => (
-                <Grid item xs={12} sm={6} md={4} key={tournament.id}>
+                <Grid
+                  key={tournament.id}
+                  size={{
+                    xs: 12,
+                    sm: 6,
+                    md: 4
+                  }}>
                   <TournamentCard tournament={tournament} />
                 </Grid>
               ))}
@@ -179,7 +222,13 @@ export default function Home() {
         </Box>
 
         <Box>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3
+            }}>
             <Typography variant="h4" component="h2">
               Últimas noticias
             </Typography>
@@ -189,38 +238,58 @@ export default function Home() {
           </Box>
 
           {postsLoading ? (
-            <Box display="flex" justifyContent="center" py={4}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                py: 4
+              }}>
               <CircularProgress />
             </Box>
           ) : posts.length === 0 ? (
-            <Typography color="text.secondary">No hay novedades por el momento.</Typography>
+            <Typography sx={{
+              color: "text.secondary"
+            }}>No hay novedades por el momento.</Typography>
           ) : (
             <Grid container spacing={3}>
               {posts.map(post => (
-                <Grid item xs={12} sm={6} md={4} key={post.id}>
+                <Grid
+                  key={post.id}
+                  size={{
+                    xs: 12,
+                    sm: 6,
+                    md: 4
+                  }}>
                   <Card sx={{ height: '100%' }}>
                     <CardActionArea
                       onClick={() => void handleReadMore(post.id)}
                       sx={{ height: '100%', alignItems: 'flex-start', display: 'flex', flexDirection: 'column' }}
                     >
                       <CardContent sx={{ width: '100%' }}>
-                        <Typography variant="h6" component="h3" mb={1} lineHeight={1.3}>
+                        <Typography
+                          variant="h6"
+                          component="h3"
+                          sx={{
+                            mb: 1,
+                            lineHeight: 1.3
+                          }}>
                           {post.title}
                         </Typography>
                         <Typography
                           variant="body2"
-                          color="text.secondary"
-                          mb={1.5}
                           sx={{
+                            color: "text.secondary",
+                            mb: 1.5,
                             display: '-webkit-box',
                             WebkitLineClamp: 3,
                             WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                          }}
-                        >
+                            overflow: 'hidden'
+                          }}>
                           {stripHtml(post.markdownText).slice(0, 160)}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant="caption" sx={{
+                          color: "text.secondary"
+                        }}>
                           {post.author} · {formatPostDate(post.createdAt)}
                         </Typography>
                       </CardContent>

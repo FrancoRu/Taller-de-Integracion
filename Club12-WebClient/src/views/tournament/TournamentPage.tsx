@@ -79,7 +79,12 @@ const TournamentPage: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="h6">Torneo</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No se recibió un torneo para visualizar.
           </Typography>
         </CardContent>
@@ -96,7 +101,12 @@ const TournamentPage: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="h6">Torneo no encontrado</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No fue posible cargar la información del torneo.
           </Typography>
           <Typography
@@ -134,14 +144,15 @@ const TournamentPage: React.FC = () => {
       <CardContent>
         <Grid
           container
-          alignItems="center"
-          justifyContent="space-between"
-          mb={2}
-        >
-          <Grid item>
+          sx={{
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 2
+          }}>
+          <Grid>
             <Typography variant="h6">{tournament.name}</Typography>
           </Grid>
-          <Grid item>
+          <Grid>
             {canEditTournament && (
               <Button
                 variant="contained"
@@ -167,14 +178,26 @@ const TournamentPage: React.FC = () => {
 
         {tab === 'detalle' && (
           <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Nombre
               </Typography>
               <Typography>{tournament.name}</Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Estado
               </Typography>
               <Typography>
@@ -185,22 +208,36 @@ const TournamentPage: React.FC = () => {
                 }
               </Typography>
             </Grid>
-            <Grid item xs={12}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid size={12}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Descripción
               </Typography>
               <Typography>{tournament.description || '—'}</Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Inicio
               </Typography>
               <Typography>
                 {new Date(tournament.startDate).toLocaleDateString('es-AR')}
               </Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Cierre de inscripción
               </Typography>
               <Typography>
@@ -209,14 +246,26 @@ const TournamentPage: React.FC = () => {
                 ).toLocaleDateString('es-AR')}
               </Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Equipos mínimos
               </Typography>
               <Typography>{tournament.minTeams}</Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Equipos máximos
               </Typography>
               <Typography>{tournament.maxTeams}</Typography>

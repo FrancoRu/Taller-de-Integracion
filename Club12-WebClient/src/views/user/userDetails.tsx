@@ -71,11 +71,14 @@ const UserDetails: React.FC = () => {
       <CardContent>
         <Stack
           direction="row"
-          alignItems="center"
-          justifyContent="space-between"
-          mb={2}
-        >
-          <Stack direction="row" alignItems="center" spacing={1}>
+          sx={{
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 2
+          }}>
+          <Stack direction="row" spacing={1} sx={{
+            alignItems: "center"
+          }}>
             <Tooltip title="Volver">
               <IconButton
                 size="small"
@@ -117,11 +120,18 @@ const UserDetails: React.FC = () => {
         <Divider sx={{ mb: 2 }} />
 
         {loading ? (
-          <Box display="flex" justifyContent="center" py={4}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              py: 4
+            }}>
             <CircularProgress />
           </Box>
         ) : !user ? (
-          <Typography color="text.secondary">
+          <Typography sx={{
+            color: "text.secondary"
+          }}>
             No se encontró el usuario.
           </Typography>
         ) : (
@@ -145,7 +155,9 @@ const Field: React.FC<{ label: string; value: string }> = ({
   value,
 }) => (
   <Box>
-    <Typography variant="caption" color="text.secondary">
+    <Typography variant="caption" sx={{
+      color: "text.secondary"
+    }}>
       {label}
     </Typography>
     <Typography variant="body1">{value}</Typography>

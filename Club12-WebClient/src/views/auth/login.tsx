@@ -38,12 +38,13 @@ export default function Login() {
 
   return (
     <Box
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      minHeight="90vh"
-      sx={{ backgroundColor: theme.palette.background.default }}
-    >
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "90vh",
+        backgroundColor: theme.palette.background.default
+      }}>
       <Card sx={{ maxWidth: 400 }}>
         <CardContent>
           <Typography

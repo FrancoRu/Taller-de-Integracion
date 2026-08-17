@@ -1,12 +1,12 @@
-import { MutableRefObject, RefObject, useLayoutEffect, useState } from 'react';
+import { RefObject, useLayoutEffect, useState } from 'react';
 import { BracketEdge } from '@/modules/playoff/type/bracket.d';
 import { GUID } from '@/modules/core/types/types';
 import theme from '@/theme';
 
 interface BracketConnectorsProps {
   edges: BracketEdge[];
-  containerRef: RefObject<HTMLDivElement>;
-  nodeRefs: MutableRefObject<Map<GUID, HTMLDivElement | null>>;
+  containerRef: RefObject<HTMLDivElement | null>;
+  nodeRefs: RefObject<Map<GUID, HTMLDivElement | null>>;
 }
 
 interface ConnectorPath {

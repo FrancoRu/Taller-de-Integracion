@@ -170,7 +170,12 @@ const PlayerSanctionPage: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="h6">Sanción</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No se recibió una sanción para visualizar.
           </Typography>
         </CardContent>
@@ -187,7 +192,12 @@ const PlayerSanctionPage: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="h6">Sanción no encontrada</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No fue posible cargar la información de la sanción.
           </Typography>
           <Typography
@@ -212,7 +222,9 @@ const PlayerSanctionPage: React.FC = () => {
   return (
     <Card>
       <CardContent>
-        <Typography variant="h6" mb={2}>
+        <Typography variant="h6" sx={{
+          mb: 2
+        }}>
           Sanción
         </Typography>
 
@@ -229,20 +241,34 @@ const PlayerSanctionPage: React.FC = () => {
 
         {tab === 'detalle' && (
           <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Duración
               </Typography>
               <Typography>{playerSanction.duration}</Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Fecha de emisión
               </Typography>
               <Typography>{formatDate(playerSanction.issuedDate)}</Typography>
             </Grid>
-            <Grid item xs={12}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Grid size={12}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Descripción
               </Typography>
               <Typography>{playerSanction.description || '—'}</Typography>
@@ -254,11 +280,12 @@ const PlayerSanctionPage: React.FC = () => {
           <Stack spacing={2}>
             <Stack
               direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              flexWrap="wrap"
-              gap={1}
-            >
+              sx={{
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 1
+              }}>
               <Chip
                 label={APPEAL_STATUS_LABEL[playerSanction.appealStatus]}
                 color={APPEAL_STATUS_COLOR[playerSanction.appealStatus]}
@@ -291,33 +318,51 @@ const PlayerSanctionPage: React.FC = () => {
             </Stack>
 
             {playerSanction.appealStatus === 'None' ? (
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{
+                color: "text.secondary"
+              }}>
                 Esta sanción no tiene apelaciones registradas.
               </Typography>
             ) : (
               <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2" color="text.secondary">
+                <Grid size={12}>
+                  <Typography variant="subtitle2" sx={{
+                    color: "text.secondary"
+                  }}>
                     Motivo de la apelación
                   </Typography>
                   <Typography>{playerSanction.appealReason || '—'}</Typography>
                 </Grid>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle2" color="text.secondary">
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 6
+                  }}>
+                  <Typography variant="subtitle2" sx={{
+                    color: "text.secondary"
+                  }}>
                     Fecha de apelación
                   </Typography>
                   <Typography>{formatDate(playerSanction.appealDate)}</Typography>
                 </Grid>
                 {playerSanction.appealResolution && (
                   <>
-                    <Grid item xs={12}>
-                      <Typography variant="subtitle2" color="text.secondary">
+                    <Grid size={12}>
+                      <Typography variant="subtitle2" sx={{
+                        color: "text.secondary"
+                      }}>
                         Resolución (decisión registrada)
                       </Typography>
                       <Typography>{playerSanction.appealResolution}</Typography>
                     </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="subtitle2" color="text.secondary">
+                    <Grid
+                      size={{
+                        xs: 12,
+                        md: 6
+                      }}>
+                      <Typography variant="subtitle2" sx={{
+                        color: "text.secondary"
+                      }}>
                         Fecha de resolución
                       </Typography>
                       <Typography>
@@ -336,25 +381,45 @@ const PlayerSanctionPage: React.FC = () => {
             {playerLoading ? (
               <LoadingIndicator />
             ) : !player || player.id !== playerSanction.playerId ? (
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{
+                color: "text.secondary"
+              }}>
                 No fue posible cargar la información del jugador.
               </Typography>
             ) : (
               <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle2" color="text.secondary">
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 6
+                  }}>
+                  <Typography variant="subtitle2" sx={{
+                    color: "text.secondary"
+                  }}>
                     Nombre completo
                   </Typography>
                   <Typography>{player.fullName}</Typography>
                 </Grid>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle2" color="text.secondary">
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 6
+                  }}>
+                  <Typography variant="subtitle2" sx={{
+                    color: "text.secondary"
+                  }}>
                     Documento
                   </Typography>
                   <Typography>{player.documentNumber}</Typography>
                 </Grid>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle2" color="text.secondary">
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 6
+                  }}>
+                  <Typography variant="subtitle2" sx={{
+                    color: "text.secondary"
+                  }}>
                     Fecha de nacimiento
                   </Typography>
                   <Typography>
@@ -363,14 +428,26 @@ const PlayerSanctionPage: React.FC = () => {
                       : '—'}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle2" color="text.secondary">
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 6
+                  }}>
+                  <Typography variant="subtitle2" sx={{
+                    color: "text.secondary"
+                  }}>
                     Teléfono
                   </Typography>
                   <Typography>{player.phoneNumber || '—'}</Typography>
                 </Grid>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle2" color="text.secondary">
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 6
+                  }}>
+                  <Typography variant="subtitle2" sx={{
+                    color: "text.secondary"
+                  }}>
                     Obra social
                   </Typography>
                   <Typography>{player.socialSecurity || '—'}</Typography>
@@ -385,39 +462,71 @@ const PlayerSanctionPage: React.FC = () => {
             {matchLoading ? (
               <LoadingIndicator />
             ) : !match || match.id !== playerSanction.matchId ? (
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{
+                color: "text.secondary"
+              }}>
                 No fue posible cargar la información del partido.
               </Typography>
             ) : (
               <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle2" color="text.secondary">
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 6
+                  }}>
+                  <Typography variant="subtitle2" sx={{
+                    color: "text.secondary"
+                  }}>
                     Fecha
                   </Typography>
                   <Typography>{formatDate(match.matchDate)}</Typography>
                 </Grid>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle2" color="text.secondary">
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 6
+                  }}>
+                  <Typography variant="subtitle2" sx={{
+                    color: "text.secondary"
+                  }}>
                     Estado
                   </Typography>
                   <Typography>
                     {match.isFinished ? 'Finalizado' : 'Programado'}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle2" color="text.secondary">
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 6
+                  }}>
+                  <Typography variant="subtitle2" sx={{
+                    color: "text.secondary"
+                  }}>
                     Equipo local
                   </Typography>
                   <Typography>{match.homeTeam?.name || '—'}</Typography>
                 </Grid>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle2" color="text.secondary">
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 6
+                  }}>
+                  <Typography variant="subtitle2" sx={{
+                    color: "text.secondary"
+                  }}>
                     Equipo visitante
                   </Typography>
                   <Typography>{match.visitorTeam?.name || '—'}</Typography>
                 </Grid>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle2" color="text.secondary">
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 6
+                  }}>
+                  <Typography variant="subtitle2" sx={{
+                    color: "text.secondary"
+                  }}>
                     Cancha
                   </Typography>
                   <Typography>{match.venue?.name || '—'}</Typography>
@@ -446,7 +555,13 @@ const PlayerSanctionPage: React.FC = () => {
             autoFocus
             sx={{ mt: 1 }}
           />
-          <Stack direction="row" justifyContent="flex-end" spacing={1} mt={2}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{
+              justifyContent: "flex-end",
+              mt: 2
+            }}>
             <Button
               color="inherit"
               onClick={() => setAppealDialogOpen(false)}
@@ -479,8 +594,10 @@ const PlayerSanctionPage: React.FC = () => {
             value={decisionAccepted ? 'accepted' : 'rejected'}
             onChange={e => setDecisionAccepted(e.target.value === 'accepted')}
             fullWidth
-            SelectProps={{ native: true }}
             sx={{ mt: 1 }}
+            slotProps={{
+              select: { native: true }
+            }}
           >
             <option value="accepted">Aceptar apelación</option>
             <option value="rejected">Rechazar apelación</option>
@@ -494,7 +611,13 @@ const PlayerSanctionPage: React.FC = () => {
             fullWidth
             sx={{ mt: 2 }}
           />
-          <Stack direction="row" justifyContent="flex-end" spacing={1} mt={2}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{
+              justifyContent: "flex-end",
+              mt: 2
+            }}>
             <Button
               color="inherit"
               onClick={() => setResolveDialogOpen(false)}

@@ -105,14 +105,31 @@ export default function PublicMatchesPage() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
-      <Typography variant="h4" component="h1" fontWeight="bold" mb={1}>
+      <Typography
+        variant="h4"
+        component="h1"
+        sx={{
+          fontWeight: "bold",
+          mb: 1
+        }}>
         Partidos
       </Typography>
-      <Typography variant="body1" color="text.secondary" mb={3}>
+      <Typography
+        variant="body1"
+        sx={{
+          color: "text.secondary",
+          mb: 3
+        }}>
         Fixture y resultados de la liga.
       </Typography>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={4} flexWrap="wrap">
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={2}
+        sx={{
+          mb: 4,
+          flexWrap: "wrap"
+        }}>
         <TextField
           select
           label="Torneo"
@@ -152,17 +169,29 @@ export default function PublicMatchesPage() {
       </Stack>
 
       {loading ? (
-        <Box display="flex" justifyContent="center" py={8}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            py: 8
+          }}>
           <CircularProgress />
         </Box>
       ) : rows.length === 0 ? (
-        <Typography color="text.secondary">No hay partidos disponibles.</Typography>
+        <Typography sx={{
+          color: "text.secondary"
+        }}>No hay partidos disponibles.</Typography>
       ) : (
         <>
           <MatchFixtureList matches={rows} />
 
           {pageCount > 1 && (
-            <Box display="flex" justifyContent="center" mt={4}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                mt: 4
+              }}>
               <Pagination
                 count={pageCount}
                 page={page}

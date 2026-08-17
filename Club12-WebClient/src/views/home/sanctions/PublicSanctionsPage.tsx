@@ -146,14 +146,27 @@ export default function PublicSanctionsPage() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
-      <Typography variant="h4" component="h1" fontWeight="bold" mb={1}>
+      <Typography
+        variant="h4"
+        component="h1"
+        sx={{
+          fontWeight: "bold",
+          mb: 1
+        }}>
         Sanciones
       </Typography>
-      <Typography variant="body1" color="text.secondary" mb={3}>
+      <Typography
+        variant="body1"
+        sx={{
+          color: "text.secondary",
+          mb: 3
+        }}>
         Listado de sanciones aplicadas a jugadores de la liga.
       </Typography>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={3}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{
+        mb: 3
+      }}>
         <TextField
           select
           label="Torneo"
@@ -176,12 +189,14 @@ export default function PublicSanctionsPage() {
           value={description}
           onChange={handleDescriptionChange}
           sx={{ minWidth: 260 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }
           }}
         />
       </Stack>

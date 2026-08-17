@@ -68,8 +68,16 @@ const BracketMatchNode = forwardRef<HTMLDivElement, BracketMatchNodeProps>(
         }}
       >
         {series && (
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.5 }}>
-            <Typography variant="caption" color="text.secondary">
+          <Stack
+            direction="row"
+            sx={{
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 0.5
+            }}>
+            <Typography variant="caption" sx={{
+              color: "text.secondary"
+            }}>
               Al mejor de {series.bestOf}
             </Typography>
             {hasGames && (
@@ -94,27 +102,29 @@ const BracketMatchNode = forwardRef<HTMLDivElement, BracketMatchNodeProps>(
           return (
             <Box
               key={key}
-              display="flex"
-              justifyContent="space-between"
-              alignItems="center"
               sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
                 py: 0.5,
                 px: 0.75,
                 borderRadius: 1,
-                bgcolor: winner ? 'rgba(255, 90, 31, 0.12)' : 'transparent',
-              }}
-            >
+                bgcolor: winner ? 'rgba(255, 90, 31, 0.12)' : 'transparent'
+              }}>
               <Typography
                 variant="body2"
-                fontWeight={winner ? 700 : 500}
                 color={team ? 'text.primary' : 'text.secondary'}
                 noWrap
-                sx={{ maxWidth: 140 }}
-              >
+                sx={{
+                  fontWeight: winner ? 700 : 500,
+                  maxWidth: 140
+                }}>
                 {teamLabel(team, match)}
               </Typography>
               {match.isFinished && team && (
-                <Typography variant="body2" fontWeight={winner ? 700 : 500}>
+                <Typography variant="body2" sx={{
+                  fontWeight: winner ? 700 : 500
+                }}>
                   {team.score}
                 </Typography>
               )}
@@ -126,8 +136,12 @@ const BracketMatchNode = forwardRef<HTMLDivElement, BracketMatchNodeProps>(
           <Collapse in={expanded}>
             <Stack spacing={0.5} sx={{ mt: 1, pt: 1, borderTop: 1, borderColor: 'divider' }}>
               {series.games.map(game => (
-                <Stack key={game.id} direction="row" justifyContent="space-between">
-                  <Typography variant="caption" color="text.secondary">
+                <Stack key={game.id} direction="row" sx={{
+                  justifyContent: "space-between"
+                }}>
+                  <Typography variant="caption" sx={{
+                    color: "text.secondary"
+                  }}>
                     Juego {game.gameNumber}
                   </Typography>
                   <Typography variant="caption">

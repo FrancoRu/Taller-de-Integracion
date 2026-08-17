@@ -131,7 +131,7 @@ const MatchCreatePage: React.FC = () => {
 
           <Grid container spacing={2}>
             {!isStageContext && (
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <TextField
                   select
                   required
@@ -156,7 +156,11 @@ const MatchCreatePage: React.FC = () => {
               </Grid>
             )}
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 select
                 required
@@ -177,7 +181,11 @@ const MatchCreatePage: React.FC = () => {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 select
                 required
@@ -198,19 +206,29 @@ const MatchCreatePage: React.FC = () => {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 label="Fecha y hora"
                 type="datetime-local"
                 value={matchDate}
                 onChange={e => setMatchDate(e.target.value)}
-                InputLabelProps={{ shrink: true }}
                 required
                 fullWidth
+                slotProps={{
+                  inputLabel: { shrink: true }
+                }}
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
               <TextField
                 select
                 label="Cancha (opcional)"
@@ -228,7 +246,9 @@ const MatchCreatePage: React.FC = () => {
             </Grid>
           </Grid>
 
-          <Stack direction="row" justifyContent="flex-end">
+          <Stack direction="row" sx={{
+            justifyContent: "flex-end"
+          }}>
             <FormButtons
               onCancel={handleCancel}
               onConfirm={() => void handleCreate()}

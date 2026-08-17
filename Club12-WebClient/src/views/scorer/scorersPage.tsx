@@ -17,7 +17,9 @@ const ScorersPage: React.FC = () => {
   return (
     <Card>
       <CardContent>
-        <Typography variant="h6" mb={2}>
+        <Typography variant="h6" sx={{
+          mb: 2
+        }}>
           Puntuaciones
         </Typography>
 

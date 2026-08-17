@@ -1,5 +1,5 @@
 import { GUID } from '@/modules/core/types/types';
-import { StageType } from '@/modules/stage/type/stage.d';
+import { StageType } from '@/modules/stage/type/stage';
 
 /**
  * Elimination round types the wizard can add to a cup, in typical

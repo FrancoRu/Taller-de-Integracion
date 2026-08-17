@@ -211,12 +211,16 @@ const UpdatePassword: React.FC<UpdatePasswordProps> = ({
   return (
     <Card sx={{ maxWidth: 520, mx: 'auto', mt: 2 }}>
       <CardContent>
-        <Typography variant="h6" mb={2}>
+        <Typography variant="h6" sx={{
+          mb: 2
+        }}>
           Cambiar password
         </Typography>
 
         {errors && errors.length > 0 && (
-          <Stack spacing={0.5} mb={2}>
+          <Stack spacing={0.5} sx={{
+            mb: 2
+          }}>
             {errors.map((error, index) => (
               <Typography key={index} color="error" variant="body2">
                 {error}
@@ -322,7 +326,9 @@ const UpdatePassword: React.FC<UpdatePasswordProps> = ({
             onChange={handleChange}
           />
 
-          <Stack direction="row" spacing={2} justifyContent="flex-end">
+          <Stack direction="row" spacing={2} sx={{
+            justifyContent: "flex-end"
+          }}>
             <Button
               variant="outlined"
               onClick={() => navigate(APP_ROUTES.panel)}

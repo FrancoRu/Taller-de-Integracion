@@ -184,7 +184,12 @@ const TournamentEditPage: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="h6">Torneo</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No se recibió un torneo para editar.
           </Typography>
         </CardContent>
@@ -201,7 +206,12 @@ const TournamentEditPage: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="h6">Torneo no encontrado</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             No fue posible cargar la información del torneo.
           </Typography>
           <Typography
@@ -331,11 +341,12 @@ const TournamentEditPage: React.FC = () => {
       <CardContent>
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
-          justifyContent="space-between"
-          alignItems={{ xs: 'flex-start', sm: 'center' }}
           spacing={1}
-          mb={2}
-        >
+          sx={{
+            justifyContent: "space-between",
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            mb: 2
+          }}>
           <Typography variant="h6">Editar torneo</Typography>
           <Stack direction="row" spacing={1}>
             <Button variant="outlined" onClick={handleCancel} disabled={saving}>
@@ -348,7 +359,11 @@ const TournamentEditPage: React.FC = () => {
         </Stack>
 
         <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6
+            }}>
             <TextField
               fullWidth
               name="name"
@@ -359,7 +374,11 @@ const TournamentEditPage: React.FC = () => {
               disabled={!canEditMainFields}
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6
+            }}>
             <TextField
               select
               fullWidth
@@ -377,7 +396,7 @@ const TournamentEditPage: React.FC = () => {
             </TextField>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             <TextField
               fullWidth
               multiline
@@ -391,7 +410,11 @@ const TournamentEditPage: React.FC = () => {
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6
+            }}>
             <TextField
               fullWidth
               name="startDate"
@@ -399,11 +422,17 @@ const TournamentEditPage: React.FC = () => {
               type="date"
               label="Inicio"
               value={form.startDate}
-              InputLabelProps={{ shrink: true }}
               disabled
+              slotProps={{
+                inputLabel: { shrink: true }
+              }}
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6
+            }}>
             <TextField
               fullWidth
               name="teamRegistrationDeadline"
@@ -412,12 +441,18 @@ const TournamentEditPage: React.FC = () => {
               label="Cierre de inscripción"
               value={form.teamRegistrationDeadline}
               onChange={handleFormChange}
-              InputLabelProps={{ shrink: true }}
               disabled={!canEditRegistrationDeadline}
+              slotProps={{
+                inputLabel: { shrink: true }
+              }}
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6
+            }}>
             <TextField
               fullWidth
               name="minTeams"
@@ -429,7 +464,11 @@ const TournamentEditPage: React.FC = () => {
               disabled={!canEditMainFields}
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6
+            }}>
             <TextField
               fullWidth
               name="maxTeams"

@@ -12,8 +12,15 @@ export default function MedicalRecord() {
         justifyContent: 'center',
       }}
     >
-      <Box width="100%" maxWidth="lg" sx={{ p: 4 }}>
-        <Typography variant="h3" component="h1" fontWeight="bold" gutterBottom>
+      <Box
+        sx={{
+          width: "100%",
+          maxWidth: "lg",
+          p: 4
+        }}>
+        <Typography variant="h3" component="h1" gutterBottom sx={{
+          fontWeight: "bold"
+        }}>
           Ficha Médica
         </Typography>
         <Typography>

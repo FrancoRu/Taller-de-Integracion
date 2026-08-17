@@ -210,7 +210,9 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
         flex: 1,
         minWidth: 200,
         renderCell: params => (
-          <Stack direction="row" alignItems="center" spacing={1}>
+          <Stack direction="row" spacing={1} sx={{
+            alignItems: "center"
+          }}>
             <TeamLogo
               teamName={params.row.name}
               logoUrl={params.row.photoUrl}
@@ -302,10 +304,11 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
     <>
       <Stack
         direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={2}
-      >
+        sx={{
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2
+        }}>
         <Typography variant="h6">{title}</Typography>
         <NewEntityButton
           type="Cancha"
@@ -317,19 +320,23 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
         />
       </Stack>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{
+        mb: 2
+      }}>
         <TextField
           label="Nombre"
           name="name"
           size="small"
           value={filters.name ?? ''}
           onChange={handleFilterChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }
           }}
         />
 
@@ -339,12 +346,14 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
           size="small"
           value={filters.address ?? ''}
           onChange={handleFilterChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }
           }}
         />
       </Stack>

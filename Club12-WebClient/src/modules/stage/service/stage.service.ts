@@ -5,7 +5,7 @@ import {
   IPutStageRequest,
   IStageResponse,
   StageFiltered,
-} from '@/modules/stage/type/stage.d';
+} from '@/modules/stage/type/stage';
 import {
   sendDelete,
   sendGet,

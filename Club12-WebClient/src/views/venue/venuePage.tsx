@@ -43,7 +43,12 @@ const VenuePage: React.FC = () => {
     return (
       <Card>
         <CardContent>
-          <Stack alignItems="center" spacing={2} py={4}>
+          <Stack
+            spacing={2}
+            sx={{
+              alignItems: "center",
+              py: 4
+            }}>
             <CircularProgress />
             <Typography>Cargando cancha...</Typography>
           </Stack>
@@ -58,7 +63,9 @@ const VenuePage: React.FC = () => {
         <CardContent>
           <Stack spacing={2}>
             <Typography variant="h6">Cancha no encontrada</Typography>
-            <Typography color="text.secondary">
+            <Typography sx={{
+              color: "text.secondary"
+            }}>
               No se pudo obtener la información de la cancha solicitada.
             </Typography>
             <Box>
@@ -82,10 +89,11 @@ const VenuePage: React.FC = () => {
         <Stack spacing={2}>
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
-            alignItems={{ xs: 'flex-start', sm: 'center' }}
-            justifyContent="space-between"
             spacing={2}
-          >
+            sx={{
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              justifyContent: "space-between"
+            }}>
             <Typography variant="h5">{venue.name}</Typography>
             <Button
               variant="contained"
@@ -99,7 +107,9 @@ const VenuePage: React.FC = () => {
           <Divider />
 
           <Stack spacing={1}>
-            <Typography variant="subtitle2" color="text.secondary">
+            <Typography variant="subtitle2" sx={{
+              color: "text.secondary"
+            }}>
               Dirección
             </Typography>
             <Typography>{venue.address || '—'}</Typography>

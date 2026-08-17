@@ -95,12 +95,13 @@ export default function PrintableResultsSheet({
 
       <Box
         data-print="hide"
-        display="flex"
-        alignItems="center"
-        gap={2}
-        flexWrap="wrap"
-        sx={{ mb: 2 }}
-      >
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+          flexWrap: "wrap",
+          mb: 2
+        }}>
         <ToggleButtonGroup
           exclusive
           size="small"

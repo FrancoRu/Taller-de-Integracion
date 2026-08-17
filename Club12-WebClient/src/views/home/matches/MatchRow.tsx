@@ -20,10 +20,11 @@ function TeamSide({ name, logoUrl, align }: TeamSideProps) {
   const label = (
     <Typography
       variant="body2"
-      fontWeight={500}
       noWrap
-      sx={{ minWidth: 0 }}
-    >
+      sx={{
+        fontWeight: 500,
+        minWidth: 0
+      }}>
       {name}
     </Typography>
   );
@@ -31,10 +32,13 @@ function TeamSide({ name, logoUrl, align }: TeamSideProps) {
   return (
     <Stack
       direction={align === 'left' ? 'row' : 'row-reverse'}
-      alignItems="center"
       spacing={1}
-      sx={{ flex: 1, minWidth: 0, justifyContent: align === 'left' ? 'flex-start' : 'flex-end' }}
-    >
+      sx={{
+        alignItems: "center",
+        flex: 1,
+        minWidth: 0,
+        justifyContent: align === 'left' ? 'flex-start' : 'flex-end'
+      }}>
       {logo}
       {label}
     </Stack>
@@ -57,19 +61,29 @@ export default function MatchRow({ match }: { match: IMatchResponse }) {
         py: 1.25,
       }}
     >
-      <Typography variant="caption" color="text.secondary">
+      <Typography variant="caption" sx={{
+        color: "text.secondary"
+      }}>
         {formatTime(match.matchDate)}
       </Typography>
 
       <TeamSide name={home?.name ?? '—'} logoUrl={home?.logoUrl} align="right" />
 
-      <Box textAlign="center" sx={{ minWidth: 56 }}>
+      <Box
+        sx={{
+          textAlign: "center",
+          minWidth: 56
+        }}>
         {finished ? (
-          <Typography variant="body1" fontWeight="bold">
+          <Typography variant="body1" sx={{
+            fontWeight: "bold"
+          }}>
             {home?.score ?? 0} – {visitor?.score ?? 0}
           </Typography>
         ) : (
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             vs
           </Typography>
         )}
@@ -79,7 +93,9 @@ export default function MatchRow({ match }: { match: IMatchResponse }) {
 
       <Box sx={{ display: { xs: 'none', sm: 'flex' }, justifyContent: 'flex-end' }}>
         {match.venue ? (
-          <Typography variant="caption" color="text.secondary" noWrap>
+          <Typography variant="caption" noWrap sx={{
+            color: "text.secondary"
+          }}>
             {match.venue.name}
           </Typography>
         ) : (

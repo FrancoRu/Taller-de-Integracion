@@ -6,7 +6,7 @@ import {
   groupStagesByBracket,
   seriesToRepresentativeMatch,
 } from '@/modules/playoff/buildBracket';
-import { IStageResponse, StageType } from '@/modules/stage/type/stage.d';
+import { IStageResponse, StageType } from '@/modules/stage/type/stage';
 import { IMatchResponse } from '@/modules/match/type/match.d';
 import { ITeamMatchResponse } from '@/modules/team/type/team.d';
 import { IMatchSeriesResponse, ISeriesGameResponse } from '@/modules/matchSeries/type/matchSeries.d';

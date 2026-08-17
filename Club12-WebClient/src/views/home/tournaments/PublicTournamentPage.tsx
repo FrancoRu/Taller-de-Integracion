@@ -21,7 +21,7 @@ import { matchService } from '@/modules/match/service/match.service';
 import { matchSeriesService } from '@/modules/matchSeries/service/matchSeries.service';
 import { IDivisionResponse } from '@/modules/division/type/division';
 import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
-import { IStageResponse } from '@/modules/stage/type/stage.d';
+import { IStageResponse } from '@/modules/stage/type/stage';
 import { IMatchResponse } from '@/modules/match/type/match.d';
 import { stageLabel } from '@/modules/stage/utils/stageLabel';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
@@ -203,7 +203,12 @@ export default function PublicTournamentPage() {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" py={10}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          py: 10
+        }}>
         <CircularProgress />
       </Box>
     );
@@ -212,7 +217,9 @@ export default function PublicTournamentPage() {
   if (!tournament || tournament.id !== tournamentId) {
     return (
       <Container maxWidth="md" sx={{ py: 5 }}>
-        <Typography variant="h5" component="h1" mb={2}>Torneo no encontrado</Typography>
+        <Typography variant="h5" component="h1" sx={{
+          mb: 2
+        }}>Torneo no encontrado</Typography>
         <Button onClick={() => navigate(APP_ROUTES.publicTournaments)}>Volver a torneos</Button>
       </Container>
     );
@@ -234,17 +241,27 @@ export default function PublicTournamentPage() {
 
     if (sections.length === 0) {
       return (
-        <Typography color="text.secondary" mb={2}>
-          No hay partidos registrados en esta división.
-        </Typography>
+        <Typography
+          sx={{
+            color: "text.secondary",
+            mb: 2
+          }}>No hay partidos registrados en esta división.
+                  </Typography>
       );
     }
 
     return (
-      <Box display="flex" flexDirection="column" gap={3}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 3
+        }}>
         {sections.map(({ stage, matches: stageMatches }) => (
           <Box key={stage.id}>
-            <Typography variant="subtitle1" component="h3" mb={1.5}>
+            <Typography variant="subtitle1" component="h3" sx={{
+              mb: 1.5
+            }}>
               {stageLabel(stage)}
             </Typography>
             <MatchFixtureList matches={stageMatches} />
@@ -258,15 +275,29 @@ export default function PublicTournamentPage() {
     sections: DivisionSections,
     renderDivision: (division: IDivisionResponse) => React.ReactNode
   ) => (
-    <Box display="flex" flexDirection="column" gap={5}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 5
+      }}>
       {sections.zones.length > 0 && (
-        <Box display="flex" flexDirection="column" gap={4}>
-          <Typography variant="overline" color="text.secondary">
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 4
+          }}>
+          <Typography variant="overline" sx={{
+            color: "text.secondary"
+          }}>
             Divisiones
           </Typography>
           {sections.zones.map(division => (
             <Box key={division.id}>
-              <Typography variant="h6" component="h2" mb={2}>
+              <Typography variant="h6" component="h2" sx={{
+                mb: 2
+              }}>
                 {division.name}
               </Typography>
               {renderDivision(division)}
@@ -276,13 +307,22 @@ export default function PublicTournamentPage() {
       )}
 
       {sections.cups.length > 0 && (
-        <Box display="flex" flexDirection="column" gap={4}>
-          <Typography variant="overline" color="text.secondary">
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 4
+          }}>
+          <Typography variant="overline" sx={{
+            color: "text.secondary"
+          }}>
             Copa
           </Typography>
           {sections.cups.map(division => (
             <Box key={division.id}>
-              <Typography variant="h6" component="h2" mb={2}>
+              <Typography variant="h6" component="h2" sx={{
+                mb: 2
+              }}>
                 {division.name}
               </Typography>
               {renderDivision(division)}
@@ -299,10 +339,22 @@ export default function PublicTournamentPage() {
         ← Volver a torneos
       </Button>
 
-      <Typography variant="h4" component="h1" fontWeight="bold" mb={0.5}>
+      <Typography
+        variant="h4"
+        component="h1"
+        sx={{
+          fontWeight: "bold",
+          mb: 0.5
+        }}>
         {tournament.name}
       </Typography>
-      <Typography variant="subtitle1" component="p" color="text.secondary" mb={3}>
+      <Typography
+        variant="subtitle1"
+        component="p"
+        sx={{
+          color: "text.secondary",
+          mb: 3
+        }}>
         {STATUS_LABEL[status] ?? status}
       </Typography>
 
@@ -322,24 +374,50 @@ export default function PublicTournamentPage() {
 
       {tab === 'info' && (
         <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Typography variant="subtitle2" component="p" color="text.secondary">Descripción</Typography>
+          <Grid size={12}>
+            <Typography variant="subtitle2" component="p" sx={{
+              color: "text.secondary"
+            }}>Descripción</Typography>
             <Typography>{tournament.description || '—'}</Typography>
           </Grid>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="subtitle2" component="p" color="text.secondary">Fecha de inicio</Typography>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
+            <Typography variant="subtitle2" component="p" sx={{
+              color: "text.secondary"
+            }}>Fecha de inicio</Typography>
             <Typography>{formatDate(tournament.startDate)}</Typography>
           </Grid>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="subtitle2" component="p" color="text.secondary">Cierre de inscripción</Typography>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
+            <Typography variant="subtitle2" component="p" sx={{
+              color: "text.secondary"
+            }}>Cierre de inscripción</Typography>
             <Typography>{formatDate(tournament.teamRegistrationDeadline)}</Typography>
           </Grid>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="subtitle2" component="p" color="text.secondary">Equipos mínimos</Typography>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
+            <Typography variant="subtitle2" component="p" sx={{
+              color: "text.secondary"
+            }}>Equipos mínimos</Typography>
             <Typography>{tournament.minTeams}</Typography>
           </Grid>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="subtitle2" component="p" color="text.secondary">Equipos máximos</Typography>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
+            <Typography variant="subtitle2" component="p" sx={{
+              color: "text.secondary"
+            }}>Equipos máximos</Typography>
             <Typography>{tournament.maxTeams}</Typography>
           </Grid>
         </Grid>
@@ -347,11 +425,18 @@ export default function PublicTournamentPage() {
 
       {tab === 'posiciones' &&
         (standingsLoading ? (
-          <Box display="flex" justifyContent="center" py={5}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              py: 5
+            }}>
             <CircularProgress />
           </Box>
         ) : standings.length === 0 ? (
-          <Typography color="text.secondary">
+          <Typography sx={{
+            color: "text.secondary"
+          }}>
             No hay posiciones disponibles para este torneo.
           </Typography>
         ) : (
@@ -366,29 +451,40 @@ export default function PublicTournamentPage() {
 
       {tab === 'equipos' && (
         teamRows.length === 0 ? (
-          <Typography color="text.secondary">No hay equipos inscriptos en este torneo.</Typography>
+          <Typography sx={{
+            color: "text.secondary"
+          }}>No hay equipos inscriptos en este torneo.</Typography>
         ) : (
           <Grid container spacing={2}>
             {teamRows.map(team => (
-              <Grid item xs={12} sm={6} md={4} key={team.id}>
+              <Grid
+                key={team.id}
+                size={{
+                  xs: 12,
+                  sm: 6,
+                  md: 4
+                }}>
                 <Box
-                  display="flex"
-                  alignItems="center"
-                  gap={1.5}
+                  onClick={() => navigate(APP_ROUTES.publicTeam.build(team.id))}
                   sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
                     p: 1.5,
                     border: '1px solid',
                     borderColor: 'divider',
                     borderRadius: 1,
                     cursor: 'pointer',
-                    '&:hover': { bgcolor: 'action.hover' },
-                  }}
-                  onClick={() => navigate(APP_ROUTES.publicTeam.build(team.id))}
-                >
+                    '&:hover': { bgcolor: 'action.hover' }
+                  }}>
                   <TeamLogo teamName={team.name} logoUrl={team.logoUrl} size={36} />
                   <Box>
-                    <Typography variant="body2" fontWeight={500}>{team.name}</Typography>
-                    <Typography variant="caption" color="text.secondary">{team.threeLetterCode}</Typography>
+                    <Typography variant="body2" sx={{
+                      fontWeight: 500
+                    }}>{team.name}</Typography>
+                    <Typography variant="caption" sx={{
+                      color: "text.secondary"
+                    }}>{team.threeLetterCode}</Typography>
                   </Box>
                 </Box>
               </Grid>
@@ -399,11 +495,18 @@ export default function PublicTournamentPage() {
 
       {tab === 'partidos' &&
         (structuralLoading ? (
-          <Box display="flex" justifyContent="center" py={5}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              py: 5
+            }}>
             <CircularProgress />
           </Box>
         ) : structuralDivisions.length === 0 ? (
-          <Typography color="text.secondary">
+          <Typography sx={{
+            color: "text.secondary"
+          }}>
             No hay divisiones disponibles para este torneo.
           </Typography>
         ) : (
@@ -412,11 +515,18 @@ export default function PublicTournamentPage() {
 
       {tab === 'llaves' &&
         (structuralLoading ? (
-          <Box display="flex" justifyContent="center" py={5}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              py: 5
+            }}>
             <CircularProgress />
           </Box>
         ) : structuralDivisions.length === 0 ? (
-          <Typography color="text.secondary">
+          <Typography sx={{
+            color: "text.secondary"
+          }}>
             No hay divisiones disponibles para este torneo.
           </Typography>
         ) : (

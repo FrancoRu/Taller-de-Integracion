@@ -1,7 +1,7 @@
 import { GUID } from '@/modules/core/types/types';
 import { IAddTournamentRequest, ITournamentResponse } from '@/modules/tournament/type/tournament.d';
 import { AddDivisionRequest, IDivisionResponse } from '@/modules/division/type/division';
-import { IAddStageRequest, IStageResponse, StageType } from '@/modules/stage/type/stage.d';
+import { IAddStageRequest, IStageResponse, StageType } from '@/modules/stage/type/stage';
 import { CupConfig, STAGE_TYPE_LABELS, WizardState, ZoneConfig } from './types';
 import { resolveCrossCupTeamIds } from './wizardLogic';
 

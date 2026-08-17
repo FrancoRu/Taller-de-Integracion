@@ -229,7 +229,9 @@ const SidebarLayout: React.FC<{ children: React.ReactNode }> = ({
           component="div"
           noWrap
           color="primary"
-          fontWeight={700}
+          sx={{
+            fontWeight: 700
+          }}
         >
           Club 12
         </Typography>
