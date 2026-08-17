@@ -59,7 +59,7 @@ export default function MatchRow({ match }: { match: IMatchResponse }) {
       to={APP_ROUTES.publicMatch.build(match.id)}
       sx={{
         display: 'grid',
-        gridTemplateColumns: { xs: '40px 1fr auto 1fr auto', sm: '56px 1fr auto 1fr 140px' },
+        gridTemplateColumns: { xs: '56px 1fr auto 1fr', sm: '56px 1fr auto 1fr 140px' },
         alignItems: 'center',
         gap: { xs: 1, sm: 2 },
         px: 2,
@@ -104,7 +104,11 @@ export default function MatchRow({ match }: { match: IMatchResponse }) {
 
       <Stack
         spacing={0.5}
-        sx={{ alignItems: 'flex-end', justifyContent: 'center' }}
+        sx={{
+          display: { xs: 'none', sm: 'flex' },
+          alignItems: 'flex-end',
+          justifyContent: 'center',
+        }}
       >
         <Chip
           label={getMatchStatusLabel(finished)}

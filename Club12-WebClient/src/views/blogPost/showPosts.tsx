@@ -109,7 +109,12 @@ const ShowPosts: React.FC = () => {
                     component="img"
                     image={post.photoUrl}
                     alt={post.title}
-                    sx={{ height: CARD_IMAGE_HEIGHT, objectFit: 'cover' }}
+                    loading="lazy"
+                    sx={{
+                      height: CARD_IMAGE_HEIGHT,
+                      objectFit: 'cover',
+                      bgcolor: 'action.hover',
+                    }}
                   />
                 ) : (
                   <Box

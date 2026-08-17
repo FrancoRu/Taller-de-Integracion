@@ -209,7 +209,7 @@ export default function Home() {
             <Typography variant="h4" component="h2">
               Torneos destacados
             </Typography>
-            <Button component={Link} to={APP_ROUTES.publicTournaments} color="secondary">
+            <Button component={Link} to={APP_ROUTES.publicTournaments} color="primary">
               Ver todos
             </Button>
           </Box>
@@ -255,7 +255,7 @@ export default function Home() {
             <Typography variant="h4" component="h2">
               Últimas noticias
             </Typography>
-            <Button component={Link} to={APP_ROUTES.publicBlog} color="secondary">
+            <Button component={Link} to={APP_ROUTES.publicBlog} color="primary">
               Ver todas
             </Button>
           </Box>
