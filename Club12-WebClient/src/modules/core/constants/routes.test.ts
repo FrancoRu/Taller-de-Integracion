@@ -6,7 +6,7 @@ describe('routes', () => {
     expect(routes.tokenInvalido).toBe('/token-invalido');
   });
 
-  it('apiUrl still resolves to a non-empty string (existing entry unaffected)', () => {
-    expect(routes.apiUrl).toContain('/api');
+  it('apiUrl is the relative same-origin path /api (no hardcoded host)', () => {
+    expect(routes.apiUrl).toBe('/api');
   });
 });

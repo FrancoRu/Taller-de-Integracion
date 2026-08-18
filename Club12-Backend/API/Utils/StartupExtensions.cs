@@ -25,10 +25,12 @@ using Infrastructure.Storage;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -94,6 +96,43 @@ public static class StartupExtensions
         });
 
         return services;
+    }
+
+    /// <summary>
+    /// Registers the two container-probe health checks: "self" (tagged
+    /// "live") always reports Healthy with no dependency check, and "db"
+    /// (tagged "ready") probes ApplicationDBContext connectivity via
+    /// AddDbContextCheck, so a misconfigured/unreachable
+    /// ConnectionStrings__DbConnection surfaces as not-ready instead of
+    /// silently healthy.
+    /// </summary>
+    public static IServiceCollection AddHealthChecksConfig(this IServiceCollection services)
+    {
+        services.AddHealthChecks()
+                .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"])
+                .AddDbContextCheck<ApplicationDBContext>("db", tags: ["ready"]);
+        return services;
+    }
+
+    /// <summary>
+    /// Maps the two container-probe endpoints: `/health` (liveness — only
+    /// the "live"-tagged self check) and `/health/ready` (readiness — only
+    /// the "ready"-tagged DB check). Both are anonymous: no fallback
+    /// authorization policy exists, so this call is defensive.
+    /// </summary>
+    public static WebApplication MapHealthCheckEndpoints(this WebApplication app)
+    {
+        app.MapHealthChecks("/health", new HealthCheckOptions
+        {
+            Predicate = registration => registration.Tags.Contains("live"),
+        }).AllowAnonymous();
+
+        app.MapHealthChecks("/health/ready", new HealthCheckOptions
+        {
+            Predicate = registration => registration.Tags.Contains("ready"),
+        }).AllowAnonymous();
+
+        return app;
     }
 
     /// <summary>

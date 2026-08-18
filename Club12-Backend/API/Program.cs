@@ -26,6 +26,7 @@ builder.Services
     .AddEmailConfig(builder.Configuration)
     .AddIdentityConfig(builder.Configuration)
     .AddBackupConfig(builder.Configuration)
+    .AddHealthChecksConfig()
     .AddExceptionHandler<GlobalExceptionHandler>()
     .AddProblemDetails();
 
@@ -50,6 +51,7 @@ app.UseSwaggerConfig(builder.Environment)
     .UseLoggingToRequestContextMiddleware(builder.Configuration);
 
 app.MapControllers();
+app.MapHealthCheckEndpoints();
 
 app.LogStartupBanner();
 

@@ -1,5 +1,5 @@
 const routes = {
-  apiUrl: `https://localhost:${import.meta.env.VITE_BACKEND_PORT}/api`,
+  apiUrl: '/api',
 
   blogposts: 'blogposts',
   divisions: 'divisions',

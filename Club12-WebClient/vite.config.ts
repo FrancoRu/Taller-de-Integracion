@@ -20,6 +20,13 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: parseInt(env.VITE_PORT) || 5173,
+      proxy: {
+        '/api': {
+          target: `https://localhost:${env.VITE_BACKEND_PORT}`,
+          changeOrigin: true,
+          secure: false, // accept the .NET dev HTTPS certificate
+        },
+      },
     },
     test: {
       globals: true,

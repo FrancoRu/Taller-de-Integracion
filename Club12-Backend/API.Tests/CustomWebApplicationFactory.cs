@@ -112,6 +112,26 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         }
     }
 
+    /// <summary>
+    /// Test-only hook for readiness-check tests: closes the SQLite
+    /// connection backing ApplicationDBContext and repoints it at a
+    /// nonexistent path with `Mode=ReadWrite` (no auto-create), so any
+    /// subsequent reopen attempt fails with SQLITE_CANTOPEN instead of
+    /// silently succeeding. A plain Close()/Dispose() is not enough here:
+    /// unlike most ADO.NET providers, SqliteConnection happily reopens an
+    /// `:memory:` connection after Dispose() by creating a brand-new, empty
+    /// in-memory database — which would make CanConnectAsync report
+    /// "reachable" again instead of simulating a real outage. Call this
+    /// AFTER the host has booted (e.g. after CreateClient()) so schema
+    /// creation already ran against the original in-memory database.
+    /// </summary>
+    public void BreakDatabaseConnection()
+    {
+        _appConnection.Close();
+        _appConnection.ConnectionString =
+            "Data Source=./health-endpoint-tests-unreachable/does-not-exist.db;Mode=ReadWrite";
+    }
+
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);

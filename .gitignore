@@ -449,6 +449,10 @@ coverage/
 *.lcov.info
 
 # Environment variable files
+# `.env` (repo root) holds the real docker-compose secrets for deployment —
+# never commit it. `.env.example` is intentionally NOT matched by this
+# pattern (no trailing wildcard) and ships in the repo as a placeholder-only
+# template; see docker-compose.yml's `env_file: .env`.
 .env
 .env.*.local
 .env.local
