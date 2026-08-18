@@ -88,6 +88,9 @@ flowchart LR
 
 ## Cómo correrlo
 
+Para el despliegue automático a producción (GitHub Actions → GHCR → runners self-hosted), ver
+[DEPLOYMENT.md](./DEPLOYMENT.md).
+
 ### Requisitos
 
 - .NET 8 SDK
