@@ -40,4 +40,9 @@ public static class ConfigurationKeys
         public const string Section = "Backup";
         public const string Enabled = "Backup:Enabled";
     }
+
+    public static class Seed
+    {
+        public const string Enabled = "Seed:Enabled";
+    }
 }

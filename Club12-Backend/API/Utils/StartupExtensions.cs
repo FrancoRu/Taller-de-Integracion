@@ -73,6 +73,7 @@ public static class StartupExtensions
         }
         services.AddDbContext<ApplicationDBContext>(options => options.UseNpgsql(connectionString));
         services.AddScoped<IClub12DBContext, ApplicationDBContext>();
+        services.AddScoped<DataSeeder>();
 
         return services;
     }
@@ -111,6 +112,13 @@ public static class StartupExtensions
 
         IdentitySeeder seeder = scope.ServiceProvider.GetRequiredService<IdentitySeeder>();
         await seeder.SeedAsync();
+
+        IConfiguration configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        if (configuration.GetValue<bool>(ConfigurationKeys.Seed.Enabled))
+        {
+            DataSeeder dataSeeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
+            await dataSeeder.SeedAsync();
+        }
     }
 
     /// <summary>
