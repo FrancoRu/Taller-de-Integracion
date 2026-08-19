@@ -2,6 +2,7 @@ const routes = {
   apiUrl: '/api',
 
   blogposts: 'blogposts',
+  dataMaintenance: 'data-maintenance',
   divisions: 'divisions',
   stages: 'stages',
   matches: 'matches',

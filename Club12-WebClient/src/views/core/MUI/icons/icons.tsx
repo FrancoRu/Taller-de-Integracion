@@ -38,6 +38,7 @@ import InstagramIcon from '@mui/icons-material/Instagram';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
+import ScienceIcon from '@mui/icons-material/Science';
 
 export {
   DeleteIcon,
@@ -80,4 +81,5 @@ export {
   FacebookIcon,
   LightModeIcon,
   DarkModeIcon,
+  ScienceIcon,
 };
