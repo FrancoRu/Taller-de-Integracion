@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Box, Button, Card, CardContent, Stack, Typography } from '@mui/material';
+import { isAxiosError } from 'axios';
 import ScienceIcon from '@mui/icons-material/Science';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import { dataMaintenanceService } from '@/modules/dataMaintenance/service/dataMaintenance.service';
@@ -49,10 +50,13 @@ const TestDataPage: React.FC = () => {
         title: 'Datos de prueba cargados',
         text: `${response.data.tournaments} torneos, ${response.data.teams} equipos y ${response.data.players} jugadores creados.`,
       });
-    } catch {
+    } catch (error) {
+      const isConflict = isAxiosError(error) && error.response?.status === 409;
       await notifyError({
         title: 'No se pudieron cargar los datos de prueba',
-        text: 'Si la base ya tiene datos, borrala primero con "Borrar DB".',
+        text: isConflict
+          ? 'La base ya tiene datos. Borrala primero con "Borrar DB".'
+          : 'Volvé a intentar en unos segundos.',
       });
     } finally {
       setIsSeeding(false);

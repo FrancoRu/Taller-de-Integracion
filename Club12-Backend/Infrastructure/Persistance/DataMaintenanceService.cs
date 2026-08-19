@@ -68,8 +68,14 @@ public sealed class DataMaintenanceService(ApplicationDBContext db, ILogger<Data
 
             logger.LogInformation(
                 "Sample data wiped: {TournamentCount} tournaments, {DivisionCount} divisions, " +
-                "{TeamCount} teams, {PlayerCount} players, {MatchCount} matches, {BlogPostCount} blog posts.",
-                tournaments, divisions, teams, players, matches, blogPosts);
+                "{TeamCount} teams, {PlayerCount} players, {MatchCount} matches, {MatchSeriesCount} match series, " +
+                "{PlayerSanctionCount} player sanctions, {PlayerStatisticCount} player statistics, " +
+                "{ScorerCount} scorers, {StageTeamMatchCount} stage-team matches, " +
+                "{PlayerTeamRegistrationCount} player-team registrations, {StageCount} stages, " +
+                "{VenueCount} venues, {BlogPostCount} blog posts.",
+                tournaments, divisions, teams, players, matches, matchSeries,
+                playerSanctions, playerStatistics, scorers, stageTeamMatches,
+                playerTeamRegistrations, stages, venues, blogPosts);
 
             return new DataWipeResult(
                 Tournaments: tournaments,
@@ -89,7 +95,7 @@ public sealed class DataMaintenanceService(ApplicationDBContext db, ILogger<Data
         }
         catch
         {
-            await transaction.RollbackAsync(ct);
+            await transaction.RollbackAsync(CancellationToken.None);
             throw;
         }
     }

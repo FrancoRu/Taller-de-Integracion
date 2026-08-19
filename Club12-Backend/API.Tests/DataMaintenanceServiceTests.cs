@@ -189,6 +189,11 @@ public class DataMaintenanceServiceTests : IClassFixture<CustomWebApplicationFac
         Assert.Equal(2, tournaments.Count);
         Assert.NotEqual(tournaments[0].Name, tournaments[1].Name);
         Assert.NotEqual(tournaments[0].Slug, tournaments[1].Slug);
+
+        Assert.True(await db.Scorers.CountAsync() > 0);
+        Assert.True(await db.PlayersStatistics.CountAsync() > 0);
+        Assert.Equal(16, await db.StageTeamMatches.CountAsync());
+        Assert.True(await db.Matches.AnyAsync(m => m.IsFinished && m.HomeScore != null));
     }
 
     [Fact]
@@ -196,11 +201,13 @@ public class DataMaintenanceServiceTests : IClassFixture<CustomWebApplicationFac
     {
         using IServiceScope scope = _factory.Services.CreateScope();
         IDataMaintenanceService service = scope.ServiceProvider.GetRequiredService<IDataMaintenanceService>();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
 
         await service.WipeSampleDataAsync();
         await service.SeedSampleDataAsync();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.SeedSampleDataAsync());
+        Assert.Equal(2, await db.Tournaments.CountAsync());
     }
 
     [Fact]

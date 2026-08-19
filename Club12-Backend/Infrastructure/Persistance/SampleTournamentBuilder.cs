@@ -232,7 +232,7 @@ public static class SampleTournamentBuilder
                     ? finishedMatchesStart.AddDays(i * 7)
                     : upcomingMatchesStart.AddDays((i - finishedCount) * 7),
                 Type = MatchType.Regular,
-                Slug = SlugGenerator.GenerateSlug($"{home.Name}-vs-{visitor.Name}-{i}-{stage.Division!.Tournament!.Slug}"),
+                Slug = SlugGenerator.GenerateSlug($"{home.Name}-vs-{visitor.Name}-{i}"),
                 HomeTeam = home,
                 VisitorTeam = visitor,
                 IsFinished = isFinished,

@@ -1,7 +1,11 @@
 using Domain.Enums;
 
+using Infrastructure.Persistance;
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
 using System.Net;
-using System.Net.Http.Json;
 
 namespace API.Tests;
 
@@ -98,6 +102,9 @@ public class DataMaintenanceAuthorizationTests : IClassFixture<CustomWebApplicat
     {
         HttpClient client = _factory.CreateAuthenticatedClient(Roles.Admin);
 
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
         // Wipe first, same reasoning as Seed_AdminRole_Succeeds above —
         // guarantees the first seed call below actually starts empty
         // regardless of what other facts in this class already did.
@@ -107,5 +114,6 @@ public class DataMaintenanceAuthorizationTests : IClassFixture<CustomWebApplicat
         HttpResponseMessage response = await client.PostAsync("api/data-maintenance/seed", null);
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal(2, await db.Tournaments.CountAsync());
     }
 }
