@@ -165,4 +165,56 @@ public class DataMaintenanceServiceTests : IClassFixture<CustomWebApplicationFac
 
         return (1, 1, teamCount, playerCount, matchCount, result.Sanctions.Count);
     }
+
+    [Fact]
+    public async Task SeedSampleDataAsync_OnEmptyDatabase_Creates2DistinctTournaments()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        IDataMaintenanceService service = scope.ServiceProvider.GetRequiredService<IDataMaintenanceService>();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        await service.WipeSampleDataAsync();
+
+        DataSeedResult result = await service.SeedSampleDataAsync();
+
+        Assert.Equal(2, result.Tournaments);
+        Assert.Equal(4, result.Divisions);
+        Assert.Equal(16, result.Teams);
+        Assert.Equal(128, result.Players);
+        Assert.Equal(2, result.BlogPosts);
+        Assert.True(result.Matches > 0);
+        Assert.True(result.PlayerSanctions > 0);
+
+        List<Tournament> tournaments = await db.Tournaments.ToListAsync();
+        Assert.Equal(2, tournaments.Count);
+        Assert.NotEqual(tournaments[0].Name, tournaments[1].Name);
+        Assert.NotEqual(tournaments[0].Slug, tournaments[1].Slug);
+    }
+
+    [Fact]
+    public async Task SeedSampleDataAsync_OnNonEmptyDatabase_ThrowsInvalidOperationException()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        IDataMaintenanceService service = scope.ServiceProvider.GetRequiredService<IDataMaintenanceService>();
+
+        await service.WipeSampleDataAsync();
+        await service.SeedSampleDataAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.SeedSampleDataAsync());
+    }
+
+    [Fact]
+    public async Task WipeSampleDataAsync_ThenSeedSampleDataAsync_SucceedsAgain()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        IDataMaintenanceService service = scope.ServiceProvider.GetRequiredService<IDataMaintenanceService>();
+
+        await service.WipeSampleDataAsync();
+        await service.SeedSampleDataAsync();
+        await service.WipeSampleDataAsync();
+
+        DataSeedResult result = await service.SeedSampleDataAsync();
+
+        Assert.Equal(2, result.Tournaments);
+    }
 }
