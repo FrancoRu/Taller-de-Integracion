@@ -1,4 +1,7 @@
+using Application.Utils.Constants.Stage;
+using Application.Utils.Helper.Playoff;
 using Application.Utils.Helper.Slug;
+using Application.Utils.Helper.Standings;
 
 using Domain.Constants;
 using Domain.Entities.Models;
@@ -14,8 +17,9 @@ namespace Infrastructure.Persistance;
 /// Builds one fully-populated sample Tournament (divisions, teams, players,
 /// a group stage, round-robin matches with scores/scorers/statistics, and
 /// sanctions) from a declarative definition. Shared by the startup
-/// DataSeeder (one call, fixed definition) and DataMaintenanceService (two
-/// calls, two distinct definitions) so the construction logic exists once.
+/// DataSeeder (one call, fixed definition, no playoffs) and
+/// DataMaintenanceService (two calls, two distinct definitions, full
+/// group-to-final playoff bracket) so the construction logic exists once.
 /// </summary>
 public static class SampleTournamentBuilder
 {
@@ -59,8 +63,17 @@ public static class SampleTournamentBuilder
     /// <paramref name="playerCounter"/> is threaded through (and must keep
     /// incrementing) across multiple calls so player names/document numbers
     /// never collide between tournaments built in the same seeding run.
+    /// <paramref name="includePlayoffs"/> opts each division into a full
+    /// Group -> SemiFinal -> ThirdPlace -> Final bracket built from the
+    /// group stage's final standings; when false (the startup DataSeeder's
+    /// default) each division gets only its Group stage, unchanged from
+    /// the original behavior.
     /// </summary>
-    public static BuildResult Build(TournamentDefinition definition, List<Venue> venues, ref int playerCounter)
+    public static BuildResult Build(
+        TournamentDefinition definition,
+        List<Venue> venues,
+        ref int playerCounter,
+        bool includePlayoffs = false)
     {
         Tournament tournament = new()
         {
@@ -109,21 +122,15 @@ public static class SampleTournamentBuilder
                 Order = 0,
             };
             division.Stages.Add(stage);
-
-            foreach (Team team in teams)
-            {
-                stage.StageTeamMatches.Add(new StageTeamMatch
-                {
-                    CreatedBy = CreatedBy,
-                    StageId = Guid.Empty,
-                    Stage = stage,
-                    TeamId = Guid.Empty,
-                    Team = team,
-                });
-            }
+            AddStageTeamMatches(stage, teams);
 
             sanctions.AddRange(SeedRoundRobinMatches(
                 stage, teams, venues, definition.FinishedMatchesStart, definition.UpcomingMatchesStart));
+
+            if (includePlayoffs)
+            {
+                SeedPlayoffStages(division, stage, teams, venues);
+            }
         }
 
         return new BuildResult(tournament, sanctions);
@@ -151,6 +158,7 @@ public static class SampleTournamentBuilder
         {
             Team team = new()
             {
+                Id = Guid.NewGuid(),
                 CreatedBy = CreatedBy,
                 Name = teamNames[i],
                 Slug = SlugGenerator.GenerateSlug(teamNames[i]),
@@ -203,6 +211,15 @@ public static class SampleTournamentBuilder
         return (division, teams);
     }
 
+    /// <summary>
+    /// Builds a full round-robin of matches for <paramref name="teams"/>,
+    /// every one of them finished with a real, non-tied score (basketball
+    /// has no draws) so <see cref="PositionCalculator"/> can produce
+    /// complete, real standings once every group match has been played.
+    /// <paramref name="upcomingMatchesStart"/> is accepted for signature
+    /// stability with existing callers but is unused now that no match is
+    /// left upcoming.
+    /// </summary>
     private static List<PlayerSanction> SeedRoundRobinMatches(
         Stage stage, List<Team> teams, List<Venue> venues, DateTime finishedMatchesStart, DateTime upcomingMatchesStart)
     {
@@ -217,112 +234,294 @@ public static class SampleTournamentBuilder
             }
         }
 
-        int finishedCount = pairings.Count / 2;
+        int matchCount = pairings.Count;
 
         for (int i = 0; i < pairings.Count; i++)
         {
             (Team home, Team visitor) = pairings[i];
-            bool isFinished = i < finishedCount;
             Venue venue = venues[i % venues.Count];
+
+            // Alternating winner with a guaranteed positive margin: never a
+            // tie, regardless of how many matches the round-robin has.
+            bool homeWins = i % 2 == 0;
+            int winnerScore = 60 + ((i * 3) % 25);
+            int loserScore = winnerScore - (3 + (i % 5));
+            int homeScore = homeWins ? winnerScore : loserScore;
+            int visitorScore = homeWins ? loserScore : winnerScore;
 
             Match match = new()
             {
                 CreatedBy = CreatedBy,
-                MatchDate = isFinished
-                    ? finishedMatchesStart.AddDays(i * 7)
-                    : upcomingMatchesStart.AddDays((i - finishedCount) * 7),
+                MatchDate = finishedMatchesStart.AddDays(i * 7),
                 Type = MatchType.Regular,
                 Slug = SlugGenerator.GenerateSlug($"{home.Name}-vs-{visitor.Name}-{i}"),
                 HomeTeam = home,
+                HomeTeamId = home.Id,
                 VisitorTeam = visitor,
-                IsFinished = isFinished,
+                VisitorTeamId = visitor.Id,
+                HomeScore = homeScore,
+                VisitorScore = visitorScore,
+                IsFinished = true,
+                WinningTeam = homeWins ? home : visitor,
+                WinningTeamId = homeWins ? home.Id : visitor.Id,
                 Stage = stage,
                 Venue = venue,
                 PlayerStatistics = [],
                 Scorers = [],
             };
 
-            if (isFinished)
+            Player homeScorer = home.Players.ElementAt(i % home.Players.Count);
+            match.Scorers.Add(new Scorer
             {
-                int homeScore = 1 + ((i * 2) % 4);
-                int visitorScore = (i % 3);
-                match.HomeScore = homeScore;
-                match.VisitorScore = visitorScore;
-                if (homeScore != visitorScore)
-                {
-                    match.WinningTeam = homeScore > visitorScore ? home : visitor;
-                }
+                CreatedBy = CreatedBy,
+                PlayerId = Guid.Empty,
+                Player = homeScorer,
+                Points = homeScore,
+                MatchId = Guid.Empty,
+                Match = match,
+            });
+            match.PlayerStatistics.Add(new PlayerStatistic
+            {
+                CreatedBy = CreatedBy,
+                Value = 1,
+                PlayerId = Guid.Empty,
+                Player = homeScorer,
+                MatchId = Guid.Empty,
+                Match = match,
+                Type = StatisticType.Assists,
+            });
 
-                Player homeScorer = home.Players.ElementAt(i % home.Players.Count);
+            if (visitorScore > 0)
+            {
+                Player visitorScorer = visitor.Players.ElementAt(i % visitor.Players.Count);
                 match.Scorers.Add(new Scorer
                 {
                     CreatedBy = CreatedBy,
                     PlayerId = Guid.Empty,
-                    Player = homeScorer,
-                    Points = homeScore,
+                    Player = visitorScorer,
+                    Points = visitorScore,
                     MatchId = Guid.Empty,
                     Match = match,
                 });
-                match.PlayerStatistics.Add(new PlayerStatistic
+            }
+
+            if (i == 0 || i == matchCount - 1)
+            {
+                Team losingTeam = match.WinningTeam == home ? visitor : home;
+
+                Player sanctionedPlayer = losingTeam.Players.ElementAt((i + 1) % losingTeam.Players.Count);
+                sanctionedPlayer.IsSanctioned = true;
+
+                sanctions.Add(new PlayerSanction
                 {
                     CreatedBy = CreatedBy,
-                    Value = 1,
+                    Duration = 2,
+                    IssuedDate = match.MatchDate,
+                    Description = "Expulsión por doble amonestación.",
+                    Player = sanctionedPlayer,
                     PlayerId = Guid.Empty,
-                    Player = homeScorer,
-                    MatchId = Guid.Empty,
                     Match = match,
-                    Type = StatisticType.Assists,
+                    MatchId = Guid.Empty,
+                    Slug = SlugGenerator.GenerateSlug(
+                        $"{sanctionedPlayer.FirstName}-{sanctionedPlayer.LastName}-{match.Slug}"),
+                    AppealStatus = i == 0 ? SanctionAppealStatus.Pending : SanctionAppealStatus.None,
                 });
-
-                if (visitorScore > 0)
-                {
-                    Player visitorScorer = visitor.Players.ElementAt(i % visitor.Players.Count);
-                    match.Scorers.Add(new Scorer
-                    {
-                        CreatedBy = CreatedBy,
-                        PlayerId = Guid.Empty,
-                        Player = visitorScorer,
-                        Points = visitorScore,
-                        MatchId = Guid.Empty,
-                        Match = match,
-                    });
-                }
-
-                if (i == 0 || i == finishedCount - 1)
-                {
-                    Team losingTeam;
-                    if (match.WinningTeam is null)
-                    {
-                        losingTeam = visitor;
-                    }
-                    else
-                    {
-                        losingTeam = match.WinningTeam == home ? visitor : home;
-                    }
-
-                    Player sanctionedPlayer = losingTeam.Players.ElementAt((i + 1) % losingTeam.Players.Count);
-                    sanctionedPlayer.IsSanctioned = true;
-
-                    sanctions.Add(new PlayerSanction
-                    {
-                        CreatedBy = CreatedBy,
-                        Duration = 2,
-                        IssuedDate = match.MatchDate,
-                        Description = "Expulsión por doble amonestación.",
-                        Player = sanctionedPlayer,
-                        PlayerId = Guid.Empty,
-                        Match = match,
-                        MatchId = Guid.Empty,
-                        Slug = SlugGenerator.GenerateSlug(
-                            $"{sanctionedPlayer.FirstName}-{sanctionedPlayer.LastName}-{match.Slug}"),
-                        AppealStatus = i == 0 ? SanctionAppealStatus.Pending : SanctionAppealStatus.None,
-                    });
-                }
             }
 
             stage.Matches.Add(match);
         }
 
         return sanctions;
+    }
+
+    /// <summary>
+    /// Builds SemiFinal -> ThirdPlace -> Final stages for one division,
+    /// seeded from the (now fully finished) group stage's standings via the
+    /// same pure helpers the production automated-stage pipeline uses
+    /// (<see cref="PositionCalculator"/>, <see cref="PlayoffSeeder"/>).
+    /// Called directly instead of going through the tournament-level
+    /// automated-stage endpoint because that endpoint validates the whole
+    /// tournament's team count against 8/16/32/64, which doesn't fit this
+    /// seeder's 2-divisions-of-4 structure. With exactly 4 teams the
+    /// bracket is SemiFinal(2 matches) -> ThirdPlace(1) + Final(1); no
+    /// QuarterFinal, which only appears at 16+ teams.
+    /// </summary>
+    private static void SeedPlayoffStages(Division division, Stage groupStage, List<Team> teams, List<Venue> venues)
+    {
+        List<Position> standings = PositionCalculator.CalculatePositions(groupStage.Matches);
+        Dictionary<Guid, Team> teamsById = teams.ToDictionary(t => t.Id);
+        List<Guid> orderedTeamIds = [.. standings.Select(p => p.TeamId)];
+        List<(Guid HomeTeamId, Guid? VisitorTeamId)> semiFinalPairs = PlayoffSeeder.SeedPairs(orderedTeamIds);
+
+        Stage semiFinalStage = new()
+        {
+            CreatedBy = CreatedBy,
+            Name = StageTemplate.SemiFinal.Name,
+            StageType = StageType.SemiFinal,
+            IsActive = true,
+            IsElimination = true,
+            StartDate = groupStage.EndDate.AddDays(StageTemplate.StandardGapDays),
+            EndDate = groupStage.EndDate.AddDays(StageTemplate.StandardGapDays + StageTemplate.DurationDays),
+            DivisionId = Guid.Empty,
+            Division = division,
+            Matches = [],
+            Order = 1,
+        };
+        division.Stages.Add(semiFinalStage);
+        AddStageTeamMatches(semiFinalStage, teams);
+
+        List<Team> semiFinalWinners = [];
+        List<Team> semiFinalLosers = [];
+
+        for (int i = 0; i < semiFinalPairs.Count; i++)
+        {
+            (Guid homeId, Guid? visitorId) = semiFinalPairs[i];
+            Team home = teamsById[homeId];
+            Team visitor = teamsById[visitorId!.Value];
+
+            int homeScore = 78 + (i * 4);
+            int visitorScore = 65 + (i * 3);
+
+            Match match = BuildFinishedPlayoffMatch(
+                semiFinalStage, home, visitor, homeScore, visitorScore, venues,
+                semiFinalStage.StartDate.AddDays(i * 2), i);
+            semiFinalStage.Matches.Add(match);
+
+            semiFinalWinners.Add(match.WinningTeam!);
+            semiFinalLosers.Add(match.WinningTeam == home ? visitor : home);
+        }
+
+        Stage thirdPlaceStage = new()
+        {
+            CreatedBy = CreatedBy,
+            Name = StageTemplate.ThirdPlace.Name,
+            StageType = StageType.ThirdPlace,
+            IsActive = true,
+            IsElimination = true,
+            StartDate = semiFinalStage.EndDate.AddDays(StageTemplate.ThirdPlaceGapDays),
+            EndDate = semiFinalStage.EndDate.AddDays(StageTemplate.ThirdPlaceGapDays + StageTemplate.DurationDays),
+            DivisionId = Guid.Empty,
+            Division = division,
+            Matches = [],
+            Order = 2,
+        };
+        division.Stages.Add(thirdPlaceStage);
+        AddStageTeamMatches(thirdPlaceStage, semiFinalLosers);
+
+        Match thirdPlaceMatch = BuildFinishedPlayoffMatch(
+            thirdPlaceStage, semiFinalLosers[0], semiFinalLosers[1], 74, 61, venues,
+            thirdPlaceStage.StartDate, 0);
+        thirdPlaceStage.Matches.Add(thirdPlaceMatch);
+
+        Stage finalStage = new()
+        {
+            CreatedBy = CreatedBy,
+            Name = StageTemplate.Final.Name,
+            StageType = StageType.Final,
+            IsActive = true,
+            IsElimination = true,
+            StartDate = thirdPlaceStage.EndDate.AddDays(StageTemplate.StandardGapDays),
+            EndDate = thirdPlaceStage.EndDate.AddDays(StageTemplate.StandardGapDays + StageTemplate.DurationDays),
+            DivisionId = Guid.Empty,
+            Division = division,
+            Matches = [],
+            Order = 3,
+        };
+        division.Stages.Add(finalStage);
+        AddStageTeamMatches(finalStage, semiFinalWinners);
+
+        Match finalMatch = BuildFinishedPlayoffMatch(
+            finalStage, semiFinalWinners[0], semiFinalWinners[1], 82, 70, venues,
+            finalStage.StartDate, 0);
+        finalStage.Matches.Add(finalMatch);
+    }
+
+    private static void AddStageTeamMatches(Stage stage, List<Team> teams)
+    {
+        foreach (Team team in teams)
+        {
+            stage.StageTeamMatches.Add(new StageTeamMatch
+            {
+                CreatedBy = CreatedBy,
+                StageId = Guid.Empty,
+                Stage = stage,
+                TeamId = Guid.Empty,
+                Team = team,
+            });
+        }
+    }
+
+    /// <summary>
+    /// Builds one finished, decisive (never-tied) knockout Match with a
+    /// scorer/statistic for the winner and a scorer for the loser (when its
+    /// score is positive), mirroring <see cref="SeedRoundRobinMatches"/>'s
+    /// lightweight scoring pattern without duplicating every stat.
+    /// </summary>
+    private static Match BuildFinishedPlayoffMatch(
+        Stage stage, Team home, Team visitor, int homeScore, int visitorScore,
+        List<Venue> venues, DateTime matchDate, int venueIndex)
+    {
+        Venue venue = venues[venueIndex % venues.Count];
+        Team winner = homeScore > visitorScore ? home : visitor;
+        Team loser = winner == home ? visitor : home;
+
+        Match match = new()
+        {
+            CreatedBy = CreatedBy,
+            MatchDate = matchDate,
+            Type = MatchType.Playoff,
+            Slug = SlugGenerator.GenerateSlug($"{home.Name}-vs-{visitor.Name}-{stage.StageType}-{Guid.NewGuid()}"),
+            HomeTeam = home,
+            HomeTeamId = home.Id,
+            VisitorTeam = visitor,
+            VisitorTeamId = visitor.Id,
+            HomeScore = homeScore,
+            VisitorScore = visitorScore,
+            IsFinished = true,
+            WinningTeam = winner,
+            WinningTeamId = winner.Id,
+            Stage = stage,
+            Venue = venue,
+            PlayerStatistics = [],
+            Scorers = [],
+        };
+
+        Player winnerScorer = winner.Players.ElementAt(0);
+        match.Scorers.Add(new Scorer
+        {
+            CreatedBy = CreatedBy,
+            PlayerId = Guid.Empty,
+            Player = winnerScorer,
+            Points = winner == home ? homeScore : visitorScore,
+            MatchId = Guid.Empty,
+            Match = match,
+        });
+        match.PlayerStatistics.Add(new PlayerStatistic
+        {
+            CreatedBy = CreatedBy,
+            Value = 1,
+            PlayerId = Guid.Empty,
+            Player = winnerScorer,
+            MatchId = Guid.Empty,
+            Match = match,
+            Type = StatisticType.Assists,
+        });
+
+        int loserScore = loser == home ? homeScore : visitorScore;
+        if (loserScore > 0)
+        {
+            Player loserScorer = loser.Players.ElementAt(0);
+            match.Scorers.Add(new Scorer
+            {
+                CreatedBy = CreatedBy,
+                PlayerId = Guid.Empty,
+                Player = loserScorer,
+                Points = loserScore,
+                MatchId = Guid.Empty,
+                Match = match,
+            });
+        }
+
+        return match;
     }
 }

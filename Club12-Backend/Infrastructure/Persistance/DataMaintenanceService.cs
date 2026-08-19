@@ -150,8 +150,10 @@ public sealed class DataMaintenanceService(ApplicationDBContext db, ILogger<Data
             ]);
 
         int playerCounter = 0;
-        SampleTournamentBuilder.BuildResult result1 = SampleTournamentBuilder.Build(tournament1, venues, ref playerCounter);
-        SampleTournamentBuilder.BuildResult result2 = SampleTournamentBuilder.Build(tournament2, venues, ref playerCounter);
+        SampleTournamentBuilder.BuildResult result1 =
+            SampleTournamentBuilder.Build(tournament1, venues, ref playerCounter, includePlayoffs: true);
+        SampleTournamentBuilder.BuildResult result2 =
+            SampleTournamentBuilder.Build(tournament2, venues, ref playerCounter, includePlayoffs: true);
 
         db.Tournaments.Add(result1.Tournament);
         db.Tournaments.Add(result2.Tournament);

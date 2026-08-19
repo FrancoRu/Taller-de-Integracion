@@ -2,6 +2,7 @@ using Application.DTOs.DataMaintenance.Response;
 using Application.Interfaces.Services;
 
 using Domain.Entities.Models;
+using Domain.Enums;
 
 using Infrastructure.Persistance;
 
@@ -192,8 +193,125 @@ public class DataMaintenanceServiceTests : IClassFixture<CustomWebApplicationFac
 
         Assert.True(await db.Scorers.CountAsync() > 0);
         Assert.True(await db.PlayersStatistics.CountAsync() > 0);
-        Assert.Equal(16, await db.StageTeamMatches.CountAsync());
+        // 4 divisions x (4 group + 4 semifinal + 2 thirdplace + 2 final) StageTeamMatch rows.
+        Assert.Equal(48, await db.StageTeamMatches.CountAsync());
         Assert.True(await db.Matches.AnyAsync(m => m.IsFinished && m.HomeScore != null));
+    }
+
+    [Fact]
+    public async Task SeedSampleDataAsync_OnEmptyDatabase_EachDivisionGetsFullPlayoffBracket()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        IDataMaintenanceService service = scope.ServiceProvider.GetRequiredService<IDataMaintenanceService>();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        await service.WipeSampleDataAsync();
+        await service.SeedSampleDataAsync();
+
+        List<Division> divisions = await db.Divisions
+            .Include(d => d.Stages)
+            .ToListAsync();
+
+        Assert.Equal(4, divisions.Count);
+
+        StageType[] expectedStageTypes =
+            [StageType.Group, StageType.SemiFinal, StageType.ThirdPlace, StageType.Final];
+
+        foreach (Division division in divisions)
+        {
+            List<StageType> actualStageTypes = [.. division.Stages.Select(s => s.StageType)];
+            Assert.Equal(expectedStageTypes.Length, actualStageTypes.Count);
+            foreach (StageType expected in expectedStageTypes)
+            {
+                Assert.Contains(expected, actualStageTypes);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task SeedSampleDataAsync_OnEmptyDatabase_FinalMatchIsFinishedWithWinner()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        IDataMaintenanceService service = scope.ServiceProvider.GetRequiredService<IDataMaintenanceService>();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        await service.WipeSampleDataAsync();
+        await service.SeedSampleDataAsync();
+
+        List<Stage> finalStages = await db.Stages
+            .Where(s => s.StageType == StageType.Final)
+            .Include(s => s.Matches)
+            .ToListAsync();
+
+        Assert.Equal(4, finalStages.Count);
+
+        foreach (Stage finalStage in finalStages)
+        {
+            Match finalMatch = Assert.Single(finalStage.Matches);
+            Assert.True(finalMatch.IsFinished);
+            Assert.NotNull(finalMatch.WinningTeamId);
+        }
+    }
+
+    [Fact]
+    public async Task SeedSampleDataAsync_OnEmptyDatabase_EveryGroupStageMatchIsFinished()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        IDataMaintenanceService service = scope.ServiceProvider.GetRequiredService<IDataMaintenanceService>();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        await service.WipeSampleDataAsync();
+        await service.SeedSampleDataAsync();
+
+        List<Match> groupMatches = await db.Matches
+            .Where(m => m.Stage.StageType == StageType.Group)
+            .ToListAsync();
+
+        Assert.NotEmpty(groupMatches);
+        Assert.All(groupMatches, m => Assert.True(m.IsFinished));
+    }
+
+    [Fact]
+    public void Build_WithoutPlayoffs_ProducesOnlyGroupStagePerDivision()
+    {
+        List<Venue> venues =
+        [
+            new() { CreatedBy = "test", Name = "Cancha de prueba", Address = "Calle Falsa 123" },
+        ];
+
+        SampleTournamentBuilder.TournamentDefinition definition = new(
+            Name: "Torneo sin playoffs",
+            Description: "Fixture de prueba para el camino de arranque (DataSeeder) sin playoffs.",
+            TeamRegistrationDeadline: new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            StartDate: new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc),
+            StageStartDate: new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc),
+            StageEndDate: new DateTime(2026, 4, 1, 0, 0, 0, DateTimeKind.Utc),
+            FinishedMatchesStart: new DateTime(2026, 2, 8, 0, 0, 0, DateTimeKind.Utc),
+            UpcomingMatchesStart: new DateTime(2026, 3, 8, 0, 0, 0, DateTimeKind.Utc),
+            MinTeams: 4,
+            MaxTeams: 8,
+            Divisions:
+            [
+                new(
+                    "Primera",
+                    ["Equipo A", "Equipo B", "Equipo C", "Equipo D"],
+                    ["EQA", "EQB", "EQC", "EQD"],
+                    ["#111111", "#222222", "#333333", "#444444"]),
+                new(
+                    "Reserva",
+                    ["Equipo E", "Equipo F", "Equipo G", "Equipo H"],
+                    ["EQE", "EQF", "EQG", "EQH"],
+                    ["#555555", "#666666", "#777777", "#888888"]),
+            ]);
+
+        int playerCounter = 0;
+        SampleTournamentBuilder.BuildResult result = SampleTournamentBuilder.Build(definition, venues, ref playerCounter);
+
+        foreach (Division division in result.Tournament.Divisions)
+        {
+            Stage stage = Assert.Single(division.Stages);
+            Assert.Equal(StageType.Group, stage.StageType);
+        }
     }
 
     [Fact]
