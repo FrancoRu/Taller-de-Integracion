@@ -1,0 +1,30 @@
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+
+using System;
+
+#nullable disable
+
+namespace Infrastructure.Identity.Migrations;
+
+/// <inheritdoc />
+public partial class addDateCreatedForUsers : Migration
+{
+    /// <inheritdoc />
+    protected override void Up(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.AddColumn<DateTime>(
+            name: "DateCreated",
+            table: "AspNetUsers",
+            type: "timestamp with time zone",
+            nullable: false,
+            defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
+    }
+
+    /// <inheritdoc />
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.DropColumn(
+            name: "DateCreated",
+            table: "AspNetUsers");
+    }
+}

@@ -1,79 +1,81 @@
-﻿using Club12.API.Utils;
-using Entities;
-using Microsoft.EntityFrameworkCore;
-using Persistence;
+using API.BackgroundServices;
+using API.Utils;
+using API.Utils.Middlewares;
+
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
 using Serilog;
+
+using System;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-// Add Serilog logging  
-builder.Host.UseSerilog((context, configuration) =>
-    configuration.ReadFrom.Configuration(context.Configuration));
+builder.Host.AddSerilogConfig(builder.Configuration);
 
-builder.Services.AddAutoMapper(typeof(Program));
-builder.Services.AddScoped<IClub12DBContext, ApplicationDBContext>();
+builder.Services
+    .AddAutoMapper(cfg => { }, typeof(Program).Assembly)
+    .AddDbContextConfig(builder.Configuration)
+    .AddCorsConfig(builder.Configuration)
+    .RegisterScoped()
+    .RegisterSingletons()
+    .AddCustomAuthorization()
+    .AddCustomAuthentication(builder.Configuration)
+    .AddCustomSwagger(builder.Configuration)
+    .AddEmailConfig(builder.Configuration)
+    .AddIdentityConfig(builder.Configuration)
+    .AddBackupConfig(builder.Configuration)
+    .AddHealthChecksConfig()
+    .AddExceptionHandler<GlobalExceptionHandler>()
+    .AddProblemDetails();
 
-string? connectionString = builder.Configuration.GetConnectionString("DbConnection");
-string? jwtSecret = builder.Configuration.GetSection("JWT:Key").Value;
-
-if (jwtSecret is null)
-{
-    Log.Fatal("There wasn't a JWT Key in the appsettings.");
-    throw new ArgumentException("The JWT Key should be initialized already.");
-}
-
-if (connectionString is null)
-{
-    Log.Fatal("Connection string is missing. Using default or fallback connection string.");
-    throw new ArgumentException("The connection string should be initialized already.");
-}
-
-builder.Services.AddDbContext<ApplicationDBContext>(options => options.UseNpgsql(connectionString));
-
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(policy =>
-    {
-        policy.WithOrigins(builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()!)
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
-
-builder.Services.RegisterApplicationServices();
-builder.Services.AddCustomAuthorization();
-builder.Services.AddCustomAuthentication(builder.Configuration);
 builder.Services.AddControllers().AddCustomJsonOptions();
-builder.Services.AddCustomSwagger(builder.Configuration);
+
+if (builder.Configuration.GetValue<bool>(ConfigurationKeys.Backup.Enabled))
+{
+    builder.Services.AddHostedService(sp => sp.GetRequiredService<DatabaseBackupHostedService>());
+}
 
 WebApplication app = builder.Build();
 
-using (IServiceScope scope = app.Services.CreateScope())
-{
-    ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
-    db.Database.Migrate();
+await app.ExecuteMigrationsAndSeedAsync();
 
-    app.Services.EnsureAdminUserExists();
-}
+app.UseSwaggerConfig(builder.Environment)
+    .UseSerilogRequestLogging()
+    .UseCors()
+    .UseAuthentication()
+    .UseAuthorization()
+    .UseMiddleware<MustChangePasswordMiddleware>()
+    .UseExceptionHandlerConfig()
+    .UseLoggingToRequestContextMiddleware(builder.Configuration);
 
-if (!builder.Environment.IsProduction())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseSerilogRequestLogging();
-app.UseCors();
-app.UseAuthentication();
-app.UseAuthorization();
 app.MapControllers();
+app.MapHealthCheckEndpoints();
 
-app.UseStatusCodePages();
-app.UseExceptionHandler();
+app.LogStartupBanner();
 
-Log.Information("----- Starting up -----");
-Log.Information("\r\n                                                                \r\n  ####    ##       ##  ##   #####               ##      ####   \r\n ##  ##   ##       ##  ##   ##  ##             ###     ##  ##  \r\n ##       ##       ##  ##   #####               ##        ##   \r\n ##       ##       ##  ##   ##  ##              ##       ##    \r\n ##  ##   ##       ##  ##   ##  ##              ##      ##     \r\n  ####    ######   ######   #####             ######   ######  \r\n                                                               \r\n");
-Log.Information("----- Started     -----");
-Log.CloseAndFlush();
+try
+{
+    await app.RunAsync();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, LogMessages.TerminatedUnexpectedly);
+}
+finally
+{
+    await Log.CloseAndFlushAsync();
+}
 
-app.Run();
+/// <summary>
+/// Visibility-only shim: WebApplicationFactory&lt;Program&gt; (used by integration
+/// tests) requires the top-level Program class to be a public partial type.
+/// This adds no runtime behavior and does not alter any code path. The
+/// constructor is protected rather than the implicit public one so the
+/// type isn't mistaken for one meant to be instantiated directly.
+/// </summary>
+public partial class Program
+{
+    protected Program() { }
+}

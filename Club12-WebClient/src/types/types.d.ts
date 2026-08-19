@@ -1,3 +1,0 @@
-interface ProviderProps {
-	children: ReactNode
-}

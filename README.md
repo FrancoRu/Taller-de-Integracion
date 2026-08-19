@@ -1,89 +1,164 @@
-# Introducción
-El proyecto consiste en un sistema web basado en el modelo cliente-servidor. Este sistema está diseñado para ser multiusuario. Además, se implementa el patrón Modelo-Vista-Controlador (MVC) para organizar y estructurar de manera eficiente la lógica de la aplicación, la presentación de datos y el control de la interfaz de usuario.
+# Liga Club12
 
-## Justificación del Proyecto
+Sistema web de gestión integral para torneos de fútbol/básquet: equipos, jugadores, partidos, estadísticas, sanciones y usuarios, con un panel administrativo privado y una vista pública para los visitantes de la liga.
 
-### Justificación Técnica
-Dado que la infraestructura del proyecto es de naturaleza web y relativamente pequeña en cuanto a recursos de almacenamiento y operaciones, se implementará a través de un servidor web de terceros. Esto se debe a que el proyecto no requiere una infraestructura considerable para alojar y servir el sitio web.
+Proyecto desarrollado como Trabajo Práctico Integrador para la materia Taller de Integración.
 
-### Justificación Económica
-- No se requerirá comprar licencias costosas de software, ya que las tecnologías seleccionadas, C# y React, son de código abierto.
-- El precio del dominio para "ligaclub12.com.ar" es de $860 (ochocientos sesenta pesos argentinos), sin IVA, al año. (DonWeb 1)
-- Para el Hosting que ofrece el plan SINGLE para una sola web al valor de $3.300 (tres mil trescientos pesos argentinos) con 50 GB y un rendimiento estándar.
+## Qué hace el sistema
 
-### Justificación Operativa
-Desde el punto de vista de los usuarios, el sistema le ofrecerá una solución más eficiente, segura y versátil en comparación con el uso de planillas de Excel. Se anticipa una aceptación positiva al cambio, ya que el sistema mejorará significativamente la gestión de torneos de baloncesto. Se llevará a cabo una capacitación a los "usuarios administradores del sistema" como también a los "usuarios administradores del torneo", mostrando las funcionalidades que posee cada uno asegurando de que puedan utilizar el sistema de manera efectiva, facilitando así la transición y la adopción del nuevo sistema.
+Liga Club12 reemplaza la gestión manual del torneo (antes llevada en planillas) por un sistema centralizado con dos caras:
 
-## Conclusión
-En la organización ya existe la necesidad de implementar un sistema que les permita realizar de una manera eficiente la gestión del torneo. Además, están de acuerdo en cubrir los costos asociados a la implementación de este nuevo sistema, lo que lo hace una opción viable el desarrollo del mismo.
+- **Panel administrativo** (requiere login): alta, baja y modificación de jugadores, equipos, divisiones, torneos, canchas (venues), partidos y sanciones; generación automática de fixtures y llaves de eliminación; gestión de usuarios con roles; publicación de novedades (blog).
+- **Vista pública** (sin login): cualquier visitante puede consultar equipos, partidos, tabla de goleadores, torneos y sanciones vigentes, sin necesidad de crear una cuenta.
 
-# Metodología de Desarrollo
+### Funcionalidades principales
 
-Se optó por esta metodología debido a la descomposición del proyecto en módulos, lo que permitirá la distribución de tareas entre el equipo. Aun así, esta metodología será adaptada al proyecto ya que solo se cuenta con un equipo de 3 desarrolladores. Los sprints están definidos para durar 4 semanas cada uno, dando un total de 7 meses. Durante estos sprints, el desarrollo del Frontend y Backend se llevará a cabo de manera simultánea, junto con el desarrollo de la Base de Datos.
+| Módulo | Qué permite |
+|---|---|
+| **Torneos y divisiones** | Crear torneos, dividirlos en divisiones y generar automáticamente las etapas (grupos, cuartos, semifinal, tercer puesto, final) según la cantidad de equipos inscriptos (8/16/32/64). |
+| **Equipos y jugadores** | Alta/baja/modificación con filtros de búsqueda, registro de equipos a un torneo, validación de DNI único por jugador. |
+| **Partidos** | Generación automática de partidos de fase de grupos (round-robin) y de eliminación directa, carga de resultados, tabla de posiciones. |
+| **Llaves (bracket)** | Visualización pública de la fase eliminatoria (cuartos, semifinal, tercer puesto, final) como un árbol de llaves, con conectores entre rondas inferidos a partir del equipo ganador; si la inferencia es ambigua (partido sin jugar, datos incompletos), se degrada a una vista en columnas sin conectores en vez de mostrar una conexión incorrecta. |
+| **Estadísticas y goleadores** | Registro de estadísticas por jugador y tabla de goleadores por torneo/equipo. |
+| **Impresión** | Vista imprimible de la tabla de posiciones y de goleadores por división (impresión nativa del navegador, sin dependencias adicionales), pensada para que los organizadores repartan o publiquen resultados en papel. |
+| **Sanciones** | Registro de sanciones a jugadores con un flujo de apelación completo (pendiente → aceptada/rechazada). |
+| **Usuarios** | Registro, login (JWT), recuperación de contraseña, activación/desactivación de cuentas, roles (RBAC). |
+| **Blog** | Publicación de novedades/crónicas de partidos, visibles públicamente. |
+| **Copias de seguridad** | Respaldo automático programado de la base de datos (desactivado por defecto hasta validarse en el entorno real). |
 
-Cada Sprint se dividirá en 4 secciones, las cuales serán de documentación de manual, sobre qué debería hacer el software, implementación, testing y por último la generación de documentación técnica, con información del funcionamiento interno del módulo finalizado. A excepción del sprint 7 que se enfocará exclusivamente en actividades de integración, despliegue y documentación del manual.
+## Cómo lo hace (arquitectura)
 
-## Sprint 1 | 27/11/2023 - 24/12/2023
+El proyecto está dividido en dos aplicaciones independientes dentro del mismo repositorio, comunicadas por una API REST.
+
+```
+Club12/
+├── Club12-Backend/     .NET 8 · ASP.NET Core Web API
+└── Club12-WebClient/   React 18 · TypeScript · Vite
+```
+
+### Backend — Arquitectura Limpia (Clean Architecture)
+
+El backend está organizado en 4 capas, cada una en su propio proyecto de .NET, con las dependencias apuntando siempre hacia adentro:
+
+```
+API  →  Application  →  Domain
+              ↑
+       Infrastructure
+```
+
+- **`Domain`** — entidades y enums del negocio (`Team`, `Player`, `Match`, `Tournament`, `Stage`, `PlayerSanction`, etc.). No depende de ninguna otra capa.
+- **`Application`** — la lógica de negocio: servicios (`MatchService`, `StageService`, `TeamService`...), DTOs de entrada/salida, interfaces de repositorios y servicios. Solo depende de `Domain`.
+- **`Infrastructure`** — implementa las interfaces que define `Application`: acceso a datos con Entity Framework Core sobre PostgreSQL, autenticación con ASP.NET Identity, integración con Supabase (almacenamiento de imágenes y backups).
+- **`API`** — los controladores HTTP (delgados, sin lógica de negocio), la configuración de arranque, autenticación JWT, Swagger y el registro de dependencias.
+
+Esto permite que la lógica de negocio (`Application`/`Domain`) no dependa de detalles técnicos como la base de datos o el framework web, y que esos detalles se puedan cambiar sin tocar las reglas del negocio.
+
+**Stack**: .NET 8, ASP.NET Core, Entity Framework Core, PostgreSQL (Npgsql), ASP.NET Identity + JWT, AutoMapper, Serilog (logging estructurado), Swagger/Swashbuckle (documentación de la API), Supabase (storage).
+
+### Frontend — organización por dominio
+
+El frontend sigue una convención de módulos por dominio de negocio, en vez de organizar por tipo de archivo:
+
+```
+src/
+├── modules/{dominio}/     lógica: context, hook, service, tipos
+│   ├── context/           estado compartido (React Context)
+│   ├── hook/               hook de acceso al context
+│   ├── service/            llamadas HTTP a la API (Axios)
+│   └── type/               tipos TypeScript del dominio
+└── views/{dominio}/        páginas y componentes visuales de ese dominio
+```
+
+Cada uno de los 13 dominios (equipos, jugadores, partidos, torneos, divisiones, sanciones, estadísticas, goleadores, etapas, canchas, usuarios, autenticación, blog) repite este mismo patrón, lo que hace que el código sea predecible: para entender cualquier funcionalidad alcanza con mirar su carpeta.
+
+**Stack**: React 18, TypeScript, Vite, Material UI (MUI), TanStack Query (cacheo y sincronización de datos del servidor), React Router, Axios.
+
+### Diagrama de flujo general
+
+```mermaid
+flowchart LR
+    U[Usuario / Visitante] -->|HTTPS| FE[Frontend React]
+    FE -->|REST + JWT| API[API .NET]
+    API --> APP[Application]
+    APP --> DOM[Domain]
+    API --> INFRA[Infrastructure]
+    INFRA --> DB[(PostgreSQL)]
+    INFRA --> SB[(Supabase Storage)]
+```
+
+## Cómo correrlo
+
+Para el despliegue automático a producción (GitHub Actions → GHCR → runners self-hosted), ver
+[DEPLOYMENT.md](./DEPLOYMENT.md).
+
+### Requisitos
+
+- .NET 8 SDK
+- Node.js 18+ y npm
+- Una base de datos PostgreSQL (local o en la nube)
+
+### Backend
+
+```bash
+cd Club12-Backend
+
+# restaurar dependencias
+dotnet restore Solution/Club12.sln
+
+# configurar la cadena de conexión, JWT, SMTP y Supabase
+# (copiar API/appsettings.json a API/appsettings.Development.json y completar los valores)
+
+# ejecutar la API (aplica las migraciones automáticamente al iniciar)
+dotnet run --project API
+```
+
+La API queda disponible con Swagger UI para explorar y probar todos los endpoints documentados.
 
 ### Frontend
-- **Diseño de Interfaz:** Durante esta etapa, se llevará a cabo la definición de la apariencia visual y la estructura general de la interfaz de usuario del sistema. Esto comprenderá la creación del esquema de la página, la elaboración de prototipos y la selección de paleta de colores y tipografía.
 
-### Backend
-- **Definición de Entidades:** En esta fase, se establecerán las entidades y modelos de datos que representarán las diferentes estructuras de información del sistema.
-- **Gestión de Base de Datos - Creación:** Implementación y configuración de las tablas necesarias para asegurar el correcto funcionamiento del sitio web.
+```bash
+cd Club12-WebClient
+pnpm install
+pnpm run dev
+```
 
-## Sprint 2 | 08/01/2024 - 04/02/2024
+### Tests
 
-### Frontend
-- **Desarrollo de Componentes en React:** Se crearán componentes reutilizables en React para integrar la interfaz de usuario.
+```bash
+# backend — xUnit + WebApplicationFactory
+dotnet test Club12-Backend/Solution/Club12.sln
 
-### Backend
-- **Implementación de Medidas de Seguridad:** Establecimiento de medidas de seguridad para prevenir la inyección de SQL.
-- **Creación de la Base de Datos - Seguridad:** Desarrollo de vistas que simplificarán el acceso a datos específicos y consultas complejas, mejorando la interacción con la base de datos.
+# frontend — Vitest + Testing Library
+cd Club12-WebClient && pnpm run test
+```
 
-## Sprint 3 | 05/02/2024 - 03/03/2024
+## Estado del proyecto
 
-### Frontend
-- **Rutas de Navegación:** Implementación de las rutas que permiten la navegación entre las diversas vistas de la aplicación.
+- **Backend**: build sin errores ni advertencias (`dotnet build`), 121 tests automatizados en verde.
+- **Frontend**: sin errores de lint, 73 tests automatizados en verde. Tema visual "modern sport" (paleta navy + naranja, tipografía Oswald/Roboto, tablas estilo marcador deportivo).
+- **Versión**: 1.0.0 en ambos proyectos.
 
-### Backend
-- **Configuración de API:** Configuración de la información en la API, incluyendo la gestión de entornos y bases de datos.
-- **Gestión de Usuarios:** Desarrollo de funciones relacionadas con la gestión de usuarios y visualización de perfiles de usuario.
+## ¿Se cubren todos los requisitos?
 
-## Sprint 4 | 04/03/2024 - 31/03/2024
+Comparando el sistema contra los dos informes de requerimientos del proyecto (Taller Integral y Taller de Integración):
 
-### Frontend
-- **Persistencia de Contexto:** Configuración del contexto y el estado global de la aplicación para gestionar la información compartida entre distintos componentes de manera eficiente.
+| Requisito funcional | Estado |
+|---|---|
+| Gestión de jugadores | ✅ Completo |
+| Gestión de equipos | ✅ Completo |
+| Registro de sanciones | ✅ Completo (con flujo de apelación, va más allá de lo pedido) |
+| Registro de estadísticas | ✅ Completo |
+| Gestión de usuarios (RBAC, recuperación de contraseña) | ✅ Completo (incluye funciones adicionales: activar/desactivar cuentas) |
+| Visualización pública para visitantes | ✅ Completo |
+| Creación de copias de seguridad | ✅ Implementado (queda desactivado por defecto hasta validarse contra el entorno real de despliegue) |
 
-### Backend
-- **Gestión de Jugadores:** Desarrollo de funciones relacionadas con la gestión de jugadores, incluyendo operaciones de alta, baja y modificación de la información de los jugadores.
-- **Gestión de Equipos:** Implementación de funciones destinadas a la gestión de equipos, comprendiendo operaciones de alta, baja y modificación de datos relacionados con los equipos.
+**Requisitos no funcionales**:
 
-## Sprint 5 | 01/04/2024 - 28/04/2024
+- Diseño adaptativo (responsive) — ✅ implementado en todas las vistas.
+- Seguridad (roles, prevención de inyección SQL vía EF Core, JWT) — ✅ implementado.
+- Testing (pruebas unitarias e integración, comprometido para el Sprint 7) — ✅ cumplido (163 tests entre ambos proyectos).
+- Documentación técnica — ✅ Swagger para la API, este README para arquitectura y uso.
+- Documentación de manual de usuario — ✅ ver [MANUAL_USUARIO.md](./MANUAL_USUARIO.md).
+- Rendimiento y escalabilidad — no verificado formalmente (requeriría pruebas de carga, fuera del alcance actual).
 
-### Frontend
-- **Servicios de Comunicación:** Desarrollo de los servicios que permitan la comunicación con la API. Implementación de funcionalidades para la gestión de información compartida entre diferentes componentes del sistema.
-
-### Backend
-- **Gestión de Estadísticas:** Desarrollo de funciones relacionadas con la gestión de estadísticas. Operaciones de alta, baja y modificación de la información estadística.
-- **Gestión de Sanciones:** Desarrollo de funciones relacionadas con la gestión de sanciones, abarcando operaciones de alta, baja y modificación de la información de sanciones en el sistema.
-
-## Sprint 6 | 29/04/2024 - 26/05/2024
-
-### Backend
-- **Gestión de Partidos:** Implementación de funciones relacionadas con la administración de partidos. Operaciones de alta, baja y modificación de información relacionada con los partidos.
-- **Gestión de Torneos:** Desarrollo de funciones relacionadas con la administración de torneos, comprendiendo operaciones de alta, baja y modificación de datos relacionados con los torneos.
-- **Integración:** Integración de los módulos desarrollados hasta el sprint anterior. Despliegue parcial de la aplicación consolidando las funcionalidades implementadas hasta el momento.
-
-## Sprint 7 | 27/05/2024 - 23/06/2024
-
-### Integración
-- **Integración Total:** Integración completa de todos los módulos desarrollados, permitiendo desplegar el sistema en su totalidad.
-
-### Testing
-- Pruebas unitarias e integración para verificar el correcto funcionamiento del módulo desarrollado.
-- Generación de documentación detallada con informe completo de los resultados obtenidos durante las pruebas.
-
-### Documentación
-- **Documentación de manual:** Instrucciones detalladas, consejos y ejemplos para que los usuarios comprendan y utilicen el software eficientemente.
-- **Documentación técnica:** Visión detallada y técnica de todo el sistema. Arquitectura, diseño, interfaces de programación, estructuras de datos y controladores.
+En resumen: **los siete requisitos funcionales están cubiertos**, varios de ellos con funcionalidad adicional a la pedida originalmente (blog de novedades, generación automática de fixtures, workflow de apelación de sanciones). El único punto no verificado formalmente es el rendimiento bajo carga, que es una prueba operativa, no una funcionalidad faltante.

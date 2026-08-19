@@ -1,52 +1,105 @@
-﻿using Entities.DTOs.User;
-using Entities.Models.UserEntity;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Services.Auth;
-using Services.Services.UserService;
+﻿using API.Utils.Helpers;
 
-namespace Club12.API.Controllers;
+using Application.DTOs.Abstract.Response;
+using Application.DTOs.User.Request;
+using Application.DTOs.User.Response;
+using Application.Interfaces.Services;
+
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace API.Controllers;
 
 /// <summary>
-/// Controller for managing users.
+/// User management endpoints (CRUD + logout).
+/// Access rules are enforced in IUserManagementService.
 /// </summary>
-/// <remarks>
-/// Initializes a new instance of the <see cref="UserController"/> class.
-/// </remarks>
-/// <param name="_userService">The user service.</param>
-/// <param name="_authService">The auth service.</param>
-[Authorize(Roles = "SuperAdmin")]
 [ApiController]
-[Route("api/users/")]
+[Route("api/users")]
+[Authorize]
 public class UserController(
-    IUserService _userService,
-    IAuthService _authService
-    ) : ControllerBase
+    IUserManagementService userManagementService) : ControllerBase
 {
-
-    /// <summary>
-    /// Logs in a user and generates a JWT token.
-    /// </summary>
-    /// <param name="userLoginRequest">The user login request.</param>
-    /// <returns>
-    /// Returns 200 (Ok) with the generated JWT token if the login is successful.
-    /// Returns 401 (Unauthorized) if the credentials are invalid.
-    /// </returns>
-    [AllowAnonymous]
-    [HttpPost("login")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public IActionResult Login(LogInUserRequest userLoginRequest)
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<UserResponse>))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<PaginatedResponse<UserResponse>>> GetAll(
+        [FromQuery] UserFilteredRequest filter, CancellationToken ct)
     {
-        User? user = _userService.GetUserByUserNameAsync(userLoginRequest.Username);
+        (string? role, Guid id) = User.GetCallerClaims();
+        return Ok(await userManagementService.GetAllAsync(role, id, filter, ct));
+    }
 
-        if (user == null || !_userService.ValidateCredentials(user, userLoginRequest.Password))
-        {
-            return Unauthorized("Invalid credentials");
-        }
+    [HttpGet("{userId:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserResponse))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UserResponse>> GetById(Guid userId, CancellationToken ct)
+    {
+        (string? role, Guid id) = User.GetCallerClaims();
+        return Ok(await userManagementService.GetByIdAsync(role, id, userId, ct));
+    }
 
-        TokenResponse token = _authService.GenerateJwtToken(user);
+    [HttpPut("{userId:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserResponse))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UserResponse>> Update(
+        Guid userId, [FromBody] UpdateUserRequest request, CancellationToken ct)
+    {
+        (string? role, Guid id) = User.GetCallerClaims();
+        return Ok(await userManagementService.UpdateAsync(role, id, userId, request, ct));
+    }
 
-        return Ok(token);
+    [HttpPut("{userId:guid}/password")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ChangePassword(
+        Guid userId, [FromBody] ChangePasswordRequest request, CancellationToken ct)
+    {
+        (string? role, Guid id) = User.GetCallerClaims();
+        await userManagementService.ChangePasswordAsync(role, id, userId, request, ct);
+        return NoContent();
+    }
+
+    [HttpPost("{userId:guid}/password/reset")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResetPasswordResponse))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ResetPasswordResponse>> ResetPassword(
+        Guid userId, CancellationToken ct)
+    {
+        (string? role, Guid id) = User.GetCallerClaims();
+        return Ok(await userManagementService.ResetPasswordAsync(role, id, userId, ct));
+    }
+
+    [HttpDelete("{userId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(Guid userId, CancellationToken ct)
+    {
+        (string? role, Guid id) = User.GetCallerClaims();
+        await userManagementService.DeleteAsync(role, id, userId, ct);
+        return NoContent();
+    }
+
+    [HttpPut("{userId:guid}/active")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UserResponse>> SetActive(
+        Guid userId, [FromBody] SetUserActiveRequest request, CancellationToken ct)
+    {
+        (string? role, Guid id) = User.GetCallerClaims();
+        return Ok(await userManagementService.SetActiveAsync(role, id, userId, request.IsActive, ct));
     }
 }

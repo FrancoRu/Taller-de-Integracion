@@ -1,75 +1,54 @@
-﻿using Entities;
-using Entities.Models.BlogPostEntity;
-using Entities.Models.DivisionEntity;
-using Entities.Models.MatchEntity;
-using Entities.Models.PlayerEntity;
-using Entities.Models.PlayerSanctionEntity;
-using Entities.Models.PlayerStatisticEntity;
-using Entities.Models.StaffEntity;
-using Entities.Models.StaffEnum;
-using Entities.Models.TeamEntity;
-using Entities.Models.TournamentEntity;
-using Entities.Models.UserEntity;
-using Entities.Models.VenueEntity;
+﻿using Domain.Entities.Models;
+
+using Infrastructure.Persistance.Converters;
 
 using Microsoft.EntityFrameworkCore;
 
-using MatchType = Entities.Models.MatchTypeEnum.MatchType;
+using System;
 
-namespace Persistence;
+namespace Infrastructure.Persistance;
 
 /// <summary>
-/// This is a placeholder interface that inherits from all domain DBContext interfaces.
+/// Application's main EF Core database context.
+/// All entity mappings are defined in Infrastructure.Persistance.Configurations
+/// and applied via ModelBuilder.ApplyConfigurationsFromAssembly.
 /// </summary>
-internal interface IDomainDBContexts : IClub12DBContext
+public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options)
+    : DbContext(options), IClub12DBContext
 {
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        configurationBuilder
+            .Properties<DateTime>()
+            .HaveColumnType("timestamp without time zone")
+            .HaveConversion<UtcDateTimeConverter>();
 
-}
+        configurationBuilder
+            .Properties<DateTime?>()
+            .HaveColumnType("timestamp without time zone")
+            .HaveConversion<NullableUtcDateTimeConverter>();
 
-public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options) : DbContext(options), IDomainDBContexts
-{
+        base.ConfigureConventions(configurationBuilder);
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Match>()
-            .Property(match => match.Type)
-            .HasConversion(
-                value => value.ToString(),
-                value => (MatchType) Enum.Parse(typeof(MatchType), value));
-
-        modelBuilder.Entity<Staff>()
-            .Property(staff => staff.Type)
-            .HasConversion(
-                value => value.ToString(),
-                value => (StaffType) Enum.Parse(typeof(StaffType), value));
-
-        modelBuilder.Entity<Team>()
-            .HasMany(team => team.Players)
-            .WithOne(player => player.Team)
-            .HasForeignKey(player => player.TeamId)
-            .OnDelete(DeleteBehavior.Cascade);
-
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDBContext).Assembly);
         base.OnModelCreating(modelBuilder);
     }
 
-    public virtual DbSet<Team> Teams { get; set; }
-
-    public virtual DbSet<Player> Players { get; set; }
-
-    public virtual DbSet<Tournament> Tournaments { get; set; }
-
-    public virtual DbSet<Division> Divisions { get; set; }
-
-    public virtual DbSet<Match> Matches { get; set; }
-
-    public virtual DbSet<PlayerStatistic> PlayersStatistics { get; set; }
-
-    public virtual DbSet<PlayerSanction> PlayerSanctions { get; set; }
-
-    public virtual DbSet<User> Users { get; set; }
-
-    public virtual DbSet<Venue> Venues { get; set; }
-
-    public virtual DbSet<BlogPost> BlogPosts { get; set; }
-
-    public virtual DbSet<Staff> Staffs { get; set; }
+    public virtual required DbSet<Team> Teams { get; set; }
+    public virtual required DbSet<Player> Players { get; set; }
+    public virtual required DbSet<Tournament> Tournaments { get; set; }
+    public virtual required DbSet<Division> Divisions { get; set; }
+    public virtual required DbSet<Match> Matches { get; set; }
+    public virtual required DbSet<MatchSeries> MatchSeries { get; set; }
+    public virtual required DbSet<PlayerStatistic> PlayersStatistics { get; set; }
+    public virtual required DbSet<PlayerSanction> PlayerSanctions { get; set; }
+    public virtual required DbSet<Venue> Venues { get; set; }
+    public virtual required DbSet<BlogPost> BlogPosts { get; set; }
+    public virtual required DbSet<Stage> Stages { get; set; }
+    public virtual required DbSet<StageTeamMatch> StageTeamMatches { get; set; }
+    public virtual required DbSet<Scorer> Scorers { get; set; }
+    public virtual required DbSet<PlayerTeamRegistration> PlayerTeamRegistrations { get; set; }
 }

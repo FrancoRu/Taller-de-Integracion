@@ -3,6 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+# CodeGraph local index (per-machine, not shared)
+.codegraph/
+
 # User-specific files
 *.rsuser
 *.suo
@@ -256,6 +259,16 @@ Generated_Code/
 # because we have git ;-)
 _UpgradeReport_Files/
 Backup*/
+# NOTE: Backup*/ above targets old VS-upgrade backup folders, but it also
+# matches the legitimate `Backup` source namespaces added by the
+# scheduled-database-backups SDD change (design.md requires these exact
+# folder names for the reflection-scan-collision reason documented there).
+# Un-ignore them explicitly rather than weakening the upstream rule.
+!Club12-Backend/Application/Backup/
+!Club12-Backend/Application/Interfaces/Backup/
+!Club12-Backend/Infrastructure/Backup/
+!Club12-Backend/API.Tests/Backup/
+!Club12-Backend/API.Tests/Backup/Fakes/
 UpgradeLog*.XML
 UpgradeLog*.htm
 ServiceFabricBackup/
@@ -436,6 +449,10 @@ coverage/
 *.lcov.info
 
 # Environment variable files
+# `.env` (repo root) holds the real docker-compose secrets for deployment —
+# never commit it. `.env.example` is intentionally NOT matched by this
+# pattern (no trailing wildcard) and ships in the repo as a placeholder-only
+# template; see docker-compose.yml's `env_file: .env`.
 .env
 .env.*.local
 .env.local
@@ -459,3 +476,17 @@ Thumbs.db
 appsettings.Facundo.json
 appsettings.Franco.json
 appsettings.Tomi.json
+/Club12-Backend/API/appsettings.Franco.Development.json
+/Club12-Backend/API/appsettings.Tomas.json
+
+# Academic/internal reports (not meant to be published in the repo)
+*.pdf
+
+# Local tooling cache
+.atl/
+/Club12-Backend/API/appsettings.Facundo.json
+
+# Playwright E2E artifacts
+/Club12-WebClient/test-results/
+/Club12-WebClient/playwright-report/
+/Club12-WebClient/blob-report/

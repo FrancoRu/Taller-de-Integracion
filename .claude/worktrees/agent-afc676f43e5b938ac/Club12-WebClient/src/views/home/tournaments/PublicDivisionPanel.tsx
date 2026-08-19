@@ -1,0 +1,276 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import {
+  Box,
+  CircularProgress,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tabs,
+  Typography,
+} from '@mui/material';
+import { GUID } from '@/modules/core/types/types';
+import { TAB_CONTENT_MIN_HEIGHT } from '@/modules/core/constants/constants';
+import { IDivisionResponse } from '@/modules/division/type/division';
+import { IScorerByPlayerResponse } from '@/modules/scorer/type/scorer.d';
+import { scorerService } from '@/modules/scorer/service/scorer.service';
+import { stageService } from '@/modules/stage/service/stage.service';
+import { matchService } from '@/modules/match/service/match.service';
+import { matchSeriesService } from '@/modules/matchSeries/service/matchSeries.service';
+import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
+import { IStageResponse } from '@/modules/stage/type/stage';
+import { IMatchResponse } from '@/modules/match/type/match.d';
+import { buildBrackets } from '@/modules/playoff/buildBracket';
+import { BracketGroup } from '@/modules/playoff/type/bracket.d';
+import { stageLabel } from '@/modules/stage/utils/stageLabel';
+import DivisionStandings from '@/views/division/divisionStandings';
+import MatchFixtureList from '@/views/home/matches/MatchFixtureList';
+import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
+
+const FETCH_PAGE_SIZE = 100;
+const STAGE_NAME_DIVISION_SEPARATOR = ' - ';
+const DEFAULT_SUB_TAB: DivisionSubTab = 'posiciones';
+const VIEW_QUERY_PARAM = 'view';
+
+type DivisionSubTab = 'posiciones' | 'goleadores' | 'partidos' | 'llaves';
+
+interface PublicDivisionPanelProps {
+  division: IDivisionResponse;
+}
+
+/**
+ * Stage names follow a "{Division} - {Specific}" convention (e.g.
+ * "Copa Club12 - ZONA 3"). We're already inside that division's tab, so
+ * strip the redundant prefix and show the specific part — this is what
+ * distinguishes stages sharing the same type (e.g. a cup division with
+ * several parallel group stages, all "Group" type with no bracketName,
+ * which stageLabel() alone can't tell apart).
+ */
+const stageSectionLabel = (stage: IStageResponse, divisionName: string): string => {
+  const prefix = `${divisionName}${STAGE_NAME_DIVISION_SEPARATOR}`;
+  return stage.name.startsWith(prefix) ? stage.name.slice(prefix.length) : stageLabel(stage);
+};
+
+const VALID_SUB_TABS: readonly DivisionSubTab[] = ['posiciones', 'goleadores', 'partidos', 'llaves'];
+const isDivisionSubTab = (value: string | null): value is DivisionSubTab =>
+  VALID_SUB_TABS.includes(value as DivisionSubTab);
+
+/**
+ * A single division's public content, scoped behind its own tournament-level
+ * tab: standings, top scorers, fixtures and playoff bracket. Match/stage/
+ * bracket and top-scorer data load lazily on first visit to their sub-tab
+ * (not for every division up front), and loading state is always cleared in
+ * a `finally` so a failed request can't leave the spinner running forever.
+ */
+export default function PublicDivisionPanel({ division }: PublicDivisionPanelProps) {
+  /**
+   * Lives in the URL for the same reason the parent tournament tab does:
+   * the browser back button should undo one sub-tab switch at a time
+   * instead of jumping out of the page entirely, and the exact view should
+   * survive a refresh or a shared link.
+   */
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawSubTab = searchParams.get(VIEW_QUERY_PARAM);
+  const subTab = isDivisionSubTab(rawSubTab) ? rawSubTab : DEFAULT_SUB_TAB;
+  const setSubTab = (value: DivisionSubTab) => {
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev);
+        next.set(VIEW_QUERY_PARAM, value);
+        return next;
+      },
+      { replace: true }
+    );
+  };
+
+  const [topScores, setTopScores] = useState<IScorerByPlayerResponse[]>([]);
+  const [topScoresLoading, setTopScoresLoading] = useState(false);
+  const [topScoresLoaded, setTopScoresLoaded] = useState(false);
+
+  const [stages, setStages] = useState<IStageResponse[]>([]);
+  const [matches, setMatches] = useState<IMatchResponse[]>([]);
+  const [seriesById, setSeriesById] = useState<Map<GUID, IMatchSeriesResponse>>(new Map());
+  const [bracketGroups, setBracketGroups] = useState<BracketGroup[]>([]);
+  const [structureLoading, setStructureLoading] = useState(false);
+  const [structureLoaded, setStructureLoaded] = useState(false);
+
+  useEffect(() => {
+    if (subTab !== 'goleadores' || topScoresLoaded) return;
+    let cancelled = false;
+
+    const fetchTopScores = async () => {
+      setTopScoresLoading(true);
+      try {
+        const response = await scorerService.getScorersByPlayerFiltered({
+          divisionId: division.id,
+          pageSize: FETCH_PAGE_SIZE,
+          pageNumber: 1,
+        });
+        if (!cancelled) setTopScores(response.data?.items ?? []);
+      } finally {
+        if (!cancelled) {
+          setTopScoresLoading(false);
+          setTopScoresLoaded(true);
+        }
+      }
+    };
+
+    void fetchTopScores();
+    return () => {
+      cancelled = true;
+    };
+  }, [subTab, topScoresLoaded, division.id]);
+
+  useEffect(() => {
+    if ((subTab !== 'partidos' && subTab !== 'llaves') || structureLoaded) return;
+    let cancelled = false;
+
+    const fetchStructure = async () => {
+      setStructureLoading(true);
+      try {
+        const [stagesResponse, matchesResponse] = await Promise.all([
+          stageService.getStagesByFilters({ divisionId: division.id, pageSize: FETCH_PAGE_SIZE }),
+          matchService.getMatchByFilter({ divisionId: division.id, pageSize: FETCH_PAGE_SIZE }),
+        ]);
+        const stagesList = stagesResponse.data?.items ?? [];
+        const matchesList = matchesResponse.data?.items ?? [];
+
+        const eliminationStages = stagesList.filter(stage => stage.isElimination);
+        const seriesStages = eliminationStages.filter(stage => stage.bestOf > 1);
+        const seriesByStageId = new Map<GUID, IMatchSeriesResponse[]>();
+        const nextSeriesById = new Map<GUID, IMatchSeriesResponse>();
+
+        if (seriesStages.length > 0) {
+          const seriesResponses = await Promise.all(
+            seriesStages.map(stage =>
+              matchSeriesService.getMatchSeriesByFilters({ stageId: stage.id, pageSize: FETCH_PAGE_SIZE })
+            )
+          );
+          seriesStages.forEach((stage, index) => {
+            const seriesList = seriesResponses[index].data?.items ?? [];
+            seriesByStageId.set(stage.id, seriesList);
+            seriesList.forEach(series => nextSeriesById.set(series.id, series));
+          });
+        }
+
+        if (!cancelled) {
+          setStages(stagesList);
+          setMatches(matchesList);
+          setSeriesById(nextSeriesById);
+          setBracketGroups(buildBrackets(eliminationStages, matchesList, seriesByStageId));
+        }
+      } finally {
+        if (!cancelled) {
+          setStructureLoading(false);
+          setStructureLoaded(true);
+        }
+      }
+    };
+
+    void fetchStructure();
+    return () => {
+      cancelled = true;
+    };
+  }, [subTab, structureLoaded, division.id]);
+
+  const matchSections = useMemo(() => {
+    const stageIdsInOrder = [...stages].sort(
+      (a, b) => a.order - b.order || a.name.localeCompare(b.name, 'es', { numeric: true })
+    );
+    return stageIdsInOrder
+      .map(stage => ({ stage, matches: matches.filter(match => match.stageId === stage.id) }))
+      .filter(section => section.matches.length > 0);
+  }, [stages, matches]);
+
+  return (
+    <Box>
+      <Tabs
+        value={subTab}
+        onChange={(_, value: DivisionSubTab) => setSubTab(value)}
+        sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}
+      >
+        <Tab label="Posiciones" value="posiciones" />
+        <Tab label="Goleadores" value="goleadores" />
+        <Tab label="Partidos" value="partidos" />
+        <Tab label="Llaves" value="llaves" />
+      </Tabs>
+
+      <Box sx={{ minHeight: TAB_CONTENT_MIN_HEIGHT }}>
+      {subTab === 'posiciones' && (
+        <DivisionStandings
+          positions={division.positions}
+          divisionId={division.id}
+          divisionName={division.name}
+        />
+      )}
+
+      {subTab === 'goleadores' &&
+        (topScoresLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+            <CircularProgress />
+          </Box>
+        ) : topScores.length === 0 ? (
+          <Typography sx={{ color: 'text.secondary' }}>
+            No hay goleadores registrados para esta división.
+          </Typography>
+        ) : (
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>#</TableCell>
+                  <TableCell>Jugador</TableCell>
+                  <TableCell align="center">Puntos</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {topScores.map((row, index) => (
+                  <TableRow key={row.playerId} hover>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{row.fullName}</TableCell>
+                    <TableCell align="center">{row.points}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        ))}
+
+      {subTab === 'partidos' &&
+        (structureLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+            <CircularProgress />
+          </Box>
+        ) : matchSections.length === 0 ? (
+          <Typography sx={{ color: 'text.secondary' }}>
+            No hay partidos registrados en esta división.
+          </Typography>
+        ) : (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {matchSections.map(({ stage, matches: stageMatches }) => (
+              <Box key={stage.id}>
+                <Typography variant="subtitle1" component="h3" sx={{ mb: 1.5 }}>
+                  {stageSectionLabel(stage, division.name)}
+                </Typography>
+                <MatchFixtureList matches={stageMatches} />
+              </Box>
+            ))}
+          </Box>
+        ))}
+
+      {subTab === 'llaves' &&
+        (structureLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <PlayoffBrackets groups={bracketGroups} seriesById={seriesById} />
+        ))}
+      </Box>
+    </Box>
+  );
+}
