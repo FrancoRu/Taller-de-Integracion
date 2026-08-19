@@ -76,6 +76,7 @@ public static class StartupExtensions
         services.AddDbContext<ApplicationDBContext>(options => options.UseNpgsql(connectionString));
         services.AddScoped<IClub12DBContext, ApplicationDBContext>();
         services.AddScoped<DataSeeder>();
+        services.AddScoped<IDataMaintenanceService, DataMaintenanceService>();
 
         return services;
     }
