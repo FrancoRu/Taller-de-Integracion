@@ -52,6 +52,7 @@ import CreateUser from './views/user/createUser';
 import EditUser from './views/user/editUser';
 import ChangePasswordPage from './views/panel/ChangePasswordPage';
 import StatisticsPage from './views/panel/StatisticsPage';
+import TestDataPage from './views/panel/TestDataPage';
 import { UserRolesType } from './modules/core/enum/user/userRolesType';
 import InvalidToken from './views/core/errors/invalidToken';
 import Forbidden from './views/core/errors/forbidden';
@@ -335,6 +336,11 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
     path: APP_ROUTES.panelStatistics,
     allowedRoles: [UserRolesType.Admin],
     element: <StatisticsPage />,
+  },
+  {
+    path: APP_ROUTES.panelTest,
+    allowedRoles: [UserRolesType.Admin],
+    element: <TestDataPage />,
   },
   { path: '*', element: <NotFound /> },
 ];
