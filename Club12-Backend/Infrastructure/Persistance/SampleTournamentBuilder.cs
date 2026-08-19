@@ -125,7 +125,7 @@ public static class SampleTournamentBuilder
             AddStageTeamMatches(stage, teams);
 
             sanctions.AddRange(SeedRoundRobinMatches(
-                stage, teams, venues, definition.FinishedMatchesStart, definition.UpcomingMatchesStart));
+                stage, teams, venues, definition.FinishedMatchesStart));
 
             if (includePlayoffs)
             {
@@ -216,12 +216,9 @@ public static class SampleTournamentBuilder
     /// every one of them finished with a real, non-tied score (basketball
     /// has no draws) so <see cref="PositionCalculator"/> can produce
     /// complete, real standings once every group match has been played.
-    /// <paramref name="upcomingMatchesStart"/> is accepted for signature
-    /// stability with existing callers but is unused now that no match is
-    /// left upcoming.
     /// </summary>
     private static List<PlayerSanction> SeedRoundRobinMatches(
-        Stage stage, List<Team> teams, List<Venue> venues, DateTime finishedMatchesStart, DateTime upcomingMatchesStart)
+        Stage stage, List<Team> teams, List<Venue> venues, DateTime finishedMatchesStart)
     {
         List<PlayerSanction> sanctions = [];
         List<(Team Home, Team Visitor)> pairings = [];
