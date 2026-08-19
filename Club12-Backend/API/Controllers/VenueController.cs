@@ -1,41 +1,33 @@
-﻿using API.Utils;
+﻿using AutoMapper;
 
-using Application.DTOs.Venue.Request;
-using Application.DTOs.Venue.Response;
-using Application.Interfaces.Services;
-
-using AutoMapper;
-
-using Domain.Entities.Models;
-using Domain.Enums;
-
-using Infrastructure.Storage;
+using Entities.DTOs.Venue;
+using Entities.Models.VenueEntity;
 
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Services.Services.VenueService;
 
-namespace API.Controllers;
+namespace Club12.API.Controllers;
 
 /// <summary>
-/// Controller for managing Venues. Reads are public; writes require Owner
-/// or TournamentManager.
+/// Controller for managing Venues.
 /// </summary>
-/// <param name="venueService">The Venue service.</param>
-/// <param name="supabaseHelper">The Supabase helper for storage operations.</param>
-/// <param name="mapper">The AutoMapper instance.</param>
+/// <remarks>
+/// Initializes a new instance of the <see cref="VenueController"/> class.
+/// </remarks>
+/// <param name="_venueService">The Venue service.</param>
+/// <param name="_mapper">The AutoMapper instance.</param>
+[Authorize(Roles = "SuperAdmin")]
 [Route("api/venues/")]
 [ApiController]
-[Authorize(Roles = Roles.AdminOwnerOrTournamentManager)]
-public class VenueController(IVenueService venueService, SupabaseHelper supabaseHelper, IMapper mapper) : ControllerBase
+public class VenueController(
+    IVenueService _venueService,
+    IMapper _mapper
+    ) : ControllerBase
 {
-
     /// <summary>
-    /// Creates a new venue asynchronously.
+    /// Creates a new venue.
     /// </summary>
     /// <param name="venueRequest">The venue creation request.</param>
     /// <returns>The created Venue response.
@@ -45,18 +37,17 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
     [HttpPost()]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(VenueResponse))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<VenueResponse>> CreateVenue(CreateVenueRequest venueRequest)
+    public ActionResult<VenueResponse> CreateVenue(CreateVenueRequest venueRequest)
     {
-        string logoUrl = await supabaseHelper.UploadImageAsync<Venue>(venueRequest.ImageFile.OpenReadStream(), venueRequest.ImageFile.FileName);
-        Venue venue = mapper.Map<Venue>(venueRequest);
-        venue.PhotoUrl = logoUrl;
-        await venueService.CreateVenueAsync(venue);
-        VenueResponse venueResponse = mapper.Map<VenueResponse>(venue);
-        return CreatedAtAction(nameof(GetVenueById), new { venueResponse.Id }, venueResponse);
+        Venue mappedVenue = _mapper.Map<Venue>(venueRequest);
+        Venue createdVenue = _venueService.CreateVenue(mappedVenue);
+        VenueResponse venueResponse = _mapper.Map<VenueResponse>(createdVenue);
+
+        return new ObjectResult(venueResponse) { StatusCode = StatusCodes.Status201Created };
     }
 
     /// <summary>
-    /// Retrieves a venue by its id asynchronously.
+    /// Retrieves a venue by its id.
     /// </summary>
     /// <param name="id">The id of the venue to retrieve.</param>
     /// <returns>The Venue with the specified id.
@@ -66,52 +57,51 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
     [AllowAnonymous]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(VenueResponse))]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<VenueResponse>> GetVenueById(Guid id)
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public ActionResult<VenueResponse> GetVenueById(Guid id)
     {
-        Venue? venue = await venueService.GetVenueByIdAsync(id);
+        Venue? venue = _venueService.GetVenueById(id);
 
         if (venue is null)
         {
-            return this.NotFoundProblem(nameof(Venue), id);
+            return BadRequest($"Venue with id {id} not found.");
         }
 
-        VenueResponse venueResponse = mapper.Map<VenueResponse>(venue);
+        VenueResponse venueResponse = _mapper.Map<VenueResponse>(venue);
         return Ok(venueResponse);
     }
 
     /// <summary>
-    /// Updates a venue by its id asynchronously.
+    /// Updates a venue by its id.
     /// </summary>
-    /// <param name="id">The id of the venue to update.</param>
+    /// <param name="venueId">The id of the venue to update.</param>
     /// <param name="venueRequest">The venue update request.</param>
     /// <returns>
     /// Returns 200 (OK) with the updated Venue response if the update was successful.
     /// Returns 400 (Bad Request) if the Venue with the provided id was not found.
     /// Returns 403 (Forbidden) if the user is not authorized.
     /// </returns>
-    [HttpPut("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [HttpPut("{venueId:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(VenueResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> UpdateVenue(Guid id, UpdateVenueRequest venueRequest)
+    public async Task<ActionResult> UpdateVenue(Guid venueId, UpdateVenueRequest venueRequest)
     {
-        Venue? existingVenue = await venueService.GetVenueByIdAsync(id);
+        Venue? existingVenue = _venueService.GetVenueById(venueId);
 
         if (existingVenue is null)
         {
-            return this.NotFoundProblem(nameof(Venue), id);
+            return BadRequest($"Venue with id {venueId} not found.");
         }
 
-        mapper.Map(venueRequest, existingVenue);
+        _mapper.Map(venueRequest, existingVenue);
+        bool updateResult = await _venueService.UpdateVenueAsync(existingVenue);
 
-        await venueService.UpdateVenueAsync(existingVenue);
-
-        return NoContent();
+        return !updateResult ? BadRequest("Failed to update the venue.") : Ok();
     }
 
     /// <summary>
-    /// Deletes a venue by its id asynchronously.
+    /// Deletes a venue by its id.
     /// </summary>
     /// <param name="id">The id of the Venue to delete.</param>
     /// <returns>
@@ -120,30 +110,24 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
     /// Returns 403 (Forbidden) if the user is not authorized.
     /// </returns>
     [HttpDelete("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> DeleteVenueById(Guid id)
+    public IActionResult DeleteVenueById(Guid id)
     {
-        Venue? venue = await venueService.GetVenueByIdAsync(id);
+        Venue? venue = _venueService.GetVenueById(id);
 
         if (venue is null)
         {
-            return this.NotFoundProblem(nameof(Venue), id);
+            return BadRequest($"Venue with id {id} not found.");
         }
 
-        if (!string.IsNullOrWhiteSpace(venue.PhotoUrl))
-        {
-            string[] photoUrlSegments = venue.PhotoUrl.Split('/');
-            await supabaseHelper.DeleteImageAsync<Venue>(photoUrlSegments[^1]);
-        }
-
-        await venueService.DeleteVenueAsync(id);
-        return NoContent();
+        _venueService.DeleteVenue(venue);
+        return Ok();
     }
 
     /// <summary>
-    /// Retrieves all venues asynchronously.
+    /// Retrieves all venues.
     /// </summary>
     /// <returns>A list of all Venue responses.</returns>
     [AllowAnonymous]
@@ -152,8 +136,8 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<IEnumerable<VenueResponse>>> GetAllVenues()
     {
-        IEnumerable<Venue> venues = await venueService.GetAllVenuesAsync();
-        IEnumerable<VenueResponse> response = mapper.Map<IEnumerable<VenueResponse>>(venues);
+        IEnumerable<Venue> venues = await _venueService.GetAllVenuesAsync();
+        IEnumerable<VenueResponse> response = _mapper.Map<IEnumerable<VenueResponse>>(venues);
 
         return Ok(response);
     }

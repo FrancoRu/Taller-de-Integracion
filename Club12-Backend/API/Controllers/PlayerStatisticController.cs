@@ -1,36 +1,28 @@
-﻿using API.Utils;
+﻿using AutoMapper;
 
-using Application.DTOs.Abstract.Response;
-using Application.DTOs.PlayerStatistic.Request;
-using Application.DTOs.PlayerStatistic.Response;
-using Application.Interfaces.Services;
-
-using AutoMapper;
-
-using Domain.Entities.Models;
-using Domain.Enums;
+using Entities.DTOs.PlayerStatistic;
+using Entities.Models.PlayerStatisticEntity;
 
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-using System;
-using System.Threading.Tasks;
+using Services.Services.PlayerStatisticService;
 
-namespace API.Controllers;
+namespace Club12.API.Controllers;
 
 /// <summary>
-/// Controller for managing Player Statistics. Reads are public; writes
-/// require Owner or TournamentManager.
+/// Controller for managing Player Statistics.
 /// </summary>
+/// <remarks>
+/// Initializes a new instance of the <see cref="PlayerStatisticController"/> class.
+/// </remarks>
 /// <param name="playerStatisticService">The Player Statistic service.</param>
-/// <param name="mapper">The Auto_mapper instance.</param>
+/// <param name="mapper">The AutoMapper instance.</param>
+[Authorize(Roles = "SuperAdmin")]
 [Route("api/player-statistics/")]
 [ApiController]
-[Authorize(Roles = Roles.AdminOwnerOrTournamentManager)]
 public class PlayerStatisticController(IPlayerStatisticService playerStatisticService, IMapper mapper) : ControllerBase
 {
-
     /// <summary>
     /// Creates a new player statistic.
     /// </summary>
@@ -40,34 +32,13 @@ public class PlayerStatisticController(IPlayerStatisticService playerStatisticSe
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(PlayerStatisticResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<PlayerStatisticResponse>> CreatePlayerStatistic(CreatePlayerStatisticRequest playerStatisticRequest)
+    public ActionResult<PlayerStatisticResponse> CreatePlayerStatistic(CreatePlayerStatisticRequest playerStatisticRequest)
     {
         PlayerStatistic mappedStatistic = mapper.Map<PlayerStatistic>(playerStatisticRequest);
-        PlayerStatistic createdStatistic = await playerStatisticService.CreatePlayerStatisticAsync(mappedStatistic);
+        PlayerStatistic createdStatistic = playerStatisticService.CreatePlayerStatistic(mappedStatistic);
         PlayerStatisticResponse statisticResponse = mapper.Map<PlayerStatisticResponse>(createdStatistic);
 
-        return new ObjectResult(statisticResponse) { StatusCode = StatusCodes.Status201Created };
-    }
-
-    /// <summary>
-    /// Retrieves a paginated, filtered list of player statistics.
-    /// </summary>
-    /// <param name="filterRequest">The filtering and pagination parameters.</param>
-    /// <returns>A paginated response containing the filtered player statistics.</returns>
-    [AllowAnonymous]
-    [HttpGet()]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<PlayerStatisticResponse>))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<PaginatedResponse<PlayerStatisticResponse>>> GetFilteredPlayerStatistics(
-        [FromQuery] GetPlayerStatisticsFilteredRequest filterRequest)
-    {
-        PaginatedResponse<PlayerStatistic> paginatedStatistics =
-            await playerStatisticService.GetPlayerStatisticsAsync(filterRequest);
-
-        PaginatedResponse<PlayerStatisticResponse> response =
-            mapper.Map<PaginatedResponse<PlayerStatisticResponse>>(paginatedStatistics);
-
-        return Ok(response);
+        return CreatedAtAction(nameof(GetPlayerStatisticById), new { id = statisticResponse.Id }, statisticResponse);
     }
 
     /// <summary>
@@ -78,14 +49,14 @@ public class PlayerStatisticController(IPlayerStatisticService playerStatisticSe
     [AllowAnonymous]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerStatisticResponse))]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PlayerStatisticResponse>> GetPlayerStatisticById(Guid id)
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public ActionResult<PlayerStatisticResponse> GetPlayerStatisticById(Guid id)
     {
-        PlayerStatistic? statistic = await playerStatisticService.GetPlayerStatisticByIdAsync(id);
+        PlayerStatistic? statistic = playerStatisticService.GetPlayerStatisticById(id);
 
         if (statistic is null)
         {
-            return this.NotFoundProblem(nameof(PlayerStatistic), id);
+            return BadRequest($"Player statistic with id {id} not found.");
         }
 
         PlayerStatisticResponse statisticResponse = mapper.Map<PlayerStatisticResponse>(statistic);
@@ -95,25 +66,25 @@ public class PlayerStatisticController(IPlayerStatisticService playerStatisticSe
     /// <summary>
     /// Updates a player statistic asynchronously.
     /// </summary>
-    /// <param name="id">The id of the statistic to update.</param>
+    /// <param name="statisticId">The id of the statistic to update.</param>
     /// <param name="updateRequest">The request with updated statistics.</param>
     /// <returns>Returns the result of the update operation.</returns>
-    [HttpPut("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> UpdatePlayerStatistic(Guid id, UpdatePlayerStatisticRequest updateRequest)
+    [HttpPut("{statisticId:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult> UpdatePlayerStatistic(Guid statisticId, UpdatePlayerStatisticRequest updateRequest)
     {
-        PlayerStatistic? existingStatistic = await playerStatisticService.GetPlayerStatisticByIdAsync(id);
+        PlayerStatistic? existingStatistic = playerStatisticService.GetPlayerStatisticById(statisticId);
 
         if (existingStatistic is null)
         {
-            return this.NotFoundProblem(nameof(PlayerStatistic), id);
+            return BadRequest($"Player statistic with id {statisticId} not found.");
         }
 
         mapper.Map(updateRequest, existingStatistic);
-        await playerStatisticService.UpdatePlayerStatisticAsync(existingStatistic);
+        bool updateResult = await playerStatisticService.UpdatePlayerStatisticAsync(existingStatistic);
 
-        return NoContent();
+        return !updateResult ? BadRequest("Failed to update the player statistic.") : Ok();
     }
 
     /// <summary>
@@ -122,11 +93,18 @@ public class PlayerStatisticController(IPlayerStatisticService playerStatisticSe
     /// <param name="id">The id of the player statistic to delete.</param>
     /// <returns>Returns the result of the delete operation.</returns>
     [HttpDelete("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> DeletePlayerStatisticById(Guid id)
+    public ActionResult DeletePlayerStatisticById(Guid id)
     {
-        await playerStatisticService.DeletePlayerStatisticAsync(id);
-        return NoContent();
+        PlayerStatistic? statistic = playerStatisticService.GetPlayerStatisticById(id);
+
+        if (statistic is null)
+        {
+            return BadRequest($"Player statistic with id {id} not found.");
+        }
+
+        playerStatisticService.DeletePlayerStatistic(statistic);
+        return Ok();
     }
 }

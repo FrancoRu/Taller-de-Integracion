@@ -1,2 +1,0 @@
-export const BLOG_EXCERPT_LENGTH = 150;
-export const BLOG_HOME_EXCERPT_LENGTH = 160;
