@@ -482,6 +482,9 @@ appsettings.Tomi.json
 # Academic/internal reports (not meant to be published in the repo)
 *.pdf
 
+# Claude Code git worktrees (local scratch checkouts, never repo content)
+.claude/worktrees/
+
 # Local tooling cache
 .atl/
 /Club12-Backend/API/appsettings.Facundo.json
