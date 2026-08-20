@@ -50,19 +50,19 @@ a High-risk PR2/PR4/PR5, `size:exception` is not recommended.
 
 ## Phase 2: Shared Backup Use Case & Manual/Scheduled Wiring (PR2)
 
-- [ ] 2.1 RED: `BackupOperationLockTests` — second `WaitAsync(TimeSpan.Zero)` while held returns false (backup-catalog#Single-Shared-Write-Path)
-- [ ] 2.2 GREEN: `Application/Backup/BackupOperationLock.cs`
-- [ ] 2.3 RED: `BackupOperationsServiceTests` — concurrent `CreateBackupAsync` → second call `Busy`, no second catalog row
-- [ ] 2.4 RED: same suite — failed dump (`IDatabaseBackupService` throws) → no `BackupRecord` written (backup-catalog#Failed-Backups-Are-Not-Catalogued)
-- [ ] 2.5 RED: same suite — `DeleteBackupAsync` with storage file missing → catalog row still removed, warning logged (backup-catalog#Delete-Removes-Both-Stored-File-and-Catalog-Record)
-- [ ] 2.6 RED: retention test extension — shared Manual+Job pool prunes correctly, tie-break preserved (scheduled-database-backups#Keep-Last-N-Retention-Pruning)
-- [ ] 2.7 GREEN: `Application/Interfaces/Backup/{IBackupOperationsService,BackupOperationResult}.cs` (Create+Delete only), `Application/DTOs/Backup/Response/BackupRecordResponse.cs`
-- [ ] 2.8 GREEN: `Application/Backup/BackupOperationsService.cs` — `CreateBackupCoreAsync` + `CreateBackupAsync`/`DeleteBackupAsync`
-- [ ] 2.9 GREEN: `Infrastructure/Backup/PgDumpBackupService.cs` — add `--clean --if-exists --no-owner --no-privileges`
-- [ ] 2.10 REFACTOR: `API/BackgroundServices/DatabaseBackupHostedService.cs` — ctor takes `IServiceScopeFactory`; tick resolves `IBackupOperationsService` in a scope; remove `Interlocked` flag
-- [ ] 2.11 RED: `BackupControllerTests` — GET/POST/DELETE map outcomes to 200/409/404/500; non-Admin → 401/403
-- [ ] 2.12 GREEN: `API/Controllers/BackupController.cs` (GET/POST/DELETE only)
-- [ ] 2.13 GREEN: `API/Utils/StartupExtensions.cs` — register scoped `IBackupCatalog`/`IBackupOperationsService`, singleton `BackupOperationLock`
+- [x] 2.1 RED: `BackupOperationLockTests` — second `WaitAsync(TimeSpan.Zero)` while held returns false (backup-catalog#Single-Shared-Write-Path)
+- [x] 2.2 GREEN: `Application/Backup/BackupOperationLock.cs`
+- [x] 2.3 RED: `BackupOperationsServiceTests` — concurrent `CreateBackupAsync` → second call `Busy`, no second catalog row
+- [x] 2.4 RED: same suite — failed dump (`IDatabaseBackupService` throws) → no `BackupRecord` written (backup-catalog#Failed-Backups-Are-Not-Catalogued)
+- [x] 2.5 RED: same suite — `DeleteBackupAsync` with storage file missing → catalog row still removed, warning logged (backup-catalog#Delete-Removes-Both-Stored-File-and-Catalog-Record)
+- [x] 2.6 RED: retention test extension — shared Manual+Job pool prunes correctly, tie-break preserved (scheduled-database-backups#Keep-Last-N-Retention-Pruning)
+- [x] 2.7 GREEN: `Application/Interfaces/Backup/{IBackupOperationsService,BackupOperationResult}.cs` (Create+Delete only), `Application/DTOs/Backup/Response/BackupRecordResponse.cs`
+- [x] 2.8 GREEN: `Application/Backup/BackupOperationsService.cs` — `CreateBackupCoreAsync` + `CreateBackupAsync`/`DeleteBackupAsync`
+- [x] 2.9 GREEN: `Infrastructure/Backup/PgDumpBackupService.cs` — add `--clean --if-exists --no-owner --no-privileges`
+- [x] 2.10 REFACTOR: `API/BackgroundServices/DatabaseBackupHostedService.cs` — ctor takes `IServiceScopeFactory`; tick resolves `IBackupOperationsService` in a scope; remove `Interlocked` flag
+- [x] 2.11 RED: `BackupControllerTests` — GET/POST/DELETE map outcomes to 200/409/404/500; non-Admin → 401/403
+- [x] 2.12 GREEN: `API/Controllers/BackupController.cs` (GET/POST/DELETE only)
+- [x] 2.13 GREEN: `API/Utils/StartupExtensions.cs` — register scoped `IBackupCatalog`/`IBackupOperationsService`, singleton `BackupOperationLock`
 
 ## Phase 3: Restore Service & Psql Adapter (PR3)
 
