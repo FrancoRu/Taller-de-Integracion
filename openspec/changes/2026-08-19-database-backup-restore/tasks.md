@@ -42,11 +42,11 @@ a High-risk PR2/PR4/PR5, `size:exception` is not recommended.
 
 ## Phase 1: Backup Catalog Foundation (PR1)
 
-- [ ] 1.1 RED: `EfBackupCatalogTests` — `AddAsync`/`GetByIdAsync`/`ListNewestFirstAsync`/`RemoveAsync` against in-memory/sqlite context (backup-catalog#Catalog-Powers-the-Admin-Backup-Listing)
-- [ ] 1.2 GREEN: `Domain/Enums/BackupOrigin.cs`, `Domain/Entities/Models/BackupRecord.cs` (`EntityBase`, `StoragePath`/`SizeBytes`/`Origin`)
-- [ ] 1.3 GREEN: `Application/Interfaces/Backup/IBackupCatalog.cs`, `Infrastructure/Persistance/Configurations/BackupRecordEntityConfiguration.cs` (`.HasConversion<string>()` on `Origin`)
-- [ ] 1.4 GREEN: `Infrastructure/Persistance/EfBackupCatalog.cs`; add `DbSet<BackupRecord>` to `ApplicationDBContext`/`IClub12DBContext`; `EntityConstants.Tables.BackupRecord`
-- [ ] 1.5 GREEN: generate `Infrastructure/Migrations/<ts>_AddBackupRecordTable.cs` (additive only); run tests
+- [x] 1.1 RED: `EfBackupCatalogTests` — `AddAsync`/`GetByIdAsync`/`ListNewestFirstAsync`/`RemoveAsync` against in-memory/sqlite context (backup-catalog#Catalog-Powers-the-Admin-Backup-Listing)
+- [x] 1.2 GREEN: `Domain/Enums/BackupOrigin.cs`, `Domain/Entities/Models/BackupRecord.cs` (`EntityBase`, `StoragePath`/`SizeBytes`/`Origin`)
+- [x] 1.3 GREEN: `Application/Interfaces/Backup/IBackupCatalog.cs`, `Infrastructure/Persistance/Configurations/BackupRecordEntityConfiguration.cs` (`.HasConversion<string>()` on `Origin`)
+- [x] 1.4 GREEN: `Infrastructure/Persistance/EfBackupCatalog.cs`; add `DbSet<BackupRecord>` to `ApplicationDBContext`/`IClub12DBContext`; `EntityConstants.Tables.BackupRecord`
+- [x] 1.5 GREEN: generate `Infrastructure/Migrations/<ts>_AddBackupRecordTable.cs` (additive only); run tests
 
 ## Phase 2: Shared Backup Use Case & Manual/Scheduled Wiring (PR2)
 
