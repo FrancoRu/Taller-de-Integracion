@@ -66,13 +66,13 @@ a High-risk PR2/PR4/PR5, `size:exception` is not recommended.
 
 ## Phase 3: Restore Service & Psql Adapter (PR3)
 
-- [ ] 3.1 RED: `PsqlDatabaseRestoreServiceTests` — asserts exact arg vector via fake `IProcessRunner`; a `StoragePath`/temp path containing `;`/`--` is not reinterpreted (threat: subprocess argument injection)
-- [ ] 3.2 RED: same suite — non-zero exit / missing `psql` binary → `BackupExecutionException` (threat: subprocess missing/failing binary)
-- [ ] 3.3 GREEN: `Application/Interfaces/Backup/IDatabaseRestoreService.cs`, `Infrastructure/Backup/PsqlDatabaseRestoreService.cs`; `BackupOptions.PsqlPath`, `ConfigurationKeys.Backup.PsqlPath`
-- [ ] 3.4 RED: `MaintenanceModeStateTests` — `Enter`/`Exit`, `IsActive`/`Reason`/`EnteredAtUtc` transitions
-- [ ] 3.5 GREEN: `Application/Interfaces/Backup/IMaintenanceModeState.cs`, `Application/Backup/MaintenanceModeState.cs` (singleton)
-- [ ] 3.6 RED: `LocalDirectoryBackupStorageTests`/`SupabaseBackupStorageTests` — `OpenReadAsync` re-validates via `ResolveSafePath`; a catalog row with `../../etc/passwd` → `ArgumentException`, no read (threat: storage path traversal)
-- [ ] 3.7 GREEN: `IBackupStorage.OpenReadAsync` (additive); implement in `LocalDirectoryBackupStorage`/`SupabaseBackupStorage`
+- [x] 3.1 RED: `PsqlDatabaseRestoreServiceTests` — asserts exact arg vector via fake `IProcessRunner`; a `StoragePath`/temp path containing `;`/`--` is not reinterpreted (threat: subprocess argument injection)
+- [x] 3.2 RED: same suite — non-zero exit / missing `psql` binary → `BackupExecutionException` (threat: subprocess missing/failing binary)
+- [x] 3.3 GREEN: `Application/Interfaces/Backup/IDatabaseRestoreService.cs`, `Infrastructure/Backup/PsqlDatabaseRestoreService.cs`; `BackupOptions.PsqlPath`, `ConfigurationKeys.Backup.PsqlPath`
+- [x] 3.4 RED: `MaintenanceModeStateTests` — `Enter`/`Exit`, `IsActive`/`Reason`/`EnteredAtUtc` transitions
+- [x] 3.5 GREEN: `Application/Interfaces/Backup/IMaintenanceModeState.cs`, `Application/Backup/MaintenanceModeState.cs` (singleton)
+- [x] 3.6 RED: `LocalDirectoryBackupStorageTests`/`SupabaseBackupStorageTests` — `OpenReadAsync` re-validates via `ResolveSafePath`; a catalog row with `../../etc/passwd` → `ArgumentException`, no read (threat: storage path traversal)
+- [x] 3.7 GREEN: `IBackupStorage.OpenReadAsync` (additive); implement in `LocalDirectoryBackupStorage`/`SupabaseBackupStorage`
 
 ## Phase 4: Restore Wiring — Use Case, Controller, Middleware (PR4)
 
