@@ -12,6 +12,11 @@ namespace Infrastructure.Persistance;
 public interface IClub12DBContext
 {
     /// <summary>
+    /// DbSet{BackupRecord} of catalogued database backups in the system.
+    /// </summary>
+    DbSet<BackupRecord> BackupRecords { get; }
+
+    /// <summary>
     /// DbSet{Team} of teams in the system.
     /// </summary>
     DbSet<Team> Teams { get; }

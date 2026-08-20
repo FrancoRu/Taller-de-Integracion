@@ -59,6 +59,7 @@ public sealed class ApplicationDBContextFactory : IDesignTimeDbContextFactory<Ap
 
         return new ApplicationDBContext(optionsBuilder.Options)
         {
+            BackupRecords = null!,
             Teams = null!,
             Players = null!,
             Tournaments = null!,
