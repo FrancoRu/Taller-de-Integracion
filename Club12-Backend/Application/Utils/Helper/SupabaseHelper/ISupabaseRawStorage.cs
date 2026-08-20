@@ -33,4 +33,10 @@ public interface ISupabaseRawStorage
     /// Removes the raw object at <paramref name="objectPath"/> in the configured bucket.
     /// </summary>
     Task RemoveRawAsync(string objectPath);
+
+    /// <summary>
+    /// Downloads the raw content of the object at <paramref name="objectPath"/>
+    /// in the configured bucket.
+    /// </summary>
+    Task<byte[]> DownloadRawAsync(string objectPath);
 }

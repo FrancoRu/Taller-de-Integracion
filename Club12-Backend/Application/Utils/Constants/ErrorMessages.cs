@@ -227,6 +227,11 @@ public static class ErrorMessages
         {
             return $"Error removing file: {reason}";
         }
+
+        public static string DownloadFailed(string reason)
+        {
+            return $"Error downloading file: {reason}";
+        }
     }
 
     public static class Query

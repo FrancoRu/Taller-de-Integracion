@@ -53,4 +53,22 @@ public sealed class FakeBackupStorage : IBackupStorage
 
         return Task.CompletedTask;
     }
+
+    /// <summary>
+    /// When set, OpenReadAsync throws this instead of succeeding —
+    /// simulates a missing/unreadable stored file.
+    /// </summary>
+    public Exception? OpenReadException { get; set; }
+
+    public Stream ContentToOpen { get; set; } = new MemoryStream();
+
+    public Task<Stream> OpenReadAsync(string name, CancellationToken ct = default)
+    {
+        if (OpenReadException is not null)
+        {
+            throw OpenReadException;
+        }
+
+        return Task.FromResult(ContentToOpen);
+    }
 }

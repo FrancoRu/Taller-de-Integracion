@@ -15,8 +15,11 @@ public sealed class FakeSupabaseRawStorage : ISupabaseRawStorage
     public List<string> UploadedPaths { get; } = [];
     public List<string> RemovedPaths { get; } = [];
     public string? LastListedPrefix { get; private set; }
+    public string? LastDownloadedPath { get; private set; }
 
     public IReadOnlyList<SupabaseStorageEntry> EntriesToList { get; set; } = Array.Empty<SupabaseStorageEntry>();
+
+    public byte[] BytesToDownload { get; set; } = Array.Empty<byte>();
 
     /// <summary>
     /// When set, every raw call throws this exception instead of succeeding —
@@ -56,5 +59,16 @@ public sealed class FakeSupabaseRawStorage : ISupabaseRawStorage
 
         RemovedPaths.Add(objectPath);
         return Task.CompletedTask;
+    }
+
+    public Task<byte[]> DownloadRawAsync(string objectPath)
+    {
+        if (ExceptionToThrow is not null)
+        {
+            throw ExceptionToThrow;
+        }
+
+        LastDownloadedPath = objectPath;
+        return Task.FromResult(BytesToDownload);
     }
 }

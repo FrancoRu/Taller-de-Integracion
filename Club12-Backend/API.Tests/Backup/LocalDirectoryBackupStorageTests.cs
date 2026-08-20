@@ -59,6 +59,40 @@ public sealed class LocalDirectoryBackupStorageTests : IDisposable
     }
 
     [Fact]
+    public async Task OpenReadAsync_StoredFile_ReturnsReadableStreamWithContent()
+    {
+        await _storage.StoreAsync("backup-1.sql", ContentStream("dump-1"));
+
+        await using Stream stream = await _storage.OpenReadAsync("backup-1.sql");
+        using StreamReader reader = new(stream);
+        string content = await reader.ReadToEndAsync();
+
+        Assert.Equal("dump-1", content);
+    }
+
+    /// <summary>
+    /// A catalog row's StoragePath is expected to be server-generated
+    /// and safe, but OpenReadAsync must still independently
+    /// re-validate it via the same ResolveSafePath guard used by
+    /// StoreAsync/DeleteAsync — a malformed/malicious catalog value must
+    /// never reach a file read (threat: storage path traversal).
+    /// </summary>
+    [Fact]
+    public async Task OpenReadAsync_TraversalName_ThrowsArgumentException_NoFileOpened()
+    {
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => _storage.OpenReadAsync("../../etc/passwd"));
+    }
+
+    [Fact]
+    public async Task OpenReadAsync_RootedPathName_ThrowsArgumentException()
+    {
+        string rooted = OperatingSystem.IsWindows() ? "C:\\evil.sql" : "/etc/passwd";
+
+        await Assert.ThrowsAsync<ArgumentException>(() => _storage.OpenReadAsync(rooted));
+    }
+
+    [Fact]
     public async Task StoreAsync_NameEscapingConfiguredDirectory_ThrowsArgumentException()
     {
         await Assert.ThrowsAsync<ArgumentException>(

@@ -52,6 +52,13 @@ public sealed class LocalDirectoryBackupStorage : IBackupStorage
         return Task.FromResult(files);
     }
 
+    public Task<Stream> OpenReadAsync(string name, CancellationToken ct = default)
+    {
+        string path = ResolveSafePath(name);
+        Stream stream = File.OpenRead(path);
+        return Task.FromResult(stream);
+    }
+
     public Task DeleteAsync(string name, CancellationToken ct = default)
     {
         string path = ResolveSafePath(name);
