@@ -47,6 +47,12 @@ public sealed class PgDumpBackupService(
             "-p", builder.Port.ToString(),
             "-U", builder.Username ?? string.Empty,
             "-d", builder.Database ?? string.Empty,
+            // Restore uses psql -f against a plain-SQL dump (design.md's
+            // "Keep plain-SQL dumps; restore with psql" decision); these
+            // flags move the ownership/role safety onto the dump side so
+            // restoring into a Supabase-managed database (different
+            // owners/roles) does not fail on CREATE/ALTER OWNER statements.
+            "--clean", "--if-exists", "--no-owner", "--no-privileges",
         ];
 
         Dictionary<string, string>? environmentVariables = null;

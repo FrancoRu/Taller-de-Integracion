@@ -1,21 +1,24 @@
 using Application.Interfaces.Backup;
 
+using Domain.Enums;
+
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace API.BackgroundServices;
 
 /// <summary>
-/// Drives the scheduled database backup: a PeriodicTimer loop
-/// that, once per elapsed interval, creates a dump (IDatabaseBackupService),
-/// stores it (IBackupStorage), and prunes stale backups per the
-/// configured retention policy (IBackupRetentionPolicy).
+/// Drives the scheduled database backup: a PeriodicTimer loop that,
+/// once per elapsed interval, resolves the scoped
+/// IBackupOperationsService and calls
+/// CreateBackupAsync(BackupOrigin.Job) — the same shared write
+/// path the manual Admin endpoint uses (spec
+/// scheduled-database-backups#Scheduled-Runs-Share-the-Catalog-Write-Path-With-Manual-Runs).
 ///
 /// No-ops entirely when BackupOptions.Enabled is false
 /// (spec: "Backup Enabled Gate") — this is checked here, independent of
@@ -24,20 +27,26 @@ namespace API.BackgroundServices;
 /// is constructed/started directly.
 ///
 /// A tick is fired-and-forgotten from the timer loop (rather than awaited
-/// inline) so a slow/blocked dump never delays the loop's own timing; an
-/// Interlocked-guarded single-flight flag ensures an
-/// already-running attempt is never started again by an overlapping tick
-/// (spec: proposal's "Long dump blocks/overlaps runs" risk). A failed
-/// attempt (BackupExecutionException, or any unexpected
-/// exception from a port implementation) is logged and never propagates —
+/// inline) so a slow/blocked attempt never delays the loop's own timing.
+/// There is no longer a local single-flight flag: the shared
+/// BackupOperationLock inside IBackupOperationsService is the one
+/// guard for both scheduled and manual attempts (design.md's "the
+/// semaphore subsumes it" decision) — an overlapping tick, or a manual
+/// request racing a scheduled attempt, is told Busy by the
+/// use case and simply logged here, never started twice. A failed
+/// attempt (Failed outcome, or any unexpected exception from
+/// resolving/calling the scoped service) is logged and never propagates —
 /// it must not crash the host or stop later scheduled attempts (spec:
 /// "Backup Failure Isolation").
+///
+/// A DI scope is created per tick (via IServiceScopeFactory) because
+/// IBackupOperationsService is scoped (it depends on the scoped
+/// IBackupCatalog/ApplicationDBContext), while this hosted service
+/// itself is a singleton.
 /// </summary>
 public sealed class DatabaseBackupHostedService(
+    IServiceScopeFactory scopeFactory,
     BackupOptions options,
-    IDatabaseBackupService backupService,
-    IBackupStorage backupStorage,
-    IBackupRetentionPolicy retentionPolicy,
     ILogger<DatabaseBackupHostedService> logger) : BackgroundService
 {
     /// <summary>
@@ -51,10 +60,6 @@ public sealed class DatabaseBackupHostedService(
     /// </summary>
     public TimeSpan? IntervalOverride { get; init; }
 
-    /// <summary>
-    /// 0 = idle, 1 = a backup attempt is in flight.
-    /// </summary>
-    private int _isRunning;
     private Task? _inFlightRun;
 
     /// <summary>
@@ -77,7 +82,7 @@ public sealed class DatabaseBackupHostedService(
         {
             while (await timer.WaitForNextTickAsync(stoppingToken))
             {
-                _inFlightRun = TryStartBackupAttempt(stoppingToken);
+                _inFlightRun = RunBackupAttemptAsync(stoppingToken);
             }
         }
         catch (OperationCanceledException ex) when (stoppingToken.IsCancellationRequested)
@@ -93,57 +98,34 @@ public sealed class DatabaseBackupHostedService(
         }
     }
 
-    private Task TryStartBackupAttempt(CancellationToken ct)
-    {
-        if (Interlocked.CompareExchange(ref _isRunning, 1, 0) != 0)
-        {
-            logger.LogWarning("Skipping scheduled backup attempt: a previous attempt is still running.");
-            return Task.CompletedTask;
-        }
-
-        return RunBackupAttemptAsync(ct);
-    }
-
     private async Task RunBackupAttemptAsync(CancellationToken ct)
     {
         try
         {
-            await using Stream dump = await backupService.CreateDumpAsync(ct);
-            string name = $"backup-{DateTimeOffset.UtcNow:yyyyMMddHHmmssfff}-{Guid.NewGuid():N}.sql";
-            await backupStorage.StoreAsync(name, dump, ct);
+            using IServiceScope scope = scopeFactory.CreateScope();
+            IBackupOperationsService operations = scope.ServiceProvider.GetRequiredService<IBackupOperationsService>();
 
-            IReadOnlyList<BackupFile> existing = await backupStorage.ListAsync(ct);
-            IReadOnlyList<BackupFile> toDelete = retentionPolicy.SelectForDeletion(existing, options.RetentionCount);
+            BackupOperationResult result = await operations.CreateBackupAsync(BackupOrigin.Job, ct);
 
-#pragma warning disable S3267
-            foreach (BackupFile stale in toDelete)
+            switch (result.Outcome)
             {
-                try
-                {
-                    await backupStorage.DeleteAsync(stale.Name, ct);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Failed to delete stale backup {Name} during retention pruning.", stale.Name);
-                }
+                case BackupOperationOutcome.Busy:
+                    logger.LogWarning("Skipping scheduled backup attempt: another backup/restore operation is already in progress.");
+                    break;
+                case BackupOperationOutcome.Failed:
+                    logger.LogError("Scheduled backup attempt failed: {Message}", result.Message);
+                    break;
+                case BackupOperationOutcome.Completed:
+                    logger.LogInformation("Scheduled backup completed: stored {StoragePath}.", result.Record?.StoragePath);
+                    break;
+                case BackupOperationOutcome.NotFound:
+                default:
+                    break;
             }
-#pragma warning restore S3267
-
-            logger.LogInformation(
-                "Scheduled backup completed: stored {Name}, pruned {PrunedCount} stale backup(s).",
-                name, toDelete.Count);
-        }
-        catch (BackupExecutionException ex)
-        {
-            logger.LogError(ex, "Scheduled backup attempt failed.");
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Unexpected error during scheduled backup attempt.");
-        }
-        finally
-        {
-            Interlocked.Exchange(ref _isRunning, 0);
         }
     }
 }

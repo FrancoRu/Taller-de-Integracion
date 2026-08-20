@@ -101,6 +101,29 @@ public class PgDumpBackupServiceTests
         Assert.All(runner.CapturedArgs!, a => Assert.DoesNotContain("&&", a));
     }
 
+    /// <summary>
+    /// Restoring with psql -f against a Supabase-managed database can
+    /// fail on ownership/role statements captured by a plain pg_dump;
+    /// these flags move that safety onto the dump side (design.md's
+    /// "Keep plain-SQL dumps; restore with psql" decision).
+    /// </summary>
+    [Fact]
+    public async Task CreateDumpAsync_IncludesCleanAndOwnershipSafetyFlags()
+    {
+        FakeProcessRunner runner = new() { ResultToReturn = new ProcessResult(0, "ok", string.Empty) };
+        IConfiguration configuration = BuildConfiguration(
+            "Host=localhost;Port=5432;Database=club12;Username=app;Password=x");
+        PgDumpBackupService service = new(runner, configuration, NullLogger<PgDumpBackupService>.Instance);
+
+        await service.CreateDumpAsync();
+
+        Assert.NotNull(runner.CapturedArgs);
+        Assert.Contains("--clean", runner.CapturedArgs!);
+        Assert.Contains("--if-exists", runner.CapturedArgs!);
+        Assert.Contains("--no-owner", runner.CapturedArgs!);
+        Assert.Contains("--no-privileges", runner.CapturedArgs!);
+    }
+
     [Fact]
     public async Task CreateDumpAsync_NonZeroExitCode_ThrowsBackupExecutionException_NotUncaught()
     {

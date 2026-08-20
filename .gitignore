@@ -266,6 +266,8 @@ Backup*/
 # Un-ignore them explicitly rather than weakening the upstream rule.
 !Club12-Backend/Application/Backup/
 !Club12-Backend/Application/Interfaces/Backup/
+!Club12-Backend/Application/DTOs/Backup/
+!Club12-Backend/Application/DTOs/Backup/Response/
 !Club12-Backend/Infrastructure/Backup/
 !Club12-Backend/API.Tests/Backup/
 !Club12-Backend/API.Tests/Backup/Fakes/

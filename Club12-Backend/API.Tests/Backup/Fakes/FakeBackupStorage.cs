@@ -20,6 +20,12 @@ public sealed class FakeBackupStorage : IBackupStorage
     public IReadOnlyList<BackupFile> FilesToList { get; set; } = Array.Empty<BackupFile>();
     public List<string> DeletedNames { get; } = [];
 
+    /// <summary>
+    /// When set, DeleteAsync throws this instead of succeeding —
+    /// simulates the stored file already being missing out-of-band.
+    /// </summary>
+    public Exception? DeleteException { get; set; }
+
     public Task StoreAsync(string name, Stream content, CancellationToken ct = default)
     {
         Interlocked.Increment(ref _storeCallCount);
@@ -38,6 +44,11 @@ public sealed class FakeBackupStorage : IBackupStorage
         lock (DeletedNames)
         {
             DeletedNames.Add(name);
+        }
+
+        if (DeleteException is not null)
+        {
+            throw DeleteException;
         }
 
         return Task.CompletedTask;

@@ -1,9 +1,9 @@
 using API.BackgroundServices;
 using API.Tests.Backup.Fakes;
 
-using Application.Backup;
 using Application.Interfaces.Backup;
 
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -11,9 +11,14 @@ namespace API.Tests.Backup;
 
 /// <summary>
 /// Unit tests for DatabaseBackupHostedService: interval-trigger
-/// logic, the Backup:Enabled gate, the single-flight guard, and
-/// failure isolation. All tests use DatabaseBackupHostedService.IntervalOverride
-/// (a short, deterministic interval) instead of sleeping for real
+/// logic, the Backup:Enabled gate, and failure isolation. Since the
+/// PR2 refactor, the service resolves IBackupOperationsService from a
+/// DI scope per tick and no longer owns its own single-flight flag — that
+/// guard now lives in BackupOperationLock, shared with the manual
+/// endpoint, and is exercised at that layer
+/// (BackupOperationsServiceTests). All tests use
+/// DatabaseBackupHostedService.IntervalOverride (a short,
+/// deterministic interval) instead of sleeping for real
 /// IntervalHours-scale durations, and poll via TestTiming
 /// rather than fixed sleeps to avoid flakiness.
 /// </summary>
@@ -29,24 +34,29 @@ public class DatabaseBackupHostedServiceTests
         };
     }
 
+    private static IServiceScopeFactory ScopeFactoryFor(IBackupOperationsService operations)
+    {
+        ServiceCollection services = new();
+        services.AddSingleton(operations);
+        ServiceProvider provider = services.BuildServiceProvider();
+        return provider.GetRequiredService<IServiceScopeFactory>();
+    }
+
     [Fact]
     public async Task ExecuteAsync_IntervalElapses_TriggersOneBackupAttempt()
     {
-        FakeDatabaseBackupService backupService = new();
-        FakeBackupStorage storage = new();
+        FakeBackupOperationsService operations = new();
         DatabaseBackupHostedService service = new(
-            EnabledOptions(), backupService, storage, new KeepLastNRetentionPolicy(),
-            NullLogger<DatabaseBackupHostedService>.Instance)
+            ScopeFactoryFor(operations), EnabledOptions(), NullLogger<DatabaseBackupHostedService>.Instance)
         {
             IntervalOverride = TimeSpan.FromMilliseconds(30),
         };
 
         await service.StartAsync(CancellationToken.None);
-        bool triggered = await TestTiming.WaitUntilAsync(() => backupService.CallCount >= 1, TimeSpan.FromSeconds(2));
+        bool triggered = await TestTiming.WaitUntilAsync(() => operations.CreateCallCount >= 1, TimeSpan.FromSeconds(2));
         await service.StopAsync(CancellationToken.None);
 
         Assert.True(triggered, "Expected at least one backup attempt after the interval elapsed.");
-        Assert.True(storage.StoreCallCount >= 1);
     }
 
     /// <summary>
@@ -55,11 +65,9 @@ public class DatabaseBackupHostedServiceTests
     [Fact]
     public async Task ExecuteAsync_IntervalNotYetElapsed_NoBackupAttemptTriggered()
     {
-        FakeDatabaseBackupService backupService = new();
-        FakeBackupStorage storage = new();
+        FakeBackupOperationsService operations = new();
         DatabaseBackupHostedService service = new(
-            EnabledOptions(), backupService, storage, new KeepLastNRetentionPolicy(),
-            NullLogger<DatabaseBackupHostedService>.Instance)
+            ScopeFactoryFor(operations), EnabledOptions(), NullLogger<DatabaseBackupHostedService>.Instance)
         {
             IntervalOverride = TimeSpan.FromSeconds(5),
         };
@@ -68,19 +76,16 @@ public class DatabaseBackupHostedServiceTests
         await Task.Delay(100);
         await service.StopAsync(CancellationToken.None);
 
-        Assert.Equal(0, backupService.CallCount);
-        Assert.Equal(0, storage.StoreCallCount);
+        Assert.Equal(0, operations.CreateCallCount);
     }
 
     [Fact]
-    public async Task ExecuteAsync_Disabled_NeverCallsBackupServiceOrStorage()
+    public async Task ExecuteAsync_Disabled_NeverCallsOperationsService()
     {
         BackupOptions options = new() { Enabled = false, IntervalHours = 24, RetentionCount = 7 };
-        FakeDatabaseBackupService backupService = new();
-        FakeBackupStorage storage = new();
+        FakeBackupOperationsService operations = new();
         DatabaseBackupHostedService service = new(
-            options, backupService, storage, new KeepLastNRetentionPolicy(),
-            NullLogger<DatabaseBackupHostedService>.Instance)
+            ScopeFactoryFor(operations), options, NullLogger<DatabaseBackupHostedService>.Instance)
         {
             IntervalOverride = TimeSpan.FromMilliseconds(20),
         };
@@ -89,66 +94,55 @@ public class DatabaseBackupHostedServiceTests
         await Task.Delay(150); // several would-be intervals, to prove no scheduling ever starts
         await service.StopAsync(CancellationToken.None);
 
-        Assert.Equal(0, backupService.CallCount);
-        Assert.Equal(0, storage.StoreCallCount);
-        Assert.Equal(0, storage.ListCallCount);
-        Assert.Equal(0, storage.DeleteCallCount);
+        Assert.Equal(0, operations.CreateCallCount);
     }
 
+    /// <summary>
+    /// Proves the hosted service no longer guards overlapping ticks itself —
+    /// it simply calls CreateBackupAsync every tick and tolerates a
+    /// Busy outcome (from the shared BackupOperationLock)
+    /// without throwing or stalling later ticks.
+    /// </summary>
     [Fact]
-    public async Task ExecuteAsync_SingleFlight_OverlappingTickDoesNotStartConcurrentAttempt()
+    public async Task ExecuteAsync_OperationReturnsBusy_LogsAndContinuesTicking_NoThrow()
     {
-        FakeDatabaseBackupService backupService = new()
+        FakeBackupOperationsService operations = new()
         {
-            Gate = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously),
+            NextCreateResult = new BackupOperationResult(BackupOperationOutcome.Busy, null, "busy"),
         };
-        FakeBackupStorage storage = new();
+        CapturingLogger<DatabaseBackupHostedService> logger = new();
         DatabaseBackupHostedService service = new(
-            EnabledOptions(), backupService, storage, new KeepLastNRetentionPolicy(),
-            NullLogger<DatabaseBackupHostedService>.Instance)
+            ScopeFactoryFor(operations), EnabledOptions(), logger)
         {
             IntervalOverride = TimeSpan.FromMilliseconds(20),
         };
 
         await service.StartAsync(CancellationToken.None);
-
-        // Let several intervals elapse while the first attempt is still gated —
-        // the single-flight guard must prevent a second concurrent attempt.
-        await Task.Delay(150);
-        Assert.Equal(1, backupService.CallCount);
-
-        backupService.Gate.SetResult(true);
-        bool completed = await TestTiming.WaitUntilAsync(() => storage.StoreCallCount >= 1, TimeSpan.FromSeconds(2));
-        Assert.True(completed, "Expected the gated attempt to complete once released.");
-
-        // After completion the guard must reset — a later tick can start attempt #2.
-        bool secondStarted = await TestTiming.WaitUntilAsync(() => backupService.CallCount >= 2, TimeSpan.FromSeconds(2));
+        bool calledTwice = await TestTiming.WaitUntilAsync(() => operations.CreateCallCount >= 2, TimeSpan.FromSeconds(2));
         await service.StopAsync(CancellationToken.None);
 
-        Assert.True(secondStarted, "Expected the guard to reset after completion, allowing a later attempt.");
+        Assert.True(calledTwice, "A Busy outcome must not stop later ticks from also attempting a backup.");
+        Assert.Contains(
+            logger.Entries,
+            e => e.Level == LogLevel.Warning && e.Message.Contains("progress", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
     public async Task ExecuteAsync_BackupFails_LoggedAndHostSurvives_NextTickStillRuns()
     {
-        FakeDatabaseBackupService backupService = new() { FailFirstCalls = 1 };
-        FakeBackupStorage storage = new();
+        FakeBackupOperationsService operations = new() { FailFirstCalls = 1 };
         CapturingLogger<DatabaseBackupHostedService> logger = new();
         DatabaseBackupHostedService service = new(
-            EnabledOptions(), backupService, storage, new KeepLastNRetentionPolicy(), logger)
+            ScopeFactoryFor(operations), EnabledOptions(), logger)
         {
             IntervalOverride = TimeSpan.FromMilliseconds(25),
         };
 
         await service.StartAsync(CancellationToken.None);
-        // Wait for the failure-triggering call PLUS a subsequent successful store —
-        // the store count (not just CallCount) is the real proof that ticking
-        // survived the failure, and is immune to extra ticks racing the shutdown.
-        bool succeededAfterFailure = await TestTiming.WaitUntilAsync(() => storage.StoreCallCount >= 1, TimeSpan.FromSeconds(2));
+        bool secondCallHappened = await TestTiming.WaitUntilAsync(() => operations.CreateCallCount >= 2, TimeSpan.FromSeconds(2));
         await service.StopAsync(CancellationToken.None);
 
-        Assert.True(backupService.CallCount >= 2, "A failed attempt must not stop the host from ticking again.");
-        Assert.True(succeededAfterFailure, "A subsequent tick after the failure must still complete and store a dump.");
+        Assert.True(secondCallHappened, "A failed attempt must not stop the host from ticking again.");
         Assert.Contains(
             logger.Entries,
             e => e.Level == LogLevel.Error && e.Message.Contains("backup", StringComparison.OrdinalIgnoreCase));
