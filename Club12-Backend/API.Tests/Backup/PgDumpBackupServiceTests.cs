@@ -135,6 +135,14 @@ public class PgDumpBackupServiceTests
     /// EntityConstants.Schema) — restricting the dump to just those excludes
     /// every Supabase-managed schema at once, rather than reacting to each
     /// foreign object name as it surfaces one restore attempt at a time.
+    /// The "Club12" pattern MUST be double-quoted (as a literal, embedded in
+    /// the arg-vector element itself — no shell is involved, so no outer
+    /// single-quoting is needed): pg_dump's -n pattern matching folds an
+    /// unquoted pattern to lowercase before comparing, and the real schema
+    /// is mixed-case, so an unquoted "Club12" pattern silently matches
+    /// nothing and pg_dump dumps zero tables from it — confirmed by
+    /// inspecting a real dump taken with the unquoted form, which contained
+    /// only "public" content, not one line of "Club12".
     /// </summary>
     [Fact]
     public async Task CreateDumpAsync_RestrictsDumpToAppOwnedSchemas()
@@ -149,7 +157,7 @@ public class PgDumpBackupServiceTests
         Assert.NotNull(runner.CapturedArgs);
         IReadOnlyList<string> args = runner.CapturedArgs!;
         Assert.Contains("public", args);
-        Assert.Contains("Club12", args);
+        Assert.Contains("\"Club12\"", args);
         Assert.Equal(2, args.Count(a => a == "-n"));
     }
 

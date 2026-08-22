@@ -81,7 +81,17 @@ public sealed class PgDumpBackupService(
             // restore with "must be owner of ...". Event triggers are
             // database-wide, not schema-scoped, so this does NOT exclude
             // them; see EventTriggerStatementPattern below for that.
-            "-n", "public", "-n", EntityConstants.Schema,
+            //
+            // "Club12" MUST be double-quoted here: pg_dump's -n pattern
+            // matching folds an unquoted pattern to lowercase before
+            // comparing against the catalog, and this schema's real name is
+            // mixed-case, so a bare "Club12" argument silently matches
+            // nothing and pg_dump dumps zero tables from it — confirmed by
+            // inspecting a real production dump taken with the unquoted
+            // form, which contained only "public" content. No shell is
+            // involved (args go straight into the process argument vector),
+            // so this is a literal-quote data value, not shell quoting.
+            "-n", "public", "-n", $"\"{EntityConstants.Schema}\"",
         ];
 
         Dictionary<string, string>? environmentVariables = null;
