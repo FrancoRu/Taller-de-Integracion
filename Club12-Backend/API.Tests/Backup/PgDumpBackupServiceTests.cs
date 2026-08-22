@@ -125,6 +125,35 @@ public class PgDumpBackupServiceTests
     }
 
     /// <summary>
+    /// pg_dump with no schema restriction captures the WHOLE database,
+    /// including Supabase-platform-owned tables/views/functions the app's
+    /// connection role never owns (e.g. a "vector_indexes" table from
+    /// Supabase's own tooling) — --clean's DROP for those then fails with
+    /// "must be owner of table X" on restore. The app's own data lives in
+    /// exactly two schemas: "public" (ASP.NET Core Identity's default,
+    /// unconfigured schema) and "Club12" (every domain entity, via
+    /// EntityConstants.Schema) — restricting the dump to just those excludes
+    /// every Supabase-managed schema at once, rather than reacting to each
+    /// foreign object name as it surfaces one restore attempt at a time.
+    /// </summary>
+    [Fact]
+    public async Task CreateDumpAsync_RestrictsDumpToAppOwnedSchemas()
+    {
+        FakeProcessRunner runner = new() { ResultToReturn = new ProcessResult(0, "ok", string.Empty) };
+        IConfiguration configuration = BuildConfiguration(
+            "Host=localhost;Port=5432;Database=club12;Username=app;Password=x");
+        PgDumpBackupService service = new(runner, configuration, NullLogger<PgDumpBackupService>.Instance);
+
+        await service.CreateDumpAsync();
+
+        Assert.NotNull(runner.CapturedArgs);
+        IReadOnlyList<string> args = runner.CapturedArgs!;
+        Assert.Contains("public", args);
+        Assert.Contains("Club12", args);
+        Assert.Equal(2, args.Count(a => a == "-n"));
+    }
+
+    /// <summary>
     /// Supabase-managed databases carry platform-internal event triggers
     /// (PostgREST's schema-cache-reload hooks, pgsodium's mask-update hook,
     /// etc.) that a plain pg_dump captures because event triggers are

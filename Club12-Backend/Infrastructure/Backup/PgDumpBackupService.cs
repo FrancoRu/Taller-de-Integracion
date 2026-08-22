@@ -4,6 +4,8 @@ using Application.Utils.Constants.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
+using Infrastructure.Persistance;
+
 using Npgsql;
 
 using System.Collections.Generic;
@@ -70,6 +72,16 @@ public sealed class PgDumpBackupService(
             // restoring into a Supabase-managed database (different
             // owners/roles) does not fail on CREATE/ALTER OWNER statements.
             "--clean", "--if-exists", "--no-owner", "--no-privileges",
+            // Restrict the dump to schemas the app actually owns: "public"
+            // (ASP.NET Core Identity's default, unconfigured schema) and
+            // "Club12" (every domain entity — EntityConstants.Schema).
+            // Without this, pg_dump captures the WHOLE database, including
+            // Supabase-platform-owned tables/views/functions the app's
+            // connection role never owns — --clean's DROP for those fails on
+            // restore with "must be owner of ...". Event triggers are
+            // database-wide, not schema-scoped, so this does NOT exclude
+            // them; see EventTriggerStatementPattern below for that.
+            "-n", "public", "-n", EntityConstants.Schema,
         ];
 
         Dictionary<string, string>? environmentVariables = null;
