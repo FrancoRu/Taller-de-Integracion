@@ -44,6 +44,7 @@ await app.ExecuteMigrationsAndSeedAsync();
 app.UseSwaggerConfig(builder.Environment)
     .UseSerilogRequestLogging()
     .UseCors()
+    .UseMiddleware<MaintenanceModeMiddleware>()
     .UseAuthentication()
     .UseAuthorization()
     .UseMiddleware<MustChangePasswordMiddleware>()

@@ -36,6 +36,11 @@ public sealed class FakeBackupOperationsService : IBackupOperationsService
     public BackupOperationResult NextDeleteResult { get; set; } =
         new(BackupOperationOutcome.Completed, null, null);
 
+    public BackupOperationResult NextRestoreResult { get; set; } =
+        new(BackupOperationOutcome.Completed, new BackupRecordResponse(Guid.NewGuid(), DateTime.UtcNow, 0, "Job", "safety.sql"), null);
+
+    public Guid? LastRestoreId { get; private set; }
+
     public async Task<BackupOperationResult> CreateBackupAsync(BackupOrigin origin, CancellationToken ct = default)
     {
         int call = Interlocked.Increment(ref _createCallCount);
@@ -53,5 +58,11 @@ public sealed class FakeBackupOperationsService : IBackupOperationsService
     public Task<BackupOperationResult> DeleteBackupAsync(Guid id, CancellationToken ct = default)
     {
         return Task.FromResult(NextDeleteResult);
+    }
+
+    public Task<BackupOperationResult> RestoreBackupAsync(Guid id, CancellationToken ct = default)
+    {
+        LastRestoreId = id;
+        return Task.FromResult(NextRestoreResult);
     }
 }

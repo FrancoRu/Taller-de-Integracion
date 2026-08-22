@@ -85,4 +85,34 @@ public class BackupController(IBackupCatalog catalog, IBackupOperationsService o
             _ => StatusCode(StatusCodes.Status500InternalServerError, result.Message),
         };
     }
+
+    /// <summary>
+    /// database-restore#Restore-Executes-Directly-Against-the-Live-Database.
+    /// The only input is the route Guid — no request body is bound
+    /// (threat-matrix "Restore of foreign/uploaded dumps": there is no
+    /// upload endpoint, so a restore can only ever target an existing
+    /// catalogued backup by id). Confirmation naming the target's
+    /// Fecha before this call is a frontend concern (Phase 5), not
+    /// enforced server-side. On success the response carries the automatic
+    /// pre-restore safety backup's record (design.md's HTTP contract).
+    /// </summary>
+    [HttpPost("{id:guid}/restore")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BackupRecordResponse))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> Restore(Guid id, CancellationToken ct)
+    {
+        BackupOperationResult result = await operations.RestoreBackupAsync(id, ct);
+
+        return result.Outcome switch
+        {
+            BackupOperationOutcome.Completed => Ok(result.Record),
+            BackupOperationOutcome.NotFound => NotFound(),
+            BackupOperationOutcome.Busy => Conflict(result.Message),
+            _ => StatusCode(StatusCodes.Status500InternalServerError, result.Message),
+        };
+    }
 }

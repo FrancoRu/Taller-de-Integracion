@@ -104,4 +104,28 @@ public class BackupAuthorizationTests : IClassFixture<CustomWebApplicationFactor
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
+
+    [Fact]
+    public async Task RestoreBackup_Anonymous_ReturnsUnauthorized()
+    {
+        HttpClient client = _factory.CreateClient();
+
+        HttpResponseMessage response = await client.PostAsync($"api/backups/{Guid.NewGuid()}/restore", null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData(Roles.Owner)]
+    [InlineData(Roles.TournamentManager)]
+    [InlineData(Roles.TeamManager)]
+    [InlineData(Roles.Guest)]
+    public async Task RestoreBackup_NonAdminRole_ReturnsForbidden(string role)
+    {
+        HttpClient client = _factory.CreateAuthenticatedClient(role);
+
+        HttpResponseMessage response = await client.PostAsync($"api/backups/{Guid.NewGuid()}/restore", null);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
 }

@@ -34,9 +34,11 @@ public sealed class BackupOperationsService(
     IBackupCatalog catalog,
     IBackupStorage storage,
     IDatabaseBackupService backupService,
+    IDatabaseRestoreService restoreService,
     IBackupRetentionPolicy retentionPolicy,
     BackupOptions options,
     BackupOperationLock operationLock,
+    IMaintenanceModeState maintenanceModeState,
     ILogger<BackupOperationsService> logger) : IBackupOperationsService
 {
     public async Task<BackupOperationResult> CreateBackupAsync(BackupOrigin origin, CancellationToken ct = default)
@@ -89,6 +91,76 @@ public sealed class BackupOperationsService(
             await catalog.RemoveAsync(record.Id, ct);
 
             return new BackupOperationResult(BackupOperationOutcome.Completed, BackupRecordResponse.FromEntity(record), null);
+        }
+        finally
+        {
+            operationLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// database-restore#Automatic-Pre-Restore-Safety-Backup +
+    /// database-restore#Maintenance-Mode-Window +
+    /// database-restore#Restore-Failure-Is-Logged-and-Isolated: enters
+    /// maintenance mode, takes an automatic safety backup of the current
+    /// state (Origin = Job, applyRetention: false — kept even past
+    /// RetentionCount) via CreateBackupCoreAsync (reusing the lock
+    /// already held by this call, not re-acquiring it), copies the selected
+    /// backup into a local temp file, and restores it. Maintenance mode is
+    /// always exited and the temp file always deleted in a finally
+    /// block, on both success and failure, so a failed restore never leaves
+    /// the app stuck or crashes the host.
+    /// </summary>
+    public async Task<BackupOperationResult> RestoreBackupAsync(Guid id, CancellationToken ct = default)
+    {
+        if (!await operationLock.WaitAsync(TimeSpan.Zero, ct))
+        {
+            return new BackupOperationResult(BackupOperationOutcome.Busy, null, ErrorMessages.Backup.OperationInProgress);
+        }
+
+        try
+        {
+            BackupRecord? record = await catalog.GetByIdAsync(id, ct);
+            if (record is null)
+            {
+                return new BackupOperationResult(BackupOperationOutcome.NotFound, null, null);
+            }
+
+            maintenanceModeState.Enter($"Restoring backup {record.Id}.");
+            string? tempFilePath = null;
+            try
+            {
+                BackupOperationResult safetyBackup = await CreateBackupCoreAsync(BackupOrigin.Job, applyRetention: false, ct);
+                if (safetyBackup.Outcome != BackupOperationOutcome.Completed)
+                {
+                    return new BackupOperationResult(BackupOperationOutcome.Failed, null, safetyBackup.Message);
+                }
+
+                tempFilePath = Path.Combine(Path.GetTempPath(), $"restore-{Guid.NewGuid():N}.sql");
+                await using (Stream source = await storage.OpenReadAsync(record.StoragePath, ct))
+                await using (FileStream destination = File.Create(tempFilePath))
+                {
+                    await source.CopyToAsync(destination, ct);
+                }
+
+                await restoreService.RestoreAsync(tempFilePath, ct);
+
+                return new BackupOperationResult(BackupOperationOutcome.Completed, safetyBackup.Record, null);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogError(ex, "Restore failed; maintenance mode will be cleared and the host keeps running.");
+                return new BackupOperationResult(BackupOperationOutcome.Failed, null, ex.Message);
+            }
+            finally
+            {
+                if (tempFilePath is not null && File.Exists(tempFilePath))
+                {
+                    File.Delete(tempFilePath);
+                }
+
+                maintenanceModeState.Exit();
+            }
         }
         finally
         {

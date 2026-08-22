@@ -475,8 +475,9 @@ public static class StartupExtensions
     /// Registers the database backup feature: binds the
     /// Backup config section into a BackupOptions
     /// singleton and registers its ports/adapters. Most of this is
-    /// singleton (pg_dump adapter, retention policy, storage adapter,
-    /// the process-wide BackupOperationLock, and
+    /// singleton (pg_dump adapter, psql restore adapter, retention
+    /// policy, storage adapter, the process-wide
+    /// BackupOperationLock and IMaintenanceModeState, and
     /// DatabaseBackupHostedService itself) — the exceptions are
     /// IBackupCatalog (EF-backed, needs the scoped
     /// ApplicationDBContext) and IBackupOperationsService (depends
@@ -509,6 +510,8 @@ public static class StartupExtensions
         services.AddSingleton<IBackupRetentionPolicy, KeepLastNRetentionPolicy>();
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IDatabaseBackupService, PgDumpBackupService>();
+        services.AddSingleton<IDatabaseRestoreService, PsqlDatabaseRestoreService>();
+        services.AddSingleton<IMaintenanceModeState, MaintenanceModeState>();
         services.AddSingleton<BackupOperationLock>();
 
         if (string.Equals(options.StorageTarget, BackupStorageTargets.Supabase, StringComparison.OrdinalIgnoreCase))

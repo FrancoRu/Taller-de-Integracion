@@ -164,4 +164,74 @@ public class BackupControllerTests
         ObjectResult obj = Assert.IsType<ObjectResult>(result);
         Assert.Equal(StatusCodes.Status500InternalServerError, obj.StatusCode);
     }
+
+    /// <summary>
+    /// threat-matrix "Restore of foreign/uploaded dumps": Restore's only
+    /// input parameter is the route Guid — no [FromBody] parameter
+    /// exists on the action, so no request body is ever bound/deserialized
+    /// into a path or dump payload. Confirming the exact id reaches
+    /// IBackupOperationsService.RestoreBackupAsync is the closest
+    /// unit-level proof of that (no separate body-binding surface to probe).
+    /// </summary>
+    [Fact]
+    public async Task Restore_Completed_ReturnsOkWithRecord_PassesOnlyRouteId()
+    {
+        Guid id = Guid.NewGuid();
+        BackupRecordResponse expected = new(Guid.NewGuid(), DateTime.UtcNow, 99, "Job", "safety.sql");
+        FakeBackupOperationsService operations = new()
+        {
+            NextRestoreResult = new BackupOperationResult(BackupOperationOutcome.Completed, expected, null),
+        };
+        BackupController sut = CreateSut(operations: operations);
+
+        IActionResult result = await sut.Restore(id, CancellationToken.None);
+
+        OkObjectResult ok = Assert.IsType<OkObjectResult>(result);
+        BackupRecordResponse body = Assert.IsType<BackupRecordResponse>(ok.Value);
+        Assert.Equal(expected, body);
+        Assert.Equal(id, operations.LastRestoreId);
+    }
+
+    [Fact]
+    public async Task Restore_NotFound_ReturnsNotFound()
+    {
+        FakeBackupOperationsService operations = new()
+        {
+            NextRestoreResult = new BackupOperationResult(BackupOperationOutcome.NotFound, null, null),
+        };
+        BackupController sut = CreateSut(operations: operations);
+
+        IActionResult result = await sut.Restore(Guid.NewGuid(), CancellationToken.None);
+
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task Restore_Busy_ReturnsConflict()
+    {
+        FakeBackupOperationsService operations = new()
+        {
+            NextRestoreResult = new BackupOperationResult(BackupOperationOutcome.Busy, null, "busy"),
+        };
+        BackupController sut = CreateSut(operations: operations);
+
+        IActionResult result = await sut.Restore(Guid.NewGuid(), CancellationToken.None);
+
+        Assert.IsType<ConflictObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task Restore_Failed_ReturnsInternalServerError()
+    {
+        FakeBackupOperationsService operations = new()
+        {
+            NextRestoreResult = new BackupOperationResult(BackupOperationOutcome.Failed, null, "boom"),
+        };
+        BackupController sut = CreateSut(operations: operations);
+
+        IActionResult result = await sut.Restore(Guid.NewGuid(), CancellationToken.None);
+
+        ObjectResult obj = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(StatusCodes.Status500InternalServerError, obj.StatusCode);
+    }
 }
