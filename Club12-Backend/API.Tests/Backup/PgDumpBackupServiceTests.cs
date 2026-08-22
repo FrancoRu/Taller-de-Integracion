@@ -124,6 +124,51 @@ public class PgDumpBackupServiceTests
         Assert.Contains("--no-privileges", runner.CapturedArgs!);
     }
 
+    /// <summary>
+    /// Supabase-managed databases carry platform-internal event triggers
+    /// (PostgREST's schema-cache-reload hooks, pgsodium's mask-update hook,
+    /// etc.) that a plain pg_dump captures because event triggers are
+    /// database-wide, not schema-scoped — no `-n`/`--exclude-schema` filters
+    /// them out. On restore, `--clean`'s `DROP EVENT TRIGGER` for one of
+    /// these fails with "must be owner of event trigger", since the app's
+    /// connection role never owns Supabase's own infrastructure objects. The
+    /// app never defines its own event triggers, so any EVENT TRIGGER
+    /// statement in the dump is guaranteed to be Supabase-owned and safe to
+    /// drop from the dump entirely (not just the one named in the incident —
+    /// psql aborts at the first one, so others further down the dump would
+    /// never even surface).
+    /// </summary>
+    [Fact]
+    public async Task CreateDumpAsync_StripsEventTriggerStatements_SupabaseInternalObjectsNotOwnedByAppRole()
+    {
+        const string rawDump = """
+            SET statement_timeout = 0;
+            DROP EVENT TRIGGER IF EXISTS pgrst_drop_watch;
+            DROP EVENT TRIGGER IF EXISTS pgrst_ddl_watch;
+            CREATE TABLE "Club12"."BackupRecords" (
+                "Id" uuid NOT NULL
+            );
+            CREATE EVENT TRIGGER pgrst_drop_watch ON sql_drop
+               EXECUTE FUNCTION extensions.pgrst_drop_watch();
+            CREATE EVENT TRIGGER pgrst_ddl_watch ON ddl_command_end
+               EXECUTE FUNCTION extensions.pgrst_ddl_watch();
+            COMMENT ON EVENT TRIGGER pgrst_drop_watch IS 'notify PostgREST of DDL changes';
+            INSERT INTO "Club12"."BackupRecords" ("Id") VALUES ('11111111-1111-1111-1111-111111111111');
+            """;
+        FakeProcessRunner runner = new() { ResultToReturn = new ProcessResult(0, rawDump, string.Empty) };
+        IConfiguration configuration = BuildConfiguration(
+            "Host=localhost;Port=5432;Database=club12;Username=app;Password=x");
+        PgDumpBackupService service = new(runner, configuration, NullLogger<PgDumpBackupService>.Instance);
+
+        await using Stream dump = await service.CreateDumpAsync();
+
+        using StreamReader reader = new(dump);
+        string content = await reader.ReadToEndAsync();
+        Assert.DoesNotContain("EVENT TRIGGER", content, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("CREATE TABLE \"Club12\".\"BackupRecords\"", content);
+        Assert.Contains("INSERT INTO \"Club12\".\"BackupRecords\"", content);
+    }
+
     [Fact]
     public async Task CreateDumpAsync_NonZeroExitCode_ThrowsBackupExecutionException_NotUncaught()
     {
