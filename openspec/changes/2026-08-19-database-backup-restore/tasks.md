@@ -89,15 +89,15 @@ a High-risk PR2/PR4/PR5, `size:exception` is not recommended.
 
 ## Phase 5: Admin Data Administration Panel (PR5)
 
-- [ ] 5.1 RED: `backup.hook.test.ts` — `useBackups()` fetch/create/delete/restore state transitions
-- [ ] 5.2 GREEN: `src/modules/backup/type/backup.d.ts`, `service/backup.service.ts`, `hook/backup.hook.ts`, `utils/backupFormat.ts`
-- [ ] 5.3 RED: `BackupsTable.test.tsx` — columns Fecha/Peso/Forma de creación/Acciones render; cancel on delete/restore confirm → service not called (admin-data-administration-panel#Confirmation-Required-for-Delete-and-Restore)
-- [ ] 5.4 GREEN: `src/views/panel/components/BackupsTable.tsx` — `GridColDef`, `buildActionsColumn`, `confirmDelete`/`confirmAction` wiring
-- [ ] 5.5 RED: `DataAdministrationPage.test.tsx` — two-card layout, Admin-only guard (admin-data-administration-panel#Panel-Renamed-and-Restructured-Into-Two-Cards; #Panel-and-Its-Actions-Are-Admin-Only)
-- [ ] 5.6 GREEN: `src/views/panel/DataAdministrationPage.tsx` (replaces `TestDataPage.tsx`); delete `TestDataPage.tsx`
-- [ ] 5.7 GREEN: `routes.ts` (`backups`, `maintenance`), `httpStatus.ts` (`Conflict`, `ServiceUnavailable`), `appRoutes.ts` (`panelDataAdministration`, path unchanged), `App.tsx`/`SidebarLayout.tsx` label+icon
-- [ ] 5.8 RED: maintenance-banner test — `onStatusCode(503, ...)` flips global banner
-- [ ] 5.9 GREEN: register 503 handler in `axiosUtils` handler registry
+- [x] 5.1 RED: `backup.hook.test.ts` — `useBackups()` fetch/create/delete/restore state transitions
+- [x] 5.2 GREEN: `src/modules/backup/type/backup.d.ts`, `service/backup.service.ts`, `hook/backup.hook.ts`, `utils/backupFormat.ts`
+- [x] 5.3 RED: `BackupsTable.test.tsx` — columns Fecha/Peso/Forma de creación/Acciones render; cancel on delete/restore confirm → service not called (admin-data-administration-panel#Confirmation-Required-for-Delete-and-Restore)
+- [x] 5.4 GREEN: `src/views/panel/components/BackupsTable.tsx` — `GridColDef`, `buildActionsColumn`, `confirmDelete`/`confirmAction` wiring
+- [x] 5.5 RED: `DataAdministrationPage.test.tsx` — two-card layout, Admin-only guard (admin-data-administration-panel#Panel-Renamed-and-Restructured-Into-Two-Cards; #Panel-and-Its-Actions-Are-Admin-Only)
+- [x] 5.6 GREEN: `src/views/panel/DataAdministrationPage.tsx` (replaces `TestDataPage.tsx`); delete `TestDataPage.tsx`
+- [x] 5.7 GREEN: `routes.ts` (`backups`, `maintenance`), `httpStatus.ts` (`Conflict`, `ServiceUnavailable`), `appRoutes.ts` (`panelDataAdministration`, path unchanged), `App.tsx`/`SidebarLayout.tsx` label+icon
+- [x] 5.8 RED: maintenance-banner test — `onStatusCode(503, ...)` flips global banner
+- [x] 5.9 GREEN: register 503 handler in `axiosUtils` handler registry
 
 ## Phase 6: Server Storage Deployment Config (PR6)
 
