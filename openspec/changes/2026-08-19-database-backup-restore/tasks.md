@@ -76,16 +76,16 @@ a High-risk PR2/PR4/PR5, `size:exception` is not recommended.
 
 ## Phase 4: Restore Wiring — Use Case, Controller, Middleware (PR4)
 
-- [ ] 4.1 RED: `BackupOperationsServiceTests` — restore takes safety backup with `Origin=Job`, `applyRetention:false`, even past `RetentionCount` (database-restore#Automatic-Pre-Restore-Safety-Backup)
-- [ ] 4.2 RED: same suite — restore failure (`IDatabaseRestoreService` throws) → maintenance exited, temp file deleted, no host crash (database-restore#Restore-Failure-Is-Logged-and-Isolated; threat: temp-file handling)
-- [ ] 4.3 GREEN: extend `IBackupOperationsService`/`BackupOperationsService.RestoreBackupAsync` — `Enter()` → `CreateBackupCoreAsync(Job, applyRetention:false)` → `OpenReadAsync` → temp file → `RestoreAsync` → `finally` cleanup + `Exit()`
-- [ ] 4.4 RED: `MaintenanceModeMiddlewareTests` — `/api/backups`, `/swagger`, an unmatched route all → 503 while active; `/health*` and `/api/maintenance` pass through (threat: routing gate bypass)
-- [ ] 4.5 RED: `MaintenanceControllerTests` — anonymous/non-Admin `DELETE /api/maintenance` → 401/403 while active (database-restore#Maintenance-Mode-Window; threat: escape-hatch abuse)
-- [ ] 4.6 GREEN: `API/Utils/Middlewares/MaintenanceModeMiddleware.cs`; register after `UseCors()`, before `UseAuthentication()` in `Program.cs`
-- [ ] 4.7 GREEN: `API/Controllers/MaintenanceController.cs` (`GET`/`DELETE api/maintenance`), `Application/DTOs/Backup/Response/MaintenanceStatusResponse.cs`
-- [ ] 4.8 RED: `BackupControllerTests` — `POST api/backups/{id}/restore` route accepts only route `Guid`, no body binding (threat: restore of foreign/uploaded dumps); requires explicit confirmation is a frontend concern (Phase 5)
-- [ ] 4.9 RED: concurrency test — concurrent restore requests → exactly one runs, others `409` (threat: DoS via repeated restore; database-restore#Restore-Executes-Directly-Against-the-Live-Database)
-- [ ] 4.10 GREEN: `BackupController.cs` restore endpoint; `StartupExtensions.cs` singletons `IMaintenanceModeState`/`IDatabaseRestoreService`
+- [x] 4.1 RED: `BackupOperationsServiceTests` — restore takes safety backup with `Origin=Job`, `applyRetention:false`, even past `RetentionCount` (database-restore#Automatic-Pre-Restore-Safety-Backup)
+- [x] 4.2 RED: same suite — restore failure (`IDatabaseRestoreService` throws) → maintenance exited, temp file deleted, no host crash (database-restore#Restore-Failure-Is-Logged-and-Isolated; threat: temp-file handling)
+- [x] 4.3 GREEN: extend `IBackupOperationsService`/`BackupOperationsService.RestoreBackupAsync` — `Enter()` → `CreateBackupCoreAsync(Job, applyRetention:false)` → `OpenReadAsync` → temp file → `RestoreAsync` → `finally` cleanup + `Exit()`
+- [x] 4.4 RED: `MaintenanceModeMiddlewareTests` — `/api/backups`, `/swagger`, an unmatched route all → 503 while active; `/health*` and `/api/maintenance` pass through (threat: routing gate bypass)
+- [x] 4.5 RED: `MaintenanceControllerTests` — anonymous/non-Admin `DELETE /api/maintenance` → 401/403 while active (database-restore#Maintenance-Mode-Window; threat: escape-hatch abuse)
+- [x] 4.6 GREEN: `API/Utils/Middlewares/MaintenanceModeMiddleware.cs`; register after `UseCors()`, before `UseAuthentication()` in `Program.cs`
+- [x] 4.7 GREEN: `API/Controllers/MaintenanceController.cs` (`GET`/`DELETE api/maintenance`), `Application/DTOs/Backup/Response/MaintenanceStatusResponse.cs`
+- [x] 4.8 RED: `BackupControllerTests` — `POST api/backups/{id}/restore` route accepts only route `Guid`, no body binding (threat: restore of foreign/uploaded dumps); requires explicit confirmation is a frontend concern (Phase 5)
+- [x] 4.9 RED: concurrency test — concurrent restore requests → exactly one runs, others `409` (threat: DoS via repeated restore; database-restore#Restore-Executes-Directly-Against-the-Live-Database)
+- [x] 4.10 GREEN: `BackupController.cs` restore endpoint; `StartupExtensions.cs` singletons `IMaintenanceModeState`/`IDatabaseRestoreService`
 
 ## Phase 5: Admin Data Administration Panel (PR5)
 
