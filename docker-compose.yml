@@ -9,11 +9,13 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
     expose: ["8080"]
     networks: [club12]
+    volumes:
+      - backup-data:/app/backups
     restart: unless-stopped
     deploy:
       resources:
         limits:
-          memory: 512m
+          memory: 1g
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/health/ready"]
       interval: 30s
@@ -37,3 +39,6 @@ services:
 
 networks:
   club12: { driver: bridge }
+
+volumes:
+  backup-data: {}

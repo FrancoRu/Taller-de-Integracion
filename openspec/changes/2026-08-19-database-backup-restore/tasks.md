@@ -101,11 +101,11 @@ a High-risk PR2/PR4/PR5, `size:exception` is not recommended.
 
 ## Phase 6: Server Storage Deployment Config (PR6)
 
-- [ ] 6.1 `Club12-Backend/Dockerfile` — add PGDG apt repo + `postgresql-client-17`; `mkdir -p /app/backups && chown $APP_UID:$APP_UID /app/backups` before `USER $APP_UID`
-- [ ] 6.2 `docker-compose.yml` — `backend.volumes: [backup-data:/app/backups]`; top-level `volumes: {backup-data:}`; memory limit `512m` → `1g`
-- [ ] 6.3 `.env.example` — `Backup__Enabled`, `Backup__IntervalHours`, `Backup__RetentionCount`, `Backup__StorageTarget`, `Backup__LocalStoragePath=/app/backups`, `Backup__PgDumpPath`, `Backup__PsqlPath`
-- [ ] 6.4 Manual verify: `pg_dump --version`/`psql --version` inside container match server major (17); `POST /api/backups` then `docker compose restart backend` confirms file persists
-- [ ] 6.5 Follow design's phased rollout order in production: image-only (`Backup__Enabled=false`) → volume → `Backup__Enabled=true` → restore rehearsal in staging before first prod restore
+- [x] 6.1 `Club12-Backend/Dockerfile` — add PGDG apt repo + `postgresql-client-17`; `mkdir -p /app/backups && chown $APP_UID:$APP_UID /app/backups` before `USER $APP_UID`
+- [x] 6.2 `docker-compose.yml` — `backend.volumes: [backup-data:/app/backups]`; top-level `volumes: {backup-data:}`; memory limit `512m` → `1g`
+- [x] 6.3 `.env.example` — `Backup__Enabled`, `Backup__IntervalHours`, `Backup__RetentionCount`, `Backup__StorageTarget`, `Backup__LocalStoragePath=/app/backups`, `Backup__PgDumpPath`, `Backup__PsqlPath`
+- [ ] 6.4 Manual verify (NOT completable from this environment — requires the real server/container): `pg_dump --version`/`psql --version` inside container match server major (17); `POST /api/backups` then `docker compose restart backend` confirms file persists
+- [ ] 6.5 Follow design's phased rollout order in production (NOT completable from this environment — requires SSH to the deploy server): image-only (`Backup__Enabled=false`) → volume → `Backup__Enabled=true` → restore rehearsal in staging before first prod restore
 
 ## Key Learnings
 
