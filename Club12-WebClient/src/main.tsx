@@ -3,6 +3,9 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
+// Side-effect import: registers the global maintenance banner against
+// axiosUtils' onStatusCode(HttpStatus.ServiceUnavailable, ...) registry.
+import './modules/core/utils/maintenanceBanner';
 import { AuthProvider } from './modules/auth/context/auth.context';
 import { BrowserRouter } from 'react-router-dom';
 import { ErrorProvider } from './modules/error/context/error.context';

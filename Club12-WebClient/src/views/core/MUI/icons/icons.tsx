@@ -39,6 +39,10 @@ import FacebookIcon from '@mui/icons-material/Facebook';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import ScienceIcon from '@mui/icons-material/Science';
+import BackupIcon from '@mui/icons-material/Backup';
+import RestoreIcon from '@mui/icons-material/Restore';
+import StorageIcon from '@mui/icons-material/Storage';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 
 export {
   DeleteIcon,
@@ -82,4 +86,8 @@ export {
   LightModeIcon,
   DarkModeIcon,
   ScienceIcon,
+  BackupIcon,
+  RestoreIcon,
+  StorageIcon,
+  DeleteSweepIcon,
 };
