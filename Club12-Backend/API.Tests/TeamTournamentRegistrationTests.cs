@@ -1,3 +1,4 @@
+using Application.DTOs.Abstract.Response;
 using Application.DTOs.Team.Request;
 using Application.Interfaces.Services;
 
@@ -105,6 +106,251 @@ public class TeamTournamentRegistrationTests : IClassFixture<CustomWebApplicatio
         HashSet<(Guid TeamId, Guid TournamentId)> combined = [.. historicalRows, .. newFromStep2];
         List<(Guid TeamId, Guid TournamentId)> secondPassNew = [.. pointerRows.Where(r => !combined.Contains(r))];
         Assert.Empty(secondPassNew);
+    }
+
+    /// <summary>
+    /// A team listed for a tournament it was never registered to gains a
+    /// registration to THAT tournament, and its denormalized current-season
+    /// pointer is refreshed to match — the join table and pointer agree for a
+    /// freshly-registered team.
+    /// </summary>
+    [Fact]
+    public async Task RegisterTeamsToTournamentAsync_NewTeam_CreatesRegistrationAndUpdatesPointer()
+    {
+        using IServiceScope seedScope = _factory.Services.CreateScope();
+        ApplicationDBContext seedDb = seedScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        Tournament tournament = await SeedTournamentAsync(seedDb, "Colón SF 2026");
+        Team team = await SeedTeamAsync(seedDb, tournamentId: null);
+
+        await RegisterAsync(tournament, [team.Id]);
+
+        List<TeamTournamentRegistration> registrations = await ReadRegistrationsAsync(team.Id);
+        TeamTournamentRegistration only = Assert.Single(registrations);
+        Assert.Equal(tournament.Id, only.TournamentId);
+
+        Team? persisted = await ReadTeamAsync(team.Id);
+        Assert.Equal(tournament.Id, persisted!.TournamentId);
+    }
+
+    /// <summary>
+    /// A team already registered to the target tournament and included again
+    /// is not duplicated — the upsert keeps the single existing row (the
+    /// unique (TeamId, TournamentId) index would otherwise reject a second).
+    /// </summary>
+    [Fact]
+    public async Task RegisterTeamsToTournamentAsync_ExistingMember_StaysRegistered_NotDuplicated()
+    {
+        using IServiceScope seedScope = _factory.Services.CreateScope();
+        ApplicationDBContext seedDb = seedScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        Tournament tournament = await SeedTournamentAsync(seedDb, "Colón SF 2026");
+        Team team = await SeedTeamAsync(seedDb, tournamentId: tournament.Id);
+        await SeedRegistrationAsync(seedDb, team, tournament);
+
+        await RegisterAsync(tournament, [team.Id]);
+
+        List<TeamTournamentRegistration> registrations = await ReadRegistrationsAsync(team.Id);
+        TeamTournamentRegistration only = Assert.Single(registrations);
+        Assert.Equal(tournament.Id, only.TournamentId);
+    }
+
+    /// <summary>
+    /// Registering a team already registered to another tournament ADDS a
+    /// second registration for the target — "Colón SF 2026" and
+    /// "Colón SF 2027" coexist as two independently preserved rows; the first
+    /// is never overwritten.
+    /// </summary>
+    [Fact]
+    public async Task RegisterTeamsToTournamentAsync_TeamInDifferentTournament_GainsSecondRegistration_KeepsFirst()
+    {
+        using IServiceScope seedScope = _factory.Services.CreateScope();
+        ApplicationDBContext seedDb = seedScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        Tournament season2026 = await SeedTournamentAsync(seedDb, "Colón SF 2026");
+        Tournament season2027 = await SeedTournamentAsync(seedDb, "Colón SF 2027");
+        Team team = await SeedTeamAsync(seedDb, tournamentId: season2026.Id);
+        await SeedRegistrationAsync(seedDb, team, season2026);
+
+        await RegisterAsync(season2027, [team.Id]);
+
+        List<TeamTournamentRegistration> registrations = await ReadRegistrationsAsync(team.Id);
+        Assert.Equal(2, registrations.Count);
+        Assert.Contains(registrations, r => r.TournamentId == season2026.Id);
+        Assert.Contains(registrations, r => r.TournamentId == season2027.Id);
+    }
+
+    /// <summary>
+    /// Dropping a team from the target tournament removes ONLY that
+    /// tournament's registration — its registration in a different tournament
+    /// survives, so history is never erased.
+    /// </summary>
+    [Fact]
+    public async Task RegisterTeamsToTournamentAsync_DroppedTeam_RemovesOnlyTargetTournamentRegistration_KeepsOthers()
+    {
+        using IServiceScope seedScope = _factory.Services.CreateScope();
+        ApplicationDBContext seedDb = seedScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        Tournament season2026 = await SeedTournamentAsync(seedDb, "Colón SF 2026");
+        Tournament season2027 = await SeedTournamentAsync(seedDb, "Colón SF 2027");
+        Team team = await SeedTeamAsync(seedDb, tournamentId: season2027.Id);
+        await SeedRegistrationAsync(seedDb, team, season2026);
+        await SeedRegistrationAsync(seedDb, team, season2027);
+
+        // Reconcile season2027 without this team → drop only its 2027 row.
+        await RegisterAsync(season2027, []);
+
+        List<TeamTournamentRegistration> registrations = await ReadRegistrationsAsync(team.Id);
+        TeamTournamentRegistration only = Assert.Single(registrations);
+        Assert.Equal(season2026.Id, only.TournamentId);
+    }
+
+    /// <summary>
+    /// An empty list clears only the target tournament's members: a team
+    /// registered to another tournament is entirely untouched (its
+    /// registration AND its pointer survive).
+    /// </summary>
+    [Fact]
+    public async Task RegisterTeamsToTournamentAsync_EmptyList_ClearsOnlyTargetTournamentMembers_KeepsOtherTournaments()
+    {
+        using IServiceScope seedScope = _factory.Services.CreateScope();
+        ApplicationDBContext seedDb = seedScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        Tournament target = await SeedTournamentAsync(seedDb, "Colón SF 2026");
+        Tournament other = await SeedTournamentAsync(seedDb, "Colón SF 2027");
+
+        Team targetMember = await SeedTeamAsync(seedDb, tournamentId: target.Id);
+        await SeedRegistrationAsync(seedDb, targetMember, target);
+
+        Team otherMember = await SeedTeamAsync(seedDb, tournamentId: other.Id);
+        await SeedRegistrationAsync(seedDb, otherMember, other);
+
+        await RegisterAsync(target, []);
+
+        Assert.Empty(await ReadRegistrationsAsync(targetMember.Id));
+        Assert.Null((await ReadTeamAsync(targetMember.Id))!.TournamentId);
+
+        List<TeamTournamentRegistration> otherRegistrations = await ReadRegistrationsAsync(otherMember.Id);
+        TeamTournamentRegistration only = Assert.Single(otherRegistrations);
+        Assert.Equal(other.Id, only.TournamentId);
+        Assert.Equal(other.Id, (await ReadTeamAsync(otherMember.Id))!.TournamentId);
+    }
+
+    /// <summary>
+    /// GetAllTeamsAsync(TournamentId) resolves participation through the
+    /// TeamTournamentRegistration join, NOT Team.TournamentId: a team whose
+    /// current pointer has moved to a newer season still appears when listing
+    /// the older season it remains registered to, and the same team appears in
+    /// BOTH seasons' listings.
+    /// </summary>
+    [Fact]
+    public async Task GetAllTeamsAsync_TournamentIdFilter_ResolvesViaJoin_TeamAppearsInEverySeasonItIsRegisteredIn()
+    {
+        using IServiceScope seedScope = _factory.Services.CreateScope();
+        ApplicationDBContext seedDb = seedScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        Tournament season2026 = await SeedTournamentAsync(seedDb, "Colón SF 2026");
+        Tournament season2027 = await SeedTournamentAsync(seedDb, "Colón SF 2027");
+
+        // Pointer currently on 2027, but registered to BOTH seasons.
+        Team team = await SeedTeamAsync(seedDb, tournamentId: season2027.Id);
+        await SeedRegistrationAsync(seedDb, team, season2026);
+        await SeedRegistrationAsync(seedDb, team, season2027);
+
+        PaginatedResponse<Team> in2026 = await GetAllTeamsAsync(new GetTeamsFilteredRequest { TournamentId = season2026.Id });
+        PaginatedResponse<Team> in2027 = await GetAllTeamsAsync(new GetTeamsFilteredRequest { TournamentId = season2027.Id });
+
+        Assert.Contains(in2026.Items, t => t.Id == team.Id);
+        Assert.Contains(in2027.Items, t => t.Id == team.Id);
+    }
+
+    /// <summary>
+    /// A team registered to a tournament but whose pointer moved elsewhere is
+    /// NOT found by that pointer's tournament unless it is also registered
+    /// there — proves the filter is the join, not the FK.
+    /// </summary>
+    [Fact]
+    public async Task GetAllTeamsAsync_TournamentIdFilter_ExcludesTeamRegisteredElsewhereEvenIfPointerMatches()
+    {
+        using IServiceScope seedScope = _factory.Services.CreateScope();
+        ApplicationDBContext seedDb = seedScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        Tournament registeredSeason = await SeedTournamentAsync(seedDb, "Colón SF 2026");
+        Tournament pointerSeason = await SeedTournamentAsync(seedDb, "Colón SF 2027");
+
+        // Pointer says 2027, but the only registration is for 2026.
+        Team team = await SeedTeamAsync(seedDb, tournamentId: pointerSeason.Id);
+        await SeedRegistrationAsync(seedDb, team, registeredSeason);
+
+        PaginatedResponse<Team> byPointer = await GetAllTeamsAsync(new GetTeamsFilteredRequest { TournamentId = pointerSeason.Id });
+        PaginatedResponse<Team> byRegistration = await GetAllTeamsAsync(new GetTeamsFilteredRequest { TournamentId = registeredSeason.Id });
+
+        Assert.DoesNotContain(byPointer.Items, t => t.Id == team.Id);
+        Assert.Contains(byRegistration.Items, t => t.Id == team.Id);
+    }
+
+    /// <summary>
+    /// The StageId special-case still works AND-combined with the
+    /// TournamentId join filter: a team registered to the tournament and
+    /// staged in the given stage is returned; a team registered but not
+    /// staged is excluded.
+    /// </summary>
+    [Fact]
+    public async Task GetAllTeamsAsync_StageIdAndTournamentIdCombined_StillHonorsStageSpecialCase()
+    {
+        using IServiceScope seedScope = _factory.Services.CreateScope();
+        ApplicationDBContext seedDb = seedScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        Tournament tournament = await SeedTournamentAsync(seedDb, "Colón SF 2026");
+        Division division = await SeedDivisionAsync(seedDb, tournament);
+        Stage stage = await SeedStageAsync(seedDb, division);
+
+        Team stagedTeam = await SeedTeamAsync(seedDb, tournamentId: tournament.Id);
+        await SeedRegistrationAsync(seedDb, stagedTeam, tournament);
+        await SeedStageTeamMatchAsync(seedDb, stage, stagedTeam);
+
+        Team unstagedTeam = await SeedTeamAsync(seedDb, tournamentId: tournament.Id);
+        await SeedRegistrationAsync(seedDb, unstagedTeam, tournament);
+
+        PaginatedResponse<Team> result = await GetAllTeamsAsync(new GetTeamsFilteredRequest
+        {
+            TournamentId = tournament.Id,
+            StageId = stage.Id,
+        });
+
+        Assert.Contains(result.Items, t => t.Id == stagedTeam.Id);
+        Assert.DoesNotContain(result.Items, t => t.Id == unstagedTeam.Id);
+    }
+
+    private async Task RegisterAsync(Tournament tournament, List<Guid> teamIds)
+    {
+        using IServiceScope actScope = _factory.Services.CreateScope();
+        ITeamService teamService = actScope.ServiceProvider.GetRequiredService<ITeamService>();
+        await teamService.RegisterTeamsToTournamentAsync(tournament, teamIds);
+    }
+
+    private async Task<PaginatedResponse<Team>> GetAllTeamsAsync(GetTeamsFilteredRequest filter)
+    {
+        using IServiceScope actScope = _factory.Services.CreateScope();
+        ITeamService teamService = actScope.ServiceProvider.GetRequiredService<ITeamService>();
+        return await teamService.GetAllTeamsAsync(filter);
+    }
+
+    private async Task<List<TeamTournamentRegistration>> ReadRegistrationsAsync(Guid teamId)
+    {
+        using IServiceScope verifyScope = _factory.Services.CreateScope();
+        ApplicationDBContext db = verifyScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        return await db.TeamTournamentRegistrations
+            .AsNoTracking()
+            .Where(r => r.TeamId == teamId)
+            .ToListAsync();
+    }
+
+    private async Task<Team?> ReadTeamAsync(Guid teamId)
+    {
+        using IServiceScope verifyScope = _factory.Services.CreateScope();
+        ApplicationDBContext db = verifyScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        return await db.Teams.AsNoTracking().SingleOrDefaultAsync(t => t.Id == teamId);
     }
 
     private static async Task<Tournament> SeedTournamentAsync(ApplicationDBContext db, string name)

@@ -19,13 +19,21 @@ public static class QueryableExtensions
     /// <typeparam name="TEntity">The type of the entity to filter.</typeparam>
     /// <typeparam name="T">The type of the filter request.</typeparam>
     /// <param name="filter">The filter request containing the filter criteria.</param>
+    /// <param name="ignoredProperties">
+    /// Names of filter properties whose auto-generated predicate must be
+    /// suppressed, letting the caller special-case them (e.g. resolving a
+    /// filter through a join instead of the entity's own FK-equality). Purely
+    /// additive: callers that pass nothing get the original behavior.
+    /// </param>
     /// <returns>An expression that represents the filter criteria.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the 'Contains' method is not found.</exception>
-    public static Expression<Func<TEntity, bool>> ConstructFilterExpression<TEntity, T>(T filter) where T : PaginatedFilterRequest
+    public static Expression<Func<TEntity, bool>> ConstructFilterExpression<TEntity, T>(T filter, params string[] ignoredProperties) where T : PaginatedFilterRequest
     {
         PropertyInfo[] filterProperties = [.. typeof(T)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => !ShouldSkipProperty(p.Name) && typeof(TEntity).GetProperty(p.Name) != null)];
+            .Where(p => !ShouldSkipProperty(p.Name)
+                && !ignoredProperties.Contains(p.Name)
+                && typeof(TEntity).GetProperty(p.Name) != null)];
 
         bool allNullOrEmpty = Array.TrueForAll(filterProperties, property =>
         {

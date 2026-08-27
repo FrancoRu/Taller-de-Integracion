@@ -169,6 +169,18 @@ public static class SampleTournamentBuilder
                 Players = [],
             };
 
+            // Season-scoped participation source of truth, mirroring the
+            // PlayerTeamRegistration seeding below — the denormalized
+            // Team.TournamentId pointer alone is not authoritative.
+            team.TeamTournamentRegistrations.Add(new TeamTournamentRegistration
+            {
+                CreatedBy = CreatedBy,
+                TeamId = Guid.Empty,
+                Team = team,
+                TournamentId = Guid.Empty,
+                Tournament = tournament,
+            });
+
             for (int p = 0; p < 8; p++)
             {
                 playerCounter++;

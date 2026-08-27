@@ -5,6 +5,7 @@ using Application.Interfaces.Services;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.Slug;
 
+using Domain.Constants;
 using Domain.Entities.Models;
 
 using LinqKit;
@@ -27,6 +28,7 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
 {
     private readonly ITeamRepository _teamRepository = unitOfWork.TeamRepository;
     private readonly IPlayerTeamRegistrationRepository _registrationRepository = unitOfWork.PlayerTeamRegistrationRepository;
+    private readonly ITeamTournamentRegistrationRepository _tournamentRegistrationRepository = unitOfWork.TeamTournamentRegistrationRepository;
 
     /// <summary>
     /// Creates a new team entity and persists it to the repository.
@@ -134,7 +136,13 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
     /// <returns>A paginated response containing the filtered teams.</returns>
     public async Task<PaginatedResponse<Team>> GetAllTeamsAsync(GetTeamsFilteredRequest filter)
     {
-        Expression<Func<Team, bool>> expression = QueryableExtensions.ConstructFilterExpression<Team, GetTeamsFilteredRequest>(filter);
+        // TournamentId is suppressed from the auto-generated FK-equality: a
+        // team's participation in a tournament is the TeamTournamentRegistration
+        // join, not the denormalized Team.TournamentId "current-season" pointer,
+        // so a team appears for every season it is registered in (including past
+        // ones whose pointer has since moved elsewhere).
+        Expression<Func<Team, bool>> expression = QueryableExtensions.ConstructFilterExpression<Team, GetTeamsFilteredRequest>(
+            filter, nameof(GetTeamsFilteredRequest.TournamentId));
 
         if (filter.StageId.HasValue)
         {
@@ -142,6 +150,14 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
                 team => team.StageTeamMatches.Any(stm => stm.StageId == filter.StageId.Value);
 
             expression = expression.And(stageExpression);
+        }
+
+        if (filter.TournamentId.HasValue)
+        {
+            Expression<Func<Team, bool>> tournamentExpression =
+                team => team.TeamTournamentRegistrations.Any(r => r.TournamentId == filter.TournamentId.Value);
+
+            expression = expression.And(tournamentExpression);
         }
 
         List<Team> filteredTeams = [.. await _teamRepository.FindAsync(
@@ -207,34 +223,81 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
     }
 
     /// <summary>
-    /// Registers a list of teams to a specified tournament.
-    /// Updates the tournament association for each team based on the provided team IDs.
-    /// - Teams whose IDs are not in <paramref name="teamIds"/> will be unassigned from the tournament.
-    /// - Teams already assigned to the tournament are left unchanged.
-    /// - Teams in <paramref name="teamIds"/> but not yet assigned will be associated with the tournament.
-    /// The changes are persisted in bulk.
+    /// Reconciles a tournament's team roster by UPSERTING
+    /// <see cref="TeamTournamentRegistration"/> rows scoped to
+    /// <paramref name="tournament"/> ONLY — the join table is the source of
+    /// truth for season-scoped participation, so a team's registrations in
+    /// other tournaments are never touched and history is never erased
+    /// (mirrors <see cref="PlayerService"/>'s EnsureRegistrationAsync upsert).
+    /// - Teams in <paramref name="teamIds"/> get or keep a registration to
+    ///   this tournament (existing rows are left as-is; the unique
+    ///   (TeamId, TournamentId) index guarantees no duplicates).
+    /// - Teams currently registered to THIS tournament but absent from
+    ///   <paramref name="teamIds"/> have only THIS tournament's registration
+    ///   removed; their rows for other tournaments survive.
+    /// - An empty <paramref name="teamIds"/> clears only this tournament's
+    ///   members, leaving every team's other-tournament history intact.
+    /// <see cref="Team.TournamentId"/> is kept in sync as a denormalized
+    /// "current-season" pointer for backward compatibility, but it is not the
+    /// source of truth.
     /// </summary>
     /// <param name="tournament">The tournament entity to register teams to.</param>
     /// <param name="teamIds">A list of team IDs to be registered in the tournament.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task RegisterTeamsToTournamentAsync(Tournament tournament, List<Guid> teamIds)
     {
-        List<Team> teamsToRegister = [.. await _teamRepository.FindAsync(team => teamIds.Contains(team.Id)
+        HashSet<Guid> targetTeamIds = [.. teamIds];
+
+        List<TeamTournamentRegistration> existingRegistrations =
+            [.. await _tournamentRegistrationRepository.FindAsync(
+                registration => registration.TournamentId == tournament.Id)];
+
+        // Remove ONLY this tournament's registrations for teams no longer in
+        // the list — scoped by registration Id so no other season is affected.
+        List<Guid> registrationIdsToRemove = [.. existingRegistrations
+            .Where(registration => !targetTeamIds.Contains(registration.TeamId))
+            .Select(registration => registration.Id)];
+
+        if (registrationIdsToRemove.Count > 0)
+        {
+            await _tournamentRegistrationRepository.RemoveAsync(
+                registration => registrationIdsToRemove.Contains(registration.Id));
+        }
+
+        // Add a registration for every listed team that does not already have
+        // one for this tournament (upsert; existing rows are kept untouched).
+        HashSet<Guid> alreadyRegisteredTeamIds = [.. existingRegistrations.Select(registration => registration.TeamId)];
+
+        List<TeamTournamentRegistration> registrationsToAdd = [.. targetTeamIds
+            .Where(teamId => !alreadyRegisteredTeamIds.Contains(teamId))
+            .Select(teamId => new TeamTournamentRegistration
+            {
+                Id = Guid.Empty,
+                TeamId = teamId,
+                TournamentId = tournament.Id,
+                DateCreated = DateTime.UtcNow,
+                CreatedBy = tournament.UpdatedBy ?? tournament.CreatedBy ?? AuditConstants.SystemUser,
+            })];
+
+        if (registrationsToAdd.Count > 0)
+        {
+            await _tournamentRegistrationRepository.AddRangeAsync(registrationsToAdd);
+        }
+
+        // Keep the denormalized current-season pointer in sync: listed teams
+        // point at this tournament, dropped teams currently pointing here are
+        // cleared. Teams pointing at a different tournament are left alone.
+        List<Team> affectedTeams = [.. await _teamRepository.FindAsync(team => teamIds.Contains(team.Id)
             || team.TournamentId == tournament.Id)];
 
-        teamsToRegister.AsParallel().ForAll(team =>
+        foreach (Team team in affectedTeams)
         {
-            if (!teamIds.Contains(team.Id))
-            {
-                team.TournamentId = null;
-            }
-            else if (team.TournamentId != tournament.Id)
-            {
-                team.Tournament = tournament;
-            }
-        });
+            team.TournamentId = targetTeamIds.Contains(team.Id) ? tournament.Id : null;
+        }
 
-        await _teamRepository.UpdateRangeAsync(teamsToRegister);
-
+        if (affectedTeams.Count > 0)
+        {
+            await _teamRepository.UpdateRangeAsync(affectedTeams);
+        }
     }
 }
