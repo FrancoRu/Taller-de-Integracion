@@ -33,4 +33,12 @@ public class Team : EntityBase
     /// <see cref="PlayerTeamRegistration"/>.
     /// </summary>
     public virtual ICollection<PlayerTeamRegistration> PlayerTeamRegistrations { get; set; } = [];
+
+    /// <summary>
+    /// Every tournament this team has ever been registered to, across every
+    /// season, independent of the current <see cref="TournamentId"/>
+    /// pointer. The source of truth for season-scoped participation — see
+    /// <see cref="TeamTournamentRegistration"/>.
+    /// </summary>
+    public virtual ICollection<TeamTournamentRegistration> TeamTournamentRegistrations { get; set; } = [];
 }

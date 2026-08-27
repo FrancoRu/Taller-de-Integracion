@@ -44,6 +44,7 @@ public static class EntityConstants
         public const string StageTeamMatch = "StageTeamMatches";
         public const string Staff = "Staffs";
         public const string Team = "Teams";
+        public const string TeamTournamentRegistration = "TeamTournamentRegistrations";
         public const string Tournament = "Tournaments";
         public const string User = "Users";
         public const string Venue = "Venues";
