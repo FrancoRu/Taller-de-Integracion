@@ -22,6 +22,8 @@ import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PlayerStatisticCreatePage from '@/views/playerStatistic/playerStatisticCreatePage';
+import PlayerStatisticCard from '@/views/playerStatistic/PlayerStatisticCard';
+import PlayerHistory from '@/views/playerStatistic/PlayerHistory';
 import PlayerSanctionCreatePage from '@/views/playerSanction/playerSanctionCreatePage';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
@@ -41,12 +43,19 @@ const PlayerPage: React.FC = () => {
   const navigate = useNavigate();
   const { role } = useAuth();
   const { player, getPlayerById } = usePlayer();
-  const { playerStatistics, getPlayerStatisticsByFilter } = usePlayerStatistic();
+  const {
+    playerStatistics,
+    getPlayerStatisticsByFilter,
+    playerCard,
+    getPlayerCard,
+    playerHistory,
+    getPlayerHistory,
+  } = usePlayerStatistic();
   const { playerSanctions, getPlayerSanctionByFilter } = usePlayerSanction();
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState<'detalle' | 'puntuaciones' | 'sanciones'>(
-    'detalle'
-  );
+  const [tab, setTab] = useState<
+    'detalle' | 'ficha' | 'historial' | 'puntuaciones' | 'sanciones'
+  >('detalle');
   const [statisticDialogOpen, setStatisticDialogOpen] = useState(false);
   const [sanctionDialogOpen, setSanctionDialogOpen] = useState(false);
 
@@ -69,11 +78,25 @@ const PlayerPage: React.FC = () => {
     void getPlayerSanctionByFilter({ playerId: player.id, pageSize: FILTER_OPTIONS_PAGE_SIZE });
   };
 
+  const refreshCard = () => {
+    if (!player?.id) return;
+    void getPlayerCard(player.id);
+  };
+
+  const refreshHistory = () => {
+    if (!player?.id) return;
+    void getPlayerHistory(player.id);
+  };
+
   useEffect(() => {
     if (tab === 'puntuaciones') {
       refreshStatistics();
     } else if (tab === 'sanciones') {
       refreshSanctions();
+    } else if (tab === 'ficha') {
+      refreshCard();
+    } else if (tab === 'historial') {
+      refreshHistory();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, player?.id]);
@@ -176,6 +199,8 @@ const PlayerPage: React.FC = () => {
           sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
         >
           <Tab label="Detalle" value="detalle" />
+          <Tab label="Ficha" value="ficha" />
+          <Tab label="Historial" value="historial" />
           <Tab label="Puntuaciones" value="puntuaciones" />
           <Tab label="Sanciones" value="sanciones" />
         </Tabs>
@@ -262,6 +287,10 @@ const PlayerPage: React.FC = () => {
             </Grid>
           </Grid>
         )}
+
+        {tab === 'ficha' && <PlayerStatisticCard card={playerCard} />}
+
+        {tab === 'historial' && <PlayerHistory history={playerHistory} />}
 
         {tab === 'puntuaciones' && (
           <>

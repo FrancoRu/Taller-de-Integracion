@@ -14,6 +14,8 @@ import {
   AddPlayerStatisticRequest,
   IPlayerStatisticContextProps,
   LoadMatchSheetRequest,
+  PlayerHistoryResponse,
+  PlayerStatisticCardResponse,
   PlayerStatisticFiltered,
   PlayerStatisticResponse,
   PutPlayerStatisticRequest,
@@ -32,6 +34,10 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
   const [playerStatistics, setPlayerStatistics] = useState<
     PlayerStatisticResponse[] | null
   >(null);
+  const [playerCard, setPlayerCard] =
+    useState<PlayerStatisticCardResponse | null>(null);
+  const [playerHistory, setPlayerHistory] =
+    useState<PlayerHistoryResponse | null>(null);
   const queryClient = useQueryClient();
 
   const handleUnknownError = useUnknownErrorHandler();
@@ -187,23 +193,71 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
     [loadMatchSheetMutation, queryClient, handleUnknownError]
   );
 
+  const getPlayerCard = useCallback(
+    async (playerId: GUID): Promise<PlayerStatisticCardResponse | void> => {
+      try {
+        const response = await queryClient.fetchQuery({
+          queryKey: playerStatisticKeys.card(playerId),
+          queryFn: async () =>
+            await playerStatisticService.getPlayerCard(playerId),
+        });
+
+        if (response?.data) {
+          setPlayerCard(response.data);
+          return response.data;
+        }
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [handleUnknownError, queryClient]
+  );
+
+  const getPlayerHistory = useCallback(
+    async (playerId: GUID): Promise<PlayerHistoryResponse | void> => {
+      try {
+        const response = await queryClient.fetchQuery({
+          queryKey: playerStatisticKeys.history(playerId),
+          queryFn: async () =>
+            await playerStatisticService.getPlayerHistory(playerId),
+        });
+
+        if (response?.data) {
+          setPlayerHistory(response.data);
+          return response.data;
+        }
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [handleUnknownError, queryClient]
+  );
+
   const container = useMemo(
     () => ({
       playerStatistic,
       playerStatistics,
+      playerCard,
+      playerHistory,
       addPlayerStatistic,
       putPlayerStatisticById,
       getPlayerStatisticById,
       getPlayerStatisticsByFilter,
       deletePlayerStatisticById,
       loadMatchSheet,
+      getPlayerCard,
+      getPlayerHistory,
     }),
     [
       addPlayerStatistic,
       deletePlayerStatisticById,
+      getPlayerCard,
+      getPlayerHistory,
       getPlayerStatisticById,
       getPlayerStatisticsByFilter,
       loadMatchSheet,
+      playerCard,
+      playerHistory,
       playerStatistic,
       playerStatistics,
       putPlayerStatisticById,

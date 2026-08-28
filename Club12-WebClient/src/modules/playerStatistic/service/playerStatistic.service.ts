@@ -11,6 +11,8 @@ import {
 import {
   AddPlayerStatisticRequest,
   LoadMatchSheetRequest,
+  PlayerHistoryResponse,
+  PlayerStatisticCardResponse,
   PlayerStatisticFiltered,
   PlayerStatisticResponse,
   PutPlayerStatisticRequest,
@@ -82,4 +84,26 @@ export const playerStatisticService = {
    */
   deletePlayerStatisticById: async (id: GUID): Promise<AxiosResponse<void>> =>
     await sendDelete(`${routes.playerStatistics}/${id}`),
+
+  /**
+   * Retrieves a player's statistic card (HU-87): total and average points and
+   * games played, per season and overall.
+   * @param {GUID} playerId - The player's stable id.
+   * @returns {Promise<AxiosResponse<PlayerStatisticCardResponse>>} The card.
+   */
+  getPlayerCard: async (
+    playerId: GUID
+  ): Promise<AxiosResponse<PlayerStatisticCardResponse>> =>
+    await sendGet(`${routes.statistics}/players/${playerId}/card`),
+
+  /**
+   * Retrieves a player's cross-season history (HU-88): per season, the team,
+   * their stats and their sanctions.
+   * @param {GUID} playerId - The player's stable id.
+   * @returns {Promise<AxiosResponse<PlayerHistoryResponse>>} The history.
+   */
+  getPlayerHistory: async (
+    playerId: GUID
+  ): Promise<AxiosResponse<PlayerHistoryResponse>> =>
+    await sendGet(`${routes.statistics}/players/${playerId}/history`),
 };

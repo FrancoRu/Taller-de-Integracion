@@ -13,6 +13,7 @@ const routes = {
   scorer: 'scorer',
   playerSanctions: 'player-sanctions',
   playerStatistics: 'player-statistics',
+  statistics: 'statistics',
   staff: 'staffs',
   teams: 'teams',
   tournaments: 'tournaments',
