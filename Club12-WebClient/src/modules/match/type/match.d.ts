@@ -58,6 +58,28 @@ export interface IMatchContextProps {
   ): Promise<GenericResponsePagination<IMatchResponse> | void>;
 
   /**
+   * Fetches a stage's matches grouped and ordered by matchday (jornada, HU-63)
+   * so the fixture can be rendered as "Fecha 1 / Partido 1..2, Fecha 2 / …".
+   * @param stageId The id of the stage whose fixture is requested.
+   * @returns A promise that resolves with the rounds, or void on error.
+   */
+  getStageMatchesByRound(
+    stageId: GUID
+  ): Promise<IRoundMatchesResponse[] | void>;
+
+  /**
+   * Reprograms/suspends a match (HU-68): marks it suspended and optionally
+   * moves it to a new date, without changing its round (HU-67).
+   * @param id The id of the match to suspend/reprogram.
+   * @param request The optional new date.
+   * @returns A promise that resolves with the updated match, or void on error.
+   */
+  suspendMatch(
+    id: GUID,
+    request: ISuspendMatchRequest
+  ): Promise<IMatchResponse | void>;
+
+  /**
    * Marks a match as a walkover (HU-73), awarding the regulation default
    * result to the present team.
    * @param id The ID of the match to mark as a walkover.
@@ -154,6 +176,15 @@ export interface IMatchResponse {
   matchDate: string;
 
   /**
+   * @property {number | null} round - The matchday (jornada) this match belongs
+   * to, 1-based (HU-63/HU-65). This is the canonical grouping key for the
+   * fixture ("Fecha 1", "Fecha 2", …); the UI groups by this rather than by
+   * the calendar date (HU-63). Null for matches with no round-robin matchday
+   * (e.g. knockout stages).
+   */
+  round?: number | null;
+
+  /**
    * @property {MatchType} matchType - The category or type of the match (e.g., Regular Season, Playoff).
    */
   matchType: MatchType;
@@ -224,6 +255,50 @@ export interface IMinimalMatchResponse {
   isFinished: boolean;
   matchType: MatchType;
   status?: MatchStatus | null;
+
+  /**
+   * The matchday (jornada) this match belongs to, 1-based (HU-63/HU-65). Null
+   * for matches with no round-robin matchday (e.g. knockout stages).
+   * @type {number | null}
+   */
+  round?: number | null;
+}
+
+/**
+ * A single matchday (jornada) and the matches played in it (HU-63). Mirrors the
+ * backend `RoundMatchesResponse`; returned ordered so the fixture can be
+ * rendered grouped by round ("Fecha 1 / Partido 1..2, Fecha 2 / …") instead of
+ * by calendar date.
+ * @interface IRoundMatchesResponse
+ */
+export interface IRoundMatchesResponse {
+  /**
+   * The 1-based round number. Null groups matches with no round-robin matchday
+   * (e.g. knockout stages).
+   * @type {number | null}
+   */
+  round: number | null;
+
+  /**
+   * The matches played in this round, in a stable order.
+   * @type {IMatchResponse[]}
+   */
+  matches: IMatchResponse[];
+}
+
+/**
+ * The request body for reprogramming/suspending a match (HU-68). The match is
+ * marked suspended and, when a new date is provided, moved to it — never
+ * changing its round (HU-67).
+ * @interface ISuspendMatchRequest
+ */
+export interface ISuspendMatchRequest {
+  /**
+   * Optional new calendar date/time (ISO 8601). When omitted, the match is
+   * suspended in place without rescheduling.
+   * @type {string}
+   */
+  matchDate?: string;
 }
 
 /**

@@ -41,6 +41,7 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import ScienceIcon from '@mui/icons-material/Science';
 import MedicalInformationIcon from '@mui/icons-material/MedicalInformation';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
+import EventBusyIcon from '@mui/icons-material/EventBusy';
 
 export {
   DeleteIcon,
@@ -86,4 +87,5 @@ export {
   ScienceIcon,
   MedicalInformationIcon,
   UploadFileIcon,
+  EventBusyIcon,
 };

@@ -6,4 +6,5 @@ export const matchKeys = {
       ? (['match', 'list'] as const)
       : (['match', 'list', filter] as const),
   byId: (id: string) => ['match', 'byId', id] as const,
+  byRound: (stageId: string) => ['match', 'byRound', stageId] as const,
 };
