@@ -22,28 +22,47 @@ public sealed class DataMaintenanceService(
     IAuditService auditService)
     : IDataMaintenanceService
 {
-    private static readonly string[] Tournament1PrimeraNames =
-        ["Atlético Central", "Deportivo Norte", "Club Belgrano", "Unión del Sur"];
-    private static readonly string[] Tournament1PrimeraCodes = ["ATC", "DNO", "CBE", "UDS"];
-    private static readonly string[] Tournament1PrimeraColors =
-        ["#1E3A8A", "#DC2626", "#16A34A", "#EA580C"];
+    // Main tournament — Primera División (8 teams).
+    private static readonly string[] PrimeraNames =
+    [
+        "Atlético Central", "Deportivo Norte", "Club Belgrano", "Unión del Sur",
+        "Racing Porteño", "Defensores del Oeste", "San Lorenzo del Valle", "Gimnasia y Tiro",
+    ];
+    private static readonly string[] PrimeraCodes =
+        ["ATC", "DNO", "CBE", "UDS", "RPO", "DOE", "SLV", "GYT"];
+    private static readonly string[] PrimeraColors =
+        ["#1E3A8A", "#DC2626", "#16A34A", "#EA580C", "#0891B2", "#7C3AED", "#CA8A04", "#0D9488"];
 
-    private static readonly string[] Tournament1ReservaNames =
-        ["Juventud Unida", "Sportivo Oeste", "Estrella Azul", "Náutico River"];
-    private static readonly string[] Tournament1ReservaCodes = ["JUN", "SPO", "EAZ", "NRV"];
-    private static readonly string[] Tournament1ReservaColors =
-        ["#7C3AED", "#0891B2", "#CA8A04", "#4338CA"];
+    // Main tournament — Segunda División (8 teams).
+    private static readonly string[] SegundaNames =
+    [
+        "Juventud Unida", "Sportivo Oeste", "Estrella Azul", "Náutico River",
+        "Ferro Andino", "Talleres del Norte", "Huracán del Litoral", "Vélez Serrano",
+    ];
+    private static readonly string[] SegundaCodes =
+        ["JUN", "SPO", "EAZ", "NRV", "FAN", "TDN", "HDL", "VSE"];
+    private static readonly string[] SegundaColors =
+        ["#4338CA", "#B91C1C", "#4D7C0F", "#9333EA", "#0284C7", "#65A30D", "#C026D3", "#B45309"];
 
-    private static readonly string[] Tournament2PrimeraNames =
+    // Playoff cups shared by both main divisions: Copa Oro (positions 1-4),
+    // Copa Plata (positions 5-8), each a best-of-3 SemiFinal + Final bracket.
+    private static readonly SampleTournamentBuilder.PlayoffCupDefinition[] MainCups =
+    [
+        new("Copa Oro", 1, 4, 3),
+        new("Copa Plata", 5, 8, 3),
+    ];
+
+    // Historical Clausura — two small 4-team divisions (single-bracket playoffs).
+    private static readonly string[] ClausuraPrimeraNames =
         ["Independiente Rural", "Ferroviario Central", "Atlético Cordillera", "Deportivo Litoral"];
-    private static readonly string[] Tournament2PrimeraCodes = ["IRU", "FCE", "ACO", "DLI"];
-    private static readonly string[] Tournament2PrimeraColors =
+    private static readonly string[] ClausuraPrimeraCodes = ["IRU", "FCE", "ACO", "DLI"];
+    private static readonly string[] ClausuraPrimeraColors =
         ["#0D9488", "#B91C1C", "#4D7C0F", "#9333EA"];
 
-    private static readonly string[] Tournament2ReservaNames =
-        ["Newell's Barrial", "Talleres del Oeste", "Huracán del Valle", "Vélez Serrano"];
-    private static readonly string[] Tournament2ReservaCodes = ["NBA", "TDO", "HDV", "VSE"];
-    private static readonly string[] Tournament2ReservaColors =
+    private static readonly string[] ClausuraReservaNames =
+        ["Newell's Barrial", "Talleres del Oeste", "Huracán del Valle", "Vélez del Parque"];
+    private static readonly string[] ClausuraReservaCodes = ["NBA", "TDO", "HDV", "VDP"];
+    private static readonly string[] ClausuraReservaColors =
         ["#0284C7", "#65A30D", "#C026D3", "#B45309"];
 
     public async Task<DataWipeResult> WipeSampleDataAsync(CancellationToken ct = default)
@@ -122,12 +141,7 @@ public sealed class DataMaintenanceService(
                 "The database already has tournament data — call WipeSampleDataAsync first, then seed again.");
         }
 
-        List<Venue> venues =
-        [
-            new() { CreatedBy = Domain.Constants.AuditConstants.SystemUser, Name = "Polideportivo Municipal", Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug("Polideportivo Municipal"), Address = "Av. Siempre Viva 1234" },
-            new() { CreatedBy = Domain.Constants.AuditConstants.SystemUser, Name = "Cancha Norte", Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug("Cancha Norte"), Address = "Calle Los Andes 850" },
-            new() { CreatedBy = Domain.Constants.AuditConstants.SystemUser, Name = "Estadio Club12", Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug("Estadio Club12"), Address = "Ruta 5 km 12" },
-        ];
+        List<Venue> venues = BuildVenues();
 
         SampleTournamentBuilder.TournamentDefinition tournament1 = new(
             Name: "Torneo Apertura 2026",
@@ -140,9 +154,10 @@ public sealed class DataMaintenanceService(
             UpcomingMatchesStart: new DateTime(2026, 9, 7, 0, 0, 0, DateTimeKind.Utc),
             Divisions:
             [
-                new("Primera División", Tournament1PrimeraNames, Tournament1PrimeraCodes, Tournament1PrimeraColors),
-                new("Reserva", Tournament1ReservaNames, Tournament1ReservaCodes, Tournament1ReservaColors),
-            ]);
+                new("Primera División", PrimeraNames, PrimeraCodes, PrimeraColors, MainCups),
+                new("Segunda División", SegundaNames, SegundaCodes, SegundaColors, MainCups),
+            ],
+            CrossCup: new("Copa Club 12", GroupCount: 4, QualifiersPerGroup: 1));
 
         SampleTournamentBuilder.TournamentDefinition tournament2 = new(
             Name: "Torneo Clausura 2026",
@@ -155,8 +170,8 @@ public sealed class DataMaintenanceService(
             UpcomingMatchesStart: new DateTime(2026, 12, 14, 0, 0, 0, DateTimeKind.Utc),
             Divisions:
             [
-                new("Primera División", Tournament2PrimeraNames, Tournament2PrimeraCodes, Tournament2PrimeraColors),
-                new("Reserva", Tournament2ReservaNames, Tournament2ReservaCodes, Tournament2ReservaColors),
+                new("Primera", ClausuraPrimeraNames, ClausuraPrimeraCodes, ClausuraPrimeraColors),
+                new("Reserva", ClausuraReservaNames, ClausuraReservaCodes, ClausuraReservaColors),
             ]);
 
         int playerCounter = 0;
@@ -198,27 +213,80 @@ public sealed class DataMaintenanceService(
             BlogPosts: blogPosts.Count);
     }
 
+    private static List<Venue> BuildVenues()
+    {
+        (string Name, string Address)[] specs =
+        [
+            ("Estadio Club 12", "Ruta 5 km 12"),
+            ("Polideportivo Municipal", "Av. Siempre Viva 1234"),
+            ("Gimnasio Central", "Calle San Martín 640"),
+            ("Cancha Norte", "Calle Los Andes 850"),
+            ("Cancha Sur", "Av. del Trabajo 2100"),
+        ];
+
+        List<Venue> venues = [];
+        foreach ((string name, string address) in specs)
+        {
+            venues.Add(new Venue
+            {
+                CreatedBy = Domain.Constants.AuditConstants.SystemUser,
+                Name = name,
+                Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug(name),
+                Address = address,
+            });
+        }
+
+        return venues;
+    }
+
     private static List<BlogPost> BuildBlogPosts(string tournament1Name, string tournament2Name)
     {
-        (string Title, string Body)[] posts =
+        (string Title, string Body, bool Published)[] posts =
         [
             (
                 $"Arrancó el {tournament1Name}",
-                $"La Liga Club12 dio el puntapié inicial al {tournament1Name}, con dos divisiones " +
-                "y ocho equipos en cada una. Los primeros partidos ya se jugaron y prometen una " +
-                "temporada muy pareja."
+                $"La Liga Club12 dio el puntapié inicial al {tournament1Name}, con la Primera y la " +
+                "Segunda División de ocho equipos cada una. Los primeros partidos ya se jugaron y " +
+                "prometen una temporada muy pareja.",
+                true
+            ),
+            (
+                "Primera División: se juega la fecha 1",
+                "La Primera División puso primera con una jornada inaugural cargada de emociones. " +
+                "Los candidatos mostraron sus cartas y la tabla de posiciones empieza a tomar forma.",
+                true
+            ),
+            (
+                "Copa Cruzada: los cruces confirmados",
+                "La Copa Club 12 reúne a los dieciséis equipos del torneo en cuatro grupos. Los " +
+                "partidos se disputan los miércoles para no superponerse con las zonas de los domingos. " +
+                "Ya están confirmados los cruces de la fase de grupos.",
+                true
+            ),
+            (
+                "Copa Oro y Copa Plata: así quedaron los playoffs",
+                "Con la fase de grupos terminada, los cuatro primeros de cada división avanzan a la " +
+                "Copa Oro y del quinto al octavo a la Copa Plata. Las semifinales se jugarán al mejor " +
+                "de tres partidos.",
+                true
+            ),
+            (
+                "Resumen de la fecha: goleadores y resultados",
+                "Repasá los resultados de la última jornada, la tabla de goleadores y las sanciones " +
+                "aplicadas por el tribunal de disciplina en la sección de estadísticas.",
+                true
             ),
             (
                 $"Se define el calendario del {tournament2Name}",
-                $"Con el {tournament1Name} en marcha, la Liga Club12 ya confirmó las fechas del " +
-                $"{tournament2Name}. Repasá los equipos inscriptos y el fixture completo en la " +
-                "sección de torneos."
+                $"Con el {tournament1Name} en marcha, la Liga Club12 ya prepara las fechas del " +
+                $"{tournament2Name}. La nota está en revisión y se publicará con el fixture completo.",
+                false
             ),
         ];
 
         List<BlogPost> blogPosts = [];
 
-        foreach ((string title, string body) in posts)
+        foreach ((string title, string body, bool published) in posts)
         {
             blogPosts.Add(new BlogPost
             {
@@ -228,6 +296,7 @@ public sealed class DataMaintenanceService(
                 Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug(title),
                 MarkdownText = body,
                 Views = 0,
+                IsPublished = published,
             });
         }
 
