@@ -48,6 +48,33 @@ public interface IAuthenticationService
         CancellationToken ct = default);
 
     /// <summary>
+    /// HU-09: creates a user by email only (no password) and emails a magic
+    /// activation link so the user sets their own password. Same
+    /// role-authorization policy as <see cref="RegisterAsync"/>.
+    /// </summary>
+    Task<InviteUserResponse> InviteUserAsync(
+        InviteUserRequest request,
+        string callerRole,
+        Guid callerId,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// HU-09: consumes the activation token from the invitation email, sets the
+    /// user's first password, enables login, and returns a ready-to-use JWT
+    /// (the user is logged in immediately after activating).
+    /// </summary>
+    Task<TokenResponse> ActivateAccountAsync(
+        ActivateAccountRequest request, CancellationToken ct = default);
+
+    /// <summary>
+    /// HU-10: self-service. Emails a password-reset magic link for the given
+    /// email. Completes silently when no account matches (no user enumeration);
+    /// the link is consumed by <see cref="ConfirmPasswordResetAsync"/>.
+    /// </summary>
+    Task RequestPasswordResetAsync(
+        RequestPasswordResetRequest request, CancellationToken ct = default);
+
+    /// <summary>
     /// Clears the caller's stored RefreshToken and RefreshTokenExpiryTime.
     /// A no-op if no user matches <paramref name="userId"/>.
     /// </summary>

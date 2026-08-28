@@ -100,6 +100,98 @@ public sealed class IdentityAuthenticationService(
     }
 
     /// <inheritdoc/>
+    public async Task<InviteUserResponse> InviteUserAsync(
+        InviteUserRequest request, string callerRole, Guid callerId, CancellationToken ct = default)
+    {
+        EnforceCreationPolicy(callerRole, request.Role);
+
+        ApplicationUser? existing = await userManager.FindByEmailAsync(request.Email);
+        if (existing is not null)
+        {
+            throw new InvalidOperationException(ErrorMessages.Auth.EmailAlreadyExists);
+        }
+
+        // HU-09: create the account by email only. No password is set here —
+        // UserName mirrors the email (Identity requires a unique UserName) and
+        // MustChangePassword keeps the account gated until activation completes.
+        ApplicationUser user = new()
+        {
+            UserName = request.Email,
+            Email = request.Email,
+            EmailConfirmed = true,
+            PhoneNumber = request.Phone,
+            CreatedByOwnerId = IsOwner(callerRole) ? callerId : null,
+            MustChangePassword = true
+        };
+
+        IdentityResult result = await userManager.CreateAsync(user);
+
+        if (!result.Succeeded)
+        {
+            string errors = string.Join(" | ", result.Errors.Select(e => e.Description));
+            throw new InvalidOperationException(ErrorMessages.Auth.UserCreationFailed(errors));
+        }
+
+        await userManager.AddToRoleAsync(user, request.Role.ToUpperInvariant());
+
+        // The activation token is a standard Identity password-reset token: it
+        // works on a passwordless account (it is derived from the SecurityStamp,
+        // not from an existing password) and is later verified by
+        // ActivateAccountAsync's ResetPasswordAsync call.
+        string token = await userManager.GeneratePasswordResetTokenAsync(user);
+        string activationLink = BuildTokenLink(user.Email!, token, activation: true);
+
+        await emailService.SendWelcomeSetPasswordAsync(user.Email!, user.UserName!, activationLink, ct);
+
+        return new InviteUserResponse(user.Id, user.Email!, request.Role.ToUpperInvariant());
+    }
+
+    /// <inheritdoc/>
+    public async Task<TokenResponse> ActivateAccountAsync(
+        ActivateAccountRequest request, CancellationToken ct = default)
+    {
+        ApplicationUser user = await userManager.FindByEmailAsync(request.Email)
+            ?? throw new UnauthorizedAccessException(ErrorMessages.Auth.InvalidPasswordResetRequest);
+
+        // ResetPasswordAsync sets the password hash whether or not one already
+        // existed, so it doubles as "set the first password" for an invited,
+        // passwordless account (HU-09).
+        IdentityResult result = await userManager.ResetPasswordAsync(
+            user, request.Token, request.NewPassword);
+
+        if (!result.Succeeded)
+        {
+            throw new InvalidOperationException(
+                string.Join("; ", result.Errors.Select(e => e.Description)));
+        }
+
+        user.MustChangePassword = false;
+        await userManager.UpdateAsync(user);
+
+        IList<string> roles = await userManager.GetRolesAsync(user);
+        return await BuildTokenResponseAsync(user, roles, ct);
+    }
+
+    /// <inheritdoc/>
+    public async Task RequestPasswordResetAsync(
+        RequestPasswordResetRequest request, CancellationToken ct = default)
+    {
+        ApplicationUser? user = await userManager.FindByEmailAsync(request.Email);
+
+        // Silently no-op for an unknown email so the endpoint never reveals
+        // which addresses have accounts (HU-10).
+        if (user is null)
+        {
+            return;
+        }
+
+        string token = await userManager.GeneratePasswordResetTokenAsync(user);
+        string resetLink = BuildTokenLink(user.Email!, token, activation: false);
+
+        await emailService.SendPasswordResetAsync(user.Email!, user.UserName!, resetLink, ct);
+    }
+
+    /// <inheritdoc/>
     public async Task<TokenResponse> LoginAsync(LogInUserRequest request, CancellationToken ct = default)
     {
         ApplicationUser user = await userManager.FindByEmailAsync(request.Email)
@@ -250,6 +342,29 @@ public sealed class IdentityAuthenticationService(
         await userManager.UpdateAsync(user);
 
         return response;
+    }
+
+    /// <summary>
+    /// Builds an email link that carries an Identity token in the shared
+    /// "?email=&amp;token=" shape. Activation links (HU-09) prefer the
+    /// configured <see cref="ConfigurationKeys.Frontend.ActivationUrl"/> and
+    /// fall back to the password-reset page URL when it is not set; reset links
+    /// (HU-10) always use <see cref="ConfigurationKeys.Frontend.PasswordResetUrl"/>.
+    /// </summary>
+    private string BuildTokenLink(string email, string token, bool activation)
+    {
+        string baseUrl = activation
+            ? configuration[ConfigurationKeys.Frontend.ActivationUrl]
+                ?? configuration[ConfigurationKeys.Frontend.PasswordResetUrl]
+                ?? throw new InvalidOperationException(
+                    ErrorMessages.Configuration.KeyNotConfigured(ConfigurationKeys.Frontend.PasswordResetUrl))
+            : configuration[ConfigurationKeys.Frontend.PasswordResetUrl]
+                ?? throw new InvalidOperationException(
+                    ErrorMessages.Configuration.KeyNotConfigured(ConfigurationKeys.Frontend.PasswordResetUrl));
+
+        return $"{baseUrl}" +
+               $"?email={Uri.EscapeDataString(email)}" +
+               $"&token={Uri.EscapeDataString(token)}";
     }
 
     private static string GenerateTemporaryPassword(int length = 16)

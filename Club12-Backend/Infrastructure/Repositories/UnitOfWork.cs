@@ -2,6 +2,11 @@ using Application.Interfaces.Repositories;
 
 using Infrastructure.Persistance;
 
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
+
+using System;
 using System.Threading.Tasks;
 
 namespace Infrastructure.Repositories;
@@ -117,5 +122,26 @@ public class UnitOfWork(
     public async Task<int> SaveChangesAsync()
     {
         return await context.SaveChangesAsync();
+    }
+
+    /// <inheritdoc/>
+    public async Task ExecuteInTransactionAsync(Func<Task> operation)
+    {
+        IExecutionStrategy strategy = context.Database.CreateExecutionStrategy();
+
+        await strategy.ExecuteAsync(async () =>
+        {
+            await using IDbContextTransaction transaction = await context.Database.BeginTransactionAsync();
+            try
+            {
+                await operation();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        });
     }
 }

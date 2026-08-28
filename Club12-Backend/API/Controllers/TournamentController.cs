@@ -56,6 +56,32 @@ public class TournamentController(
     }
 
     /// <summary>
+    /// HU-38: creates a whole tournament (base fields + divisions with their
+    /// cups, points, playoff mappings and stages) in a single atomic
+    /// transaction. A failure at any step persists nothing — no partial
+    /// tournament is left behind. The granular endpoints stay available for
+    /// incremental edits.
+    /// </summary>
+    /// <param name="request">The full tournament-wizard payload.</param>
+    /// <returns>
+    /// Returns 201 (Created) with the created tournament (including its divisions).
+    /// Returns 400 (Bad Request) if the payload is invalid or a rule (e.g. a
+    /// division category mismatch) aborts the atomic create.
+    /// Returns 403 (Forbidden) if the user is not authorized.
+    /// </returns>
+    [HttpPost("full")]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TournamentResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<TournamentResponse>> CreateFullTournamentAsync(CreateFullTournamentRequest request)
+    {
+        Tournament createdTournament = await tournamentService.CreateFullTournamentAsync(request);
+        TournamentResponse tournamentResponse = mapper.Map<TournamentResponse>(createdTournament);
+
+        return new ObjectResult(tournamentResponse) { StatusCode = StatusCodes.Status201Created };
+    }
+
+    /// <summary>
     /// Retrieves a tournament by its unique identifier or its public slug.
     /// </summary>
     /// <param name="idOrSlug">Tournament identifier (GUID) or slug.</param>

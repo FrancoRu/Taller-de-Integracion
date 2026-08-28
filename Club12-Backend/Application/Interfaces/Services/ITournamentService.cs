@@ -22,6 +22,20 @@ public interface ITournamentService
     Task<Tournament> CreateTournamentAsync(Tournament tournamentEntity);
 
     /// <summary>
+    /// HU-38: creates a whole tournament (base fields + every division with its
+    /// points, playoff mappings and stages) in a SINGLE transaction, reusing
+    /// the granular create logic. A failure at any point rolls the entire graph
+    /// back, so no partial tournament is ever left behind. The tournament is
+    /// created <see cref="TournamentStatus.OpenForRegistration"/> so its
+    /// structure is valid to build (structural creation is part of creation) and
+    /// it is ready to register teams; the fixture is still generated later by
+    /// the canonical transition to RegistrationClosed.
+    /// </summary>
+    /// <param name="request">The full wizard payload.</param>
+    /// <returns>The created Tournament, including its divisions.</returns>
+    Task<Tournament> CreateFullTournamentAsync(CreateFullTournamentRequest request);
+
+    /// <summary>
     /// Retrieves a Tournament by its id asynchronously.
     /// </summary>
     /// <param name="tournamentId">The id of the Tournament to retrieve.</param>

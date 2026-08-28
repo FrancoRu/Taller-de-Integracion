@@ -9,6 +9,7 @@ using Application.Utils.Constants.Pagination;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.Slug;
 
+using Domain.Constants;
 using Domain.Entities.Models;
 using Domain.Enums;
 
@@ -24,7 +25,9 @@ public class TournamentService(
     ITournamentRepository tournamentRepository,
     IStageService stageService,
     IMatchService matchService,
-    IAuditService auditService) : ITournamentService
+    IAuditService auditService,
+    IDivisionService divisionService,
+    IUnitOfWork unitOfWork) : ITournamentService
 {
     public async Task<Tournament> CreateTournamentAsync(Tournament tournamentEntity)
     {
@@ -34,6 +37,88 @@ public class TournamentService(
 
         await tournamentRepository.AddAsync(tournamentEntity);
         return tournamentEntity;
+    }
+
+    /// <inheritdoc/>
+    public async Task<Tournament> CreateFullTournamentAsync(CreateFullTournamentRequest request)
+    {
+        // Created OpenForRegistration: divisions/stages can only be built while
+        // the tournament is in that status (HU-31 structural-edit guard), and
+        // structural creation is part of creation. Teams register and the
+        // fixture is generated later via the canonical RegistrationClosed
+        // transition.
+        Tournament tournament = new()
+        {
+            Name = request.Name,
+            Description = request.Description,
+            Slug = null!,
+            TeamRegistrationDeadline = request.TeamRegistrationDeadline,
+            StartDate = request.StartDate,
+            Category = request.Category,
+            Status = TournamentStatus.OpenForRegistration,
+            Divisions = [],
+            Teams = [],
+            CreatedBy = AuditConstants.SystemUser,
+        };
+
+        await unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            await CreateTournamentAsync(tournament);
+
+            foreach (CreateFullDivisionRequest divisionRequest in request.Divisions)
+            {
+                Division division = new()
+                {
+                    Name = divisionRequest.Name,
+                    Slug = null!,
+                    Tournament = tournament,
+                    TournamentId = tournament.Id,
+                    Category = divisionRequest.Category,
+                    IsCrossDivisionCup = divisionRequest.IsCrossDivisionCup,
+                    PointsForWin = divisionRequest.PointsForWin,
+                    PointsForLoss = divisionRequest.PointsForLoss,
+                    Stages = [],
+                    CreatedBy = AuditConstants.SystemUser,
+                    PlayoffMappings = (divisionRequest.PlayoffMappings ?? [])
+                        .Select(mapping => new DivisionPlayoffMapping
+                        {
+                            FromPosition = mapping.FromPosition,
+                            ToPosition = mapping.ToPosition,
+                            Destination = mapping.Destination,
+                            CreatedBy = AuditConstants.SystemUser,
+                        })
+                        .ToList(),
+                };
+
+                await divisionService.CreateDivisionAsync(division);
+
+                foreach (CreateFullStageRequest stageRequest in divisionRequest.Stages)
+                {
+                    Stage stage = new()
+                    {
+                        Name = stageRequest.Name,
+                        Slug = null!,
+                        Description = stageRequest.Description,
+                        StageType = stageRequest.StageType,
+                        IsActive = stageRequest.IsActive ?? true,
+                        IsElimination = stageRequest.IsElimination ?? (stageRequest.StageType != StageType.Group),
+                        StartDate = stageRequest.StartDate,
+                        EndDate = stageRequest.EndDate,
+                        DivisionId = division.Id,
+                        Division = division,
+                        BracketName = stageRequest.BracketName,
+                        BestOf = stageRequest.BestOf,
+                        RoundRobinLegs = stageRequest.RoundRobinLegs,
+                        Matches = [],
+                        CreatedBy = AuditConstants.SystemUser,
+                    };
+
+                    await stageService.CreateStageAsync(stage);
+                }
+            }
+        });
+
+        return await GetTournamentByIdAsync(tournament.Id) ?? tournament;
     }
 
     public async Task<Tournament?> GetTournamentByIdAsync(Guid tournamentId)
