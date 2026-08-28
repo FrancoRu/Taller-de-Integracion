@@ -13,8 +13,6 @@ const makeState = (): WizardState => {
     description: 'Torneo de prueba',
     startDate: '2026-03-01',
     teamRegistrationDeadline: '2026-02-15',
-    minTeams: 2,
-    maxTeams: 8,
   };
   state.selectedTeamIds = [guid('a'), guid('b')];
   state.zones = [
@@ -69,8 +67,13 @@ describe('submitWizard', () => {
     expect(result.tournamentId).toBe(guid('tournament'));
     expect(result.warnings).toEqual([]);
     expect(services.addTournament).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'Apertura 2026', minTeams: 2, maxTeams: 8 })
+      expect.objectContaining({ name: 'Apertura 2026' })
     );
+    // minTeams/maxTeams were dropped from the backend contract; the wizard
+    // must not send them.
+    const addTournamentArg = services.addTournament.mock.calls[0][0];
+    expect(addTournamentArg).not.toHaveProperty('minTeams');
+    expect(addTournamentArg).not.toHaveProperty('maxTeams');
     expect(services.registerTeams).toHaveBeenCalledWith(guid('tournament'), [guid('a'), guid('b')]);
   });
 

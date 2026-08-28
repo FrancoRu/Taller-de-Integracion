@@ -21,8 +21,6 @@ const makeValidState = (): WizardState => {
     description: '',
     startDate: '2026-03-01',
     teamRegistrationDeadline: '2026-02-15',
-    minTeams: 4,
-    maxTeams: 8,
   };
   state.selectedTeamIds = [guid('a'), guid('b'), guid('c'), guid('d')];
   state.zones = [
@@ -62,47 +60,16 @@ describe('validateTournamentStep', () => {
     state.tournament.teamRegistrationDeadline = state.tournament.startDate;
     expect(validateTournamentStep(state).length).toBeGreaterThan(0);
   });
-
-  it('rejects minTeams below the backend-allowed minimum (4)', () => {
-    const state = makeValidState();
-    state.tournament.minTeams = 3;
-    expect(validateTournamentStep(state).length).toBeGreaterThan(0);
-  });
-
-  it('rejects maxTeams above the backend-allowed maximum (32)', () => {
-    const state = makeValidState();
-    state.tournament.maxTeams = 33;
-    expect(validateTournamentStep(state).length).toBeGreaterThan(0);
-  });
-
-  it('rejects minTeams greater than maxTeams', () => {
-    const state = makeValidState();
-    state.tournament.minTeams = 10;
-    state.tournament.maxTeams = 8;
-    expect(validateTournamentStep(state).length).toBeGreaterThan(0);
-  });
-
-  it('accepts the wizard defaults (min 4, max 32) as a valid, submittable range', () => {
-    const state = createInitialWizardState();
-    expect(state.tournament.minTeams).toBe(4);
-    expect(state.tournament.maxTeams).toBe(32);
-  });
 });
 
 describe('validateTeamsStep', () => {
-  it('rejects fewer teams than the configured minimum', () => {
+  it('rejects a tournament with no teams inscribed', () => {
     const state = makeValidState();
-    state.tournament.minTeams = 6;
+    state.selectedTeamIds = [];
     expect(validateTeamsStep(state).length).toBeGreaterThan(0);
   });
 
-  it('rejects more teams than the configured maximum', () => {
-    const state = makeValidState();
-    state.tournament.maxTeams = 2;
-    expect(validateTeamsStep(state).length).toBeGreaterThan(0);
-  });
-
-  it('accepts a team count within range', () => {
+  it('accepts at least one inscribed team', () => {
     expect(validateTeamsStep(makeValidState())).toEqual([]);
   });
 });

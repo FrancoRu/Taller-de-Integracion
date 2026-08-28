@@ -1,9 +1,5 @@
 import { Grid, TextField } from '@mui/material';
-import {
-  MAX_ALLOWED_TOURNAMENT_TEAMS,
-  MIN_ALLOWED_TOURNAMENT_TEAMS,
-  TournamentStepState,
-} from '../types';
+import { TournamentStepState } from '../types';
 
 interface TorneoStepProps {
   value: TournamentStepState;
@@ -67,42 +63,6 @@ export default function TorneoStep({ value, onChange }: TorneoStepProps) {
           slotProps={{
             inputLabel: { shrink: true }
           }}
-        />
-      </Grid>
-
-      <Grid
-        size={{
-          xs: 12,
-          md: 6
-        }}>
-        <TextField
-          label="Mín. equipos"
-          type="number"
-          value={value.minTeams}
-          onChange={e => onChange({ ...value, minTeams: Number(e.target.value) })}
-          helperText={`Entre ${MIN_ALLOWED_TOURNAMENT_TEAMS} y ${MAX_ALLOWED_TOURNAMENT_TEAMS}`}
-          slotProps={{
-            htmlInput: { min: MIN_ALLOWED_TOURNAMENT_TEAMS, max: MAX_ALLOWED_TOURNAMENT_TEAMS },
-          }}
-          fullWidth
-        />
-      </Grid>
-
-      <Grid
-        size={{
-          xs: 12,
-          md: 6
-        }}>
-        <TextField
-          label="Máx. equipos"
-          type="number"
-          value={value.maxTeams}
-          onChange={e => onChange({ ...value, maxTeams: Number(e.target.value) })}
-          helperText={`Entre ${MIN_ALLOWED_TOURNAMENT_TEAMS} y ${MAX_ALLOWED_TOURNAMENT_TEAMS}`}
-          slotProps={{
-            htmlInput: { min: MIN_ALLOWED_TOURNAMENT_TEAMS, max: MAX_ALLOWED_TOURNAMENT_TEAMS },
-          }}
-          fullWidth
         />
       </Grid>
     </Grid>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
+import { formatDateAr } from '@/modules/core/utils/formatDate';
 import {
   Box,
   Container,
@@ -21,13 +22,7 @@ import {
 } from '@/modules/core/constants/pagination';
 import { FILTERS_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/constants';
 
-const formatDate = (value?: string | Date | null) => {
-  if (!value) return '—';
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime())
-    ? '—'
-    : parsed.toLocaleDateString('es-AR', { dateStyle: 'short' });
-};
+const formatDate = (value?: string | Date | null) => formatDateAr(value);
 
 /**
  * Sanctions recorded as a permanent/indefinite ban (e.g. expulsion) are

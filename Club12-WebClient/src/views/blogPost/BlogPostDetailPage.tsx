@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
+import { formatDateAr } from '@/modules/core/utils/formatDate';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
 import { BlogPostResponse } from '@/modules/blogPost/type/blogPost';
@@ -69,7 +70,7 @@ const BlogPostDetailPage: React.FC = () => {
           color: "text.secondary",
           mb: 3
         }}>
-        {post.author} · {new Date(post.createdAt).toLocaleDateString()}
+        {post.author} · {formatDateAr(post.createdAt)}
       </Typography>
       {post.photoUrl && (
         <Box

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
+import { formatDateTimeAr } from '@/modules/core/utils/formatDate';
 import {
   Box,
   Card,
@@ -43,21 +44,7 @@ import { FILTERS_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/constants';
 
 const EMPTY_FILTERS: PlayerSanctionsSearchFilters = {};
 
-const formatDateTime = (value?: string | Date | null) => {
-  if (!value) {
-    return '—';
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return '—';
-  }
-
-  return parsed.toLocaleString('es-AR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  });
-};
+const formatDateTime = (value?: string | Date | null) => formatDateTimeAr(value);
 
 const PlayerSanctionsPage: React.FC = () => {
   const navigate = useNavigate();

@@ -2,15 +2,6 @@ import { GUID } from '@/modules/core/types/types';
 import { StageType } from '@/modules/stage/type/stage';
 
 /**
- * Mirrors the backend's Application.Utils.Constants.Validation.TournamentFieldRange
- * (CreateTournamentRequest.MinTeams/MaxTeams are both [Range(4, 32)]). Kept
- * here rather than defaulting to arbitrary values so a tournament created
- * with the wizard's defaults always passes backend validation.
- */
-export const MIN_ALLOWED_TOURNAMENT_TEAMS = 4;
-export const MAX_ALLOWED_TOURNAMENT_TEAMS = 32;
-
-/**
  * Elimination round types the wizard can add to a cup, in typical
  * chronological order. RoundOf16/QuarterFinal/SemiFinal/ThirdPlace/Final
  * are all admin-selectable — the wizard never assumes a fixed shape.
@@ -90,8 +81,6 @@ export interface TournamentStepState {
   description: string;
   startDate: string;
   teamRegistrationDeadline: string;
-  minTeams: number;
-  maxTeams: number;
 }
 
 export interface WizardState {
@@ -136,8 +125,6 @@ export const createInitialWizardState = (): WizardState => ({
     description: '',
     startDate: '',
     teamRegistrationDeadline: '',
-    minTeams: MIN_ALLOWED_TOURNAMENT_TEAMS,
-    maxTeams: MAX_ALLOWED_TOURNAMENT_TEAMS,
   },
   selectedTeamIds: [],
   zones: [],

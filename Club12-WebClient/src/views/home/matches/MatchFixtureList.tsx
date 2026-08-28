@@ -2,22 +2,11 @@ import { useMemo } from 'react';
 import { Box, Divider, Paper, Stack, Typography } from '@mui/material';
 import { IMatchResponse } from '@/modules/match/type/match.d';
 import MatchRow from '@/views/home/matches/MatchRow';
+import { toArDayKey, formatArDayLabel } from '@/modules/core/utils/formatDate';
 
-const dayKey = (value: string) => {
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? 'unknown' : parsed.toISOString().slice(0, 10);
-};
+const dayKey = (value: string) => toArDayKey(value);
 
-const formatRoundLabel = (key: string) => {
-  if (key === 'unknown') return 'Fecha a confirmar';
-  const parsed = new Date(`${key}T00:00:00`);
-  const label = parsed.toLocaleDateString('es-AR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  });
-  return label.charAt(0).toUpperCase() + label.slice(1);
-};
+const formatRoundLabel = (key: string) => formatArDayLabel(key);
 
 interface Round {
   key: string;

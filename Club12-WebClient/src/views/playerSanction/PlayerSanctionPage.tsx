@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { formatDateTimeAr } from '@/modules/core/utils/formatDate';
 import {
   Button,
   Card,
@@ -41,21 +42,7 @@ const APPEAL_STATUS_COLOR: Record<
   Rejected: 'error',
 };
 
-const formatDate = (value?: string | Date | null) => {
-  if (!value) {
-    return '—';
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return '—';
-  }
-
-  return parsed.toLocaleString('es-AR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  });
-};
+const formatDate = (value?: string | Date | null) => formatDateTimeAr(value);
 
 const PlayerSanctionPage: React.FC = () => {
   const { playerSanctionId } = useParams<{ playerSanctionId: GUID }>();

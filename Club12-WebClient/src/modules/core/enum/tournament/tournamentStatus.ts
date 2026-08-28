@@ -1,6 +1,7 @@
 export const TournamentStatus = {
   Scheduled: 'Scheduled',
   OpenForRegistration: 'OpenForRegistration',
+  RegistrationClosed: 'RegistrationClosed',
   Ongoing: 'Ongoing',
   Finished: 'Finished',
   Canceled: 'Canceled',

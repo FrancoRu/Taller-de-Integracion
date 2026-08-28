@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
+import { formatDateAr } from '@/modules/core/utils/formatDate';
 import {
   Box,
   Card,
@@ -34,10 +35,7 @@ import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const EMPTY_FILTERS: GetBlogPostsFilteredRequest = {};
 
-const formatDate = (value: Date | string) => {
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString('es-AR');
-};
+const formatDate = (value: Date | string) => formatDateAr(value);
 
 const BlogPostsPage: React.FC = () => {
   const { getBlogPostsByFilters, deleteBlogPostById } = useBlogPost();

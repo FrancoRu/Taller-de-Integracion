@@ -175,8 +175,6 @@ export const submitWizard = async (
     description: state.tournament.description.trim(),
     startDate: new Date(state.tournament.startDate),
     teamRegistrationDeadline: new Date(state.tournament.teamRegistrationDeadline),
-    minTeams: state.tournament.minTeams,
-    maxTeams: state.tournament.maxTeams,
   });
 
   if (!tournament) {

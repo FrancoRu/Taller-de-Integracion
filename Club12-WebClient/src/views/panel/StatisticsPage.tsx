@@ -25,6 +25,7 @@ import { IScorerByPlayerResponse } from '@/modules/scorer/type/scorer.d';
 const STATUS_LABEL: Record<TournamentStatus, string> = {
   Scheduled: 'Programados',
   OpenForRegistration: 'Inscripción abierta',
+  RegistrationClosed: 'Inscripción cerrada',
   Ongoing: 'En curso',
   Finished: 'Finalizados',
   Canceled: 'Cancelados',
@@ -33,6 +34,7 @@ const STATUS_LABEL: Record<TournamentStatus, string> = {
 const STATUS_COLOR: Record<TournamentStatus, string> = {
   Scheduled: '#1976d2',
   OpenForRegistration: '#0288d1',
+  RegistrationClosed: '#9c27b0',
   Ongoing: '#2e7d32',
   Finished: '#616161',
   Canceled: '#d32f2f',
@@ -122,6 +124,7 @@ const StatisticsPage = () => {
       const byStatus: Record<TournamentStatus, number> = {
         Scheduled: 0,
         OpenForRegistration: 0,
+        RegistrationClosed: 0,
         Ongoing: 0,
         Finished: 0,
         Canceled: 0,

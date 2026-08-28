@@ -14,19 +14,9 @@ import { useMatch } from '@/modules/match/hook/match.hook';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { formatMatchScore, getMatchStatusColor, getMatchStatusLabel } from '@/modules/match/utils/matchDisplay';
+import { formatLongDateTimeAr } from '@/modules/core/utils/formatDate';
 
-const formatMatchDateTime = (value: string) => {
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime())
-    ? '—'
-    : parsed.toLocaleString('es-AR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-};
+const formatMatchDateTime = (value: string) => formatLongDateTimeAr(value);
 
 export default function PublicMatchPage() {
   const { matchId } = useParams<{ matchId: string }>();

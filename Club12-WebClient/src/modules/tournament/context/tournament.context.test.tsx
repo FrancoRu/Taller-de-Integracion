@@ -29,8 +29,6 @@ const buildTournament = (
   divisions: [],
   teamRegistrationDeadline: new Date('2026-01-01'),
   startDate: new Date('2026-02-01'),
-  maxTeams: 10,
-  minTeams: 4,
   status: 'Scheduled',
   ...overrides,
 });

@@ -81,14 +81,6 @@ export function TournamentCard({ tournament }: { tournament: ITournamentResponse
             }}>
             Inicio: {formatTournamentDate(tournament.startDate)}
           </Typography>
-          <Typography
-            variant="caption"
-            sx={{
-              color: "text.secondary",
-              display: "block"
-            }}>
-            Equipos: {tournament.minTeams}–{tournament.maxTeams}
-          </Typography>
         </CardContent>
       </CardActionArea>
     </Card>

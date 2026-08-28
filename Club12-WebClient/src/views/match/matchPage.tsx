@@ -17,7 +17,10 @@ import { GUID } from '@/modules/core/types/types';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import { IPlayerSanctionResponse } from '@/modules/playerSanction/type/playerSanction.d';
-import { formatMatchDateToString } from '@/modules/core/utils/formatDate';
+import {
+  formatMatchDateToString,
+  formatLongDateTimeAr,
+} from '@/modules/core/utils/formatDate';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import MatchStatisticsTab from '@/views/match/MatchStatisticsTab';
@@ -26,21 +29,7 @@ import PlayerSanctionCreatePage from '@/views/playerSanction/playerSanctionCreat
 import { VisibilityIcon } from '@/views/core/MUI/icons/icons';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
-const formatDateTime = (value?: string | null) => {
-  if (!value) {
-    return '—';
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return '—';
-  }
-
-  return parsed.toLocaleString('es-AR', {
-    dateStyle: 'full',
-    timeStyle: 'short',
-  });
-};
+const formatDateTime = (value?: string | null) => formatLongDateTimeAr(value);
 
 type MatchTab = 'detalle' | 'puntuaciones' | 'sanciones';
 

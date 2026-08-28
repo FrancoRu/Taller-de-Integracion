@@ -99,18 +99,6 @@ export interface IAddTournamentRequest {
    * @type {Date}
    */
   startDate: Date;
-
-  /**
-   * The maximum number of teams allowed to participate in the tournament.
-   * @type {number}
-   */
-  maxTeams: number;
-
-  /**
-   * The minimum number of teams required to hold the tournament.
-   * @type {number}
-   */
-  minTeams: number;
 }
 
 /**
@@ -160,18 +148,6 @@ export interface ITournamentResponse {
    * @type {Date}
    */
   startDate: Date;
-
-  /**
-   * The maximum number of teams allowed to participate in the tournament.
-   * @type {number}
-   */
-  maxTeams: number;
-
-  /**
-   * The minimum number of teams required to hold the tournament.
-   * @type {number}
-   */
-  minTeams: number;
 
   /**
    * The current status of the tournament.
@@ -233,18 +209,6 @@ export interface IPutTournamentRequest {
    * @type {Date}
    */
   startDate: Date;
-
-  /**
-   * The maximum number of teams allowed to participate in the tournament.
-   * @type {number}
-   */
-  maxTeams: number;
-
-  /**
-   * The minimum number of teams required to hold the tournament.
-   * @type {number}
-   */
-  minTeams: number;
 
   /**
    * The current status of the tournament.
