@@ -89,7 +89,30 @@ public class AuditTrailTests : IClassFixture<CustomWebApplicationFactory>
             .FirstAsync();
 
         Assert.Equal(nameof(Tournament), entry.TargetType);
-        Assert.Contains("Scheduled", entry.Detail);
-        Assert.Contains("OpenForRegistration", entry.Detail);
+        // The user-facing audit Detail must be Spanish (not the English enum
+        // names): "Programado → Inscripción abierta".
+        Assert.Contains("Programado", entry.Detail);
+        Assert.Contains("Inscripción abierta", entry.Detail);
+        Assert.DoesNotContain("Scheduled", entry.Detail);
+        Assert.DoesNotContain("OpenForRegistration", entry.Detail);
+    }
+
+    [Fact]
+    public async Task WipeSampleData_AuditDetail_IsSpanish()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        IDataMaintenanceService service = scope.ServiceProvider.GetRequiredService<IDataMaintenanceService>();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        await service.WipeSampleDataAsync();
+
+        AuditLog entry = await db.AuditLogs
+            .Where(a => a.Action == AuditAction.DataWipe)
+            .OrderByDescending(a => a.DateCreated)
+            .FirstAsync();
+
+        Assert.NotNull(entry.Detail);
+        Assert.Contains("torneos", entry.Detail);
+        Assert.DoesNotContain("Wiped", entry.Detail);
     }
 }

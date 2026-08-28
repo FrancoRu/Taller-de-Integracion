@@ -87,8 +87,8 @@ public sealed class DataMaintenanceService(
             await auditService.LogAsync(
                 AuditAction.DataWipe,
                 detail:
-                    $"Wiped tournament-domain data: {tournaments} tournaments, {teams} teams, " +
-                    $"{players} players, {matches} matches.",
+                    $"Se eliminaron los datos de torneos: {tournaments} torneos, {teams} equipos, " +
+                    $"{players} jugadores, {matches} partidos.",
                 ct: ct);
 
             return new DataWipeResult(

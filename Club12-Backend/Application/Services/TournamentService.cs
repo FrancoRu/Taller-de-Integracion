@@ -204,7 +204,7 @@ public class TournamentService(
             AuditAction.TournamentStatusChange,
             targetType: nameof(Tournament),
             targetId: tournamentId.ToString(),
-            detail: $"{previousStatus} -> {newStatus}");
+            detail: $"{previousStatus.ToSpanishLabel()} → {newStatus.ToSpanishLabel()}");
     }
 
     /// <summary>
