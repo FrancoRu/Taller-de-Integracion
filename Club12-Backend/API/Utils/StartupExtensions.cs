@@ -7,6 +7,7 @@ using Application.Interfaces.Backup;
 using Application.Interfaces.Mappers;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Interfaces.Storage;
 using Application.Services;
 using Application.Utils.Constants;
 using Application.Utils.Helper.SupabaseHelper;
@@ -342,6 +343,14 @@ public static class StartupExtensions
     public static IServiceCollection RegisterSingletons(this IServiceCollection services)
     {
         services.AddSingleton<SupabaseHelper>();
+
+        // Medical-record file storage (HU-55/HU-56). Reuses the shared Supabase
+        // client via ISupabaseRawStorage (implemented by SupabaseHelper) and
+        // confines files to their own medical-records/ area, separate from the
+        // backups/ area. Registered here (not conditionally like backup
+        // storage) because medical-record uploads always target Supabase.
+        services.AddSingleton<ISupabaseRawStorage>(sp => sp.GetRequiredService<SupabaseHelper>());
+        services.AddSingleton<IMedicalRecordStorage, SupabaseMedicalRecordStorage>();
         return services;
     }
 

@@ -161,23 +161,28 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork) : IPlayerStatisticSe
 
         Guid tournamentId = teamEntity.TournamentId.Value;
 
-        HashSet<Guid> registeredPlayerIds = [.. (await _playerTeamRegistrationRepository.FindAsync(
+        Dictionary<Guid, PlayerTeamRegistration> registrationsByPlayer = (await _playerTeamRegistrationRepository.FindAsync(
             registration => registration.TeamId == request.TeamId
                 && registration.TournamentId == tournamentId
                 && playerIds.Contains(registration.PlayerId)))
-            .Select(registration => registration.PlayerId)];
+            .ToDictionary(registration => registration.PlayerId);
 
         Dictionary<Guid, Player> playersById = (await _playerRepository.FindAsync(player => playerIds.Contains(player.Id)))
             .ToDictionary(player => player.Id);
 
         foreach (Guid playerId in playerIds)
         {
-            if (!registeredPlayerIds.Contains(playerId))
+            if (!registrationsByPlayer.TryGetValue(playerId, out PlayerTeamRegistration? registration))
             {
                 throw new InvalidOperationException(ErrorMessages.MatchSheet.PlayerNotOnRoster(playerId));
             }
 
-            if (!playersById.TryGetValue(playerId, out Player? player) || player.IsSanctioned)
+            // Eligible only when NOT sanctioned (HU-61) AND the medical record
+            // is Approved for this team+tournament (HU-57/HU-60). A Pending or
+            // Rejected registration — including a brand-new season's, which
+            // never inherits a prior approval (HU-59) — is not habilitado.
+            bool sanctioned = !playersById.TryGetValue(playerId, out Player? player) || player.IsSanctioned;
+            if (sanctioned || registration.MedicalRecordStatus != MedicalRecordStatus.Approved)
             {
                 throw new InvalidOperationException(ErrorMessages.MatchSheet.PlayerNotEligible(playerId));
             }

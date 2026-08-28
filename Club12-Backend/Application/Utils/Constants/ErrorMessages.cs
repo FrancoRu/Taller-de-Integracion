@@ -219,6 +219,18 @@ public static class ErrorMessages
         }
     }
 
+    public static class MedicalRecord
+    {
+        public const string InvalidPdfFile = "The medical-record file must be a valid PDF.";
+
+        public static string RegistrationNotFound(
+            System.Guid playerId, System.Guid teamId, System.Guid tournamentId)
+        {
+            return $"Player {playerId} has no registration to team {teamId} for tournament " +
+                $"{tournamentId}, so a medical record cannot be attached or reviewed.";
+        }
+    }
+
     public static class MatchSeries
     {
         public const string RequiresTwoDifferentTeams = "A series requires two different teams.";

@@ -20,6 +20,15 @@ public class PlayerTeamRegistrationEntityConfiguration : BaseEntityConfiguration
         builder.Property(r => r.TeamId).IsRequired();
         builder.Property(r => r.TournamentId).IsRequired();
 
+        // Medical-record / eligibility (HU-55/57/58). Status is persisted as
+        // the enum name (string), mirroring the other enum columns in this DB
+        // (Match.Status, PlayerStatistic.Type, PlayerSanction.AppealStatus).
+        builder.Property(r => r.MedicalRecordStatus).IsRequired().HasConversion<string>();
+        builder.Property(r => r.MedicalRecordFileUrl);
+        builder.Property(r => r.MedicalRecordFileName);
+        builder.Property(r => r.MedicalRecordReviewReason);
+        builder.Property(r => r.MedicalRecordReviewedAt);
+
         builder.HasIndex(r => new { r.PlayerId, r.TournamentId }).IsUnique();
 
         builder.HasOne(r => r.Player)

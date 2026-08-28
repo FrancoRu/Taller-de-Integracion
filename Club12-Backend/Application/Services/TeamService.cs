@@ -220,7 +220,14 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
                 ? []
                 : [.. registrationsByTeam[team.Id]
                     .Where(r => r.TournamentId == season.Value)
-                    .Select(r => r.Player!)];
+                    .Select(r =>
+                    {
+                        // Surface the season-scoped eligibility onto the roster
+                        // player (transient, not persisted) so responses expose
+                        // habilitado/not-habilitado per player (HU-57/HU-62).
+                        r.Player!.MedicalRecordStatus = r.MedicalRecordStatus;
+                        return r.Player!;
+                    })];
         }
     }
 

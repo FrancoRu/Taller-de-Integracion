@@ -1,0 +1,88 @@
+using Application.DTOs.MedicalRecord.Response;
+using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
+using Application.Utils.Constants;
+
+using Domain.Entities.Models;
+using Domain.Enums;
+
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Application.Services;
+
+/// <summary>
+/// Applies medical-record / eligibility operations to a player's season
+/// registration (HU-55/57/58). Deliberately holds no storage dependency: the
+/// file upload itself is performed by the caller (controller) against the
+/// storage boundary and only the resulting reference is handed here, so this
+/// service — and all the eligibility rules — can be unit-tested without a live
+/// Supabase bucket.
+/// </summary>
+public class MedicalRecordService(IUnitOfWork unitOfWork) : IMedicalRecordService
+{
+    private readonly IPlayerTeamRegistrationRepository _registrationRepository = unitOfWork.PlayerTeamRegistrationRepository;
+
+    public async Task<MedicalRecordResponse> RecordUploadAsync(
+        Guid playerId, Guid teamId, Guid tournamentId, string fileReference, string fileName, string actor)
+    {
+        PlayerTeamRegistration registration = await GetRegistrationAsync(playerId, teamId, tournamentId);
+
+        registration.MedicalRecordFileUrl = fileReference;
+        registration.MedicalRecordFileName = fileName;
+        // Uploading a (new) file always requires a fresh review — it never
+        // habilitates on its own (HU-57).
+        registration.MedicalRecordStatus = MedicalRecordStatus.Pending;
+        registration.MedicalRecordReviewReason = null;
+        registration.MedicalRecordReviewedAt = null;
+        Touch(registration, actor);
+
+        await _registrationRepository.UpdateAsync(registration);
+
+        return MedicalRecordResponse.FromRegistration(registration);
+    }
+
+    public async Task<MedicalRecordResponse> ReviewAsync(
+        Guid playerId, Guid teamId, Guid tournamentId, bool approve, string? reason, string actor)
+    {
+        PlayerTeamRegistration registration = await GetRegistrationAsync(playerId, teamId, tournamentId);
+
+        registration.MedicalRecordStatus = approve ? MedicalRecordStatus.Approved : MedicalRecordStatus.Rejected;
+        registration.MedicalRecordReviewReason = approve ? null : reason;
+        registration.MedicalRecordReviewedAt = DateTime.UtcNow;
+        Touch(registration, actor);
+
+        await _registrationRepository.UpdateAsync(registration);
+
+        return MedicalRecordResponse.FromRegistration(registration);
+    }
+
+    public async Task<MedicalRecordResponse?> GetAsync(Guid playerId, Guid teamId, Guid tournamentId)
+    {
+        PlayerTeamRegistration? registration = await FindRegistrationAsync(playerId, teamId, tournamentId);
+        return registration is null ? null : MedicalRecordResponse.FromRegistration(registration);
+    }
+
+    private async Task<PlayerTeamRegistration> GetRegistrationAsync(Guid playerId, Guid teamId, Guid tournamentId)
+    {
+        return await FindRegistrationAsync(playerId, teamId, tournamentId)
+            ?? throw new InvalidOperationException(
+                ErrorMessages.MedicalRecord.RegistrationNotFound(playerId, teamId, tournamentId));
+    }
+
+    private async Task<PlayerTeamRegistration?> FindRegistrationAsync(Guid playerId, Guid teamId, Guid tournamentId)
+    {
+        return (await _registrationRepository.FindAsync(
+            registration => registration.PlayerId == playerId
+                && registration.TeamId == teamId
+                && registration.TournamentId == tournamentId))
+            .FirstOrDefault();
+    }
+
+    private static void Touch(PlayerTeamRegistration registration, string actor)
+    {
+        registration.DateUpdated = DateTime.UtcNow;
+        registration.UpdatedBy = string.IsNullOrWhiteSpace(actor) ? registration.UpdatedBy : actor;
+    }
+}

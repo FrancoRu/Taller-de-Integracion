@@ -1,5 +1,8 @@
-﻿using System;
+﻿using Domain.Enums;
+
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain.Entities.Models;
 
@@ -46,4 +49,23 @@ public class Player : EntityBase
     /// truth for roster membership — see <see cref="PlayerTeamRegistration"/>.
     /// </summary>
     public virtual ICollection<PlayerTeamRegistration> PlayerTeamRegistrations { get; set; } = [];
+
+    /// <summary>
+    /// Transient, NOT persisted: the medical-record / eligibility status of
+    /// this player for the season roster currently being viewed (HU-57/HU-62).
+    /// Populated on demand when a roster is loaded for a specific season (see
+    /// TeamService.AttachSeasonRostersAsync) from the matching
+    /// <see cref="PlayerTeamRegistration"/>. Null when no season context is set.
+    /// </summary>
+    [NotMapped]
+    public MedicalRecordStatus? MedicalRecordStatus { get; set; }
+
+    /// <summary>
+    /// Transient, NOT persisted: whether the player is "habilitado" for the
+    /// season roster currently being viewed (HU-57) — i.e. their medical
+    /// record is Approved. Lets the frontend flag not-habilitado players
+    /// (HU-62). Sanctions are enforced separately in the match-sheet path.
+    /// </summary>
+    [NotMapped]
+    public bool IsHabilitado => MedicalRecordStatus == Domain.Enums.MedicalRecordStatus.Approved;
 }

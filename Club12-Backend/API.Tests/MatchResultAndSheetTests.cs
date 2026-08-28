@@ -444,7 +444,8 @@ public class MatchResultAndSheetTests : IClassFixture<CustomWebApplicationFactor
     }
 
     private static async Task<Player> SeedRosterPlayerAsync(
-        ApplicationDBContext db, Team team, Guid tournamentId, string lastName, bool isSanctioned = false)
+        ApplicationDBContext db, Team team, Guid tournamentId, string lastName,
+        bool isSanctioned = false, MedicalRecordStatus medicalStatus = MedicalRecordStatus.Approved)
     {
         Player player = await SeedPlayerAsync(db, team, lastName, isSanctioned);
 
@@ -453,6 +454,7 @@ public class MatchResultAndSheetTests : IClassFixture<CustomWebApplicationFactor
             PlayerId = player.Id,
             TeamId = team.Id,
             TournamentId = tournamentId,
+            MedicalRecordStatus = medicalStatus,
             CreatedBy = "test",
         });
         await db.SaveChangesAsync();
