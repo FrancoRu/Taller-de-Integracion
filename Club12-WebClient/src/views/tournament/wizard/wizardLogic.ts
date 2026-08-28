@@ -1,4 +1,3 @@
-import { GUID } from '@/modules/core/types/types';
 import { TOURNAMENT_CATEGORY_LABELS } from '@/modules/core/enum/tournament/tournamentCategory';
 import { CupConfig, PlayoffMappingConfig, STAGE_TYPE_LABELS, WizardState } from './types';
 
@@ -30,17 +29,6 @@ export const validateTournamentStep = (state: WizardState): ValidationResult => 
     new Date(tournament.teamRegistrationDeadline) >= new Date(tournament.startDate)
   ) {
     errors.push('La fecha límite de inscripción debe ser anterior a la fecha de inicio.');
-  }
-
-  return errors;
-};
-
-export const validateTeamsStep = (state: WizardState): ValidationResult => {
-  const { selectedTeamIds } = state;
-  const errors: string[] = [];
-
-  if (selectedTeamIds.length < 1) {
-    errors.push('Debés inscribir al menos un equipo.');
   }
 
   return errors;
@@ -144,10 +132,12 @@ export const validatePlayoffMappings = (
 };
 
 /**
- * Validates the zones step: every zone has a name, every selected team
- * belongs to exactly one zone (catches both "unassigned team" and "team
- * in two zones" before the admin ever reaches the server-side guardrails),
- * and every configured cup is well-formed.
+ * Validates the zones step (HU-106 — STRUCTURE ONLY): every zone has a
+ * unique name and every configured cup / playoff-range mapping is
+ * well-formed. Teams are not selected in the wizard anymore, so there is no
+ * team-partition check here; the playoff ranges are validated with a team
+ * count of 0, which skips the upper-bound check while still catching
+ * inverted, overlapping, or unmapped ranges.
  */
 export const validateZonesStep = (state: WizardState): ValidationResult => {
   const errors: string[] = [];
@@ -172,35 +162,12 @@ export const validateZonesStep = (state: WizardState): ValidationResult => {
     seenZoneNames.add(normalized);
   });
 
-  const teamZoneCount = new Map<GUID, number>();
-  for (const zone of state.zones) {
-    for (const teamId of zone.teamIds) {
-      teamZoneCount.set(teamId, (teamZoneCount.get(teamId) ?? 0) + 1);
-    }
-  }
-
-  const unassigned = state.selectedTeamIds.filter(id => !teamZoneCount.has(id));
-  if (unassigned.length > 0) {
-    errors.push(
-      `${unassigned.length} equipo(s) inscripto(s) todavía no están en ninguna zona.`
-    );
-  }
-
-  const inMultipleZones = [...teamZoneCount.entries()].filter(([, count]) => count > 1);
-  if (inMultipleZones.length > 0) {
-    errors.push(`${inMultipleZones.length} equipo(s) están en más de una zona a la vez.`);
-  }
-
   state.zones.forEach(zone => {
-    if (zone.teamIds.length === 0) {
-      errors.push(`La zona "${zone.name || '(sin nombre)'}" no tiene equipos.`);
-    }
-
     errors.push(...validateCups(zone.cups, `la zona "${zone.name || '(sin nombre)'}"`));
     errors.push(
       ...validatePlayoffMappings(
         zone.playoffMappings,
-        zone.teamIds.length,
+        0,
         zone.cups.map(cup => cup.name),
         `la zona "${zone.name || '(sin nombre)'}"`
       )
@@ -222,19 +189,11 @@ export const validateCrossCupStep = (state: WizardState): ValidationResult => {
     errors.push('La copa cruzada necesita un nombre.');
   }
 
-  const teamCount = crossCup.includeAllTeams
-    ? state.selectedTeamIds.length
-    : crossCup.teamIds.length;
-
-  if (teamCount < 2) {
-    errors.push('La copa cruzada necesita al menos 2 equipos.');
-  }
-
   errors.push(...validateCups(crossCup.cups, 'la copa cruzada'));
   errors.push(
     ...validatePlayoffMappings(
       crossCup.playoffMappings,
-      teamCount,
+      0,
       crossCup.cups.map(cup => cup.name),
       'la copa cruzada'
     )
@@ -245,7 +204,6 @@ export const validateCrossCupStep = (state: WizardState): ValidationResult => {
 
 export const isWizardReadyToSubmit = (state: WizardState): boolean =>
   validateTournamentStep(state).length === 0 &&
-  validateTeamsStep(state).length === 0 &&
   validateZonesStep(state).length === 0 &&
   validateCrossCupStep(state).length === 0;
 
@@ -302,7 +260,6 @@ export const buildWizardTree = (state: WizardState): WizardTreeNode[] => {
       label: `${state.tournament.name || '(sin nombre)'} · ${
         TOURNAMENT_CATEGORY_LABELS[state.tournament.category]
       }`,
-      tag: `${state.selectedTeamIds.length} equipos`,
     },
   ];
 
@@ -310,20 +267,16 @@ export const buildWizardTree = (state: WizardState): WizardTreeNode[] => {
     nodes.push({
       id: zone.id,
       depth: 2,
-      label: `${zone.name || '(sin nombre)'} — ${zone.teamIds.length} equipos`,
+      label: zone.name || '(sin nombre)',
     });
     nodes.push(...buildGroupAndCupNodes(zone.id, zone.hasGroupStage, zone.roundRobinLegs, zone.cups));
   });
 
   if (state.crossCup.enabled) {
-    const teamCount = state.crossCup.includeAllTeams
-      ? state.selectedTeamIds.length
-      : state.crossCup.teamIds.length;
-
     nodes.push({
       id: 'cross-cup',
       depth: 2,
-      label: `${state.crossCup.name || '(sin nombre)'} — ${teamCount} equipos`,
+      label: state.crossCup.name || '(sin nombre)',
       tag: 'división cruzada',
     });
     nodes.push(
@@ -338,6 +291,3 @@ export const buildWizardTree = (state: WizardState): WizardTreeNode[] => {
 
   return nodes;
 };
-
-export const resolveCrossCupTeamIds = (state: WizardState): GUID[] =>
-  state.crossCup.includeAllTeams ? state.selectedTeamIds : state.crossCup.teamIds;

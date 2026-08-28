@@ -5,21 +5,23 @@ import { IAddStageRequest, IStageResponse, StageType } from '@/modules/stage/typ
 import { PlayoffMappingRequest } from '@/modules/division/type/division.d';
 import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
 import { CupConfig, PlayoffMappingConfig, STAGE_TYPE_LABELS, WizardState, ZoneConfig } from './types';
-import { resolveCrossCupTeamIds } from './wizardLogic';
 
 /**
  * The wizard's persistence dependencies, injected so the orchestration
  * logic below can be unit-tested without mounting React or hitting the
  * network — every wizard-context hook exposes a function matching one of
  * these signatures already.
+ *
+ * HU-106: the wizard creates STRUCTURE ONLY (tournament + divisions +
+ * stages). Team registration, stage assignment, and fixture generation are
+ * deliberately absent — teams are registered later (registration phase) and
+ * the fixture is generated when the tournament's registration closes
+ * (HU-38 / HU-107 / HU-108).
  */
 export interface WizardServices {
   addTournament(request: IAddTournamentRequest): Promise<ITournamentResponse | void>;
-  registerTeams(tournamentId: GUID, teamIds: GUID[]): Promise<boolean | void>;
   addDivision(request: AddDivisionRequest): Promise<IDivisionResponse | void>;
   addStage(request: IAddStageRequest): Promise<IStageResponse | void>;
-  assignTeamsToStage(stageId: GUID, teamIds: GUID[], auto?: boolean): Promise<boolean | void>;
-  generateMatches(stageId: GUID): Promise<boolean>;
 }
 
 export interface WizardSubmissionResult {
@@ -98,7 +100,6 @@ const createZoneStructure = async (
   services: WizardServices,
   tournamentId: GUID,
   zoneName: string,
-  teamIds: GUID[],
   hasGroupStage: boolean,
   roundRobinLegs: number,
   cups: CupConfig[],
@@ -137,6 +138,11 @@ const createZoneStructure = async (
   if (hasGroupStage) {
     const groupEndDate = addDays(startDate, GROUP_STAGE_DURATION_DAYS);
 
+    // HU-106: the group stage is created as STRUCTURE ONLY. Teams are not
+    // registered or assigned here, and no fixture is generated. The backend
+    // generates the group-stage fixture later, when the tournament's
+    // registration is closed (HU-38 / HU-107 / HU-108), from the teams that
+    // registered during the registration phase.
     const groupStage = await services.addStage({
       name: 'Fase de Grupos',
       stageType: StageType.Group,
@@ -149,41 +155,6 @@ const createZoneStructure = async (
 
     if (!groupStage) {
       warnings.push(`No se pudo crear la fase de grupos de "${zoneName}".`);
-    } else {
-      // Registers *only this zone's* teams to the tournament right before
-      // assigning/generating its fixture (rather than relying on the
-      // upfront, whole-tournament registration in submitWizard below).
-      // The backend infers an unassigned stage's round-robin pool from
-      // "teams registered to the tournament" when it can't otherwise tell
-      // which teams belong to which zone; scoping registration this
-      // tightly keeps that inference correct for every zone regardless of
-      // how many other zones/teams the tournament ends up with. Final,
-      // full registration of every selected team happens once at the end
-      // of submitWizard, after every zone's fixture already exists.
-      if (teamIds.length > 0) {
-        const registered = await services.registerTeams(tournamentId, teamIds);
-        if (!registered) {
-          warnings.push(`No se pudieron registrar los equipos de "${zoneName}" en el torneo.`);
-        }
-      }
-
-      const assigned = await services.assignTeamsToStage(groupStage.id, teamIds, false);
-      if (!assigned) {
-        warnings.push(`No se pudieron asignar los equipos a la fase de grupos de "${zoneName}".`);
-      } else {
-        // HU-38 (PARTIAL): the CANONICAL fixture trigger is the tournament's
-        // status transition to "Inscripción cerrada" — the backend generates
-        // the group-stage fixture there. This wizard-time call predates that
-        // and is kept only so the admin sees a fixture immediately; it is
-        // safe to leave because the backend generator is IDEMPOTENT (a second
-        // pass on the same stage does not duplicate matches), so the two
-        // triggers never double-generate. Do NOT add a second generateMatches
-        // call anywhere in this flow.
-        const generated = await services.generateMatches(groupStage.id);
-        if (!generated) {
-          warnings.push(`No se pudo generar el fixture de la fase de grupos de "${zoneName}".`);
-        }
-      }
     }
 
     nextStartDate = groupEndDate;
@@ -195,14 +166,15 @@ const createZoneStructure = async (
 };
 
 /**
- * Sequences every API call needed to materialize a wizard's local state:
- * the tournament, its registered teams, each zone (division + optional
+ * Sequences every API call needed to materialize a wizard's local state as
+ * STRUCTURE ONLY (HU-106): the tournament, each zone (division + optional
  * group stage + playoff cup shells), and the optional cross-division cup.
- * Nothing is transactional — if a step fails, prior steps are NOT rolled
- * back (that state is real and left for the admin to fix from the normal
- * panel), and the failure is surfaced as a warning rather than aborting
- * the whole run, except for the tournament itself: without it nothing
- * else can proceed.
+ * No teams are registered and no fixture is generated — the tournament is
+ * left in OpenForRegistration for the later registration phase. Nothing is
+ * transactional — if a step fails, prior steps are NOT rolled back (that
+ * state is real and left for the admin to fix from the normal panel), and
+ * the failure is surfaced as a warning rather than aborting the whole run,
+ * except for the tournament itself: without it nothing else can proceed.
  */
 export const submitWizard = async (
   state: WizardState,
@@ -230,7 +202,6 @@ export const submitWizard = async (
       services,
       tournament.id,
       zone.name.trim(),
-      zone.teamIds,
       zone.hasGroupStage,
       zone.roundRobinLegs,
       zone.cups,
@@ -249,7 +220,6 @@ export const submitWizard = async (
       services,
       tournament.id,
       state.crossCup.name.trim(),
-      resolveCrossCupTeamIds(state),
       state.crossCup.hasGroupStage,
       state.crossCup.roundRobinLegs,
       state.crossCup.cups,
@@ -261,18 +231,6 @@ export const submitWizard = async (
       state.tournament.category,
       warnings
     );
-  }
-
-  // Every zone above already registered (and re-registered, since each
-  // zone's registerTeams call replaces the tournament's whole roster —
-  // see TeamService.RegisterTeamsToTournamentAsync) just its own teams
-  // right before generating its fixture. This final call restores the
-  // full, correct roster now that every zone's matches already exist.
-  if (state.selectedTeamIds.length > 0) {
-    const registered = await services.registerTeams(tournament.id, state.selectedTeamIds);
-    if (!registered) {
-      warnings.push('No se pudieron registrar los equipos en el torneo.');
-    }
   }
 
   return { success: true, tournamentId: tournament.id, warnings };

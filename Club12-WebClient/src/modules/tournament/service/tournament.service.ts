@@ -10,7 +10,9 @@ import {
 } from '@/modules/core/utils/axiosUtils';
 import {
   IAddTournamentRequest,
+  IEnrollTeamRequest,
   IPutTournamentRequest,
+  ITournamentCompletability,
   ITournamentFiltered,
   ITournamentResponse,
 } from '@/modules/tournament/type/tournament.d';
@@ -85,4 +87,54 @@ export const tournamentService = {
     await sendPost(`${routes.tournaments}/register-teams/${id}`, {
       teamIds: teamsId,
     }),
+
+  /**
+   * Enrolls a single team into a tournament during its registration phase
+   * (HU-107). Sends the enrollment contract to
+   * `POST /api/tournaments/{id}/enroll-team`.
+   *
+   * @async
+   * @function enrollTeam
+   * @param {GUID} id - The tournament identifier (GUID) to enroll the team into.
+   * @param {IEnrollTeamRequest} request - Enrollment payload. Exactly one of
+   *   `existingTeamId` / `newTeamName` must be set; `copyRosterFromTournamentId`
+   *   optionally seeds the roster from a previous season.
+   * @returns {Promise<AxiosResponse<void>>} The server response.
+   */
+  enrollTeam: async (
+    id: GUID,
+    request: IEnrollTeamRequest
+  ): Promise<AxiosResponse<void>> =>
+    await sendPost(`${routes.tournaments}/${id}/enroll-team`, request),
+
+  /**
+   * Removes a team's enrollment from a tournament (HU-108). Sends
+   * `DELETE /api/tournaments/{id}/teams/{teamId}`. The backend answers 204 on
+   * success and 409 once the tournament has started.
+   *
+   * @async
+   * @function unenrollTeam
+   * @param {GUID} id - The tournament identifier (GUID).
+   * @param {GUID} teamId - The team identifier (GUID) to unenroll.
+   * @returns {Promise<AxiosResponse<void>>} The server response.
+   */
+  unenrollTeam: async (
+    id: GUID,
+    teamId: GUID
+  ): Promise<AxiosResponse<void>> =>
+    await sendDelete(`${routes.tournaments}/${id}/teams/${teamId}`),
+
+  /**
+   * Fetches the live completability report for a tournament (HU-109) from
+   * `GET /api/tournaments/{id}/completability`.
+   *
+   * @async
+   * @function getCompletability
+   * @param {GUID} id - The tournament identifier (GUID).
+   * @returns {Promise<AxiosResponse<ITournamentCompletability>>} The server response.
+   */
+  getCompletability: async (
+    id: GUID
+  ): Promise<AxiosResponse<ITournamentCompletability>> =>
+    await sendGet(`${routes.tournaments}/${id}/completability`),
 };

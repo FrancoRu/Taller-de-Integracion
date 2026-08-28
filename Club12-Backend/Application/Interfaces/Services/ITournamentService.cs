@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.Abstract.Response;
 using Application.DTOs.Tournament.Request;
+using Application.DTOs.Tournament.Response;
 
 using Domain.Entities.Models;
 using Domain.Enums;
@@ -29,7 +30,8 @@ public interface ITournamentService
     /// created <see cref="TournamentStatus.OpenForRegistration"/> so its
     /// structure is valid to build (structural creation is part of creation) and
     /// it is ready to register teams; the fixture is still generated later by
-    /// the canonical transition to RegistrationClosed.
+    /// the canonical transition to <see cref="TournamentStatus.Ongoing"/>
+    /// (starting the tournament, HU-108).
     /// </summary>
     /// <param name="request">The full wizard payload.</param>
     /// <returns>The created Tournament, including its divisions.</returns>
@@ -62,15 +64,28 @@ public interface ITournamentService
     /// Moves a tournament to a new lifecycle status, enforcing the forward-only
     /// state machine (see <see cref="Domain.Enums.TournamentStatusTransitions"/>).
     /// A no-op when the tournament is already in the target status. Transitioning
-    /// into <see cref="TournamentStatus.RegistrationClosed"/> also auto-generates
-    /// the fixture (matches) for every stage of every division that does not yet
-    /// have matches, making it the canonical fixture trigger.
+    /// into <see cref="TournamentStatus.Ongoing"/> (starting the tournament)
+    /// auto-generates the fixture (matches) for every stage of every division
+    /// that does not yet have matches, making it the canonical fixture trigger
+    /// (HU-108). Closing registration only freezes the roster; it no longer
+    /// generates the fixture.
     /// </summary>
     /// <param name="tournamentId">The id of the tournament to transition.</param>
     /// <param name="newStatus">The target lifecycle status.</param>
     /// <exception cref="System.Collections.Generic.KeyNotFoundException">No tournament exists with the given id.</exception>
     /// <exception cref="System.InvalidOperationException">The requested transition is not allowed by the state machine.</exception>
     Task ChangeStatusAsync(Guid tournamentId, TournamentStatus newStatus);
+
+    /// <summary>
+    /// HU-109: reports whether a tournament can be COMPLETED once started, and
+    /// lists the blocking issues when it cannot. This is the same guard the
+    /// transition to <see cref="TournamentStatus.Ongoing"/> enforces, exposed as
+    /// a read-only query so the panel can preview the issues before starting.
+    /// </summary>
+    /// <param name="tournamentId">The id of the tournament to evaluate.</param>
+    /// <returns>The completability report (CanStart + Issues).</returns>
+    /// <exception cref="System.Collections.Generic.KeyNotFoundException">No tournament exists with the given id.</exception>
+    Task<TournamentCompletabilityResponse> GetCompletabilityAsync(Guid tournamentId);
 
     /// <summary>
     /// Deletes a Tournament asynchronously.

@@ -1,6 +1,5 @@
 import {
   Box,
-  Chip,
   Divider,
   FormControlLabel,
   MenuItem,
@@ -9,34 +8,23 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { GUID } from '@/modules/core/types/types';
-import { ITeamResponse } from '@/modules/team/type/team.d';
 import { CrossCupConfig, PlayoffMappingConfig, ROUND_ROBIN_LEGS_OPTIONS } from '../types';
 import CupsEditor from './CupsEditor';
 import PlayoffRangesEditor from './PlayoffRangesEditor';
 
 interface CopaCruzadaStepProps {
-  teams: ITeamResponse[];
   value: CrossCupConfig;
   onChange: (value: CrossCupConfig) => void;
 }
 
 /**
- * The optional cup that draws teams from every zone at once. Structurally
- * identical to a zone (name, teams, group stage, playoff cups) — its only
- * special behavior is that it is marked as a cross-division cup, so a
- * team can be here AND in its regular zone at the same time.
+ * The optional cup that spans every zone at once. Structurally identical to
+ * a zone (name, group stage, playoff cups) — its only special behavior is
+ * that it is marked as a cross-division cup, so a team can eventually be
+ * here AND in its regular zone at the same time. HU-106: no teams are
+ * selected here; the wizard defines structure only.
  */
-export default function CopaCruzadaStep({ teams, value, onChange }: CopaCruzadaStepProps) {
-  const toggleTeam = (teamId: GUID) => {
-    onChange({
-      ...value,
-      teamIds: value.teamIds.includes(teamId)
-        ? value.teamIds.filter(id => id !== teamId)
-        : [...value.teamIds, teamId],
-    });
-  };
-
+export default function CopaCruzadaStep({ value, onChange }: CopaCruzadaStepProps) {
   return (
     <Stack spacing={2}>
       <FormControlLabel
@@ -67,48 +55,6 @@ export default function CopaCruzadaStep({ teams, value, onChange }: CopaCruzadaS
             fullWidth
             sx={{ mb: 2 }}
           />
-
-          <FormControlLabel
-            control={
-              <Switch
-                checked={value.includeAllTeams}
-                onChange={e => onChange({ ...value, includeAllTeams: e.target.checked })}
-              />
-            }
-            label="Incluir todos los equipos inscriptos"
-          />
-
-          {!value.includeAllTeams && (
-            <>
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "text.secondary",
-                  display: "block",
-                  mt: 1
-                }}>
-                Equipos de la copa ({value.teamIds.length})
-              </Typography>
-              <Stack
-                direction="row"
-                sx={{
-                  flexWrap: "wrap",
-                  gap: 1,
-                  mt: 0.5,
-                  mb: 2
-                }}>
-                {teams.map(team => (
-                  <Chip
-                    key={team.id}
-                    label={team.name}
-                    color={value.teamIds.includes(team.id) ? 'primary' : 'default'}
-                    variant={value.teamIds.includes(team.id) ? 'filled' : 'outlined'}
-                    onClick={() => toggleTeam(team.id)}
-                  />
-                ))}
-              </Stack>
-            </>
-          )}
 
           <Stack
             direction="row"
@@ -187,7 +133,7 @@ export default function CopaCruzadaStep({ teams, value, onChange }: CopaCruzadaS
           <PlayoffRangesEditor
             mappings={value.playoffMappings}
             cups={value.cups}
-            teamCount={value.includeAllTeams ? teams.length : value.teamIds.length}
+            teamCount={0}
             onChange={(playoffMappings: PlayoffMappingConfig[]) =>
               onChange({ ...value, playoffMappings })
             }

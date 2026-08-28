@@ -42,7 +42,10 @@ Aplican a TODAS las historias. Si una historia las contradice, ganan estas.
 - **R2 — Todo scopeado a la temporada, se arregla ya.** Se deja de reasignar `Team.TournamentId`; la
   participación equipo–torneo pasa a ser una inscripción por temporada (espejo de
   `PlayerTeamRegistration`). Es Must. Ver HU-98.
-- **R3 — Fixture se genera al pasar a "Inscripción cerrada"** (único disparador). Ver HU-37 / HU-64.
+- **R3 — Fixture se genera al iniciar el torneo, tras asignar equipos.** *(Actualizada por HU-108.)*
+  El disparador **ya no** es "Inscripción cerrada" sino la transición **"En curso"** (posterior a la
+  asignación de inscriptos a divisiones), porque las zonas se pueblan recién en la asignación. Ver
+  HU-108 / HU-64.
 - **R4 — Básquet sin empates.** Todo partido tiene ganador. En fase de grupos el desempate se
   resuelve por tabla (HU-80); en playoff hay prórroga hasta que haya ganador (HU-82). Ver HU-70.
 
@@ -284,11 +287,13 @@ Ciclo: `Programado` (inicial) → `Inscripción abierta` → `Inscripción cerra
 torneo antes de abrir inscripciones.
 - Solo con **Inscripción abierta** se agregan/editan equipos y divisiones (HU-31).
 
-### HU-37 · "Inscripción cerrada" dispara la generación del fixture — `M`
-**Como** owner/admin **quiero** que al pasar a "Inscripción cerrada" se generen los enfrentamientos
-**para** cerrar la inscripción y programar en un solo paso (R3).
-- La transición a "Inscripción cerrada" dispara la generación del fixture (HU-64) de todas las
-  divisiones del torneo.
+### HU-37 · "Inscripción cerrada" habilita la asignación (el fixture se genera al iniciar) — `M`
+> **Supersedida por HU-108.** El fixture ya **no** se genera al cerrar inscripción, porque los
+> equipos se asignan a divisiones *después* del cierre.
+**Como** owner/admin **quiero** que "Inscripción cerrada" **habilite la asignación** de equipos a
+divisiones **para** armar los grupos con el padrón definitivo antes de generar el fixture.
+- La transición a "Inscripción cerrada" **congela el padrón** y habilita el paso de asignación (HU-108).
+- La generación del fixture (HU-64) ocurre al pasar a **"En curso"**, tras la asignación.
 
 ---
 
@@ -311,11 +316,15 @@ configuraciones imposibles.
 - El límite de inscripción debe ser anterior al inicio (ej. una semana antes); mensaje claro si no.
 
 ### HU-41 · Selección de equipos mejorada y scopeada a la temporada — `M`
+> **Supersedida por HU-106/107.** El asistente ya **no** selecciona equipos; la inscripción de
+> equipos se hace con el torneo abierto (HU-107) y la asignación a divisiones tras el cierre (HU-108).
 **Como** owner/admin **quiero** una pantalla de selección clara con los equipos de la temporada
 **para** armar el torneo sin confusión.
 - (D2) Los equipos se listan por temporada/torneo. UX rediseñada: buscar, ver seleccionados, quitar.
 
 ### HU-42 · [BUG] Un equipo asignado a una zona no aparece en otra — `M`
+> **Trasladada a HU-108.** La unicidad de zona ahora se valida en el **paso de asignación** (tras el
+> cierre de inscripción), no en el asistente.
 **Como** owner/admin **quiero** que al asignar un equipo a la Zona A deje de aparecer en la Zona B
 **para** no poder ponerlo en dos zonas.
 - Asignado a Zona A, no aparece disponible en el selector de Zona B (se oculta, no solo un aviso).
@@ -361,10 +370,12 @@ en el mismo torneo **para** respetar la regla del club (no se cruzan).
 - Validación que evita incluir la femenina en el mismo torneo que las masculinas; va en torneo aparte.
 
 ### HU-49 · Paso de revisión antes de crear — `S`
-**Como** owner/admin **quiero** un resumen final antes de confirmar **para** validar zonas, equipos y
-formato.
-- Muestra cantidad de equipos, equipos por zona, formato de grupo, copas y series. Confirmar dispara
-  la creación en una transacción (HU-38).
+> **Ajustada por HU-106.** El resumen ya **no** muestra equipos por zona (no se seleccionan en el
+> asistente); muestra la **estructura**: divisiones, formato de grupo, copas y series.
+**Como** owner/admin **quiero** un resumen final antes de confirmar **para** validar la estructura y
+el formato.
+- Muestra divisiones/zonas, formato de grupo, copas y series. Confirmar dispara la creación en una
+  transacción (HU-38).
 
 ---
 
@@ -817,6 +828,100 @@ experiencia atractiva.
 **Como** usuario **quiero** que el rediseño sea accesible y responsive **para** usarlo en cualquier
 dispositivo.
 - Mobile-first, contraste AA, foco visible por teclado, dark por defecto en todo el sitio.
+
+---
+
+## Épica 22 — Rediseño del flujo de inscripción y armado del torneo
+
+> Decisión del owner (aprobada): el armado del torneo se separa de la inscripción de equipos.
+> Esta épica **supersede parcialmente** a R3, HU-37, HU-41, HU-42 y HU-49 (ver notas en cada una).
+> Nuevo ciclo de vida: **Wizard** (torneo + estructura, sin equipos ni fixture) → **Inscripción**
+> (fase abierta: se agregan/crean equipos) → **Cierre** (habilita asignación) → **Asignación**
+> (repartir inscriptos en divisiones) → **Fixture** (al iniciar el torneo).
+
+### HU-106 · El asistente crea torneo + estructura, sin equipos ni fixture — `M`
+**Como** owner/admin **quiero** que el asistente cree el torneo y su estructura de divisiones/zonas/
+copas **sin** seleccionar equipos ni generar el fixture **para** separar el armado de la inscripción.
+- Se **elimina el paso de selección de equipos** del asistente (supersede HU-41): el wizard ya no
+  lista ni asigna equipos.
+- Las divisiones/zonas/copas se crean **vacías de equipos**; el fixture **no** se genera en la
+  creación (supersede la generación temprana del asistente).
+- El torneo queda en **"Inscripción abierta"** (`OpenForRegistration`), listo para inscribir.
+- El paso de revisión (HU-49) ya **no** muestra equipos por zona: muestra la estructura (divisiones,
+  formato de grupo, copas, series).
+
+### HU-107 · Inscripción de equipos con el torneo abierto (crear nuevo / inscribir existente + copiar plantel) — `M`
+**Como** owner/admin **quiero**, con el torneo en "Inscripción abierta", agregar equipos al torneo
+**para** inscribir a los que se anotaron.
+- **Club nuevo:** si no existe, se crea en el momento, scopeado a este torneo/temporada (D2).
+- **Club existente (otra temporada):** se **inscribe** a este torneo y se le **copia el plantel** como
+  base editable (HU-53). No se **duplica** la identidad del club (HU-99): se crea una nueva inscripción
+  de temporada (`TeamTournamentRegistration`, HU-98).
+- El plantel copiado es **editable** para la nueva temporada: altas de jugadores nuevos, bajas de los
+  que no siguen. La ficha médica no se hereda (HU-59).
+- Un admin/owner puede **mover un jugador de un club a otro** (antes del inicio o a mitad de
+  temporada); el cambio afecta **solo la temporada actual** (`PlayerTeamRegistration`, HU-98), nunca
+  las anteriores.
+- Solo se inscribe/edita mientras el torneo está en "Inscripción abierta" (HU-31).
+- El equipo queda **inscripto al torneo, todavía sin división** asignada.
+
+### HU-108 · Asignar inscriptos a divisiones y generar el fixture al iniciar — `M`
+**Como** owner/admin **quiero**, tras cerrar la inscripción, asignar los equipos inscriptos a
+divisiones/zonas y **recién ahí** generar el fixture **para** armar los grupos con el padrón
+definitivo.
+- El **paso de asignación se habilita** cuando el torneo pasa a "Inscripción cerrada"
+  (`RegistrationClosed`).
+- Se reparten los equipos **inscriptos** en divisiones/zonas; un equipo va a **una sola** zona
+  (supersede HU-42: la unicidad de zona ahora se valida en la asignación, no en el wizard).
+- El fixture **ya no** se genera al cerrar inscripción (supersede R3 / HU-37): se genera al **iniciar
+  el torneo** tras la asignación (nueva transición `RegistrationClosed → En curso`).
+- Reusa la asignación equipo→fase existente y la generación **idempotente** del fixture (HU-64).
+
+### HU-109 · Guardas de completitud: no permitir torneos que no se puedan completar — `M`
+**Como** organizador de torneos **quiero** que el sistema impida armar o iniciar un torneo en un
+estado imposible de completar **para** no terminar con grupos vacíos, copas sin equipos o fixtures
+rotos. *(La estructura se configura en el wizard antes de conocer los inscriptos; estas guardas
+cierran esa brecha.)*
+- **Dos momentos de control:**
+  - **Asignación** (`RegistrationClosed`): **validación en vivo** que le muestra al admin exactamente
+    qué falta para poder iniciar.
+  - **Iniciar torneo** (`RegistrationClosed → En curso`, disparador del fixture — HU-108): **bloqueo
+    duro**; no se puede iniciar hasta que todo sea completable.
+- **Reglas (criterio de básquet):**
+  1. Cada división/zona que juega tiene **≥ 2 equipos** asignados (no hay grupo ni bracket con 0-1).
+  2. Todo equipo **inscripto** está asignado a **exactamente una zona regular** (división con
+     `IsCrossDivisionCup=false`): sin huérfanos y no en dos zonas (HU-42). **La copa cruzada NO cuenta
+     como zona**: es una competencia paralela que incluye equipos de todas las zonas, así que un
+     equipo juega su zona **y** la copa cruzada (HU-47) sin violar esta regla.
+  3. **Copa cruzada** (HU-47): cantidad de grupos ≤ equipos; cada grupo **≥ 2**. El playoff soporta
+     **BYE** para no-potencias-de-2 (HU-82).
+  4. **Mapeos de playoff** (HU-45): si un rango arranca más allá de la cantidad de equipos de esa
+     división, se **bloquea** hasta corregir (ajustar el mapeo o asignar más equipos); no se recorta
+     ni se permite una copa vacía.
+  5. Coherencia general de básquet: sin empates (R4); la siembra de playoff exige la fase de grupos
+     completa; la serie final al mejor de N necesita 2 equipos.
+
+### HU-110 · Copa cruzada con múltiples grupos de tamaño variable — `M`
+**Como** organizador **quiero** dividir la copa cruzada en varios grupos (de tamaños distintos) cuyos
+mejores clasifiquen a un único cuadro **para** modelar la Copa Club 12 tal como se juega.
+- La copa cruzada (opcional por edición — HU-47) puede dividir sus equipos en **N grupos** de **tamaño
+  variable**. *Ejemplo real:* 37 equipos → 10 grupos (7 de 4 + 3 de 3), doble rueda por grupo.
+- Clasifican los **primeros K de cada grupo** (configurable; por defecto **1**) a **un único bracket**
+  de la copa, sembrado con **BYE** cuando no son potencia de 2 (HU-82).
+- **Gap actual:** el modelo arma la copa cruzada como un solo grupo. Hay que soportar N grupos que
+  alimenten un cuadro común (candidato: N divisiones cruzadas cuyos clasificados se juntan por HU-45;
+  verificar la generación antes de diseñar).
+- Completitud (HU-109): cada grupo de la copa cruzada **≥ 2**; el bracket necesita **≥ 2** clasificados.
+
+### HU-111 · Calendario: jornadas de zona y copa no se solapan; fechas primero, hora/cancha después — `M`
+**Como** organizador **quiero** que al generar el fixture las jornadas de las zonas y las de la copa
+cruzada **no caigan el mismo día**, y que primero se fijen solo **fechas** **para** poder asignar
+horario y cancha con calma sin choques.
+- La generación del fixture asigna **solo fechas** (jornadas): **sin horario ni cancha**.
+- Las jornadas de **zonas (divisiones)** y de **copa cruzada** del mismo torneo **no se pisan en los
+  mismos días** (un equipo no juega zona y copa el mismo día).
+- Después, el admin asigna **hora + cancha** por partido (edición de fecha/cancha ya existe: HU-66/67).
+- El orden de jornadas queda fijo (HU-67); editar la fecha de un partido no cambia su jornada (HU-68).
 
 ---
 

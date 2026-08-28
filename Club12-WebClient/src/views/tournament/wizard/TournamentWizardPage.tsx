@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -12,74 +12,43 @@ import {
 } from '@mui/material';
 import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
-import { useTeam } from '@/modules/team/hook/team.hook';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { useStage } from '@/modules/stage/hook/stage.hook';
-import { useMatch } from '@/modules/match/hook/match.hook';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
-import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { createInitialWizardState } from './types';
 import {
   buildWizardTree,
   validateCrossCupStep,
-  validateTeamsStep,
   validateTournamentStep,
   validateZonesStep,
 } from './wizardLogic';
 import { submitWizard } from './submitWizard';
 import TorneoStep from './steps/TorneoStep';
-import EquiposStep from './steps/EquiposStep';
 import DivisionesStep from './steps/DivisionesStep';
 import CopaCruzadaStep from './steps/CopaCruzadaStep';
 import RevisionStep from './steps/RevisionStep';
 
-const STEP_LABELS = ['Torneo', 'Equipos', 'Divisiones', 'Copa cruzada', 'Revisión'];
+// HU-106: the wizard creates the tournament + its division/zone/cup/stage
+// structure only. Teams are inscribed later (registration phase) and
+// assigned to divisions once registration closes — so there is no "Equipos"
+// step here anymore.
+const STEP_LABELS = ['Torneo', 'Divisiones', 'Copa cruzada', 'Revisión'];
 
 export default function TournamentWizardPage() {
   const navigate = useNavigate();
-  const { addTournament, registerTeamsByTournamentId, tournaments, getAllTournamentsByFilter } =
-    useTournament();
-  const { teams, getTeamsByFiltered } = useTeam();
+  const { addTournament } = useTournament();
   const { addDivision } = useDivision();
-  const { addStage, assignTeamsToStage } = useStage();
-  const { generateMatchesAutomatically } = useMatch();
+  const { addStage } = useStage();
 
   const [activeStep, setActiveStep] = useState(0);
   const [state, setState] = useState(createInitialWizardState);
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    void getTeamsByFiltered({ pageSize: FILTER_OPTIONS_PAGE_SIZE });
-    void getAllTournamentsByFilter({ pageSize: FILTER_OPTIONS_PAGE_SIZE });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  /**
-   * Every club team is selectable here, not just ones with no current
-   * tournament: a team's `tournamentId` is reassigned every season (see
-   * `TeamService.RegisterTeamsToTournamentAsync`), so picking a team that
-   * already played a prior/other tournament simply moves it to this one.
-   * `tournamentNameById` lets the step show where a team currently plays
-   * so the admin can make that reassignment knowingly.
-   */
-  const availableTeams = useMemo(() => teams ?? [], [teams]);
-
-  const tournamentNameById = useMemo(
-    () => new Map((tournaments ?? []).map(t => [t.id, t.name])),
-    [tournaments]
-  );
-
-  const selectedTeams = useMemo(
-    () => availableTeams.filter(team => state.selectedTeamIds.includes(team.id)),
-    [availableTeams, state.selectedTeamIds]
-  );
 
   const treeNodes = useMemo(() => buildWizardTree(state), [state]);
 
   const stepErrors = useMemo(
     () => [
       validateTournamentStep(state),
-      validateTeamsStep(state),
       validateZonesStep(state),
       validateCrossCupStep(state),
       [],
@@ -110,11 +79,8 @@ export default function TournamentWizardPage() {
     try {
       const result = await submitWizard(state, {
         addTournament,
-        registerTeams: registerTeamsByTournamentId,
         addDivision,
         addStage,
-        assignTeamsToStage,
-        generateMatches: generateMatchesAutomatically,
       });
 
       if (!result.success) {
@@ -133,7 +99,7 @@ export default function TournamentWizardPage() {
       } else {
         await notifySuccess({
           title: 'Torneo creado',
-          text: 'El torneo y su estructura se crearon correctamente.',
+          text: 'El torneo y su estructura se crearon correctamente. Ahora podés abrir la inscripción de equipos.',
         });
       }
 
@@ -145,16 +111,7 @@ export default function TournamentWizardPage() {
     } finally {
       setSubmitting(false);
     }
-  }, [
-    state,
-    addTournament,
-    registerTeamsByTournamentId,
-    addDivision,
-    addStage,
-    assignTeamsToStage,
-    generateMatchesAutomatically,
-    navigate,
-  ]);
+  }, [state, addTournament, addDivision, addStage, navigate]);
 
   return (
     <Card>
@@ -181,28 +138,18 @@ export default function TournamentWizardPage() {
             />
           )}
           {activeStep === 1 && (
-            <EquiposStep
-              availableTeams={availableTeams}
-              tournamentNameById={tournamentNameById}
-              selectedTeamIds={state.selectedTeamIds}
-              onChange={selectedTeamIds => setState(prev => ({ ...prev, selectedTeamIds }))}
-            />
-          )}
-          {activeStep === 2 && (
             <DivisionesStep
-              teams={selectedTeams}
               zones={state.zones}
               onChange={zones => setState(prev => ({ ...prev, zones }))}
             />
           )}
-          {activeStep === 3 && (
+          {activeStep === 2 && (
             <CopaCruzadaStep
-              teams={selectedTeams}
               value={state.crossCup}
               onChange={crossCup => setState(prev => ({ ...prev, crossCup }))}
             />
           )}
-          {activeStep === 4 && <RevisionStep nodes={treeNodes} />}
+          {activeStep === 3 && <RevisionStep nodes={treeNodes} />}
         </Box>
 
         <Box
@@ -224,7 +171,7 @@ export default function TournamentWizardPage() {
               onClick={() => void handleSubmit()}
               disabled={submitting}
             >
-              {submitting ? 'Creando...' : 'Crear torneo completo'}
+              {submitting ? 'Creando...' : 'Crear torneo'}
             </Button>
           )}
         </Box>

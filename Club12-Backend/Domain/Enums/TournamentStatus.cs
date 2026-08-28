@@ -12,8 +12,10 @@ public enum TournamentStatus
     OpenForRegistration,
     /// <summary>
     /// Registration has closed. Structural changes (divisions, stages, team
-    /// registrations) are frozen and the fixture has been generated. The
-    /// tournament is waiting to start.
+    /// registrations) are frozen: the roster is fixed and teams are assigned to
+    /// divisions. The fixture is NOT generated yet — it is generated when the
+    /// tournament starts (transition to <see cref="Ongoing"/>). The tournament
+    /// is waiting to start.
     /// </summary>
     RegistrationClosed,
     /// <summary>

@@ -93,6 +93,18 @@ public static class ErrorMessages
                 "(HU-48): the feminine competition is a separate tournament and cannot be mixed with the " +
                 "masculine one. Create the division under a tournament of the same category.";
         }
+
+        public static string NotCompletable(string issueSummaries)
+        {
+            return "Cannot start the tournament because it is not completable in its current state (HU-109): " +
+                $"{issueSummaries}. Resolve every issue before starting.";
+        }
+
+        public static string UnenrollNotAllowed(Domain.Enums.TournamentStatus status)
+        {
+            return "Teams can only be removed while the tournament is OpenForRegistration or " +
+                $"RegistrationClosed; this tournament is '{status}'.";
+        }
     }
 
     public static class Team
@@ -105,6 +117,16 @@ public static class ErrorMessages
         public static string NotInTournament(System.Guid teamId)
         {
             return $"Team '{teamId}' is not currently registered to any tournament, so players cannot be registered to it.";
+        }
+
+        public static string AlreadyEnrolled(System.Guid teamId, System.Guid tournamentId)
+        {
+            return $"Team '{teamId}' is already enrolled in tournament '{tournamentId}'. A team can be enrolled only once per tournament.";
+        }
+
+        public static string NotEnrolled(System.Guid teamId, System.Guid tournamentId)
+        {
+            return $"Team '{teamId}' is not enrolled in tournament '{tournamentId}'.";
         }
     }
 

@@ -1,4 +1,3 @@
-import { GUID } from '@/modules/core/types/types';
 import { StageType } from '@/modules/stage/type/stage';
 import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
 
@@ -69,15 +68,16 @@ export interface PlayoffMappingConfig {
 }
 
 /**
- * One admin-named zone (division) of the tournament: a subset of the
- * registered teams, an optional group stage, zero or more parallel playoff
- * cups, its own points-per-win/loss (HU-79), and the position-range →
- * playoff mappings that seed those cups (HU-45).
+ * One admin-named zone (division) of the tournament: an optional group
+ * stage, zero or more parallel playoff cups, its own points-per-win/loss
+ * (HU-79), and the position-range → playoff mappings that seed those cups
+ * (HU-45). The wizard defines STRUCTURE ONLY (HU-106): teams are added
+ * later, during the registration phase, and assigned to divisions once
+ * registration closes (HU-107/108).
  */
 export interface ZoneConfig {
   id: string;
   name: string;
-  teamIds: GUID[];
   hasGroupStage: boolean;
   roundRobinLegs: number;
   cups: CupConfig[];
@@ -87,15 +87,15 @@ export interface ZoneConfig {
 }
 
 /**
- * The optional cup that draws teams from every zone at once (e.g. an
- * admin-named "Copa Club12"). Structurally identical to a zone, just
- * exempt from the "one team, one zone" rule.
+ * The optional cup that spans every zone at once (e.g. an admin-named
+ * "Copa Club12"). Structurally identical to a zone; it is flagged as a
+ * cross-division cup so it is exempt from the "one team, one zone" rule
+ * when teams are eventually assigned (HU-107/108). The wizard defines its
+ * STRUCTURE ONLY (HU-106) — no teams are selected here.
  */
 export interface CrossCupConfig {
   enabled: boolean;
   name: string;
-  includeAllTeams: boolean;
-  teamIds: GUID[];
   hasGroupStage: boolean;
   roundRobinLegs: number;
   cups: CupConfig[];
@@ -120,7 +120,6 @@ export interface TournamentStepState {
 
 export interface WizardState {
   tournament: TournamentStepState;
-  selectedTeamIds: GUID[];
   zones: ZoneConfig[];
   crossCup: CrossCupConfig;
 }
@@ -155,7 +154,6 @@ export const createEmptyPlayoffMapping = (): PlayoffMappingConfig => ({
 export const createEmptyZone = (): ZoneConfig => ({
   id: nextLocalId(),
   name: '',
-  teamIds: [],
   hasGroupStage: true,
   roundRobinLegs: 1,
   cups: [],
@@ -172,13 +170,10 @@ export const createInitialWizardState = (): WizardState => ({
     teamRegistrationDeadline: '',
     category: TournamentCategory.Masculine,
   },
-  selectedTeamIds: [],
   zones: [],
   crossCup: {
     enabled: false,
     name: '',
-    includeAllTeams: true,
-    teamIds: [],
     hasGroupStage: true,
     roundRobinLegs: 1,
     cups: [],

@@ -69,6 +69,108 @@ export interface ITournamentContextProps {
     id: GUID,
     teamsId: GUID[]
   ): Promise<boolean | void>;
+
+  /**
+   * Enrolls a single team into a tournament during its registration phase
+   * (HU-107). Either an existing team is enrolled (existingTeamId) or a brand
+   * new team is created and enrolled in one step (newTeamName) — exactly one of
+   * the two. When an existing team is enrolled, its roster can be seeded from a
+   * previous season by passing copyRosterFromTournamentId.
+   * @param id The tournament identifier (GUID) to enroll the team into.
+   * @param request The enrollment payload (existing team or new team + optional roster copy).
+   * @returns A promise resolving to `true` on success, otherwise void.
+   */
+  enrollTeam(
+    id: GUID,
+    request: IEnrollTeamRequest
+  ): Promise<boolean | void>;
+
+  /**
+   * Removes a team's enrollment from a tournament during its registration
+   * phase (HU-108). Hits `DELETE /api/tournaments/{id}/teams/{teamId}`, which
+   * the backend rejects with 409 once the tournament has started.
+   * @param id The tournament identifier (GUID) to unenroll the team from.
+   * @param teamId The team identifier (GUID) to unenroll.
+   * @returns A promise resolving to `true` on success, otherwise void.
+   */
+  unenrollTeam(id: GUID, teamId: GUID): Promise<boolean | void>;
+
+  /**
+   * Fetches the live completability report for a tournament (HU-109) from
+   * `GET /api/tournaments/{id}/completability`. Reports whether the tournament
+   * can start and, if not, the list of blocking issues.
+   * @param id The tournament identifier (GUID).
+   * @returns A promise resolving to the completability report, or void on failure.
+   */
+  getCompletability(id: GUID): Promise<ITournamentCompletability | void>;
+}
+
+/**
+ * A single blocking issue preventing a tournament from starting (HU-109), as
+ * returned by the completability endpoint. `code` is a stable machine-readable
+ * identifier; the optional fields carry the context each code needs to build a
+ * human-readable message.
+ * @interface ICompletabilityIssue
+ */
+export interface ICompletabilityIssue {
+  /**
+   * Stable issue code (e.g. `ZoneTooFewTeams`, `TeamNotAssigned`,
+   * `TeamInMultipleZones`, `PlayoffRangeExceedsTeams`,
+   * `CrossCupGroupTooFewTeams`).
+   * @type {string}
+   */
+  code: string;
+
+  /** Name of the division/zone the issue refers to, when applicable. */
+  divisionName?: string;
+
+  /** Name of the team the issue refers to, when applicable. */
+  teamName?: string;
+
+  /** First standings position of the offending playoff range, when applicable. */
+  fromPosition?: number;
+
+  /** Number of teams assigned to the offending zone/group, when applicable. */
+  assignedTeams?: number;
+}
+
+/**
+ * The live completability report for a tournament (HU-109).
+ * @interface ITournamentCompletability
+ */
+export interface ITournamentCompletability {
+  /** Whether the tournament can transition to Ongoing (start). */
+  canStart: boolean;
+
+  /** The blocking issues; empty when `canStart` is true. */
+  issues: ICompletabilityIssue[];
+}
+
+/**
+ * The request body structure for enrolling a team into a tournament (HU-107).
+ * Exactly one of `existingTeamId` / `newTeamName` must be provided.
+ * @interface IEnrollTeamRequest
+ */
+export interface IEnrollTeamRequest {
+  /**
+   * The identifier of an already-existing team (club) to enroll.
+   * @type {GUID}
+   */
+  existingTeamId?: GUID;
+
+  /**
+   * The name of a brand-new team to create and enroll in one step.
+   * @type {string}
+   */
+  newTeamName?: string;
+
+  /**
+   * When enrolling an existing team, the tournament (season) whose roster
+   * should be copied as the starting plantel for this enrollment. Typically the
+   * team's most recent season.
+   * @type {GUID}
+   */
+  copyRosterFromTournamentId?: GUID;
 }
 
 /**

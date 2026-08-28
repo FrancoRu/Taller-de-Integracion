@@ -12,10 +12,11 @@ namespace API.Tests;
 
 /// <summary>
 /// Service-level tests for the tournament state machine (HU-35) and the
-/// RegistrationClosed fixture trigger (HU-37 / HU-64):
+/// fixture trigger (HU-37 / HU-64 / HU-108):
 /// <see cref="ITournamentService.ChangeStatusAsync"/> enforces forward-only
-/// transitions and, on entering RegistrationClosed, auto-generates the
-/// fixture for every stage of every division exactly once.
+/// transitions and, on the tournament STARTING (transition into Ongoing),
+/// auto-generates the fixture for every stage of every division exactly once.
+/// Closing registration (RegistrationClosed) no longer generates the fixture.
 /// </summary>
 public class TournamentServiceStateMachineTests : IClassFixture<CustomWebApplicationFactory>
 {
@@ -99,8 +100,11 @@ public class TournamentServiceStateMachineTests : IClassFixture<CustomWebApplica
     }
 
     [Fact]
-    public async Task ChangeStatusAsync_IntoRegistrationClosed_AutoGeneratesFixtureForEveryStage()
+    public async Task ChangeStatusAsync_IntoRegistrationClosed_DoesNotGenerateAnyMatches()
     {
+        // HU-108: closing registration only freezes the roster (teams are later
+        // assigned to divisions). The fixture is NOT generated here anymore — it
+        // is generated when the tournament starts (Ongoing).
         using IServiceScope scope = _factory.Services.CreateScope();
         ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
         ITournamentService tournamentService = scope.ServiceProvider.GetRequiredService<ITournamentService>();
@@ -114,6 +118,30 @@ public class TournamentServiceStateMachineTests : IClassFixture<CustomWebApplica
 
         await tournamentService.ChangeStatusAsync(tournament.Id, TournamentStatus.RegistrationClosed);
 
+        Assert.Equal(0, await db.Matches.CountAsync(m => m.StageId == stage.Id));
+
+        Tournament reloaded = await db.Tournaments.AsNoTracking().SingleAsync(t => t.Id == tournament.Id);
+        Assert.Equal(TournamentStatus.RegistrationClosed, reloaded.Status);
+    }
+
+    [Fact]
+    public async Task ChangeStatusAsync_IntoOngoing_AutoGeneratesFixtureForEveryStage()
+    {
+        // HU-108: starting the tournament (RegistrationClosed -> Ongoing) is the
+        // canonical fixture trigger.
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        ITournamentService tournamentService = scope.ServiceProvider.GetRequiredService<ITournamentService>();
+
+        Tournament tournament = await SeedTournamentAsync(db, TournamentStatus.RegistrationClosed);
+        Division division = await SeedDivisionAsync(db, tournament);
+        Stage stage = await SeedGroupStageAsync(db, division);
+        await SeedAndAssignTeamsAsync(db, tournament, stage, teamCount: 4);
+
+        Assert.Equal(0, await db.Matches.CountAsync(m => m.StageId == stage.Id));
+
+        await tournamentService.ChangeStatusAsync(tournament.Id, TournamentStatus.Ongoing);
+
         // 4 teams, single round-robin => 4*3/2 = 6 matches, all seeded with a
         // real home/visitor pairing.
         List<Match> matches = await db.Matches.AsNoTracking().Where(m => m.StageId == stage.Id).ToListAsync();
@@ -125,28 +153,28 @@ public class TournamentServiceStateMachineTests : IClassFixture<CustomWebApplica
         });
 
         Tournament reloaded = await db.Tournaments.AsNoTracking().SingleAsync(t => t.Id == tournament.Id);
-        Assert.Equal(TournamentStatus.RegistrationClosed, reloaded.Status);
+        Assert.Equal(TournamentStatus.Ongoing, reloaded.Status);
     }
 
     [Fact]
-    public async Task ChangeStatusAsync_IntoRegistrationClosed_DoesNotRegenerateStageThatAlreadyHasMatches()
+    public async Task ChangeStatusAsync_IntoOngoing_DoesNotRegenerateStageThatAlreadyHasMatches()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
         ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
         ITournamentService tournamentService = scope.ServiceProvider.GetRequiredService<ITournamentService>();
         IMatchService matchService = scope.ServiceProvider.GetRequiredService<IMatchService>();
 
-        Tournament tournament = await SeedTournamentAsync(db, TournamentStatus.OpenForRegistration);
+        Tournament tournament = await SeedTournamentAsync(db, TournamentStatus.RegistrationClosed);
         Division division = await SeedDivisionAsync(db, tournament);
         Stage stage = await SeedGroupStageAsync(db, division);
         await SeedAndAssignTeamsAsync(db, tournament, stage, teamCount: 4);
 
         // Pre-generate the fixture for this stage (mirrors the still-supported
-        // manual generation path). The transition must NOT double it.
+        // manual generation path). Starting the tournament must NOT double it.
         List<Match> preGenerated = await matchService.CreateAutomatedMatchesAsync(stage.Id);
         Assert.Equal(6, preGenerated.Count);
 
-        await tournamentService.ChangeStatusAsync(tournament.Id, TournamentStatus.RegistrationClosed);
+        await tournamentService.ChangeStatusAsync(tournament.Id, TournamentStatus.Ongoing);
 
         Assert.Equal(6, await db.Matches.CountAsync(m => m.StageId == stage.Id));
     }
