@@ -211,22 +211,47 @@ public class MatchController(IMatchService matchService, IStageTeamMatchService 
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> UpdateMatchScore(Guid id, UpdateMatchScoreRequest scoreRequest)
     {
-        Match? existingMatch = await matchService.GetMatchByIdAsync(id);
-        if (existingMatch is null)
+        Match? updatedMatch = await matchService.LoadMatchResultAsync(id, scoreRequest.HomeScore, scoreRequest.VisitorScore);
+        if (updatedMatch is null)
         {
             return this.NotFoundProblem(nameof(Match), id);
         }
 
-        mapper.Map(scoreRequest, existingMatch);
-
-        await matchService.UpdateMatchAsync(existingMatch);
-
-        if (existingMatch.SeriesId.HasValue)
+        if (updatedMatch.SeriesId.HasValue)
         {
-            await matchSeriesService.RecalculateSeriesWinnerAsync(existingMatch.SeriesId.Value);
+            await matchSeriesService.RecalculateSeriesWinnerAsync(updatedMatch.SeriesId.Value);
         }
 
-        DetailedMatchResponse detailedMatch = mapper.Map<DetailedMatchResponse>(existingMatch);
+        DetailedMatchResponse detailedMatch = mapper.Map<DetailedMatchResponse>(updatedMatch);
+        return Ok(detailedMatch);
+    }
+
+    /// <summary>
+    /// Marks a match as a walkover (HU-73), awarding the regulation default
+    /// result to the present team.
+    /// </summary>
+    /// <param name="id">The id of the match to mark as a walkover.</param>
+    /// <param name="walkOverRequest">The request identifying the present team.</param>
+    /// <returns>The updated match response.</returns>
+    [HttpPut("{id:guid}/walkover")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedMatchResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult> LoadWalkOver(Guid id, LoadWalkOverRequest walkOverRequest)
+    {
+        Match? updatedMatch = await matchService.LoadWalkOverAsync(id, walkOverRequest.PresentTeamId, walkOverRequest.PresentTeamScore);
+        if (updatedMatch is null)
+        {
+            return this.NotFoundProblem(nameof(Match), id);
+        }
+
+        if (updatedMatch.SeriesId.HasValue)
+        {
+            await matchSeriesService.RecalculateSeriesWinnerAsync(updatedMatch.SeriesId.Value);
+        }
+
+        DetailedMatchResponse detailedMatch = mapper.Map<DetailedMatchResponse>(updatedMatch);
         return Ok(detailedMatch);
     }
 }

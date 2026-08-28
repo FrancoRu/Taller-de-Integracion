@@ -64,6 +64,15 @@ public class Match : EntityBase
     public required bool IsFinished { get; set; }
 
     /// <summary>
+    /// The match's result lifecycle state (HU-69): Scheduled (no result yet),
+    /// Played (decisive result loaded), Suspended, or WalkOver. Kept alongside
+    /// <see cref="IsFinished"/> for backward compatibility: a match is finished
+    /// when its status is <see cref="MatchStatus.Played"/> or
+    /// <see cref="MatchStatus.WalkOver"/>.
+    /// </summary>
+    public MatchStatus Status { get; set; } = MatchStatus.Scheduled;
+
+    /// <summary>
     /// Represents the winning team in the match.
     /// </summary>
     public Team? WinningTeam { get; set; }

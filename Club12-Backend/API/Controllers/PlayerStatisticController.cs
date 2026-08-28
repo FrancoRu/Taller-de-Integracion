@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace API.Controllers;
@@ -47,6 +48,29 @@ public class PlayerStatisticController(IPlayerStatisticService playerStatisticSe
         PlayerStatisticResponse statisticResponse = mapper.Map<PlayerStatisticResponse>(createdStatistic);
 
         return new ObjectResult(statisticResponse) { StatusCode = StatusCodes.Status201Created };
+    }
+
+    /// <summary>
+    /// Loads a whole team's scoring sheet (planilla) for a match in one
+    /// coherent operation (HU-71). The listed players' points must add up to
+    /// the team's final score and every player must be on the team's roster
+    /// for that season and eligible; otherwise nothing is saved and the error
+    /// explains the difference.
+    /// </summary>
+    /// <param name="request">The match, team, and per-player points.</param>
+    /// <returns>The persisted Points statistics for the team in this match.</returns>
+    [HttpPost("match-sheet")]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(PaginatedResponse<PlayerStatisticResponse>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult> LoadMatchSheet(LoadMatchSheetRequest request)
+    {
+        List<PlayerStatistic> created = await playerStatisticService.LoadTeamMatchSheetAsync(request);
+
+        List<PlayerStatisticResponse> response = mapper.Map<List<PlayerStatisticResponse>>(created);
+
+        return new ObjectResult(response) { StatusCode = StatusCodes.Status201Created };
     }
 
     /// <summary>

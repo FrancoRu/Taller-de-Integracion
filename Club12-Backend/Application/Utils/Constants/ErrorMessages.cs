@@ -172,9 +172,50 @@ public static class ErrorMessages
         public const string EndDateBeforeStartDate = "End date must be after start date.";
         public const string StageTypeNotSupportedForAutomatedCreation = "Stage type not supported for automated match creation.";
 
+        // HU-70: basketball has no draws — a played match must have a winner.
+        public const string GroupStageTieNotAllowed =
+            "A group-stage match cannot end tied; basketball has no draws. Load a decisive score with a winner.";
+        public const string PlayoffTieNotAllowed =
+            "A playoff match cannot end tied; it must be resolved by overtime. Load the final decisive score with a winner.";
+
+        // HU-73: walkover.
+        public const string WalkOverTeamNotInMatch =
+            "The present team must be either the home or the visitor team of this match.";
+
         public static string TeamsNotDistributableAcrossGroups(int registeredTeams, int totalGroups)
         {
             return $"Registered teams ({registeredTeams}) cannot be distributed evenly across {totalGroups} groups.";
+        }
+    }
+
+    public static class MatchSheet
+    {
+        // HU-71: the sum of a team's players' points must equal the team's final score.
+        public static string ScoreMismatch(int teamScore, int playersSum)
+        {
+            int difference = teamScore - playersSum;
+            return $"The players' points do not add up to the team's score: the team scored {teamScore} " +
+                $"but the loaded players sum {playersSum} (difference of {difference}). Fix the sheet before saving.";
+        }
+
+        public static string MatchNotFinished(System.Guid matchId)
+        {
+            return $"Cannot load the match sheet for match {matchId} because it has no final score loaded yet.";
+        }
+
+        public static string TeamNotInMatch(System.Guid teamId)
+        {
+            return $"Team {teamId} did not play in this match, so its players' points cannot be loaded here.";
+        }
+
+        public static string PlayerNotOnRoster(System.Guid playerId)
+        {
+            return $"Player {playerId} is not on this team's roster for this season, so their points cannot be loaded.";
+        }
+
+        public static string PlayerNotEligible(System.Guid playerId)
+        {
+            return $"Player {playerId} is not eligible (missing approved registration or under an active sanction).";
         }
     }
 

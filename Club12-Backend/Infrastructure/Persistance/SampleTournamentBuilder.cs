@@ -298,6 +298,19 @@ public static class SampleTournamentBuilder
                 Match = match,
                 Type = StatisticType.Assists,
             });
+            // HU-72: mirror the points into PlayerStatistic (Points) so the
+            // goleadores ranking — which now reads PlayerStatistic — reflects
+            // the sample data.
+            match.PlayerStatistics.Add(new PlayerStatistic
+            {
+                CreatedBy = CreatedBy,
+                Value = homeScore,
+                PlayerId = Guid.Empty,
+                Player = homeScorer,
+                MatchId = Guid.Empty,
+                Match = match,
+                Type = StatisticType.Points,
+            });
 
             if (visitorScore > 0)
             {
@@ -310,6 +323,16 @@ public static class SampleTournamentBuilder
                     Points = visitorScore,
                     MatchId = Guid.Empty,
                     Match = match,
+                });
+                match.PlayerStatistics.Add(new PlayerStatistic
+                {
+                    CreatedBy = CreatedBy,
+                    Value = visitorScore,
+                    PlayerId = Guid.Empty,
+                    Player = visitorScorer,
+                    MatchId = Guid.Empty,
+                    Match = match,
+                    Type = StatisticType.Points,
                 });
             }
 
@@ -517,6 +540,17 @@ public static class SampleTournamentBuilder
             Match = match,
             Type = StatisticType.Assists,
         });
+        // HU-72: mirror the points into PlayerStatistic (Points) for the ranking.
+        match.PlayerStatistics.Add(new PlayerStatistic
+        {
+            CreatedBy = CreatedBy,
+            Value = winner == home ? homeScore : visitorScore,
+            PlayerId = Guid.Empty,
+            Player = winnerScorer,
+            MatchId = Guid.Empty,
+            Match = match,
+            Type = StatisticType.Points,
+        });
 
         int loserScore = loser == home ? homeScore : visitorScore;
         if (loserScore > 0)
@@ -530,6 +564,16 @@ public static class SampleTournamentBuilder
                 Points = loserScore,
                 MatchId = Guid.Empty,
                 Match = match,
+            });
+            match.PlayerStatistics.Add(new PlayerStatistic
+            {
+                CreatedBy = CreatedBy,
+                Value = loserScore,
+                PlayerId = Guid.Empty,
+                Player = loserScorer,
+                MatchId = Guid.Empty,
+                Match = match,
+                Type = StatisticType.Points,
             });
         }
 

@@ -47,6 +47,12 @@ public class DetailedMatchResponse : BaseEntityResponse
     public required bool IsFinished { get; set; }
 
     /// <summary>
+    /// The result lifecycle state (HU-69): Scheduled, Played, Suspended, or
+    /// WalkOver. Lets the UI distinguish a walkover from a normal result.
+    /// </summary>
+    public string? Status { get; set; }
+
+    /// <summary>
     /// The name of the winning team, if available.
     /// </summary>
     public string? WinningTeamName { get; set; }

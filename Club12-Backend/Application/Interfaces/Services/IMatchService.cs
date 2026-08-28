@@ -30,6 +30,19 @@ public interface IMatchService
 
     Task UpdateMatchAsync(Match matchEntity);
 
+    /// <summary>
+    /// Loads a decisive final result for a match (HU-69/HU-70), rejecting a
+    /// tied score. Returns the updated match, or null if it does not exist.
+    /// </summary>
+    Task<Match?> LoadMatchResultAsync(Guid matchId, int homeScore, int visitorScore);
+
+    /// <summary>
+    /// Applies a walkover result to a match (HU-73), awarding the regulation
+    /// default to the present team. Returns the updated match, or null if it
+    /// does not exist.
+    /// </summary>
+    Task<Match?> LoadWalkOverAsync(Guid matchId, Guid presentTeamId, int? presentTeamScore);
+
     Task DeleteMatchAsync(Guid id);
 
     Task<PaginatedResponse<Match>> GetAllMatchesAsync(GetMatchesFilteredRequest filter);

@@ -456,19 +456,26 @@ public class ScorerRepositoryTests : IClassFixture<CustomWebApplicationFactory>
         return (player, match, team);
     }
 
-    private static async Task<Scorer> AddScorerAsync(ApplicationDBContext db, Guid playerId, Guid matchId, int points)
+    /// <summary>
+    /// HU-72: the goleadores ranking now aggregates from PlayerStatistic
+    /// (Type == Points) — the same table the per-match loading path writes —
+    /// instead of the retired Scorer read-model. These characterization tests
+    /// therefore seed the player's points as a Points PlayerStatistic.
+    /// </summary>
+    private static async Task<PlayerStatistic> AddScorerAsync(ApplicationDBContext db, Guid playerId, Guid matchId, int points)
     {
-        Scorer scorer = new()
+        PlayerStatistic statistic = new()
         {
             PlayerId = playerId,
             MatchId = matchId,
-            Points = points,
+            Value = points,
+            Type = StatisticType.Points,
             CreatedBy = "test",
         };
 
-        db.Scorers.Add(scorer);
+        db.PlayersStatistics.Add(statistic);
         await db.SaveChangesAsync();
 
-        return scorer;
+        return statistic;
     }
 }

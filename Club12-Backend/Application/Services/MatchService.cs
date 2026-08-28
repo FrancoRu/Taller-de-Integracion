@@ -92,6 +92,96 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
         await _matchRepository.UpdateAsync(matchEntity);
     }
 
+    /// <summary>
+    /// Loads a decisive final result for a match (HU-69/HU-70). Basketball has
+    /// no draws, so an equal score is rejected with a stage-appropriate message
+    /// (group stage vs. playoff overtime) instead of silently picking a winner.
+    /// On success the match becomes <see cref="MatchStatus.Played"/>, IsFinished
+    /// is set, and the winning team is derived from the higher score.
+    /// </summary>
+    /// <param name="matchId">The id of the match to load.</param>
+    /// <param name="homeScore">The home team's final score.</param>
+    /// <param name="visitorScore">The visitor team's final score.</param>
+    /// <returns>The updated match, or null if no match with that id exists.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the score is tied.</exception>
+    public async Task<Match?> LoadMatchResultAsync(Guid matchId, int homeScore, int visitorScore)
+    {
+        Match? match = await _matchRepository.GetByIdAsync(matchId,
+            includes: [m => m.HomeTeam!, m => m.VisitorTeam!, m => m.Stage]);
+
+        if (match is null)
+        {
+            return null;
+        }
+
+        if (homeScore == visitorScore)
+        {
+            throw new InvalidOperationException(
+                match.Stage.StageType == StageType.Group
+                    ? ErrorMessages.Match.GroupStageTieNotAllowed
+                    : ErrorMessages.Match.PlayoffTieNotAllowed);
+        }
+
+        match.HomeScore = homeScore;
+        match.VisitorScore = visitorScore;
+
+        bool homeWon = homeScore > visitorScore;
+        match.WinningTeam = homeWon ? match.HomeTeam : match.VisitorTeam;
+        match.WinningTeamId = homeWon ? match.HomeTeamId : match.VisitorTeamId;
+
+        match.IsFinished = true;
+        match.Status = MatchStatus.Played;
+
+        await _matchRepository.UpdateAsync(match);
+        return match;
+    }
+
+    /// <summary>
+    /// Marks a match as a walkover (HU-73): the present team is awarded the
+    /// regulation default result (<see cref="MatchDefaults.WalkOverWinnerScore"/>-0,
+    /// or a caller-provided winner score) and the absent team gets zero. The
+    /// match becomes <see cref="MatchStatus.WalkOver"/> so it stays
+    /// distinguishable from a normally played result while still counting in
+    /// standings and statistics like any finished, decisive match.
+    /// </summary>
+    /// <param name="matchId">The id of the match.</param>
+    /// <param name="presentTeamId">The team that showed up (the winner by walkover).</param>
+    /// <param name="presentTeamScore">Optional override for the present team's awarded score; defaults to the regulation value.</param>
+    /// <returns>The updated match, or null if no match with that id exists.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the present team is not part of the match.</exception>
+    public async Task<Match?> LoadWalkOverAsync(Guid matchId, Guid presentTeamId, int? presentTeamScore)
+    {
+        Match? match = await _matchRepository.GetByIdAsync(matchId,
+            includes: [m => m.HomeTeam!, m => m.VisitorTeam!, m => m.Stage]);
+
+        if (match is null)
+        {
+            return null;
+        }
+
+        bool presentIsHome = match.HomeTeamId == presentTeamId;
+        bool presentIsVisitor = match.VisitorTeamId == presentTeamId;
+
+        if (!presentIsHome && !presentIsVisitor)
+        {
+            throw new InvalidOperationException(ErrorMessages.Match.WalkOverTeamNotInMatch);
+        }
+
+        int winnerScore = presentTeamScore ?? MatchDefaults.WalkOverWinnerScore;
+
+        match.HomeScore = presentIsHome ? winnerScore : MatchDefaults.WalkOverLoserScore;
+        match.VisitorScore = presentIsHome ? MatchDefaults.WalkOverLoserScore : winnerScore;
+
+        match.WinningTeam = presentIsHome ? match.HomeTeam : match.VisitorTeam;
+        match.WinningTeamId = presentTeamId;
+
+        match.IsFinished = true;
+        match.Status = MatchStatus.WalkOver;
+
+        await _matchRepository.UpdateAsync(match);
+        return match;
+    }
+
     public async Task<PaginatedResponse<Match>> GetAllMatchesAsync(GetMatchesFilteredRequest filter)
     {
         Expression<Func<Match, bool>> expression = QueryableExtensions.ConstructFilterExpression<Match, GetMatchesFilteredRequest>(filter);

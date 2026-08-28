@@ -45,6 +45,12 @@ public class MinimalMatchResponse : BaseEntityResponse
     public required bool IsFinished { get; set; }
 
     /// <summary>
+    /// The result lifecycle state (HU-69): Scheduled, Played, Suspended, or
+    /// WalkOver.
+    /// </summary>
+    public string? Status { get; set; }
+
+    /// <summary>
     /// The type of the match (e.g., regular or playoff).
     /// </summary>
     public required string MatchType { get; set; }
