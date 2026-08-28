@@ -79,7 +79,27 @@ public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionServ
 
     public async Task<PaginatedResponse<PlayerSanction>> GetPlayerSanctionsAsync(GetPlayerSanctionsFilteredRequest filter)
     {
-        Expression<Func<PlayerSanction, bool>> expression = QueryableExtensions.ConstructFilterExpression<PlayerSanction, GetPlayerSanctionsFilteredRequest>(filter);
+        // Description is suppressed from the auto-generated single-field
+        // predicate so the free-text search box can match EITHER the sanction
+        // reason OR the sanctioned player's name (Names + LastName). All
+        // clauses are case-insensitive partial (Contains) matches, mirroring
+        // the auto-generator's own ToLower().Contains() string handling.
+        // Accent-insensitivity is intentionally NOT applied: it would require
+        // a Postgres extension (e.g. unaccent/citext) that is not enabled in
+        // this project, and the SQLite test provider could not translate it.
+        Expression<Func<PlayerSanction, bool>> expression = QueryableExtensions.ConstructFilterExpression<PlayerSanction, GetPlayerSanctionsFilteredRequest>(
+            filter, nameof(GetPlayerSanctionsFilteredRequest.Description));
+
+        if (!string.IsNullOrWhiteSpace(filter.Description))
+        {
+            string searchTerm = filter.Description.ToLower();
+            expression = expression.And(playerSanction =>
+                playerSanction.Description.ToLower().Contains(searchTerm)
+                || playerSanction.Player.FirstName.ToLower().Contains(searchTerm)
+                || (playerSanction.Player.SecondName != null
+                    && playerSanction.Player.SecondName.ToLower().Contains(searchTerm))
+                || playerSanction.Player.LastName.ToLower().Contains(searchTerm));
+        }
 
         if (filter.TournamentId.HasValue)
         {

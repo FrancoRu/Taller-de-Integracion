@@ -162,6 +162,17 @@ public class DivisionController(
 
         PaginatedResponse<DivisionResponse> response = mapper.Map<PaginatedResponse<DivisionResponse>>(paginatedDivisions);
 
+        // Populate each division's standings here too — not just in the
+        // single-division detail endpoint. The divisions table's team counter
+        // reads Positions.Length, so leaving it null (the mapper never sets it,
+        // because Division has no Positions member) made every row show 0
+        // teams even when the division was fully populated for the season.
+        foreach (DivisionResponse divisionResponse in response.Items)
+        {
+            List<Position> positions = await divisionService.GetPositionsByDivisionIdAsync(divisionResponse.Id);
+            divisionResponse.Positions = mapper.Map<List<PositionResponse>>(positions);
+        }
+
         return Ok(response);
     }
 
