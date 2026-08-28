@@ -4,6 +4,9 @@ import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCat
 export const BEST_OF_OPTIONS = [1, 3, 5, 7];
 export const ROUND_ROBIN_LEGS_OPTIONS = [1, 2, 3];
 
+/** Default series format for a playoff round when none is chosen (best-of-3). */
+export const DEFAULT_BEST_OF = 3;
+
 /** A playoff cup needs at least 2 qualifiers (a final), and at most 16 (the deepest bracket the stage types model — Octavos). */
 export const MIN_CUP_QUALIFIERS = 2;
 export const MAX_CUP_QUALIFIERS = 16;
@@ -60,9 +63,37 @@ export interface CupConfig {
   name: string;
   /** How many teams qualify to this cup from the group-stage standings (HU-112, ≥ 2). */
   qualifiers: number;
-  /** Series format for every round of this cup: 1 = single game, 3/5/7 = best-of-N. */
-  bestOf: number;
+  /**
+   * Series format PER derived bracket phase (HU-112): a stage type → best-of
+   * (1 single game, 3/5/7 best-of-N). Phases are derived from `qualifiers`
+   * ({@link qualifiersToStageTypes}); a phase missing here defaults to
+   * {@link DEFAULT_BEST_OF}, so semis can be best-of-3 while the final is
+   * best-of-5.
+   */
+  bestOfByStage: Partial<Record<StageType, number>>;
 }
+
+/** The best-of a cup's derived phase uses, defaulting to {@link DEFAULT_BEST_OF}. */
+export const getStageBestOf = (cup: CupConfig, stageType: StageType): number =>
+  cup.bestOfByStage[stageType] ?? DEFAULT_BEST_OF;
+
+/**
+ * The standings positions that qualify to the cup at `index`, given the cups'
+ * order (HU-112): cups fill top-down, so cup 0 takes 1..q0, cup 1 takes
+ * q0+1..q0+q1, and so on. Cups without a name are skipped (they seed nothing).
+ */
+export const cupPositionRange = (
+  cups: CupConfig[],
+  index: number
+): { from: number; to: number } => {
+  let from = 1;
+  for (let i = 0; i < index; i += 1) {
+    if (cups[i].name.trim().length > 0) {
+      from += cups[i].qualifiers;
+    }
+  }
+  return { from, to: from + cups[index].qualifiers - 1 };
+};
 
 /**
  * One admin-named zone (division) of the tournament: an optional group
@@ -138,9 +169,10 @@ export const nextLocalId = (): string => {
 export const createEmptyCup = (): CupConfig => ({
   id: nextLocalId(),
   name: '',
-  // Default: top 4 qualify (semis + final), best-of-3 — the club's typical cup.
+  // Default: top 4 qualify (semis + final). Each derived phase defaults to
+  // best-of-3 (DEFAULT_BEST_OF) — the club's typical cup.
   qualifiers: 4,
-  bestOf: 3,
+  bestOfByStage: {},
 });
 
 export const createEmptyZone = (): ZoneConfig => ({

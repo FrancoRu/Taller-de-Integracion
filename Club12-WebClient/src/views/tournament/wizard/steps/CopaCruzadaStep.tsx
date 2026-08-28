@@ -147,6 +147,7 @@ export default function CopaCruzadaStep({ value, onChange }: CopaCruzadaStepProp
             cups={value.cups}
             onChange={cups => onChange({ ...value, cups })}
             hideQualifiers
+            derivedQualifiers={value.groupCount * value.qualifiersPerGroup}
           />
         </Box>
       )}

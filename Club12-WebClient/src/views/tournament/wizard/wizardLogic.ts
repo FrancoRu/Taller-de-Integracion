@@ -5,6 +5,7 @@ import {
   MIN_CUP_QUALIFIERS,
   STAGE_TYPE_LABELS,
   WizardState,
+  getStageBestOf,
   qualifiersToStageTypes,
 } from './types';
 
@@ -170,11 +171,14 @@ export interface WizardTreeNode {
  * the cup's own count but the cross cup passes its pooled group total.
  */
 const describeCup = (cup: CupConfig, qualifiers = cup.qualifiers): string => {
-  const rounds = qualifiersToStageTypes(qualifiers)
-    .map(stageType => STAGE_TYPE_LABELS[stageType])
+  const phases = qualifiersToStageTypes(qualifiers)
+    .map(stageType => {
+      const bestOf = getStageBestOf(cup, stageType);
+      const serie = bestOf === 1 ? 'a partido único' : `al mejor de ${bestOf}`;
+      return `${STAGE_TYPE_LABELS[stageType]} ${serie}`;
+    })
     .join(' → ');
-  const serie = cup.bestOf === 1 ? 'partido único' : `mejor de ${cup.bestOf}`;
-  return `${cup.name || '(sin nombre)'} — ${qualifiers} clasifican, ${serie} (${rounds})`;
+  return `${cup.name || '(sin nombre)'} — ${qualifiers} clasifican (${phases})`;
 };
 
 const buildGroupAndCupNodes = (
