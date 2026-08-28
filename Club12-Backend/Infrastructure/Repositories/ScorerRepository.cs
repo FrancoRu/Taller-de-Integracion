@@ -87,6 +87,27 @@ public class ScorerRepository(ApplicationDBContext context)
             scoreStatsQuery = scoreStatsQuery.Where(s => s.MatchId == filter.MatchId.Value);
         }
 
+        // HU-85 season / all-time scopes. A "season" is the calendar year of a
+        // tournament's StartDate (the simplest consistent value, no schema
+        // change). When a Season is given, restrict BOTH the ranked players and
+        // the summed points to tournaments that started that year; when neither
+        // TournamentId nor Season is given, nothing here narrows the sum, so the
+        // same player row aggregates every point across every season — the
+        // all-time ranking. Grouping is by PlayerId: because Player.DocumentNumber
+        // is uniquely indexed, one real person is exactly one Player row reused
+        // across seasons (season scoping lives in PlayerTeamRegistration, not in
+        // duplicate Player rows), so a PlayerId already IS the cross-season person.
+        if (filter.Season.HasValue)
+        {
+            int season = filter.Season.Value;
+
+            scoreStatsQuery = scoreStatsQuery.Where(s =>
+                _context.Set<Tournament>().Any(t =>
+                    t.Id == s.Match!.Stage.Division.TournamentId && t.StartDate.Year == season));
+
+            playersQuery = playersQuery.Where(p => scoreStatsQuery.Any(s => s.PlayerId == p.Id));
+        }
+
         IQueryable<ScorerByPlayerResponse> query = playersQuery.Select(player => new ScorerByPlayerResponse
         {
             PlayerId = player.Id,
