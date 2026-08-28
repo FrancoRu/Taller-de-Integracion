@@ -877,6 +877,28 @@ definitivo.
   el torneo** tras la asignación (nueva transición `RegistrationClosed → En curso`).
 - Reusa la asignación equipo→fase existente y la generación **idempotente** del fixture (HU-64).
 
+### HU-109 · Guardas de completitud: no permitir torneos que no se puedan completar — `M`
+**Como** organizador de torneos **quiero** que el sistema impida armar o iniciar un torneo en un
+estado imposible de completar **para** no terminar con grupos vacíos, copas sin equipos o fixtures
+rotos. *(La estructura se configura en el wizard antes de conocer los inscriptos; estas guardas
+cierran esa brecha.)*
+- **Dos momentos de control:**
+  - **Asignación** (`RegistrationClosed`): **validación en vivo** que le muestra al admin exactamente
+    qué falta para poder iniciar.
+  - **Iniciar torneo** (`RegistrationClosed → En curso`, disparador del fixture — HU-108): **bloqueo
+    duro**; no se puede iniciar hasta que todo sea completable.
+- **Reglas (criterio de básquet):**
+  1. Cada división/zona que juega tiene **≥ 2 equipos** asignados (no hay grupo ni bracket con 0-1).
+  2. Todo equipo **inscripto** está asignado a **exactamente una** división (sin huérfanos; no en dos
+     zonas, HU-42).
+  3. **Copa cruzada** (HU-47): cantidad de grupos ≤ equipos; cada grupo **≥ 2**. El playoff soporta
+     **BYE** para no-potencias-de-2 (HU-82).
+  4. **Mapeos de playoff** (HU-45): si un rango arranca más allá de la cantidad de equipos de esa
+     división, se **bloquea** hasta corregir (ajustar el mapeo o asignar más equipos); no se recorta
+     ni se permite una copa vacía.
+  5. Coherencia general de básquet: sin empates (R4); la siembra de playoff exige la fase de grupos
+     completa; la serie final al mejor de N necesita 2 equipos.
+
 ---
 
 ## Resumen de prioridades
