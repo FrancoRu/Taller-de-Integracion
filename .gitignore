@@ -487,6 +487,9 @@ appsettings.Tomi.json
 
 # Academic/internal reports (not meant to be published in the repo)
 *.pdf
+# Exception: static assets served by the web client MUST be versioned so they
+# ship with the production build (HU-21: medical-record download 404 in prod).
+!Club12-WebClient/public/documents/*.pdf
 
 # Claude Code git worktrees (local scratch checkouts, never repo content)
 .claude/worktrees/
