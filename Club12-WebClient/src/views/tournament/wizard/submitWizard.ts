@@ -3,6 +3,7 @@ import { IAddTournamentRequest, ITournamentResponse } from '@/modules/tournament
 import { AddDivisionRequest, IDivisionResponse } from '@/modules/division/type/division';
 import { IAddStageRequest, IStageResponse, StageType } from '@/modules/stage/type/stage';
 import { PlayoffMappingRequest } from '@/modules/division/type/division.d';
+import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
 import { CupConfig, PlayoffMappingConfig, STAGE_TYPE_LABELS, WizardState, ZoneConfig } from './types';
 import { resolveCrossCupTeamIds } from './wizardLogic';
 
@@ -106,6 +107,7 @@ const createZoneStructure = async (
   pointsForWin: number,
   pointsForLoss: number,
   playoffMappings: PlayoffMappingConfig[],
+  category: TournamentCategory,
   warnings: string[]
 ): Promise<IDivisionResponse | null> => {
   const division = await services.addDivision({
@@ -117,6 +119,11 @@ const createZoneStructure = async (
     // final group-stage table (HU-81) when the tournament closes.
     pointsForWin,
     pointsForLoss,
+    // HU-48: every division MUST carry the tournament's category. The backend
+    // rejects a division whose category differs from its tournament, and its
+    // Division.Category defaults to Masculine — so a Feminine tournament would
+    // have its zones rejected unless we send Feminine explicitly here.
+    category,
     playoffMappings: toPlayoffMappingRequests(playoffMappings),
   });
 
@@ -208,6 +215,8 @@ export const submitWizard = async (
     description: state.tournament.description.trim(),
     startDate: new Date(state.tournament.startDate),
     teamRegistrationDeadline: new Date(state.tournament.teamRegistrationDeadline),
+    // HU-48: the category is set at creation and immutable afterwards.
+    category: state.tournament.category,
   });
 
   if (!tournament) {
@@ -230,6 +239,7 @@ export const submitWizard = async (
       zone.pointsForWin,
       zone.pointsForLoss,
       zone.playoffMappings,
+      state.tournament.category,
       warnings
     );
   }
@@ -248,6 +258,7 @@ export const submitWizard = async (
       state.crossCup.pointsForWin,
       state.crossCup.pointsForLoss,
       state.crossCup.playoffMappings,
+      state.tournament.category,
       warnings
     );
   }

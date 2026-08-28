@@ -1,5 +1,6 @@
 import { GUID } from '@/modules/core/types/types';
 import { StageType } from '@/modules/stage/type/stage';
+import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
 
 /**
  * Elimination round types the wizard can add to a cup, in typical
@@ -108,6 +109,13 @@ export interface TournamentStepState {
   description: string;
   startDate: string;
   teamRegistrationDeadline: string;
+  /**
+   * Competitive category (gender) of the tournament (HU-48). Chosen here and
+   * threaded onto both the tournament and every division the wizard creates,
+   * so a Feminine tournament's zones are not rejected by the backend's
+   * category-match rule.
+   */
+  category: TournamentCategory;
 }
 
 export interface WizardState {
@@ -162,6 +170,7 @@ export const createInitialWizardState = (): WizardState => ({
     description: '',
     startDate: '',
     teamRegistrationDeadline: '',
+    category: TournamentCategory.Masculine,
   },
   selectedTeamIds: [],
   zones: [],

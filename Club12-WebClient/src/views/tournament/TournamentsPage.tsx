@@ -72,10 +72,7 @@ const TournamentsPage: React.FC = () => {
   }, [getAllTournamentsByFilter]);
 
   const canLoadTournaments = useMemo(
-    () =>
-      role === UserRolesType.Admin ||
-      role === UserRolesType.Owner ||
-      role === UserRolesType.TournamentManager,
+    () => role === UserRolesType.Admin || role === UserRolesType.Owner,
     [role]
   );
 

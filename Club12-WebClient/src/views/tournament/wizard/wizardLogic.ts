@@ -1,4 +1,5 @@
 import { GUID } from '@/modules/core/types/types';
+import { TOURNAMENT_CATEGORY_LABELS } from '@/modules/core/enum/tournament/tournamentCategory';
 import { CupConfig, PlayoffMappingConfig, STAGE_TYPE_LABELS, WizardState } from './types';
 
 /**
@@ -298,7 +299,9 @@ export const buildWizardTree = (state: WizardState): WizardTreeNode[] => {
     {
       id: 'tournament',
       depth: 1,
-      label: state.tournament.name || '(sin nombre)',
+      label: `${state.tournament.name || '(sin nombre)'} · ${
+        TOURNAMENT_CATEGORY_LABELS[state.tournament.category]
+      }`,
       tag: `${state.selectedTeamIds.length} equipos`,
     },
   ];

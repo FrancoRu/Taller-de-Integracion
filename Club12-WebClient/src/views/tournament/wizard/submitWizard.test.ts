@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { GUID } from '@/modules/core/types/types';
 import { StageType } from '@/modules/stage/type/stage';
+import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
 import { WizardState, createInitialWizardState } from './types';
 import { WizardServices, submitWizard } from './submitWizard';
 
@@ -13,6 +14,7 @@ const makeState = (): WizardState => {
     description: 'Torneo de prueba',
     startDate: '2026-03-01',
     teamRegistrationDeadline: '2026-02-15',
+    category: TournamentCategory.Masculine,
   };
   state.selectedTeamIds = [guid('a'), guid('b')];
   state.zones = [
@@ -265,5 +267,48 @@ describe('submitWizard', () => {
     await submitWizard(makeState(), services);
 
     expect(services.addDivision).toHaveBeenCalledTimes(1);
+  });
+
+  // HU-48: the chosen category is set at creation on the tournament and must
+  // be echoed onto every division, because the backend rejects a division
+  // whose category differs from its tournament (Division.Category defaults to
+  // Masculine server-side).
+  it('sends the tournament category on addTournament', async () => {
+    const services = makeServices();
+    const state = makeState();
+    state.tournament.category = TournamentCategory.Feminine;
+
+    await submitWizard(state, services);
+
+    expect(services.addTournament).toHaveBeenCalledWith(
+      expect.objectContaining({ category: TournamentCategory.Feminine })
+    );
+  });
+
+  it('sends the same category on every division-create call (zones and cross-cup)', async () => {
+    const services = makeServices();
+    const state = makeState();
+    state.tournament.category = TournamentCategory.Feminine;
+    state.crossCup = {
+      enabled: true,
+      name: 'Copa Club12',
+      includeAllTeams: true,
+      teamIds: [],
+      hasGroupStage: false,
+      roundRobinLegs: 1,
+      cups: [],
+      pointsForWin: 2,
+      pointsForLoss: 1,
+      playoffMappings: [],
+    };
+
+    await submitWizard(state, services);
+
+    expect(services.addDivision).toHaveBeenCalledTimes(2);
+    for (const call of services.addDivision.mock.calls) {
+      expect(call[0]).toEqual(
+        expect.objectContaining({ category: TournamentCategory.Feminine })
+      );
+    }
   });
 });

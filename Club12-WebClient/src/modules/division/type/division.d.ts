@@ -3,6 +3,7 @@ import {
   GenericResponsePagination,
   GUID,
 } from '@/modules/core/types/types';
+import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
 
 /**
  * Context properties and methods for managing divisions in a React application.
@@ -117,6 +118,17 @@ export interface AddDivisionRequest {
    * @type {number}
    */
   pointsForLoss?: number;
+
+  /**
+   * Competitive category (gender) of the division (HU-48). MUST match the
+   * parent tournament's category — the backend rejects a division whose
+   * category differs from its tournament, and `Division.Category` defaults to
+   * Masculine server-side. The wizard therefore sends the tournament's
+   * category on every division so a Feminine tournament's zones are created
+   * as Feminine and not rejected.
+   * @type {TournamentCategory}
+   */
+  category?: TournamentCategory;
 
   /**
    * Optional position-range → playoff-destination mappings (HU-45) the

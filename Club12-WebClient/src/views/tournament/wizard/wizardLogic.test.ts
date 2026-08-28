@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { GUID } from '@/modules/core/types/types';
 import { StageType } from '@/modules/stage/type/stage';
+import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
 import {
   CrossCupConfig,
   CupConfig,
@@ -29,6 +30,7 @@ const makeValidState = (): WizardState => {
     description: '',
     startDate: '2026-03-01',
     teamRegistrationDeadline: '2026-02-15',
+    category: TournamentCategory.Masculine,
   };
   state.selectedTeamIds = [guid('a'), guid('b'), guid('c'), guid('d')];
   state.zones = [

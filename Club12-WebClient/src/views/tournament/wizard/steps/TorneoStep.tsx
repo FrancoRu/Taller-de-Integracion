@@ -1,4 +1,8 @@
-import { Grid, TextField } from '@mui/material';
+import { Grid, MenuItem, TextField } from '@mui/material';
+import {
+  TOURNAMENT_CATEGORY_LABELS,
+  TournamentCategory,
+} from '@/modules/core/enum/tournament/tournamentCategory';
 import { TournamentStepState } from '../types';
 
 interface TorneoStepProps {
@@ -28,6 +32,29 @@ export default function TorneoStep({ value, onChange }: TorneoStepProps) {
           minRows={2}
           fullWidth
         />
+      </Grid>
+
+      <Grid size={12}>
+        <TextField
+          select
+          label="Categoría"
+          value={value.category}
+          onChange={e =>
+            onChange({
+              ...value,
+              category: e.target.value as TournamentCategory,
+            })
+          }
+          required
+          fullWidth
+          helperText="La categoría femenina se juega como un torneo aparte y no se puede cambiar luego."
+        >
+          {Object.values(TournamentCategory).map(category => (
+            <MenuItem key={category} value={category}>
+              {TOURNAMENT_CATEGORY_LABELS[category]}
+            </MenuItem>
+          ))}
+        </TextField>
       </Grid>
 
       <Grid

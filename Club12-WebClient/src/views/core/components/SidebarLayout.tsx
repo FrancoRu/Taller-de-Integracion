@@ -86,8 +86,8 @@ const CONFIGURATION_CHILDREN: NavTab[] = [
 ];
 
 /**
- * Tournament-structure pages: Admin, Owner and TournamentManager can all
- * reach these (mirrors the AdminOwnerOrTournamentManager backend policy on
+ * Tournament-structure pages: Admin and Owner can both reach these
+ * (mirrors the Admin/Owner backend policy on
  * TournamentController/PlayerSanctionController/VenueController). Kept
  * separate from ADMINISTRATION_CHILDREN below, which also includes
  * Puntuaciones — Admin is not authorized for that one — so Admin's sidebar
@@ -147,26 +147,6 @@ const TEAM_ADMINISTRATION_CHILDREN: NavTab[] = [
 ];
 
 const TABS_BY_ROLE: Record<UserRolesType, NavTab[]> = {
-  [UserRolesType.TeamManager]: [
-    {
-      label: 'Jugadores',
-      path: APP_ROUTES.panelPlayers,
-      icon: TAB_ICONS['Jugadores'],
-    },
-    { label: 'Equipo', path: APP_ROUTES.panelTeam, icon: TAB_ICONS['Equipo'] },
-  ],
-  [UserRolesType.TournamentManager]: [
-    {
-      label: 'Administracion',
-      icon: TAB_ICONS['Administracion'],
-      children: ADMINISTRATION_CHILDREN,
-    },
-    {
-      label: 'Gestion de Equipos',
-      icon: TAB_ICONS['AdministracionDeEquipos'],
-      children: TEAM_ADMINISTRATION_CHILDREN,
-    },
-  ],
   [UserRolesType.Owner]: [
     {
       label: 'Administracion',

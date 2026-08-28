@@ -45,12 +45,6 @@ const ROLE_NORMALIZATION_MAP: Record<string, UserRolesType> = {
   owner: UserRolesType.Owner,
   duenio: UserRolesType.Owner,
   dueño: UserRolesType.Owner,
-  tournament_manager: UserRolesType.TournamentManager,
-  tournamentmanager: UserRolesType.TournamentManager,
-  'tournament manager': UserRolesType.TournamentManager,
-  team_manager: UserRolesType.TeamManager,
-  teammanager: UserRolesType.TeamManager,
-  'team manager': UserRolesType.TeamManager,
   guest: UserRolesType.Guest,
 };
 

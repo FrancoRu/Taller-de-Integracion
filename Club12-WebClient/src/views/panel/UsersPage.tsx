@@ -322,10 +322,7 @@ const UsersPage: React.FC = () => {
           >
             <MenuItem value="">Todos</MenuItem>
             {Object.values(UserRolesType)
-              .filter(
-                role =>
-                  role !== UserRolesType.Guest && role !== UserRolesType.Admin
-              )
+              .filter(role => role !== UserRolesType.Guest)
               .map(role => (
                 <MenuItem key={role} value={role}>
                   {USER_ROLE_LABELS[role]}

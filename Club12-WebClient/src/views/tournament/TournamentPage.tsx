@@ -4,6 +4,7 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
   Divider,
   Grid,
   MenuItem,
@@ -16,6 +17,7 @@ import {
 import { GUID } from '@/modules/core/types/types';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
+import { TOURNAMENT_CATEGORY_LABELS } from '@/modules/core/enum/tournament/tournamentCategory';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
@@ -119,7 +121,7 @@ const TournamentPage: React.FC = () => {
   }
 
   const canEditTournament =
-    role === UserRolesType.Owner || role === UserRolesType.TournamentManager;
+    role === UserRolesType.Owner || role === UserRolesType.Admin;
 
   const currentStatus = resolveTournamentStatus(tournament.status);
   const nextStatusOptions = getNextStatusOptions(currentStatus);
@@ -188,7 +190,14 @@ const TournamentPage: React.FC = () => {
             mb: 2
           }}>
           <Grid>
-            <Typography variant="h6">{tournament.name}</Typography>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+              <Typography variant="h6">{tournament.name}</Typography>
+              <Chip
+                size="small"
+                color="secondary"
+                label={TOURNAMENT_CATEGORY_LABELS[tournament.category]}
+              />
+            </Stack>
           </Grid>
           <Grid>
             <Stack direction="row" spacing={1}>
@@ -247,6 +256,20 @@ const TournamentPage: React.FC = () => {
                 Estado
               </Typography>
               <Typography>{TOURNAMENT_STATUS_LABEL[currentStatus]}</Typography>
+            </Grid>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
+                Categoría
+              </Typography>
+              <Typography>
+                {TOURNAMENT_CATEGORY_LABELS[tournament.category]}
+              </Typography>
             </Grid>
             <Grid size={12}>
               <Typography variant="subtitle2" sx={{

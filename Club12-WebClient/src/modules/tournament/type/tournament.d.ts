@@ -1,4 +1,5 @@
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
+import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
 import {
   Filtered,
   GenericResponsePagination,
@@ -99,6 +100,15 @@ export interface IAddTournamentRequest {
    * @type {Date}
    */
   startDate: Date;
+
+  /**
+   * Competitive category (gender) of the tournament (HU-48). Chosen at
+   * creation and immutable afterwards. The feminine competition is played as
+   * its own separate tournament. Omit to let the backend default to
+   * Masculine.
+   * @type {TournamentCategory}
+   */
+  category?: TournamentCategory;
 }
 
 /**
@@ -154,6 +164,13 @@ export interface ITournamentResponse {
    * @type {TournamentStatus}
    */
   status: TournamentStatus;
+
+  /**
+   * Competitive category (gender) of the tournament (HU-48). The feminine
+   * competition is played as its own separate tournament.
+   * @type {TournamentCategory}
+   */
+  category: TournamentCategory;
 }
 
 /**

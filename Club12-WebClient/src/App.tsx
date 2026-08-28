@@ -67,8 +67,6 @@ import VenuePage from './views/venue/venuePage';
 import ScorersPage from './views/scorer/scorersPage';
 
 const FIRST_TAB_BY_ROLE: Partial<Record<UserRolesType, string>> = {
-  [UserRolesType.TeamManager]: APP_ROUTES.panelPlayers,
-  [UserRolesType.TournamentManager]: APP_ROUTES.panelTournaments,
   [UserRolesType.Owner]: APP_ROUTES.panelTournaments,
   [UserRolesType.Admin]: APP_ROUTES.panelUsers,
 };
@@ -83,202 +81,137 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
   { path: APP_ROUTES.passwordReset, element: <PasswordReset /> },
   {
     path: APP_ROUTES.panelPlayers,
-    allowedRoles: [UserRolesType.TeamManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Owner],
     element: <PlayersPage />,
   },
   {
     path: APP_ROUTES.panelPlayer.pattern,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-      UserRolesType.TeamManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <PlayerPage />,
   },
   {
     path: APP_ROUTES.panelTeam,
-    allowedRoles: [UserRolesType.TeamManager],
+    allowedRoles: [UserRolesType.Owner],
     element: <TeamPage />,
   },
   {
     path: APP_ROUTES.panelTeamDetail.pattern,
-    allowedRoles: [
-      UserRolesType.TeamManager,
-      UserRolesType.TournamentManager,
-      UserRolesType.Owner,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <TeamPage />,
   },
   {
     path: APP_ROUTES.panelTournament,
-    allowedRoles: [UserRolesType.TournamentManager],
+    allowedRoles: [UserRolesType.Owner],
     element: <TournamentPage />,
   },
   {
     path: APP_ROUTES.panelTournamentDetail.pattern,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <TournamentPage />,
   },
   {
     path: APP_ROUTES.panelTournamentEdit.pattern,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <TournamentEditPage />,
   },
   {
     path: APP_ROUTES.panelTeams,
-    allowedRoles: [UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Owner],
     element: <TeamsPage title="Equipos" wrapInCard />,
   },
   {
     path: APP_ROUTES.panelTeamRegister,
-    allowedRoles: [UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Owner],
     element: <TeamRegisterPage />,
   },
   {
     path: APP_ROUTES.panelSanctions,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <PlayerSanctionsPage />,
   },
   {
     path: APP_ROUTES.panelSanction.pattern,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <PlayerSanctionPage />,
   },
   {
     path: APP_ROUTES.panelSanctionEdit.pattern,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <PlayerSanctionEditPage />,
   },
   {
     path: APP_ROUTES.panelScorers,
-    allowedRoles: [UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Owner],
     element: <ScorersPage />,
   },
   {
     path: APP_ROUTES.panelVenues,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <VenuesPage />,
   },
   {
     path: APP_ROUTES.panelVenue.pattern,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <VenuePage />,
   },
   {
     path: APP_ROUTES.panelTournaments,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <TournamentsPage />,
   },
   {
     path: APP_ROUTES.panelTournamentWizard,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <TournamentWizardPage />,
   },
   {
     path: APP_ROUTES.panelDivisions,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <DivisionsPage wrapInCard />,
   },
   {
     path: APP_ROUTES.panelDivisionCreate,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <DivisionCreatePage />,
   },
   {
     path: APP_ROUTES.panelDivision.pattern,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <DivisionPage />,
   },
   {
     path: APP_ROUTES.panelStages,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <StagesPage wrapInCard />,
   },
   {
     path: APP_ROUTES.panelStageCreate,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <StageCreatePage />,
   },
   {
     path: APP_ROUTES.panelStageEdit.pattern,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <StageEditPage />,
   },
   {
     path: APP_ROUTES.panelStage.pattern,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <StagePage />,
   },
   {
     path: APP_ROUTES.panelMatches,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <MatchesPage wrapInCard />,
   },
   {
     path: APP_ROUTES.panelMatchCreate,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <MatchCreatePage />,
   },
   {
     path: APP_ROUTES.panelMatch.pattern,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <MatchPage />,
   },
   {
