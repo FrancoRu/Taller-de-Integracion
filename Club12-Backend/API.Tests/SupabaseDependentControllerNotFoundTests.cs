@@ -157,6 +157,15 @@ public class SupabaseDependentControllerNotFoundTests
         {
             throw new NotImplementedException();
         }
+
+        public Task<Team> EnrollTeamAsync(
+            Tournament tournament,
+            Guid? existingTeamId,
+            string? newTeamName,
+            Guid? copyRosterFromTournamentId)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     private sealed class NotFoundVenueService : IVenueService

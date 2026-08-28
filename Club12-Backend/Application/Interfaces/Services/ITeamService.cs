@@ -72,4 +72,33 @@ public interface ITeamService
     Task<PaginatedResponse<Team>> GetAllTeamsAsync(GetTeamsFilteredRequest filter);
 
     Task RegisterTeamsToTournamentAsync(Tournament tournament, List<Guid> teamIds);
+
+    /// <summary>
+    /// HU-107: enrolls a single team into <paramref name="tournament"/>'s
+    /// registration phase, atomically. Exactly one of
+    /// <paramref name="existingTeamId"/> or <paramref name="newTeamName"/> must
+    /// be supplied — the caller is expected to have validated that shape:
+    /// <list type="bullet">
+    /// <item><paramref name="newTeamName"/> creates a brand-new team with an
+    /// empty roster and registers it.</item>
+    /// <item><paramref name="existingTeamId"/> registers an existing team (a
+    /// club from another season) — the same Team identity is reused (HU-99),
+    /// only a new season registration is created.</item>
+    /// </list>
+    /// The enrollment is additive: teams already registered to this tournament
+    /// are preserved. When <paramref name="copyRosterFromTournamentId"/> is set
+    /// (only valid with <paramref name="existingTeamId"/>), that team's roster is
+    /// cloned from the given season into this tournament as an editable base
+    /// (HU-53); medical records are never inherited (HU-59).
+    /// </summary>
+    /// <param name="tournament">The tournament to enroll the team into. Must be OpenForRegistration.</param>
+    /// <param name="existingTeamId">The existing team to enroll, or null.</param>
+    /// <param name="newTeamName">The name of a brand-new team to create and enroll, or null.</param>
+    /// <param name="copyRosterFromTournamentId">Optional source season whose roster to copy.</param>
+    /// <returns>The enrolled team, with its roster scoped to this tournament.</returns>
+    Task<Team> EnrollTeamAsync(
+        Tournament tournament,
+        Guid? existingTeamId,
+        string? newTeamName,
+        Guid? copyRosterFromTournamentId);
 }

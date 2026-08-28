@@ -1,6 +1,7 @@
 ﻿using API.Utils;
 
 using Application.DTOs.Abstract.Response;
+using Application.DTOs.Team.Response;
 using Application.DTOs.Tournament.Request;
 using Application.DTOs.Tournament.Response;
 using Application.Interfaces.Services;
@@ -209,5 +210,60 @@ public class TournamentController(
         }
         await teamService.RegisterTeamsToTournamentAsync(tournament, registerTeamsRequest.TeamIds);
         return Ok();
+    }
+
+    /// <summary>
+    /// HU-107: enrolls a single team into the tournament's registration phase.
+    /// Two modes — create a brand-new team (<c>NewTeamName</c>) or enroll an
+    /// existing club from another season (<c>ExistingTeamId</c>), optionally
+    /// copying that team's roster from a past season as an editable base
+    /// (<c>CopyRosterFromTournamentId</c>). Everything runs in one transaction.
+    /// </summary>
+    /// <param name="tournamentId">Tournament identifier (GUID).</param>
+    /// <param name="request">The enroll payload.</param>
+    /// <returns>
+    /// Returns 201 (Created) with the enrolled team, its roster scoped to this tournament.
+    /// Returns 400 (Bad Request) when the payload shape is invalid (not exactly one of
+    /// ExistingTeamId/NewTeamName, or CopyRosterFromTournamentId without ExistingTeamId).
+    /// Returns 404 (Not Found) when the tournament or an existing team does not exist.
+    /// Returns 409 (Conflict) when the tournament is not OpenForRegistration or the team
+    /// is already enrolled.
+    /// </returns>
+    [HttpPost("{tournamentId:guid}/enroll-team")]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TeamResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<TeamResponse>> EnrollTeam(Guid tournamentId, EnrollTeamRequest request)
+    {
+        bool hasExistingTeam = request.ExistingTeamId.HasValue;
+        bool hasNewTeamName = !string.IsNullOrWhiteSpace(request.NewTeamName);
+
+        // Exactly one of ExistingTeamId / NewTeamName must be provided.
+        if (hasExistingTeam == hasNewTeamName)
+        {
+            return BadRequest("Provide exactly one of ExistingTeamId or NewTeamName.");
+        }
+
+        // CopyRosterFromTournamentId is only valid together with ExistingTeamId.
+        if (request.CopyRosterFromTournamentId.HasValue && !hasExistingTeam)
+        {
+            return BadRequest("CopyRosterFromTournamentId is only allowed together with ExistingTeamId.");
+        }
+
+        Tournament? tournament = await tournamentService.GetTournamentByIdAsync(tournamentId);
+        if (tournament is null)
+        {
+            return this.NotFoundProblem(nameof(Tournament), tournamentId);
+        }
+
+        Team enrolledTeam = await teamService.EnrollTeamAsync(
+            tournament,
+            request.ExistingTeamId,
+            request.NewTeamName,
+            request.CopyRosterFromTournamentId);
+
+        TeamResponse teamResponse = mapper.Map<TeamResponse>(enrolledTeam);
+        return new ObjectResult(teamResponse) { StatusCode = StatusCodes.Status201Created };
     }
 }

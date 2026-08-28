@@ -106,6 +106,11 @@ public static class ErrorMessages
         {
             return $"Team '{teamId}' is not currently registered to any tournament, so players cannot be registered to it.";
         }
+
+        public static string AlreadyEnrolled(System.Guid teamId, System.Guid tournamentId)
+        {
+            return $"Team '{teamId}' is already enrolled in tournament '{tournamentId}'. A team can be enrolled only once per tournament.";
+        }
     }
 
     public static class Roster
