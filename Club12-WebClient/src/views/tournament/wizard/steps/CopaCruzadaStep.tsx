@@ -8,9 +8,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { CrossCupConfig, PlayoffMappingConfig, ROUND_ROBIN_LEGS_OPTIONS } from '../types';
+import { CrossCupConfig, ROUND_ROBIN_LEGS_OPTIONS } from '../types';
 import CupsEditor from './CupsEditor';
-import PlayoffRangesEditor from './PlayoffRangesEditor';
 
 interface CopaCruzadaStepProps {
   value: CrossCupConfig;
@@ -136,18 +135,18 @@ export default function CopaCruzadaStep({ value, onChange }: CopaCruzadaStepProp
           }}>
             Playoffs de la copa cruzada
           </Typography>
-          <CupsEditor cups={value.cups} onChange={cups => onChange({ ...value, cups })} />
-
-          <Typography variant="subtitle2" sx={{ mb: 1, mt: 2 }}>
-            Clasificación a playoffs por rango
+          <Typography variant="caption" sx={{ color: 'text.secondary', mb: 1, display: 'block' }}>
+            Clasifican los mejores {value.qualifiersPerGroup} de cada uno de los {value.groupCount} grupos
+            ({value.groupCount * value.qualifiersPerGroup} en total) a un único cuadro. Las fases se arman
+            solas según esa cantidad.
           </Typography>
-          <PlayoffRangesEditor
-            mappings={value.playoffMappings}
+          {/* HU-112: the cross cup pools group qualifiers, so its cups' rounds are
+              derived from groupCount * qualifiersPerGroup — the per-cup "cuántos
+              clasifican" field is hidden here. */}
+          <CupsEditor
             cups={value.cups}
-            teamCount={0}
-            onChange={(playoffMappings: PlayoffMappingConfig[]) =>
-              onChange({ ...value, playoffMappings })
-            }
+            onChange={cups => onChange({ ...value, cups })}
+            hideQualifiers
           />
         </Box>
       )}

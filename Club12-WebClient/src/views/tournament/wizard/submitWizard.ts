@@ -7,10 +7,10 @@ import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCat
 import {
   CrossCupConfig,
   CupConfig,
-  PlayoffMappingConfig,
   STAGE_TYPE_LABELS,
   WizardState,
   ZoneConfig,
+  qualifiersToStageTypes,
 } from './types';
 
 /**
@@ -58,52 +58,69 @@ const addDays = (date: Date, days: number): Date => {
 const roundLabel = (stageType: StageType): string => STAGE_TYPE_LABELS[stageType];
 
 /**
- * Maps the wizard's local playoff-range rows (HU-45) to the backend
- * `PlayoffMappingRequest` shape, dropping the local React `id` and any
- * still-blank row (no destination cup chosen yet) so half-filled drafts
- * never reach the API.
+ * HU-112: derives a zone's standings→cup position ranges (HU-45) from its
+ * cups' ORDER and qualifier counts, instead of a manual range editor. Cups
+ * fill top-down: the first cup takes positions 1..q0, the next q0+1..q0+q1,
+ * and so on. A cup without a name is skipped (nothing to seed).
  */
-const toPlayoffMappingRequests = (mappings: PlayoffMappingConfig[]): PlayoffMappingRequest[] =>
-  mappings
-    .filter(mapping => mapping.destination.trim().length > 0)
-    .map(mapping => ({
-      fromPosition: mapping.fromPosition,
-      toPosition: mapping.toPosition,
-      destination: mapping.destination.trim(),
-    }));
+const deriveCupMappings = (cups: CupConfig[]): PlayoffMappingRequest[] => {
+  const mappings: PlayoffMappingRequest[] = [];
+  let nextPosition = 1;
+
+  for (const cup of cups) {
+    const name = cup.name.trim();
+    if (name.length === 0 || cup.qualifiers < 1) {
+      continue;
+    }
+
+    mappings.push({
+      fromPosition: nextPosition,
+      toPosition: nextPosition + cup.qualifiers - 1,
+      destination: name,
+    });
+    nextPosition += cup.qualifiers;
+  }
+
+  return mappings;
+};
 
 /**
- * Creates the cup's elimination stages (structure only — bracket name and
- * best-of per round). Team assignment and match generation are
- * deliberately left for later: seeding a knockout round needs group-stage
- * standings that do not exist yet at tournament-creation time.
+ * Creates each cup's elimination stages (structure only). HU-112: the rounds
+ * are DERIVED from how many teams qualify to the cup, so the bracket always
+ * fits its qualifiers (2 → Final; 4 → Semis + Final; 8 → Cuartos + Semis +
+ * Final; …). Every round uses the cup's single `bestOf`. Team assignment and
+ * match generation are left for later (seeding a knockout needs group-stage
+ * standings that do not exist yet). `qualifiersOverride` lets the cross cup
+ * derive its rounds from the pooled group total (groups × qualifiersPerGroup).
  */
 const createCupStages = async (
   services: WizardServices,
   divisionId: GUID,
   startDate: Date,
   cups: CupConfig[],
-  warnings: string[]
+  warnings: string[],
+  qualifiersOverride?: number
 ): Promise<void> => {
   for (const cup of cups) {
+    const qualifiers = qualifiersOverride ?? cup.qualifiers;
     let roundStartDate = startDate;
 
-    for (const round of cup.rounds) {
+    for (const stageType of qualifiersToStageTypes(qualifiers)) {
       const roundEndDate = addDays(roundStartDate, ROUND_DURATION_DAYS);
 
       const stage = await services.addStage({
-        name: `${cup.name} - ${roundLabel(round.stageType)}`,
-        stageType: round.stageType,
+        name: `${cup.name} - ${roundLabel(stageType)}`,
+        stageType,
         isElimination: true,
         startDate: roundStartDate,
         endDate: roundEndDate,
         divisionId,
         bracketName: cup.name,
-        bestOf: round.bestOf,
+        bestOf: cup.bestOf,
       });
 
       if (!stage) {
-        warnings.push(`No se pudo crear la ronda "${roundLabel(round.stageType)}" de "${cup.name}".`);
+        warnings.push(`No se pudo crear la ronda "${roundLabel(stageType)}" de "${cup.name}".`);
       }
 
       roundStartDate = roundEndDate;
@@ -122,7 +139,6 @@ const createZoneStructure = async (
   isCrossDivisionCup: boolean,
   pointsForWin: number,
   pointsForLoss: number,
-  playoffMappings: PlayoffMappingConfig[],
   category: TournamentCategory,
   warnings: string[]
 ): Promise<IDivisionResponse | null> => {
@@ -130,9 +146,10 @@ const createZoneStructure = async (
     name: zoneName,
     tournamentId,
     isCrossDivisionCup,
-    // Per-division scoring (HU-79) and position-range → cup mappings
-    // (HU-45). The backend uses the mappings to seed each cup from the
-    // final group-stage table (HU-81) when the tournament closes.
+    // Per-division scoring (HU-79). The standings→cup position ranges (HU-45)
+    // are DERIVED from the cups' order and qualifier counts (HU-112); the
+    // backend uses them to seed each cup from the final group-stage table
+    // (HU-81) when the tournament closes.
     pointsForWin,
     pointsForLoss,
     // HU-48: every division MUST carry the tournament's category. The backend
@@ -140,7 +157,7 @@ const createZoneStructure = async (
     // Division.Category defaults to Masculine — so a Feminine tournament would
     // have its zones rejected unless we send Feminine explicitly here.
     category,
-    playoffMappings: toPlayoffMappingRequests(playoffMappings),
+    playoffMappings: deriveCupMappings(cups),
   });
 
   if (!division) {
@@ -209,7 +226,10 @@ const createCrossCupStructure = async (
     pointsForWin: crossCup.pointsForWin,
     pointsForLoss: crossCup.pointsForLoss,
     category,
-    playoffMappings: toPlayoffMappingRequests(crossCup.playoffMappings),
+    // The cross cup pools the top teams of every group into its bracket via
+    // the backend seeder (HU-110) — it is NOT seeded from a single division's
+    // standings, so it carries no position-range mappings.
+    playoffMappings: [],
   });
 
   if (!division) {
@@ -238,7 +258,16 @@ const createCrossCupStructure = async (
     }
   }
 
-  await createCupStages(services, division.id, groupEndDate, crossCup.cups, warnings);
+  // HU-112: the cross-cup bracket's rounds are derived from the pooled group
+  // total (groups × qualifiers-per-group), not a per-cup qualifier field.
+  await createCupStages(
+    services,
+    division.id,
+    groupEndDate,
+    crossCup.cups,
+    warnings,
+    crossCup.groupCount * crossCup.qualifiersPerGroup
+  );
 };
 
 /**
@@ -300,7 +329,6 @@ export const submitWizard = async (
       false,
       zone.pointsForWin,
       zone.pointsForLoss,
-      zone.playoffMappings,
       state.tournament.category,
       warnings
     );

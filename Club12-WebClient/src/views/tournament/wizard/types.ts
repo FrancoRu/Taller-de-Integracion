@@ -1,21 +1,12 @@
 import { StageType } from '@/modules/stage/type/stage';
 import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
 
-/**
- * Elimination round types the wizard can add to a cup, in typical
- * chronological order. RoundOf16/QuarterFinal/SemiFinal/ThirdPlace/Final
- * are all admin-selectable — the wizard never assumes a fixed shape.
- */
-export const ELIMINATION_STAGE_TYPES: StageType[] = [
-  StageType.RoundOf16,
-  StageType.QuarterFinal,
-  StageType.SemiFinal,
-  StageType.ThirdPlace,
-  StageType.Final,
-];
-
 export const BEST_OF_OPTIONS = [1, 3, 5, 7];
 export const ROUND_ROBIN_LEGS_OPTIONS = [1, 2, 3];
+
+/** A playoff cup needs at least 2 qualifiers (a final), and at most 16 (the deepest bracket the stage types model — Octavos). */
+export const MIN_CUP_QUALIFIERS = 2;
+export const MAX_CUP_QUALIFIERS = 16;
 
 /** Default points a division awards for a win / a loss (HU-79, e.g. FIBA 2/1). No draw points (HU-70). */
 export const DEFAULT_POINTS_FOR_WIN = 2;
@@ -32,48 +23,54 @@ export const STAGE_TYPE_LABELS: Record<StageType, string> = {
 };
 
 /**
- * One elimination round within a cup (e.g. "Semifinal, al mejor de 3").
+ * HU-112: derives a cup's bracket rounds from how many teams qualify to it,
+ * so the rounds ALWAYS match the qualifier count (you can never configure
+ * "4 qualify" with only a final). Non-powers-of-two are padded with byes by
+ * the backend seeder, so the depth here is `ceil(log2(qualifiers))` rounds:
+ * 2 → Final; 3-4 → Semifinal+Final; 5-8 → Cuartos+Semifinal+Final;
+ * 9-16 → Octavos+Cuartos+Semifinal+Final.
  */
-export interface RoundConfig {
-  id: string;
-  stageType: StageType;
-  bestOf: number;
-}
+export const qualifiersToStageTypes = (qualifiers: number): StageType[] => {
+  if (qualifiers <= 2) return [StageType.Final];
+  if (qualifiers <= 4) return [StageType.SemiFinal, StageType.Final];
+  if (qualifiers <= 8) {
+    return [StageType.QuarterFinal, StageType.SemiFinal, StageType.Final];
+  }
+  return [
+    StageType.RoundOf16,
+    StageType.QuarterFinal,
+    StageType.SemiFinal,
+    StageType.Final,
+  ];
+};
 
 /**
  * One named parallel playoff bracket within a zone or the cross-division
  * cup (e.g. an admin-named "Copa de Oro"). The name is always free text —
  * never a hardcoded system value.
+ *
+ * HU-112: a cup is defined by HOW MANY teams qualify to it (`qualifiers`)
+ * and the series format (`bestOf`). The bracket rounds are DERIVED from the
+ * qualifier count (see {@link qualifiersToStageTypes}) so the two can never
+ * be inconsistent, and the zone's standings→cup position ranges are derived
+ * from the cups' order (top cup gets positions 1..q0, next q0+1..q0+q1, …).
  */
 export interface CupConfig {
   id: string;
   name: string;
-  rounds: RoundConfig[];
-}
-
-/**
- * One position-range → playoff-destination row the admin defines for a
- * division (HU-45): the teams finishing between `fromPosition` and
- * `toPosition` (inclusive, 1-based) in the group-stage table qualify for
- * the cup named `destination` (a configured cup's name / BracketName).
- * Ranges within a division must not overlap and must stay within the
- * division's team count; positions left uncovered simply don't advance.
- * `id` is a local React key only — never sent to the API.
- */
-export interface PlayoffMappingConfig {
-  id: string;
-  fromPosition: number;
-  toPosition: number;
-  destination: string;
+  /** How many teams qualify to this cup from the group-stage standings (HU-112, ≥ 2). */
+  qualifiers: number;
+  /** Series format for every round of this cup: 1 = single game, 3/5/7 = best-of-N. */
+  bestOf: number;
 }
 
 /**
  * One admin-named zone (division) of the tournament: an optional group
- * stage, zero or more parallel playoff cups, its own points-per-win/loss
- * (HU-79), and the position-range → playoff mappings that seed those cups
- * (HU-45). The wizard defines STRUCTURE ONLY (HU-106): teams are added
- * later, during the registration phase, and assigned to divisions once
- * registration closes (HU-107/108).
+ * stage, zero or more parallel playoff cups, and its own points-per-win/loss
+ * (HU-79). The wizard defines STRUCTURE ONLY (HU-106): teams are added later,
+ * during the registration phase, and assigned to divisions once registration
+ * closes (HU-107/108). Each cup's standings→cup position ranges (HU-45) are
+ * derived from the cups' order and qualifier counts (HU-112).
  */
 export interface ZoneConfig {
   id: string;
@@ -83,7 +80,6 @@ export interface ZoneConfig {
   cups: CupConfig[];
   pointsForWin: number;
   pointsForLoss: number;
-  playoffMappings: PlayoffMappingConfig[];
 }
 
 /**
@@ -94,8 +90,9 @@ export interface ZoneConfig {
  * HU-110: the cross cup is a MULTI-GROUP competition — it is split into
  * `groupCount` group stages ("Grupo 1"…"Grupo N"), and the top
  * `qualifiersPerGroup` teams of every group are pooled into a single
- * knockout bracket. The wizard defines its STRUCTURE ONLY (HU-106) — no
- * teams are selected here.
+ * knockout bracket. Its bracket rounds are derived from the pooled total
+ * (`groupCount * qualifiersPerGroup`, HU-112). The wizard defines its
+ * STRUCTURE ONLY (HU-106) — no teams are selected here.
  */
 export interface CrossCupConfig {
   enabled: boolean;
@@ -108,7 +105,6 @@ export interface CrossCupConfig {
   cups: CupConfig[];
   pointsForWin: number;
   pointsForLoss: number;
-  playoffMappings: PlayoffMappingConfig[];
 }
 
 export interface TournamentStepState {
@@ -139,23 +135,12 @@ export const nextLocalId = (): string => {
   return `local-${localIdCounter}`;
 };
 
-export const createEmptyRound = (): RoundConfig => ({
-  id: nextLocalId(),
-  stageType: StageType.Final,
-  bestOf: 1,
-});
-
 export const createEmptyCup = (): CupConfig => ({
   id: nextLocalId(),
   name: '',
-  rounds: [createEmptyRound()],
-});
-
-export const createEmptyPlayoffMapping = (): PlayoffMappingConfig => ({
-  id: nextLocalId(),
-  fromPosition: 1,
-  toPosition: 1,
-  destination: '',
+  // Default: top 4 qualify (semis + final), best-of-3 — the club's typical cup.
+  qualifiers: 4,
+  bestOf: 3,
 });
 
 export const createEmptyZone = (): ZoneConfig => ({
@@ -166,7 +151,6 @@ export const createEmptyZone = (): ZoneConfig => ({
   cups: [],
   pointsForWin: DEFAULT_POINTS_FOR_WIN,
   pointsForLoss: DEFAULT_POINTS_FOR_LOSS,
-  playoffMappings: [],
 });
 
 export const createInitialWizardState = (): WizardState => ({
@@ -187,6 +171,5 @@ export const createInitialWizardState = (): WizardState => ({
     cups: [],
     pointsForWin: DEFAULT_POINTS_FOR_WIN,
     pointsForLoss: DEFAULT_POINTS_FOR_LOSS,
-    playoffMappings: [],
   },
 });

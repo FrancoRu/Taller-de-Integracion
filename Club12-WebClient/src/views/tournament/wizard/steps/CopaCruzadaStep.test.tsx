@@ -11,8 +11,7 @@ const makeCrossCup = (overrides: Partial<CrossCupConfig> = {}): CrossCupConfig =
   roundRobinLegs: 1,
   cups: [],
   pointsForWin: 2,
-  pointsForLoss: 1,
-  playoffMappings: [],
+  pointsForLoss: 1,
   ...overrides,
 });
 

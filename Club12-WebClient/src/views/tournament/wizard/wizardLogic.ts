@@ -1,5 +1,12 @@
 import { TOURNAMENT_CATEGORY_LABELS } from '@/modules/core/enum/tournament/tournamentCategory';
-import { CupConfig, PlayoffMappingConfig, STAGE_TYPE_LABELS, WizardState } from './types';
+import {
+  CupConfig,
+  MAX_CUP_QUALIFIERS,
+  MIN_CUP_QUALIFIERS,
+  STAGE_TYPE_LABELS,
+  WizardState,
+  qualifiersToStageTypes,
+} from './types';
 
 /**
  * A single step's validation result: empty when valid, otherwise the list
@@ -34,7 +41,17 @@ export const validateTournamentStep = (state: WizardState): ValidationResult => 
   return errors;
 };
 
-const validateCups = (cups: CupConfig[], contextLabel: string): ValidationResult => {
+/**
+ * Validates a set of cups (HU-112): each needs a unique name and — for zone
+ * cups — a whole "cuántos clasifican" between {@link MIN_CUP_QUALIFIERS} and
+ * {@link MAX_CUP_QUALIFIERS}. The cross cup's qualifier count is derived from
+ * its groups, so `checkQualifiers` is false there.
+ */
+const validateCups = (
+  cups: CupConfig[],
+  contextLabel: string,
+  checkQualifiers = true
+): ValidationResult => {
   const errors: string[] = [];
   const seenNames = new Set<string>();
 
@@ -52,8 +69,15 @@ const validateCups = (cups: CupConfig[], contextLabel: string): ValidationResult
     }
     seenNames.add(normalized);
 
-    if (cup.rounds.length === 0) {
-      errors.push(`La copa "${trimmedName}" necesita al menos una ronda.`);
+    if (
+      checkQualifiers &&
+      (!Number.isInteger(cup.qualifiers) ||
+        cup.qualifiers < MIN_CUP_QUALIFIERS ||
+        cup.qualifiers > MAX_CUP_QUALIFIERS)
+    ) {
+      errors.push(
+        `La copa "${trimmedName}" debe tener entre ${MIN_CUP_QUALIFIERS} y ${MAX_CUP_QUALIFIERS} clasificados.`
+      );
     }
   });
 
@@ -61,83 +85,11 @@ const validateCups = (cups: CupConfig[], contextLabel: string): ValidationResult
 };
 
 /**
- * Validates a division's playoff-range → cup mappings (HU-45): every row
- * must point at a configured cup, sit within `1..teamCount`, have
- * `from <= to`, and no two rows may overlap. `teamCount` of 0 (no teams
- * assigned yet) skips the upper-bound check so the admin can still draft
- * ranges before finishing team assignment. `cupNames` is the set of the
- * division's configured cup names the destination must belong to.
- */
-export const validatePlayoffMappings = (
-  mappings: PlayoffMappingConfig[],
-  teamCount: number,
-  cupNames: string[],
-  contextLabel: string
-): ValidationResult => {
-  const errors: string[] = [];
-
-  if (mappings.length === 0) {
-    return errors;
-  }
-
-  const validCupNames = new Set(cupNames.map(name => name.trim().toLowerCase()).filter(Boolean));
-
-  mappings.forEach(mapping => {
-    const { fromPosition, toPosition, destination } = mapping;
-
-    if (!Number.isInteger(fromPosition) || !Number.isInteger(toPosition) || fromPosition < 1 || toPosition < 1) {
-      errors.push(`Los rangos de playoff de ${contextLabel} deben usar posiciones enteras desde 1.`);
-      return;
-    }
-
-    if (fromPosition > toPosition) {
-      errors.push(
-        `En ${contextLabel}, el rango ${fromPosition}–${toPosition} está invertido (desde debe ser ≤ hasta).`
-      );
-      return;
-    }
-
-    if (teamCount > 0 && toPosition > teamCount) {
-      errors.push(
-        `En ${contextLabel}, el rango ${fromPosition}–${toPosition} supera los ${teamCount} equipos de la zona.`
-      );
-    }
-
-    const trimmedDestination = destination.trim();
-    if (!trimmedDestination) {
-      errors.push(`Cada rango de playoff de ${contextLabel} necesita una copa de destino.`);
-    } else if (!validCupNames.has(trimmedDestination.toLowerCase())) {
-      errors.push(
-        `En ${contextLabel}, la copa de destino "${trimmedDestination}" no coincide con ninguna copa configurada.`
-      );
-    }
-  });
-
-  // Overlap check: sort by start position and confirm each range starts
-  // strictly after the previous one ends, so no position lands in two cups.
-  const sorted = [...mappings]
-    .filter(m => Number.isInteger(m.fromPosition) && Number.isInteger(m.toPosition) && m.fromPosition <= m.toPosition)
-    .sort((a, b) => a.fromPosition - b.fromPosition);
-
-  for (let i = 1; i < sorted.length; i += 1) {
-    if (sorted[i].fromPosition <= sorted[i - 1].toPosition) {
-      errors.push(
-        `Los rangos de playoff de ${contextLabel} se solapan (posición ${sorted[i].fromPosition} está en dos copas).`
-      );
-      break;
-    }
-  }
-
-  return errors;
-};
-
-/**
- * Validates the zones step (HU-106 — STRUCTURE ONLY): every zone has a
- * unique name and every configured cup / playoff-range mapping is
- * well-formed. Teams are not selected in the wizard anymore, so there is no
- * team-partition check here; the playoff ranges are validated with a team
- * count of 0, which skips the upper-bound check while still catching
- * inverted, overlapping, or unmapped ranges.
+ * Validates the zones step (HU-106 — STRUCTURE ONLY): every zone has a unique
+ * name and every configured cup is well-formed (name + qualifier count). The
+ * standings→cup position ranges are DERIVED from the cups (HU-112), so there
+ * is no manual range editor to validate; the "ranges fit the teams" check runs
+ * later, at assignment/start, as a completability rule (HU-109).
  */
 export const validateZonesStep = (state: WizardState): ValidationResult => {
   const errors: string[] = [];
@@ -164,14 +116,6 @@ export const validateZonesStep = (state: WizardState): ValidationResult => {
 
   state.zones.forEach(zone => {
     errors.push(...validateCups(zone.cups, `la zona "${zone.name || '(sin nombre)'}"`));
-    errors.push(
-      ...validatePlayoffMappings(
-        zone.playoffMappings,
-        0,
-        zone.cups.map(cup => cup.name),
-        `la zona "${zone.name || '(sin nombre)'}"`
-      )
-    );
   });
 
   return errors;
@@ -200,15 +144,9 @@ export const validateCrossCupStep = (state: WizardState): ValidationResult => {
     errors.push('Debe clasificar al menos un equipo por grupo en la copa cruzada.');
   }
 
-  errors.push(...validateCups(crossCup.cups, 'la copa cruzada'));
-  errors.push(
-    ...validatePlayoffMappings(
-      crossCup.playoffMappings,
-      0,
-      crossCup.cups.map(cup => cup.name),
-      'la copa cruzada'
-    )
-  );
+  // The cross cup's cups derive their qualifiers from its groups, so only the
+  // name/uniqueness is validated here.
+  errors.push(...validateCups(crossCup.cups, 'la copa cruzada', false));
 
   return errors;
 };
@@ -226,11 +164,17 @@ export interface WizardTreeNode {
   tag?: string;
 }
 
-const describeCup = (cup: CupConfig): string => {
-  const roundsSummary = cup.rounds
-    .map(round => `${STAGE_TYPE_LABELS[round.stageType]} Bo${round.bestOf}`)
-    .join(', ');
-  return `${cup.name || '(sin nombre)'}${roundsSummary ? ` (${roundsSummary})` : ''}`;
+/**
+ * Describes a cup for the review tree (HU-112): its name, how many qualify,
+ * the series format, and the derived bracket rounds. `qualifiers` defaults to
+ * the cup's own count but the cross cup passes its pooled group total.
+ */
+const describeCup = (cup: CupConfig, qualifiers = cup.qualifiers): string => {
+  const rounds = qualifiersToStageTypes(qualifiers)
+    .map(stageType => STAGE_TYPE_LABELS[stageType])
+    .join(' → ');
+  const serie = cup.bestOf === 1 ? 'partido único' : `mejor de ${cup.bestOf}`;
+  return `${cup.name || '(sin nombre)'} — ${qualifiers} clasifican, ${serie} (${rounds})`;
 };
 
 const buildGroupAndCupNodes = (
@@ -285,6 +229,7 @@ export const buildWizardTree = (state: WizardState): WizardTreeNode[] => {
 
   if (state.crossCup.enabled) {
     const { groupCount, qualifiersPerGroup, roundRobinLegs, cups } = state.crossCup;
+    const pooledQualifiers = groupCount * qualifiersPerGroup;
 
     nodes.push({
       id: 'cross-cup',
@@ -315,7 +260,7 @@ export const buildWizardTree = (state: WizardState): WizardTreeNode[] => {
     });
 
     cups.forEach(cup => {
-      nodes.push({ id: cup.id, depth: 3, label: describeCup(cup) });
+      nodes.push({ id: cup.id, depth: 3, label: describeCup(cup, pooledQualifiers) });
     });
   }
 
