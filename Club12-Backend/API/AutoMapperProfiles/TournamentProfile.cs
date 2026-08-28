@@ -23,6 +23,12 @@ public class TournamentProfile : Profile
 
         _ = CreateMap<CreateTournamentRequest, Tournament>();
 
-        _ = CreateMap<UpdateTournamentRequest, Tournament>();
+        // Status is intentionally NOT mapped here: a status change is a
+        // guarded state-machine transition (with fixture side effects), driven
+        // through TournamentService.ChangeStatusAsync — never a blind field
+        // overwrite from a generic update. The generic update only touches the
+        // tournament's descriptive fields.
+        _ = CreateMap<UpdateTournamentRequest, Tournament>()
+            .ForMember(dest => dest.Status, opt => opt.Ignore());
     }
 }

@@ -44,16 +44,6 @@ public class TournamentResponse : BaseEntityResponse
     public required DateTime StartDate { get; set; }
 
     /// <summary>
-    /// The maximum number of teams allowed to participate in the tournament.
-    /// </summary>
-    public required int MaxTeams { get; set; }
-
-    /// <summary>
-    /// The minimum number of teams required to hold the tournament.
-    /// </summary>
-    public required int MinTeams { get; set; }
-
-    /// <summary>
     /// Current lifecycle status of the tournament.
     /// </summary>
     public TournamentStatus Status { get; set; }

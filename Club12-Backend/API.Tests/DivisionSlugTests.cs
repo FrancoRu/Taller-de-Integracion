@@ -1,6 +1,7 @@
 using Application.Interfaces.Services;
 
 using Domain.Entities.Models;
+using Domain.Enums;
 
 using Infrastructure.Persistance;
 
@@ -148,8 +149,7 @@ public class DivisionSlugTests : IClassFixture<CustomWebApplicationFactory>
             Slug = $"tournament-{Guid.NewGuid()}",
             TeamRegistrationDeadline = startDate.AddDays(-1),
             StartDate = startDate,
-            MaxTeams = 8,
-            MinTeams = 2,
+            Status = TournamentStatus.OpenForRegistration,
             Divisions = [],
             Teams = [],
             CreatedBy = "test",

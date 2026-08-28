@@ -124,8 +124,6 @@ public sealed class DataMaintenanceService(ApplicationDBContext db, ILogger<Data
             StageEndDate: new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
             FinishedMatchesStart: new DateTime(2026, 6, 8, 0, 0, 0, DateTimeKind.Utc),
             UpcomingMatchesStart: new DateTime(2026, 9, 7, 0, 0, 0, DateTimeKind.Utc),
-            MinTeams: 4,
-            MaxTeams: 16,
             Divisions:
             [
                 new("Primera División", Tournament1PrimeraNames, Tournament1PrimeraCodes, Tournament1PrimeraColors),
@@ -141,8 +139,6 @@ public sealed class DataMaintenanceService(ApplicationDBContext db, ILogger<Data
             StageEndDate: new DateTime(2027, 1, 15, 0, 0, 0, DateTimeKind.Utc),
             FinishedMatchesStart: new DateTime(2026, 10, 8, 0, 0, 0, DateTimeKind.Utc),
             UpcomingMatchesStart: new DateTime(2026, 12, 14, 0, 0, 0, DateTimeKind.Utc),
-            MinTeams: 4,
-            MaxTeams: 16,
             Divisions:
             [
                 new("Primera División", Tournament2PrimeraNames, Tournament2PrimeraCodes, Tournament2PrimeraColors),

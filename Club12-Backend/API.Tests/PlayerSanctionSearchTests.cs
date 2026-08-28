@@ -146,8 +146,6 @@ public class PlayerSanctionSearchTests : IClassFixture<CustomWebApplicationFacto
             Slug = $"tournament-{Guid.NewGuid()}",
             TeamRegistrationDeadline = issuedDate.AddDays(-1),
             StartDate = issuedDate,
-            MaxTeams = 8,
-            MinTeams = 2,
             Divisions = [],
             Teams = [],
             CreatedBy = "test",

@@ -22,8 +22,6 @@ public class TournamentEntityConfiguration : BaseEntityConfiguration<Tournament>
         builder.Property(t => t.Description).IsRequired();
         builder.Property(t => t.TeamRegistrationDeadline).IsRequired();
         builder.Property(t => t.StartDate).IsRequired();
-        builder.Property(t => t.MaxTeams).IsRequired();
-        builder.Property(t => t.MinTeams).IsRequired();
         builder.Property(t => t.Status).HasDefaultValue(TournamentStatus.Scheduled).IsRequired();
 
         builder.HasIndex(t => t.Slug).IsUnique();

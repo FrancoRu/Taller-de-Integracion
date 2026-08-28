@@ -19,6 +19,14 @@ public static class MaxTeams
     public const int GROUP = 4;
 
     /// <summary>
+    /// Upper bound on how many teams a single manually-built Group stage (one
+    /// zone's whole round-robin phase) may hold. Used only as a sanity ceiling
+    /// in <see cref="Application.Services.StageService.AssignTeamsToStageAsync"/>;
+    /// unrelated to the auto-generator's fixed per-group <see cref="GROUP"/> size.
+    /// </summary>
+    public const int GROUP_STAGE_CAP = 32;
+
+    /// <summary>
     /// Maximum number of teams in the quarter-final stage.
     /// </summary>
     public const int QUARTER_FINAL = 8;

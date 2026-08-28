@@ -5,7 +5,6 @@ using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Utils.Constants;
 using Application.Utils.Constants.Stage;
-using Application.Utils.Constants.Validation;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.Playoff;
 using Application.Utils.Helper.Slug;
@@ -311,7 +310,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
         // ceiling the tournament itself enforces instead of the
         // auto-generator's per-group size.
         int maxTeams = stage.StageType == StageType.Group
-            ? TournamentFieldRange.MaxAllowedTeams
+            ? MaxTeams.GROUP_STAGE_CAP
             : StageHelper.GetMaxTeamsForStage(stage.StageType);
         int availableSlots = maxTeams - existingMatches.Count();
 

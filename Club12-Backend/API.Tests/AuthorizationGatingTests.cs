@@ -131,8 +131,6 @@ public class AuthorizationGatingTests : IClassFixture<CustomWebApplicationFactor
             Description = "Authorization gating test tournament",
             StartDate = startDate,
             TeamRegistrationDeadline = startDate.AddDays(-1),
-            MinTeams = 4,
-            MaxTeams = 32,
         };
     }
 }

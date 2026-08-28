@@ -141,8 +141,6 @@ public class StageSlugTests : IClassFixture<CustomWebApplicationFactory>
             Slug = $"tournament-{Guid.NewGuid()}",
             TeamRegistrationDeadline = startDate.AddDays(-1),
             StartDate = startDate,
-            MaxTeams = 8,
-            MinTeams = 2,
             Divisions = [],
             Teams = [],
             CreatedBy = "test",

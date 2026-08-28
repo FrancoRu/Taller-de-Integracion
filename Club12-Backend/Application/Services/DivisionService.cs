@@ -4,6 +4,7 @@ using Application.DTOs.Match.Request;
 using Application.DTOs.Stage.Request;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 using Application.Utils.Constants.Pagination;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.Slug;
@@ -40,6 +41,8 @@ public class DivisionService(
     /// <returns>The created Division entity.</returns>
     public async Task<Division> CreateDivisionAsync(Division divisionEntity)
     {
+        await EnsureTournamentAllowsStructuralChangesAsync(divisionEntity.TournamentId);
+
         divisionEntity.Slug = await SlugGenerator.GenerateUniqueSlugAsync(
             divisionEntity.Name,
             candidate => divisionRepository.ExistsAsync(division => division.Slug == candidate));
@@ -63,7 +66,28 @@ public class DivisionService(
     /// <param name="divisionEntity">The division entity with updated values.</param>
     public async Task UpdateDivisionAsync(Division divisionEntity)
     {
+        await EnsureTournamentAllowsStructuralChangesAsync(divisionEntity.TournamentId);
+
         await divisionRepository.UpdateAsync(divisionEntity);
+    }
+
+    /// <summary>
+    /// Guards structural changes (HU-31): divisions may only be created or
+    /// edited while their tournament is
+    /// <see cref="TournamentStatus.OpenForRegistration"/>. Once registration
+    /// has closed (or the tournament is Scheduled/Ongoing/Finished/Canceled)
+    /// the structure is frozen. A division pointing at a tournament that does
+    /// not exist is left for the normal not-found handling downstream.
+    /// </summary>
+    private async Task EnsureTournamentAllowsStructuralChangesAsync(Guid tournamentId)
+    {
+        Tournament? tournament = await tournamentRepository.GetByIdAsync(tournamentId);
+
+        if (tournament is not null && tournament.Status != TournamentStatus.OpenForRegistration)
+        {
+            throw new InvalidOperationException(
+                ErrorMessages.Tournament.StructuralEditNotAllowed(tournament.Status));
+        }
     }
 
     /// <summary>

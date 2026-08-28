@@ -65,6 +65,29 @@ public static class ErrorMessages
         }
     }
 
+    public static class Tournament
+    {
+        public static string NotFound(System.Guid tournamentId)
+        {
+            return $"There is no Tournament with id: {tournamentId}.";
+        }
+
+        public static string InvalidStatusTransition(
+            Domain.Enums.TournamentStatus from, Domain.Enums.TournamentStatus to)
+        {
+            return $"Cannot change tournament status from '{from}' to '{to}'. " +
+                "Allowed flow is Scheduled -> OpenForRegistration -> RegistrationClosed -> " +
+                "Ongoing -> Finished; a tournament may be Canceled from any non-terminal state, " +
+                "and Finished/Canceled are terminal.";
+        }
+
+        public static string StructuralEditNotAllowed(Domain.Enums.TournamentStatus status)
+        {
+            return $"Structural changes (divisions and team registrations) are only allowed while " +
+                $"the tournament is OpenForRegistration; this tournament is '{status}'.";
+        }
+    }
+
     public static class Team
     {
         public static string NotFound(System.Guid teamId)

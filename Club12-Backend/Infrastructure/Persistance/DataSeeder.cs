@@ -59,8 +59,6 @@ public sealed class DataSeeder(ApplicationDBContext db, ILogger<DataSeeder> logg
             StageEndDate: new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
             FinishedMatchesStart: new DateTime(2026, 6, 8, 0, 0, 0, DateTimeKind.Utc),
             UpcomingMatchesStart: new DateTime(2026, 9, 7, 0, 0, 0, DateTimeKind.Utc),
-            MinTeams: 4,
-            MaxTeams: 16,
             Divisions:
             [
                 new(  "Primera División", PrimeraTeamNames, PrimeraTeamCodes, PrimeraTeamColors),

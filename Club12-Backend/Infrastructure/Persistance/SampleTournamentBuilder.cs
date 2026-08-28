@@ -52,8 +52,6 @@ public static class SampleTournamentBuilder
         DateTime StageEndDate,
         DateTime FinishedMatchesStart,
         DateTime UpcomingMatchesStart,
-        int MinTeams,
-        int MaxTeams,
         DivisionDefinition[] Divisions);
 
     public sealed record BuildResult(Tournament Tournament, List<PlayerSanction> Sanctions);
@@ -83,8 +81,6 @@ public static class SampleTournamentBuilder
             Description = definition.Description,
             TeamRegistrationDeadline = definition.TeamRegistrationDeadline,
             StartDate = definition.StartDate,
-            MinTeams = definition.MinTeams,
-            MaxTeams = definition.MaxTeams,
             Status = TournamentStatus.Ongoing,
             Divisions = [],
             Teams = [],

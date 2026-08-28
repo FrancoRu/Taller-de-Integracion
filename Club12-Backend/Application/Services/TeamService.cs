@@ -2,11 +2,13 @@
 using Application.DTOs.Team.Request;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.Slug;
 
 using Domain.Constants;
 using Domain.Entities.Models;
+using Domain.Enums;
 
 using LinqKit;
 
@@ -246,6 +248,15 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task RegisterTeamsToTournamentAsync(Tournament tournament, List<Guid> teamIds)
     {
+        // Structural guard (HU-31): team registrations may only be added or
+        // removed while the tournament is OpenForRegistration. Once
+        // registration closes the roster is frozen.
+        if (tournament.Status != TournamentStatus.OpenForRegistration)
+        {
+            throw new InvalidOperationException(
+                ErrorMessages.Tournament.StructuralEditNotAllowed(tournament.Status));
+        }
+
         HashSet<Guid> targetTeamIds = [.. teamIds];
 
         List<TeamTournamentRegistration> existingRegistrations =

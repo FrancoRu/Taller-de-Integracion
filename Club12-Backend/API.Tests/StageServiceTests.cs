@@ -456,7 +456,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         Assert.DoesNotContain(assignedTeamIds, teamBIds.Contains);
     }
 
-    private static async Task<Tournament> SeedTournamentAsync(ApplicationDBContext db, int maxTeams = 64)
+    private static async Task<Tournament> SeedTournamentAsync(ApplicationDBContext db)
     {
         DateTime startDate = DateTime.UtcNow.Date.AddDays(30);
 
@@ -467,8 +467,6 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
             Slug = $"tournament-{Guid.NewGuid()}",
             TeamRegistrationDeadline = startDate.AddDays(-1),
             StartDate = startDate,
-            MaxTeams = maxTeams,
-            MinTeams = 2,
             Divisions = [],
             Teams = [],
             CreatedBy = "test",
@@ -509,7 +507,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
 
     private static async Task<(Tournament tournament, List<Team> teams)> SeedTournamentWithTeamsAsync(ApplicationDBContext db, int teamCount)
     {
-        Tournament tournament = await SeedTournamentAsync(db, Math.Max(teamCount, 2));
+        Tournament tournament = await SeedTournamentAsync(db);
         List<Team> teams = await SeedTeamsAsync(db, tournament, teamCount);
 
         return (tournament, teams);

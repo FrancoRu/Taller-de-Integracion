@@ -211,8 +211,6 @@ public class PlayerTeamRegistrationTests : IClassFixture<CustomWebApplicationFac
             Slug = $"{name.ToLowerInvariant().Replace(' ', '-')}-{Guid.NewGuid()}",
             TeamRegistrationDeadline = startDate.AddDays(-1),
             StartDate = startDate,
-            MaxTeams = 32,
-            MinTeams = 2,
             Divisions = [],
             Teams = [],
             CreatedBy = "test",

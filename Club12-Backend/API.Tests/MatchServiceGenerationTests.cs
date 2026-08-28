@@ -346,8 +346,6 @@ public class MatchServiceGenerationTests : IClassFixture<CustomWebApplicationFac
             Slug = $"tournament-{Guid.NewGuid()}",
             TeamRegistrationDeadline = start.AddDays(-1),
             StartDate = start,
-            MaxTeams = 64,
-            MinTeams = 2,
             Divisions = [],
             Teams = [],
             CreatedBy = "test",
