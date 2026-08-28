@@ -46,6 +46,7 @@ app.UseSwaggerConfig(builder.Environment)
     .UseCors()
     .UseAuthentication()
     .UseAuthorization()
+    .UseMiddleware<MaintenanceModeMiddleware>()
     .UseMiddleware<MustChangePasswordMiddleware>()
     .UseExceptionHandlerConfig()
     .UseLoggingToRequestContextMiddleware(builder.Configuration);

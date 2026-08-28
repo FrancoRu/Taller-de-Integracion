@@ -39,6 +39,7 @@ public static class ConfigurationKeys
     public static class Backup
     {
         public const string PgDumpPath = "Backup:PgDumpPath";
+        public const string PsqlPath = "Backup:PsqlPath";
     }
 
     public static class Supabase

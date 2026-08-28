@@ -57,4 +57,20 @@ public sealed class FakeSupabaseRawStorage : ISupabaseRawStorage
         RemovedPaths.Add(objectPath);
         return Task.CompletedTask;
     }
+
+    public List<string> DownloadedPaths { get; } = [];
+
+    /// <summary>Bytes returned by DownloadRawAsync.</summary>
+    public byte[] DownloadContent { get; set; } = Array.Empty<byte>();
+
+    public Task<Stream> DownloadRawAsync(string objectPath)
+    {
+        if (ExceptionToThrow is not null)
+        {
+            throw ExceptionToThrow;
+        }
+
+        DownloadedPaths.Add(objectPath);
+        return Task.FromResult<Stream>(new MemoryStream(DownloadContent));
+    }
 }

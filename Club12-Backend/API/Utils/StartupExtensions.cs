@@ -4,7 +4,9 @@ using API.Utils.Middlewares;
 
 using Application.Backup;
 using Application.Interfaces.Backup;
+using Application.Interfaces.Maintenance;
 using Application.Interfaces.Mappers;
+using Application.Maintenance;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Interfaces.Storage;
@@ -506,6 +508,14 @@ public static class StartupExtensions
         services.AddSingleton<IBackupRetentionPolicy, KeepLastNRetentionPolicy>();
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IDatabaseBackupService, PgDumpBackupService>();
+        services.AddSingleton<IDatabaseRestoreService, PgRestoreService>();
+
+        // HU-92 maintenance lock (shared by the middleware and the manual
+        // backup/restore services) and the HU-91/HU-93 orchestrators. All are
+        // singletons: they depend only on the singleton backup ports above.
+        services.AddSingleton<IMaintenanceState, MaintenanceState>();
+        services.AddSingleton<IManualBackupService, ManualBackupService>();
+        services.AddSingleton<IBackupRestoreService, BackupRestoreService>();
 
         if (string.Equals(options.StorageTarget, BackupStorageTargets.Supabase, StringComparison.OrdinalIgnoreCase))
         {

@@ -173,6 +173,26 @@ public class SupabaseHelper : ISupabaseRawStorage
     }
 
     /// <summary>
+    /// Downloads the raw object at <paramref name="objectPath"/> from the
+    /// bucket and returns its bytes as a readable stream. Additive: does not
+    /// affect the image-shaped helpers or the other raw operations.
+    /// </summary>
+    /// <param name="objectPath">The exact object path within the bucket.</param>
+    /// <exception cref="InvalidOperationException">Thrown when the download fails.</exception>
+    public async Task<Stream> DownloadRawAsync(string objectPath)
+    {
+        try
+        {
+            byte[] bytes = await _client.Storage.From(_bucketName).Download(objectPath, (EventHandler<float>?)null);
+            return new MemoryStream(bytes);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException(ErrorMessages.Storage.ListFailed(ex.Message), ex);
+        }
+    }
+
+    /// <summary>
     /// Reads all bytes from a given Stream using the Stream.Read method in chunks,
     /// and returns the entire content as a byte array.
     /// </summary>

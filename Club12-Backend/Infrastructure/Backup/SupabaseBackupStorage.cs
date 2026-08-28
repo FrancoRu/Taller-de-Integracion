@@ -79,6 +79,21 @@ public sealed class SupabaseBackupStorage(ISupabaseRawStorage rawStorage) : IBac
         }
     }
 
+    public async Task<Stream> RetrieveAsync(string name, CancellationToken ct = default)
+    {
+        string objectPath = ToObjectPath(name);
+
+        try
+        {
+            return await rawStorage.DownloadRawAsync(objectPath);
+        }
+        catch (Exception ex)
+        {
+            throw new BackupExecutionException(
+                $"Failed to retrieve backup '{name}' from Supabase storage: {ex.Message}", ex);
+        }
+    }
+
     /// <summary>
     /// Resolves <paramref name="name"/> against the backups/ prefix
     /// and throws ArgumentException unless it is a simple,

@@ -67,6 +67,18 @@ public sealed class LocalDirectoryBackupStorage : IBackupStorage
         return Task.CompletedTask;
     }
 
+    public Task<Stream> RetrieveAsync(string name, CancellationToken ct = default)
+    {
+        string path = ResolveSafePath(name);
+        if (!File.Exists(path))
+        {
+            throw new BackupExecutionException($"Backup '{name}' was not found in local storage.");
+        }
+
+        Stream stream = File.OpenRead(path);
+        return Task.FromResult(stream);
+    }
+
     /// <summary>
     /// Resolves <paramref name="name"/> against the configured directory and
     /// throws ArgumentException unless the resolved path stays
