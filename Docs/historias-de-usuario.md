@@ -889,8 +889,10 @@ cierran esa brecha.)*
     duro**; no se puede iniciar hasta que todo sea completable.
 - **Reglas (criterio de básquet):**
   1. Cada división/zona que juega tiene **≥ 2 equipos** asignados (no hay grupo ni bracket con 0-1).
-  2. Todo equipo **inscripto** está asignado a **exactamente una** división (sin huérfanos; no en dos
-     zonas, HU-42).
+  2. Todo equipo **inscripto** está asignado a **exactamente una zona regular** (división con
+     `IsCrossDivisionCup=false`): sin huérfanos y no en dos zonas (HU-42). **La copa cruzada NO cuenta
+     como zona**: es una competencia paralela que incluye equipos de todas las zonas, así que un
+     equipo juega su zona **y** la copa cruzada (HU-47) sin violar esta regla.
   3. **Copa cruzada** (HU-47): cantidad de grupos ≤ equipos; cada grupo **≥ 2**. El playoff soporta
      **BYE** para no-potencias-de-2 (HU-82).
   4. **Mapeos de playoff** (HU-45): si un rango arranca más allá de la cantidad de equipos de esa
