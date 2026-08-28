@@ -469,9 +469,11 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
     /// Creates the group stage's matches from a round-robin fixture organised
     /// by matchday (jornada, HU-63/HU-65). The number of rounds is derived from
     /// the team count and <see cref="Stage.RoundRobinLegs"/>; every match is
-    /// tagged with its 1-based <see cref="Match.Round"/> and given a default
-    /// Sunday date for that round (HU-65). Round numbers — not the calendar
-    /// date — are the canonical fixture grouping.
+    /// tagged with its 1-based <see cref="Match.Round"/> and given a default,
+    /// division-aware weekly date for that round (HU-65/HU-111): regular zones
+    /// on Sundays, a cross-division cup shifted to a different weekday so its
+    /// jornadas never collide with the zones a shared team also plays in. Round
+    /// numbers — not the calendar date — are the canonical fixture grouping.
     /// <para>
     /// When <paramref name="teamIds"/> unambiguously matches
     /// <paramref name="totalTeams"/>, each match is seeded with a home/visitor
@@ -497,9 +499,18 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
         List<(Guid HomeTeamId, Guid VisitorTeamId, int Round)> fixture =
             RoundRobinScheduler.GenerateRounds(rosterForSchedule, stage.RoundRobinLegs);
 
+        // HU-111: lay the jornadas out weekly, division-aware. Regular zones
+        // keep the Sunday baseline; a cross-division-cup stage is shifted to a
+        // different weekday so a team playing both its zone and the cup never
+        // has two jornadas on the same day. Coordinated here (not at the
+        // tournament level) so BOTH the manual single-stage generate endpoint
+        // and the tournament-start fixture trigger (GenerateFixtureAsync, which
+        // calls this same path) get the anti-collision schedule.
+        bool isCrossDivisionCup = stage.Division?.IsCrossDivisionCup ?? false;
+
         foreach ((Guid homeTeamId, Guid visitorTeamId, int round) in fixture)
         {
-            Match match = BuildMatch(stage, RoundCalendar.SundayForRound(stage.StartDate, round), MatchType.Regular);
+            Match match = BuildMatch(stage, RoundCalendar.DateForRound(stage.StartDate, round, isCrossDivisionCup), MatchType.Regular);
             match.Round = round;
 
             if (seeded)

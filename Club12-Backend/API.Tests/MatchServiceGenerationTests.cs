@@ -400,6 +400,115 @@ public class MatchServiceGenerationTests : IClassFixture<CustomWebApplicationFac
         Assert.Equal([1, 1, 2, 2, 3, 3], rounds);
     }
 
+    /// <summary>
+    /// HU-111: a group-stage fixture is laid out by jornada, weekly. Every match
+    /// sharing a <see cref="Match.Round"/> is dated the same calendar day, and
+    /// successive rounds are exactly seven days apart. Dates only: the time
+    /// component is a neutral midnight and no venue is assigned, so the admin
+    /// fills real time/venue later (HU-66/HU-67).
+    /// </summary>
+    [Fact]
+    public async Task CreateAutomatedMatchesAsync_GroupStage_SameRoundSharesDate_RoundsAreWeekly_NeutralTimeNoVenue()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IMatchService matchService = scope.ServiceProvider.GetRequiredService<IMatchService>();
+
+        DateTime start = new(2026, 3, 2, 0, 0, 0, DateTimeKind.Utc); // Fixed anchor keeps the assertions deterministic.
+        (_, _, List<Stage> stages, _) = await SeedGroupStageWithTeamsAsync(db, teamsPerGroup: 4, groupCount: 1, start, start.AddDays(60));
+
+        List<Match> matches = await matchService.CreateAutomatedMatchesAsync(stages[0].Id);
+
+        // 4 teams => 3 rounds of 2 matches each.
+        List<IGrouping<int, Match>> byRound = [.. matches.GroupBy(m => m.Round!.Value).OrderBy(g => g.Key)];
+        Assert.Equal(3, byRound.Count);
+
+        // Every match in a round shares exactly one calendar date.
+        Assert.All(byRound, group => Assert.Single(group.Select(m => m.MatchDate).Distinct()));
+
+        // Successive rounds are exactly one week apart.
+        List<DateTime> roundDates = [.. byRound.Select(group => group.First().MatchDate)];
+        for (int i = 0; i < roundDates.Count; i++)
+        {
+            Assert.Equal(roundDates[0].AddDays(7 * i), roundDates[i]);
+        }
+
+        // Dates only: neutral midnight time, no venue.
+        Assert.All(matches, m => Assert.Equal(TimeSpan.Zero, m.MatchDate.TimeOfDay));
+        Assert.All(matches, m => Assert.Null(m.VenueId));
+    }
+
+    /// <summary>
+    /// HU-111 core anti-collision guarantee: a team belongs to its zone AND the
+    /// cross-division cup, so the two fixtures must never place a jornada on the
+    /// same day. Regular zones are dated on Sundays; the cross cup is shifted to
+    /// a different fixed weekday (Wednesday), so no calendar date is ever shared
+    /// between the two fixtures on any jornada.
+    /// </summary>
+    [Fact]
+    public async Task CreateAutomatedMatchesAsync_RegularZoneAndCrossCup_SameTournament_NeverShareADate()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IMatchService matchService = scope.ServiceProvider.GetRequiredService<IMatchService>();
+
+        DateTime start = new(2026, 3, 2, 0, 0, 0, DateTimeKind.Utc); // Fixed anchor keeps the assertions deterministic.
+
+        (Tournament tournament, Division zone) = await SeedDivisionAsync(db);
+        Stage zoneStage = (await SeedGroupStagesAsync(db, zone, groupCount: 1, start, start.AddDays(60)))[0];
+        List<Team> zoneTeams = await SeedTeamsAsync(db, 4, tournament.Id);
+        await AssignTeamsToStageAsync(db, zoneStage, zoneTeams);
+
+        Division cup = await SeedCrossCupDivisionAsync(db, tournament);
+        Stage cupStage = (await SeedGroupStagesAsync(db, cup, groupCount: 1, start, start.AddDays(60)))[0];
+        List<Team> cupTeams = await SeedTeamsAsync(db, 4, tournament.Id);
+        await AssignTeamsToStageAsync(db, cupStage, cupTeams);
+
+        List<Match> zoneMatches = await matchService.CreateAutomatedMatchesAsync(zoneStage.Id);
+        List<Match> cupMatches = await matchService.CreateAutomatedMatchesAsync(cupStage.Id);
+
+        // Zones land on Sundays; the cross cup on a different fixed weekday.
+        Assert.NotEmpty(zoneMatches);
+        Assert.NotEmpty(cupMatches);
+        Assert.All(zoneMatches, m => Assert.Equal(DayOfWeek.Sunday, m.MatchDate.DayOfWeek));
+        Assert.All(cupMatches, m => Assert.Equal(DayOfWeek.Wednesday, m.MatchDate.DayOfWeek));
+
+        // The core guarantee: no jornada of either fixture ever shares a date.
+        HashSet<DateTime> zoneDates = [.. zoneMatches.Select(m => m.MatchDate)];
+        HashSet<DateTime> cupDates = [.. cupMatches.Select(m => m.MatchDate)];
+        Assert.Empty(zoneDates.Intersect(cupDates));
+    }
+
+    private static async Task<Division> SeedCrossCupDivisionAsync(ApplicationDBContext db, Tournament tournament)
+    {
+        Division cup = new()
+        {
+            Slug = $"cross-cup-{Guid.NewGuid()}",
+            Name = $"Cross-Cup-{Guid.NewGuid()}",
+            Tournament = tournament,
+            TournamentId = tournament.Id,
+            IsCrossDivisionCup = true,
+            Stages = [],
+            CreatedBy = "test",
+        };
+
+        db.Divisions.Add(cup);
+        await db.SaveChangesAsync();
+
+        return cup;
+    }
+
+    private static async Task AssignTeamsToStageAsync(ApplicationDBContext db, Stage stage, List<Team> teams)
+    {
+        db.StageTeamMatches.AddRange(teams.Select(t => new StageTeamMatch
+        {
+            StageId = stage.Id,
+            TeamId = t.Id,
+            CreatedBy = "test",
+        }));
+        await db.SaveChangesAsync();
+    }
+
     private static async Task<List<Team>> SeedTeamsAsync(ApplicationDBContext db, int count, Guid? tournamentId = null)
     {
         List<Team> teams = [];
