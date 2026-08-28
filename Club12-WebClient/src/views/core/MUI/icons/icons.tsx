@@ -42,6 +42,8 @@ import ScienceIcon from '@mui/icons-material/Science';
 import MedicalInformationIcon from '@mui/icons-material/MedicalInformation';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import EventBusyIcon from '@mui/icons-material/EventBusy';
+import NumbersIcon from '@mui/icons-material/Numbers';
+import HistoryIcon from '@mui/icons-material/History';
 
 export {
   DeleteIcon,
@@ -88,4 +90,6 @@ export {
   MedicalInformationIcon,
   UploadFileIcon,
   EventBusyIcon,
+  NumbersIcon,
+  HistoryIcon,
 };

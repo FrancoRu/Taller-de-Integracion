@@ -17,10 +17,13 @@ import {
   PlayerFiltered,
   IPlayerResponse,
   IPutPlayerRequest,
+  IRegisterPlayerToTeamRequest,
+  PlayerRegistrationResult,
 } from '@/modules/player/type/player.d';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { playerKeys } from '@/modules/player/queryKeys';
 import { HttpStatus } from '@/modules/core/constants/httpStatus';
+import { mapRosterConflictMessage } from '@/modules/player/utils/rosterConflict';
 
 export const PlayerContext = createContext<IPlayerContextProps | undefined>(
   undefined
@@ -47,6 +50,16 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
 
   const deletePlayerMutation = useMutation({
     mutationFn: playerService.deletePlayerById,
+  });
+
+  const registerPlayerMutation = useMutation({
+    mutationFn: ({
+      playerId,
+      request,
+    }: {
+      playerId: GUID;
+      request: IRegisterPlayerToTeamRequest;
+    }) => playerService.registerPlayerToTeam(playerId, request),
   });
 
   useEffect(() => {
@@ -158,6 +171,35 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
     [deletePlayerMutation, queryClient, handleUnknownError]
   );
 
+  /**
+   * Unlike the other mutations, this one does not funnel a failure through the
+   * global error handler: the roster invariants (HU-54) come back as a 409 the
+   * caller must surface inline with the exact reason, so we translate the
+   * conflict into a discriminated result instead of swallowing it. On success
+   * the player/team lists are invalidated so the refreshed dorsal is picked up.
+   */
+  const registerPlayerToTeam = useCallback(
+    async (
+      playerId: GUID,
+      request: IRegisterPlayerToTeamRequest
+    ): Promise<PlayerRegistrationResult> => {
+      try {
+        const res = await registerPlayerMutation.mutateAsync({
+          playerId,
+          request,
+        });
+        await queryClient.invalidateQueries({ queryKey: playerKeys.list() });
+        return { success: true, data: res.data };
+      } catch (error: unknown) {
+        return {
+          success: false,
+          errorMessage: mapRosterConflictMessage(error),
+        };
+      }
+    },
+    [registerPlayerMutation, queryClient]
+  );
+
   const container: IPlayerContextProps = useMemo(
     () => ({
       player,
@@ -167,6 +209,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
       getPlayersByFilter,
       putPlayerById,
       deletePlayerById,
+      registerPlayerToTeam,
     }),
     [
       player,
@@ -176,6 +219,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
       getPlayersByFilter,
       putPlayerById,
       deletePlayerById,
+      registerPlayerToTeam,
     ]
   );
   return (

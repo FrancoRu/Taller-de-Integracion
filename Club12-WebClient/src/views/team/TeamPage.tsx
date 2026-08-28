@@ -122,6 +122,16 @@ const TeamPage: React.FC<TeamPageProps> = ({
     return map;
   }, [team?.players]);
 
+  // Per-player dorsal for this season roster, so the plantel can show the
+  // number and prefill the assign-dorsal dialog (HU-54).
+  const jerseyByPlayerId = useMemo(() => {
+    const map = new Map<GUID, number | null | undefined>();
+    (team?.players ?? []).forEach(player =>
+      map.set(player.id, player.jerseyNumber)
+    );
+    return map;
+  }, [team?.players]);
+
   const refreshTeam = useCallback(() => {
     if (!targetTeamId) return;
     void getTeamById(targetTeamId);
@@ -280,6 +290,7 @@ const TeamPage: React.FC<TeamPageProps> = ({
           wrapInCard={false}
           tournamentId={team.tournamentId}
           medicalByPlayerId={medicalByPlayerId}
+          jerseyByPlayerId={jerseyByPlayerId}
           onMedicalChange={refreshTeam}
         />
       )}

@@ -12,7 +12,9 @@ import {
   IAddPlayerRequest,
   PlayerFiltered,
   IPlayerResponse,
+  IPlayerRegistrationResponse,
   IPutPlayerRequest,
+  IRegisterPlayerToTeamRequest,
 } from '@/modules/player/type/player';
 
 /**
@@ -74,4 +76,18 @@ export const playerService = {
    */
   deletePlayerById: async (id: GUID): Promise<AxiosResponse<void>> =>
     sendDelete(`${routes.players}/${id}`),
+
+  /**
+   * Registers a player onto a team's roster for a season, optionally assigning
+   * a dorsal (HU-54). The backend enforces the roster invariants and answers
+   * with a 409 Conflict when one is violated.
+   * @param {GUID} playerId - The player to register.
+   * @param {IRegisterPlayerToTeamRequest} request - Team, tournament and dorsal.
+   * @returns {Promise<AxiosResponse<IPlayerRegistrationResponse>>} The outcome.
+   */
+  registerPlayerToTeam: async (
+    playerId: GUID,
+    request: IRegisterPlayerToTeamRequest
+  ): Promise<AxiosResponse<IPlayerRegistrationResponse>> =>
+    sendPost(`${routes.players}/${playerId}/registration`, request),
 };

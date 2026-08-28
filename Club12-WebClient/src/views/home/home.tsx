@@ -23,6 +23,10 @@ import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { BLOG_HOME_EXCERPT_LENGTH } from '@/modules/blogPost/constants/blogPost';
 import { TournamentCard } from '@/views/home/tournaments/PublicTournamentsPage';
 import BasketballCourtPattern from '@/views/core/components/BasketballCourtPattern';
+import {
+  DEFAULT_PAGE_METADATA,
+  usePageMetadata,
+} from '@/modules/core/utils/pageMetadata';
 
 const FEATURED_TOURNAMENTS_COUNT = 3;
 const LATEST_POSTS_COUNT = 3;
@@ -52,6 +56,9 @@ const formatPostDate = (value: Date | string) => {
 };
 
 export default function Home() {
+  // HU-17: sensible default social/SEO metadata for the landing page.
+  usePageMetadata(DEFAULT_PAGE_METADATA);
+
   const navigate = useNavigate();
   const { tournaments, getAllTournamentsByFilter } = useTournament();
   const { getBlogPostsByFilters, getBlogPostsById } = useBlogPost();

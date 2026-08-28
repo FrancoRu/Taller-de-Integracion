@@ -10,6 +10,7 @@ import {
   ExpandMoreIcon,
   GavelIcon,
   GroupsIcon,
+  HistoryIcon,
   LockIcon,
   LogoutIcon,
   ManageAccountsSharpIcon,
@@ -64,6 +65,7 @@ const TAB_ICONS: Record<string, React.ReactNode> = {
   Blog: <ArticleIcon />,
   Configuracion: <SettingsIcon />,
   Estadisticas: <BarChartIcon />,
+  Auditoria: <HistoryIcon />,
   Test: <ScienceIcon />,
   CambiarPassword: <LockIcon />,
   EditarPerfil: <BadgeIcon />,
@@ -161,6 +163,11 @@ const TABS_BY_ROLE: Record<UserRolesType, NavTab[]> = {
     { label: 'Usuarios', path: APP_ROUTES.panelUsers, icon: TAB_ICONS['Usuarios'] },
     { label: 'Blog', path: APP_ROUTES.panelBlog, icon: TAB_ICONS['Blog'] },
     {
+      label: 'Registro de auditoría',
+      path: APP_ROUTES.panelAuditLogs,
+      icon: TAB_ICONS['Auditoria'],
+    },
+    {
       label: 'Configuración',
       icon: TAB_ICONS['Configuracion'],
       children: CONFIGURATION_CHILDREN,
@@ -183,6 +190,11 @@ const TABS_BY_ROLE: Record<UserRolesType, NavTab[]> = {
       label: 'Estadisticas',
       path: APP_ROUTES.panelStatistics,
       icon: TAB_ICONS['Estadisticas'],
+    },
+    {
+      label: 'Registro de auditoría',
+      path: APP_ROUTES.panelAuditLogs,
+      icon: TAB_ICONS['Auditoria'],
     },
     {
       label: 'Administración de datos',

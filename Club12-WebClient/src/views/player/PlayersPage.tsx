@@ -20,6 +20,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import {
   confirmDelete,
+  notifyError,
   notifySuccess,
   notifyWarning,
 } from '@/modules/core/utils/confirmDialog';
@@ -41,6 +42,7 @@ import {
   DeleteIcon,
   EditIcon,
   MedicalInformationIcon,
+  NumbersIcon,
   SearchIcon,
   VisibilityIcon,
 } from '@/views/core/MUI/icons/icons';
@@ -102,6 +104,8 @@ interface PlayersPageProps {
   tournamentId?: GUID | null;
   /** Per-player medical/eligibility signal keyed by player id (from the roster). */
   medicalByPlayerId?: Map<GUID, PlayerMedicalInfo>;
+  /** Per-player dorsal (jersey number) keyed by player id (from the roster, HU-54). */
+  jerseyByPlayerId?: Map<GUID, number | null | undefined>;
   /** Called after a medical record is uploaded/reviewed so the roster can refresh. */
   onMedicalChange?: () => void;
 }
@@ -128,6 +132,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   onCreate,
   tournamentId,
   medicalByPlayerId,
+  jerseyByPlayerId,
   onMedicalChange,
 }) => {
   const navigate = useNavigate();
@@ -137,6 +142,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     putPlayerById,
     getPlayersByFilter,
     deletePlayerById,
+    registerPlayerToTeam,
   } = usePlayer();
   const { teams, getTeamsByFiltered } = useTeam();
   const [loading, setLoading] = useState(false);
@@ -163,12 +169,36 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   const [medicalPlayer, setMedicalPlayer] = useState<IPlayerResponse | null>(
     null
   );
+  const [dorsalPlayer, setDorsalPlayer] = useState<IPlayerResponse | null>(
+    null
+  );
+  const [dorsalValue, setDorsalValue] = useState('');
 
   const medicalEnabled = Boolean(teamId && tournamentId);
+  // HU-54: assigning a dorsal is a season-roster operation, so it needs both a
+  // team and a tournament in scope — same precondition as the medical record.
+  const rosterEnabled = medicalEnabled;
+
+  const currentDorsalFor = useCallback(
+    (row: IPlayerResponse): number | null | undefined =>
+      jerseyByPlayerId?.get(row.id) ?? row.jerseyNumber,
+    [jerseyByPlayerId]
+  );
 
   const handleOpenMedical = useCallback((row: IPlayerResponse) => {
     setMedicalPlayer(row);
   }, []);
+
+  const handleOpenDorsal = useCallback(
+    (row: IPlayerResponse) => {
+      const dorsal = currentDorsalFor(row);
+      setDorsalValue(
+        dorsal === null || dorsal === undefined ? '' : String(dorsal)
+      );
+      setDorsalPlayer(row);
+    },
+    [currentDorsalFor]
+  );
 
   const fetchPlayers = useCallback(
     async (
@@ -305,6 +335,13 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         hidden: !medicalEnabled,
       },
       {
+        label: 'Dorsal',
+        color: 'info',
+        icon: <NumbersIcon fontSize="small" />,
+        onClick: handleOpenDorsal,
+        hidden: !rosterEnabled,
+      },
+      {
         label: 'Editar',
         color: 'primary',
         icon: <EditIcon fontSize="small" />,
@@ -317,7 +354,15 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         onClick: handleDelete,
       },
     ],
-    [handleDelete, handleEdit, handleOpenMedical, handleView, medicalEnabled]
+    [
+      handleDelete,
+      handleEdit,
+      handleOpenDorsal,
+      handleOpenMedical,
+      handleView,
+      medicalEnabled,
+      rosterEnabled,
+    ]
   );
 
   const columns: GridColDef<IPlayerResponse>[] = useMemo(() => {
@@ -350,6 +395,21 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       },
     ];
 
+    if (rosterEnabled) {
+      baseColumns.push({
+        field: 'jerseyNumber',
+        headerName: 'Dorsal',
+        flex: 0.5,
+        minWidth: 100,
+        sortable: false,
+        filterable: false,
+        renderCell: params => {
+          const dorsal = currentDorsalFor(params.row);
+          return dorsal === null || dorsal === undefined ? '—' : dorsal;
+        },
+      });
+    }
+
     if (medicalEnabled) {
       baseColumns.push({
         field: 'habilitacion',
@@ -371,7 +431,13 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     }
 
     return [...baseColumns, buildActionsColumn(playerActions)];
-  }, [medicalByPlayerId, medicalEnabled, playerActions]);
+  }, [
+    currentDorsalFor,
+    medicalByPlayerId,
+    medicalEnabled,
+    playerActions,
+    rosterEnabled,
+  ]);
 
   const rows = useMemo(() => players ?? [], [players]);
   const teamOptions = useMemo(() => teams ?? [], [teams]);
@@ -506,6 +572,57 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     await notifySuccess({
       title: 'Jugador actualizado',
       text: 'El jugador se actualizó correctamente.',
+    });
+  };
+
+  const handleDorsalSubmit = async () => {
+    if (!dorsalPlayer || !teamId || !tournamentId) {
+      return;
+    }
+
+    const trimmed = dorsalValue.trim();
+    let jerseyNumber: number | null = null;
+
+    if (trimmed !== '') {
+      const parsed = Number(trimmed);
+      if (!Number.isInteger(parsed) || parsed <= 0) {
+        void notifyWarning({
+          title: 'Dorsal inválido',
+          text: 'El dorsal debe ser un número entero positivo.',
+        });
+        return;
+      }
+      jerseyNumber = parsed;
+    }
+
+    setSubmitting(true);
+    const result = await registerPlayerToTeam(dorsalPlayer.id, {
+      teamId,
+      tournamentId,
+      jerseyNumber,
+    });
+    setSubmitting(false);
+
+    if (!result.success) {
+      // HU-54: surface the exact roster conflict (duplicate dorsal / roster
+      // full / player already in another team of this tournament).
+      await notifyError({
+        title: 'No se pudo asignar el dorsal',
+        text: result.errorMessage,
+      });
+      return;
+    }
+
+    setDorsalPlayer(null);
+    setDorsalValue('');
+    onMedicalChange?.();
+    await fetchPlayers(debouncedFilters, paginationModel);
+    await notifySuccess({
+      title: 'Dorsal actualizado',
+      text:
+        jerseyNumber === null
+          ? 'Se quitó el dorsal del jugador.'
+          : `Se asignó el dorsal ${jerseyNumber}.`,
     });
   };
 
@@ -841,6 +958,44 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               resetPlayerForm();
             }}
             onConfirm={() => void handleEditSubmit()}
+            confirmLabel="Guardar"
+            disabled={submitting}
+          />
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(dorsalPlayer)}
+        onClose={() => !submitting && setDorsalPlayer(null)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Asignar dorsal</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {dorsalPlayer && (
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                {dorsalPlayer.fullName}
+              </Typography>
+            )}
+            <TextField
+              label="Dorsal"
+              type="number"
+              value={dorsalValue}
+              onChange={e => setDorsalValue(e.target.value)}
+              fullWidth
+              helperText="Único por equipo y temporada. Dejar vacío para quitarlo."
+              slotProps={{ htmlInput: { min: 1, step: 1 } }}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <FormButtons
+            onCancel={() => {
+              setDorsalPlayer(null);
+              setDorsalValue('');
+            }}
+            onConfirm={() => void handleDorsalSubmit()}
             confirmLabel="Guardar"
             disabled={submitting}
           />

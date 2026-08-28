@@ -5,6 +5,7 @@ import {
   Box,
   Card,
   CardContent,
+  Chip,
   InputAdornment,
   Stack,
   TextField,
@@ -138,6 +139,20 @@ const BlogPostsPage: React.FC = () => {
     const baseColumns: GridColDef<BlogPostResponse>[] = [
       { field: 'title', headerName: 'Título', flex: 1.4, minWidth: 200 },
       { field: 'author', headerName: 'Autor', flex: 1, minWidth: 150 },
+      {
+        field: 'isPublished',
+        headerName: 'Estado',
+        flex: 0.7,
+        minWidth: 120,
+        sortable: false,
+        filterable: false,
+        renderCell: params =>
+          params.row.isPublished ? (
+            <Chip size="small" color="success" variant="outlined" label="Publicada" />
+          ) : (
+            <Chip size="small" color="warning" label="Borrador" />
+          ),
+      },
       { field: 'views', headerName: 'Vistas', flex: 0.5, minWidth: 90 },
       {
         field: 'createdAt',

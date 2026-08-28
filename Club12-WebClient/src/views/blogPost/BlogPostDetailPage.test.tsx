@@ -20,6 +20,7 @@ const buildPost = (
   views: 0,
   markdownText: 'contenido',
   createdAt: new Date('2026-01-01'),
+  isPublished: true,
   ...overrides,
 });
 

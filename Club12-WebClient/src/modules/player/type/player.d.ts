@@ -57,7 +57,52 @@ export interface IPlayerContextProps {
    * @returns A promise that resolves when the player is successfully deleted.
    */
   deletePlayerById(id: GUID): Promise<void>;
+
+  /**
+   * Registers a player onto a team's roster for a tournament season,
+   * optionally assigning a dorsal (HU-54). Resolves with a discriminated
+   * result so callers can surface the specific roster-invariant conflict
+   * (duplicate dorsal / roster full / already in another team) returned as a
+   * 409 by the backend.
+   * @param playerId The player to register.
+   * @param request The team, tournament and optional dorsal.
+   */
+  registerPlayerToTeam(
+    playerId: GUID,
+    request: IRegisterPlayerToTeamRequest
+  ): Promise<PlayerRegistrationResult>;
 }
+
+/**
+ * The request body for registering a player onto a team roster (HU-54).
+ * @interface IRegisterPlayerToTeamRequest
+ */
+export interface IRegisterPlayerToTeamRequest {
+  teamId: GUID;
+  tournamentId: GUID;
+  /** The dorsal to assign for this team/season, or null to leave it unset. */
+  jerseyNumber?: number | null;
+}
+
+/**
+ * The successful outcome of a roster registration (HU-54).
+ * @interface IPlayerRegistrationResponse
+ */
+export interface IPlayerRegistrationResponse {
+  playerId: GUID;
+  teamId: GUID;
+  tournamentId: GUID;
+  jerseyNumber?: number | null;
+}
+
+/**
+ * Discriminated result of {@link IPlayerContextProps.registerPlayerToTeam}:
+ * either the registration succeeded, or it failed with a user-facing message
+ * mapped from the backend roster conflict (HU-54).
+ */
+export type PlayerRegistrationResult =
+  | { success: true; data: IPlayerRegistrationResponse }
+  | { success: false; errorMessage: string };
 
 /**
  * The filter criteria for fetching players, which includes the player's name and document number.
@@ -182,6 +227,14 @@ export interface IPlayerResponse extends IAddPlayerRequest {
    * @type {boolean}
    */
   isHabilitado?: boolean;
+
+  /**
+   * The player's dorsal (jersey number) for this season roster (HU-54). Null
+   * or undefined when unassigned or when the roster was not loaded for a
+   * specific season.
+   * @type {number}
+   */
+  jerseyNumber?: number | null;
 }
 
 export interface IPublicPlayerResponse {
@@ -235,6 +288,13 @@ export interface IPublicPlayerResponse {
    * @type {boolean}
    */
   isHabilitado?: boolean;
+
+  /**
+   * The player's dorsal (jersey number) for this season roster (HU-54). Null
+   * or undefined when unassigned.
+   * @type {number}
+   */
+  jerseyNumber?: number | null;
 }
 
 /**

@@ -1,6 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Box, Button, Card, CardContent, CircularProgress, Stack, TextField, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CircularProgress,
+  FormControlLabel,
+  Stack,
+  Switch,
+  TextField,
+  Typography,
+} from '@mui/material';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { GUID } from '@/modules/core/types/types';
@@ -43,6 +54,7 @@ const BlogPostEditPage: React.FC = () => {
     author: '',
     title: '',
     markdownText: '',
+    isPublished: true,
   });
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
   const [photoFile, setPhotoFile] = useState<File | undefined>(undefined);
@@ -63,6 +75,7 @@ const BlogPostEditPage: React.FC = () => {
           author: post.author,
           title: post.title,
           markdownText: post.markdownText,
+          isPublished: post.isPublished,
         });
         setPhotoUrl(post.photoUrl);
       } else {
@@ -113,6 +126,7 @@ const BlogPostEditPage: React.FC = () => {
       title: form.title.trim(),
       author: form.author.trim(),
       markdownText: form.markdownText,
+      isPublished: form.isPublished,
     });
 
     if (!updated) {
@@ -206,6 +220,22 @@ const BlogPostEditPage: React.FC = () => {
             onChange={content => setForm(prev => ({ ...prev, markdownText: content }))}
             modules={quillModules}
             style={{ height: 200, marginBottom: 40 }}
+          />
+
+          <FormControlLabel
+            control={
+              <Switch
+                checked={form.isPublished ?? true}
+                onChange={(_, checked) =>
+                  setForm(prev => ({ ...prev, isPublished: checked }))
+                }
+              />
+            }
+            label={
+              form.isPublished
+                ? 'Publicada (visible en el sitio)'
+                : 'Borrador (no visible al público)'
+            }
           />
 
           <Stack direction="row" sx={{

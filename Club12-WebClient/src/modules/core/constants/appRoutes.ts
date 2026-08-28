@@ -116,5 +116,6 @@ export const APP_ROUTES = {
   panelChangePassword: '/panel/configuracion/cambiar-password',
   panelEditProfile: '/panel/configuracion/editar-perfil',
   panelStatistics: '/panel/estadisticas',
+  panelAuditLogs: '/panel/auditoria',
   panelTest: '/panel/test',
 } as const;

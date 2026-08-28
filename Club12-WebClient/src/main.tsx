@@ -20,6 +20,7 @@ import { PlayerStatisticProvider } from './modules/playerStatistic/context/playe
 import { ScorerProvider } from './modules/scorer/context/scorer.context';
 import { BlogPostProvider } from './modules/blogPost/context/blogPost.context';
 import { MedicalRecordProvider } from './modules/medicalRecord/context/medicalRecord.context';
+import { AuditLogProvider } from './modules/auditLog/context/auditLog.context';
 import ErrorBoundary from './views/core/errors/error-boundary';
 import ComposeProviders from './views/core/components/ComposeProviders';
 import QueryProvider from './views/core/components/QueryProvider';
@@ -47,6 +48,7 @@ const providers: ComponentType<{ children: ReactNode }>[] = [
   PlayerStatisticProvider,
   BlogPostProvider,
   MedicalRecordProvider,
+  AuditLogProvider,
 ];
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
