@@ -39,6 +39,8 @@ import FacebookIcon from '@mui/icons-material/Facebook';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import ScienceIcon from '@mui/icons-material/Science';
+import MedicalInformationIcon from '@mui/icons-material/MedicalInformation';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 export {
   DeleteIcon,
@@ -82,4 +84,6 @@ export {
   LightModeIcon,
   DarkModeIcon,
   ScienceIcon,
+  MedicalInformationIcon,
+  UploadFileIcon,
 };

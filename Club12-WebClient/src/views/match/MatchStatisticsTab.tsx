@@ -29,6 +29,8 @@ import {
 } from '@/modules/playerStatistic/type/playerStatistic';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
+import HabilitacionBadge from '@/views/medicalRecord/HabilitacionBadge';
+import { resolveIsHabilitado } from '@/modules/medicalRecord/utils/medicalRecordDisplay';
 
 interface MatchStatisticsTabProps {
   match: IMatchResponse;
@@ -200,7 +202,24 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
                 <TableBody>
                   {teamPlayers.map(player => (
                     <TableRow key={player.id}>
-                      <TableCell>{player.fullName}</TableCell>
+                      <TableCell>
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          sx={{ alignItems: 'center' }}
+                        >
+                          <span>{player.fullName}</span>
+                          {!resolveIsHabilitado(
+                            player.isHabilitado,
+                            player.medicalRecordStatus
+                          ) && (
+                            <HabilitacionBadge
+                              isHabilitado={player.isHabilitado}
+                              status={player.medicalRecordStatus}
+                            />
+                          )}
+                        </Stack>
+                      </TableCell>
                       <TableCell align="center">
                         {pointsByPlayer[player.id] ?? 0}
                       </TableCell>
@@ -274,7 +293,24 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
             <TableBody>
               {(activeTeam?.players ?? []).map(player => (
                 <TableRow key={player.id}>
-                  <TableCell>{player.fullName}</TableCell>
+                  <TableCell>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      sx={{ alignItems: 'center' }}
+                    >
+                      <span>{player.fullName}</span>
+                      {!resolveIsHabilitado(
+                        player.isHabilitado,
+                        player.medicalRecordStatus
+                      ) && (
+                        <HabilitacionBadge
+                          isHabilitado={player.isHabilitado}
+                          status={player.medicalRecordStatus}
+                        />
+                      )}
+                    </Stack>
+                  </TableCell>
                   <TableCell align="center">
                     <TextField
                       type="number"

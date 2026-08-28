@@ -40,12 +40,22 @@ import NewEntityButton from '@/views/core/components/NewEntityButton';
 import {
   DeleteIcon,
   EditIcon,
+  MedicalInformationIcon,
   SearchIcon,
   VisibilityIcon,
 } from '@/views/core/MUI/icons/icons';
 import { useTeam } from '@/modules/team/hook/team.hook';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { FILTERS_DEBOUNCE_DELAY_LONG_MS } from '@/modules/core/constants/constants';
+import { MedicalRecordStatus } from '@/modules/core/enum/medicalRecord/medicalRecordStatus';
+import HabilitacionBadge from '@/views/medicalRecord/HabilitacionBadge';
+import PlayerMedicalRecordDialog from '@/views/medicalRecord/PlayerMedicalRecordDialog';
+
+/** Per-player medical / eligibility signal keyed by player id (HU-57/HU-62). */
+export interface PlayerMedicalInfo {
+  status?: MedicalRecordStatus | null;
+  isHabilitado?: boolean;
+}
 
 type PlayersSearchFilters = Pick<
   PlayerFiltered,
@@ -83,6 +93,17 @@ interface PlayersPageProps {
   wrapInCard?: boolean;
   createType?: string;
   onCreate?: () => void;
+  /**
+   * When set, the roster shows the per-player habilitación badge and a
+   * "ficha médica" action scoped to this tournament (HU-55/57/58). The medical
+   * record is scoped to player + team + tournament, so both `teamId` and
+   * `tournamentId` are required to enable it.
+   */
+  tournamentId?: GUID | null;
+  /** Per-player medical/eligibility signal keyed by player id (from the roster). */
+  medicalByPlayerId?: Map<GUID, PlayerMedicalInfo>;
+  /** Called after a medical record is uploaded/reviewed so the roster can refresh. */
+  onMedicalChange?: () => void;
 }
 
 const getDateValue = (value?: Date) => {
@@ -105,6 +126,9 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   wrapInCard = true,
   createType = 'Jugador',
   onCreate,
+  tournamentId,
+  medicalByPlayerId,
+  onMedicalChange,
 }) => {
   const navigate = useNavigate();
   const {
@@ -136,6 +160,15 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   );
   const [playerForm, setPlayerForm] =
     useState<PlayerFormState>(INITIAL_PLAYER_FORM);
+  const [medicalPlayer, setMedicalPlayer] = useState<IPlayerResponse | null>(
+    null
+  );
+
+  const medicalEnabled = Boolean(teamId && tournamentId);
+
+  const handleOpenMedical = useCallback((row: IPlayerResponse) => {
+    setMedicalPlayer(row);
+  }, []);
 
   const fetchPlayers = useCallback(
     async (
@@ -265,6 +298,13 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         onClick: handleView,
       },
       {
+        label: 'Ficha médica',
+        color: 'secondary',
+        icon: <MedicalInformationIcon fontSize="small" />,
+        onClick: handleOpenMedical,
+        hidden: !medicalEnabled,
+      },
+      {
         label: 'Editar',
         color: 'primary',
         icon: <EditIcon fontSize="small" />,
@@ -277,7 +317,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         onClick: handleDelete,
       },
     ],
-    [handleDelete, handleEdit, handleView]
+    [handleDelete, handleEdit, handleOpenMedical, handleView, medicalEnabled]
   );
 
   const columns: GridColDef<IPlayerResponse>[] = useMemo(() => {
@@ -310,8 +350,28 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       },
     ];
 
+    if (medicalEnabled) {
+      baseColumns.push({
+        field: 'habilitacion',
+        headerName: 'Habilitación',
+        flex: 0.9,
+        minWidth: 150,
+        sortable: false,
+        filterable: false,
+        renderCell: params => {
+          const info = medicalByPlayerId?.get(params.row.id);
+          return (
+            <HabilitacionBadge
+              isHabilitado={info?.isHabilitado ?? params.row.isHabilitado}
+              status={info?.status ?? params.row.medicalRecordStatus}
+            />
+          );
+        },
+      });
+    }
+
     return [...baseColumns, buildActionsColumn(playerActions)];
-  }, [playerActions]);
+  }, [medicalByPlayerId, medicalEnabled, playerActions]);
 
   const rows = useMemo(() => players ?? [], [players]);
   const teamOptions = useMemo(() => teams ?? [], [teams]);
@@ -786,6 +846,29 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
           />
         </DialogActions>
       </Dialog>
+
+      {medicalEnabled && teamId && tournamentId && medicalPlayer && (
+        <PlayerMedicalRecordDialog
+          open={Boolean(medicalPlayer)}
+          onClose={() => setMedicalPlayer(null)}
+          playerId={medicalPlayer.id}
+          teamId={teamId}
+          tournamentId={tournamentId}
+          playerName={medicalPlayer.fullName}
+          status={
+            medicalByPlayerId?.get(medicalPlayer.id)?.status ??
+            medicalPlayer.medicalRecordStatus
+          }
+          isHabilitado={
+            medicalByPlayerId?.get(medicalPlayer.id)?.isHabilitado ??
+            medicalPlayer.isHabilitado
+          }
+          onChanged={() => {
+            onMedicalChange?.();
+            void fetchPlayers(debouncedFilters, paginationModel);
+          }}
+        />
+      )}
     </>
   );
 

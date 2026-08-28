@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Button,
@@ -20,7 +20,9 @@ import { usePlayerStatistic } from '@/modules/playerStatistic/hook/playerStatist
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import TeamLogo from '@/views/core/components/TeamLogo';
-import PlayersPage from '@/views/player/PlayersPage';
+import PlayersPage, {
+  PlayerMedicalInfo,
+} from '@/views/player/PlayersPage';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PlayerStatisticCreatePage from '@/views/playerStatistic/playerStatisticCreatePage';
 import PlayerSanctionCreatePage from '@/views/playerSanction/playerSanctionCreatePage';
@@ -106,6 +108,24 @@ const TeamPage: React.FC<TeamPageProps> = ({
     (team?.players ?? []).forEach(player => map.set(player.id, player.fullName));
     return map;
   }, [team?.players]);
+
+  // Per-player habilitación / medical status for this season roster, so the
+  // plantel can show the badge and drive the ficha-médica dialog (HU-57/HU-62).
+  const medicalByPlayerId = useMemo(() => {
+    const map = new Map<GUID, PlayerMedicalInfo>();
+    (team?.players ?? []).forEach(player =>
+      map.set(player.id, {
+        status: player.medicalRecordStatus,
+        isHabilitado: player.isHabilitado,
+      })
+    );
+    return map;
+  }, [team?.players]);
+
+  const refreshTeam = useCallback(() => {
+    if (!targetTeamId) return;
+    void getTeamById(targetTeamId);
+  }, [getTeamById, targetTeamId]);
 
   if (!targetTeamId) {
     return (
@@ -258,6 +278,9 @@ const TeamPage: React.FC<TeamPageProps> = ({
           title={undefined}
           emptyMessage="Este equipo no tiene jugadores cargados."
           wrapInCard={false}
+          tournamentId={team.tournamentId}
+          medicalByPlayerId={medicalByPlayerId}
+          onMedicalChange={refreshTeam}
         />
       )}
 

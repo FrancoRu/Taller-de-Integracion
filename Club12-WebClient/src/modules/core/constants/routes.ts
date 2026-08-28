@@ -7,6 +7,7 @@ const routes = {
   stages: 'stages',
   matches: 'matches',
   matchSeries: 'match-series',
+  medicalRecords: 'medical-records',
   players: 'players',
   scorer: 'scorer',
   playerSanctions: 'player-sanctions',

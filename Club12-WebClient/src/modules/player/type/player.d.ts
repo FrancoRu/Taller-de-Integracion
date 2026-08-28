@@ -3,6 +3,7 @@ import {
   GenericResponsePagination,
   GUID,
 } from '@/modules/core/types/types';
+import { MedicalRecordStatus } from '@/modules/core/enum/medicalRecord/medicalRecordStatus';
 
 /**
  * Context properties and methods for managing players in a sports system.
@@ -167,6 +168,20 @@ export interface IPlayerResponse extends IAddPlayerRequest {
   club: string;
 
   category: string;
+
+  /**
+   * The player's medical-record status for the season roster this response
+   * belongs to (HU-57), when the backend populated it for a specific season.
+   * @type {MedicalRecordStatus}
+   */
+  medicalRecordStatus?: MedicalRecordStatus | null;
+
+  /**
+   * Whether the player is habilitado (medical record Approved) for this
+   * season roster (HU-57).
+   * @type {boolean}
+   */
+  isHabilitado?: boolean;
 }
 
 export interface IPublicPlayerResponse {
@@ -205,6 +220,21 @@ export interface IPublicPlayerResponse {
    * @type {GUID}
    */
   teamId: GUID;
+
+  /**
+   * The player's medical-record status for the season roster this response
+   * belongs to (HU-57). Null/undefined when the roster was not loaded for a
+   * specific season.
+   * @type {MedicalRecordStatus}
+   */
+  medicalRecordStatus?: MedicalRecordStatus | null;
+
+  /**
+   * Whether the player is habilitado (medical record Approved) for this
+   * season roster (HU-57), so the UI can flag not-habilitado players (HU-62).
+   * @type {boolean}
+   */
+  isHabilitado?: boolean;
 }
 
 /**
