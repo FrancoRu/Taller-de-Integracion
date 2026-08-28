@@ -56,12 +56,14 @@ export const venueService = {
     await sendGet(routes.venues),
 
   /**
-   * Retrieves a venue by its ID.
-   * @param {string} id - The ID of the venue to retrieve.
+   * Retrieves a venue by its ID or its public slug.
+   * @param {string} idOrSlug - The ID or slug of the venue to retrieve.
    * @returns {Promise<AxiosResponse<IVenueResponse>>} The server response containing the venue details.
    */
-  getVenueById: async (id: GUID): Promise<AxiosResponse<IVenueResponse>> =>
-    await sendGet(`${routes.venues}/${id}`),
+  getVenueById: async (
+    idOrSlug: string
+  ): Promise<AxiosResponse<IVenueResponse>> =>
+    await sendGet(`${routes.venues}/${idOrSlug}`),
 
   /**
    * Deletes a venue by its ID.

@@ -121,10 +121,10 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const getStageById = useCallback(
-    async (id: GUID): Promise<IStageResponse | void> => {
+    async (idOrSlug: string): Promise<IStageResponse | void> => {
       try {
         const existingStage: IStageResponse | undefined = stages?.find(
-          e => e.id == id
+          e => e.id === idOrSlug || e.slug === idOrSlug
         );
 
         if (existingStage) {
@@ -134,8 +134,8 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
 
         const res: AxiosResponse<IStageResponse> = await queryClient.fetchQuery(
           {
-            queryKey: stageKeys.byId(id),
-            queryFn: async () => await stageService.getStagesById(id),
+            queryKey: stageKeys.byId(idOrSlug),
+            queryFn: async () => await stageService.getStagesById(idOrSlug),
           }
         );
 

@@ -38,11 +38,11 @@ export interface IDivisionContextProps {
   ): Promise<boolean | void>;
 
   /**
-   * Fetches a division by its ID.
-   * @param id The ID of the division to fetch.
+   * Fetches a division by its ID or its public slug.
+   * @param idOrSlug The ID or slug of the division to fetch.
    * @returns A promise that resolves with the division data.
    */
-  getDivisionsById(id: GUID): Promise<IDivisionResponse | void>;
+  getDivisionsById(idOrSlug: string): Promise<IDivisionResponse | void>;
 
   /**
    * Fetches divisions based on filters and pagination.
@@ -104,6 +104,12 @@ export interface IDivisionResponse {
    * @type {string}
    */
   name: string;
+
+  /**
+   * The unique, URL-friendly identifier used in public division links.
+   * @type {string}
+   */
+  slug: string;
 
   /**
    * Indicates whether the division has finished.

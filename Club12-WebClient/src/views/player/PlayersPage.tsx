@@ -213,7 +213,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
 
   const handleView = useCallback(
     (row: IPlayerResponse) => {
-      navigate(APP_ROUTES.panelPlayer.build(row.id));
+      navigate(APP_ROUTES.panelPlayer.build(row.slug));
     },
     [navigate]
   );

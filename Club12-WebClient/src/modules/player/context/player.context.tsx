@@ -75,15 +75,15 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
 
   const getPlayerById = useCallback(
     async (
-      id: GUID,
+      idOrSlug: string,
       isAdministrative: boolean = false
     ): Promise<IPlayerResponse | void> => {
       try {
         const res: AxiosResponse<IPlayerResponse> =
           await queryClient.fetchQuery({
-            queryKey: playerKeys.byId(id, isAdministrative),
+            queryKey: playerKeys.byId(idOrSlug, isAdministrative),
             queryFn: async () =>
-              await playerService.getPlayerById(id, isAdministrative),
+              await playerService.getPlayerById(idOrSlug, isAdministrative),
           });
 
         if (res) {

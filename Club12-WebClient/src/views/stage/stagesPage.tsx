@@ -218,7 +218,7 @@ const StagesPage: React.FC<StagesPageProps> = ({
 
   const handleView = useCallback(
     (row: IStageResponse) => {
-      navigate(APP_ROUTES.panelStage.build(row.id));
+      navigate(APP_ROUTES.panelStage.build(row.slug));
     },
     [navigate]
   );

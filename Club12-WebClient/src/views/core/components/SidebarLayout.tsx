@@ -1,10 +1,8 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  AccountTreeSharpIcon,
   AppRegistrationIcon,
   ArticleIcon,
-  AutoAwesomeIcon,
   BadgeIcon,
   BarChartIcon,
   EmojiEventsIcon,
@@ -15,20 +13,22 @@ import {
   LockIcon,
   LogoutIcon,
   ManageAccountsSharpIcon,
+  MenuIcon,
   PeopleIcon,
   PersonIcon,
   ScienceIcon,
   SettingsIcon,
   ShieldIcon,
-  SportsBasketballSharpIcon,
   SportsIcon,
   StadiumIcon,
   StarIcon,
 } from '@/views/core/MUI/icons/icons';
 import {
+  AppBar,
   Box,
   Collapse,
   Drawer,
+  IconButton,
   List,
   ListItemButton,
   ListItemIcon,
@@ -60,10 +60,6 @@ const TAB_ICONS: Record<string, React.ReactNode> = {
   Equipos: <ShieldIcon />,
   Registro: <AppRegistrationIcon />,
   Torneos: <EmojiEventsIcon />,
-  AsistenteDeTorneo: <AutoAwesomeIcon />,
-  Divisiones: <SportsBasketballSharpIcon />,
-  Fases: <AccountTreeSharpIcon />,
-  Partidos: <SportsIcon />,
   Usuarios: <PeopleIcon />,
   Blog: <ArticleIcon />,
   Configuracion: <SettingsIcon />,
@@ -92,37 +88,24 @@ const CONFIGURATION_CHILDREN: NavTab[] = [
 /**
  * Tournament-structure pages: Admin, Owner and TournamentManager can all
  * reach these (mirrors the AdminOwnerOrTournamentManager backend policy on
- * TournamentController/DivisionController/StageController/MatchController/
- * PlayerSanctionController/VenueController). Kept separate from
- * ADMINISTRATION_CHILDREN below, which also includes Puntuaciones — Admin
- * is not authorized for that one — so Admin's sidebar never links to a
- * page that bounces to /forbidden.
+ * TournamentController/PlayerSanctionController/VenueController). Kept
+ * separate from ADMINISTRATION_CHILDREN below, which also includes
+ * Puntuaciones — Admin is not authorized for that one — so Admin's sidebar
+ * never links to a page that bounces to /forbidden.
+ *
+ * HU-26: Divisiones, Fases and Partidos are no longer standalone sidebar
+ * entries — they are managed from within a tournament (the tournament
+ * detail view drills into its divisions, stages and matches). HU-27: the
+ * tournament wizard ("Asistente de torneo") is reached only via the
+ * "Nuevo torneo" button on the tournaments page, not from the sidebar.
+ * The underlying routes (panelDivisions/panelStages/panelMatches/
+ * panelTournamentWizard) still exist and stay reachable from those flows.
  */
 const TOURNAMENT_STRUCTURE_CHILDREN: NavTab[] = [
   {
     label: 'Torneos',
     path: APP_ROUTES.panelTournaments,
     icon: TAB_ICONS['Torneos'],
-  },
-  {
-    label: 'Asistente de torneo',
-    path: APP_ROUTES.panelTournamentWizard,
-    icon: TAB_ICONS['AsistenteDeTorneo'],
-  },
-  {
-    label: 'Divisiones',
-    path: APP_ROUTES.panelDivisions,
-    icon: TAB_ICONS['Divisiones'],
-  },
-  {
-    label: 'Fases',
-    path: APP_ROUTES.panelStages,
-    icon: TAB_ICONS['Fases'],
-  },
-  {
-    label: 'Partidos',
-    path: APP_ROUTES.panelMatches,
-    icon: TAB_ICONS['Partidos'],
   },
   {
     label: 'Sanciones',
@@ -222,7 +205,7 @@ const TABS_BY_ROLE: Record<UserRolesType, NavTab[]> = {
       icon: TAB_ICONS['Estadisticas'],
     },
     {
-      label: 'Test',
+      label: 'Administración de datos',
       path: APP_ROUTES.panelTest,
       icon: TAB_ICONS['Test'],
     },
@@ -244,11 +227,23 @@ const SidebarLayout: React.FC<{ children: React.ReactNode }> = ({
     Configuracion: location.pathname.startsWith(APP_ROUTES.panelSettings),
   });
 
+  // HU-105: on small screens the drawer is a temporary overlay toggled from
+  // the top app bar; on md+ it stays permanent. This flag drives the overlay.
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+
   const tabs = TABS_BY_ROLE[role] ?? [];
+
+  // Navigate and, on mobile, close the temporary drawer so it doesn't cover
+  // the page the user just opened.
+  const handleNavigate = (path: string) => {
+    navigate(path);
+    setMobileOpen(false);
+  };
 
   // HU-03: after signing out, redirect to the public home instead of staying
   // on the (now unauthenticated) panel URL, which would render a 404.
   const handleLogOut = async () => {
+    setMobileOpen(false);
     await logOut();
     navigate(APP_ROUTES.home);
   };
@@ -318,7 +313,7 @@ const SidebarLayout: React.FC<{ children: React.ReactNode }> = ({
                         selected={Boolean(
                           child.path && location.pathname.startsWith(child.path)
                         )}
-                        onClick={() => child.path && navigate(child.path)}
+                        onClick={() => child.path && handleNavigate(child.path)}
                         disabled={child.disabled}
                         sx={{
                           mx: 1,
@@ -351,7 +346,7 @@ const SidebarLayout: React.FC<{ children: React.ReactNode }> = ({
               selected={Boolean(
                 tab.path && location.pathname.startsWith(tab.path)
               )}
-              onClick={() => tab.path && navigate(tab.path)}
+              onClick={() => tab.path && handleNavigate(tab.path)}
               sx={{
                 mx: 1,
                 borderRadius: 1,
@@ -386,33 +381,96 @@ const SidebarLayout: React.FC<{ children: React.ReactNode }> = ({
     </Box>
   );
 
+  const drawerPaperSx = {
+    width: DRAWER_WIDTH,
+    boxSizing: 'border-box',
+    backgroundColor: 'background.paper',
+    borderRight: '1px solid',
+    borderColor: 'divider',
+  } as const;
+
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      <Drawer
-        variant="permanent"
+      {/* HU-105: compact top bar shown only on small screens, hosting the
+          hamburger that toggles the temporary navigation drawer. */}
+      <AppBar
+        position="fixed"
+        color="default"
+        elevation={1}
         sx={{
-          width: DRAWER_WIDTH,
-          flexShrink: 0,
-          '& .MuiDrawer-paper': {
-            width: DRAWER_WIDTH,
-            boxSizing: 'border-box',
-            backgroundColor: 'background.paper',
-            borderRight: '1px solid',
-            borderColor: 'divider',
-          },
+          display: { xs: 'flex', md: 'none' },
+          backgroundColor: 'background.paper',
         }}
       >
-        {drawerContent}
-      </Drawer>
+        <Toolbar sx={{ gap: 1 }}>
+          <IconButton
+            edge="start"
+            aria-label="Abrir menú de navegación"
+            onClick={() => setMobileOpen(true)}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              bgcolor: LOGO_BACKGROUND_COLOR,
+              borderRadius: 1.5,
+              p: 0.5,
+            }}
+          >
+            <Box
+              component="img"
+              src="/assets/logo-club12.png"
+              alt="Club 12"
+              sx={{ height: 32, width: 'auto', display: 'block' }}
+            />
+          </Box>
+        </Toolbar>
+      </AppBar>
+
+      <Box
+        component="nav"
+        sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}
+      >
+        {/* Temporary overlay drawer for xs/sm. */}
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={() => setMobileOpen(false)}
+          sx={{
+            display: { xs: 'block', md: 'none' },
+            '& .MuiDrawer-paper': drawerPaperSx,
+          }}
+        >
+          {drawerContent}
+        </Drawer>
+
+        {/* Permanent drawer for md and up. */}
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: 'none', md: 'block' },
+            '& .MuiDrawer-paper': drawerPaperSx,
+          }}
+          open
+        >
+          {drawerContent}
+        </Drawer>
+      </Box>
+
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          p: { xs: 2, sm: 3 },
+          width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
           backgroundColor: 'background.default',
           minHeight: '100vh',
         }}
       >
+        {/* Spacer that pushes content below the mobile AppBar; collapses on md+. */}
+        <Toolbar sx={{ display: { xs: 'block', md: 'none' } }} />
         {children}
       </Box>
     </Box>

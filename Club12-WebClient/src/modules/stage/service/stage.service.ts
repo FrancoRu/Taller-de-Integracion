@@ -39,12 +39,14 @@ export const stageService = {
     sendPut(`${routes.stages}/${id}`, stageRequest),
 
   /**
-   * Retrieves a stage by its ID.
-   * @param {GUID} id - The unique identifier of the stage to retrieve.
+   * Retrieves a stage by its ID or its public slug.
+   * @param {string} idOrSlug - The ID or slug of the stage to retrieve.
    * @returns {Promise<AxiosResponse<IStageResponse>>} The response containing the requested stage.
    */
-  getStagesById: async (id: GUID): Promise<AxiosResponse<IStageResponse>> =>
-    sendGet(`${routes.stages}/${id}`),
+  getStagesById: async (
+    idOrSlug: string
+  ): Promise<AxiosResponse<IStageResponse>> =>
+    sendGet(`${routes.stages}/${idOrSlug}`),
 
   /**
    * Retrieves a paginated list of stages based on filters.

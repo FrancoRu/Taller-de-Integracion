@@ -31,11 +31,11 @@ export interface IVenueContextProps {
   getAllVenues(): Promise<IVenueResponse[] | void>;
 
   /**
-   * Fetches a specific venue by its unique ID.
-   * @param id The ID of the venue to fetch.
+   * Fetches a specific venue by its unique ID or its public slug.
+   * @param idOrSlug The ID or slug of the venue to fetch.
    * @returns A promise that resolves with the venue data.
    */
-  getVenueById(id: GUID): Promise<IVenueResponse | void>;
+  getVenueById(idOrSlug: string): Promise<IVenueResponse | void>;
 
   /**
    * Deletes a venue by its unique ID.
@@ -85,6 +85,12 @@ export interface IVenueResponse {
    * @type {string}
    */
   name: string;
+
+  /**
+   * The unique, URL-friendly identifier used in public venue links.
+   * @type {string}
+   */
+  slug: string;
 
   /**
    * The address of the venue.

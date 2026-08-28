@@ -14,7 +14,6 @@ import {
   Tabs,
   Typography,
 } from '@mui/material';
-import { GUID } from '@/modules/core/types/types';
 import { usePlayer } from '@/modules/player/hook/player.hook';
 import { usePlayerStatistic } from '@/modules/playerStatistic/hook/playerStatistic.hook';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
@@ -38,7 +37,7 @@ const formatDate = (value?: string | Date | null) => {
 };
 
 const PlayerPage: React.FC = () => {
-  const { playerId } = useParams<{ playerId: GUID }>();
+  const { playerId } = useParams<{ playerId: string }>();
   const navigate = useNavigate();
   const { role } = useAuth();
   const { player, getPlayerById } = usePlayer();
@@ -57,14 +56,17 @@ const PlayerPage: React.FC = () => {
   );
   const isAdministrative = role !== UserRolesType.Guest;
 
+  // Statistics and sanctions are filtered by the real player GUID, so they
+  // only load once the slug-or-id route param has resolved to a fetched
+  // player (player.id), never from the raw param which may be a slug.
   const refreshStatistics = () => {
-    if (!targetPlayerId) return;
-    void getPlayerStatisticsByFilter({ playerId: targetPlayerId, pageSize: FILTER_OPTIONS_PAGE_SIZE });
+    if (!player?.id) return;
+    void getPlayerStatisticsByFilter({ playerId: player.id, pageSize: FILTER_OPTIONS_PAGE_SIZE });
   };
 
   const refreshSanctions = () => {
-    if (!targetPlayerId) return;
-    void getPlayerSanctionByFilter({ playerId: targetPlayerId, pageSize: FILTER_OPTIONS_PAGE_SIZE });
+    if (!player?.id) return;
+    void getPlayerSanctionByFilter({ playerId: player.id, pageSize: FILTER_OPTIONS_PAGE_SIZE });
   };
 
   useEffect(() => {
@@ -74,7 +76,7 @@ const PlayerPage: React.FC = () => {
       refreshSanctions();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, targetPlayerId]);
+  }, [tab, player?.id]);
 
   useEffect(() => {
     if (!targetPlayerId) {
@@ -112,7 +114,10 @@ const PlayerPage: React.FC = () => {
     return <LoadingIndicator />;
   }
 
-  if (!player || player.id !== targetPlayerId) {
+  if (
+    !player ||
+    (player.id !== targetPlayerId && player.slug !== targetPlayerId)
+  ) {
     return (
       <Card>
         <CardContent>

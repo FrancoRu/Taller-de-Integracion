@@ -30,19 +30,19 @@ export const playerService = {
     sendPost(routes.players, player),
 
   /**
-   * Retrieves a player by their ID.
-   * @param {string} id - The ID of the player to retrieve.
+   * Retrieves a player by their ID or their public slug.
+   * @param {string} idOrSlug - The ID or slug of the player to retrieve.
    * @param {boolean} isAdministrative - Whether to fetch the player using the administrative route.
    * @returns {Promise<AxiosResponse<IPlayerResponse>>} The server response.
    */
   getPlayerById: async (
-    id: GUID,
+    idOrSlug: string,
     isAdministrative: boolean
   ): Promise<AxiosResponse<IPlayerResponse>> => {
     const resource: string = isAdministrative
       ? `${routes.players}/admin`
       : routes.players;
-    return sendGet(`${resource}/${id}`);
+    return sendGet(`${resource}/${idOrSlug}`);
   },
 
   /**

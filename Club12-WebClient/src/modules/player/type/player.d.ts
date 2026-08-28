@@ -20,13 +20,13 @@ export interface IPlayerContextProps {
   addPlayer(player: IAddPlayerRequest): Promise<IPlayerResponse | void>;
 
   /**
-   * Fetches a player by its ID.
-   * @param id The ID of the player to fetch.
+   * Fetches a player by its ID or its public slug.
+   * @param idOrSlug The ID or slug of the player to fetch.
    * @param isAdministrative Whether to use the administrative route to fetch the player. Defaults to false.
    * @returns A promise that resolves with the player details.
    */
   getPlayerById(
-    id: GUID,
+    idOrSlug: string,
     isAdministrative: boolean = false
   ): Promise<IPlayerResponse | void>;
 
@@ -153,6 +153,12 @@ export interface IPlayerResponse extends IAddPlayerRequest {
    * @type {string}
    */
   id: GUID;
+
+  /**
+   * The unique, URL-friendly identifier used in public player links.
+   * @type {string}
+   */
+  slug: string;
 
   fullName: string;
 

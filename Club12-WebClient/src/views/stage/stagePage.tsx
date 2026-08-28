@@ -10,7 +10,6 @@ import {
   Tabs,
   Typography,
 } from '@mui/material';
-import { GUID } from '@/modules/core/types/types';
 import { useStage } from '@/modules/stage/hook/stage.hook';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import MatchesPage from '@/views/match/matchesPage';
@@ -33,7 +32,7 @@ const formatStageType = (value: string) =>
   value.replace(/([a-z])([A-Z])/g, '$1 $2').trim();
 
 const StagePage: React.FC = () => {
-  const { stageId } = useParams<{ stageId: GUID }>();
+  const { stageId } = useParams<{ stageId: string }>();
   const navigate = useNavigate();
   const { stage, getStageById } = useStage();
   const [loading, setLoading] = useState(false);
@@ -80,7 +79,10 @@ const StagePage: React.FC = () => {
     return <LoadingIndicator />;
   }
 
-  if (!stage || stage.id !== targetStageId) {
+  if (
+    !stage ||
+    (stage.id !== targetStageId && stage.slug !== targetStageId)
+  ) {
     return (
       <Card>
         <CardContent>
@@ -128,7 +130,7 @@ const StagePage: React.FC = () => {
             <Button
               variant="contained"
               color="primary"
-              onClick={() => navigate(APP_ROUTES.panelStageEdit.build(targetStageId))}
+              onClick={() => navigate(APP_ROUTES.panelStageEdit.build(stage.id))}
             >
               Editar
             </Button>
@@ -249,7 +251,7 @@ const StagePage: React.FC = () => {
 
         {tab === 'partidos' && (
           <MatchesPage
-            stageId={targetStageId}
+            stageId={stage.id}
             title={undefined}
             wrapInCard={false}
           />

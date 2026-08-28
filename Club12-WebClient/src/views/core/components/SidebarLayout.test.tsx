@@ -46,3 +46,42 @@ describe('SidebarLayout — HU-03 logout redirect', () => {
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/'));
   });
 });
+
+describe('SidebarLayout — HU-26/HU-27 slimmed navigation', () => {
+  beforeEach(() => {
+    mockNavigate.mockClear();
+    mockedUseAuth.mockReturnValue({
+      role: UserRolesType.Owner,
+      logOut: vi.fn().mockResolvedValue(undefined),
+      signIn: vi.fn(),
+      isAuthenticated: true,
+      user: null,
+    } as unknown as ReturnType<typeof useAuth>);
+  });
+
+  const renderSidebar = () =>
+    render(
+      <MemoryRouter initialEntries={['/panel/torneos']}>
+        <SidebarLayout>
+          <div>panel content</div>
+        </SidebarLayout>
+      </MemoryRouter>
+    );
+
+  it('no longer lists Divisiones, Fases, Partidos or the tournament wizard', () => {
+    renderSidebar();
+
+    expect(screen.queryByText('Divisiones')).not.toBeInTheDocument();
+    expect(screen.queryByText('Fases')).not.toBeInTheDocument();
+    expect(screen.queryByText('Partidos')).not.toBeInTheDocument();
+    expect(screen.queryByText('Asistente de torneo')).not.toBeInTheDocument();
+  });
+
+  it('keeps the tournament-management and admin entries', () => {
+    renderSidebar();
+
+    ['Torneos', 'Sanciones', 'Canchas', 'Equipos', 'Usuarios', 'Blog'].forEach(
+      label => expect(screen.getByText(label)).toBeInTheDocument()
+    );
+  });
+});

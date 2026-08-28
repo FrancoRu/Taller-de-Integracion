@@ -92,7 +92,7 @@ const DivisionCreatePage: React.FC = () => {
       text: 'La división se creó correctamente.',
     });
 
-    navigate(APP_ROUTES.panelDivision.build(response.id));
+    navigate(APP_ROUTES.panelDivision.build(response.slug));
   }, [name, tournamentId, isCrossDivisionCup, addDivision, navigate]);
 
   return (
