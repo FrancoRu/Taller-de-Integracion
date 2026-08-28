@@ -15,8 +15,15 @@ import {
 import { AddIcon, DeleteIcon } from '@/views/core/MUI/icons/icons';
 import { GUID } from '@/modules/core/types/types';
 import { ITeamResponse } from '@/modules/team/type/team.d';
-import { CupConfig, ROUND_ROBIN_LEGS_OPTIONS, ZoneConfig, createEmptyZone } from '../types';
+import {
+  CupConfig,
+  PlayoffMappingConfig,
+  ROUND_ROBIN_LEGS_OPTIONS,
+  ZoneConfig,
+  createEmptyZone,
+} from '../types';
 import CupsEditor from './CupsEditor';
+import PlayoffRangesEditor from './PlayoffRangesEditor';
 
 interface DivisionesStepProps {
   teams: ITeamResponse[];
@@ -175,6 +182,34 @@ export default function DivisionesStep({ teams, zones, onChange }: DivisionesSte
             )}
           </Stack>
 
+          {/* Per-division scoring (HU-79): defaults 2/1, no draw points. */}
+          <Stack
+            direction="row"
+            spacing={2}
+            sx={{
+              alignItems: 'center',
+              mb: 2,
+            }}>
+            <TextField
+              type="number"
+              size="small"
+              label="Puntos por victoria"
+              value={zone.pointsForWin}
+              onChange={e => updateZone(zone.id, { pointsForWin: Number(e.target.value) })}
+              slotProps={{ htmlInput: { min: 0 } }}
+              sx={{ width: 180 }}
+            />
+            <TextField
+              type="number"
+              size="small"
+              label="Puntos por derrota"
+              value={zone.pointsForLoss}
+              onChange={e => updateZone(zone.id, { pointsForLoss: Number(e.target.value) })}
+              slotProps={{ htmlInput: { min: 0 } }}
+              sx={{ width: 180 }}
+            />
+          </Stack>
+
           <Divider sx={{ mb: 2 }} />
 
           <Typography variant="subtitle2" sx={{
@@ -185,6 +220,18 @@ export default function DivisionesStep({ teams, zones, onChange }: DivisionesSte
           <CupsEditor
             cups={zone.cups}
             onChange={(cups: CupConfig[]) => updateZone(zone.id, { cups })}
+          />
+
+          <Typography variant="subtitle2" sx={{ mb: 1, mt: 2 }}>
+            Clasificación a playoffs por rango
+          </Typography>
+          <PlayoffRangesEditor
+            mappings={zone.playoffMappings}
+            cups={zone.cups}
+            teamCount={zone.teamIds.length}
+            onChange={(playoffMappings: PlayoffMappingConfig[]) =>
+              updateZone(zone.id, { playoffMappings })
+            }
           />
         </Box>
       ))}

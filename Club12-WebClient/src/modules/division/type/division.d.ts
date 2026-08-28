@@ -62,6 +62,23 @@ export interface IDivisionContextProps {
 }
 
 /**
+ * One position-range → playoff-destination entry (HU-45) sent with a
+ * division so the backend can seed multiple cups from the final table
+ * (HU-81). Field names mirror the backend `PlayoffMappingRequest` DTO.
+ * @interface PlayoffMappingRequest
+ */
+export interface PlayoffMappingRequest {
+  /** First standings position in the range (1-based, inclusive). */
+  fromPosition: number;
+
+  /** Last standings position in the range (1-based, inclusive). */
+  toPosition: number;
+
+  /** The destination cup's BracketName (e.g. "Copa Oro"). */
+  destination: string;
+}
+
+/**
  * The request body structure for adding a new division.
  * @interface AddDivisionRequest
  */
@@ -86,6 +103,28 @@ export interface AddDivisionRequest {
    * @type {boolean}
    */
   isCrossDivisionCup?: boolean;
+
+  /**
+   * Points awarded for a win in this division's standings (HU-79).
+   * Omit to let the backend default to 2.
+   * @type {number}
+   */
+  pointsForWin?: number;
+
+  /**
+   * Points awarded for a loss in this division's standings (HU-79).
+   * Omit to let the backend default to 1.
+   * @type {number}
+   */
+  pointsForLoss?: number;
+
+  /**
+   * Optional position-range → playoff-destination mappings (HU-45) the
+   * wizard sends so the backend can seed multiple cups (HU-81). Ranges
+   * must not overlap.
+   * @type {PlayoffMappingRequest[]}
+   */
+  playoffMappings?: PlayoffMappingRequest[];
 }
 
 /**

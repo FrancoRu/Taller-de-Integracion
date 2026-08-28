@@ -1,5 +1,5 @@
 import { GUID } from '@/modules/core/types/types';
-import { CupConfig, STAGE_TYPE_LABELS, WizardState } from './types';
+import { CupConfig, PlayoffMappingConfig, STAGE_TYPE_LABELS, WizardState } from './types';
 
 /**
  * A single step's validation result: empty when valid, otherwise the list
@@ -72,6 +72,77 @@ const validateCups = (cups: CupConfig[], contextLabel: string): ValidationResult
 };
 
 /**
+ * Validates a division's playoff-range → cup mappings (HU-45): every row
+ * must point at a configured cup, sit within `1..teamCount`, have
+ * `from <= to`, and no two rows may overlap. `teamCount` of 0 (no teams
+ * assigned yet) skips the upper-bound check so the admin can still draft
+ * ranges before finishing team assignment. `cupNames` is the set of the
+ * division's configured cup names the destination must belong to.
+ */
+export const validatePlayoffMappings = (
+  mappings: PlayoffMappingConfig[],
+  teamCount: number,
+  cupNames: string[],
+  contextLabel: string
+): ValidationResult => {
+  const errors: string[] = [];
+
+  if (mappings.length === 0) {
+    return errors;
+  }
+
+  const validCupNames = new Set(cupNames.map(name => name.trim().toLowerCase()).filter(Boolean));
+
+  mappings.forEach(mapping => {
+    const { fromPosition, toPosition, destination } = mapping;
+
+    if (!Number.isInteger(fromPosition) || !Number.isInteger(toPosition) || fromPosition < 1 || toPosition < 1) {
+      errors.push(`Los rangos de playoff de ${contextLabel} deben usar posiciones enteras desde 1.`);
+      return;
+    }
+
+    if (fromPosition > toPosition) {
+      errors.push(
+        `En ${contextLabel}, el rango ${fromPosition}–${toPosition} está invertido (desde debe ser ≤ hasta).`
+      );
+      return;
+    }
+
+    if (teamCount > 0 && toPosition > teamCount) {
+      errors.push(
+        `En ${contextLabel}, el rango ${fromPosition}–${toPosition} supera los ${teamCount} equipos de la zona.`
+      );
+    }
+
+    const trimmedDestination = destination.trim();
+    if (!trimmedDestination) {
+      errors.push(`Cada rango de playoff de ${contextLabel} necesita una copa de destino.`);
+    } else if (!validCupNames.has(trimmedDestination.toLowerCase())) {
+      errors.push(
+        `En ${contextLabel}, la copa de destino "${trimmedDestination}" no coincide con ninguna copa configurada.`
+      );
+    }
+  });
+
+  // Overlap check: sort by start position and confirm each range starts
+  // strictly after the previous one ends, so no position lands in two cups.
+  const sorted = [...mappings]
+    .filter(m => Number.isInteger(m.fromPosition) && Number.isInteger(m.toPosition) && m.fromPosition <= m.toPosition)
+    .sort((a, b) => a.fromPosition - b.fromPosition);
+
+  for (let i = 1; i < sorted.length; i += 1) {
+    if (sorted[i].fromPosition <= sorted[i - 1].toPosition) {
+      errors.push(
+        `Los rangos de playoff de ${contextLabel} se solapan (posición ${sorted[i].fromPosition} está en dos copas).`
+      );
+      break;
+    }
+  }
+
+  return errors;
+};
+
+/**
  * Validates the zones step: every zone has a name, every selected team
  * belongs to exactly one zone (catches both "unassigned team" and "team
  * in two zones" before the admin ever reaches the server-side guardrails),
@@ -125,6 +196,14 @@ export const validateZonesStep = (state: WizardState): ValidationResult => {
     }
 
     errors.push(...validateCups(zone.cups, `la zona "${zone.name || '(sin nombre)'}"`));
+    errors.push(
+      ...validatePlayoffMappings(
+        zone.playoffMappings,
+        zone.teamIds.length,
+        zone.cups.map(cup => cup.name),
+        `la zona "${zone.name || '(sin nombre)'}"`
+      )
+    );
   });
 
   return errors;
@@ -151,6 +230,14 @@ export const validateCrossCupStep = (state: WizardState): ValidationResult => {
   }
 
   errors.push(...validateCups(crossCup.cups, 'la copa cruzada'));
+  errors.push(
+    ...validatePlayoffMappings(
+      crossCup.playoffMappings,
+      teamCount,
+      crossCup.cups.map(cup => cup.name),
+      'la copa cruzada'
+    )
+  );
 
   return errors;
 };

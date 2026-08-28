@@ -37,8 +37,6 @@ test('wizard creates Clausura Club 12 2026: 4 zones (double round-robin + Oro/Pl
       'Liga de básquet amateur Club12 La Vuelta, temporada 2026: Zonas A-D y Copa Club12 Clausura.',
     startDate: '2026-09-01',
     teamRegistrationDeadline: '2026-08-20',
-    minTeams: 8,
-    maxTeams: 16,
   });
 
   await selectTeams(page, ZONE_TEAM_CHIP_LABELS);
