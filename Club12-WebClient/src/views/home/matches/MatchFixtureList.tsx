@@ -9,35 +9,12 @@ import {
   formatRoundLabel,
   groupMatchesByRound,
 } from '@/modules/match/utils/matchGrouping';
-import { formatDateTimeAr } from '@/modules/core/utils/formatDate';
-import { CsvRow, downloadCsv } from '@/modules/core/utils/csv';
+import {
+  FIXTURE_CSV_HEADERS,
+  buildFixtureCsvRows,
+} from '@/modules/match/utils/matchFixtureCsv';
+import { downloadCsv } from '@/modules/core/utils/csv';
 import ExportCsvButton from '@/views/core/components/ExportCsvButton';
-
-const FIXTURE_CSV_HEADERS = [
-  'Fecha',
-  'Fecha y hora',
-  'Local',
-  'Visitante',
-  'Resultado',
-  'Estado',
-];
-
-const EMPTY_TEAM = '—';
-
-/** Builds the CSV rows (HU-89) for a fixture, grouped and ordered by round. */
-export const buildFixtureCsvRows = (matches: IMatchResponse[]): CsvRow[] =>
-  groupMatchesByRound(matches).flatMap(round =>
-    round.matches.map(match => [
-      formatRoundLabel(round.round),
-      formatDateTimeAr(match.matchDate),
-      match.homeTeam?.name ?? EMPTY_TEAM,
-      match.visitorTeam?.name ?? EMPTY_TEAM,
-      match.isFinished
-        ? `${match.homeTeam?.score ?? 0}-${match.visitorTeam?.score ?? 0}`
-        : EMPTY_TEAM,
-      match.isFinished ? 'Finalizado' : 'Programado',
-    ])
-  );
 
 /**
  * A stage's fixture grouped by matchday (jornada, HU-63): the group header is

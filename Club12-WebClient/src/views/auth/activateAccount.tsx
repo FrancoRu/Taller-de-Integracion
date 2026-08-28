@@ -18,7 +18,13 @@ import { buildPasswordPolicyMessages } from '@/modules/auth/utils/passwordPolicy
 import { HttpStatus } from '@/modules/core/constants/httpStatus';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
-export default function PasswordReset() {
+/**
+ * HU-09: activation screen reached from the magic link in the invitation
+ * email. Reads `?email=&token=` from the URL, lets the invited user set their
+ * first password, and posts it to POST /api/auth/activate. On success the
+ * account can log in, so we send the user to the login screen.
+ */
+export default function ActivateAccount() {
   const navigate = useNavigate();
   const location = useLocation();
   const { setError, setMessage } = useError();
@@ -46,7 +52,7 @@ export default function PasswordReset() {
     const messages = buildPasswordPolicyMessages(newPassword, confirmPassword);
 
     if (!hasRequiredParams) {
-      messages.unshift('El enlace de recuperación no es válido.');
+      messages.unshift('El enlace de activación no es válido.');
     }
 
     if (messages.length > 0) {
@@ -56,7 +62,7 @@ export default function PasswordReset() {
 
     setSubmitting(true);
     try {
-      const response = await authService.confirmPasswordResetRequest({
+      const response = await authService.activateRequest({
         email,
         token,
         newPassword,
@@ -64,7 +70,7 @@ export default function PasswordReset() {
 
       if (response?.status === HttpStatus.Ok) {
         setMessage(HttpStatus.Ok, [
-          'Contraseña actualizada correctamente. Iniciá sesión.',
+          'Cuenta activada correctamente. Iniciá sesión.',
         ]);
         navigate(APP_ROUTES.login, { replace: true });
       }
@@ -82,17 +88,16 @@ export default function PasswordReset() {
   return (
     <Box
       sx={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "90vh"
-      }}>
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '90vh',
+      }}
+    >
       <Card sx={{ maxWidth: 520, width: '100%' }}>
         <CardContent>
-          <Typography variant="h5" sx={{
-            mb: 2
-          }}>
-            Restablecer contraseña
+          <Typography variant="h5" sx={{ mb: 2 }}>
+            Activá tu cuenta
           </Typography>
 
           <Stack spacing={2}>
@@ -110,15 +115,17 @@ export default function PasswordReset() {
 
             <TextField
               fullWidth
-              label="Confirmar nueva contraseña"
+              label="Confirmar contraseña"
               type="password"
               value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}
             />
 
-            <Stack direction="row" spacing={2} sx={{
-              justifyContent: "flex-end"
-            }}>
+            <Stack
+              direction="row"
+              spacing={2}
+              sx={{ justifyContent: 'flex-end' }}
+            >
               <Button
                 variant="outlined"
                 onClick={() => navigate(APP_ROUTES.login, { replace: true })}
@@ -131,7 +138,7 @@ export default function PasswordReset() {
                 onClick={handleSubmit}
                 disabled={submitting}
               >
-                {submitting ? 'Guardando...' : 'Cambiar contraseña'}
+                {submitting ? 'Activando...' : 'Activar cuenta'}
               </Button>
             </Stack>
           </Stack>

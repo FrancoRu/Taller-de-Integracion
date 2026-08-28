@@ -8,6 +8,8 @@
 export const APP_ROUTES = {
   home: '/',
   login: '/login',
+  forgotPassword: '/auth/olvide-password',
+  activate: '/auth/activar',
   passwordReset: '/auth/password-reset',
   quienesSomos: '/quienes-somos',
   fichaMedica: '/ficha-medica',
@@ -108,6 +110,7 @@ export const APP_ROUTES = {
   },
   panelUsers: '/panel/usuarios',
   panelUserCreate: '/panel/usuarios/crear',
+  panelUserInvite: '/panel/usuarios/invitar',
   panelUserEdit: {
     pattern: '/panel/usuarios/:userId/editar',
     build: (userId: string) => `/panel/usuarios/${userId}/editar`,

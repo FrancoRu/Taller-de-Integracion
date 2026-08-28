@@ -5,9 +5,8 @@ import { GUID } from '@/modules/core/types/types';
 import { MatchType } from '@/modules/core/enum/match/matchType';
 import { IMatchResponse } from '@/modules/match/type/match';
 import { ITeamMatchResponse } from '@/modules/team/type/team';
-import MatchFixtureList, {
-  buildFixtureCsvRows,
-} from '@/views/home/matches/MatchFixtureList';
+import MatchFixtureList from '@/views/home/matches/MatchFixtureList';
+import { buildFixtureCsvRows } from '@/modules/match/utils/matchFixtureCsv';
 
 const guid = (value: string) => value as GUID;
 

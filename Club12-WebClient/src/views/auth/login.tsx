@@ -4,6 +4,7 @@ import {
   Box,
   TextField,
   Button,
+  Link,
   Typography,
   Card,
   CardContent,
@@ -97,6 +98,16 @@ export default function Login() {
           >
             Iniciar Sesión
           </Button>
+          <Box sx={{ mt: 2, textAlign: 'center' }}>
+            <Link
+              component="button"
+              type="button"
+              variant="body2"
+              onClick={() => navigate(APP_ROUTES.forgotPassword)}
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </Box>
         </CardContent>
       </Card>
     </Box>

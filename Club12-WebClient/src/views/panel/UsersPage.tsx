@@ -8,6 +8,7 @@ import React, {
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import {
   Box,
+  Button,
   Card,
   CardContent,
   Chip,
@@ -270,10 +271,18 @@ const UsersPage: React.FC = () => {
             mb: 2
           }}>
           <Typography variant="h6">Usuarios</Typography>
-          <NewEntityButton
-            type="Usuario"
-            onClick={() => navigate(APP_ROUTES.panelUserCreate)}
-          />
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="outlined"
+              onClick={() => navigate(APP_ROUTES.panelUserInvite)}
+            >
+              Invitar usuario
+            </Button>
+            <NewEntityButton
+              type="Usuario"
+              onClick={() => navigate(APP_ROUTES.panelUserCreate)}
+            />
+          </Stack>
         </Stack>
 
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{

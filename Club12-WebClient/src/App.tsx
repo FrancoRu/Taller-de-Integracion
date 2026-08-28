@@ -47,6 +47,7 @@ import MatchCreatePage from './views/match/matchCreatePage';
 import UsersPage from './views/panel/UsersPage';
 import UserDetails from './views/user/userDetails';
 import CreateUser from './views/user/createUser';
+import InviteUser from './views/user/inviteUser';
 import EditUser from './views/user/editUser';
 import ChangePasswordPage from './views/panel/ChangePasswordPage';
 import StatisticsPage from './views/panel/StatisticsPage';
@@ -57,6 +58,8 @@ import InvalidToken from './views/core/errors/invalidToken';
 import Forbidden from './views/core/errors/forbidden';
 import NotFound from './views/core/errors/NotFound';
 import PasswordReset from './views/auth/passwordReset';
+import ForgotPassword from './views/auth/forgotPassword';
+import ActivateAccount from './views/auth/activateAccount';
 import PrivateRoute from './views/core/privateRoute';
 import TeamsPage from './views/team/TeamsPage';
 import TeamRegisterPage from './views/team/TeamRegisterPage';
@@ -247,6 +250,11 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
     element: <CreateUser />,
   },
   {
+    path: APP_ROUTES.panelUserInvite,
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
+    element: <InviteUser />,
+  },
+  {
     path: APP_ROUTES.panelUserEdit.pattern,
     allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <EditUser />,
@@ -357,6 +365,8 @@ function App() {
         ))}
       </Route>
       <Route path={APP_ROUTES.login} element={<Login />} />
+      <Route path={APP_ROUTES.forgotPassword} element={<ForgotPassword />} />
+      <Route path={APP_ROUTES.activate} element={<ActivateAccount />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
