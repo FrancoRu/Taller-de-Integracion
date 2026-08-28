@@ -19,9 +19,17 @@ public class PlayerSanctionProfile : Profile
     {
         _ = CreateMap<CreatePlayerSanctionRequest, PlayerSanction>();
         _ = CreateMap<PlayerSanction, PlayerSanctionResponse>()
-            .ForMember(dest => dest.PlayerFullName, opt => opt.MapFrom(src => src.Player.FullName))
+            .ForMember(dest => dest.PlayerFullName,
+                opt => opt.MapFrom(src => src.Player != null ? src.Player.FullName : null))
+            .ForMember(dest => dest.TeamName,
+                opt => opt.MapFrom(src => src.Team != null ? src.Team.Name : null))
+            // FechasRemaining / IsActive are computed against finished rounds
+            // (HU-75/HU-76) and populated by the controller, not mapped here.
+            .ForMember(dest => dest.FechasRemaining, opt => opt.Ignore())
+            .ForMember(dest => dest.IsActive, opt => opt.Ignore())
             .ReverseMap()
-            .ForMember(dest => dest.Player, opt => opt.Ignore());
+            .ForMember(dest => dest.Player, opt => opt.Ignore())
+            .ForMember(dest => dest.Team, opt => opt.Ignore());
 
         _ = CreateMap<UpdatePlayerSanctionRequest, PlayerSanction>();
     }
