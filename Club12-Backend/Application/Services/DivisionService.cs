@@ -211,6 +211,59 @@ public class DivisionService(
     }
 
     /// <summary>
+    /// Computes standings for a division split by Group stage. A regular zone
+    /// returns a single entry; a multi-group cross-division cup (HU-110)
+    /// returns one entry per internal group, each computed only over that
+    /// group's finished matches. Groups are ordered by stage Order then name
+    /// so "Grupo 1".."Grupo N" render in a stable, human order.
+    /// </summary>
+    /// <param name="divisionId">The id of the division.</param>
+    /// <returns>One <see cref="GroupStandings"/> per Group stage; empty when the division has no Group stage.</returns>
+    public async Task<List<GroupStandings>> GetGroupStandingsByDivisionIdAsync(Guid divisionId)
+    {
+        PaginatedResponse<Stage> stages = await stageService.GetAllStagesAsync(new GetStagesFilteredRequest
+        {
+            DivisionId = divisionId,
+            StageType = StageType.Group,
+            PageSize = PaginationDefaults.MaxPageSize,
+        });
+
+        List<Stage> groupStages = [.. stages.Items
+            .OrderBy(stage => stage.Order)
+            .ThenBy(stage => stage.Name, StringComparer.Ordinal)];
+
+        if (groupStages.Count == 0)
+        {
+            return [];
+        }
+
+        Division? division = await divisionRepository.GetByIdAsync(divisionId);
+        int pointsForWin = division?.PointsForWin ?? PositionCalculator.DefaultPointsForWin;
+        int pointsForLoss = division?.PointsForLoss ?? PositionCalculator.DefaultPointsForLoss;
+
+        List<GroupStandings> result = [];
+
+        foreach (Stage groupStage in groupStages)
+        {
+            PaginatedResponse<Match> matches = await matchService.GetAllMatchesAsync(new GetMatchesFilteredRequest
+            {
+                StageId = groupStage.Id,
+                IsFinished = true,
+                PageSize = PaginationDefaults.MaxPageSize,
+            });
+
+            result.Add(new GroupStandings
+            {
+                StageId = groupStage.Id,
+                StageName = groupStage.Name,
+                Positions = PositionCalculator.CalculatePositions(matches.Items, pointsForWin, pointsForLoss),
+            });
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Returns every team registered to the tournament that does not yet
     /// belong to any division (regular or cross-division-cup).
     /// </summary>

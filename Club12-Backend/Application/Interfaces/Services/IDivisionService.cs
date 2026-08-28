@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.Abstract.Response;
 using Application.DTOs.Divisions.Request;
+using Application.Utils.Helper.Standings;
 
 using Domain.Entities.Models;
 
@@ -62,6 +63,18 @@ public interface IDivisionService
     /// <param name="divisionId">The id of the division.</param>
     /// <returns>One Position per team with at least one finished Group-stage match; empty if the division has no Group stage or no finished matches yet.</returns>
     Task<List<Position>> GetPositionsByDivisionIdAsync(Guid divisionId);
+
+    /// <summary>
+    /// Computes standings for a division split by Group stage. A regular zone
+    /// (one Group stage) returns a single entry; a multi-group cross-division
+    /// cup (HU-110) returns one entry per internal group ("Grupo 1".."Grupo N"),
+    /// each computed only over that group's finished matches. Groups are
+    /// ordered by stage Order then name. Empty when the division has no Group
+    /// stage.
+    /// </summary>
+    /// <param name="divisionId">The id of the division.</param>
+    /// <returns>One <see cref="GroupStandings"/> per Group stage.</returns>
+    Task<List<GroupStandings>> GetGroupStandingsByDivisionIdAsync(Guid divisionId);
 
     /// <summary>
     /// Returns every team registered to the tournament that does not yet

@@ -145,7 +145,7 @@ public sealed class DataMaintenanceService(
 
         SampleTournamentBuilder.TournamentDefinition tournament1 = new(
             Name: "Torneo Apertura 2026",
-            Description: "Torneo Apertura de la Liga Club12, temporada 2026 — dato de muestra.",
+            Description: "Torneo Apertura de la Liga Club 12, temporada 2026.",
             TeamRegistrationDeadline: new DateTime(2026, 5, 15, 0, 0, 0, DateTimeKind.Utc),
             StartDate: new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc),
             StageStartDate: new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc),
@@ -161,7 +161,7 @@ public sealed class DataMaintenanceService(
 
         SampleTournamentBuilder.TournamentDefinition tournament2 = new(
             Name: "Torneo Clausura 2026",
-            Description: "Torneo Clausura de la Liga Club12, temporada 2026 — dato de muestra.",
+            Description: "Torneo Clausura de la Liga Club 12, temporada 2026.",
             TeamRegistrationDeadline: new DateTime(2026, 9, 15, 0, 0, 0, DateTimeKind.Utc),
             StartDate: new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc),
             StageStartDate: new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc),
@@ -172,7 +172,9 @@ public sealed class DataMaintenanceService(
             [
                 new("Primera", ClausuraPrimeraNames, ClausuraPrimeraCodes, ClausuraPrimeraColors),
                 new("Reserva", ClausuraReservaNames, ClausuraReservaCodes, ClausuraReservaColors),
-            ]);
+            ],
+            // Historical: the Clausura is a past, completed edition.
+            Status: TournamentStatus.Finished);
 
         int playerCounter = 0;
         SampleTournamentBuilder.BuildResult result1 =

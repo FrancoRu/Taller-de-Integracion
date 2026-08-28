@@ -94,7 +94,8 @@ public static class SampleTournamentBuilder
         DateTime FinishedMatchesStart,
         DateTime UpcomingMatchesStart,
         DivisionDefinition[] Divisions,
-        CrossCupDefinition? CrossCup = null);
+        CrossCupDefinition? CrossCup = null,
+        TournamentStatus Status = TournamentStatus.Ongoing);
 
     public sealed record BuildResult(Tournament Tournament, List<PlayerSanction> Sanctions);
 
@@ -123,7 +124,7 @@ public static class SampleTournamentBuilder
             Description = definition.Description,
             TeamRegistrationDeadline = definition.TeamRegistrationDeadline,
             StartDate = definition.StartDate,
-            Status = TournamentStatus.Ongoing,
+            Status = definition.Status,
             Divisions = [],
             Teams = [],
         };
