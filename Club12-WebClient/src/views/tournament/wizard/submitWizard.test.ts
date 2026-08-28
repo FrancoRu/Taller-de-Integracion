@@ -27,7 +27,7 @@ const makeState = (): WizardState => {
           id: 'cup-1',
           name: 'Copa de Oro',
           qualifiers: 4,
-          bestOf: 3,
+          bestOfByStage: {},
         },
       ],
       pointsForWin: 3,
@@ -133,8 +133,8 @@ describe('submitWizard', () => {
     const services = makeServices();
     const state = makeState();
     state.zones[0].cups = [
-      { id: 'cup-oro', name: 'Copa de Oro', qualifiers: 4, bestOf: 3 },
-      { id: 'cup-plata', name: 'Copa de Plata', qualifiers: 4, bestOf: 3 },
+      { id: 'cup-oro', name: 'Copa de Oro', qualifiers: 4, bestOfByStage: {} },
+      { id: 'cup-plata', name: 'Copa de Plata', qualifiers: 4, bestOfByStage: {} },
     ];
 
     await submitWizard(state, services);
@@ -227,7 +227,7 @@ describe('submitWizard', () => {
       roundRobinLegs: 1,
       cups: [],
       pointsForWin: 2,
-      pointsForLoss: 1,
+      pointsForLoss: 1,
     };
 
     await submitWizard(state, services);
@@ -259,7 +259,7 @@ describe('submitWizard', () => {
       roundRobinLegs: 2,
       cups: [],
       pointsForWin: 2,
-      pointsForLoss: 1,
+      pointsForLoss: 1,
     };
 
     await submitWizard(state, services);
@@ -298,7 +298,7 @@ describe('submitWizard', () => {
       roundRobinLegs: 1,
       cups: [],
       pointsForWin: 2,
-      pointsForLoss: 1,
+      pointsForLoss: 1,
     };
 
     await submitWizard(state, services);
@@ -347,7 +347,7 @@ describe('submitWizard', () => {
       roundRobinLegs: 1,
       cups: [],
       pointsForWin: 2,
-      pointsForLoss: 1,
+      pointsForLoss: 1,
     };
 
     await submitWizard(state, services);

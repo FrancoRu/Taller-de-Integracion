@@ -10,6 +10,7 @@ import {
   STAGE_TYPE_LABELS,
   WizardState,
   ZoneConfig,
+  getStageBestOf,
   qualifiersToStageTypes,
 } from './types';
 
@@ -116,7 +117,7 @@ const createCupStages = async (
         endDate: roundEndDate,
         divisionId,
         bracketName: cup.name,
-        bestOf: cup.bestOf,
+        bestOf: getStageBestOf(cup, stageType),
       });
 
       if (!stage) {

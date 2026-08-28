@@ -90,14 +90,14 @@ describe('validateZonesStep', () => {
 
   it('rejects a cup with no name', () => {
     const state = makeValidState();
-    const cup: CupConfig = { id: 'cup-1', name: '', qualifiers: 4, bestOf: 3 };
+    const cup: CupConfig = { id: 'cup-1', name: '', qualifiers: 4, bestOfByStage: {} };
     state.zones[0].cups.push(cup);
     expect(validateZonesStep(state).some(e => e.includes('necesita un nombre'))).toBe(true);
   });
 
   it('HU-112: rejects a cup with fewer than 2 qualifiers', () => {
     const state = makeValidState();
-    const cup: CupConfig = { id: 'cup-1', name: 'Copa de Oro', qualifiers: 1, bestOf: 3 };
+    const cup: CupConfig = { id: 'cup-1', name: 'Copa de Oro', qualifiers: 1, bestOfByStage: {} };
     state.zones[0].cups.push(cup);
     expect(validateZonesStep(state).some(e => e.includes('clasificados'))).toBe(true);
   });
@@ -182,13 +182,15 @@ describe('buildWizardTree', () => {
       id: 'cup-1',
       name: 'Copa de Oro',
       qualifiers: 4,
-      bestOf: 3,
+      bestOfByStage: {},
     });
 
     const nodes = buildWizardTree(state);
     expect(
       nodes.some(
-        n => n.label === 'Copa de Oro — 4 clasifican, mejor de 3 (Semifinal → Final)'
+        n =>
+          n.label ===
+          'Copa de Oro — 4 clasifican (Semifinal al mejor de 3 → Final al mejor de 3)'
       )
     ).toBe(true);
   });
