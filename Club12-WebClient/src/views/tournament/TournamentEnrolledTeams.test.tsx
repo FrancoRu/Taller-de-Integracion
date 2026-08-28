@@ -42,6 +42,7 @@ const buildTeam = (overrides: Partial<ITeamResponse> = {}): ITeamResponse => ({
 
 let getTeamsByFiltered: Mock<ITeamContextProps['getTeamsByFiltered']>;
 let enrollTeam: Mock<ITournamentContextProps['enrollTeam']>;
+let unenrollTeam: Mock<ITournamentContextProps['unenrollTeam']>;
 
 const setup = (options: {
   enrolled?: ITeamResponse[];
@@ -59,6 +60,9 @@ const setup = (options: {
 
   enrollTeam = vi.fn<ITournamentContextProps['enrollTeam']>();
   enrollTeam.mockResolvedValue(true);
+
+  unenrollTeam = vi.fn<ITournamentContextProps['unenrollTeam']>();
+  unenrollTeam.mockResolvedValue(true);
 
   mockedUseTeam.mockReturnValue({
     team: null,
@@ -81,6 +85,8 @@ const setup = (options: {
     deleteTournamentById: vi.fn(),
     registerTeamsByTournamentId: vi.fn(),
     enrollTeam,
+    unenrollTeam,
+    getCompletability: vi.fn(),
   } as ITournamentContextProps);
 };
 
@@ -270,5 +276,34 @@ describe('TournamentEnrolledTeams — enroll existing team', () => {
       )
     );
     expect(enrollTeam).not.toHaveBeenCalled();
+  });
+});
+
+describe('TournamentEnrolledTeams — unenroll team (HU-108)', () => {
+  it('unenrolls a team and refreshes the enrolled list', async () => {
+    const river = buildTeam({ name: 'River', slug: 'river' });
+    setup({ enrolled: [river], all: [river] });
+    const user = userEvent.setup();
+
+    renderComponent();
+    await screen.findByRole('link', { name: 'River' });
+
+    getTeamsByFiltered.mockClear();
+
+    await user.click(
+      screen.getByRole('button', { name: /dar de baja a River/i })
+    );
+
+    await waitFor(() => expect(unenrollTeam).toHaveBeenCalledTimes(1));
+    expect(unenrollTeam).toHaveBeenCalledWith(TOURNAMENT_ID, river.id);
+
+    await waitFor(() =>
+      expect(getTeamsByFiltered).toHaveBeenCalledWith(
+        expect.objectContaining({ tournamentId: TOURNAMENT_ID })
+      )
+    );
+    expect(mockedSwalFire).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Equipo dado de baja' })
+    );
   });
 });

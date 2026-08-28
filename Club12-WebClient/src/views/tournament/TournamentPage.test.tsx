@@ -17,6 +17,12 @@ vi.mock('@/modules/auth/hook/auth.hook');
 vi.mock('@/views/tournament/TournamentEnrolledTeams', () => ({
   default: () => <div>enrolled-teams-panel</div>,
 }));
+// The assignment tab pulls in division/stage/team/tournament data hooks it does
+// not need for this gate test; stub the whole subtree so only the tab wiring is
+// exercised.
+vi.mock('@/views/tournament/TournamentDivisionAssignment', () => ({
+  default: () => <div>division-assignment-panel</div>,
+}));
 
 const mockedUseTournament = vi.mocked(useTournament);
 const mockedUseAuth = vi.mocked(useAuth);
@@ -48,6 +54,8 @@ const setup = (status: TournamentStatus) => {
     deleteTournamentById: vi.fn(),
     registerTeamsByTournamentId: vi.fn(),
     enrollTeam: vi.fn(),
+    unenrollTeam: vi.fn(),
+    getCompletability: vi.fn(),
   } as ITournamentContextProps);
 
   mockedUseAuth.mockReturnValue({
@@ -88,6 +96,27 @@ describe('TournamentPage — enrolled-teams tab gate (HU-107)', () => {
     await screen.findByRole('tab', { name: 'Detalle' });
     expect(
       screen.queryByRole('tab', { name: 'Equipos inscriptos' })
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe('TournamentPage — assignment tab gate (HU-108/HU-109)', () => {
+  it('shows the "Asignación" tab only while RegistrationClosed', async () => {
+    setup(TournamentStatus.RegistrationClosed);
+    renderPage();
+
+    expect(
+      await screen.findByRole('tab', { name: 'Asignación' })
+    ).toBeInTheDocument();
+  });
+
+  it('hides the "Asignación" tab for other statuses', async () => {
+    setup(TournamentStatus.OpenForRegistration);
+    renderPage();
+
+    await screen.findByRole('tab', { name: 'Detalle' });
+    expect(
+      screen.queryByRole('tab', { name: 'Asignación' })
     ).not.toBeInTheDocument();
   });
 });

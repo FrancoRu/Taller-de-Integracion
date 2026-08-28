@@ -16,6 +16,7 @@ import { tournamentService } from '@/modules/tournament/service/tournament.servi
 import {
   IAddTournamentRequest,
   IEnrollTeamRequest,
+  ITournamentCompletability,
   ITournamentContextProps,
   IPutTournamentRequest,
   ITournamentFiltered,
@@ -227,6 +228,51 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
     [setError, setMessage]
   );
 
+  const unenrollTeam = useCallback(
+    async (id: GUID, teamId: GUID): Promise<boolean | void> => {
+      try {
+        const res: AxiosResponse<void> = await tournamentService.unenrollTeam(
+          id,
+          teamId
+        );
+
+        if (res) {
+          setMessage(res.status, ['Equipo dado de baja correctamente']);
+        }
+        return (
+          res.status === HttpStatus.Ok || res.status === HttpStatus.NoContent
+        );
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+          setError(error);
+        } else {
+          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+        }
+      }
+    },
+    [setError, setMessage]
+  );
+
+  const getCompletability = useCallback(
+    async (id: GUID): Promise<ITournamentCompletability | void> => {
+      try {
+        const res: AxiosResponse<ITournamentCompletability> =
+          await tournamentService.getCompletability(id);
+
+        if (res && res.data) {
+          return res.data;
+        }
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+          setError(error);
+        } else {
+          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+        }
+      }
+    },
+    [setError]
+  );
+
   const container: ITournamentContextProps = useMemo(
     () => ({
       tournament,
@@ -238,6 +284,8 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       deleteTournamentById,
       registerTeamsByTournamentId,
       enrollTeam,
+      unenrollTeam,
+      getCompletability,
     }),
     [
       tournament,
@@ -249,6 +297,8 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       deleteTournamentById,
       registerTeamsByTournamentId,
       enrollTeam,
+      unenrollTeam,
+      getCompletability,
     ]
   );
 

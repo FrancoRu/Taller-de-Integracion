@@ -17,7 +17,7 @@ import { ITeamResponse } from '@/modules/team/type/team.d';
 import { IEnrollTeamRequest } from '@/modules/tournament/type/tournament';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
-import { notifySuccess } from '@/modules/core/utils/confirmDialog';
+import { confirmDelete, notifySuccess } from '@/modules/core/utils/confirmDialog';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import EnrollTeamDialog from '@/views/tournament/EnrollTeamDialog';
 
@@ -35,7 +35,7 @@ const TournamentEnrolledTeams: React.FC<TournamentEnrolledTeamsProps> = ({
   tournamentId,
 }) => {
   const { getTeamsByFiltered } = useTeam();
-  const { enrollTeam } = useTournament();
+  const { enrollTeam, unenrollTeam } = useTournament();
 
   const [enrolledTeams, setEnrolledTeams] = useState<ITeamResponse[]>([]);
   const [allTeams, setAllTeams] = useState<ITeamResponse[]>([]);
@@ -95,6 +95,33 @@ const TournamentEnrolledTeams: React.FC<TournamentEnrolledTeamsProps> = ({
     }
   };
 
+  const handleUnenroll = async (team: ITeamResponse) => {
+    const confirmed = await confirmDelete({
+      title: 'Dar de baja equipo',
+      text: `¿Querés dar de baja a ${team.name} del torneo? Se puede volver a inscribir mientras la inscripción siga abierta.`,
+      confirmButtonText: 'Dar de baja',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    // The backend rejects an unenroll once the tournament has started (409);
+    // that message is surfaced by the global error handler, so only the
+    // success path notifies and refreshes here.
+    const success = await unenrollTeam(tournamentId, team.id);
+    if (!success) {
+      return;
+    }
+
+    await loadEnrolledTeams();
+    await loadAllTeams();
+    await notifySuccess({
+      title: 'Equipo dado de baja',
+      text: 'El equipo se dio de baja del torneo.',
+    });
+  };
+
   return (
     <Box sx={{ width: '100%' }}>
       <Stack
@@ -120,7 +147,20 @@ const TournamentEnrolledTeams: React.FC<TournamentEnrolledTeamsProps> = ({
       ) : (
         <List>
           {enrolledTeams.map(team => (
-            <ListItem key={team.id} divider>
+            <ListItem
+              key={team.id}
+              divider
+              secondaryAction={
+                <Button
+                  color="error"
+                  size="small"
+                  aria-label={`Dar de baja a ${team.name}`}
+                  onClick={() => void handleUnenroll(team)}
+                >
+                  Dar de baja
+                </Button>
+              }
+            >
               <ListItemText
                 primary={
                   <Link
