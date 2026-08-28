@@ -44,9 +44,9 @@ public class TournamentService(
     {
         // Created OpenForRegistration: divisions/stages can only be built while
         // the tournament is in that status (HU-31 structural-edit guard), and
-        // structural creation is part of creation. Teams register and the
-        // fixture is generated later via the canonical RegistrationClosed
-        // transition.
+        // structural creation is part of creation. Teams register, registration
+        // closes, and the fixture is generated later when the tournament starts
+        // (the canonical transition to Ongoing, HU-108).
         Tournament tournament = new()
         {
             Name = request.Name,
@@ -167,13 +167,15 @@ public class TournamentService(
                 ErrorMessages.Tournament.InvalidStatusTransition(tournament.Status, newStatus));
         }
 
-        // Closing registration is the canonical fixture trigger: generate the
-        // matches for every division's stages exactly once (see
-        // GenerateFixtureAsync for the idempotency guard). Done BEFORE the
-        // status is committed so a generation failure leaves the tournament in
-        // its prior (still editable) status instead of stranding it in
-        // RegistrationClosed with a half-built fixture.
-        if (newStatus == TournamentStatus.RegistrationClosed)
+        // HU-108: starting the tournament is the canonical fixture trigger.
+        // After registration closes teams are assigned to divisions; only when
+        // the tournament moves to Ongoing do we generate the matches for every
+        // division's stages exactly once (see GenerateFixtureAsync for the
+        // idempotency guard). Done BEFORE the status is committed so a
+        // generation failure leaves the tournament in its prior (still
+        // RegistrationClosed, editable) status instead of stranding it in
+        // Ongoing with a half-built fixture.
+        if (newStatus == TournamentStatus.Ongoing)
         {
             await GenerateFixtureAsync(tournament);
         }
