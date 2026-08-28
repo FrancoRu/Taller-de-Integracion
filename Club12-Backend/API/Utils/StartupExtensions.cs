@@ -150,6 +150,14 @@ public static class StartupExtensions
         ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
         await db.Database.MigrateAsync();
 
+        // HU-99: give every team a stable cross-season club identity. The
+        // migration only adds the schema (Clubs table + Team.ClubId); the data
+        // backfill runs here as an idempotent step so it links teams created by
+        // any migration/seed path. A re-run is a cheap no-op once every team is
+        // already linked.
+        IClubService clubService = scope.ServiceProvider.GetRequiredService<IClubService>();
+        await clubService.BackfillClubsAsync();
+
         IdentityAppDbContext identityDb = scope.ServiceProvider.GetRequiredService<IdentityAppDbContext>();
         await identityDb.Database.MigrateAsync();
 

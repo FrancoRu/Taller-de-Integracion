@@ -37,6 +37,7 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
         base.OnModelCreating(modelBuilder);
     }
 
+    public virtual required DbSet<Club> Clubs { get; set; }
     public virtual required DbSet<Team> Teams { get; set; }
     public virtual required DbSet<Player> Players { get; set; }
     public virtual required DbSet<Tournament> Tournaments { get; set; }

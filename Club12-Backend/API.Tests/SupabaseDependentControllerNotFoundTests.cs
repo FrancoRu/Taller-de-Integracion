@@ -38,7 +38,7 @@ public class SupabaseDependentControllerNotFoundTests
     [Fact]
     public async Task TeamController_GetTeamById_MissingEntity_Returns404ProblemDetails()
     {
-        TeamController controller = new(new NotFoundTeamService(), null!, new NotUsedMapper());
+        TeamController controller = new(new NotFoundTeamService(), null!, null!, new NotUsedMapper());
         ConfigureProblemDetailsFactory(controller);
 
         ActionResult<TeamResponse> result = await controller.GetTeamById(Guid.NewGuid().ToString());
@@ -68,7 +68,7 @@ public class SupabaseDependentControllerNotFoundTests
     [Fact]
     public async Task TeamController_DeleteTeamById_MissingEntity_Returns404ProblemDetails()
     {
-        TeamController controller = new(new NotFoundTeamService(), null!, new NotUsedMapper());
+        TeamController controller = new(new NotFoundTeamService(), null!, null!, new NotUsedMapper());
         ConfigureProblemDetailsFactory(controller);
 
         IActionResult result = await controller.DeleteTeamById(Guid.NewGuid());

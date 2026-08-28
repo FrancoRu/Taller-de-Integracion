@@ -18,6 +18,7 @@ namespace Infrastructure.Repositories;
 public class UnitOfWork(
     ApplicationDBContext context,
     IPlayerRepository playerRepository,
+    IClubRepository clubRepository,
     ITeamRepository teamRepository,
     IDivisionRepository divisionRepository,
     IMatchRepository matchRepository,
@@ -37,6 +38,11 @@ public class UnitOfWork(
     /// Gets the repository for blog post entities.
     /// </summary>
     public IBlogPostRepository BlogPostRepository { get; } = blogPostRepository;
+
+    /// <summary>
+    /// Gets the repository for club entities (stable cross-season identity, HU-99).
+    /// </summary>
+    public IClubRepository ClubRepository { get; } = clubRepository;
 
     /// <summary>
     /// Gets the repository for team entities.

@@ -25,6 +25,7 @@ public static class EntityConstants
     {
         public const string AuditLog = "AuditLogs";
         public const string BlogPost = "BlogPosts";
+        public const string Club = "Clubs";
         public const string Division = "Divisions";
         public const string DivisionPlayoffMapping = "DivisionPlayoffMappings";
         public const string Match = "Matches";

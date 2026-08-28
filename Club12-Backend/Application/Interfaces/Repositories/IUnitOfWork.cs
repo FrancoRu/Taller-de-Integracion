@@ -8,6 +8,7 @@ namespace Application.Interfaces.Repositories;
 public interface IUnitOfWork
 {
     IBlogPostRepository BlogPostRepository { get; }
+    IClubRepository ClubRepository { get; }
     ITeamRepository TeamRepository { get; }
     IVenueRepository VenueRepository { get; }
     ITournamentRepository TournamentRepository { get; }
