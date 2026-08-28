@@ -251,6 +251,23 @@ public static class ErrorMessages
     public static class Playoff
     {
         public const string NotEnoughRankedTeams = "Seeding requires at least two ranked teams.";
+        public const string EmptyDestination = "A playoff position range must have a non-empty destination.";
+        public const string NoMappingsConfigured = "This division has no playoff position-range mapping configured.";
+
+        public static string InvalidRange(int from, int to)
+        {
+            return $"Invalid playoff position range {from}-{to}: positions must be 1-based and 'from' must be less than or equal to 'to'.";
+        }
+
+        public static string OverlappingRanges(int firstFrom, int firstTo, int secondFrom, int secondTo)
+        {
+            return $"Playoff position ranges {firstFrom}-{firstTo} and {secondFrom}-{secondTo} overlap; each position must map to at most one destination.";
+        }
+
+        public static string CupStageNotFound(string destination)
+        {
+            return $"No unseeded first-round elimination stage found for playoff destination '{destination}'.";
+        }
     }
 
     public static class Backup

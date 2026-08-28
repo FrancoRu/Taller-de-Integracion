@@ -21,9 +21,17 @@ public class DivisionEntityConfiguration : BaseEntityConfiguration<Division>
             .HasForeignKey(d => d.TournamentId)
             .IsRequired();
 
+        builder.Property(d => d.PointsForWin).IsRequired().HasDefaultValue(2);
+        builder.Property(d => d.PointsForLoss).IsRequired().HasDefaultValue(1);
+
         builder.HasMany(d => d.Stages)
             .WithOne(s => s.Division)
             .HasForeignKey(s => s.DivisionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(d => d.PlayoffMappings)
+            .WithOne(m => m.Division)
+            .HasForeignKey(m => m.DivisionId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

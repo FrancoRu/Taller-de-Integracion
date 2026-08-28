@@ -49,4 +49,27 @@ public class Division : EntityBase
     /// division" rule so the same team can belong to its zone AND the cup.
     /// </summary>
     public bool IsCrossDivisionCup { get; set; } = false;
+
+    /// <summary>
+    /// Points awarded for a win when building this division's standings
+    /// (HU-79). Configurable per division so the scoring rule sits in the
+    /// same aggregate that owns the standings and the playoff mapping.
+    /// Defaults to 2 (FIBA-style: 2 for a win, 1 for a loss).
+    /// </summary>
+    public int PointsForWin { get; set; } = 2;
+
+    /// <summary>
+    /// Points awarded for a loss when building this division's standings
+    /// (HU-79). Basketball has no draws, so every finished match awards
+    /// <see cref="PointsForWin"/> to one team and this to the other.
+    /// Defaults to 1.
+    /// </summary>
+    public int PointsForLoss { get; set; } = 1;
+
+    /// <summary>
+    /// Maps this division's final standings position ranges to playoff
+    /// destinations (HU-45), e.g. 1-4 → "Copa Oro", 5-8 → "Copa Plata".
+    /// Positions not covered by any range do not qualify for a playoff.
+    /// </summary>
+    public virtual ICollection<DivisionPlayoffMapping> PlayoffMappings { get; set; } = [];
 }

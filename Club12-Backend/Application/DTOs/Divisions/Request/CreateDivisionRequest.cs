@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.Divisions.Request;
 
@@ -26,4 +27,25 @@ public class CreateDivisionRequest
     /// Defaults to false.
     /// </summary>
     public bool IsCrossDivisionCup { get; set; } = false;
+
+    /// <summary>
+    /// Points awarded for a win in this division's standings (HU-79).
+    /// Defaults to 2.
+    /// </summary>
+    [Range(0, int.MaxValue, ErrorMessage = "PointsForWin cannot be negative.")]
+    public int PointsForWin { get; set; } = 2;
+
+    /// <summary>
+    /// Points awarded for a loss in this division's standings (HU-79).
+    /// Defaults to 1.
+    /// </summary>
+    [Range(0, int.MaxValue, ErrorMessage = "PointsForLoss cannot be negative.")]
+    public int PointsForLoss { get; set; } = 1;
+
+    /// <summary>
+    /// Optional position-range → playoff-destination mapping (HU-45) the
+    /// wizard sends so the system can seed multiple cups (HU-81). Ranges must
+    /// not overlap.
+    /// </summary>
+    public List<PlayoffMappingRequest>? PlayoffMappings { get; set; }
 }

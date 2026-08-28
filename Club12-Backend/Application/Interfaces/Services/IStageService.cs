@@ -75,5 +75,16 @@ public interface IStageService
     /// <param name="stageId">The elimination stage to seed.</param>
     /// <returns>The stage's matches, now seeded with home/visitor teams.</returns>
     Task<List<Match>> SeedKnockoutStageAsync(Guid stageId);
+
+    /// <summary>
+    /// Seeds every playoff cup of a division from its final group-stage
+    /// standings using the division's position-range mapping (HU-45/HU-81).
+    /// Each mapped destination is populated from the standings positions its
+    /// range covers and seeded into the first-round elimination stage whose
+    /// BracketName matches that destination.
+    /// </summary>
+    /// <param name="divisionId">The division whose group stage has finished.</param>
+    /// <returns>The seeded matches per destination cup (BracketName → matches).</returns>
+    Task<Dictionary<string, List<Match>>> SeedPlayoffCupsAsync(Guid divisionId);
 }
 

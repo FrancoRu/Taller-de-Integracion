@@ -43,4 +43,15 @@ public class DivisionResponse
     /// draws teams from every other division in the tournament.
     /// </summary>
     public bool IsCrossDivisionCup { get; set; }
+
+    /// <summary>Points awarded for a win in this division's standings (HU-79).</summary>
+    public int PointsForWin { get; set; }
+
+    /// <summary>Points awarded for a loss in this division's standings (HU-79).</summary>
+    public int PointsForLoss { get; set; }
+
+    /// <summary>
+    /// The division's position-range → playoff-destination mapping (HU-45).
+    /// </summary>
+    public List<PlayoffMappingResponse>? PlayoffMappings { get; set; }
 }

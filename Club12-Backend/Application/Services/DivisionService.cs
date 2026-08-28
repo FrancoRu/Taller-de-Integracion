@@ -7,6 +7,7 @@ using Application.Interfaces.Services;
 using Application.Utils.Constants;
 using Application.Utils.Constants.Pagination;
 using Application.Utils.Extensions;
+using Application.Utils.Helper.Playoff;
 using Application.Utils.Helper.Slug;
 using Application.Utils.Helper.Standings;
 
@@ -43,6 +44,8 @@ public class DivisionService(
     {
         await EnsureTournamentAllowsStructuralChangesAsync(divisionEntity.TournamentId);
 
+        PlayoffMappingValidator.Validate(divisionEntity.PlayoffMappings);
+
         divisionEntity.Slug = await SlugGenerator.GenerateUniqueSlugAsync(
             divisionEntity.Name,
             candidate => divisionRepository.ExistsAsync(division => division.Slug == candidate));
@@ -67,6 +70,8 @@ public class DivisionService(
     public async Task UpdateDivisionAsync(Division divisionEntity)
     {
         await EnsureTournamentAllowsStructuralChangesAsync(divisionEntity.TournamentId);
+
+        PlayoffMappingValidator.Validate(divisionEntity.PlayoffMappings);
 
         await divisionRepository.UpdateAsync(divisionEntity);
     }
@@ -174,6 +179,10 @@ public class DivisionService(
             return [];
         }
 
+        Division? division = await divisionRepository.GetByIdAsync(divisionId);
+        int pointsForWin = division?.PointsForWin ?? PositionCalculator.DefaultPointsForWin;
+        int pointsForLoss = division?.PointsForLoss ?? PositionCalculator.DefaultPointsForLoss;
+
         PaginatedResponse<Match> matches = await matchService.GetAllMatchesAsync(new GetMatchesFilteredRequest
         {
             StageId = groupStage.Id,
@@ -181,7 +190,7 @@ public class DivisionService(
             PageSize = PaginationDefaults.MaxPageSize,
         });
 
-        return PositionCalculator.CalculatePositions(matches.Items);
+        return PositionCalculator.CalculatePositions(matches.Items, pointsForWin, pointsForLoss);
     }
 
     /// <summary>

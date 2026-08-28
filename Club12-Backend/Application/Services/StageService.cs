@@ -476,7 +476,8 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
             m.Stage.DivisionId == stage.DivisionId && m.Stage.StageType == StageType.Group,
             includes: [m => m.HomeTeam!, m => m.VisitorTeam!, m => m.WinningTeam!])];
 
-        List<Position> standings = PositionCalculator.CalculatePositions(groupMatches);
+        List<Position> standings = PositionCalculator.CalculatePositions(
+            groupMatches, stage.Division.PointsForWin, stage.Division.PointsForLoss);
 
         List<Guid> orderedTeamIds = [.. standings
             .Where(position => assignedTeamIds.Contains(position.TeamId))
@@ -487,9 +488,92 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
             throw new InvalidOperationException(ErrorMessages.Stage.SeedMissingStandings);
         }
 
+        List<Match> orderedMatches = FillStageWithSeeds(stage.Matches, orderedTeamIds);
+
+        await _matchRepository.UpdateRangeAsync(orderedMatches);
+
+        return orderedMatches;
+    }
+
+    /// <summary>
+    /// Seeds every playoff cup of a division from its final group-stage
+    /// standings using the division's position-range mapping (HU-45/HU-81).
+    /// Each mapped destination (e.g. "Copa Oro", "Copa Plata") is populated
+    /// from the standings positions its range covers and seeded into the
+    /// first-round elimination stage whose <see cref="Stage.BracketName"/>
+    /// matches that destination, reusing the same classic bracket seeding as
+    /// the single-cup path. Single-cup tournaments keep using
+    /// <see cref="SeedKnockoutStageAsync"/> unchanged.
+    /// </summary>
+    /// <param name="divisionId">The division whose group stage has finished.</param>
+    /// <returns>The seeded matches per destination cup (BracketName → matches).</returns>
+    public async Task<Dictionary<string, List<Match>>> SeedPlayoffCupsAsync(Guid divisionId)
+    {
+        Division division = await _divisionRepository.GetByIdAsync(
+            divisionId, includes: [d => d.PlayoffMappings])
+            ?? throw new InvalidOperationException(ErrorMessages.Stage.DivisionNotFound);
+
+        if (division.PlayoffMappings.Count == 0)
+        {
+            throw new InvalidOperationException(ErrorMessages.Playoff.NoMappingsConfigured);
+        }
+
+        List<Match> groupMatches = [.. await _matchRepository.FindAsync(m =>
+            m.Stage.DivisionId == divisionId && m.Stage.StageType == StageType.Group,
+            includes: [m => m.HomeTeam!, m => m.VisitorTeam!, m => m.WinningTeam!])];
+
+        List<Position> standings = PositionCalculator.CalculatePositions(
+            groupMatches, division.PointsForWin, division.PointsForLoss);
+
+        Dictionary<string, List<Guid>> qualifiersByCup = PlayoffQualificationResolver.Resolve(
+        [
+            new PlayoffQualificationResolver.DivisionStandings
+            {
+                Standings = standings,
+                Mappings = [.. division.PlayoffMappings],
+            },
+        ]);
+
+        List<Stage> eliminationStages = [.. await _stageRepository.FindAsync(
+            s => s.DivisionId == divisionId && s.StageType != StageType.Group,
+            includes: [s => s.Matches])];
+
+        Dictionary<string, List<Match>> seededByCup = [];
+
+        foreach ((string destination, List<Guid> orderedTeamIds) in qualifiersByCup)
+        {
+            if (orderedTeamIds.Count < 2)
+            {
+                continue;
+            }
+
+            Stage cupStage = eliminationStages
+                .Where(s => s.BracketName == destination
+                    && s.Matches.Count > 0
+                    && !s.Matches.Any(m => m.HomeTeamId.HasValue || m.VisitorTeamId.HasValue))
+                .OrderBy(s => s.Order)
+                .FirstOrDefault()
+                ?? throw new InvalidOperationException(ErrorMessages.Playoff.CupStageNotFound(destination));
+
+            List<Match> seeded = FillStageWithSeeds(cupStage.Matches, orderedTeamIds);
+            await _matchRepository.UpdateRangeAsync(seeded);
+            seededByCup[destination] = seeded;
+        }
+
+        return seededByCup;
+    }
+
+    /// <summary>
+    /// Pairs an ordered (best seed first) list of team ids into a stage's
+    /// already-generated, still-empty matches using the classic bracket seed
+    /// order, marking bye pairs as finished walkover wins. Shared by the
+    /// single-cup and multi-cup seeding paths.
+    /// </summary>
+    private static List<Match> FillStageWithSeeds(IEnumerable<Match> stageMatches, IReadOnlyList<Guid> orderedTeamIds)
+    {
         List<(Guid HomeTeamId, Guid? VisitorTeamId)> pairs = PlayoffSeeder.SeedPairs(orderedTeamIds);
 
-        List<Match> orderedMatches = [.. stage.Matches.OrderBy(m => m.MatchDate).ThenBy(m => m.Id)];
+        List<Match> orderedMatches = [.. stageMatches.OrderBy(m => m.MatchDate).ThenBy(m => m.Id)];
 
         for (int i = 0; i < pairs.Count; i++)
         {
@@ -502,8 +586,6 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
                 orderedMatches[i].WinningTeamId = pairs[i].HomeTeamId;
             }
         }
-
-        await _matchRepository.UpdateRangeAsync(orderedMatches);
 
         return orderedMatches;
     }
