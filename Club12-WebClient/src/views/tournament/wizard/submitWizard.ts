@@ -4,7 +4,14 @@ import { AddDivisionRequest, IDivisionResponse } from '@/modules/division/type/d
 import { IAddStageRequest, IStageResponse, StageType } from '@/modules/stage/type/stage';
 import { PlayoffMappingRequest } from '@/modules/division/type/division.d';
 import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
-import { CupConfig, PlayoffMappingConfig, STAGE_TYPE_LABELS, WizardState, ZoneConfig } from './types';
+import {
+  CrossCupConfig,
+  CupConfig,
+  PlayoffMappingConfig,
+  STAGE_TYPE_LABELS,
+  WizardState,
+  ZoneConfig,
+} from './types';
 
 /**
  * The wizard's persistence dependencies, injected so the orchestration
@@ -166,6 +173,67 @@ const createZoneStructure = async (
 };
 
 /**
+ * Materializes the cross-division cup (HU-110) as STRUCTURE ONLY: one
+ * division flagged `isCrossDivisionCup` carrying `qualifiersPerGroup`, then
+ * ONE group stage per configured group ("Grupo 1"…"Grupo N") — every group
+ * shares the group-phase window and its own configured RoundRobinLegs — and
+ * finally the bracket/cup stages after the groups. Unlike a regular zone
+ * (exactly one group), the cross cup fans out into N parallel groups; the
+ * backend later pools the top-`qualifiersPerGroup` of every group, sized
+ * automatically when the fixture is generated. Teams are not assigned here.
+ */
+const createCrossCupStructure = async (
+  services: WizardServices,
+  tournamentId: GUID,
+  crossCup: CrossCupConfig,
+  startDate: Date,
+  category: TournamentCategory,
+  warnings: string[]
+): Promise<void> => {
+  const cupName = crossCup.name.trim();
+
+  const division = await services.addDivision({
+    name: cupName,
+    tournamentId,
+    isCrossDivisionCup: true,
+    // HU-110: how many teams advance per group into the pooled bracket.
+    qualifiersPerGroup: crossCup.qualifiersPerGroup,
+    pointsForWin: crossCup.pointsForWin,
+    pointsForLoss: crossCup.pointsForLoss,
+    category,
+    playoffMappings: toPlayoffMappingRequests(crossCup.playoffMappings),
+  });
+
+  if (!division) {
+    warnings.push(`No se pudo crear la copa cruzada "${cupName}".`);
+    return;
+  }
+
+  const groupEndDate = addDays(startDate, GROUP_STAGE_DURATION_DAYS);
+
+  // One Group stage per configured group. The backend now allows more than
+  // one Group stage in a cross-cup division (HU-110). Each runs in the same
+  // window; the wizard sends no match count — the bracket auto-sizes later.
+  for (let groupNumber = 1; groupNumber <= crossCup.groupCount; groupNumber += 1) {
+    const groupStage = await services.addStage({
+      name: `Grupo ${groupNumber}`,
+      stageType: StageType.Group,
+      isElimination: false,
+      startDate,
+      endDate: groupEndDate,
+      divisionId: division.id,
+      roundRobinLegs: crossCup.roundRobinLegs,
+    });
+
+    if (!groupStage) {
+      warnings.push(`No se pudo crear el grupo ${groupNumber} de "${cupName}".`);
+    }
+  }
+
+  await createCupStages(services, division.id, groupEndDate, crossCup.cups, warnings);
+};
+
+/**
  * Sequences every API call needed to materialize a wizard's local state as
  * STRUCTURE ONLY (HU-106): the tournament, each zone (division + optional
  * group stage + playoff cup shells), and the optional cross-division cup.
@@ -216,18 +284,11 @@ export const submitWizard = async (
   }
 
   if (state.crossCup.enabled) {
-    await createZoneStructure(
+    await createCrossCupStructure(
       services,
       tournament.id,
-      state.crossCup.name.trim(),
-      state.crossCup.hasGroupStage,
-      state.crossCup.roundRobinLegs,
-      state.crossCup.cups,
+      state.crossCup,
       startDate,
-      true,
-      state.crossCup.pointsForWin,
-      state.crossCup.pointsForLoss,
-      state.crossCup.playoffMappings,
       state.tournament.category,
       warnings
     );

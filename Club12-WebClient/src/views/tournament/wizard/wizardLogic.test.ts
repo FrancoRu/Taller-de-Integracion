@@ -205,6 +205,38 @@ describe('validateCrossCupStep', () => {
     state.crossCup = { ...state.crossCup, enabled: true, name: 'Copa cruzada' };
     expect(validateCrossCupStep(state)).toEqual([]);
   });
+
+  // HU-110: the cross cup is a multi-group competition.
+  it('rejects fewer than one group', () => {
+    const state = makeValidState();
+    state.crossCup = { ...state.crossCup, enabled: true, name: 'Copa cruzada', groupCount: 0 };
+    expect(validateCrossCupStep(state).some(e => e.includes('al menos un grupo'))).toBe(true);
+  });
+
+  it('rejects fewer than one qualifier per group', () => {
+    const state = makeValidState();
+    state.crossCup = {
+      ...state.crossCup,
+      enabled: true,
+      name: 'Copa cruzada',
+      qualifiersPerGroup: 0,
+    };
+    expect(
+      validateCrossCupStep(state).some(e => e.includes('al menos un equipo por grupo'))
+    ).toBe(true);
+  });
+
+  it('accepts several groups with several qualifiers each', () => {
+    const state = makeValidState();
+    state.crossCup = {
+      ...state.crossCup,
+      enabled: true,
+      name: 'Copa cruzada',
+      groupCount: 4,
+      qualifiersPerGroup: 2,
+    };
+    expect(validateCrossCupStep(state)).toEqual([]);
+  });
 });
 
 describe('isWizardReadyToSubmit', () => {
@@ -257,5 +289,31 @@ describe('buildWizardTree', () => {
     const crossNode = nodes.find(n => n.id === 'cross-cup');
     expect(crossNode).toMatchObject({ depth: 2, tag: 'división cruzada' });
     expect(crossNode?.label).toContain('Copa Club12');
+  });
+
+  // HU-110: the cross cup review lists one line per group plus how many
+  // teams advance from each, instead of a single "Fase de grupos" line.
+  it('lists one line per cross-cup group and a qualifiers-per-group line', () => {
+    const state = makeValidState();
+    state.crossCup = {
+      ...state.crossCup,
+      enabled: true,
+      name: 'Copa Club12',
+      groupCount: 3,
+      qualifiersPerGroup: 2,
+      roundRobinLegs: 2,
+    };
+
+    const nodes = buildWizardTree(state);
+    const groupLabels = nodes
+      .filter(n => n.id.startsWith('cross-cup-group-'))
+      .map(n => n.label);
+
+    expect(groupLabels).toHaveLength(3);
+    expect(groupLabels[0]).toContain('Grupo 1');
+    expect(groupLabels[0]).toContain('2 veces');
+    expect(
+      nodes.some(n => n.id === 'cross-cup-qualifiers' && n.label.includes('2 equipos por grupo'))
+    ).toBe(true);
   });
 });

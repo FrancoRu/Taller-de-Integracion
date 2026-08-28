@@ -106,6 +106,15 @@ export interface AddDivisionRequest {
   isCrossDivisionCup?: boolean;
 
   /**
+   * For a cross-division cup (HU-110): how many teams advance from each of
+   * the cup's group stages into the pooled knockout bracket. Only meaningful
+   * when `isCrossDivisionCup` is true; the backend auto-sizes the bracket's
+   * first round from the pooled top-`qualifiersPerGroup` of every group.
+   * @type {number}
+   */
+  qualifiersPerGroup?: number;
+
+  /**
    * Points awarded for a win in this division's standings (HU-79).
    * Omit to let the backend default to 2.
    * @type {number}

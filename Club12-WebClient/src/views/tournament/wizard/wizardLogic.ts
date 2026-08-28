@@ -189,6 +189,17 @@ export const validateCrossCupStep = (state: WizardState): ValidationResult => {
     errors.push('La copa cruzada necesita un nombre.');
   }
 
+  // HU-110: the cross cup is split into groups, and a fixed number of teams
+  // advances from each group into the pooled bracket. Both must be whole
+  // numbers of at least 1.
+  if (!Number.isInteger(crossCup.groupCount) || crossCup.groupCount < 1) {
+    errors.push('La copa cruzada necesita al menos un grupo.');
+  }
+
+  if (!Number.isInteger(crossCup.qualifiersPerGroup) || crossCup.qualifiersPerGroup < 1) {
+    errors.push('Debe clasificar al menos un equipo por grupo en la copa cruzada.');
+  }
+
   errors.push(...validateCups(crossCup.cups, 'la copa cruzada'));
   errors.push(
     ...validatePlayoffMappings(
@@ -273,20 +284,39 @@ export const buildWizardTree = (state: WizardState): WizardTreeNode[] => {
   });
 
   if (state.crossCup.enabled) {
+    const { groupCount, qualifiersPerGroup, roundRobinLegs, cups } = state.crossCup;
+
     nodes.push({
       id: 'cross-cup',
       depth: 2,
       label: state.crossCup.name || '(sin nombre)',
       tag: 'división cruzada',
     });
-    nodes.push(
-      ...buildGroupAndCupNodes(
-        'cross-cup',
-        state.crossCup.hasGroupStage,
-        state.crossCup.roundRobinLegs,
-        state.crossCup.cups
-      )
-    );
+
+    // HU-110: one line per group, then a line stating how many advance.
+    for (let groupNumber = 1; groupNumber <= groupCount; groupNumber += 1) {
+      nodes.push({
+        id: `cross-cup-group-${groupNumber}`,
+        depth: 3,
+        label:
+          roundRobinLegs > 1
+            ? `Grupo ${groupNumber} (todos contra todos, ${roundRobinLegs} veces)`
+            : `Grupo ${groupNumber} (todos contra todos)`,
+      });
+    }
+
+    nodes.push({
+      id: 'cross-cup-qualifiers',
+      depth: 3,
+      label:
+        qualifiersPerGroup === 1
+          ? 'Clasifica 1 equipo por grupo'
+          : `Clasifican ${qualifiersPerGroup} equipos por grupo`,
+    });
+
+    cups.forEach(cup => {
+      nodes.push({ id: cup.id, depth: 3, label: describeCup(cup) });
+    });
   }
 
   return nodes;

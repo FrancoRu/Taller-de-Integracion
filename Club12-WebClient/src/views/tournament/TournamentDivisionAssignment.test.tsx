@@ -67,9 +67,14 @@ const buildDivision = (
   isCrossDivisionCup,
 });
 
-const buildGroupStage = (id: string, divisionId: string): IStageResponse => ({
+const buildGroupStage = (
+  id: string,
+  divisionId: string,
+  name = 'Fase de grupos',
+  order = 1
+): IStageResponse => ({
   id: gid(id),
-  name: 'Fase de grupos',
+  name,
   slug: `grupos-${id}`,
   stageType: StageType.Group,
   isActive: true,
@@ -77,7 +82,7 @@ const buildGroupStage = (id: string, divisionId: string): IStageResponse => ({
   startDate: '2026-02-01',
   endDate: '2026-03-01',
   divisionId: gid(divisionId),
-  order: 1,
+  order,
   bestOf: 1,
   roundRobinLegs: 1,
 });
@@ -114,6 +119,9 @@ const setup = (options: {
   status?: TournamentStatus;
   divisions?: IDivisionResponse[];
   groupStageByDivision?: Record<string, IStageResponse>;
+  // HU-110: a cross-division cup has more than one Group stage, so a division
+  // can map to a LIST of stages. Merged with the singular map above.
+  groupStagesByDivision?: Record<string, IStageResponse[]>;
   enrolled?: ITeamResponse[];
   assignedByStage?: Record<string, ITeamResponse[]>;
   completability?: ITournamentCompletability;
@@ -121,6 +129,7 @@ const setup = (options: {
   const status = options.status ?? TournamentStatus.RegistrationClosed;
   const divisions = options.divisions ?? [];
   const groupStageByDivision = options.groupStageByDivision ?? {};
+  const groupStagesByDivision = options.groupStagesByDivision ?? {};
   const enrolled = options.enrolled ?? [];
   const assignedByStage = options.assignedByStage ?? {};
   const completability =
@@ -140,8 +149,11 @@ const setup = (options: {
 
   getStagesByFilters = vi.fn<IStageContextProps['getStagesByFilters']>();
   getStagesByFilters.mockImplementation(async filter => {
-    const stage = groupStageByDivision[filter?.divisionId as string];
-    return page(stage ? 1 : 0, stage ? [stage] : []);
+    const divisionId = filter?.divisionId as string;
+    const single = groupStageByDivision[divisionId];
+    const stages =
+      groupStagesByDivision[divisionId] ?? (single ? [single] : []);
+    return page(stages.length, stages);
   });
 
   assignTeamsToStage = vi.fn<IStageContextProps['assignTeamsToStage']>();
@@ -301,6 +313,69 @@ describe('TournamentDivisionAssignment — assigning teams', () => {
     });
     expect(
       within(crossRegion).getByRole('button', { name: /agregar River/i })
+    ).toBeInTheDocument();
+  });
+});
+
+describe('TournamentDivisionAssignment — multi-group cross cup (HU-110)', () => {
+  it('shows every cross-cup group and assigns a team to the chosen group', async () => {
+    const river = buildTeam('river-id', 'River');
+    const boca = buildTeam('boca-id', 'Boca');
+    const crossCup = buildDivision('div-c', 'Copa Club12', true);
+    const grupo1 = buildGroupStage('gs-c1', 'div-c', 'Grupo 1', 1);
+    const grupo2 = buildGroupStage('gs-c2', 'div-c', 'Grupo 2', 2);
+
+    const { tournament } = setup({
+      divisions: [crossCup],
+      groupStagesByDivision: { 'div-c': [grupo1, grupo2] },
+      enrolled: [river, boca],
+      assignedByStage: { 'gs-c1': [], 'gs-c2': [] },
+      completability: { canStart: false, issues: [] },
+    });
+
+    const user = userEvent.setup();
+    renderComponent(tournament);
+
+    // Both groups are rendered as their own labelled sections.
+    const grupo1Region = await screen.findByRole('region', { name: /^Grupo 1$/i });
+    const grupo2Region = await screen.findByRole('region', { name: /^Grupo 2$/i });
+    expect(grupo1Region).toBeInTheDocument();
+    expect(grupo2Region).toBeInTheDocument();
+
+    // Assigning River to Grupo 2 targets that group's stage, not Grupo 1's.
+    await user.click(
+      within(grupo2Region).getByRole('button', { name: /agregar River/i })
+    );
+
+    await waitFor(() => expect(assignTeamsToStage).toHaveBeenCalledTimes(1));
+    expect(assignTeamsToStage).toHaveBeenCalledWith(grupo2.id, [river.id]);
+  });
+
+  it('excludes a team already in one cross-cup group from the other groups of the same cup', async () => {
+    const river = buildTeam('river-id', 'River');
+    const boca = buildTeam('boca-id', 'Boca');
+    const crossCup = buildDivision('div-c', 'Copa Club12', true);
+    const grupo1 = buildGroupStage('gs-c1', 'div-c', 'Grupo 1', 1);
+    const grupo2 = buildGroupStage('gs-c2', 'div-c', 'Grupo 2', 2);
+
+    const { tournament } = setup({
+      divisions: [crossCup],
+      groupStagesByDivision: { 'div-c': [grupo1, grupo2] },
+      enrolled: [river, boca],
+      assignedByStage: { 'gs-c1': [river], 'gs-c2': [] },
+      completability: { canStart: false, issues: [] },
+    });
+
+    renderComponent(tournament);
+
+    // River already plays Grupo 1, so it must not be offered in Grupo 2; Boca
+    // (in neither) still can be added there.
+    const grupo2Region = await screen.findByRole('region', { name: /^Grupo 2$/i });
+    expect(
+      within(grupo2Region).queryByRole('button', { name: /agregar River/i })
+    ).not.toBeInTheDocument();
+    expect(
+      within(grupo2Region).getByRole('button', { name: /agregar Boca/i })
     ).toBeInTheDocument();
   });
 });

@@ -208,7 +208,8 @@ describe('submitWizard', () => {
     state.crossCup = {
       enabled: true,
       name: 'Copa Club12',
-      hasGroupStage: false,
+      groupCount: 1,
+      qualifiersPerGroup: 1,
       roundRobinLegs: 1,
       cups: [],
       pointsForWin: 2,
@@ -228,6 +229,83 @@ describe('submitWizard', () => {
     await submitWizard(makeState(), services);
 
     expect(services.addDivision).toHaveBeenCalledTimes(1);
+  });
+
+  // HU-110: the cross cup is a multi-group competition. The wizard must create
+  // ONE Group stage per configured group ("Grupo 1"…"Grupo N"), each with the
+  // configured RoundRobinLegs, and must never send a match count — the bracket
+  // is auto-sized by the backend from the pooled qualifiers.
+  it('creates one Group stage per configured cross-cup group with the configured RoundRobinLegs', async () => {
+    const services = makeServices();
+    const state = makeState();
+    state.crossCup = {
+      enabled: true,
+      name: 'Copa Club12',
+      groupCount: 3,
+      qualifiersPerGroup: 2,
+      roundRobinLegs: 2,
+      cups: [],
+      pointsForWin: 2,
+      pointsForLoss: 1,
+      playoffMappings: [],
+    };
+
+    await submitWizard(state, services);
+
+    const crossGroupCalls = services.addStage.mock.calls.filter(call => {
+      const stage = call[0] as { stageType: StageType; name: string };
+      return stage.stageType === StageType.Group && stage.name.startsWith('Grupo ');
+    });
+
+    expect(crossGroupCalls).toHaveLength(3);
+    expect(crossGroupCalls.map(call => (call[0] as { name: string }).name)).toEqual([
+      'Grupo 1',
+      'Grupo 2',
+      'Grupo 3',
+    ]);
+    for (const call of crossGroupCalls) {
+      expect(call[0]).toMatchObject({
+        stageType: StageType.Group,
+        isElimination: false,
+        roundRobinLegs: 2,
+      });
+      // The wizard never sends a match count for the cross-cup groups.
+      expect(call[0]).not.toHaveProperty('numberOfMatches');
+      expect(call[0]).not.toHaveProperty('matchCount');
+    }
+  });
+
+  it('sends qualifiersPerGroup on the cross-cup division and omits it on regular zones', async () => {
+    const services = makeServices();
+    const state = makeState();
+    state.crossCup = {
+      enabled: true,
+      name: 'Copa Club12',
+      groupCount: 2,
+      qualifiersPerGroup: 4,
+      roundRobinLegs: 1,
+      cups: [],
+      pointsForWin: 2,
+      pointsForLoss: 1,
+      playoffMappings: [],
+    };
+
+    await submitWizard(state, services);
+
+    expect(services.addDivision).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Copa Club12',
+        isCrossDivisionCup: true,
+        qualifiersPerGroup: 4,
+      })
+    );
+
+    // The regular zone must not carry qualifiersPerGroup — it is a cross-cup
+    // only concept.
+    const zoneCall = services.addDivision.mock.calls.find(
+      call => (call[0] as { name: string }).name === 'Zona A'
+    );
+    expect(zoneCall?.[0]).not.toHaveProperty('qualifiersPerGroup');
   });
 
   // HU-48: the chosen category is set at creation on the tournament and must
@@ -253,7 +331,8 @@ describe('submitWizard', () => {
     state.crossCup = {
       enabled: true,
       name: 'Copa Club12',
-      hasGroupStage: false,
+      groupCount: 1,
+      qualifiersPerGroup: 1,
       roundRobinLegs: 1,
       cups: [],
       pointsForWin: 2,
