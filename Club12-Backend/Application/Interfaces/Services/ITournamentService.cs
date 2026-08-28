@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.Abstract.Response;
 using Application.DTOs.Tournament.Request;
+using Application.DTOs.Tournament.Response;
 
 using Domain.Entities.Models;
 using Domain.Enums;
@@ -74,6 +75,17 @@ public interface ITournamentService
     /// <exception cref="System.Collections.Generic.KeyNotFoundException">No tournament exists with the given id.</exception>
     /// <exception cref="System.InvalidOperationException">The requested transition is not allowed by the state machine.</exception>
     Task ChangeStatusAsync(Guid tournamentId, TournamentStatus newStatus);
+
+    /// <summary>
+    /// HU-109: reports whether a tournament can be COMPLETED once started, and
+    /// lists the blocking issues when it cannot. This is the same guard the
+    /// transition to <see cref="TournamentStatus.Ongoing"/> enforces, exposed as
+    /// a read-only query so the panel can preview the issues before starting.
+    /// </summary>
+    /// <param name="tournamentId">The id of the tournament to evaluate.</param>
+    /// <returns>The completability report (CanStart + Issues).</returns>
+    /// <exception cref="System.Collections.Generic.KeyNotFoundException">No tournament exists with the given id.</exception>
+    Task<TournamentCompletabilityResponse> GetCompletabilityAsync(Guid tournamentId);
 
     /// <summary>
     /// Deletes a Tournament asynchronously.

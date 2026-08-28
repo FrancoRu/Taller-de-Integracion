@@ -101,4 +101,23 @@ public interface ITeamService
         Guid? existingTeamId,
         string? newTeamName,
         Guid? copyRosterFromTournamentId);
+
+    /// <summary>
+    /// Removes a team from a tournament (HU-107 gap), atomically. Allowed only
+    /// while the tournament is <see cref="Domain.Enums.TournamentStatus.OpenForRegistration"/>
+    /// or <see cref="Domain.Enums.TournamentStatus.RegistrationClosed"/> — once
+    /// the tournament has started the roster is frozen. Removes only THIS
+    /// tournament's footprint for the team: its
+    /// <see cref="TeamTournamentRegistration"/>, its
+    /// <see cref="PlayerTeamRegistration"/> rows for this season, and its
+    /// <see cref="StageTeamMatch"/> assignments in this tournament's stages;
+    /// the team's registrations and roster in OTHER seasons are never touched.
+    /// The denormalized <see cref="Team.TournamentId"/> pointer is cleared only
+    /// when it currently points at this tournament.
+    /// </summary>
+    /// <param name="tournament">The tournament to remove the team from.</param>
+    /// <param name="teamId">The id of the team to remove.</param>
+    /// <exception cref="System.InvalidOperationException">The tournament is not in a phase that allows removing teams.</exception>
+    /// <exception cref="System.Collections.Generic.KeyNotFoundException">The team is not enrolled in the tournament.</exception>
+    Task UnenrollTeamAsync(Tournament tournament, Guid teamId);
 }

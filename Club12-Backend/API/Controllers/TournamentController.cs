@@ -266,4 +266,57 @@ public class TournamentController(
         TeamResponse teamResponse = mapper.Map<TeamResponse>(enrolledTeam);
         return new ObjectResult(teamResponse) { StatusCode = StatusCodes.Status201Created };
     }
+
+    /// <summary>
+    /// HU-109: reports whether the tournament can be completed once started, and
+    /// the blocking issues when it cannot. The frontend localizes each issue
+    /// from its <c>Code</c> — the backend text stays English/neutral.
+    /// </summary>
+    /// <param name="tournamentId">Tournament identifier (GUID).</param>
+    /// <returns>
+    /// Returns 200 (OK) with the completability report (CanStart + Issues).
+    /// Returns 404 (Not Found) when the tournament does not exist.
+    /// Returns 403 (Forbidden) if unauthorized.
+    /// </returns>
+    [HttpGet("{tournamentId:guid}/completability")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TournamentCompletabilityResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<TournamentCompletabilityResponse>> GetCompletability(Guid tournamentId)
+    {
+        TournamentCompletabilityResponse response = await tournamentService.GetCompletabilityAsync(tournamentId);
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// HU-107 (gap): removes a team from the tournament during its
+    /// registration/pre-start window. Allowed only while the tournament is
+    /// OpenForRegistration or RegistrationClosed. Removes only this tournament's
+    /// footprint for the team (season registration, this season's roster
+    /// registrations, and stage assignments); other seasons are untouched.
+    /// </summary>
+    /// <param name="tournamentId">Tournament identifier (GUID).</param>
+    /// <param name="teamId">Team identifier (GUID).</param>
+    /// <returns>
+    /// Returns 204 (No Content) when the team is removed.
+    /// Returns 404 (Not Found) when the tournament does not exist or the team is not enrolled.
+    /// Returns 409 (Conflict) when the tournament has already started (not in a removable phase).
+    /// Returns 403 (Forbidden) if unauthorized.
+    /// </returns>
+    [HttpDelete("{tournamentId:guid}/teams/{teamId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> UnenrollTeam(Guid tournamentId, Guid teamId)
+    {
+        Tournament? tournament = await tournamentService.GetTournamentByIdAsync(tournamentId);
+        if (tournament is null)
+        {
+            return this.NotFoundProblem(nameof(Tournament), tournamentId);
+        }
+
+        await teamService.UnenrollTeamAsync(tournament, teamId);
+        return NoContent();
+    }
 }

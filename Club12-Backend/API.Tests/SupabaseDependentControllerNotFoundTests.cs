@@ -166,6 +166,11 @@ public class SupabaseDependentControllerNotFoundTests
         {
             throw new NotImplementedException();
         }
+
+        public Task UnenrollTeamAsync(Tournament tournament, Guid teamId)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     private sealed class NotFoundVenueService : IVenueService
