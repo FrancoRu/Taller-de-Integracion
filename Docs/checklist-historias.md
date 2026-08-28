@@ -31,7 +31,7 @@ Leyenda: ✅ hecho y verificado con tests · ⚠️ hecho con salvedad · 🔵 s
 - [x] HU-18 Quiénes somos ✅
 - [x] HU-19 Reglamento ✅
 - [x] HU-20 Descargar plantilla ficha médica ✅
-- [ ] HU-21 Arreglar descarga de ficha en prod 🔵 (la página existe; requiere reproducir en el entorno desplegado)
+- [x] HU-21 Arreglar descarga de ficha en prod ✅ (causa raíz: el PDF servido estaba git-ignorado por la regla `*.pdf` → 404 en prod; se agregó excepción en `.gitignore` y se versionó el asset)
 
 ## Épica 5 — Sanciones públicas
 - [x] HU-22 Consulta pública de sanciones ✅
@@ -154,8 +154,7 @@ Leyenda: ✅ hecho y verificado con tests · ⚠️ hecho con salvedad · 🔵 s
 ---
 
 ## Resumen
-- **104 / 105 historias ✅** (implementadas + verificadas con tests).
-- **1 pendiente 🔵 HU-21** — es un spike de entorno desplegado (la página de descarga existe y funciona en local; hay que reproducir el fallo en el server), no una tarea de código.
+- **105 / 105 historias ✅** (implementadas + verificadas con tests).
 - Salvedades menores: HU-17 (Open Graph client-side, sin SSR).
 
 ### Pendiente operativo (no historias)
