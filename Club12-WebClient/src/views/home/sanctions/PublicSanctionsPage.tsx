@@ -3,6 +3,7 @@ import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { formatDateAr } from '@/modules/core/utils/formatDate';
 import {
   Box,
+  Chip,
   Container,
   InputAdornment,
   MenuItem,
@@ -13,6 +14,13 @@ import {
 import { GUID } from '@/modules/core/types/types';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import { IPlayerSanctionResponse } from '@/modules/playerSanction/type/playerSanction.d';
+import {
+  formatFechasRemaining,
+  formatSanctionDurationFechas,
+  getSanctionStateLabel,
+  getSanctionSubjectName,
+  getSanctionSubjectTypeLabel,
+} from '@/modules/playerSanction/utils/sanctionDisplay';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { SearchIcon } from '@/views/core/MUI/icons/icons';
 import {
@@ -24,29 +32,48 @@ import { FILTERS_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/constants';
 
 const formatDate = (value?: string | Date | null) => formatDateAr(value);
 
-/**
- * Sanctions recorded as a permanent/indefinite ban (e.g. expulsion) are
- * stored with an arbitrarily large duration rather than a real match-day
- * count — show it as "Permanente" instead of a literal, meaningless number.
- */
-const PERMANENT_SANCTION_DURATION_THRESHOLD = 999;
-
-const formatSanctionDuration = (duration: number) =>
-  duration >= PERMANENT_SANCTION_DURATION_THRESHOLD ? 'Permanente' : duration;
-
 const columns: GridColDef<IPlayerSanctionResponse>[] = [
   {
-    field: 'playerFullName',
-    headerName: 'Jugador',
+    field: 'subject',
+    headerName: 'Sujeto',
     flex: 1.2,
     minWidth: 200,
+    sortable: false,
+    renderCell: params => getSanctionSubjectName(params.row),
+  },
+  {
+    field: 'subjectType',
+    headerName: 'Tipo',
+    flex: 0.6,
+    minWidth: 100,
+    renderCell: params => getSanctionSubjectTypeLabel(params.row),
   },
   {
     field: 'duration',
-    headerName: 'Duración (fechas)',
+    headerName: 'Duración',
+    flex: 0.7,
+    minWidth: 120,
+    renderCell: params => formatSanctionDurationFechas(params.row.duration),
+  },
+  {
+    field: 'fechasRemaining',
+    headerName: 'Fechas restantes',
     flex: 0.7,
     minWidth: 130,
-    renderCell: params => formatSanctionDuration(params.row.duration),
+    renderCell: params => formatFechasRemaining(params.row.fechasRemaining),
+  },
+  {
+    field: 'isActive',
+    headerName: 'Estado',
+    flex: 0.6,
+    minWidth: 110,
+    renderCell: params => (
+      <Chip
+        size="small"
+        label={getSanctionStateLabel(params.row)}
+        color={params.row.isActive ? 'warning' : 'default'}
+      />
+    ),
   },
   {
     field: 'issuedDate',
@@ -58,8 +85,8 @@ const columns: GridColDef<IPlayerSanctionResponse>[] = [
   {
     field: 'description',
     headerName: 'Motivo',
-    flex: 1.8,
-    minWidth: 260,
+    flex: 1.6,
+    minWidth: 240,
   },
 ];
 
@@ -167,7 +194,7 @@ export default function PublicSanctionsPage() {
           color: "text.secondary",
           mb: 3
         }}>
-        Listado de sanciones aplicadas a jugadores de la liga.
+        Listado de sanciones aplicadas a jugadores, equipos y staff de la liga.
       </Typography>
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{

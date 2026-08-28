@@ -23,6 +23,13 @@ import { useMatch } from '@/modules/match/hook/match.hook';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import { IPlayerSanctionResponse } from '@/modules/playerSanction/type/playerSanction.d';
 import {
+  formatFechasRemaining,
+  formatSanctionDurationFechas,
+  getSanctionStateLabel,
+  getSanctionSubjectName,
+  getSanctionSubjectTypeLabel,
+} from '@/modules/playerSanction/utils/sanctionDisplay';
+import {
   formatMatchDateToString,
   formatLongDateTimeAr,
 } from '@/modules/core/utils/formatDate';
@@ -493,12 +500,20 @@ const MatchPage: React.FC = () => {
                       <CardContent>
                         <Stack spacing={1.5}>
                           <Typography variant="h6">
-                            {sanction.playerFullName}
+                            {getSanctionSubjectName(sanction)}
                           </Typography>
                           <Typography variant="body2" sx={{
                             color: "text.secondary"
                           }}>
-                            Duración: {sanction.duration} partidos
+                            {getSanctionSubjectTypeLabel(sanction)} ·{' '}
+                            {getSanctionStateLabel(sanction)}
+                          </Typography>
+                          <Typography variant="body2" sx={{
+                            color: "text.secondary"
+                          }}>
+                            Duración: {formatSanctionDurationFechas(sanction.duration)}
+                            {' · Restantes: '}
+                            {formatFechasRemaining(sanction.fechasRemaining)}
                           </Typography>
                           <Typography variant="body2" sx={{
                             color: "text.secondary"
@@ -511,18 +526,23 @@ const MatchPage: React.FC = () => {
                           <Typography variant="body2">
                             {sanction.description}
                           </Typography>
-                          <Box>
-                            <Button
-                              variant="text"
-                              onClick={() =>
-                                navigate(
-                                  APP_ROUTES.panelPlayer.build(sanction.playerId)
-                                )
-                              }
-                            >
-                              Ver jugador
-                            </Button>
-                          </Box>
+                          {sanction.subjectType === 'Player' &&
+                            sanction.playerId && (
+                              <Box>
+                                <Button
+                                  variant="text"
+                                  onClick={() =>
+                                    navigate(
+                                      APP_ROUTES.panelPlayer.build(
+                                        sanction.playerId as GUID
+                                      )
+                                    )
+                                  }
+                                >
+                                  Ver jugador
+                                </Button>
+                              </Box>
+                            )}
                         </Stack>
                       </CardContent>
                     </Card>

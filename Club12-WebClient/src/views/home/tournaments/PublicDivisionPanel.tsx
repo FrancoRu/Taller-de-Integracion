@@ -256,7 +256,10 @@ export default function PublicDivisionPanel({ division }: PublicDivisionPanelPro
                 <Typography variant="subtitle1" component="h3" sx={{ mb: 1.5 }}>
                   {stageSectionLabel(stage, division.name)}
                 </Typography>
-                <MatchFixtureList matches={stageMatches} />
+                <MatchFixtureList
+                  matches={stageMatches}
+                  exportTitle={stageSectionLabel(stage, division.name)}
+                />
               </Box>
             ))}
           </Box>

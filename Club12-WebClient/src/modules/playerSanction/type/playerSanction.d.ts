@@ -119,12 +119,48 @@ export interface IPlayerSanctionResponse {
   slug: string;
 
   /**
-   * The unique identifier of the player who received the sanction.
-   * @type {GUID}
+   * The kind of subject the sanction targets (HU-77): Player, Team or Staff.
+   * @type {SanctionSubjectType}
    */
-  playerId: GUID;
+  subjectType: SanctionSubjectType;
 
-  playerFullName: string;
+  /**
+   * The number of FECHAS (jornadas) still to be served (HU-75). Zero means the
+   * sanction has been fully served; null when it cannot be computed. Always in
+   * fechas, never in calendar days.
+   * @type {number | null}
+   */
+  fechasRemaining?: number | null;
+
+  /**
+   * Whether the sanction is still active (HU-76): true while there are fechas
+   * remaining to be served.
+   * @type {boolean}
+   */
+  isActive: boolean;
+
+  /**
+   * The unique identifier of the player who received the sanction. Null for
+   * team or staff sanctions.
+   * @type {GUID | null}
+   */
+  playerId: GUID | null;
+
+  /** The sanctioned player's full name. Null for team or staff sanctions. */
+  playerFullName: string | null;
+
+  /**
+   * The unique identifier of the sanctioned team. Null unless this is a team
+   * sanction (HU-77).
+   * @type {GUID | null}
+   */
+  teamId?: GUID | null;
+
+  /** The sanctioned team's name. Null unless this is a team sanction (HU-77). */
+  teamName?: string | null;
+
+  /** The sanctioned staff member's name. Null unless this is a staff sanction (HU-77). */
+  staffName?: string | null;
 
   matchId: GUID;
 
@@ -138,6 +174,13 @@ export interface IPlayerSanctionResponse {
 
   appealResolvedDate?: string | null;
 }
+
+/**
+ * The kind of subject a sanction targets (HU-77). Mirrors the backend
+ * `SanctionSubjectType` enum, which is serialized as a string by the API's
+ * JsonStringEnumConverter, so these literals are sent/received verbatim.
+ */
+export type SanctionSubjectType = 'Player' | 'Team' | 'Staff';
 
 /**
  * The appeal state of a player sanction.
@@ -254,10 +297,32 @@ export interface IAddPlayerSanction {
   matchId: GUID;
 
   /**
-   * The unique identifier of the player who will receive the sanction.
+   * The kind of subject the sanction targets (HU-77). Determines which of
+   * playerId / teamId / staffName below must be sent.
+   * @type {SanctionSubjectType}
+   */
+  subjectType: SanctionSubjectType;
+
+  /**
+   * The player who will receive the sanction. Required when subjectType is
+   * 'Player'.
    * @type {GUID}
    */
-  playerId: GUID;
+  playerId?: GUID;
+
+  /**
+   * The team that will receive the sanction. Required when subjectType is
+   * 'Team' (HU-77).
+   * @type {GUID}
+   */
+  teamId?: GUID;
+
+  /**
+   * The staff member's name that will receive the sanction. Required when
+   * subjectType is 'Staff' (HU-77).
+   * @type {string}
+   */
+  staffName?: string;
 }
 
 /**
@@ -344,8 +409,12 @@ export interface IPlayerSanctionCreateFormState {
   divisionId: GUID | '';
   stageId: GUID | '';
   matchId: GUID | '';
+  /** The subject kind selected in the form (HU-77). */
+  subjectType: SanctionSubjectType;
   teamId: GUID | '';
   playerId: GUID | '';
+  /** Free-text staff member name, used only when subjectType is 'Staff' (HU-77). */
+  staffName: string;
 }
 
 export interface IPlayerSanctionEditFormState {

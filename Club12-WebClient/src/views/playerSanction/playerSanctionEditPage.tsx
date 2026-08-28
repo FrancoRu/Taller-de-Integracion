@@ -170,7 +170,7 @@ const PlayerSanctionEditPage: React.FC = () => {
                 md: 4
               }}>
               <TextField
-                label="Duración"
+                label="Duración (fechas)"
                 type="number"
                 value={form.duration}
                 onChange={e =>
@@ -178,6 +178,7 @@ const PlayerSanctionEditPage: React.FC = () => {
                 }
                 required
                 fullWidth
+                helperText="La duración se expresa en fechas (jornadas)."
                 slotProps={{
                   htmlInput: { min: 1 }
                 }}
