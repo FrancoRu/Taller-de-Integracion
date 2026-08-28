@@ -4,6 +4,7 @@ using Application.DTOs.Abstract.Response;
 using Application.DTOs.Divisions.Request;
 using Application.DTOs.Divisions.Response;
 using Application.Interfaces.Services;
+using Application.Utils.Helper.Standings;
 
 using AutoMapper;
 
@@ -16,6 +17,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace API.Controllers;
@@ -77,8 +79,7 @@ public class DivisionController(
         }
 
         DivisionResponse divisionResponse = mapper.Map<DivisionResponse>(division);
-        List<Position> positions = await divisionService.GetPositionsByDivisionIdAsync(division.Id);
-        divisionResponse.Positions = mapper.Map<List<PositionResponse>>(positions);
+        await PopulateStandingsAsync(divisionResponse);
 
         return Ok(divisionResponse);
     }
@@ -169,11 +170,32 @@ public class DivisionController(
         // teams even when the division was fully populated for the season.
         foreach (DivisionResponse divisionResponse in response.Items)
         {
-            List<Position> positions = await divisionService.GetPositionsByDivisionIdAsync(divisionResponse.Id);
-            divisionResponse.Positions = mapper.Map<List<PositionResponse>>(positions);
+            await PopulateStandingsAsync(divisionResponse);
         }
 
         return Ok(response);
+    }
+
+    /// <summary>
+    /// Fills a division response's standings from its Group stages. Sets
+    /// <see cref="DivisionResponse.GroupStandings"/> to one table per Group
+    /// stage (a multi-group cross-division cup has several, HU-110) and
+    /// <see cref="DivisionResponse.Positions"/> to the pooled union across all
+    /// groups, so the team counter reflects every group's teams. A regular
+    /// zone yields a single group whose table equals Positions — unchanged.
+    /// </summary>
+    private async Task PopulateStandingsAsync(DivisionResponse divisionResponse)
+    {
+        List<GroupStandings> groups = await divisionService.GetGroupStandingsByDivisionIdAsync(divisionResponse.Id);
+
+        divisionResponse.GroupStandings = mapper.Map<List<GroupStandingsResponse>>(groups);
+
+        List<Position> pooledPositions = [.. groups
+            .SelectMany(group => group.Positions)
+            .GroupBy(position => position.TeamId)
+            .Select(group => group.First())];
+
+        divisionResponse.Positions = mapper.Map<List<PositionResponse>>(pooledPositions);
     }
 
 }

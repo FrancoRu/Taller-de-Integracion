@@ -31,9 +31,20 @@ public class DivisionResponse
     public bool IsFinished { get; set; }
 
     /// <summary>
-    /// Gets or sets the list of positions for teams in the division.
+    /// Gets or sets the list of positions for teams in the division. For a
+    /// multi-group cross-division cup this is the pooled union across every
+    /// internal group (so the team counter reflects all groups' teams); use
+    /// <see cref="GroupStandings"/> to render one table per group.
     /// </summary>
     public List<PositionResponse>? Positions { get; set; }
+
+    /// <summary>
+    /// One standings table per Group stage (HU-110). A regular zone has a
+    /// single entry; a multi-group cross-division cup has one per internal
+    /// group ("Grupo 1".."Grupo N"). Null/empty when the division has no
+    /// Group stage yet.
+    /// </summary>
+    public List<GroupStandingsResponse>? GroupStandings { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the tournament to which the division belongs.

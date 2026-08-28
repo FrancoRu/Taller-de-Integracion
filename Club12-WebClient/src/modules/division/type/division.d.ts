@@ -178,10 +178,21 @@ export interface IDivisionResponse {
   isFinished: boolean;
 
   /**
-   * The list of positions for teams in the division.
+   * The list of positions for teams in the division. For a multi-group
+   * cross-division cup this is the pooled union across every internal group
+   * (so a team counter reflects all groups); use `groupStandings` to render
+   * one table per group.
    * @type {Position[]}
    */
   positions?: Position[];
+
+  /**
+   * One standings table per Group stage (HU-110). A regular zone has a single
+   * entry; a multi-group cross-division cup has one per internal group
+   * ("Grupo 1".."Grupo N"). Absent/empty when the division has no group stage.
+   * @type {GroupStandings[]}
+   */
+  groupStandings?: GroupStandings[];
 
   /**
    * The ID of the tournament to which the division belongs.
@@ -196,6 +207,23 @@ export interface IDivisionResponse {
    */
   isCrossDivisionCup: boolean;
 }
+
+/**
+ * Standings for a single Group stage within a division. A regular zone has
+ * exactly one; a multi-group cross-division cup (HU-110) has one per internal
+ * group, each computed only over that group's own matches.
+ * @type GroupStandings
+ */
+export type GroupStandings = {
+  /** The id of the Group stage these standings belong to. */
+  stageId: GUID;
+
+  /** The Group stage's name, used as the table label (e.g. "Grupo 1"). */
+  stageName: string;
+
+  /** The ordered standings for the teams in this group. */
+  positions: Position[];
+};
 
 /**
  * The structure for a position in a division, including team statistics.

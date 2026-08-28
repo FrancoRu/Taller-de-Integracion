@@ -22,7 +22,7 @@ import { stageService } from '@/modules/stage/service/stage.service';
 import { matchService } from '@/modules/match/service/match.service';
 import { matchSeriesService } from '@/modules/matchSeries/service/matchSeries.service';
 import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
-import { IStageResponse } from '@/modules/stage/type/stage';
+import { IStageResponse, StageType } from '@/modules/stage/type/stage';
 import { IMatchResponse } from '@/modules/match/type/match.d';
 import { buildBrackets } from '@/modules/playoff/buildBracket';
 import { BracketGroup } from '@/modules/playoff/type/bracket.d';
@@ -181,10 +181,22 @@ export default function PublicDivisionPanel({ division }: PublicDivisionPanelPro
     const stageIdsInOrder = [...stages].sort(
       (a, b) => a.order - b.order || a.name.localeCompare(b.name, 'es', { numeric: true })
     );
+    // A multi-group cross-division cup has several parallel Group stages
+    // ("Grupo 1".."Grupo N"). stageSectionLabel would collapse them all to the
+    // generic "Fase de grupos", so label each by its own stage name instead —
+    // that is the only thing distinguishing one group's fixture from another.
+    const groupStageCount = stages.filter(stage => stage.stageType === StageType.Group).length;
     return stageIdsInOrder
-      .map(stage => ({ stage, matches: matches.filter(match => match.stageId === stage.id) }))
+      .map(stage => {
+        const isDistinctGroup = stage.stageType === StageType.Group && groupStageCount > 1;
+        return {
+          stage,
+          label: isDistinctGroup ? stage.name : stageSectionLabel(stage, division.name),
+          matches: matches.filter(match => match.stageId === stage.id),
+        };
+      })
       .filter(section => section.matches.length > 0);
-  }, [stages, matches]);
+  }, [stages, matches, division.name]);
 
   return (
     <Box>
@@ -200,13 +212,28 @@ export default function PublicDivisionPanel({ division }: PublicDivisionPanelPro
       </Tabs>
 
       <Box sx={{ minHeight: TAB_CONTENT_MIN_HEIGHT }}>
-      {subTab === 'posiciones' && (
-        <DivisionStandings
-          positions={division.positions}
-          divisionId={division.id}
-          divisionName={division.name}
-        />
-      )}
+      {subTab === 'posiciones' &&
+        (division.groupStandings && division.groupStandings.length > 1 ? (
+          // Multi-group cross-division cup (HU-110): one standings table per
+          // internal group, each labelled by its stage name ("Grupo 1", …) and
+          // computed over that group's own matches.
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {division.groupStandings.map(group => (
+              <Box key={group.stageId}>
+                <Typography variant="subtitle1" component="h3" sx={{ mb: 1.5 }}>
+                  {group.stageName}
+                </Typography>
+                <DivisionStandings positions={group.positions} />
+              </Box>
+            ))}
+          </Box>
+        ) : (
+          <DivisionStandings
+            positions={division.positions}
+            divisionId={division.id}
+            divisionName={division.name}
+          />
+        ))}
 
       {subTab === 'goleadores' &&
         (topScoresLoading ? (
@@ -251,15 +278,12 @@ export default function PublicDivisionPanel({ division }: PublicDivisionPanelPro
           </Typography>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {matchSections.map(({ stage, matches: stageMatches }) => (
+            {matchSections.map(({ stage, label, matches: stageMatches }) => (
               <Box key={stage.id}>
                 <Typography variant="subtitle1" component="h3" sx={{ mb: 1.5 }}>
-                  {stageSectionLabel(stage, division.name)}
+                  {label}
                 </Typography>
-                <MatchFixtureList
-                  matches={stageMatches}
-                  exportTitle={stageSectionLabel(stage, division.name)}
-                />
+                <MatchFixtureList matches={stageMatches} exportTitle={label} />
               </Box>
             ))}
           </Box>

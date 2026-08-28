@@ -274,13 +274,27 @@ const DivisionPage: React.FC = () => {
           </Grid>
         )}
 
-        {tab === 'posiciones' && (
-          <DivisionStandings
-            positions={division.positions}
-            divisionId={division.id}
-            divisionName={division.name}
-          />
-        )}
+        {tab === 'posiciones' &&
+          (division.groupStandings && division.groupStandings.length > 1 ? (
+            // Multi-group cross-division cup (HU-110): one standings table per
+            // internal group, each labelled by its stage name ("Grupo 1", …).
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {division.groupStandings.map(group => (
+                <Box key={group.stageId}>
+                  <Typography variant="subtitle1" component="h3" sx={{ mb: 1.5 }}>
+                    {group.stageName}
+                  </Typography>
+                  <DivisionStandings positions={group.positions} />
+                </Box>
+              ))}
+            </Box>
+          ) : (
+            <DivisionStandings
+              positions={division.positions}
+              divisionId={division.id}
+              divisionName={division.name}
+            />
+          ))}
 
         {tab === 'fases' && (
           <StagesPage
