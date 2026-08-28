@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Domain.Enums;
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.Divisions.Request;
@@ -41,6 +43,14 @@ public class CreateDivisionRequest
     /// </summary>
     [Range(0, int.MaxValue, ErrorMessage = "PointsForLoss cannot be negative.")]
     public int PointsForLoss { get; set; } = 1;
+
+    /// <summary>
+    /// Competitive category (gender) of the division (HU-48). Must match the
+    /// parent tournament's category — a single tournament cannot mix feminine
+    /// and masculine divisions, so a mismatch is rejected. Defaults to
+    /// <see cref="TournamentCategory.Masculine"/> when omitted.
+    /// </summary>
+    public TournamentCategory Category { get; set; } = TournamentCategory.Masculine;
 
     /// <summary>
     /// Optional position-range → playoff-destination mapping (HU-45) the

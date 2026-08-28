@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Domain.Enums;
+
+using System;
 using System.Collections.Generic;
 
 namespace Domain.Entities.Models;
@@ -35,6 +37,15 @@ public class Division : EntityBase
     /// The Id of the tournament this division belongs to.
     /// </summary>
     public Guid TournamentId { get; set; }
+
+    /// <summary>
+    /// Competitive category (gender) of the division (HU-48). Must match the
+    /// parent <see cref="Tournament"/>'s <see cref="Tournament.Category"/>: a
+    /// single tournament can never mix feminine and masculine divisions. The
+    /// invariant is enforced when a division is created or updated. Defaults to
+    /// <see cref="TournamentCategory.Masculine"/>.
+    /// </summary>
+    public TournamentCategory Category { get; set; } = TournamentCategory.Masculine;
 
     /// <summary>
     /// The list of Stages in this division.

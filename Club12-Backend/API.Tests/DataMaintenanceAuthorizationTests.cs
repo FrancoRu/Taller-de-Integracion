@@ -34,8 +34,6 @@ public class DataMaintenanceAuthorizationTests : IClassFixture<CustomWebApplicat
 
     [Theory]
     [InlineData(Roles.Owner)]
-    [InlineData(Roles.TournamentManager)]
-    [InlineData(Roles.TeamManager)]
     [InlineData(Roles.Guest)]
     public async Task Seed_NonAdminRole_ReturnsForbidden(string role)
     {
@@ -75,8 +73,6 @@ public class DataMaintenanceAuthorizationTests : IClassFixture<CustomWebApplicat
 
     [Theory]
     [InlineData(Roles.Owner)]
-    [InlineData(Roles.TournamentManager)]
-    [InlineData(Roles.TeamManager)]
     [InlineData(Roles.Guest)]
     public async Task Wipe_NonAdminRole_ReturnsForbidden(string role)
     {

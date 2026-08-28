@@ -21,8 +21,8 @@ public class ApplicationUser : IdentityUser<Guid>
     public DateTime? RefreshTokenExpiryTime { get; set; }
 
     /// <summary>
-    /// For TOURNAMENT_MANAGER accounts: the Id of the OWNER who registered them.
-    /// Null for ADMIN and OWNER accounts (created directly by an admin).
+    /// The Id of the OWNER who registered this account, when it was created
+    /// by an owner rather than directly by an admin. Null otherwise.
     /// </summary>
     public Guid? CreatedByOwnerId { get; set; }
 

@@ -7,40 +7,28 @@ namespace Domain.Enums;
 /// Constants use nameof() so a rename of the enum member produces
 /// a compile error here instead of a silent runtime mismatch.
 /// </para>
+/// <para>
+/// HU-05: the role model is deliberately just two operator accounts —
+/// <see cref="Owner"/> and <see cref="Admin"/> (Admin IT) — plus the
+/// technical <see cref="Guest"/> role for anonymous public access. The
+/// former TournamentManager / TeamManager roles were removed, so every
+/// staff-only endpoint now resolves to <see cref="AdminOrOwner"/>.
+/// </para>
 /// </summary>
 public static class Roles
 {
     public const string Admin = nameof(UserRoleType.ADMIN);
     public const string Owner = nameof(UserRoleType.OWNER);
-    public const string TournamentManager = nameof(UserRoleType.TOURNAMENT_MANAGER);
-    public const string TeamManager = nameof(UserRoleType.TEAM_MANAGER);
     public const string Guest = nameof(UserRoleType.GUEST);
 
     /// <summary>
-    /// Blog and user management — the two roles that administer
-    /// site-wide, non-tournament content and accounts.
+    /// Every staff role that may operate the panel: the Owner account and
+    /// the Admin IT account. This is the single group every staff-only
+    /// endpoint uses now that the tournament/team manager roles are gone —
+    /// blog and user management, tournament/division/stage/match/series/
+    /// venue/sanction/statistic management, team and roster management, and
+    /// the endpoints that expose a player's private details all collapse to
+    /// this same Owner-or-Admin group.
     /// </summary>
     public const string AdminOrOwner = $"{Admin},{Owner}";
-
-    /// <summary>
-    /// Tournament/division/stage/match/series/venue/sanction/statistic
-    /// management — the roles that run a tournament's competitive
-    /// structure day to day, plus Admin as the top-privilege role.
-    /// </summary>
-    public const string AdminOwnerOrTournamentManager = $"{Admin},{Owner},{TournamentManager}";
-
-    /// <summary>
-    /// Team and player roster management — a team's own manager, plus the
-    /// tournament-level roles that oversee registration.
-    /// </summary>
-    public const string TeamManagerOrTournamentManagerOrOwner =
-        $"{TeamManager},{TournamentManager},{Owner}";
-
-    /// <summary>
-    /// Every non-guest staff role — used for read endpoints that expose a
-    /// player's private details (document number, birth date, etc.) to
-    /// whichever staff role is looking them up.
-    /// </summary>
-    public const string AnyStaffRole =
-        $"{Admin},{Owner},{TournamentManager},{TeamManager}";
 }

@@ -205,8 +205,6 @@ public static class StartupExtensions
     [
         UserRoleType.ADMIN.ToRoleName(),
         UserRoleType.OWNER.ToRoleName(),
-        UserRoleType.TOURNAMENT_MANAGER.ToRoleName(),
-        UserRoleType.TEAM_MANAGER.ToRoleName(),
         UserRoleType.GUEST.ToRoleName(),
     ];
 

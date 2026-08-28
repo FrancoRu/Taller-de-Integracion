@@ -13,13 +13,13 @@ namespace Application.Interfaces.Services;
 public interface IAuthenticationService
 {
     /// <summary>
-    /// Password login restricted to ADMIN, OWNER, and TOURNAMENT_MANAGER accounts.
-    /// TEAM_MANAGER accounts must authenticate via the magic-link flow instead.
+    /// Password login for the operator accounts (ADMIN, OWNER).
     /// </summary>
     Task<TokenResponse> LoginAsync(LogInUserRequest request, CancellationToken ct = default);
 
     /// <summary>
-    /// Generates a magic-link token for TEAM_MANAGER accounts only.
+    /// Generates a magic-link token. Deferred to Phase 2 (D6): kept in place
+    /// but no longer gated to a specific role after TeamManager was removed.
     /// </summary>
     Task<MagicLinkResponse> RequestMagicLinkAsync(MagicLinkRequest request, CancellationToken ct = default);
     Task<TokenResponse> MagicLinkLoginAsync(MagicLinkLoginRequest request, CancellationToken ct = default);

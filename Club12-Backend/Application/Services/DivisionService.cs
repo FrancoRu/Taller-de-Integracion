@@ -42,7 +42,7 @@ public class DivisionService(
     /// <returns>The created Division entity.</returns>
     public async Task<Division> CreateDivisionAsync(Division divisionEntity)
     {
-        await EnsureTournamentAllowsStructuralChangesAsync(divisionEntity.TournamentId);
+        await EnsureTournamentAllowsDivisionAsync(divisionEntity);
 
         PlayoffMappingValidator.Validate(divisionEntity.PlayoffMappings);
 
@@ -69,7 +69,7 @@ public class DivisionService(
     /// <param name="divisionEntity">The division entity with updated values.</param>
     public async Task UpdateDivisionAsync(Division divisionEntity)
     {
-        await EnsureTournamentAllowsStructuralChangesAsync(divisionEntity.TournamentId);
+        await EnsureTournamentAllowsDivisionAsync(divisionEntity);
 
         PlayoffMappingValidator.Validate(divisionEntity.PlayoffMappings);
 
@@ -77,21 +77,38 @@ public class DivisionService(
     }
 
     /// <summary>
-    /// Guards structural changes (HU-31): divisions may only be created or
-    /// edited while their tournament is
-    /// <see cref="TournamentStatus.OpenForRegistration"/>. Once registration
-    /// has closed (or the tournament is Scheduled/Ongoing/Finished/Canceled)
-    /// the structure is frozen. A division pointing at a tournament that does
-    /// not exist is left for the normal not-found handling downstream.
+    /// Guards a division create/update against its tournament. Two rules:
+    /// <list type="bullet">
+    /// <item>HU-31: divisions may only be created or edited while their
+    /// tournament is <see cref="TournamentStatus.OpenForRegistration"/>. Once
+    /// registration has closed (or the tournament is
+    /// Scheduled/Ongoing/Finished/Canceled) the structure is frozen.</item>
+    /// <item>HU-48: a division's <see cref="Division.Category"/> must match its
+    /// tournament's <see cref="Tournament.Category"/> — a single tournament can
+    /// never mix feminine and masculine divisions.</item>
+    /// </list>
+    /// A division pointing at a tournament that does not exist is left for the
+    /// normal not-found handling downstream.
     /// </summary>
-    private async Task EnsureTournamentAllowsStructuralChangesAsync(Guid tournamentId)
+    private async Task EnsureTournamentAllowsDivisionAsync(Division division)
     {
-        Tournament? tournament = await tournamentRepository.GetByIdAsync(tournamentId);
+        Tournament? tournament = await tournamentRepository.GetByIdAsync(division.TournamentId);
 
-        if (tournament is not null && tournament.Status != TournamentStatus.OpenForRegistration)
+        if (tournament is null)
+        {
+            return;
+        }
+
+        if (tournament.Status != TournamentStatus.OpenForRegistration)
         {
             throw new InvalidOperationException(
                 ErrorMessages.Tournament.StructuralEditNotAllowed(tournament.Status));
+        }
+
+        if (division.Category != tournament.Category)
+        {
+            throw new InvalidOperationException(
+                ErrorMessages.Tournament.CategoryMismatch(division.Category, tournament.Category));
         }
     }
 

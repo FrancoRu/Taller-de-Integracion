@@ -39,16 +39,12 @@ public sealed class IdentityAuthenticationService(
             [UserRoleType.ADMIN.ToRoleName()] = new(StringComparer.OrdinalIgnoreCase)
             {
                 UserRoleType.ADMIN.ToRoleName(),
-                UserRoleType.OWNER.ToRoleName(),
-                UserRoleType.TOURNAMENT_MANAGER.ToRoleName(),
-                UserRoleType.TEAM_MANAGER.ToRoleName()
+                UserRoleType.OWNER.ToRoleName()
             },
             [UserRoleType.OWNER.ToRoleName()] = new(StringComparer.OrdinalIgnoreCase)
             {
                 UserRoleType.ADMIN.ToRoleName(),
-                UserRoleType.OWNER.ToRoleName(),
-                UserRoleType.TOURNAMENT_MANAGER.ToRoleName(),
-                UserRoleType.TEAM_MANAGER.ToRoleName()
+                UserRoleType.OWNER.ToRoleName()
             }
         };
 
@@ -119,11 +115,11 @@ public sealed class IdentityAuthenticationService(
             throw new UnauthorizedAccessException(ErrorMessages.Auth.AccountDeactivated);
         }
 
+        // HU-05: the role model is now just the two operator accounts
+        // (Owner, Admin), both password-based. The former TeamManager-only
+        // magic-link gate was removed with that role.
         IList<string> roles = await userManager.GetRolesAsync(user);
-
-        return roles.Contains(UserRoleType.TEAM_MANAGER.ToRoleName())
-            ? throw new UnauthorizedAccessException(ErrorMessages.Auth.TeamManagerMustUseMagicLink)
-            : await BuildTokenResponseAsync(user, roles, ct);
+        return await BuildTokenResponseAsync(user, roles, ct);
     }
 
     /// <inheritdoc/>
@@ -133,13 +129,10 @@ public sealed class IdentityAuthenticationService(
         ApplicationUser user = await userManager.FindByEmailAsync(request.Email)
             ?? throw new KeyNotFoundException(ErrorMessages.Auth.NoAccountForEmail);
 
-        IList<string> roles = await userManager.GetRolesAsync(user);
-
-        if (!roles.Contains(UserRoleType.TEAM_MANAGER.ToRoleName()))
-        {
-            throw new UnauthorizedAccessException(ErrorMessages.Auth.MagicLinkOnlyForTeamManager);
-        }
-
+        // HU-05 / D6: magic-link was the TeamManager-only auth path. That role
+        // no longer exists and the magic-link flow is deferred to Phase 2, so
+        // the former role gate was dropped; the token flow itself is left in
+        // place unchanged for that future use.
         string token = await userManager.GenerateUserTokenAsync(
             user, TokenOptions.DefaultEmailProvider, MagicLinkPurpose);
 

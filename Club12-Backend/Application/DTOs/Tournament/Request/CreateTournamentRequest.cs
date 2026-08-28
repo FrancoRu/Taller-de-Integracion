@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Domain.Enums;
+
+using System;
 using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.Tournament.Request;
 
@@ -31,4 +33,12 @@ public class CreateTournamentRequest
     /// </summary>
     [Required(ErrorMessage = "Start date is required.")]
     public required DateTime StartDate { get; set; }
+
+    /// <summary>
+    /// Competitive category (gender) of the tournament (HU-48). The feminine
+    /// competition is a separate tournament and cannot share a tournament with
+    /// masculine divisions. Defaults to
+    /// <see cref="TournamentCategory.Masculine"/> when omitted.
+    /// </summary>
+    public TournamentCategory Category { get; set; } = TournamentCategory.Masculine;
 }

@@ -21,13 +21,13 @@ namespace API.Controllers;
 /// <summary>
 /// Controller for managing best-of-N playoff series between two teams at a
 /// single bracket round. Reads are public; writes require Owner or
-/// TournamentManager.
+/// Admin.
 /// </summary>
 /// <param name="matchSeriesService">Service for series business logic and persistence operations.</param>
 /// <param name="mapper">AutoMapper instance for mapping between entities and DTOs.</param>
 [Route("api/match-series/")]
 [ApiController]
-[Authorize(Roles = Roles.AdminOwnerOrTournamentManager)]
+[Authorize(Roles = Roles.AdminOrOwner)]
 public class MatchSeriesController(IMatchSeriesService matchSeriesService, IMapper mapper) : ControllerBase
 {
     /// <summary>

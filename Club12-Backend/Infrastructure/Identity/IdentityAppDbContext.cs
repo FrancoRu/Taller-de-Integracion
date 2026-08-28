@@ -29,11 +29,13 @@ public class IdentityAppDbContext(DbContextOptions<IdentityAppDbContext> options
 
     private static void SeedRoles(ModelBuilder builder)
     {
+        // HU-05: only the two operator accounts (Owner, Admin IT) plus the
+        // technical Guest role for anonymous public access are seeded. The
+        // former TournamentManager (3) and TeamManager (4) roles were removed.
+        // Guest keeps its original seed value 5 so its role Id/GUID is stable.
         builder.Entity<IdentityRole<Guid>>().HasData(
             CreateRole(1, UserRoleType.ADMIN),
             CreateRole(2, UserRoleType.OWNER),
-            CreateRole(3, UserRoleType.TOURNAMENT_MANAGER),
-            CreateRole(4, UserRoleType.TEAM_MANAGER),
             CreateRole(5, UserRoleType.GUEST)
         );
     }

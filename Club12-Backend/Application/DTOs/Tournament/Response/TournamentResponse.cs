@@ -47,4 +47,10 @@ public class TournamentResponse : BaseEntityResponse
     /// Current lifecycle status of the tournament.
     /// </summary>
     public TournamentStatus Status { get; set; }
+
+    /// <summary>
+    /// Competitive category (gender) of the tournament (HU-48). The feminine
+    /// competition is played as its own separate tournament.
+    /// </summary>
+    public TournamentCategory Category { get; set; }
 }

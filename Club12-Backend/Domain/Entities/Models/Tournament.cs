@@ -44,6 +44,15 @@ public class Tournament : EntityBase
     public TournamentStatus Status { get; set; } = TournamentStatus.Scheduled;
 
     /// <summary>
+    /// Competitive category (gender) of the tournament (HU-48). By club rule
+    /// the feminine competition is a separate tournament, so every division in
+    /// this tournament must share this category — it is the source of truth for
+    /// the "no mixing feminine and masculine" invariant. Defaults to
+    /// <see cref="TournamentCategory.Masculine"/>.
+    /// </summary>
+    public TournamentCategory Category { get; set; } = TournamentCategory.Masculine;
+
+    /// <summary>
     /// The divisions associated with the tournament.
     /// </summary>
     public virtual required ICollection<Division> Divisions { get; set; }

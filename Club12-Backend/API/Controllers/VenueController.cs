@@ -23,14 +23,14 @@ namespace API.Controllers;
 
 /// <summary>
 /// Controller for managing Venues. Reads are public; writes require Owner
-/// or TournamentManager.
+/// or Admin.
 /// </summary>
 /// <param name="venueService">The Venue service.</param>
 /// <param name="supabaseHelper">The Supabase helper for storage operations.</param>
 /// <param name="mapper">The AutoMapper instance.</param>
 [Route("api/venues/")]
 [ApiController]
-[Authorize(Roles = Roles.AdminOwnerOrTournamentManager)]
+[Authorize(Roles = Roles.AdminOrOwner)]
 public class VenueController(IVenueService venueService, SupabaseHelper supabaseHelper, IMapper mapper) : ControllerBase
 {
 

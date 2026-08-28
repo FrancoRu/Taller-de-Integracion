@@ -97,7 +97,7 @@ public class MedicalRecordController(
     /// <param name="tournamentId">The tournament (season).</param>
     /// <returns>The medical-record state, or 404 when none exists.</returns>
     [HttpGet()]
-    [Authorize(Roles = Roles.AnyStaffRole)]
+    [Authorize(Roles = Roles.AdminOrOwner)]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MedicalRecordResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<MedicalRecordResponse>> GetMedicalRecord(

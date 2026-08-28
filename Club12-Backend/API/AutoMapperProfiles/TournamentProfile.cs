@@ -28,7 +28,13 @@ public class TournamentProfile : Profile
         // through TournamentService.ChangeStatusAsync — never a blind field
         // overwrite from a generic update. The generic update only touches the
         // tournament's descriptive fields.
+        //
+        // Category (HU-48) is likewise NOT mapped on update: a tournament's
+        // gender category is fixed at creation ("femenino as a separate
+        // tournament, by design"). Flipping it later would silently mix it
+        // with the divisions already created under the original category.
         _ = CreateMap<UpdateTournamentRequest, Tournament>()
-            .ForMember(dest => dest.Status, opt => opt.Ignore());
+            .ForMember(dest => dest.Status, opt => opt.Ignore())
+            .ForMember(dest => dest.Category, opt => opt.Ignore());
     }
 }

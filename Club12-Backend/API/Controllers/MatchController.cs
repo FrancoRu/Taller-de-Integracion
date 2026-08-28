@@ -24,7 +24,7 @@ namespace API.Controllers;
 
 /// <summary>
 /// Controller for managing Matches. Reads are public; writes require
-/// Owner or TournamentManager.
+/// Owner or Admin.
 /// </summary>
 /// <param name="matchService">The Match service.</param>
 /// <param name="stageTeamMatchService">The stage-team match service.</param>
@@ -32,7 +32,7 @@ namespace API.Controllers;
 /// <param name="mapper">The AutoMapper instance.</param>
 [Route("api/matches/")]
 [ApiController]
-[Authorize(Roles = Roles.AdminOwnerOrTournamentManager)]
+[Authorize(Roles = Roles.AdminOrOwner)]
 public class MatchController(IMatchService matchService, IStageTeamMatchService stageTeamMatchService, IMatchSeriesService matchSeriesService, IMapper mapper) : ControllerBase
 {
     /// <summary>

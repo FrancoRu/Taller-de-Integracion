@@ -22,13 +22,13 @@ namespace API.Controllers;
 
 /// <summary>
 /// Controller for managing divisions. Reads are public; writes require
-/// Owner or TournamentManager.
+/// Owner or Admin.
 /// </summary>
 /// <param name="divisionService">The division service.</param>
 /// <param name="mapper">The AutoMapper instance.</param>
 [Route("api/divisions/")]
 [ApiController]
-[Authorize(Roles = Roles.AdminOwnerOrTournamentManager)]
+[Authorize(Roles = Roles.AdminOrOwner)]
 public class DivisionController(
     IDivisionService divisionService,
     IMapper mapper

@@ -23,11 +23,11 @@ namespace API.Controllers;
 /// Controller responsible for managing tournament-related operations.
 /// Provides endpoints for creating, retrieving, updating, deleting, and filtering tournaments,
 /// as well as registering teams to tournaments. Reads are public; writes require Owner or
-/// TournamentManager.
+/// Admin.
 /// </summary>
 [Route("api/tournaments/")]
 [ApiController]
-[Authorize(Roles = Roles.AdminOwnerOrTournamentManager)]
+[Authorize(Roles = Roles.AdminOrOwner)]
 public class TournamentController(
     ITournamentService tournamentService,
     ITeamService teamService,

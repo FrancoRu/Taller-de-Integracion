@@ -24,14 +24,14 @@ namespace API.Controllers;
 
 /// <summary>
 /// Controller for managing teams. Reads are public; writes require
-/// TeamManager, TournamentManager, or Owner.
+/// Owner or Admin.
 /// </summary>
 /// <param name="teamService">The team service for handling team-related operations.</param>
 /// <param name="supabaseHelper">The Supabase helper for storage operations.</param>
 /// <param name="mapper">The AutoMapper instance for mapping data models.</param>
 [Route("api/teams/")]
 [ApiController]
-[Authorize(Roles = Roles.TeamManagerOrTournamentManagerOrOwner)]
+[Authorize(Roles = Roles.AdminOrOwner)]
 public class TeamController(
     ITeamService teamService,
     SupabaseHelper supabaseHelper,

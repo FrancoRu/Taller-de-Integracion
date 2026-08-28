@@ -1,4 +1,5 @@
 ﻿using Domain.Entities.Models;
+using Domain.Enums;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -23,6 +24,7 @@ public class DivisionEntityConfiguration : BaseEntityConfiguration<Division>
 
         builder.Property(d => d.PointsForWin).IsRequired().HasDefaultValue(2);
         builder.Property(d => d.PointsForLoss).IsRequired().HasDefaultValue(1);
+        builder.Property(d => d.Category).IsRequired().HasDefaultValue(TournamentCategory.Masculine);
 
         builder.HasMany(d => d.Stages)
             .WithOne(s => s.Division)

@@ -23,7 +23,7 @@ namespace API.Controllers;
 /// <summary>
 /// Controller for managing Stage entities, providing endpoints for creation, retrieval, update, deletion,
 /// automated generation of stages and matches, and team assignment operations. Reads are public; writes
-/// require Owner or TournamentManager.
+/// require Owner or Admin.
 /// </summary>
 /// <remarks>
 /// This controller exposes RESTful endpoints for handling Stage-related operations in the tournament system.
@@ -36,7 +36,7 @@ namespace API.Controllers;
 /// <param name="mapper">AutoMapper instance for mapping between entities and DTOs.</param>
 [Route("api/stages/")]
 [ApiController]
-[Authorize(Roles = Roles.AdminOwnerOrTournamentManager)]
+[Authorize(Roles = Roles.AdminOrOwner)]
 public class StageController(IStageService stageService, IMatchService matchService, IMapper mapper) : ControllerBase
 {
     /// <summary>

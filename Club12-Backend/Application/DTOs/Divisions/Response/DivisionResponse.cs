@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Domain.Enums;
+
+using System;
 using System.Collections.Generic;
 namespace Application.DTOs.Divisions.Response;
 
@@ -43,6 +45,12 @@ public class DivisionResponse
     /// draws teams from every other division in the tournament.
     /// </summary>
     public bool IsCrossDivisionCup { get; set; }
+
+    /// <summary>
+    /// Competitive category (gender) of the division (HU-48). Always matches
+    /// the parent tournament's category.
+    /// </summary>
+    public TournamentCategory Category { get; set; }
 
     /// <summary>Points awarded for a win in this division's standings (HU-79).</summary>
     public int PointsForWin { get; set; }

@@ -288,11 +288,11 @@ public sealed class IdentityUserManagementService(
         {
             [Roles.Admin] = new(StringComparer.OrdinalIgnoreCase)
             {
-                Roles.Admin, Roles.Owner, Roles.TournamentManager, Roles.TeamManager
+                Roles.Admin, Roles.Owner
             },
             [Roles.Owner] = new(StringComparer.OrdinalIgnoreCase)
             {
-                Roles.Admin, Roles.Owner, Roles.TournamentManager, Roles.TeamManager
+                Roles.Admin, Roles.Owner
             }
         };
 

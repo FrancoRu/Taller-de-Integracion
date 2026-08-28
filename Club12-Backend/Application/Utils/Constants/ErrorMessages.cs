@@ -25,8 +25,6 @@ public static class ErrorMessages
         public const string RoleClaimMissing = "Role claim is missing from the token.";
         public const string IdClaimMissing = "Id claim is missing from the token.";
         public const string AccessDenied = "Access denied.";
-        public const string TeamManagerMustUseMagicLink = "TeamManager accounts must authenticate via the magic-link flow.";
-        public const string MagicLinkOnlyForTeamManager = "Magic-link is only available for TeamManager accounts.";
 
         public static string UserCreationFailed(string errors)
         {
@@ -85,6 +83,15 @@ public static class ErrorMessages
         {
             return $"Structural changes (divisions and team registrations) are only allowed while " +
                 $"the tournament is OpenForRegistration; this tournament is '{status}'.";
+        }
+
+        public static string CategoryMismatch(
+            Domain.Enums.TournamentCategory divisionCategory,
+            Domain.Enums.TournamentCategory tournamentCategory)
+        {
+            return $"A '{divisionCategory}' division cannot belong to a '{tournamentCategory}' tournament " +
+                "(HU-48): the feminine competition is a separate tournament and cannot be mixed with the " +
+                "masculine one. Create the division under a tournament of the same category.";
         }
     }
 

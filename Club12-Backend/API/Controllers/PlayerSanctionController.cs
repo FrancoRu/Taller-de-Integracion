@@ -22,13 +22,13 @@ namespace API.Controllers;
 
 /// <summary>
 /// Controller for managing Player Sanctions. Reads are public; writes
-/// require Owner or TournamentManager.
+/// require Owner or Admin.
 /// </summary>
 /// <param name="playerSanctionService">The Player Sanction service.</param>
 /// <param name="mapper">The AutoMapper instance.</param>
 [Route("api/player-sanctions/")]
 [ApiController]
-[Authorize(Roles = Roles.AdminOwnerOrTournamentManager)]
+[Authorize(Roles = Roles.AdminOrOwner)]
 public class PlayerSanctionController(IPlayerSanctionService playerSanctionService, IMapper mapper) : ControllerBase
 {
     /// <summary>
