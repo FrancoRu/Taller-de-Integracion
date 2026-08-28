@@ -901,6 +901,28 @@ cierran esa brecha.)*
   5. Coherencia general de básquet: sin empates (R4); la siembra de playoff exige la fase de grupos
      completa; la serie final al mejor de N necesita 2 equipos.
 
+### HU-110 · Copa cruzada con múltiples grupos de tamaño variable — `M`
+**Como** organizador **quiero** dividir la copa cruzada en varios grupos (de tamaños distintos) cuyos
+mejores clasifiquen a un único cuadro **para** modelar la Copa Club 12 tal como se juega.
+- La copa cruzada (opcional por edición — HU-47) puede dividir sus equipos en **N grupos** de **tamaño
+  variable**. *Ejemplo real:* 37 equipos → 10 grupos (7 de 4 + 3 de 3), doble rueda por grupo.
+- Clasifican los **primeros K de cada grupo** (configurable; por defecto **1**) a **un único bracket**
+  de la copa, sembrado con **BYE** cuando no son potencia de 2 (HU-82).
+- **Gap actual:** el modelo arma la copa cruzada como un solo grupo. Hay que soportar N grupos que
+  alimenten un cuadro común (candidato: N divisiones cruzadas cuyos clasificados se juntan por HU-45;
+  verificar la generación antes de diseñar).
+- Completitud (HU-109): cada grupo de la copa cruzada **≥ 2**; el bracket necesita **≥ 2** clasificados.
+
+### HU-111 · Calendario: jornadas de zona y copa no se solapan; fechas primero, hora/cancha después — `M`
+**Como** organizador **quiero** que al generar el fixture las jornadas de las zonas y las de la copa
+cruzada **no caigan el mismo día**, y que primero se fijen solo **fechas** **para** poder asignar
+horario y cancha con calma sin choques.
+- La generación del fixture asigna **solo fechas** (jornadas): **sin horario ni cancha**.
+- Las jornadas de **zonas (divisiones)** y de **copa cruzada** del mismo torneo **no se pisan en los
+  mismos días** (un equipo no juega zona y copa el mismo día).
+- Después, el admin asigna **hora + cancha** por partido (edición de fecha/cancha ya existe: HU-66/67).
+- El orden de jornadas queda fijo (HU-67); editar la fecha de un partido no cambia su jornada (HU-68).
+
 ---
 
 ## Resumen de prioridades
