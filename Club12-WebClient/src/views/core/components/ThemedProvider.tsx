@@ -1,5 +1,5 @@
 import { PropsWithChildren } from 'react';
-import { ThemeProvider } from '@emotion/react';
+import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { getTheme } from '@/theme';
 
