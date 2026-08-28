@@ -12,13 +12,11 @@ import {
 import { AddIcon, DeleteIcon } from '@/views/core/MUI/icons/icons';
 import {
   CupConfig,
-  PlayoffMappingConfig,
   ROUND_ROBIN_LEGS_OPTIONS,
   ZoneConfig,
   createEmptyZone,
 } from '../types';
 import CupsEditor from './CupsEditor';
-import PlayoffRangesEditor from './PlayoffRangesEditor';
 
 interface DivisionesStepProps {
   zones: ZoneConfig[];
@@ -136,18 +134,6 @@ export default function DivisionesStep({ zones, onChange }: DivisionesStepProps)
           <CupsEditor
             cups={zone.cups}
             onChange={(cups: CupConfig[]) => updateZone(zone.id, { cups })}
-          />
-
-          <Typography variant="subtitle2" sx={{ mb: 1, mt: 2 }}>
-            Clasificación a playoffs por rango
-          </Typography>
-          <PlayoffRangesEditor
-            mappings={zone.playoffMappings}
-            cups={zone.cups}
-            teamCount={0}
-            onChange={(playoffMappings: PlayoffMappingConfig[]) =>
-              updateZone(zone.id, { playoffMappings })
-            }
           />
         </Box>
       ))}

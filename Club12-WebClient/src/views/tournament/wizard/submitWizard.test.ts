@@ -26,17 +26,12 @@ const makeState = (): WizardState => {
         {
           id: 'cup-1',
           name: 'Copa de Oro',
-          rounds: [
-            { id: 'r1', stageType: StageType.SemiFinal, bestOf: 3 },
-            { id: 'r2', stageType: StageType.Final, bestOf: 5 },
-          ],
+          qualifiers: 4,
+          bestOf: 3,
         },
       ],
       pointsForWin: 3,
       pointsForLoss: 0,
-      playoffMappings: [
-        { id: 'm1', fromPosition: 1, toPosition: 2, destination: 'Copa de Oro' },
-      ],
     },
   ];
   return state;
@@ -118,32 +113,28 @@ describe('submitWizard', () => {
     );
   });
 
-  it('sends the per-division points (HU-79) and playoff range mappings (HU-45) on addDivision', async () => {
+  it('HU-112: derives the per-division points (HU-79) and playoff ranges from the cups', async () => {
     const services = makeServices();
     await submitWizard(makeState(), services);
 
+    // The single cup "Copa de Oro" has qualifiers=4, so the derived range is
+    // positions 1-4 (no manual range editor anymore).
     expect(services.addDivision).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Zona A',
         pointsForWin: 3,
         pointsForLoss: 0,
-        playoffMappings: [{ fromPosition: 1, toPosition: 2, destination: 'Copa de Oro' }],
+        playoffMappings: [{ fromPosition: 1, toPosition: 4, destination: 'Copa de Oro' }],
       })
     );
-
-    // The local React `id` is stripped from every mapping before it is sent.
-    const divisionArg = services.addDivision.mock.calls[0][0] as {
-      playoffMappings: Array<Record<string, unknown>>;
-    };
-    expect(divisionArg.playoffMappings[0]).not.toHaveProperty('id');
   });
 
-  it('drops half-filled playoff ranges (no destination cup chosen) before sending', async () => {
+  it('HU-112: derives top-down position ranges from the cups order and qualifiers', async () => {
     const services = makeServices();
     const state = makeState();
-    state.zones[0].playoffMappings = [
-      { id: 'm1', fromPosition: 1, toPosition: 2, destination: 'Copa de Oro' },
-      { id: 'm2', fromPosition: 3, toPosition: 4, destination: '   ' },
+    state.zones[0].cups = [
+      { id: 'cup-oro', name: 'Copa de Oro', qualifiers: 4, bestOf: 3 },
+      { id: 'cup-plata', name: 'Copa de Plata', qualifiers: 4, bestOf: 3 },
     ];
 
     await submitWizard(state, services);
@@ -152,8 +143,10 @@ describe('submitWizard', () => {
       playoffMappings: Array<Record<string, unknown>>;
     };
     expect(divisionArg.playoffMappings).toEqual([
-      { fromPosition: 1, toPosition: 2, destination: 'Copa de Oro' },
+      { fromPosition: 1, toPosition: 4, destination: 'Copa de Oro' },
+      { fromPosition: 5, toPosition: 8, destination: 'Copa de Plata' },
     ]);
+    expect(divisionArg.playoffMappings[0]).not.toHaveProperty('id');
   });
 
   it('creates the group stage as structure with the configured RoundRobinLegs and no team assignment', async () => {
@@ -165,13 +158,14 @@ describe('submitWizard', () => {
     );
   });
 
-  it('creates one stage per cup round with the bracket name and best-of', async () => {
+  it('HU-112: derives the cup rounds from the qualifier count (4 -> Semis + Final)', async () => {
     const services = makeServices();
     await submitWizard(makeState(), services);
 
     const cupStageCalls = services.addStage.mock.calls.filter(
       call => (call[0] as { isElimination: boolean }).isElimination
     );
+    // qualifiers=4 derives exactly Semifinal + Final, both using the cup's bestOf (3).
     expect(cupStageCalls).toHaveLength(2);
     expect(cupStageCalls[0][0]).toMatchObject({
       stageType: StageType.SemiFinal,
@@ -181,7 +175,7 @@ describe('submitWizard', () => {
     expect(cupStageCalls[1][0]).toMatchObject({
       stageType: StageType.Final,
       bracketName: 'Copa de Oro',
-      bestOf: 5,
+      bestOf: 3,
     });
   });
 
@@ -233,8 +227,7 @@ describe('submitWizard', () => {
       roundRobinLegs: 1,
       cups: [],
       pointsForWin: 2,
-      pointsForLoss: 1,
-      playoffMappings: [],
+      pointsForLoss: 1,
     };
 
     await submitWizard(state, services);
@@ -266,8 +259,7 @@ describe('submitWizard', () => {
       roundRobinLegs: 2,
       cups: [],
       pointsForWin: 2,
-      pointsForLoss: 1,
-      playoffMappings: [],
+      pointsForLoss: 1,
     };
 
     await submitWizard(state, services);
@@ -306,8 +298,7 @@ describe('submitWizard', () => {
       roundRobinLegs: 1,
       cups: [],
       pointsForWin: 2,
-      pointsForLoss: 1,
-      playoffMappings: [],
+      pointsForLoss: 1,
     };
 
     await submitWizard(state, services);
@@ -356,8 +347,7 @@ describe('submitWizard', () => {
       roundRobinLegs: 1,
       cups: [],
       pointsForWin: 2,
-      pointsForLoss: 1,
-      playoffMappings: [],
+      pointsForLoss: 1,
     };
 
     await submitWizard(state, services);
