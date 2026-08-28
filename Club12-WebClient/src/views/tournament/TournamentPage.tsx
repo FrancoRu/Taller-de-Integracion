@@ -23,6 +23,7 @@ import { useAuth } from '@/modules/auth/hook/auth.hook';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import DivisionsPage from '@/views/division/divisionsPage';
 import TeamsPage from '@/views/team/TeamsPage';
+import TournamentEnrolledTeams from '@/views/tournament/TournamentEnrolledTeams';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import {
   TOURNAMENT_STATUS_LABEL,
@@ -39,9 +40,9 @@ const TournamentPage: React.FC = () => {
   const { role } = useAuth();
   const { tournament, getTournamentById, putTournamentById } = useTournament();
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState<'detalle' | 'divisiones' | 'equipos'>(
-    'detalle'
-  );
+  const [tab, setTab] = useState<
+    'detalle' | 'divisiones' | 'equipos' | 'inscriptos'
+  >('detalle');
   const [targetStatus, setTargetStatus] = useState<TournamentStatus | ''>('');
   const [changingStatus, setChangingStatus] = useState(false);
 
@@ -126,6 +127,10 @@ const TournamentPage: React.FC = () => {
   const currentStatus = resolveTournamentStatus(tournament.status);
   const nextStatusOptions = getNextStatusOptions(currentStatus);
   const canChangeStatus = canEditTournament && nextStatusOptions.length > 0;
+  // HU-107: enrolled-team management is the registration phase, only available
+  // while the tournament is accepting registrations.
+  const isOpenForRegistration =
+    currentStatus === TournamentStatus.OpenForRegistration;
 
   const handleCreateDivision = () => {
     navigate(`${APP_ROUTES.panelDivisionCreate}?tournamentId=${tournament.id}`);
@@ -229,6 +234,9 @@ const TournamentPage: React.FC = () => {
           <Tab label="Detalle" value="detalle" />
           <Tab label="Divisiones" value="divisiones" />
           <Tab label="Equipos" value="equipos" />
+          {isOpenForRegistration && (
+            <Tab label="Equipos inscriptos" value="inscriptos" />
+          )}
         </Tabs>
 
         {tab === 'detalle' && (
@@ -366,6 +374,10 @@ const TournamentPage: React.FC = () => {
         )}
 
         {tab === 'equipos' && <TeamsPage tournamentId={tournament.id} />}
+
+        {tab === 'inscriptos' && isOpenForRegistration && (
+          <TournamentEnrolledTeams tournamentId={tournament.id} />
+        )}
       </CardContent>
     </Card>
   );

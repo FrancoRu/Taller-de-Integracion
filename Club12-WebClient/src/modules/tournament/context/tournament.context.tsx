@@ -15,6 +15,7 @@ import { useError } from '@/modules/error/hooks/error.hock';
 import { tournamentService } from '@/modules/tournament/service/tournament.service';
 import {
   IAddTournamentRequest,
+  IEnrollTeamRequest,
   ITournamentContextProps,
   IPutTournamentRequest,
   ITournamentFiltered,
@@ -199,6 +200,33 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
     [setError, setMessage]
   );
 
+  const enrollTeam = useCallback(
+    async (id: GUID, request: IEnrollTeamRequest): Promise<boolean | void> => {
+      try {
+        const res: AxiosResponse<void> = await tournamentService.enrollTeam(
+          id,
+          request
+        );
+
+        if (res) {
+          setMessage(res.status, ['Equipo inscripto correctamente']);
+        }
+        return (
+          res.status === HttpStatus.Ok ||
+          res.status === HttpStatus.Created ||
+          res.status === HttpStatus.NoContent
+        );
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+          setError(error);
+        } else {
+          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+        }
+      }
+    },
+    [setError, setMessage]
+  );
+
   const container: ITournamentContextProps = useMemo(
     () => ({
       tournament,
@@ -209,6 +237,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       putTournamentById,
       deleteTournamentById,
       registerTeamsByTournamentId,
+      enrollTeam,
     }),
     [
       tournament,
@@ -219,6 +248,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       putTournamentById,
       deleteTournamentById,
       registerTeamsByTournamentId,
+      enrollTeam,
     ]
   );
 

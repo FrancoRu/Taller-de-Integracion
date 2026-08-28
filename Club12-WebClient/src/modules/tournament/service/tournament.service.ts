@@ -10,6 +10,7 @@ import {
 } from '@/modules/core/utils/axiosUtils';
 import {
   IAddTournamentRequest,
+  IEnrollTeamRequest,
   IPutTournamentRequest,
   ITournamentFiltered,
   ITournamentResponse,
@@ -85,4 +86,23 @@ export const tournamentService = {
     await sendPost(`${routes.tournaments}/register-teams/${id}`, {
       teamIds: teamsId,
     }),
+
+  /**
+   * Enrolls a single team into a tournament during its registration phase
+   * (HU-107). Sends the enrollment contract to
+   * `POST /api/tournaments/{id}/enroll-team`.
+   *
+   * @async
+   * @function enrollTeam
+   * @param {GUID} id - The tournament identifier (GUID) to enroll the team into.
+   * @param {IEnrollTeamRequest} request - Enrollment payload. Exactly one of
+   *   `existingTeamId` / `newTeamName` must be set; `copyRosterFromTournamentId`
+   *   optionally seeds the roster from a previous season.
+   * @returns {Promise<AxiosResponse<void>>} The server response.
+   */
+  enrollTeam: async (
+    id: GUID,
+    request: IEnrollTeamRequest
+  ): Promise<AxiosResponse<void>> =>
+    await sendPost(`${routes.tournaments}/${id}/enroll-team`, request),
 };

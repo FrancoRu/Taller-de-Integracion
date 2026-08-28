@@ -69,6 +69,48 @@ export interface ITournamentContextProps {
     id: GUID,
     teamsId: GUID[]
   ): Promise<boolean | void>;
+
+  /**
+   * Enrolls a single team into a tournament during its registration phase
+   * (HU-107). Either an existing team is enrolled (existingTeamId) or a brand
+   * new team is created and enrolled in one step (newTeamName) — exactly one of
+   * the two. When an existing team is enrolled, its roster can be seeded from a
+   * previous season by passing copyRosterFromTournamentId.
+   * @param id The tournament identifier (GUID) to enroll the team into.
+   * @param request The enrollment payload (existing team or new team + optional roster copy).
+   * @returns A promise resolving to `true` on success, otherwise void.
+   */
+  enrollTeam(
+    id: GUID,
+    request: IEnrollTeamRequest
+  ): Promise<boolean | void>;
+}
+
+/**
+ * The request body structure for enrolling a team into a tournament (HU-107).
+ * Exactly one of `existingTeamId` / `newTeamName` must be provided.
+ * @interface IEnrollTeamRequest
+ */
+export interface IEnrollTeamRequest {
+  /**
+   * The identifier of an already-existing team (club) to enroll.
+   * @type {GUID}
+   */
+  existingTeamId?: GUID;
+
+  /**
+   * The name of a brand-new team to create and enroll in one step.
+   * @type {string}
+   */
+  newTeamName?: string;
+
+  /**
+   * When enrolling an existing team, the tournament (season) whose roster
+   * should be copied as the starting plantel for this enrollment. Typically the
+   * team's most recent season.
+   * @type {GUID}
+   */
+  copyRosterFromTournamentId?: GUID;
 }
 
 /**
