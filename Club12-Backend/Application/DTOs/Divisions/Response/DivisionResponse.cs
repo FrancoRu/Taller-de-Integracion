@@ -59,6 +59,12 @@ public class DivisionResponse
     public int PointsForLoss { get; set; }
 
     /// <summary>
+    /// How many teams qualify to the bracket from EACH internal group of a
+    /// multi-group cross-division cup (HU-110). Defaults to 1.
+    /// </summary>
+    public int QualifiersPerGroup { get; set; }
+
+    /// <summary>
     /// The division's position-range → playoff-destination mapping (HU-45).
     /// </summary>
     public List<PlayoffMappingResponse>? PlayoffMappings { get; set; }

@@ -327,6 +327,11 @@ public static class ErrorMessages
         {
             return $"No unseeded first-round elimination stage found for playoff destination '{destination}'.";
         }
+
+        public static string InvalidQualifiersPerGroup(int qualifiersPerGroup)
+        {
+            return $"QualifiersPerGroup must be at least 1, but was {qualifiersPerGroup}.";
+        }
     }
 
     public static class Backup

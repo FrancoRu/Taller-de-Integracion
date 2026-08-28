@@ -56,38 +56,49 @@ export default function CopaCruzadaStep({ value, onChange }: CopaCruzadaStepProp
             sx={{ mb: 2 }}
           />
 
+          {/* HU-110: the cross cup is split into N groups; the top
+              `qualifiersPerGroup` of each group are pooled into the bracket. */}
           <Stack
             direction="row"
             spacing={2}
             sx={{
               alignItems: "center",
+              flexWrap: 'wrap',
+              gap: 2,
               my: 2
             }}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={value.hasGroupStage}
-                  onChange={e => onChange({ ...value, hasGroupStage: e.target.checked })}
-                />
-              }
-              label="Fase de grupos"
+            <TextField
+              type="number"
+              size="small"
+              label="Cantidad de grupos"
+              value={value.groupCount}
+              onChange={e => onChange({ ...value, groupCount: Number(e.target.value) })}
+              slotProps={{ htmlInput: { min: 1 } }}
+              sx={{ width: 180 }}
             />
-            {value.hasGroupStage && (
-              <TextField
-                select
-                size="small"
-                label="Veces que se enfrenta cada par"
-                value={value.roundRobinLegs}
-                onChange={e => onChange({ ...value, roundRobinLegs: Number(e.target.value) })}
-                sx={{ minWidth: 220 }}
-              >
-                {ROUND_ROBIN_LEGS_OPTIONS.map(option => (
-                  <MenuItem key={option} value={option}>
-                    {option === 1 ? 'Una vez (simple)' : `${option} veces`}
-                  </MenuItem>
-                ))}
-              </TextField>
-            )}
+            <TextField
+              type="number"
+              size="small"
+              label="Clasifican por grupo"
+              value={value.qualifiersPerGroup}
+              onChange={e => onChange({ ...value, qualifiersPerGroup: Number(e.target.value) })}
+              slotProps={{ htmlInput: { min: 1 } }}
+              sx={{ width: 180 }}
+            />
+            <TextField
+              select
+              size="small"
+              label="Veces que se enfrenta cada par"
+              value={value.roundRobinLegs}
+              onChange={e => onChange({ ...value, roundRobinLegs: Number(e.target.value) })}
+              sx={{ minWidth: 220 }}
+            >
+              {ROUND_ROBIN_LEGS_OPTIONS.map(option => (
+                <MenuItem key={option} value={option}>
+                  {option === 1 ? 'Una vez (simple)' : `${option} veces`}
+                </MenuItem>
+              ))}
+            </TextField>
           </Stack>
 
           {/* Per-division scoring (HU-79): defaults 2/1, no draw points. */}

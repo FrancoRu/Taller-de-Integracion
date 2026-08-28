@@ -88,15 +88,22 @@ export interface ZoneConfig {
 
 /**
  * The optional cup that spans every zone at once (e.g. an admin-named
- * "Copa Club12"). Structurally identical to a zone; it is flagged as a
- * cross-division cup so it is exempt from the "one team, one zone" rule
- * when teams are eventually assigned (HU-107/108). The wizard defines its
- * STRUCTURE ONLY (HU-106) — no teams are selected here.
+ * "Copa Club12"). Flagged as a cross-division cup so it is exempt from the
+ * "one team, one zone" rule when teams are eventually assigned (HU-107/108).
+ *
+ * HU-110: the cross cup is a MULTI-GROUP competition — it is split into
+ * `groupCount` group stages ("Grupo 1"…"Grupo N"), and the top
+ * `qualifiersPerGroup` teams of every group are pooled into a single
+ * knockout bracket. The wizard defines its STRUCTURE ONLY (HU-106) — no
+ * teams are selected here.
  */
 export interface CrossCupConfig {
   enabled: boolean;
   name: string;
-  hasGroupStage: boolean;
+  /** How many group stages the cross cup is split into (HU-110, >= 1). */
+  groupCount: number;
+  /** How many teams advance from each group to the bracket (HU-110, >= 1). */
+  qualifiersPerGroup: number;
   roundRobinLegs: number;
   cups: CupConfig[];
   pointsForWin: number;
@@ -174,7 +181,8 @@ export const createInitialWizardState = (): WizardState => ({
   crossCup: {
     enabled: false,
     name: '',
-    hasGroupStage: true,
+    groupCount: 1,
+    qualifiersPerGroup: 1,
     roundRobinLegs: 1,
     cups: [],
     pointsForWin: DEFAULT_POINTS_FOR_WIN,

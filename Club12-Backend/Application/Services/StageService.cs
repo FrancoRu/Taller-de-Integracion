@@ -119,11 +119,14 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     /// <param name="stageEntity">The stage entity to create.</param>
     /// <returns>The created stage entity.</returns>
     /// <exception cref="InvalidOperationException">
-    /// Thrown if a stage with the same name already exists in the division, or if the
-    /// division already has a Group stage and <paramref name="stageEntity"/> is also a
-    /// Group stage (a division's round-robin phase is a single stage — see
-    /// <see cref="AssignTeamsToStageAsync"/>'s comment on why a Group stage can hold an
-    /// entire zone's teams — so a second one would be an orphaned, ambiguous fixture).
+    /// Thrown if a stage with the same name already exists in the division, or if a
+    /// non-cross-division-cup division already has a Group stage and
+    /// <paramref name="stageEntity"/> is also a Group stage (a regular division's
+    /// round-robin phase is a single stage — see <see cref="AssignTeamsToStageAsync"/>'s
+    /// comment on why a Group stage can hold an entire zone's teams — so a second one
+    /// would be an orphaned, ambiguous fixture). A cross-division cup
+    /// (<see cref="Division.IsCrossDivisionCup"/>) is exempt: it may hold several Group
+    /// stages whose top teams are pooled to seed one bracket (HU-110).
     /// </exception>
     public async Task<Stage> CreateStageAsync(Stage stageEntity)
     {
@@ -140,7 +143,15 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
             bool hasGroupStage = await _stageRepository.ExistsAsync(
                 s => s.DivisionId == stageEntity.DivisionId && s.StageType == StageType.Group);
 
-            if (hasGroupStage)
+            // HU-110: a multi-group cross-division cup ("Copa Club12") is
+            // seeded by pooling the top teams of SEVERAL internal group
+            // stages, so it may legitimately hold more than one Group stage.
+            // Every regular division keeps the original one-Group-per-division
+            // rule (a second one would be an orphaned, ambiguous fixture).
+            bool isCrossDivisionCup = await _divisionRepository.ExistsAsync(
+                d => d.Id == stageEntity.DivisionId && d.IsCrossDivisionCup);
+
+            if (hasGroupStage && !isCrossDivisionCup)
             {
                 throw new InvalidOperationException(ErrorMessages.Stage.GroupStageAlreadyExistsInDivision);
             }
@@ -463,6 +474,23 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
             throw new InvalidOperationException(ErrorMessages.Stage.AlreadySeeded);
         }
 
+        // HU-110: a cross-division cup with more than one internal group is
+        // seeded by pooling the top QualifiersPerGroup teams of every group
+        // and ordering them by group-stage strength, rather than from the
+        // teams pre-assigned to this stage. A cross cup with a single group,
+        // and every regular division, falls through to the unchanged
+        // single-standings path below.
+        if (stage.Division.IsCrossDivisionCup)
+        {
+            List<Stage> groupStages = [.. await _stageRepository.FindAsync(
+                s => s.DivisionId == stage.DivisionId && s.StageType == StageType.Group)];
+
+            if (groupStages.Count > 1)
+            {
+                return await SeedMultiGroupCrossCupStageAsync(stage, groupStages);
+            }
+        }
+
         List<Guid> assignedTeamIds = [.. stage.StageTeamMatches.Select(stm => stm.TeamId)];
         int slotCapacity = stage.Matches.Count * 2;
 
@@ -493,6 +521,38 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
         await _matchRepository.UpdateRangeAsync(orderedMatches);
 
         return orderedMatches;
+    }
+
+    /// <summary>
+    /// Seeds a multi-group cross-division cup's first elimination stage
+    /// (HU-110). Each internal <see cref="StageType.Group"/> stage's standings
+    /// are computed independently; the top
+    /// <see cref="Division.QualifiersPerGroup"/> teams of every group are
+    /// pooled and ordered by group-stage strength
+    /// (see <see cref="CrossCupGroupSeeder"/>), then paired into the bracket
+    /// with the shared classic-seed/BYE placement. The pool must hold at least
+    /// two qualifiers.
+    /// </summary>
+    private async Task<List<Match>> SeedMultiGroupCrossCupStageAsync(Stage stage, List<Stage> groupStages)
+    {
+        List<Match> groupMatches = [.. await _matchRepository.FindAsync(m =>
+            m.Stage.DivisionId == stage.DivisionId && m.Stage.StageType == StageType.Group,
+            includes: [m => m.HomeTeam!, m => m.VisitorTeam!, m => m.WinningTeam!])];
+
+        List<IReadOnlyList<Position>> standingsPerGroup = [.. groupStages
+            .Select(groupStage => (IReadOnlyList<Position>) PositionCalculator.CalculatePositions(
+                [.. groupMatches.Where(m => m.StageId == groupStage.Id)],
+                stage.Division.PointsForWin,
+                stage.Division.PointsForLoss))];
+
+        List<Guid> orderedTeamIds = CrossCupGroupSeeder.ResolveSeedOrder(
+            standingsPerGroup, stage.Division.QualifiersPerGroup);
+
+        List<Match> seeded = FillStageWithSeeds(stage.Matches, orderedTeamIds);
+
+        await _matchRepository.UpdateRangeAsync(seeded);
+
+        return seeded;
     }
 
     /// <summary>

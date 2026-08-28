@@ -5,6 +5,7 @@ using Application.Interfaces.Services;
 using Application.Utils.Constants;
 using Application.Utils.Constants.Stage;
 using Application.Utils.Extensions;
+using Application.Utils.Helper.Playoff;
 using Application.Utils.Helper.RoundRobin;
 using Application.Utils.Helper.Slug;
 
@@ -513,15 +514,10 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
         return Task.FromResult(matches);
     }
 
-    private static Task<List<Match>> CreateKnockoutStageMatchesAsync(Stage stage)
+    private async Task<List<Match>> CreateKnockoutStageMatchesAsync(Stage stage)
     {
         List<Match> matches = [];
-        int matchCount = stage.StageType switch
-        {
-            StageType.QuarterFinal => KnockoutMatchCount.QUARTER_FINAL,
-            StageType.SemiFinal => KnockoutMatchCount.SEMI_FINAL,
-            _ => throw new InvalidOperationException(ErrorMessages.Match.InvalidKnockoutStageType)
-        };
+        int matchCount = await ResolveKnockoutFirstRoundMatchCountAsync(stage);
 
         List<DateTime> matchDates = DistributeMatchDates(stage.StartDate, stage.EndDate, matchCount);
 
@@ -530,7 +526,49 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
             matches.Add(BuildMatch(stage, matchDates[i]));
         }
 
-        return Task.FromResult(matches);
+        return matches;
+    }
+
+    /// <summary>
+    /// Number of empty first-round matches to create for a bracket stage.
+    /// <para>
+    /// A multi-group cross-division cup (HU-110) is sized from its pooled
+    /// qualifiers instead of the fixed per-stage-type count: with
+    /// <c>totalQualifiers = Σ min(QualifiersPerGroup, groupSize)</c> across
+    /// every internal group, the first round needs
+    /// <c>NextPowerOfTwo(totalQualifiers) / 2</c> matches so
+    /// <see cref="Application.Utils.Helper.Playoff.PlayoffSeeder.SeedPairs"/>
+    /// (which pads the seed pool up to the next power of two with byes) has an
+    /// empty match for every pair. A cross cup with a single group, and every
+    /// regular division, keeps the original fixed count for its stage type.
+    /// </para>
+    /// </summary>
+    private async Task<int> ResolveKnockoutFirstRoundMatchCountAsync(Stage stage)
+    {
+        if (stage.Division.IsCrossDivisionCup)
+        {
+            List<Stage> groupStages = [.. await _stageRepository.FindAsync(
+                s => s.DivisionId == stage.DivisionId && s.StageType == StageType.Group)];
+
+            if (groupStages.Count > 1)
+            {
+                int totalQualifiers = 0;
+                foreach (Stage groupStage in groupStages)
+                {
+                    int groupSize = await _stageTeamMatchRepository.CountAsync(stm => stm.StageId == groupStage.Id);
+                    totalQualifiers += Math.Min(stage.Division.QualifiersPerGroup, groupSize);
+                }
+
+                return PlayoffSeeder.NextPowerOfTwo(totalQualifiers) / 2;
+            }
+        }
+
+        return stage.StageType switch
+        {
+            StageType.QuarterFinal => KnockoutMatchCount.QUARTER_FINAL,
+            StageType.SemiFinal => KnockoutMatchCount.SEMI_FINAL,
+            _ => throw new InvalidOperationException(ErrorMessages.Match.InvalidKnockoutStageType)
+        };
     }
 
     private static Task<List<Match>> CreateFinalStageMatchesAsync(Stage stage)

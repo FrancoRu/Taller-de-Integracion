@@ -45,6 +45,15 @@ public class CreateDivisionRequest
     public int PointsForLoss { get; set; } = 1;
 
     /// <summary>
+    /// How many teams qualify to the bracket from EACH internal group of a
+    /// multi-group cross-division cup (HU-110). Only meaningful when
+    /// <see cref="IsCrossDivisionCup"/> is true and the division holds more
+    /// than one Group stage; harmless default 1 everywhere else.
+    /// </summary>
+    [Range(1, int.MaxValue, ErrorMessage = "QualifiersPerGroup must be at least 1.")]
+    public int QualifiersPerGroup { get; set; } = 1;
+
+    /// <summary>
     /// Competitive category (gender) of the division (HU-48). Must match the
     /// parent tournament's category — a single tournament cannot mix feminine
     /// and masculine divisions, so a mismatch is rejected. Defaults to

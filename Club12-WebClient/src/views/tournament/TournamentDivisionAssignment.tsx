@@ -35,10 +35,20 @@ interface TournamentDivisionAssignmentProps {
   tournament: ITournamentResponse;
 }
 
+/** One group stage of a division together with the teams already in it. */
+interface StageGroup {
+  stage: IStageResponse;
+  assignedTeams: ITeamResponse[];
+}
+
 interface DivisionAssignment {
   division: IDivisionResponse;
-  groupStage: IStageResponse | null;
-  assignedTeams: ITeamResponse[];
+  /**
+   * The division's group stages. A regular zone has exactly one; a
+   * cross-division cup (HU-110) fans out into N ("Grupo 1"…"Grupo N"). Empty
+   * when the division has no group stage at all.
+   */
+  groups: StageGroup[];
 }
 
 /**
@@ -102,23 +112,27 @@ const TournamentDivisionAssignment: React.FC<
               pageSize: FILTER_OPTIONS_PAGE_SIZE,
             });
 
-            const groupStage =
-              stagesResult?.items?.find(
-                stage => stage.stageType === StageType.Group
-              ) ??
-              stagesResult?.items?.[0] ??
-              null;
+            // A cross-division cup (HU-110) has more than one Group stage, so
+            // we keep every one and let the admin assign teams to each; a
+            // regular zone still resolves to a single group. Order them by
+            // their stage `order` so "Grupo 1"…"Grupo N" stay in sequence.
+            const items = stagesResult?.items ?? [];
+            const groupStages = items
+              .filter(stage => stage.stageType === StageType.Group)
+              .sort((a, b) => a.order - b.order);
+            const resolvedStages = groupStages.length > 0 ? groupStages : items;
 
-            let assignedTeams: ITeamResponse[] = [];
-            if (groupStage) {
-              const assignedResult = await getTeamsByFiltered({
-                stageId: groupStage.id,
-                pageSize: FILTER_OPTIONS_PAGE_SIZE,
-              });
-              assignedTeams = assignedResult?.items ?? [];
-            }
+            const groups = await Promise.all(
+              resolvedStages.map(async stage => {
+                const assignedResult = await getTeamsByFiltered({
+                  stageId: stage.id,
+                  pageSize: FILTER_OPTIONS_PAGE_SIZE,
+                });
+                return { stage, assignedTeams: assignedResult?.items ?? [] };
+              })
+            );
 
-            return { division, groupStage, assignedTeams };
+            return { division, groups };
           })
         );
 
@@ -168,18 +182,29 @@ const TournamentDivisionAssignment: React.FC<
   // offered in another. The cross-division cup is a parallel membership, so it
   // is excluded from this set and only filters against its own assignments.
   const teamsInRegularZones = new Set<GUID>();
-  assignments.forEach(({ division, assignedTeams }) => {
+  assignments.forEach(({ division, groups }) => {
     if (!division.isCrossDivisionCup) {
-      assignedTeams.forEach(team => teamsInRegularZones.add(team.id));
+      groups.forEach(group =>
+        group.assignedTeams.forEach(team => teamsInRegularZones.add(team.id))
+      );
     }
   });
 
+  // Teams eligible for a division's groups. A regular zone bars any team
+  // already placed in another regular zone. A cross-division cup (HU-110) is a
+  // parallel membership: a team may join a cup group even if it also plays a
+  // regular zone, but it must not sit in two different groups of the SAME cup,
+  // so every team already in ANY of this cup's groups is excluded from all of
+  // them.
   const eligibleTeamsFor = ({
     division,
-    assignedTeams,
+    groups,
   }: DivisionAssignment): ITeamResponse[] => {
     if (division.isCrossDivisionCup) {
-      const alreadyInCup = new Set(assignedTeams.map(team => team.id));
+      const alreadyInCup = new Set<GUID>();
+      groups.forEach(group =>
+        group.assignedTeams.forEach(team => alreadyInCup.add(team.id))
+      );
       return enrolledTeams.filter(team => !alreadyInCup.has(team.id));
     }
 
@@ -280,8 +305,11 @@ const TournamentDivisionAssignment: React.FC<
       ) : (
         <Stack spacing={3}>
           {assignments.map(assignment => {
-            const { division, groupStage, assignedTeams } = assignment;
+            const { division, groups } = assignment;
             const eligibleTeams = eligibleTeamsFor(assignment);
+            // A cross-division cup shows its N groups each under its own
+            // heading; a regular zone has a single group and needs none.
+            const showGroupHeadings = division.isCrossDivisionCup;
 
             return (
               <Box
@@ -306,70 +334,84 @@ const TournamentDivisionAssignment: React.FC<
                   )}
                 </Stack>
 
-                {!groupStage ? (
+                {groups.length === 0 ? (
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     Esta división no tiene fase de grupos para asignar equipos.
                   </Typography>
                 ) : (
-                  <>
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ color: 'text.secondary', mb: 0.5 }}
-                    >
-                      Equipos asignados
-                    </Typography>
-                    {assignedTeams.length === 0 ? (
-                      <Typography
-                        variant="body2"
-                        sx={{ color: 'text.secondary', mb: 1 }}
+                  <Stack spacing={2}>
+                    {groups.map(({ stage, assignedTeams }) => (
+                      <Box
+                        key={stage.id}
+                        component="section"
+                        aria-label={stage.name}
                       >
-                        Todavía no hay equipos asignados a esta zona.
-                      </Typography>
-                    ) : (
-                      <List dense disablePadding sx={{ mb: 1 }}>
-                        {assignedTeams.map(team => (
-                          <ListItem key={team.id} disableGutters>
-                            <ListItemText primary={team.name} />
-                          </ListItem>
-                        ))}
-                      </List>
-                    )}
+                        {showGroupHeadings && (
+                          <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+                            {stage.name}
+                          </Typography>
+                        )}
 
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ color: 'text.secondary', mb: 0.5 }}
-                    >
-                      Agregar equipos
-                    </Typography>
-                    {eligibleTeams.length === 0 ? (
-                      <Typography
-                        variant="body2"
-                        sx={{ color: 'text.secondary' }}
-                      >
-                        No hay equipos disponibles para agregar a esta zona.
-                      </Typography>
-                    ) : (
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        sx={{ flexWrap: 'wrap', gap: 1 }}
-                      >
-                        {eligibleTeams.map(team => (
-                          <Button
-                            key={team.id}
-                            size="small"
-                            variant="outlined"
-                            disabled={busy}
-                            onClick={() =>
-                              void handleAssign(groupStage.id, team.id)
-                            }
+                        <Typography
+                          variant="subtitle2"
+                          sx={{ color: 'text.secondary', mb: 0.5 }}
+                        >
+                          Equipos asignados
+                        </Typography>
+                        {assignedTeams.length === 0 ? (
+                          <Typography
+                            variant="body2"
+                            sx={{ color: 'text.secondary', mb: 1 }}
                           >
-                            Agregar {team.name}
-                          </Button>
-                        ))}
-                      </Stack>
-                    )}
-                  </>
+                            Todavía no hay equipos asignados a esta zona.
+                          </Typography>
+                        ) : (
+                          <List dense disablePadding sx={{ mb: 1 }}>
+                            {assignedTeams.map(team => (
+                              <ListItem key={team.id} disableGutters>
+                                <ListItemText primary={team.name} />
+                              </ListItem>
+                            ))}
+                          </List>
+                        )}
+
+                        <Typography
+                          variant="subtitle2"
+                          sx={{ color: 'text.secondary', mb: 0.5 }}
+                        >
+                          Agregar equipos
+                        </Typography>
+                        {eligibleTeams.length === 0 ? (
+                          <Typography
+                            variant="body2"
+                            sx={{ color: 'text.secondary' }}
+                          >
+                            No hay equipos disponibles para agregar a esta zona.
+                          </Typography>
+                        ) : (
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            sx={{ flexWrap: 'wrap', gap: 1 }}
+                          >
+                            {eligibleTeams.map(team => (
+                              <Button
+                                key={team.id}
+                                size="small"
+                                variant="outlined"
+                                disabled={busy}
+                                onClick={() =>
+                                  void handleAssign(stage.id, team.id)
+                                }
+                              >
+                                Agregar {team.name}
+                              </Button>
+                            ))}
+                          </Stack>
+                        )}
+                      </Box>
+                    ))}
+                  </Stack>
                 )}
               </Box>
             );
