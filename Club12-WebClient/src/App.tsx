@@ -7,7 +7,6 @@ import '@fontsource/oswald/600.css';
 import '@fontsource/oswald/700.css';
 import { ReactElement } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { Box } from '@mui/material';
 import Home from './views/home/home';
 import PublicTeamPage from './views/home/teams/PublicTeamPage';
 import PublicSanctionsPage from './views/home/sanctions/PublicSanctionsPage';
@@ -23,12 +22,11 @@ import Login from './views/auth/login';
 import routes from './modules/core/constants/routes';
 import { APP_ROUTES } from './modules/core/constants/appRoutes';
 import HowWeAre from './views/home/howWeAre/howWeAre';
-import NavMenu from './views/home/NavMenu/navMenu';
-import Footer from './views/home/Footer/Footer';
 import { useAuth } from './modules/auth/hook/auth.hook';
 import MedicalRecord from './views/home/information/medicalRecord';
 import Regulation from './views/home/information/regulation';
 import SidebarLayout from './views/core/components/SidebarLayout';
+import PublicLayout from './views/core/components/PublicLayout';
 import PlayersPage from './views/player/PlayersPage';
 import PlayerPage from './views/player/PlayerPage';
 import TeamPage from './views/team/TeamPage';
@@ -366,8 +364,6 @@ const PUBLIC_ROUTES: PublicRouteConfig[] = [
   },
   { path: APP_ROUTES.publicBlog, element: <BlogListPage /> },
   { path: APP_ROUTES.blogPost.pattern, element: <BlogPostDetailPage /> },
-  { path: APP_ROUTES.login, element: <Login /> },
-  { path: '*', element: <NotFound /> },
 ];
 
 function App() {
@@ -406,18 +402,18 @@ function App() {
     );
   }
 
+  // Login (HU-02) and the 404/NotFound catch-all (HU-04) must render without
+  // the public header/footer, so they sit outside the PublicLayout chrome.
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <NavMenu />
-      <Box component="main" sx={{ flex: 1 }}>
-        <Routes>
-          {PUBLIC_ROUTES.map(({ path, element }) => (
-            <Route key={path} path={path} element={element} />
-          ))}
-        </Routes>
-      </Box>
-      <Footer />
-    </Box>
+    <Routes>
+      <Route element={<PublicLayout />}>
+        {PUBLIC_ROUTES.map(({ path, element }) => (
+          <Route key={path} path={path} element={element} />
+        ))}
+      </Route>
+      <Route path={APP_ROUTES.login} element={<Login />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 

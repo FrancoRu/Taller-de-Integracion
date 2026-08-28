@@ -246,6 +246,13 @@ const SidebarLayout: React.FC<{ children: React.ReactNode }> = ({
 
   const tabs = TABS_BY_ROLE[role] ?? [];
 
+  // HU-03: after signing out, redirect to the public home instead of staying
+  // on the (now unauthenticated) panel URL, which would render a 404.
+  const handleLogOut = async () => {
+    await logOut();
+    navigate(APP_ROUTES.home);
+  };
+
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Toolbar sx={{ px: 2, display: 'flex', alignItems: 'center' }}>
@@ -366,7 +373,10 @@ const SidebarLayout: React.FC<{ children: React.ReactNode }> = ({
       </Box>
       <Divider />
       <List>
-        <ListItemButton onClick={logOut} sx={{ mx: 1, borderRadius: 1, mb: 1 }}>
+        <ListItemButton
+          onClick={handleLogOut}
+          sx={{ mx: 1, borderRadius: 1, mb: 1 }}
+        >
           <ListItemIcon sx={{ minWidth: 36 }}>
             <LogoutIcon />
           </ListItemIcon>
