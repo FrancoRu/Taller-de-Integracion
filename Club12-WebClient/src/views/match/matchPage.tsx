@@ -5,11 +5,16 @@ import {
   Button,
   Card,
   CardContent,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   Grid,
   IconButton,
+  MenuItem,
   Stack,
   Tab,
   Tabs,
+  TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -21,9 +26,15 @@ import {
   formatMatchDateToString,
   formatLongDateTimeAr,
 } from '@/modules/core/utils/formatDate';
+import {
+  confirmAction,
+  notifySuccess,
+  notifyWarning,
+} from '@/modules/core/utils/confirmDialog';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import MatchStatisticsTab from '@/views/match/MatchStatisticsTab';
+import MatchStatusChip from '@/views/match/MatchStatusChip';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PlayerSanctionCreatePage from '@/views/playerSanction/playerSanctionCreatePage';
 import { VisibilityIcon } from '@/views/core/MUI/icons/icons';
@@ -36,12 +47,19 @@ type MatchTab = 'detalle' | 'puntuaciones' | 'sanciones';
 const MatchPage: React.FC = () => {
   const { matchId } = useParams<{ matchId: GUID }>();
   const navigate = useNavigate();
-  const { match, getMatchById } = useMatch();
+  const { match, getMatchById, putMatchScoreByMatchId, loadWalkOver } =
+    useMatch();
   const { playerSanctions, getPlayerSanctionByFilter } = usePlayerSanction();
   const [loading, setLoading] = useState(false);
   const [sanctionsLoading, setSanctionsLoading] = useState(false);
   const [tab, setTab] = useState<MatchTab>('detalle');
   const [sanctionDialogOpen, setSanctionDialogOpen] = useState(false);
+  const [resultDialogOpen, setResultDialogOpen] = useState(false);
+  const [walkoverDialogOpen, setWalkoverDialogOpen] = useState(false);
+  const [submittingResult, setSubmittingResult] = useState(false);
+  const [homeScore, setHomeScore] = useState('0');
+  const [visitorScore, setVisitorScore] = useState('0');
+  const [presentTeamId, setPresentTeamId] = useState<GUID | ''>('');
 
   const targetMatchId = useMemo(
     () => matchId ?? match?.id,
@@ -84,6 +102,87 @@ const MatchPage: React.FC = () => {
     refreshSanctions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, match?.id]);
+
+  const openResultDialog = useCallback(() => {
+    setHomeScore(String(match?.homeTeam?.score ?? 0));
+    setVisitorScore(String(match?.visitorTeam?.score ?? 0));
+    setResultDialogOpen(true);
+  }, [match?.homeTeam?.score, match?.visitorTeam?.score]);
+
+  const handleLoadResult = useCallback(async () => {
+    if (!match?.id) {
+      return;
+    }
+
+    const home = Number(homeScore);
+    const visitor = Number(visitorScore);
+
+    if (Number.isNaN(home) || Number.isNaN(visitor)) {
+      await notifyWarning({ title: 'Ingrese un marcador válido.' });
+      return;
+    }
+
+    // Mirror the backend no-draws rule (HU-70) client-side so the operator
+    // gets an immediate, clear message instead of a round-trip 409.
+    if (home === visitor) {
+      await notifyWarning({
+        title: 'No se permiten empates',
+        text: 'En básquet todo partido cargado debe tener un ganador.',
+      });
+      return;
+    }
+
+    setSubmittingResult(true);
+    const result = await putMatchScoreByMatchId(match.id, {
+      homeScore: home,
+      visitorScore: visitor,
+    });
+    setSubmittingResult(false);
+
+    if (!result) {
+      return;
+    }
+
+    setResultDialogOpen(false);
+    await notifySuccess({ title: 'Resultado cargado' });
+  }, [homeScore, visitorScore, match?.id, putMatchScoreByMatchId]);
+
+  const openWalkoverDialog = useCallback(() => {
+    setPresentTeamId(match?.homeTeam?.id ?? match?.visitorTeam?.id ?? '');
+    setWalkoverDialogOpen(true);
+  }, [match?.homeTeam?.id, match?.visitorTeam?.id]);
+
+  const handleWalkover = useCallback(async () => {
+    if (!match?.id || !presentTeamId) {
+      return;
+    }
+
+    const presentName =
+      presentTeamId === match.homeTeam?.id
+        ? match.homeTeam?.name
+        : match.visitorTeam?.name;
+
+    const confirmed = await confirmAction({
+      title: '¿Marcar walkover?',
+      text: `Se otorgará el resultado reglamentario a ${presentName ?? 'el equipo presente'}.`,
+      icon: 'warning',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    setSubmittingResult(true);
+    const result = await loadWalkOver(match.id, { presentTeamId });
+    setSubmittingResult(false);
+
+    if (!result) {
+      return;
+    }
+
+    setWalkoverDialogOpen(false);
+    await notifySuccess({ title: 'Walkover cargado' });
+  }, [match, presentTeamId, loadWalkOver]);
 
   if (!targetMatchId) {
     return (
@@ -219,6 +318,24 @@ const MatchPage: React.FC = () => {
         {tab === 'detalle' && (
           <>
             <Stack
+              direction="row"
+              spacing={1}
+              sx={{ justifyContent: 'flex-end', flexWrap: 'wrap', mb: 2 }}
+            >
+              <Button variant="contained" onClick={openResultDialog}>
+                Cargar resultado
+              </Button>
+              <Button
+                variant="outlined"
+                color="warning"
+                onClick={openWalkoverDialog}
+                disabled={!homeTeam || !visitorTeam}
+              >
+                Marcar W.O.
+              </Button>
+            </Stack>
+
+            <Stack
               direction={{ xs: 'column', md: 'row' }}
               spacing={3}
               sx={{
@@ -300,9 +417,12 @@ const MatchPage: React.FC = () => {
                 }}>
                   Estado
                 </Typography>
-                <Typography>
-                  {match.isFinished ? 'Finalizado' : 'Programado'}
-                </Typography>
+                <Box sx={{ mt: 0.5 }}>
+                  <MatchStatusChip
+                    status={match.status}
+                    isFinished={match.isFinished}
+                  />
+                </Box>
               </Grid>
               <Grid
                 size={{
@@ -426,6 +546,100 @@ const MatchPage: React.FC = () => {
         onCreated={refreshSanctions}
         presetMatch={match}
       />
+
+      <Dialog
+        open={resultDialogOpen}
+        onClose={() => !submittingResult && setResultDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Cargar resultado</DialogTitle>
+        <DialogContent>
+          <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              type="number"
+              label={homeTeam?.name || 'Local'}
+              value={homeScore}
+              onChange={e => setHomeScore(e.target.value)}
+              slotProps={{ htmlInput: { min: 0 } }}
+              fullWidth
+            />
+            <TextField
+              type="number"
+              label={visitorTeam?.name || 'Visitante'}
+              value={visitorScore}
+              onChange={e => setVisitorScore(e.target.value)}
+              slotProps={{ htmlInput: { min: 0 } }}
+              fullWidth
+            />
+          </Stack>
+          <Typography variant="caption" sx={{ color: 'text.secondary', mt: 1, display: 'block' }}>
+            No se permiten empates: el partido debe tener un ganador.
+          </Typography>
+          <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', mt: 2 }}>
+            <Button
+              color="inherit"
+              onClick={() => setResultDialogOpen(false)}
+              disabled={submittingResult}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => void handleLoadResult()}
+              disabled={submittingResult || homeScore === visitorScore}
+            >
+              Guardar
+            </Button>
+          </Stack>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={walkoverDialogOpen}
+        onClose={() => !submittingResult && setWalkoverDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Marcar walkover (W.O.)</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+            Seleccione el equipo que se presentó. Recibirá el resultado
+            reglamentario por defecto.
+          </Typography>
+          <TextField
+            select
+            label="Equipo presente"
+            value={presentTeamId}
+            onChange={e => setPresentTeamId(e.target.value as GUID)}
+            fullWidth
+          >
+            {homeTeam && (
+              <MenuItem value={homeTeam.id}>{homeTeam.name}</MenuItem>
+            )}
+            {visitorTeam && (
+              <MenuItem value={visitorTeam.id}>{visitorTeam.name}</MenuItem>
+            )}
+          </TextField>
+          <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', mt: 2 }}>
+            <Button
+              color="inherit"
+              onClick={() => setWalkoverDialogOpen(false)}
+              disabled={submittingResult}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="contained"
+              color="warning"
+              onClick={() => void handleWalkover()}
+              disabled={submittingResult || !presentTeamId}
+            >
+              Confirmar W.O.
+            </Button>
+          </Stack>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

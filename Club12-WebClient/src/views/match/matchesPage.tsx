@@ -27,6 +27,7 @@ import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import TeamLogo from '@/views/core/components/TeamLogo';
+import MatchStatusChip from '@/views/match/MatchStatusChip';
 import {
   DeleteIcon,
   EditIcon,
@@ -375,12 +376,17 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
         renderCell: params => params.row.venue?.name || '—',
       },
       {
-        field: 'isFinished',
+        field: 'status',
         headerName: 'Estado',
         flex: 0.8,
-        minWidth: 110,
-        renderCell: params =>
-          params.row.isFinished ? 'Finalizado' : 'Programado',
+        minWidth: 130,
+        sortable: false,
+        renderCell: params => (
+          <MatchStatusChip
+            status={params.row.status}
+            isFinished={params.row.isFinished}
+          />
+        ),
       },
     ];
 

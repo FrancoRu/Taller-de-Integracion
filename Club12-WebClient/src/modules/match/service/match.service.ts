@@ -10,6 +10,7 @@ import {
 } from '@/modules/core/utils/axiosUtils';
 import {
   IAddMatchRequest,
+  ILoadWalkOverRequest,
   MatchFiltered,
   IMatchResponse,
   IMinimalMatchResponse,
@@ -54,6 +55,19 @@ export const matchService = {
     matchDate: IPutMatchRequest
   ): Promise<AxiosResponse<IMatchResponse>> =>
     sendPut<IMatchResponse>(`${routes.matches}/${id}`, matchDate),
+
+  /**
+   * Marks a match as a walkover (HU-73), awarding the regulation default
+   * result to the present team.
+   * @param {string} id - The ID of the match to mark as a walkover.
+   * @param {ILoadWalkOverRequest} request - The present team (and optional score override).
+   * @returns {Promise<AxiosResponse<IMatchResponse>>} - A promise that resolves with the updated match.
+   */
+  loadWalkOver: async (
+    id: GUID,
+    request: ILoadWalkOverRequest
+  ): Promise<AxiosResponse<IMatchResponse>> =>
+    sendPut<IMatchResponse>(`${routes.matches}/${id}/walkover`, request),
 
   /**
    * Retrieves a match by its ID or its public slug.

@@ -13,6 +13,7 @@ import { playerStatisticService } from '@/modules/playerStatistic/service/player
 import {
   AddPlayerStatisticRequest,
   IPlayerStatisticContextProps,
+  LoadMatchSheetRequest,
   PlayerStatisticFiltered,
   PlayerStatisticResponse,
   PutPlayerStatisticRequest,
@@ -55,6 +56,10 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
 
   const deletePlayerStatisticMutation = useMutation({
     mutationFn: playerStatisticService.deletePlayerStatisticById,
+  });
+
+  const loadMatchSheetMutation = useMutation({
+    mutationFn: playerStatisticService.loadMatchSheet,
   });
 
   const addPlayerStatistic = useCallback(
@@ -163,6 +168,25 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
     [deletePlayerStatisticMutation, queryClient, handleUnknownError]
   );
 
+  const loadMatchSheet = useCallback(
+    async (
+      request: LoadMatchSheetRequest
+    ): Promise<PlayerStatisticResponse[] | void> => {
+      try {
+        const response: AxiosResponse<PlayerStatisticResponse[]> =
+          await loadMatchSheetMutation.mutateAsync(request);
+
+        await queryClient.invalidateQueries({
+          queryKey: playerStatisticKeys.all,
+        });
+        return response.data;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [loadMatchSheetMutation, queryClient, handleUnknownError]
+  );
+
   const container = useMemo(
     () => ({
       playerStatistic,
@@ -172,12 +196,14 @@ export const PlayerStatisticProvider: React.FC<{ children: ReactNode }> = ({
       getPlayerStatisticById,
       getPlayerStatisticsByFilter,
       deletePlayerStatisticById,
+      loadMatchSheet,
     }),
     [
       addPlayerStatistic,
       deletePlayerStatisticById,
       getPlayerStatisticById,
       getPlayerStatisticsByFilter,
+      loadMatchSheet,
       playerStatistic,
       playerStatistics,
       putPlayerStatisticById,

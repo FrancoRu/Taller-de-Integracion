@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
   Button,
-  Chip,
   CircularProgress,
   Container,
   Divider,
@@ -12,8 +11,9 @@ import {
 } from '@mui/material';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import TeamLogo from '@/views/core/components/TeamLogo';
+import MatchStatusChip from '@/views/match/MatchStatusChip';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
-import { formatMatchScore, getMatchStatusColor, getMatchStatusLabel } from '@/modules/match/utils/matchDisplay';
+import { formatMatchScore } from '@/modules/match/utils/matchDisplay';
 import { formatLongDateTimeAr } from '@/modules/core/utils/formatDate';
 
 const formatMatchDateTime = (value: string) => formatLongDateTimeAr(value);
@@ -68,11 +68,7 @@ export default function PublicMatchPage() {
       </Button>
 
       <Stack sx={{ alignItems: 'center', mb: 3 }} spacing={1}>
-        <Chip
-          label={getMatchStatusLabel(isFinished)}
-          color={getMatchStatusColor(isFinished)}
-          size="small"
-        />
+        <MatchStatusChip status={match.status} isFinished={isFinished} />
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
           {formatMatchDateTime(match.matchDate)}
         </Typography>

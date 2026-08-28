@@ -10,6 +10,7 @@ import {
 } from '@/modules/core/utils/axiosUtils';
 import {
   AddPlayerStatisticRequest,
+  LoadMatchSheetRequest,
   PlayerStatisticFiltered,
   PlayerStatisticResponse,
   PutPlayerStatisticRequest,
@@ -28,6 +29,18 @@ export const playerStatisticService = {
     playerStatistic: AddPlayerStatisticRequest
   ): Promise<AxiosResponse<PlayerStatisticResponse>> =>
     await sendPost(routes.playerStatistics, playerStatistic),
+
+  /**
+   * Loads a whole team's match sheet (planilla) for a match in one call
+   * (HU-71). The listed players' points must add up to the team's final score;
+   * the backend returns 409 with the difference otherwise.
+   * @param {LoadMatchSheetRequest} request - The match, team and per-player points.
+   * @returns {Promise<AxiosResponse<PlayerStatisticResponse[]>>} The persisted statistics.
+   */
+  loadMatchSheet: async (
+    request: LoadMatchSheetRequest
+  ): Promise<AxiosResponse<PlayerStatisticResponse[]>> =>
+    await sendPost(`${routes.playerStatistics}/match-sheet`, request),
 
   /**
    * Updates an existing player statistic.

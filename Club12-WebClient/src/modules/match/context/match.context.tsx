@@ -14,6 +14,7 @@ import { useUnknownErrorHandler } from '@/modules/error/hooks/useUnknownErrorHan
 import { matchService } from '@/modules/match/service/match.service';
 import {
   IAddMatchRequest,
+  ILoadWalkOverRequest,
   IMatchContextProps,
   MatchFiltered,
   IMatchResponse,
@@ -65,6 +66,16 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
 
   const deleteMatchMutation = useMutation({
     mutationFn: matchService.deleteMatchById,
+  });
+
+  const loadWalkOverMutation = useMutation({
+    mutationFn: ({
+      id,
+      request,
+    }: {
+      id: GUID;
+      request: ILoadWalkOverRequest;
+    }) => matchService.loadWalkOver(id, request),
   });
 
   const generateMatchesMutation = useMutation({
@@ -136,6 +147,28 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       }
     },
     [putMatchMutation, queryClient, setMessage, handleUnknownError]
+  );
+
+  const loadWalkOver = useCallback(
+    async (
+      id: GUID,
+      request: ILoadWalkOverRequest
+    ): Promise<IMatchResponse | void> => {
+      try {
+        const res: AxiosResponse<IMatchResponse> =
+          await loadWalkOverMutation.mutateAsync({ id, request });
+        if (res) {
+          setMatch(res.data);
+          queryClient.setQueryData(matchKeys.byId(id), res);
+          await queryClient.invalidateQueries({ queryKey: matchKeys.list() });
+          setMessage(res.status, ['Walkover cargado correctamente']);
+        }
+        return res.data;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [loadWalkOverMutation, queryClient, setMessage, handleUnknownError]
   );
 
   const getMatchById = useCallback(
@@ -223,6 +256,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       addMatch,
       putMatchByMatchId,
       putMatchScoreByMatchId,
+      loadWalkOver,
       getMatchById,
       getMatchByFilter,
       deleteMatchById,
@@ -234,6 +268,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       addMatch,
       putMatchByMatchId,
       putMatchScoreByMatchId,
+      loadWalkOver,
       getMatchById,
       getMatchByFilter,
       deleteMatchById,

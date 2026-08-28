@@ -1,5 +1,6 @@
 import { Filtered, GenericResponsePagination, GUID } from '@/modules/core/types/types';
 import { MatchType } from '@/modules/core/enum/match/matchType';
+import { MatchStatus } from '@/modules/core/enum/match/matchStatus';
 import { ITeamMatchResponse } from '@/modules/team/type/team';
 import { IVenueResponse } from '@/modules/venue/type/venue';
 
@@ -55,6 +56,18 @@ export interface IMatchContextProps {
   getMatchByFilter(
     filter: MatchFiltered
   ): Promise<GenericResponsePagination<IMatchResponse> | void>;
+
+  /**
+   * Marks a match as a walkover (HU-73), awarding the regulation default
+   * result to the present team.
+   * @param id The ID of the match to mark as a walkover.
+   * @param request The present team (and optional score override).
+   * @returns A promise that resolves with the updated match, or void on error.
+   */
+  loadWalkOver(
+    id: GUID,
+    request: ILoadWalkOverRequest
+  ): Promise<IMatchResponse | void>;
 
   /**
    * Deletes a match by its ID.
@@ -184,6 +197,13 @@ export interface IMatchResponse {
    * @property {string | null} winningTeamName - The name of the winning team, or null if the match is not finished or was a draw.
    */
   winningTeamName: string | null;
+
+  /**
+   * @property {MatchStatus | null} status - The lifecycle status of the match
+   * (Scheduled/Played/Suspended/WalkOver). Lets a walkover be told apart from
+   * a normal result. Optional/null when the backend did not populate it.
+   */
+  status?: MatchStatus | null;
 }
 
 /**
@@ -203,6 +223,7 @@ export interface IMinimalMatchResponse {
   winningTeamName: string | null;
   isFinished: boolean;
   matchType: MatchType;
+  status?: MatchStatus | null;
 }
 
 /**
@@ -348,4 +369,24 @@ export interface IEditMatch extends IPutMatchRequest {
 
 export interface IDashboardMatches {
   matches: IMatchResponse[] | null;
+}
+
+/**
+ * The request body structure for marking a match as a walkover (HU-73).
+ * @interface ILoadWalkOverRequest
+ */
+export interface ILoadWalkOverRequest {
+  /**
+   * The team that showed up (the walkover winner). Must be one of the match's
+   * two teams.
+   * @type {GUID}
+   */
+  presentTeamId: GUID;
+
+  /**
+   * Optional override for the present team's awarded score. When omitted, the
+   * backend applies the regulation default.
+   * @type {number}
+   */
+  presentTeamScore?: number;
 }

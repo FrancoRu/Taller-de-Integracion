@@ -55,6 +55,18 @@ export interface IPlayerStatisticContextProps {
    * @returns A promise that resolves when the player statistic is successfully deleted.
    */
   deletePlayerStatisticById(id: GUID): Promise<void>;
+
+  /**
+   * Loads a whole team's scoring sheet (planilla) for a match in one coherent
+   * operation (HU-71). The listed players' points must add up to the team's
+   * final score; otherwise the backend saves nothing and returns 409.
+   * @param request The match, team, and per-player points.
+   * @returns A promise that resolves with the persisted Points statistics, or
+   * void on error (the error message is surfaced globally).
+   */
+  loadMatchSheet(
+    request: LoadMatchSheetRequest
+  ): Promise<PlayerStatisticResponse[] | void>;
 }
 
 export type StatisticType = 'Points' | 'Assists';
@@ -136,6 +148,50 @@ export interface PlayerStatisticResponse {
    * @type {string | null}
    */
   matchDate: string | null;
+}
+
+/**
+ * A single player's points within a team's match sheet (HU-71).
+ * @interface PlayerScoreEntry
+ */
+export interface PlayerScoreEntry {
+  /**
+   * The player who scored.
+   * @type {GUID}
+   */
+  playerId: GUID;
+
+  /**
+   * The points the player scored in the match (may be zero).
+   * @type {number}
+   */
+  points: number;
+}
+
+/**
+ * The request body structure for loading a whole team's match sheet
+ * (planilla) in one call (HU-71). The sum of `scores` points must equal the
+ * team's final score for the match.
+ * @interface LoadMatchSheetRequest
+ */
+export interface LoadMatchSheetRequest {
+  /**
+   * The match whose sheet is being loaded.
+   * @type {GUID}
+   */
+  matchId: GUID;
+
+  /**
+   * The team (home or visitor) whose players are being loaded.
+   * @type {GUID}
+   */
+  teamId: GUID;
+
+  /**
+   * The per-player points for the team.
+   * @type {PlayerScoreEntry[]}
+   */
+  scores: PlayerScoreEntry[];
 }
 
 /**
