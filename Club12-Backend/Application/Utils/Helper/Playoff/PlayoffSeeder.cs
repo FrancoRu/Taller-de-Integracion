@@ -50,7 +50,13 @@ public static class PlayoffSeeder
         return pairs;
     }
 
-    private static int NextPowerOfTwo(int value)
+    /// <summary>
+    /// Smallest power of two greater than or equal to <paramref name="value"/>
+    /// (the bracket size a seed pool of that many teams pads up to). Shared
+    /// with the bracket's automated match-count sizing so both use the same
+    /// padding rule.
+    /// </summary>
+    public static int NextPowerOfTwo(int value)
     {
         int power = 1;
         while (power < value)

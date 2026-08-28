@@ -1,5 +1,7 @@
 using API.AutoMapperProfiles;
 
+using Application.DTOs.Divisions.Request;
+using Application.DTOs.Divisions.Response;
 using Application.DTOs.Match.Request;
 using Application.DTOs.Match.Response;
 using Application.DTOs.Team.Response;
@@ -140,5 +142,54 @@ public class AutoMapperProfilesTests
         TeamResponse response = mapper.Map<TeamResponse>(team);
 
         Assert.Equal(clubId, response.ClubId);
+    }
+
+    /// <summary>
+    /// HU-110: QualifiersPerGroup round-trips through the division mappings —
+    /// CreateDivisionRequest -> Division -> DivisionResponse — by AutoMapper's
+    /// name convention, so the wizard's value reaches the entity and is echoed
+    /// back in the response.
+    /// </summary>
+    [Fact]
+    public void Map_DivisionQualifiersPerGroup_RoundTripsThroughRequestAndResponse()
+    {
+        MapperConfiguration configuration = new(cfg => cfg.AddProfile<DivisionProfile>(), NullLoggerFactory.Instance);
+        IMapper mapper = configuration.CreateMapper();
+
+        CreateDivisionRequest request = new()
+        {
+            Name = "Copa Club12",
+            TournamentId = Guid.NewGuid(),
+            IsCrossDivisionCup = true,
+            QualifiersPerGroup = 2,
+        };
+
+        Division division = mapper.Map<Division>(request);
+        Assert.Equal(2, division.QualifiersPerGroup);
+
+        DivisionResponse response = mapper.Map<DivisionResponse>(division);
+        Assert.Equal(2, response.QualifiersPerGroup);
+    }
+
+    /// <summary>
+    /// An omitted QualifiersPerGroup defaults to 1 on the request DTO and
+    /// survives the mapping unchanged, leaving every existing division's
+    /// seeding behavior intact.
+    /// </summary>
+    [Fact]
+    public void Map_DivisionQualifiersPerGroup_DefaultsToOne()
+    {
+        MapperConfiguration configuration = new(cfg => cfg.AddProfile<DivisionProfile>(), NullLoggerFactory.Instance);
+        IMapper mapper = configuration.CreateMapper();
+
+        CreateDivisionRequest request = new()
+        {
+            Name = "Primera",
+            TournamentId = Guid.NewGuid(),
+        };
+
+        Division division = mapper.Map<Division>(request);
+
+        Assert.Equal(1, division.QualifiersPerGroup);
     }
 }

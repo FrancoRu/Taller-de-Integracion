@@ -239,6 +239,41 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal(StageType.SemiFinal, created.StageType);
     }
 
+    /// <summary>
+    /// HU-110: a cross-division cup is seeded by pooling the top teams of
+    /// SEVERAL internal group stages, so — unlike a regular division — it may
+    /// hold more than one Group stage.
+    /// </summary>
+    [Fact]
+    public async Task CreateStageAsync_CrossDivisionCup_AllowsSecondGroupStage()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
+
+        Tournament tournament = await SeedTournamentAsync(db);
+        Division division = await SeedDivisionAsync(db, tournament, withStages: true, isCrossDivisionCup: true);
+
+        Stage secondGroupStage = new()
+        {
+            Slug = $"stage-{Guid.NewGuid()}",
+            Name = $"Grupo B - {Guid.NewGuid()}",
+            StageType = StageType.Group,
+            IsActive = true,
+            StartDate = tournament.StartDate,
+            EndDate = tournament.StartDate.AddDays(StageTemplate.DurationDays),
+            DivisionId = division.Id,
+            Division = division,
+            Matches = [],
+            CreatedBy = "test",
+        };
+
+        Stage created = await stageService.CreateStageAsync(secondGroupStage);
+
+        Assert.Equal(StageType.Group, created.StageType);
+        Assert.Equal(2, await db.Stages.CountAsync(s => s.DivisionId == division.Id && s.StageType == StageType.Group));
+    }
+
     [Fact]
     public async Task AssignTeamsToStageAsync_ExactSlotMatch_AssignsAllTeams()
     {
@@ -513,7 +548,8 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         return (tournament, teams);
     }
 
-    private static async Task<Division> SeedDivisionAsync(ApplicationDBContext db, Tournament tournament, bool withStages = false)
+    private static async Task<Division> SeedDivisionAsync(
+        ApplicationDBContext db, Tournament tournament, bool withStages = false, bool isCrossDivisionCup = false)
     {
         Division division = new()
         {
@@ -521,6 +557,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
             Name = $"Division-{Guid.NewGuid()}",
             Tournament = tournament,
             TournamentId = tournament.Id,
+            IsCrossDivisionCup = isCrossDivisionCup,
             Stages = [],
             CreatedBy = "test",
         };

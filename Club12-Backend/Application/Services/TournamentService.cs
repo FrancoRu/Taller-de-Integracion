@@ -79,6 +79,7 @@ public class TournamentService(
                     IsCrossDivisionCup = divisionRequest.IsCrossDivisionCup,
                     PointsForWin = divisionRequest.PointsForWin,
                     PointsForLoss = divisionRequest.PointsForLoss,
+                    QualifiersPerGroup = divisionRequest.QualifiersPerGroup,
                     Stages = [],
                     CreatedBy = AuditConstants.SystemUser,
                     PlayoffMappings = (divisionRequest.PlayoffMappings ?? [])
