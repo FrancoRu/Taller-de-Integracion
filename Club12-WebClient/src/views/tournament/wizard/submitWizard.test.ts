@@ -16,12 +16,10 @@ const makeState = (): WizardState => {
     teamRegistrationDeadline: '2026-02-15',
     category: TournamentCategory.Masculine,
   };
-  state.selectedTeamIds = [guid('a'), guid('b')];
   state.zones = [
     {
       id: 'zone-1',
       name: 'Zona A',
-      teamIds: [guid('a'), guid('b')],
       hasGroupStage: true,
       roundRobinLegs: 2,
       cups: [
@@ -50,7 +48,6 @@ const makeServices = (
   addTournament: vi.fn(async () => (({
     id: guid('tournament')
   }) as never)),
-  registerTeams: vi.fn(async () => true),
   addDivision: vi.fn(async ({ name, tournamentId, isCrossDivisionCup }: never) => (({
     id: guid('division'),
     name,
@@ -60,13 +57,11 @@ const makeServices = (
   addStage: vi.fn(async () => (({
     id: guid('stage')
   }) as never)),
-  assignTeamsToStage: vi.fn(async () => true),
-  generateMatches: vi.fn(async () => true),
   ...overrides,
 }) as unknown as WizardServices & Record<keyof WizardServices, ReturnType<typeof vi.fn>>;
 
 describe('submitWizard', () => {
-  it('creates the tournament, registers teams, and reports success', async () => {
+  it('creates the tournament as structure only and reports success', async () => {
     const services = makeServices();
     const result = await submitWizard(makeState(), services);
 
@@ -81,54 +76,36 @@ describe('submitWizard', () => {
     const addTournamentArg = services.addTournament.mock.calls[0][0];
     expect(addTournamentArg).not.toHaveProperty('minTeams');
     expect(addTournamentArg).not.toHaveProperty('maxTeams');
-    expect(services.registerTeams).toHaveBeenCalledWith(guid('tournament'), [guid('a'), guid('b')]);
   });
 
   /**
-   * Regression test for a real bug found by driving the actual wizard
-   * against a live backend: the server infers an unassigned stage's
-   * round-robin pool from "how many teams are currently registered to the
-   * tournament" when it has no better signal. Registering every zone's
-   * teams in one batch up front (before any zone-specific assignment)
-   * meant that signal was always the TOURNAMENT-WIDE team count, never a
-   * single zone's own count, so every zone but the last ended up with the
-   * wrong fixture. Registering only each zone's own teams right before its
-   * own assignment/generation step keeps that signal correct per zone; the
-   * final call restores everyone's registration once every fixture exists.
+   * HU-106: the wizard now creates ONLY the tournament + its
+   * division/zone/cup/stage STRUCTURE. Teams are added later (registration
+   * phase) and assigned to divisions only after registration closes
+   * (HU-107/108). The wizard must therefore never register teams, assign
+   * teams to a stage, nor generate any fixture — the tournament is left in
+   * OpenForRegistration with no matches.
    */
-  it('registers only each zone\'s own teams before assigning/generating its fixture, then registers everyone at the end', async () => {
-    const registerCalls: unknown[][] = [];
-    const services = makeServices({
-      registerTeams: vi.fn(async (...args: unknown[]) => {
-        registerCalls.push(args);
-        return true;
-      }),
-    });
+  it('creates only structure — never registers teams, assigns teams, or generates a fixture', async () => {
+    const registerTeams = vi.fn(async () => true);
+    const assignTeamsToStage = vi.fn(async () => true);
+    const generateMatches = vi.fn(async () => true);
 
-    const state = makeState();
-    state.selectedTeamIds = [guid('a'), guid('b'), guid('c'), guid('d')];
-    state.zones = [
-      { ...state.zones[0], teamIds: [guid('a'), guid('b')] },
-      {
-        id: 'zone-2',
-        name: 'Zona B',
-        teamIds: [guid('c'), guid('d')],
-        hasGroupStage: true,
-        roundRobinLegs: 1,
-        cups: [],
-        pointsForWin: 2,
-        pointsForLoss: 1,
-        playoffMappings: [],
-      },
-    ];
+    const services = {
+      ...makeServices(),
+      // These must NOT exist on the contract anymore, but even if a caller
+      // still injects them, submitWizard must never invoke them.
+      registerTeams,
+      assignTeamsToStage,
+      generateMatches,
+    } as unknown as WizardServices;
 
-    await submitWizard(state, services);
+    const result = await submitWizard(makeState(), services);
 
-    expect(registerCalls).toEqual([
-      [guid('tournament'), [guid('a'), guid('b')]],
-      [guid('tournament'), [guid('c'), guid('d')]],
-      [guid('tournament'), [guid('a'), guid('b'), guid('c'), guid('d')]],
-    ]);
+    expect(result.success).toBe(true);
+    expect(registerTeams).not.toHaveBeenCalled();
+    expect(assignTeamsToStage).not.toHaveBeenCalled();
+    expect(generateMatches).not.toHaveBeenCalled();
   });
 
   it('creates one division per zone with isCrossDivisionCup false', async () => {
@@ -178,18 +155,16 @@ describe('submitWizard', () => {
     ]);
   });
 
-  it('creates the group stage with the configured RoundRobinLegs and assigns the zone teams to it', async () => {
+  it('creates the group stage as structure with the configured RoundRobinLegs and no team assignment', async () => {
     const services = makeServices();
     await submitWizard(makeState(), services);
 
     expect(services.addStage).toHaveBeenCalledWith(
       expect.objectContaining({ stageType: StageType.Group, isElimination: false, roundRobinLegs: 2 })
     );
-    expect(services.assignTeamsToStage).toHaveBeenCalledWith(guid('stage'), [guid('a'), guid('b')], false);
-    expect(services.generateMatches).toHaveBeenCalledWith(guid('stage'));
   });
 
-  it('creates one stage per cup round with the bracket name and best-of, but never assigns teams to them', async () => {
+  it('creates one stage per cup round with the bracket name and best-of', async () => {
     const services = makeServices();
     await submitWizard(makeState(), services);
 
@@ -207,9 +182,6 @@ describe('submitWizard', () => {
       bracketName: 'Copa de Oro',
       bestOf: 5,
     });
-
-    // assignTeamsToStage was called exactly once — for the group stage, not the cup rounds.
-    expect(services.assignTeamsToStage).toHaveBeenCalledTimes(1);
   });
 
   it('aborts immediately and reports an error when tournament creation fails', async () => {
@@ -219,15 +191,6 @@ describe('submitWizard', () => {
     expect(result.success).toBe(false);
     expect(result.error).toBeDefined();
     expect(services.addDivision).not.toHaveBeenCalled();
-  });
-
-  it('keeps going and records a warning when team registration fails', async () => {
-    const services = makeServices({ registerTeams: vi.fn(async () => undefined) });
-    const result = await submitWizard(makeState(), services);
-
-    expect(result.success).toBe(true);
-    expect(result.warnings.some(w => w.includes('registrar'))).toBe(true);
-    expect(services.addDivision).toHaveBeenCalled();
   });
 
   it('records a warning and skips stage creation when a zone division fails to create', async () => {
@@ -245,8 +208,6 @@ describe('submitWizard', () => {
     state.crossCup = {
       enabled: true,
       name: 'Copa Club12',
-      includeAllTeams: true,
-      teamIds: [],
       hasGroupStage: false,
       roundRobinLegs: 1,
       cups: [],
@@ -292,8 +253,6 @@ describe('submitWizard', () => {
     state.crossCup = {
       enabled: true,
       name: 'Copa Club12',
-      includeAllTeams: true,
-      teamIds: [],
       hasGroupStage: false,
       roundRobinLegs: 1,
       cups: [],

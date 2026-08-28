@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { GUID } from '@/modules/core/types/types';
 import { StageType } from '@/modules/stage/type/stage';
 import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
 import {
@@ -13,15 +12,11 @@ import {
 import {
   buildWizardTree,
   isWizardReadyToSubmit,
-  resolveCrossCupTeamIds,
   validateCrossCupStep,
   validatePlayoffMappings,
-  validateTeamsStep,
   validateTournamentStep,
   validateZonesStep,
 } from './wizardLogic';
-
-const guid = (seed: string): GUID => `${seed}-0000-0000-0000-000000000000` as GUID;
 
 const makeValidState = (): WizardState => {
   const state = createInitialWizardState();
@@ -32,12 +27,10 @@ const makeValidState = (): WizardState => {
     teamRegistrationDeadline: '2026-02-15',
     category: TournamentCategory.Masculine,
   };
-  state.selectedTeamIds = [guid('a'), guid('b'), guid('c'), guid('d')];
   state.zones = [
     {
       id: 'zone-1',
       name: 'Zona A',
-      teamIds: [guid('a'), guid('b')],
       hasGroupStage: true,
       roundRobinLegs: 1,
       cups: [],
@@ -48,7 +41,6 @@ const makeValidState = (): WizardState => {
     {
       id: 'zone-2',
       name: 'Zona B',
-      teamIds: [guid('c'), guid('d')],
       hasGroupStage: true,
       roundRobinLegs: 1,
       cups: [],
@@ -78,20 +70,8 @@ describe('validateTournamentStep', () => {
   });
 });
 
-describe('validateTeamsStep', () => {
-  it('rejects a tournament with no teams inscribed', () => {
-    const state = makeValidState();
-    state.selectedTeamIds = [];
-    expect(validateTeamsStep(state).length).toBeGreaterThan(0);
-  });
-
-  it('accepts at least one inscribed team', () => {
-    expect(validateTeamsStep(makeValidState())).toEqual([]);
-  });
-});
-
 describe('validateZonesStep', () => {
-  it('accepts a clean partition of every selected team across named zones', () => {
+  it('accepts named zones with valid cups (no teams are assigned in the wizard)', () => {
     expect(validateZonesStep(makeValidState())).toEqual([]);
   });
 
@@ -101,38 +81,16 @@ describe('validateZonesStep', () => {
     expect(validateZonesStep(state).length).toBeGreaterThan(0);
   });
 
-  it('rejects an unassigned team', () => {
+  it('rejects a zone with no name', () => {
     const state = makeValidState();
-    state.selectedTeamIds.push(guid('e'));
-    expect(validateZonesStep(state).some(e => e.includes('ninguna zona'))).toBe(true);
-  });
-
-  it('rejects a team assigned to two zones at once', () => {
-    const state = makeValidState();
-    state.zones[1].teamIds.push(guid('a'));
-    expect(validateZonesStep(state).some(e => e.includes('más de una zona'))).toBe(true);
+    state.zones[0].name = '   ';
+    expect(validateZonesStep(state).some(e => e.includes('necesitan un nombre'))).toBe(true);
   });
 
   it('rejects two zones with the same name', () => {
     const state = makeValidState();
     state.zones[1].name = 'zona a';
     expect(validateZonesStep(state).some(e => e.includes('dos zonas llamadas'))).toBe(true);
-  });
-
-  it('rejects an empty zone', () => {
-    const state = makeValidState();
-    state.zones.push({
-      id: 'zone-3',
-      name: 'Zona C',
-      teamIds: [],
-      hasGroupStage: true,
-      roundRobinLegs: 1,
-      cups: [],
-      pointsForWin: 2,
-      pointsForLoss: 1,
-      playoffMappings: [],
-    });
-    expect(validateZonesStep(state).some(e => e.includes('no tiene equipos'))).toBe(true);
   });
 
   it('rejects a cup with no name', () => {
@@ -242,21 +200,9 @@ describe('validateCrossCupStep', () => {
     expect(validateCrossCupStep(state).length).toBeGreaterThan(0);
   });
 
-  it('requires at least 2 teams when enabled with an explicit roster', () => {
+  it('accepts an enabled cross cup with a name (no teams are assigned in the wizard)', () => {
     const state = makeValidState();
-    state.crossCup = {
-      ...state.crossCup,
-      enabled: true,
-      name: 'Copa cruzada',
-      includeAllTeams: false,
-      teamIds: [guid('a')],
-    };
-    expect(validateCrossCupStep(state).length).toBeGreaterThan(0);
-  });
-
-  it('accepts includeAllTeams with enough selected teams', () => {
-    const state = makeValidState();
-    state.crossCup = { ...state.crossCup, enabled: true, name: 'Copa cruzada', includeAllTeams: true };
+    state.crossCup = { ...state.crossCup, enabled: true, name: 'Copa cruzada' };
     expect(validateCrossCupStep(state)).toEqual([]);
   });
 });
@@ -271,28 +217,14 @@ describe('isWizardReadyToSubmit', () => {
   });
 });
 
-describe('resolveCrossCupTeamIds', () => {
-  it('resolves to every selected team when includeAllTeams is true', () => {
-    const state = makeValidState();
-    state.crossCup = { ...state.crossCup, includeAllTeams: true };
-    expect(resolveCrossCupTeamIds(state)).toEqual(state.selectedTeamIds);
-  });
-
-  it('resolves to the explicit roster when includeAllTeams is false', () => {
-    const state = makeValidState();
-    const explicit = [guid('a')];
-    state.crossCup = { ...state.crossCup, includeAllTeams: false, teamIds: explicit };
-    expect(resolveCrossCupTeamIds(state)).toEqual(explicit);
-  });
-});
-
 describe('buildWizardTree', () => {
   it('emits the tournament node, one node per zone, and a group-stage line per zone with a group stage', () => {
     const state = makeValidState();
     const nodes = buildWizardTree(state);
 
-    expect(nodes[0]).toMatchObject({ depth: 1, tag: '4 equipos' });
-    expect(nodes.some(n => n.depth === 2 && n.label.startsWith('Zona A'))).toBe(true);
+    expect(nodes[0]).toMatchObject({ depth: 1 });
+    expect(nodes[0].label).toContain('Apertura 2026');
+    expect(nodes.some(n => n.depth === 2 && n.label === 'Zona A')).toBe(true);
     expect(nodes.some(n => n.depth === 3 && n.label.includes('Fase de grupos'))).toBe(true);
   });
 
@@ -318,7 +250,6 @@ describe('buildWizardTree', () => {
       ...state.crossCup,
       enabled: true,
       name: 'Copa Club12',
-      includeAllTeams: true,
     };
     state.crossCup = crossCup;
 
