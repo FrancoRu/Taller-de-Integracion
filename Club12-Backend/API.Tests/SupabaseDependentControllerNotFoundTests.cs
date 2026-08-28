@@ -52,7 +52,7 @@ public class SupabaseDependentControllerNotFoundTests
         VenueController controller = new(new NotFoundVenueService(), null!, new NotUsedMapper());
         ConfigureProblemDetailsFactory(controller);
 
-        ActionResult<VenueResponse> result = await controller.GetVenueById(Guid.NewGuid());
+        ActionResult<VenueResponse> result = await controller.GetVenueById(Guid.NewGuid().ToString());
 
         AssertNotFoundProblem(result.Result, "Venue");
     }
@@ -167,6 +167,11 @@ public class SupabaseDependentControllerNotFoundTests
         }
 
         public Task<Venue?> GetVenueByIdAsync(Guid venueId)
+        {
+            return Task.FromResult<Venue?>(null);
+        }
+
+        public Task<Venue?> GetVenueByIdOrSlugAsync(string idOrSlug)
         {
             return Task.FromResult<Venue?>(null);
         }

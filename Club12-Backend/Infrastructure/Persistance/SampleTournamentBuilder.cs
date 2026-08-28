@@ -112,6 +112,7 @@ public static class SampleTournamentBuilder
             {
                 CreatedBy = CreatedBy,
                 Name = "Fase de Grupos",
+                Slug = SlugGenerator.GenerateSlug($"Fase de Grupos {division.Name} {Guid.NewGuid()}"),
                 StageType = StageType.Group,
                 IsActive = true,
                 StartDate = definition.StageStartDate,
@@ -148,6 +149,7 @@ public static class SampleTournamentBuilder
         {
             CreatedBy = CreatedBy,
             Name = divisionName,
+            Slug = SlugGenerator.GenerateSlug($"{divisionName} {Guid.NewGuid()}"),
             Tournament = tournament,
             Stages = [],
         };
@@ -194,6 +196,7 @@ public static class SampleTournamentBuilder
                     CreatedBy = CreatedBy,
                     FirstName = firstName,
                     LastName = lastName,
+                    Slug = SlugGenerator.GenerateSlug($"{lastName} {firstName} {documentNumber}"),
                     DocumentNumber = documentNumber,
                     IsSanctioned = false,
                     BirthDate = new DateTime(2026, 8, 18, 0, 0, 0, DateTimeKind.Utc)
@@ -366,6 +369,7 @@ public static class SampleTournamentBuilder
         {
             CreatedBy = CreatedBy,
             Name = StageTemplate.SemiFinal.Name,
+            Slug = SlugGenerator.GenerateSlug($"{StageTemplate.SemiFinal.Name} {division.Name} {Guid.NewGuid()}"),
             StageType = StageType.SemiFinal,
             IsActive = true,
             IsElimination = true,
@@ -404,6 +408,7 @@ public static class SampleTournamentBuilder
         {
             CreatedBy = CreatedBy,
             Name = StageTemplate.ThirdPlace.Name,
+            Slug = SlugGenerator.GenerateSlug($"{StageTemplate.ThirdPlace.Name} {division.Name} {Guid.NewGuid()}"),
             StageType = StageType.ThirdPlace,
             IsActive = true,
             IsElimination = true,
@@ -426,6 +431,7 @@ public static class SampleTournamentBuilder
         {
             CreatedBy = CreatedBy,
             Name = StageTemplate.Final.Name,
+            Slug = SlugGenerator.GenerateSlug($"{StageTemplate.Final.Name} {division.Name} {Guid.NewGuid()}"),
             StageType = StageType.Final,
             IsActive = true,
             IsElimination = true,

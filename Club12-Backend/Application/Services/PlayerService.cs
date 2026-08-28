@@ -3,6 +3,7 @@ using Application.DTOs.Player.Request;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Utils.Extensions;
+using Application.Utils.Helper.Slug;
 
 using Domain.Constants;
 using Domain.Entities.Models;
@@ -22,6 +23,10 @@ public class PlayerService(IUnitOfWork unitOfWork) : IPlayerService
 
     public async Task<Player> CreatePlayerAsync(Player playerEntity, Guid tournamentId)
     {
+        playerEntity.Slug = await SlugGenerator.GenerateUniqueSlugAsync(
+            playerEntity.FullName,
+            candidate => _playerRepository.ExistsAsync(player => player.Slug == candidate));
+
         await _playerRepository.AddAsync(playerEntity);
         await EnsureRegistrationAsync(playerEntity, tournamentId);
 
@@ -31,6 +36,23 @@ public class PlayerService(IUnitOfWork unitOfWork) : IPlayerService
     public async Task<Player?> GetPlayerByIdAsync(Guid playerId)
     {
         return await _playerRepository.GetByIdAsync(playerId);
+    }
+
+    /// <summary>
+    /// Retrieves a player by its id or its slug. The value is treated as an id
+    /// when it parses as a GUID, otherwise it is looked up as a slug.
+    /// </summary>
+    /// <param name="idOrSlug">The player's GUID id or its slug.</param>
+    /// <returns>The matching player, or null if not found.</returns>
+    public async Task<Player?> GetPlayerByIdOrSlugAsync(string idOrSlug)
+    {
+        if (Guid.TryParse(idOrSlug, out Guid playerId))
+        {
+            return await GetPlayerByIdAsync(playerId);
+        }
+
+        IEnumerable<Player> matches = await _playerRepository.FindAsync(player => player.Slug == idOrSlug);
+        return matches.FirstOrDefault();
     }
 
     public async Task DeletePlayerAsync(Guid id)

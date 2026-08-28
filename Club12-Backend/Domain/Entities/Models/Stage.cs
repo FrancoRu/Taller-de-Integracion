@@ -8,6 +8,14 @@ namespace Domain.Entities.Models;
 public class Stage : EntityBase
 {
     public required string Name { get; set; }
+
+    /// <summary>
+    /// The unique, URL-friendly identifier used in public stage links.
+    /// Generated once from the name at creation time and never changed
+    /// afterward, so shared links keep working even if the stage is renamed.
+    /// </summary>
+    public required string Slug { get; set; }
+
     public string? Description { get; set; }
     public required StageType StageType { get; set; }
     public required bool IsActive { get; set; }

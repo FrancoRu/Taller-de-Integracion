@@ -29,6 +29,11 @@ public class PublicPlayerResponse : BaseEntityResponse
     public required string FullName { get; set; }
 
     /// <summary>
+    /// The unique, URL-friendly identifier used in public player links.
+    /// </summary>
+    public required string Slug { get; set; }
+
+    /// <summary>
     /// The unique identifier of the Team to which the Player belongs.
     /// </summary>
     public required Guid TeamId { get; set; }

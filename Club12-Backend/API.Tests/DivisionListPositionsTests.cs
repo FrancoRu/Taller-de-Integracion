@@ -121,6 +121,7 @@ public class DivisionListPositionsTests : IClassFixture<CustomWebApplicationFact
     {
         Division division = new()
         {
+            Slug = $"division-{Guid.NewGuid()}",
             Name = $"Division-{Guid.NewGuid()}",
             Tournament = tournament,
             TournamentId = tournament.Id,
@@ -138,6 +139,7 @@ public class DivisionListPositionsTests : IClassFixture<CustomWebApplicationFact
     {
         Stage stage = new()
         {
+            Slug = $"stage-{Guid.NewGuid()}",
             Name = $"Group-{Guid.NewGuid()}",
             StageType = StageType.Group,
             IsActive = true,

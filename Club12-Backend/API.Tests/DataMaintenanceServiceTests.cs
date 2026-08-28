@@ -103,7 +103,7 @@ public class DataMaintenanceServiceTests : IClassFixture<CustomWebApplicationFac
     {
         List<Venue> venues =
         [
-            new() { CreatedBy = "test", Name = "Cancha de prueba", Address = "Calle Falsa 123" },
+            new() { Slug = $"venue-{Guid.NewGuid()}", CreatedBy = "test", Name = "Cancha de prueba", Address = "Calle Falsa 123" },
         ];
 
         SampleTournamentBuilder.TournamentDefinition definition = new(
@@ -276,7 +276,7 @@ public class DataMaintenanceServiceTests : IClassFixture<CustomWebApplicationFac
     {
         List<Venue> venues =
         [
-            new() { CreatedBy = "test", Name = "Cancha de prueba", Address = "Calle Falsa 123" },
+            new() { Slug = $"venue-{Guid.NewGuid()}", CreatedBy = "test", Name = "Cancha de prueba", Address = "Calle Falsa 123" },
         ];
 
         SampleTournamentBuilder.TournamentDefinition definition = new(

@@ -12,6 +12,9 @@ public class DivisionEntityConfiguration : BaseEntityConfiguration<Division>
         builder.ToTable(EntityConstants.Tables.Division, EntityConstants.Schema);
 
         builder.Property(d => d.Name).IsRequired().HasMaxLength(30);
+        builder.Property(d => d.Slug).IsRequired().HasMaxLength(220);
+
+        builder.HasIndex(d => d.Slug).IsUnique();
 
         builder.HasOne(d => d.Tournament)
             .WithMany(t => t.Divisions)

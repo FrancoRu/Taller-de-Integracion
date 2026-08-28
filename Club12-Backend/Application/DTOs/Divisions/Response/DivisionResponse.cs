@@ -19,6 +19,11 @@ public class DivisionResponse
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
+    /// The unique, URL-friendly identifier used in public division links.
+    /// </summary>
+    public string Slug { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets a value indicating whether the division has finished.
     /// </summary>
     public bool IsFinished { get; set; }

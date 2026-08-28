@@ -52,28 +52,28 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
         venue.PhotoUrl = logoUrl;
         await venueService.CreateVenueAsync(venue);
         VenueResponse venueResponse = mapper.Map<VenueResponse>(venue);
-        return CreatedAtAction(nameof(GetVenueById), new { venueResponse.Id }, venueResponse);
+        return CreatedAtAction(nameof(GetVenueById), new { idOrSlug = venueResponse.Id }, venueResponse);
     }
 
     /// <summary>
-    /// Retrieves a venue by its id asynchronously.
+    /// Retrieves a venue by its id or its public slug asynchronously.
     /// </summary>
-    /// <param name="id">The id of the venue to retrieve.</param>
-    /// <returns>The Venue with the specified id.
+    /// <param name="idOrSlug">The id (GUID) or slug of the venue to retrieve.</param>
+    /// <returns>The Venue with the specified id or slug.
     /// <para>Returns 200 (OK) with the Venue response if it was found.</para>
-    /// <para>Returns 400 (Bad Request) if the Venue with the provided id was not found.</para>
+    /// <para>Returns 404 (Not Found) if the Venue with the provided id or slug was not found.</para>
     /// </returns>
     [AllowAnonymous]
-    [HttpGet("{id:guid}")]
+    [HttpGet("{idOrSlug}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(VenueResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<VenueResponse>> GetVenueById(Guid id)
+    public async Task<ActionResult<VenueResponse>> GetVenueById(string idOrSlug)
     {
-        Venue? venue = await venueService.GetVenueByIdAsync(id);
+        Venue? venue = await venueService.GetVenueByIdOrSlugAsync(idOrSlug);
 
         if (venue is null)
         {
-            return this.NotFoundProblem(nameof(Venue), id);
+            return this.NotFoundProblem(nameof(Venue), idOrSlug);
         }
 
         VenueResponse venueResponse = mapper.Map<VenueResponse>(venue);

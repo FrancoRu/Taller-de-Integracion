@@ -13,6 +13,11 @@ public class VenueResponse : BaseEntityResponse
     public required string Name { get; set; }
 
     /// <summary>
+    /// The unique, URL-friendly identifier used in public venue links.
+    /// </summary>
+    public required string Slug { get; set; }
+
+    /// <summary>
     /// The address of the venue.
     /// </summary>
     public required string Address { get; set; }

@@ -8,6 +8,7 @@ using Application.Utils.Constants.Stage;
 using Application.Utils.Constants.Validation;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.Playoff;
+using Application.Utils.Helper.Slug;
 using Application.Utils.Helper.StageHelper;
 using Application.Utils.Helper.Standings;
 
@@ -45,6 +46,26 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     public async Task<Stage?> GetStageByIdAsync(Guid stageId)
     {
         return await _stageRepository.GetByIdAsync(stageId, includes: [stage => stage.Division]);
+    }
+
+    /// <summary>
+    /// Retrieves a stage by its id or its slug. The value is treated as an id
+    /// when it parses as a GUID, otherwise it is looked up as a slug.
+    /// </summary>
+    /// <param name="idOrSlug">The stage's GUID id or its slug.</param>
+    /// <returns>The matching stage, or null if not found.</returns>
+    public async Task<Stage?> GetStageByIdOrSlugAsync(string idOrSlug)
+    {
+        if (Guid.TryParse(idOrSlug, out Guid stageId))
+        {
+            return await GetStageByIdAsync(stageId);
+        }
+
+        IEnumerable<Stage> matches = await _stageRepository.FindAsync(
+            stage => stage.Slug == idOrSlug,
+            includes: [stage => stage.Division]);
+
+        return matches.FirstOrDefault();
     }
 
     /// <summary>
@@ -126,6 +147,10 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
             }
         }
 
+        stageEntity.Slug = await SlugGenerator.GenerateUniqueSlugAsync(
+            stageEntity.Name,
+            candidate => _stageRepository.ExistsAsync(stage => stage.Slug == candidate));
+
         await _stageRepository.AddAsync(stageEntity);
         return stageEntity;
     }
@@ -145,6 +170,7 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
         {
             Id = Guid.Empty,
             Name = template.Name,
+            Slug = string.Empty,
             Description = template.Description,
             StageType = stageType,
             IsActive = true,
@@ -235,9 +261,34 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
 
         finalStage.Order = order;
 
+        await AssignStageSlugsAsync(stages);
+
         await _stageRepository.AddRangeAsync(stages);
 
         return stages;
+    }
+
+    /// <summary>
+    /// Assigns a unique slug to every stage in a freshly built batch (e.g. a
+    /// division's full set of automated stages) before it is persisted.
+    /// Uniqueness is checked against both already-persisted stages and the
+    /// slugs already assigned earlier in this same batch, since none of the
+    /// batch's stages exist in the repository yet when this runs. Mirrors
+    /// MatchService.AssignMatchSlugsAsync.
+    /// </summary>
+    private async Task AssignStageSlugsAsync(List<Stage> stages)
+    {
+        HashSet<string> slugsAssignedInBatch = [];
+
+        foreach (Stage stage in stages)
+        {
+            stage.Slug = await SlugGenerator.GenerateUniqueSlugAsync(
+                stage.Name,
+                async candidate => slugsAssignedInBatch.Contains(candidate)
+                    || await _stageRepository.ExistsAsync(s => s.Slug == candidate));
+
+            slugsAssignedInBatch.Add(stage.Slug);
+        }
     }
 
     /// <summary>

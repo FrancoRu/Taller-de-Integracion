@@ -178,6 +178,7 @@ public class PlayerSanctionSlugTests : IClassFixture<CustomWebApplicationFactory
 
         Division division = new()
         {
+            Slug = $"division-{Guid.NewGuid()}",
             Id = divisionId,
             Name = $"Division-{Guid.NewGuid()}",
             Tournament = tournament,
@@ -187,6 +188,7 @@ public class PlayerSanctionSlugTests : IClassFixture<CustomWebApplicationFactory
 
         Stage stage = new()
         {
+            Slug = $"stage-{Guid.NewGuid()}",
             Id = stageId,
             Name = $"Stage-{Guid.NewGuid()}",
             StageType = StageType.Group,
@@ -213,6 +215,7 @@ public class PlayerSanctionSlugTests : IClassFixture<CustomWebApplicationFactory
 
         Player player = new()
         {
+            Slug = $"player-{Guid.NewGuid()}",
             FirstName = "Perez",
             LastName = "Juan",
             DocumentNumber = Guid.NewGuid().ToString("N")[..10],

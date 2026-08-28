@@ -35,6 +35,14 @@ public interface IPlayerService
     Task<Player?> GetPlayerByIdAsync(Guid playerId);
 
     /// <summary>
+    /// Retrieves a Player by its id or its slug. The value is treated as an id
+    /// when it parses as a GUID, otherwise it is looked up as a slug.
+    /// </summary>
+    /// <param name="idOrSlug">The player's GUID id or its slug.</param>
+    /// <returns>The matching player, or null if not found.</returns>
+    Task<Player?> GetPlayerByIdOrSlugAsync(string idOrSlug);
+
+    /// <summary>
     /// Updates a Player and keeps their season-scoped roster registration in
     /// sync: if the player's TeamId changed, either the registration for
     /// <paramref name="tournamentId"/> is moved to the new team, or (if none

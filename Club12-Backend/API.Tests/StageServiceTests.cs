@@ -188,6 +188,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
 
         Stage secondGroupStage = new()
         {
+            Slug = $"stage-{Guid.NewGuid()}",
             Name = $"Totally-Different-Name-{Guid.NewGuid()}",
             StageType = StageType.Group,
             IsActive = true,
@@ -221,6 +222,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
 
         Stage semiFinalStage = new()
         {
+            Slug = $"stage-{Guid.NewGuid()}",
             Name = $"Semifinal-{Guid.NewGuid()}",
             StageType = StageType.SemiFinal,
             IsActive = true,
@@ -420,6 +422,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
 
         Stage stage = new()
         {
+            Slug = $"stage-{Guid.NewGuid()}",
             Name = $"Stage-{Guid.NewGuid()}",
             StageType = StageType.SemiFinal,
             IsActive = true,
@@ -516,6 +519,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
     {
         Division division = new()
         {
+            Slug = $"division-{Guid.NewGuid()}",
             Name = $"Division-{Guid.NewGuid()}",
             Tournament = tournament,
             TournamentId = tournament.Id,
@@ -530,6 +534,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         {
             Stage existingStage = new()
             {
+                Slug = $"stage-{Guid.NewGuid()}",
                 Name = $"Existing-{Guid.NewGuid()}",
                 StageType = StageType.Group,
                 IsActive = true,
@@ -556,6 +561,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
 
         Stage stage = new()
         {
+            Slug = $"stage-{Guid.NewGuid()}",
             Name = $"Stage-{Guid.NewGuid()}",
             StageType = stageType,
             IsActive = true,

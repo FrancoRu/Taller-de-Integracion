@@ -30,6 +30,15 @@ public interface IDivisionService
 
     Task<Division?> GetSimpleDivisionByIdAsync(Guid divisionId);
 
+    /// <summary>
+    /// Retrieves a division by its id or its slug asynchronously. The value is
+    /// treated as an id when it parses as a GUID, otherwise it is looked up as
+    /// a slug.
+    /// </summary>
+    /// <param name="idOrSlug">The division's GUID id or its slug.</param>
+    /// <returns>The matching division, or null if not found.</returns>
+    Task<Division?> GetSimpleDivisionByIdOrSlugAsync(string idOrSlug);
+
     Task DeleteDivisionAsync(Guid id);
 
     /// <summary>

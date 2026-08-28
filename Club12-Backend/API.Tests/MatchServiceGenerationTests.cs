@@ -197,6 +197,7 @@ public class MatchServiceGenerationTests : IClassFixture<CustomWebApplicationFac
         (Tournament tournament, Division zoneA) = await SeedDivisionAsync(db);
         Division zoneB = new()
         {
+            Slug = $"division-{Guid.NewGuid()}",
             Name = $"Division-{Guid.NewGuid()}",
             Tournament = tournament,
             Stages = [],
@@ -354,6 +355,7 @@ public class MatchServiceGenerationTests : IClassFixture<CustomWebApplicationFac
 
         Division division = new()
         {
+            Slug = $"division-{Guid.NewGuid()}",
             Name = $"Division-{Guid.NewGuid()}",
             Tournament = tournament,
             Stages = [],
@@ -378,6 +380,7 @@ public class MatchServiceGenerationTests : IClassFixture<CustomWebApplicationFac
         {
             stages.Add(new Stage
             {
+                Slug = $"stage-{Guid.NewGuid()}",
                 Name = $"Group-{i}-{Guid.NewGuid()}",
                 StageType = StageType.Group,
                 IsActive = true,

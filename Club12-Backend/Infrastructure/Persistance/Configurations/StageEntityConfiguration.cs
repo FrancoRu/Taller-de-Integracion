@@ -12,6 +12,7 @@ public class StageEntityConfiguration : BaseEntityConfiguration<Stage>
         builder.ToTable(EntityConstants.Tables.Stage, EntityConstants.Schema);
 
         builder.Property(s => s.Name).IsRequired().HasMaxLength(100);
+        builder.Property(s => s.Slug).IsRequired().HasMaxLength(220);
         builder.Property(s => s.Description).HasMaxLength(1000);
         builder.Property(s => s.StageType).IsRequired().HasConversion<string>();
         builder.Property(s => s.IsActive).IsRequired();
@@ -25,5 +26,7 @@ public class StageEntityConfiguration : BaseEntityConfiguration<Stage>
         builder.HasIndex(s => new { s.Name, s.DivisionId })
             .IsUnique()
             .HasDatabaseName(EntityConstants.Indexes.UniqueStageNameDivision);
+
+        builder.HasIndex(s => s.Slug).IsUnique();
     }
 }

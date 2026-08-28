@@ -136,6 +136,7 @@ public class UnassignedTeamsTests : IClassFixture<CustomWebApplicationFactory>
     {
         Division division = new()
         {
+            Slug = $"division-{Guid.NewGuid()}",
             Name = $"Division-{Guid.NewGuid()}",
             Tournament = tournament,
             TournamentId = tournament.Id,
@@ -154,6 +155,7 @@ public class UnassignedTeamsTests : IClassFixture<CustomWebApplicationFactory>
     {
         Stage stage = new()
         {
+            Slug = $"stage-{Guid.NewGuid()}",
             Name = $"Stage-{Guid.NewGuid()}",
             StageType = StageType.Group,
             IsActive = true,

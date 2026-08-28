@@ -52,32 +52,32 @@ public class DivisionController(
         Division createdDivision = await divisionService.CreateDivisionAsync(mappedDivision);
         DivisionResponse divisionResponse = mapper.Map<DivisionResponse>(createdDivision);
 
-        return CreatedAtAction(nameof(GetDivisionById), new { id = divisionResponse.Id }, divisionResponse);
+        return CreatedAtAction(nameof(GetDivisionById), new { idOrSlug = divisionResponse.Id }, divisionResponse);
     }
 
     /// <summary>
-    /// Retrieves a division by its id.
+    /// Retrieves a division by its id or its public slug.
     /// </summary>
-    /// <param name="id">The id of the division to retrieve.</param>
-    /// <returns>The division with the specified id.
+    /// <param name="idOrSlug">The id (GUID) or slug of the division to retrieve.</param>
+    /// <returns>The division with the specified id or slug.
     /// <para>Returns 200 (Ok) with the division response if it was found.</para>
-    /// <para>Returns 400 (Bad Request) if the division with the provided id was not found.</para>
+    /// <para>Returns 404 (Not Found) if the division with the provided id or slug was not found.</para>
     /// </returns>
     [AllowAnonymous]
-    [HttpGet("{id:guid}/detail")]
+    [HttpGet("{idOrSlug}/detail")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedDivisionResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<DivisionResponse>> GetDivisionById(Guid id)
+    public async Task<ActionResult<DivisionResponse>> GetDivisionById(string idOrSlug)
     {
-        Division? division = await divisionService.GetSimpleDivisionByIdAsync(id);
+        Division? division = await divisionService.GetSimpleDivisionByIdOrSlugAsync(idOrSlug);
 
         if (division is null)
         {
-            return this.NotFoundProblem(nameof(Division), id);
+            return this.NotFoundProblem(nameof(Division), idOrSlug);
         }
 
         DivisionResponse divisionResponse = mapper.Map<DivisionResponse>(division);
-        List<Position> positions = await divisionService.GetPositionsByDivisionIdAsync(id);
+        List<Position> positions = await divisionService.GetPositionsByDivisionIdAsync(division.Id);
         divisionResponse.Positions = mapper.Map<List<PositionResponse>>(positions);
 
         return Ok(divisionResponse);

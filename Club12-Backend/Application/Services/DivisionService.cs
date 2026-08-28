@@ -6,6 +6,7 @@ using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Utils.Constants.Pagination;
 using Application.Utils.Extensions;
+using Application.Utils.Helper.Slug;
 using Application.Utils.Helper.Standings;
 
 using Domain.Entities.Models;
@@ -39,6 +40,10 @@ public class DivisionService(
     /// <returns>The created Division entity.</returns>
     public async Task<Division> CreateDivisionAsync(Division divisionEntity)
     {
+        divisionEntity.Slug = await SlugGenerator.GenerateUniqueSlugAsync(
+            divisionEntity.Name,
+            candidate => divisionRepository.ExistsAsync(division => division.Slug == candidate));
+
         await divisionRepository.AddAsync(divisionEntity);
         return divisionEntity;
     }
@@ -70,6 +75,26 @@ public class DivisionService(
     public async Task<Division?> GetSimpleDivisionByIdAsync(Guid divisionId)
     {
         return await divisionRepository.GetByIdAsync(divisionId);
+    }
+
+    /// <summary>
+    /// Retrieves a division by its id or its slug. The value is treated as an
+    /// id when it parses as a GUID, otherwise it is looked up as a slug.
+    /// Returns only the basic division data.
+    /// </summary>
+    /// <param name="idOrSlug">The division's GUID id or its slug.</param>
+    /// <returns>The matching Division, or null if not found.</returns>
+    public async Task<Division?> GetSimpleDivisionByIdOrSlugAsync(string idOrSlug)
+    {
+        if (Guid.TryParse(idOrSlug, out Guid divisionId))
+        {
+            return await GetSimpleDivisionByIdAsync(divisionId);
+        }
+
+        IEnumerable<Division> matches = await divisionRepository.FindAsync(
+            division => division.Slug == idOrSlug);
+
+        return matches.FirstOrDefault();
     }
 
     /// <summary>

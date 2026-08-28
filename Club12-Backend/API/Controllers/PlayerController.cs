@@ -67,28 +67,28 @@ public class PlayerController(
         Player mappedPlayer = mapper.Map<Player>(playerRequest);
         Player createdPlayer = await playerService.CreatePlayerAsync(mappedPlayer, existingTeam.TournamentId.Value);
         PublicPlayerResponse playerResponse = mapper.Map<PublicPlayerResponse>(createdPlayer);
-        return CreatedAtRoute("GetPlayerById", new { id = createdPlayer.Id }, playerResponse);
+        return CreatedAtRoute("GetPlayerById", new { idOrSlug = createdPlayer.Id }, playerResponse);
     }
 
     /// <summary>
-    /// Retrieves a player by its id.
+    /// Retrieves a player by its id or its public slug.
     /// </summary>
-    /// <param name="id">The id of the player to retrieve.</param>
-    /// <returns>The Player with the specified id.
+    /// <param name="idOrSlug">The id (GUID) or slug of the player to retrieve.</param>
+    /// <returns>The Player with the specified id or slug.
     /// <para>Returns 200 (OK) with the Player response if it was found.</para>
-    /// <para>Returns 400 (Bad Request) if the Player with the provided id was not found.</para>
+    /// <para>Returns 404 (Not Found) if the Player with the provided id or slug was not found.</para>
     /// </returns>
     [AllowAnonymous]
-    [HttpGet("{id:guid}", Name = "GetPlayerById")]
+    [HttpGet("{idOrSlug}", Name = "GetPlayerById")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PublicPlayerResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PublicPlayerResponse>> GetPlayerByIdAsync(Guid id)
+    public async Task<ActionResult<PublicPlayerResponse>> GetPlayerByIdAsync(string idOrSlug)
     {
-        Player? player = await playerService.GetPlayerByIdAsync(id);
+        Player? player = await playerService.GetPlayerByIdOrSlugAsync(idOrSlug);
 
         if (player is null)
         {
-            return this.NotFoundProblem(nameof(Player), id);
+            return this.NotFoundProblem(nameof(Player), idOrSlug);
         }
 
         PublicPlayerResponse playerResponse = mapper.Map<PublicPlayerResponse>(player);

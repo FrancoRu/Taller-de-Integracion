@@ -21,6 +21,15 @@ public interface IStageService
     Task<Stage?> GetStageByIdAsync(Guid stageId);
 
     /// <summary>
+    /// Retrieves a stage by its id or its slug asynchronously. The value is
+    /// treated as an id when it parses as a GUID, otherwise it is looked up as
+    /// a slug.
+    /// </summary>
+    /// <param name="idOrSlug">The stage's GUID id or its slug.</param>
+    /// <returns>The matching stage, or null if not found.</returns>
+    Task<Stage?> GetStageByIdOrSlugAsync(string idOrSlug);
+
+    /// <summary>
     /// Retrieves a paginated and filtered list of Stages.
     /// </summary>
     /// <param name="filter">Object containing parameters to filter, sort, and paginate the results.</param>

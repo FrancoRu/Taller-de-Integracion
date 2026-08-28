@@ -9,6 +9,14 @@ public class Player : EntityBase
     public string? SecondName { get; set; }
     public required string LastName { get; set; }
 
+    /// <summary>
+    /// The unique, URL-friendly identifier used in public player links.
+    /// Generated once from the player's full name at creation time and never
+    /// changed afterward, so shared links keep working even if the player is
+    /// renamed. Duplicate names are disambiguated with a numeric suffix.
+    /// </summary>
+    public required string Slug { get; set; }
+
     /// <summary>Computed — not persisted to the database.</summary>
     public string FullName => string.Concat(
         LastName.ToUpper(),

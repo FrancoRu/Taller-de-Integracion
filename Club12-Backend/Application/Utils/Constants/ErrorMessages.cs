@@ -94,6 +94,11 @@ public static class ErrorMessages
             return $"Stage with id {id} not found.";
         }
 
+        public static string NotFoundById(string idOrSlug)
+        {
+            return $"Stage with id or slug {idOrSlug} not found.";
+        }
+
         public static string AlreadyExistsInDivision(string stageName)
         {
             return $"Stage with name '{stageName}' already exists in the current division.";
