@@ -27,6 +27,14 @@ import {
  */
 export interface WizardServices {
   addTournament(request: IAddTournamentRequest): Promise<ITournamentResponse | void>;
+  /**
+   * Moves the freshly-created tournament from its initial `Scheduled` status
+   * to `OpenForRegistration`. The backend freezes structural edits unless the
+   * tournament is `OpenForRegistration` (HU-31), so this MUST run before any
+   * division/stage is created — otherwise every `addDivision` is rejected with
+   * 409. Leaves the tournament open for the registration phase (HU-106).
+   */
+  openRegistration(tournamentId: GUID): Promise<boolean | void>;
   addDivision(request: AddDivisionRequest): Promise<IDivisionResponse | void>;
   addStage(request: IAddStageRequest): Promise<IStageResponse | void>;
 }
@@ -261,6 +269,21 @@ export const submitWizard = async (
 
   if (!tournament) {
     return { success: false, error: 'No se pudo crear el torneo.', warnings };
+  }
+
+  // Open registration BEFORE building the structure: the backend rejects any
+  // division/stage creation unless the tournament is OpenForRegistration
+  // (HU-31), and a new tournament starts as Scheduled. Without this, every
+  // zone fails with 409. If it fails the structure can't be built, so abort.
+  const opened = await services.openRegistration(tournament.id);
+  if (!opened) {
+    return {
+      success: false,
+      tournamentId: tournament.id,
+      error:
+        'El torneo se creó pero no se pudo abrir la inscripción, así que no se pudieron crear las zonas. Abrí la inscripción desde el panel y agregá las divisiones.',
+      warnings,
+    };
   }
 
   const startDate = new Date(state.tournament.startDate);
