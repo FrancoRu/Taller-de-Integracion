@@ -17,6 +17,7 @@ public class PlayerEntityConfiguration : BaseEntityConfiguration<Player>
         builder.Property(p => p.FirstName).IsRequired().HasMaxLength(70);
         builder.Property(p => p.SecondName).HasMaxLength(70);
         builder.Property(p => p.LastName).IsRequired().HasMaxLength(70);
+        builder.Property(p => p.Slug).IsRequired().HasMaxLength(220);
         builder.Property(p => p.DocumentNumber).IsRequired().HasMaxLength(15);
         builder.Property(p => p.IsSanctioned).IsRequired();
         builder.Property(p => p.BirthDate).IsRequired();
@@ -25,5 +26,7 @@ public class PlayerEntityConfiguration : BaseEntityConfiguration<Player>
         builder.Ignore(p => p.FullName);
 
         builder.HasIndex(p => p.DocumentNumber).IsUnique();
+
+        builder.HasIndex(p => p.Slug).IsUnique();
     }
 }

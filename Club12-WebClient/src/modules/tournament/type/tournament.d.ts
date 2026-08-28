@@ -1,4 +1,5 @@
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
+import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
 import {
   Filtered,
   GenericResponsePagination,
@@ -101,16 +102,13 @@ export interface IAddTournamentRequest {
   startDate: Date;
 
   /**
-   * The maximum number of teams allowed to participate in the tournament.
-   * @type {number}
+   * Competitive category (gender) of the tournament (HU-48). Chosen at
+   * creation and immutable afterwards. The feminine competition is played as
+   * its own separate tournament. Omit to let the backend default to
+   * Masculine.
+   * @type {TournamentCategory}
    */
-  maxTeams: number;
-
-  /**
-   * The minimum number of teams required to hold the tournament.
-   * @type {number}
-   */
-  minTeams: number;
+  category?: TournamentCategory;
 }
 
 /**
@@ -162,22 +160,17 @@ export interface ITournamentResponse {
   startDate: Date;
 
   /**
-   * The maximum number of teams allowed to participate in the tournament.
-   * @type {number}
-   */
-  maxTeams: number;
-
-  /**
-   * The minimum number of teams required to hold the tournament.
-   * @type {number}
-   */
-  minTeams: number;
-
-  /**
    * The current status of the tournament.
    * @type {TournamentStatus}
    */
   status: TournamentStatus;
+
+  /**
+   * Competitive category (gender) of the tournament (HU-48). The feminine
+   * competition is played as its own separate tournament.
+   * @type {TournamentCategory}
+   */
+  category: TournamentCategory;
 }
 
 /**
@@ -233,18 +226,6 @@ export interface IPutTournamentRequest {
    * @type {Date}
    */
   startDate: Date;
-
-  /**
-   * The maximum number of teams allowed to participate in the tournament.
-   * @type {number}
-   */
-  maxTeams: number;
-
-  /**
-   * The minimum number of teams required to hold the tournament.
-   * @type {number}
-   */
-  minTeams: number;
 
   /**
    * The current status of the tournament.

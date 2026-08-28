@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { formatDateTimeAr } from '@/modules/core/utils/formatDate';
 import {
   Dialog,
   DialogContent,
@@ -21,8 +22,10 @@ import {
   IAddPlayerSanction,
   IPlayerSanctionCreateFormState,
   IPlayerSanctionCreatePageProps,
+  SanctionSubjectType,
 } from '@/modules/playerSanction/type/playerSanction.d';
 import FormButtons from '@/views/core/components/FormButtons';
+import SanctionSubjectFields from '@/views/playerSanction/SanctionSubjectFields';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 
 const INITIAL_FORM: IPlayerSanctionCreateFormState = {
@@ -33,25 +36,13 @@ const INITIAL_FORM: IPlayerSanctionCreateFormState = {
   divisionId: '',
   stageId: '',
   matchId: '',
+  subjectType: 'Player',
   teamId: '',
   playerId: '',
+  staffName: '',
 };
 
-const formatDateTime = (value?: string | null) => {
-  if (!value) {
-    return '—';
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return '—';
-  }
-
-  return parsed.toLocaleString('es-AR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  });
-};
+const formatDateTime = (value?: string | null) => formatDateTimeAr(value);
 
 const buildInitialForm = (
   presetMatch?: IPlayerSanctionCreatePageProps['presetMatch']
@@ -179,6 +170,18 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
     onClose();
   }, [onClose, presetMatch, submitting]);
 
+  const handleSubjectTypeChange = useCallback((subjectType: SanctionSubjectType) => {
+    // Switching the subject kind clears the identity fields that no longer
+    // apply, so a stale player/team/staff value can never be submitted.
+    setForm(prev => ({
+      ...prev,
+      subjectType,
+      teamId: subjectType === 'Staff' ? '' : prev.teamId,
+      playerId: subjectType === 'Player' ? prev.playerId : '',
+      staffName: subjectType === 'Staff' ? prev.staffName : '',
+    }));
+  }, []);
+
   const handleCreate = useCallback(async () => {
     if (!form.matchId) {
       await notifyWarning({
@@ -188,7 +191,10 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
       return;
     }
 
-    if (!form.teamId) {
+    if (
+      (form.subjectType === 'Player' || form.subjectType === 'Team') &&
+      !form.teamId
+    ) {
       await notifyWarning({
         title: 'Campos incompletos',
         text: 'Debes seleccionar un equipo.',
@@ -196,10 +202,18 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
       return;
     }
 
-    if (!form.playerId) {
+    if (form.subjectType === 'Player' && !form.playerId) {
       await notifyWarning({
         title: 'Campos incompletos',
         text: 'Debes seleccionar un jugador.',
+      });
+      return;
+    }
+
+    if (form.subjectType === 'Staff' && !form.staffName.trim()) {
+      await notifyWarning({
+        title: 'Campos incompletos',
+        text: 'Debes ingresar el nombre del staff.',
       });
       return;
     }
@@ -235,7 +249,10 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
       issuedDate: new Date(form.issuedDate),
       description: form.description.trim(),
       matchId: form.matchId,
-      playerId: form.playerId,
+      subjectType: form.subjectType,
+      ...(form.subjectType === 'Player' && { playerId: form.playerId as GUID }),
+      ...(form.subjectType === 'Team' && { teamId: form.teamId as GUID }),
+      ...(form.subjectType === 'Staff' && { staffName: form.staffName.trim() }),
     };
 
     const createdSanction = await addPlayerSanction(payload);
@@ -415,66 +432,25 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
             </>
             )}
 
-            <Grid
-              size={{
-                xs: 12,
-                md: 6
-              }}>
-              <TextField
-                select
-                required
-                label="Equipo"
-                value={form.teamId}
-                onChange={e =>
-                  setForm(prev => ({
-                    ...prev,
-                    teamId: e.target.value as GUID,
-                    playerId: '',
-                  }))
-                }
-                disabled={!form.matchId}
-                fullWidth
-              >
-                <MenuItem value="" disabled>
-                  Seleccionar equipo
-                </MenuItem>
-                {teamOptions.map(teamOption => (
-                  <MenuItem key={teamOption.id} value={teamOption.id}>
-                    {teamOption.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-
-            <Grid
-              size={{
-                xs: 12,
-                md: 6
-              }}>
-              <TextField
-                select
-                required
-                label="Jugador"
-                value={form.playerId}
-                onChange={e =>
-                  setForm(prev => ({
-                    ...prev,
-                    playerId: e.target.value as GUID,
-                  }))
-                }
-                disabled={!form.teamId}
-                fullWidth
-              >
-                <MenuItem value="" disabled>
-                  Seleccionar jugador
-                </MenuItem>
-                {playerOptions.map(playerOption => (
-                  <MenuItem key={playerOption.id} value={playerOption.id}>
-                    {playerOption.fullName}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
+            <SanctionSubjectFields
+              subjectType={form.subjectType}
+              teamId={form.teamId}
+              playerId={form.playerId}
+              staffName={form.staffName}
+              teamOptions={teamOptions}
+              playerOptions={playerOptions}
+              disabled={!form.matchId}
+              onSubjectTypeChange={handleSubjectTypeChange}
+              onTeamChange={teamId =>
+                setForm(prev => ({ ...prev, teamId, playerId: '' }))
+              }
+              onPlayerChange={playerId =>
+                setForm(prev => ({ ...prev, playerId }))
+              }
+              onStaffNameChange={staffName =>
+                setForm(prev => ({ ...prev, staffName }))
+              }
+            />
 
             <Grid
               size={{
@@ -482,7 +458,7 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
                 md: 4
               }}>
               <TextField
-                label="Duración"
+                label="Duración (fechas)"
                 type="number"
                 value={form.duration}
                 onChange={e =>
@@ -534,7 +510,7 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
           <Typography variant="body2" sx={{
             color: "text.secondary"
           }}>
-            La duración se expresa en cantidad de partidos.
+            La duración se expresa en cantidad de fechas (jornadas).
           </Typography>
 
           <Stack direction="row" spacing={1} sx={{

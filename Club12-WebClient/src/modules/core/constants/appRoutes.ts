@@ -8,6 +8,8 @@
 export const APP_ROUTES = {
   home: '/',
   login: '/login',
+  forgotPassword: '/auth/olvide-password',
+  activate: '/auth/activar',
   passwordReset: '/auth/password-reset',
   quienesSomos: '/quienes-somos',
   fichaMedica: '/ficha-medica',
@@ -55,6 +57,10 @@ export const APP_ROUTES = {
     build: (tournamentId: string) => `/panel/torneos/${tournamentId}/editar`,
   },
   panelTeams: '/panel/equipos',
+  panelClub: {
+    pattern: '/panel/clubes/:idOrSlug',
+    build: (idOrSlug: string) => `/panel/clubes/${idOrSlug}`,
+  },
   panelTeamRegister: '/panel/registro-equipos',
   panelSanctions: '/panel/sanciones',
   panelSanction: {
@@ -104,6 +110,7 @@ export const APP_ROUTES = {
   },
   panelUsers: '/panel/usuarios',
   panelUserCreate: '/panel/usuarios/crear',
+  panelUserInvite: '/panel/usuarios/invitar',
   panelUserEdit: {
     pattern: '/panel/usuarios/:userId/editar',
     build: (userId: string) => `/panel/usuarios/${userId}/editar`,
@@ -116,5 +123,6 @@ export const APP_ROUTES = {
   panelChangePassword: '/panel/configuracion/cambiar-password',
   panelEditProfile: '/panel/configuracion/editar-perfil',
   panelStatistics: '/panel/estadisticas',
+  panelAuditLogs: '/panel/auditoria',
   panelDataAdministration: '/panel/test',
 } as const;

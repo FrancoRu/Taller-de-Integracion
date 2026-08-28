@@ -29,8 +29,6 @@ import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 const SUPER_ADMIN_ASSIGNABLE_ROLES: UserRolesType[] = [
   UserRolesType.Admin,
   UserRolesType.Owner,
-  UserRolesType.TournamentManager,
-  UserRolesType.TeamManager,
 ];
 
 const EMPTY_FORM: RegisterUserRequest = {

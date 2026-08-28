@@ -14,12 +14,15 @@ import { useUnknownErrorHandler } from '@/modules/error/hooks/useUnknownErrorHan
 import { matchService } from '@/modules/match/service/match.service';
 import {
   IAddMatchRequest,
+  ILoadWalkOverRequest,
   IMatchContextProps,
   MatchFiltered,
   IMatchResponse,
   IMinimalMatchResponse,
   IPutMatchRequest,
   IPutMatchScoreRequest,
+  IRoundMatchesResponse,
+  ISuspendMatchRequest,
 } from '@/modules/match/type/match';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { matchKeys } from '@/modules/match/queryKeys';
@@ -65,6 +68,26 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
 
   const deleteMatchMutation = useMutation({
     mutationFn: matchService.deleteMatchById,
+  });
+
+  const loadWalkOverMutation = useMutation({
+    mutationFn: ({
+      id,
+      request,
+    }: {
+      id: GUID;
+      request: ILoadWalkOverRequest;
+    }) => matchService.loadWalkOver(id, request),
+  });
+
+  const suspendMatchMutation = useMutation({
+    mutationFn: ({
+      id,
+      request,
+    }: {
+      id: GUID;
+      request: ISuspendMatchRequest;
+    }) => matchService.suspendMatch(id, request),
   });
 
   const generateMatchesMutation = useMutation({
@@ -138,6 +161,28 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
     [putMatchMutation, queryClient, setMessage, handleUnknownError]
   );
 
+  const loadWalkOver = useCallback(
+    async (
+      id: GUID,
+      request: ILoadWalkOverRequest
+    ): Promise<IMatchResponse | void> => {
+      try {
+        const res: AxiosResponse<IMatchResponse> =
+          await loadWalkOverMutation.mutateAsync({ id, request });
+        if (res) {
+          setMatch(res.data);
+          queryClient.setQueryData(matchKeys.byId(id), res);
+          await queryClient.invalidateQueries({ queryKey: matchKeys.list() });
+          setMessage(res.status, ['Walkover cargado correctamente']);
+        }
+        return res.data;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [loadWalkOverMutation, queryClient, setMessage, handleUnknownError]
+  );
+
   const getMatchById = useCallback(
     async (idOrSlug: string): Promise<IMatchResponse | void> => {
       try {
@@ -178,6 +223,48 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       }
     },
     [queryClient, handleUnknownError]
+  );
+
+  const getStageMatchesByRound = useCallback(
+    async (stageId: GUID): Promise<IRoundMatchesResponse[] | void> => {
+      try {
+        const res = await queryClient.fetchQuery({
+          queryKey: matchKeys.byRound(stageId),
+          queryFn: async () =>
+            await matchService.getStageMatchesByRound(stageId),
+        });
+
+        return res.data;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [queryClient, handleUnknownError]
+  );
+
+  const suspendMatch = useCallback(
+    async (
+      id: GUID,
+      request: ISuspendMatchRequest
+    ): Promise<IMatchResponse | void> => {
+      try {
+        const res: AxiosResponse<IMatchResponse> =
+          await suspendMatchMutation.mutateAsync({ id, request });
+        if (res) {
+          setMatch(res.data);
+          queryClient.setQueryData(matchKeys.byId(id), res);
+          await queryClient.invalidateQueries({ queryKey: matchKeys.list() });
+          await queryClient.invalidateQueries({
+            queryKey: ['match', 'byRound'],
+          });
+          setMessage(res.status, ['Partido reprogramado correctamente']);
+        }
+        return res.data;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [suspendMatchMutation, queryClient, setMessage, handleUnknownError]
   );
 
   const deleteMatchById = useCallback(
@@ -223,8 +310,11 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       addMatch,
       putMatchByMatchId,
       putMatchScoreByMatchId,
+      loadWalkOver,
       getMatchById,
       getMatchByFilter,
+      getStageMatchesByRound,
+      suspendMatch,
       deleteMatchById,
       generateMatchesAutomatically,
     }),
@@ -234,8 +324,11 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       addMatch,
       putMatchByMatchId,
       putMatchScoreByMatchId,
+      loadWalkOver,
       getMatchById,
       getMatchByFilter,
+      getStageMatchesByRound,
+      suspendMatch,
       deleteMatchById,
       generateMatchesAutomatically,
     ]

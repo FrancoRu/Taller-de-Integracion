@@ -1,5 +1,7 @@
 using Domain.Entities.Models;
+using Domain.Enums;
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,54 +10,197 @@ namespace Application.Utils.Helper.Standings;
 /// <summary>
 /// Computes division standings from a set of matches. Basketball has no
 /// draws: every finished, fully-seeded match has exactly one winner, so a
-/// team either wins (2 points) or loses (1 point) — never a tie.
+/// team either wins or loses — never a tie. The points awarded for a win and
+/// a loss are configurable per division (HU-79, defaulting to 2/1), and ties
+/// on table points are broken with the club's fixed group-stage tiebreaker
+/// order (HU-80).
 /// </summary>
 public static class PositionCalculator
 {
-    private const int PointsForWin = 2;
-    private const int PointsForLoss = 1;
+    public const int DefaultPointsForWin = 2;
+    public const int DefaultPointsForLoss = 1;
 
     /// <summary>
     /// Builds one Position per team that appears in at least one finished,
-    /// fully-seeded match. Unfinished matches and matches missing a home
-    /// or visitor team (not yet seeded) are ignored.
+    /// fully-seeded match, ordered by the HU-80 group-stage tiebreaker chain.
+    /// Unfinished matches and matches missing a home or visitor team (not yet
+    /// seeded) are ignored.
     /// </summary>
-    public static List<Position> CalculatePositions(IEnumerable<Match> matches)
+    /// <param name="matches">The zone's matches.</param>
+    /// <param name="pointsForWin">Table points for a win (HU-79). Defaults to 2.</param>
+    /// <param name="pointsForLoss">Table points for a loss (HU-79). Defaults to 1.</param>
+    public static List<Position> CalculatePositions(
+        IEnumerable<Match> matches,
+        int pointsForWin = DefaultPointsForWin,
+        int pointsForLoss = DefaultPointsForLoss)
     {
-        Dictionary<System.Guid, Position> positionsByTeamId = [];
+        List<Match> finishedMatches = [.. matches.Where(IsSeededAndFinished)];
 
-        foreach (Match match in matches)
+        Dictionary<Guid, Position> positionsByTeamId = [];
+
+        foreach (Match match in finishedMatches)
         {
-            if (!match.IsFinished || match.HomeTeam is null || match.VisitorTeam is null
-                || match.HomeScore is null || match.VisitorScore is null)
-            {
-                continue;
-            }
-
             bool homeWon = match.WinningTeamId == match.HomeTeamId;
 
-            ApplyResult(positionsByTeamId, match.HomeTeam, match.HomeScore.Value, match.VisitorScore.Value, homeWon);
-            ApplyResult(positionsByTeamId, match.VisitorTeam, match.VisitorScore.Value, match.HomeScore.Value, !homeWon);
+            ApplyResult(positionsByTeamId, match.HomeTeam!, match.HomeScore!.Value, match.VisitorScore!.Value, homeWon, pointsForWin, pointsForLoss);
+            ApplyResult(positionsByTeamId, match.VisitorTeam!, match.VisitorScore.Value, match.HomeScore.Value, !homeWon, pointsForWin, pointsForLoss);
         }
 
-        return positionsByTeamId.Values
-            .Select(position =>
+        foreach (Position position in positionsByTeamId.Values)
+        {
+            position.PointsDifference = position.PointsFor - position.PointsAgainst;
+        }
+
+        return OrderWithTiebreakers(positionsByTeamId.Values, finishedMatches, pointsForWin, pointsForLoss);
+    }
+
+    private static bool IsSeededAndFinished(Match match)
+    {
+        return match.IsFinished
+            && match.HomeTeam is not null && match.VisitorTeam is not null
+            && match.HomeScore is not null && match.VisitorScore is not null;
+    }
+
+    /// <summary>
+    /// Orders the positions applying the HU-80 chain stepwise: teams are
+    /// first sorted by PTS, then PG, then whole-zone DG. Any remaining group
+    /// of teams still tied on all three is broken by the head-to-head
+    /// mini-table built only from the games among that tied group, and — only
+    /// when those teams played each other more than once — by the points
+    /// difference within those same games.
+    /// </summary>
+    private static List<Position> OrderWithTiebreakers(
+        IEnumerable<Position> positions,
+        IReadOnlyList<Match> matches,
+        int pointsForWin,
+        int pointsForLoss)
+    {
+        List<Position> ranked = [.. positions
+            .OrderByDescending(p => p.Points)
+            .ThenByDescending(p => p.Wins)
+            .ThenByDescending(p => p.PointsDifference)];
+
+        List<Position> result = [];
+
+        int index = 0;
+        while (index < ranked.Count)
+        {
+            int groupEnd = index + 1;
+            while (groupEnd < ranked.Count && SharesBaseCriteria(ranked[index], ranked[groupEnd]))
             {
-                position.PointsDifference = position.PointsFor - position.PointsAgainst;
-                return position;
-            })
-            .OrderByDescending(position => position.Points)
-            .ThenByDescending(position => position.PointsDifference)
-            .ThenByDescending(position => position.PointsFor)
-            .ToList();
+                groupEnd++;
+            }
+
+            List<Position> tiedGroup = ranked.GetRange(index, groupEnd - index);
+
+            if (tiedGroup.Count == 1)
+            {
+                result.Add(tiedGroup[0]);
+            }
+            else
+            {
+                result.AddRange(BreakTie(tiedGroup, matches, pointsForWin, pointsForLoss));
+            }
+
+            index = groupEnd;
+        }
+
+        AssignResolvedBy(result);
+
+        return result;
+    }
+
+    private static bool SharesBaseCriteria(Position a, Position b)
+    {
+        return a.Points == b.Points && a.Wins == b.Wins && a.PointsDifference == b.PointsDifference;
+    }
+
+    /// <summary>
+    /// Breaks a set of teams tied on PTS/PG/DG using the head-to-head
+    /// mini-table (points earned only in games among the tied set) and then,
+    /// when the tied set played each other more than once, the points
+    /// difference within those games.
+    /// </summary>
+    private static List<Position> BreakTie(
+        List<Position> tiedGroup,
+        IReadOnlyList<Match> matches,
+        int pointsForWin,
+        int pointsForLoss)
+    {
+        HashSet<Guid> tiedIds = [.. tiedGroup.Select(p => p.TeamId)];
+
+        List<Match> h2hMatches = [.. matches.Where(m =>
+            tiedIds.Contains(m.HomeTeamId!.Value) && tiedIds.Contains(m.VisitorTeamId!.Value))];
+
+        Dictionary<Guid, int> h2hPoints = tiedGroup.ToDictionary(p => p.TeamId, _ => 0);
+        Dictionary<Guid, int> h2hDifference = tiedGroup.ToDictionary(p => p.TeamId, _ => 0);
+
+        foreach (Match match in h2hMatches)
+        {
+            Guid winnerId = match.WinningTeamId!.Value;
+            Guid homeId = match.HomeTeamId!.Value;
+            Guid visitorId = match.VisitorTeamId!.Value;
+
+            h2hPoints[winnerId] += pointsForWin;
+            h2hPoints[winnerId == homeId ? visitorId : homeId] += pointsForLoss;
+
+            int margin = match.HomeScore!.Value - match.VisitorScore!.Value;
+            h2hDifference[homeId] += margin;
+            h2hDifference[visitorId] -= margin;
+        }
+
+        // "DG en H2H" only applies when the tied teams played each other more
+        // than once (HU-80, criterion 5).
+        bool playedMoreThanOnce = h2hMatches.Count > 1;
+
+        return [.. tiedGroup
+            .OrderByDescending(p => h2hPoints[p.TeamId])
+            .ThenByDescending(p => playedMoreThanOnce ? h2hDifference[p.TeamId] : 0)];
+    }
+
+    /// <summary>
+    /// Records, for each team, the criterion that separated it from the team
+    /// ranked immediately above it, so the standings UI can show why each tie
+    /// was broken (HU-80). The top team and any team not sharing table points
+    /// with the one above it carry no reason.
+    /// </summary>
+    private static void AssignResolvedBy(List<Position> ordered)
+    {
+        for (int i = 1; i < ordered.Count; i++)
+        {
+            Position above = ordered[i - 1];
+            Position current = ordered[i];
+
+            if (above.Points != current.Points)
+            {
+                current.ResolvedBy = null;
+            }
+            else if (above.Wins != current.Wins)
+            {
+                current.ResolvedBy = TiebreakerCriterion.GamesWon;
+            }
+            else if (above.PointsDifference != current.PointsDifference)
+            {
+                current.ResolvedBy = TiebreakerCriterion.PointsDifference;
+            }
+            else
+            {
+                // Tied on all whole-zone criteria: the head-to-head chain put
+                // them in this order. We cannot cheaply tell PG-in-H2H from
+                // DG-in-H2H apart here, so we report HeadToHead as the family.
+                current.ResolvedBy = TiebreakerCriterion.HeadToHead;
+            }
+        }
     }
 
     private static void ApplyResult(
-        Dictionary<System.Guid, Position> positionsByTeamId,
+        Dictionary<Guid, Position> positionsByTeamId,
         Team team,
         int pointsFor,
         int pointsAgainst,
-        bool won)
+        bool won,
+        int pointsForWin,
+        int pointsForLoss)
     {
         if (!positionsByTeamId.TryGetValue(team.Id, out Position? position))
         {
@@ -82,12 +227,12 @@ public static class PositionCalculator
         if (won)
         {
             position.Wins += 1;
-            position.Points += PointsForWin;
+            position.Points += pointsForWin;
         }
         else
         {
             position.Losses += 1;
-            position.Points += PointsForLoss;
+            position.Points += pointsForLoss;
         }
     }
 }

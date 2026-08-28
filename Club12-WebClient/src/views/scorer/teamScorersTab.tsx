@@ -7,10 +7,17 @@ import {
 } from '@/modules/core/constants/pagination';
 import { GUID } from '@/modules/core/types/types';
 import { useScorer } from '@/modules/scorer/hook/scorer.hook';
+import { scorerService } from '@/modules/scorer/service/scorer.service';
 import { IScorerByTeamResponse } from '@/modules/scorer/type/scorer.d';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import DivisionStagePicker from '@/views/core/components/DivisionStagePicker';
+import ExportCsvButton from '@/views/core/components/ExportCsvButton';
+import { downloadCsv } from '@/modules/core/utils/csv';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
+
+/** Upper bound of rows fetched in one page for a CSV export (HU-89). */
+const CSV_EXPORT_PAGE_SIZE = 1000;
+const TEAM_SCORERS_CSV_HEADERS = ['#', 'Equipo', 'Puntos'];
 
 const TeamScorersTab: React.FC = () => {
   const { tournaments, getAllTournamentsByFilter } = useTournament();
@@ -121,6 +128,29 @@ const TeamScorersTab: React.FC = () => {
     []
   );
 
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportCsv = useCallback(async () => {
+    setExporting(true);
+    try {
+      const response = await scorerService.getScorersByTeamFiltered({
+        tournamentId: selectedTournamentId || undefined,
+        divisionId: selectedDivisionId || undefined,
+        stageId: selectedStageId || undefined,
+        pageNumber: 1,
+        pageSize: CSV_EXPORT_PAGE_SIZE,
+      });
+      const items = response.data?.items ?? [];
+      downloadCsv(
+        'goleadores-por-equipo',
+        TEAM_SCORERS_CSV_HEADERS,
+        items.map((row, index) => [index + 1, row.name, row.points])
+      );
+    } finally {
+      setExporting(false);
+    }
+  }, [selectedDivisionId, selectedStageId, selectedTournamentId]);
+
   const columns = useMemo<GridColDef<IScorerByTeamResponse>[]>(
     () => [
       {
@@ -170,6 +200,11 @@ const TeamScorersTab: React.FC = () => {
           stageId={selectedStageId}
           onDivisionChange={handleDivisionChange}
           onStageChange={handleStageChange}
+        />
+
+        <ExportCsvButton
+          onExport={handleExportCsv}
+          disabled={exporting || (scorersByTeam ?? []).length === 0}
         />
       </Stack>
 

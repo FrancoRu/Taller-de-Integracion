@@ -140,7 +140,7 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
 
   const handleView = useCallback(
     (row: IDivisionResponse) => {
-      navigate(APP_ROUTES.panelDivision.build(row.id));
+      navigate(APP_ROUTES.panelDivision.build(row.slug));
     },
     [navigate]
   );

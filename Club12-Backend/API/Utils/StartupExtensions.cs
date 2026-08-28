@@ -7,6 +7,7 @@ using Application.Interfaces.Backup;
 using Application.Interfaces.Mappers;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Interfaces.Storage;
 using Application.Services;
 using Application.Utils.Constants;
 using Application.Utils.Helper.SupabaseHelper;
@@ -147,6 +148,14 @@ public static class StartupExtensions
         ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
         await db.Database.MigrateAsync();
 
+        // HU-99: give every team a stable cross-season club identity. The
+        // migration only adds the schema (Clubs table + Team.ClubId); the data
+        // backfill runs here as an idempotent step so it links teams created by
+        // any migration/seed path. A re-run is a cheap no-op once every team is
+        // already linked.
+        IClubService clubService = scope.ServiceProvider.GetRequiredService<IClubService>();
+        await clubService.BackfillClubsAsync();
+
         IdentityAppDbContext identityDb = scope.ServiceProvider.GetRequiredService<IdentityAppDbContext>();
         await identityDb.Database.MigrateAsync();
 
@@ -204,8 +213,6 @@ public static class StartupExtensions
     [
         UserRoleType.ADMIN.ToRoleName(),
         UserRoleType.OWNER.ToRoleName(),
-        UserRoleType.TOURNAMENT_MANAGER.ToRoleName(),
-        UserRoleType.TEAM_MANAGER.ToRoleName(),
         UserRoleType.GUEST.ToRoleName(),
     ];
 
@@ -342,6 +349,14 @@ public static class StartupExtensions
     public static IServiceCollection RegisterSingletons(this IServiceCollection services)
     {
         services.AddSingleton<SupabaseHelper>();
+
+        // Medical-record file storage (HU-55/HU-56). Reuses the shared Supabase
+        // client via ISupabaseRawStorage (implemented by SupabaseHelper) and
+        // confines files to their own medical-records/ area, separate from the
+        // backups/ area. Registered here (not conditionally like backup
+        // storage) because medical-record uploads always target Supabase.
+        services.AddSingleton<ISupabaseRawStorage>(sp => sp.GetRequiredService<SupabaseHelper>());
+        services.AddSingleton<IMedicalRecordStorage, SupabaseMedicalRecordStorage>();
         return services;
     }
 
@@ -411,6 +426,13 @@ public static class StartupExtensions
 
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        // Audit trail (HU-101): resolve the current caller's identity from the
+        // HTTP context so application/infrastructure services can record "who"
+        // without depending on the web layer.
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserAccessor, API.Utils.Helpers.HttpCurrentUserAccessor>();
+
         return services;
     }
 

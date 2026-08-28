@@ -33,4 +33,11 @@ public class CreateBlogPostRequest
     /// </summary>
     [Required]
     public required string MarkdownText { get; set; }
+
+    /// <summary>
+    /// Whether the post is published (visible publicly) or a draft (HU-16).
+    /// Defaults to true (published) so the create flow is unchanged unless a
+    /// draft is explicitly requested.
+    /// </summary>
+    public bool IsPublished { get; set; } = true;
 }

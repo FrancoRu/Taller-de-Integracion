@@ -33,8 +33,8 @@ public interface IUserManagementService
     /// ADMIN → any user. OWNER → self or their subordinates. Others → self only.
     /// If <see cref="UpdateUserRequest.Role"/> is set, additionally changes the
     /// target's role (replacing whatever role they currently have). Role changes
-    /// are restricted to ADMIN (any role, any user) and OWNER (TOURNAMENT_MANAGER
-    /// only, and only for their own subordinates); nobody may change their own role.
+    /// are restricted to ADMIN and OWNER (each may assign the Owner/Admin
+    /// operator roles); nobody may change their own role.
     /// </summary>
     Task<UserResponse> UpdateAsync(
         string callerRole, Guid callerId, Guid userId,

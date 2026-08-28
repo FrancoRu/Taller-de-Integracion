@@ -26,6 +26,15 @@ public interface IVenueService
     Task<Venue?> GetVenueByIdAsync(Guid venueId);
 
     /// <summary>
+    /// Retrieves a Venue by its id or its slug asynchronously. The value is
+    /// treated as an id when it parses as a GUID, otherwise it is looked up as
+    /// a slug.
+    /// </summary>
+    /// <param name="idOrSlug">The venue's GUID id or its slug.</param>
+    /// <returns>The matching venue, or null if not found.</returns>
+    Task<Venue?> GetVenueByIdOrSlugAsync(string idOrSlug);
+
+    /// <summary>
     /// Updates a Venue asynchronously.
     /// </summary>
     /// <param name="venueEntity">The Venue to update.</param>

@@ -25,11 +25,9 @@ import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { TAB_CONTENT_MIN_HEIGHT } from '@/modules/core/constants/constants';
 import { TOURNAMENT_STATUS_LABEL } from '@/modules/tournament/utils/tournamentDisplay';
+import { formatDateAr } from '@/modules/core/utils/formatDate';
 
-const formatDate = (value: Date | string) => {
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString('es-AR');
-};
+const formatDate = (value: Date | string) => formatDateAr(value);
 
 const INFO_TAB = 'info';
 const TEAMS_TAB = 'equipos';
@@ -309,26 +307,6 @@ export default function PublicTournamentPage() {
               color: "text.secondary"
             }}>Cierre de inscripción</Typography>
             <Typography>{formatDate(tournament.teamRegistrationDeadline)}</Typography>
-          </Grid>
-          <Grid
-            size={{
-              xs: 12,
-              sm: 6
-            }}>
-            <Typography variant="subtitle2" component="p" sx={{
-              color: "text.secondary"
-            }}>Equipos mínimos</Typography>
-            <Typography>{tournament.minTeams}</Typography>
-          </Grid>
-          <Grid
-            size={{
-              xs: 12,
-              sm: 6
-            }}>
-            <Typography variant="subtitle2" component="p" sx={{
-              color: "text.secondary"
-            }}>Equipos máximos</Typography>
-            <Typography>{tournament.maxTeams}</Typography>
           </Grid>
         </Grid>
       )}

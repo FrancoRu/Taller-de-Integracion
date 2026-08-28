@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { GUID } from '@/modules/core/types/types';
 import { StageType } from '@/modules/stage/type/stage';
+import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
 import { WizardState, createInitialWizardState } from './types';
 import { WizardServices, submitWizard } from './submitWizard';
 
@@ -13,8 +14,7 @@ const makeState = (): WizardState => {
     description: 'Torneo de prueba',
     startDate: '2026-03-01',
     teamRegistrationDeadline: '2026-02-15',
-    minTeams: 2,
-    maxTeams: 8,
+    category: TournamentCategory.Masculine,
   };
   state.selectedTeamIds = [guid('a'), guid('b')];
   state.zones = [
@@ -33,6 +33,11 @@ const makeState = (): WizardState => {
             { id: 'r2', stageType: StageType.Final, bestOf: 5 },
           ],
         },
+      ],
+      pointsForWin: 3,
+      pointsForLoss: 0,
+      playoffMappings: [
+        { id: 'm1', fromPosition: 1, toPosition: 2, destination: 'Copa de Oro' },
       ],
     },
   ];
@@ -69,8 +74,13 @@ describe('submitWizard', () => {
     expect(result.tournamentId).toBe(guid('tournament'));
     expect(result.warnings).toEqual([]);
     expect(services.addTournament).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'Apertura 2026', minTeams: 2, maxTeams: 8 })
+      expect.objectContaining({ name: 'Apertura 2026' })
     );
+    // minTeams/maxTeams were dropped from the backend contract; the wizard
+    // must not send them.
+    const addTournamentArg = services.addTournament.mock.calls[0][0];
+    expect(addTournamentArg).not.toHaveProperty('minTeams');
+    expect(addTournamentArg).not.toHaveProperty('maxTeams');
     expect(services.registerTeams).toHaveBeenCalledWith(guid('tournament'), [guid('a'), guid('b')]);
   });
 
@@ -106,6 +116,9 @@ describe('submitWizard', () => {
         hasGroupStage: true,
         roundRobinLegs: 1,
         cups: [],
+        pointsForWin: 2,
+        pointsForLoss: 1,
+        playoffMappings: [],
       },
     ];
 
@@ -125,6 +138,44 @@ describe('submitWizard', () => {
     expect(services.addDivision).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'Zona A', tournamentId: guid('tournament'), isCrossDivisionCup: false })
     );
+  });
+
+  it('sends the per-division points (HU-79) and playoff range mappings (HU-45) on addDivision', async () => {
+    const services = makeServices();
+    await submitWizard(makeState(), services);
+
+    expect(services.addDivision).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Zona A',
+        pointsForWin: 3,
+        pointsForLoss: 0,
+        playoffMappings: [{ fromPosition: 1, toPosition: 2, destination: 'Copa de Oro' }],
+      })
+    );
+
+    // The local React `id` is stripped from every mapping before it is sent.
+    const divisionArg = services.addDivision.mock.calls[0][0] as {
+      playoffMappings: Array<Record<string, unknown>>;
+    };
+    expect(divisionArg.playoffMappings[0]).not.toHaveProperty('id');
+  });
+
+  it('drops half-filled playoff ranges (no destination cup chosen) before sending', async () => {
+    const services = makeServices();
+    const state = makeState();
+    state.zones[0].playoffMappings = [
+      { id: 'm1', fromPosition: 1, toPosition: 2, destination: 'Copa de Oro' },
+      { id: 'm2', fromPosition: 3, toPosition: 4, destination: '   ' },
+    ];
+
+    await submitWizard(state, services);
+
+    const divisionArg = services.addDivision.mock.calls[0][0] as {
+      playoffMappings: Array<Record<string, unknown>>;
+    };
+    expect(divisionArg.playoffMappings).toEqual([
+      { fromPosition: 1, toPosition: 2, destination: 'Copa de Oro' },
+    ]);
   });
 
   it('creates the group stage with the configured RoundRobinLegs and assigns the zone teams to it', async () => {
@@ -199,6 +250,9 @@ describe('submitWizard', () => {
       hasGroupStage: false,
       roundRobinLegs: 1,
       cups: [],
+      pointsForWin: 2,
+      pointsForLoss: 1,
+      playoffMappings: [],
     };
 
     await submitWizard(state, services);
@@ -213,5 +267,48 @@ describe('submitWizard', () => {
     await submitWizard(makeState(), services);
 
     expect(services.addDivision).toHaveBeenCalledTimes(1);
+  });
+
+  // HU-48: the chosen category is set at creation on the tournament and must
+  // be echoed onto every division, because the backend rejects a division
+  // whose category differs from its tournament (Division.Category defaults to
+  // Masculine server-side).
+  it('sends the tournament category on addTournament', async () => {
+    const services = makeServices();
+    const state = makeState();
+    state.tournament.category = TournamentCategory.Feminine;
+
+    await submitWizard(state, services);
+
+    expect(services.addTournament).toHaveBeenCalledWith(
+      expect.objectContaining({ category: TournamentCategory.Feminine })
+    );
+  });
+
+  it('sends the same category on every division-create call (zones and cross-cup)', async () => {
+    const services = makeServices();
+    const state = makeState();
+    state.tournament.category = TournamentCategory.Feminine;
+    state.crossCup = {
+      enabled: true,
+      name: 'Copa Club12',
+      includeAllTeams: true,
+      teamIds: [],
+      hasGroupStage: false,
+      roundRobinLegs: 1,
+      cups: [],
+      pointsForWin: 2,
+      pointsForLoss: 1,
+      playoffMappings: [],
+    };
+
+    await submitWizard(state, services);
+
+    expect(services.addDivision).toHaveBeenCalledTimes(2);
+    for (const call of services.addDivision.mock.calls) {
+      expect(call[0]).toEqual(
+        expect.objectContaining({ category: TournamentCategory.Feminine })
+      );
+    }
   });
 });

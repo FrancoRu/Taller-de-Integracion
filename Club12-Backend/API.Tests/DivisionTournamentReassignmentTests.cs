@@ -113,8 +113,7 @@ public class DivisionTournamentReassignmentTests : IClassFixture<CustomWebApplic
             Slug = $"tournament-{Guid.NewGuid()}",
             TeamRegistrationDeadline = startDate.AddDays(-1),
             StartDate = startDate,
-            MaxTeams = 32,
-            MinTeams = 2,
+            Status = TournamentStatus.OpenForRegistration,
             Divisions = [],
             Teams = [],
             CreatedBy = "test",
@@ -130,6 +129,7 @@ public class DivisionTournamentReassignmentTests : IClassFixture<CustomWebApplic
     {
         Division division = new()
         {
+            Slug = $"division-{Guid.NewGuid()}",
             Name = $"Division-{Guid.NewGuid()}",
             Tournament = tournament,
             TournamentId = tournament.Id,
@@ -147,6 +147,7 @@ public class DivisionTournamentReassignmentTests : IClassFixture<CustomWebApplic
     {
         Stage stage = new()
         {
+            Slug = $"stage-{Guid.NewGuid()}",
             Name = $"Stage-{Guid.NewGuid()}",
             StageType = StageType.Group,
             IsActive = true,

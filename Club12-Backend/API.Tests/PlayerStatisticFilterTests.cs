@@ -65,8 +65,6 @@ public class PlayerStatisticFilterTests : IClassFixture<CustomWebApplicationFact
             Slug = $"tournament-{Guid.NewGuid()}",
             TeamRegistrationDeadline = startDate.AddDays(-1),
             StartDate = startDate,
-            MaxTeams = 32,
-            MinTeams = 2,
             Divisions = [],
             Teams = [],
             CreatedBy = "test",
@@ -102,6 +100,7 @@ public class PlayerStatisticFilterTests : IClassFixture<CustomWebApplicationFact
     {
         Player player = new()
         {
+            Slug = $"player-{Guid.NewGuid()}",
             FirstName = "Test",
             LastName = $"Player-{Guid.NewGuid()}",
             DocumentNumber = Guid.NewGuid().ToString("N")[..8],
@@ -123,6 +122,7 @@ public class PlayerStatisticFilterTests : IClassFixture<CustomWebApplicationFact
     {
         Division division = new()
         {
+            Slug = $"division-{Guid.NewGuid()}",
             Name = $"Division-{Guid.NewGuid()}",
             Tournament = tournament,
             TournamentId = tournament.Id,
@@ -141,6 +141,7 @@ public class PlayerStatisticFilterTests : IClassFixture<CustomWebApplicationFact
     {
         Stage stage = new()
         {
+            Slug = $"stage-{Guid.NewGuid()}",
             Name = $"Stage-{Guid.NewGuid()}",
             StageType = StageType.Group,
             IsActive = true,

@@ -6,6 +6,7 @@ using Application.Utils.Extensions;
 using Application.Utils.Helper.Slug;
 
 using Domain.Entities.Models;
+using Domain.Enums;
 
 using LinqKit;
 
@@ -21,18 +22,147 @@ public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionServ
 {
     private readonly IPlayerSanctionRepository _playerSanctionRepository = unitOfWork.PlayerSanctionRepository;
     private readonly IPlayerRepository _playerRepository = unitOfWork.PlayerRepository;
+    private readonly IMatchRepository _matchRepository = unitOfWork.MatchRepository;
+    private readonly ITeamRepository _teamRepository = unitOfWork.TeamRepository;
 
     public async Task<PlayerSanction> CreatePlayerSanctionAsync(PlayerSanction playerSanctionEntity)
     {
-        Player? player = await _playerRepository.GetByIdAsync(playerSanctionEntity.PlayerId);
-        string playerName = player?.FullName ?? "jugador";
+        string subjectName = await ResolveSubjectNameAsync(playerSanctionEntity);
 
         playerSanctionEntity.Slug = await SlugGenerator.GenerateUniqueSlugAsync(
-            $"{playerName} {playerSanctionEntity.IssuedDate:yyyy-MM-dd}",
+            $"{subjectName} {playerSanctionEntity.IssuedDate:yyyy-MM-dd}",
             candidate => _playerSanctionRepository.ExistsAsync(sanction => sanction.Slug == candidate));
 
         await _playerSanctionRepository.AddAsync(playerSanctionEntity);
         return playerSanctionEntity;
+    }
+
+    /// <summary>
+    /// Resolves the human-readable name of a sanction's subject (player, team
+    /// or staff, HU-77) so the slug reads sensibly regardless of subject type.
+    /// </summary>
+    private async Task<string> ResolveSubjectNameAsync(PlayerSanction sanction)
+    {
+        switch (sanction.SubjectType)
+        {
+            case SanctionSubjectType.Team:
+                if (sanction.TeamId.HasValue)
+                {
+                    Team? team = await _teamRepository.GetByIdAsync(sanction.TeamId.Value);
+                    return team?.Name ?? "equipo";
+                }
+                return "equipo";
+
+            case SanctionSubjectType.Staff:
+                return string.IsNullOrWhiteSpace(sanction.StaffName) ? "staff" : sanction.StaffName;
+
+            // SanctionSubjectType.Player and any future/default value.
+            default:
+                if (sanction.PlayerId.HasValue)
+                {
+                    Player? player = await _playerRepository.GetByIdAsync(sanction.PlayerId.Value);
+                    return player?.FullName ?? "jugador";
+                }
+                return "jugador";
+        }
+    }
+
+    /// <summary>
+    /// Computes how many FECHAS (jornadas) of the sanction are still to be
+    /// served (HU-75). A sanction of N fechas is served as the subject's team
+    /// plays the rounds after the one the sanction was issued in: for each
+    /// finished match of that team in the same stage with a higher round
+    /// number, one fecha is consumed. The result is clamped to zero and is
+    /// expressed in fechas, never in calendar days.
+    /// </summary>
+    /// <returns>
+    /// The number of fechas remaining, or null when it cannot be computed by
+    /// rounds (a staff sanction, an unknown team, or a match with no round).
+    /// </returns>
+    public async Task<int?> GetFechasRemainingAsync(PlayerSanction sanction)
+    {
+        Guid? teamId = await ResolveSubjectTeamIdAsync(sanction);
+        if (!teamId.HasValue)
+        {
+            return null;
+        }
+
+        Match? sanctionMatch = await _matchRepository.GetByIdAsync(sanction.MatchId);
+        if (sanctionMatch?.Round is not int sanctionRound)
+        {
+            return null;
+        }
+
+        Guid teamValue = teamId.Value;
+        Guid stageId = sanctionMatch.StageId;
+
+        int roundsServed = await _matchRepository.CountAsync(match =>
+            match.StageId == stageId
+            && match.IsFinished
+            && match.Round != null
+            && match.Round > sanctionRound
+            && (match.HomeTeamId == teamValue || match.VisitorTeamId == teamValue));
+
+        return Math.Max(0, sanction.Duration - roundsServed);
+    }
+
+    /// <summary>
+    /// Determines whether a player currently has any ACTIVE sanction, i.e. a
+    /// sanction with one or more fechas still to be served (HU-76). Used to
+    /// keep eligibility consistent with the fechas-based rule.
+    /// </summary>
+    public async Task<bool> HasActiveSanctionAsync(Guid playerId)
+    {
+        IEnumerable<PlayerSanction> sanctions = await _playerSanctionRepository.FindAsync(
+            sanction => sanction.PlayerId == playerId
+                && sanction.SubjectType == SanctionSubjectType.Player,
+            includes: [sanction => sanction.Match]);
+
+        foreach (PlayerSanction sanction in sanctions)
+        {
+            int? remaining = await GetFechasRemainingAsync(sanction);
+
+            // A sanction whose fechas cannot be computed by rounds (e.g. the
+            // originating match has no round) still counts as active while its
+            // duration is positive; the day-based sweep cleans it up later.
+            bool active = remaining.HasValue ? remaining.Value > 0 : sanction.Duration > 0;
+            if (active)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Resolves the team whose rounds a sanction is served against: the
+    /// sanctioned player's team, the sanctioned team itself, or none for a
+    /// staff sanction.
+    /// </summary>
+    private async Task<Guid?> ResolveSubjectTeamIdAsync(PlayerSanction sanction)
+    {
+        switch (sanction.SubjectType)
+        {
+            case SanctionSubjectType.Team:
+                return sanction.TeamId;
+
+            case SanctionSubjectType.Player:
+                if (sanction.Player is not null)
+                {
+                    return sanction.Player.TeamId;
+                }
+                if (sanction.PlayerId.HasValue)
+                {
+                    Player? player = await _playerRepository.GetByIdAsync(sanction.PlayerId.Value);
+                    return player?.TeamId;
+                }
+                return null;
+
+            case SanctionSubjectType.Staff:
+            default:
+                return null;
+        }
     }
 
     public async Task<PlayerSanction?> GetPlayerSanctionByIdAsync(Guid playerSanctionId)
@@ -74,12 +204,33 @@ public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionServ
     {
         return await _playerSanctionRepository.FindAsync(
                 playerSanction => playerSanction.IssuedDate.AddDays(playerSanction.Duration) <= date,
-                includes: [playerSanction => playerSanction.Player]);
+                includes: [playerSanction => playerSanction.Player!]);
     }
 
     public async Task<PaginatedResponse<PlayerSanction>> GetPlayerSanctionsAsync(GetPlayerSanctionsFilteredRequest filter)
     {
-        Expression<Func<PlayerSanction, bool>> expression = QueryableExtensions.ConstructFilterExpression<PlayerSanction, GetPlayerSanctionsFilteredRequest>(filter);
+        // Description is suppressed from the auto-generated single-field
+        // predicate so the free-text search box can match EITHER the sanction
+        // reason OR the sanctioned player's name (Names + LastName). All
+        // clauses are case-insensitive partial (Contains) matches, mirroring
+        // the auto-generator's own ToLower().Contains() string handling.
+        // Accent-insensitivity is intentionally NOT applied: it would require
+        // a Postgres extension (e.g. unaccent/citext) that is not enabled in
+        // this project, and the SQLite test provider could not translate it.
+        Expression<Func<PlayerSanction, bool>> expression = QueryableExtensions.ConstructFilterExpression<PlayerSanction, GetPlayerSanctionsFilteredRequest>(
+            filter, nameof(GetPlayerSanctionsFilteredRequest.Description));
+
+        if (!string.IsNullOrWhiteSpace(filter.Description))
+        {
+            string searchTerm = filter.Description.ToLower();
+            expression = expression.And(playerSanction =>
+                playerSanction.Description.ToLower().Contains(searchTerm)
+                || (playerSanction.Player != null
+                    && (playerSanction.Player.FirstName.ToLower().Contains(searchTerm)
+                        || (playerSanction.Player.SecondName != null
+                            && playerSanction.Player.SecondName.ToLower().Contains(searchTerm))
+                        || playerSanction.Player.LastName.ToLower().Contains(searchTerm))));
+        }
 
         if (filter.TournamentId.HasValue)
         {
@@ -102,12 +253,16 @@ public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionServ
 
         if (filter.TeamId.HasValue)
         {
-            expression = expression.And(playerSanction => playerSanction.Player.TeamId == filter.TeamId.Value);
+            // Matches both a player sanction whose player belongs to the team
+            // and a team-subject sanction targeting the team directly (HU-77).
+            expression = expression.And(playerSanction =>
+                (playerSanction.Player != null && playerSanction.Player.TeamId == filter.TeamId.Value)
+                || playerSanction.TeamId == filter.TeamId.Value);
         }
 
         IEnumerable<PlayerSanction> filteredSanctions = await _playerSanctionRepository.FindAsync(expression,
             filter: filter,
-            includes: [playerSanction => playerSanction.Player, playerSanction => playerSanction.Match]);
+            includes: [playerSanction => playerSanction.Player!, playerSanction => playerSanction.Match]);
 
         int totalCount = await _playerSanctionRepository.CountAsync(expression);
 

@@ -4,6 +4,7 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -19,66 +20,67 @@ import {
 import { notifySuccess } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { IMatchResponse } from '@/modules/match/type/match';
+import { ITeamMatchResponse } from '@/modules/team/type/team';
 import { IPublicPlayerResponse } from '@/modules/player/type/player.d';
 import { usePlayerStatistic } from '@/modules/playerStatistic/hook/playerStatistic.hook';
 import {
+  PlayerScoreEntry,
   PlayerStatisticResponse,
-  StatisticType,
 } from '@/modules/playerStatistic/type/playerStatistic';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
+import HabilitacionBadge from '@/views/medicalRecord/HabilitacionBadge';
+import { resolveIsHabilitado } from '@/modules/medicalRecord/utils/medicalRecordDisplay';
 
 interface MatchStatisticsTabProps {
   match: IMatchResponse;
 }
 
-interface StatRecord {
+/** The team currently being edited in the sheet dialog. */
+interface ActiveTeam {
   id: GUID;
-  value: number;
+  name: string;
+  score: number;
+  players: IPublicPlayerResponse[];
 }
 
-interface FormRow {
-  points: string;
-  assists: string;
-}
-
-const buildStatMap = (
-  statistics: PlayerStatisticResponse[],
-  type: StatisticType
-): Record<string, StatRecord> =>
+/**
+ * Sums the Points statistics for a match, keyed by player id, so each team's
+ * currently-loaded planilla can be shown without a second request.
+ */
+const buildPointsMap = (
+  statistics: PlayerStatisticResponse[]
+): Record<string, number> =>
   statistics
-    .filter(stat => stat.type === type)
-    .reduce<Record<string, StatRecord>>((acc, stat) => {
-      acc[stat.playerId] = { id: stat.id, value: stat.value };
+    .filter(stat => stat.type === 'Points')
+    .reduce<Record<string, number>>((acc, stat) => {
+      acc[stat.playerId] = (acc[stat.playerId] ?? 0) + stat.value;
       return acc;
     }, {});
 
+const toActiveTeam = (team: ITeamMatchResponse | null): ActiveTeam | null =>
+  team
+    ? {
+        id: team.id,
+        name: team.name,
+        score: team.score ?? 0,
+        players: team.players ?? [],
+      }
+    : null;
+
 export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
-  const {
-    getPlayerStatisticsByFilter,
-    addPlayerStatistic,
-    putPlayerStatisticById,
-    deletePlayerStatisticById,
-  } = usePlayerStatistic();
+  const { getPlayerStatisticsByFilter, loadMatchSheet } = usePlayerStatistic();
 
   const [statistics, setStatistics] = useState<PlayerStatisticResponse[]>([]);
   const [loading, setLoading] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState<Record<string, FormRow>>({});
+  const [activeTeam, setActiveTeam] = useState<ActiveTeam | null>(null);
+  const [form, setForm] = useState<Record<string, string>>({});
 
   const getStatisticsRef = useRef(getPlayerStatisticsByFilter);
   useEffect(() => {
     getStatisticsRef.current = getPlayerStatisticsByFilter;
   }, [getPlayerStatisticsByFilter]);
-
-  const players = useMemo<IPublicPlayerResponse[]>(
-    () => [
-      ...(match.homeTeam?.players ?? []),
-      ...(match.visitorTeam?.players ?? []),
-    ],
-    [match.homeTeam?.players, match.visitorTeam?.players]
-  );
 
   const loadStatistics = useCallback(async () => {
     setLoading(true);
@@ -95,143 +97,157 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
     void loadStatistics();
   }, [loadStatistics]);
 
-  const pointsByPlayer = useMemo(
-    () => buildStatMap(statistics, 'Points'),
-    [statistics]
-  );
-  const assistsByPlayer = useMemo(
-    () => buildStatMap(statistics, 'Assists'),
-    [statistics]
-  );
+  const pointsByPlayer = useMemo(() => buildPointsMap(statistics), [statistics]);
 
-  const openDialog = useCallback(() => {
-    const initialForm: Record<string, FormRow> = {};
-    players.forEach(player => {
-      initialForm[player.id] = {
-        points: String(pointsByPlayer[player.id]?.value ?? 0),
-        assists: String(assistsByPlayer[player.id]?.value ?? 0),
-      };
+  const openDialog = useCallback((team: ActiveTeam) => {
+    const initialForm: Record<string, string> = {};
+    team.players.forEach(player => {
+      initialForm[player.id] = '0';
     });
     setForm(initialForm);
-    setDialogOpen(true);
-  }, [assistsByPlayer, players, pointsByPlayer]);
+    setActiveTeam(team);
+  }, []);
 
   const closeDialog = useCallback(() => {
     if (submitting) {
       return;
     }
-    setDialogOpen(false);
+    setActiveTeam(null);
   }, [submitting]);
 
-  const persistStat = useCallback(
-    async (
-      playerId: GUID,
-      type: StatisticType,
-      newValue: number,
-      existing?: StatRecord
-    ) => {
-      if (existing) {
-        if (newValue === existing.value) {
-          return;
-        }
-        if (newValue <= 0) {
-          await deletePlayerStatisticById(existing.id);
-          return;
-        }
-        await putPlayerStatisticById(existing.id, { value: newValue });
-        return;
-      }
-
-      if (newValue > 0) {
-        await addPlayerStatistic({
-          value: newValue,
-          matchId: match.id,
-          playerId,
-          type,
-        });
-      }
-    },
-    [addPlayerStatistic, deletePlayerStatisticById, match.id, putPlayerStatisticById]
+  const currentSum = useMemo(
+    () =>
+      Object.values(form).reduce(
+        (total, value) => total + (Number(value) || 0),
+        0
+      ),
+    [form]
   );
 
+  const targetScore = activeTeam?.score ?? 0;
+  const difference = currentSum - targetScore;
+  const sumMatches = difference === 0;
+
   const handleSave = useCallback(async () => {
-    setSubmitting(true);
-
-    for (const player of players) {
-      const row = form[player.id];
-      if (!row) {
-        continue;
-      }
-
-      const points = Number(row.points) || 0;
-      const assists = Number(row.assists) || 0;
-
-      await persistStat(player.id, 'Points', points, pointsByPlayer[player.id]);
-      await persistStat(
-        player.id,
-        'Assists',
-        assists,
-        assistsByPlayer[player.id]
-      );
+    if (!activeTeam || !sumMatches) {
+      return;
     }
 
-    setSubmitting(false);
-    setDialogOpen(false);
-    await loadStatistics();
-    await notifySuccess({ title: 'Puntuaciones guardadas' });
-  }, [
-    assistsByPlayer,
-    form,
-    loadStatistics,
-    persistStat,
-    players,
-    pointsByPlayer,
-  ]);
+    const scores: PlayerScoreEntry[] = activeTeam.players.map(player => ({
+      playerId: player.id,
+      points: Number(form[player.id]) || 0,
+    }));
 
-  const renderTeam = (
-    team: IMatchResponse['homeTeam'],
+    setSubmitting(true);
+    const result = await loadMatchSheet({
+      matchId: match.id,
+      teamId: activeTeam.id,
+      scores,
+    });
+    setSubmitting(false);
+
+    // A falsy result means the backend rejected the sheet (e.g. a 409 sum
+    // mismatch or an ineligible player); the message is surfaced globally and
+    // the dialog stays open so the operator can correct it.
+    if (!result) {
+      return;
+    }
+
+    setActiveTeam(null);
+    await loadStatistics();
+    await notifySuccess({ title: 'Planilla cargada' });
+  }, [activeTeam, form, loadMatchSheet, loadStatistics, match.id, sumMatches]);
+
+  const renderTeamCard = (
+    team: ITeamMatchResponse | null,
     fallbackLabel: string
   ) => {
+    const activeCandidate = toActiveTeam(team);
     const teamPlayers = team?.players ?? [];
+    const loadedTotal = teamPlayers.reduce(
+      (total, player) => total + (pointsByPlayer[player.id] ?? 0),
+      0
+    );
 
     return (
       <Card variant="outlined">
         <CardContent>
-          <Typography variant="subtitle1" sx={{
-            mb: 1
-          }}>
-            {team?.name || fallbackLabel}
-          </Typography>
+          <Stack
+            direction="row"
+            sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
+          >
+            <Typography variant="subtitle1">
+              {team?.name || fallbackLabel}
+            </Typography>
+            <Chip
+              size="small"
+              label={`Marcador: ${team?.score ?? 0}`}
+              color={loadedTotal === (team?.score ?? 0) ? 'success' : 'default'}
+            />
+          </Stack>
+
           {teamPlayers.length === 0 ? (
-            <Typography variant="body2" sx={{
-              color: "text.secondary"
-            }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               Sin jugadores registrados.
             </Typography>
           ) : (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Jugador</TableCell>
-                  <TableCell align="center">Goles</TableCell>
-                  <TableCell align="center">Asistencias</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {teamPlayers.map(player => (
-                  <TableRow key={player.id}>
-                    <TableCell>{player.fullName}</TableCell>
-                    <TableCell align="center">
-                      {pointsByPlayer[player.id]?.value ?? 0}
-                    </TableCell>
-                    <TableCell align="center">
-                      {assistsByPlayer[player.id]?.value ?? 0}
-                    </TableCell>
+            <>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Jugador</TableCell>
+                    <TableCell align="center">Puntos</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHead>
+                <TableBody>
+                  {teamPlayers.map(player => (
+                    <TableRow key={player.id}>
+                      <TableCell>
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          sx={{ alignItems: 'center' }}
+                        >
+                          <span>{player.fullName}</span>
+                          {!resolveIsHabilitado(
+                            player.isHabilitado,
+                            player.medicalRecordStatus
+                          ) && (
+                            <HabilitacionBadge
+                              isHabilitado={player.isHabilitado}
+                              status={player.medicalRecordStatus}
+                            />
+                          )}
+                        </Stack>
+                      </TableCell>
+                      <TableCell align="center">
+                        {pointsByPlayer[player.id] ?? 0}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <Typography
+                variant="caption"
+                sx={{ color: 'text.secondary', mt: 1, display: 'block' }}
+              >
+                Cargado: {loadedTotal} / {team?.score ?? 0}
+              </Typography>
+            </>
           )}
+
+          <Box sx={{ mt: 2 }}>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() =>
+                activeCandidate && openDialog(activeCandidate)
+              }
+              disabled={teamPlayers.length === 0}
+            >
+              Cargar planilla
+            </Button>
+          </Box>
         </CardContent>
       </Card>
     );
@@ -243,23 +259,10 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
 
   return (
     <Stack spacing={2}>
-      <Stack
-        direction="row"
-        sx={{
-          justifyContent: "space-between",
-          alignItems: "center"
-        }}>
-        <Typography variant="body1">
-          Goles y asistencias por jugador.
-        </Typography>
-        <Button
-          variant="contained"
-          onClick={openDialog}
-          disabled={players.length === 0}
-        >
-          Cargar puntuaciones
-        </Button>
-      </Stack>
+      <Typography variant="body1">
+        Planilla de puntos por jugador. La suma de cada equipo debe coincidir
+        con su marcador.
+      </Typography>
 
       <Box
         sx={{
@@ -268,60 +271,63 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
           gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
         }}
       >
-        {renderTeam(match.homeTeam, 'Equipo local')}
-        {renderTeam(match.visitorTeam, 'Equipo visitante')}
+        {renderTeamCard(match.homeTeam, 'Equipo local')}
+        {renderTeamCard(match.visitorTeam, 'Equipo visitante')}
       </Box>
 
-      <Dialog open={dialogOpen} onClose={closeDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Cargar puntuaciones</DialogTitle>
+      <Dialog
+        open={Boolean(activeTeam)}
+        onClose={closeDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Planilla — {activeTeam?.name}</DialogTitle>
         <DialogContent>
           <Table size="small">
             <TableHead>
               <TableRow>
                 <TableCell>Jugador</TableCell>
-                <TableCell align="center">Goles</TableCell>
-                <TableCell align="center">Asistencias</TableCell>
+                <TableCell align="center">Puntos</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {players.map(player => (
+              {(activeTeam?.players ?? []).map(player => (
                 <TableRow key={player.id}>
-                  <TableCell>{player.fullName}</TableCell>
-                  <TableCell align="center">
-                    <TextField
-                      type="number"
-                      size="small"
-                      value={form[player.id]?.points ?? '0'}
-                      onChange={e =>
-                        setForm(prev => ({
-                          ...prev,
-                          [player.id]: {
-                            points: e.target.value,
-                            assists: prev[player.id]?.assists ?? '0',
-                          },
-                        }))
-                      }
-                      slotProps={{
-                        htmlInput: { min: 0, style: { width: 64 } }
-                      }}
-                    />
+                  <TableCell>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      sx={{ alignItems: 'center' }}
+                    >
+                      <span>{player.fullName}</span>
+                      {!resolveIsHabilitado(
+                        player.isHabilitado,
+                        player.medicalRecordStatus
+                      ) && (
+                        <HabilitacionBadge
+                          isHabilitado={player.isHabilitado}
+                          status={player.medicalRecordStatus}
+                        />
+                      )}
+                    </Stack>
                   </TableCell>
                   <TableCell align="center">
                     <TextField
                       type="number"
                       size="small"
-                      value={form[player.id]?.assists ?? '0'}
+                      value={form[player.id] ?? '0'}
                       onChange={e =>
                         setForm(prev => ({
                           ...prev,
-                          [player.id]: {
-                            points: prev[player.id]?.points ?? '0',
-                            assists: e.target.value,
-                          },
+                          [player.id]: e.target.value,
                         }))
                       }
                       slotProps={{
-                        htmlInput: { min: 0, style: { width: 64 } }
+                        htmlInput: {
+                          min: 0,
+                          style: { width: 72 },
+                          'aria-label': `Puntos de ${player.fullName}`,
+                        },
                       }}
                     />
                   </TableCell>
@@ -332,20 +338,36 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
 
           <Stack
             direction="row"
+            spacing={2}
+            sx={{ justifyContent: 'space-between', alignItems: 'center', mt: 2 }}
+          >
+            <Typography variant="body2">
+              Suma: <strong>{currentSum}</strong> / Marcador:{' '}
+              <strong>{targetScore}</strong>
+            </Typography>
+            {!sumMatches && (
+              <Typography variant="body2" color="error">
+                {difference > 0
+                  ? `Sobran ${difference} puntos`
+                  : `Faltan ${Math.abs(difference)} puntos`}
+              </Typography>
+            )}
+          </Stack>
+
+          <Stack
+            direction="row"
             spacing={1}
-            sx={{
-              justifyContent: "flex-end",
-              mt: 2
-            }}>
+            sx={{ justifyContent: 'flex-end', mt: 2 }}
+          >
             <Button onClick={closeDialog} disabled={submitting} color="inherit">
               Cancelar
             </Button>
             <Button
               variant="contained"
               onClick={() => void handleSave()}
-              disabled={submitting}
+              disabled={submitting || !sumMatches}
             >
-              Guardar
+              Guardar planilla
             </Button>
           </Stack>
         </DialogContent>

@@ -10,13 +10,12 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { GUID } from '@/modules/core/types/types';
 import { IVenueResponse } from '@/modules/venue/type/venue';
 import { useVenue } from '@/modules/venue/hook/venue.hook';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const VenuePage: React.FC = () => {
-  const { venueId } = useParams<{ venueId: GUID }>();
+  const { venueId } = useParams<{ venueId: string }>();
   const navigate = useNavigate();
   const { getVenueById } = useVenue();
 

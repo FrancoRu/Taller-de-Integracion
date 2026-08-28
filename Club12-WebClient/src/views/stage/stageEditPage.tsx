@@ -94,8 +94,10 @@ const StageEditPage: React.FC = () => {
       return;
     }
 
-    navigate(APP_ROUTES.panelStage.build(targetStageId));
-  }, [navigate, targetStageId]);
+    // Prefer the slug so the detail URL never exposes a UUID (the edit route
+    // itself stays id-based).
+    navigate(APP_ROUTES.panelStage.build(stage?.slug ?? targetStageId));
+  }, [navigate, stage?.slug, targetStageId]);
 
   const handleSave = useCallback(async () => {
     if (!targetStageId || !stage) {
@@ -126,7 +128,7 @@ const StageEditPage: React.FC = () => {
       text: 'Los cambios se guardaron correctamente.',
     });
 
-    navigate(APP_ROUTES.panelStage.build(targetStageId));
+    navigate(APP_ROUTES.panelStage.build(stage.slug));
   }, [
     canEditIsActive,
     navigate,

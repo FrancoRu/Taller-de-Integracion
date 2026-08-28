@@ -43,6 +43,61 @@ public class AuthController(IAuthenticationService authenticationService) : Cont
         return CreatedAtAction(nameof(Register), new { userId = response.UserId }, response);
     }
 
+    /// <summary>
+    /// HU-09: creates a user by email only (no password) and emails a magic
+    /// activation link. Requires Admin or Owner.
+    /// </summary>
+    [Authorize(Roles = Roles.AdminOrOwner)]
+    [HttpPost("invite")]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(InviteUserResponse))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<InviteUserResponse>> Invite(
+        [FromBody] InviteUserRequest request, CancellationToken ct)
+    {
+        string callerRole = User.FindFirst(ClaimTypes.Role)?.Value
+            ?? throw new UnauthorizedAccessException(ErrorMessages.Auth.RoleClaimMissing);
+
+        Guid callerId = Guid.Parse(
+            User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? throw new UnauthorizedAccessException(ErrorMessages.Auth.IdClaimMissing));
+
+        InviteUserResponse response =
+            await authenticationService.InviteUserAsync(request, callerRole, callerId, ct);
+
+        return CreatedAtAction(nameof(Invite), new { userId = response.UserId }, response);
+    }
+
+    /// <summary>
+    /// HU-09: consumes the activation token from the invitation email, sets the
+    /// user's first password, and returns a ready-to-use JWT.
+    /// </summary>
+    [AllowAnonymous]
+    [HttpPost("activate")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokenResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<TokenResponse>> Activate(
+        [FromBody] ActivateAccountRequest request, CancellationToken ct)
+    {
+        return Ok(await authenticationService.ActivateAccountAsync(request, ct));
+    }
+
+    /// <summary>
+    /// HU-10: self-service. Emails a password-reset magic link for the given
+    /// email. Always returns 200 so it never reveals whether the email has an
+    /// account. The link is consumed by POST password-reset/confirm.
+    /// </summary>
+    [AllowAnonymous]
+    [HttpPost("password-reset/request")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> RequestPasswordReset(
+        [FromBody] RequestPasswordResetRequest request, CancellationToken ct)
+    {
+        await authenticationService.RequestPasswordResetAsync(request, ct);
+        return Ok();
+    }
+
     [AllowAnonymous]
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokenResponse))]

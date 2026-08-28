@@ -44,17 +44,13 @@ public class TournamentResponse : BaseEntityResponse
     public required DateTime StartDate { get; set; }
 
     /// <summary>
-    /// The maximum number of teams allowed to participate in the tournament.
-    /// </summary>
-    public required int MaxTeams { get; set; }
-
-    /// <summary>
-    /// The minimum number of teams required to hold the tournament.
-    /// </summary>
-    public required int MinTeams { get; set; }
-
-    /// <summary>
     /// Current lifecycle status of the tournament.
     /// </summary>
     public TournamentStatus Status { get; set; }
+
+    /// <summary>
+    /// Competitive category (gender) of the tournament (HU-48). The feminine
+    /// competition is played as its own separate tournament.
+    /// </summary>
+    public TournamentCategory Category { get; set; }
 }

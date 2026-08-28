@@ -33,8 +33,13 @@ public interface IBlogPostService
     /// as a slug.
     /// </summary>
     /// <param name="idOrSlug">The blog post's GUID id or its slug.</param>
+    /// <param name="includeUnpublished">
+    /// When false (the default, public callers) a draft post (HU-16) is
+    /// treated as not found and null is returned; when true (Admin/Owner) drafts
+    /// are returned like any other post.
+    /// </param>
     /// <returns>The blog post with the specified id or slug, or null if not found.</returns>
-    Task<BlogPost?> GetBlogPostByIdOrSlugAsync(string idOrSlug);
+    Task<BlogPost?> GetBlogPostByIdOrSlugAsync(string idOrSlug, bool includeUnpublished = false);
 
     /// <summary>
     /// Deletes a blog post.
@@ -53,6 +58,10 @@ public interface IBlogPostService
     /// Retrieves blog posts with pagination and filtering.
     /// </summary>
     /// <param name="filter">The filtering and pagination request.</param>
+    /// <param name="includeUnpublished">
+    /// When false (the default, public callers) only published posts are
+    /// returned (HU-16); when true (Admin/Owner) drafts are included too.
+    /// </param>
     /// <returns>A paginated response containing the blog posts.</returns>
-    Task<PaginatedResponse<BlogPost>> GetAllBlogPostsAsync(GetBlogPostsFilteredRequest filter);
+    Task<PaginatedResponse<BlogPost>> GetAllBlogPostsAsync(GetBlogPostsFilteredRequest filter, bool includeUnpublished = false);
 }

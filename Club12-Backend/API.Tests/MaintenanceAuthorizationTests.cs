@@ -39,8 +39,6 @@ public class MaintenanceAuthorizationTests : IClassFixture<CustomWebApplicationF
 
     [Theory]
     [InlineData(Roles.Owner)]
-    [InlineData(Roles.TournamentManager)]
-    [InlineData(Roles.TeamManager)]
     [InlineData(Roles.Guest)]
     public async Task GetStatus_NonAdminRole_ReturnsForbidden(string role)
     {
@@ -82,8 +80,6 @@ public class MaintenanceAuthorizationTests : IClassFixture<CustomWebApplicationF
 
     [Theory]
     [InlineData(Roles.Owner)]
-    [InlineData(Roles.TournamentManager)]
-    [InlineData(Roles.TeamManager)]
     [InlineData(Roles.Guest)]
     public async Task ExitMaintenance_NonAdminRoleWhileActive_ReturnsForbidden(string role)
     {

@@ -39,6 +39,12 @@ public class TeamResponse : BaseEntityResponse
     public Guid? TournamentId { get; set; }
 
     /// <summary>
+    /// The club this team belongs to, letting the frontend link a team to its
+    /// club. Null when the team is not associated with a club.
+    /// </summary>
+    public Guid? ClubId { get; set; }
+
+    /// <summary>
     /// The list of players in the team.
     /// </summary>
     public required List<PublicPlayerResponse> Players { get; set; } = [];

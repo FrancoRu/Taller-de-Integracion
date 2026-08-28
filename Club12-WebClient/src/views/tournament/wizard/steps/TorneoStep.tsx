@@ -1,9 +1,9 @@
-import { Grid, TextField } from '@mui/material';
+import { Grid, MenuItem, TextField } from '@mui/material';
 import {
-  MAX_ALLOWED_TOURNAMENT_TEAMS,
-  MIN_ALLOWED_TOURNAMENT_TEAMS,
-  TournamentStepState,
-} from '../types';
+  TOURNAMENT_CATEGORY_LABELS,
+  TournamentCategory,
+} from '@/modules/core/enum/tournament/tournamentCategory';
+import { TournamentStepState } from '../types';
 
 interface TorneoStepProps {
   value: TournamentStepState;
@@ -32,6 +32,29 @@ export default function TorneoStep({ value, onChange }: TorneoStepProps) {
           minRows={2}
           fullWidth
         />
+      </Grid>
+
+      <Grid size={12}>
+        <TextField
+          select
+          label="Categoría"
+          value={value.category}
+          onChange={e =>
+            onChange({
+              ...value,
+              category: e.target.value as TournamentCategory,
+            })
+          }
+          required
+          fullWidth
+          helperText="La categoría femenina se juega como un torneo aparte y no se puede cambiar luego."
+        >
+          {Object.values(TournamentCategory).map(category => (
+            <MenuItem key={category} value={category}>
+              {TOURNAMENT_CATEGORY_LABELS[category]}
+            </MenuItem>
+          ))}
+        </TextField>
       </Grid>
 
       <Grid
@@ -67,42 +90,6 @@ export default function TorneoStep({ value, onChange }: TorneoStepProps) {
           slotProps={{
             inputLabel: { shrink: true }
           }}
-        />
-      </Grid>
-
-      <Grid
-        size={{
-          xs: 12,
-          md: 6
-        }}>
-        <TextField
-          label="Mín. equipos"
-          type="number"
-          value={value.minTeams}
-          onChange={e => onChange({ ...value, minTeams: Number(e.target.value) })}
-          helperText={`Entre ${MIN_ALLOWED_TOURNAMENT_TEAMS} y ${MAX_ALLOWED_TOURNAMENT_TEAMS}`}
-          slotProps={{
-            htmlInput: { min: MIN_ALLOWED_TOURNAMENT_TEAMS, max: MAX_ALLOWED_TOURNAMENT_TEAMS },
-          }}
-          fullWidth
-        />
-      </Grid>
-
-      <Grid
-        size={{
-          xs: 12,
-          md: 6
-        }}>
-        <TextField
-          label="Máx. equipos"
-          type="number"
-          value={value.maxTeams}
-          onChange={e => onChange({ ...value, maxTeams: Number(e.target.value) })}
-          helperText={`Entre ${MIN_ALLOWED_TOURNAMENT_TEAMS} y ${MAX_ALLOWED_TOURNAMENT_TEAMS}`}
-          slotProps={{
-            htmlInput: { min: MIN_ALLOWED_TOURNAMENT_TEAMS, max: MAX_ALLOWED_TOURNAMENT_TEAMS },
-          }}
-          fullWidth
         />
       </Grid>
     </Grid>

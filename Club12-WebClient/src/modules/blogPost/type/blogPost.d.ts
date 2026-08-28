@@ -84,6 +84,13 @@ export interface CreateBlogPostRequest {
    * @type {string}
    */
   markdownText: string;
+
+  /**
+   * Whether the post is published (visible publicly) or saved as a draft
+   * (HU-16). Defaults to published when omitted.
+   * @type {boolean}
+   */
+  isPublished?: boolean;
 }
 
 /**
@@ -108,6 +115,13 @@ export interface UpdateBlogPostRequest {
    * @type {string}
    */
   author?: string;
+
+  /**
+   * The updated publication state (HU-16). `undefined` leaves the current
+   * state untouched; `true` publishes, `false` turns it back into a draft.
+   * @type {boolean}
+   */
+  isPublished?: boolean;
 }
 
 /**
@@ -174,6 +188,12 @@ export interface BlogPostResponse {
    * @type {Date}
    */
   createdAt: Date;
+
+  /**
+   * Whether the post is published (visible publicly) or a draft (HU-16).
+   * @type {boolean}
+   */
+  isPublished: boolean;
 }
 
 /**

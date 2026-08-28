@@ -44,7 +44,7 @@ public class PlayerController(
     /// <para>Returns 400 (Bad Request) if the Team with the provided id was not found.</para>
     /// <para>Returns 403 (Forbidden) if the user is not authenticated.</para>
     /// </returns>
-    [Authorize(Roles = Roles.TeamManagerOrTournamentManagerOrOwner)]
+    [Authorize(Roles = Roles.AdminOrOwner)]
     [HttpPost()]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(PublicPlayerResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -67,28 +67,54 @@ public class PlayerController(
         Player mappedPlayer = mapper.Map<Player>(playerRequest);
         Player createdPlayer = await playerService.CreatePlayerAsync(mappedPlayer, existingTeam.TournamentId.Value);
         PublicPlayerResponse playerResponse = mapper.Map<PublicPlayerResponse>(createdPlayer);
-        return CreatedAtRoute("GetPlayerById", new { id = createdPlayer.Id }, playerResponse);
+        return CreatedAtRoute("GetPlayerById", new { idOrSlug = createdPlayer.Id }, playerResponse);
     }
 
     /// <summary>
-    /// Retrieves a player by its id.
+    /// Registers a player onto a team's roster for a tournament season,
+    /// optionally assigning a dorsal, enforcing the HU-54 roster invariants
+    /// (no two teams in one tournament, roster-size cap, unique dorsal).
     /// </summary>
-    /// <param name="id">The id of the player to retrieve.</param>
-    /// <returns>The Player with the specified id.
+    /// <param name="playerId">The player to register.</param>
+    /// <param name="request">The team, tournament and optional dorsal.</param>
+    /// <returns>
+    /// <para>Returns 200 (OK) with the registration outcome.</para>
+    /// <para>Returns 409 (Conflict) if a roster invariant is violated.</para>
+    /// <para>Returns 403 (Forbidden) if the user is not authorized.</para>
+    /// </returns>
+    [Authorize(Roles = Roles.AdminOrOwner)]
+    [HttpPost("{playerId:guid}/registration")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerRegistrationResponse))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<PlayerRegistrationResponse>> RegisterPlayerToTeam(
+        Guid playerId, [FromBody] RegisterPlayerToTeamRequest request)
+    {
+        PlayerTeamRegistration registration = await playerService.RegisterPlayerToTeamAsync(
+            playerId, request.TeamId, request.TournamentId, request.JerseyNumber);
+
+        return Ok(mapper.Map<PlayerRegistrationResponse>(registration));
+    }
+
+    /// <summary>
+    /// Retrieves a player by its id or its public slug.
+    /// </summary>
+    /// <param name="idOrSlug">The id (GUID) or slug of the player to retrieve.</param>
+    /// <returns>The Player with the specified id or slug.
     /// <para>Returns 200 (OK) with the Player response if it was found.</para>
-    /// <para>Returns 400 (Bad Request) if the Player with the provided id was not found.</para>
+    /// <para>Returns 404 (Not Found) if the Player with the provided id or slug was not found.</para>
     /// </returns>
     [AllowAnonymous]
-    [HttpGet("{id:guid}", Name = "GetPlayerById")]
+    [HttpGet("{idOrSlug}", Name = "GetPlayerById")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PublicPlayerResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PublicPlayerResponse>> GetPlayerByIdAsync(Guid id)
+    public async Task<ActionResult<PublicPlayerResponse>> GetPlayerByIdAsync(string idOrSlug)
     {
-        Player? player = await playerService.GetPlayerByIdAsync(id);
+        Player? player = await playerService.GetPlayerByIdOrSlugAsync(idOrSlug);
 
         if (player is null)
         {
-            return this.NotFoundProblem(nameof(Player), id);
+            return this.NotFoundProblem(nameof(Player), idOrSlug);
         }
 
         PublicPlayerResponse playerResponse = mapper.Map<PublicPlayerResponse>(player);
@@ -102,7 +128,7 @@ public class PlayerController(
     /// <returns>
     /// Returns AdminPlayerResponse if the player is found; otherwise, returns a 400 Bad Request.
     /// </returns>
-    [Authorize(Roles = Roles.AnyStaffRole)]
+    [Authorize(Roles = Roles.AdminOrOwner)]
     [HttpGet("admin/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AdminPlayerResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -129,7 +155,7 @@ public class PlayerController(
     /// Returns 400 (Bad Request) if the Player with the provided id was not found.
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
-    [Authorize(Roles = Roles.TeamManagerOrTournamentManagerOrOwner)]
+    [Authorize(Roles = Roles.AdminOrOwner)]
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -171,7 +197,7 @@ public class PlayerController(
     /// Returns 400 (Bad Request) if the Player with the provided id was not found.
     /// Returns 403 (Forbidden) if the user is not authenticated.
     /// </returns>
-    [Authorize(Roles = Roles.TeamManagerOrTournamentManagerOrOwner)]
+    [Authorize(Roles = Roles.AdminOrOwner)]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -209,7 +235,7 @@ public class PlayerController(
     /// <response code="200">Returns a paginated list of filtered players</response>
     /// <response code="400">Returns 400 if there is an invalid filter parameter or the filter results in no data</response>
     /// <response code="403">Returns 403 if the user does not have the required permissions (admin)</response>
-    [Authorize(Roles = Roles.AnyStaffRole)]
+    [Authorize(Roles = Roles.AdminOrOwner)]
     [HttpGet("")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<AdminPlayerResponse>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

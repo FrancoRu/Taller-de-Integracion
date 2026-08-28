@@ -23,6 +23,9 @@ public class DivisionProfile : Profile
         _ = CreateMap<Division, MinimalDivisionResponse>()
             .ReverseMap();
 
+        _ = CreateMap<PlayoffMappingRequest, DivisionPlayoffMapping>();
+        _ = CreateMap<DivisionPlayoffMapping, PlayoffMappingResponse>();
+
         _ = CreateMap<CreateDivisionRequest, Division>();
 
         // TournamentId is deliberately excluded from the blind convention

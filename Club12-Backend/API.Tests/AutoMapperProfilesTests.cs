@@ -1,6 +1,8 @@
 using API.AutoMapperProfiles;
 
+using Application.DTOs.Match.Request;
 using Application.DTOs.Match.Response;
+using Application.DTOs.Team.Response;
 
 using AutoMapper;
 
@@ -80,5 +82,63 @@ public class AutoMapperProfilesTests
 
         Assert.Null(response.HomeTeamName);
         Assert.Null(response.VisitorTeamName);
+    }
+
+    /// <summary>
+    /// HU-67: editing a match's calendar date/time (the UpdateMatchRequest path)
+    /// must never move it to another round. The request carries no Round, so
+    /// mapping it onto an existing match leaves the round untouched while still
+    /// applying the new date.
+    /// </summary>
+    [Fact]
+    public void Map_UpdateMatchRequestOntoMatch_ChangesDate_ButLeavesRoundUnchanged()
+    {
+        Match match = CreateMatch(homeTeam: null, visitorTeam: null);
+        match.Round = 3;
+        DateTime originalDate = match.MatchDate;
+        DateTime newDate = originalDate.AddDays(5);
+
+        UpdateMatchRequest request = new() { MatchDate = newDate };
+        IMapper mapper = CreateMapper();
+
+        mapper.Map(request, match);
+
+        Assert.Equal(3, match.Round);
+        Assert.Equal(newDate, match.MatchDate);
+    }
+
+    /// <summary>
+    /// The round flows through to the response DTOs so the frontend can group
+    /// the fixture by matchday (HU-63).
+    /// </summary>
+    [Fact]
+    public void Map_ToDetailedMatchResponse_ExposesRound()
+    {
+        Match match = CreateMatch(homeTeam: null, visitorTeam: null);
+        match.Round = 7;
+        IMapper mapper = CreateMapper();
+
+        DetailedMatchResponse response = mapper.Map<DetailedMatchResponse>(match);
+
+        Assert.Equal(7, response.Round);
+    }
+
+    /// <summary>
+    /// The team's ClubId flows through to the response DTO so the frontend can
+    /// link a team back to its club.
+    /// </summary>
+    [Fact]
+    public void Map_ToTeamResponse_ExposesClubId()
+    {
+        MapperConfiguration configuration = new(cfg => cfg.AddProfile<TeamProfile>(), NullLoggerFactory.Instance);
+        IMapper mapper = configuration.CreateMapper();
+
+        Guid clubId = Guid.NewGuid();
+        Team team = CreateTeam("River Plate");
+        team.ClubId = clubId;
+
+        TeamResponse response = mapper.Map<TeamResponse>(team);
+
+        Assert.Equal(clubId, response.ClubId);
     }
 }

@@ -37,11 +37,13 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
         base.OnModelCreating(modelBuilder);
     }
 
+    public virtual required DbSet<Club> Clubs { get; set; }
     public virtual required DbSet<BackupRecord> BackupRecords { get; set; }
     public virtual required DbSet<Team> Teams { get; set; }
     public virtual required DbSet<Player> Players { get; set; }
     public virtual required DbSet<Tournament> Tournaments { get; set; }
     public virtual required DbSet<Division> Divisions { get; set; }
+    public virtual required DbSet<DivisionPlayoffMapping> DivisionPlayoffMappings { get; set; }
     public virtual required DbSet<Match> Matches { get; set; }
     public virtual required DbSet<MatchSeries> MatchSeries { get; set; }
     public virtual required DbSet<PlayerStatistic> PlayersStatistics { get; set; }
@@ -52,4 +54,6 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
     public virtual required DbSet<StageTeamMatch> StageTeamMatches { get; set; }
     public virtual required DbSet<Scorer> Scorers { get; set; }
     public virtual required DbSet<PlayerTeamRegistration> PlayerTeamRegistrations { get; set; }
+    public virtual required DbSet<TeamTournamentRegistration> TeamTournamentRegistrations { get; set; }
+    public virtual required DbSet<AuditLog> AuditLogs { get; set; }
 }

@@ -17,6 +17,11 @@ public class BlogPostEntityConfiguration : BaseEntityConfiguration<BlogPost>
         builder.Property(b => b.PhotoUrl).HasMaxLength(2048);
         builder.Property(b => b.MarkdownText).IsRequired();
 
+        // HU-16: draft/published state. Default true so every pre-existing
+        // post (back-filled by the migration) stays publicly visible and any
+        // future insert that omits the flag is treated as published.
+        builder.Property(b => b.IsPublished).IsRequired().HasDefaultValue(true);
+
         builder.HasIndex(b => b.Slug).IsUnique();
     }
 }

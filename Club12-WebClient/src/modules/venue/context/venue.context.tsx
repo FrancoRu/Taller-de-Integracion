@@ -91,6 +91,7 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
               venues?.find(existingVenue => existingVenue.id === id) ?? null;
             const updatedVenue: IVenueResponse = {
               id,
+              slug: currentVenue?.slug ?? '',
               name: venue.name ?? currentVenue?.name ?? '',
               address: venue.address ?? currentVenue?.address ?? '',
               photoUrl: venue.photoUrl ?? currentVenue?.photoUrl ?? '',
@@ -145,9 +146,11 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
   }, [queryClient, handleUnknownError]);
 
   const getVenueById = useCallback(
-    async (id: GUID): Promise<IVenueResponse | void> => {
+    async (idOrSlug: string): Promise<IVenueResponse | void> => {
       try {
-        const existingVenue = venues?.find(e => e.id == id);
+        const existingVenue = venues?.find(
+          e => e.id === idOrSlug || e.slug === idOrSlug
+        );
 
         if (existingVenue) {
           setVenue(existingVenue);
@@ -155,8 +158,8 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
         }
         const res: AxiosResponse<IVenueResponse> = await queryClient.fetchQuery(
           {
-            queryKey: venueKeys.byId(id),
-            queryFn: async () => await venueService.getVenueById(id),
+            queryKey: venueKeys.byId(idOrSlug),
+            queryFn: async () => await venueService.getVenueById(idOrSlug),
           }
         );
 

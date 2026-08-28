@@ -187,8 +187,6 @@ public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFacto
             Slug = $"tournament-{Guid.NewGuid()}",
             TeamRegistrationDeadline = startDate.AddDays(-1),
             StartDate = startDate,
-            MaxTeams = 8,
-            MinTeams = 2,
             Divisions = [],
             Teams = [],
             CreatedBy = "test",
@@ -196,6 +194,7 @@ public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFacto
 
         Division division = new()
         {
+            Slug = $"division-{Guid.NewGuid()}",
             Id = divisionId,
             Name = $"Division-{Guid.NewGuid()}",
             Tournament = tournament,
@@ -205,6 +204,7 @@ public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFacto
 
         Stage stage = new()
         {
+            Slug = $"stage-{Guid.NewGuid()}",
             Id = stageId,
             Name = $"Stage-{Guid.NewGuid()}",
             StageType = StageType.Group,
@@ -231,6 +231,7 @@ public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFacto
 
         Player player = new()
         {
+            Slug = $"player-{Guid.NewGuid()}",
             FirstName = "Sanctioned",
             LastName = "Player",
             DocumentNumber = Guid.NewGuid().ToString("N")[..10],

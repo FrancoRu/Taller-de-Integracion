@@ -45,9 +45,9 @@ public sealed class DataSeeder(ApplicationDBContext db, ILogger<DataSeeder> logg
 
         List<Venue> venues =
         [
-            new() { CreatedBy = Domain.Constants.AuditConstants.SystemUser, Name = "Polideportivo Municipal", Address = "Av. Siempre Viva 1234" },
-            new() { CreatedBy = Domain.Constants.AuditConstants.SystemUser, Name = "Cancha Norte", Address = "Calle Los Andes 850" },
-            new() { CreatedBy = Domain.Constants.AuditConstants.SystemUser, Name = "Estadio Club12", Address = "Ruta 5 km 12" },
+            new() { CreatedBy = Domain.Constants.AuditConstants.SystemUser, Name = "Polideportivo Municipal", Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug("Polideportivo Municipal"), Address = "Av. Siempre Viva 1234" },
+            new() { CreatedBy = Domain.Constants.AuditConstants.SystemUser, Name = "Cancha Norte", Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug("Cancha Norte"), Address = "Calle Los Andes 850" },
+            new() { CreatedBy = Domain.Constants.AuditConstants.SystemUser, Name = "Estadio Club12", Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug("Estadio Club12"), Address = "Ruta 5 km 12" },
         ];
 
         SampleTournamentBuilder.TournamentDefinition definition = new(
@@ -59,8 +59,6 @@ public sealed class DataSeeder(ApplicationDBContext db, ILogger<DataSeeder> logg
             StageEndDate: new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
             FinishedMatchesStart: new DateTime(2026, 6, 8, 0, 0, 0, DateTimeKind.Utc),
             UpcomingMatchesStart: new DateTime(2026, 9, 7, 0, 0, 0, DateTimeKind.Utc),
-            MinTeams: 4,
-            MaxTeams: 16,
             Divisions:
             [
                 new(  "Primera División", PrimeraTeamNames, PrimeraTeamCodes, PrimeraTeamColors),

@@ -93,6 +93,7 @@ public class PlayerTeamRegistrationTests : IClassFixture<CustomWebApplicationFac
         // (Team -> Tournament) as new rows to insert.
         Player newPlayer = new()
         {
+            Slug = $"player-{Guid.NewGuid()}",
             FirstName = "Nuevo",
             LastName = "Jugador",
             DocumentNumber = Guid.NewGuid().ToString("N")[..10],
@@ -210,8 +211,6 @@ public class PlayerTeamRegistrationTests : IClassFixture<CustomWebApplicationFac
             Slug = $"{name.ToLowerInvariant().Replace(' ', '-')}-{Guid.NewGuid()}",
             TeamRegistrationDeadline = startDate.AddDays(-1),
             StartDate = startDate,
-            MaxTeams = 32,
-            MinTeams = 2,
             Divisions = [],
             Teams = [],
             CreatedBy = "test",
@@ -247,6 +246,7 @@ public class PlayerTeamRegistrationTests : IClassFixture<CustomWebApplicationFac
     {
         Player player = new()
         {
+            Slug = $"player-{Guid.NewGuid()}",
             FirstName = "Test",
             LastName = "Player",
             DocumentNumber = Guid.NewGuid().ToString("N")[..10],

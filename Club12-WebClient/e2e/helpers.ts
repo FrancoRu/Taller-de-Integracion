@@ -63,11 +63,13 @@ export interface TournamentStepInput {
   description: string;
   startDate: string; // yyyy-mm-dd
   teamRegistrationDeadline: string; // yyyy-mm-dd
-  minTeams: number;
-  maxTeams: number;
 }
 
-/** Step 1 — Torneo: fills the tournament's own fields and advances. */
+/**
+ * Step 1 — Torneo: fills the tournament's own fields and advances. The
+ * "Mín./Máx. equipos" fields were removed from this step (HU-34/HU-39): the
+ * wizard no longer caps team counts, so there is nothing to fill here.
+ */
 export const fillTournamentStep = async (
   page: Page,
   input: TournamentStepInput
@@ -77,8 +79,6 @@ export const fillTournamentStep = async (
   await content.getByLabel('Descripción').fill(input.description);
   await content.getByLabel('Inicio').fill(input.startDate);
   await content.getByLabel('Límite de inscripción').fill(input.teamRegistrationDeadline);
-  await content.getByLabel('Mín. equipos').fill(String(input.minTeams));
-  await content.getByLabel('Máx. equipos').fill(String(input.maxTeams));
   await content.getByRole('button', { name: 'Continuar' }).click();
 };
 

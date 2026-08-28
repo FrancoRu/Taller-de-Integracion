@@ -6,7 +6,6 @@ import {
   Button,
   Card,
   CardContent,
-  Divider,
   Stack,
   TextField,
   Typography,
@@ -14,21 +13,10 @@ import {
 import { authService } from '@/modules/auth/service/auth.service';
 import { useError } from '@/modules/error/hooks/error.hock';
 import InvalidToken from '@/views/core/errors/invalidToken';
+import PasswordPolicyChecklist from '@/views/auth/PasswordPolicyChecklist';
+import { buildPasswordPolicyMessages } from '@/modules/auth/utils/passwordPolicy';
 import { HttpStatus } from '@/modules/core/constants/httpStatus';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
-
-const getPasswordPolicyState = (password: string) => {
-  const uniqueCharsCount = new Set(password).size;
-
-  return {
-    requiredLength: password.length >= 8,
-    requireUppercase: /[A-Z]/.test(password),
-    requireLowercase: /[a-z]/.test(password),
-    requireDigit: /\d/.test(password),
-    requireNonAlphanumeric: /[^a-zA-Z0-9]/.test(password),
-    requiredUniqueChars: uniqueCharsCount >= 2,
-  };
-};
 
 export default function PasswordReset() {
   const navigate = useNavigate();
@@ -52,62 +40,13 @@ export default function PasswordReset() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const passwordPolicy = useMemo(
-    () => getPasswordPolicyState(newPassword),
-    [newPassword]
-  );
-
   const hasRequiredParams = email.length > 0 && token.length > 0;
 
   const handleSubmit = async () => {
-    const messages: string[] = [];
+    const messages = buildPasswordPolicyMessages(newPassword, confirmPassword);
 
     if (!hasRequiredParams) {
-      messages.push('El enlace de recuperación no es válido.');
-    }
-
-    if (!newPassword) {
-      messages.push('La nueva contraseña es obligatoria.');
-    }
-
-    if (!passwordPolicy.requiredLength) {
-      messages.push('La contraseña debe tener al menos 8 caracteres.');
-    }
-
-    if (!passwordPolicy.requireUppercase) {
-      messages.push(
-        'La contraseña debe contener al menos una letra mayúscula.'
-      );
-    }
-
-    if (!passwordPolicy.requireLowercase) {
-      messages.push(
-        'La contraseña debe contener al menos una letra minúscula.'
-      );
-    }
-
-    if (!passwordPolicy.requireDigit) {
-      messages.push('La contraseña debe contener al menos un número.');
-    }
-
-    if (!passwordPolicy.requireNonAlphanumeric) {
-      messages.push(
-        'La contraseña debe contener al menos un carácter no alfanumérico.'
-      );
-    }
-
-    if (!passwordPolicy.requiredUniqueChars) {
-      messages.push(
-        'La contraseña debe contener al menos 2 caracteres únicos.'
-      );
-    }
-
-    if (!confirmPassword) {
-      messages.push('La confirmación de contraseña es obligatoria.');
-    }
-
-    if (newPassword && confirmPassword && newPassword !== confirmPassword) {
-      messages.push('La confirmación no coincide con la nueva contraseña.');
+      messages.unshift('El enlace de recuperación no es válido.');
     }
 
     if (messages.length > 0) {
@@ -167,74 +106,7 @@ export default function PasswordReset() {
               onChange={e => setNewPassword(e.target.value)}
             />
 
-            <Stack spacing={0.5}>
-              <Typography variant="subtitle2">Reglas de contraseña</Typography>
-              <Divider />
-              <Typography
-                variant="body2"
-                color={
-                  passwordPolicy.requiredLength
-                    ? 'success.main'
-                    : 'text.secondary'
-                }
-              >
-                {passwordPolicy.requiredLength ? '✓' : '•'} Mínimo 8 caracteres
-              </Typography>
-              <Typography
-                variant="body2"
-                color={
-                  passwordPolicy.requireUppercase
-                    ? 'success.main'
-                    : 'text.secondary'
-                }
-              >
-                {passwordPolicy.requireUppercase ? '✓' : '•'} Al menos una
-                mayúscula
-              </Typography>
-              <Typography
-                variant="body2"
-                color={
-                  passwordPolicy.requireLowercase
-                    ? 'success.main'
-                    : 'text.secondary'
-                }
-              >
-                {passwordPolicy.requireLowercase ? '✓' : '•'} Al menos una
-                minúscula
-              </Typography>
-              <Typography
-                variant="body2"
-                color={
-                  passwordPolicy.requireDigit
-                    ? 'success.main'
-                    : 'text.secondary'
-                }
-              >
-                {passwordPolicy.requireDigit ? '✓' : '•'} Al menos un número
-              </Typography>
-              <Typography
-                variant="body2"
-                color={
-                  passwordPolicy.requireNonAlphanumeric
-                    ? 'success.main'
-                    : 'text.secondary'
-                }
-              >
-                {passwordPolicy.requireNonAlphanumeric ? '✓' : '•'} Al menos un
-                carácter especial
-              </Typography>
-              <Typography
-                variant="body2"
-                color={
-                  passwordPolicy.requiredUniqueChars
-                    ? 'success.main'
-                    : 'text.secondary'
-                }
-              >
-                {passwordPolicy.requiredUniqueChars ? '✓' : '•'} Al menos 2
-                caracteres únicos
-              </Typography>
-            </Stack>
+            <PasswordPolicyChecklist password={newPassword} />
 
             <TextField
               fullWidth

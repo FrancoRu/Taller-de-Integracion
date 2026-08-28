@@ -52,11 +52,13 @@ public class AuthorizationGatingTests : IClassFixture<CustomWebApplicationFactor
     /// <summary>
     /// Expects not-found (missing player), never a permission error —
     /// proves the role check passed and the request reached the handler.
+    /// HU-05: staff is now just Owner/Admin, so Admin stands in for the
+    /// former manager roles here.
     /// </summary>
     [Fact]
     public async Task GetPlayerCompleteData_StaffRole_IsAuthorized()
     {
-        HttpClient client = _factory.CreateAuthenticatedClient(Roles.TeamManager);
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Admin);
 
         HttpResponseMessage response = await client.GetAsync($"api/players/admin/{Guid.NewGuid()}");
 
@@ -77,7 +79,7 @@ public class AuthorizationGatingTests : IClassFixture<CustomWebApplicationFactor
     [Fact]
     public async Task CreateTournament_WrongRole_ReturnsForbidden()
     {
-        HttpClient client = _factory.CreateAuthenticatedClient(Roles.TeamManager);
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Guest);
         CreateTournamentRequest request = BuildTournamentRequest();
 
         HttpResponseMessage response = await client.PostAsJsonAsync("api/tournaments", request);
@@ -131,8 +133,6 @@ public class AuthorizationGatingTests : IClassFixture<CustomWebApplicationFactor
             Description = "Authorization gating test tournament",
             StartDate = startDate,
             TeamRegistrationDeadline = startDate.AddDays(-1),
-            MinTeams = 4,
-            MaxTeams = 32,
         };
     }
 }

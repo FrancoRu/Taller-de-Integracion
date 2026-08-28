@@ -7,6 +7,7 @@ import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { tournamentService } from '@/modules/tournament/service/tournament.service';
 import type { ITournamentResponse } from '@/modules/tournament/type/tournament.d';
 import type { GUID } from '@/modules/core/types/types';
+import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
 
 vi.mock('@/modules/tournament/service/tournament.service');
 vi.mock('sweetalert2', () => ({
@@ -29,9 +30,8 @@ const buildTournament = (
   divisions: [],
   teamRegistrationDeadline: new Date('2026-01-01'),
   startDate: new Date('2026-02-01'),
-  maxTeams: 10,
-  minTeams: 4,
   status: 'Scheduled',
+  category: TournamentCategory.Masculine,
   ...overrides,
 });
 

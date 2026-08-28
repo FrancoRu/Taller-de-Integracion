@@ -23,11 +23,11 @@ namespace API.Controllers;
 /// Controller responsible for managing tournament-related operations.
 /// Provides endpoints for creating, retrieving, updating, deleting, and filtering tournaments,
 /// as well as registering teams to tournaments. Reads are public; writes require Owner or
-/// TournamentManager.
+/// Admin.
 /// </summary>
 [Route("api/tournaments/")]
 [ApiController]
-[Authorize(Roles = Roles.AdminOwnerOrTournamentManager)]
+[Authorize(Roles = Roles.AdminOrOwner)]
 public class TournamentController(
     ITournamentService tournamentService,
     ITeamService teamService,
@@ -50,6 +50,32 @@ public class TournamentController(
     {
         Tournament mappedTournament = mapper.Map<Tournament>(tournamentRequest);
         Tournament createdTournament = await tournamentService.CreateTournamentAsync(mappedTournament);
+        TournamentResponse tournamentResponse = mapper.Map<TournamentResponse>(createdTournament);
+
+        return new ObjectResult(tournamentResponse) { StatusCode = StatusCodes.Status201Created };
+    }
+
+    /// <summary>
+    /// HU-38: creates a whole tournament (base fields + divisions with their
+    /// cups, points, playoff mappings and stages) in a single atomic
+    /// transaction. A failure at any step persists nothing — no partial
+    /// tournament is left behind. The granular endpoints stay available for
+    /// incremental edits.
+    /// </summary>
+    /// <param name="request">The full tournament-wizard payload.</param>
+    /// <returns>
+    /// Returns 201 (Created) with the created tournament (including its divisions).
+    /// Returns 400 (Bad Request) if the payload is invalid or a rule (e.g. a
+    /// division category mismatch) aborts the atomic create.
+    /// Returns 403 (Forbidden) if the user is not authorized.
+    /// </returns>
+    [HttpPost("full")]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TournamentResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<TournamentResponse>> CreateFullTournamentAsync(CreateFullTournamentRequest request)
+    {
+        Tournament createdTournament = await tournamentService.CreateFullTournamentAsync(request);
         TournamentResponse tournamentResponse = mapper.Map<TournamentResponse>(createdTournament);
 
         return new ObjectResult(tournamentResponse) { StatusCode = StatusCodes.Status201Created };
@@ -103,9 +129,20 @@ public class TournamentController(
             return this.NotFoundProblem(nameof(Tournament), id);
         }
 
+        // Status is intentionally excluded from this mapping (see
+        // TournamentProfile): descriptive fields update freely here, but a
+        // status change is a guarded state-machine transition handled below.
         mapper.Map(tournamentRequest, existingTournament);
 
         await tournamentService.UpdateTournamentAsync(existingTournament);
+
+        // Route any requested status change through the forward-only state
+        // machine. A no-op transition (same status) is ignored by the service,
+        // so re-sending the current status on a plain edit is harmless.
+        if (tournamentRequest.Status is TournamentStatus requestedStatus)
+        {
+            await tournamentService.ChangeStatusAsync(id, requestedStatus);
+        }
 
         return NoContent();
     }

@@ -96,8 +96,6 @@ public class DivisionStandingsTests : IClassFixture<CustomWebApplicationFactory>
             Slug = $"tournament-{Guid.NewGuid()}",
             TeamRegistrationDeadline = startDate.AddDays(-1),
             StartDate = startDate,
-            MaxTeams = 8,
-            MinTeams = 2,
             Divisions = [],
             Teams = [],
             CreatedBy = "test",
@@ -140,6 +138,7 @@ public class DivisionStandingsTests : IClassFixture<CustomWebApplicationFactory>
     {
         Division division = new()
         {
+            Slug = $"division-{Guid.NewGuid()}",
             Name = $"Division-{Guid.NewGuid()}",
             Tournament = tournament,
             TournamentId = tournament.Id,
@@ -163,6 +162,7 @@ public class DivisionStandingsTests : IClassFixture<CustomWebApplicationFactory>
     {
         Stage stage = new()
         {
+            Slug = $"stage-{Guid.NewGuid()}",
             Name = $"{stageType}-{Guid.NewGuid()}",
             StageType = stageType,
             IsActive = true,

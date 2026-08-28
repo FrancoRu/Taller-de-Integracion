@@ -11,6 +11,12 @@ public enum TournamentStatus
     /// </summary>
     OpenForRegistration,
     /// <summary>
+    /// Registration has closed. Structural changes (divisions, stages, team
+    /// registrations) are frozen and the fixture has been generated. The
+    /// tournament is waiting to start.
+    /// </summary>
+    RegistrationClosed,
+    /// <summary>
     /// The tournament is currently ongoing.
     /// </summary>
     Ongoing,

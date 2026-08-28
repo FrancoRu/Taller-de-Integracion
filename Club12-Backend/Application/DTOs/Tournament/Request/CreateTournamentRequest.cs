@@ -1,4 +1,4 @@
-﻿using Application.Utils.Constants.Validation;
+﻿using Domain.Enums;
 
 using System;
 using System.ComponentModel.DataAnnotations;
@@ -35,18 +35,10 @@ public class CreateTournamentRequest
     public required DateTime StartDate { get; set; }
 
     /// <summary>
-    /// The maximum number of teams allowed to participate in the tournament.
+    /// Competitive category (gender) of the tournament (HU-48). The feminine
+    /// competition is a separate tournament and cannot share a tournament with
+    /// masculine divisions. Defaults to
+    /// <see cref="TournamentCategory.Masculine"/> when omitted.
     /// </summary>
-    [Required(ErrorMessage = "Max teams is required.")]
-    [Range(TournamentFieldRange.MinAllowedTeams, TournamentFieldRange.MaxAllowedTeams,
-        ErrorMessage = "Max teams must be between 4 and 32.")]
-    public required int MaxTeams { get; set; }
-
-    /// <summary>
-    /// The minimum number of teams required to hold the tournament.
-    /// </summary>
-    [Required(ErrorMessage = "Min teams is required.")]
-    [Range(TournamentFieldRange.MinAllowedTeams, TournamentFieldRange.MaxAllowedTeams,
-        ErrorMessage = "Min teams must be between 4 and 32.")]
-    public required int MinTeams { get; set; }
+    public TournamentCategory Category { get; set; } = TournamentCategory.Masculine;
 }

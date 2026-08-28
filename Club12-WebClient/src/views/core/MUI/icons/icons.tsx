@@ -39,6 +39,11 @@ import FacebookIcon from '@mui/icons-material/Facebook';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import ScienceIcon from '@mui/icons-material/Science';
+import MedicalInformationIcon from '@mui/icons-material/MedicalInformation';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+import EventBusyIcon from '@mui/icons-material/EventBusy';
+import NumbersIcon from '@mui/icons-material/Numbers';
+import HistoryIcon from '@mui/icons-material/History';
 import BackupIcon from '@mui/icons-material/Backup';
 import RestoreIcon from '@mui/icons-material/Restore';
 import StorageIcon from '@mui/icons-material/Storage';
@@ -86,6 +91,11 @@ export {
   LightModeIcon,
   DarkModeIcon,
   ScienceIcon,
+  MedicalInformationIcon,
+  UploadFileIcon,
+  EventBusyIcon,
+  NumbersIcon,
+  HistoryIcon,
   BackupIcon,
   RestoreIcon,
   StorageIcon,

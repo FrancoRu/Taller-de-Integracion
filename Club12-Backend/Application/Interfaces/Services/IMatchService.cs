@@ -30,9 +30,39 @@ public interface IMatchService
 
     Task UpdateMatchAsync(Match matchEntity);
 
+    /// <summary>
+    /// Loads a decisive final result for a match (HU-69/HU-70), rejecting a
+    /// tied score. Returns the updated match, or null if it does not exist.
+    /// </summary>
+    Task<Match?> LoadMatchResultAsync(Guid matchId, int homeScore, int visitorScore);
+
+    /// <summary>
+    /// Applies a walkover result to a match (HU-73), awarding the regulation
+    /// default to the present team. Returns the updated match, or null if it
+    /// does not exist.
+    /// </summary>
+    Task<Match?> LoadWalkOverAsync(Guid matchId, Guid presentTeamId, int? presentTeamScore);
+
+    /// <summary>
+    /// Reprograms/suspends a match (HU-68): marks it
+    /// <see cref="Domain.Enums.MatchStatus.Suspended"/> and optionally moves it
+    /// to a new calendar date, without altering its <see cref="Match.Round"/>
+    /// (HU-67) or the rest of the fixture. Returns the updated match, or null if
+    /// it does not exist.
+    /// </summary>
+    Task<Match?> SuspendMatchAsync(Guid matchId, DateTime? newMatchDate);
+
     Task DeleteMatchAsync(Guid id);
 
     Task<PaginatedResponse<Match>> GetAllMatchesAsync(GetMatchesFilteredRequest filter);
+
+    /// <summary>
+    /// Retrieves every match of a stage ordered by matchday (jornada, HU-63):
+    /// round 1 first, then round 2, … so the caller can render the fixture
+    /// grouped by round ("Fecha 1 / Partido 1..2, Fecha 2 / …") rather than by
+    /// calendar date. Matches without a round (e.g. knockout) sort last.
+    /// </summary>
+    Task<List<Match>> GetStageMatchesByRoundAsync(Guid stageId);
 
     Task<List<Match>> CreateAutomatedMatchesAsync(Guid stageId);
 }

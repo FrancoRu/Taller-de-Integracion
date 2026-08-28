@@ -52,8 +52,6 @@ public static class SampleTournamentBuilder
         DateTime StageEndDate,
         DateTime FinishedMatchesStart,
         DateTime UpcomingMatchesStart,
-        int MinTeams,
-        int MaxTeams,
         DivisionDefinition[] Divisions);
 
     public sealed record BuildResult(Tournament Tournament, List<PlayerSanction> Sanctions);
@@ -83,8 +81,6 @@ public static class SampleTournamentBuilder
             Description = definition.Description,
             TeamRegistrationDeadline = definition.TeamRegistrationDeadline,
             StartDate = definition.StartDate,
-            MinTeams = definition.MinTeams,
-            MaxTeams = definition.MaxTeams,
             Status = TournamentStatus.Ongoing,
             Divisions = [],
             Teams = [],
@@ -112,6 +108,7 @@ public static class SampleTournamentBuilder
             {
                 CreatedBy = CreatedBy,
                 Name = "Fase de Grupos",
+                Slug = SlugGenerator.GenerateSlug($"Fase de Grupos {division.Name} {Guid.NewGuid()}"),
                 StageType = StageType.Group,
                 IsActive = true,
                 StartDate = definition.StageStartDate,
@@ -148,6 +145,7 @@ public static class SampleTournamentBuilder
         {
             CreatedBy = CreatedBy,
             Name = divisionName,
+            Slug = SlugGenerator.GenerateSlug($"{divisionName} {Guid.NewGuid()}"),
             Tournament = tournament,
             Stages = [],
         };
@@ -169,6 +167,18 @@ public static class SampleTournamentBuilder
                 Players = [],
             };
 
+            // Season-scoped participation source of truth, mirroring the
+            // PlayerTeamRegistration seeding below — the denormalized
+            // Team.TournamentId pointer alone is not authoritative.
+            team.TeamTournamentRegistrations.Add(new TeamTournamentRegistration
+            {
+                CreatedBy = CreatedBy,
+                TeamId = Guid.Empty,
+                Team = team,
+                TournamentId = Guid.Empty,
+                Tournament = tournament,
+            });
+
             for (int p = 0; p < 8; p++)
             {
                 playerCounter++;
@@ -182,6 +192,7 @@ public static class SampleTournamentBuilder
                     CreatedBy = CreatedBy,
                     FirstName = firstName,
                     LastName = lastName,
+                    Slug = SlugGenerator.GenerateSlug($"{lastName} {firstName} {documentNumber}"),
                     DocumentNumber = documentNumber,
                     IsSanctioned = false,
                     BirthDate = new DateTime(2026, 8, 18, 0, 0, 0, DateTimeKind.Utc)
@@ -287,6 +298,19 @@ public static class SampleTournamentBuilder
                 Match = match,
                 Type = StatisticType.Assists,
             });
+            // HU-72: mirror the points into PlayerStatistic (Points) so the
+            // goleadores ranking — which now reads PlayerStatistic — reflects
+            // the sample data.
+            match.PlayerStatistics.Add(new PlayerStatistic
+            {
+                CreatedBy = CreatedBy,
+                Value = homeScore,
+                PlayerId = Guid.Empty,
+                Player = homeScorer,
+                MatchId = Guid.Empty,
+                Match = match,
+                Type = StatisticType.Points,
+            });
 
             if (visitorScore > 0)
             {
@@ -299,6 +323,16 @@ public static class SampleTournamentBuilder
                     Points = visitorScore,
                     MatchId = Guid.Empty,
                     Match = match,
+                });
+                match.PlayerStatistics.Add(new PlayerStatistic
+                {
+                    CreatedBy = CreatedBy,
+                    Value = visitorScore,
+                    PlayerId = Guid.Empty,
+                    Player = visitorScorer,
+                    MatchId = Guid.Empty,
+                    Match = match,
+                    Type = StatisticType.Points,
                 });
             }
 
@@ -354,6 +388,7 @@ public static class SampleTournamentBuilder
         {
             CreatedBy = CreatedBy,
             Name = StageTemplate.SemiFinal.Name,
+            Slug = SlugGenerator.GenerateSlug($"{StageTemplate.SemiFinal.Name} {division.Name} {Guid.NewGuid()}"),
             StageType = StageType.SemiFinal,
             IsActive = true,
             IsElimination = true,
@@ -392,6 +427,7 @@ public static class SampleTournamentBuilder
         {
             CreatedBy = CreatedBy,
             Name = StageTemplate.ThirdPlace.Name,
+            Slug = SlugGenerator.GenerateSlug($"{StageTemplate.ThirdPlace.Name} {division.Name} {Guid.NewGuid()}"),
             StageType = StageType.ThirdPlace,
             IsActive = true,
             IsElimination = true,
@@ -414,6 +450,7 @@ public static class SampleTournamentBuilder
         {
             CreatedBy = CreatedBy,
             Name = StageTemplate.Final.Name,
+            Slug = SlugGenerator.GenerateSlug($"{StageTemplate.Final.Name} {division.Name} {Guid.NewGuid()}"),
             StageType = StageType.Final,
             IsActive = true,
             IsElimination = true,
@@ -503,6 +540,17 @@ public static class SampleTournamentBuilder
             Match = match,
             Type = StatisticType.Assists,
         });
+        // HU-72: mirror the points into PlayerStatistic (Points) for the ranking.
+        match.PlayerStatistics.Add(new PlayerStatistic
+        {
+            CreatedBy = CreatedBy,
+            Value = winner == home ? homeScore : visitorScore,
+            PlayerId = Guid.Empty,
+            Player = winnerScorer,
+            MatchId = Guid.Empty,
+            Match = match,
+            Type = StatisticType.Points,
+        });
 
         int loserScore = loser == home ? homeScore : visitorScore;
         if (loserScore > 0)
@@ -516,6 +564,16 @@ public static class SampleTournamentBuilder
                 Points = loserScore,
                 MatchId = Guid.Empty,
                 Match = match,
+            });
+            match.PlayerStatistics.Add(new PlayerStatistic
+            {
+                CreatedBy = CreatedBy,
+                Value = loserScore,
+                PlayerId = Guid.Empty,
+                Player = loserScorer,
+                MatchId = Guid.Empty,
+                Match = match,
+                Type = StatisticType.Points,
             });
         }
 

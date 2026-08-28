@@ -25,7 +25,7 @@ import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 const BRACKET_FETCH_PAGE_SIZE = 100;
 
 const DivisionPage: React.FC = () => {
-  const { divisionId } = useParams<{ divisionId: GUID }>();
+  const { divisionId } = useParams<{ divisionId: string }>();
   const navigate = useNavigate();
   const { division, getDivisionsById } = useDivision();
   const { tournament, getTournamentById } = useTournament();
@@ -69,7 +69,11 @@ const DivisionPage: React.FC = () => {
   }, [division?.tournamentId, tournament?.id, getTournamentById]);
 
   useEffect(() => {
-    if (tab !== 'llaves' || !targetDivisionId) {
+    // Filters below are keyed by the real division GUID, so the elimination
+    // brackets only fetch once the slug-or-id param has resolved to a
+    // loaded division.
+    const resolvedDivisionId = division?.id;
+    if (tab !== 'llaves' || !resolvedDivisionId) {
       return;
     }
 
@@ -78,12 +82,12 @@ const DivisionPage: React.FC = () => {
 
       const [stagesResponse, matchesResponse] = await Promise.all([
         stageService.getStagesByFilters({
-          divisionId: targetDivisionId,
+          divisionId: resolvedDivisionId,
           isElimination: true,
           pageSize: BRACKET_FETCH_PAGE_SIZE,
         }),
         matchService.getMatchByFilter({
-          divisionId: targetDivisionId,
+          divisionId: resolvedDivisionId,
           pageSize: BRACKET_FETCH_PAGE_SIZE,
         }),
       ]);
@@ -118,7 +122,7 @@ const DivisionPage: React.FC = () => {
     };
 
     void fetchBrackets();
-  }, [tab, targetDivisionId]);
+  }, [tab, division?.id]);
 
   const canGenerateStages = useMemo(() => {
     if (!division?.tournamentId || tournament?.id !== division.tournamentId) {
@@ -160,7 +164,10 @@ const DivisionPage: React.FC = () => {
     return <LoadingIndicator />;
   }
 
-  if (!division || division.id !== targetDivisionId) {
+  if (
+    !division ||
+    (division.id !== targetDivisionId && division.slug !== targetDivisionId)
+  ) {
     return (
       <Card>
         <CardContent>
@@ -270,14 +277,14 @@ const DivisionPage: React.FC = () => {
         {tab === 'posiciones' && (
           <DivisionStandings
             positions={division.positions}
-            divisionId={targetDivisionId}
+            divisionId={division.id}
             divisionName={division.name}
           />
         )}
 
         {tab === 'fases' && (
           <StagesPage
-            divisionId={targetDivisionId}
+            divisionId={division.id}
             showGenerateStagesButton={canGenerateStages}
             title={undefined}
             wrapInCard={false}

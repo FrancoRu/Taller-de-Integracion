@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Domain.Enums;
+
+using System;
 using System.Collections.Generic;
 namespace Application.DTOs.Divisions.Response;
 
@@ -17,6 +19,11 @@ public class DivisionResponse
     /// Gets or sets the name of the division.
     /// </summary>
     public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The unique, URL-friendly identifier used in public division links.
+    /// </summary>
+    public string Slug { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets a value indicating whether the division has finished.
@@ -38,4 +45,21 @@ public class DivisionResponse
     /// draws teams from every other division in the tournament.
     /// </summary>
     public bool IsCrossDivisionCup { get; set; }
+
+    /// <summary>
+    /// Competitive category (gender) of the division (HU-48). Always matches
+    /// the parent tournament's category.
+    /// </summary>
+    public TournamentCategory Category { get; set; }
+
+    /// <summary>Points awarded for a win in this division's standings (HU-79).</summary>
+    public int PointsForWin { get; set; }
+
+    /// <summary>Points awarded for a loss in this division's standings (HU-79).</summary>
+    public int PointsForLoss { get; set; }
+
+    /// <summary>
+    /// The division's position-range → playoff-destination mapping (HU-45).
+    /// </summary>
+    public List<PlayoffMappingResponse>? PlayoffMappings { get; set; }
 }

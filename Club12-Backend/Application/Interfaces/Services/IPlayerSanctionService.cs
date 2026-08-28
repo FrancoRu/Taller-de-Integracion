@@ -43,10 +43,30 @@ public interface IPlayerSanctionService
 
     /// <summary>
     /// Retrieves expired player sanctions as of a specific date asynchronously.
+    /// Day-based technical cleanup backstop (HU-75/R1); NOT the source of truth
+    /// for "fechas remaining".
     /// </summary>
     /// <param name="date">The date to check for expired sanctions.</param>
     /// <returns>A collection of expired player sanctions.</returns>
     Task<IEnumerable<PlayerSanction>> GetExpiredSanctionsAsync(DateTime date);
+
+    /// <summary>
+    /// Computes how many FECHAS (jornadas) of a sanction are still to be served
+    /// (HU-75), based on the subject team's finished rounds since the sanction
+    /// was issued. Returns null when it cannot be computed by rounds.
+    /// </summary>
+    /// <param name="sanction">The sanction to evaluate.</param>
+    /// <returns>The fechas remaining, or null when not computable by rounds.</returns>
+    Task<int?> GetFechasRemainingAsync(PlayerSanction sanction);
+
+    /// <summary>
+    /// Determines whether a player has any active sanction — one with fechas
+    /// still to be served (HU-76) — so eligibility stays consistent with the
+    /// fechas-based rule.
+    /// </summary>
+    /// <param name="playerId">The player to check.</param>
+    /// <returns>True when the player has at least one active sanction.</returns>
+    Task<bool> HasActiveSanctionAsync(Guid playerId);
 
     /// <summary>
     /// Retrieves player sanctions with pagination and filtering asynchronously.

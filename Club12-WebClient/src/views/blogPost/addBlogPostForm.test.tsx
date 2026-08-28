@@ -46,6 +46,7 @@ const buildPost = (): BlogPostResponse => ({
   views: 0,
   markdownText: 'contenido',
   createdAt: new Date(),
+  isPublished: true,
 });
 
 describe('AddBlogPostForm', () => {
@@ -146,6 +147,64 @@ describe('AddBlogPostForm', () => {
     await waitFor(() =>
       expect(addBlogPost).toHaveBeenCalledWith(
         expect.objectContaining({ photoFile: file })
+      )
+    );
+  });
+
+  it('sends isPublished true by default (published) on submit (HU-16)', async () => {
+    const addBlogPost = vi.fn().mockResolvedValue(buildPost());
+    mockedUseBlogPost.mockReturnValue({
+      addBlogPost,
+    } as unknown as ReturnType<typeof useBlogPost>);
+    vi.spyOn(confirmDialog, 'notifySuccess').mockResolvedValue(undefined);
+
+    render(
+      <MemoryRouter>
+        <AddBlogPostForm />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByRole('textbox', { name: /autor/i }), {
+      target: { value: 'Juan' },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: /título/i }), {
+      target: { value: 'Gran final' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar' }));
+
+    await waitFor(() =>
+      expect(addBlogPost).toHaveBeenCalledWith(
+        expect.objectContaining({ isPublished: true })
+      )
+    );
+  });
+
+  it('sends isPublished false when saved as a draft (HU-16)', async () => {
+    const addBlogPost = vi.fn().mockResolvedValue(buildPost());
+    mockedUseBlogPost.mockReturnValue({
+      addBlogPost,
+    } as unknown as ReturnType<typeof useBlogPost>);
+    vi.spyOn(confirmDialog, 'notifySuccess').mockResolvedValue(undefined);
+
+    render(
+      <MemoryRouter>
+        <AddBlogPostForm />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByRole('textbox', { name: /autor/i }), {
+      target: { value: 'Juan' },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: /título/i }), {
+      target: { value: 'Gran final' },
+    });
+    // Toggle the draft/published switch off -> draft.
+    fireEvent.click(screen.getByRole('switch'));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar borrador' }));
+
+    await waitFor(() =>
+      expect(addBlogPost).toHaveBeenCalledWith(
+        expect.objectContaining({ isPublished: false })
       )
     );
   });

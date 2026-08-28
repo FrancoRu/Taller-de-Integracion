@@ -167,7 +167,7 @@ describe('DataAdministrationPage — Admin-only guard', () => {
   it('denies access to a non-Admin', () => {
     mockedUseAuth.mockReturnValue({
       isAuthenticated: true,
-      role: UserRolesType.TeamManager,
+      role: UserRolesType.Owner,
     } as ReturnType<typeof useAuth>);
 
     renderGuarded();

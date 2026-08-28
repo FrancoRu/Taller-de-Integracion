@@ -145,6 +145,7 @@ public class PlayerSanctionServiceTests : IClassFixture<CustomWebApplicationFact
         IEnumerable<PlayerSanction> result = await sanctionService.GetExpiredSanctionsAsync(cutoffDate);
 
         PlayerSanction returned = Assert.Single(result, s => s.Id == sanction.Id);
+        Assert.NotNull(sanction.Player);
         Assert.NotNull(returned.Player);
         Assert.Equal(sanction.Player.Id, returned.Player.Id);
         Assert.Equal(sanction.Player.DocumentNumber, returned.Player.DocumentNumber);
@@ -169,8 +170,6 @@ public class PlayerSanctionServiceTests : IClassFixture<CustomWebApplicationFact
             Slug = $"tournament-{Guid.NewGuid()}",
             TeamRegistrationDeadline = issuedDate.AddDays(-1),
             StartDate = issuedDate,
-            MaxTeams = 8,
-            MinTeams = 2,
             Divisions = [],
             Teams = [],
             CreatedBy = "test",
@@ -178,6 +177,7 @@ public class PlayerSanctionServiceTests : IClassFixture<CustomWebApplicationFact
 
         Division division = new()
         {
+            Slug = $"division-{Guid.NewGuid()}",
             Id = divisionId,
             Name = $"Division-{Guid.NewGuid()}",
             Tournament = tournament,
@@ -187,6 +187,7 @@ public class PlayerSanctionServiceTests : IClassFixture<CustomWebApplicationFact
 
         Stage stage = new()
         {
+            Slug = $"stage-{Guid.NewGuid()}",
             Id = stageId,
             Name = $"Stage-{Guid.NewGuid()}",
             StageType = StageType.Group,
@@ -213,6 +214,7 @@ public class PlayerSanctionServiceTests : IClassFixture<CustomWebApplicationFact
 
         Player player = new()
         {
+            Slug = $"player-{Guid.NewGuid()}",
             FirstName = "Expiry",
             LastName = "Tester",
             DocumentNumber = Guid.NewGuid().ToString("N")[..10],

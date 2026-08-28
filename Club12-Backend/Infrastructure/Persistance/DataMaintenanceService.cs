@@ -2,6 +2,7 @@ using Application.DTOs.DataMaintenance.Response;
 using Application.Interfaces.Services;
 
 using Domain.Entities.Models;
+using Domain.Enums;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -15,7 +16,10 @@ using System.Threading.Tasks;
 namespace Infrastructure.Persistance;
 
 /// <inheritdoc cref="IDataMaintenanceService"/>
-public sealed class DataMaintenanceService(ApplicationDBContext db, ILogger<DataMaintenanceService> logger)
+public sealed class DataMaintenanceService(
+    ApplicationDBContext db,
+    ILogger<DataMaintenanceService> logger,
+    IAuditService auditService)
     : IDataMaintenanceService
 {
     private static readonly string[] Tournament1PrimeraNames =
@@ -77,6 +81,16 @@ public sealed class DataMaintenanceService(ApplicationDBContext db, ILogger<Data
                 playerSanctions, playerStatistics, scorers, stageTeamMatches,
                 playerTeamRegistrations, stages, venues, blogPosts);
 
+            // HU-101: record the destructive wipe for traceability. Written
+            // after commit so it survives the wipe (the audit table is not part
+            // of the tournament-domain data being deleted).
+            await auditService.LogAsync(
+                AuditAction.DataWipe,
+                detail:
+                    $"Wiped tournament-domain data: {tournaments} tournaments, {teams} teams, " +
+                    $"{players} players, {matches} matches.",
+                ct: ct);
+
             return new DataWipeResult(
                 Tournaments: tournaments,
                 Divisions: divisions,
@@ -110,9 +124,9 @@ public sealed class DataMaintenanceService(ApplicationDBContext db, ILogger<Data
 
         List<Venue> venues =
         [
-            new() { CreatedBy = Domain.Constants.AuditConstants.SystemUser, Name = "Polideportivo Municipal", Address = "Av. Siempre Viva 1234" },
-            new() { CreatedBy = Domain.Constants.AuditConstants.SystemUser, Name = "Cancha Norte", Address = "Calle Los Andes 850" },
-            new() { CreatedBy = Domain.Constants.AuditConstants.SystemUser, Name = "Estadio Club12", Address = "Ruta 5 km 12" },
+            new() { CreatedBy = Domain.Constants.AuditConstants.SystemUser, Name = "Polideportivo Municipal", Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug("Polideportivo Municipal"), Address = "Av. Siempre Viva 1234" },
+            new() { CreatedBy = Domain.Constants.AuditConstants.SystemUser, Name = "Cancha Norte", Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug("Cancha Norte"), Address = "Calle Los Andes 850" },
+            new() { CreatedBy = Domain.Constants.AuditConstants.SystemUser, Name = "Estadio Club12", Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug("Estadio Club12"), Address = "Ruta 5 km 12" },
         ];
 
         SampleTournamentBuilder.TournamentDefinition tournament1 = new(
@@ -124,8 +138,6 @@ public sealed class DataMaintenanceService(ApplicationDBContext db, ILogger<Data
             StageEndDate: new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
             FinishedMatchesStart: new DateTime(2026, 6, 8, 0, 0, 0, DateTimeKind.Utc),
             UpcomingMatchesStart: new DateTime(2026, 9, 7, 0, 0, 0, DateTimeKind.Utc),
-            MinTeams: 4,
-            MaxTeams: 16,
             Divisions:
             [
                 new("Primera División", Tournament1PrimeraNames, Tournament1PrimeraCodes, Tournament1PrimeraColors),
@@ -141,8 +153,6 @@ public sealed class DataMaintenanceService(ApplicationDBContext db, ILogger<Data
             StageEndDate: new DateTime(2027, 1, 15, 0, 0, 0, DateTimeKind.Utc),
             FinishedMatchesStart: new DateTime(2026, 10, 8, 0, 0, 0, DateTimeKind.Utc),
             UpcomingMatchesStart: new DateTime(2026, 12, 14, 0, 0, 0, DateTimeKind.Utc),
-            MinTeams: 4,
-            MaxTeams: 16,
             Divisions:
             [
                 new("Primera División", Tournament2PrimeraNames, Tournament2PrimeraCodes, Tournament2PrimeraColors),

@@ -20,4 +20,10 @@ public class UpdateBlogPostRequest
     /// The updated author of the blog post.
     /// </summary>
     public string? Author { get; set; }
+
+    /// <summary>
+    /// The updated publication state (HU-16). Null leaves the current state
+    /// unchanged; true publishes, false turns the post back into a draft.
+    /// </summary>
+    public bool? IsPublished { get; set; }
 }

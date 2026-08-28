@@ -1,7 +1,9 @@
 const routes = {
   apiUrl: '/api',
 
+  auditLogs: 'audit-logs',
   backups: 'backups',
+  clubs: 'clubs',
   blogposts: 'blogposts',
   maintenance: 'maintenance',
   dataMaintenance: 'data-maintenance',
@@ -9,10 +11,12 @@ const routes = {
   stages: 'stages',
   matches: 'matches',
   matchSeries: 'match-series',
+  medicalRecords: 'medical-records',
   players: 'players',
   scorer: 'scorer',
   playerSanctions: 'player-sanctions',
   playerStatistics: 'player-statistics',
+  statistics: 'statistics',
   staff: 'staffs',
   teams: 'teams',
   tournaments: 'tournaments',

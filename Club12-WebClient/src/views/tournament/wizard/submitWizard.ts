@@ -2,7 +2,9 @@ import { GUID } from '@/modules/core/types/types';
 import { IAddTournamentRequest, ITournamentResponse } from '@/modules/tournament/type/tournament.d';
 import { AddDivisionRequest, IDivisionResponse } from '@/modules/division/type/division';
 import { IAddStageRequest, IStageResponse, StageType } from '@/modules/stage/type/stage';
-import { CupConfig, STAGE_TYPE_LABELS, WizardState, ZoneConfig } from './types';
+import { PlayoffMappingRequest } from '@/modules/division/type/division.d';
+import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
+import { CupConfig, PlayoffMappingConfig, STAGE_TYPE_LABELS, WizardState, ZoneConfig } from './types';
 import { resolveCrossCupTeamIds } from './wizardLogic';
 
 /**
@@ -37,6 +39,21 @@ const addDays = (date: Date, days: number): Date => {
 };
 
 const roundLabel = (stageType: StageType): string => STAGE_TYPE_LABELS[stageType];
+
+/**
+ * Maps the wizard's local playoff-range rows (HU-45) to the backend
+ * `PlayoffMappingRequest` shape, dropping the local React `id` and any
+ * still-blank row (no destination cup chosen yet) so half-filled drafts
+ * never reach the API.
+ */
+const toPlayoffMappingRequests = (mappings: PlayoffMappingConfig[]): PlayoffMappingRequest[] =>
+  mappings
+    .filter(mapping => mapping.destination.trim().length > 0)
+    .map(mapping => ({
+      fromPosition: mapping.fromPosition,
+      toPosition: mapping.toPosition,
+      destination: mapping.destination.trim(),
+    }));
 
 /**
  * Creates the cup's elimination stages (structure only — bracket name and
@@ -87,12 +104,27 @@ const createZoneStructure = async (
   cups: CupConfig[],
   startDate: Date,
   isCrossDivisionCup: boolean,
+  pointsForWin: number,
+  pointsForLoss: number,
+  playoffMappings: PlayoffMappingConfig[],
+  category: TournamentCategory,
   warnings: string[]
 ): Promise<IDivisionResponse | null> => {
   const division = await services.addDivision({
     name: zoneName,
     tournamentId,
     isCrossDivisionCup,
+    // Per-division scoring (HU-79) and position-range → cup mappings
+    // (HU-45). The backend uses the mappings to seed each cup from the
+    // final group-stage table (HU-81) when the tournament closes.
+    pointsForWin,
+    pointsForLoss,
+    // HU-48: every division MUST carry the tournament's category. The backend
+    // rejects a division whose category differs from its tournament, and its
+    // Division.Category defaults to Masculine — so a Feminine tournament would
+    // have its zones rejected unless we send Feminine explicitly here.
+    category,
+    playoffMappings: toPlayoffMappingRequests(playoffMappings),
   });
 
   if (!division) {
@@ -139,6 +171,14 @@ const createZoneStructure = async (
       if (!assigned) {
         warnings.push(`No se pudieron asignar los equipos a la fase de grupos de "${zoneName}".`);
       } else {
+        // HU-38 (PARTIAL): the CANONICAL fixture trigger is the tournament's
+        // status transition to "Inscripción cerrada" — the backend generates
+        // the group-stage fixture there. This wizard-time call predates that
+        // and is kept only so the admin sees a fixture immediately; it is
+        // safe to leave because the backend generator is IDEMPOTENT (a second
+        // pass on the same stage does not duplicate matches), so the two
+        // triggers never double-generate. Do NOT add a second generateMatches
+        // call anywhere in this flow.
         const generated = await services.generateMatches(groupStage.id);
         if (!generated) {
           warnings.push(`No se pudo generar el fixture de la fase de grupos de "${zoneName}".`);
@@ -175,8 +215,8 @@ export const submitWizard = async (
     description: state.tournament.description.trim(),
     startDate: new Date(state.tournament.startDate),
     teamRegistrationDeadline: new Date(state.tournament.teamRegistrationDeadline),
-    minTeams: state.tournament.minTeams,
-    maxTeams: state.tournament.maxTeams,
+    // HU-48: the category is set at creation and immutable afterwards.
+    category: state.tournament.category,
   });
 
   if (!tournament) {
@@ -196,6 +236,10 @@ export const submitWizard = async (
       zone.cups,
       startDate,
       false,
+      zone.pointsForWin,
+      zone.pointsForLoss,
+      zone.playoffMappings,
+      state.tournament.category,
       warnings
     );
   }
@@ -211,6 +255,10 @@ export const submitWizard = async (
       state.crossCup.cups,
       startDate,
       true,
+      state.crossCup.pointsForWin,
+      state.crossCup.pointsForLoss,
+      state.crossCup.playoffMappings,
+      state.tournament.category,
       warnings
     );
   }

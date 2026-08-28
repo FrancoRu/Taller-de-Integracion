@@ -1,14 +1,6 @@
 import { GUID } from '@/modules/core/types/types';
 import { StageType } from '@/modules/stage/type/stage';
-
-/**
- * Mirrors the backend's Application.Utils.Constants.Validation.TournamentFieldRange
- * (CreateTournamentRequest.MinTeams/MaxTeams are both [Range(4, 32)]). Kept
- * here rather than defaulting to arbitrary values so a tournament created
- * with the wizard's defaults always passes backend validation.
- */
-export const MIN_ALLOWED_TOURNAMENT_TEAMS = 4;
-export const MAX_ALLOWED_TOURNAMENT_TEAMS = 32;
+import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
 
 /**
  * Elimination round types the wizard can add to a cup, in typical
@@ -25,6 +17,10 @@ export const ELIMINATION_STAGE_TYPES: StageType[] = [
 
 export const BEST_OF_OPTIONS = [1, 3, 5, 7];
 export const ROUND_ROBIN_LEGS_OPTIONS = [1, 2, 3];
+
+/** Default points a division awards for a win / a loss (HU-79, e.g. FIBA 2/1). No draw points (HU-70). */
+export const DEFAULT_POINTS_FOR_WIN = 2;
+export const DEFAULT_POINTS_FOR_LOSS = 1;
 
 /** Spanish display labels for each stage type, shared by the cup editor and the review-step tree preview. */
 export const STAGE_TYPE_LABELS: Record<StageType, string> = {
@@ -57,9 +53,26 @@ export interface CupConfig {
 }
 
 /**
+ * One position-range → playoff-destination row the admin defines for a
+ * division (HU-45): the teams finishing between `fromPosition` and
+ * `toPosition` (inclusive, 1-based) in the group-stage table qualify for
+ * the cup named `destination` (a configured cup's name / BracketName).
+ * Ranges within a division must not overlap and must stay within the
+ * division's team count; positions left uncovered simply don't advance.
+ * `id` is a local React key only — never sent to the API.
+ */
+export interface PlayoffMappingConfig {
+  id: string;
+  fromPosition: number;
+  toPosition: number;
+  destination: string;
+}
+
+/**
  * One admin-named zone (division) of the tournament: a subset of the
- * registered teams, an optional group stage, and zero or more parallel
- * playoff cups.
+ * registered teams, an optional group stage, zero or more parallel playoff
+ * cups, its own points-per-win/loss (HU-79), and the position-range →
+ * playoff mappings that seed those cups (HU-45).
  */
 export interface ZoneConfig {
   id: string;
@@ -68,6 +81,9 @@ export interface ZoneConfig {
   hasGroupStage: boolean;
   roundRobinLegs: number;
   cups: CupConfig[];
+  pointsForWin: number;
+  pointsForLoss: number;
+  playoffMappings: PlayoffMappingConfig[];
 }
 
 /**
@@ -83,6 +99,9 @@ export interface CrossCupConfig {
   hasGroupStage: boolean;
   roundRobinLegs: number;
   cups: CupConfig[];
+  pointsForWin: number;
+  pointsForLoss: number;
+  playoffMappings: PlayoffMappingConfig[];
 }
 
 export interface TournamentStepState {
@@ -90,8 +109,13 @@ export interface TournamentStepState {
   description: string;
   startDate: string;
   teamRegistrationDeadline: string;
-  minTeams: number;
-  maxTeams: number;
+  /**
+   * Competitive category (gender) of the tournament (HU-48). Chosen here and
+   * threaded onto both the tournament and every division the wizard creates,
+   * so a Feminine tournament's zones are not rejected by the backend's
+   * category-match rule.
+   */
+  category: TournamentCategory;
 }
 
 export interface WizardState {
@@ -121,6 +145,13 @@ export const createEmptyCup = (): CupConfig => ({
   rounds: [createEmptyRound()],
 });
 
+export const createEmptyPlayoffMapping = (): PlayoffMappingConfig => ({
+  id: nextLocalId(),
+  fromPosition: 1,
+  toPosition: 1,
+  destination: '',
+});
+
 export const createEmptyZone = (): ZoneConfig => ({
   id: nextLocalId(),
   name: '',
@@ -128,6 +159,9 @@ export const createEmptyZone = (): ZoneConfig => ({
   hasGroupStage: true,
   roundRobinLegs: 1,
   cups: [],
+  pointsForWin: DEFAULT_POINTS_FOR_WIN,
+  pointsForLoss: DEFAULT_POINTS_FOR_LOSS,
+  playoffMappings: [],
 });
 
 export const createInitialWizardState = (): WizardState => ({
@@ -136,8 +170,7 @@ export const createInitialWizardState = (): WizardState => ({
     description: '',
     startDate: '',
     teamRegistrationDeadline: '',
-    minTeams: MIN_ALLOWED_TOURNAMENT_TEAMS,
-    maxTeams: MAX_ALLOWED_TOURNAMENT_TEAMS,
+    category: TournamentCategory.Masculine,
   },
   selectedTeamIds: [],
   zones: [],
@@ -149,5 +182,8 @@ export const createInitialWizardState = (): WizardState => ({
     hasGroupStage: true,
     roundRobinLegs: 1,
     cups: [],
+    pointsForWin: DEFAULT_POINTS_FOR_WIN,
+    pointsForLoss: DEFAULT_POINTS_FOR_LOSS,
+    playoffMappings: [],
   },
 });

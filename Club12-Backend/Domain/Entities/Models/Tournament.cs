@@ -39,19 +39,18 @@ public class Tournament : EntityBase
     public required DateTime StartDate { get; set; }
 
     /// <summary>
-    /// The maximum number of teams allowed to participate in the tournament.
-    /// </summary>
-    public required int MaxTeams { get; set; }
-
-    /// <summary>
-    /// The minimum number of teams required to hold the tournament.
-    /// </summary>
-    public required int MinTeams { get; set; }
-
-    /// <summary>
     /// Current lifecycle status of the tournament.
     /// </summary>
     public TournamentStatus Status { get; set; } = TournamentStatus.Scheduled;
+
+    /// <summary>
+    /// Competitive category (gender) of the tournament (HU-48). By club rule
+    /// the feminine competition is a separate tournament, so every division in
+    /// this tournament must share this category — it is the source of truth for
+    /// the "no mixing feminine and masculine" invariant. Defaults to
+    /// <see cref="TournamentCategory.Masculine"/>.
+    /// </summary>
+    public TournamentCategory Category { get; set; } = TournamentCategory.Masculine;
 
     /// <summary>
     /// The divisions associated with the tournament.

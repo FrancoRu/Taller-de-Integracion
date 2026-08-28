@@ -22,8 +22,6 @@ test('wizard creates Femenino Clausura: its own tournament, 1 zone, group + Oro-
     description: 'Torneo femenino Club12 La Vuelta, temporada 2026 — Clausura.',
     startDate: '2026-10-01',
     teamRegistrationDeadline: '2026-09-15',
-    minTeams: 4,
-    maxTeams: 12,
   });
 
   await selectTeams(page, withTournamentSuffix(FEMENINO_TEAMS, FEMENINO_TOURNAMENT_NAME));

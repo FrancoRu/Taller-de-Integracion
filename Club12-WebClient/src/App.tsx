@@ -7,7 +7,6 @@ import '@fontsource/oswald/600.css';
 import '@fontsource/oswald/700.css';
 import { ReactElement } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { Box } from '@mui/material';
 import Home from './views/home/home';
 import PublicTeamPage from './views/home/teams/PublicTeamPage';
 import PublicSanctionsPage from './views/home/sanctions/PublicSanctionsPage';
@@ -23,12 +22,11 @@ import Login from './views/auth/login';
 import routes from './modules/core/constants/routes';
 import { APP_ROUTES } from './modules/core/constants/appRoutes';
 import HowWeAre from './views/home/howWeAre/howWeAre';
-import NavMenu from './views/home/NavMenu/navMenu';
-import Footer from './views/home/Footer/Footer';
 import { useAuth } from './modules/auth/hook/auth.hook';
 import MedicalRecord from './views/home/information/medicalRecord';
 import Regulation from './views/home/information/regulation';
 import SidebarLayout from './views/core/components/SidebarLayout';
+import PublicLayout from './views/core/components/PublicLayout';
 import PlayersPage from './views/player/PlayersPage';
 import PlayerPage from './views/player/PlayerPage';
 import TeamPage from './views/team/TeamPage';
@@ -49,18 +47,23 @@ import MatchCreatePage from './views/match/matchCreatePage';
 import UsersPage from './views/panel/UsersPage';
 import UserDetails from './views/user/userDetails';
 import CreateUser from './views/user/createUser';
+import InviteUser from './views/user/inviteUser';
 import EditUser from './views/user/editUser';
 import ChangePasswordPage from './views/panel/ChangePasswordPage';
 import StatisticsPage from './views/panel/StatisticsPage';
+import AuditLogsPage from './views/panel/AuditLogsPage';
 import DataAdministrationPage from './views/panel/DataAdministrationPage';
 import { UserRolesType } from './modules/core/enum/user/userRolesType';
 import InvalidToken from './views/core/errors/invalidToken';
 import Forbidden from './views/core/errors/forbidden';
 import NotFound from './views/core/errors/NotFound';
 import PasswordReset from './views/auth/passwordReset';
+import ForgotPassword from './views/auth/forgotPassword';
+import ActivateAccount from './views/auth/activateAccount';
 import PrivateRoute from './views/core/privateRoute';
 import TeamsPage from './views/team/TeamsPage';
 import TeamRegisterPage from './views/team/TeamRegisterPage';
+import ClubHistoryPage from './views/club/ClubHistoryPage';
 import PlayerSanctionsPage from './views/playerSanction/PlayerSanctionsPage';
 import PlayerSanctionPage from './views/playerSanction/PlayerSanctionPage';
 import PlayerSanctionEditPage from './views/playerSanction/playerSanctionEditPage';
@@ -69,8 +72,6 @@ import VenuePage from './views/venue/venuePage';
 import ScorersPage from './views/scorer/scorersPage';
 
 const FIRST_TAB_BY_ROLE: Partial<Record<UserRolesType, string>> = {
-  [UserRolesType.TeamManager]: APP_ROUTES.panelPlayers,
-  [UserRolesType.TournamentManager]: APP_ROUTES.panelTournaments,
   [UserRolesType.Owner]: APP_ROUTES.panelTournaments,
   [UserRolesType.Admin]: APP_ROUTES.panelUsers,
 };
@@ -85,202 +86,142 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
   { path: APP_ROUTES.passwordReset, element: <PasswordReset /> },
   {
     path: APP_ROUTES.panelPlayers,
-    allowedRoles: [UserRolesType.TeamManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Owner],
     element: <PlayersPage />,
   },
   {
     path: APP_ROUTES.panelPlayer.pattern,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-      UserRolesType.TeamManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <PlayerPage />,
   },
   {
     path: APP_ROUTES.panelTeam,
-    allowedRoles: [UserRolesType.TeamManager],
+    allowedRoles: [UserRolesType.Owner],
     element: <TeamPage />,
   },
   {
     path: APP_ROUTES.panelTeamDetail.pattern,
-    allowedRoles: [
-      UserRolesType.TeamManager,
-      UserRolesType.TournamentManager,
-      UserRolesType.Owner,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <TeamPage />,
   },
   {
     path: APP_ROUTES.panelTournament,
-    allowedRoles: [UserRolesType.TournamentManager],
+    allowedRoles: [UserRolesType.Owner],
     element: <TournamentPage />,
   },
   {
     path: APP_ROUTES.panelTournamentDetail.pattern,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <TournamentPage />,
   },
   {
     path: APP_ROUTES.panelTournamentEdit.pattern,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <TournamentEditPage />,
   },
   {
     path: APP_ROUTES.panelTeams,
-    allowedRoles: [UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Owner],
     element: <TeamsPage title="Equipos" wrapInCard />,
   },
   {
+    path: APP_ROUTES.panelClub.pattern,
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
+    element: <ClubHistoryPage />,
+  },
+  {
     path: APP_ROUTES.panelTeamRegister,
-    allowedRoles: [UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Owner],
     element: <TeamRegisterPage />,
   },
   {
     path: APP_ROUTES.panelSanctions,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <PlayerSanctionsPage />,
   },
   {
     path: APP_ROUTES.panelSanction.pattern,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <PlayerSanctionPage />,
   },
   {
     path: APP_ROUTES.panelSanctionEdit.pattern,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <PlayerSanctionEditPage />,
   },
   {
     path: APP_ROUTES.panelScorers,
-    allowedRoles: [UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Owner],
     element: <ScorersPage />,
   },
   {
     path: APP_ROUTES.panelVenues,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <VenuesPage />,
   },
   {
     path: APP_ROUTES.panelVenue.pattern,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.TournamentManager, UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <VenuePage />,
   },
   {
     path: APP_ROUTES.panelTournaments,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <TournamentsPage />,
   },
   {
     path: APP_ROUTES.panelTournamentWizard,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <TournamentWizardPage />,
   },
   {
     path: APP_ROUTES.panelDivisions,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <DivisionsPage wrapInCard />,
   },
   {
     path: APP_ROUTES.panelDivisionCreate,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <DivisionCreatePage />,
   },
   {
     path: APP_ROUTES.panelDivision.pattern,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <DivisionPage />,
   },
   {
     path: APP_ROUTES.panelStages,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <StagesPage wrapInCard />,
   },
   {
     path: APP_ROUTES.panelStageCreate,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <StageCreatePage />,
   },
   {
     path: APP_ROUTES.panelStageEdit.pattern,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <StageEditPage />,
   },
   {
     path: APP_ROUTES.panelStage.pattern,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <StagePage />,
   },
   {
     path: APP_ROUTES.panelMatches,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <MatchesPage wrapInCard />,
   },
   {
     path: APP_ROUTES.panelMatchCreate,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <MatchCreatePage />,
   },
   {
     path: APP_ROUTES.panelMatch.pattern,
-    allowedRoles: [
-      UserRolesType.Admin,
-      UserRolesType.Owner,
-      UserRolesType.TournamentManager,
-    ],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <MatchPage />,
   },
   {
@@ -307,6 +248,11 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
     path: APP_ROUTES.panelUserCreate,
     allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <CreateUser />,
+  },
+  {
+    path: APP_ROUTES.panelUserInvite,
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
+    element: <InviteUser />,
   },
   {
     path: APP_ROUTES.panelUserEdit.pattern,
@@ -338,6 +284,11 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
     element: <StatisticsPage />,
   },
   {
+    path: APP_ROUTES.panelAuditLogs,
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
+    element: <AuditLogsPage />,
+  },
+  {
     path: APP_ROUTES.panelDataAdministration,
     allowedRoles: [UserRolesType.Admin],
     element: <DataAdministrationPage />,
@@ -366,8 +317,6 @@ const PUBLIC_ROUTES: PublicRouteConfig[] = [
   },
   { path: APP_ROUTES.publicBlog, element: <BlogListPage /> },
   { path: APP_ROUTES.blogPost.pattern, element: <BlogPostDetailPage /> },
-  { path: APP_ROUTES.login, element: <Login /> },
-  { path: '*', element: <NotFound /> },
 ];
 
 function App() {
@@ -406,18 +355,20 @@ function App() {
     );
   }
 
+  // Login (HU-02) and the 404/NotFound catch-all (HU-04) must render without
+  // the public header/footer, so they sit outside the PublicLayout chrome.
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <NavMenu />
-      <Box component="main" sx={{ flex: 1 }}>
-        <Routes>
-          {PUBLIC_ROUTES.map(({ path, element }) => (
-            <Route key={path} path={path} element={element} />
-          ))}
-        </Routes>
-      </Box>
-      <Footer />
-    </Box>
+    <Routes>
+      <Route element={<PublicLayout />}>
+        {PUBLIC_ROUTES.map(({ path, element }) => (
+          <Route key={path} path={path} element={element} />
+        ))}
+      </Route>
+      <Route path={APP_ROUTES.login} element={<Login />} />
+      <Route path={APP_ROUTES.forgotPassword} element={<ForgotPassword />} />
+      <Route path={APP_ROUTES.activate} element={<ActivateAccount />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 

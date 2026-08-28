@@ -27,5 +27,7 @@ public class PlayerProfile : Profile
         _ = CreateMap<CreatePlayerRequest, Player>();
 
         _ = CreateMap<UpdatePlayerRequest, Player>();
+
+        _ = CreateMap<PlayerTeamRegistration, PlayerRegistrationResponse>();
     }
 }

@@ -4,48 +4,46 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
+  Divider,
   Grid,
+  MenuItem,
   Stack,
   Tab,
   Tabs,
+  TextField,
   Typography,
 } from '@mui/material';
 import { GUID } from '@/modules/core/types/types';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
+import { TOURNAMENT_CATEGORY_LABELS } from '@/modules/core/enum/tournament/tournamentCategory';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import DivisionsPage from '@/views/division/divisionsPage';
 import TeamsPage from '@/views/team/TeamsPage';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
-import { TOURNAMENT_STATUS_LABEL } from '@/modules/tournament/utils/tournamentDisplay';
-
-const resolveTournamentStatus = (status: unknown): TournamentStatus => {
-  if (typeof status === 'string') {
-    if (
-      status === TournamentStatus.Scheduled ||
-      status === TournamentStatus.OpenForRegistration ||
-      status === TournamentStatus.Ongoing ||
-      status === TournamentStatus.Finished ||
-      status === TournamentStatus.Canceled
-    ) {
-      return status;
-    }
-  }
-
-  return TournamentStatus.Scheduled;
-};
+import {
+  TOURNAMENT_STATUS_LABEL,
+  resolveTournamentStatus,
+} from '@/modules/tournament/utils/tournamentDisplay';
+import { getNextStatusOptions } from '@/modules/tournament/utils/tournamentStatusTransitions';
+import { IPutTournamentRequest } from '@/modules/tournament/type/tournament';
+import { confirmAction } from '@/modules/core/utils/confirmDialog';
+import { formatDateAr } from '@/modules/core/utils/formatDate';
 
 const TournamentPage: React.FC = () => {
   const { tournamentId } = useParams<{ tournamentId: GUID }>();
   const navigate = useNavigate();
   const { role } = useAuth();
-  const { tournament, getTournamentById } = useTournament();
+  const { tournament, getTournamentById, putTournamentById } = useTournament();
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<'detalle' | 'divisiones' | 'equipos'>(
     'detalle'
   );
+  const [targetStatus, setTargetStatus] = useState<TournamentStatus | ''>('');
+  const [changingStatus, setChangingStatus] = useState(false);
 
   useEffect(() => {
     if (!tournamentId) {
@@ -123,10 +121,62 @@ const TournamentPage: React.FC = () => {
   }
 
   const canEditTournament =
-    role === UserRolesType.Owner || role === UserRolesType.TournamentManager;
+    role === UserRolesType.Owner || role === UserRolesType.Admin;
+
+  const currentStatus = resolveTournamentStatus(tournament.status);
+  const nextStatusOptions = getNextStatusOptions(currentStatus);
+  const canChangeStatus = canEditTournament && nextStatusOptions.length > 0;
 
   const handleCreateDivision = () => {
     navigate(`${APP_ROUTES.panelDivisionCreate}?tournamentId=${tournament.id}`);
+  };
+
+  const handleChangeStatus = async () => {
+    if (!targetStatus) {
+      return;
+    }
+
+    const label = TOURNAMENT_STATUS_LABEL[targetStatus];
+
+    // Closing registration is the fixture-generation trigger on the backend;
+    // make that consequence explicit before the admin commits to it.
+    const confirmed =
+      targetStatus === TournamentStatus.RegistrationClosed
+        ? await confirmAction({
+            title: 'Cerrar inscripción',
+            text: 'Se cerrará la inscripción y se generará automáticamente el fixture del torneo. Esta acción no se puede revertir. ¿Continuar?',
+            confirmButtonText: 'Cerrar y generar fixture',
+          })
+        : await confirmAction({
+            title: `Cambiar estado a "${label}"`,
+            text: 'El cambio de estado sigue el flujo del torneo y no se puede revertir. ¿Continuar?',
+            confirmButtonText: 'Cambiar estado',
+          });
+
+    if (!confirmed) {
+      return;
+    }
+
+    // The status-change endpoint is the tournament PUT: the backend routes the
+    // requested status through its forward-only state machine and rejects an
+    // invalid transition with 409, which the global error handler surfaces to
+    // the user. Only valid next statuses are offered above, so a 409 here only
+    // happens on a stale view (someone else advanced the tournament first).
+    const payload: IPutTournamentRequest = {
+      name: tournament.name,
+      description: tournament.description,
+      startDate: new Date(tournament.startDate),
+      teamRegistrationDeadline: new Date(tournament.teamRegistrationDeadline),
+      status: targetStatus,
+    };
+
+    setChangingStatus(true);
+    try {
+      await putTournamentById(tournament.id, payload);
+      setTargetStatus('');
+    } finally {
+      setChangingStatus(false);
+    }
   };
 
   return (
@@ -140,7 +190,14 @@ const TournamentPage: React.FC = () => {
             mb: 2
           }}>
           <Grid>
-            <Typography variant="h6">{tournament.name}</Typography>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+              <Typography variant="h6">{tournament.name}</Typography>
+              <Chip
+                size="small"
+                color="secondary"
+                label={TOURNAMENT_CATEGORY_LABELS[tournament.category]}
+              />
+            </Stack>
           </Grid>
           <Grid>
             <Stack direction="row" spacing={1}>
@@ -198,12 +255,20 @@ const TournamentPage: React.FC = () => {
               }}>
                 Estado
               </Typography>
+              <Typography>{TOURNAMENT_STATUS_LABEL[currentStatus]}</Typography>
+            </Grid>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
+                Categoría
+              </Typography>
               <Typography>
-                {
-                  TOURNAMENT_STATUS_LABEL[
-                    resolveTournamentStatus(tournament.status)
-                  ]
-                }
+                {TOURNAMENT_CATEGORY_LABELS[tournament.category]}
               </Typography>
             </Grid>
             <Grid size={12}>
@@ -224,9 +289,7 @@ const TournamentPage: React.FC = () => {
               }}>
                 Inicio
               </Typography>
-              <Typography>
-                {new Date(tournament.startDate).toLocaleDateString('es-AR')}
-              </Typography>
+              <Typography>{formatDateAr(tournament.startDate)}</Typography>
             </Grid>
             <Grid
               size={{
@@ -239,35 +302,56 @@ const TournamentPage: React.FC = () => {
                 Cierre de inscripción
               </Typography>
               <Typography>
-                {new Date(
-                  tournament.teamRegistrationDeadline
-                ).toLocaleDateString('es-AR')}
+                {formatDateAr(tournament.teamRegistrationDeadline)}
               </Typography>
             </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                md: 6
-              }}>
-              <Typography variant="subtitle2" sx={{
-                color: "text.secondary"
-              }}>
-                Equipos mínimos
-              </Typography>
-              <Typography>{tournament.minTeams}</Typography>
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                md: 6
-              }}>
-              <Typography variant="subtitle2" sx={{
-                color: "text.secondary"
-              }}>
-                Equipos máximos
-              </Typography>
-              <Typography>{tournament.maxTeams}</Typography>
-            </Grid>
+
+            {canChangeStatus && (
+              <Grid size={12}>
+                <Divider sx={{ my: 1 }} />
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  Cambiar estado
+                </Typography>
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={1}
+                  sx={{ alignItems: { sm: 'center' } }}
+                >
+                  <TextField
+                    select
+                    size="small"
+                    label="Nuevo estado"
+                    value={targetStatus}
+                    onChange={event =>
+                      setTargetStatus(event.target.value as TournamentStatus)
+                    }
+                    sx={{ minWidth: 220 }}
+                  >
+                    {nextStatusOptions.map(status => (
+                      <MenuItem key={status} value={status}>
+                        {TOURNAMENT_STATUS_LABEL[status]}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                  <Button
+                    variant="contained"
+                    onClick={handleChangeStatus}
+                    disabled={!targetStatus || changingStatus}
+                  >
+                    {changingStatus ? 'Aplicando...' : 'Aplicar'}
+                  </Button>
+                </Stack>
+                {targetStatus === TournamentStatus.RegistrationClosed && (
+                  <Typography
+                    variant="caption"
+                    sx={{ color: 'text.secondary', display: 'block', mt: 1 }}
+                  >
+                    Al cerrar la inscripción se generará automáticamente el
+                    fixture del torneo.
+                  </Typography>
+                )}
+              </Grid>
+            )}
           </Grid>
         )}
 

@@ -19,6 +19,12 @@ namespace API.Tests;
 /// (a caller can never grant a role beyond its own assignment policy, and
 /// nobody — not even ADMIN — can change their own role), and the Identity
 /// invariant that a user ends up in exactly one role after the change.
+/// <para>
+/// HU-05: the role model is now just the two operator accounts (Owner,
+/// Admin IT) plus the technical Guest role, so these tests exercise role
+/// changes between Owner and Admin and use Guest as the "non-privileged
+/// caller" that must be rejected.
+/// </para>
 /// </summary>
 public class UserRoleChangeTests : IClassFixture<CustomWebApplicationFactory>
 {
@@ -39,13 +45,13 @@ public class UserRoleChangeTests : IClassFixture<CustomWebApplicationFactory>
             scope.ServiceProvider.GetRequiredService<IUserManagementService>();
 
         (Guid adminId, _) = await SeedUserWithRoleAsync(userManager, UserRoleType.ADMIN);
-        (Guid targetId, _) = await SeedUserWithRoleAsync(userManager, UserRoleType.TOURNAMENT_MANAGER);
+        (Guid targetId, _) = await SeedUserWithRoleAsync(userManager, UserRoleType.OWNER);
 
         UserResponse result = await userManagementService.UpdateAsync(
             Roles.Admin, adminId, targetId,
-            new UpdateUserRequest { Role = UserRoleType.TEAM_MANAGER });
+            new UpdateUserRequest { Role = UserRoleType.ADMIN });
 
-        Assert.Equal(Roles.TeamManager, result.Role);
+        Assert.Equal(Roles.Admin, result.Role);
     }
 
     [Fact]
@@ -59,15 +65,15 @@ public class UserRoleChangeTests : IClassFixture<CustomWebApplicationFactory>
 
         (Guid ownerId, _) = await SeedUserWithRoleAsync(userManager, UserRoleType.OWNER);
         (Guid subordinateId, ApplicationUser subordinate) =
-            await SeedUserWithRoleAsync(userManager, UserRoleType.TOURNAMENT_MANAGER);
+            await SeedUserWithRoleAsync(userManager, UserRoleType.OWNER);
         subordinate.CreatedByOwnerId = ownerId;
         await userManager.UpdateAsync(subordinate);
 
         UserResponse result = await userManagementService.UpdateAsync(
             Roles.Owner, ownerId, subordinateId,
-            new UpdateUserRequest { Role = UserRoleType.TOURNAMENT_MANAGER });
+            new UpdateUserRequest { Role = UserRoleType.ADMIN });
 
-        Assert.Equal(Roles.TournamentManager, result.Role);
+        Assert.Equal(Roles.Admin, result.Role);
     }
 
     [Fact]
@@ -79,12 +85,12 @@ public class UserRoleChangeTests : IClassFixture<CustomWebApplicationFactory>
         IUserManagementService userManagementService =
             scope.ServiceProvider.GetRequiredService<IUserManagementService>();
 
-        (Guid callerId, _) = await SeedUserWithRoleAsync(userManager, UserRoleType.TOURNAMENT_MANAGER);
-        (Guid targetId, _) = await SeedUserWithRoleAsync(userManager, UserRoleType.TEAM_MANAGER);
+        (Guid callerId, _) = await SeedUserWithRoleAsync(userManager, UserRoleType.GUEST);
+        (Guid targetId, _) = await SeedUserWithRoleAsync(userManager, UserRoleType.OWNER);
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             userManagementService.UpdateAsync(
-                Roles.TournamentManager, callerId, targetId,
+                Roles.Guest, callerId, targetId,
                 new UpdateUserRequest { Role = UserRoleType.OWNER }));
     }
 
@@ -105,13 +111,13 @@ public class UserRoleChangeTests : IClassFixture<CustomWebApplicationFactory>
 
         (Guid ownerId, _) = await SeedUserWithRoleAsync(userManager, UserRoleType.OWNER);
         // Not created by this owner (CreatedByOwnerId left null).
-        (Guid targetId, _) = await SeedUserWithRoleAsync(userManager, UserRoleType.TOURNAMENT_MANAGER);
+        (Guid targetId, _) = await SeedUserWithRoleAsync(userManager, UserRoleType.OWNER);
 
         UserResponse result = await userManagementService.UpdateAsync(
             Roles.Owner, ownerId, targetId,
-            new UpdateUserRequest { Role = UserRoleType.TEAM_MANAGER });
+            new UpdateUserRequest { Role = UserRoleType.ADMIN });
 
-        Assert.Equal(Roles.TeamManager, result.Role);
+        Assert.Equal(Roles.Admin, result.Role);
     }
 
     [Fact]
@@ -125,7 +131,7 @@ public class UserRoleChangeTests : IClassFixture<CustomWebApplicationFactory>
 
         (Guid ownerId, _) = await SeedUserWithRoleAsync(userManager, UserRoleType.OWNER);
         (Guid subordinateId, ApplicationUser subordinate) =
-            await SeedUserWithRoleAsync(userManager, UserRoleType.TOURNAMENT_MANAGER);
+            await SeedUserWithRoleAsync(userManager, UserRoleType.ADMIN);
         subordinate.CreatedByOwnerId = ownerId;
         await userManager.UpdateAsync(subordinate);
 
@@ -146,7 +152,7 @@ public class UserRoleChangeTests : IClassFixture<CustomWebApplicationFactory>
             scope.ServiceProvider.GetRequiredService<IUserManagementService>();
 
         (Guid adminId, _) = await SeedUserWithRoleAsync(userManager, UserRoleType.ADMIN);
-        (Guid targetId, _) = await SeedUserWithRoleAsync(userManager, UserRoleType.TEAM_MANAGER);
+        (Guid targetId, _) = await SeedUserWithRoleAsync(userManager, UserRoleType.OWNER);
 
         await Assert.ThrowsAsync<ArgumentException>(() =>
             userManagementService.UpdateAsync(
@@ -186,7 +192,7 @@ public class UserRoleChangeTests : IClassFixture<CustomWebApplicationFactory>
             UserManager<ApplicationUser> seedUserManager =
                 seedScope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             (adminId, _) = await SeedUserWithRoleAsync(seedUserManager, UserRoleType.ADMIN);
-            (targetId, _) = await SeedUserWithRoleAsync(seedUserManager, UserRoleType.TOURNAMENT_MANAGER);
+            (targetId, _) = await SeedUserWithRoleAsync(seedUserManager, UserRoleType.OWNER);
         }
 
         using (IServiceScope actScope = _factory.Services.CreateScope())
@@ -196,7 +202,7 @@ public class UserRoleChangeTests : IClassFixture<CustomWebApplicationFactory>
 
             await userManagementService.UpdateAsync(
                 Roles.Admin, adminId, targetId,
-                new UpdateUserRequest { Role = UserRoleType.TEAM_MANAGER });
+                new UpdateUserRequest { Role = UserRoleType.ADMIN });
         }
 
         using IServiceScope verifyScope = _factory.Services.CreateScope();
@@ -208,7 +214,7 @@ public class UserRoleChangeTests : IClassFixture<CustomWebApplicationFactory>
         IList<string> rolesAfterChange = await verifyUserManager.GetRolesAsync(persistedTarget!);
 
         Assert.Single(rolesAfterChange);
-        Assert.Equal(Roles.TeamManager, rolesAfterChange[0]);
+        Assert.Equal(Roles.Admin, rolesAfterChange[0]);
     }
 
     [Fact]
@@ -221,13 +227,13 @@ public class UserRoleChangeTests : IClassFixture<CustomWebApplicationFactory>
             scope.ServiceProvider.GetRequiredService<IUserManagementService>();
 
         (Guid adminId, _) = await SeedUserWithRoleAsync(userManager, UserRoleType.ADMIN);
-        (Guid targetId, _) = await SeedUserWithRoleAsync(userManager, UserRoleType.TOURNAMENT_MANAGER);
+        (Guid targetId, _) = await SeedUserWithRoleAsync(userManager, UserRoleType.OWNER);
 
         UserResponse result = await userManagementService.UpdateAsync(
             Roles.Admin, adminId, targetId,
             new UpdateUserRequest { Username = $"renamed-{Guid.NewGuid():N}" });
 
-        Assert.Equal(Roles.TournamentManager, result.Role);
+        Assert.Equal(Roles.Owner, result.Role);
     }
 
     private static async Task<(Guid Id, ApplicationUser User)> SeedUserWithRoleAsync(

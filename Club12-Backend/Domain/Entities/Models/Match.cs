@@ -16,6 +16,18 @@ public class Match : EntityBase
     public DateTime MatchDate { get; set; }
 
     /// <summary>
+    /// The matchday (jornada) this match belongs to within its stage, 1-based
+    /// (HU-63/HU-65). This — not the calendar date — is the canonical fixture
+    /// grouping key: "Fecha 1", "Fecha 2", … Every team plays at most once per
+    /// round, and with an odd number of teams exactly one team is idle ("libre")
+    /// each round. The round order is fixed (HU-67): editing a match's calendar
+    /// date (HU-68) never changes its round. Null for matches that have no
+    /// round-robin matchday (e.g. knockout/elimination stages) and for legacy
+    /// rows created before this concept existed.
+    /// </summary>
+    public int? Round { get; set; }
+
+    /// <summary>
     /// Represents the type of the match (regular or playoff).
     /// </summary>
     public required MatchType Type { get; set; }
@@ -62,6 +74,15 @@ public class Match : EntityBase
     /// Indicates whether the match has finished.
     /// </summary>
     public required bool IsFinished { get; set; }
+
+    /// <summary>
+    /// The match's result lifecycle state (HU-69): Scheduled (no result yet),
+    /// Played (decisive result loaded), Suspended, or WalkOver. Kept alongside
+    /// <see cref="IsFinished"/> for backward compatibility: a match is finished
+    /// when its status is <see cref="MatchStatus.Played"/> or
+    /// <see cref="MatchStatus.WalkOver"/>.
+    /// </summary>
+    public MatchStatus Status { get; set; } = MatchStatus.Scheduled;
 
     /// <summary>
     /// Represents the winning team in the match.

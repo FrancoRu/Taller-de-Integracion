@@ -2,6 +2,7 @@
 using Application.DTOs.Tournament.Request;
 
 using Domain.Entities.Models;
+using Domain.Enums;
 
 using System;
 using System.Threading.Tasks;
@@ -21,6 +22,20 @@ public interface ITournamentService
     Task<Tournament> CreateTournamentAsync(Tournament tournamentEntity);
 
     /// <summary>
+    /// HU-38: creates a whole tournament (base fields + every division with its
+    /// points, playoff mappings and stages) in a SINGLE transaction, reusing
+    /// the granular create logic. A failure at any point rolls the entire graph
+    /// back, so no partial tournament is ever left behind. The tournament is
+    /// created <see cref="TournamentStatus.OpenForRegistration"/> so its
+    /// structure is valid to build (structural creation is part of creation) and
+    /// it is ready to register teams; the fixture is still generated later by
+    /// the canonical transition to RegistrationClosed.
+    /// </summary>
+    /// <param name="request">The full wizard payload.</param>
+    /// <returns>The created Tournament, including its divisions.</returns>
+    Task<Tournament> CreateFullTournamentAsync(CreateFullTournamentRequest request);
+
+    /// <summary>
     /// Retrieves a Tournament by its id asynchronously.
     /// </summary>
     /// <param name="tournamentId">The id of the Tournament to retrieve.</param>
@@ -36,11 +51,26 @@ public interface ITournamentService
     Task<Tournament?> GetTournamentByIdOrSlugAsync(string idOrSlug);
 
     /// <summary>
-    /// Updates a Tournament asynchronously.
+    /// Updates a Tournament asynchronously. Does NOT change the lifecycle
+    /// status — use <see cref="ChangeStatusAsync"/> for that.
     /// </summary>
     /// <param name="tournamentEntity">The Tournament to update.</param>
     /// <returns>A Tournament entity indicating whether the update was successful.</returns>
     Task UpdateTournamentAsync(Tournament tournamentEntity);
+
+    /// <summary>
+    /// Moves a tournament to a new lifecycle status, enforcing the forward-only
+    /// state machine (see <see cref="Domain.Enums.TournamentStatusTransitions"/>).
+    /// A no-op when the tournament is already in the target status. Transitioning
+    /// into <see cref="TournamentStatus.RegistrationClosed"/> also auto-generates
+    /// the fixture (matches) for every stage of every division that does not yet
+    /// have matches, making it the canonical fixture trigger.
+    /// </summary>
+    /// <param name="tournamentId">The id of the tournament to transition.</param>
+    /// <param name="newStatus">The target lifecycle status.</param>
+    /// <exception cref="System.Collections.Generic.KeyNotFoundException">No tournament exists with the given id.</exception>
+    /// <exception cref="System.InvalidOperationException">The requested transition is not allowed by the state machine.</exception>
+    Task ChangeStatusAsync(Guid tournamentId, TournamentStatus newStatus);
 
     /// <summary>
     /// Deletes a Tournament asynchronously.

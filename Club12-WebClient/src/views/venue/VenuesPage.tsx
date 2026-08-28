@@ -145,7 +145,7 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
 
   const handleView = useCallback(
     (row: IVenueResponse) => {
-      navigate(APP_ROUTES.panelVenue.build(row.id));
+      navigate(APP_ROUTES.panelVenue.build(row.slug));
     },
     [navigate]
   );

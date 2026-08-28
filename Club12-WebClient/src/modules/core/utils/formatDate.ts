@@ -1,4 +1,4 @@
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import 'dayjs/locale/es';
@@ -7,13 +7,88 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 /**
- * Converts a UTC date string to a formatted local date string in Spanish.
+ * Canonical display timezone for the whole app (HU-100). The backend stores
+ * and returns instants in UTC; every user-facing date/time is presented in
+ * Argentina time regardless of the viewer's own timezone.
+ */
+export const AR_TIMEZONE = 'America/Argentina/Buenos_Aires';
+
+/** Parses a UTC value and shifts it to Argentina time. */
+const toArDayjs = (value: Date | string): Dayjs =>
+  dayjs.utc(value).tz(AR_TIMEZONE);
+
+/**
+ * Formats a UTC value as a short Argentina-time date, e.g. "16/08/2026".
+ * Returns "—" for empty or unparseable input.
+ */
+export function formatDateAr(value?: Date | string | null): string {
+  if (!value) return '—';
+  const parsed = toArDayjs(value);
+  return parsed.isValid() ? parsed.format('DD/MM/YYYY') : '—';
+}
+
+/**
+ * Formats a UTC value as a short Argentina-time date and time, e.g.
+ * "16/08/2026 14:30". Returns "—" for empty or unparseable input.
+ */
+export function formatDateTimeAr(value?: Date | string | null): string {
+  if (!value) return '—';
+  const parsed = toArDayjs(value);
+  return parsed.isValid() ? parsed.format('DD/MM/YYYY HH:mm') : '—';
+}
+
+/**
+ * Formats a UTC value as an Argentina-time clock time, e.g. "14:30".
+ * Returns "—" for empty or unparseable input.
+ */
+export function formatTimeAr(value?: Date | string | null): string {
+  if (!value) return '—';
+  const parsed = toArDayjs(value);
+  return parsed.isValid() ? parsed.format('HH:mm') : '—';
+}
+
+/**
+ * Formats a UTC value as a long Spanish Argentina-time date and time, e.g.
+ * "lunes, 16 de agosto de 2026 • 14:30". Returns "—" for empty/invalid input.
+ */
+export function formatLongDateTimeAr(value?: Date | string | null): string {
+  if (!value) return '—';
+  const parsed = toArDayjs(value);
+  return parsed.isValid()
+    ? parsed.locale('es').format('dddd, D [de] MMMM [de] YYYY • HH:mm')
+    : '—';
+}
+
+/**
+ * Argentina-time calendar-day key ("YYYY-MM-DD") for a UTC value, or
+ * "unknown" for empty/invalid input. Used to group items (e.g. fixtures) by
+ * their Argentina-time day so an instant near midnight lands on the day the
+ * user actually sees, not the UTC day.
+ */
+export function toArDayKey(value?: Date | string | null): string {
+  if (!value) return 'unknown';
+  const parsed = toArDayjs(value);
+  return parsed.isValid() ? parsed.format('YYYY-MM-DD') : 'unknown';
+}
+
+/**
+ * Formats a "YYYY-MM-DD" day key (see toArDayKey) as a long, capitalized
+ * Spanish weekday + day + month label, e.g. "Jueves, 1 de enero".
+ */
+export function formatArDayLabel(dayKey: string): string {
+  const parsed = dayjs(dayKey);
+  if (!parsed.isValid()) return 'Fecha a confirmar';
+  const label = parsed.locale('es').format('dddd, D [de] MMMM');
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+/**
+ * Converts a UTC date string to a formatted Argentina-time date string in
+ * Spanish, e.g. "lunes, 16 de agosto de 2026 • 14:30".
  * @param dateString - The date string in UTC format.
- * @returns The formatted date in local timezone, e.g. "lunes, 16 de agosto de 2026 • 14:30".
  */
 export function formatMatchDateToString(dateString: string): string {
-  const localDate = dayjs.utc(dateString).local();
-  return localDate.locale('es').format('dddd, D [de] MMMM [de] YYYY • HH:mm');
+  return formatLongDateTimeAr(dateString);
 }
 
 /**

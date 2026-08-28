@@ -2,6 +2,11 @@ using Application.Interfaces.Repositories;
 
 using Infrastructure.Persistance;
 
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
+
+using System;
 using System.Threading.Tasks;
 
 namespace Infrastructure.Repositories;
@@ -18,6 +23,7 @@ namespace Infrastructure.Repositories;
 public class UnitOfWork(
     ApplicationDBContext context,
     IPlayerRepository playerRepository,
+    IClubRepository clubRepository,
     ITeamRepository teamRepository,
     IDivisionRepository divisionRepository,
     IMatchRepository matchRepository,
@@ -29,13 +35,19 @@ public class UnitOfWork(
     IVenueRepository venueRepository,
     IStageRepository stageRepository,
     IStageTeamMatchRepository stageTeamMatchRepository,
-    IPlayerTeamRegistrationRepository playerTeamRegistrationRepository
+    IPlayerTeamRegistrationRepository playerTeamRegistrationRepository,
+    ITeamTournamentRegistrationRepository teamTournamentRegistrationRepository
     ) : IUnitOfWork
 {
     /// <summary>
     /// Gets the repository for blog post entities.
     /// </summary>
     public IBlogPostRepository BlogPostRepository { get; } = blogPostRepository;
+
+    /// <summary>
+    /// Gets the repository for club entities (stable cross-season identity, HU-99).
+    /// </summary>
+    public IClubRepository ClubRepository { get; } = clubRepository;
 
     /// <summary>
     /// Gets the repository for team entities.
@@ -99,11 +111,37 @@ public class UnitOfWork(
     public IPlayerTeamRegistrationRepository PlayerTeamRegistrationRepository { get; } = playerTeamRegistrationRepository;
 
     /// <summary>
+    /// Gets the repository for team-tournament registration entities.
+    /// </summary>
+    public ITeamTournamentRegistrationRepository TeamTournamentRegistrationRepository { get; } = teamTournamentRegistrationRepository;
+
+    /// <summary>
     /// Commits all tracked changes to the database asynchronously.
     /// </summary>
     /// <returns>The number of state entries written to the database.</returns>
     public async Task<int> SaveChangesAsync()
     {
         return await context.SaveChangesAsync();
+    }
+
+    /// <inheritdoc/>
+    public async Task ExecuteInTransactionAsync(Func<Task> operation)
+    {
+        IExecutionStrategy strategy = context.Database.CreateExecutionStrategy();
+
+        await strategy.ExecuteAsync(async () =>
+        {
+            await using IDbContextTransaction transaction = await context.Database.BeginTransactionAsync();
+            try
+            {
+                await operation();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        });
     }
 }

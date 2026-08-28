@@ -136,7 +136,10 @@ public class BlogPostController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<BlogPostResponse>> GetBlogPostById(string idOrSlug)
     {
-        BlogPost? blogPost = await blogPostService.GetBlogPostByIdOrSlugAsync(idOrSlug);
+        // Only Admin/Owner may resolve drafts (HU-16); anonymous/public
+        // callers get 404 for an unpublished post.
+        bool includeUnpublished = User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Owner);
+        BlogPost? blogPost = await blogPostService.GetBlogPostByIdOrSlugAsync(idOrSlug, includeUnpublished);
 
         if (blogPost is null)
         {
@@ -176,7 +179,9 @@ public class BlogPostController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaginatedResponse<BlogPostResponse>>> GetFilteredBlogPosts([FromQuery] GetBlogPostsFilteredRequest filterRequest)
     {
-        PaginatedResponse<BlogPost> paginatedPosts = await blogPostService.GetAllBlogPostsAsync(filterRequest);
+        // Public listing shows only published posts; Admin/Owner see drafts too (HU-16).
+        bool includeUnpublished = User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Owner);
+        PaginatedResponse<BlogPost> paginatedPosts = await blogPostService.GetAllBlogPostsAsync(filterRequest, includeUnpublished);
         PaginatedResponse<BlogPostResponse> response = mapper.Map<PaginatedResponse<BlogPostResponse>>(paginatedPosts);
 
         return Ok(response);

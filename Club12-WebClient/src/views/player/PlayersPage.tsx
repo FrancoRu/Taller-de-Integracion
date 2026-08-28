@@ -20,6 +20,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import {
   confirmDelete,
+  notifyError,
   notifySuccess,
   notifyWarning,
 } from '@/modules/core/utils/confirmDialog';
@@ -40,12 +41,23 @@ import NewEntityButton from '@/views/core/components/NewEntityButton';
 import {
   DeleteIcon,
   EditIcon,
+  MedicalInformationIcon,
+  NumbersIcon,
   SearchIcon,
   VisibilityIcon,
 } from '@/views/core/MUI/icons/icons';
 import { useTeam } from '@/modules/team/hook/team.hook';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { FILTERS_DEBOUNCE_DELAY_LONG_MS } from '@/modules/core/constants/constants';
+import { MedicalRecordStatus } from '@/modules/core/enum/medicalRecord/medicalRecordStatus';
+import HabilitacionBadge from '@/views/medicalRecord/HabilitacionBadge';
+import PlayerMedicalRecordDialog from '@/views/medicalRecord/PlayerMedicalRecordDialog';
+
+/** Per-player medical / eligibility signal keyed by player id (HU-57/HU-62). */
+export interface PlayerMedicalInfo {
+  status?: MedicalRecordStatus | null;
+  isHabilitado?: boolean;
+}
 
 type PlayersSearchFilters = Pick<
   PlayerFiltered,
@@ -83,6 +95,19 @@ interface PlayersPageProps {
   wrapInCard?: boolean;
   createType?: string;
   onCreate?: () => void;
+  /**
+   * When set, the roster shows the per-player habilitación badge and a
+   * "ficha médica" action scoped to this tournament (HU-55/57/58). The medical
+   * record is scoped to player + team + tournament, so both `teamId` and
+   * `tournamentId` are required to enable it.
+   */
+  tournamentId?: GUID | null;
+  /** Per-player medical/eligibility signal keyed by player id (from the roster). */
+  medicalByPlayerId?: Map<GUID, PlayerMedicalInfo>;
+  /** Per-player dorsal (jersey number) keyed by player id (from the roster, HU-54). */
+  jerseyByPlayerId?: Map<GUID, number | null | undefined>;
+  /** Called after a medical record is uploaded/reviewed so the roster can refresh. */
+  onMedicalChange?: () => void;
 }
 
 const getDateValue = (value?: Date) => {
@@ -105,6 +130,10 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   wrapInCard = true,
   createType = 'Jugador',
   onCreate,
+  tournamentId,
+  medicalByPlayerId,
+  jerseyByPlayerId,
+  onMedicalChange,
 }) => {
   const navigate = useNavigate();
   const {
@@ -113,6 +142,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     putPlayerById,
     getPlayersByFilter,
     deletePlayerById,
+    registerPlayerToTeam,
   } = usePlayer();
   const { teams, getTeamsByFiltered } = useTeam();
   const [loading, setLoading] = useState(false);
@@ -136,6 +166,39 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   );
   const [playerForm, setPlayerForm] =
     useState<PlayerFormState>(INITIAL_PLAYER_FORM);
+  const [medicalPlayer, setMedicalPlayer] = useState<IPlayerResponse | null>(
+    null
+  );
+  const [dorsalPlayer, setDorsalPlayer] = useState<IPlayerResponse | null>(
+    null
+  );
+  const [dorsalValue, setDorsalValue] = useState('');
+
+  const medicalEnabled = Boolean(teamId && tournamentId);
+  // HU-54: assigning a dorsal is a season-roster operation, so it needs both a
+  // team and a tournament in scope — same precondition as the medical record.
+  const rosterEnabled = medicalEnabled;
+
+  const currentDorsalFor = useCallback(
+    (row: IPlayerResponse): number | null | undefined =>
+      jerseyByPlayerId?.get(row.id) ?? row.jerseyNumber,
+    [jerseyByPlayerId]
+  );
+
+  const handleOpenMedical = useCallback((row: IPlayerResponse) => {
+    setMedicalPlayer(row);
+  }, []);
+
+  const handleOpenDorsal = useCallback(
+    (row: IPlayerResponse) => {
+      const dorsal = currentDorsalFor(row);
+      setDorsalValue(
+        dorsal === null || dorsal === undefined ? '' : String(dorsal)
+      );
+      setDorsalPlayer(row);
+    },
+    [currentDorsalFor]
+  );
 
   const fetchPlayers = useCallback(
     async (
@@ -213,7 +276,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
 
   const handleView = useCallback(
     (row: IPlayerResponse) => {
-      navigate(APP_ROUTES.panelPlayer.build(row.id));
+      navigate(APP_ROUTES.panelPlayer.build(row.slug));
     },
     [navigate]
   );
@@ -265,6 +328,20 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         onClick: handleView,
       },
       {
+        label: 'Ficha médica',
+        color: 'secondary',
+        icon: <MedicalInformationIcon fontSize="small" />,
+        onClick: handleOpenMedical,
+        hidden: !medicalEnabled,
+      },
+      {
+        label: 'Dorsal',
+        color: 'info',
+        icon: <NumbersIcon fontSize="small" />,
+        onClick: handleOpenDorsal,
+        hidden: !rosterEnabled,
+      },
+      {
         label: 'Editar',
         color: 'primary',
         icon: <EditIcon fontSize="small" />,
@@ -277,7 +354,15 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         onClick: handleDelete,
       },
     ],
-    [handleDelete, handleEdit, handleView]
+    [
+      handleDelete,
+      handleEdit,
+      handleOpenDorsal,
+      handleOpenMedical,
+      handleView,
+      medicalEnabled,
+      rosterEnabled,
+    ]
   );
 
   const columns: GridColDef<IPlayerResponse>[] = useMemo(() => {
@@ -310,8 +395,49 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       },
     ];
 
+    if (rosterEnabled) {
+      baseColumns.push({
+        field: 'jerseyNumber',
+        headerName: 'Dorsal',
+        flex: 0.5,
+        minWidth: 100,
+        sortable: false,
+        filterable: false,
+        renderCell: params => {
+          const dorsal = currentDorsalFor(params.row);
+          return dorsal === null || dorsal === undefined ? '—' : dorsal;
+        },
+      });
+    }
+
+    if (medicalEnabled) {
+      baseColumns.push({
+        field: 'habilitacion',
+        headerName: 'Habilitación',
+        flex: 0.9,
+        minWidth: 150,
+        sortable: false,
+        filterable: false,
+        renderCell: params => {
+          const info = medicalByPlayerId?.get(params.row.id);
+          return (
+            <HabilitacionBadge
+              isHabilitado={info?.isHabilitado ?? params.row.isHabilitado}
+              status={info?.status ?? params.row.medicalRecordStatus}
+            />
+          );
+        },
+      });
+    }
+
     return [...baseColumns, buildActionsColumn(playerActions)];
-  }, [playerActions]);
+  }, [
+    currentDorsalFor,
+    medicalByPlayerId,
+    medicalEnabled,
+    playerActions,
+    rosterEnabled,
+  ]);
 
   const rows = useMemo(() => players ?? [], [players]);
   const teamOptions = useMemo(() => teams ?? [], [teams]);
@@ -446,6 +572,57 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     await notifySuccess({
       title: 'Jugador actualizado',
       text: 'El jugador se actualizó correctamente.',
+    });
+  };
+
+  const handleDorsalSubmit = async () => {
+    if (!dorsalPlayer || !teamId || !tournamentId) {
+      return;
+    }
+
+    const trimmed = dorsalValue.trim();
+    let jerseyNumber: number | null = null;
+
+    if (trimmed !== '') {
+      const parsed = Number(trimmed);
+      if (!Number.isInteger(parsed) || parsed <= 0) {
+        void notifyWarning({
+          title: 'Dorsal inválido',
+          text: 'El dorsal debe ser un número entero positivo.',
+        });
+        return;
+      }
+      jerseyNumber = parsed;
+    }
+
+    setSubmitting(true);
+    const result = await registerPlayerToTeam(dorsalPlayer.id, {
+      teamId,
+      tournamentId,
+      jerseyNumber,
+    });
+    setSubmitting(false);
+
+    if (!result.success) {
+      // HU-54: surface the exact roster conflict (duplicate dorsal / roster
+      // full / player already in another team of this tournament).
+      await notifyError({
+        title: 'No se pudo asignar el dorsal',
+        text: result.errorMessage,
+      });
+      return;
+    }
+
+    setDorsalPlayer(null);
+    setDorsalValue('');
+    onMedicalChange?.();
+    await fetchPlayers(debouncedFilters, paginationModel);
+    await notifySuccess({
+      title: 'Dorsal actualizado',
+      text:
+        jerseyNumber === null
+          ? 'Se quitó el dorsal del jugador.'
+          : `Se asignó el dorsal ${jerseyNumber}.`,
     });
   };
 
@@ -786,6 +963,67 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
           />
         </DialogActions>
       </Dialog>
+
+      <Dialog
+        open={Boolean(dorsalPlayer)}
+        onClose={() => !submitting && setDorsalPlayer(null)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Asignar dorsal</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {dorsalPlayer && (
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                {dorsalPlayer.fullName}
+              </Typography>
+            )}
+            <TextField
+              label="Dorsal"
+              type="number"
+              value={dorsalValue}
+              onChange={e => setDorsalValue(e.target.value)}
+              fullWidth
+              helperText="Único por equipo y temporada. Dejar vacío para quitarlo."
+              slotProps={{ htmlInput: { min: 1, step: 1 } }}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <FormButtons
+            onCancel={() => {
+              setDorsalPlayer(null);
+              setDorsalValue('');
+            }}
+            onConfirm={() => void handleDorsalSubmit()}
+            confirmLabel="Guardar"
+            disabled={submitting}
+          />
+        </DialogActions>
+      </Dialog>
+
+      {medicalEnabled && teamId && tournamentId && medicalPlayer && (
+        <PlayerMedicalRecordDialog
+          open={Boolean(medicalPlayer)}
+          onClose={() => setMedicalPlayer(null)}
+          playerId={medicalPlayer.id}
+          teamId={teamId}
+          tournamentId={tournamentId}
+          playerName={medicalPlayer.fullName}
+          status={
+            medicalByPlayerId?.get(medicalPlayer.id)?.status ??
+            medicalPlayer.medicalRecordStatus
+          }
+          isHabilitado={
+            medicalByPlayerId?.get(medicalPlayer.id)?.isHabilitado ??
+            medicalPlayer.isHabilitado
+          }
+          onChanged={() => {
+            onMedicalChange?.();
+            void fetchPlayers(debouncedFilters, paginationModel);
+          }}
+        />
+      )}
     </>
   );
 

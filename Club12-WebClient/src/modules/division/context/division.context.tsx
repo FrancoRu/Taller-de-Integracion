@@ -144,10 +144,10 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const getDivisionsById = useCallback(
-    async (id: GUID): Promise<IDivisionResponse | void> => {
+    async (idOrSlug: string): Promise<IDivisionResponse | void> => {
       try {
         const existingDivision: IDivisionResponse | undefined = divisions?.find(
-          e => e.id === id
+          e => e.id === idOrSlug || e.slug === idOrSlug
         );
 
         if (existingDivision) {
@@ -157,8 +157,9 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
 
         const res: AxiosResponse<IDivisionResponse> =
           await queryClient.fetchQuery({
-            queryKey: divisionKeys.byId(id),
-            queryFn: async () => await divisionService.getDivisionsById(id),
+            queryKey: divisionKeys.byId(idOrSlug),
+            queryFn: async () =>
+              await divisionService.getDivisionsById(idOrSlug),
           });
 
         if (res && res.data) {

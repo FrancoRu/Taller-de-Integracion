@@ -35,8 +35,6 @@ public class BackupAuthorizationTests : IClassFixture<CustomWebApplicationFactor
 
     [Theory]
     [InlineData(Roles.Owner)]
-    [InlineData(Roles.TournamentManager)]
-    [InlineData(Roles.TeamManager)]
     [InlineData(Roles.Guest)]
     public async Task GetBackups_NonAdminRole_ReturnsForbidden(string role)
     {
@@ -69,8 +67,6 @@ public class BackupAuthorizationTests : IClassFixture<CustomWebApplicationFactor
 
     [Theory]
     [InlineData(Roles.Owner)]
-    [InlineData(Roles.TournamentManager)]
-    [InlineData(Roles.TeamManager)]
     [InlineData(Roles.Guest)]
     public async Task CreateBackup_NonAdminRole_ReturnsForbidden(string role)
     {
@@ -93,8 +89,6 @@ public class BackupAuthorizationTests : IClassFixture<CustomWebApplicationFactor
 
     [Theory]
     [InlineData(Roles.Owner)]
-    [InlineData(Roles.TournamentManager)]
-    [InlineData(Roles.TeamManager)]
     [InlineData(Roles.Guest)]
     public async Task DeleteBackup_NonAdminRole_ReturnsForbidden(string role)
     {
@@ -117,8 +111,6 @@ public class BackupAuthorizationTests : IClassFixture<CustomWebApplicationFactor
 
     [Theory]
     [InlineData(Roles.Owner)]
-    [InlineData(Roles.TournamentManager)]
-    [InlineData(Roles.TeamManager)]
     [InlineData(Roles.Guest)]
     public async Task RestoreBackup_NonAdminRole_ReturnsForbidden(string role)
     {

@@ -28,6 +28,14 @@ public static class ConfigurationKeys
     public static class Frontend
     {
         public const string PasswordResetUrl = "Frontend:PasswordResetUrl";
+
+        /// <summary>
+        /// HU-09: base URL of the account-activation page the invited user lands
+        /// on from the invitation email. Falls back to
+        /// <see cref="PasswordResetUrl"/> when not configured, since both pages
+        /// consume an Identity token in the same "?email=&amp;token=" shape.
+        /// </summary>
+        public const string ActivationUrl = "Frontend:ActivationUrl";
     }
 
     public static class AdminUser

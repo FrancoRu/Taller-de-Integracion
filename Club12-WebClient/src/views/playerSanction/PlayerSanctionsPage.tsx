@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
+import { formatDateTimeAr } from '@/modules/core/utils/formatDate';
 import {
   Box,
   Card,
   CardContent,
+  Chip,
   InputAdornment,
   MenuItem,
   Stack,
@@ -17,6 +19,13 @@ import {
   IPlayerSanctionResponse,
   PlayerSanctionsSearchFilters,
 } from '@/modules/playerSanction/type/playerSanction.d';
+import {
+  formatFechasRemaining,
+  formatSanctionDurationFechas,
+  getSanctionStateLabel,
+  getSanctionSubjectName,
+  getSanctionSubjectTypeLabel,
+} from '@/modules/playerSanction/utils/sanctionDisplay';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { useStage } from '@/modules/stage/hook/stage.hook';
@@ -43,21 +52,7 @@ import { FILTERS_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/constants';
 
 const EMPTY_FILTERS: PlayerSanctionsSearchFilters = {};
 
-const formatDateTime = (value?: string | Date | null) => {
-  if (!value) {
-    return '—';
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return '—';
-  }
-
-  return parsed.toLocaleString('es-AR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  });
-};
+const formatDateTime = (value?: string | Date | null) => formatDateTimeAr(value);
 
 const PlayerSanctionsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -320,16 +315,46 @@ const PlayerSanctionsPage: React.FC = () => {
   const columns: GridColDef<IPlayerSanctionResponse>[] = useMemo(() => {
     const baseColumns: GridColDef<IPlayerSanctionResponse>[] = [
       {
-        field: 'playerFullName',
-        headerName: 'Jugador',
+        field: 'subject',
+        headerName: 'Sujeto',
         flex: 1.2,
-        minWidth: 220,
+        minWidth: 200,
+        sortable: false,
+        renderCell: params => getSanctionSubjectName(params.row),
+      },
+      {
+        field: 'subjectType',
+        headerName: 'Tipo',
+        flex: 0.6,
+        minWidth: 100,
+        renderCell: params => getSanctionSubjectTypeLabel(params.row),
       },
       {
         field: 'duration',
-        headerName: 'Duración',
+        headerName: 'Duración (fechas)',
+        flex: 0.7,
+        minWidth: 130,
+        renderCell: params => formatSanctionDurationFechas(params.row.duration),
+      },
+      {
+        field: 'fechasRemaining',
+        headerName: 'Fechas restantes',
+        flex: 0.7,
+        minWidth: 130,
+        renderCell: params => formatFechasRemaining(params.row.fechasRemaining),
+      },
+      {
+        field: 'isActive',
+        headerName: 'Estado',
         flex: 0.6,
         minWidth: 110,
+        renderCell: params => (
+          <Chip
+            size="small"
+            label={getSanctionStateLabel(params.row)}
+            color={params.row.isActive ? 'warning' : 'default'}
+          />
+        ),
       },
       {
         field: 'issuedDate',
@@ -341,8 +366,8 @@ const PlayerSanctionsPage: React.FC = () => {
       {
         field: 'description',
         headerName: 'Descripción',
-        flex: 1.6,
-        minWidth: 260,
+        flex: 1.4,
+        minWidth: 240,
       },
     ];
 

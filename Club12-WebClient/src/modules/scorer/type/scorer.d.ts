@@ -27,7 +27,19 @@ export interface IScorerFiltered extends Filtered {
   matchId?: GUID;
   teamId?: GUID;
   playerId?: GUID;
+  /**
+   * Scopes the goleadores ranking to a whole SEASON (HU-85) — the calendar year
+   * of a tournament's start date. Independent from `tournamentId`. Leaving both
+   * `tournamentId` and `season` unset yields the ALL-TIME ranking.
+   */
+  season?: number;
 }
+
+/**
+ * The three HU-85 ranking scopes a goleadores view can switch between:
+ * a single tournament, a whole season (calendar year), or all-time.
+ */
+export type ScorerScope = 'tournament' | 'season' | 'allTime';
 
 export type IScorerByTeamFiltered = MatchFiltered;
 

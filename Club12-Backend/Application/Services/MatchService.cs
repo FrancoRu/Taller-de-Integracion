@@ -92,6 +92,141 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
         await _matchRepository.UpdateAsync(matchEntity);
     }
 
+    /// <summary>
+    /// Loads a decisive final result for a match (HU-69/HU-70). Basketball has
+    /// no draws, so an equal score is rejected with a stage-appropriate message
+    /// (group stage vs. playoff overtime) instead of silently picking a winner.
+    /// On success the match becomes <see cref="MatchStatus.Played"/>, IsFinished
+    /// is set, and the winning team is derived from the higher score.
+    /// </summary>
+    /// <param name="matchId">The id of the match to load.</param>
+    /// <param name="homeScore">The home team's final score.</param>
+    /// <param name="visitorScore">The visitor team's final score.</param>
+    /// <returns>The updated match, or null if no match with that id exists.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the score is tied.</exception>
+    public async Task<Match?> LoadMatchResultAsync(Guid matchId, int homeScore, int visitorScore)
+    {
+        Match? match = await _matchRepository.GetByIdAsync(matchId,
+            includes: [m => m.HomeTeam!, m => m.VisitorTeam!, m => m.Stage]);
+
+        if (match is null)
+        {
+            return null;
+        }
+
+        if (homeScore == visitorScore)
+        {
+            throw new InvalidOperationException(
+                match.Stage.StageType == StageType.Group
+                    ? ErrorMessages.Match.GroupStageTieNotAllowed
+                    : ErrorMessages.Match.PlayoffTieNotAllowed);
+        }
+
+        match.HomeScore = homeScore;
+        match.VisitorScore = visitorScore;
+
+        bool homeWon = homeScore > visitorScore;
+        match.WinningTeam = homeWon ? match.HomeTeam : match.VisitorTeam;
+        match.WinningTeamId = homeWon ? match.HomeTeamId : match.VisitorTeamId;
+
+        match.IsFinished = true;
+        match.Status = MatchStatus.Played;
+
+        await _matchRepository.UpdateAsync(match);
+        return match;
+    }
+
+    /// <summary>
+    /// Marks a match as a walkover (HU-73): the present team is awarded the
+    /// regulation default result (<see cref="MatchDefaults.WalkOverWinnerScore"/>-0,
+    /// or a caller-provided winner score) and the absent team gets zero. The
+    /// match becomes <see cref="MatchStatus.WalkOver"/> so it stays
+    /// distinguishable from a normally played result while still counting in
+    /// standings and statistics like any finished, decisive match.
+    /// </summary>
+    /// <param name="matchId">The id of the match.</param>
+    /// <param name="presentTeamId">The team that showed up (the winner by walkover).</param>
+    /// <param name="presentTeamScore">Optional override for the present team's awarded score; defaults to the regulation value.</param>
+    /// <returns>The updated match, or null if no match with that id exists.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the present team is not part of the match.</exception>
+    public async Task<Match?> LoadWalkOverAsync(Guid matchId, Guid presentTeamId, int? presentTeamScore)
+    {
+        Match? match = await _matchRepository.GetByIdAsync(matchId,
+            includes: [m => m.HomeTeam!, m => m.VisitorTeam!, m => m.Stage]);
+
+        if (match is null)
+        {
+            return null;
+        }
+
+        bool presentIsHome = match.HomeTeamId == presentTeamId;
+        bool presentIsVisitor = match.VisitorTeamId == presentTeamId;
+
+        if (!presentIsHome && !presentIsVisitor)
+        {
+            throw new InvalidOperationException(ErrorMessages.Match.WalkOverTeamNotInMatch);
+        }
+
+        int winnerScore = presentTeamScore ?? MatchDefaults.WalkOverWinnerScore;
+
+        match.HomeScore = presentIsHome ? winnerScore : MatchDefaults.WalkOverLoserScore;
+        match.VisitorScore = presentIsHome ? MatchDefaults.WalkOverLoserScore : winnerScore;
+
+        match.WinningTeam = presentIsHome ? match.HomeTeam : match.VisitorTeam;
+        match.WinningTeamId = presentTeamId;
+
+        match.IsFinished = true;
+        match.Status = MatchStatus.WalkOver;
+
+        await _matchRepository.UpdateAsync(match);
+        return match;
+    }
+
+    /// <summary>
+    /// Reprograms/suspends a match (HU-68). The match becomes
+    /// <see cref="MatchStatus.Suspended"/> and, when a new date is supplied,
+    /// moves to it. Its <see cref="Match.Round"/> is deliberately left
+    /// untouched (HU-67): suspending or rescheduling never changes the matchday
+    /// a game belongs to, nor does it affect any other match in the fixture.
+    /// </summary>
+    /// <param name="matchId">The id of the match to suspend/reprogram.</param>
+    /// <param name="newMatchDate">Optional new calendar date; when null the existing date is kept.</param>
+    /// <returns>The updated match, or null if no match with that id exists.</returns>
+    public async Task<Match?> SuspendMatchAsync(Guid matchId, DateTime? newMatchDate)
+    {
+        Match? match = await _matchRepository.GetByIdAsync(matchId,
+            includes: [m => m.HomeTeam!, m => m.VisitorTeam!]);
+
+        if (match is null)
+        {
+            return null;
+        }
+
+        match.Status = MatchStatus.Suspended;
+
+        if (newMatchDate.HasValue)
+        {
+            match.MatchDate = newMatchDate.Value;
+        }
+
+        await _matchRepository.UpdateAsync(match);
+        return match;
+    }
+
+    public async Task<List<Match>> GetStageMatchesByRoundAsync(Guid stageId)
+    {
+        IEnumerable<Match> matches = await _matchRepository.FindAsync(
+            match => match.StageId == stageId,
+            includes: [match => match.HomeTeam!, match => match.VisitorTeam!, match => match.Venue!]);
+
+        // Round is the canonical grouping (HU-63): order by matchday, then by
+        // date within the round for a stable "Partido 1, Partido 2, …" order.
+        // Matches without a round (e.g. knockout) sort after the numbered ones.
+        return [.. matches
+            .OrderBy(match => match.Round ?? int.MaxValue)
+            .ThenBy(match => match.MatchDate)];
+    }
+
     public async Task<PaginatedResponse<Match>> GetAllMatchesAsync(GetMatchesFilteredRequest filter)
     {
         Expression<Func<Match, bool>> expression = QueryableExtensions.ConstructFilterExpression<Match, GetMatchesFilteredRequest>(filter);
@@ -330,32 +465,46 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
     }
 
     /// <summary>
-    /// Creates the group stage's matches. When <paramref name="teamIds"/>
-    /// unambiguously matches <paramref name="totalTeams"/>, each match is
-    /// actually seeded with a home/visitor pair from a freshly randomized
-    /// round-robin fixture (repeated per Stage.RoundRobinLegs); otherwise
-    /// the matches are created empty, exactly as before this pairing logic
-    /// existed, for the admin to assign manually.
+    /// Creates the group stage's matches from a round-robin fixture organised
+    /// by matchday (jornada, HU-63/HU-65). The number of rounds is derived from
+    /// the team count and <see cref="Stage.RoundRobinLegs"/>; every match is
+    /// tagged with its 1-based <see cref="Match.Round"/> and given a default
+    /// Sunday date for that round (HU-65). Round numbers — not the calendar
+    /// date — are the canonical fixture grouping.
+    /// <para>
+    /// When <paramref name="teamIds"/> unambiguously matches
+    /// <paramref name="totalTeams"/>, each match is seeded with a home/visitor
+    /// pair; otherwise the matches are created unseeded (teams left null) for
+    /// the admin to assign manually, but still keep their round structure so a
+    /// later assignment slots them into the right matchday.
+    /// </para>
     /// </summary>
     private static Task<List<Match>> CreateGroupStageMatchesAsync(Stage stage, int totalTeams, List<Guid> teamIds)
     {
         List<Match> matches = [];
 
-        int totalMatches = totalTeams * (totalTeams - 1) / 2 * stage.RoundRobinLegs;
-        List<DateTime> matchDates = DistributeMatchDates(stage.StartDate, stage.EndDate, totalMatches);
+        bool seeded = teamIds.Count == totalTeams;
 
-        List<(Guid HomeTeamId, Guid VisitorTeamId)> fixture = teamIds.Count == totalTeams
-            ? RoundRobinScheduler.GenerateFixture(teamIds, stage.RoundRobinLegs)
-            : [];
+        // When the roster is unknown we still need the round structure (how
+        // many matches, and each one's matchday), which depends only on the
+        // team count and legs — so schedule with throwaway placeholder ids and
+        // keep just the round numbers, leaving the teams unseeded.
+        IReadOnlyList<Guid> rosterForSchedule = seeded
+            ? teamIds
+            : [.. Enumerable.Range(0, totalTeams).Select(_ => Guid.NewGuid())];
 
-        for (int i = 0; i < totalMatches; i++)
+        List<(Guid HomeTeamId, Guid VisitorTeamId, int Round)> fixture =
+            RoundRobinScheduler.GenerateRounds(rosterForSchedule, stage.RoundRobinLegs);
+
+        foreach ((Guid homeTeamId, Guid visitorTeamId, int round) in fixture)
         {
-            Match match = BuildMatch(stage, matchDates[i], MatchType.Regular);
+            Match match = BuildMatch(stage, RoundCalendar.SundayForRound(stage.StartDate, round), MatchType.Regular);
+            match.Round = round;
 
-            if (i < fixture.Count)
+            if (seeded)
             {
-                match.HomeTeamId = fixture[i].HomeTeamId;
-                match.VisitorTeamId = fixture[i].VisitorTeamId;
+                match.HomeTeamId = homeTeamId;
+                match.VisitorTeamId = visitorTeamId;
             }
 
             matches.Add(match);

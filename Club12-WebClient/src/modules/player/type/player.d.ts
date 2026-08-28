@@ -3,6 +3,7 @@ import {
   GenericResponsePagination,
   GUID,
 } from '@/modules/core/types/types';
+import { MedicalRecordStatus } from '@/modules/core/enum/medicalRecord/medicalRecordStatus';
 
 /**
  * Context properties and methods for managing players in a sports system.
@@ -20,13 +21,13 @@ export interface IPlayerContextProps {
   addPlayer(player: IAddPlayerRequest): Promise<IPlayerResponse | void>;
 
   /**
-   * Fetches a player by its ID.
-   * @param id The ID of the player to fetch.
+   * Fetches a player by its ID or its public slug.
+   * @param idOrSlug The ID or slug of the player to fetch.
    * @param isAdministrative Whether to use the administrative route to fetch the player. Defaults to false.
    * @returns A promise that resolves with the player details.
    */
   getPlayerById(
-    id: GUID,
+    idOrSlug: string,
     isAdministrative: boolean = false
   ): Promise<IPlayerResponse | void>;
 
@@ -56,7 +57,52 @@ export interface IPlayerContextProps {
    * @returns A promise that resolves when the player is successfully deleted.
    */
   deletePlayerById(id: GUID): Promise<void>;
+
+  /**
+   * Registers a player onto a team's roster for a tournament season,
+   * optionally assigning a dorsal (HU-54). Resolves with a discriminated
+   * result so callers can surface the specific roster-invariant conflict
+   * (duplicate dorsal / roster full / already in another team) returned as a
+   * 409 by the backend.
+   * @param playerId The player to register.
+   * @param request The team, tournament and optional dorsal.
+   */
+  registerPlayerToTeam(
+    playerId: GUID,
+    request: IRegisterPlayerToTeamRequest
+  ): Promise<PlayerRegistrationResult>;
 }
+
+/**
+ * The request body for registering a player onto a team roster (HU-54).
+ * @interface IRegisterPlayerToTeamRequest
+ */
+export interface IRegisterPlayerToTeamRequest {
+  teamId: GUID;
+  tournamentId: GUID;
+  /** The dorsal to assign for this team/season, or null to leave it unset. */
+  jerseyNumber?: number | null;
+}
+
+/**
+ * The successful outcome of a roster registration (HU-54).
+ * @interface IPlayerRegistrationResponse
+ */
+export interface IPlayerRegistrationResponse {
+  playerId: GUID;
+  teamId: GUID;
+  tournamentId: GUID;
+  jerseyNumber?: number | null;
+}
+
+/**
+ * Discriminated result of {@link IPlayerContextProps.registerPlayerToTeam}:
+ * either the registration succeeded, or it failed with a user-facing message
+ * mapped from the backend roster conflict (HU-54).
+ */
+export type PlayerRegistrationResult =
+  | { success: true; data: IPlayerRegistrationResponse }
+  | { success: false; errorMessage: string };
 
 /**
  * The filter criteria for fetching players, which includes the player's name and document number.
@@ -154,6 +200,12 @@ export interface IPlayerResponse extends IAddPlayerRequest {
    */
   id: GUID;
 
+  /**
+   * The unique, URL-friendly identifier used in public player links.
+   * @type {string}
+   */
+  slug: string;
+
   fullName: string;
 
   isFederated: boolean;
@@ -161,6 +213,28 @@ export interface IPlayerResponse extends IAddPlayerRequest {
   club: string;
 
   category: string;
+
+  /**
+   * The player's medical-record status for the season roster this response
+   * belongs to (HU-57), when the backend populated it for a specific season.
+   * @type {MedicalRecordStatus}
+   */
+  medicalRecordStatus?: MedicalRecordStatus | null;
+
+  /**
+   * Whether the player is habilitado (medical record Approved) for this
+   * season roster (HU-57).
+   * @type {boolean}
+   */
+  isHabilitado?: boolean;
+
+  /**
+   * The player's dorsal (jersey number) for this season roster (HU-54). Null
+   * or undefined when unassigned or when the roster was not loaded for a
+   * specific season.
+   * @type {number}
+   */
+  jerseyNumber?: number | null;
 }
 
 export interface IPublicPlayerResponse {
@@ -199,6 +273,28 @@ export interface IPublicPlayerResponse {
    * @type {GUID}
    */
   teamId: GUID;
+
+  /**
+   * The player's medical-record status for the season roster this response
+   * belongs to (HU-57). Null/undefined when the roster was not loaded for a
+   * specific season.
+   * @type {MedicalRecordStatus}
+   */
+  medicalRecordStatus?: MedicalRecordStatus | null;
+
+  /**
+   * Whether the player is habilitado (medical record Approved) for this
+   * season roster (HU-57), so the UI can flag not-habilitado players (HU-62).
+   * @type {boolean}
+   */
+  isHabilitado?: boolean;
+
+  /**
+   * The player's dorsal (jersey number) for this season roster (HU-54). Null
+   * or undefined when unassigned.
+   * @type {number}
+   */
+  jerseyNumber?: number | null;
 }
 
 /**

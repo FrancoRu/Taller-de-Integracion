@@ -32,6 +32,12 @@ export const blogPostService = {
     formData.append('Title', post.title);
     formData.append('MarkdownText', post.markdownText);
 
+    // HU-16: only override the server default (published) when the author
+    // explicitly chose a draft, keeping the create request backward-compatible.
+    if (post.isPublished !== undefined) {
+      formData.append('IsPublished', String(post.isPublished));
+    }
+
     if (post.photoFile) {
       formData.append('PhotoFile', post.photoFile as Blob);
     }
@@ -55,6 +61,12 @@ export const blogPostService = {
     if (post.title) formData.append('Title', post.title);
 
     if (post.markdownText) formData.append('MarkdownText', post.markdownText);
+
+    // HU-16: forward the publication state only when the caller set it, so an
+    // edit that does not touch the draft/published toggle leaves it unchanged.
+    if (post.isPublished !== undefined) {
+      formData.append('IsPublished', String(post.isPublished));
+    }
 
     return sendPut<BlogPostResponse>(`${routes.blogposts}/${id}`, formData);
   },

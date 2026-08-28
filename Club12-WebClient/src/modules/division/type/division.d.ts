@@ -3,6 +3,7 @@ import {
   GenericResponsePagination,
   GUID,
 } from '@/modules/core/types/types';
+import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
 
 /**
  * Context properties and methods for managing divisions in a React application.
@@ -38,11 +39,11 @@ export interface IDivisionContextProps {
   ): Promise<boolean | void>;
 
   /**
-   * Fetches a division by its ID.
-   * @param id The ID of the division to fetch.
+   * Fetches a division by its ID or its public slug.
+   * @param idOrSlug The ID or slug of the division to fetch.
    * @returns A promise that resolves with the division data.
    */
-  getDivisionsById(id: GUID): Promise<IDivisionResponse | void>;
+  getDivisionsById(idOrSlug: string): Promise<IDivisionResponse | void>;
 
   /**
    * Fetches divisions based on filters and pagination.
@@ -59,6 +60,23 @@ export interface IDivisionContextProps {
    * @returns A promise that resolves when the division is successfully deleted.
    */
   deleteDivisionsById(id: GUID): Promise<void>;
+}
+
+/**
+ * One position-range → playoff-destination entry (HU-45) sent with a
+ * division so the backend can seed multiple cups from the final table
+ * (HU-81). Field names mirror the backend `PlayoffMappingRequest` DTO.
+ * @interface PlayoffMappingRequest
+ */
+export interface PlayoffMappingRequest {
+  /** First standings position in the range (1-based, inclusive). */
+  fromPosition: number;
+
+  /** Last standings position in the range (1-based, inclusive). */
+  toPosition: number;
+
+  /** The destination cup's BracketName (e.g. "Copa Oro"). */
+  destination: string;
 }
 
 /**
@@ -86,6 +104,39 @@ export interface AddDivisionRequest {
    * @type {boolean}
    */
   isCrossDivisionCup?: boolean;
+
+  /**
+   * Points awarded for a win in this division's standings (HU-79).
+   * Omit to let the backend default to 2.
+   * @type {number}
+   */
+  pointsForWin?: number;
+
+  /**
+   * Points awarded for a loss in this division's standings (HU-79).
+   * Omit to let the backend default to 1.
+   * @type {number}
+   */
+  pointsForLoss?: number;
+
+  /**
+   * Competitive category (gender) of the division (HU-48). MUST match the
+   * parent tournament's category — the backend rejects a division whose
+   * category differs from its tournament, and `Division.Category` defaults to
+   * Masculine server-side. The wizard therefore sends the tournament's
+   * category on every division so a Feminine tournament's zones are created
+   * as Feminine and not rejected.
+   * @type {TournamentCategory}
+   */
+  category?: TournamentCategory;
+
+  /**
+   * Optional position-range → playoff-destination mappings (HU-45) the
+   * wizard sends so the backend can seed multiple cups (HU-81). Ranges
+   * must not overlap.
+   * @type {PlayoffMappingRequest[]}
+   */
+  playoffMappings?: PlayoffMappingRequest[];
 }
 
 /**
@@ -104,6 +155,12 @@ export interface IDivisionResponse {
    * @type {string}
    */
   name: string;
+
+  /**
+   * The unique, URL-friendly identifier used in public division links.
+   * @type {string}
+   */
+  slug: string;
 
   /**
    * Indicates whether the division has finished.

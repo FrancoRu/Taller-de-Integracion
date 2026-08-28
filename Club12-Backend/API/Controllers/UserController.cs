@@ -5,6 +5,8 @@ using Application.DTOs.User.Request;
 using Application.DTOs.User.Response;
 using Application.Interfaces.Services;
 
+using Domain.Enums;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +25,8 @@ namespace API.Controllers;
 [Route("api/users")]
 [Authorize]
 public class UserController(
-    IUserManagementService userManagementService) : ControllerBase
+    IUserManagementService userManagementService,
+    IAuditService auditService) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<UserResponse>))]
@@ -77,7 +80,16 @@ public class UserController(
         Guid userId, CancellationToken ct)
     {
         (string? role, Guid id) = User.GetCallerClaims();
-        return Ok(await userManagementService.ResetPasswordAsync(role, id, userId, ct));
+        ResetPasswordResponse response = await userManagementService.ResetPasswordAsync(role, id, userId, ct);
+
+        // HU-101: record the password reset / blanqueo for traceability.
+        await auditService.LogAsync(
+            AuditAction.PasswordReset,
+            targetType: "User",
+            targetId: userId.ToString(),
+            ct: ct);
+
+        return Ok(response);
     }
 
     [HttpDelete("{userId:guid}")]

@@ -1,12 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { GUID } from '@/modules/core/types/types';
 import { StageType } from '@/modules/stage/type/stage';
-import { CrossCupConfig, CupConfig, WizardState, ZoneConfig, createInitialWizardState } from './types';
+import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
+import {
+  CrossCupConfig,
+  CupConfig,
+  PlayoffMappingConfig,
+  WizardState,
+  ZoneConfig,
+  createInitialWizardState,
+} from './types';
 import {
   buildWizardTree,
   isWizardReadyToSubmit,
   resolveCrossCupTeamIds,
   validateCrossCupStep,
+  validatePlayoffMappings,
   validateTeamsStep,
   validateTournamentStep,
   validateZonesStep,
@@ -21,8 +30,7 @@ const makeValidState = (): WizardState => {
     description: '',
     startDate: '2026-03-01',
     teamRegistrationDeadline: '2026-02-15',
-    minTeams: 4,
-    maxTeams: 8,
+    category: TournamentCategory.Masculine,
   };
   state.selectedTeamIds = [guid('a'), guid('b'), guid('c'), guid('d')];
   state.zones = [
@@ -33,6 +41,9 @@ const makeValidState = (): WizardState => {
       hasGroupStage: true,
       roundRobinLegs: 1,
       cups: [],
+      pointsForWin: 2,
+      pointsForLoss: 1,
+      playoffMappings: [],
     },
     {
       id: 'zone-2',
@@ -41,6 +52,9 @@ const makeValidState = (): WizardState => {
       hasGroupStage: true,
       roundRobinLegs: 1,
       cups: [],
+      pointsForWin: 2,
+      pointsForLoss: 1,
+      playoffMappings: [],
     },
   ];
   return state;
@@ -62,47 +76,16 @@ describe('validateTournamentStep', () => {
     state.tournament.teamRegistrationDeadline = state.tournament.startDate;
     expect(validateTournamentStep(state).length).toBeGreaterThan(0);
   });
-
-  it('rejects minTeams below the backend-allowed minimum (4)', () => {
-    const state = makeValidState();
-    state.tournament.minTeams = 3;
-    expect(validateTournamentStep(state).length).toBeGreaterThan(0);
-  });
-
-  it('rejects maxTeams above the backend-allowed maximum (32)', () => {
-    const state = makeValidState();
-    state.tournament.maxTeams = 33;
-    expect(validateTournamentStep(state).length).toBeGreaterThan(0);
-  });
-
-  it('rejects minTeams greater than maxTeams', () => {
-    const state = makeValidState();
-    state.tournament.minTeams = 10;
-    state.tournament.maxTeams = 8;
-    expect(validateTournamentStep(state).length).toBeGreaterThan(0);
-  });
-
-  it('accepts the wizard defaults (min 4, max 32) as a valid, submittable range', () => {
-    const state = createInitialWizardState();
-    expect(state.tournament.minTeams).toBe(4);
-    expect(state.tournament.maxTeams).toBe(32);
-  });
 });
 
 describe('validateTeamsStep', () => {
-  it('rejects fewer teams than the configured minimum', () => {
+  it('rejects a tournament with no teams inscribed', () => {
     const state = makeValidState();
-    state.tournament.minTeams = 6;
+    state.selectedTeamIds = [];
     expect(validateTeamsStep(state).length).toBeGreaterThan(0);
   });
 
-  it('rejects more teams than the configured maximum', () => {
-    const state = makeValidState();
-    state.tournament.maxTeams = 2;
-    expect(validateTeamsStep(state).length).toBeGreaterThan(0);
-  });
-
-  it('accepts a team count within range', () => {
+  it('accepts at least one inscribed team', () => {
     expect(validateTeamsStep(makeValidState())).toEqual([]);
   });
 });
@@ -145,6 +128,9 @@ describe('validateZonesStep', () => {
       hasGroupStage: true,
       roundRobinLegs: 1,
       cups: [],
+      pointsForWin: 2,
+      pointsForLoss: 1,
+      playoffMappings: [],
     });
     expect(validateZonesStep(state).some(e => e.includes('no tiene equipos'))).toBe(true);
   });
@@ -161,6 +147,86 @@ describe('validateZonesStep', () => {
     const cup: CupConfig = { id: 'cup-1', name: 'Copa de Oro', rounds: [] };
     state.zones[0].cups.push(cup);
     expect(validateZonesStep(state).some(e => e.includes('al menos una ronda'))).toBe(true);
+  });
+});
+
+describe('validatePlayoffMappings', () => {
+  const mapping = (
+    fromPosition: number,
+    toPosition: number,
+    destination: string
+  ): PlayoffMappingConfig => ({ id: `${fromPosition}-${toPosition}`, fromPosition, toPosition, destination });
+
+  const cups = ['Copa Oro', 'Copa Plata'];
+
+  it('accepts a clean, non-overlapping partition within the team count', () => {
+    const mappings = [mapping(1, 4, 'Copa Oro'), mapping(5, 8, 'Copa Plata')];
+    expect(validatePlayoffMappings(mappings, 8, cups, 'la zona')).toEqual([]);
+  });
+
+  it('is a no-op when there are no mappings', () => {
+    expect(validatePlayoffMappings([], 8, cups, 'la zona')).toEqual([]);
+  });
+
+  it('rejects two ranges that overlap', () => {
+    const mappings = [mapping(1, 4, 'Copa Oro'), mapping(4, 8, 'Copa Plata')];
+    expect(validatePlayoffMappings(mappings, 8, cups, 'la zona').some(e => e.includes('solapan'))).toBe(
+      true
+    );
+  });
+
+  it('rejects overlap regardless of the order the rows were entered', () => {
+    const mappings = [mapping(5, 8, 'Copa Plata'), mapping(3, 6, 'Copa Oro')];
+    expect(validatePlayoffMappings(mappings, 8, cups, 'la zona').some(e => e.includes('solapan'))).toBe(
+      true
+    );
+  });
+
+  it('rejects a range that exceeds the team count', () => {
+    const mappings = [mapping(1, 12, 'Copa Oro')];
+    expect(validatePlayoffMappings(mappings, 8, cups, 'la zona').some(e => e.includes('supera'))).toBe(
+      true
+    );
+  });
+
+  it('skips the upper-bound check when no teams are assigned yet', () => {
+    const mappings = [mapping(1, 12, 'Copa Oro')];
+    expect(validatePlayoffMappings(mappings, 0, cups, 'la zona')).toEqual([]);
+  });
+
+  it('rejects an inverted range (from greater than to)', () => {
+    const mappings = [mapping(5, 2, 'Copa Oro')];
+    expect(
+      validatePlayoffMappings(mappings, 8, cups, 'la zona').some(e => e.includes('invertido'))
+    ).toBe(true);
+  });
+
+  it('rejects a destination that is not one of the configured cups', () => {
+    const mappings = [mapping(1, 4, 'Copa Bronce')];
+    expect(
+      validatePlayoffMappings(mappings, 8, cups, 'la zona').some(e => e.includes('no coincide'))
+    ).toBe(true);
+  });
+
+  it('rejects a mapping with no destination chosen', () => {
+    const mappings = [mapping(1, 4, '')];
+    expect(
+      validatePlayoffMappings(mappings, 8, cups, 'la zona').some(e => e.includes('copa de destino'))
+    ).toBe(true);
+  });
+});
+
+describe('validateZonesStep with playoff mappings', () => {
+  it('surfaces an overlap error from a zone\'s playoff mappings', () => {
+    const state = makeValidState();
+    state.zones[0].cups = [
+      { id: 'cup-1', name: 'Copa Oro', rounds: [{ id: 'r1', stageType: StageType.Final, bestOf: 1 }] },
+    ];
+    state.zones[0].playoffMappings = [
+      { id: 'm1', fromPosition: 1, toPosition: 2, destination: 'Copa Oro' },
+      { id: 'm2', fromPosition: 2, toPosition: 2, destination: 'Copa Oro' },
+    ];
+    expect(validateZonesStep(state).some(e => e.includes('solapan'))).toBe(true);
   });
 });
 

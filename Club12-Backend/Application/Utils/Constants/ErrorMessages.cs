@@ -25,8 +25,6 @@ public static class ErrorMessages
         public const string RoleClaimMissing = "Role claim is missing from the token.";
         public const string IdClaimMissing = "Id claim is missing from the token.";
         public const string AccessDenied = "Access denied.";
-        public const string TeamManagerMustUseMagicLink = "TeamManager accounts must authenticate via the magic-link flow.";
-        public const string MagicLinkOnlyForTeamManager = "Magic-link is only available for TeamManager accounts.";
 
         public static string UserCreationFailed(string errors)
         {
@@ -65,6 +63,38 @@ public static class ErrorMessages
         }
     }
 
+    public static class Tournament
+    {
+        public static string NotFound(System.Guid tournamentId)
+        {
+            return $"There is no Tournament with id: {tournamentId}.";
+        }
+
+        public static string InvalidStatusTransition(
+            Domain.Enums.TournamentStatus from, Domain.Enums.TournamentStatus to)
+        {
+            return $"Cannot change tournament status from '{from}' to '{to}'. " +
+                "Allowed flow is Scheduled -> OpenForRegistration -> RegistrationClosed -> " +
+                "Ongoing -> Finished; a tournament may be Canceled from any non-terminal state, " +
+                "and Finished/Canceled are terminal.";
+        }
+
+        public static string StructuralEditNotAllowed(Domain.Enums.TournamentStatus status)
+        {
+            return $"Structural changes (divisions and team registrations) are only allowed while " +
+                $"the tournament is OpenForRegistration; this tournament is '{status}'.";
+        }
+
+        public static string CategoryMismatch(
+            Domain.Enums.TournamentCategory divisionCategory,
+            Domain.Enums.TournamentCategory tournamentCategory)
+        {
+            return $"A '{divisionCategory}' division cannot belong to a '{tournamentCategory}' tournament " +
+                "(HU-48): the feminine competition is a separate tournament and cannot be mixed with the " +
+                "masculine one. Create the division under a tournament of the same category.";
+        }
+    }
+
     public static class Team
     {
         public static string NotFound(System.Guid teamId)
@@ -75,6 +105,24 @@ public static class ErrorMessages
         public static string NotInTournament(System.Guid teamId)
         {
             return $"Team '{teamId}' is not currently registered to any tournament, so players cannot be registered to it.";
+        }
+    }
+
+    public static class Roster
+    {
+        public static string PlayerAlreadyInAnotherTeam(System.Guid playerId, System.Guid tournamentId)
+        {
+            return $"Player '{playerId}' is already registered to another team in tournament '{tournamentId}'. A player cannot be registered to two teams in the same tournament.";
+        }
+
+        public static string RosterFull(System.Guid teamId, int maxPlayers)
+        {
+            return $"Team '{teamId}' already has the maximum of {maxPlayers} players for this tournament.";
+        }
+
+        public static string DuplicateJerseyNumber(int jerseyNumber, System.Guid teamId, System.Guid tournamentId)
+        {
+            return $"Jersey number {jerseyNumber} is already used by another player in team '{teamId}' for tournament '{tournamentId}'.";
         }
     }
 
@@ -92,6 +140,11 @@ public static class ErrorMessages
         public static string NotFoundById(System.Guid id)
         {
             return $"Stage with id {id} not found.";
+        }
+
+        public static string NotFoundById(string idOrSlug)
+        {
+            return $"Stage with id or slug {idOrSlug} not found.";
         }
 
         public static string AlreadyExistsInDivision(string stageName)
@@ -144,9 +197,62 @@ public static class ErrorMessages
         public const string EndDateBeforeStartDate = "End date must be after start date.";
         public const string StageTypeNotSupportedForAutomatedCreation = "Stage type not supported for automated match creation.";
 
+        // HU-70: basketball has no draws — a played match must have a winner.
+        public const string GroupStageTieNotAllowed =
+            "A group-stage match cannot end tied; basketball has no draws. Load a decisive score with a winner.";
+        public const string PlayoffTieNotAllowed =
+            "A playoff match cannot end tied; it must be resolved by overtime. Load the final decisive score with a winner.";
+
+        // HU-73: walkover.
+        public const string WalkOverTeamNotInMatch =
+            "The present team must be either the home or the visitor team of this match.";
+
         public static string TeamsNotDistributableAcrossGroups(int registeredTeams, int totalGroups)
         {
             return $"Registered teams ({registeredTeams}) cannot be distributed evenly across {totalGroups} groups.";
+        }
+    }
+
+    public static class MatchSheet
+    {
+        // HU-71: the sum of a team's players' points must equal the team's final score.
+        public static string ScoreMismatch(int teamScore, int playersSum)
+        {
+            int difference = teamScore - playersSum;
+            return $"The players' points do not add up to the team's score: the team scored {teamScore} " +
+                $"but the loaded players sum {playersSum} (difference of {difference}). Fix the sheet before saving.";
+        }
+
+        public static string MatchNotFinished(System.Guid matchId)
+        {
+            return $"Cannot load the match sheet for match {matchId} because it has no final score loaded yet.";
+        }
+
+        public static string TeamNotInMatch(System.Guid teamId)
+        {
+            return $"Team {teamId} did not play in this match, so its players' points cannot be loaded here.";
+        }
+
+        public static string PlayerNotOnRoster(System.Guid playerId)
+        {
+            return $"Player {playerId} is not on this team's roster for this season, so their points cannot be loaded.";
+        }
+
+        public static string PlayerNotEligible(System.Guid playerId)
+        {
+            return $"Player {playerId} is not eligible (missing approved registration or under an active sanction).";
+        }
+    }
+
+    public static class MedicalRecord
+    {
+        public const string InvalidPdfFile = "The medical-record file must be a valid PDF.";
+
+        public static string RegistrationNotFound(
+            System.Guid playerId, System.Guid teamId, System.Guid tournamentId)
+        {
+            return $"Player {playerId} has no registration to team {teamId} for tournament " +
+                $"{tournamentId}, so a medical record cannot be attached or reviewed.";
         }
     }
 
@@ -182,6 +288,23 @@ public static class ErrorMessages
     public static class Playoff
     {
         public const string NotEnoughRankedTeams = "Seeding requires at least two ranked teams.";
+        public const string EmptyDestination = "A playoff position range must have a non-empty destination.";
+        public const string NoMappingsConfigured = "This division has no playoff position-range mapping configured.";
+
+        public static string InvalidRange(int from, int to)
+        {
+            return $"Invalid playoff position range {from}-{to}: positions must be 1-based and 'from' must be less than or equal to 'to'.";
+        }
+
+        public static string OverlappingRanges(int firstFrom, int firstTo, int secondFrom, int secondTo)
+        {
+            return $"Playoff position ranges {firstFrom}-{firstTo} and {secondFrom}-{secondTo} overlap; each position must map to at most one destination.";
+        }
+
+        public static string CupStageNotFound(string destination)
+        {
+            return $"No unseeded first-round elimination stage found for playoff destination '{destination}'.";
+        }
     }
 
     public static class Backup

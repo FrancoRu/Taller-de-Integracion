@@ -46,21 +46,39 @@ public class BlogPostService(IBlogPostRepository blogpostRepository) : IBlogPost
     /// an id when it parses as a GUID, otherwise it is looked up as a slug.
     /// </summary>
     /// <param name="idOrSlug">The blog post's GUID id or its slug.</param>
+    /// <param name="includeUnpublished">
+    /// When false (the default), a draft is treated as not found so it never
+    /// leaks through public endpoints; when true, drafts are also resolved.
+    /// </param>
     /// <returns>The blog post entity if found; otherwise, null.</returns>
-    public async Task<BlogPost?> GetBlogPostByIdOrSlugAsync(string idOrSlug)
+    public async Task<BlogPost?> GetBlogPostByIdOrSlugAsync(string idOrSlug, bool includeUnpublished = false)
     {
-        if (Guid.TryParse(idOrSlug, out Guid blogPostId))
+        BlogPost? post = Guid.TryParse(idOrSlug, out Guid blogPostId)
+            ? await GetBlogPostByIdAsync(blogPostId)
+            : (await blogpostRepository.FindAsync(candidate => candidate.Slug == idOrSlug)).FirstOrDefault();
+
+        // Public callers must not resolve drafts (HU-16): a draft is treated
+        // as not found so it never leaks through the public detail endpoint.
+        if (post is not null && !includeUnpublished && !post.IsPublished)
         {
-            return await GetBlogPostByIdAsync(blogPostId);
+            return null;
         }
 
-        IEnumerable<BlogPost> posts = await blogpostRepository.FindAsync(post => post.Slug == idOrSlug);
-        return posts.FirstOrDefault();
+        return post;
     }
 
-    public async Task<PaginatedResponse<BlogPost>> GetAllBlogPostsAsync(GetBlogPostsFilteredRequest filter)
+    public async Task<PaginatedResponse<BlogPost>> GetAllBlogPostsAsync(GetBlogPostsFilteredRequest filter, bool includeUnpublished = false)
     {
         Expression<Func<BlogPost, bool>> expression = QueryableExtensions.ConstructFilterExpression<BlogPost, GetBlogPostsFilteredRequest>(filter);
+
+        // Public listing only ever exposes published posts (HU-16); Admin/Owner
+        // callers pass includeUnpublished: true to also see drafts.
+        if (!includeUnpublished)
+        {
+            Expression<Func<BlogPost, bool>> publishedOnly = post => post.IsPublished;
+            expression = expression.AndAlso(publishedOnly);
+        }
+
         IEnumerable<BlogPost> filteredBlogPosts = await blogpostRepository.FindAsync(expression, filter: filter);
 
         int totalCount = await blogpostRepository.CountAsync(expression);

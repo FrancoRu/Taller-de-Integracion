@@ -19,6 +19,8 @@ import { Position } from '@/modules/division/type/division.d';
 import { sortPositions } from '@/modules/division/utils/sortPositions';
 import { scorerService } from '@/modules/scorer/service/scorer.service';
 import { IScorerByPlayerResponse } from '@/modules/scorer/type/scorer.d';
+import { downloadCsv } from '@/modules/core/utils/csv';
+import ExportCsvButton from '@/views/core/components/ExportCsvButton';
 
 const TOP_SCORES_PAGE_SIZE = 100;
 
@@ -29,6 +31,44 @@ interface PrintableResultsSheetProps {
   divisionName?: string;
   positions: Position[];
 }
+
+const STANDINGS_CSV_HEADERS = [
+  '#',
+  'Equipo',
+  'PJ',
+  'PG',
+  'PP',
+  'GF',
+  'GC',
+  'DIF',
+  'Pts',
+];
+const GOLEADORES_CSV_HEADERS = ['#', 'Jugador', 'Puntos'];
+
+const standingsCsvRows = (rows: Position[]) =>
+  rows.map((row, index) => [
+    index + 1,
+    row.teamName,
+    row.matchesPlayed,
+    row.wins,
+    row.losses,
+    row.pointsFor,
+    row.pointsAgainst,
+    row.pointsDifference,
+    row.points,
+  ]);
+
+const goleadoresCsvRows = (rows: IScorerByPlayerResponse[]) =>
+  rows.map((row, index) => [index + 1, row.fullName, row.points]);
+
+/** Slugifies a division name into a safe CSV filename fragment. */
+const csvFilenamePart = (divisionName?: string) =>
+  (divisionName ?? 'division')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase() || 'division';
 
 /**
  * `@media print` isolation: hide every element on the page except this
@@ -104,6 +144,29 @@ export default function PrintableResultsSheet({
   const showStandings = target === 'standings' || target === 'both';
   const showGoleadores = target === 'goleadores' || target === 'both';
 
+  /**
+   * Exports the currently-toggled result(s) as CSV (HU-89). Mirrors the print
+   * target: "Posiciones" downloads the standings, "Goleadores" the top-scorer
+   * ranking, and "Ambos" downloads both files.
+   */
+  const handleExportCsv = () => {
+    const namePart = csvFilenamePart(divisionName);
+    if (showStandings) {
+      downloadCsv(
+        `posiciones-${namePart}`,
+        STANDINGS_CSV_HEADERS,
+        standingsCsvRows(standingsRows)
+      );
+    }
+    if (showGoleadores) {
+      downloadCsv(
+        `goleadores-${namePart}`,
+        GOLEADORES_CSV_HEADERS,
+        goleadoresCsvRows(topScores)
+      );
+    }
+  };
+
   return (
     <Box>
       <GlobalStyles styles={printMediaStyles} />
@@ -142,6 +205,7 @@ export default function PrintableResultsSheet({
         >
           Imprimir
         </Button>
+        <ExportCsvButton onExport={handleExportCsv} />
       </Box>
 
       <Box data-print={isPrintTarget ? 'sheet' : undefined} sx={{ display: 'none' }}>

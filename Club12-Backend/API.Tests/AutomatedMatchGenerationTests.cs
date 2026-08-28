@@ -74,8 +74,6 @@ public class AutomatedMatchGenerationTests : IClassFixture<CustomWebApplicationF
             Slug = $"tournament-{Guid.NewGuid()}",
             TeamRegistrationDeadline = startDate.AddDays(-1),
             StartDate = startDate,
-            MaxTeams = 8,
-            MinTeams = 2,
             Divisions = [],
             Teams = [],
             CreatedBy = "test",
@@ -83,6 +81,7 @@ public class AutomatedMatchGenerationTests : IClassFixture<CustomWebApplicationF
 
         Division division = new()
         {
+            Slug = $"division-{Guid.NewGuid()}",
             Id = divisionId,
             Name = $"Division-{Guid.NewGuid()}",
             Tournament = tournament,
@@ -92,6 +91,7 @@ public class AutomatedMatchGenerationTests : IClassFixture<CustomWebApplicationF
 
         Stage stage = new()
         {
+            Slug = $"stage-{Guid.NewGuid()}",
             Name = $"Stage-{Guid.NewGuid()}",
             StageType = stageType,
             IsActive = true,

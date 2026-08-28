@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Domain.Enums;
+
+using System;
 
 namespace Domain.Entities.Models;
 
@@ -54,7 +56,17 @@ public class Position
     public required int PointsDifference { get; set; }
 
     /// <summary>
-    /// The total points accumulated by the team, calculated based on wins and losses (2 points per win, 1 point per loss).
+    /// The total points accumulated by the team, calculated from the
+    /// division's configured points-per-win and points-per-loss (HU-79;
+    /// defaults 2 per win, 1 per loss).
     /// </summary>
     public required int Points { get; set; }
+
+    /// <summary>
+    /// The tiebreaker criterion (HU-80) that separated this team from the
+    /// team ranked immediately above it. Null for the top team and for teams
+    /// that are not tied with the team above them on table points. Lets the
+    /// standings UI show why each tie was broken.
+    /// </summary>
+    public TiebreakerCriterion? ResolvedBy { get; set; }
 }

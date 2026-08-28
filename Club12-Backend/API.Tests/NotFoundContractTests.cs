@@ -127,7 +127,7 @@ public class NotFoundContractTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task CreatePlayer_MissingTeamId_StaysBadRequest()
     {
-        HttpClient client = _factory.CreateAuthenticatedClient(Roles.TeamManager);
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Owner);
         CreatePlayerRequest request = new()
         {
             FirstName = "Test",

@@ -59,11 +59,13 @@ public sealed class ApplicationDBContextFactory : IDesignTimeDbContextFactory<Ap
 
         return new ApplicationDBContext(optionsBuilder.Options)
         {
+            Clubs = null!,
             BackupRecords = null!,
             Teams = null!,
             Players = null!,
             Tournaments = null!,
             Divisions = null!,
+            DivisionPlayoffMappings = null!,
             Matches = null!,
             MatchSeries = null!,
             PlayersStatistics = null!,
@@ -74,6 +76,8 @@ public sealed class ApplicationDBContextFactory : IDesignTimeDbContextFactory<Ap
             StageTeamMatches = null!,
             Scorers = null!,
             PlayerTeamRegistrations = null!,
+            TeamTournamentRegistrations = null!,
+            AuditLogs = null!,
         };
     }
 

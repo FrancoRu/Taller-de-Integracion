@@ -23,7 +23,7 @@ namespace API.Controllers;
 /// <summary>
 /// Controller for managing Stage entities, providing endpoints for creation, retrieval, update, deletion,
 /// automated generation of stages and matches, and team assignment operations. Reads are public; writes
-/// require Owner or TournamentManager.
+/// require Owner or Admin.
 /// </summary>
 /// <remarks>
 /// This controller exposes RESTful endpoints for handling Stage-related operations in the tournament system.
@@ -36,7 +36,7 @@ namespace API.Controllers;
 /// <param name="mapper">AutoMapper instance for mapping between entities and DTOs.</param>
 [Route("api/stages/")]
 [ApiController]
-[Authorize(Roles = Roles.AdminOwnerOrTournamentManager)]
+[Authorize(Roles = Roles.AdminOrOwner)]
 public class StageController(IStageService stageService, IMatchService matchService, IMapper mapper) : ControllerBase
 {
     /// <summary>
@@ -53,7 +53,7 @@ public class StageController(IStageService stageService, IMatchService matchServ
         Stage mappedStage = mapper.Map<Stage>(stageRequest);
         Stage createdStage = await stageService.CreateStageAsync(mappedStage);
         StageResponse stageResponse = mapper.Map<StageResponse>(createdStage);
-        return CreatedAtAction(nameof(GetStageById), new { createdStage.Id }, stageResponse);
+        return CreatedAtAction(nameof(GetStageById), new { idOrSlug = createdStage.Id }, stageResponse);
     }
 
     /// <summary>
@@ -80,22 +80,22 @@ public class StageController(IStageService stageService, IMatchService matchServ
     }
 
     /// <summary>
-    /// Retrieves a Stage by its id.
+    /// Retrieves a Stage by its id or its public slug.
     /// </summary>
-    /// <param name="id">The id of the Stage.</param>
+    /// <param name="idOrSlug">The id (GUID) or slug of the Stage.</param>
     /// <returns>The Stage entity.</returns>
     [AllowAnonymous]
-    [HttpGet("{id:guid}")]
+    [HttpGet("{idOrSlug}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Stage))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<StageResponse>> GetStageById(Guid id)
+    public async Task<ActionResult<StageResponse>> GetStageById(string idOrSlug)
     {
-        Stage? stage = await stageService.GetStageByIdAsync(id);
+        Stage? stage = await stageService.GetStageByIdOrSlugAsync(idOrSlug);
 
         if (stage == null)
         {
-            return NotFound(ErrorMessages.Stage.NotFoundById(id));
+            return NotFound(ErrorMessages.Stage.NotFoundById(idOrSlug));
         }
 
         StageResponse stageResponse = mapper.Map<StageResponse>(stage);

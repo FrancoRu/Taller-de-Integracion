@@ -4,6 +4,7 @@ using Application.DTOs.PlayerStatistic.Request;
 using Domain.Entities.Models;
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Application.Interfaces.Services;
@@ -35,4 +36,11 @@ public interface IPlayerStatisticService
     /// Retrieves a paginated, filtered list of player statistics.
     /// </summary>
     Task<PaginatedResponse<PlayerStatistic>> GetPlayerStatisticsAsync(GetPlayerStatisticsFilteredRequest filter);
+
+    /// <summary>
+    /// Loads a whole team's coherent scoring sheet for a match (HU-71): the
+    /// listed players' points must add up to the team's final score and every
+    /// player must be on the roster and eligible, or nothing is saved.
+    /// </summary>
+    Task<List<PlayerStatistic>> LoadTeamMatchSheetAsync(LoadMatchSheetRequest request);
 }

@@ -50,14 +50,14 @@ export const divisionService = {
     sendPut<IDivisionResponse>(`${routes.divisions}/${id}`, division),
 
   /**
-   * Retrieves a division by its ID.
-   * @param {string} id - The ID of the division to retrieve.
+   * Retrieves a division by its ID or its public slug.
+   * @param {string} idOrSlug - The ID or slug of the division to retrieve.
    * @returns {Promise<AxiosResponse<IDivisionResponse>>} - A promise that resolves with the division data.
    */
   getDivisionsById: async (
-    id: GUID
+    idOrSlug: string
   ): Promise<AxiosResponse<IDivisionResponse>> =>
-    sendGet<IDivisionResponse>(`${routes.divisions}/${id}/detail`),
+    sendGet<IDivisionResponse>(`${routes.divisions}/${idOrSlug}/detail`),
 
   /**
    * Retrieves divisions based on provided filters.

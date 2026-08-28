@@ -26,6 +26,7 @@ const makeTeam = (
 
 const makeStage = (overrides: Partial<IStageResponse> & { id: GUID; stageType: StageType }): IStageResponse => ({
   name: overrides.stageType,
+  slug: '',
   isActive: true,
   isElimination: true,
   startDate: '2026-01-01',

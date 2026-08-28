@@ -4,13 +4,9 @@ import { IMatchResponse } from '@/modules/match/type/match.d';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import { formatMatchScore, getMatchStatusColor, getMatchStatusLabel } from '@/modules/match/utils/matchDisplay';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import { formatTimeAr } from '@/modules/core/utils/formatDate';
 
-const formatTime = (value: string) => {
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime())
-    ? '—'
-    : parsed.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-};
+const formatTime = (value: string) => formatTimeAr(value);
 
 interface TeamSideProps {
   name: string;

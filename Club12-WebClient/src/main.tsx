@@ -12,6 +12,7 @@ import { ErrorProvider } from './modules/error/context/error.context';
 import { TournamentProvider } from './modules/tournament/context/tournament.context';
 import { VenueProvider } from './modules/venue/context/venue.context';
 import { TeamProvider } from './modules/team/context/team.context';
+import { ClubProvider } from './modules/club/context/club.context';
 import { UserProvider } from './modules/user/context/user.context';
 import { DivisionProvider } from './modules/division/context/division.context';
 import { PlayerProvider } from './modules/player/context/player.context';
@@ -21,6 +22,8 @@ import { PlayerSanctionProvider } from './modules/playerSanction/context/playerS
 import { PlayerStatisticProvider } from './modules/playerStatistic/context/playerStatistic.context';
 import { ScorerProvider } from './modules/scorer/context/scorer.context';
 import { BlogPostProvider } from './modules/blogPost/context/blogPost.context';
+import { MedicalRecordProvider } from './modules/medicalRecord/context/medicalRecord.context';
+import { AuditLogProvider } from './modules/auditLog/context/auditLog.context';
 import ErrorBoundary from './views/core/errors/error-boundary';
 import ComposeProviders from './views/core/components/ComposeProviders';
 import QueryProvider from './views/core/components/QueryProvider';
@@ -35,6 +38,7 @@ const providers: ComponentType<{ children: ReactNode }>[] = [
   AuthProvider,
   VenueProvider,
   TeamProvider,
+  ClubProvider,
   PlayerProvider,
   UserProvider,
   TournamentProvider,
@@ -45,6 +49,8 @@ const providers: ComponentType<{ children: ReactNode }>[] = [
   ScorerProvider,
   PlayerStatisticProvider,
   BlogPostProvider,
+  MedicalRecordProvider,
+  AuditLogProvider,
 ];
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(

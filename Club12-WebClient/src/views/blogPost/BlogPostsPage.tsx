@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
+import { formatDateAr } from '@/modules/core/utils/formatDate';
 import {
   Box,
   Card,
   CardContent,
+  Chip,
   InputAdornment,
   Stack,
   TextField,
@@ -34,10 +36,7 @@ import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const EMPTY_FILTERS: GetBlogPostsFilteredRequest = {};
 
-const formatDate = (value: Date | string) => {
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString('es-AR');
-};
+const formatDate = (value: Date | string) => formatDateAr(value);
 
 const BlogPostsPage: React.FC = () => {
   const { getBlogPostsByFilters, deleteBlogPostById } = useBlogPost();
@@ -140,6 +139,20 @@ const BlogPostsPage: React.FC = () => {
     const baseColumns: GridColDef<BlogPostResponse>[] = [
       { field: 'title', headerName: 'Título', flex: 1.4, minWidth: 200 },
       { field: 'author', headerName: 'Autor', flex: 1, minWidth: 150 },
+      {
+        field: 'isPublished',
+        headerName: 'Estado',
+        flex: 0.7,
+        minWidth: 120,
+        sortable: false,
+        filterable: false,
+        renderCell: params =>
+          params.row.isPublished ? (
+            <Chip size="small" color="success" variant="outlined" label="Publicada" />
+          ) : (
+            <Chip size="small" color="warning" label="Borrador" />
+          ),
+      },
       { field: 'views', headerName: 'Vistas', flex: 0.5, minWidth: 90 },
       {
         field: 'createdAt',

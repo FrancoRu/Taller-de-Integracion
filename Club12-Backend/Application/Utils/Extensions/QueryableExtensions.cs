@@ -19,13 +19,21 @@ public static class QueryableExtensions
     /// <typeparam name="TEntity">The type of the entity to filter.</typeparam>
     /// <typeparam name="T">The type of the filter request.</typeparam>
     /// <param name="filter">The filter request containing the filter criteria.</param>
+    /// <param name="ignoredProperties">
+    /// Names of filter properties whose auto-generated predicate must be
+    /// suppressed, letting the caller special-case them (e.g. resolving a
+    /// filter through a join instead of the entity's own FK-equality). Purely
+    /// additive: callers that pass nothing get the original behavior.
+    /// </param>
     /// <returns>An expression that represents the filter criteria.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the 'Contains' method is not found.</exception>
-    public static Expression<Func<TEntity, bool>> ConstructFilterExpression<TEntity, T>(T filter) where T : PaginatedFilterRequest
+    public static Expression<Func<TEntity, bool>> ConstructFilterExpression<TEntity, T>(T filter, params string[] ignoredProperties) where T : PaginatedFilterRequest
     {
         PropertyInfo[] filterProperties = [.. typeof(T)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => !ShouldSkipProperty(p.Name) && typeof(TEntity).GetProperty(p.Name) != null)];
+            .Where(p => !ShouldSkipProperty(p.Name)
+                && !ignoredProperties.Contains(p.Name)
+                && typeof(TEntity).GetProperty(p.Name) != null)];
 
         bool allNullOrEmpty = Array.TrueForAll(filterProperties, property =>
         {
@@ -90,6 +98,31 @@ public static class QueryableExtensions
         finalExpression ??= Expression.Constant(true);
 
         return Expression.Lambda<Func<TEntity, bool>>(finalExpression, parameterExpr);
+    }
+
+    /// <summary>
+    /// Combines two entity predicates with a logical AND, rebinding the second
+    /// predicate's parameter onto the first so the result is a single lambda
+    /// EF Core can translate to SQL (unlike Expression.Invoke). Used to append
+    /// extra server-side filters (e.g. published-only blog posts, HU-16) to a
+    /// dynamically built filter expression.
+    /// </summary>
+    public static Expression<Func<TEntity, bool>> AndAlso<TEntity>(
+        this Expression<Func<TEntity, bool>> left,
+        Expression<Func<TEntity, bool>> right)
+    {
+        ParameterExpression parameter = left.Parameters[0];
+        Expression reboundRight = new ReplaceParameterVisitor(right.Parameters[0], parameter).Visit(right.Body);
+        Expression combined = Expression.AndAlso(left.Body, reboundRight);
+        return Expression.Lambda<Func<TEntity, bool>>(combined, parameter);
+    }
+
+    private sealed class ReplaceParameterVisitor(ParameterExpression from, ParameterExpression to) : ExpressionVisitor
+    {
+        protected override Expression VisitParameter(ParameterExpression node)
+        {
+            return node == from ? to : base.VisitParameter(node);
+        }
     }
 
     /// <summary>

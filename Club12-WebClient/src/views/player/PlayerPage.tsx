@@ -14,7 +14,6 @@ import {
   Tabs,
   Typography,
 } from '@mui/material';
-import { GUID } from '@/modules/core/types/types';
 import { usePlayer } from '@/modules/player/hook/player.hook';
 import { usePlayerStatistic } from '@/modules/playerStatistic/hook/playerStatistic.hook';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
@@ -23,6 +22,8 @@ import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PlayerStatisticCreatePage from '@/views/playerStatistic/playerStatisticCreatePage';
+import PlayerStatisticCard from '@/views/playerStatistic/PlayerStatisticCard';
+import PlayerHistory from '@/views/playerStatistic/PlayerHistory';
 import PlayerSanctionCreatePage from '@/views/playerSanction/playerSanctionCreatePage';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
@@ -38,16 +39,23 @@ const formatDate = (value?: string | Date | null) => {
 };
 
 const PlayerPage: React.FC = () => {
-  const { playerId } = useParams<{ playerId: GUID }>();
+  const { playerId } = useParams<{ playerId: string }>();
   const navigate = useNavigate();
   const { role } = useAuth();
   const { player, getPlayerById } = usePlayer();
-  const { playerStatistics, getPlayerStatisticsByFilter } = usePlayerStatistic();
+  const {
+    playerStatistics,
+    getPlayerStatisticsByFilter,
+    playerCard,
+    getPlayerCard,
+    playerHistory,
+    getPlayerHistory,
+  } = usePlayerStatistic();
   const { playerSanctions, getPlayerSanctionByFilter } = usePlayerSanction();
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState<'detalle' | 'puntuaciones' | 'sanciones'>(
-    'detalle'
-  );
+  const [tab, setTab] = useState<
+    'detalle' | 'ficha' | 'historial' | 'puntuaciones' | 'sanciones'
+  >('detalle');
   const [statisticDialogOpen, setStatisticDialogOpen] = useState(false);
   const [sanctionDialogOpen, setSanctionDialogOpen] = useState(false);
 
@@ -57,14 +65,27 @@ const PlayerPage: React.FC = () => {
   );
   const isAdministrative = role !== UserRolesType.Guest;
 
+  // Statistics and sanctions are filtered by the real player GUID, so they
+  // only load once the slug-or-id route param has resolved to a fetched
+  // player (player.id), never from the raw param which may be a slug.
   const refreshStatistics = () => {
-    if (!targetPlayerId) return;
-    void getPlayerStatisticsByFilter({ playerId: targetPlayerId, pageSize: FILTER_OPTIONS_PAGE_SIZE });
+    if (!player?.id) return;
+    void getPlayerStatisticsByFilter({ playerId: player.id, pageSize: FILTER_OPTIONS_PAGE_SIZE });
   };
 
   const refreshSanctions = () => {
-    if (!targetPlayerId) return;
-    void getPlayerSanctionByFilter({ playerId: targetPlayerId, pageSize: FILTER_OPTIONS_PAGE_SIZE });
+    if (!player?.id) return;
+    void getPlayerSanctionByFilter({ playerId: player.id, pageSize: FILTER_OPTIONS_PAGE_SIZE });
+  };
+
+  const refreshCard = () => {
+    if (!player?.id) return;
+    void getPlayerCard(player.id);
+  };
+
+  const refreshHistory = () => {
+    if (!player?.id) return;
+    void getPlayerHistory(player.id);
   };
 
   useEffect(() => {
@@ -72,9 +93,13 @@ const PlayerPage: React.FC = () => {
       refreshStatistics();
     } else if (tab === 'sanciones') {
       refreshSanctions();
+    } else if (tab === 'ficha') {
+      refreshCard();
+    } else if (tab === 'historial') {
+      refreshHistory();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, targetPlayerId]);
+  }, [tab, player?.id]);
 
   useEffect(() => {
     if (!targetPlayerId) {
@@ -112,7 +137,10 @@ const PlayerPage: React.FC = () => {
     return <LoadingIndicator />;
   }
 
-  if (!player || player.id !== targetPlayerId) {
+  if (
+    !player ||
+    (player.id !== targetPlayerId && player.slug !== targetPlayerId)
+  ) {
     return (
       <Card>
         <CardContent>
@@ -171,6 +199,8 @@ const PlayerPage: React.FC = () => {
           sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
         >
           <Tab label="Detalle" value="detalle" />
+          <Tab label="Ficha" value="ficha" />
+          <Tab label="Historial" value="historial" />
           <Tab label="Puntuaciones" value="puntuaciones" />
           <Tab label="Sanciones" value="sanciones" />
         </Tabs>
@@ -257,6 +287,10 @@ const PlayerPage: React.FC = () => {
             </Grid>
           </Grid>
         )}
+
+        {tab === 'ficha' && <PlayerStatisticCard card={playerCard} />}
+
+        {tab === 'historial' && <PlayerHistory history={playerHistory} />}
 
         {tab === 'puntuaciones' && (
           <>

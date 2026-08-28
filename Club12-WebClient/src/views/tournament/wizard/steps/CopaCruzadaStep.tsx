@@ -11,8 +11,9 @@ import {
 } from '@mui/material';
 import { GUID } from '@/modules/core/types/types';
 import { ITeamResponse } from '@/modules/team/type/team.d';
-import { CrossCupConfig, ROUND_ROBIN_LEGS_OPTIONS } from '../types';
+import { CrossCupConfig, PlayoffMappingConfig, ROUND_ROBIN_LEGS_OPTIONS } from '../types';
 import CupsEditor from './CupsEditor';
+import PlayoffRangesEditor from './PlayoffRangesEditor';
 
 interface CopaCruzadaStepProps {
   teams: ITeamResponse[];
@@ -143,6 +144,34 @@ export default function CopaCruzadaStep({ teams, value, onChange }: CopaCruzadaS
             )}
           </Stack>
 
+          {/* Per-division scoring (HU-79): defaults 2/1, no draw points. */}
+          <Stack
+            direction="row"
+            spacing={2}
+            sx={{
+              alignItems: 'center',
+              mb: 2,
+            }}>
+            <TextField
+              type="number"
+              size="small"
+              label="Puntos por victoria"
+              value={value.pointsForWin}
+              onChange={e => onChange({ ...value, pointsForWin: Number(e.target.value) })}
+              slotProps={{ htmlInput: { min: 0 } }}
+              sx={{ width: 180 }}
+            />
+            <TextField
+              type="number"
+              size="small"
+              label="Puntos por derrota"
+              value={value.pointsForLoss}
+              onChange={e => onChange({ ...value, pointsForLoss: Number(e.target.value) })}
+              slotProps={{ htmlInput: { min: 0 } }}
+              sx={{ width: 180 }}
+            />
+          </Stack>
+
           <Divider sx={{ mb: 2 }} />
 
           <Typography variant="subtitle2" sx={{
@@ -151,6 +180,18 @@ export default function CopaCruzadaStep({ teams, value, onChange }: CopaCruzadaS
             Playoffs de la copa cruzada
           </Typography>
           <CupsEditor cups={value.cups} onChange={cups => onChange({ ...value, cups })} />
+
+          <Typography variant="subtitle2" sx={{ mb: 1, mt: 2 }}>
+            Clasificación a playoffs por rango
+          </Typography>
+          <PlayoffRangesEditor
+            mappings={value.playoffMappings}
+            cups={value.cups}
+            teamCount={value.includeAllTeams ? teams.length : value.teamIds.length}
+            onChange={(playoffMappings: PlayoffMappingConfig[]) =>
+              onChange({ ...value, playoffMappings })
+            }
+          />
         </Box>
       )}
     </Stack>

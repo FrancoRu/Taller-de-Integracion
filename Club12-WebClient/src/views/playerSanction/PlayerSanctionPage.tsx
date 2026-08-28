@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { formatDateTimeAr } from '@/modules/core/utils/formatDate';
 import {
   Button,
   Card,
@@ -19,6 +20,13 @@ import { notifySuccess } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import { SanctionAppealStatus } from '@/modules/playerSanction/type/playerSanction';
+import {
+  formatFechasRemaining,
+  formatSanctionDurationFechas,
+  getSanctionStateLabel,
+  getSanctionSubjectName,
+  getSanctionSubjectTypeLabel,
+} from '@/modules/playerSanction/utils/sanctionDisplay';
 import { usePlayer } from '@/modules/player/hook/player.hook';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
@@ -41,21 +49,7 @@ const APPEAL_STATUS_COLOR: Record<
   Rejected: 'error',
 };
 
-const formatDate = (value?: string | Date | null) => {
-  if (!value) {
-    return '—';
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return '—';
-  }
-
-  return parsed.toLocaleString('es-AR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  });
-};
+const formatDate = (value?: string | Date | null) => formatDateTimeAr(value);
 
 const PlayerSanctionPage: React.FC = () => {
   const { playerSanctionId } = useParams<{ playerSanctionId: GUID }>();
@@ -134,13 +128,14 @@ const PlayerSanctionPage: React.FC = () => {
   }, [getPlayerSanctionById, targetSanctionId]);
 
   useEffect(() => {
-    if (tab !== 'jugador' || !playerSanction?.playerId) {
+    const playerId = playerSanction?.playerId;
+    if (tab !== 'jugador' || !playerId) {
       return;
     }
 
     const fetchPlayer = async () => {
       setPlayerLoading(true);
-      await getPlayerById(playerSanction.playerId, true);
+      await getPlayerById(playerId, true);
       setPlayerLoading(false);
     };
 
@@ -251,7 +246,9 @@ const PlayerSanctionPage: React.FC = () => {
         >
           <Tab label="Detalle" value="detalle" />
           <Tab label="Apelación" value="apelacion" />
-          <Tab label="Jugador" value="jugador" />
+          {playerSanction.subjectType === 'Player' && (
+            <Tab label="Jugador" value="jugador" />
+          )}
           <Tab label="Partido" value="partido" />
         </Tabs>
 
@@ -265,9 +262,56 @@ const PlayerSanctionPage: React.FC = () => {
               <Typography variant="subtitle2" sx={{
                 color: "text.secondary"
               }}>
+                Sujeto
+              </Typography>
+              <Typography>
+                {getSanctionSubjectTypeLabel(playerSanction)}:{' '}
+                {getSanctionSubjectName(playerSanction)}
+              </Typography>
+            </Grid>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
+                Estado
+              </Typography>
+              <Chip
+                size="small"
+                label={getSanctionStateLabel(playerSanction)}
+                color={playerSanction.isActive ? 'warning' : 'default'}
+              />
+            </Grid>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
                 Duración
               </Typography>
-              <Typography>{playerSanction.duration}</Typography>
+              <Typography>
+                {formatSanctionDurationFechas(playerSanction.duration)}
+              </Typography>
+            </Grid>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6
+              }}>
+              <Typography variant="subtitle2" sx={{
+                color: "text.secondary"
+              }}>
+                Fechas restantes
+              </Typography>
+              <Typography>
+                {formatFechasRemaining(playerSanction.fechasRemaining)}
+              </Typography>
             </Grid>
             <Grid
               size={{

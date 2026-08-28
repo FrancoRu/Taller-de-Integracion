@@ -188,6 +188,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
 
         Stage secondGroupStage = new()
         {
+            Slug = $"stage-{Guid.NewGuid()}",
             Name = $"Totally-Different-Name-{Guid.NewGuid()}",
             StageType = StageType.Group,
             IsActive = true,
@@ -221,6 +222,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
 
         Stage semiFinalStage = new()
         {
+            Slug = $"stage-{Guid.NewGuid()}",
             Name = $"Semifinal-{Guid.NewGuid()}",
             StageType = StageType.SemiFinal,
             IsActive = true,
@@ -420,6 +422,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
 
         Stage stage = new()
         {
+            Slug = $"stage-{Guid.NewGuid()}",
             Name = $"Stage-{Guid.NewGuid()}",
             StageType = StageType.SemiFinal,
             IsActive = true,
@@ -453,7 +456,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         Assert.DoesNotContain(assignedTeamIds, teamBIds.Contains);
     }
 
-    private static async Task<Tournament> SeedTournamentAsync(ApplicationDBContext db, int maxTeams = 64)
+    private static async Task<Tournament> SeedTournamentAsync(ApplicationDBContext db)
     {
         DateTime startDate = DateTime.UtcNow.Date.AddDays(30);
 
@@ -464,8 +467,6 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
             Slug = $"tournament-{Guid.NewGuid()}",
             TeamRegistrationDeadline = startDate.AddDays(-1),
             StartDate = startDate,
-            MaxTeams = maxTeams,
-            MinTeams = 2,
             Divisions = [],
             Teams = [],
             CreatedBy = "test",
@@ -506,7 +507,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
 
     private static async Task<(Tournament tournament, List<Team> teams)> SeedTournamentWithTeamsAsync(ApplicationDBContext db, int teamCount)
     {
-        Tournament tournament = await SeedTournamentAsync(db, Math.Max(teamCount, 2));
+        Tournament tournament = await SeedTournamentAsync(db);
         List<Team> teams = await SeedTeamsAsync(db, tournament, teamCount);
 
         return (tournament, teams);
@@ -516,6 +517,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
     {
         Division division = new()
         {
+            Slug = $"division-{Guid.NewGuid()}",
             Name = $"Division-{Guid.NewGuid()}",
             Tournament = tournament,
             TournamentId = tournament.Id,
@@ -530,6 +532,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         {
             Stage existingStage = new()
             {
+                Slug = $"stage-{Guid.NewGuid()}",
                 Name = $"Existing-{Guid.NewGuid()}",
                 StageType = StageType.Group,
                 IsActive = true,
@@ -556,6 +559,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
 
         Stage stage = new()
         {
+            Slug = $"stage-{Guid.NewGuid()}",
             Name = $"Stage-{Guid.NewGuid()}",
             StageType = stageType,
             IsActive = true,

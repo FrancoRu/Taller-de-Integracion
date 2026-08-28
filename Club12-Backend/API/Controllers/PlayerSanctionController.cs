@@ -16,19 +16,20 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace API.Controllers;
 
 /// <summary>
 /// Controller for managing Player Sanctions. Reads are public; writes
-/// require Owner or TournamentManager.
+/// require Owner or Admin.
 /// </summary>
 /// <param name="playerSanctionService">The Player Sanction service.</param>
 /// <param name="mapper">The AutoMapper instance.</param>
 [Route("api/player-sanctions/")]
 [ApiController]
-[Authorize(Roles = Roles.AdminOwnerOrTournamentManager)]
+[Authorize(Roles = Roles.AdminOrOwner)]
 public class PlayerSanctionController(IPlayerSanctionService playerSanctionService, IMapper mapper) : ControllerBase
 {
     /// <summary>
@@ -44,7 +45,7 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
     {
         PlayerSanction mappedSanction = mapper.Map<PlayerSanction>(playerSanctionRequest);
         PlayerSanction createdSanction = await playerSanctionService.CreatePlayerSanctionAsync(mappedSanction);
-        PlayerSanctionResponse sanctionResponse = mapper.Map<PlayerSanctionResponse>(createdSanction);
+        PlayerSanctionResponse sanctionResponse = await ToResponseAsync(createdSanction);
 
         return CreatedAtAction(nameof(GetPlayerSanctionById), new { idOrSlug = sanctionResponse.Id }, sanctionResponse);
     }
@@ -67,7 +68,7 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
             return this.NotFoundProblem(nameof(PlayerSanction), idOrSlug);
         }
 
-        PlayerSanctionResponse sanctionResponse = mapper.Map<PlayerSanctionResponse>(sanction);
+        PlayerSanctionResponse sanctionResponse = await ToResponseAsync(sanction);
         return Ok(sanctionResponse);
     }
 
@@ -94,6 +95,13 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
 
         PaginatedResponse<PlayerSanctionResponse> response = mapper.Map<PaginatedResponse<PlayerSanctionResponse>>(paginatedPlayerSanctions);
 
+        List<PlayerSanctionResponse> enrichedItems = [];
+        foreach (PlayerSanction sanction in paginatedPlayerSanctions.Items)
+        {
+            enrichedItems.Add(await ToResponseAsync(sanction));
+        }
+        response.Items = enrichedItems;
+
         return Ok(response);
     }
     /// <summary>
@@ -116,7 +124,7 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
 
         mapper.Map(updateRequest, existingSanction);
         await playerSanctionService.UpdatePlayerSanctionAsync(existingSanction);
-        return Ok(mapper.Map<PlayerSanctionResponse>(existingSanction));
+        return Ok(await ToResponseAsync(existingSanction));
     }
 
     /// <summary>
@@ -151,7 +159,7 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
         existingSanction.AppealResolvedDate = null;
 
         await playerSanctionService.UpdatePlayerSanctionAsync(existingSanction);
-        return Ok(mapper.Map<PlayerSanctionResponse>(existingSanction));
+        return Ok(await ToResponseAsync(existingSanction));
     }
 
     /// <summary>
@@ -186,7 +194,7 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
         existingSanction.AppealResolvedDate = DateTime.UtcNow;
 
         await playerSanctionService.UpdatePlayerSanctionAsync(existingSanction);
-        return Ok(mapper.Map<PlayerSanctionResponse>(existingSanction));
+        return Ok(await ToResponseAsync(existingSanction));
     }
 
     /// <summary>
@@ -201,5 +209,23 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
     {
         await playerSanctionService.DeletePlayerSanctionAsync(id);
         return NoContent();
+    }
+
+    /// <summary>
+    /// Maps a sanction to its response and enriches it with the fechas-based
+    /// status (HU-75/HU-76): how many fechas are left to serve and whether the
+    /// sanction is still active. Labelled in fechas, never in calendar days.
+    /// </summary>
+    private async Task<PlayerSanctionResponse> ToResponseAsync(PlayerSanction sanction)
+    {
+        PlayerSanctionResponse response = mapper.Map<PlayerSanctionResponse>(sanction);
+
+        int? fechasRemaining = await playerSanctionService.GetFechasRemainingAsync(sanction);
+        response.FechasRemaining = fechasRemaining;
+        response.IsActive = fechasRemaining.HasValue
+            ? fechasRemaining.Value > 0
+            : sanction.Duration > 0;
+
+        return response;
     }
 }

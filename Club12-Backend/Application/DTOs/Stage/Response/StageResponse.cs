@@ -27,6 +27,11 @@ public class StageResponse : BaseEntityResponse
     public required string Name { get; set; }
 
     /// <summary>
+    /// The unique, URL-friendly identifier used in public stage links.
+    /// </summary>
+    public required string Slug { get; set; }
+
+    /// <summary>
     /// Optional description providing additional details about the stage.
     /// </summary>
     public string? Description { get; set; }

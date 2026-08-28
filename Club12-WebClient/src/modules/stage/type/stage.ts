@@ -30,11 +30,11 @@ export interface IStageContextProps {
   putStageById(id: GUID, division: IPutStageRequest): Promise<boolean | void>;
 
   /**
-   * Retrieves a stage by its ID.
-   * @param {GUID} id - The unique identifier of the stage to retrieve.
+   * Retrieves a stage by its ID or its public slug.
+   * @param {string} idOrSlug - The ID or slug of the stage to retrieve.
    * @returns {Promise<IStageResponse | void>} A promise resolving to the requested stage or void on failure.
    */
-  getStageById(id: GUID): Promise<IStageResponse | void>;
+  getStageById(idOrSlug: string): Promise<IStageResponse | void>;
 
   /**
    * Retrieves a paginated list of stages based on filters.
@@ -98,6 +98,12 @@ export interface IStageResponse {
    * @type {string}
    */
   name: string;
+
+  /**
+   * The unique, URL-friendly identifier used in public stage links.
+   * @type {string}
+   */
+  slug: string;
 
   /**
    * Optional description providing additional details about the stage.

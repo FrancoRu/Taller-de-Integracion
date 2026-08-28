@@ -47,25 +47,11 @@ import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import {
   TOURNAMENT_STATUS_LABEL,
   TOURNAMENT_STATUS_COLOR,
+  resolveTournamentStatus,
 } from '@/modules/tournament/utils/tournamentDisplay';
+import { formatDateAr } from '@/modules/core/utils/formatDate';
 
 const EMPTY_FILTERS: ITournamentFiltered = {};
-
-const resolveTournamentStatus = (status: unknown): TournamentStatus => {
-  if (typeof status === 'string') {
-    if (
-      status === TournamentStatus.Scheduled ||
-      status === TournamentStatus.OpenForRegistration ||
-      status === TournamentStatus.Ongoing ||
-      status === TournamentStatus.Finished ||
-      status === TournamentStatus.Canceled
-    ) {
-      return status;
-    }
-  }
-
-  return TournamentStatus.Scheduled;
-};
 
 const TournamentsPage: React.FC = () => {
   const { tournaments, getAllTournamentsByFilter, deleteTournamentById } =
@@ -86,21 +72,9 @@ const TournamentsPage: React.FC = () => {
   }, [getAllTournamentsByFilter]);
 
   const canLoadTournaments = useMemo(
-    () =>
-      role === UserRolesType.Admin ||
-      role === UserRolesType.Owner ||
-      role === UserRolesType.TournamentManager,
+    () => role === UserRolesType.Admin || role === UserRolesType.Owner,
     [role]
   );
-
-  const formatDate = (value: Date | string): string => {
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) {
-      return '—';
-    }
-
-    return parsed.toLocaleDateString('es-AR');
-  };
 
   const handleView = useCallback(
     (row: ITournamentResponse) => {
@@ -179,26 +153,14 @@ const TournamentsPage: React.FC = () => {
         headerName: 'Cierre inscripción',
         flex: 1,
         minWidth: 150,
-        renderCell: params => formatDate(params.row.teamRegistrationDeadline),
+        renderCell: params => formatDateAr(params.row.teamRegistrationDeadline),
       },
       {
         field: 'startDate',
         headerName: 'Inicio',
         flex: 1,
         minWidth: 120,
-        renderCell: params => formatDate(params.row.startDate),
-      },
-      {
-        field: 'minTeams',
-        headerName: 'Mín',
-        flex: 0.5,
-        minWidth: 70,
-      },
-      {
-        field: 'maxTeams',
-        headerName: 'Máx',
-        flex: 0.5,
-        minWidth: 70,
+        renderCell: params => formatDateAr(params.row.startDate),
       },
       {
         field: 'status',

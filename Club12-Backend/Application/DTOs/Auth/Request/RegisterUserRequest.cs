@@ -28,7 +28,7 @@ public sealed class RegisterUserRequest
     public string? Phone { get; set; }
 
     /// <summary>
-    /// Target role. Accepted values: ADMIN, OWNER, TOURNAMENT_MANAGER, TEAM_MANAGER.
+    /// Target role. Accepted values: ADMIN, OWNER.
     /// </summary>
     [Required(ErrorMessage = "Role is required.")]
     public required string Role { get; set; }

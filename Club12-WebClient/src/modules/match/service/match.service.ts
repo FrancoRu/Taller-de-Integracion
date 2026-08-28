@@ -10,11 +10,14 @@ import {
 } from '@/modules/core/utils/axiosUtils';
 import {
   IAddMatchRequest,
+  ILoadWalkOverRequest,
   MatchFiltered,
   IMatchResponse,
   IMinimalMatchResponse,
   IPutMatchRequest,
   IPutMatchScoreRequest,
+  IRoundMatchesResponse,
+  ISuspendMatchRequest,
 } from '@/modules/match/type/match';
 
 /**
@@ -56,6 +59,19 @@ export const matchService = {
     sendPut<IMatchResponse>(`${routes.matches}/${id}`, matchDate),
 
   /**
+   * Marks a match as a walkover (HU-73), awarding the regulation default
+   * result to the present team.
+   * @param {string} id - The ID of the match to mark as a walkover.
+   * @param {ILoadWalkOverRequest} request - The present team (and optional score override).
+   * @returns {Promise<AxiosResponse<IMatchResponse>>} - A promise that resolves with the updated match.
+   */
+  loadWalkOver: async (
+    id: GUID,
+    request: ILoadWalkOverRequest
+  ): Promise<AxiosResponse<IMatchResponse>> =>
+    sendPut<IMatchResponse>(`${routes.matches}/${id}/walkover`, request),
+
+  /**
    * Retrieves a match by its ID or its public slug.
    * @param {string} idOrSlug - The ID or slug of the match to retrieve.
    * @returns {Promise<AxiosResponse<IMatchResponse>>} - A promise that resolves with the match data.
@@ -77,6 +93,32 @@ export const matchService = {
       routes.matches,
       withTablePageSize(filter)
     ),
+
+  /**
+   * Retrieves a stage's matches grouped and ordered by matchday (jornada,
+   * HU-63) so the fixture renders as "Fecha 1 / Partido 1..2, Fecha 2 / …".
+   * @param {GUID} stageId - The ID of the stage whose fixture is requested.
+   * @returns {Promise<AxiosResponse<IRoundMatchesResponse[]>>} - A promise that resolves with the rounds.
+   */
+  getStageMatchesByRound: async (
+    stageId: GUID
+  ): Promise<AxiosResponse<IRoundMatchesResponse[]>> =>
+    sendGet<IRoundMatchesResponse[]>(
+      `${routes.matches}/stage/${stageId}/by-round`
+    ),
+
+  /**
+   * Reprograms/suspends a match (HU-68): marks it suspended and optionally
+   * moves it to a new date, without changing its round (HU-67).
+   * @param {GUID} id - The ID of the match to suspend/reprogram.
+   * @param {ISuspendMatchRequest} request - The optional new date.
+   * @returns {Promise<AxiosResponse<IMatchResponse>>} - A promise that resolves with the updated match.
+   */
+  suspendMatch: async (
+    id: GUID,
+    request: ISuspendMatchRequest
+  ): Promise<AxiosResponse<IMatchResponse>> =>
+    sendPut<IMatchResponse>(`${routes.matches}/${id}/suspend`, request),
 
   /**
    * Deletes a match by its ID.

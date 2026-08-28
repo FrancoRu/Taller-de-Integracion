@@ -4,8 +4,11 @@ using Application.DTOs.Match.Request;
 using Application.DTOs.Stage.Request;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 using Application.Utils.Constants.Pagination;
 using Application.Utils.Extensions;
+using Application.Utils.Helper.Playoff;
+using Application.Utils.Helper.Slug;
 using Application.Utils.Helper.Standings;
 
 using Domain.Entities.Models;
@@ -39,6 +42,14 @@ public class DivisionService(
     /// <returns>The created Division entity.</returns>
     public async Task<Division> CreateDivisionAsync(Division divisionEntity)
     {
+        await EnsureTournamentAllowsDivisionAsync(divisionEntity);
+
+        PlayoffMappingValidator.Validate(divisionEntity.PlayoffMappings);
+
+        divisionEntity.Slug = await SlugGenerator.GenerateUniqueSlugAsync(
+            divisionEntity.Name,
+            candidate => divisionRepository.ExistsAsync(division => division.Slug == candidate));
+
         await divisionRepository.AddAsync(divisionEntity);
         return divisionEntity;
     }
@@ -58,7 +69,47 @@ public class DivisionService(
     /// <param name="divisionEntity">The division entity with updated values.</param>
     public async Task UpdateDivisionAsync(Division divisionEntity)
     {
+        await EnsureTournamentAllowsDivisionAsync(divisionEntity);
+
+        PlayoffMappingValidator.Validate(divisionEntity.PlayoffMappings);
+
         await divisionRepository.UpdateAsync(divisionEntity);
+    }
+
+    /// <summary>
+    /// Guards a division create/update against its tournament. Two rules:
+    /// <list type="bullet">
+    /// <item>HU-31: divisions may only be created or edited while their
+    /// tournament is <see cref="TournamentStatus.OpenForRegistration"/>. Once
+    /// registration has closed (or the tournament is
+    /// Scheduled/Ongoing/Finished/Canceled) the structure is frozen.</item>
+    /// <item>HU-48: a division's <see cref="Division.Category"/> must match its
+    /// tournament's <see cref="Tournament.Category"/> — a single tournament can
+    /// never mix feminine and masculine divisions.</item>
+    /// </list>
+    /// A division pointing at a tournament that does not exist is left for the
+    /// normal not-found handling downstream.
+    /// </summary>
+    private async Task EnsureTournamentAllowsDivisionAsync(Division division)
+    {
+        Tournament? tournament = await tournamentRepository.GetByIdAsync(division.TournamentId);
+
+        if (tournament is null)
+        {
+            return;
+        }
+
+        if (tournament.Status != TournamentStatus.OpenForRegistration)
+        {
+            throw new InvalidOperationException(
+                ErrorMessages.Tournament.StructuralEditNotAllowed(tournament.Status));
+        }
+
+        if (division.Category != tournament.Category)
+        {
+            throw new InvalidOperationException(
+                ErrorMessages.Tournament.CategoryMismatch(division.Category, tournament.Category));
+        }
     }
 
     /// <summary>
@@ -70,6 +121,26 @@ public class DivisionService(
     public async Task<Division?> GetSimpleDivisionByIdAsync(Guid divisionId)
     {
         return await divisionRepository.GetByIdAsync(divisionId);
+    }
+
+    /// <summary>
+    /// Retrieves a division by its id or its slug. The value is treated as an
+    /// id when it parses as a GUID, otherwise it is looked up as a slug.
+    /// Returns only the basic division data.
+    /// </summary>
+    /// <param name="idOrSlug">The division's GUID id or its slug.</param>
+    /// <returns>The matching Division, or null if not found.</returns>
+    public async Task<Division?> GetSimpleDivisionByIdOrSlugAsync(string idOrSlug)
+    {
+        if (Guid.TryParse(idOrSlug, out Guid divisionId))
+        {
+            return await GetSimpleDivisionByIdAsync(divisionId);
+        }
+
+        IEnumerable<Division> matches = await divisionRepository.FindAsync(
+            division => division.Slug == idOrSlug);
+
+        return matches.FirstOrDefault();
     }
 
     /// <summary>
@@ -125,6 +196,10 @@ public class DivisionService(
             return [];
         }
 
+        Division? division = await divisionRepository.GetByIdAsync(divisionId);
+        int pointsForWin = division?.PointsForWin ?? PositionCalculator.DefaultPointsForWin;
+        int pointsForLoss = division?.PointsForLoss ?? PositionCalculator.DefaultPointsForLoss;
+
         PaginatedResponse<Match> matches = await matchService.GetAllMatchesAsync(new GetMatchesFilteredRequest
         {
             StageId = groupStage.Id,
@@ -132,7 +207,7 @@ public class DivisionService(
             PageSize = PaginationDefaults.MaxPageSize,
         });
 
-        return PositionCalculator.CalculatePositions(matches.Items);
+        return PositionCalculator.CalculatePositions(matches.Items, pointsForWin, pointsForLoss);
     }
 
     /// <summary>

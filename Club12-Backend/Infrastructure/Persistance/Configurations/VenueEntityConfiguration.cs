@@ -16,6 +16,9 @@ public class VenueEntityConfiguration : BaseEntityConfiguration<Venue>
         builder.ToTable(EntityConstants.Tables.Venue, EntityConstants.Schema);
 
         builder.Property(v => v.Name).IsRequired().HasMaxLength(50);
+        builder.Property(v => v.Slug).IsRequired().HasMaxLength(220);
         builder.Property(v => v.Address).IsRequired().HasMaxLength(200);
+
+        builder.HasIndex(v => v.Slug).IsUnique();
     }
 }

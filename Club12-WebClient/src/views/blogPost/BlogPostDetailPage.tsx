@@ -1,10 +1,25 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
+import { formatDateAr } from '@/modules/core/utils/formatDate';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
 import { BlogPostResponse } from '@/modules/blogPost/type/blogPost';
 import ErrorPageLayout from '@/views/core/components/ErrorPageLayout';
 import ErrorPageActions from '@/views/core/components/ErrorPageActions';
+import { usePageMetadata } from '@/modules/core/utils/pageMetadata';
+
+const BLOG_META_DESCRIPTION_LENGTH = 200;
+
+/** Reduces the post's HTML body to a plain-text excerpt for social cards. */
+const buildDescription = (html: string): string => {
+  const withoutTags = html.replace(/<[^>]*>/g, ' ');
+  const decoder = document.createElement('textarea');
+  decoder.innerHTML = withoutTags;
+  const text = decoder.value.replace(/\s+/g, ' ').trim();
+  return text.length > BLOG_META_DESCRIPTION_LENGTH
+    ? `${text.slice(0, BLOG_META_DESCRIPTION_LENGTH)}…`
+    : text;
+};
 
 interface BlogPostLocationState {
   post?: BlogPostResponse;
@@ -34,6 +49,16 @@ const BlogPostDetailPage: React.FC = () => {
 
     loadPost();
   }, [idOrSlug, post, getBlogPostsById]);
+
+  // HU-17: set per-post Open Graph / Twitter tags so a shared blog URL renders
+  // a rich card (title, description, image). Empty strings while the post is
+  // still loading leave the index.html defaults in place.
+  usePageMetadata({
+    title: post?.title,
+    description: post ? buildDescription(post.markdownText) : undefined,
+    image: post?.photoUrl,
+    type: 'article',
+  });
 
   if (loading) {
     return (
@@ -69,7 +94,7 @@ const BlogPostDetailPage: React.FC = () => {
           color: "text.secondary",
           mb: 3
         }}>
-        {post.author} · {new Date(post.createdAt).toLocaleDateString()}
+        {post.author} · {formatDateAr(post.createdAt)}
       </Typography>
       {post.photoUrl && (
         <Box

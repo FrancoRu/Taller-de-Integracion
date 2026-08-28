@@ -145,6 +145,13 @@ export interface ITeamResponse {
   players: IPublicPlayerResponse[];
 
   tournamentId: GUID | null;
+
+  /**
+   * The stable cross-season club this team belongs to (HU-99), when linked.
+   * Absent/undefined until the team is associated with a club.
+   * @type {GUID | null}
+   */
+  clubId?: GUID | null;
 }
 
 /**

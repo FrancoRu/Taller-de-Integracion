@@ -61,6 +61,93 @@ export interface PasswordResetConfirmRequest {
 }
 
 /**
+ * HU-09: request to invite a user by email only (no password). The backend
+ * creates a passwordless account and emails a magic activation link. Requires
+ * Admin or Owner.
+ * @interface InviteUserRequest
+ */
+export interface InviteUserRequest {
+  /**
+   * Email the invitation/activation link is sent to.
+   * @type {string}
+   */
+  email: string;
+
+  /**
+   * Optional contact phone number.
+   * @type {string | undefined}
+   */
+  phone?: string;
+
+  /**
+   * Target role. Accepted values: ADMIN, OWNER.
+   * @type {string}
+   */
+  role: string;
+}
+
+/**
+ * HU-09: confirmation payload returned after inviting a user by email.
+ * @interface InviteUserResponse
+ */
+export interface InviteUserResponse {
+  /**
+   * Id of the newly created (passwordless) user.
+   * @type {string}
+   */
+  userId: string;
+
+  /**
+   * Email the activation link was sent to.
+   * @type {string}
+   */
+  email: string;
+
+  /**
+   * Assigned role.
+   * @type {string}
+   */
+  role: string;
+}
+
+/**
+ * HU-09: payload the invited user submits from the activation email link to
+ * set their first password and enable login.
+ * @interface ActivateAccountRequest
+ */
+export interface ActivateAccountRequest {
+  /**
+   * Email associated with the invited account.
+   * @type {string}
+   */
+  email: string;
+
+  /**
+   * Activation token received by email.
+   * @type {string}
+   */
+  token: string;
+
+  /**
+   * First password the user chooses.
+   * @type {string}
+   */
+  newPassword: string;
+}
+
+/**
+ * HU-10: self-service request to receive a password-reset magic link by email.
+ * @interface RequestPasswordResetRequest
+ */
+export interface RequestPasswordResetRequest {
+  /**
+   * Email to send the password-reset link to.
+   * @type {string}
+   */
+  email: string;
+}
+
+/**
  * Represents a user login request.
  * @interface LogInUserRequest
  */

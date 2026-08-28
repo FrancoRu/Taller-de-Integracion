@@ -5,7 +5,9 @@ import {
   Button,
   Card,
   CardContent,
+  FormControlLabel,
   Stack,
+  Switch,
   Typography,
 } from '@mui/material';
 import ReactQuill from 'react-quill-new';
@@ -45,6 +47,7 @@ const AddBlogPostForm: React.FC = () => {
     author: '',
     title: '',
     markdownText: '',
+    isPublished: true,
   });
   const [previewOpen, setPreviewOpen] = useState(false);
   const [photoObjectUrl, setPhotoObjectUrl] = useState<string | undefined>(undefined);
@@ -82,7 +85,11 @@ const AddBlogPostForm: React.FC = () => {
     setSubmitting(false);
 
     if (result) {
-      await notifySuccess({ title: 'La publicación fue creada exitosamente.' });
+      await notifySuccess({
+        title: formData.isPublished
+          ? 'La publicación fue creada y publicada exitosamente.'
+          : 'La publicación fue guardada como borrador.',
+      });
       navigate(APP_ROUTES.panelBlog);
     }
   };
@@ -127,6 +134,21 @@ const AddBlogPostForm: React.FC = () => {
             modules={quillModules}
             style={{ height: '200px', marginBottom: '20px' }}
           />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={formData.isPublished ?? true}
+                onChange={(_, checked) =>
+                  setFormData(prev => ({ ...prev, isPublished: checked }))
+                }
+              />
+            }
+            label={
+              formData.isPublished
+                ? 'Publicada (visible en el sitio)'
+                : 'Borrador (no visible al público)'
+            }
+          />
           <Stack direction="row" spacing={2} sx={{ mt: 3, justifyContent: 'space-between' }}>
             <Button type="button" variant="outlined" onClick={() => setPreviewOpen(true)}>
               Vista previa
@@ -137,7 +159,11 @@ const AddBlogPostForm: React.FC = () => {
               color="primary"
               disabled={submitting}
             >
-              {submitting ? 'Publicando...' : 'Publicar'}
+              {submitting
+                ? 'Guardando...'
+                : formData.isPublished
+                  ? 'Publicar'
+                  : 'Guardar borrador'}
             </Button>
           </Stack>
         </form>

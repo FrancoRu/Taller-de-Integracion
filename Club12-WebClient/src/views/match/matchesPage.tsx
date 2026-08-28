@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
+import { formatDateTimeAr } from '@/modules/core/utils/formatDate';
 import {
   Box,
   Card,
@@ -26,6 +27,8 @@ import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import TeamLogo from '@/views/core/components/TeamLogo';
+import MatchStatusChip from '@/views/match/MatchStatusChip';
+import StageMatchesByRound from '@/views/match/StageMatchesByRound';
 import {
   DeleteIcon,
   EditIcon,
@@ -62,21 +65,7 @@ type MatchesSearchFilters = Pick<
 
 const EMPTY_FILTERS: MatchesSearchFilters = {};
 
-const formatDateTime = (value?: string | null) => {
-  if (!value) {
-    return '—';
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return '—';
-  }
-
-  return parsed.toLocaleString('es-AR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  });
-};
+const formatDateTime = (value?: string | null) => formatDateTimeAr(value);
 
 const MatchesPage: React.FC<MatchesPageProps> = ({
   stageId,
@@ -189,8 +178,14 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
   }, [filters]);
 
   useEffect(() => {
+    // The stage view renders the jornada-grouped fixture (by-round endpoint)
+    // instead of this paginated grid, so skip the filtered fetch there.
+    if (stageId) {
+      return;
+    }
+
     void fetchMatches(debouncedFilters, paginationModel);
-  }, [debouncedFilters, fetchMatches, paginationModel]);
+  }, [debouncedFilters, fetchMatches, paginationModel, stageId]);
 
   const handleFilterChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -388,12 +383,17 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
         renderCell: params => params.row.venue?.name || '—',
       },
       {
-        field: 'isFinished',
+        field: 'status',
         headerName: 'Estado',
         flex: 0.8,
-        minWidth: 110,
-        renderCell: params =>
-          params.row.isFinished ? 'Finalizado' : 'Programado',
+        minWidth: 130,
+        sortable: false,
+        renderCell: params => (
+          <MatchStatusChip
+            status={params.row.status}
+            isFinished={params.row.isFinished}
+          />
+        ),
       },
     ];
 
@@ -455,6 +455,40 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
         : APP_ROUTES.panelMatchCreate
     );
   }, [onCreate, navigate, stageId]);
+
+  // HU-63/HU-65: inside a stage the fixture is grouped by jornada ("Fecha 1 /
+  // Partido 1..2, …"), never by calendar date. The filterable global grid is
+  // only used for the cross-tournament matches list (no stageId).
+  if (stageId) {
+    const stageContent = (
+      <>
+        {(title || createType) && (
+          <Stack
+            direction="row"
+            sx={{
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 2,
+            }}
+          >
+            {title ? <Typography variant="h6">{title}</Typography> : <Box />}
+            <NewEntityButton type={createType} onClick={handleCreateMatch} />
+          </Stack>
+        )}
+        <StageMatchesByRound stageId={stageId} emptyMessage={emptyMessage} />
+      </>
+    );
+
+    if (wrapInCard) {
+      return (
+        <Card>
+          <CardContent>{stageContent}</CardContent>
+        </Card>
+      );
+    }
+
+    return <Box sx={{ width: '100%' }}>{stageContent}</Box>;
+  }
 
   const content = (
     <>

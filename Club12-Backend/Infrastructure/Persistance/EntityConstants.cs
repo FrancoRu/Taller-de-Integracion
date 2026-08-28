@@ -23,9 +23,12 @@ public static class EntityConstants
 
     public static class Tables
     {
+        public const string AuditLog = "AuditLogs";
         public const string BackupRecord = "BackupRecords";
         public const string BlogPost = "BlogPosts";
+        public const string Club = "Clubs";
         public const string Division = "Divisions";
+        public const string DivisionPlayoffMapping = "DivisionPlayoffMappings";
         public const string Match = "Matches";
         public const string MatchSeries = "MatchSeries";
         public const string Player = "Players";
@@ -45,6 +48,7 @@ public static class EntityConstants
         public const string StageTeamMatch = "StageTeamMatches";
         public const string Staff = "Staffs";
         public const string Team = "Teams";
+        public const string TeamTournamentRegistration = "TeamTournamentRegistrations";
         public const string Tournament = "Tournaments";
         public const string User = "Users";
         public const string Venue = "Venues";

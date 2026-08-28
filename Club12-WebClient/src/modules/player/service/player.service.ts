@@ -12,7 +12,9 @@ import {
   IAddPlayerRequest,
   PlayerFiltered,
   IPlayerResponse,
+  IPlayerRegistrationResponse,
   IPutPlayerRequest,
+  IRegisterPlayerToTeamRequest,
 } from '@/modules/player/type/player';
 
 /**
@@ -30,19 +32,19 @@ export const playerService = {
     sendPost(routes.players, player),
 
   /**
-   * Retrieves a player by their ID.
-   * @param {string} id - The ID of the player to retrieve.
+   * Retrieves a player by their ID or their public slug.
+   * @param {string} idOrSlug - The ID or slug of the player to retrieve.
    * @param {boolean} isAdministrative - Whether to fetch the player using the administrative route.
    * @returns {Promise<AxiosResponse<IPlayerResponse>>} The server response.
    */
   getPlayerById: async (
-    id: GUID,
+    idOrSlug: string,
     isAdministrative: boolean
   ): Promise<AxiosResponse<IPlayerResponse>> => {
     const resource: string = isAdministrative
       ? `${routes.players}/admin`
       : routes.players;
-    return sendGet(`${resource}/${id}`);
+    return sendGet(`${resource}/${idOrSlug}`);
   },
 
   /**
@@ -74,4 +76,18 @@ export const playerService = {
    */
   deletePlayerById: async (id: GUID): Promise<AxiosResponse<void>> =>
     sendDelete(`${routes.players}/${id}`),
+
+  /**
+   * Registers a player onto a team's roster for a season, optionally assigning
+   * a dorsal (HU-54). The backend enforces the roster invariants and answers
+   * with a 409 Conflict when one is violated.
+   * @param {GUID} playerId - The player to register.
+   * @param {IRegisterPlayerToTeamRequest} request - Team, tournament and dorsal.
+   * @returns {Promise<AxiosResponse<IPlayerRegistrationResponse>>} The outcome.
+   */
+  registerPlayerToTeam: async (
+    playerId: GUID,
+    request: IRegisterPlayerToTeamRequest
+  ): Promise<AxiosResponse<IPlayerRegistrationResponse>> =>
+    sendPost(`${routes.players}/${playerId}/registration`, request),
 };

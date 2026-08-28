@@ -1,11 +1,6 @@
 import { GUID } from '@/modules/core/types/types';
-import {
-  CupConfig,
-  MAX_ALLOWED_TOURNAMENT_TEAMS,
-  MIN_ALLOWED_TOURNAMENT_TEAMS,
-  STAGE_TYPE_LABELS,
-  WizardState,
-} from './types';
+import { TOURNAMENT_CATEGORY_LABELS } from '@/modules/core/enum/tournament/tournamentCategory';
+import { CupConfig, PlayoffMappingConfig, STAGE_TYPE_LABELS, WizardState } from './types';
 
 /**
  * A single step's validation result: empty when valid, otherwise the list
@@ -37,45 +32,15 @@ export const validateTournamentStep = (state: WizardState): ValidationResult => 
     errors.push('La fecha límite de inscripción debe ser anterior a la fecha de inicio.');
   }
 
-  if (
-    tournament.minTeams < MIN_ALLOWED_TOURNAMENT_TEAMS ||
-    tournament.minTeams > MAX_ALLOWED_TOURNAMENT_TEAMS
-  ) {
-    errors.push(
-      `El mínimo de equipos debe estar entre ${MIN_ALLOWED_TOURNAMENT_TEAMS} y ${MAX_ALLOWED_TOURNAMENT_TEAMS}.`
-    );
-  }
-
-  if (
-    tournament.maxTeams < MIN_ALLOWED_TOURNAMENT_TEAMS ||
-    tournament.maxTeams > MAX_ALLOWED_TOURNAMENT_TEAMS
-  ) {
-    errors.push(
-      `El máximo de equipos debe estar entre ${MIN_ALLOWED_TOURNAMENT_TEAMS} y ${MAX_ALLOWED_TOURNAMENT_TEAMS}.`
-    );
-  }
-
-  if (tournament.minTeams > tournament.maxTeams) {
-    errors.push('El mínimo de equipos no puede superar al máximo.');
-  }
-
   return errors;
 };
 
 export const validateTeamsStep = (state: WizardState): ValidationResult => {
-  const { selectedTeamIds, tournament } = state;
+  const { selectedTeamIds } = state;
   const errors: string[] = [];
 
-  if (selectedTeamIds.length < tournament.minTeams) {
-    errors.push(
-      `Debés inscribir al menos ${tournament.minTeams} equipos (hay ${selectedTeamIds.length}).`
-    );
-  }
-
-  if (selectedTeamIds.length > tournament.maxTeams) {
-    errors.push(
-      `No podés inscribir más de ${tournament.maxTeams} equipos (hay ${selectedTeamIds.length}).`
-    );
+  if (selectedTeamIds.length < 1) {
+    errors.push('Debés inscribir al menos un equipo.');
   }
 
   return errors;
@@ -103,6 +68,77 @@ const validateCups = (cups: CupConfig[], contextLabel: string): ValidationResult
       errors.push(`La copa "${trimmedName}" necesita al menos una ronda.`);
     }
   });
+
+  return errors;
+};
+
+/**
+ * Validates a division's playoff-range → cup mappings (HU-45): every row
+ * must point at a configured cup, sit within `1..teamCount`, have
+ * `from <= to`, and no two rows may overlap. `teamCount` of 0 (no teams
+ * assigned yet) skips the upper-bound check so the admin can still draft
+ * ranges before finishing team assignment. `cupNames` is the set of the
+ * division's configured cup names the destination must belong to.
+ */
+export const validatePlayoffMappings = (
+  mappings: PlayoffMappingConfig[],
+  teamCount: number,
+  cupNames: string[],
+  contextLabel: string
+): ValidationResult => {
+  const errors: string[] = [];
+
+  if (mappings.length === 0) {
+    return errors;
+  }
+
+  const validCupNames = new Set(cupNames.map(name => name.trim().toLowerCase()).filter(Boolean));
+
+  mappings.forEach(mapping => {
+    const { fromPosition, toPosition, destination } = mapping;
+
+    if (!Number.isInteger(fromPosition) || !Number.isInteger(toPosition) || fromPosition < 1 || toPosition < 1) {
+      errors.push(`Los rangos de playoff de ${contextLabel} deben usar posiciones enteras desde 1.`);
+      return;
+    }
+
+    if (fromPosition > toPosition) {
+      errors.push(
+        `En ${contextLabel}, el rango ${fromPosition}–${toPosition} está invertido (desde debe ser ≤ hasta).`
+      );
+      return;
+    }
+
+    if (teamCount > 0 && toPosition > teamCount) {
+      errors.push(
+        `En ${contextLabel}, el rango ${fromPosition}–${toPosition} supera los ${teamCount} equipos de la zona.`
+      );
+    }
+
+    const trimmedDestination = destination.trim();
+    if (!trimmedDestination) {
+      errors.push(`Cada rango de playoff de ${contextLabel} necesita una copa de destino.`);
+    } else if (!validCupNames.has(trimmedDestination.toLowerCase())) {
+      errors.push(
+        `En ${contextLabel}, la copa de destino "${trimmedDestination}" no coincide con ninguna copa configurada.`
+      );
+    }
+  });
+
+  // Overlap check: sort by start position and confirm each range starts
+  // strictly after the previous one ends, so no position lands in two cups.
+  const sorted = [...mappings]
+    .filter(m => Number.isInteger(m.fromPosition) && Number.isInteger(m.toPosition) && m.fromPosition <= m.toPosition)
+    .sort((a, b) => a.fromPosition - b.fromPosition);
+
+  for (let i = 1; i < sorted.length; i += 1) {
+    if (sorted[i].fromPosition <= sorted[i - 1].toPosition) {
+      errors.push(
+        `Los rangos de playoff de ${contextLabel} se solapan (posición ${sorted[i].fromPosition} está en dos copas).`
+      );
+      break;
+    }
+  }
 
   return errors;
 };
@@ -161,6 +197,14 @@ export const validateZonesStep = (state: WizardState): ValidationResult => {
     }
 
     errors.push(...validateCups(zone.cups, `la zona "${zone.name || '(sin nombre)'}"`));
+    errors.push(
+      ...validatePlayoffMappings(
+        zone.playoffMappings,
+        zone.teamIds.length,
+        zone.cups.map(cup => cup.name),
+        `la zona "${zone.name || '(sin nombre)'}"`
+      )
+    );
   });
 
   return errors;
@@ -187,6 +231,14 @@ export const validateCrossCupStep = (state: WizardState): ValidationResult => {
   }
 
   errors.push(...validateCups(crossCup.cups, 'la copa cruzada'));
+  errors.push(
+    ...validatePlayoffMappings(
+      crossCup.playoffMappings,
+      teamCount,
+      crossCup.cups.map(cup => cup.name),
+      'la copa cruzada'
+    )
+  );
 
   return errors;
 };
@@ -247,7 +299,9 @@ export const buildWizardTree = (state: WizardState): WizardTreeNode[] => {
     {
       id: 'tournament',
       depth: 1,
-      label: state.tournament.name || '(sin nombre)',
+      label: `${state.tournament.name || '(sin nombre)'} · ${
+        TOURNAMENT_CATEGORY_LABELS[state.tournament.category]
+      }`,
       tag: `${state.selectedTeamIds.length} equipos`,
     },
   ];

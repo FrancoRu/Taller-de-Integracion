@@ -35,6 +35,14 @@ public interface IPlayerService
     Task<Player?> GetPlayerByIdAsync(Guid playerId);
 
     /// <summary>
+    /// Retrieves a Player by its id or its slug. The value is treated as an id
+    /// when it parses as a GUID, otherwise it is looked up as a slug.
+    /// </summary>
+    /// <param name="idOrSlug">The player's GUID id or its slug.</param>
+    /// <returns>The matching player, or null if not found.</returns>
+    Task<Player?> GetPlayerByIdOrSlugAsync(string idOrSlug);
+
+    /// <summary>
     /// Updates a Player and keeps their season-scoped roster registration in
     /// sync: if the player's TeamId changed, either the registration for
     /// <paramref name="tournamentId"/> is moved to the new team, or (if none
@@ -45,6 +53,29 @@ public interface IPlayerService
     Task UpdatePlayerAsync(Player playerEntity, Guid tournamentId);
 
     Task DeletePlayerAsync(Guid id);
+
+    /// <summary>
+    /// Registers a player onto a team's roster for a specific tournament
+    /// (season), enforcing the HU-54 roster invariants:
+    /// <list type="bullet">
+    /// <item>a player cannot be registered to two teams in the same tournament;</item>
+    /// <item>the team's roster may not exceed the configured maximum size;</item>
+    /// <item>a jersey number (dorsal), when given, must be unique within the
+    /// team + tournament.</item>
+    /// </list>
+    /// Re-registering the same player to the same team updates their dorsal
+    /// (idempotent), so this is safe to call for both add and edit.
+    /// </summary>
+    /// <param name="playerId">The player to register.</param>
+    /// <param name="teamId">The team to register the player onto.</param>
+    /// <param name="tournamentId">The tournament (season) the registration belongs to.</param>
+    /// <param name="jerseyNumber">The player's dorsal for this team/season, or null.</param>
+    /// <returns>The created or updated registration.</returns>
+    /// <exception cref="System.InvalidOperationException">
+    /// Thrown when any of the roster invariants is violated.
+    /// </exception>
+    Task<PlayerTeamRegistration> RegisterPlayerToTeamAsync(
+        Guid playerId, Guid teamId, Guid tournamentId, int? jerseyNumber = null);
 
     /// <summary>
     /// Retrieves players with pagination and filtering.

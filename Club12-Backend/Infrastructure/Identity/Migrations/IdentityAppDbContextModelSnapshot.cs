@@ -17,7 +17,7 @@ namespace Infrastructure.Identity.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.11")
+                .HasAnnotation("ProductVersion", "8.0.30")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -143,20 +143,6 @@ namespace Infrastructure.Identity.Migrations
                             ConcurrencyStamp = "2",
                             Name = "OWNER",
                             NormalizedName = "OWNER"
-                        },
-                        new
-                        {
-                            Id = new Guid("00000000-0000-0000-0000-000000000003"),
-                            ConcurrencyStamp = "3",
-                            Name = "TOURNAMENT_MANAGER",
-                            NormalizedName = "TOURNAMENT_MANAGER"
-                        },
-                        new
-                        {
-                            Id = new Guid("00000000-0000-0000-0000-000000000004"),
-                            ConcurrencyStamp = "4",
-                            Name = "TEAM_MANAGER",
-                            NormalizedName = "TEAM_MANAGER"
                         },
                         new
                         {

@@ -24,7 +24,7 @@ namespace API.Controllers;
 
 /// <summary>
 /// Controller for managing Matches. Reads are public; writes require
-/// Owner or TournamentManager.
+/// Owner or Admin.
 /// </summary>
 /// <param name="matchService">The Match service.</param>
 /// <param name="stageTeamMatchService">The stage-team match service.</param>
@@ -32,7 +32,7 @@ namespace API.Controllers;
 /// <param name="mapper">The AutoMapper instance.</param>
 [Route("api/matches/")]
 [ApiController]
-[Authorize(Roles = Roles.AdminOwnerOrTournamentManager)]
+[Authorize(Roles = Roles.AdminOrOwner)]
 public class MatchController(IMatchService matchService, IStageTeamMatchService stageTeamMatchService, IMatchSeriesService matchSeriesService, IMapper mapper) : ControllerBase
 {
     /// <summary>
@@ -167,6 +167,56 @@ public class MatchController(IMatchService matchService, IStageTeamMatchService 
     }
 
     /// <summary>
+    /// Retrieves a stage's matches grouped by matchday (jornada, HU-63) so the
+    /// fixture can be rendered as "Fecha 1 / Partido 1..2, Fecha 2 / …". The
+    /// grouping key is the round, not the calendar date.
+    /// </summary>
+    /// <param name="stageId">The id of the stage whose fixture is requested.</param>
+    /// <returns>The matches grouped and ordered by round.</returns>
+    [AllowAnonymous]
+    [HttpGet("stage/{stageId:guid}/by-round")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<RoundMatchesResponse>))]
+    public async Task<ActionResult<List<RoundMatchesResponse>>> GetStageMatchesByRound(Guid stageId)
+    {
+        List<Match> matches = await matchService.GetStageMatchesByRoundAsync(stageId);
+
+        List<RoundMatchesResponse> rounds = [.. matches
+            .GroupBy(match => match.Round)
+            .OrderBy(group => group.Key ?? int.MaxValue)
+            .Select(group => new RoundMatchesResponse
+            {
+                Round = group.Key,
+                Matches = mapper.Map<List<DetailedMatchResponse>>(group.ToList()),
+            })];
+
+        return Ok(rounds);
+    }
+
+    /// <summary>
+    /// Reprograms/suspends a match (HU-68): marks it suspended and optionally
+    /// moves it to a new date, without changing its round (HU-67) or the rest
+    /// of the fixture.
+    /// </summary>
+    /// <param name="id">The id of the match to suspend/reprogram.</param>
+    /// <param name="suspendRequest">The request with an optional new date.</param>
+    /// <returns>The updated match response.</returns>
+    [HttpPut("{id:guid}/suspend")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedMatchResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> SuspendMatch(Guid id, SuspendMatchRequest suspendRequest)
+    {
+        Match? updatedMatch = await matchService.SuspendMatchAsync(id, suspendRequest.MatchDate);
+
+        if (updatedMatch is null)
+        {
+            return this.NotFoundProblem(nameof(Match), id);
+        }
+
+        DetailedMatchResponse detailedMatch = mapper.Map<DetailedMatchResponse>(updatedMatch);
+        return Ok(detailedMatch);
+    }
+
+    /// <summary>
     /// Deletes a match by its id.
     /// </summary>
     /// <param name="id">The id of the match to delete.</param>
@@ -211,22 +261,47 @@ public class MatchController(IMatchService matchService, IStageTeamMatchService 
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> UpdateMatchScore(Guid id, UpdateMatchScoreRequest scoreRequest)
     {
-        Match? existingMatch = await matchService.GetMatchByIdAsync(id);
-        if (existingMatch is null)
+        Match? updatedMatch = await matchService.LoadMatchResultAsync(id, scoreRequest.HomeScore, scoreRequest.VisitorScore);
+        if (updatedMatch is null)
         {
             return this.NotFoundProblem(nameof(Match), id);
         }
 
-        mapper.Map(scoreRequest, existingMatch);
-
-        await matchService.UpdateMatchAsync(existingMatch);
-
-        if (existingMatch.SeriesId.HasValue)
+        if (updatedMatch.SeriesId.HasValue)
         {
-            await matchSeriesService.RecalculateSeriesWinnerAsync(existingMatch.SeriesId.Value);
+            await matchSeriesService.RecalculateSeriesWinnerAsync(updatedMatch.SeriesId.Value);
         }
 
-        DetailedMatchResponse detailedMatch = mapper.Map<DetailedMatchResponse>(existingMatch);
+        DetailedMatchResponse detailedMatch = mapper.Map<DetailedMatchResponse>(updatedMatch);
+        return Ok(detailedMatch);
+    }
+
+    /// <summary>
+    /// Marks a match as a walkover (HU-73), awarding the regulation default
+    /// result to the present team.
+    /// </summary>
+    /// <param name="id">The id of the match to mark as a walkover.</param>
+    /// <param name="walkOverRequest">The request identifying the present team.</param>
+    /// <returns>The updated match response.</returns>
+    [HttpPut("{id:guid}/walkover")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedMatchResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult> LoadWalkOver(Guid id, LoadWalkOverRequest walkOverRequest)
+    {
+        Match? updatedMatch = await matchService.LoadWalkOverAsync(id, walkOverRequest.PresentTeamId, walkOverRequest.PresentTeamScore);
+        if (updatedMatch is null)
+        {
+            return this.NotFoundProblem(nameof(Match), id);
+        }
+
+        if (updatedMatch.SeriesId.HasValue)
+        {
+            await matchSeriesService.RecalculateSeriesWinnerAsync(updatedMatch.SeriesId.Value);
+        }
+
+        DetailedMatchResponse detailedMatch = mapper.Map<DetailedMatchResponse>(updatedMatch);
         return Ok(detailedMatch);
     }
 }

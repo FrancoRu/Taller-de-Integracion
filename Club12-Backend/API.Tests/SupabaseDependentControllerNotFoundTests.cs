@@ -52,7 +52,7 @@ public class SupabaseDependentControllerNotFoundTests
         VenueController controller = new(new NotFoundVenueService(), null!, new NotUsedMapper());
         ConfigureProblemDetailsFactory(controller);
 
-        ActionResult<VenueResponse> result = await controller.GetVenueById(Guid.NewGuid());
+        ActionResult<VenueResponse> result = await controller.GetVenueById(Guid.NewGuid().ToString());
 
         AssertNotFoundProblem(result.Result, "Venue");
     }
@@ -171,6 +171,11 @@ public class SupabaseDependentControllerNotFoundTests
             return Task.FromResult<Venue?>(null);
         }
 
+        public Task<Venue?> GetVenueByIdOrSlugAsync(string idOrSlug)
+        {
+            return Task.FromResult<Venue?>(null);
+        }
+
         public Task UpdateVenueAsync(Venue venueEntity)
         {
             throw new NotImplementedException();
@@ -199,7 +204,7 @@ public class SupabaseDependentControllerNotFoundTests
             return Task.FromResult<BlogPost?>(null);
         }
 
-        public Task<BlogPost?> GetBlogPostByIdOrSlugAsync(string idOrSlug)
+        public Task<BlogPost?> GetBlogPostByIdOrSlugAsync(string idOrSlug, bool includeUnpublished = false)
         {
             return Task.FromResult<BlogPost?>(null);
         }
@@ -214,7 +219,7 @@ public class SupabaseDependentControllerNotFoundTests
             throw new NotImplementedException();
         }
 
-        public Task<PaginatedResponse<BlogPost>> GetAllBlogPostsAsync(GetBlogPostsFilteredRequest filter)
+        public Task<PaginatedResponse<BlogPost>> GetAllBlogPostsAsync(GetBlogPostsFilteredRequest filter, bool includeUnpublished = false)
         {
             throw new NotImplementedException();
         }

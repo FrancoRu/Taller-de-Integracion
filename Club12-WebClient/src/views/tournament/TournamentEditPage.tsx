@@ -14,42 +14,18 @@ import { notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
-import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
-import { useAuth } from '@/modules/auth/hook/auth.hook';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import { IPutTournamentRequest } from '@/modules/tournament/type/tournament';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
-import { TOURNAMENT_STATUS_LABEL } from '@/modules/tournament/utils/tournamentDisplay';
-
-const STATUS_FLOW_ORDER: Record<TournamentStatus, number> = {
-  [TournamentStatus.Scheduled]: 0,
-  [TournamentStatus.OpenForRegistration]: 1,
-  [TournamentStatus.Ongoing]: 2,
-  [TournamentStatus.Finished]: 3,
-  [TournamentStatus.Canceled]: 4,
-};
-
-const resolveTournamentStatus = (status: unknown): TournamentStatus => {
-  if (typeof status === 'string') {
-    if (
-      status === TournamentStatus.Scheduled ||
-      status === TournamentStatus.OpenForRegistration ||
-      status === TournamentStatus.Ongoing ||
-      status === TournamentStatus.Finished ||
-      status === TournamentStatus.Canceled
-    ) {
-      return status;
-    }
-  }
-
-  return TournamentStatus.Scheduled;
-};
+import {
+  TOURNAMENT_STATUS_LABEL,
+  resolveTournamentStatus,
+} from '@/modules/tournament/utils/tournamentDisplay';
+import { getNextStatusOptions } from '@/modules/tournament/utils/tournamentStatusTransitions';
 
 type TournamentFormState = {
   name: string;
   description: string;
-  minTeams: number;
-  maxTeams: number;
   teamRegistrationDeadline: string;
   startDate: string;
   status: TournamentStatus;
@@ -67,16 +43,12 @@ const toDateInputValue = (value: Date | string): string => {
 const fromTournamentToForm = (tournament: {
   name: string;
   description: string;
-  minTeams: number;
-  maxTeams: number;
   teamRegistrationDeadline: Date | string;
   startDate: Date | string;
   status: TournamentStatus;
 }): TournamentFormState => ({
   name: tournament.name,
   description: tournament.description ?? '',
-  minTeams: tournament.minTeams,
-  maxTeams: tournament.maxTeams,
   teamRegistrationDeadline: toDateInputValue(
     tournament.teamRegistrationDeadline
   ),
@@ -87,7 +59,6 @@ const fromTournamentToForm = (tournament: {
 const TournamentEditPage: React.FC = () => {
   const { tournamentId } = useParams<{ tournamentId: GUID }>();
   const navigate = useNavigate();
-  const { role } = useAuth();
   const { tournament, getTournamentById, putTournamentById } = useTournament();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -127,18 +98,14 @@ const TournamentEditPage: React.FC = () => {
     );
   }, [tournament]);
 
-  const isOwner = role === UserRolesType.Owner;
   const currentStatus = resolveTournamentStatus(tournament?.status);
   const now = new Date();
   const registrationDeadlineDate = new Date(
     tournament?.teamRegistrationDeadline ?? ''
   );
-  const startDate = new Date(tournament?.startDate ?? '');
   const registrationClosed =
     !Number.isNaN(registrationDeadlineDate.getTime()) &&
     registrationDeadlineDate.getTime() <= now.getTime();
-  const tournamentStarted =
-    !Number.isNaN(startDate.getTime()) && startDate.getTime() <= now.getTime();
 
   const canEditMainFields =
     !registrationClosed && currentStatus === TournamentStatus.Scheduled;
@@ -146,31 +113,12 @@ const TournamentEditPage: React.FC = () => {
     !registrationClosed &&
     currentStatus === TournamentStatus.OpenForRegistration;
 
-  const statusOptions = useMemo(() => {
-    const allStatuses: TournamentStatus[] = [
-      TournamentStatus.Scheduled,
-      TournamentStatus.OpenForRegistration,
-      TournamentStatus.Ongoing,
-      TournamentStatus.Finished,
-      TournamentStatus.Canceled,
-    ];
-
-    return allStatuses.filter(status => {
-      if (status === currentStatus) {
-        return true;
-      }
-
-      if (status === TournamentStatus.Canceled) {
-        return isOwner || !tournamentStarted;
-      }
-
-      if (currentStatus === TournamentStatus.Canceled) {
-        return false;
-      }
-
-      return STATUS_FLOW_ORDER[status] >= STATUS_FLOW_ORDER[currentStatus];
-    });
-  }, [currentStatus, isOwner, tournamentStarted]);
+  // The current status plus the forward-only transitions the backend state
+  // machine allows from it. An invalid pick is still rejected server-side (409).
+  const statusOptions = useMemo(
+    () => [currentStatus, ...getNextStatusOptions(currentStatus)],
+    [currentStatus]
+  );
 
   if (!tournamentId) {
     return (
@@ -240,13 +188,6 @@ const TournamentEditPage: React.FC = () => {
         return prev;
       }
 
-      if (name === 'minTeams' || name === 'maxTeams') {
-        return {
-          ...prev,
-          [name]: Number(value),
-        };
-      }
-
       if (name === 'status') {
         return {
           ...prev,
@@ -272,18 +213,8 @@ const TournamentEditPage: React.FC = () => {
 
     const messages: string[] = [];
 
-    if (canEditMainFields) {
-      if (!form.name.trim()) {
-        messages.push('El nombre es obligatorio.');
-      }
-
-      if (form.minTeams <= 0 || form.maxTeams <= 0) {
-        messages.push('Los equipos mínimos y máximos deben ser mayores a 0.');
-      }
-
-      if (form.minTeams > form.maxTeams) {
-        messages.push('Los equipos mínimos no pueden superar a los máximos.');
-      }
+    if (canEditMainFields && !form.name.trim()) {
+      messages.push('El nombre es obligatorio.');
     }
 
     if (canEditRegistrationDeadline && !form.teamRegistrationDeadline) {
@@ -309,8 +240,6 @@ const TournamentEditPage: React.FC = () => {
       description: canEditMainFields
         ? form.description.trim()
         : tournament.description,
-      minTeams: canEditMainFields ? form.minTeams : tournament.minTeams,
-      maxTeams: canEditMainFields ? form.maxTeams : tournament.maxTeams,
       startDate: new Date(form.startDate || tournament.startDate),
       teamRegistrationDeadline: new Date(
         canEditRegistrationDeadline
@@ -438,39 +367,6 @@ const TournamentEditPage: React.FC = () => {
               slotProps={{
                 inputLabel: { shrink: true }
               }}
-            />
-          </Grid>
-
-          <Grid
-            size={{
-              xs: 12,
-              md: 6
-            }}>
-            <TextField
-              fullWidth
-              name="minTeams"
-              size="small"
-              type="number"
-              label="Equipos mínimos"
-              value={form.minTeams}
-              onChange={handleFormChange}
-              disabled={!canEditMainFields}
-            />
-          </Grid>
-          <Grid
-            size={{
-              xs: 12,
-              md: 6
-            }}>
-            <TextField
-              fullWidth
-              name="maxTeams"
-              size="small"
-              type="number"
-              label="Equipos máximos"
-              value={form.maxTeams}
-              onChange={handleFormChange}
-              disabled={!canEditMainFields}
             />
           </Grid>
         </Grid>

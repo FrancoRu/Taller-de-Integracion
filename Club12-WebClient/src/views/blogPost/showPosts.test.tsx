@@ -18,6 +18,7 @@ const buildPost = (
   title: 'Titulo',
   slug: 'titulo',
   views: 0,
+  isPublished: true,
   markdownText: 'contenido',
   createdAt: new Date(),
   ...overrides,
