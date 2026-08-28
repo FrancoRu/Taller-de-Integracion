@@ -1,13 +1,11 @@
 using Application.Interfaces.Backup;
 
-using System.Text;
-
 namespace API.Tests.Backup.Fakes;
 
 /// <summary>
-/// Test double for IBackupStorage. Records call counts, stored names, and
-/// deleted names so hosted-service and orchestration tests can assert on
-/// storage/retention/restore interaction without any real I/O.
+/// Test double for IBackupStorage. Records call counts and
+/// deleted names so hosted-service tests can assert on storage/retention
+/// interaction without any real I/O.
 /// </summary>
 public sealed class FakeBackupStorage : IBackupStorage
 {
@@ -20,24 +18,17 @@ public sealed class FakeBackupStorage : IBackupStorage
     public int DeleteCallCount => _deleteCallCount;
 
     public IReadOnlyList<BackupFile> FilesToList { get; set; } = Array.Empty<BackupFile>();
-    public List<string> StoredNames { get; } = [];
     public List<string> DeletedNames { get; } = [];
-    public List<string> RetrievedNames { get; } = [];
 
-    /// <summary>Content returned by RetrieveAsync for any name.</summary>
-    public string RetrieveContent { get; set; } = "-- restored dump --";
-
-    /// <summary>When set, RetrieveAsync throws this instead of returning content.</summary>
-    public Exception? RetrieveException { get; set; }
+    /// <summary>
+    /// When set, DeleteAsync throws this instead of succeeding —
+    /// simulates the stored file already being missing out-of-band.
+    /// </summary>
+    public Exception? DeleteException { get; set; }
 
     public Task StoreAsync(string name, Stream content, CancellationToken ct = default)
     {
         Interlocked.Increment(ref _storeCallCount);
-        lock (StoredNames)
-        {
-            StoredNames.Add(name);
-        }
-
         return Task.CompletedTask;
     }
 
@@ -55,22 +46,29 @@ public sealed class FakeBackupStorage : IBackupStorage
             DeletedNames.Add(name);
         }
 
+        if (DeleteException is not null)
+        {
+            throw DeleteException;
+        }
+
         return Task.CompletedTask;
     }
 
-    public Task<Stream> RetrieveAsync(string name, CancellationToken ct = default)
+    /// <summary>
+    /// When set, OpenReadAsync throws this instead of succeeding —
+    /// simulates a missing/unreadable stored file.
+    /// </summary>
+    public Exception? OpenReadException { get; set; }
+
+    public Stream ContentToOpen { get; set; } = new MemoryStream();
+
+    public Task<Stream> OpenReadAsync(string name, CancellationToken ct = default)
     {
-        if (RetrieveException is not null)
+        if (OpenReadException is not null)
         {
-            throw RetrieveException;
+            throw OpenReadException;
         }
 
-        lock (RetrievedNames)
-        {
-            RetrievedNames.Add(name);
-        }
-
-        Stream stream = new MemoryStream(Encoding.UTF8.GetBytes(RetrieveContent));
-        return Task.FromResult(stream);
+        return Task.FromResult(ContentToOpen);
     }
 }

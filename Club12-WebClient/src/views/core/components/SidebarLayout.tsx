@@ -17,12 +17,12 @@ import {
   MenuIcon,
   PeopleIcon,
   PersonIcon,
-  ScienceIcon,
   SettingsIcon,
   ShieldIcon,
   SportsIcon,
   StadiumIcon,
   StarIcon,
+  StorageIcon,
 } from '@/views/core/MUI/icons/icons';
 import {
   AppBar,
@@ -66,7 +66,7 @@ const TAB_ICONS: Record<string, React.ReactNode> = {
   Configuracion: <SettingsIcon />,
   Estadisticas: <BarChartIcon />,
   Auditoria: <HistoryIcon />,
-  Test: <ScienceIcon />,
+  AdministracionDeDatos: <StorageIcon />,
   CambiarPassword: <LockIcon />,
   EditarPerfil: <BadgeIcon />,
   Sanciones: <GavelIcon />,
@@ -198,8 +198,8 @@ const TABS_BY_ROLE: Record<UserRolesType, NavTab[]> = {
     },
     {
       label: 'Administración de datos',
-      path: APP_ROUTES.panelTest,
-      icon: TAB_ICONS['Test'],
+      path: APP_ROUTES.panelDataAdministration,
+      icon: TAB_ICONS['AdministracionDeDatos'],
     },
   ],
   [UserRolesType.Guest]: [],

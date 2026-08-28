@@ -1,24 +1,25 @@
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Application.Interfaces.Backup;
 
 /// <summary>
-/// Low-level restore boundary: replays a single plain-SQL dump
-/// (as produced by <see cref="IDatabaseBackupService.CreateDumpAsync"/>) back
-/// into the configured database. The pg-specific adapter shells out to
-/// <c>psql</c> via <see cref="IProcessRunner"/>, mirroring how
-/// PgDumpBackupService shells out to <c>pg_dump</c>. Implementations must
-/// surface a failed restore (non-zero exit, missing binary, ...) as a
-/// <see cref="BackupExecutionException"/> rather than an unhandled exception,
-/// so the restore orchestrator can keep the safety backup and report cleanly.
+/// Restores the database from a local plain-SQL dump file (design.md's "Keep
+/// plain-SQL dumps; restore with psql, not pg_restore" decision — the dump
+/// produced by IDatabaseBackupService is plain SQL text, not a
+/// binary custom/tar archive). Adapters are implemented in a later work unit
+/// alongside the restore endpoint; this port is defined here so
+/// BackupOperationsService.RestoreBackupAsync can be designed
+/// against its real shape.
 /// </summary>
 public interface IDatabaseRestoreService
 {
     /// <summary>
-    /// Applies the SQL in <paramref name="dumpContent"/> to the database.
-    /// The caller owns the stream's lifetime.
+    /// Restores from the plain-SQL dump at <paramref name="dumpFilePath"/>.
+    /// Throws BackupExecutionException on failure (non-zero exit,
+    /// missing binary) — callers are expected to catch it, log it, and keep
+    /// the host running (see the "Restore Failure Is Logged and Isolated"
+    /// spec requirement).
     /// </summary>
-    Task RestoreAsync(Stream dumpContent, CancellationToken ct = default);
+    Task RestoreAsync(string dumpFilePath, CancellationToken ct = default);
 }

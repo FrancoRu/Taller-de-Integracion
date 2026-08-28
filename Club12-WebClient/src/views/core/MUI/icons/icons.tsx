@@ -44,6 +44,10 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import EventBusyIcon from '@mui/icons-material/EventBusy';
 import NumbersIcon from '@mui/icons-material/Numbers';
 import HistoryIcon from '@mui/icons-material/History';
+import BackupIcon from '@mui/icons-material/Backup';
+import RestoreIcon from '@mui/icons-material/Restore';
+import StorageIcon from '@mui/icons-material/Storage';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 
 export {
   DeleteIcon,
@@ -92,4 +96,8 @@ export {
   EventBusyIcon,
   NumbersIcon,
   HistoryIcon,
+  BackupIcon,
+  RestoreIcon,
+  StorageIcon,
+  DeleteSweepIcon,
 };

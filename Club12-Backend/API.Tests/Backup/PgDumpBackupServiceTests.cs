@@ -101,6 +101,111 @@ public class PgDumpBackupServiceTests
         Assert.All(runner.CapturedArgs!, a => Assert.DoesNotContain("&&", a));
     }
 
+    /// <summary>
+    /// Restoring with psql -f against a Supabase-managed database can
+    /// fail on ownership/role statements captured by a plain pg_dump;
+    /// these flags move that safety onto the dump side (design.md's
+    /// "Keep plain-SQL dumps; restore with psql" decision).
+    /// </summary>
+    [Fact]
+    public async Task CreateDumpAsync_IncludesCleanAndOwnershipSafetyFlags()
+    {
+        FakeProcessRunner runner = new() { ResultToReturn = new ProcessResult(0, "ok", string.Empty) };
+        IConfiguration configuration = BuildConfiguration(
+            "Host=localhost;Port=5432;Database=club12;Username=app;Password=x");
+        PgDumpBackupService service = new(runner, configuration, NullLogger<PgDumpBackupService>.Instance);
+
+        await service.CreateDumpAsync();
+
+        Assert.NotNull(runner.CapturedArgs);
+        Assert.Contains("--clean", runner.CapturedArgs!);
+        Assert.Contains("--if-exists", runner.CapturedArgs!);
+        Assert.Contains("--no-owner", runner.CapturedArgs!);
+        Assert.Contains("--no-privileges", runner.CapturedArgs!);
+    }
+
+    /// <summary>
+    /// pg_dump with no schema restriction captures the WHOLE database,
+    /// including Supabase-platform-owned tables/views/functions the app's
+    /// connection role never owns (e.g. a "vector_indexes" table from
+    /// Supabase's own tooling) — --clean's DROP for those then fails with
+    /// "must be owner of table X" on restore. The app's own data lives in
+    /// exactly two schemas: "public" (ASP.NET Core Identity's default,
+    /// unconfigured schema) and "Club12" (every domain entity, via
+    /// EntityConstants.Schema) — restricting the dump to just those excludes
+    /// every Supabase-managed schema at once, rather than reacting to each
+    /// foreign object name as it surfaces one restore attempt at a time.
+    /// The "Club12" pattern MUST be double-quoted (as a literal, embedded in
+    /// the arg-vector element itself — no shell is involved, so no outer
+    /// single-quoting is needed): pg_dump's -n pattern matching folds an
+    /// unquoted pattern to lowercase before comparing, and the real schema
+    /// is mixed-case, so an unquoted "Club12" pattern silently matches
+    /// nothing and pg_dump dumps zero tables from it — confirmed by
+    /// inspecting a real dump taken with the unquoted form, which contained
+    /// only "public" content, not one line of "Club12".
+    /// </summary>
+    [Fact]
+    public async Task CreateDumpAsync_RestrictsDumpToAppOwnedSchemas()
+    {
+        FakeProcessRunner runner = new() { ResultToReturn = new ProcessResult(0, "ok", string.Empty) };
+        IConfiguration configuration = BuildConfiguration(
+            "Host=localhost;Port=5432;Database=club12;Username=app;Password=x");
+        PgDumpBackupService service = new(runner, configuration, NullLogger<PgDumpBackupService>.Instance);
+
+        await service.CreateDumpAsync();
+
+        Assert.NotNull(runner.CapturedArgs);
+        IReadOnlyList<string> args = runner.CapturedArgs!;
+        Assert.Contains("public", args);
+        Assert.Contains("\"Club12\"", args);
+        Assert.Equal(2, args.Count(a => a == "-n"));
+    }
+
+    /// <summary>
+    /// Supabase-managed databases carry platform-internal event triggers
+    /// (PostgREST's schema-cache-reload hooks, pgsodium's mask-update hook,
+    /// etc.) that a plain pg_dump captures because event triggers are
+    /// database-wide, not schema-scoped — no `-n`/`--exclude-schema` filters
+    /// them out. On restore, `--clean`'s `DROP EVENT TRIGGER` for one of
+    /// these fails with "must be owner of event trigger", since the app's
+    /// connection role never owns Supabase's own infrastructure objects. The
+    /// app never defines its own event triggers, so any EVENT TRIGGER
+    /// statement in the dump is guaranteed to be Supabase-owned and safe to
+    /// drop from the dump entirely (not just the one named in the incident —
+    /// psql aborts at the first one, so others further down the dump would
+    /// never even surface).
+    /// </summary>
+    [Fact]
+    public async Task CreateDumpAsync_StripsEventTriggerStatements_SupabaseInternalObjectsNotOwnedByAppRole()
+    {
+        const string rawDump = """
+            SET statement_timeout = 0;
+            DROP EVENT TRIGGER IF EXISTS pgrst_drop_watch;
+            DROP EVENT TRIGGER IF EXISTS pgrst_ddl_watch;
+            CREATE TABLE "Club12"."BackupRecords" (
+                "Id" uuid NOT NULL
+            );
+            CREATE EVENT TRIGGER pgrst_drop_watch ON sql_drop
+               EXECUTE FUNCTION extensions.pgrst_drop_watch();
+            CREATE EVENT TRIGGER pgrst_ddl_watch ON ddl_command_end
+               EXECUTE FUNCTION extensions.pgrst_ddl_watch();
+            COMMENT ON EVENT TRIGGER pgrst_drop_watch IS 'notify PostgREST of DDL changes';
+            INSERT INTO "Club12"."BackupRecords" ("Id") VALUES ('11111111-1111-1111-1111-111111111111');
+            """;
+        FakeProcessRunner runner = new() { ResultToReturn = new ProcessResult(0, rawDump, string.Empty) };
+        IConfiguration configuration = BuildConfiguration(
+            "Host=localhost;Port=5432;Database=club12;Username=app;Password=x");
+        PgDumpBackupService service = new(runner, configuration, NullLogger<PgDumpBackupService>.Instance);
+
+        await using Stream dump = await service.CreateDumpAsync();
+
+        using StreamReader reader = new(dump);
+        string content = await reader.ReadToEndAsync();
+        Assert.DoesNotContain("EVENT TRIGGER", content, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("CREATE TABLE \"Club12\".\"BackupRecords\"", content);
+        Assert.Contains("INSERT INTO \"Club12\".\"BackupRecords\"", content);
+    }
+
     [Fact]
     public async Task CreateDumpAsync_NonZeroExitCode_ThrowsBackupExecutionException_NotUncaught()
     {

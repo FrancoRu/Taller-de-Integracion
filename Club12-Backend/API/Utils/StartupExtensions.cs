@@ -4,9 +4,7 @@ using API.Utils.Middlewares;
 
 using Application.Backup;
 using Application.Interfaces.Backup;
-using Application.Interfaces.Maintenance;
 using Application.Interfaces.Mappers;
-using Application.Maintenance;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Interfaces.Storage;
@@ -496,10 +494,20 @@ public static class StartupExtensions
     }
 
     /// <summary>
-    /// Registers the scheduled database backup feature: binds the
+    /// Registers the database backup feature: binds the
     /// Backup config section into a BackupOptions
-    /// singleton and registers its ports/adapters (pg_dump, retention,
-    /// DatabaseBackupHostedService) explicitly as singletons.
+    /// singleton and registers its ports/adapters. Most of this is
+    /// singleton (pg_dump adapter, psql restore adapter, retention
+    /// policy, storage adapter, the process-wide
+    /// BackupOperationLock and IMaintenanceModeState, and
+    /// DatabaseBackupHostedService itself) — the exceptions are
+    /// IBackupCatalog (EF-backed, needs the scoped
+    /// ApplicationDBContext) and IBackupOperationsService (depends
+    /// on the catalog), both registered scoped so the manual endpoint
+    /// (BackupController) and the scheduled job (resolving from a
+    /// DI scope per tick) each get their own catalog/DbContext instance
+    /// while still serializing through the one shared
+    /// BackupOperationLock singleton.
     /// The IBackupStorage implementation is selected by
     /// BackupOptions.StorageTarget: Supabase registers
     /// SupabaseBackupStorage (reusing the existing
@@ -512,8 +520,9 @@ public static class StartupExtensions
     /// reflection scan: these live outside the
     /// Application.Interfaces.Services namespace on purpose, because
     /// that scanner auto-binds everything it finds as <b>Scoped</b> — a
-    /// lifetime mismatch for a service consumed by a singleton
-    /// BackgroundService.
+    /// lifetime mismatch for the singleton services registered here (and,
+    /// for IBackupCatalog/IBackupOperationsService, explicit scoped
+    /// registration is clearer than relying on naming-convention reflection).
     /// </remarks>
     public static IServiceCollection AddBackupConfig(this IServiceCollection services, IConfiguration configuration)
     {
@@ -523,14 +532,9 @@ public static class StartupExtensions
         services.AddSingleton<IBackupRetentionPolicy, KeepLastNRetentionPolicy>();
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IDatabaseBackupService, PgDumpBackupService>();
-        services.AddSingleton<IDatabaseRestoreService, PgRestoreService>();
-
-        // HU-92 maintenance lock (shared by the middleware and the manual
-        // backup/restore services) and the HU-91/HU-93 orchestrators. All are
-        // singletons: they depend only on the singleton backup ports above.
-        services.AddSingleton<IMaintenanceState, MaintenanceState>();
-        services.AddSingleton<IManualBackupService, ManualBackupService>();
-        services.AddSingleton<IBackupRestoreService, BackupRestoreService>();
+        services.AddSingleton<IDatabaseRestoreService, PsqlDatabaseRestoreService>();
+        services.AddSingleton<IMaintenanceModeState, MaintenanceModeState>();
+        services.AddSingleton<BackupOperationLock>();
 
         if (string.Equals(options.StorageTarget, BackupStorageTargets.Supabase, StringComparison.OrdinalIgnoreCase))
         {
@@ -542,6 +546,9 @@ public static class StartupExtensions
             services.AddSingleton<IBackupStorage>(sp => new LocalDirectoryBackupStorage(
                 options.LocalStoragePath, sp.GetRequiredService<ILogger<LocalDirectoryBackupStorage>>()));
         }
+
+        services.AddScoped<IBackupCatalog, EfBackupCatalog>();
+        services.AddScoped<IBackupOperationsService, BackupOperationsService>();
 
         services.AddSingleton<DatabaseBackupHostedService>();
 

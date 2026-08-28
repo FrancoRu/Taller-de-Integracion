@@ -52,7 +52,7 @@ import EditUser from './views/user/editUser';
 import ChangePasswordPage from './views/panel/ChangePasswordPage';
 import StatisticsPage from './views/panel/StatisticsPage';
 import AuditLogsPage from './views/panel/AuditLogsPage';
-import TestDataPage from './views/panel/TestDataPage';
+import DataAdministrationPage from './views/panel/DataAdministrationPage';
 import { UserRolesType } from './modules/core/enum/user/userRolesType';
 import InvalidToken from './views/core/errors/invalidToken';
 import Forbidden from './views/core/errors/forbidden';
@@ -289,9 +289,9 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
     element: <AuditLogsPage />,
   },
   {
-    path: APP_ROUTES.panelTest,
+    path: APP_ROUTES.panelDataAdministration,
     allowedRoles: [UserRolesType.Admin],
-    element: <TestDataPage />,
+    element: <DataAdministrationPage />,
   },
   { path: '*', element: <NotFound /> },
 ];

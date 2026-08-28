@@ -266,9 +266,15 @@ Backup*/
 # Un-ignore them explicitly rather than weakening the upstream rule.
 !Club12-Backend/Application/Backup/
 !Club12-Backend/Application/Interfaces/Backup/
+!Club12-Backend/Application/DTOs/Backup/
+!Club12-Backend/Application/DTOs/Backup/Response/
 !Club12-Backend/Infrastructure/Backup/
 !Club12-Backend/API.Tests/Backup/
 !Club12-Backend/API.Tests/Backup/Fakes/
+# PR5 (frontend): the same `Backup*/` pattern also matches the legitimate
+# `src/modules/backup/` feature module added for the admin backup/restore
+# panel — un-ignore it explicitly too.
+!Club12-WebClient/src/modules/backup/
 UpgradeLog*.XML
 UpgradeLog*.htm
 ServiceFabricBackup/

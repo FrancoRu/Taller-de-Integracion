@@ -1,4 +1,4 @@
-using Application.Interfaces.Maintenance;
+using Application.Interfaces.Backup;
 
 using Microsoft.AspNetCore.Http;
 
@@ -8,56 +8,43 @@ using System.Threading.Tasks;
 namespace API.Utils.Middlewares;
 
 /// <summary>
-/// Enforces the maintenance lock (HU-92) app-wide: while a backup or restore
-/// holds the lock, any mutating request (POST/PUT/DELETE/PATCH) is
-/// short-circuited with 503 "operation in progress" so nobody can modify data
-/// mid-operation. Read requests (GET/HEAD/OPTIONS) always pass, so the UI can
-/// still render and poll the maintenance status. The status endpoint is
-/// additionally allow-listed so it is reachable regardless of verb.
+/// database-restore#Maintenance-Mode-Window: while IMaintenanceModeState
+/// is active, every request except the allow-listed paths responds
+/// 503 (design.md's "Maintenance gate is middleware placed after
+/// UseCors, before UseAuthentication" decision — mirrors
+/// MustChangePasswordMiddleware's shape). Registered after
+/// UseCors() so the 503 still carries CORS headers, and before
+/// UseAuthentication() so the gate is not preempted by an auth
+/// failure. Placing this as middleware (not an MVC filter) covers every
+/// request shape, including unmatched routes and Swagger, which an
+/// IAsyncActionFilter would miss (threat-matrix "Routing gate bypass").
+/// The allow-list covers /health (StartsWithSegments also matches
+/// /health/ready) and /api/maintenance — the manual escape hatch,
+/// which still enforces its own [Authorize(Roles = Admin)] (threat-matrix
+/// "Escape-hatch abuse").
 /// </summary>
-public sealed class MaintenanceModeMiddleware(RequestDelegate next, IMaintenanceState state)
+public class MaintenanceModeMiddleware(RequestDelegate next, IMaintenanceModeState maintenanceModeState)
 {
-    /// <summary>
-    /// Path prefixes that stay open even while locked, so the client can read
-    /// the maintenance banner state.
-    /// </summary>
     private static readonly string[] AllowedPaths =
     [
-        "/api/backups/status",
+        "/health",
+        "/api/maintenance",
     ];
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (state.IsActive
-            && IsMutating(context.Request.Method)
-            && !IsAllowed(context.Request.Path))
+        if (maintenanceModeState.IsActive && !Array.Exists(AllowedPaths, p => context.Request.Path.StartsWithSegments(p)))
         {
-            MaintenanceStatus? status = state.Current;
-
             context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
-            context.Response.Headers.RetryAfter = "5";
+            context.Response.Headers.RetryAfter = "30";
             await context.Response.WriteAsJsonAsync(new
             {
-                error = "A maintenance operation is in progress. Please try again shortly.",
-                operation = status?.Operation,
-                startedAt = status?.StartedAt,
+                error = "The application is temporarily in maintenance mode.",
+                reason = maintenanceModeState.Reason,
             });
             return;
         }
 
         await next(context);
-    }
-
-    private static bool IsMutating(string method)
-    {
-        return HttpMethods.IsPost(method)
-            || HttpMethods.IsPut(method)
-            || HttpMethods.IsDelete(method)
-            || HttpMethods.IsPatch(method);
-    }
-
-    private static bool IsAllowed(PathString path)
-    {
-        return Array.Exists(AllowedPaths, p => path.StartsWithSegments(p, StringComparison.OrdinalIgnoreCase));
     }
 }

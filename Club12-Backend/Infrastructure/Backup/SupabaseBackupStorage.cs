@@ -48,6 +48,22 @@ public sealed class SupabaseBackupStorage(ISupabaseRawStorage rawStorage) : IBac
         }
     }
 
+    public async Task<Stream> OpenReadAsync(string name, CancellationToken ct = default)
+    {
+        string objectPath = ToObjectPath(name);
+
+        try
+        {
+            byte[] bytes = await rawStorage.DownloadRawAsync(objectPath);
+            return new MemoryStream(bytes);
+        }
+        catch (Exception ex)
+        {
+            throw new BackupExecutionException(
+                $"Failed to download backup '{name}' from Supabase storage: {ex.Message}", ex);
+        }
+    }
+
     public async Task<IReadOnlyList<BackupFile>> ListAsync(CancellationToken ct = default)
     {
         try
@@ -76,21 +92,6 @@ public sealed class SupabaseBackupStorage(ISupabaseRawStorage rawStorage) : IBac
         {
             throw new BackupExecutionException(
                 $"Failed to delete backup '{name}' from Supabase storage: {ex.Message}", ex);
-        }
-    }
-
-    public async Task<Stream> RetrieveAsync(string name, CancellationToken ct = default)
-    {
-        string objectPath = ToObjectPath(name);
-
-        try
-        {
-            return await rawStorage.DownloadRawAsync(objectPath);
-        }
-        catch (Exception ex)
-        {
-            throw new BackupExecutionException(
-                $"Failed to retrieve backup '{name}' from Supabase storage: {ex.Message}", ex);
         }
     }
 

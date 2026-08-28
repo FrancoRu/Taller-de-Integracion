@@ -3,8 +3,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
+// Side-effect import: registers the global maintenance banner against
+// axiosUtils' onStatusCode(HttpStatus.ServiceUnavailable, ...) registry.
+import './modules/core/utils/maintenanceBanner';
 import { AuthProvider } from './modules/auth/context/auth.context';
-import { BackupProvider } from './modules/backup/context/backup.context';
 import { BrowserRouter } from 'react-router-dom';
 import { ErrorProvider } from './modules/error/context/error.context';
 import { TournamentProvider } from './modules/tournament/context/tournament.context';
@@ -26,7 +28,6 @@ import ErrorBoundary from './views/core/errors/error-boundary';
 import ComposeProviders from './views/core/components/ComposeProviders';
 import QueryProvider from './views/core/components/QueryProvider';
 import ThemedProvider from './views/core/components/ThemedProvider';
-import MaintenanceBanner from './views/backup/MaintenanceBanner';
 
 const providers: ComponentType<{ children: ReactNode }>[] = [
   ErrorBoundary,
@@ -35,7 +36,6 @@ const providers: ComponentType<{ children: ReactNode }>[] = [
   BrowserRouter,
   ErrorProvider,
   AuthProvider,
-  BackupProvider,
   VenueProvider,
   TeamProvider,
   ClubProvider,
@@ -56,7 +56,6 @@ const providers: ComponentType<{ children: ReactNode }>[] = [
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <ComposeProviders providers={providers}>
-      <MaintenanceBanner />
       <App />
     </ComposeProviders>
   </React.StrictMode>

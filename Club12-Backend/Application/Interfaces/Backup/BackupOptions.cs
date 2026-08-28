@@ -13,4 +13,5 @@ public sealed class BackupOptions
     public string StorageTarget { get; set; } = BackupStorageTargets.Local;
     public string LocalStoragePath { get; set; } = "backups";
     public string PgDumpPath { get; set; } = "pg_dump";
+    public string PsqlPath { get; set; } = "psql";
 }

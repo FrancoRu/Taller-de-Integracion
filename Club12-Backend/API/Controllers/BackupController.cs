@@ -1,141 +1,118 @@
-using Application.DTOs.Backup.Request;
 using Application.DTOs.Backup.Response;
 using Application.Interfaces.Backup;
-using Application.Interfaces.Maintenance;
-using Application.Interfaces.Services;
 
+using Domain.Entities.Models;
 using Domain.Enums;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace API.Controllers;
 
 /// <summary>
-/// Admin/Owner backup management (HU-91/92/93): trigger a manual backup, list
-/// available backups, restore from a chosen backup (safety-backup-first), and
-/// read the maintenance-lock status. The create and restore operations run
-/// under the app-wide maintenance lock; a request that arrives while one is
-/// already running is rejected with 503.
+/// Admin-only management of database backups: list the catalog, trigger a
+/// manual backup, and delete a backup. Create/Delete go through the shared
+/// IBackupOperationsService write path (the same one the scheduled
+/// job uses); GET reads directly from IBackupCatalog, the source of
+/// truth for the listing (not IBackupStorage.ListAsync()).
+/// Mirrors DataMaintenanceController's shape: [ApiController],
+/// [Authorize(Roles = Roles.Admin)], a CancellationToken
+/// parameter, and Ok(result) on success. Outcomes are mapped
+/// explicitly to status codes rather than relying on exception-mapped
+/// status codes (design.md's "Controllers return an explicit outcome"
+/// decision), which keeps this controller's own logic pure and easy to
+/// unit test.
 /// </summary>
 [Route("api/backups")]
 [ApiController]
-[Authorize(Roles = Roles.AdminOrOwner)]
-public class BackupController(
-    IManualBackupService manualBackupService,
-    IBackupRestoreService backupRestoreService,
-    IMaintenanceState maintenanceState,
-    IAuditService auditService) : ControllerBase
+[Authorize(Roles = Roles.Admin)]
+#pragma warning disable S6960
+public class BackupController(IBackupCatalog catalog, IBackupOperationsService operations) : ControllerBase
+#pragma warning restore S6960
 {
-    /// <summary>
-    /// Triggers a backup on demand and returns the created backup's metadata.
-    /// </summary>
-    [HttpPost]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BackupFile))]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-    public async Task<ActionResult<BackupFile>> CreateBackup(CancellationToken ct)
-    {
-        try
-        {
-            BackupFile created = await manualBackupService.CreateBackupAsync(ct);
-            return Ok(created);
-        }
-        catch (MaintenanceInProgressException ex)
-        {
-            return MaintenanceInProgress(ex);
-        }
-        catch (BackupExecutionException ex)
-        {
-            return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError,
-                title: "Backup failed");
-        }
-    }
-
-    /// <summary>
-    /// Lists the backups currently available in storage, newest first.
-    /// </summary>
     [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IReadOnlyList<BackupFile>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IReadOnlyList<BackupRecordResponse>))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IReadOnlyList<BackupFile>>> ListBackups(CancellationToken ct)
+    public async Task<ActionResult<IReadOnlyList<BackupRecordResponse>>> GetAll(CancellationToken ct)
     {
-        IReadOnlyList<BackupFile> backups = await manualBackupService.ListBackupsAsync(ct);
-        return Ok(backups);
+        IReadOnlyList<BackupRecord> records = await catalog.ListNewestFirstAsync(ct);
+        IReadOnlyList<BackupRecordResponse> response = records.Select(BackupRecordResponse.FromEntity).ToList();
+        return Ok(response);
+    }
+
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BackupRecordResponse))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> Create(CancellationToken ct)
+    {
+        BackupOperationResult result = await operations.CreateBackupAsync(BackupOrigin.Manual, ct);
+
+        return result.Outcome switch
+        {
+            BackupOperationOutcome.Completed => Ok(result.Record),
+            BackupOperationOutcome.Busy => Conflict(result.Message),
+            _ => StatusCode(StatusCodes.Status500InternalServerError, result.Message),
+        };
+    }
+
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    {
+        BackupOperationResult result = await operations.DeleteBackupAsync(id, ct);
+
+        return result.Outcome switch
+        {
+            BackupOperationOutcome.Completed => NoContent(),
+            BackupOperationOutcome.NotFound => NotFound(),
+            BackupOperationOutcome.Busy => Conflict(result.Message),
+            _ => StatusCode(StatusCodes.Status500InternalServerError, result.Message),
+        };
     }
 
     /// <summary>
-    /// Restores the database from a chosen backup. A safety backup is created
-    /// first; on success it is deleted, on failure it is kept so data can be
-    /// recovered.
+    /// database-restore#Restore-Executes-Directly-Against-the-Live-Database.
+    /// The only input is the route Guid — no request body is bound
+    /// (threat-matrix "Restore of foreign/uploaded dumps": there is no
+    /// upload endpoint, so a restore can only ever target an existing
+    /// catalogued backup by id). Confirmation naming the target's
+    /// Fecha before this call is a frontend concern (Phase 5), not
+    /// enforced server-side. On success the response carries the automatic
+    /// pre-restore safety backup's record (design.md's HTTP contract).
     /// </summary>
-    [HttpPost("restore")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RestoreResult))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [HttpPost("{id:guid}/restore")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BackupRecordResponse))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-    public async Task<ActionResult<RestoreResult>> Restore([FromBody] RestoreRequest request, CancellationToken ct)
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> Restore(Guid id, CancellationToken ct)
     {
-        if (request is null || string.IsNullOrWhiteSpace(request.BackupName))
-        {
-            return BadRequest("A backup name is required.");
-        }
+        BackupOperationResult result = await operations.RestoreBackupAsync(id, ct);
 
-        try
+        return result.Outcome switch
         {
-            RestoreResult result = await backupRestoreService.RestoreAsync(request.BackupName, ct);
-
-            // HU-101: record the sensitive restore for traceability.
-            await auditService.LogAsync(
-                AuditAction.BackupRestore,
-                targetType: "Backup",
-                targetId: request.BackupName,
-                detail: $"Restored from '{request.BackupName}'; safety backup '{result.SafetyBackupName}'.",
-                ct: ct);
-
-            return Ok(result);
-        }
-        catch (MaintenanceInProgressException ex)
-        {
-            return MaintenanceInProgress(ex);
-        }
-        catch (BackupExecutionException ex)
-        {
-            return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError,
-                title: "Restore failed (safety backup retained)");
-        }
-    }
-
-    /// <summary>
-    /// Reports the current maintenance-lock state so the UI can show or clear
-    /// the "operation in progress" banner. Reachable even while locked.
-    /// </summary>
-    [HttpGet("status")]
-    [AllowAnonymous]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MaintenanceStatusResponse))]
-    public ActionResult<MaintenanceStatusResponse> Status()
-    {
-        MaintenanceStatus? current = maintenanceState.Current;
-        return Ok(new MaintenanceStatusResponse(
-            maintenanceState.IsActive, current?.Operation, current?.StartedAt));
-    }
-
-    private ObjectResult MaintenanceInProgress(MaintenanceInProgressException ex)
-    {
-        Response.Headers.RetryAfter = "5";
-        return StatusCode(StatusCodes.Status503ServiceUnavailable, new
-        {
-            error = ex.Message,
-            operation = ex.Status?.Operation,
-            startedAt = ex.Status?.StartedAt,
-        });
+            BackupOperationOutcome.Completed => Ok(result.Record),
+            BackupOperationOutcome.NotFound => NotFound(),
+            BackupOperationOutcome.Busy => Conflict(result.Message),
+            _ => StatusCode(StatusCodes.Status500InternalServerError, result.Message),
+        };
     }
 }

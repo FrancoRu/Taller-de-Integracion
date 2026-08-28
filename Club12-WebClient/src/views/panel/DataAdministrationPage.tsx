@@ -1,19 +1,36 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Button, Card, CardContent, Stack, Typography } from '@mui/material';
 import { isAxiosError } from 'axios';
-import ScienceIcon from '@mui/icons-material/Science';
-import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
+import {
+  BackupIcon,
+  DeleteSweepIcon,
+  ScienceIcon,
+} from '@/views/core/MUI/icons/icons';
 import { dataMaintenanceService } from '@/modules/dataMaintenance/service/dataMaintenance.service';
+import { useBackups } from '@/modules/backup/hook/backup.hook';
+import BackupsTable from '@/views/panel/components/BackupsTable';
 import {
   confirmDelete,
   notifyError,
   notifySuccess,
 } from '@/modules/core/utils/confirmDialog';
-import BackupPanel from '@/views/backup/BackupPanel';
 
-const TestDataPage: React.FC = () => {
+const DataAdministrationPage: React.FC = () => {
   const [isWiping, setIsWiping] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
+  const {
+    backups,
+    loading,
+    busy,
+    fetchBackups,
+    createBackup,
+    deleteBackup,
+    restoreBackup,
+  } = useBackups();
+
+  useEffect(() => {
+    void fetchBackups();
+  }, [fetchBackups]);
 
   const handleWipe = async (): Promise<void> => {
     const confirmed = await confirmDelete({
@@ -64,18 +81,55 @@ const TestDataPage: React.FC = () => {
     }
   };
 
+  const handleGenerateBackup = async (): Promise<void> => {
+    const created = await createBackup();
+    if (!created) {
+      await notifyError({
+        title: 'No se pudo generar el respaldo',
+        text: 'Puede haber otra operación de respaldo/restauración en curso. Volvé a intentar en unos segundos.',
+      });
+      return;
+    }
+
+    await notifySuccess({ title: 'Respaldo generado' });
+  };
+
+  const handleDeleteBackup = async (backup: {
+    id: string;
+  }): Promise<void> => {
+    const deleted = await deleteBackup(backup.id);
+    if (!deleted) {
+      await notifyError({ title: 'No se pudo eliminar el respaldo' });
+      return;
+    }
+
+    await notifySuccess({ title: 'Respaldo eliminado' });
+  };
+
+  const handleRestoreBackup = async (backup: {
+    id: string;
+  }): Promise<void> => {
+    const restored = await restoreBackup(backup.id);
+    if (!restored) {
+      await notifyError({ title: 'No se pudo restaurar el respaldo' });
+      return;
+    }
+
+    await notifySuccess({ title: 'Base de datos restaurada' });
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h5" sx={{ mb: 2 }}>
-        Herramientas de datos de prueba
+        Administración de datos
       </Typography>
-      <Card>
+
+      <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Typography variant="body2" sx={{ mb: 3 }}>
-            Estas herramientas afectan solo torneos, equipos, jugadores, partidos,
-            sanciones y estadísticas. Los usuarios y roles nunca se tocan.
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Base de datos
           </Typography>
-          <Stack direction="row" spacing={2}>
+          <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
             <Button
               variant="outlined"
               color="error"
@@ -83,23 +137,43 @@ const TestDataPage: React.FC = () => {
               disabled={isWiping || isSeeding}
               onClick={handleWipe}
             >
-              Borrar DB
+              Borrar los datos
             </Button>
             <Button
               variant="contained"
-              startIcon={<ScienceIcon />}
-              disabled={isWiping || isSeeding}
-              onClick={handleSeed}
+              startIcon={<BackupIcon />}
+              disabled={busy}
+              onClick={() => void handleGenerateBackup()}
             >
-              Cargar Datos de prueba
+              Generar respaldo
             </Button>
           </Stack>
+          <BackupsTable
+            backups={backups}
+            loading={loading}
+            onDelete={handleDeleteBackup}
+            onRestore={handleRestoreBackup}
+          />
         </CardContent>
       </Card>
 
-      <BackupPanel />
+      <Card>
+        <CardContent>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Test
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<ScienceIcon />}
+            disabled={isWiping || isSeeding}
+            onClick={() => void handleSeed()}
+          >
+            Cargar Datos de prueba
+          </Button>
+        </CardContent>
+      </Card>
     </Box>
   );
 };
 
-export default TestDataPage;
+export default DataAdministrationPage;

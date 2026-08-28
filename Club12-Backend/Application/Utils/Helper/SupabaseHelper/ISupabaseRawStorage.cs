@@ -35,9 +35,8 @@ public interface ISupabaseRawStorage
     Task RemoveRawAsync(string objectPath);
 
     /// <summary>
-    /// Downloads the raw object at <paramref name="objectPath"/> from the
-    /// configured bucket and returns its bytes as a readable stream. Used by
-    /// the restore flow to fetch a chosen backup's contents.
+    /// Downloads the raw content of the object at <paramref name="objectPath"/>
+    /// in the configured bucket.
     /// </summary>
-    Task<Stream> DownloadRawAsync(string objectPath);
+    Task<byte[]> DownloadRawAsync(string objectPath);
 }

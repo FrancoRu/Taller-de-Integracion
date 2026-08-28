@@ -24,7 +24,7 @@ Liga Club12 reemplaza la gestión manual del torneo (antes llevada en planillas)
 | **Sanciones** | Registro de sanciones a jugadores con un flujo de apelación completo (pendiente → aceptada/rechazada). |
 | **Usuarios** | Registro, login (JWT), recuperación de contraseña, activación/desactivación de cuentas, roles (RBAC). |
 | **Blog** | Publicación de novedades/crónicas de partidos, visibles públicamente. |
-| **Copias de seguridad** | Respaldo automático programado de la base de datos (desactivado por defecto hasta validarse en el entorno real). |
+| **Copias de seguridad** | Respaldo automático programado de la base de datos, activo en producción. |
 
 ## Cómo lo hace (arquitectura)
 
@@ -150,7 +150,7 @@ Comparando el sistema contra los dos informes de requerimientos del proyecto (Ta
 | Registro de estadísticas | ✅ Completo |
 | Gestión de usuarios (RBAC, recuperación de contraseña) | ✅ Completo (incluye funciones adicionales: activar/desactivar cuentas) |
 | Visualización pública para visitantes | ✅ Completo |
-| Creación de copias de seguridad | ✅ Implementado (queda desactivado por defecto hasta validarse contra el entorno real de despliegue) |
+| Creación de copias de seguridad | ✅ Implementado y activo en producción |
 
 **Requisitos no funcionales**:
 

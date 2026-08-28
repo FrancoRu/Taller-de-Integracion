@@ -42,70 +42,70 @@ a High-risk PR2/PR4/PR5, `size:exception` is not recommended.
 
 ## Phase 1: Backup Catalog Foundation (PR1)
 
-- [ ] 1.1 RED: `EfBackupCatalogTests` — `AddAsync`/`GetByIdAsync`/`ListNewestFirstAsync`/`RemoveAsync` against in-memory/sqlite context (backup-catalog#Catalog-Powers-the-Admin-Backup-Listing)
-- [ ] 1.2 GREEN: `Domain/Enums/BackupOrigin.cs`, `Domain/Entities/Models/BackupRecord.cs` (`EntityBase`, `StoragePath`/`SizeBytes`/`Origin`)
-- [ ] 1.3 GREEN: `Application/Interfaces/Backup/IBackupCatalog.cs`, `Infrastructure/Persistance/Configurations/BackupRecordEntityConfiguration.cs` (`.HasConversion<string>()` on `Origin`)
-- [ ] 1.4 GREEN: `Infrastructure/Persistance/EfBackupCatalog.cs`; add `DbSet<BackupRecord>` to `ApplicationDBContext`/`IClub12DBContext`; `EntityConstants.Tables.BackupRecord`
-- [ ] 1.5 GREEN: generate `Infrastructure/Migrations/<ts>_AddBackupRecordTable.cs` (additive only); run tests
+- [x] 1.1 RED: `EfBackupCatalogTests` — `AddAsync`/`GetByIdAsync`/`ListNewestFirstAsync`/`RemoveAsync` against in-memory/sqlite context (backup-catalog#Catalog-Powers-the-Admin-Backup-Listing)
+- [x] 1.2 GREEN: `Domain/Enums/BackupOrigin.cs`, `Domain/Entities/Models/BackupRecord.cs` (`EntityBase`, `StoragePath`/`SizeBytes`/`Origin`)
+- [x] 1.3 GREEN: `Application/Interfaces/Backup/IBackupCatalog.cs`, `Infrastructure/Persistance/Configurations/BackupRecordEntityConfiguration.cs` (`.HasConversion<string>()` on `Origin`)
+- [x] 1.4 GREEN: `Infrastructure/Persistance/EfBackupCatalog.cs`; add `DbSet<BackupRecord>` to `ApplicationDBContext`/`IClub12DBContext`; `EntityConstants.Tables.BackupRecord`
+- [x] 1.5 GREEN: generate `Infrastructure/Migrations/<ts>_AddBackupRecordTable.cs` (additive only); run tests
 
 ## Phase 2: Shared Backup Use Case & Manual/Scheduled Wiring (PR2)
 
-- [ ] 2.1 RED: `BackupOperationLockTests` — second `WaitAsync(TimeSpan.Zero)` while held returns false (backup-catalog#Single-Shared-Write-Path)
-- [ ] 2.2 GREEN: `Application/Backup/BackupOperationLock.cs`
-- [ ] 2.3 RED: `BackupOperationsServiceTests` — concurrent `CreateBackupAsync` → second call `Busy`, no second catalog row
-- [ ] 2.4 RED: same suite — failed dump (`IDatabaseBackupService` throws) → no `BackupRecord` written (backup-catalog#Failed-Backups-Are-Not-Catalogued)
-- [ ] 2.5 RED: same suite — `DeleteBackupAsync` with storage file missing → catalog row still removed, warning logged (backup-catalog#Delete-Removes-Both-Stored-File-and-Catalog-Record)
-- [ ] 2.6 RED: retention test extension — shared Manual+Job pool prunes correctly, tie-break preserved (scheduled-database-backups#Keep-Last-N-Retention-Pruning)
-- [ ] 2.7 GREEN: `Application/Interfaces/Backup/{IBackupOperationsService,BackupOperationResult}.cs` (Create+Delete only), `Application/DTOs/Backup/Response/BackupRecordResponse.cs`
-- [ ] 2.8 GREEN: `Application/Backup/BackupOperationsService.cs` — `CreateBackupCoreAsync` + `CreateBackupAsync`/`DeleteBackupAsync`
-- [ ] 2.9 GREEN: `Infrastructure/Backup/PgDumpBackupService.cs` — add `--clean --if-exists --no-owner --no-privileges`
-- [ ] 2.10 REFACTOR: `API/BackgroundServices/DatabaseBackupHostedService.cs` — ctor takes `IServiceScopeFactory`; tick resolves `IBackupOperationsService` in a scope; remove `Interlocked` flag
-- [ ] 2.11 RED: `BackupControllerTests` — GET/POST/DELETE map outcomes to 200/409/404/500; non-Admin → 401/403
-- [ ] 2.12 GREEN: `API/Controllers/BackupController.cs` (GET/POST/DELETE only)
-- [ ] 2.13 GREEN: `API/Utils/StartupExtensions.cs` — register scoped `IBackupCatalog`/`IBackupOperationsService`, singleton `BackupOperationLock`
+- [x] 2.1 RED: `BackupOperationLockTests` — second `WaitAsync(TimeSpan.Zero)` while held returns false (backup-catalog#Single-Shared-Write-Path)
+- [x] 2.2 GREEN: `Application/Backup/BackupOperationLock.cs`
+- [x] 2.3 RED: `BackupOperationsServiceTests` — concurrent `CreateBackupAsync` → second call `Busy`, no second catalog row
+- [x] 2.4 RED: same suite — failed dump (`IDatabaseBackupService` throws) → no `BackupRecord` written (backup-catalog#Failed-Backups-Are-Not-Catalogued)
+- [x] 2.5 RED: same suite — `DeleteBackupAsync` with storage file missing → catalog row still removed, warning logged (backup-catalog#Delete-Removes-Both-Stored-File-and-Catalog-Record)
+- [x] 2.6 RED: retention test extension — shared Manual+Job pool prunes correctly, tie-break preserved (scheduled-database-backups#Keep-Last-N-Retention-Pruning)
+- [x] 2.7 GREEN: `Application/Interfaces/Backup/{IBackupOperationsService,BackupOperationResult}.cs` (Create+Delete only), `Application/DTOs/Backup/Response/BackupRecordResponse.cs`
+- [x] 2.8 GREEN: `Application/Backup/BackupOperationsService.cs` — `CreateBackupCoreAsync` + `CreateBackupAsync`/`DeleteBackupAsync`
+- [x] 2.9 GREEN: `Infrastructure/Backup/PgDumpBackupService.cs` — add `--clean --if-exists --no-owner --no-privileges`
+- [x] 2.10 REFACTOR: `API/BackgroundServices/DatabaseBackupHostedService.cs` — ctor takes `IServiceScopeFactory`; tick resolves `IBackupOperationsService` in a scope; remove `Interlocked` flag
+- [x] 2.11 RED: `BackupControllerTests` — GET/POST/DELETE map outcomes to 200/409/404/500; non-Admin → 401/403
+- [x] 2.12 GREEN: `API/Controllers/BackupController.cs` (GET/POST/DELETE only)
+- [x] 2.13 GREEN: `API/Utils/StartupExtensions.cs` — register scoped `IBackupCatalog`/`IBackupOperationsService`, singleton `BackupOperationLock`
 
 ## Phase 3: Restore Service & Psql Adapter (PR3)
 
-- [ ] 3.1 RED: `PsqlDatabaseRestoreServiceTests` — asserts exact arg vector via fake `IProcessRunner`; a `StoragePath`/temp path containing `;`/`--` is not reinterpreted (threat: subprocess argument injection)
-- [ ] 3.2 RED: same suite — non-zero exit / missing `psql` binary → `BackupExecutionException` (threat: subprocess missing/failing binary)
-- [ ] 3.3 GREEN: `Application/Interfaces/Backup/IDatabaseRestoreService.cs`, `Infrastructure/Backup/PsqlDatabaseRestoreService.cs`; `BackupOptions.PsqlPath`, `ConfigurationKeys.Backup.PsqlPath`
-- [ ] 3.4 RED: `MaintenanceModeStateTests` — `Enter`/`Exit`, `IsActive`/`Reason`/`EnteredAtUtc` transitions
-- [ ] 3.5 GREEN: `Application/Interfaces/Backup/IMaintenanceModeState.cs`, `Application/Backup/MaintenanceModeState.cs` (singleton)
-- [ ] 3.6 RED: `LocalDirectoryBackupStorageTests`/`SupabaseBackupStorageTests` — `OpenReadAsync` re-validates via `ResolveSafePath`; a catalog row with `../../etc/passwd` → `ArgumentException`, no read (threat: storage path traversal)
-- [ ] 3.7 GREEN: `IBackupStorage.OpenReadAsync` (additive); implement in `LocalDirectoryBackupStorage`/`SupabaseBackupStorage`
+- [x] 3.1 RED: `PsqlDatabaseRestoreServiceTests` — asserts exact arg vector via fake `IProcessRunner`; a `StoragePath`/temp path containing `;`/`--` is not reinterpreted (threat: subprocess argument injection)
+- [x] 3.2 RED: same suite — non-zero exit / missing `psql` binary → `BackupExecutionException` (threat: subprocess missing/failing binary)
+- [x] 3.3 GREEN: `Application/Interfaces/Backup/IDatabaseRestoreService.cs`, `Infrastructure/Backup/PsqlDatabaseRestoreService.cs`; `BackupOptions.PsqlPath`, `ConfigurationKeys.Backup.PsqlPath`
+- [x] 3.4 RED: `MaintenanceModeStateTests` — `Enter`/`Exit`, `IsActive`/`Reason`/`EnteredAtUtc` transitions
+- [x] 3.5 GREEN: `Application/Interfaces/Backup/IMaintenanceModeState.cs`, `Application/Backup/MaintenanceModeState.cs` (singleton)
+- [x] 3.6 RED: `LocalDirectoryBackupStorageTests`/`SupabaseBackupStorageTests` — `OpenReadAsync` re-validates via `ResolveSafePath`; a catalog row with `../../etc/passwd` → `ArgumentException`, no read (threat: storage path traversal)
+- [x] 3.7 GREEN: `IBackupStorage.OpenReadAsync` (additive); implement in `LocalDirectoryBackupStorage`/`SupabaseBackupStorage`
 
 ## Phase 4: Restore Wiring — Use Case, Controller, Middleware (PR4)
 
-- [ ] 4.1 RED: `BackupOperationsServiceTests` — restore takes safety backup with `Origin=Job`, `applyRetention:false`, even past `RetentionCount` (database-restore#Automatic-Pre-Restore-Safety-Backup)
-- [ ] 4.2 RED: same suite — restore failure (`IDatabaseRestoreService` throws) → maintenance exited, temp file deleted, no host crash (database-restore#Restore-Failure-Is-Logged-and-Isolated; threat: temp-file handling)
-- [ ] 4.3 GREEN: extend `IBackupOperationsService`/`BackupOperationsService.RestoreBackupAsync` — `Enter()` → `CreateBackupCoreAsync(Job, applyRetention:false)` → `OpenReadAsync` → temp file → `RestoreAsync` → `finally` cleanup + `Exit()`
-- [ ] 4.4 RED: `MaintenanceModeMiddlewareTests` — `/api/backups`, `/swagger`, an unmatched route all → 503 while active; `/health*` and `/api/maintenance` pass through (threat: routing gate bypass)
-- [ ] 4.5 RED: `MaintenanceControllerTests` — anonymous/non-Admin `DELETE /api/maintenance` → 401/403 while active (database-restore#Maintenance-Mode-Window; threat: escape-hatch abuse)
-- [ ] 4.6 GREEN: `API/Utils/Middlewares/MaintenanceModeMiddleware.cs`; register after `UseCors()`, before `UseAuthentication()` in `Program.cs`
-- [ ] 4.7 GREEN: `API/Controllers/MaintenanceController.cs` (`GET`/`DELETE api/maintenance`), `Application/DTOs/Backup/Response/MaintenanceStatusResponse.cs`
-- [ ] 4.8 RED: `BackupControllerTests` — `POST api/backups/{id}/restore` route accepts only route `Guid`, no body binding (threat: restore of foreign/uploaded dumps); requires explicit confirmation is a frontend concern (Phase 5)
-- [ ] 4.9 RED: concurrency test — concurrent restore requests → exactly one runs, others `409` (threat: DoS via repeated restore; database-restore#Restore-Executes-Directly-Against-the-Live-Database)
-- [ ] 4.10 GREEN: `BackupController.cs` restore endpoint; `StartupExtensions.cs` singletons `IMaintenanceModeState`/`IDatabaseRestoreService`
+- [x] 4.1 RED: `BackupOperationsServiceTests` — restore takes safety backup with `Origin=Job`, `applyRetention:false`, even past `RetentionCount` (database-restore#Automatic-Pre-Restore-Safety-Backup)
+- [x] 4.2 RED: same suite — restore failure (`IDatabaseRestoreService` throws) → maintenance exited, temp file deleted, no host crash (database-restore#Restore-Failure-Is-Logged-and-Isolated; threat: temp-file handling)
+- [x] 4.3 GREEN: extend `IBackupOperationsService`/`BackupOperationsService.RestoreBackupAsync` — `Enter()` → `CreateBackupCoreAsync(Job, applyRetention:false)` → `OpenReadAsync` → temp file → `RestoreAsync` → `finally` cleanup + `Exit()`
+- [x] 4.4 RED: `MaintenanceModeMiddlewareTests` — `/api/backups`, `/swagger`, an unmatched route all → 503 while active; `/health*` and `/api/maintenance` pass through (threat: routing gate bypass)
+- [x] 4.5 RED: `MaintenanceControllerTests` — anonymous/non-Admin `DELETE /api/maintenance` → 401/403 while active (database-restore#Maintenance-Mode-Window; threat: escape-hatch abuse)
+- [x] 4.6 GREEN: `API/Utils/Middlewares/MaintenanceModeMiddleware.cs`; register after `UseCors()`, before `UseAuthentication()` in `Program.cs`
+- [x] 4.7 GREEN: `API/Controllers/MaintenanceController.cs` (`GET`/`DELETE api/maintenance`), `Application/DTOs/Backup/Response/MaintenanceStatusResponse.cs`
+- [x] 4.8 RED: `BackupControllerTests` — `POST api/backups/{id}/restore` route accepts only route `Guid`, no body binding (threat: restore of foreign/uploaded dumps); requires explicit confirmation is a frontend concern (Phase 5)
+- [x] 4.9 RED: concurrency test — concurrent restore requests → exactly one runs, others `409` (threat: DoS via repeated restore; database-restore#Restore-Executes-Directly-Against-the-Live-Database)
+- [x] 4.10 GREEN: `BackupController.cs` restore endpoint; `StartupExtensions.cs` singletons `IMaintenanceModeState`/`IDatabaseRestoreService`
 
 ## Phase 5: Admin Data Administration Panel (PR5)
 
-- [ ] 5.1 RED: `backup.hook.test.ts` — `useBackups()` fetch/create/delete/restore state transitions
-- [ ] 5.2 GREEN: `src/modules/backup/type/backup.d.ts`, `service/backup.service.ts`, `hook/backup.hook.ts`, `utils/backupFormat.ts`
-- [ ] 5.3 RED: `BackupsTable.test.tsx` — columns Fecha/Peso/Forma de creación/Acciones render; cancel on delete/restore confirm → service not called (admin-data-administration-panel#Confirmation-Required-for-Delete-and-Restore)
-- [ ] 5.4 GREEN: `src/views/panel/components/BackupsTable.tsx` — `GridColDef`, `buildActionsColumn`, `confirmDelete`/`confirmAction` wiring
-- [ ] 5.5 RED: `DataAdministrationPage.test.tsx` — two-card layout, Admin-only guard (admin-data-administration-panel#Panel-Renamed-and-Restructured-Into-Two-Cards; #Panel-and-Its-Actions-Are-Admin-Only)
-- [ ] 5.6 GREEN: `src/views/panel/DataAdministrationPage.tsx` (replaces `TestDataPage.tsx`); delete `TestDataPage.tsx`
-- [ ] 5.7 GREEN: `routes.ts` (`backups`, `maintenance`), `httpStatus.ts` (`Conflict`, `ServiceUnavailable`), `appRoutes.ts` (`panelDataAdministration`, path unchanged), `App.tsx`/`SidebarLayout.tsx` label+icon
-- [ ] 5.8 RED: maintenance-banner test — `onStatusCode(503, ...)` flips global banner
-- [ ] 5.9 GREEN: register 503 handler in `axiosUtils` handler registry
+- [x] 5.1 RED: `backup.hook.test.ts` — `useBackups()` fetch/create/delete/restore state transitions
+- [x] 5.2 GREEN: `src/modules/backup/type/backup.d.ts`, `service/backup.service.ts`, `hook/backup.hook.ts`, `utils/backupFormat.ts`
+- [x] 5.3 RED: `BackupsTable.test.tsx` — columns Fecha/Peso/Forma de creación/Acciones render; cancel on delete/restore confirm → service not called (admin-data-administration-panel#Confirmation-Required-for-Delete-and-Restore)
+- [x] 5.4 GREEN: `src/views/panel/components/BackupsTable.tsx` — `GridColDef`, `buildActionsColumn`, `confirmDelete`/`confirmAction` wiring
+- [x] 5.5 RED: `DataAdministrationPage.test.tsx` — two-card layout, Admin-only guard (admin-data-administration-panel#Panel-Renamed-and-Restructured-Into-Two-Cards; #Panel-and-Its-Actions-Are-Admin-Only)
+- [x] 5.6 GREEN: `src/views/panel/DataAdministrationPage.tsx` (replaces `TestDataPage.tsx`); delete `TestDataPage.tsx`
+- [x] 5.7 GREEN: `routes.ts` (`backups`, `maintenance`), `httpStatus.ts` (`Conflict`, `ServiceUnavailable`), `appRoutes.ts` (`panelDataAdministration`, path unchanged), `App.tsx`/`SidebarLayout.tsx` label+icon
+- [x] 5.8 RED: maintenance-banner test — `onStatusCode(503, ...)` flips global banner
+- [x] 5.9 GREEN: register 503 handler in `axiosUtils` handler registry
 
 ## Phase 6: Server Storage Deployment Config (PR6)
 
-- [ ] 6.1 `Club12-Backend/Dockerfile` — add PGDG apt repo + `postgresql-client-17`; `mkdir -p /app/backups && chown $APP_UID:$APP_UID /app/backups` before `USER $APP_UID`
-- [ ] 6.2 `docker-compose.yml` — `backend.volumes: [backup-data:/app/backups]`; top-level `volumes: {backup-data:}`; memory limit `512m` → `1g`
-- [ ] 6.3 `.env.example` — `Backup__Enabled`, `Backup__IntervalHours`, `Backup__RetentionCount`, `Backup__StorageTarget`, `Backup__LocalStoragePath=/app/backups`, `Backup__PgDumpPath`, `Backup__PsqlPath`
-- [ ] 6.4 Manual verify: `pg_dump --version`/`psql --version` inside container match server major (17); `POST /api/backups` then `docker compose restart backend` confirms file persists
-- [ ] 6.5 Follow design's phased rollout order in production: image-only (`Backup__Enabled=false`) → volume → `Backup__Enabled=true` → restore rehearsal in staging before first prod restore
+- [x] 6.1 `Club12-Backend/Dockerfile` — add PGDG apt repo + `postgresql-client-17`; `mkdir -p /app/backups && chown $APP_UID:$APP_UID /app/backups` before `USER $APP_UID`
+- [x] 6.2 `docker-compose.yml` — `backend.volumes: [backup-data:/app/backups]`; top-level `volumes: {backup-data:}`; memory limit `512m` → `1g`
+- [x] 6.3 `.env.example` — `Backup__Enabled`, `Backup__IntervalHours`, `Backup__RetentionCount`, `Backup__StorageTarget`, `Backup__LocalStoragePath=/app/backups`, `Backup__PgDumpPath`, `Backup__PsqlPath`
+- [ ] 6.4 Manual verify (NOT completable from this environment — requires the real server/container): `pg_dump --version`/`psql --version` inside container match server major (17); `POST /api/backups` then `docker compose restart backend` confirms file persists
+- [ ] 6.5 Follow design's phased rollout order in production (NOT completable from this environment — requires SSH to the deploy server): image-only (`Backup__Enabled=false`) → volume → `Backup__Enabled=true` → restore rehearsal in staging before first prod restore
 
 ## Key Learnings
 

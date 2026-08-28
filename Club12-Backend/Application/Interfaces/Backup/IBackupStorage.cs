@@ -20,12 +20,13 @@ public interface IBackupStorage
     Task DeleteAsync(string name, CancellationToken ct = default);
 
     /// <summary>
-    /// Opens the stored backup <paramref name="name"/> for reading. Used by the
-    /// restore flow to fetch the chosen dump's bytes so they can be replayed
-    /// into the database. Implementations validate the name the same way
-    /// <see cref="DeleteAsync"/> does (no traversal / rooted paths) and surface
-    /// a missing object or transport error as a
-    /// <see cref="BackupExecutionException"/>.
+    /// Opens a readable stream over the stored backup named
+    /// <paramref name="name"/>, for the restore flow to copy into a local
+    /// temp file before invoking IDatabaseRestoreService. Adapters
+    /// MUST re-validate <paramref name="name"/> with the exact same guard
+    /// StoreAsync/DeleteAsync use before any read/download is
+    /// attempted, since the caller-supplied name may originate from a
+    /// catalog row rather than a trusted server-generated value.
     /// </summary>
-    Task<Stream> RetrieveAsync(string name, CancellationToken ct = default);
+    Task<Stream> OpenReadAsync(string name, CancellationToken ct = default);
 }

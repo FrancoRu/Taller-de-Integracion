@@ -310,6 +310,7 @@ public static class ErrorMessages
     public static class Backup
     {
         public const string RetentionCountNegative = "Retention count cannot be negative.";
+        public const string OperationInProgress = "A backup or restore operation is already in progress.";
     }
 
     public static class Configuration
@@ -348,6 +349,11 @@ public static class ErrorMessages
         public static string RemoveFailed(string reason)
         {
             return $"Error removing file: {reason}";
+        }
+
+        public static string DownloadFailed(string reason)
+        {
+            return $"Error downloading file: {reason}";
         }
     }
 

@@ -1,16 +1,18 @@
 using Domain.Enums;
 
 using System.Net;
-using System.Net.Http.Json;
 
 namespace API.Tests;
 
 /// <summary>
-/// Proves the HU-91/93 backup endpoints are Admin/Owner-only and that the
-/// HU-92 maintenance status endpoint is anonymously reachable (so the banner
-/// works for everyone). Only checks authorization boundaries — it never
-/// triggers a real backup/restore (that needs pg_dump/psql), so no dump is
-/// executed here.
+/// Proves every api/backups endpoint is Admin-only, mirroring the
+/// pattern in DataMaintenanceAuthorizationTests.cs. Only the
+/// negative paths (anonymous/non-Admin) and the safe read (GET, Admin) are
+/// exercised via the real HTTP pipeline — POST/DELETE as Admin would invoke
+/// the real BackupOperationsService (pg_dump), which has no
+/// binary available in this test environment; that outcome-mapping behavior
+/// is covered instead by the pure unit tests in
+/// Backup/BackupControllerTests.cs.
 /// </summary>
 public class BackupAuthorizationTests : IClassFixture<CustomWebApplicationFactory>
 {
@@ -19,6 +21,38 @@ public class BackupAuthorizationTests : IClassFixture<CustomWebApplicationFactor
     public BackupAuthorizationTests(CustomWebApplicationFactory factory)
     {
         _factory = factory;
+    }
+
+    [Fact]
+    public async Task GetBackups_Anonymous_ReturnsUnauthorized()
+    {
+        HttpClient client = _factory.CreateClient();
+
+        HttpResponseMessage response = await client.GetAsync("api/backups");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData(Roles.Owner)]
+    [InlineData(Roles.Guest)]
+    public async Task GetBackups_NonAdminRole_ReturnsForbidden(string role)
+    {
+        HttpClient client = _factory.CreateAuthenticatedClient(role);
+
+        HttpResponseMessage response = await client.GetAsync("api/backups");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetBackups_AdminRole_Succeeds()
+    {
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Admin);
+
+        HttpResponseMessage response = await client.GetAsync("api/backups");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
@@ -31,10 +65,12 @@ public class BackupAuthorizationTests : IClassFixture<CustomWebApplicationFactor
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Fact]
-    public async Task CreateBackup_GuestRole_ReturnsForbidden()
+    [Theory]
+    [InlineData(Roles.Owner)]
+    [InlineData(Roles.Guest)]
+    public async Task CreateBackup_NonAdminRole_ReturnsForbidden(string role)
     {
-        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Guest);
+        HttpClient client = _factory.CreateAuthenticatedClient(role);
 
         HttpResponseMessage response = await client.PostAsync("api/backups", null);
 
@@ -42,33 +78,46 @@ public class BackupAuthorizationTests : IClassFixture<CustomWebApplicationFactor
     }
 
     [Fact]
-    public async Task ListBackups_Anonymous_ReturnsUnauthorized()
+    public async Task DeleteBackup_Anonymous_ReturnsUnauthorized()
     {
         HttpClient client = _factory.CreateClient();
 
-        HttpResponseMessage response = await client.GetAsync("api/backups");
+        HttpResponseMessage response = await client.DeleteAsync($"api/backups/{Guid.NewGuid()}");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Fact]
-    public async Task Restore_GuestRole_ReturnsForbidden()
+    [Theory]
+    [InlineData(Roles.Owner)]
+    [InlineData(Roles.Guest)]
+    public async Task DeleteBackup_NonAdminRole_ReturnsForbidden(string role)
     {
-        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Guest);
+        HttpClient client = _factory.CreateAuthenticatedClient(role);
 
-        HttpResponseMessage response = await client.PostAsJsonAsync(
-            "api/backups/restore", new { backupName = "whatever.sql" });
+        HttpResponseMessage response = await client.DeleteAsync($"api/backups/{Guid.NewGuid()}");
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     [Fact]
-    public async Task Status_Anonymous_ReturnsOk()
+    public async Task RestoreBackup_Anonymous_ReturnsUnauthorized()
     {
         HttpClient client = _factory.CreateClient();
 
-        HttpResponseMessage response = await client.GetAsync("api/backups/status");
+        HttpResponseMessage response = await client.PostAsync($"api/backups/{Guid.NewGuid()}/restore", null);
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData(Roles.Owner)]
+    [InlineData(Roles.Guest)]
+    public async Task RestoreBackup_NonAdminRole_ReturnsForbidden(string role)
+    {
+        HttpClient client = _factory.CreateAuthenticatedClient(role);
+
+        HttpResponseMessage response = await client.PostAsync($"api/backups/{Guid.NewGuid()}/restore", null);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 }

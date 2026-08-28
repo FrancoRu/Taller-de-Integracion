@@ -65,6 +65,50 @@ public sealed class SupabaseBackupStorageTests
     }
 
     [Fact]
+    public async Task OpenReadAsync_ValidName_DownloadsFromBackupsPrefix_ReturnsStreamWithContent()
+    {
+        FakeSupabaseRawStorage raw = new() { BytesToDownload = Encoding.UTF8.GetBytes("dump-1") };
+        SupabaseBackupStorage storage = new(raw);
+
+        await using Stream stream = await storage.OpenReadAsync("backup-1.sql");
+        using StreamReader reader = new(stream);
+        string content = await reader.ReadToEndAsync();
+
+        Assert.Equal("backups/backup-1.sql", raw.LastDownloadedPath);
+        Assert.Equal("dump-1", content);
+    }
+
+    /// <summary>
+    /// A catalog row's StoragePath is expected to be server-generated
+    /// and safe, but OpenReadAsync must still independently
+    /// re-validate it via the same ToObjectPath guard used by
+    /// StoreAsync/DeleteAsync — a malformed/malicious catalog value must
+    /// never reach a raw download call (threat: storage path traversal).
+    /// </summary>
+    [Fact]
+    public async Task OpenReadAsync_TraversalName_ThrowsArgumentException_NoDownloadAttempted()
+    {
+        FakeSupabaseRawStorage raw = new();
+        SupabaseBackupStorage storage = new(raw);
+
+        await Assert.ThrowsAsync<ArgumentException>(() => storage.OpenReadAsync("../../etc/passwd"));
+
+        Assert.Null(raw.LastDownloadedPath);
+    }
+
+    [Fact]
+    public async Task OpenReadAsync_RawStorageThrows_WrapsIntoBackupExecutionException()
+    {
+        FakeSupabaseRawStorage raw = new() { ExceptionToThrow = new InvalidOperationException("network unreachable") };
+        SupabaseBackupStorage storage = new(raw);
+
+        BackupExecutionException ex = await Assert.ThrowsAsync<BackupExecutionException>(
+            () => storage.OpenReadAsync("backup-1.sql"));
+
+        Assert.Contains("backup-1.sql", ex.Message);
+    }
+
+    [Fact]
     public async Task DeleteAsync_ValidName_RemovesUnderBackupsPrefix()
     {
         FakeSupabaseRawStorage raw = new();

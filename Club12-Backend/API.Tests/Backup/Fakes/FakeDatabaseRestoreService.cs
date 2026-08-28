@@ -3,37 +3,35 @@ using Application.Interfaces.Backup;
 namespace API.Tests.Backup.Fakes;
 
 /// <summary>
-/// Test double for IDatabaseRestoreService (the low-level psql apply). Records
-/// the content it was handed and how many times it ran, can be told to fail
-/// (simulating a non-zero psql exit), and exposes an OnRestore hook so a test
-/// can assert what state the storage was in at the moment the restore ran
-/// (e.g. that the safety backup already existed).
+/// Test double for IDatabaseRestoreService. No real psql binary
+/// involved — records the dump file path it was invoked with (so tests can
+/// assert the temp file cleanup happens after the call) and can be
+/// configured to throw to simulate a failed restore (spec
+/// database-restore#Restore-Failure-Is-Logged-and-Isolated).
 /// </summary>
 public sealed class FakeDatabaseRestoreService : IDatabaseRestoreService
 {
-    public int CallCount { get; private set; }
-    public string? CapturedContent { get; private set; }
+    private int _callCount;
 
-    /// <summary>When true, RestoreAsync throws a BackupExecutionException.</summary>
-    public bool ShouldThrow { get; set; }
+    public int CallCount => _callCount;
 
-    /// <summary>Runs just before the (optional) failure, after capturing content.</summary>
-    public Func<Task>? OnRestore { get; set; }
+    public string? CapturedDumpFilePath { get; private set; }
 
-    public async Task RestoreAsync(Stream dumpContent, CancellationToken ct = default)
+    /// <summary>
+    /// When set, RestoreAsync throws this instead of succeeding.
+    /// </summary>
+    public Exception? ExceptionToThrow { get; set; }
+
+    public Task RestoreAsync(string dumpFilePath, CancellationToken ct = default)
     {
-        CallCount++;
-        using StreamReader reader = new(dumpContent);
-        CapturedContent = await reader.ReadToEndAsync(ct);
+        Interlocked.Increment(ref _callCount);
+        CapturedDumpFilePath = dumpFilePath;
 
-        if (OnRestore is not null)
+        if (ExceptionToThrow is not null)
         {
-            await OnRestore();
+            throw ExceptionToThrow;
         }
 
-        if (ShouldThrow)
-        {
-            throw new BackupExecutionException("Simulated restore failure (non-zero psql exit).");
-        }
+        return Task.CompletedTask;
     }
 }

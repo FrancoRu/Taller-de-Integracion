@@ -5,10 +5,12 @@ using API.Utils.Middlewares;
 using Application.Utils.Options;
 
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 using Serilog;
+using Serilog.Events;
 
 using System;
 
@@ -48,11 +50,11 @@ WebApplication app = builder.Build();
 await app.ExecuteMigrationsAndSeedAsync();
 
 app.UseSwaggerConfig(builder.Environment)
-    .UseSerilogRequestLogging()
+    .UseSerilogRequestLogging(options => options.GetLevel = GetRequestLoggingLevel)
     .UseCors()
+    .UseMiddleware<MaintenanceModeMiddleware>()
     .UseAuthentication()
     .UseAuthorization()
-    .UseMiddleware<MaintenanceModeMiddleware>()
     .UseMiddleware<MustChangePasswordMiddleware>()
     .UseExceptionHandlerConfig()
     .UseLoggingToRequestContextMiddleware(builder.Configuration);
@@ -73,6 +75,25 @@ catch (Exception ex)
 finally
 {
     await Log.CloseAndFlushAsync();
+}
+
+// The docker-compose healthcheck polls /health/ready every 30s; logging
+// every successful poll at Information drowns out real request logs.
+// Failures still surface at Error regardless of path, so a flapping health
+// check remains visible.
+static LogEventLevel GetRequestLoggingLevel(HttpContext httpContext, double elapsedMs, Exception? ex)
+{
+    if (ex is not null || httpContext.Response.StatusCode > 499)
+    {
+        return LogEventLevel.Error;
+    }
+
+    if (httpContext.Request.Path.StartsWithSegments("/health"))
+    {
+        return LogEventLevel.Verbose;
+    }
+
+    return LogEventLevel.Information;
 }
 
 /// <summary>
