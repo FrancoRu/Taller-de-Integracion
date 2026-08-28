@@ -1,18 +1,30 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import App from '@/App';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 
+// Mutable so a test can flip the session to authenticated. Hoisted because the
+// vi.mock factory below runs before module imports.
+const authState = vi.hoisted(() => ({
+  isAuthenticated: false,
+  role: 'Guest' as string,
+}));
+
 vi.mock('@/modules/auth/hook/auth.hook', () => ({
   useAuth: () => ({
-    isAuthenticated: false,
-    role: UserRolesType.Guest,
+    isAuthenticated: authState.isAuthenticated,
+    role: authState.role,
     signIn: vi.fn(),
     logOut: vi.fn(),
     user: null,
   }),
 }));
+
+afterEach(() => {
+  authState.isAuthenticated = false;
+  authState.role = 'Guest';
+});
 
 const renderAt = (path: string) =>
   render(
@@ -43,6 +55,21 @@ describe('App public layout chrome', () => {
   it('keeps header and footer on a normal public route', () => {
     renderAt('/quienes-somos');
 
+    expect(document.querySelector('header')).not.toBeNull();
+    expect(document.querySelector('footer')).not.toBeNull();
+  });
+
+  it('lets an authenticated admin open a public page instead of 404', () => {
+    // Regression: public slug routes (tournament/blog/team/match) used to be
+    // omitted entirely for authenticated users, so any public URL 404'd from
+    // the panel catch-all without ever hitting the API. They must resolve for
+    // logged-in users too, under the public layout (not the admin sidebar).
+    authState.isAuthenticated = true;
+    authState.role = UserRolesType.Admin;
+
+    renderAt('/quienes-somos');
+
+    expect(screen.queryByText(/no existe o fue movida/i)).toBeNull();
     expect(document.querySelector('header')).not.toBeNull();
     expect(document.querySelector('footer')).not.toBeNull();
   });

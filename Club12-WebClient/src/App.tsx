@@ -6,7 +6,7 @@ import '@fontsource/oswald/500.css';
 import '@fontsource/oswald/600.css';
 import '@fontsource/oswald/700.css';
 import { ReactElement } from 'react';
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import Home from './views/home/home';
 import PublicTeamPage from './views/home/teams/PublicTeamPage';
 import PublicSanctionsPage from './views/home/sanctions/PublicSanctionsPage';
@@ -326,37 +326,18 @@ function App() {
   if (location.pathname === APP_ROUTES.forbidden) return <Forbidden />;
   if (location.pathname === routes.tokenInvalido) return <InvalidToken />;
 
-  if (isAuthenticated) {
-    const defaultTab = FIRST_TAB_BY_ROLE[role] ?? APP_ROUTES.panelUsers;
-    return (
-      <SidebarLayout>
-        <Routes>
-          {ADMIN_ROUTES.map(({ path, element, allowedRoles }) => (
-            <Route
-              key={path}
-              path={path}
-              element={
-                allowedRoles ? (
-                  <PrivateRoute allowedRoles={allowedRoles}>
-                    {element}
-                  </PrivateRoute>
-                ) : (
-                  element
-                )
-              }
-            />
-          ))}
-          <Route
-            path={APP_ROUTES.panel}
-            element={<Navigate to={defaultTab} replace />}
-          />
-        </Routes>
-      </SidebarLayout>
-    );
-  }
+  const defaultTab = FIRST_TAB_BY_ROLE[role] ?? APP_ROUTES.panelUsers;
 
-  // Login (HU-02) and the 404/NotFound catch-all (HU-04) must render without
-  // the public header/footer, so they sit outside the PublicLayout chrome.
+  // Public pages render for EVERYONE — authenticated or not — so shareable
+  // slug links (public tournament HU-14, blog post HU-13, team/match, HU-15)
+  // keep working even while an admin is logged in. Previously the whole public
+  // route tree was omitted for authenticated users, so any public slug URL fell
+  // through to the panel catch-all and 404'd without ever hitting the API.
+  //
+  // Login (HU-02) and the 404/NotFound catch-all (HU-04) render without the
+  // public header/footer, so they sit outside the PublicLayout chrome. The
+  // admin panel is only mounted when authenticated, under one persistent
+  // SidebarLayout (via <Outlet />) so the sidebar survives panel navigation.
   return (
     <Routes>
       <Route element={<PublicLayout />}>
@@ -367,6 +348,39 @@ function App() {
       <Route path={APP_ROUTES.login} element={<Login />} />
       <Route path={APP_ROUTES.forgotPassword} element={<ForgotPassword />} />
       <Route path={APP_ROUTES.activate} element={<ActivateAccount />} />
+
+      {isAuthenticated && (
+        <Route
+          element={
+            <SidebarLayout>
+              <Outlet />
+            </SidebarLayout>
+          }
+        >
+          {ADMIN_ROUTES.filter(({ path }) => path !== '*').map(
+            ({ path, element, allowedRoles }) => (
+              <Route
+                key={path}
+                path={path}
+                element={
+                  allowedRoles ? (
+                    <PrivateRoute allowedRoles={allowedRoles}>
+                      {element}
+                    </PrivateRoute>
+                  ) : (
+                    element
+                  )
+                }
+              />
+            )
+          )}
+          <Route
+            path={APP_ROUTES.panel}
+            element={<Navigate to={defaultTab} replace />}
+          />
+        </Route>
+      )}
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
