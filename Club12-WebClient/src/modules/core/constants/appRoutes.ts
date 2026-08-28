@@ -55,6 +55,10 @@ export const APP_ROUTES = {
     build: (tournamentId: string) => `/panel/torneos/${tournamentId}/editar`,
   },
   panelTeams: '/panel/equipos',
+  panelClub: {
+    pattern: '/panel/clubes/:idOrSlug',
+    build: (idOrSlug: string) => `/panel/clubes/${idOrSlug}`,
+  },
   panelTeamRegister: '/panel/registro-equipos',
   panelSanctions: '/panel/sanciones',
   panelSanction: {

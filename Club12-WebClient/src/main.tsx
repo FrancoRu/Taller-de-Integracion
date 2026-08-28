@@ -10,6 +10,7 @@ import { ErrorProvider } from './modules/error/context/error.context';
 import { TournamentProvider } from './modules/tournament/context/tournament.context';
 import { VenueProvider } from './modules/venue/context/venue.context';
 import { TeamProvider } from './modules/team/context/team.context';
+import { ClubProvider } from './modules/club/context/club.context';
 import { UserProvider } from './modules/user/context/user.context';
 import { DivisionProvider } from './modules/division/context/division.context';
 import { PlayerProvider } from './modules/player/context/player.context';
@@ -37,6 +38,7 @@ const providers: ComponentType<{ children: ReactNode }>[] = [
   BackupProvider,
   VenueProvider,
   TeamProvider,
+  ClubProvider,
   PlayerProvider,
   UserProvider,
   TournamentProvider,

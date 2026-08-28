@@ -26,6 +26,7 @@ import PlayersPage, {
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PlayerStatisticCreatePage from '@/views/playerStatistic/playerStatisticCreatePage';
 import PlayerSanctionCreatePage from '@/views/playerSanction/playerSanctionCreatePage';
+import RosterImportDialog from '@/views/team/RosterImportDialog';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { STATISTIC_TYPE_LABELS } from '@/modules/playerStatistic/utils/playerStatisticDisplay';
@@ -61,6 +62,7 @@ const TeamPage: React.FC<TeamPageProps> = ({
   >('detalle');
   const [statisticDialogOpen, setStatisticDialogOpen] = useState(false);
   const [sanctionDialogOpen, setSanctionDialogOpen] = useState(false);
+  const [rosterImportOpen, setRosterImportOpen] = useState(false);
 
   const targetTeamId = useMemo(
     () => teamIdOverride ?? teamId ?? team?.id,
@@ -279,20 +281,50 @@ const TeamPage: React.FC<TeamPageProps> = ({
             </Typography>
             <Typography>{team.players?.length ?? 0}</Typography>
           </Grid>
+          {team.clubId && (
+            <Grid size={12}>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() =>
+                  navigate(APP_ROUTES.panelClub.build(team.clubId as GUID))
+                }
+              >
+                Ver historial del club
+              </Button>
+            </Grid>
+          )}
         </Grid>
       )}
 
       {tab === 'jugadores' && team.id && (
-        <PlayersPage
-          teamId={team.id}
-          title={undefined}
-          emptyMessage="Este equipo no tiene jugadores cargados."
-          wrapInCard={false}
-          tournamentId={team.tournamentId}
-          medicalByPlayerId={medicalByPlayerId}
-          jerseyByPlayerId={jerseyByPlayerId}
-          onMedicalChange={refreshTeam}
-        />
+        <>
+          <Stack
+            direction="row"
+            sx={{
+              justifyContent: 'flex-end',
+              mb: 2,
+            }}
+          >
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => setRosterImportOpen(true)}
+            >
+              Importar plantel de una temporada anterior
+            </Button>
+          </Stack>
+          <PlayersPage
+            teamId={team.id}
+            title={undefined}
+            emptyMessage="Este equipo no tiene jugadores cargados."
+            wrapInCard={false}
+            tournamentId={team.tournamentId}
+            medicalByPlayerId={medicalByPlayerId}
+            jerseyByPlayerId={jerseyByPlayerId}
+            onMedicalChange={refreshTeam}
+          />
+        </>
       )}
 
       {tab === 'puntuaciones' && (
@@ -381,6 +413,16 @@ const TeamPage: React.FC<TeamPageProps> = ({
         onClose={() => setSanctionDialogOpen(false)}
         onCreated={refreshSanctions}
       />
+      {team.id && (
+        <RosterImportDialog
+          open={rosterImportOpen}
+          onClose={() => setRosterImportOpen(false)}
+          targetTeamId={team.id}
+          targetTournamentId={team.tournamentId}
+          clubId={team.clubId}
+          onImported={refreshTeam}
+        />
+      )}
     </>
   );
 

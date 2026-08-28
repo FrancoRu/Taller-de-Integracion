@@ -3,6 +3,7 @@ const routes = {
 
   auditLogs: 'audit-logs',
   backups: 'backups',
+  clubs: 'clubs',
   blogposts: 'blogposts',
   dataMaintenance: 'data-maintenance',
   divisions: 'divisions',
