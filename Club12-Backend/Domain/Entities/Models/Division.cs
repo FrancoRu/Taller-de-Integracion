@@ -78,6 +78,17 @@ public class Division : EntityBase
     public int PointsForLoss { get; set; } = 1;
 
     /// <summary>
+    /// How many teams qualify to the bracket from EACH internal group of a
+    /// multi-group cross-division cup (HU-110). Only meaningful when
+    /// <see cref="IsCrossDivisionCup"/> is true and the division holds more
+    /// than one <see cref="Domain.Enums.StageType.Group"/> stage: the bracket
+    /// is then seeded from the top <c>QualifiersPerGroup</c> teams of every
+    /// group, pooled and ordered by group-stage strength. Defaults to 1, which
+    /// leaves every existing division's seeding unchanged.
+    /// </summary>
+    public int QualifiersPerGroup { get; set; } = 1;
+
+    /// <summary>
     /// Maps this division's final standings position ranges to playoff
     /// destinations (HU-45), e.g. 1-4 → "Copa Oro", 5-8 → "Copa Plata".
     /// Positions not covered by any range do not qualify for a playoff.
