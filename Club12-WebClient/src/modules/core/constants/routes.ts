@@ -1,6 +1,7 @@
 const routes = {
   apiUrl: '/api',
 
+  backups: 'backups',
   blogposts: 'blogposts',
   dataMaintenance: 'data-maintenance',
   divisions: 'divisions',

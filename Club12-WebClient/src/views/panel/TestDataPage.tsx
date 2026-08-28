@@ -9,6 +9,7 @@ import {
   notifyError,
   notifySuccess,
 } from '@/modules/core/utils/confirmDialog';
+import BackupPanel from '@/views/backup/BackupPanel';
 
 const TestDataPage: React.FC = () => {
   const [isWiping, setIsWiping] = useState(false);
@@ -95,6 +96,8 @@ const TestDataPage: React.FC = () => {
           </Stack>
         </CardContent>
       </Card>
+
+      <BackupPanel />
     </Box>
   );
 };
