@@ -23,7 +23,8 @@ namespace Application.Services;
 public class TournamentService(
     ITournamentRepository tournamentRepository,
     IStageService stageService,
-    IMatchService matchService) : ITournamentService
+    IMatchService matchService,
+    IAuditService auditService) : ITournamentService
 {
     public async Task<Tournament> CreateTournamentAsync(Tournament tournamentEntity)
     {
@@ -92,8 +93,16 @@ public class TournamentService(
             await GenerateFixtureAsync(tournament);
         }
 
+        TournamentStatus previousStatus = tournament.Status;
         tournament.Status = newStatus;
         await tournamentRepository.UpdateAsync(tournament);
+
+        // HU-101: record the sensitive status change for traceability.
+        await auditService.LogAsync(
+            AuditAction.TournamentStatusChange,
+            targetType: nameof(Tournament),
+            targetId: tournamentId.ToString(),
+            detail: $"{previousStatus} -> {newStatus}");
     }
 
     /// <summary>

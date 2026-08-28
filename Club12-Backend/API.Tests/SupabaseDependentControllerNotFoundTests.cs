@@ -204,7 +204,7 @@ public class SupabaseDependentControllerNotFoundTests
             return Task.FromResult<BlogPost?>(null);
         }
 
-        public Task<BlogPost?> GetBlogPostByIdOrSlugAsync(string idOrSlug)
+        public Task<BlogPost?> GetBlogPostByIdOrSlugAsync(string idOrSlug, bool includeUnpublished = false)
         {
             return Task.FromResult<BlogPost?>(null);
         }
@@ -219,7 +219,7 @@ public class SupabaseDependentControllerNotFoundTests
             throw new NotImplementedException();
         }
 
-        public Task<PaginatedResponse<BlogPost>> GetAllBlogPostsAsync(GetBlogPostsFilteredRequest filter)
+        public Task<PaginatedResponse<BlogPost>> GetAllBlogPostsAsync(GetBlogPostsFilteredRequest filter, bool includeUnpublished = false)
         {
             throw new NotImplementedException();
         }

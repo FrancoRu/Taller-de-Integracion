@@ -226,6 +226,9 @@ public class TeamService(IUnitOfWork unitOfWork) : ITeamService
                         // player (transient, not persisted) so responses expose
                         // habilitado/not-habilitado per player (HU-57/HU-62).
                         r.Player!.MedicalRecordStatus = r.MedicalRecordStatus;
+                        // Surface the season-scoped dorsal (HU-54) onto the
+                        // roster player (transient, not persisted).
+                        r.Player!.JerseyNumber = r.JerseyNumber;
                         return r.Player!;
                     })];
         }

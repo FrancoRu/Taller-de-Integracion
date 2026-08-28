@@ -31,6 +31,14 @@ public class PlayerTeamRegistrationEntityConfiguration : BaseEntityConfiguration
 
         builder.HasIndex(r => new { r.PlayerId, r.TournamentId }).IsUnique();
 
+        // Jersey number / dorsal (HU-54). Unique within the same team +
+        // tournament. Both Npgsql and SQLite treat NULLs as distinct in a
+        // unique index, so this allows any number of players with no assigned
+        // dorsal (NULL) while rejecting duplicate non-null dorsals — no
+        // provider-specific filtered index required.
+        builder.Property(r => r.JerseyNumber);
+        builder.HasIndex(r => new { r.TeamId, r.TournamentId, r.JerseyNumber }).IsUnique();
+
         builder.HasOne(r => r.Player)
             .WithMany(p => p.PlayerTeamRegistrations)
             .HasForeignKey(r => r.PlayerId)

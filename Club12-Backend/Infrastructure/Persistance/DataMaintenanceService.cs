@@ -2,6 +2,7 @@ using Application.DTOs.DataMaintenance.Response;
 using Application.Interfaces.Services;
 
 using Domain.Entities.Models;
+using Domain.Enums;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -15,7 +16,10 @@ using System.Threading.Tasks;
 namespace Infrastructure.Persistance;
 
 /// <inheritdoc cref="IDataMaintenanceService"/>
-public sealed class DataMaintenanceService(ApplicationDBContext db, ILogger<DataMaintenanceService> logger)
+public sealed class DataMaintenanceService(
+    ApplicationDBContext db,
+    ILogger<DataMaintenanceService> logger,
+    IAuditService auditService)
     : IDataMaintenanceService
 {
     private static readonly string[] Tournament1PrimeraNames =
@@ -76,6 +80,16 @@ public sealed class DataMaintenanceService(ApplicationDBContext db, ILogger<Data
                 tournaments, divisions, teams, players, matches, matchSeries,
                 playerSanctions, playerStatistics, scorers, stageTeamMatches,
                 playerTeamRegistrations, stages, venues, blogPosts);
+
+            // HU-101: record the destructive wipe for traceability. Written
+            // after commit so it survives the wipe (the audit table is not part
+            // of the tournament-domain data being deleted).
+            await auditService.LogAsync(
+                AuditAction.DataWipe,
+                detail:
+                    $"Wiped tournament-domain data: {tournaments} tournaments, {teams} teams, " +
+                    $"{players} players, {matches} matches.",
+                ct: ct);
 
             return new DataWipeResult(
                 Tournaments: tournaments,

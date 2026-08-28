@@ -43,4 +43,9 @@ public class BlogPostResponse : BaseEntityResponse
     /// The date and time the blog post was created.
     /// </summary>
     public required DateTime CreatedAt { get; set; }
+
+    /// <summary>
+    /// Whether the post is published (visible publicly) or a draft (HU-16).
+    /// </summary>
+    public bool IsPublished { get; set; }
 }

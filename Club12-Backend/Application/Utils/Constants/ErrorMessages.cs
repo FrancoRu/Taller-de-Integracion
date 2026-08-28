@@ -108,6 +108,24 @@ public static class ErrorMessages
         }
     }
 
+    public static class Roster
+    {
+        public static string PlayerAlreadyInAnotherTeam(System.Guid playerId, System.Guid tournamentId)
+        {
+            return $"Player '{playerId}' is already registered to another team in tournament '{tournamentId}'. A player cannot be registered to two teams in the same tournament.";
+        }
+
+        public static string RosterFull(System.Guid teamId, int maxPlayers)
+        {
+            return $"Team '{teamId}' already has the maximum of {maxPlayers} players for this tournament.";
+        }
+
+        public static string DuplicateJerseyNumber(int jerseyNumber, System.Guid teamId, System.Guid tournamentId)
+        {
+            return $"Jersey number {jerseyNumber} is already used by another player in team '{teamId}' for tournament '{tournamentId}'.";
+        }
+    }
+
     public static class Stage
     {
         public const string NotFoundGeneric = "Stage not found.";

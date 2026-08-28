@@ -71,6 +71,32 @@ public class PlayerController(
     }
 
     /// <summary>
+    /// Registers a player onto a team's roster for a tournament season,
+    /// optionally assigning a dorsal, enforcing the HU-54 roster invariants
+    /// (no two teams in one tournament, roster-size cap, unique dorsal).
+    /// </summary>
+    /// <param name="playerId">The player to register.</param>
+    /// <param name="request">The team, tournament and optional dorsal.</param>
+    /// <returns>
+    /// <para>Returns 200 (OK) with the registration outcome.</para>
+    /// <para>Returns 409 (Conflict) if a roster invariant is violated.</para>
+    /// <para>Returns 403 (Forbidden) if the user is not authorized.</para>
+    /// </returns>
+    [Authorize(Roles = Roles.AdminOrOwner)]
+    [HttpPost("{playerId:guid}/registration")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerRegistrationResponse))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<PlayerRegistrationResponse>> RegisterPlayerToTeam(
+        Guid playerId, [FromBody] RegisterPlayerToTeamRequest request)
+    {
+        PlayerTeamRegistration registration = await playerService.RegisterPlayerToTeamAsync(
+            playerId, request.TeamId, request.TournamentId, request.JerseyNumber);
+
+        return Ok(mapper.Map<PlayerRegistrationResponse>(registration));
+    }
+
+    /// <summary>
     /// Retrieves a player by its id or its public slug.
     /// </summary>
     /// <param name="idOrSlug">The id (GUID) or slug of the player to retrieve.</param>

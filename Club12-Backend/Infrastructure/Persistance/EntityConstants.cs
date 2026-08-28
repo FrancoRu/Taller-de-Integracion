@@ -23,6 +23,7 @@ public static class EntityConstants
 
     public static class Tables
     {
+        public const string AuditLog = "AuditLogs";
         public const string BlogPost = "BlogPosts";
         public const string Division = "Divisions";
         public const string DivisionPlayoffMapping = "DivisionPlayoffMappings";

@@ -2,6 +2,7 @@ using Application.DTOs.Backup.Request;
 using Application.DTOs.Backup.Response;
 using Application.Interfaces.Backup;
 using Application.Interfaces.Maintenance;
+using Application.Interfaces.Services;
 
 using Domain.Enums;
 
@@ -28,7 +29,8 @@ namespace API.Controllers;
 public class BackupController(
     IManualBackupService manualBackupService,
     IBackupRestoreService backupRestoreService,
-    IMaintenanceState maintenanceState) : ControllerBase
+    IMaintenanceState maintenanceState,
+    IAuditService auditService) : ControllerBase
 {
     /// <summary>
     /// Triggers a backup on demand and returns the created backup's metadata.
@@ -90,6 +92,15 @@ public class BackupController(
         try
         {
             RestoreResult result = await backupRestoreService.RestoreAsync(request.BackupName, ct);
+
+            // HU-101: record the sensitive restore for traceability.
+            await auditService.LogAsync(
+                AuditAction.BackupRestore,
+                targetType: "Backup",
+                targetId: request.BackupName,
+                detail: $"Restored from '{request.BackupName}'; safety backup '{result.SafetyBackupName}'.",
+                ct: ct);
+
             return Ok(result);
         }
         catch (MaintenanceInProgressException ex)

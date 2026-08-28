@@ -2,11 +2,15 @@ using Application.DTOs.Abstract.Response;
 using Application.DTOs.Player.Request;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.Slug;
+using Application.Utils.Options;
 
 using Domain.Constants;
 using Domain.Entities.Models;
+
+using Microsoft.Extensions.Options;
 
 using System;
 using System.Collections.Generic;
@@ -16,10 +20,11 @@ using System.Threading.Tasks;
 
 namespace Application.Services;
 
-public class PlayerService(IUnitOfWork unitOfWork) : IPlayerService
+public class PlayerService(IUnitOfWork unitOfWork, IOptions<RosterOptions> rosterOptions) : IPlayerService
 {
     private readonly IPlayerRepository _playerRepository = unitOfWork.PlayerRepository;
     private readonly IPlayerTeamRegistrationRepository _registrationRepository = unitOfWork.PlayerTeamRegistrationRepository;
+    private readonly int _maxPlayersPerTeam = rosterOptions.Value.MaxPlayersPerTeam;
 
     public async Task<Player> CreatePlayerAsync(Player playerEntity, Guid tournamentId)
     {
@@ -58,6 +63,74 @@ public class PlayerService(IUnitOfWork unitOfWork) : IPlayerService
     public async Task DeletePlayerAsync(Guid id)
     {
         await _playerRepository.RemoveAsync(player => player.Id == id);
+    }
+
+    /// <inheritdoc />
+    public async Task<PlayerTeamRegistration> RegisterPlayerToTeamAsync(
+        Guid playerId, Guid teamId, Guid tournamentId, int? jerseyNumber = null)
+    {
+        IEnumerable<PlayerTeamRegistration> existing = await _registrationRepository.FindAsync(
+            registration => registration.PlayerId == playerId && registration.TournamentId == tournamentId);
+        PlayerTeamRegistration? registration = existing.FirstOrDefault();
+
+        // HU-54: a player cannot be registered to two teams in the same tournament.
+        if (registration is not null && registration.TeamId != teamId)
+        {
+            throw new InvalidOperationException(
+                ErrorMessages.Roster.PlayerAlreadyInAnotherTeam(playerId, tournamentId));
+        }
+
+        // HU-54: dorsal must be unique within the same team + tournament
+        // (ignoring this same player's own current registration).
+        if (jerseyNumber is not null)
+        {
+            bool dorsalTaken = await _registrationRepository.ExistsAsync(candidate =>
+                candidate.TeamId == teamId
+                && candidate.TournamentId == tournamentId
+                && candidate.PlayerId != playerId
+                && candidate.JerseyNumber == jerseyNumber);
+
+            if (dorsalTaken)
+            {
+                throw new InvalidOperationException(
+                    ErrorMessages.Roster.DuplicateJerseyNumber(jerseyNumber.Value, teamId, tournamentId));
+            }
+        }
+
+        if (registration is null)
+        {
+            // HU-54: enforce the configurable roster-size cap when adding a
+            // brand-new member (re-registering an existing member does not grow
+            // the roster, so it skips this check).
+            int currentRosterSize = await _registrationRepository.CountAsync(
+                candidate => candidate.TeamId == teamId && candidate.TournamentId == tournamentId);
+
+            if (currentRosterSize >= _maxPlayersPerTeam)
+            {
+                throw new InvalidOperationException(
+                    ErrorMessages.Roster.RosterFull(teamId, _maxPlayersPerTeam));
+            }
+
+            PlayerTeamRegistration created = new()
+            {
+                Id = Guid.Empty,
+                PlayerId = playerId,
+                TeamId = teamId,
+                TournamentId = tournamentId,
+                JerseyNumber = jerseyNumber,
+                DateCreated = DateTime.UtcNow,
+                CreatedBy = AuditConstants.SystemUser,
+            };
+
+            await _registrationRepository.AddAsync(created);
+            return created;
+        }
+
+        // Same player, same team: keep the dorsal in sync (idempotent add/edit).
+        registration.JerseyNumber = jerseyNumber;
+        registration.DateUpdated = DateTime.UtcNow;
+        await _registrationRepository.UpdateAsync(registration);
+        return registration;
     }
 
     public async Task UpdatePlayerAsync(Player playerEntity, Guid tournamentId)

@@ -23,6 +23,13 @@ public class BlogPostProfile : Profile
             .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.DateCreated))
             .ReverseMap();
 
-        _ = CreateMap<UpdateBlogPostRequest, BlogPost>();
+        _ = CreateMap<UpdateBlogPostRequest, BlogPost>()
+            // Null IsPublished on the request means "leave unchanged" (HU-16):
+            // only overwrite the entity's flag when the caller sent a value.
+            .ForMember(dest => dest.IsPublished, opt =>
+            {
+                opt.PreCondition(src => src.IsPublished.HasValue);
+                opt.MapFrom(src => src.IsPublished!.Value);
+            });
     }
 }

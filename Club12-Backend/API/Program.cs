@@ -2,6 +2,8 @@ using API.BackgroundServices;
 using API.Utils;
 using API.Utils.Middlewares;
 
+using Application.Utils.Options;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +31,10 @@ builder.Services
     .AddHealthChecksConfig()
     .AddExceptionHandler<GlobalExceptionHandler>()
     .AddProblemDetails();
+
+// HU-54: configurable roster limits. Absent section falls back to defaults.
+builder.Services.Configure<RosterOptions>(
+    builder.Configuration.GetSection(RosterOptions.SectionName));
 
 builder.Services.AddControllers().AddCustomJsonOptions();
 

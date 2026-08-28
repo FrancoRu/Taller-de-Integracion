@@ -420,6 +420,13 @@ public static class StartupExtensions
 
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        // Audit trail (HU-101): resolve the current caller's identity from the
+        // HTTP context so application/infrastructure services can record "who"
+        // without depending on the web layer.
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserAccessor, API.Utils.Helpers.HttpCurrentUserAccessor>();
+
         return services;
     }
 

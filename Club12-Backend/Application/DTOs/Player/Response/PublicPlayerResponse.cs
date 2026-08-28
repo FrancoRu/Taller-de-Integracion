@@ -53,4 +53,11 @@ public class PublicPlayerResponse : BaseEntityResponse
     /// (HU-62).
     /// </summary>
     public bool IsHabilitado { get; set; }
+
+    /// <summary>
+    /// The player's jersey number (dorsal) for this season roster (HU-54).
+    /// Null when the roster was not loaded for a specific season or no number
+    /// is assigned.
+    /// </summary>
+    public int? JerseyNumber { get; set; }
 }

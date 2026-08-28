@@ -55,6 +55,29 @@ public interface IPlayerService
     Task DeletePlayerAsync(Guid id);
 
     /// <summary>
+    /// Registers a player onto a team's roster for a specific tournament
+    /// (season), enforcing the HU-54 roster invariants:
+    /// <list type="bullet">
+    /// <item>a player cannot be registered to two teams in the same tournament;</item>
+    /// <item>the team's roster may not exceed the configured maximum size;</item>
+    /// <item>a jersey number (dorsal), when given, must be unique within the
+    /// team + tournament.</item>
+    /// </list>
+    /// Re-registering the same player to the same team updates their dorsal
+    /// (idempotent), so this is safe to call for both add and edit.
+    /// </summary>
+    /// <param name="playerId">The player to register.</param>
+    /// <param name="teamId">The team to register the player onto.</param>
+    /// <param name="tournamentId">The tournament (season) the registration belongs to.</param>
+    /// <param name="jerseyNumber">The player's dorsal for this team/season, or null.</param>
+    /// <returns>The created or updated registration.</returns>
+    /// <exception cref="System.InvalidOperationException">
+    /// Thrown when any of the roster invariants is violated.
+    /// </exception>
+    Task<PlayerTeamRegistration> RegisterPlayerToTeamAsync(
+        Guid playerId, Guid teamId, Guid tournamentId, int? jerseyNumber = null);
+
+    /// <summary>
     /// Retrieves players with pagination and filtering.
     /// </summary>
     /// <param name="filter">The filtering and pagination request.</param>

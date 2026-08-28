@@ -25,16 +25,22 @@ public class PlayerSanctionEntityConfiguration : BaseEntityConfiguration<PlayerS
 
         // PlayerId is now optional (HU-77): team/staff sanctions carry no
         // player. Existing player sanctions keep their PlayerId set.
+        // OnDelete is stated explicitly to match the delete behavior the
+        // existing migrations already applied to the database (Player:
+        // Cascade, Team: Restrict); without it the optional FKs would default
+        // to NoAction and drift from the persisted schema.
         builder.HasOne(ps => ps.Player)
             .WithMany()
             .HasForeignKey(ps => ps.PlayerId)
-            .IsRequired(false);
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Team subject sanctions (HU-77). Optional FK to a real Team.
         builder.HasOne(ps => ps.Team)
             .WithMany()
             .HasForeignKey(ps => ps.TeamId)
-            .IsRequired(false);
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(ps => ps.Match)
             .WithMany()

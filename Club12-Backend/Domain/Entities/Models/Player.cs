@@ -68,4 +68,15 @@ public class Player : EntityBase
     /// </summary>
     [NotMapped]
     public bool IsHabilitado => MedicalRecordStatus == Domain.Enums.MedicalRecordStatus.Approved;
+
+    /// <summary>
+    /// Transient, NOT persisted: the player's jersey number (dorsal) for the
+    /// season roster currently being viewed (HU-54). Populated on demand when
+    /// a roster is loaded for a specific season (see
+    /// TeamService.AttachSeasonRostersAsync) from the matching
+    /// <see cref="PlayerTeamRegistration.JerseyNumber"/>. Null when no season
+    /// context is set or no number is assigned.
+    /// </summary>
+    [NotMapped]
+    public int? JerseyNumber { get; set; }
 }
