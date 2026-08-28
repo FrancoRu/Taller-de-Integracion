@@ -167,6 +167,56 @@ public class MatchController(IMatchService matchService, IStageTeamMatchService 
     }
 
     /// <summary>
+    /// Retrieves a stage's matches grouped by matchday (jornada, HU-63) so the
+    /// fixture can be rendered as "Fecha 1 / Partido 1..2, Fecha 2 / …". The
+    /// grouping key is the round, not the calendar date.
+    /// </summary>
+    /// <param name="stageId">The id of the stage whose fixture is requested.</param>
+    /// <returns>The matches grouped and ordered by round.</returns>
+    [AllowAnonymous]
+    [HttpGet("stage/{stageId:guid}/by-round")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<RoundMatchesResponse>))]
+    public async Task<ActionResult<List<RoundMatchesResponse>>> GetStageMatchesByRound(Guid stageId)
+    {
+        List<Match> matches = await matchService.GetStageMatchesByRoundAsync(stageId);
+
+        List<RoundMatchesResponse> rounds = [.. matches
+            .GroupBy(match => match.Round)
+            .OrderBy(group => group.Key ?? int.MaxValue)
+            .Select(group => new RoundMatchesResponse
+            {
+                Round = group.Key,
+                Matches = mapper.Map<List<DetailedMatchResponse>>(group.ToList()),
+            })];
+
+        return Ok(rounds);
+    }
+
+    /// <summary>
+    /// Reprograms/suspends a match (HU-68): marks it suspended and optionally
+    /// moves it to a new date, without changing its round (HU-67) or the rest
+    /// of the fixture.
+    /// </summary>
+    /// <param name="id">The id of the match to suspend/reprogram.</param>
+    /// <param name="suspendRequest">The request with an optional new date.</param>
+    /// <returns>The updated match response.</returns>
+    [HttpPut("{id:guid}/suspend")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedMatchResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> SuspendMatch(Guid id, SuspendMatchRequest suspendRequest)
+    {
+        Match? updatedMatch = await matchService.SuspendMatchAsync(id, suspendRequest.MatchDate);
+
+        if (updatedMatch is null)
+        {
+            return this.NotFoundProblem(nameof(Match), id);
+        }
+
+        DetailedMatchResponse detailedMatch = mapper.Map<DetailedMatchResponse>(updatedMatch);
+        return Ok(detailedMatch);
+    }
+
+    /// <summary>
     /// Deletes a match by its id.
     /// </summary>
     /// <param name="id">The id of the match to delete.</param>

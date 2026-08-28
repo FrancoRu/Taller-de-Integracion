@@ -17,6 +17,14 @@ public class DetailedMatchResponse : BaseEntityResponse
     public required DateTime MatchDate { get; set; }
 
     /// <summary>
+    /// The matchday (jornada) this match belongs to, 1-based (HU-63/HU-65).
+    /// This is the canonical grouping key for the fixture ("Fecha 1", "Fecha
+    /// 2", …); the frontend should group by this rather than by MatchDate. Null
+    /// for matches with no round-robin matchday (e.g. knockout stages).
+    /// </summary>
+    public int? Round { get; set; }
+
+    /// <summary>
     /// The type of the match (e.g., regular or playoff).
     /// </summary>
     public required string MatchType { get; set; }

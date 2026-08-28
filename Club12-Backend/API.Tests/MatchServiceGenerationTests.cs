@@ -92,11 +92,13 @@ public class MatchServiceGenerationTests : IClassFixture<CustomWebApplicationFac
     }
 
     /// <summary>
-    /// Match date distribution is reachable via the group stage path only.
-    /// teamsPerGroup=2 produces a single round-robin match (2*1/2 = 1).
+    /// HU-65: a group-stage fixture is scheduled by matchday, one round per
+    /// Sunday from the stage start — not by spreading matches evenly across the
+    /// stage's date range. teamsPerGroup=2 produces a single round-robin match
+    /// (2*1/2 = 1) in round 1, dated the first Sunday on or after the start.
     /// </summary>
     [Fact]
-    public async Task CreateAutomatedMatchesAsync_GroupStage_SingleMatch_UsesRangeMidpoint()
+    public async Task CreateAutomatedMatchesAsync_GroupStage_SingleMatch_IsRoundOneOnFirstSunday()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
         ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
@@ -110,39 +112,50 @@ public class MatchServiceGenerationTests : IClassFixture<CustomWebApplicationFac
         List<Match> matches = await matchService.CreateAutomatedMatchesAsync(stages[0].Id);
 
         Assert.Single(matches);
-        DateTime expectedDate = start.AddDays((end - start).TotalDays / 2);
-        Assert.Equal(expectedDate, matches[0].MatchDate);
+        Assert.Equal(1, matches[0].Round);
+        Assert.Equal(FirstSundayOnOrAfter(start), matches[0].MatchDate);
     }
 
     /// <summary>
-    /// teamsPerGroup=3 produces 3 round-robin matches (3*2/2 = 3).
+    /// HU-63/HU-65: teamsPerGroup=3 is odd, so the single round-robin has 3
+    /// rounds (each with one match and one idle team), scheduled on 3
+    /// consecutive Sundays. Round is the canonical grouping — one match per
+    /// round, one round per Sunday.
     /// </summary>
     [Fact]
-    public async Task CreateAutomatedMatchesAsync_GroupStage_MultipleMatches_SpreadEvenlyAcrossRange()
+    public async Task CreateAutomatedMatchesAsync_GroupStage_OddTeams_OneMatchPerRoundOnConsecutiveSundays()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
         ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
         IMatchService matchService = scope.ServiceProvider.GetRequiredService<IMatchService>();
 
         DateTime start = DateTime.UtcNow.Date;
-        DateTime end = start.AddDays(10);
+        DateTime end = start.AddDays(30);
 
         (_, _, List<Stage> stages, _) = await SeedGroupStageWithTeamsAsync(db, teamsPerGroup: 3, groupCount: 1, start, end);
 
         List<Match> matches = await matchService.CreateAutomatedMatchesAsync(stages[0].Id);
-        List<Match> ordered = [.. matches.OrderBy(m => m.MatchDate)];
+        List<Match> ordered = [.. matches.OrderBy(m => m.Round)];
 
         Assert.Equal(3, ordered.Count);
-        Assert.Equal(start, ordered[0].MatchDate);
-        Assert.Equal(end, ordered[^1].MatchDate);
+        Assert.Equal([1, 2, 3], [.. ordered.Select(m => m.Round)]);
 
-        double totalDays = (end - start).TotalDays;
-        double interval = totalDays / (ordered.Count - 1);
+        DateTime firstSunday = FirstSundayOnOrAfter(start);
         for (int i = 0; i < ordered.Count; i++)
         {
-            DateTime expected = start.AddDays(interval * i);
-            Assert.Equal(expected, ordered[i].MatchDate);
+            Assert.Equal(firstSunday.AddDays(7 * i), ordered[i].MatchDate);
         }
+    }
+
+    /// <summary>
+    /// The default Sunday schedule for a round: the first Sunday on or after
+    /// the start date. Mirrors RoundCalendar so tests assert against the same
+    /// contract the service uses.
+    /// </summary>
+    private static DateTime FirstSundayOnOrAfter(DateTime start)
+    {
+        int daysUntilSunday = ((int)DayOfWeek.Sunday - (int)start.Date.DayOfWeek + 7) % 7;
+        return start.Date.AddDays(daysUntilSunday);
     }
 
     [Fact]
@@ -280,20 +293,27 @@ public class MatchServiceGenerationTests : IClassFixture<CustomWebApplicationFac
 
         List<Match> matches = await matchService.CreateAutomatedMatchesAsync(stages[0].Id);
 
-        // Assertions intentionally avoid pinning exact suffix values: this test
-        // class shares one SQLite database across its fixture, so an earlier
-        // test may already own the bare (unsuffixed) slug for "today" — the
-        // point under test is that all 6 in-batch collisions resolve to
-        // distinct slugs, not which exact suffix each one lands on.
-        string expectedBasePrefix = $"tbd-vs-tbd-{sameDate:yyyy-MM-dd}";
-
+        // Unseeded matches still carry the round structure (HU-63): 4 teams =>
+        // 3 rounds of 2 unseeded ("TBD vs TBD") matches each. The two matches
+        // that share a round share a Sunday date, so their base slug collides —
+        // the point under test is that all in-batch collisions resolve to
+        // distinct slugs. Assertions avoid pinning exact suffix values because
+        // this test class shares one SQLite database across its fixture.
         Assert.Equal(6, matches.Count);
-        Assert.All(matches, m => Assert.StartsWith(expectedBasePrefix, m.Slug));
+        Assert.All(matches, m => Assert.NotNull(m.Round));
+        Assert.All(matches, m => Assert.StartsWith("tbd-vs-tbd-", m.Slug));
         Assert.Equal(matches.Count, matches.Select(m => m.Slug).Distinct().Count());
     }
 
+    /// <summary>
+    /// HU-65/HU-67: a group-stage fixture is scheduled from the start date by
+    /// consecutive Sundays and does not depend on the stage end date, so an
+    /// inverted range no longer aborts generation the way the old even-spread
+    /// date distribution did — the match is simply placed on the first Sunday
+    /// on or after the start.
+    /// </summary>
     [Fact]
-    public async Task CreateAutomatedMatchesAsync_GroupStage_EndDateBeforeStartDate_ThrowsArgumentException()
+    public async Task CreateAutomatedMatchesAsync_GroupStage_EndDateBeforeStartDate_StillSchedulesFromStartSunday()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
         ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
@@ -304,8 +324,80 @@ public class MatchServiceGenerationTests : IClassFixture<CustomWebApplicationFac
 
         (_, _, List<Stage> stages, _) = await SeedGroupStageWithTeamsAsync(db, teamsPerGroup: 2, groupCount: 1, start, end);
 
-        await Assert.ThrowsAsync<ArgumentException>(
-            () => matchService.CreateAutomatedMatchesAsync(stages[0].Id));
+        List<Match> matches = await matchService.CreateAutomatedMatchesAsync(stages[0].Id);
+
+        Assert.Single(matches);
+        Assert.Equal(1, matches[0].Round);
+        Assert.Equal(FirstSundayOnOrAfter(start), matches[0].MatchDate);
+    }
+
+    /// <summary>
+    /// HU-68/HU-67: suspending (and rescheduling) a match marks it Suspended and
+    /// moves its date, but never changes its round nor the rest of the fixture's
+    /// rounds. Every other match keeps the round it was generated with.
+    /// </summary>
+    [Fact]
+    public async Task SuspendMatchAsync_MarksSuspendedAndMovesDate_ButKeepsRoundAndRestOfFixture()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IMatchService matchService = scope.ServiceProvider.GetRequiredService<IMatchService>();
+
+        (_, _, List<Stage> stages, _) = await SeedGroupStageWithTeamsAsync(db, teamsPerGroup: 4, groupCount: 1);
+
+        List<Match> matches = await matchService.CreateAutomatedMatchesAsync(stages[0].Id);
+        Match target = matches[0];
+        int originalRound = target.Round!.Value;
+
+        // Snapshot every other match's round to prove the fixture is untouched.
+        Dictionary<Guid, int?> otherRoundsBefore = matches
+            .Where(m => m.Id != target.Id)
+            .ToDictionary(m => m.Id, m => m.Round);
+
+        DateTime newDate = target.MatchDate.AddDays(3);
+        Match? suspended = await matchService.SuspendMatchAsync(target.Id, newDate);
+
+        Assert.NotNull(suspended);
+        Assert.Equal(MatchStatus.Suspended, suspended!.Status);
+        Assert.Equal(newDate, suspended.MatchDate);
+        Assert.Equal(originalRound, suspended.Round);
+
+        // Re-read from the database to confirm the round was persisted intact.
+        Match? reloaded = await matchService.GetMatchByIdAsync(target.Id);
+        Assert.NotNull(reloaded);
+        Assert.Equal(originalRound, reloaded!.Round);
+        Assert.Equal(MatchStatus.Suspended, reloaded.Status);
+
+        List<Match> byRound = await matchService.GetStageMatchesByRoundAsync(stages[0].Id);
+        foreach (Match other in byRound.Where(m => m.Id != target.Id))
+        {
+            Assert.Equal(otherRoundsBefore[other.Id], other.Round);
+        }
+    }
+
+    /// <summary>
+    /// HU-63: a stage's matches can be fetched grouped/ordered by round so the
+    /// frontend renders "Fecha 1 / Partido…, Fecha 2 / …". Ordering is by round,
+    /// not calendar date.
+    /// </summary>
+    [Fact]
+    public async Task GetStageMatchesByRoundAsync_OrdersMatchesByRound()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IMatchService matchService = scope.ServiceProvider.GetRequiredService<IMatchService>();
+
+        (_, _, List<Stage> stages, _) = await SeedGroupStageWithTeamsAsync(db, teamsPerGroup: 4, groupCount: 1);
+        await matchService.CreateAutomatedMatchesAsync(stages[0].Id);
+
+        List<Match> byRound = await matchService.GetStageMatchesByRoundAsync(stages[0].Id);
+
+        Assert.NotEmpty(byRound);
+        Assert.All(byRound, m => Assert.NotNull(m.Round));
+
+        // 4 teams => 3 rounds of 2 matches each, delivered round 1, 2, 3.
+        List<int> rounds = [.. byRound.Select(m => m.Round!.Value)];
+        Assert.Equal([1, 1, 2, 2, 3, 3], rounds);
     }
 
     private static async Task<List<Team>> SeedTeamsAsync(ApplicationDBContext db, int count, Guid? tournamentId = null)

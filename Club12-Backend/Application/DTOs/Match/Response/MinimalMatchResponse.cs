@@ -15,6 +15,13 @@ public class MinimalMatchResponse : BaseEntityResponse
     public required DateTime MatchDate { get; set; }
 
     /// <summary>
+    /// The matchday (jornada) this match belongs to, 1-based (HU-63/HU-65).
+    /// Canonical fixture grouping key; null for matches with no round-robin
+    /// matchday (e.g. knockout stages).
+    /// </summary>
+    public int? Round { get; set; }
+
+    /// <summary>
     /// The name of the home team.
     /// </summary>
     public required string HomeTeamName { get; set; }
