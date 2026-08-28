@@ -176,13 +176,16 @@ public class DataMaintenanceServiceTests : IClassFixture<CustomWebApplicationFac
 
         DataSeedResult result = await service.SeedSampleDataAsync();
 
+        // Main "Apertura": Primera(8) + Segunda(8) + Copa Club 12 (cross cup) = 3 divisions,
+        // 16 teams, 128 players. Historical "Clausura": Primera(4) + Reserva(4) = 2 divisions,
+        // 8 teams, 64 players. Totals: 5 divisions, 24 teams, 192 players.
         Assert.Equal(2, result.Tournaments);
-        Assert.Equal(4, result.Divisions);
-        Assert.Equal(16, result.Teams);
-        Assert.Equal(128, result.Players);
-        Assert.Equal(2, result.BlogPosts);
+        Assert.Equal(5, result.Divisions);
+        Assert.Equal(24, result.Teams);
+        Assert.Equal(192, result.Players);
+        Assert.Equal(6, result.BlogPosts);
         Assert.True(result.Matches > 0);
-        Assert.True(result.PlayerSanctions > 0);
+        Assert.True(result.PlayerSanctions >= 5);
 
         List<Tournament> tournaments = await db.Tournaments.ToListAsync();
         Assert.Equal(2, tournaments.Count);
@@ -191,13 +194,12 @@ public class DataMaintenanceServiceTests : IClassFixture<CustomWebApplicationFac
 
         Assert.True(await db.Scorers.CountAsync() > 0);
         Assert.True(await db.PlayersStatistics.CountAsync() > 0);
-        // 4 divisions x (4 group + 4 semifinal + 2 thirdplace + 2 final) StageTeamMatch rows.
-        Assert.Equal(48, await db.StageTeamMatches.CountAsync());
+        Assert.Equal(5, await db.Venues.CountAsync());
         Assert.True(await db.Matches.AnyAsync(m => m.IsFinished && m.HomeScore != null));
     }
 
     [Fact]
-    public async Task SeedSampleDataAsync_OnEmptyDatabase_EachDivisionGetsFullPlayoffBracket()
+    public async Task SeedSampleDataAsync_MainDivisions_AreNamedAndHaveEightTeamsEach()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
         IDataMaintenanceService service = scope.ServiceProvider.GetRequiredService<IDataMaintenanceService>();
@@ -206,28 +208,55 @@ public class DataMaintenanceServiceTests : IClassFixture<CustomWebApplicationFac
         await service.WipeSampleDataAsync();
         await service.SeedSampleDataAsync();
 
-        List<Division> divisions = await db.Divisions
-            .Include(d => d.Stages)
-            .ToListAsync();
-
-        Assert.Equal(4, divisions.Count);
-
-        StageType[] expectedStageTypes =
-            [StageType.Group, StageType.SemiFinal, StageType.ThirdPlace, StageType.Final];
-
-        foreach (Division division in divisions)
+        foreach (string divisionName in new[] { "Primera División", "Segunda División" })
         {
-            List<StageType> actualStageTypes = [.. division.Stages.Select(s => s.StageType)];
-            Assert.Equal(expectedStageTypes.Length, actualStageTypes.Count);
-            foreach (StageType expected in expectedStageTypes)
+            Division division = await db.Divisions
+                .Include(d => d.Stages).ThenInclude(s => s.StageTeamMatches)
+                .SingleAsync(d => d.Name == divisionName);
+
+            Stage groupStage = Assert.Single(division.Stages, s => s.StageType == StageType.Group);
+            Assert.Equal(8, groupStage.StageTeamMatches.Count);
+        }
+    }
+
+    [Fact]
+    public async Task SeedSampleDataAsync_MainDivisions_HaveCopaOroAndCopaPlataMappingsAndBrackets()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        IDataMaintenanceService service = scope.ServiceProvider.GetRequiredService<IDataMaintenanceService>();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        await service.WipeSampleDataAsync();
+        await service.SeedSampleDataAsync();
+
+        foreach (string divisionName in new[] { "Primera División", "Segunda División" })
+        {
+            Division division = await db.Divisions
+                .Include(d => d.Stages)
+                .Include(d => d.PlayoffMappings)
+                .SingleAsync(d => d.Name == divisionName);
+
+            // Position-range mappings (HU-45): 1-4 -> Copa Oro, 5-8 -> Copa Plata.
+            DivisionPlayoffMapping oro = Assert.Single(division.PlayoffMappings, m => m.Destination == "Copa Oro");
+            Assert.Equal(1, oro.FromPosition);
+            Assert.Equal(4, oro.ToPosition);
+            DivisionPlayoffMapping plata = Assert.Single(division.PlayoffMappings, m => m.Destination == "Copa Plata");
+            Assert.Equal(5, plata.FromPosition);
+            Assert.Equal(8, plata.ToPosition);
+
+            // Each cup has a best-of-3 SemiFinal + Final bracket carrying its BracketName.
+            foreach (string cup in new[] { "Copa Oro", "Copa Plata" })
             {
-                Assert.Contains(expected, actualStageTypes);
+                List<Stage> cupStages = [.. division.Stages.Where(s => s.BracketName == cup)];
+                Assert.Contains(cupStages, s => s.StageType == StageType.SemiFinal);
+                Assert.Contains(cupStages, s => s.StageType == StageType.Final);
+                Assert.All(cupStages, s => Assert.Equal(3, s.BestOf));
             }
         }
     }
 
     [Fact]
-    public async Task SeedSampleDataAsync_OnEmptyDatabase_FinalMatchIsFinishedWithWinner()
+    public async Task SeedSampleDataAsync_FinalStages_AreFinishedWithAWinner()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
         IDataMaintenanceService service = scope.ServiceProvider.GetRequiredService<IDataMaintenanceService>();
@@ -241,7 +270,8 @@ public class DataMaintenanceServiceTests : IClassFixture<CustomWebApplicationFac
             .Include(s => s.Matches)
             .ToListAsync();
 
-        Assert.Equal(4, finalStages.Count);
+        // 2 cups x 2 main divisions + 1 cross cup + 2 historical divisions = 7 finals.
+        Assert.Equal(7, finalStages.Count);
 
         foreach (Stage finalStage in finalStages)
         {
@@ -249,6 +279,196 @@ public class DataMaintenanceServiceTests : IClassFixture<CustomWebApplicationFac
             Assert.True(finalMatch.IsFinished);
             Assert.NotNull(finalMatch.WinningTeamId);
         }
+    }
+
+    [Fact]
+    public async Task SeedSampleDataAsync_CrossDivisionCup_ExistsWithFourGroupsAndQualifiersPerGroup()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        IDataMaintenanceService service = scope.ServiceProvider.GetRequiredService<IDataMaintenanceService>();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        await service.WipeSampleDataAsync();
+        await service.SeedSampleDataAsync();
+
+        Division crossCup = await db.Divisions
+            .Include(d => d.Stages).ThenInclude(s => s.StageTeamMatches)
+            .SingleAsync(d => d.IsCrossDivisionCup);
+
+        Assert.Equal("Copa Club 12", crossCup.Name);
+        Assert.Equal(1, crossCup.QualifiersPerGroup);
+
+        List<Stage> groups = [.. crossCup.Stages.Where(s => s.StageType == StageType.Group)];
+        Assert.Equal(4, groups.Count);
+        Assert.All(groups, g => Assert.Equal(4, g.StageTeamMatches.Count));
+
+        // The pooled bracket exists (SemiFinal + Final).
+        Assert.Contains(crossCup.Stages, s => s.StageType == StageType.SemiFinal);
+        Assert.Contains(crossCup.Stages, s => s.StageType == StageType.Final);
+    }
+
+    [Fact]
+    public async Task SeedSampleDataAsync_GroupMatches_HaveJornadasWithEveryTeamOncePerRound()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        IDataMaintenanceService service = scope.ServiceProvider.GetRequiredService<IDataMaintenanceService>();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        await service.WipeSampleDataAsync();
+        await service.SeedSampleDataAsync();
+
+        List<Match> groupMatches = await db.Matches
+            .Where(m => m.Stage.StageType == StageType.Group)
+            .ToListAsync();
+
+        Assert.NotEmpty(groupMatches);
+        // Every group match belongs to a jornada.
+        Assert.All(groupMatches, m => Assert.NotNull(m.Round));
+
+        // For the Primera División group: 7 jornadas, each with every one of the
+        // 8 teams appearing exactly once (4 matches, 8 distinct team slots).
+        Division primera = await db.Divisions
+            .Include(d => d.Stages).ThenInclude(s => s.Matches)
+            .SingleAsync(d => d.Name == "Primera División");
+        Stage primeraGroup = primera.Stages.Single(s => s.StageType == StageType.Group);
+
+        List<IGrouping<int, Match>> rounds = [.. primeraGroup.Matches.GroupBy(m => m.Round!.Value)];
+        Assert.Equal(7, rounds.Count);
+        foreach (IGrouping<int, Match> round in rounds)
+        {
+            List<Guid?> teamSlots =
+            [
+                .. round.Select(m => m.HomeTeamId),
+                .. round.Select(m => m.VisitorTeamId),
+            ];
+            Assert.Equal(8, teamSlots.Count);
+            Assert.Equal(8, teamSlots.Distinct().Count());
+        }
+    }
+
+    [Fact]
+    public async Task SeedSampleDataAsync_ZoneAndCrossCupJornadas_FallOnDifferentWeekdays()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        IDataMaintenanceService service = scope.ServiceProvider.GetRequiredService<IDataMaintenanceService>();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        await service.WipeSampleDataAsync();
+        await service.SeedSampleDataAsync();
+
+        // Regular zone group matches are played on Sundays.
+        Division primera = await db.Divisions
+            .Include(d => d.Stages).ThenInclude(s => s.Matches)
+            .SingleAsync(d => d.Name == "Primera División");
+        Stage primeraGroup = primera.Stages.Single(s => s.StageType == StageType.Group);
+        Assert.All(primeraGroup.Matches, m => Assert.Equal(DayOfWeek.Sunday, m.MatchDate.DayOfWeek));
+
+        // Cross-cup group matches are played on Wednesdays (HU-111), so they can
+        // never collide with the zone Sundays.
+        Division crossCup = await db.Divisions
+            .Include(d => d.Stages).ThenInclude(s => s.Matches)
+            .SingleAsync(d => d.IsCrossDivisionCup);
+        List<Match> crossGroupMatches = [.. crossCup.Stages
+            .Where(s => s.StageType == StageType.Group)
+            .SelectMany(s => s.Matches)];
+        Assert.NotEmpty(crossGroupMatches);
+        Assert.All(crossGroupMatches, m => Assert.Equal(DayOfWeek.Wednesday, m.MatchDate.DayOfWeek));
+    }
+
+    [Fact]
+    public async Task SeedSampleDataAsync_SeedsVariedSanctionsAndSeveralSpanishNews()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        IDataMaintenanceService service = scope.ServiceProvider.GetRequiredService<IDataMaintenanceService>();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        await service.WipeSampleDataAsync();
+        await service.SeedSampleDataAsync();
+
+        List<PlayerSanction> sanctions = await db.PlayerSanctions.ToListAsync();
+        Assert.True(sanctions.Count >= 5);
+        // Variety: at least one Team sanction, one appeal pending, one served/rejected.
+        Assert.Contains(sanctions, s => s.SubjectType == SanctionSubjectType.Team && s.TeamId != null);
+        Assert.Contains(sanctions, s => s.SubjectType == SanctionSubjectType.Player && s.PlayerId != null);
+        Assert.Contains(sanctions, s => s.AppealStatus == SanctionAppealStatus.Pending);
+        // Active sanctions actually flag their player as sanctioned.
+        Assert.True(await db.Players.AnyAsync(p => p.IsSanctioned));
+
+        // News: several posts, all with Spanish content, mixing published and draft.
+        List<BlogPost> posts = await db.BlogPosts.ToListAsync();
+        Assert.True(posts.Count >= 5);
+        Assert.Contains(posts, p => p.IsPublished);
+        Assert.Contains(posts, p => !p.IsPublished);
+    }
+
+    [Fact]
+    public async Task SeedSampleDataAsync_ProducesCoherentStandingsBracketsAndOneTeamOneZone()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        IDataMaintenanceService service = scope.ServiceProvider.GetRequiredService<IDataMaintenanceService>();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        await service.WipeSampleDataAsync();
+        await service.SeedSampleDataAsync();
+
+        // Standings over the finished group matches are complete: every one of
+        // the 8 teams has played all 7 of its games.
+        Division primera = await db.Divisions
+            .Include(d => d.Stages).ThenInclude(s => s.Matches).ThenInclude(m => m.HomeTeam)
+            .Include(d => d.Stages).ThenInclude(s => s.Matches).ThenInclude(m => m.VisitorTeam)
+            .SingleAsync(d => d.Name == "Primera División");
+        Stage primeraGroup = primera.Stages.Single(s => s.StageType == StageType.Group);
+
+        List<Domain.Entities.Models.Position> standings =
+            Application.Utils.Helper.Standings.PositionCalculator.CalculatePositions(primeraGroup.Matches);
+        Assert.Equal(8, standings.Count);
+        foreach (Domain.Entities.Models.Position position in standings)
+        {
+            Assert.Equal(7, position.MatchesPlayed);
+        }
+
+        // Copa Oro's semifinal teams are exactly the top 4 of those standings.
+        List<Guid> top4 = [.. standings.Take(4).Select(p => p.TeamId)];
+        Stage oroSemi = primera.Stages.Single(s => s.BracketName == "Copa Oro" && s.StageType == StageType.SemiFinal);
+        List<Guid> oroSemiTeams =
+        [
+            .. oroSemi.Matches.Select(m => m.HomeTeamId!.Value),
+            .. oroSemi.Matches.Select(m => m.VisitorTeamId!.Value),
+        ];
+        Assert.Equal([.. top4.OrderBy(x => x)], [.. oroSemiTeams.OrderBy(x => x)]);
+
+        // Every main-tournament team belongs to exactly one regular zone (one
+        // StageTeamMatch across the two divisions' group stages) AND to exactly
+        // one cross-cup group.
+        Tournament apertura = await db.Tournaments.SingleAsync(t => t.Name == "Torneo Apertura 2026");
+        List<Guid> divisionIds = await db.Divisions
+            .Where(d => d.TournamentId == apertura.Id && !d.IsCrossDivisionCup)
+            .Select(d => d.Id).ToListAsync();
+        Guid crossCupId = await db.Divisions
+            .Where(d => d.TournamentId == apertura.Id && d.IsCrossDivisionCup)
+            .Select(d => d.Id).SingleAsync();
+
+        List<Guid> teamIds = await db.Teams.Where(t => t.TournamentId == apertura.Id).Select(t => t.Id).ToListAsync();
+        Assert.Equal(16, teamIds.Count);
+
+        foreach (Guid teamId in teamIds)
+        {
+            int zoneGroupCount = await db.StageTeamMatches.CountAsync(stm =>
+                stm.TeamId == teamId
+                && stm.Stage!.StageType == StageType.Group
+                && divisionIds.Contains(stm.Stage.DivisionId));
+            Assert.Equal(1, zoneGroupCount);
+
+            int crossGroupCount = await db.StageTeamMatches.CountAsync(stm =>
+                stm.TeamId == teamId
+                && stm.Stage!.StageType == StageType.Group
+                && stm.Stage.DivisionId == crossCupId);
+            Assert.Equal(1, crossGroupCount);
+        }
+
+        // Season registrations exist for every team and player of the season.
+        Assert.Equal(16, await db.Set<TeamTournamentRegistration>().CountAsync(r => r.TournamentId == apertura.Id));
+        Assert.Equal(128, await db.Set<PlayerTeamRegistration>().CountAsync(r => r.TournamentId == apertura.Id));
     }
 
     [Fact]
