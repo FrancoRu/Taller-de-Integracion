@@ -207,11 +207,11 @@ public class TournamentService(
                 PageSize = PaginationDefaults.MaxPageSize,
             });
 
-            foreach (Stage stage in stages.Items)
+            foreach (Guid stageId in stages.Items.Select(stage => stage.Id))
             {
                 PaginatedResponse<Match> existingMatches = await matchService.GetAllMatchesAsync(new GetMatchesFilteredRequest
                 {
-                    StageId = stage.Id,
+                    StageId = stageId,
                     PageSize = 1,
                 });
 
@@ -220,7 +220,7 @@ public class TournamentService(
                     continue;
                 }
 
-                await matchService.CreateAutomatedMatchesAsync(stage.Id);
+                await matchService.CreateAutomatedMatchesAsync(stageId);
             }
         }
     }

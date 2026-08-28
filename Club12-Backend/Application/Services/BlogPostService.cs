@@ -46,6 +46,10 @@ public class BlogPostService(IBlogPostRepository blogpostRepository) : IBlogPost
     /// an id when it parses as a GUID, otherwise it is looked up as a slug.
     /// </summary>
     /// <param name="idOrSlug">The blog post's GUID id or its slug.</param>
+    /// <param name="includeUnpublished">
+    /// When false (the default), a draft is treated as not found so it never
+    /// leaks through public endpoints; when true, drafts are also resolved.
+    /// </param>
     /// <returns>The blog post entity if found; otherwise, null.</returns>
     public async Task<BlogPost?> GetBlogPostByIdOrSlugAsync(string idOrSlug, bool includeUnpublished = false)
     {

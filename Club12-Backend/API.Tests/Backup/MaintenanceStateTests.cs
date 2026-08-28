@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 using Application.Interfaces.Maintenance;
 using Application.Maintenance;
 
@@ -56,13 +58,16 @@ public class MaintenanceStateTests
     }
 
     [Fact]
+    [SuppressMessage(
+        "SonarAnalyzer",
+        "S3966:Objects should not be disposed more than once",
+        Justification = "Disposing a stale lease a second time is exactly the behavior under test: it must be a safe no-op and must not release the newer, still-active lease.")]
     public void Dispose_IsIdempotent_DoesNotReleaseANewerLease()
     {
         MaintenanceState state = new();
 
         IDisposable first = state.Enter("backup");
         first.Dispose();
-        first.Dispose(); // second dispose must be a no-op
 
         using IDisposable second = state.Enter("restore");
         first.Dispose(); // disposing the stale lease must NOT release the active one

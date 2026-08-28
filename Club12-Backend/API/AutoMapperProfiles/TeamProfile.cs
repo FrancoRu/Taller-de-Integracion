@@ -18,6 +18,7 @@ public class TeamProfile : Profile
     public TeamProfile()
     {
         _ = CreateMap<Team, TeamResponse>()
+            .ForMember(dest => dest.ClubId, opt => opt.MapFrom(src => src.ClubId))
             .ReverseMap();
 
         _ = CreateMap<Team, TeamDetailedMatchResponse>()

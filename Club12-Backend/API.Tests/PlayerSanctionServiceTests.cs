@@ -145,6 +145,7 @@ public class PlayerSanctionServiceTests : IClassFixture<CustomWebApplicationFact
         IEnumerable<PlayerSanction> result = await sanctionService.GetExpiredSanctionsAsync(cutoffDate);
 
         PlayerSanction returned = Assert.Single(result, s => s.Id == sanction.Id);
+        Assert.NotNull(sanction.Player);
         Assert.NotNull(returned.Player);
         Assert.Equal(sanction.Player.Id, returned.Player.Id);
         Assert.Equal(sanction.Player.DocumentNumber, returned.Player.DocumentNumber);

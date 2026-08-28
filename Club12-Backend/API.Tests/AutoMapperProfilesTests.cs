@@ -2,6 +2,7 @@ using API.AutoMapperProfiles;
 
 using Application.DTOs.Match.Request;
 using Application.DTOs.Match.Response;
+using Application.DTOs.Team.Response;
 
 using AutoMapper;
 
@@ -120,5 +121,24 @@ public class AutoMapperProfilesTests
         DetailedMatchResponse response = mapper.Map<DetailedMatchResponse>(match);
 
         Assert.Equal(7, response.Round);
+    }
+
+    /// <summary>
+    /// The team's ClubId flows through to the response DTO so the frontend can
+    /// link a team back to its club.
+    /// </summary>
+    [Fact]
+    public void Map_ToTeamResponse_ExposesClubId()
+    {
+        MapperConfiguration configuration = new(cfg => cfg.AddProfile<TeamProfile>(), NullLoggerFactory.Instance);
+        IMapper mapper = configuration.CreateMapper();
+
+        Guid clubId = Guid.NewGuid();
+        Team team = CreateTeam("River Plate");
+        team.ClubId = clubId;
+
+        TeamResponse response = mapper.Map<TeamResponse>(team);
+
+        Assert.Equal(clubId, response.ClubId);
     }
 }

@@ -50,18 +50,12 @@ public sealed class BackupRestoreService(
 
         logger.LogInformation("Restore safety backup stored as {SafetyName}.", safetyName);
 
-        try
+        // A restore failure propagates as-is: the safety backup created above is
+        // kept for recovery because the cleanup below runs only on the success
+        // path, and its name was already logged when it was stored.
+        await using (Stream chosen = await backupStorage.RetrieveAsync(backupName, ct))
         {
-            await using Stream chosen = await backupStorage.RetrieveAsync(backupName, ct);
             await restoreService.RestoreAsync(chosen, ct);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(
-                ex,
-                "Restore from {BackupName} failed; safety backup {SafetyName} kept for recovery.",
-                backupName, safetyName);
-            throw;
         }
 
         // Success: the database is now the restored one, so the safeguard is no
