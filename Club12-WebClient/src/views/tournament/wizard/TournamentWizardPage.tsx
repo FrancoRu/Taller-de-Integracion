@@ -14,6 +14,9 @@ import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { useStage } from '@/modules/stage/hook/stage.hook';
+import { tournamentService } from '@/modules/tournament/service/tournament.service';
+import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
+import { GUID } from '@/modules/core/types/types';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { createInitialWizardState } from './types';
 import {
@@ -79,6 +82,27 @@ export default function TournamentWizardPage() {
     try {
       const result = await submitWizard(state, {
         addTournament,
+        // Structure can only be built while OpenForRegistration (HU-31), and a
+        // new tournament starts Scheduled — so open registration right after
+        // creating it, before any division/stage. Uses the raw service so the
+        // orchestration can tell success from failure (the context method
+        // returns void). Errors surface through submitWizard's result.
+        openRegistration: async (tournamentId: GUID) => {
+          try {
+            await tournamentService.putTournamentById(tournamentId, {
+              name: state.tournament.name.trim(),
+              description: state.tournament.description.trim(),
+              startDate: new Date(state.tournament.startDate),
+              teamRegistrationDeadline: new Date(
+                state.tournament.teamRegistrationDeadline
+              ),
+              status: TournamentStatus.OpenForRegistration,
+            });
+            return true;
+          } catch {
+            return false;
+          }
+        },
         addDivision,
         addStage,
       });
@@ -99,7 +123,7 @@ export default function TournamentWizardPage() {
       } else {
         await notifySuccess({
           title: 'Torneo creado',
-          text: 'El torneo y su estructura se crearon correctamente. Ahora podés abrir la inscripción de equipos.',
+          text: 'El torneo y su estructura se crearon correctamente. La inscripción quedó abierta: ya podés inscribir equipos.',
         });
       }
 

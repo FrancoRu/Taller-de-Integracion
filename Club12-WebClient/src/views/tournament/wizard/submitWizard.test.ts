@@ -48,6 +48,7 @@ const makeServices = (
   addTournament: vi.fn(async () => (({
     id: guid('tournament')
   }) as never)),
+  openRegistration: vi.fn(async () => true),
   addDivision: vi.fn(async ({ name, tournamentId, isCrossDivisionCup }: never) => (({
     id: guid('division'),
     name,
@@ -186,6 +187,25 @@ describe('submitWizard', () => {
 
   it('aborts immediately and reports an error when tournament creation fails', async () => {
     const services = makeServices({ addTournament: vi.fn(async () => undefined) });
+    const result = await submitWizard(makeState(), services);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
+    expect(services.addDivision).not.toHaveBeenCalled();
+  });
+
+  it('opens registration after creating the tournament and before any division', async () => {
+    const services = makeServices();
+    await submitWizard(makeState(), services);
+
+    expect(services.openRegistration).toHaveBeenCalledWith(guid('tournament'));
+    const openOrder = services.openRegistration.mock.invocationCallOrder[0];
+    const divisionOrder = services.addDivision.mock.invocationCallOrder[0];
+    expect(openOrder).toBeLessThan(divisionOrder);
+  });
+
+  it('aborts before building the structure when registration cannot be opened', async () => {
+    const services = makeServices({ openRegistration: vi.fn(async () => false) });
     const result = await submitWizard(makeState(), services);
 
     expect(result.success).toBe(false);
