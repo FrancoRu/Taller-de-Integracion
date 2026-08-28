@@ -151,12 +151,24 @@ Leyenda: ✅ hecho y verificado con tests · ⚠️ hecho con salvedad · 🔵 s
 - [x] HU-104 Tema en panel ✅
 - [x] HU-105 Responsive + accesibilidad ✅ (pase liviano)
 
+## Épica 22 — Rediseño del flujo de inscripción y armado del torneo
+> Mergeado a `develop`: PR #42 (HU-106..109), verificado con tests (backend 551 / frontend 339, 0 warnings).
+- [x] HU-106 Wizard crea torneo + estructura, sin equipos ni fixture ✅
+- [x] HU-107 Inscripción de equipos con torneo abierto (crear nuevo / inscribir existente + copiar plantel; alta y baja) ✅
+- [x] HU-108 Asignar inscriptos a divisiones y generar fixture al iniciar ✅
+- [x] HU-109 Guardas de completitud (bloqueo duro + validación en vivo) ✅
+
+## Épica 23 — Copa cruzada multi-grupo y calendario
+- [x] HU-110 Copa cruzada con N grupos de tamaño variable → un cuadro con BYE ✅ (PR #43)
+- [x] HU-111 Calendario: jornadas semanales, zona/copa en días distintos, solo fechas ✅ (PR #44) ⚠️ datación de rondas de playoff diferida
+
 ---
 
 ## Resumen
-- **105 / 105 historias ✅** (implementadas + verificadas con tests).
-- Salvedades menores: HU-17 (Open Graph client-side, sin SSR).
+- **111 / 111 historias ✅** (implementadas + verificadas con tests). Estado en `develop`: backend **551** tests, frontend **339** tests, 0 warnings.
+- Salvedades menores: HU-17 (Open Graph client-side, sin SSR); HU-111 dejó la **datación de rondas de playoff** como follow-up (las jornadas de grupo sí están coordinadas).
 
 ### Pendiente operativo (no historias)
-- Validación E2E en vivo con Playwright + navegador (funcional + visual).
+- **Verificación E2E en vivo** del flujo completo (crear → inscribir → asignar → iniciar → fixture) sobre `develop`.
+- Desplegar `develop` a producción (las features nuevas todavía no están en el sitio publicado).
 - Limpiar la base de datos de desarrollo (se migra sola al arrancar por auto-migrate; luego wipe vía panel de Administración de datos).
