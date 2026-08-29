@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -15,6 +16,7 @@ import {
   Typography,
 } from '@mui/material';
 import { GUID } from '@/modules/core/types/types';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import { IMatchResponse, IRoundMatchesResponse } from '@/modules/match/type/match';
 import {
@@ -62,6 +64,7 @@ export default function StageMatchesByRound({
   stageId,
   emptyMessage = 'No hay partidos cargados para esta fase.',
 }: StageMatchesByRoundProps) {
+  const navigate = useNavigate();
   const { getStageMatchesByRound, suspendMatch } = useMatch();
   const [rounds, setRounds] = useState<IRoundMatchesResponse[]>([]);
   const [loading, setLoading] = useState(false);
@@ -171,15 +174,29 @@ export default function StageMatchesByRound({
                     </Typography>
                     <TeamSide team={match.visitorTeam} />
                     <MatchStatusChip status={match.status} isFinished={match.isFinished} />
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      color="warning"
-                      startIcon={<EventBusyIcon fontSize="small" />}
-                      onClick={() => openSuspend(match)}
+                    <Stack
+                      direction={{ xs: 'column', sm: 'row' }}
+                      spacing={1}
                     >
-                      Suspender / Reprogramar
-                    </Button>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        onClick={() =>
+                          navigate(APP_ROUTES.panelMatch.build(match.slug))
+                        }
+                      >
+                        Cargar resultado
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="warning"
+                        startIcon={<EventBusyIcon fontSize="small" />}
+                        onClick={() => openSuspend(match)}
+                      >
+                        Suspender / Reprogramar
+                      </Button>
+                    </Stack>
                   </Box>
                 ))}
                 {byes.map(teamName => (

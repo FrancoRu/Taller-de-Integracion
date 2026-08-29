@@ -220,6 +220,16 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
     {
         PlayerSanctionResponse response = mapper.Map<PlayerSanctionResponse>(sanction);
 
+        // Resolve WHO the sanction targets (HU-77) so the list/detail always
+        // show the subject — the player's name, the TEAM's name for a team
+        // sanction, or the staff member's name — regardless of which
+        // navigations the query happened to load.
+        (string? playerFullName, string? teamName, string? staffName) =
+            await playerSanctionService.ResolveSubjectAsync(sanction);
+        response.PlayerFullName = playerFullName;
+        response.TeamName = teamName;
+        response.StaffName = staffName;
+
         int? fechasRemaining = await playerSanctionService.GetFechasRemainingAsync(sanction);
         response.FechasRemaining = fechasRemaining;
         response.IsActive = fechasRemaining.HasValue

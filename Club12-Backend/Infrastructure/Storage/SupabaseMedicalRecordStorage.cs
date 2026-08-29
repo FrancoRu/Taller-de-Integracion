@@ -34,4 +34,9 @@ public sealed class SupabaseMedicalRecordStorage(ISupabaseRawStorage rawStorage)
 
         return objectPath;
     }
+
+    public async Task<byte[]> DownloadAsync(string objectPath, CancellationToken ct = default)
+    {
+        return await rawStorage.DownloadRawAsync(objectPath);
+    }
 }

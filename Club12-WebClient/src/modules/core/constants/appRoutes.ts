@@ -82,16 +82,16 @@ export const APP_ROUTES = {
   panelTournamentWizard: '/panel/torneos/asistente',
   panelDivisions: '/panel/divisiones',
   panelDivisionCreate: '/panel/divisiones/crear',
+  panelDivisionEdit: {
+    pattern: '/panel/divisiones/:divisionId/editar',
+    build: (divisionId: string) => `/panel/divisiones/${divisionId}/editar`,
+  },
   panelDivision: {
     pattern: '/panel/divisiones/:divisionId',
     build: (divisionId: string) => `/panel/divisiones/${divisionId}`,
   },
   panelStages: '/panel/fases',
   panelStageCreate: '/panel/fases/crear',
-  panelStageEdit: {
-    pattern: '/panel/fases/editar/:stageId',
-    build: (stageId: string) => `/panel/fases/editar/${stageId}`,
-  },
   panelStage: {
     pattern: '/panel/fases/:stageId',
     build: (stageId: string) => `/panel/fases/${stageId}`,

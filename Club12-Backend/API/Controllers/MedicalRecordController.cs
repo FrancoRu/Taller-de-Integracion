@@ -110,6 +110,36 @@ public class MedicalRecordController(
             : Ok(response);
     }
 
+    /// <summary>
+    /// Downloads the PDF file of a player's uploaded medical record for a team
+    /// and tournament (HU-55/HU-56). The medical-records storage area is
+    /// private, so the file is streamed back through the API rather than via a
+    /// public URL.
+    /// </summary>
+    /// <param name="playerId">The player.</param>
+    /// <param name="teamId">The team the player is registered to.</param>
+    /// <param name="tournamentId">The tournament (season).</param>
+    /// <returns>The stored PDF, or 404 when no record/file exists.</returns>
+    [HttpGet("download")]
+    [Authorize(Roles = Roles.AdminOrOwner)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DownloadMedicalRecord(
+        [FromQuery] Guid playerId, [FromQuery] Guid teamId, [FromQuery] Guid tournamentId)
+    {
+        MedicalRecordResponse? record = await medicalRecordService.GetAsync(playerId, teamId, tournamentId);
+
+        if (record?.FileUrl is null)
+        {
+            return this.NotFoundProblem(nameof(MedicalRecordResponse), $"{playerId}/{teamId}/{tournamentId}");
+        }
+
+        byte[] content = await medicalRecordStorage.DownloadAsync(record.FileUrl);
+        string fileName = string.IsNullOrWhiteSpace(record.FileName) ? "medical-record.pdf" : record.FileName;
+
+        return File(content, "application/pdf", fileName);
+    }
+
     private string GetActor()
     {
         return User?.Identity?.Name

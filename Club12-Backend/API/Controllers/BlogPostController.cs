@@ -104,7 +104,7 @@ public class BlogPostController(
     [HttpPut("{id:guid}/photo")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> UpdateBlogPostPhoto(Guid id, UpdateBlogPostPhotoRequest photoRequest)
+    public async Task<ActionResult> UpdateBlogPostPhoto(Guid id, [FromForm] UpdateBlogPostPhotoRequest photoRequest)
     {
         if (!photoRequest.PhotoFile.IsValidImageFile())
         {
@@ -146,9 +146,15 @@ public class BlogPostController(
             return this.NotFoundProblem(nameof(BlogPost), idOrSlug);
         }
 
-        blogPost.Views++;
-        await blogPostService.UpdateBlogPostAsync(blogPost);
-
+        // The view counter reflects genuine public reads only (HU): an
+        // Admin/Owner opening the post to preview or edit it must not inflate
+        // the count. Public callers (the same ones that cannot see drafts)
+        // increment it exactly once per read.
+        if (!includeUnpublished)
+        {
+            blogPost.Views++;
+            await blogPostService.UpdateBlogPostAsync(blogPost);
+        }
 
         BlogPostResponse blogPostResponse = mapper.Map<BlogPostResponse>(blogPost);
         return Ok(blogPostResponse);

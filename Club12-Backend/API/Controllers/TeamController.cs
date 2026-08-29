@@ -46,7 +46,7 @@ public class TeamController(
     [HttpPost()]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TeamResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<TeamResponse>> CreateTeam(CreateTeamRequest teamRequest)
+    public async Task<ActionResult<TeamResponse>> CreateTeam([FromForm] CreateTeamRequest teamRequest)
     {
         if (!teamRequest.LogoFile.IsValidImageFile())
         {
@@ -103,7 +103,7 @@ public class TeamController(
     [HttpPut("{id:guid}/logo")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> UpdateTeamLogo(Guid id, UpdateTeamLogoRequest logoRequest)
+    public async Task<ActionResult> UpdateTeamLogo(Guid id, [FromForm] UpdateTeamLogoRequest logoRequest)
     {
         if (!logoRequest.LogoFile.IsValidImageFile())
         {
