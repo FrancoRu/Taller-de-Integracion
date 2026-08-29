@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -82,6 +83,21 @@ const TeamFormDialog: React.FC<TeamFormDialogProps> = ({
   const selectedStyle = toJerseyStyle(form.jerseyStyle);
   const previewSecondary = hasSecondary ? secondaryValue : undefined;
 
+  // Preview a freshly picked escudo file immediately (object URL), falling back
+  // to the team's stored logo. The URL is revoked when the file changes or the
+  // dialog unmounts so it doesn't leak.
+  const [logoPreview, setLogoPreview] = useState('');
+  useEffect(() => {
+    if (!form.logo) {
+      setLogoPreview('');
+      return;
+    }
+    const url = URL.createObjectURL(form.logo);
+    setLogoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [form.logo]);
+  const displayedLogoUrl = logoPreview || form.logoUrl;
+
   return (
     <Dialog
       open={open}
@@ -102,7 +118,7 @@ const TeamFormDialog: React.FC<TeamFormDialogProps> = ({
                 gap: 1,
               }}
             >
-              <TeamLogo teamName={form.name || '—'} logoUrl={form.logoUrl} size={88} />
+              <TeamLogo teamName={form.name || '—'} logoUrl={displayedLogoUrl} size={88} />
               <Button variant="outlined" component="label" size="small">
                 {form.logoUrl || form.logo ? 'Cambiar escudo' : 'Seleccionar escudo'}
                 <input

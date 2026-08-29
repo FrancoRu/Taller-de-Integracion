@@ -68,8 +68,17 @@ export const teamService = {
    * @param {File} logo - The new logo file.
    * @returns {Promise<AxiosResponse<void>>} The server response.
    */
-  putTeamLogoById: async (id: GUID, logo: File): Promise<AxiosResponse<void>> =>
-    await sendPut(`${routes.teams}/${id}/logo`, logo),
+  putTeamLogoById: async (id: GUID, logo: File): Promise<AxiosResponse<void>> => {
+    // The backend binds [FromForm] UpdateTeamLogoRequest, which requires both a
+    // TeamId and the LogoFile — send a proper multipart body (a raw File as the
+    // request body fails model binding with a 400).
+    const formData = new FormData();
+    formData.append('TeamId', id);
+    formData.append('LogoFile', logo);
+    return await sendPut(`${routes.teams}/${id}/logo`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 
   /**
    * Retrieves teams based on the provided filters.
