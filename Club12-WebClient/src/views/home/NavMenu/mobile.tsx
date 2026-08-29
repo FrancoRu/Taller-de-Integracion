@@ -49,13 +49,13 @@ const MobileNavItems: React.FC<MobileNavItemsProps> = ({ onCloseDrawer }) => {
 
       <ListItemButton
         component={Link}
-        to={`/${RoutesNavigationViews.Tournaments}`}
-        selected={location.pathname.startsWith('/torneos')}
+        to={`/${RoutesNavigationViews.Champions}`}
+        selected={isSelected(`/${RoutesNavigationViews.Champions}`)}
         onClick={() =>
-          handleNavigationAndCloseDrawer(`/${RoutesNavigationViews.Tournaments}`)
+          handleNavigationAndCloseDrawer(`/${RoutesNavigationViews.Champions}`)
         }
       >
-        <ListItemText primary="Torneos" />
+        <ListItemText primary="Campeones" />
       </ListItemButton>
 
       <ListItemButton
@@ -67,17 +67,6 @@ const MobileNavItems: React.FC<MobileNavItemsProps> = ({ onCloseDrawer }) => {
         }
       >
         <ListItemText primary="Sanciones" />
-      </ListItemButton>
-
-      <ListItemButton
-        component={Link}
-        to={`/${RoutesNavigationViews.Champions}`}
-        selected={isSelected(`/${RoutesNavigationViews.Champions}`)}
-        onClick={() =>
-          handleNavigationAndCloseDrawer(`/${RoutesNavigationViews.Champions}`)
-        }
-      >
-        <ListItemText primary="Campeones" />
       </ListItemButton>
 
       <ListItemButton

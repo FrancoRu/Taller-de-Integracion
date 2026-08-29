@@ -81,9 +81,6 @@ export default function PublicChampionsPage() {
 
   return (
     <PageShell title="Campeones">
-      <Typography variant="body1" sx={{ color: 'text.secondary', mb: 3 }}>
-        Los campeones de cada torneo, coronados al finalizar la competencia.
-      </Typography>
 
       {seasons.length === 0 ? (
         <Typography sx={{ color: 'text.secondary' }}>

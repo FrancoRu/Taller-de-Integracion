@@ -64,13 +64,13 @@ const DesktopNavItems: React.FC<DesktopNavItemsProps> = ({
 
       <ListItemButton
         component={Link}
-        to={`/${RoutesNavigationViews.Tournaments}`}
-        selected={location.pathname.startsWith('/torneos')}
+        to={`/${RoutesNavigationViews.Champions}`}
+        selected={isSelected(`/${RoutesNavigationViews.Champions}`)}
         onClick={() =>
-          handleNavigationAndCloseMenu(`/${RoutesNavigationViews.Tournaments}`)
+          handleNavigationAndCloseMenu(`/${RoutesNavigationViews.Champions}`)
         }
       >
-        <ListItemText primary="Torneos" />
+        <ListItemText primary="Campeones" />
       </ListItemButton>
 
       <ListItemButton
@@ -82,17 +82,6 @@ const DesktopNavItems: React.FC<DesktopNavItemsProps> = ({
         }
       >
         <ListItemText primary="Sanciones" />
-      </ListItemButton>
-
-      <ListItemButton
-        component={Link}
-        to={`/${RoutesNavigationViews.Champions}`}
-        selected={isSelected(`/${RoutesNavigationViews.Champions}`)}
-        onClick={() =>
-          handleNavigationAndCloseMenu(`/${RoutesNavigationViews.Champions}`)
-        }
-      >
-        <ListItemText primary="Campeones" />
       </ListItemButton>
 
       <ListItemButton
