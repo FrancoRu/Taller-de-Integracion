@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace API.Controllers;
@@ -153,6 +154,95 @@ public class TeamController(
 
         TeamResponse teamResponse = mapper.Map<TeamResponse>(team);
         return Ok(teamResponse);
+    }
+
+    /// <summary>
+    /// Retrieves the team's current group-stage standing row for a tournament,
+    /// powering the public team-profile summary card.
+    /// </summary>
+    /// <param name="idOrSlug">The id (GUID) or slug of the team.</param>
+    /// <param name="tournamentId">
+    /// Optional: the tournament to summarize. Defaults to the team's own current
+    /// tournament when omitted.
+    /// </param>
+    /// <returns>
+    /// <para>Returns 200 (OK) with the standing row when the team is in a
+    /// group-stage table for the tournament.</para>
+    /// <para>Returns 200 (OK) with a null body when the team is in no group-stage
+    /// standing (e.g. playoff-only, unassigned, or no finished matches yet).</para>
+    /// <para>Returns 404 (Not Found) when the team does not exist.</para>
+    /// </returns>
+    [AllowAnonymous]
+    [HttpGet("{idOrSlug}/summary")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TeamSummaryResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TeamSummaryResponse>> GetTeamSummary(string idOrSlug, [FromQuery] Guid? tournamentId = null)
+    {
+        Team? team = await teamService.GetTeamByIdOrSlugAsync(idOrSlug, tournamentId);
+
+        if (team is null)
+        {
+            return this.NotFoundProblem(nameof(Team), idOrSlug);
+        }
+
+        TeamSummaryResponse? summary = await teamService.GetTeamSummaryAsync(team.Id, tournamentId ?? team.TournamentId);
+        return Ok(summary);
+    }
+
+    /// <summary>
+    /// Retrieves the team's matches in a tournament (home or visitor), oriented
+    /// from the team's perspective and ordered by date ascending.
+    /// </summary>
+    /// <param name="idOrSlug">The id (GUID) or slug of the team.</param>
+    /// <param name="tournamentId">
+    /// Optional: the tournament to list matches for. Defaults to the team's own
+    /// current tournament when omitted.
+    /// </param>
+    /// <returns>
+    /// <para>Returns 200 (OK) with the team's matches (empty when there are none).</para>
+    /// <para>Returns 404 (Not Found) when the team does not exist.</para>
+    /// </returns>
+    [AllowAnonymous]
+    [HttpGet("{idOrSlug}/matches")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<TeamMatchResponse>))]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<List<TeamMatchResponse>>> GetTeamMatches(string idOrSlug, [FromQuery] Guid? tournamentId = null)
+    {
+        Team? team = await teamService.GetTeamByIdOrSlugAsync(idOrSlug, tournamentId);
+
+        if (team is null)
+        {
+            return this.NotFoundProblem(nameof(Team), idOrSlug);
+        }
+
+        List<TeamMatchResponse> matches = await teamService.GetTeamMatchesAsync(team.Id, tournamentId ?? team.TournamentId);
+        return Ok(matches);
+    }
+
+    /// <summary>
+    /// Retrieves every tournament the team has participated in, newest first,
+    /// with season info — the public team-profile trajectory list.
+    /// </summary>
+    /// <param name="idOrSlug">The id (GUID) or slug of the team.</param>
+    /// <returns>
+    /// <para>Returns 200 (OK) with the team's participations (empty when none).</para>
+    /// <para>Returns 404 (Not Found) when the team does not exist.</para>
+    /// </returns>
+    [AllowAnonymous]
+    [HttpGet("{idOrSlug}/participations")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<TeamParticipationResponse>))]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<List<TeamParticipationResponse>>> GetTeamParticipations(string idOrSlug)
+    {
+        Team? team = await teamService.GetTeamByIdOrSlugAsync(idOrSlug);
+
+        if (team is null)
+        {
+            return this.NotFoundProblem(nameof(Team), idOrSlug);
+        }
+
+        List<TeamParticipationResponse> participations = await teamService.GetTeamParticipationsAsync(team.Id, team.TournamentId);
+        return Ok(participations);
     }
 
     /// <summary>

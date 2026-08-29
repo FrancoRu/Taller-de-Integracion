@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.Abstract.Response;
 using Application.DTOs.Team.Request;
+using Application.DTOs.Team.Response;
 
 using Domain.Entities.Models;
 
@@ -120,4 +121,48 @@ public interface ITeamService
     /// <exception cref="System.InvalidOperationException">The tournament is not in a phase that allows removing teams.</exception>
     /// <exception cref="System.Collections.Generic.KeyNotFoundException">The team is not enrolled in the tournament.</exception>
     Task UnenrollTeamAsync(Tournament tournament, Guid teamId);
+
+    /// <summary>
+    /// Builds the team's current group-stage standing row for a tournament,
+    /// powering the public team-profile summary card. Scans the tournament's
+    /// divisions, computes each division's group standings, and returns the row
+    /// for the group table that contains the team (with its 1-based position and
+    /// the group's team count).
+    /// </summary>
+    /// <param name="teamId">The team whose standing to locate.</param>
+    /// <param name="tournamentId">
+    /// The tournament to look in; when null the team has no season context and
+    /// null is returned.
+    /// </param>
+    /// <returns>
+    /// The team's standing row, or null when the team is in no group-stage
+    /// standing for the tournament (e.g. playoff-only, or no finished matches).
+    /// </returns>
+    Task<TeamSummaryResponse?> GetTeamSummaryAsync(Guid teamId, Guid? tournamentId);
+
+    /// <summary>
+    /// Returns the team's matches (as home OR visitor) in a tournament, oriented
+    /// from the team's perspective and ordered by match date ascending.
+    /// </summary>
+    /// <param name="teamId">The team whose matches to list.</param>
+    /// <param name="tournamentId">
+    /// The tournament to scope the matches to; when null an empty list is
+    /// returned.
+    /// </param>
+    /// <returns>The team's matches, oldest first; empty when there are none.</returns>
+    Task<List<TeamMatchResponse>> GetTeamMatchesAsync(Guid teamId, Guid? tournamentId);
+
+    /// <summary>
+    /// Returns every tournament the team has participated in (from its
+    /// <see cref="TeamTournamentRegistration"/> history), enriched with season
+    /// info, newest first (by season year descending, nulls last, then
+    /// tournament name).
+    /// </summary>
+    /// <param name="teamId">The team whose participation history to list.</param>
+    /// <param name="currentTournamentId">
+    /// The team's current tournament pointer, used to flag the current
+    /// participation; when null no entry is flagged current.
+    /// </param>
+    /// <returns>The team's tournament participations.</returns>
+    Task<List<TeamParticipationResponse>> GetTeamParticipationsAsync(Guid teamId, Guid? currentTournamentId);
 }

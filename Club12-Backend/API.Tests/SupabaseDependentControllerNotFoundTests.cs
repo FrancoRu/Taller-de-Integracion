@@ -47,6 +47,39 @@ public class SupabaseDependentControllerNotFoundTests
     }
 
     [Fact]
+    public async Task TeamController_GetTeamSummary_MissingEntity_Returns404ProblemDetails()
+    {
+        TeamController controller = new(new NotFoundTeamService(), null!, new NotUsedMapper());
+        ConfigureProblemDetailsFactory(controller);
+
+        ActionResult<TeamSummaryResponse> result = await controller.GetTeamSummary(Guid.NewGuid().ToString());
+
+        AssertNotFoundProblem(result.Result, "Team");
+    }
+
+    [Fact]
+    public async Task TeamController_GetTeamMatches_MissingEntity_Returns404ProblemDetails()
+    {
+        TeamController controller = new(new NotFoundTeamService(), null!, new NotUsedMapper());
+        ConfigureProblemDetailsFactory(controller);
+
+        ActionResult<List<TeamMatchResponse>> result = await controller.GetTeamMatches(Guid.NewGuid().ToString());
+
+        AssertNotFoundProblem(result.Result, "Team");
+    }
+
+    [Fact]
+    public async Task TeamController_GetTeamParticipations_MissingEntity_Returns404ProblemDetails()
+    {
+        TeamController controller = new(new NotFoundTeamService(), null!, new NotUsedMapper());
+        ConfigureProblemDetailsFactory(controller);
+
+        ActionResult<List<TeamParticipationResponse>> result = await controller.GetTeamParticipations(Guid.NewGuid().ToString());
+
+        AssertNotFoundProblem(result.Result, "Team");
+    }
+
+    [Fact]
     public async Task VenueController_GetVenueById_MissingEntity_Returns404ProblemDetails()
     {
         VenueController controller = new(new NotFoundVenueService(), null!, new NotUsedMapper());
@@ -168,6 +201,21 @@ public class SupabaseDependentControllerNotFoundTests
         }
 
         public Task UnenrollTeamAsync(Tournament tournament, Guid teamId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<TeamSummaryResponse?> GetTeamSummaryAsync(Guid teamId, Guid? tournamentId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<List<TeamMatchResponse>> GetTeamMatchesAsync(Guid teamId, Guid? tournamentId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<List<TeamParticipationResponse>> GetTeamParticipationsAsync(Guid teamId, Guid? currentTournamentId)
         {
             throw new NotImplementedException();
         }

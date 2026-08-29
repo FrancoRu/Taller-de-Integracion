@@ -14,6 +14,11 @@ import {
   TeamFiltered,
   ITeamResponse,
 } from '@/modules/team/type/team';
+import {
+  TeamMatch,
+  TeamParticipation,
+  TeamSummary,
+} from '@/modules/team/type/teamProfile.d';
 
 /**
  * Service for managing teams.
@@ -107,4 +112,48 @@ export const teamService = {
    */
   deleteTeamById: async (id: GUID): Promise<AxiosResponse<void>> =>
     await sendDelete(`${routes.teams}/${id}`),
+
+  /**
+   * Retrieves a team's standing (position, record, points) within one
+   * tournament, for the public team profile. Answers `null` when the team has
+   * no standing yet.
+   * @param {string} idOrSlug - The id or public slug of the team.
+   * @param {GUID} [tournamentId] - Scopes the standing to a single tournament.
+   * @returns {Promise<AxiosResponse<TeamSummary | null>>} The server response.
+   */
+  getTeamSummary: async (
+    idOrSlug: string,
+    tournamentId?: GUID
+  ): Promise<AxiosResponse<TeamSummary | null>> =>
+    await sendGet(
+      `${routes.teams}/${idOrSlug}/summary`,
+      tournamentId ? { tournamentId } : undefined
+    ),
+
+  /**
+   * Retrieves a team's fixture (matches ordered by date ascending), oriented to
+   * this team, for the public team profile.
+   * @param {string} idOrSlug - The id or public slug of the team.
+   * @param {GUID} [tournamentId] - Scopes the fixture to a single tournament.
+   * @returns {Promise<AxiosResponse<TeamMatch[]>>} The server response.
+   */
+  getTeamMatches: async (
+    idOrSlug: string,
+    tournamentId?: GUID
+  ): Promise<AxiosResponse<TeamMatch[]>> =>
+    await sendGet(
+      `${routes.teams}/${idOrSlug}/matches`,
+      tournamentId ? { tournamentId } : undefined
+    ),
+
+  /**
+   * Retrieves the tournaments a team has taken part in (newest first), used to
+   * drive the team profile's season/tournament selector.
+   * @param {string} idOrSlug - The id or public slug of the team.
+   * @returns {Promise<AxiosResponse<TeamParticipation[]>>} The server response.
+   */
+  getTeamParticipations: async (
+    idOrSlug: string
+  ): Promise<AxiosResponse<TeamParticipation[]>> =>
+    await sendGet(`${routes.teams}/${idOrSlug}/participations`),
 };
