@@ -2,7 +2,7 @@
 
 > Documento para continuar en un chat nuevo. Rama de integración: **develop** (deploya a staging: club12.argentum-solutions.com.ar). `main` NO se toca. Stack: .NET 8 backend (Clean/Hexagonal, EF Core + Npgsql/Postgres) + React 19/TS/MUI/Vite frontend (vitest, ESLint `--max-warnings 0`). Todo user-facing en **español (voseo)**; código en inglés.
 
-## ✅ MERGEADO a develop / en staging (PRs #53–#70)
+## ✅ MERGEADO a develop / en staging (PRs #53–#71)
 
 **Design system (base)**
 - `src/design/tokens.ts` (brand/surface/ink/semantic/radius/font/pageMinHeight/**gold**/**category**), `colorName.ts` (hex→fill+ink), `jerseyStyles.ts` (11 estilos).
@@ -73,7 +73,7 @@ Bloque admin-organizar + seguridad (verificado por build+tests; E2E admin en viv
 0. **Goleadores del scoreboard** ✅ (PR #70) — `MatchRepository.GetDetailByIdOrSlugAsync` incluye Home/Visitor/Venue + `Scorers.ThenInclude(Player)` + `Stage.Division`; el mapping atribuye scorers al equipo vía `Scorer.Player.TeamId` y agrega por jugador. Además: cada goleador muestra la **camiseta (kit del equipo) + dorsal** (de la inscripción del torneo; `Player.JerseyNumber` es `[NotMapped]`, el real vive en `PlayerTeamRegistration.JerseyNumber`), se sacó la sección Sanciones del partido, y el seed reparte los puntos entre 5 jugadores + asigna dorsales 4-11 únicos por equipo. Verificado con Playwright.
 1. **Llaves admin editables** — cargar resultado desde el bracket (ahí están los partidos).
 2. **Staff de equipo** (DT/asistente/DT-jugador) — entidad/rol por equipo+temporada (+migración).
-3. **Canchas imagen+mapa** — Venue lat/lng + Leaflet/OSM + display/edit de imagen (+migración).
+3. **Canchas imagen+mapa** ✅ (PR #71) — `Venue.Latitude/Longitude` (migración `AddVenueImageAndLocation`) + `PUT /venues/{id}/photo`; admin edita coords+imagen (preview); vista pública muestra imagen + botón "Ver en el mapa" (Google Maps por coords, sin dep de mapa). Seed con **6 canchas reales de Paraná** (Estadio Ángel Malvicino/Echagüe, Estudiantes, Rowing, Sionista, Talleres, Polideportivo Municipal) con coordenadas, en ambos seed paths (`DataSeeder` + `DataMaintenanceService`). Verificado (un partido juega en Estadio Ángel Malvicino).
 4. **Auditoría completa** — extender `AuditLog` a TODA mutación admin (actor+entidad+acción+timestamp).
 5. **Mensajes auth backend→español** — `ErrorMessages.Auth.*` están en inglés (ojo: tests que asertan el texto exacto de los títulos del GlobalExceptionHandler).
 6. **Endurecer OnDelete** peligroso (`MatchSeries/Team→Cascade`) en una migración (flagged en #66).
