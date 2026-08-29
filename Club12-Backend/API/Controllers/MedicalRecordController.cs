@@ -47,11 +47,22 @@ public class MedicalRecordController(
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(MedicalRecordResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<MedicalRecordResponse>> UploadMedicalRecord([FromForm] UploadMedicalRecordRequest request)
     {
         if (!request.File.IsValidPdfFile())
         {
             return BadRequest(ErrorMessages.MedicalRecord.InvalidPdfFile);
+        }
+
+        // HU-57: reject the upload up front — before touching storage — when the
+        // ficha is already Approved. An habilitado record is view/download only.
+        MedicalRecordResponse? current = await medicalRecordService.GetAsync(
+            request.PlayerId, request.TeamId, request.TournamentId);
+
+        if (current?.Status == MedicalRecordStatus.Approved)
+        {
+            return Conflict(ErrorMessages.MedicalRecord.AlreadyApproved);
         }
 
         string fileReference = await medicalRecordStorage.StoreAsync(

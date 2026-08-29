@@ -40,6 +40,15 @@ public static class SampleTournamentBuilder
 {
     private const string CreatedBy = AuditConstants.SystemUser;
 
+    // Static ficha-médica reference attached to every habilitado (Approved)
+    // seeded registration so the "habilitado ⟺ ficha aprobada" invariant holds
+    // in the sample data: an Approved record always carries a file URL, file
+    // name and a review timestamp (HU-55/HU-57).
+    private const string SampleMedicalRecordFileUrl = "medical-records/sample/ficha-medica.pdf";
+    private const string SampleMedicalRecordFileName = "ficha-medica.pdf";
+    private static readonly DateTime SampleMedicalRecordReviewedAt =
+        new(2026, 8, 1, 12, 0, 0, DateTimeKind.Utc);
+
     private static readonly string[] FirstNames =
     [
         "Juan", "Carlos", "Martín", "Diego", "Facundo", "Lucas", "Nicolás", "Matías",
@@ -318,6 +327,13 @@ public static class SampleTournamentBuilder
 
                 team.Players.Add(player);
 
+                // Most seeded players are habilitado (ficha Approved) so the
+                // sample data showcases the habilitado state; the last player of
+                // each team stays Pending (no ficha) to keep the upload/review
+                // flow demonstrable. Approved rows always carry the ficha
+                // reference, keeping "habilitado ⟺ ficha aprobada" consistent.
+                bool isHabilitado = p < 7;
+
                 team.PlayerTeamRegistrations.Add(new PlayerTeamRegistration
                 {
                     CreatedBy = CreatedBy,
@@ -327,6 +343,12 @@ public static class SampleTournamentBuilder
                     Team = team,
                     TournamentId = Guid.Empty,
                     Tournament = tournament,
+                    MedicalRecordStatus = isHabilitado
+                        ? MedicalRecordStatus.Approved
+                        : MedicalRecordStatus.Pending,
+                    MedicalRecordFileUrl = isHabilitado ? SampleMedicalRecordFileUrl : null,
+                    MedicalRecordFileName = isHabilitado ? SampleMedicalRecordFileName : null,
+                    MedicalRecordReviewedAt = isHabilitado ? SampleMedicalRecordReviewedAt : null,
                 });
             }
 

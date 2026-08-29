@@ -20,10 +20,16 @@ using System.Threading.Tasks;
 
 namespace Application.Services;
 
-public class PlayerService(IUnitOfWork unitOfWork, IOptions<RosterOptions> rosterOptions) : IPlayerService
+public class PlayerService(
+    IUnitOfWork unitOfWork,
+    IScorerRepository scorerRepository,
+    IOptions<RosterOptions> rosterOptions) : IPlayerService
 {
     private readonly IPlayerRepository _playerRepository = unitOfWork.PlayerRepository;
     private readonly IPlayerTeamRegistrationRepository _registrationRepository = unitOfWork.PlayerTeamRegistrationRepository;
+    private readonly IPlayerStatisticRepository _statisticRepository = unitOfWork.PlayerStatisticRepository;
+    private readonly IPlayerSanctionRepository _sanctionRepository = unitOfWork.PlayerSanctionRepository;
+    private readonly IScorerRepository _scorerRepository = scorerRepository;
     private readonly int _maxPlayersPerTeam = rosterOptions.Value.MaxPlayersPerTeam;
 
     public async Task<Player> CreatePlayerAsync(Player playerEntity, Guid tournamentId)
@@ -62,6 +68,20 @@ public class PlayerService(IUnitOfWork unitOfWork, IOptions<RosterOptions> roste
 
     public async Task DeletePlayerAsync(Guid id)
     {
+        // Integrity: a player who already has match statistics, scorer records
+        // or sanctions is part of the tournament history — deleting them would
+        // orphan those records, so the deletion is blocked. Otherwise the
+        // player's season registrations are cleaned up and the player removed.
+        bool hasStatistics = await _statisticRepository.ExistsAsync(statistic => statistic.PlayerId == id);
+        bool hasScorers = await _scorerRepository.ExistsAsync(scorer => scorer.PlayerId == id);
+        bool hasSanctions = await _sanctionRepository.ExistsAsync(sanction => sanction.PlayerId == id);
+
+        if (hasStatistics || hasScorers || hasSanctions)
+        {
+            throw new InvalidOperationException(ErrorMessages.Player.HasHistoryCannotDelete);
+        }
+
+        await _registrationRepository.RemoveAsync(registration => registration.PlayerId == id);
         await _playerRepository.RemoveAsync(player => player.Id == id);
     }
 

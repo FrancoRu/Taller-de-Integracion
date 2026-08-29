@@ -317,7 +317,18 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         return;
       }
 
-      await deletePlayerById(row.id);
+      const result = await deletePlayerById(row.id);
+
+      if (!result.success) {
+        // Surface the backend integrity block (e.g. the player has statistics
+        // or sanctions) with its exact Spanish message.
+        await notifyError({
+          title: 'No se pudo eliminar',
+          text: result.errorMessage,
+        });
+        return;
+      }
+
       await notifySuccess({
         title: '¡Eliminado!',
         text: 'El jugador ha sido eliminado.',
@@ -482,7 +493,6 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   const validatePlayerForm = (resolvedTeamId: GUID | '') => {
     if (
       !playerForm.firstName.trim() ||
-      !playerForm.secondName.trim() ||
       !playerForm.lastName.trim() ||
       !playerForm.documentNumber.trim() ||
       !playerForm.birthDate.trim() ||
@@ -491,7 +501,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     ) {
       void notifyWarning({
         title: 'Campos incompletos',
-        text: 'Nombre, segundo nombre, apellido, documento, fecha de nacimiento, teléfono y seguro social son obligatorios.',
+        text: 'Nombre, apellido, documento, fecha de nacimiento, teléfono y seguro social son obligatorios. El segundo nombre es opcional.',
       });
       return false;
     }
@@ -541,7 +551,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     setSubmitting(true);
     const payload: IAddPlayerRequest = {
       firstName: playerForm.firstName.trim(),
-      secondName: playerForm.secondName.trim(),
+      secondName: playerForm.secondName.trim() || undefined,
       lastName: playerForm.lastName.trim(),
       documentNumber: playerForm.documentNumber.trim(),
       birthDate: new Date(playerForm.birthDate),
@@ -578,7 +588,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     setSubmitting(true);
     const payload: IPutPlayerRequest = {
       firstName: playerForm.firstName.trim(),
-      secondName: playerForm.secondName.trim(),
+      secondName: playerForm.secondName.trim() || undefined,
       lastName: playerForm.lastName.trim(),
       documentNumber: playerForm.documentNumber.trim(),
       birthDate: playerForm.birthDate
@@ -766,12 +776,11 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               fullWidth
             />
             <TextField
-              label="Segundo nombre"
+              label="Segundo nombre (opcional)"
               value={playerForm.secondName}
               onChange={e =>
                 setPlayerForm(prev => ({ ...prev, secondName: e.target.value }))
               }
-              required
               fullWidth
             />
             <TextField
@@ -887,12 +896,11 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               fullWidth
             />
             <TextField
-              label="Segundo nombre"
+              label="Segundo nombre (opcional)"
               value={playerForm.secondName}
               onChange={e =>
                 setPlayerForm(prev => ({ ...prev, secondName: e.target.value }))
               }
-              required
               fullWidth
             />
             <TextField

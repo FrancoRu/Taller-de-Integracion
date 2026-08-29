@@ -1,7 +1,12 @@
 import { AxiosResponse } from 'axios';
 import routes from '@/modules/core/constants/routes';
 import { GUID } from '@/modules/core/types/types';
-import { sendGet, sendPost, sendPut } from '@/modules/core/utils/axiosUtils';
+import {
+  downloadfile,
+  sendGet,
+  sendPost,
+  sendPut,
+} from '@/modules/core/utils/axiosUtils';
 import {
   IMedicalRecordResponse,
   IReviewMedicalRecordRequest,
@@ -60,4 +65,29 @@ export const medicalRecordService = {
     tournamentId: GUID
   ): Promise<AxiosResponse<IMedicalRecordResponse>> =>
     await sendGet(routes.medicalRecords, { playerId, teamId, tournamentId }),
+
+  /**
+   * Downloads the stored ficha-médica PDF of a player's season registration
+   * (HU-55/HU-56). The medical-records area is private, so the file is streamed
+   * back through the API (as a blob) and saved locally rather than opened from a
+   * public URL — the record's `fileUrl` is only an internal storage reference.
+   * @param {GUID} playerId - The player.
+   * @param {GUID} teamId - The team the player is registered to.
+   * @param {GUID} tournamentId - The tournament (season).
+   * @param {string} fileName - The name to save the downloaded PDF as.
+   */
+  downloadMedicalRecord: async (
+    playerId: GUID,
+    teamId: GUID,
+    tournamentId: GUID,
+    fileName: string
+  ): Promise<void> => {
+    const query = new URLSearchParams({
+      playerId,
+      teamId,
+      tournamentId,
+    }).toString();
+
+    await downloadfile(`${routes.medicalRecords}/download?${query}`, fileName);
+  },
 };

@@ -148,6 +148,28 @@ public static class ErrorMessages
         }
     }
 
+    public static class Player
+    {
+        /// <summary>
+        /// User-facing (Spanish) message returned when a player who has match
+        /// statistics, scorer records or sanctions is deleted: removing them
+        /// would orphan historical records, so the deletion is blocked.
+        /// </summary>
+        public const string HasHistoryCannotDelete =
+            "No se puede eliminar: el jugador tiene estadísticas o sanciones registradas.";
+    }
+
+    public static class Venue
+    {
+        /// <summary>
+        /// User-facing (Spanish) message returned when a venue (cancha) that is
+        /// referenced by one or more matches is deleted: removing it would leave
+        /// those matches without their venue, so the deletion is blocked.
+        /// </summary>
+        public const string ReferencedByMatches =
+            "No se puede eliminar: la cancha tiene partidos asociados.";
+    }
+
     public static class Stage
     {
         public const string NotFoundGeneric = "Stage not found.";
@@ -269,6 +291,15 @@ public static class ErrorMessages
     public static class MedicalRecord
     {
         public const string InvalidPdfFile = "The medical-record file must be a valid PDF.";
+
+        /// <summary>
+        /// User-facing (Spanish) message returned when a new ficha upload is
+        /// attempted on a registration whose medical record is already Approved:
+        /// once habilitado the ficha can only be viewed/downloaded, never
+        /// replaced (HU-57).
+        /// </summary>
+        public const string AlreadyApproved =
+            "La ficha médica ya está aprobada; no se puede subir una nueva. Solo puede consultarse o descargarse.";
 
         public static string RegistrationNotFound(
             System.Guid playerId, System.Guid teamId, System.Guid tournamentId)

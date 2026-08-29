@@ -24,6 +24,10 @@ import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { playerKeys } from '@/modules/player/queryKeys';
 import { HttpStatus } from '@/modules/core/constants/httpStatus';
 import { mapRosterConflictMessage } from '@/modules/player/utils/rosterConflict';
+import {
+  extractProblemDetail,
+  MutationResult,
+} from '@/modules/core/utils/problemDetails';
 
 export const PlayerContext = createContext<IPlayerContextProps | undefined>(
   undefined
@@ -156,19 +160,31 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
     [putPlayerMutation, queryClient, handleUnknownError]
   );
 
+  /**
+   * Unlike the read mutations, a delete can be blocked by a backend integrity
+   * rule (a player with statistics/scorers/sanctions returns a 409 with a
+   * Spanish message). The failure is returned as a discriminated result so the
+   * caller can surface that exact reason inline instead of swallowing it.
+   */
   const deletePlayerById = useCallback(
-    async (id: GUID): Promise<void> => {
+    async (id: GUID): Promise<MutationResult> => {
       try {
         await deletePlayerMutation.mutateAsync(id);
         setPlayer(null);
         setPlayers(prev => prev?.filter(e => e.id !== id) ?? null);
         queryClient.removeQueries({ queryKey: playerKeys.byId(id) });
         await queryClient.invalidateQueries({ queryKey: playerKeys.list() });
+        return { success: true };
       } catch (error: unknown) {
-        handleUnknownError(error);
+        return {
+          success: false,
+          errorMessage:
+            extractProblemDetail(error) ??
+            'No se pudo eliminar el jugador. Intentá nuevamente.',
+        };
       }
     },
-    [deletePlayerMutation, queryClient, handleUnknownError]
+    [deletePlayerMutation, queryClient]
   );
 
   /**

@@ -1,3 +1,6 @@
+import { GUID } from '@/modules/core/types/types';
+import { MutationResult } from '@/modules/core/utils/problemDetails';
+
 /**
  * Context properties and methods for managing venue data in a React application.
  * These methods interact with the backend for creating, updating, fetching, and deleting venues.
@@ -38,11 +41,12 @@ export interface IVenueContextProps {
   getVenueById(idOrSlug: string): Promise<IVenueResponse | void>;
 
   /**
-   * Deletes a venue by its unique ID.
+   * Deletes a venue by its unique ID. Resolves with a discriminated result so
+   * callers can surface a backend integrity block (a venue referenced by
+   * matches is rejected with a 409 and a Spanish message).
    * @param id The ID of the venue to delete.
-   * @returns A promise that resolves when the venue is successfully deleted.
    */
-  deleteVenueById(id: GUID): Promise<void>;
+  deleteVenueById(id: GUID): Promise<MutationResult>;
 }
 
 /**
