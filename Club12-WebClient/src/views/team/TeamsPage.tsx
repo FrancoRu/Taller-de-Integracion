@@ -17,6 +17,7 @@ import {
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import TeamLogo from '@/views/core/components/TeamLogo';
+import JerseySvg from '@/views/core/components/JerseySvg';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import {
   DeleteIcon,
@@ -30,7 +31,11 @@ import {
 import TeamsFilterBar from '@/views/team/TeamsFilterBar';
 import TeamsTable from '@/views/team/TeamsTable';
 import TeamFormDialog from '@/views/team/TeamFormDialog';
-import type { TeamsSearchFilters, TeamFormState } from '@/views/team/teams.types';
+import type {
+  TeamsSearchFilters,
+  TeamFormState,
+  TeamFormField,
+} from '@/views/team/teams.types';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { FILTERS_DEBOUNCE_DELAY_LONG_MS } from '@/modules/core/constants/constants';
 
@@ -48,7 +53,9 @@ const EMPTY_FILTERS: TeamsSearchFilters = {};
 const INITIAL_TEAM_FORM: TeamFormState = {
   name: '',
   threeLetterCode: '',
-  shirtColor: '',
+  shirtColor: '#1E5FCC',
+  shirtSecondaryColor: '',
+  jerseyStyle: 'solid',
   logo: null,
 };
 
@@ -150,7 +157,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
   }, []);
 
   const handleTeamFieldChange = useCallback(
-    (field: 'name' | 'threeLetterCode' | 'shirtColor', value: string) => {
+    (field: TeamFormField, value: string) => {
       setTeamForm(prev => ({
         ...prev,
         [field]: field === 'threeLetterCode' ? value.toUpperCase() : value,
@@ -176,6 +183,8 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
       name: row.name,
       threeLetterCode: row.threeLetterCode,
       shirtColor: row.shirtColor,
+      shirtSecondaryColor: row.shirtSecondaryColor ?? '',
+      jerseyStyle: row.jerseyStyle ?? 'solid',
       logo: null,
     });
   }, []);
@@ -252,10 +261,21 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
       },
       {
         field: 'shirtColor',
-        headerName: 'Color camiseta',
+        headerName: 'Camiseta',
         flex: 1,
         minWidth: 140,
-        renderCell: params => params.row.shirtColor || '—',
+        sortable: false,
+        renderCell: params => (
+          <Stack sx={{ height: '100%', justifyContent: 'center' }}>
+            <JerseySvg
+              color={params.row.shirtColor}
+              secondaryColor={params.row.shirtSecondaryColor}
+              style={params.row.jerseyStyle}
+              size={28}
+              title={`Camiseta de ${params.row.name}`}
+            />
+          </Stack>
+        ),
       },
     ];
 
@@ -314,6 +334,8 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
       name: teamForm.name.trim(),
       threeLetterCode: teamForm.threeLetterCode.trim(),
       shirtColor: teamForm.shirtColor.trim(),
+      shirtSecondaryColor: teamForm.shirtSecondaryColor.trim() || null,
+      jerseyStyle: teamForm.jerseyStyle,
       logo: teamForm.logo as File,
       tournamentId,
     };
@@ -352,6 +374,8 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
       name: teamForm.name.trim(),
       threeLetterCode: teamForm.threeLetterCode.trim(),
       shirtColor: teamForm.shirtColor.trim(),
+      shirtSecondaryColor: teamForm.shirtSecondaryColor.trim() || null,
+      jerseyStyle: teamForm.jerseyStyle,
     };
 
     const updatedTeam = await putTeamById(editingTeam.id, payload);

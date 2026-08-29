@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -15,6 +14,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { ListSkeleton } from '@/views/core/components/skeletons';
 import { GUID } from '@/modules/core/types/types';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { useMatch } from '@/modules/match/hook/match.hook';
@@ -116,11 +116,7 @@ export default function StageMatchesByRound({
   }, [target, newDate, suspendMatch, closeSuspend, reload]);
 
   if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
-        <CircularProgress />
-      </Box>
-    );
+    return <ListSkeleton items={4} />;
   }
 
   if (rounds.length === 0) {

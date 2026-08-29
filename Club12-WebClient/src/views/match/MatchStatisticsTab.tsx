@@ -27,7 +27,7 @@ import {
   PlayerScoreEntry,
   PlayerStatisticResponse,
 } from '@/modules/playerStatistic/type/playerStatistic';
-import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import { TableSkeleton } from '@/views/core/components/skeletons';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import HabilitacionBadge from '@/views/medicalRecord/HabilitacionBadge';
 import { resolveIsHabilitado } from '@/modules/medicalRecord/utils/medicalRecordDisplay';
@@ -254,7 +254,7 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
   };
 
   if (loading) {
-    return <LoadingIndicator />;
+    return <TableSkeleton rows={5} columns={5} />;
   }
 
   return (

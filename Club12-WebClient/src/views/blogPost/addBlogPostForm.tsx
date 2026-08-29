@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   TextField,
   Button,
-  Card,
-  CardContent,
   FormControlLabel,
   Stack,
   Switch,
@@ -15,6 +13,7 @@ import 'react-quill-new/dist/quill.snow.css';
 import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
 import { CreateBlogPostRequest } from '@/modules/blogPost/type/blogPost';
 import { notifySuccess } from '@/modules/core/utils/confirmDialog';
+import PageShell from '@/views/core/components/PageShell';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import BlogPostImageField from '@/views/blogPost/BlogPostImageField';
 import BlogPostPreviewDialog from '@/views/blogPost/BlogPostPreviewDialog';
@@ -95,11 +94,7 @@ const AddBlogPostForm: React.FC = () => {
   };
 
   return (
-    <Card sx={{ maxWidth: 600, margin: 'auto', padding: 3 }}>
-      <CardContent>
-        <Typography variant="h5" component="h1" gutterBottom>
-          Nueva publicación
-        </Typography>
+    <PageShell title="Nueva publicación" maxWidth="sm">
         <form onSubmit={handleSubmit}>
           <TextField
             label="Autor"
@@ -167,7 +162,6 @@ const AddBlogPostForm: React.FC = () => {
             </Button>
           </Stack>
         </form>
-      </CardContent>
 
       <BlogPostPreviewDialog
         open={previewOpen}
@@ -177,7 +171,7 @@ const AddBlogPostForm: React.FC = () => {
         photoUrl={photoObjectUrl}
         markdownText={formData.markdownText}
       />
-    </Card>
+    </PageShell>
   );
 };
 

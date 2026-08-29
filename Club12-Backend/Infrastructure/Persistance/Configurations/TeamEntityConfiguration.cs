@@ -20,6 +20,8 @@ public class TeamEntityConfiguration : BaseEntityConfiguration<Team>
         builder.Property(t => t.ThreeLetterCode).IsRequired();
         builder.Property(t => t.LogoUrl).IsRequired();
         builder.Property(t => t.ShirtColor).IsRequired();
+        builder.Property(t => t.JerseyStyle).IsRequired().HasMaxLength(20).HasDefaultValue("solid");
+        builder.Property(t => t.ShirtSecondaryColor).HasMaxLength(9);
 
         builder.HasIndex(t => t.Slug).IsUnique();
 

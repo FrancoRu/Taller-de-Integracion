@@ -18,7 +18,7 @@ import { IEnrollTeamRequest } from '@/modules/tournament/type/tournament';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { confirmDelete, notifySuccess } from '@/modules/core/utils/confirmDialog';
-import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import { ListSkeleton } from '@/views/core/components/skeletons';
 import EnrollTeamDialog from '@/views/tournament/EnrollTeamDialog';
 
 interface TournamentEnrolledTeamsProps {
@@ -139,10 +139,11 @@ const TournamentEnrolledTeams: React.FC<TournamentEnrolledTeamsProps> = ({
       </Stack>
 
       {loading ? (
-        <LoadingIndicator />
+        <ListSkeleton items={4} />
       ) : enrolledTeams.length === 0 ? (
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Todavía no hay equipos inscriptos en este torneo.
+          Todavía no hay equipos inscriptos en este torneo. Inscribí el primero
+          para empezar.
         </Typography>
       ) : (
         <List>

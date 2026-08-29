@@ -82,7 +82,9 @@ public static class SampleTournamentBuilder
         string[] TeamNames,
         string[] TeamCodes,
         string[] TeamColors,
-        PlayoffCupDefinition[]? PlayoffCups = null);
+        PlayoffCupDefinition[]? PlayoffCups = null,
+        string[]? TeamStyles = null,
+        string[]? TeamSecondaryColors = null);
 
     public sealed record TournamentDefinition(
         string Name,
@@ -140,6 +142,8 @@ public static class SampleTournamentBuilder
                 divisionDef.TeamNames,
                 divisionDef.TeamCodes,
                 divisionDef.TeamColors,
+                divisionDef.TeamStyles,
+                divisionDef.TeamSecondaryColors,
                 ref playerCounter);
 
             tournament.Divisions.Add(division);
@@ -201,6 +205,8 @@ public static class SampleTournamentBuilder
         string[] teamNames,
         string[] teamCodes,
         string[] teamColors,
+        string[]? teamStyles,
+        string[]? teamSecondaryColors,
         ref int playerCounter)
     {
         Division division = new()
@@ -225,6 +231,8 @@ public static class SampleTournamentBuilder
                 ThreeLetterCode = teamCodes[i],
                 LogoUrl = $"https://placehold.co/128x128?text={teamCodes[i]}",
                 ShirtColor = teamColors[i],
+                JerseyStyle = teamStyles is not null && i < teamStyles.Length ? teamStyles[i] : "solid",
+                ShirtSecondaryColor = teamSecondaryColors is not null && i < teamSecondaryColors.Length ? teamSecondaryColors[i] : null,
                 Tournament = tournament,
                 Players = [],
             };

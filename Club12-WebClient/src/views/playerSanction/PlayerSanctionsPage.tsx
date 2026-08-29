@@ -3,14 +3,11 @@ import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { formatDateTimeAr } from '@/modules/core/utils/formatDate';
 import {
   Box,
-  Card,
-  CardContent,
   Chip,
   InputAdornment,
   MenuItem,
   Stack,
   TextField,
-  Typography,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { GUID } from '@/modules/core/types/types';
@@ -34,6 +31,8 @@ import { usePlayer } from '@/modules/player/hook/player.hook';
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
+import PageShell from '@/views/core/components/PageShell';
+import FilterBar from '@/views/core/components/FilterBar';
 import {
   DeleteIcon,
   EditIcon,
@@ -241,6 +240,12 @@ const PlayerSanctionsPage: React.FC = () => {
     setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
   };
 
+  const handleClearFilters = () => {
+    setFilters(EMPTY_FILTERS);
+    setDebouncedFilters(EMPTY_FILTERS);
+    setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
+  };
+
   const handlePaginationModelChange = useCallback(
     (nextPaginationModel: GridPaginationModel) => {
       setPaginationModel(prev =>
@@ -422,22 +427,12 @@ const PlayerSanctionsPage: React.FC = () => {
   );
 
   return (
-    <Card>
-      <CardContent>
-        <Stack
-          direction="row"
-          sx={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 2
-          }}>
-          <Typography variant="h6">Sanciones</Typography>
-          <NewEntityButton type="Sanción" onClick={handleCreateSanction} />
-        </Stack>
-
-        <Stack spacing={2} sx={{
-          mb: 2
-        }}>
+    <PageShell
+      title="Sanciones"
+      actions={<NewEntityButton type="Sanción" onClick={handleCreateSanction} />}
+    >
+      <FilterBar onClear={handleClearFilters} ariaLabel="Filtros de sanciones">
+        <Stack spacing={2} sx={{ width: '100%' }}>
           <Box
             sx={{
               display: 'grid',
@@ -580,9 +575,10 @@ const PlayerSanctionsPage: React.FC = () => {
               }} />
           </Stack>
         </Stack>
+      </FilterBar>
 
-        <Box sx={{ width: '100%' }}>
-          <DataGrid
+      <Box sx={{ width: '100%' }}>
+        <DataGrid
             rows={rows}
             columns={columns}
             loading={loading}
@@ -611,8 +607,7 @@ const PlayerSanctionsPage: React.FC = () => {
           onClose={() => setDeletingSanction(null)}
           onDeleted={handleDeletedSanction}
         />
-      </CardContent>
-    </Card>
+    </PageShell>
   );
 };
 

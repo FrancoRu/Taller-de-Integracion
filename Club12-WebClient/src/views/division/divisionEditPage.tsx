@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  Card,
-  CardContent,
   FormControlLabel,
   Grid,
   Stack,
@@ -15,7 +13,8 @@ import { GUID } from '@/modules/core/types/types';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { IDivisionPropsView } from '@/modules/division/type/division';
 import FormButtons from '@/views/core/components/FormButtons';
-import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import PageShell from '@/views/core/components/PageShell';
+import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 interface IDivisionEditFormState extends IDivisionPropsView {
@@ -114,19 +113,20 @@ const DivisionEditPage: React.FC = () => {
 
   if (!targetDivisionId) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">Editar división</Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
-            No se recibió una división para editar.
-          </Typography>
-        </CardContent>
-      </Card>
+      <PageShell title="Editar división" maxWidth="md">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          No se recibió una división para editar.
+        </Typography>
+      </PageShell>
     );
   }
 
   if (loading) {
-    return <LoadingIndicator />;
+    return (
+      <PageShell title="Editar división" maxWidth="md">
+        <DetailSkeleton />
+      </PageShell>
+    );
   }
 
   if (
@@ -134,24 +134,18 @@ const DivisionEditPage: React.FC = () => {
     (division.id !== targetDivisionId && division.slug !== targetDivisionId)
   ) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">División no encontrada</Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
-            No fue posible cargar la información de la división.
-          </Typography>
-        </CardContent>
-      </Card>
+      <PageShell title="División no encontrada" maxWidth="md">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          No fue posible cargar la información de la división.
+        </Typography>
+      </PageShell>
     );
   }
 
   return (
-    <Card>
-      <CardContent>
-        <Stack spacing={2}>
-          <Typography variant="h6">Editar división</Typography>
-
-          <Grid container spacing={2}>
+    <PageShell title="Editar división" maxWidth="md">
+      <Stack spacing={2}>
+        <Grid container spacing={2}>
             <Grid size={12}>
               <TextField
                 label="Nombre"
@@ -180,19 +174,18 @@ const DivisionEditPage: React.FC = () => {
                 label="Finalizada"
               />
             </Grid>
-          </Grid>
+        </Grid>
 
-          <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>
-            <FormButtons
-              onCancel={handleCancel}
-              onConfirm={() => void handleSave()}
-              confirmLabel="Guardar"
-              disabled={submitting}
-            />
-          </Stack>
+        <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>
+          <FormButtons
+            onCancel={handleCancel}
+            onConfirm={() => void handleSave()}
+            confirmLabel="Guardar"
+            disabled={submitting}
+          />
         </Stack>
-      </CardContent>
-    </Card>
+      </Stack>
+    </PageShell>
   );
 };
 

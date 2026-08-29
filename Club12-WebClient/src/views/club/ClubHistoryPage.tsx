@@ -1,9 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  Button,
-  Card,
-  CardContent,
   Stack,
   Table,
   TableBody,
@@ -15,7 +12,8 @@ import {
 } from '@mui/material';
 import { useClub } from '@/modules/club/hook/club.hook';
 import { GUID } from '@/modules/core/types/types';
-import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import PageShell from '@/views/core/components/PageShell';
+import { TableSkeleton } from '@/views/core/components/skeletons';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
@@ -86,57 +84,48 @@ const ClubHistoryPage: React.FC = () => {
   }, [club]);
 
   if (loading) {
-    return <LoadingIndicator />;
+    return (
+      <PageShell title="Historial del club">
+        <TableSkeleton columns={3} />
+      </PageShell>
+    );
   }
 
   if (!club) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">Club no encontrado</Typography>
-          <Typography
-            variant="body2"
-            sx={{ color: 'text.secondary', mt: 1 }}
-          >
-            No fue posible cargar el historial del club.
-          </Typography>
-        </CardContent>
-      </Card>
+      <PageShell
+        title="Club no encontrado"
+        back={{ label: 'Volver', onClick: () => navigate(APP_ROUTES.panelTeams) }}
+      >
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          No fue posible cargar el historial del club.
+        </Typography>
+      </PageShell>
     );
   }
 
   return (
-    <Card>
-      <CardContent>
+    <PageShell
+      back={{ label: 'Volver', onClick: () => navigate(APP_ROUTES.panelTeams) }}
+    >
         <Stack
-          direction={{ xs: 'column', sm: 'row' }}
+          direction="row"
           spacing={1.5}
-          sx={{
-            alignItems: { xs: 'flex-start', sm: 'center' },
-            justifyContent: 'space-between',
-            mb: 2,
-          }}
+          sx={{ alignItems: 'center', mb: 3 }}
         >
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-            <TeamLogo
-              teamName={club.name}
-              logoUrl={club.logoUrl ?? ''}
-              size={44}
-            />
-            <div>
-              <Typography variant="h6">{club.name}</Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                Historial del club
-              </Typography>
-            </div>
-          </Stack>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => navigate(APP_ROUTES.panelTeams)}
-          >
-            Volver
-          </Button>
+          <TeamLogo
+            teamName={club.name}
+            logoUrl={club.logoUrl ?? ''}
+            size={44}
+          />
+          <div>
+            <Typography variant="h4" component="h1">
+              {club.name}
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              Historial del club
+            </Typography>
+          </div>
         </Stack>
 
         {rows.length > 0 ? (
@@ -185,8 +174,7 @@ const ClubHistoryPage: React.FC = () => {
             Este club todavía no tiene temporadas registradas.
           </Typography>
         )}
-      </CardContent>
-    </Card>
+    </PageShell>
   );
 };
 

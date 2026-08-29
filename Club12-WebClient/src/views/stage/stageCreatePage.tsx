@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Card,
-  CardContent,
   FormControlLabel,
   Grid,
   MenuItem,
   Stack,
   Switch,
   TextField,
-  Typography,
 } from '@mui/material';
+import PageShell from '@/views/core/components/PageShell';
 import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { useDivision } from '@/modules/division/hook/division.hook';
@@ -196,12 +194,9 @@ const StageCreatePage: React.FC = () => {
   };
 
   return (
-    <Card>
-      <CardContent>
-        <Stack spacing={2}>
-          <Typography variant="h6">Nueva fase</Typography>
-
-          <Grid container spacing={2}>
+    <PageShell title="Nueva fase" maxWidth="md">
+      <Stack spacing={2}>
+        <Grid container spacing={2}>
             {!isDivisionContext && (
               <Grid size={12}>
                 <TextField
@@ -444,21 +439,18 @@ const StageCreatePage: React.FC = () => {
                 </Grid>
               </>
             )}
-          </Grid>
+        </Grid>
 
-          <Stack direction="row" sx={{
-            justifyContent: "flex-end"
-          }}>
-            <FormButtons
-              onCancel={handleCancel}
-              onConfirm={() => void handleCreate()}
-              confirmLabel="Crear"
-              disabled={submitting}
-            />
-          </Stack>
+        <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>
+          <FormButtons
+            onCancel={handleCancel}
+            onConfirm={() => void handleCreate()}
+            confirmLabel="Crear"
+            disabled={submitting}
+          />
         </Stack>
-      </CardContent>
-    </Card>
+      </Stack>
+    </PageShell>
   );
 };
 

@@ -8,6 +8,8 @@ const emptyForm: TeamFormState = {
   name: '',
   threeLetterCode: '',
   shirtColor: '',
+  shirtSecondaryColor: '',
+  jerseyStyle: 'solid',
   logo: null,
 };
 
@@ -101,5 +103,40 @@ describe('TeamFormDialog', () => {
       within(dialog).getByRole('button', { name: /cancelar/i })
     );
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the jersey style gallery and fires onFieldChange with jerseyStyle on selection', async () => {
+    const onFieldChange = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <TeamFormDialog
+        open
+        title="Nuevo equipo"
+        confirmLabel="Crear"
+        withLogo
+        form={emptyForm}
+        submitting={false}
+        onFieldChange={onFieldChange}
+        onLogoChange={vi.fn()}
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+      />
+    );
+
+    const gallery = screen.getByRole('radiogroup', {
+      name: /modelo de camiseta/i,
+    });
+    // One selectable tile per jersey template.
+    expect(within(gallery).getAllByRole('radio').length).toBeGreaterThan(1);
+    // The default "solid" style is the selected tile.
+    expect(
+      within(gallery).getByRole('radio', { name: 'Lisa' })
+    ).toHaveAttribute('aria-checked', 'true');
+
+    await user.click(
+      within(gallery).getByRole('radio', { name: 'Rayas verticales' })
+    );
+    expect(onFieldChange).toHaveBeenCalledWith('jerseyStyle', 'stripes');
   });
 });

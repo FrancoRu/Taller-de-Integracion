@@ -4,13 +4,13 @@ import { formatDateAr } from '@/modules/core/utils/formatDate';
 import {
   Box,
   Chip,
-  Container,
   InputAdornment,
   MenuItem,
-  Stack,
   TextField,
   Typography,
 } from '@mui/material';
+import PageShell from '@/views/core/components/PageShell';
+import FilterBar from '@/views/core/components/FilterBar';
 import { GUID } from '@/modules/core/types/types';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import { IPlayerSanctionResponse } from '@/modules/playerSanction/type/playerSanction.d';
@@ -174,20 +174,18 @@ export default function PublicSanctionsPage() {
     []
   );
 
+  const handleClearFilters = useCallback(() => {
+    setSelectedTournamentId('');
+    setDescription('');
+    setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
+  }, []);
+
   const rows = useMemo(() => playerSanctions ?? [], [playerSanctions]);
   const tournamentOptions = useMemo(() => tournaments ?? [], [tournaments]);
+  const hasActiveFilters = Boolean(selectedTournamentId || description);
 
   return (
-    <Container maxWidth="lg" sx={{ py: 5 }}>
-      <Typography
-        variant="h4"
-        component="h1"
-        sx={{
-          fontWeight: "bold",
-          mb: 1
-        }}>
-        Sanciones
-      </Typography>
+    <PageShell title="Sanciones">
       <Typography
         variant="body1"
         sx={{
@@ -197,9 +195,10 @@ export default function PublicSanctionsPage() {
         Listado de sanciones aplicadas a jugadores, equipos y staff de la liga.
       </Typography>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{
-        mb: 3
-      }}>
+      <FilterBar
+        ariaLabel="Filtros de sanciones"
+        onClear={hasActiveFilters ? handleClearFilters : undefined}
+      >
         <TextField
           select
           label="Torneo"
@@ -232,7 +231,7 @@ export default function PublicSanctionsPage() {
             }
           }}
         />
-      </Stack>
+      </FilterBar>
 
       <Box sx={{ width: '100%' }}>
         <DataGrid
@@ -255,6 +254,6 @@ export default function PublicSanctionsPage() {
           }}
         />
       </Box>
-    </Container>
+    </PageShell>
   );
 }

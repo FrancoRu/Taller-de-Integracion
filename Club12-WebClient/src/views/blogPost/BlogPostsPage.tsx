@@ -3,13 +3,9 @@ import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { formatDateAr } from '@/modules/core/utils/formatDate';
 import {
   Box,
-  Card,
-  CardContent,
   Chip,
   InputAdornment,
-  Stack,
   TextField,
-  Typography,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { confirmDelete, notifySuccess } from '@/modules/core/utils/confirmDialog';
@@ -21,7 +17,9 @@ import {
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
-import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import PageShell from '@/views/core/components/PageShell';
+import FilterBar from '@/views/core/components/FilterBar';
+import { TableSkeleton } from '@/views/core/components/skeletons';
 import {
   DeleteIcon,
   EditIcon,
@@ -79,6 +77,11 @@ const BlogPostsPage: React.FC = () => {
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value || undefined }));
+    setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
+  };
+
+  const handleClearFilters = () => {
+    setFilters(EMPTY_FILTERS);
     setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
   };
 
@@ -173,25 +176,14 @@ const BlogPostsPage: React.FC = () => {
   }, [navigate]);
 
   return (
-    <Card>
-      <CardContent>
-        <Stack
-          direction="row"
-          sx={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 2
-          }}>
-          <Typography variant="h6">Blog</Typography>
-          <NewEntityButton type="Publicación" onClick={handleCreate} />
-        </Stack>
-
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{
-          mb: 2
-        }}>
-          <TextField
-            label="Título"
-            name="title"
+    <PageShell
+      title="Blog"
+      actions={<NewEntityButton type="Publicación" onClick={handleCreate} />}
+    >
+      <FilterBar onClear={handleClearFilters} ariaLabel="Filtros de publicaciones">
+        <TextField
+          label="Título"
+          name="title"
             size="small"
             value={filters.title ?? ''}
             onChange={handleFilterChange}
@@ -221,29 +213,28 @@ const BlogPostsPage: React.FC = () => {
               }
             }}
           />
-        </Stack>
+      </FilterBar>
 
-        {loading ? (
-          <LoadingIndicator />
-        ) : (
-          <Box sx={{ width: '100%' }}>
-            <DataGrid
-              rows={rows}
-              columns={columns}
-              getRowId={row => row.id}
-              autoHeight
-              disableRowSelectionOnClick
-              disableColumnMenu
-              pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
-              paginationModel={paginationModel}
-              onPaginationModelChange={handlePaginationModelChange}
-              paginationMode="server"
-              rowCount={rowCount}
-            />
-          </Box>
-        )}
-      </CardContent>
-    </Card>
+      {loading ? (
+        <TableSkeleton columns={6} />
+      ) : (
+        <Box sx={{ width: '100%' }}>
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            getRowId={row => row.id}
+            autoHeight
+            disableRowSelectionOnClick
+            disableColumnMenu
+            pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+            paginationModel={paginationModel}
+            onPaginationModelChange={handlePaginationModelChange}
+            paginationMode="server"
+            rowCount={rowCount}
+          />
+        </Box>
+      )}
+    </PageShell>
   );
 };
 

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Box,
-  CircularProgress,
   Tab,
   Table,
   TableBody,
@@ -13,6 +12,7 @@ import {
   Tabs,
   Typography,
 } from '@mui/material';
+import { TableSkeleton, ListSkeleton } from '@/views/core/components/skeletons';
 import { GUID } from '@/modules/core/types/types';
 import { TAB_CONTENT_MIN_HEIGHT } from '@/modules/core/constants/constants';
 import { IDivisionResponse } from '@/modules/division/type/division';
@@ -237,9 +237,7 @@ export default function PublicDivisionPanel({ division }: PublicDivisionPanelPro
 
       {subTab === 'goleadores' &&
         (topScoresLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
-            <CircularProgress />
-          </Box>
+          <TableSkeleton rows={6} columns={3} />
         ) : topScores.length === 0 ? (
           <Typography sx={{ color: 'text.secondary' }}>
             No hay goleadores registrados para esta división.
@@ -269,9 +267,7 @@ export default function PublicDivisionPanel({ division }: PublicDivisionPanelPro
 
       {subTab === 'partidos' &&
         (structureLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
-            <CircularProgress />
-          </Box>
+          <ListSkeleton items={6} />
         ) : matchSections.length === 0 ? (
           <Typography sx={{ color: 'text.secondary' }}>
             No hay partidos registrados en esta división.
@@ -291,9 +287,7 @@ export default function PublicDivisionPanel({ division }: PublicDivisionPanelPro
 
       {subTab === 'llaves' &&
         (structureLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
-            <CircularProgress />
-          </Box>
+          <ListSkeleton items={5} />
         ) : (
           <PlayoffBrackets groups={bracketGroups} seriesById={seriesById} />
         ))}

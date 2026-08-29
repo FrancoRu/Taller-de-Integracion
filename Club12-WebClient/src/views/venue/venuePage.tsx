@@ -1,17 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CircularProgress,
-  Divider,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Box, Stack, Typography } from '@mui/material';
 import { IVenueResponse } from '@/modules/venue/type/venue';
 import { useVenue } from '@/modules/venue/hook/venue.hook';
+import PageShell from '@/views/core/components/PageShell';
+import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const VenuePage: React.FC = () => {
@@ -40,96 +33,53 @@ const VenuePage: React.FC = () => {
 
   if (loading) {
     return (
-      <Card>
-        <CardContent>
-          <Stack
-            spacing={2}
-            sx={{
-              alignItems: "center",
-              py: 4
-            }}>
-            <CircularProgress />
-            <Typography>Cargando cancha...</Typography>
-          </Stack>
-        </CardContent>
-      </Card>
+      <PageShell title="Cancha">
+        <DetailSkeleton />
+      </PageShell>
     );
   }
 
   if (!venue) {
     return (
-      <Card>
-        <CardContent>
-          <Stack spacing={2}>
-            <Typography variant="h6">Cancha no encontrada</Typography>
-            <Typography sx={{
-              color: "text.secondary"
-            }}>
-              No se pudo obtener la información de la cancha solicitada.
-            </Typography>
-            <Box>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => navigate(APP_ROUTES.panelVenues)}
-              >
-                Volver
-              </Button>
-            </Box>
-          </Stack>
-        </CardContent>
-      </Card>
+      <PageShell
+        title="Cancha no encontrada"
+        back={{ label: 'Volver', onClick: () => navigate(APP_ROUTES.panelVenues) }}
+      >
+        <Typography sx={{ color: 'text.secondary' }}>
+          No se pudo obtener la información de la cancha solicitada.
+        </Typography>
+      </PageShell>
     );
   }
 
   return (
-    <Card>
-      <CardContent>
-        <Stack spacing={2}>
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={2}
-            sx={{
-              alignItems: { xs: 'flex-start', sm: 'center' },
-              justifyContent: "space-between"
-            }}>
-            <Typography variant="h5">{venue.name}</Typography>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => navigate(APP_ROUTES.panelVenues)}
-            >
-              Volver
-            </Button>
-          </Stack>
-
-          <Divider />
-
-          <Stack spacing={1}>
-            <Typography variant="subtitle2" sx={{
-              color: "text.secondary"
-            }}>
-              Dirección
-            </Typography>
-            <Typography>{venue.address || '—'}</Typography>
-          </Stack>
-
-          {venue.photoUrl && (
-            <Box
-              component="img"
-              src={venue.photoUrl}
-              alt={`Cancha ${venue.name}`}
-              sx={{
-                width: '100%',
-                maxWidth: 520,
-                borderRadius: 2,
-                objectFit: 'cover',
-              }}
-            />
-          )}
+    <PageShell
+      title={venue.name}
+      back={{ label: 'Volver', onClick: () => navigate(APP_ROUTES.panelVenues) }}
+    >
+      <Stack spacing={2}>
+        <Stack spacing={1}>
+          <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
+            Dirección
+          </Typography>
+          <Typography>{venue.address || '—'}</Typography>
         </Stack>
-      </CardContent>
-    </Card>
+
+        {venue.photoUrl && (
+          <Box
+            component="img"
+            src={venue.photoUrl}
+            alt={`Cancha ${venue.name}`}
+            sx={{
+              width: '100%',
+              maxWidth: 520,
+              borderRadius: 2,
+              objectFit: 'cover',
+            }}
+          />
+        )}
+      </Stack>
+    </PageShell>
   );
 };
 

@@ -1,19 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Card,
-  CardContent,
-  Grid,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Grid, Stack, TextField, Typography } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import { IPlayerSanctionEditFormState } from '@/modules/playerSanction/type/playerSanction.d';
 import FormButtons from '@/views/core/components/FormButtons';
-import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import PageShell from '@/views/core/components/PageShell';
+import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const INITIAL_FORM: IPlayerSanctionEditFormState = {
@@ -119,50 +113,38 @@ const PlayerSanctionEditPage: React.FC = () => {
 
   if (!targetSanctionId) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">Editar sanción</Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              mt: 1
-            }}>
-            No se recibió una sanción para editar.
-          </Typography>
-        </CardContent>
-      </Card>
+      <PageShell title="Editar sanción">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          No se recibió una sanción para editar.
+        </Typography>
+      </PageShell>
     );
   }
 
   if (loading) {
-    return <LoadingIndicator />;
+    return (
+      <PageShell title="Editar sanción">
+        <DetailSkeleton />
+      </PageShell>
+    );
   }
 
   if (!playerSanction || playerSanction.id !== targetSanctionId) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">Sanción no encontrada</Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              mt: 1
-            }}>
-            No fue posible cargar la información de la sanción.
-          </Typography>
-        </CardContent>
-      </Card>
+      <PageShell title="Sanción no encontrada">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          No fue posible cargar la información de la sanción.
+        </Typography>
+      </PageShell>
     );
   }
 
   return (
-    <Card>
-      <CardContent>
+    <PageShell
+      title="Editar sanción"
+      back={{ label: 'Volver', onClick: handleClose }}
+    >
         <Stack spacing={2}>
-          <Typography variant="h6">Editar sanción</Typography>
-
           <Grid container spacing={2}>
             <Grid
               size={{
@@ -211,8 +193,7 @@ const PlayerSanctionEditPage: React.FC = () => {
             />
           </Stack>
         </Stack>
-      </CardContent>
-    </Card>
+    </PageShell>
   );
 };
 

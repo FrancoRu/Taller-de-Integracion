@@ -250,9 +250,11 @@ describe('TeamsPage — create dialog', () => {
     expect(
       within(dialog).getByRole('textbox', { name: /^Código/ })
     ).toHaveValue('');
+    // The kit designer exposes a jersey-style gallery instead of a plain
+    // color textbox, defaulting to the "Lisa" (solid) template.
     expect(
-      within(dialog).getByRole('textbox', { name: /^Color camiseta/ })
-    ).toHaveValue('');
+      within(dialog).getByRole('radiogroup', { name: /modelo de camiseta/i })
+    ).toBeInTheDocument();
     expect(
       within(dialog).getByRole('button', { name: /seleccionar logo/i })
     ).toBeInTheDocument();
@@ -306,10 +308,6 @@ describe('TeamsPage — create dialog', () => {
       within(dialog).getByRole('textbox', { name: /^Código/ }),
       'boc'
     );
-    await user.type(
-      within(dialog).getByRole('textbox', { name: /^Color camiseta/ }),
-      ' Azul '
-    );
 
     const logoFile = new File(['logo'], 'logo.png', { type: 'image/png' });
     const fileInput = dialog.querySelector(
@@ -320,11 +318,13 @@ describe('TeamsPage — create dialog', () => {
     await user.click(within(dialog).getByRole('button', { name: /crear/i }));
 
     await waitFor(() => expect(addTeam).toHaveBeenCalledTimes(1));
+    // The kit designer defaults the primary color and the solid template.
     expect(addTeam).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Boca',
         threeLetterCode: 'BOC',
-        shirtColor: 'Azul',
+        shirtColor: '#1E5FCC',
+        jerseyStyle: 'solid',
         logo: logoFile,
       })
     );
@@ -356,9 +356,11 @@ describe('TeamsPage — edit dialog', () => {
     expect(
       within(dialog).getByRole('textbox', { name: /^Código/ })
     ).toHaveValue('RIV');
+    // The color is now edited through the kit designer's pickers/gallery
+    // rather than a plain textbox.
     expect(
-      within(dialog).getByRole('textbox', { name: /^Color camiseta/ })
-    ).toHaveValue('Rojo');
+      within(dialog).getByRole('radiogroup', { name: /modelo de camiseta/i })
+    ).toBeInTheDocument();
   });
 
   it('calls putTeamById with trimmed values, closes, refetches and shows a success alert', async () => {

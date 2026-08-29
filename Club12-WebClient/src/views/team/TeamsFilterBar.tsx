@@ -49,7 +49,7 @@ const TeamsFilterBar: React.FC<TeamsFilterBarProps> = ({
       }}
     />
     <TextField
-      label="Color camiseta"
+      label="Camiseta"
       name="shirtColor"
       size="small"
       value={filters.shirtColor ?? ''}

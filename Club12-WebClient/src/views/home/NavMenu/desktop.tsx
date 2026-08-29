@@ -53,6 +53,39 @@ const DesktopNavItems: React.FC<DesktopNavItemsProps> = ({
 
       <ListItemButton
         component={Link}
+        to={`/${RoutesNavigationViews.Tournaments}`}
+        selected={location.pathname.startsWith('/torneos')}
+        onClick={() =>
+          handleNavigationAndCloseMenu(`/${RoutesNavigationViews.Tournaments}`)
+        }
+      >
+        <ListItemText primary="Torneos" />
+      </ListItemButton>
+
+      <ListItemButton
+        component={Link}
+        to={`/${RoutesNavigationViews.Sanctions}`}
+        selected={isSelected(`/${RoutesNavigationViews.Sanctions}`)}
+        onClick={() =>
+          handleNavigationAndCloseMenu(`/${RoutesNavigationViews.Sanctions}`)
+        }
+      >
+        <ListItemText primary="Sanciones" />
+      </ListItemButton>
+
+      <ListItemButton
+        component={Link}
+        to={`/${RoutesNavigationViews.Blog}`}
+        selected={isSelected(`/${RoutesNavigationViews.Blog}`)}
+        onClick={() =>
+          handleNavigationAndCloseMenu(`/${RoutesNavigationViews.Blog}`)
+        }
+      >
+        <ListItemText primary="Novedades" />
+      </ListItemButton>
+
+      <ListItemButton
+        component={Link}
         to={RoutesNavigationViews.How_We_Are}
         selected={isSelected(RoutesNavigationViews.How_We_Are)}
         onClick={() =>
@@ -99,7 +132,7 @@ const DesktopNavItems: React.FC<DesktopNavItemsProps> = ({
           }
         >
           <MenuItem selected={isSelected(RoutesNavigationViews.Medical_Record)}>
-            Ficha Medica
+            Ficha médica
           </MenuItem>
         </Link>
         <Link
@@ -114,39 +147,6 @@ const DesktopNavItems: React.FC<DesktopNavItemsProps> = ({
           </MenuItem>
         </Link>
       </Menu>
-
-      <ListItemButton
-        component={Link}
-        to={`/${RoutesNavigationViews.Tournaments}`}
-        selected={location.pathname.startsWith('/torneos')}
-        onClick={() =>
-          handleNavigationAndCloseMenu(`/${RoutesNavigationViews.Tournaments}`)
-        }
-      >
-        <ListItemText primary="Torneos" />
-      </ListItemButton>
-
-      <ListItemButton
-        component={Link}
-        to={`/${RoutesNavigationViews.Sanctions}`}
-        selected={isSelected(`/${RoutesNavigationViews.Sanctions}`)}
-        onClick={() =>
-          handleNavigationAndCloseMenu(`/${RoutesNavigationViews.Sanctions}`)
-        }
-      >
-        <ListItemText primary="Sanciones" />
-      </ListItemButton>
-
-      <ListItemButton
-        component={Link}
-        to={`/${RoutesNavigationViews.Blog}`}
-        selected={isSelected(`/${RoutesNavigationViews.Blog}`)}
-        onClick={() =>
-          handleNavigationAndCloseMenu(`/${RoutesNavigationViews.Blog}`)
-        }
-      >
-        <ListItemText primary="Novedades" />
-      </ListItemButton>
     </Box>
   );
 };

@@ -3,8 +3,6 @@ import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   InputAdornment,
   MenuItem,
   Stack,
@@ -12,6 +10,8 @@ import {
   Typography,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import PageShell from '@/views/core/components/PageShell';
+import FilterBar from '@/views/core/components/FilterBar';
 import { confirmDelete, notifySuccess } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { useStage } from '@/modules/stage/hook/stage.hook';
@@ -203,6 +203,12 @@ const StagesPage: React.FC<StagesPageProps> = ({
     setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
   };
 
+  const handleClearFilters = () => {
+    setFilters(EMPTY_FILTERS);
+    setDebouncedFilters(EMPTY_FILTERS);
+    setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
+  };
+
   const handlePaginationModelChange = useCallback(
     (nextPaginationModel: GridPaginationModel) => {
       setPaginationModel(prev =>
@@ -384,42 +390,35 @@ const StagesPage: React.FC<StagesPageProps> = ({
     navigate(`${APP_ROUTES.panelStageCreate}${query}`);
   }, [divisionId, navigate, onCreate]);
 
-  const content = (
-    <>
-      {(title || createType) && (
-        <Stack
-          direction="row"
-          sx={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 2
-          }}>
-          {title ? <Typography variant="h6">{title}</Typography> : <Box />}
-          <Stack direction="row" spacing={1}>
-            {canGenerateStages && (
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<SettingsSuggestIcon />}
-                onClick={() => void handleGenerateStages()}
-                disabled={loading}
-              >
-                Generar Fases
-              </Button>
-            )}
-            <NewEntityButton
-              gender="feminine"
-              type={createType}
-              onClick={handleCreateStage}
-            />
-          </Stack>
-        </Stack>
+  const actionButtons = (
+    <Stack direction="row" spacing={1}>
+      {canGenerateStages && (
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<SettingsSuggestIcon />}
+          onClick={() => void handleGenerateStages()}
+          disabled={loading}
+        >
+          Generar fases
+        </Button>
       )}
+      {createType && (
+        <NewEntityButton
+          gender="feminine"
+          type={createType}
+          onClick={handleCreateStage}
+        />
+      )}
+    </Stack>
+  );
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{
-        mb: 2
-      }}>
-        <TextField
+  const filterBar = (
+    <FilterBar
+      onClear={hasActiveFilters ? handleClearFilters : undefined}
+      ariaLabel="Filtros de fases"
+    >
+      <TextField
           label="Nombre"
           name="name"
           size="small"
@@ -496,37 +495,57 @@ const StagesPage: React.FC<StagesPageProps> = ({
             ))}
           </TextField>
         )}
-      </Stack>
+    </FilterBar>
+  );
 
-      <Box sx={{ width: '100%' }}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          loading={loading}
-          getRowId={row => row.id}
-          autoHeight
-          disableRowSelectionOnClick
-          disableColumnMenu
-          localeText={{ noRowsLabel: noRowsMessage }}
-          pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
-          paginationModel={paginationModel}
-          onPaginationModelChange={handlePaginationModelChange}
-          paginationMode="server"
-          rowCount={rowCount}
-        />
-      </Box>
-    </>
+  const grid = (
+    <Box sx={{ width: '100%' }}>
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        loading={loading}
+        getRowId={row => row.id}
+        autoHeight
+        disableRowSelectionOnClick
+        disableColumnMenu
+        localeText={{ noRowsLabel: noRowsMessage }}
+        pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+        paginationModel={paginationModel}
+        onPaginationModelChange={handlePaginationModelChange}
+        paginationMode="server"
+        rowCount={rowCount}
+      />
+    </Box>
   );
 
   if (wrapInCard) {
     return (
-      <Card>
-        <CardContent>{content}</CardContent>
-      </Card>
+      <PageShell title={title} actions={actionButtons}>
+        {filterBar}
+        {grid}
+      </PageShell>
     );
   }
 
-  return <Box sx={{ width: '100%' }}>{content}</Box>;
+  return (
+    <Box sx={{ width: '100%' }}>
+      {(title || createType) && (
+        <Stack
+          direction="row"
+          sx={{
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 2,
+          }}
+        >
+          {title ? <Typography variant="h6">{title}</Typography> : <Box />}
+          {actionButtons}
+        </Stack>
+      )}
+      {filterBar}
+      {grid}
+    </Box>
+  );
 };
 
 export default StagesPage;

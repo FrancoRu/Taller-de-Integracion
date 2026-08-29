@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Box, Button, Card, CardContent, CircularProgress, Grid, Stack, Tab, Tabs, Typography } from '@mui/material';
+import { Box, Button, Grid, Tab, Tabs, Typography } from '@mui/material';
+import PageShell from '@/views/core/components/PageShell';
+import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { GUID } from '@/modules/core/types/types';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
@@ -13,7 +15,6 @@ import { buildBrackets } from '@/modules/playoff/buildBracket';
 import { BracketGroup } from '@/modules/playoff/type/bracket.d';
 import StagesPage from '@/views/stage/stagesPage';
 import DivisionStandings from '@/views/division/divisionStandings';
-import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
@@ -144,24 +145,20 @@ const DivisionPage: React.FC = () => {
 
   if (!targetDivisionId) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">División</Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              mt: 1
-            }}>
-            No se recibió una división para visualizar.
-          </Typography>
-        </CardContent>
-      </Card>
+      <PageShell title="División">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          No se recibió una división para visualizar.
+        </Typography>
+      </PageShell>
     );
   }
 
   if (loading) {
-    return <LoadingIndicator />;
+    return (
+      <PageShell title="División">
+        <DetailSkeleton />
+      </PageShell>
+    );
   }
 
   if (
@@ -169,58 +166,35 @@ const DivisionPage: React.FC = () => {
     (division.id !== targetDivisionId && division.slug !== targetDivisionId)
   ) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">División no encontrada</Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              mt: 1
-            }}>
-            No fue posible cargar la información de la división.
-          </Typography>
-          <Typography
-            component="button"
-            onClick={() => navigate(APP_ROUTES.panelDivisions)}
-            sx={{
-              mt: 2,
-              border: 0,
-              background: 'none',
-              color: 'primary.main',
-              cursor: 'pointer',
-              p: 0,
-            }}
-          >
-            Volver al listado
-          </Typography>
-        </CardContent>
-      </Card>
+      <PageShell title="División no encontrada">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          No fue posible cargar la información de la división.
+        </Typography>
+        <Button
+          variant="text"
+          onClick={() => navigate(APP_ROUTES.panelDivisions)}
+          sx={{ mt: 2, px: 0 }}
+        >
+          Volver al listado
+        </Button>
+      </PageShell>
     );
   }
 
   return (
-    <Card>
-      <CardContent>
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={2}
-          sx={{
-            alignItems: { xs: 'flex-start', sm: 'center' },
-            justifyContent: "space-between",
-            mb: 2
-          }}>
-          <Typography variant="h6">{division.name}</Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => navigate(APP_ROUTES.panelDivisions)}
-          >
-            Volver
-          </Button>
-        </Stack>
-
-        <Tabs
+    <PageShell
+      title={division.name}
+      actions={
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => navigate(APP_ROUTES.panelDivisions)}
+        >
+          Volver
+        </Button>
+      }
+    >
+      <Tabs
           value={tab}
           onChange={(_, value) => setTab(value)}
           sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
@@ -307,19 +281,11 @@ const DivisionPage: React.FC = () => {
 
         {tab === 'llaves' &&
           (bracketsLoading ? (
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                py: 5
-              }}>
-              <CircularProgress />
-            </Box>
+            <DetailSkeleton />
           ) : (
             <PlayoffBrackets groups={bracketGroups} seriesById={seriesById} />
           ))}
-      </CardContent>
-    </Card>
+    </PageShell>
   );
 };
 

@@ -1,21 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  Box,
-  Card,
-  CardContent,
-  CircularProgress,
-  Divider,
-  IconButton,
-  Stack,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import {
-  ArrowBackIcon,
-  EditIcon,
-  LockResetIcon,
-} from '@/views/core/MUI/icons/icons';
+import { Box, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import { EditIcon, LockResetIcon } from '@/views/core/MUI/icons/icons';
+import PageShell from '@/views/core/components/PageShell';
+import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { useError } from '@/modules/error/hooks/error.hock';
 import { useUser } from '@/modules/user/hook/user.hook';
@@ -62,88 +50,56 @@ const UserDetails: React.FC = () => {
   }, [userId, getById]);
 
   return (
-    <Card sx={{ maxWidth: 600, mx: 'auto', mt: 3 }}>
-      <CardContent>
-        <Stack
-          direction="row"
-          sx={{
-            alignItems: "center",
-            justifyContent: "space-between",
-            mb: 2
-          }}>
-          <Stack direction="row" spacing={1} sx={{
-            alignItems: "center"
-          }}>
-            <Tooltip title="Volver">
-              <IconButton
-                size="small"
-                onClick={() => navigate(APP_ROUTES.panelUsers)}
-              >
-                <ArrowBackIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Typography variant="h6">Detalle de usuario</Typography>
-          </Stack>
-
-          {!loading && user && (
-            <Stack direction="row" spacing={1}>
-              {canResetPassword && (
-                <Tooltip title="Blanquear password">
-                  <IconButton
-                    color="warning"
-                    onClick={handlePasswordReset}
-                    disabled={resetting}
-                  >
-                    <LockResetIcon />
-                  </IconButton>
-                </Tooltip>
-              )}
-              <Tooltip title="Editar">
+    <PageShell
+      title="Detalle de usuario"
+      maxWidth="sm"
+      back={{ label: 'Volver', onClick: () => navigate(APP_ROUTES.panelUsers) }}
+      actions={
+        !loading && user ? (
+          <>
+            {canResetPassword && (
+              <Tooltip title="Blanquear contraseña">
                 <IconButton
-                  color="primary"
-                  onClick={() =>
-                    navigate(APP_ROUTES.panelUserEdit.build(userId as string))
-                  }
+                  color="warning"
+                  onClick={handlePasswordReset}
+                  disabled={resetting}
                 >
-                  <EditIcon />
+                  <LockResetIcon />
                 </IconButton>
               </Tooltip>
-            </Stack>
-          )}
+            )}
+            <Tooltip title="Editar">
+              <IconButton
+                color="primary"
+                onClick={() =>
+                  navigate(APP_ROUTES.panelUserEdit.build(userId as string))
+                }
+              >
+                <EditIcon />
+              </IconButton>
+            </Tooltip>
+          </>
+        ) : undefined
+      }
+    >
+      {loading ? (
+        <DetailSkeleton />
+      ) : !user ? (
+        <Typography sx={{ color: 'text.secondary' }}>
+          No se encontró el usuario.
+        </Typography>
+      ) : (
+        <Stack spacing={2}>
+          <Field label="Usuario" value={user.username} />
+          <Field label="Email" value={user.email} />
+          <Field label="Teléfono" value={user.phoneNumber ?? '—'} />
+          <Field
+            label="Rol"
+            value={USER_ROLE_LABELS[user.role as UserRolesType] ?? user.role}
+          />
         </Stack>
-
-        <Divider sx={{ mb: 2 }} />
-
-        {loading ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              py: 4
-            }}>
-            <CircularProgress />
-          </Box>
-        ) : !user ? (
-          <Typography sx={{
-            color: "text.secondary"
-          }}>
-            No se encontró el usuario.
-          </Typography>
-        ) : (
-          <Stack spacing={2}>
-            <Field label="Usuario" value={user.username} />
-            <Field label="Email" value={user.email} />
-            <Field label="Teléfono" value={user.phoneNumber ?? '—'} />
-            <Field
-              label="Rol"
-              value={
-                USER_ROLE_LABELS[user.role as UserRolesType] ?? user.role
-              }
-            />
-          </Stack>
-        )}
-      </CardContent>
-    </Card>
+      )}
+    </PageShell>
   );
 };
 

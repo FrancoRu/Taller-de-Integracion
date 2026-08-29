@@ -27,6 +27,12 @@ public sealed class DataSeeder(ApplicationDBContext db, ILogger<DataSeeder> logg
     private static readonly string[] PrimeraTeamColors =
         ["#1E3A8A", "#DC2626", "#16A34A", "#EA580C"];
 
+    private static readonly string[] PrimeraTeamStyles =
+        ["stripes", "hoops", "diagonal", "chevron"];
+
+    private static readonly string[] PrimeraTeamSecondaryColors =
+        ["#FFFFFF", "#FFFFFF", "#FFFFFF", "#1E293B"];
+
     private static readonly string[] ReservaTeamNames =
         ["Juventud Unida", "Sportivo Oeste", "Estrella Azul", "Náutico River"];
 
@@ -34,6 +40,12 @@ public sealed class DataSeeder(ApplicationDBContext db, ILogger<DataSeeder> logg
 
     private static readonly string[] ReservaTeamColors =
         ["#7C3AED", "#0891B2", "#CA8A04", "#4338CA"];
+
+    private static readonly string[] ReservaTeamStyles =
+        ["sash", "halves", "vneck", "gradient"];
+
+    private static readonly string[] ReservaTeamSecondaryColors =
+        ["#FDE047", "#FFFFFF", "#1E293B", "#FFFFFF"];
 
     public async Task SeedAsync()
     {
@@ -61,8 +73,10 @@ public sealed class DataSeeder(ApplicationDBContext db, ILogger<DataSeeder> logg
             UpcomingMatchesStart: new DateTime(2026, 9, 7, 0, 0, 0, DateTimeKind.Utc),
             Divisions:
             [
-                new(  "Primera División", PrimeraTeamNames, PrimeraTeamCodes, PrimeraTeamColors),
-                new("Reserva", ReservaTeamNames, ReservaTeamCodes, ReservaTeamColors),
+                new("Primera División", PrimeraTeamNames, PrimeraTeamCodes, PrimeraTeamColors,
+                    TeamStyles: PrimeraTeamStyles, TeamSecondaryColors: PrimeraTeamSecondaryColors),
+                new("Reserva", ReservaTeamNames, ReservaTeamCodes, ReservaTeamColors,
+                    TeamStyles: ReservaTeamStyles, TeamSecondaryColors: ReservaTeamSecondaryColors),
             ]);
 
         int playerCounter = 0;

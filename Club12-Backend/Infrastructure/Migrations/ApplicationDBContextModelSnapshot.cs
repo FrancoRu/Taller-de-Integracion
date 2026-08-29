@@ -920,6 +920,13 @@ namespace Persistance.Migrations
                     b.Property<DateTime?>("DateUpdated")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<string>("JerseyStyle")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("solid");
+
                     b.Property<string>("LogoUrl")
                         .IsRequired()
                         .HasColumnType("text");
@@ -931,6 +938,10 @@ namespace Persistance.Migrations
                     b.Property<string>("ShirtColor")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("ShirtSecondaryColor")
+                        .HasMaxLength(9)
+                        .HasColumnType("character varying(9)");
 
                     b.Property<string>("Slug")
                         .IsRequired()

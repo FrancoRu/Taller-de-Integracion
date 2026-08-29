@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  Box,
   Button,
-  Card,
-  CardContent,
-  CircularProgress,
   FormControlLabel,
   Stack,
   Switch,
@@ -19,6 +15,8 @@ import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
 import { UpdateBlogPostRequest } from '@/modules/blogPost/type/blogPost';
 import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import FormButtons from '@/views/core/components/FormButtons';
+import PageShell from '@/views/core/components/PageShell';
+import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import BlogPostImageField from '@/views/blogPost/BlogPostImageField';
 import BlogPostPreviewDialog from '@/views/blogPost/BlogPostPreviewDialog';
@@ -145,53 +143,31 @@ const BlogPostEditPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Card>
-        <CardContent>
-          <Stack
-            spacing={2}
-            sx={{
-              alignItems: "center",
-              py: 4
-            }}>
-            <CircularProgress />
-            <Typography>Cargando publicación...</Typography>
-          </Stack>
-        </CardContent>
-      </Card>
+      <PageShell title="Editar publicación">
+        <DetailSkeleton />
+      </PageShell>
     );
   }
 
   if (notFound) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">Publicación no encontrada</Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              mt: 1
-            }}>
-            No fue posible cargar la publicación solicitada.
-          </Typography>
-          <Box sx={{
-            mt: 2
-          }}>
-            <Button variant="contained" onClick={handleCancel}>
-              Volver
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
+      <PageShell
+        title="Publicación no encontrada"
+        back={{ label: 'Volver', onClick: handleCancel }}
+      >
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          No fue posible cargar la publicación solicitada.
+        </Typography>
+      </PageShell>
     );
   }
 
   return (
-    <Card>
-      <CardContent>
+    <PageShell
+      title="Editar publicación"
+      back={{ label: 'Volver', onClick: handleCancel }}
+    >
         <Stack spacing={2}>
-          <Typography variant="h6">Editar publicación</Typography>
-
           <TextField
             label="Autor"
             value={form.author ?? ''}
@@ -252,7 +228,6 @@ const BlogPostEditPage: React.FC = () => {
             />
           </Stack>
         </Stack>
-      </CardContent>
 
       <BlogPostPreviewDialog
         open={previewOpen}
@@ -262,7 +237,7 @@ const BlogPostEditPage: React.FC = () => {
         photoUrl={displayedImageUrl}
         markdownText={form.markdownText ?? ''}
       />
-    </Card>
+    </PageShell>
   );
 };
 

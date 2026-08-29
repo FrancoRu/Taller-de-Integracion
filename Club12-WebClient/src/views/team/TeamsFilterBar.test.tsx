@@ -4,7 +4,7 @@ import TeamsFilterBar from '@/views/team/TeamsFilterBar';
 import type { TeamsSearchFilters } from '@/views/team/teams.types';
 
 describe('TeamsFilterBar', () => {
-  it('renders the current filter values in the Nombre, Código and Color camiseta fields', () => {
+  it('renders the current filter values in the Nombre, Código and Camiseta fields', () => {
     const filters: TeamsSearchFilters = {
       name: 'River',
       threeLetterCode: 'RIV',
@@ -22,7 +22,7 @@ describe('TeamsFilterBar', () => {
       'RIV'
     );
     expect(
-      screen.getByRole('textbox', { name: 'Color camiseta' })
+      screen.getByRole('textbox', { name: 'Camiseta' })
     ).toHaveValue('Rojo');
   });
 
