@@ -64,6 +64,13 @@ Bloque admin-organizar + seguridad (verificado por build+tests; E2E admin en viv
 3. **Stats por temporada** ✅ (frontend) — la página admin Estadísticas ahora tiene filtro Temporada + Torneo (torneos derivados de la temporada elegida) que scopea el ranking de goleadores vía los params `season`/`tournamentId` que YA existen en el endpoint scorer; las cards resumen quedan globales. Default sin filtro. Helpers `statisticsFilters.ts` TDD.
 4. **Delete-integridad global** ✅ (backend, sin migración) — guards de borrado en los services de Team/Tournament/Division: bloquean (409 español) si hay historia competitiva (partidos jugados, Ongoing/Finished, deducciones, sanciones, inscripciones); si está vacío, borra con cascade coherente. OJO borra vía `ExecuteDeleteAsync` (bypassa EF → solo aplica OnDelete de la DB). ⚠️ FLAG (reportado, NO tocado, requiere migración): `MatchSeries→Team` y `Team→Players` son Cascade → un borrado crudo de Team borraría series/plantel; el guard de servicio lo previene, pero convendría endurecer el OnDelete en una migración futura.
 
+## 🔄 EN PROGRESO — rama `feat/scoreboard-and-polish` (sale de develop post-#66, NO mergeado aún)
+
+1. **Scoreboard del partido público** ✅ — `PublicMatchPage` rediseñada como scoreboard: marcador grande (Oswald, ganador resaltado en primary, perdedor atenuado), escudos iguales, chip de estado, fecha/cancha, "VS" si está programado; goleadores por equipo (2 columnas) + sanciones. Liga neutral (sin local/visita). Admin de partido intacto. Helpers `getScoreboardEmphasis`/`sortScorersByPoints` TDD. ⚠️ Observación: el GET de match no incluye los `scorers` del partido → "Sin goleadores cargados" aunque el seed carga scoring; revisar el include del endpoint de match (data, no layout).
+
+## 📋 BACKLOG restante (post scoreboard)
+Llaves admin editables (cargar resultado desde el bracket), staff de equipo (DT/asistente/DT-jugador), canchas imagen+mapa (Venue lat/lng + Leaflet/OSM), auditoría completa (AuditLog en toda mutación admin), mensajes auth backend→español (ErrorMessages.Auth.*; ojo tests que asertan texto), y el **E2E final** del ciclo completo (crear temporada→torneo→estructura→inscripción→fichas→arrancar→resultados→posiciones→playoffs→campeones, verificando que todo sea correcto — el norte).
+
 
 PLAN restante (orden): SEO/meta; admin organizar (scoreboard/scoring por partido, deducción de puntos, fases bloqueadas con torneo arrancado, llaves editables); integridad+auditoría (delete-integridad global, AuditLog en toda mutación); features (staff DT, stats por temporada, canchas imagen+mapa, mensajes auth backend→español); E2E final del ciclo completo. Norte: organizar temporada de punta a punta, correcto.
 
