@@ -18,10 +18,7 @@ import {
   ISeasonResponse,
   SeasonFiltered,
 } from '@/modules/season/type/season';
-import {
-  GenericResponsePagination,
-  GUID,
-} from '@/modules/core/types/types';
+import { GUID } from '@/modules/core/types/types';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { seasonKeys } from '@/modules/season/queryKeys';
 import { HttpStatus } from '@/modules/core/constants/httpStatus';
@@ -129,18 +126,18 @@ export const SeasonProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const getSeasonsByFiltered = useCallback(
-    async (
-      filter: SeasonFiltered
-    ): Promise<GenericResponsePagination<ISeasonResponse> | void> => {
+    async (filter: SeasonFiltered): Promise<ISeasonResponse[] | void> => {
       try {
-        const res: AxiosResponse<GenericResponsePagination<ISeasonResponse>> =
+        // The seasons endpoint returns a plain array (seasons are few, no
+        // pagination), so the list is `res.data` itself — not a `.items` page.
+        const res: AxiosResponse<ISeasonResponse[]> =
           await queryClient.fetchQuery({
             queryKey: seasonKeys.list(filter),
             queryFn: async () => await seasonService.getSeasonsByFiltered(filter),
           });
 
         if (res) {
-          setSeasons(res.data.items);
+          setSeasons(res.data);
         }
         return res.data;
       } catch (error: unknown) {
