@@ -28,6 +28,14 @@ export interface IVenueContextProps {
   ): Promise<IVenueResponse | void>;
 
   /**
+   * Uploads a new photo for an existing venue. The image is stored separately
+   * from the venue's other fields (mirrors the team logo endpoint).
+   * @param id The ID of the venue whose photo to replace.
+   * @param image The new image file.
+   */
+  putVenuePhotoById(id: GUID, image: File): Promise<void>;
+
+  /**
    * Fetches all venues from the system.
    * @returns A promise that resolves with an array of venues.
    */
@@ -71,6 +79,18 @@ export interface IAddVenueRequest {
    * @type {File}
    */
   imageFile: File;
+
+  /**
+   * Optional geographic latitude of the venue.
+   * @type {number}
+   */
+  latitude?: number;
+
+  /**
+   * Optional geographic longitude of the venue.
+   * @type {number}
+   */
+  longitude?: number;
 }
 
 /**
@@ -103,6 +123,18 @@ export interface IVenueResponse {
   address: string;
 
   photoUrl?: string;
+
+  /**
+   * Optional geographic latitude of the venue, for the public map link.
+   * @type {number}
+   */
+  latitude?: number;
+
+  /**
+   * Optional geographic longitude of the venue, for the public map link.
+   * @type {number}
+   */
+  longitude?: number;
 }
 
 /**
@@ -128,6 +160,18 @@ export interface IPutVenueRequest {
    * @type {string}
    */
   photoUrl?: string;
+
+  /**
+   * Optional geographic latitude of the venue.
+   * @type {number}
+   */
+  latitude?: number;
+
+  /**
+   * Optional geographic longitude of the venue.
+   * @type {number}
+   */
+  longitude?: number;
 }
 
 export interface VenueDashboardProps {

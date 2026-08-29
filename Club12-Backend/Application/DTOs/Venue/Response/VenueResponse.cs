@@ -26,4 +26,14 @@ public class VenueResponse : BaseEntityResponse
     /// The URL of the venue's photo.
     /// </summary>
     public string? PhotoUrl { get; set; }
+
+    /// <summary>
+    /// Optional geographic latitude of the venue, for the public map link.
+    /// </summary>
+    public double? Latitude { get; set; }
+
+    /// <summary>
+    /// Optional geographic longitude of the venue, for the public map link.
+    /// </summary>
+    public double? Longitude { get; set; }
 }

@@ -99,6 +99,8 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
               name: venue.name ?? currentVenue?.name ?? '',
               address: venue.address ?? currentVenue?.address ?? '',
               photoUrl: venue.photoUrl ?? currentVenue?.photoUrl ?? '',
+              latitude: venue.latitude ?? currentVenue?.latitude,
+              longitude: venue.longitude ?? currentVenue?.longitude,
             };
             setVenue(updatedVenue);
             setVenues(prev => upsertListById(prev, updatedVenue));
@@ -127,6 +129,19 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
       }
     },
     [putVenueMutation, queryClient, setMessage, venues, handleUnknownError]
+  );
+
+  const putVenuePhotoById = useCallback(
+    async (id: GUID, image: File): Promise<void> => {
+      try {
+        await venueService.putVenuePhotoById(id, image);
+        await queryClient.invalidateQueries({ queryKey: venueKeys.byId(id) });
+        await queryClient.invalidateQueries({ queryKey: venueKeys.list() });
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [queryClient, handleUnknownError]
   );
 
   const getAllVenues = useCallback(async (): Promise<
@@ -215,6 +230,7 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
       getVenueById,
       getAllVenues,
       putVenueById,
+      putVenuePhotoById,
       deleteVenueById,
     }),
     [
@@ -224,6 +240,7 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
       getVenueById,
       getAllVenues,
       putVenueById,
+      putVenuePhotoById,
       deleteVenueById,
     ]
   );

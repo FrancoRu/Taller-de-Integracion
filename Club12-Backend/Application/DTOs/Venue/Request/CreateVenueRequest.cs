@@ -30,4 +30,14 @@ public class CreateVenueRequest
     [Required(ErrorMessage = "The image file image is required.")]
     [DataType(DataType.Upload)]
     public required IFormFile ImageFile { get; init; }
+
+    /// <summary>
+    /// Optional geographic latitude of the venue (e.g. pasted from Google Maps).
+    /// </summary>
+    public double? Latitude { get; set; }
+
+    /// <summary>
+    /// Optional geographic longitude of the venue (e.g. pasted from Google Maps).
+    /// </summary>
+    public double? Longitude { get; set; }
 }

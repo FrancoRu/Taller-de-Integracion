@@ -60,6 +60,8 @@ type VenueSearchFilters = {
 type VenueFormState = {
   name: string;
   address: string;
+  latitude: string;
+  longitude: string;
   imageFile: File | null;
 };
 
@@ -68,7 +70,24 @@ const EMPTY_FILTERS: VenueSearchFilters = {};
 const INITIAL_VENUE_FORM: VenueFormState = {
   name: '',
   address: '',
+  latitude: '',
+  longitude: '',
   imageFile: null,
+};
+
+const COORDINATES_HELPER_TEXT = 'Pegá las coordenadas de Google Maps.';
+
+/**
+ * Parses a coordinate text input into a number. Empty or invalid input yields
+ * undefined so the field is treated as "not provided" rather than 0.
+ */
+const parseCoordinate = (value: string): number | undefined => {
+  const trimmed = value.trim();
+  if (trimmed === '') {
+    return undefined;
+  }
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : undefined;
 };
 
 const VenuesPage: React.FC<VenuesPageProps> = ({
@@ -77,8 +96,14 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
   wrapInCard = true,
 }) => {
   const navigate = useNavigate();
-  const { venues, addVenue, putVenueById, deleteVenueById, getAllVenues } =
-    useVenue();
+  const {
+    venues,
+    addVenue,
+    putVenueById,
+    putVenuePhotoById,
+    deleteVenueById,
+    getAllVenues,
+  } = useVenue();
 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -89,6 +114,19 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
   const [editingVenue, setEditingVenue] = useState<IVenueResponse | null>(null);
   const [venueForm, setVenueForm] =
     useState<VenueFormState>(INITIAL_VENUE_FORM);
+  const [imagePreview, setImagePreview] = useState('');
+
+  // Preview a freshly picked image immediately (object URL). The URL is revoked
+  // when the file changes or the component unmounts so it does not leak.
+  useEffect(() => {
+    if (!venueForm.imageFile) {
+      setImagePreview('');
+      return;
+    }
+    const url = URL.createObjectURL(venueForm.imageFile);
+    setImagePreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [venueForm.imageFile]);
 
   const fetchVenues = useCallback(async () => {
     setLoading(true);
@@ -161,6 +199,8 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
     setVenueForm({
       name: row.name,
       address: row.address,
+      latitude: row.latitude?.toString() ?? '',
+      longitude: row.longitude?.toString() ?? '',
       imageFile: null,
     });
   }, []);
@@ -287,6 +327,8 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
       name: venueForm.name.trim(),
       address: venueForm.address.trim(),
       imageFile: venueForm.imageFile,
+      latitude: parseCoordinate(venueForm.latitude),
+      longitude: parseCoordinate(venueForm.longitude),
     };
 
     const created = await addVenue(payload);
@@ -318,9 +360,17 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
     const payload: IPutVenueRequest = {
       name: venueForm.name.trim(),
       address: venueForm.address.trim(),
+      latitude: parseCoordinate(venueForm.latitude),
+      longitude: parseCoordinate(venueForm.longitude),
     };
 
     const updated = await putVenueById(editingVenue.id, payload);
+
+    // The venue fields and its photo are two separate endpoints; upload the new
+    // image (if the admin picked one) as part of the same save.
+    if (venueForm.imageFile) {
+      await putVenuePhotoById(editingVenue.id, venueForm.imageFile);
+    }
     setSubmitting(false);
 
     if (updated === undefined) {
@@ -330,6 +380,67 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
     setEditingVenue(null);
     resetVenueForm();
     await fetchVenues();
+  };
+
+  const coordinateFields = (
+    <>
+      <TextField
+        label="Latitud"
+        type="number"
+        value={venueForm.latitude}
+        onChange={e =>
+          setVenueForm(prev => ({ ...prev, latitude: e.target.value }))
+        }
+        fullWidth
+        helperText={COORDINATES_HELPER_TEXT}
+      />
+      <TextField
+        label="Longitud"
+        type="number"
+        value={venueForm.longitude}
+        onChange={e =>
+          setVenueForm(prev => ({ ...prev, longitude: e.target.value }))
+        }
+        fullWidth
+      />
+    </>
+  );
+
+  const renderImageField = (fallbackUrl?: string) => {
+    const displayedUrl = imagePreview || fallbackUrl;
+    return (
+      <Stack spacing={1} sx={{ alignItems: 'center' }}>
+        {displayedUrl && (
+          <Box
+            component="img"
+            src={displayedUrl}
+            alt="Vista previa de la cancha"
+            sx={{
+              width: '100%',
+              maxWidth: 320,
+              borderRadius: 2,
+              objectFit: 'cover',
+            }}
+          />
+        )}
+        <Button variant="outlined" component="label">
+          {venueForm.imageFile
+            ? `Imagen: ${venueForm.imageFile.name}`
+            : displayedUrl
+              ? 'Cambiar imagen'
+              : 'Seleccionar imagen'}
+          <input
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={e => {
+              const file = e.target.files?.[0] ?? null;
+              setVenueForm(prev => ({ ...prev, imageFile: file }));
+            }}
+          />
+        </Button>
+      </Stack>
+    );
   };
 
   const createButton = (
@@ -425,20 +536,8 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
               required
               fullWidth
             />
-            <Button variant="outlined" component="label">
-              {venueForm.imageFile
-                ? `Imagen: ${venueForm.imageFile.name}`
-                : 'Seleccionar imagen'}
-              <input
-                type="file"
-                accept="image/*"
-                hidden
-                onChange={e => {
-                  const file = e.target.files?.[0] ?? null;
-                  setVenueForm(prev => ({ ...prev, imageFile: file }));
-                }}
-              />
-            </Button>
+            {coordinateFields}
+            {renderImageField()}
           </Stack>
         </DialogContent>
         <DialogActions>
@@ -481,6 +580,8 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
               required
               fullWidth
             />
+            {coordinateFields}
+            {renderImageField(editingVenue?.photoUrl)}
           </Stack>
         </DialogContent>
         <DialogActions>

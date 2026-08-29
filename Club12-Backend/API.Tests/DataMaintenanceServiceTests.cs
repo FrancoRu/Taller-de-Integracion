@@ -194,7 +194,7 @@ public class DataMaintenanceServiceTests : IClassFixture<CustomWebApplicationFac
 
         Assert.True(await db.Scorers.CountAsync() > 0);
         Assert.True(await db.PlayersStatistics.CountAsync() > 0);
-        Assert.Equal(5, await db.Venues.CountAsync());
+        Assert.Equal(6, await db.Venues.CountAsync());
         Assert.True(await db.Matches.AnyAsync(m => m.IsFinished && m.HomeScore != null));
     }
 
