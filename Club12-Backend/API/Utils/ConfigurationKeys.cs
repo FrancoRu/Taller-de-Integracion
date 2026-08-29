@@ -44,5 +44,19 @@ public static class ConfigurationKeys
     public static class Seed
     {
         public const string Enabled = "Seed:Enabled";
+
+        /// <summary>
+        /// When true, the startup DataSeeder deletes existing sample domain data
+        /// (FK-safe) before seeding, forcing a clean reseed. Dev-only: the whole
+        /// seed path is already gated by <see cref="Enabled"/>. Defaults to false.
+        /// </summary>
+        public const string Reset = "Seed:Reset";
+
+        /// <summary>
+        /// Filesystem folder the startup DataSeeder reads team crest PNGs from
+        /// and uploads as real team logos. Absent/missing folder falls back to
+        /// placeholder logos without failing the seed.
+        /// </summary>
+        public const string LogosPath = "Seed:LogosPath";
     }
 }

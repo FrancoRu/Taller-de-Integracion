@@ -165,8 +165,10 @@ public static class StartupExtensions
         IConfiguration configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
         if (configuration.GetValue<bool>(ConfigurationKeys.Seed.Enabled))
         {
+            bool reset = configuration.GetValue<bool>(ConfigurationKeys.Seed.Reset);
+            string? logosPath = configuration[ConfigurationKeys.Seed.LogosPath];
             DataSeeder dataSeeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
-            await dataSeeder.SeedAsync();
+            await dataSeeder.SeedAsync(reset, logosPath);
         }
     }
 

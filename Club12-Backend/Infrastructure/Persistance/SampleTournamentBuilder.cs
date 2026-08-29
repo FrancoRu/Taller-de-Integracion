@@ -106,7 +106,8 @@ public static class SampleTournamentBuilder
         DateTime UpcomingMatchesStart,
         DivisionDefinition[] Divisions,
         CrossCupDefinition? CrossCup = null,
-        TournamentStatus Status = TournamentStatus.Ongoing);
+        TournamentStatus Status = TournamentStatus.Ongoing,
+        TournamentCategory Category = TournamentCategory.Masculine);
 
     public sealed record BuildResult(Tournament Tournament, List<PlayerSanction> Sanctions);
 
@@ -178,6 +179,10 @@ public static class SampleTournamentBuilder
             TeamRegistrationDeadline = definition.TeamRegistrationDeadline,
             StartDate = definition.StartDate,
             Status = definition.Status,
+            // Competitive category (HU-48): every division built below inherits
+            // it so the "one tournament, one category" invariant holds in the
+            // seeded graph.
+            Category = definition.Category,
             Divisions = [],
             Teams = [],
         };
@@ -198,6 +203,7 @@ public static class SampleTournamentBuilder
                 slugRegistry,
                 ref playerCounter);
 
+            division.Category = definition.Category;
             tournament.Divisions.Add(division);
             foreach (Team team in teams)
             {
@@ -688,6 +694,9 @@ public static class SampleTournamentBuilder
             Stages = [],
             IsCrossDivisionCup = true,
             QualifiersPerGroup = crossCup.QualifiersPerGroup,
+            // The cup lives inside its tournament, so it shares the tournament's
+            // category (HU-48) like every other division.
+            Category = tournament.Category,
         };
         tournament.Divisions.Add(cupDivision);
 
