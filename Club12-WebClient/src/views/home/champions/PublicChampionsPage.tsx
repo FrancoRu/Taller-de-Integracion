@@ -28,12 +28,15 @@ const groupBySeason = (
   const bySeason = new Map<string, IChampionHistory[]>();
 
   history.forEach(entry => {
-    const existing = bySeason.get(entry.seasonName);
+    // A tournament may not be assigned to a season yet — group those together
+    // under a clear label instead of an empty heading.
+    const key = entry.seasonName || 'Sin temporada';
+    const existing = bySeason.get(key);
     if (existing) {
       existing.push(entry);
     } else {
-      order.push(entry.seasonName);
-      bySeason.set(entry.seasonName, [entry]);
+      order.push(key);
+      bySeason.set(key, [entry]);
     }
   });
 
