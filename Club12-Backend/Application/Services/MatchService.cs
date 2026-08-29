@@ -59,16 +59,11 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
     /// <returns>The match entity if found; otherwise, null.</returns>
     public async Task<Match?> GetMatchByIdOrSlugAsync(string idOrSlug)
     {
-        if (Guid.TryParse(idOrSlug, out Guid matchId))
-        {
-            return await GetMatchByIdAsync(matchId);
-        }
-
-        IEnumerable<Match> matches = await _matchRepository.FindAsync(
-            match => match.Slug == idOrSlug,
-            includes: [match => match.HomeTeam!, match => match.VisitorTeam!]);
-
-        return matches.FirstOrDefault();
+        // Loads the full public-detail graph (both teams, venue, and scorers with
+        // their players) so the match page can render the scoreboard AND the
+        // per-team goleadores — the generic include list can't express the nested
+        // Scorers.Player path scorer→team attribution needs.
+        return await _matchRepository.GetDetailByIdOrSlugAsync(idOrSlug);
     }
 
     public async Task<Match?> GetMatchByIdWithScorersAsync(Guid matchId)

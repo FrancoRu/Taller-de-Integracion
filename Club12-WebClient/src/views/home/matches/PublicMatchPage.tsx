@@ -10,8 +10,8 @@ import {
   Typography,
 } from '@mui/material';
 import { useMatch } from '@/modules/match/hook/match.hook';
-import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import TeamLogo from '@/views/core/components/TeamLogo';
+import JerseySvg from '@/views/core/components/JerseySvg';
 import MatchStatusChip from '@/views/match/MatchStatusChip';
 import PageShell from '@/views/core/components/PageShell';
 import SectionHeading from '@/views/core/components/SectionHeading';
@@ -23,13 +23,6 @@ import {
   sortScorersByPoints,
 } from '@/modules/match/utils/matchDisplay';
 import { formatLongDateTimeAr } from '@/modules/core/utils/formatDate';
-import {
-  formatFechasRemaining,
-  formatSanctionDurationFechas,
-  getSanctionStateLabel,
-  getSanctionSubjectName,
-  getSanctionSubjectTypeLabel,
-} from '@/modules/playerSanction/utils/sanctionDisplay';
 import { ITeamMatchResponse } from '@/modules/team/type/team';
 import { font } from '@/design/tokens';
 import {
@@ -68,7 +61,6 @@ export default function PublicMatchPage() {
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
   const { match, getMatchById } = useMatch();
-  const { playerSanctions, getPlayerSanctionByFilter } = usePlayerSanction();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -80,18 +72,6 @@ export default function PublicMatchPage() {
     };
     void fetch();
   }, [matchId, getMatchById]);
-
-  // Sanctions are an optional, non-critical section: fetch them silently by the
-  // resolved match GUID (never the route slug) so a public visitor never sees a
-  // blocking error if the list cannot load. The section simply stays hidden.
-  const resolvedMatchId = match?.id;
-  useEffect(() => {
-    if (!resolvedMatchId) return;
-    void getPlayerSanctionByFilter(
-      { matchId: resolvedMatchId },
-      { silent: true }
-    );
-  }, [resolvedMatchId, getPlayerSanctionByFilter]);
 
   const goToTournaments = () => navigate(APP_ROUTES.publicTournaments);
 
@@ -141,9 +121,6 @@ export default function PublicMatchPage() {
     winningTeamId: match.winningTeamId,
   });
 
-  const sanctions =
-    playerSanctions?.filter(sanction => sanction.matchId === match.id) ?? [];
-
   const renderTeam = (
     team: ITeamMatchResponse | null,
     side: ScoreEmphasis
@@ -192,36 +169,37 @@ export default function PublicMatchPage() {
     return (
       <Card variant="outlined" sx={{ height: '100%' }}>
         <CardContent>
-          <Stack
-            direction="row"
-            spacing={1}
-            sx={{ alignItems: 'center', mb: 1.5 }}
+          <Typography
+            variant="subtitle1"
+            sx={{ fontWeight: 700, minWidth: 0, mb: 1.5 }}
+            noWrap
           >
-            <TeamLogo
-              teamName={team?.name ?? '—'}
-              logoUrl={team?.logoUrl}
-              size={28}
-            />
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, minWidth: 0 }} noWrap>
-              {team?.name ?? '—'}
-            </Typography>
-          </Stack>
+            {team?.name ?? '—'}
+          </Typography>
 
           {scorers.length === 0 ? (
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               Sin goleadores cargados.
             </Typography>
           ) : (
-            <Stack component="ul" spacing={0.75} sx={{ listStyle: 'none', p: 0, m: 0 }}>
+            <Stack component="ul" spacing={1} sx={{ listStyle: 'none', p: 0, m: 0 }}>
               {scorers.map(scorer => (
                 <Stack
                   key={scorer.playerId}
                   component="li"
                   direction="row"
-                  spacing={1}
-                  sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}
+                  spacing={1.25}
+                  sx={{ alignItems: 'center' }}
                 >
-                  <Typography variant="body2" sx={{ minWidth: 0 }} noWrap>
+                  <JerseySvg
+                    color={team?.shirtColor}
+                    secondaryColor={team?.shirtSecondaryColor}
+                    style={team?.jerseyStyle}
+                    number={scorer.jerseyNumber ?? undefined}
+                    size={30}
+                    title={`Camiseta de ${scorer.fullName}`}
+                  />
+                  <Typography variant="body2" sx={{ minWidth: 0, flex: 1 }} noWrap>
                     {scorer.fullName}
                   </Typography>
                   <Typography
@@ -323,7 +301,7 @@ export default function PublicMatchPage() {
 
       <Divider sx={{ mb: 3 }} />
 
-      <Box component="section" sx={{ mb: sanctions.length > 0 ? 4 : 0 }}>
+      <Box component="section">
         <SectionHeading>Goleadores del partido</SectionHeading>
         <Box
           sx={{
@@ -336,43 +314,6 @@ export default function PublicMatchPage() {
           {renderScorers(visitorTeam)}
         </Box>
       </Box>
-
-      {sanctions.length > 0 && (
-        <Box component="section">
-          <SectionHeading>Sanciones</SectionHeading>
-          <Box
-            sx={{
-              display: 'grid',
-              gap: 2,
-              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
-            }}
-          >
-            {sanctions.map(sanction => (
-              <Card key={sanction.id} variant="outlined">
-                <CardContent>
-                  <Stack spacing={1}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                      {getSanctionSubjectName(sanction)}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      {getSanctionSubjectTypeLabel(sanction)} ·{' '}
-                      {getSanctionStateLabel(sanction)}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      Duración: {formatSanctionDurationFechas(sanction.duration)}
-                      {' · Restantes: '}
-                      {formatFechasRemaining(sanction.fechasRemaining)}
-                    </Typography>
-                    {sanction.description && (
-                      <Typography variant="body2">{sanction.description}</Typography>
-                    )}
-                  </Stack>
-                </CardContent>
-              </Card>
-            ))}
-          </Box>
-        </Box>
-      )}
     </PageShell>
   );
 }

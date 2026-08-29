@@ -50,6 +50,8 @@ export interface IScorerBaseResponse {
 export interface IScorerByPlayerResponse extends IScorerBaseResponse {
   playerId: GUID;
   fullName: string;
+  /** The player's jersey number (dorsal), when known — for the match kit. */
+  jerseyNumber?: number | null;
 }
 
 export interface IScorerByTeamResponse extends IScorerBaseResponse {
