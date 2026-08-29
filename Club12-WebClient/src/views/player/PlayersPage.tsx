@@ -336,7 +336,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       },
       {
         label: 'Ficha médica',
-        color: 'secondary',
+        color: 'success',
         icon: <MedicalInformationIcon fontSize="small" />,
         onClick: handleOpenMedical,
         hidden: !medicalEnabled,
