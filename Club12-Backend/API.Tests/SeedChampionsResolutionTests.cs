@@ -57,6 +57,14 @@ public class SeedChampionsResolutionTests : IClassFixture<CustomWebApplicationFa
         // Division.Slug unique index.
         string zoneName = $"Primera División {Guid.NewGuid()}";
         string cupName = $"Copa Club 12 {Guid.NewGuid()}";
+        // Position-range cups exactly like the seeded Apertura's regular
+        // divisions: they register DivisionPlayoffMappings AND make the champion
+        // resolve from the top cup (Copa Oro, positions 1-4) Final.
+        SampleTournamentBuilder.PlayoffCupDefinition[] cups =
+        [
+            new("Copa Oro", FromPosition: 1, ToPosition: 4, BestOf: 1),
+            new("Copa Plata", FromPosition: 5, ToPosition: 8, BestOf: 1),
+        ];
         SampleTournamentBuilder.TournamentDefinition definition = new(
             Name: $"Apertura Finished {Guid.NewGuid()}",
             Description: "Torneo finalizado con playoffs y copa.",
@@ -68,7 +76,7 @@ public class SeedChampionsResolutionTests : IClassFixture<CustomWebApplicationFa
             UpcomingMatchesStart: new DateTime(2026, 6, 30, 0, 0, 0, DateTimeKind.Utc),
             Divisions:
             [
-                new(zoneName, UniqueNames(8), Codes(8), Colors(8)),
+                new(zoneName, UniqueNames(8), Codes(8), Colors(8), cups),
             ],
             CrossCup: new(cupName, GroupCount: 2, QualifiersPerGroup: 1),
             Status: TournamentStatus.Finished,
@@ -84,11 +92,19 @@ public class SeedChampionsResolutionTests : IClassFixture<CustomWebApplicationFa
         db.PlayerSanctions.AddRange(result.Sanctions);
         await db.SaveChangesAsync();
 
+        // The position-range cups registered the playoff mappings the standings
+        // colouring reads (Copa Oro 1-4, Copa Plata 5-8).
+        Division zoneDivision = await db.Divisions
+            .Include(d => d.PlayoffMappings)
+            .SingleAsync(d => d.Name == zoneName);
+        Assert.Contains(zoneDivision.PlayoffMappings, m => m.Destination == "Copa Oro" && m.FromPosition == 1 && m.ToPosition == 4);
+        Assert.Contains(zoneDivision.PlayoffMappings, m => m.Destination == "Copa Plata" && m.FromPosition == 5 && m.ToPosition == 8);
+
         List<ChampionHistoryResponse> history = await championService.GetChampionsHistoryAsync(seasonId: null);
         List<ChampionHistoryResponse> entries = [.. history.Where(h => h.TournamentId == result.Tournament.Id)];
 
-        // The finished tournament resolves at least one champion, and the zone
-        // division ("Primera División") is crowned via its playoff Final.
+        // Champions STILL resolve after switching to SeedCupPlayoffs: the zone
+        // division is crowned via its top cup's (Copa Oro) Final.
         Assert.NotEmpty(entries);
         Assert.All(entries, e => Assert.NotNull(e.ChampionTeam));
         Assert.Contains(entries, e => e.DivisionName == zoneName);
