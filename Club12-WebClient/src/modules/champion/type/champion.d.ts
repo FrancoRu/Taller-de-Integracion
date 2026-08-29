@@ -34,7 +34,7 @@ export interface IPodium {
 export interface IChampionHistory {
   tournamentId: GUID;
   tournamentName: string;
-  seasonName: string;
+  seasonName: string | null;
   category: TournamentCategory;
   divisionName: string;
   championTeam: IPodiumTeam;
