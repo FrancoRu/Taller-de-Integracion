@@ -31,6 +31,12 @@ export const teamService = {
     formData.append('Name', team.name);
     formData.append('ThreeLetterCode', team.threeLetterCode);
     formData.append('ShirtColor', team.shirtColor);
+    if (team.shirtSecondaryColor) {
+      formData.append('ShirtSecondaryColor', team.shirtSecondaryColor);
+    }
+    if (team.jerseyStyle) {
+      formData.append('JerseyStyle', team.jerseyStyle);
+    }
     formData.append('LogoFile', team.logo);
 
     if (team.tournamentId !== undefined) {

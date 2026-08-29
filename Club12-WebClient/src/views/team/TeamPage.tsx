@@ -20,6 +20,7 @@ import { usePlayerStatistic } from '@/modules/playerStatistic/hook/playerStatist
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import TeamLogo from '@/views/core/components/TeamLogo';
+import JerseySvg from '@/views/core/components/JerseySvg';
 import PlayersPage, {
   PlayerMedicalInfo,
 } from '@/views/player/PlayersPage';
@@ -265,9 +266,15 @@ const TeamPage: React.FC<TeamPageProps> = ({
             <Typography variant="subtitle2" sx={{
               color: "text.secondary"
             }}>
-              Color camiseta
+              Camiseta
             </Typography>
-            <Typography>{team.shirtColor || '—'}</Typography>
+            <JerseySvg
+              color={team.shirtColor}
+              secondaryColor={team.shirtSecondaryColor}
+              style={team.jerseyStyle}
+              size={48}
+              title={`Camiseta de ${team.name}`}
+            />
           </Grid>
           <Grid
             size={{
