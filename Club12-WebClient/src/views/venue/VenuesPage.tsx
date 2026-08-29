@@ -219,9 +219,11 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
         flex: 1,
         minWidth: 200,
         renderCell: params => (
-          <Stack direction="row" spacing={1} sx={{
-            alignItems: "center"
-          }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ alignItems: 'center', height: '100%' }}
+          >
             <TeamLogo
               teamName={params.row.name}
               logoUrl={params.row.photoUrl}
