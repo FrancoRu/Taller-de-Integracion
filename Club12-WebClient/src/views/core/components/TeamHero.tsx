@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Box, Typography } from '@mui/material';
-import { resolveShirtColor } from '@/design/colorName';
+import { hexToRgba, resolveShirtColor } from '@/design/colorName';
 import { toJerseyStyle } from '@/design/jerseyStyles';
 import JerseySvg from '@/views/core/components/JerseySvg';
 import TeamLogo from '@/views/core/components/TeamLogo';
@@ -18,14 +18,6 @@ export interface TeamHeroProps {
   /** Optional content rendered below the identity row (tabs, meta, etc.). */
   children?: ReactNode;
 }
-
-/** Turns a `#rrggbb` hex into an `rgba()` string at the given alpha. */
-const hexToRgba = (hex: string, alpha: number): string => {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
 
 /**
  * The public header band for a team page. The background layers the club's

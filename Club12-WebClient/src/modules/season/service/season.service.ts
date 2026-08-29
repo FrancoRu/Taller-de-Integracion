@@ -1,7 +1,7 @@
 import { AxiosResponse } from 'axios';
 import routes from '@/modules/core/constants/routes';
 import { withTablePageSize } from '@/modules/core/constants/pagination';
-import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
+import { GUID } from '@/modules/core/types/types';
 import {
   sendDelete,
   sendGet,
@@ -44,11 +44,11 @@ export const seasonService = {
   /**
    * Retrieves seasons based on the provided filters.
    * @param {SeasonFiltered} filter - The filters to apply when retrieving seasons.
-   * @returns {Promise<AxiosResponse<GenericResponsePagination<ISeasonResponse>>>} The server response containing the filtered seasons.
+   * @returns {Promise<AxiosResponse<ISeasonResponse[]>>} The server response — a plain array of seasons (no pagination).
    */
   getSeasonsByFiltered: async (
     filter: SeasonFiltered
-  ): Promise<AxiosResponse<GenericResponsePagination<ISeasonResponse>>> =>
+  ): Promise<AxiosResponse<ISeasonResponse[]>> =>
     await sendGet(routes.seasons, withTablePageSize(filter)),
 
   /**

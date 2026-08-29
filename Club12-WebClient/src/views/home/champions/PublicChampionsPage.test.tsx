@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GUID } from '@/modules/core/types/types';
 import { IChampionHistory } from '@/modules/champion/type/champion.d';
@@ -14,6 +15,13 @@ vi.mock('@/modules/champion/service/champion.service', () => ({
 }));
 
 const guid = (value: string) => value as GUID;
+
+const renderPage = () =>
+  render(
+    <MemoryRouter>
+      <PublicChampionsPage />
+    </MemoryRouter>
+  );
 
 const entry = (overrides: Partial<IChampionHistory> = {}): IChampionHistory => ({
   tournamentId: guid('tournament-1'),
@@ -51,10 +59,10 @@ describe('PublicChampionsPage', () => {
       ],
     });
 
-    render(<PublicChampionsPage />);
+    renderPage();
 
     await waitFor(() => {
-      expect(screen.getByText('Apertura 2025')).toBeInTheDocument();
+      expect(screen.getByText(/Apertura 2025/)).toBeInTheDocument();
     });
 
     expect(screen.getByRole('heading', { name: 'Temporada 2025' })).toBeInTheDocument();
@@ -62,12 +70,17 @@ describe('PublicChampionsPage', () => {
     expect(screen.getByText('Las Panteras')).toBeInTheDocument();
     expect(screen.getByText('Masculino')).toBeInTheDocument();
     expect(screen.getByText('Femenino')).toBeInTheDocument();
+
+    // Each champion team links to its public team page.
+    expect(
+      screen.getByRole('link', { name: /Los Halcones/i })
+    ).toHaveAttribute('href', '/equipos/team-1');
   });
 
   it('shows the empty state when there are no champions yet', async () => {
     getChampionsHistory.mockResolvedValue({ data: [] });
 
-    render(<PublicChampionsPage />);
+    renderPage();
 
     await waitFor(() => {
       expect(

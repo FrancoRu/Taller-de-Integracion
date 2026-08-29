@@ -153,11 +153,17 @@ export default function PublicTournamentPage() {
   }, [tournamentGuid]);
 
   // The podium (top three per division) is surfaced at the top of each
-  // division's panel once it has a decided champion. Fetched once the
-  // tournament resolves; failures degrade silently (no podium banner).
+  // division's panel only once the tournament is FINISHED — while it is still
+  // being played the current standings leaders are not champions, so showing a
+  // "Campeones" podium would be misleading. Failures degrade silently.
   useEffect(() => {
     if (!tournamentGuid) return;
     let cancelled = false;
+
+    if (tournament?.status !== TournamentStatus.Finished) {
+      setPodiumsByDivision(new Map());
+      return;
+    }
 
     const fetchChampions = async () => {
       try {
@@ -175,7 +181,7 @@ export default function PublicTournamentPage() {
     return () => {
       cancelled = true;
     };
-  }, [tournamentGuid]);
+  }, [tournamentGuid, tournament?.status]);
 
   const teamRows = useMemo(() => teams ?? [], [teams]);
   const activeDivision = useMemo(

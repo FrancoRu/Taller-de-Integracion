@@ -5,11 +5,12 @@ import { IPodium, IPodiumTeam } from '@/modules/champion/type/champion.d';
 import { brand } from '@/design/tokens';
 
 /**
- * Subtle medal accents for each podium place. Gold ties to the brand orange
- * family; silver/bronze are neutral metallics that read on the dark canvas.
+ * Subtle medal accents for each podium place. Gold is the club's championship
+ * gold from the brand; silver/bronze are neutral metallics that read on the
+ * dark canvas.
  */
 const PLACE_ACCENT: Record<1 | 2 | 3, string> = {
-  1: brand.orange,
+  1: brand.gold,
   2: '#C7CDD6',
   3: '#CD8E5A',
 };

@@ -1,10 +1,13 @@
 ﻿using Application.DTOs.Abstract.Response;
 using Application.DTOs.Team.Request;
+using Application.DTOs.Team.Response;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Utils.Constants;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.Slug;
+using Application.Utils.Helper.Standings;
+using Application.Utils.Helper.TeamProfile;
 
 using Domain.Constants;
 using Domain.Entities.Models;
@@ -26,13 +29,20 @@ namespace Application.Services;
 /// as well as filtering teams and registering them to tournaments.
 /// Utilizes repositories for data access and supports asynchronous operations.
 /// </summary>
-public class TeamService(IUnitOfWork unitOfWork, IRosterCopyService rosterCopyService) : ITeamService
+public class TeamService(
+    IUnitOfWork unitOfWork,
+    IRosterCopyService rosterCopyService,
+    IDivisionService divisionService) : ITeamService
 {
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IRosterCopyService _rosterCopyService = rosterCopyService;
+    private readonly IDivisionService _divisionService = divisionService;
     private readonly ITeamRepository _teamRepository = unitOfWork.TeamRepository;
     private readonly IPlayerTeamRegistrationRepository _registrationRepository = unitOfWork.PlayerTeamRegistrationRepository;
     private readonly ITeamTournamentRegistrationRepository _tournamentRegistrationRepository = unitOfWork.TeamTournamentRegistrationRepository;
+    private readonly IDivisionRepository _divisionRepository = unitOfWork.DivisionRepository;
+    private readonly IMatchRepository _matchRepository = unitOfWork.MatchRepository;
+    private readonly ITournamentRepository _tournamentRepository = unitOfWork.TournamentRepository;
 
     /// <summary>
     /// Creates a new team entity and persists it to the repository.
@@ -480,5 +490,124 @@ public class TeamService(IUnitOfWork unitOfWork, IRosterCopyService rosterCopySe
             Players = [],
             CreatedBy = AuditConstants.SystemUser,
         };
+    }
+
+    /// <inheritdoc />
+    public async Task<TeamSummaryResponse?> GetTeamSummaryAsync(Guid teamId, Guid? tournamentId)
+    {
+        // No season context (team has no current tournament and none was
+        // requested) means there is no standing to report.
+        if (tournamentId is null)
+        {
+            return null;
+        }
+
+        // Prefer the team's real competitive division (its zone) over a
+        // cross-division cup like "Copa Club 12": a team can belong to BOTH, and
+        // the division is what matters for its standing — the cup is secondary.
+        // Ordering cups last means the first group table that contains the team
+        // is its zone whenever it has one.
+        List<Division> divisions = [.. (await _divisionRepository.FindAsync(
+            division => division.TournamentId == tournamentId.Value))
+            .OrderBy(division => division.IsCrossDivisionCup)];
+
+        foreach (Division division in divisions)
+        {
+            // Reuse the canonical standings computation (per group) instead of
+            // recomputing it here — a regular zone yields one group, a
+            // cross-division cup one per internal group, and the team's rank is
+            // always within its own group's table.
+            List<GroupStandings> groups = await _divisionService.GetGroupStandingsByDivisionIdAsync(division.Id);
+
+            var located = groups
+                .Select(group => new
+                {
+                    Group = group,
+                    Index = group.Positions.FindIndex(position => position.TeamId == teamId),
+                })
+                .FirstOrDefault(candidate => candidate.Index >= 0);
+
+            if (located is not null)
+            {
+                Position row = located.Group.Positions[located.Index];
+
+                return new TeamSummaryResponse
+                {
+                    DivisionId = division.Id,
+                    DivisionName = division.Name,
+                    Position = located.Index + 1,
+                    TotalTeams = located.Group.Positions.Count,
+                    Played = row.MatchesPlayed,
+                    Wins = row.Wins,
+                    Losses = row.Losses,
+                    PointsFor = row.PointsFor,
+                    PointsAgainst = row.PointsAgainst,
+                    PointsDifference = row.PointsDifference,
+                    Points = row.Points,
+                };
+            }
+        }
+
+        // The team plays in no group-stage table for this tournament
+        // (playoff-only, unassigned, or no finished matches yet).
+        return null;
+    }
+
+    /// <inheritdoc />
+    public async Task<List<TeamMatchResponse>> GetTeamMatchesAsync(Guid teamId, Guid? tournamentId)
+    {
+        if (tournamentId is null)
+        {
+            return [];
+        }
+
+        // Read the team's matches (either side) scoped to the tournament via its
+        // stage → division → tournament chain. Queried directly rather than
+        // through the paginated match filter, which has no "by team" predicate
+        // and would cap a tournament-wide read at one page.
+        List<Match> matches = [.. await _matchRepository.FindAsync(
+            match => (match.HomeTeamId == teamId || match.VisitorTeamId == teamId)
+                && match.Stage.Division.TournamentId == tournamentId.Value,
+            includes: [match => match.HomeTeam!, match => match.VisitorTeam!, match => match.Venue!])];
+
+        return [.. matches
+            .OrderBy(match => match.MatchDate)
+            .Select(match => TeamMatchMapper.Map(match, teamId))];
+    }
+
+    /// <inheritdoc />
+    public async Task<List<TeamParticipationResponse>> GetTeamParticipationsAsync(Guid teamId, Guid? currentTournamentId)
+    {
+        List<TeamTournamentRegistration> registrations = [.. await _tournamentRegistrationRepository.FindAsync(
+            registration => registration.TeamId == teamId)];
+
+        if (registrations.Count == 0)
+        {
+            return [];
+        }
+
+        List<Guid> tournamentIds = [.. registrations.Select(registration => registration.TournamentId).Distinct()];
+
+        List<Tournament> tournaments = [.. await _tournamentRepository.FindAsync(
+            tournament => tournamentIds.Contains(tournament.Id),
+            includes: [tournament => tournament.Season!])];
+
+        return [.. tournaments
+            .Select(tournament => new TeamParticipationResponse
+            {
+                TournamentId = tournament.Id,
+                TournamentName = tournament.Name,
+                TournamentSlug = tournament.Slug,
+                Category = tournament.Category.ToString(),
+                SeasonId = tournament.SeasonId,
+                SeasonName = tournament.Season?.Name,
+                Year = tournament.Season?.Year,
+                IsCurrent = currentTournamentId.HasValue && tournament.Id == currentTournamentId.Value,
+            })
+            // Newest first: known years descending, participations without a
+            // season year last, ties broken by tournament name.
+            .OrderByDescending(participation => participation.Year.HasValue)
+            .ThenByDescending(participation => participation.Year)
+            .ThenBy(participation => participation.TournamentName, StringComparer.OrdinalIgnoreCase)];
     }
 }

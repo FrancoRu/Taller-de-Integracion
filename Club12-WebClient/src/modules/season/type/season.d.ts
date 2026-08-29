@@ -1,8 +1,4 @@
-import {
-  Filtered,
-  GenericResponsePagination,
-  GUID,
-} from '@/modules/core/types/types';
+import { Filtered, GUID } from '@/modules/core/types/types';
 import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
 
 /**
@@ -102,13 +98,13 @@ export interface ISeasonContextProps {
   ): Promise<ISeasonResponse | void>;
 
   /**
-   * Fetches seasons based on filters and pagination.
+   * Fetches all seasons (a plain array; seasons are few, no pagination).
    * @param filter The filter criteria to apply when fetching seasons.
-   * @returns A promise that resolves with a paginated response containing filtered seasons.
+   * @returns A promise that resolves with the array of seasons.
    */
   getSeasonsByFiltered(
     filter: SeasonFiltered
-  ): Promise<GenericResponsePagination<ISeasonResponse> | void>;
+  ): Promise<ISeasonResponse[] | void>;
 
   /**
    * Fetches a specific season by its unique ID or its public slug.

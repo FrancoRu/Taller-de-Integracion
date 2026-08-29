@@ -106,7 +106,10 @@ public static class SampleTournamentBuilder
         DateTime UpcomingMatchesStart,
         DivisionDefinition[] Divisions,
         CrossCupDefinition? CrossCup = null,
-        TournamentStatus Status = TournamentStatus.Ongoing);
+        TournamentStatus Status = TournamentStatus.Ongoing,
+        TournamentCategory Category = TournamentCategory.Masculine,
+        int RoundRobinLegs = 1,
+        int? PlayedRoundsPerZone = null);
 
     public sealed record BuildResult(Tournament Tournament, List<PlayerSanction> Sanctions);
 
@@ -178,6 +181,10 @@ public static class SampleTournamentBuilder
             TeamRegistrationDeadline = definition.TeamRegistrationDeadline,
             StartDate = definition.StartDate,
             Status = definition.Status,
+            // Competitive category (HU-48): every division built below inherits
+            // it so the "one tournament, one category" invariant holds in the
+            // seeded graph.
+            Category = definition.Category,
             Divisions = [],
             Teams = [],
         };
@@ -198,6 +205,7 @@ public static class SampleTournamentBuilder
                 slugRegistry,
                 ref playerCounter);
 
+            division.Category = definition.Category;
             tournament.Divisions.Add(division);
             foreach (Team team in teams)
             {
@@ -218,14 +226,15 @@ public static class SampleTournamentBuilder
                 Division = division,
                 Matches = [],
                 Order = 0,
-                RoundRobinLegs = 1,
+                RoundRobinLegs = definition.RoundRobinLegs,
             };
             division.Stages.Add(stage);
             regularGroupStages.Add(stage);
             AddStageTeamMatches(stage, teams);
 
             SeedRoundRobinMatches(
-                stage, teams, venues, definition.StageStartDate, isCrossDivisionCup: false);
+                stage, teams, venues, definition.StageStartDate, isCrossDivisionCup: false,
+                legs: definition.RoundRobinLegs, playedRounds: definition.PlayedRoundsPerZone);
 
             if (includePlayoffs)
             {
@@ -368,13 +377,25 @@ public static class SampleTournamentBuilder
     /// <see cref="Match.Round"/> is the 1-based jornada and
     /// <see cref="Match.MatchDate"/> is the calendar date for that jornada
     /// (Sundays for zones, Wednesdays for cross-division cups — HU-111).
+    ///
+    /// <paramref name="legs"/> repeats the whole schedule (2 = a home-and-away
+    /// double round-robin, "ida y vuelta"): each extra leg replays the same
+    /// pairings with home/away inverted and its jornadas numbered after the
+    /// previous leg's, so a mid-season tournament can have many jornadas.
+    /// <paramref name="playedRounds"/>, when set, is the number of leading
+    /// jornadas that are FINISHED (with scores); every later jornada is seeded
+    /// as an UPCOMING (unplayed) match on a future date, so an in-progress
+    /// tournament shows both a live standings table and a "Próximos" fixture.
+    /// Null (the default) leaves every jornada finished.
     /// </summary>
     private static void SeedRoundRobinMatches(
         Stage stage,
         List<Team> teams,
         List<Venue> venues,
         DateTime anchorDate,
-        bool isCrossDivisionCup)
+        bool isCrossDivisionCup,
+        int legs = 1,
+        int? playedRounds = null)
     {
         int n = teams.Count;
         if (n < 2)
@@ -382,45 +403,66 @@ public static class SampleTournamentBuilder
             return;
         }
 
-        // Circle method: index 0 stays fixed, indices 1..n-1 rotate one slot
-        // each round. `slots` holds the ORIGINAL team indices in seeding order,
-        // so a smaller index means a stronger team.
-        int[] slots = [.. Enumerable.Range(0, n)];
-        int rounds = n - 1;
+        int roundsPerLeg = n - 1;
         int matchIndex = 0;
 
-        for (int r = 0; r < rounds; r++)
+        for (int leg = 0; leg < legs; leg++)
         {
-            int round = r + 1;
-            DateTime roundDate = RoundCalendar.DateForRound(anchorDate, round, isCrossDivisionCup);
+            // Circle method: index 0 stays fixed, indices 1..n-1 rotate one slot
+            // each round. `slots` holds the ORIGINAL team indices in seeding
+            // order, so a smaller index means a stronger team. It resets at the
+            // start of each leg so the return leg replays the same pairings.
+            int[] slots = [.. Enumerable.Range(0, n)];
 
-            for (int i = 0; i < n / 2; i++)
+            for (int r = 0; r < roundsPerLeg; r++)
             {
-                int first = slots[i];
-                int second = slots[n - 1 - i];
+                // Global 1-based jornada number across all legs.
+                int round = (leg * roundsPerLeg) + r + 1;
+                DateTime roundDate = RoundCalendar.DateForRound(anchorDate, round, isCrossDivisionCup);
+                bool isUpcoming = playedRounds is int played && round > played;
 
-                // Alternate home/away by round so no team is always home.
-                (int homeIdx, int visitorIdx) = round % 2 == 1 ? (first, second) : (second, first);
+                for (int i = 0; i < n / 2; i++)
+                {
+                    int first = slots[i];
+                    int second = slots[n - 1 - i];
 
-                Team home = teams[homeIdx];
-                Team visitor = teams[visitorIdx];
+                    // Alternate home/away by round so no team is always home; on
+                    // the return leg invert it so the rematch swaps venue.
+                    bool homeIsFirst = round % 2 == 1;
+                    if (leg % 2 == 1)
+                    {
+                        homeIsFirst = !homeIsFirst;
+                    }
 
-                bool homeIsStronger = homeIdx < visitorIdx;
-                int margin = 4 + ((homeIdx + visitorIdx + matchIndex) % 9);
-                int winnerScore = 68 + ((matchIndex * 5) % 22);
-                int loserScore = winnerScore - margin;
-                int homeScore = homeIsStronger ? winnerScore : loserScore;
-                int visitorScore = homeIsStronger ? loserScore : winnerScore;
+                    (int homeIdx, int visitorIdx) = homeIsFirst ? (first, second) : (second, first);
 
-                Match match = BuildFinishedMatch(
-                    stage, home, visitor, homeScore, visitorScore, MatchType.Regular,
-                    venues, roundDate, matchIndex, round);
+                    Team home = teams[homeIdx];
+                    Team visitor = teams[visitorIdx];
 
-                stage.Matches.Add(match);
-                matchIndex++;
+                    if (isUpcoming)
+                    {
+                        stage.Matches.Add(BuildUpcomingMatch(
+                            stage, home, visitor, MatchType.Regular, venues, roundDate, matchIndex, round));
+                    }
+                    else
+                    {
+                        bool homeIsStronger = homeIdx < visitorIdx;
+                        int margin = 4 + ((homeIdx + visitorIdx + matchIndex) % 9);
+                        int winnerScore = 68 + ((matchIndex * 5) % 22);
+                        int loserScore = winnerScore - margin;
+                        int homeScore = homeIsStronger ? winnerScore : loserScore;
+                        int visitorScore = homeIsStronger ? loserScore : winnerScore;
+
+                        stage.Matches.Add(BuildFinishedMatch(
+                            stage, home, visitor, homeScore, visitorScore, MatchType.Regular,
+                            venues, roundDate, matchIndex, round));
+                    }
+
+                    matchIndex++;
+                }
+
+                Rotate(slots);
             }
-
-            Rotate(slots);
         }
     }
 
@@ -688,6 +730,9 @@ public static class SampleTournamentBuilder
             Stages = [],
             IsCrossDivisionCup = true,
             QualifiersPerGroup = crossCup.QualifiersPerGroup,
+            // The cup lives inside its tournament, so it shares the tournament's
+            // category (HU-48) like every other division.
+            Category = tournament.Category,
         };
         tournament.Divisions.Add(cupDivision);
 
@@ -872,6 +917,50 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
+    /// Builds one UPCOMING (unplayed) regular match: teams and a future
+    /// <see cref="Match.MatchDate"/>/<see cref="Match.Round"/> are set, but there
+    /// is no score, no winner and no scorers, and
+    /// <see cref="Match.Status"/> stays <see cref="MatchStatus.Scheduled"/> with
+    /// <see cref="Match.IsFinished"/> = false. Used to fill the still-to-play
+    /// jornadas of an in-progress tournament so its "Próximos" fixture has data.
+    /// </summary>
+    private static Match BuildUpcomingMatch(
+        Stage stage,
+        Team home,
+        Team visitor,
+        MatchType type,
+        List<Venue> venues,
+        DateTime matchDate,
+        int venueIndex,
+        int? round)
+    {
+        Venue venue = venues[venueIndex % venues.Count];
+
+        return new Match
+        {
+            CreatedBy = CreatedBy,
+            MatchDate = matchDate,
+            Round = round,
+            Type = type,
+            Slug = SlugGenerator.GenerateSlug($"{home.Name}-vs-{visitor.Name}-{stage.StageType}-{Guid.NewGuid()}"),
+            HomeTeam = home,
+            HomeTeamId = home.Id,
+            VisitorTeam = visitor,
+            VisitorTeamId = visitor.Id,
+            HomeScore = null,
+            VisitorScore = null,
+            IsFinished = false,
+            Status = MatchStatus.Scheduled,
+            WinningTeam = null,
+            WinningTeamId = null,
+            Stage = stage,
+            Venue = venue,
+            PlayerStatistics = [],
+            Scorers = [],
+        };
+    }
+
+    /// <summary>
     /// Adds a scorer plus Points/Assists PlayerStatistic rows for one team in a
     /// match (HU-72: the goleadores ranking reads PlayerStatistic). Skips a
     /// zero-score team so no phantom scorer is created.
@@ -927,7 +1016,10 @@ public static class SampleTournamentBuilder
     {
         List<PlayerSanction> sanctions = [];
 
-        List<Match> matches = [.. groupStages.SelectMany(s => s.Matches)];
+        // Only finished matches carry a real result/winner, so sanctions are
+        // tied to those (an in-progress tournament's group stage also holds
+        // still-to-play upcoming matches, which must never seed a sanction).
+        List<Match> matches = [.. groupStages.SelectMany(s => s.Matches).Where(m => m.IsFinished)];
         if (matches.Count == 0)
         {
             return sanctions;
