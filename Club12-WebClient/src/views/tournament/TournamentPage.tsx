@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Button, Chip, Grid, Stack, Tab, Tabs, Typography } from '@mui/material';
+import { Button, Grid, Stack, Tab, Tabs, Typography } from '@mui/material';
 import PageShell from '@/views/core/components/PageShell';
+import CategoryChip from '@/views/core/components/CategoryChip';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { GUID } from '@/modules/core/types/types';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
@@ -128,11 +129,7 @@ const TournamentPage: React.FC = () => {
       }
     >
       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 2 }}>
-        <Chip
-          size="small"
-          color="secondary"
-          label={TOURNAMENT_CATEGORY_LABELS[tournament.category]}
-        />
+        <CategoryChip category={tournament.category} />
       </Stack>
 
       <Tabs

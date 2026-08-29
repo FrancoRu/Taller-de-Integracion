@@ -18,6 +18,7 @@ import {
   TOURNAMENT_CATEGORY_LABELS,
   TournamentCategory,
 } from '@/modules/core/enum/tournament/tournamentCategory';
+import { categoryColor } from '@/design/categoryColor';
 import PageShell from '@/views/core/components/PageShell';
 import SectionHeading from '@/views/core/components/SectionHeading';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
@@ -50,7 +51,9 @@ function CategorySection({
 }) {
   return (
     <Box component="section" sx={{ mb: 4 }}>
-      <SectionHeading>{TOURNAMENT_CATEGORY_LABELS[category]}</SectionHeading>
+      <SectionHeading accentColor={categoryColor(category).fill}>
+        {TOURNAMENT_CATEGORY_LABELS[category]}
+      </SectionHeading>
       {tournaments.length === 0 ? (
         <Typography sx={{ color: 'text.secondary' }}>
           No hay torneos en esta categoría.

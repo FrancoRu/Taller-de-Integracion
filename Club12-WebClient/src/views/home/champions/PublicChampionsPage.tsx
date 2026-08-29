@@ -12,10 +12,10 @@ import {
 import PageShell from '@/views/core/components/PageShell';
 import SectionHeading from '@/views/core/components/SectionHeading';
 import TeamLogo from '@/views/core/components/TeamLogo';
+import CategoryChip from '@/views/core/components/CategoryChip';
 import { TableSkeleton } from '@/views/core/components/skeletons';
 import { championService } from '@/modules/champion/service/champion.service';
 import { IChampionHistory } from '@/modules/champion/type/champion.d';
-import { TOURNAMENT_CATEGORY_LABELS } from '@/modules/core/enum/tournament/tournamentCategory';
 
 /**
  * Groups the flat champion history into ordered season buckets, preserving the
@@ -112,8 +112,7 @@ export default function PublicChampionsPage() {
                       >
                         <TableCell>{entry.tournamentName}</TableCell>
                         <TableCell>
-                          {TOURNAMENT_CATEGORY_LABELS[entry.category] ??
-                            entry.category}
+                          <CategoryChip category={entry.category} />
                         </TableCell>
                         <TableCell>{entry.divisionName}</TableCell>
                         <TableCell>
