@@ -26,6 +26,15 @@ public class TeamDetailedMatchResponse
     /// </summary>
     public required string LogoUrl { get; set; }
 
+    /// <summary>Primary shirt color (#rrggbb), for rendering the kit.</summary>
+    public string? ShirtColor { get; set; }
+
+    /// <summary>Jersey kit pattern (e.g. "solid", "stripes").</summary>
+    public string? JerseyStyle { get; set; }
+
+    /// <summary>Secondary shirt color (#rrggbb), for the kit trim/pattern.</summary>
+    public string? ShirtSecondaryColor { get; set; }
+
     /// <summary>
     /// The score of the team.
     /// </summary>

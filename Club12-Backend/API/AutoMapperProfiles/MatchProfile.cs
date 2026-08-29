@@ -72,6 +72,8 @@ public class MatchProfile : Profile
             return [];
         }
 
+        Guid? tournamentId = match.Stage?.Division?.TournamentId;
+
         return [.. match.Scorers
             .Where(scorer => scorer.Player is not null && scorer.Player.TeamId == teamId.Value)
             .GroupBy(scorer => scorer.PlayerId)
@@ -79,8 +81,28 @@ public class MatchProfile : Profile
             {
                 PlayerId = group.Key,
                 FullName = group.First().Player!.FullName,
+                JerseyNumber = JerseyNumberFor(group.First().Player!, tournamentId),
                 Points = group.Sum(scorer => scorer.Points),
             })
             .OrderByDescending(scorer => scorer.Points)];
+    }
+
+    /// <summary>
+    /// The player's jersey number (dorsal) for the match's tournament, taken from
+    /// the matching roster registration (Player.JerseyNumber itself is transient).
+    /// Falls back to any registration's number when the tournament can't be resolved.
+    /// </summary>
+    private static int? JerseyNumberFor(Player player, Guid? tournamentId)
+    {
+        if (player.PlayerTeamRegistrations is null || player.PlayerTeamRegistrations.Count == 0)
+        {
+            return null;
+        }
+
+        PlayerTeamRegistration? registration = tournamentId is null
+            ? null
+            : player.PlayerTeamRegistrations.FirstOrDefault(reg => reg.TournamentId == tournamentId.Value);
+
+        return (registration ?? player.PlayerTeamRegistrations.First()).JerseyNumber;
     }
 }

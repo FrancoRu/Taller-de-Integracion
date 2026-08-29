@@ -359,6 +359,7 @@ public static class SampleTournamentBuilder
                     Team = team,
                     TournamentId = Guid.Empty,
                     Tournament = tournament,
+                    JerseyNumber = p + 4,
                     MedicalRecordStatus = isHabilitado
                         ? MedicalRecordStatus.Approved
                         : MedicalRecordStatus.Pending,
@@ -974,28 +975,60 @@ public static class SampleTournamentBuilder
     /// </summary>
     private static void AddScoring(Match match, Team team, int score, int scorerSeed)
     {
-        if (score <= 0)
+        if (score <= 0 || team.Players.Count == 0)
         {
             return;
         }
 
-        Player scorer = team.Players.ElementAt(scorerSeed % team.Players.Count);
+        // Spread the team's points across a handful of players (deterministic, no
+        // RNG) so the goleadores read realistically instead of one player scoring
+        // the whole game. Weights taper off; the lead scorer takes the remainder.
+        int[] weights = [5, 4, 3, 2, 1];
+        int scorerCount = Math.Min(weights.Length, team.Players.Count);
+        int weightTotal = 0;
+        for (int i = 0; i < scorerCount; i++)
+        {
+            weightTotal += weights[i];
+        }
 
+        int[] shares = new int[scorerCount];
+        int distributed = 0;
+        for (int i = 1; i < scorerCount; i++)
+        {
+            shares[i] = score * weights[i] / weightTotal;
+            distributed += shares[i];
+        }
+        shares[0] = score - distributed;
+
+        for (int i = 0; i < scorerCount; i++)
+        {
+            if (shares[i] <= 0)
+            {
+                continue;
+            }
+
+            Player player = team.Players.ElementAt((scorerSeed + i) % team.Players.Count);
+            AddPlayerScoring(match, player, shares[i]);
+        }
+    }
+
+    private static void AddPlayerScoring(Match match, Player player, int points)
+    {
         match.Scorers.Add(new Scorer
         {
             CreatedBy = CreatedBy,
             PlayerId = Guid.Empty,
-            Player = scorer,
-            Points = score,
+            Player = player,
+            Points = points,
             MatchId = Guid.Empty,
             Match = match,
         });
         match.PlayerStatistics.Add(new PlayerStatistic
         {
             CreatedBy = CreatedBy,
-            Value = score,
+            Value = points,
             PlayerId = Guid.Empty,
-            Player = scorer,
+            Player = player,
             MatchId = Guid.Empty,
             Match = match,
             Type = StatisticType.Points,
@@ -1005,7 +1038,7 @@ public static class SampleTournamentBuilder
             CreatedBy = CreatedBy,
             Value = 1,
             PlayerId = Guid.Empty,
-            Player = scorer,
+            Player = player,
             MatchId = Guid.Empty,
             Match = match,
             Type = StatisticType.Assists,

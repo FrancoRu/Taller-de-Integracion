@@ -27,8 +27,13 @@ public class MatchRepository(ApplicationDBContext context)
             .Include(match => match.HomeTeam)
             .Include(match => match.VisitorTeam)
             .Include(match => match.Venue)
+            // Stage → Division gives the match's tournament, used to pick each
+            // scorer's jersey number from that tournament's roster registration.
+            .Include(match => match.Stage)
+                .ThenInclude(stage => stage.Division)
             .Include(match => match.Scorers)
                 .ThenInclude(scorer => scorer.Player)
+                    .ThenInclude(player => player!.PlayerTeamRegistrations)
             .AsSplitQuery();
 
         return Guid.TryParse(idOrSlug, out Guid matchId)

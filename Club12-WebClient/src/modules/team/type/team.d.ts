@@ -242,6 +242,15 @@ export interface ITeamMatchResponse {
    */
   logoUrl: string;
 
+  /** Primary shirt color (#rrggbb), for rendering the kit on the scoreboard. */
+  shirtColor?: string | null;
+
+  /** Jersey kit pattern (e.g. "solid", "stripes"). */
+  jerseyStyle?: string | null;
+
+  /** Secondary shirt color (#rrggbb), for the kit trim/pattern. */
+  shirtSecondaryColor?: string | null;
+
   /**
    * @property {number} score - The score achieved by the team in the match.
    */
