@@ -32,6 +32,8 @@ const buildTournament = (
   startDate: new Date('2026-02-01'),
   status: 'Scheduled',
   category: TournamentCategory.Masculine,
+  seasonId: null,
+  seasonName: null,
   ...overrides,
 });
 

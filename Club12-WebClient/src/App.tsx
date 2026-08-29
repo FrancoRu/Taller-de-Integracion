@@ -13,6 +13,8 @@ import PublicSanctionsPage from './views/home/sanctions/PublicSanctionsPage';
 import PublicMatchPage from './views/home/matches/PublicMatchPage';
 import PublicTournamentsPage from './views/home/tournaments/PublicTournamentsPage';
 import PublicTournamentPage from './views/home/tournaments/PublicTournamentPage';
+import PublicSeasonsPage from './views/home/seasons/PublicSeasonsPage';
+import PublicSeasonPage from './views/home/seasons/PublicSeasonPage';
 import BlogPostDetailPage from './views/blogPost/BlogPostDetailPage';
 import BlogListPage from './views/blogPost/BlogListPage';
 import AddBlogPostForm from './views/blogPost/addBlogPostForm';
@@ -69,6 +71,7 @@ import PlayerSanctionPage from './views/playerSanction/PlayerSanctionPage';
 import PlayerSanctionEditPage from './views/playerSanction/playerSanctionEditPage';
 import VenuesPage from './views/venue/VenuesPage';
 import VenuePage from './views/venue/venuePage';
+import SeasonsPage from './views/season/SeasonsPage';
 import ScorersPage from './views/scorer/scorersPage';
 
 const FIRST_TAB_BY_ROLE: Partial<Record<UserRolesType, string>> = {
@@ -163,6 +166,11 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
     path: APP_ROUTES.panelVenue.pattern,
     allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <VenuePage />,
+  },
+  {
+    path: APP_ROUTES.panelSeasons,
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
+    element: <SeasonsPage />,
   },
   {
     path: APP_ROUTES.panelTournaments,
@@ -310,6 +318,8 @@ const PUBLIC_ROUTES: PublicRouteConfig[] = [
   { path: APP_ROUTES.publicTeam.pattern, element: <PublicTeamPage /> },
   { path: APP_ROUTES.publicSanctions, element: <PublicSanctionsPage /> },
   { path: APP_ROUTES.publicMatch.pattern, element: <PublicMatchPage /> },
+  { path: APP_ROUTES.publicSeasons, element: <PublicSeasonsPage /> },
+  { path: APP_ROUTES.publicSeason.pattern, element: <PublicSeasonPage /> },
   { path: APP_ROUTES.publicTournaments, element: <PublicTournamentsPage /> },
   {
     path: APP_ROUTES.publicTournament.pattern,

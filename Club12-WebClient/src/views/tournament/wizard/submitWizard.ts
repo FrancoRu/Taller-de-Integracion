@@ -295,6 +295,11 @@ export const submitWizard = async (
     teamRegistrationDeadline: new Date(state.tournament.teamRegistrationDeadline),
     // HU-48: the category is set at creation and immutable afterwards.
     category: state.tournament.category,
+    // Optional grouping into a season ("Temporada"). Only sent when chosen so
+    // an unset select leaves the tournament without a season.
+    ...(state.tournament.seasonId
+      ? { seasonId: state.tournament.seasonId as GUID }
+      : {}),
   });
 
   if (!tournament) {

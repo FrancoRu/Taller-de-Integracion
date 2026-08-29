@@ -1,9 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button, Grid, MenuItem, TextField, Typography } from '@mui/material';
 import { notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
+import { useSeason } from '@/modules/season/hook/season.hook';
+import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
 import PageShell from '@/views/core/components/PageShell';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
@@ -21,6 +23,7 @@ type TournamentFormState = {
   teamRegistrationDeadline: string;
   startDate: string;
   status: TournamentStatus;
+  seasonId: string;
 };
 
 const toDateInputValue = (value: Date | string): string => {
@@ -38,6 +41,7 @@ const fromTournamentToForm = (tournament: {
   teamRegistrationDeadline: Date | string;
   startDate: Date | string;
   status: TournamentStatus;
+  seasonId?: GUID | null;
 }): TournamentFormState => ({
   name: tournament.name,
   description: tournament.description ?? '',
@@ -46,15 +50,29 @@ const fromTournamentToForm = (tournament: {
   ),
   startDate: toDateInputValue(tournament.startDate),
   status: resolveTournamentStatus(tournament.status),
+  seasonId: tournament.seasonId ?? '',
 });
 
 const TournamentEditPage: React.FC = () => {
   const { tournamentId } = useParams<{ tournamentId: GUID }>();
   const navigate = useNavigate();
   const { tournament, getTournamentById, putTournamentById } = useTournament();
+  const { seasons, getSeasonsByFiltered } = useSeason();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<TournamentFormState | null>(null);
+  const getSeasonsRef = useRef(getSeasonsByFiltered);
+
+  useEffect(() => {
+    getSeasonsRef.current = getSeasonsByFiltered;
+  }, [getSeasonsByFiltered]);
+
+  useEffect(() => {
+    void getSeasonsRef.current({
+      pageSize: FILTER_OPTIONS_PAGE_SIZE,
+      pageNumber: 1,
+    });
+  }, []);
 
   useEffect(() => {
     if (!tournamentId) {
@@ -224,6 +242,9 @@ const TournamentEditPage: React.FC = () => {
           : tournament.teamRegistrationDeadline
       ),
       status: form.status,
+      // Optional grouping into a season ("Temporada"). Empty select detaches
+      // the tournament from any season (null).
+      seasonId: form.seasonId ? (form.seasonId as GUID) : null,
     };
 
     setSaving(true);
@@ -299,6 +320,28 @@ const TournamentEditPage: React.FC = () => {
               onChange={handleFormChange}
               disabled={!canEditMainFields}
             />
+          </Grid>
+
+          <Grid size={12}>
+            <TextField
+              select
+              fullWidth
+              name="seasonId"
+              size="small"
+              label="Temporada (opcional)"
+              value={form.seasonId}
+              onChange={handleFormChange}
+              helperText="Agrupá el torneo dentro de una temporada. Podés dejarlo vacío."
+            >
+              <MenuItem value="">
+                <em>Sin temporada</em>
+              </MenuItem>
+              {(seasons ?? []).map(season => (
+                <MenuItem key={season.id} value={season.id}>
+                  {season.name}
+                </MenuItem>
+              ))}
+            </TextField>
           </Grid>
 
           <Grid

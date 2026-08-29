@@ -5,6 +5,7 @@ import {
   ArticleIcon,
   BadgeIcon,
   BarChartIcon,
+  CalendarMonthIcon,
   EmojiEventsIcon,
   ExpandLessIcon,
   ExpandMoreIcon,
@@ -61,6 +62,7 @@ const TAB_ICONS: Record<string, React.ReactNode> = {
   Equipos: <ShieldIcon />,
   Registro: <AppRegistrationIcon />,
   Torneos: <EmojiEventsIcon />,
+  Temporadas: <CalendarMonthIcon />,
   Usuarios: <PeopleIcon />,
   Blog: <ArticleIcon />,
   Configuracion: <SettingsIcon />,
@@ -100,6 +102,11 @@ const CONFIGURATION_CHILDREN: NavTab[] = [
  * routes still exist and stay reachable from those flows.
  */
 const COMPETITION_CHILDREN: NavTab[] = [
+  {
+    label: 'Temporadas',
+    path: APP_ROUTES.panelSeasons,
+    icon: TAB_ICONS['Temporadas'],
+  },
   {
     label: 'Torneos',
     path: APP_ROUTES.panelTournaments,

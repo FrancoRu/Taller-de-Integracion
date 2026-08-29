@@ -38,6 +38,17 @@ const MobileNavItems: React.FC<MobileNavItemsProps> = ({ onCloseDrawer }) => {
 
       <ListItemButton
         component={Link}
+        to={`/${RoutesNavigationViews.Seasons}`}
+        selected={location.pathname.startsWith('/temporadas')}
+        onClick={() =>
+          handleNavigationAndCloseDrawer(`/${RoutesNavigationViews.Seasons}`)
+        }
+      >
+        <ListItemText primary="Temporadas" />
+      </ListItemButton>
+
+      <ListItemButton
+        component={Link}
         to={`/${RoutesNavigationViews.Tournaments}`}
         selected={location.pathname.startsWith('/torneos')}
         onClick={() =>
