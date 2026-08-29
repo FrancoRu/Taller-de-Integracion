@@ -6,7 +6,6 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
-  Link,
   Stack,
   TextField,
   Typography,
@@ -17,10 +16,11 @@ import { useMedicalRecord } from '@/modules/medicalRecord/hook/medicalRecord.hoo
 import { medicalRecordService } from '@/modules/medicalRecord/service/medicalRecord.service';
 import { IMedicalRecordResponse } from '@/modules/medicalRecord/type/medicalRecord.d';
 import {
+  notifyError,
   notifySuccess,
   notifyWarning,
 } from '@/modules/core/utils/confirmDialog';
-import { UploadFileIcon } from '@/views/core/MUI/icons/icons';
+import { DownloadIcon, UploadFileIcon } from '@/views/core/MUI/icons/icons';
 import HabilitacionBadge from '@/views/medicalRecord/HabilitacionBadge';
 
 interface PlayerMedicalRecordDialogProps {
@@ -67,6 +67,26 @@ const PlayerMedicalRecordDialog: React.FC<PlayerMedicalRecordDialogProps> = ({
 
   const effectiveStatus = record?.status ?? status ?? null;
   const effectiveHabilitado = record?.isHabilitado ?? isHabilitado ?? false;
+  // Once the ficha is Approved (habilitado) it is frozen: the stored file can
+  // only be viewed/downloaded, never replaced (HU-57).
+  const isApproved = effectiveStatus === MedicalRecordStatus.Approved;
+  const hasStoredFile = Boolean(record?.fileUrl ?? record?.fileName);
+
+  const handleDownload = async () => {
+    try {
+      await medicalRecordService.downloadMedicalRecord(
+        playerId,
+        teamId,
+        tournamentId,
+        record?.fileName ?? 'ficha-medica.pdf'
+      );
+    } catch {
+      void notifyError({
+        title: 'No se pudo descargar',
+        text: 'No se pudo descargar la ficha médica. Intentá nuevamente.',
+      });
+    }
+  };
 
   useEffect(() => {
     if (!open) {
@@ -196,21 +216,24 @@ const PlayerMedicalRecordDialog: React.FC<PlayerMedicalRecordDialogProps> = ({
             />
           </Stack>
 
-          {record?.fileName && (
-            <Typography variant="body2">
-              Archivo cargado:{' '}
-              {record.fileUrl ? (
-                <Link
-                  href={record.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {record.fileName}
-                </Link>
-              ) : (
-                record.fileName
-              )}
-            </Typography>
+          {hasStoredFile && (
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1}
+              sx={{ alignItems: { sm: 'center' } }}
+            >
+              <Typography variant="body2">
+                Archivo cargado: {record?.fileName ?? 'ficha-medica.pdf'}
+              </Typography>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<DownloadIcon fontSize="small" />}
+                onClick={() => void handleDownload()}
+              >
+                Descargar ficha
+              </Button>
+            </Stack>
           )}
 
           {effectiveStatus === MedicalRecordStatus.Rejected &&
@@ -220,71 +243,90 @@ const PlayerMedicalRecordDialog: React.FC<PlayerMedicalRecordDialogProps> = ({
               </Typography>
             )}
 
-          <Divider />
-
-          <Typography variant="subtitle2">Subir ficha médica (PDF)</Typography>
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={1}
-            sx={{ alignItems: { sm: 'center' } }}
-          >
-            <Button
-              variant="outlined"
-              component="label"
-              startIcon={<UploadFileIcon fontSize="small" />}
-              disabled={submitting}
-            >
-              Seleccionar PDF
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="application/pdf,.pdf"
-                hidden
-                onChange={e => setSelectedFile(e.target.files?.[0] ?? null)}
-              />
-            </Button>
+          {isApproved && (
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {selectedFile?.name ?? 'Ningún archivo seleccionado'}
+              La ficha ya está aprobada y el jugador quedó habilitado. Solo puede
+              consultarse o descargarse.
             </Typography>
-            <Button
-              variant="contained"
-              onClick={() => void handleUpload()}
-              disabled={submitting || !selectedFile}
-            >
-              Subir ficha
-            </Button>
-          </Stack>
+          )}
 
-          <Divider />
+          {!isApproved && (
+            <>
+              <Divider />
 
-          <Typography variant="subtitle2">Revisión (aprobar / rechazar)</Typography>
-          <TextField
-            label="Motivo de rechazo (opcional)"
-            value={rejectReason}
-            onChange={e => setRejectReason(e.target.value)}
-            fullWidth
-            multiline
-            minRows={2}
-            slotProps={{ htmlInput: { maxLength: 500 } }}
-          />
-          <Stack direction="row" spacing={1}>
-            <Button
-              variant="contained"
-              color="success"
-              onClick={() => void handleReview(true)}
-              disabled={submitting}
-            >
-              Aprobar
-            </Button>
-            <Button
-              variant="contained"
-              color="error"
-              onClick={() => void handleReview(false)}
-              disabled={submitting}
-            >
-              Rechazar
-            </Button>
-          </Stack>
+              <Typography variant="subtitle2">
+                Subir ficha médica (PDF)
+              </Typography>
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={1}
+                sx={{ alignItems: { sm: 'center' } }}
+              >
+                <Button
+                  variant="outlined"
+                  component="label"
+                  startIcon={<UploadFileIcon fontSize="small" />}
+                  disabled={submitting}
+                >
+                  Seleccionar PDF
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    hidden
+                    onChange={e => setSelectedFile(e.target.files?.[0] ?? null)}
+                  />
+                </Button>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  {selectedFile?.name ?? 'Ningún archivo seleccionado'}
+                </Typography>
+                <Button
+                  variant="contained"
+                  onClick={() => void handleUpload()}
+                  disabled={submitting || !selectedFile}
+                >
+                  Subir ficha
+                </Button>
+              </Stack>
+            </>
+          )}
+
+          {!isApproved && (
+            <>
+              <Divider />
+
+              <Typography variant="subtitle2">
+                Revisión (aprobar / rechazar)
+              </Typography>
+              <TextField
+                label="Motivo de rechazo (opcional)"
+                value={rejectReason}
+                onChange={e => setRejectReason(e.target.value)}
+                fullWidth
+                multiline
+                minRows={2}
+                slotProps={{ htmlInput: { maxLength: 500 } }}
+              />
+              <Stack direction="row" spacing={1}>
+                <Button
+                  variant="contained"
+                  color="success"
+                  onClick={() => void handleReview(true)}
+                  disabled={submitting}
+                >
+                  Aprobar
+                </Button>
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={() => void handleReview(false)}
+                  disabled={submitting}
+                >
+                  Rechazar
+                </Button>
+              </Stack>
+            </>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions>

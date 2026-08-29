@@ -4,6 +4,7 @@ import {
   GUID,
 } from '@/modules/core/types/types';
 import { MedicalRecordStatus } from '@/modules/core/enum/medicalRecord/medicalRecordStatus';
+import { MutationResult } from '@/modules/core/utils/problemDetails';
 
 /**
  * Context properties and methods for managing players in a sports system.
@@ -52,11 +53,12 @@ export interface IPlayerContextProps {
   ): Promise<IPlayerResponse | void>;
 
   /**
-   * Deletes a player by its ID.
+   * Deletes a player by its ID. Resolves with a discriminated result so callers
+   * can surface a backend integrity block (a player with statistics/scorers/
+   * sanctions is rejected with a 409 and a Spanish message).
    * @param id The ID of the player to delete.
-   * @returns A promise that resolves when the player is successfully deleted.
    */
-  deletePlayerById(id: GUID): Promise<void>;
+  deletePlayerById(id: GUID): Promise<MutationResult>;
 
   /**
    * Registers a player onto a team's roster for a tournament season,

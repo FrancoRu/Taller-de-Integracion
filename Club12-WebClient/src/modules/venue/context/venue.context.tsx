@@ -21,6 +21,10 @@ import { GUID } from '@/modules/core/types/types';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { venueKeys } from '@/modules/venue/queryKeys';
 import { HttpStatus } from '@/modules/core/constants/httpStatus';
+import {
+  extractProblemDetail,
+  MutationResult,
+} from '@/modules/core/utils/problemDetails';
 
 export const VenueContext = createContext<IVenueContextProps | undefined>(
   undefined
@@ -175,8 +179,14 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
     [venues, queryClient, handleUnknownError]
   );
 
+  /**
+   * A venue delete can be blocked by a backend integrity rule (a venue still
+   * referenced by matches returns a 409 with a Spanish message). The failure is
+   * returned as a discriminated result so the caller can surface that exact
+   * reason inline instead of swallowing it.
+   */
   const deleteVenueById = useCallback(
-    async (id: GUID): Promise<void> => {
+    async (id: GUID): Promise<MutationResult> => {
       try {
         await deleteVenueMutation.mutateAsync(id);
         setVenue(null);
@@ -184,11 +194,17 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
         queryClient.removeQueries({ queryKey: venueKeys.byId(id) });
         await queryClient.invalidateQueries({ queryKey: venueKeys.list() });
         setMessage(HttpStatus.NoContent, ['La cancha ha sido eliminada.']);
+        return { success: true };
       } catch (error: unknown) {
-        handleUnknownError(error);
+        return {
+          success: false,
+          errorMessage:
+            extractProblemDetail(error) ??
+            'No se pudo eliminar la cancha. Intentá nuevamente.',
+        };
       }
     },
-    [deleteVenueMutation, queryClient, setMessage, handleUnknownError]
+    [deleteVenueMutation, queryClient, setMessage]
   );
 
   const container: IVenueContextProps = useMemo(

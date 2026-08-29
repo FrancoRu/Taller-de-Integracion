@@ -16,6 +16,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import {
   confirmDelete,
+  notifyError,
   notifySuccess,
   notifyWarning,
 } from '@/modules/core/utils/confirmDialog';
@@ -175,7 +176,17 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
         return;
       }
 
-      await deleteVenueById(row.id);
+      const result = await deleteVenueById(row.id);
+
+      if (!result.success) {
+        // Surface the backend integrity block (the venue is referenced by
+        // matches) with its exact Spanish message.
+        await notifyError({
+          title: 'No se pudo eliminar',
+          text: result.errorMessage,
+        });
+        return;
+      }
 
       await notifySuccess({
         title: '¡Eliminada!',

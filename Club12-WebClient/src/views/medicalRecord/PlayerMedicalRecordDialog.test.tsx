@@ -15,6 +15,7 @@ vi.mock('@/modules/medicalRecord/service/medicalRecord.service', () => ({
     getMedicalRecord: vi.fn(),
     uploadMedicalRecord: vi.fn(),
     reviewMedicalRecord: vi.fn(),
+    downloadMedicalRecord: vi.fn(),
   },
 }));
 vi.mock('sweetalert2', () => ({
@@ -23,6 +24,7 @@ vi.mock('sweetalert2', () => ({
 
 const mockedUseMedicalRecord = vi.mocked(useMedicalRecord);
 const mockedGet = vi.mocked(medicalRecordService.getMedicalRecord);
+const mockedDownload = vi.mocked(medicalRecordService.downloadMedicalRecord);
 
 const playerId = '11111111-1111-1111-1111-111111111111' as GUID;
 const teamId = '22222222-2222-2222-2222-222222222222' as GUID;
@@ -57,6 +59,7 @@ const setup = () => {
   });
   // No record exists yet on open.
   mockedGet.mockRejectedValue(new Error('404'));
+  mockedDownload.mockResolvedValue(undefined);
 };
 
 const renderDialog = () =>
@@ -140,6 +143,61 @@ describe('PlayerMedicalRecordDialog', () => {
         approve: false,
         reason: 'Faltan firmas',
       })
+    );
+  });
+
+  it('hides upload and downloads the stored ficha when the record is already approved', async () => {
+    // An approved (habilitado) record: only view/download must be offered —
+    // uploading a new ficha is forbidden (HU-57).
+    mockedGet.mockResolvedValue({
+      data: {
+        playerId,
+        teamId,
+        tournamentId,
+        status: MedicalRecordStatus.Approved,
+        isHabilitado: true,
+        fileUrl: 'medical-records/some/object/path.pdf',
+        fileName: 'ficha.pdf',
+      },
+    } as Awaited<ReturnType<typeof medicalRecordService.getMedicalRecord>>);
+
+    const user = userEvent.setup();
+    render(
+      <PlayerMedicalRecordDialog
+        open
+        onClose={vi.fn()}
+        playerId={playerId}
+        teamId={teamId}
+        tournamentId={tournamentId}
+        playerName="Juan Pérez"
+        status={MedicalRecordStatus.Approved}
+        isHabilitado
+      />
+    );
+
+    const dialog = screen.getByRole('dialog');
+
+    await waitFor(() =>
+      expect(within(dialog).getByText('Habilitado')).toBeInTheDocument()
+    );
+
+    // Upload / review controls are gone; only the download stays.
+    expect(
+      within(dialog).queryByRole('button', { name: /subir ficha/i })
+    ).not.toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole('button', { name: /aprobar/i })
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      within(dialog).getByRole('button', { name: /descargar ficha/i })
+    );
+
+    expect(mockedDownload).toHaveBeenCalledWith(
+      playerId,
+      teamId,
+      tournamentId,
+      'ficha.pdf'
     );
   });
 });
