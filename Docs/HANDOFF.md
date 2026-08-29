@@ -2,7 +2,7 @@
 
 > Documento para continuar en un chat nuevo. Rama de integración: **develop** (deploya a staging: club12.argentum-solutions.com.ar). `main` NO se toca. Stack: .NET 8 backend (Clean/Hexagonal, EF Core + Npgsql/Postgres) + React 19/TS/MUI/Vite frontend (vitest, ESLint `--max-warnings 0`). Todo user-facing en **español (voseo)**; código en inglés.
 
-## ✅ MERGEADO a develop / en staging (PRs #53–#64)
+## ✅ MERGEADO a develop / en staging (PRs #53–#65)
 
 **Design system (base)**
 - `src/design/tokens.ts` (brand/surface/ink/semantic/radius/font/pageMinHeight/**gold**/**category**), `colorName.ts` (hex→fill+ink), `jerseyStyles.ts` (11 estilos).
@@ -47,9 +47,9 @@ Loop autónomo de mejora de páginas públicas + data real. Todo verde (backend 
 6. **Home rediseñado** — hero cálido (gradiente naranja→granate, court pattern, Oswald "CLUB 12", eyebrow dorado, CTAs Ver temporadas/Campeones), torneos destacados con `CategoryChip`+estado, **franja "Campeones recientes"** (oro, crests reales), noticias, y accesos rápidos como pill strip secundario. `TournamentCard` ahora muestra su chip de categoría (también en la página de Torneos).
 7. **Sweep E2E público (con Playwright en 3002) + 2 bugfixes**: verificado el ciclo completo Home → Temporadas → Temporada (masc/fem) → Torneo → División (posiciones/goleadores/partidos/llaves) → Campeones → perfil de equipo, todo con data real. BUGS ARREGLADOS: (a) **Temporadas pública salía vacía** — el endpoint `GET /api/seasons` devuelve un array plano pero el context leía `res.data.items` (undefined); era latente (no había Season antes). (b) **Podio "Campeones" se mostraba en torneos En curso** — `PublicTournamentPage` traía el podio sin gatear por estado; ahora solo si `TournamentStatus.Finished` (Apertura muestra podio, Clausura no).
 
-## 🔄 EN PROGRESO — rama `feat/admin-season-first` (sale de develop post-#64, NO mergeado aún)
+## ✅ MERGEADO a develop vía **PR #65** — rama `feat/admin-season-first`
 
-Loop autónomo continúa (mandato del owner: "armá un plan y seguilo, arreglá todo"). Commits en la rama (todo verde):
+Loop autónomo (mandato del owner: "armá un plan y seguilo, arreglá todo"). Todo verde (backend 648 / frontend 458) y deployado a staging. Incluye:
 1. **Fix login en español** — el `signIn` del auth context disparaba un alert global BLOQUEANTE con el mensaje crudo del API en inglés ("Invalid credentials."); ahora el login solo muestra su error inline en español ("Usuario o contraseña incorrectos"). Pendiente menor: traducir `ErrorMessages.Auth.*` del backend (asoman en flujos de auth de borde).
 2. **Admin season-first** — admins/owners aterrizan en **Temporadas**; nueva página admin de detalle de temporada (`/panel/temporadas/:seasonId`) que lista los torneos de esa temporada agrupados por categoría con CTA "Nuevo Torneo" que abre el wizard **pre-scopeado** a esa temporada; drill-in "Ver torneos" desde la lista. ADITIVO: la ruta plana de Torneos y el path "Sin temporada" del wizard quedan intactos.
 3. **Posiciones coloreadas** ✅ VERIFICADO — backend deriva `QualificationRanges` (from/to/copa/order) de `Division.PlayoffMappings` y las expone en el detalle de división; front colorea las filas que clasifican por tier de copa (oro/plata/bronce) + chip "Copa Oro"/"Copa Plata" por fila + leyenda. El seed ahora da Copa Oro (1-4) + Copa Plata (5-8) a las divisiones de torneos finalizados (via `SeedCupPlayoffs`), campeón desde la copa top. Playwright confirmó el coloreado en Apertura Primera. (Nota menor: el 3er puesto del podio sale "A definir" en copas BestOf=1 sin partido por 3er puesto.)
