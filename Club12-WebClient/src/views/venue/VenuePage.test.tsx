@@ -39,4 +39,36 @@ describe('VenuePage — HU-15 slug route', () => {
     expect(await screen.findByText('Cancha Central')).toBeInTheDocument();
     expect(getVenueById).toHaveBeenCalledWith('cancha-central');
   });
+
+  it('shows a "Ver en el mapa" link to Google Maps when coordinates exist', async () => {
+    const getVenueById = vi.fn().mockResolvedValue(
+      buildVenue({ latitude: -34.603722, longitude: -58.381592 })
+    );
+    mockedUseVenue.mockReturnValue({
+      getVenueById,
+    } as unknown as ReturnType<typeof useVenue>);
+
+    renderAt('/panel/canchas/cancha-central');
+
+    const mapLink = await screen.findByRole('link', { name: 'Ver en el mapa' });
+    expect(mapLink).toHaveAttribute(
+      'href',
+      'https://www.google.com/maps?q=-34.603722,-58.381592'
+    );
+    expect(mapLink).toHaveAttribute('target', '_blank');
+  });
+
+  it('omits the map link when the venue has no coordinates', async () => {
+    const getVenueById = vi.fn().mockResolvedValue(buildVenue());
+    mockedUseVenue.mockReturnValue({
+      getVenueById,
+    } as unknown as ReturnType<typeof useVenue>);
+
+    renderAt('/panel/canchas/cancha-central');
+
+    await screen.findByText('Cancha Central');
+    expect(
+      screen.queryByRole('link', { name: 'Ver en el mapa' })
+    ).not.toBeInTheDocument();
+  });
 });

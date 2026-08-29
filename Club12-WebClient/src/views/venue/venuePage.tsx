@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Box, Stack, Typography } from '@mui/material';
+import { Box, Button, Stack, Typography } from '@mui/material';
 import { IVenueResponse } from '@/modules/venue/type/venue';
 import { useVenue } from '@/modules/venue/hook/venue.hook';
 import PageShell from '@/views/core/components/PageShell';
@@ -52,6 +52,12 @@ const VenuePage: React.FC = () => {
     );
   }
 
+  const hasCoordinates =
+    venue.latitude !== undefined &&
+    venue.latitude !== null &&
+    venue.longitude !== undefined &&
+    venue.longitude !== null;
+
   return (
     <PageShell
       title={venue.name}
@@ -64,6 +70,19 @@ const VenuePage: React.FC = () => {
           </Typography>
           <Typography>{venue.address || '—'}</Typography>
         </Stack>
+
+        {hasCoordinates && (
+          <Button
+            variant="outlined"
+            component="a"
+            href={`https://www.google.com/maps?q=${venue.latitude},${venue.longitude}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{ alignSelf: 'flex-start' }}
+          >
+            Ver en el mapa
+          </Button>
+        )}
 
         {venue.photoUrl && (
           <Box

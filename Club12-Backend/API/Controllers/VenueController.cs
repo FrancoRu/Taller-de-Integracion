@@ -3,6 +3,7 @@
 using Application.DTOs.Venue.Request;
 using Application.DTOs.Venue.Response;
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 
 using AutoMapper;
 
@@ -108,6 +109,37 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
         await venueService.UpdateVenueAsync(existingVenue);
 
         return NoContent();
+    }
+
+    /// <summary>
+    /// Updates the photo of a venue.
+    /// </summary>
+    /// <param name="id">The id of the venue to update the photo.</param>
+    /// <param name="photoRequest">The update venue photo request.</param>
+    /// <returns>Returns 200 (OK) if the photo was successfully updated.</returns>
+    [HttpPut("{id:guid}/photo")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> UpdateVenuePhoto(Guid id, [FromForm] UpdateVenuePhotoRequest photoRequest)
+    {
+        if (!photoRequest.ImageFile.IsValidImageFile())
+        {
+            return BadRequest(ErrorMessages.Media.InvalidImageFile);
+        }
+
+        Venue? venue = await venueService.GetVenueByIdAsync(id);
+        if (venue is null)
+        {
+            return this.NotFoundProblem(nameof(Venue), id);
+        }
+
+        venue.PhotoUrl = await supabaseHelper.UploadImageAsync<Venue>(
+            photoRequest.ImageFile.OpenReadStream(),
+            photoRequest.ImageFile.FileName);
+
+        await venueService.UpdateVenueAsync(venue);
+        return Ok();
     }
 
     /// <summary>

@@ -13,4 +13,16 @@ public class Venue : EntityBase
 
     public required string Address { get; set; }
     public string? PhotoUrl { get; set; }
+
+    /// <summary>
+    /// Optional geographic latitude of the venue, used to build a public map
+    /// link. Null when the venue has no coordinates yet.
+    /// </summary>
+    public double? Latitude { get; set; }
+
+    /// <summary>
+    /// Optional geographic longitude of the venue, used to build a public map
+    /// link. Null when the venue has no coordinates yet.
+    /// </summary>
+    public double? Longitude { get; set; }
 }

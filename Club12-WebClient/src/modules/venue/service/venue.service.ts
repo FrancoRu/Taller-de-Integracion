@@ -29,10 +29,36 @@ export const venueService = {
     formData.append('Name', venue.name);
     formData.append('Address', venue.address);
     formData.append('ImageFile', venue.imageFile);
+    if (venue.latitude !== undefined) {
+      formData.append('Latitude', String(venue.latitude));
+    }
+    if (venue.longitude !== undefined) {
+      formData.append('Longitude', String(venue.longitude));
+    }
     return await sendPost(routes.venues, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+    });
+  },
+
+  /**
+   * Updates the photo for a specific venue. The backend binds
+   * [FromForm] UpdateVenuePhotoRequest, which requires both a VenueId and the
+   * ImageFile — send a proper multipart body.
+   * @param {string} id - The ID of the venue to update.
+   * @param {File} image - The new image file.
+   * @returns {Promise<AxiosResponse<void>>} The server response.
+   */
+  putVenuePhotoById: async (
+    id: GUID,
+    image: File
+  ): Promise<AxiosResponse<void>> => {
+    const formData = new FormData();
+    formData.append('VenueId', id);
+    formData.append('ImageFile', image);
+    return await sendPut(`${routes.venues}/${id}/photo`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
 

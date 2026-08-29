@@ -250,17 +250,20 @@ public sealed class DataMaintenanceService(
 
     private static List<Venue> BuildVenues()
     {
-        (string Name, string Address)[] specs =
+        // Real basketball club gyms from Paraná, Entre Ríos, with approximate
+        // coordinates around the city (~-31.73, -60.52).
+        (string Name, string Address, double Latitude, double Longitude)[] specs =
         [
-            ("Estadio Club 12", "Ruta 5 km 12"),
-            ("Polideportivo Municipal", "Av. Siempre Viva 1234"),
-            ("Gimnasio Central", "Calle San Martín 640"),
-            ("Cancha Norte", "Calle Los Andes 850"),
-            ("Cancha Sur", "Av. del Trabajo 2100"),
+            ("Estadio Ángel Malvicino (Echagüe)", "Av. Almafuerte, Paraná", -31.7398, -60.5060),
+            ("Gimnasio Estudiantes de Paraná", "Gualeguaychú 100, Paraná", -31.7255, -60.5150),
+            ("Paraná Rowing Club", "Av. Costanera, Paraná", -31.7150, -60.4890),
+            ("Club Sionista", "25 de Mayo, Paraná", -31.7345, -60.5250),
+            ("Club Atlético Talleres (Paraná)", "Av. Ramírez, Paraná", -31.7460, -60.5300),
+            ("Polideportivo Municipal Paraná", "Parque Urquiza, Paraná", -31.7205, -60.5050),
         ];
 
         List<Venue> venues = [];
-        foreach ((string name, string address) in specs)
+        foreach ((string name, string address, double latitude, double longitude) in specs)
         {
             venues.Add(new Venue
             {
@@ -268,6 +271,8 @@ public sealed class DataMaintenanceService(
                 Name = name,
                 Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug(name),
                 Address = address,
+                Latitude = latitude,
+                Longitude = longitude,
             });
         }
 
