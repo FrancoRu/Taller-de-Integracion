@@ -7,6 +7,7 @@ import {
   CardContent,
   Chip,
   Grid,
+  Stack,
   Typography,
 } from '@mui/material';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
@@ -15,6 +16,7 @@ import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatu
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import PageShell from '@/views/core/components/PageShell';
+import CategoryChip from '@/views/core/components/CategoryChip';
 import { CardGridSkeleton } from '@/views/core/components/skeletons';
 import {
   TOURNAMENT_STATUS_LABEL,
@@ -50,12 +52,19 @@ export function TournamentCard({ tournament }: { tournament: ITournamentResponse
               }}>
               {tournament.name}
             </Typography>
-            <Chip
-              label={TOURNAMENT_STATUS_LABEL[status] ?? status}
-              color={TOURNAMENT_STATUS_COLOR[status] ?? 'default'}
-              size="small"
-              variant={status === 'Scheduled' ? 'outlined' : 'filled'}
-            />
+            <Stack
+              direction="row"
+              spacing={0.5}
+              sx={{ flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}
+            >
+              <CategoryChip category={tournament.category} />
+              <Chip
+                label={TOURNAMENT_STATUS_LABEL[status] ?? status}
+                color={TOURNAMENT_STATUS_COLOR[status] ?? 'default'}
+                size="small"
+                variant={status === 'Scheduled' ? 'outlined' : 'filled'}
+              />
+            </Stack>
           </Box>
 
           {tournament.description && (
