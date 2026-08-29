@@ -10,6 +10,7 @@ import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import Home from './views/home/home';
 import PublicTeamPage from './views/home/teams/PublicTeamPage';
 import PublicSanctionsPage from './views/home/sanctions/PublicSanctionsPage';
+import PublicChampionsPage from './views/home/champions/PublicChampionsPage';
 import PublicMatchPage from './views/home/matches/PublicMatchPage';
 import PublicTournamentsPage from './views/home/tournaments/PublicTournamentsPage';
 import PublicTournamentPage from './views/home/tournaments/PublicTournamentPage';
@@ -317,6 +318,7 @@ const PUBLIC_ROUTES: PublicRouteConfig[] = [
   { path: APP_ROUTES.reglamento, element: <Regulation /> },
   { path: APP_ROUTES.publicTeam.pattern, element: <PublicTeamPage /> },
   { path: APP_ROUTES.publicSanctions, element: <PublicSanctionsPage /> },
+  { path: APP_ROUTES.publicChampions, element: <PublicChampionsPage /> },
   { path: APP_ROUTES.publicMatch.pattern, element: <PublicMatchPage /> },
   { path: APP_ROUTES.publicSeasons, element: <PublicSeasonsPage /> },
   { path: APP_ROUTES.publicSeason.pattern, element: <PublicSeasonPage /> },

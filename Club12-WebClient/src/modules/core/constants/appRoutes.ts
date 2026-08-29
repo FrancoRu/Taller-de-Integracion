@@ -21,6 +21,7 @@ export const APP_ROUTES = {
     build: (teamId: string) => `/equipos/${teamId}`,
   },
   publicSanctions: '/sanciones',
+  publicChampions: '/campeones',
   publicMatch: {
     pattern: '/partidos/:matchId',
     build: (matchId: string) => `/partidos/${matchId}`,

@@ -71,6 +71,17 @@ const MobileNavItems: React.FC<MobileNavItemsProps> = ({ onCloseDrawer }) => {
 
       <ListItemButton
         component={Link}
+        to={`/${RoutesNavigationViews.Champions}`}
+        selected={isSelected(`/${RoutesNavigationViews.Champions}`)}
+        onClick={() =>
+          handleNavigationAndCloseDrawer(`/${RoutesNavigationViews.Champions}`)
+        }
+      >
+        <ListItemText primary="Campeones" />
+      </ListItemButton>
+
+      <ListItemButton
+        component={Link}
         to={`/${RoutesNavigationViews.Blog}`}
         selected={isSelected(`/${RoutesNavigationViews.Blog}`)}
         onClick={() =>

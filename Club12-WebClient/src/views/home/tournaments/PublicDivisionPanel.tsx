@@ -33,6 +33,8 @@ import { stageLabel } from '@/modules/stage/utils/stageLabel';
 import DivisionStandings from '@/views/division/divisionStandings';
 import MatchFixtureList from '@/views/home/matches/MatchFixtureList';
 import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
+import Podium from '@/views/champion/Podium';
+import { IPodium } from '@/modules/champion/type/champion.d';
 
 const FETCH_PAGE_SIZE = 100;
 const STAGE_NAME_DIVISION_SEPARATOR = ' - ';
@@ -45,6 +47,11 @@ interface PublicDivisionPanelProps {
   division: IDivisionResponse;
   /** The teams that play in this division (shown in its "Equipos" tab). */
   teams: ITeamResponse[];
+  /**
+   * This division's podium (top three), when it has a decided champion. Shown
+   * as a highlighted banner above the sub-tabs. Omitted/`null` while undecided.
+   */
+  podium?: IPodium | null;
 }
 
 /**
@@ -71,7 +78,7 @@ const isDivisionSubTab = (value: string | null): value is DivisionSubTab =>
  * (not for every division up front), and loading state is always cleared in
  * a `finally` so a failed request can't leave the spinner running forever.
  */
-export default function PublicDivisionPanel({ division, teams }: PublicDivisionPanelProps) {
+export default function PublicDivisionPanel({ division, teams, podium }: PublicDivisionPanelProps) {
   /**
    * Lives in the URL for the same reason the parent tournament tab does:
    * the browser back button should undo one sub-tab switch at a time
@@ -205,6 +212,20 @@ export default function PublicDivisionPanel({ division, teams }: PublicDivisionP
 
   return (
     <Box>
+      {podium?.first && (
+        <Box
+          sx={{
+            mb: 3,
+            p: { xs: 2, sm: 3 },
+            borderRadius: 2,
+            bgcolor: 'action.hover',
+          }}
+        >
+          <SectionHeading>Campeones</SectionHeading>
+          <Podium podium={podium} />
+        </Box>
+      )}
+
       <SecondaryTabs
         value={subTab}
         onChange={(_, value) => setSubTab(value as DivisionSubTab)}
