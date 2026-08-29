@@ -8,7 +8,11 @@ import {
   useMemo,
 } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
+import {
+  FetchOptions,
+  GenericResponsePagination,
+  GUID,
+} from '@/modules/core/types/types';
 import { useError } from '@/modules/error/hooks/error.hock';
 import { useUnknownErrorHandler } from '@/modules/error/hooks/useUnknownErrorHandler';
 import { divisionService } from '@/modules/division/service/division.service';
@@ -175,7 +179,8 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
 
   const getDivisionsByFilters = useCallback(
     async (
-      filter: DivisionFiltered
+      filter: DivisionFiltered,
+      options?: FetchOptions
     ): Promise<GenericResponsePagination<IDivisionResponse> | void> => {
       try {
         const res = await queryClient.fetchQuery({
@@ -189,7 +194,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
           return res.data;
         }
       } catch (error: unknown) {
-        handleUnknownError(error);
+        if (!options?.silent) handleUnknownError(error);
       }
     },
     [setDivisions, queryClient, handleUnknownError]

@@ -1,4 +1,5 @@
 import {
+  FetchOptions,
   Filtered,
   GenericResponsePagination,
   GUID,
@@ -45,7 +46,8 @@ export interface IPlayerSanctionContextProps {
    * @returns A promise that resolves with a paginated response containing filtered sanctions, or void if no results are found.
    */
   getPlayerSanctionByFilter(
-    filter: IPlayerSanctionFiltered
+    filter: IPlayerSanctionFiltered,
+    options?: FetchOptions
   ): Promise<GenericResponsePagination<IPlayerSanctionResponse> | void>;
 
   /**

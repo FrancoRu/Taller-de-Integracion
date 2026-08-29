@@ -42,7 +42,9 @@ const BlogPostDetailPage: React.FC = () => {
     const loadPost = async () => {
       setLoading(true);
       try {
-        const fetchedPost = await getBlogPostsById(idOrSlug);
+        // Suppress the global blocking alert on the initial GET; a failed
+        // load falls through to the quiet inline "not found" state below.
+        const fetchedPost = await getBlogPostsById(idOrSlug, { silent: true });
         setPost(fetchedPost ?? undefined);
       } finally {
         setLoading(false);

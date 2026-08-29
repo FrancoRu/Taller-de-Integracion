@@ -59,7 +59,9 @@ describe('BlogPostDetailPage', () => {
     renderAt('/blog/guid-a-aaaa-bbbb-cccc');
 
     expect(await screen.findByText('Post recargado')).toBeInTheDocument();
-    expect(getBlogPostsById).toHaveBeenCalledWith('guid-a-aaaa-bbbb-cccc');
+    expect(getBlogPostsById).toHaveBeenCalledWith('guid-a-aaaa-bbbb-cccc', {
+      silent: true,
+    });
   });
 
   it('shows a not-found page when the fetched post does not exist', async () => {

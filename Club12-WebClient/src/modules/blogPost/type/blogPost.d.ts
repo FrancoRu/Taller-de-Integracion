@@ -1,4 +1,8 @@
-import { Filtered, GenericResponsePagination } from '@/modules/core/types/types';
+import {
+  FetchOptions,
+  Filtered,
+  GenericResponsePagination,
+} from '@/modules/core/types/types';
 
 /**
  * Context properties and methods for managing blog posts in a React application.
@@ -37,15 +41,20 @@ export interface IBlogPostContextProps {
    * @param idOrSlug The ID or slug of the blog post to fetch.
    * @returns A promise that resolves with the blog post data.
    */
-  getBlogPostsById(idOrSlug: string): Promise<BlogPostResponse | void>;
+  getBlogPostsById(
+    idOrSlug: string,
+    options?: FetchOptions
+  ): Promise<BlogPostResponse | void>;
 
   /**
    * Fetches blog posts based on filters and pagination.
    * @param filter The filter criteria to apply when fetching blog posts.
+   * @param options Per-call options; `silent` suppresses the global alert on failure.
    * @returns A promise that resolves with a paginated response containing filtered blog posts.
    */
   getBlogPostsByFilters(
-    filter: GetBlogPostsFilteredRequest
+    filter: GetBlogPostsFilteredRequest,
+    options?: FetchOptions
   ): Promise<GenericResponsePagination<BlogPostResponse> | void>;
 
   /**

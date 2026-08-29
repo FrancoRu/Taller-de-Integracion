@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -10,6 +10,7 @@ import {
   Typography,
 } from '@mui/material';
 import PageShell from '@/views/core/components/PageShell';
+import LoadErrorState from '@/views/core/components/LoadErrorState';
 import { DetailSkeleton, TableSkeleton } from '@/views/core/components/skeletons';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useTeam } from '@/modules/team/hook/team.hook';
@@ -62,6 +63,7 @@ export default function PublicTournamentPage() {
   const { teams, getTeamsByFiltered } = useTeam();
   const { getDivisionsByFilters } = useDivision();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const [divisions, setDivisions] = useState<IDivisionResponse[]>([]);
   const [divisionsLoading, setDivisionsLoading] = useState(false);
   const [podiumsByDivision, setPodiumsByDivision] = useState<Map<GUID, IPodium>>(
@@ -104,15 +106,22 @@ export default function PublicTournamentPage() {
   useEffect(() => { getTeamsRef.current = getTeamsByFiltered; }, [getTeamsByFiltered]);
   useEffect(() => { getDivisionsRef.current = getDivisionsByFilters; }, [getDivisionsByFilters]);
 
-  useEffect(() => {
+  const loadTournament = useCallback(async () => {
     if (!tournamentId) return;
-    const fetch = async () => {
-      setLoading(true);
-      await getTournamentRef.current(tournamentId);
-      setLoading(false);
-    };
-    void fetch();
+    setLoading(true);
+    setError(false);
+    // Suppress the global blocking alert on the initial GET; a failed load
+    // returns void, which we surface as a quiet inline retry state instead.
+    const response = await getTournamentRef.current(tournamentId, {
+      silent: true,
+    });
+    setError(response === undefined);
+    setLoading(false);
   }, [tournamentId]);
+
+  useEffect(() => {
+    void loadTournament();
+  }, [loadTournament]);
 
   useEffect(() => {
     if (!tournamentGuid) return;
@@ -121,11 +130,14 @@ export default function PublicTournamentPage() {
     const fetchDivisions = async () => {
       setDivisionsLoading(true);
       try {
-        const response = await getDivisionsRef.current({
-          tournamentId: tournamentGuid,
-          pageSize: PUBLIC_LISTING_PAGE_SIZE,
-          pageNumber: 1,
-        });
+        const response = await getDivisionsRef.current(
+          {
+            tournamentId: tournamentGuid,
+            pageSize: PUBLIC_LISTING_PAGE_SIZE,
+            pageNumber: 1,
+          },
+          { silent: true }
+        );
         const divisionsList = response?.items ?? [];
         const detailed = await Promise.all(
           divisionsList.map(async division => {
@@ -149,7 +161,10 @@ export default function PublicTournamentPage() {
   // the tournament resolves rather than only when a teams tab is opened.
   useEffect(() => {
     if (!tournamentGuid) return;
-    void getTeamsRef.current({ tournamentId: tournamentGuid, pageSize: PUBLIC_LISTING_PAGE_SIZE, pageNumber: 1 });
+    void getTeamsRef.current(
+      { tournamentId: tournamentGuid, pageSize: PUBLIC_LISTING_PAGE_SIZE, pageNumber: 1 },
+      { silent: true }
+    );
   }, [tournamentGuid]);
 
   // The podium (top three per division) is surfaced at the top of each
@@ -205,6 +220,23 @@ export default function PublicTournamentPage() {
     return (
       <PageShell>
         <DetailSkeleton />
+      </PageShell>
+    );
+  }
+
+  if (error && !tournament) {
+    return (
+      <PageShell
+        maxWidth="md"
+        back={{
+          label: 'Volver a torneos',
+          onClick: () => navigate(APP_ROUTES.publicTournaments),
+        }}
+      >
+        <LoadErrorState
+          message="No pudimos cargar el torneo."
+          onRetry={() => void loadTournament()}
+        />
       </PageShell>
     );
   }

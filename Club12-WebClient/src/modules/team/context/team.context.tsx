@@ -8,7 +8,11 @@ import {
   useMemo,
 } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
+import {
+  FetchOptions,
+  GenericResponsePagination,
+  GUID,
+} from '@/modules/core/types/types';
 import { useUnknownErrorHandler } from '@/modules/error/hooks/useUnknownErrorHandler';
 import { teamService } from '@/modules/team/service/team.service';
 import {
@@ -124,7 +128,8 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
 
   const getTeamsByFiltered = useCallback(
     async (
-      filter: TeamFiltered
+      filter: TeamFiltered,
+      options?: FetchOptions
     ): Promise<GenericResponsePagination<ITeamResponse> | void> => {
       try {
         const res = await queryClient.fetchQuery({
@@ -137,14 +142,14 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
           return res.data;
         }
       } catch (error: unknown) {
-        handleUnknownError(error);
+        if (!options?.silent) handleUnknownError(error);
       }
     },
     [queryClient, handleUnknownError]
   );
 
   const getTeamById = useCallback(
-    async (id: string): Promise<ITeamResponse | void> => {
+    async (id: string, options?: FetchOptions): Promise<ITeamResponse | void> => {
       try {
         const res: AxiosResponse<ITeamResponse> = await queryClient.fetchQuery({
           queryKey: teamKeys.byId(id),
@@ -156,7 +161,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
           return res.data;
         }
       } catch (error: unknown) {
-        handleUnknownError(error);
+        if (!options?.silent) handleUnknownError(error);
       }
     },
     [queryClient, handleUnknownError]

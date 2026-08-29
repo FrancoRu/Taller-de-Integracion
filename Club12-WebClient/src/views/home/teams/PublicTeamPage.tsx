@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -51,6 +51,7 @@ import JerseySvg from '@/views/core/components/JerseySvg';
 import SectionHeading from '@/views/core/components/SectionHeading';
 import CategoryChip from '@/views/core/components/CategoryChip';
 import StatTile from '@/views/core/components/StatTile';
+import LoadErrorState from '@/views/core/components/LoadErrorState';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 /** A participation's option label, e.g. "Apertura 2025 · Temporada 2025". */
@@ -405,19 +406,25 @@ export default function PublicTeamPage() {
   const navigate = useNavigate();
   const { team, getTeamById } = useTeam();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const [activeTournamentId, setActiveTournamentId] = useState<GUID | undefined>(
     undefined
   );
 
-  useEffect(() => {
+  const loadTeam = useCallback(async () => {
     if (!teamId) return;
-    const fetch = async () => {
-      setLoading(true);
-      await getTeamById(teamId);
-      setLoading(false);
-    };
-    void fetch();
+    setLoading(true);
+    setError(false);
+    // Suppress the global blocking alert on the initial GET; a failed load
+    // returns void, which we surface as a quiet inline retry state instead.
+    const response = await getTeamById(teamId, { silent: true });
+    setError(response === undefined);
+    setLoading(false);
   }, [teamId, getTeamById]);
+
+  useEffect(() => {
+    void loadTeam();
+  }, [loadTeam]);
 
   const { participations } = useTeamParticipations(teamId);
 
@@ -446,6 +453,17 @@ export default function PublicTeamPage() {
   }
 
   if (!team || (team.id !== teamId && team.slug !== teamId)) {
+    if (error) {
+      return (
+        <Container maxWidth="md" sx={{ py: 5 }}>
+          <LoadErrorState
+            message="No pudimos cargar el equipo."
+            onRetry={() => void loadTeam()}
+          />
+        </Container>
+      );
+    }
+
     return (
       <Container maxWidth="md" sx={{ py: 5 }}>
         <Typography variant="h5" component="h1" sx={{ mb: 2 }}>

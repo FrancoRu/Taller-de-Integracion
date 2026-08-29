@@ -1,4 +1,4 @@
-import { Filtered, GUID } from '@/modules/core/types/types';
+import { FetchOptions, Filtered, GUID } from '@/modules/core/types/types';
 import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
 
 /**
@@ -103,15 +103,20 @@ export interface ISeasonContextProps {
    * @returns A promise that resolves with the array of seasons.
    */
   getSeasonsByFiltered(
-    filter: SeasonFiltered
+    filter: SeasonFiltered,
+    options?: FetchOptions
   ): Promise<ISeasonResponse[] | void>;
 
   /**
    * Fetches a specific season by its unique ID or its public slug.
    * @param idOrSlug The ID or slug of the season to fetch.
+   * @param options Per-call options; `silent` suppresses the global alert on failure.
    * @returns A promise that resolves with the season data.
    */
-  getSeasonById(idOrSlug: string): Promise<ISeasonResponse | void>;
+  getSeasonById(
+    idOrSlug: string,
+    options?: FetchOptions
+  ): Promise<ISeasonResponse | void>;
 
   /**
    * Deletes a season by its unique ID.

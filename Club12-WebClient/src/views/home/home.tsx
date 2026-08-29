@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatDateAr } from '@/modules/core/utils/formatDate';
 import {
@@ -29,6 +29,7 @@ import BasketballCourtPattern from '@/views/core/components/BasketballCourtPatte
 import PageShell from '@/views/core/components/PageShell';
 import SectionHeading from '@/views/core/components/SectionHeading';
 import TeamLogo from '@/views/core/components/TeamLogo';
+import LoadErrorState from '@/views/core/components/LoadErrorState';
 import { CardGridSkeleton } from '@/views/core/components/skeletons';
 import { brand, font, logoBackground, radius } from '@/design/tokens';
 import { hexToRgba } from '@/design/colorName';
@@ -173,6 +174,8 @@ export default function Home() {
   const [champions, setChampions] = useState<IChampionHistory[]>([]);
   const [postsLoading, setPostsLoading] = useState(false);
   const [tournamentsLoading, setTournamentsLoading] = useState(false);
+  const [postsError, setPostsError] = useState(false);
+  const [tournamentsError, setTournamentsError] = useState(false);
 
   const getAllTournamentsRef = useRef(getAllTournamentsByFilter);
   const getBlogPostsRef = useRef(getBlogPostsByFilters);
@@ -181,29 +184,43 @@ export default function Home() {
   useEffect(() => { getAllTournamentsRef.current = getAllTournamentsByFilter; }, [getAllTournamentsByFilter]);
   useEffect(() => { getBlogPostsRef.current = getBlogPostsByFilters; }, [getBlogPostsByFilters]);
 
-  useEffect(() => {
-    const fetchTournaments = async () => {
-      setTournamentsLoading(true);
-      await getAllTournamentsRef.current({ pageSize: PUBLIC_LISTING_PAGE_SIZE, pageNumber: 1 });
-      setTournamentsLoading(false);
-    };
-    void fetchTournaments();
+  // The landing sections fetch on mount but must NOT pop the global blocking
+  // alert if a GET fails — each degrades to its own quiet inline retry state.
+  const fetchTournaments = useCallback(async () => {
+    setTournamentsLoading(true);
+    setTournamentsError(false);
+    const response = await getAllTournamentsRef.current(
+      { pageSize: PUBLIC_LISTING_PAGE_SIZE, pageNumber: 1 },
+      { silent: true }
+    );
+    setTournamentsError(response === undefined);
+    setTournamentsLoading(false);
   }, []);
 
-  useEffect(() => {
-    const fetchPosts = async () => {
-      setPostsLoading(true);
-      const response = await getBlogPostsRef.current({
+  const fetchPosts = useCallback(async () => {
+    setPostsLoading(true);
+    setPostsError(false);
+    const response = await getBlogPostsRef.current(
+      {
         pageNumber: 1,
         pageSize: LATEST_POSTS_COUNT,
         author: '',
         title: '',
-      });
-      setPosts(response?.items ?? []);
-      setPostsLoading(false);
-    };
-    void fetchPosts();
+      },
+      { silent: true }
+    );
+    setPostsError(response === undefined);
+    setPosts(response?.items ?? []);
+    setPostsLoading(false);
   }, []);
+
+  useEffect(() => {
+    void fetchTournaments();
+  }, [fetchTournaments]);
+
+  useEffect(() => {
+    void fetchPosts();
+  }, [fetchPosts]);
 
   useEffect(() => {
     let cancelled = false;
@@ -356,6 +373,11 @@ export default function Home() {
 
           {tournamentsLoading ? (
             <CardGridSkeleton count={3} />
+          ) : tournamentsError ? (
+            <LoadErrorState
+              message="No pudimos cargar los torneos."
+              onRetry={() => void fetchTournaments()}
+            />
           ) : featuredTournaments.length === 0 ? (
             <Typography sx={{ color: 'text.secondary' }}>
               Todavía no hay torneos publicados. Volvé a consultar más adelante.
@@ -419,6 +441,11 @@ export default function Home() {
 
           {postsLoading ? (
             <CardGridSkeleton count={3} />
+          ) : postsError ? (
+            <LoadErrorState
+              message="No pudimos cargar las novedades."
+              onRetry={() => void fetchPosts()}
+            />
           ) : posts.length === 0 ? (
             <Typography sx={{ color: 'text.secondary' }}>
               Todavía no publicamos novedades. Pronto vas a encontrar noticias acá.

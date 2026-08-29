@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -21,6 +21,7 @@ import {
 import { categoryColor } from '@/design/categoryColor';
 import PageShell from '@/views/core/components/PageShell';
 import SectionHeading from '@/views/core/components/SectionHeading';
+import LoadErrorState from '@/views/core/components/LoadErrorState';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
@@ -77,6 +78,7 @@ export default function PublicSeasonPage() {
   const { getSeasonById } = useSeason();
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [season, setSeason] = useState<ISeasonResponse | null>(null);
   const getSeasonByIdRef = useRef(getSeasonById);
 
@@ -84,26 +86,47 @@ export default function PublicSeasonPage() {
     getSeasonByIdRef.current = getSeasonById;
   }, [getSeasonById]);
 
-  useEffect(() => {
-    const fetch = async () => {
-      if (!seasonId) {
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      const response = await getSeasonByIdRef.current(seasonId);
-      setSeason(response ?? null);
+  const loadSeason = useCallback(async () => {
+    if (!seasonId) {
       setLoading(false);
-    };
+      return;
+    }
 
-    void fetch();
+    setLoading(true);
+    setError(false);
+    // Suppress the global blocking alert on the initial GET; a failed load
+    // returns void, which we surface as a quiet inline retry state instead.
+    const response = await getSeasonByIdRef.current(seasonId, { silent: true });
+    setSeason(response ?? null);
+    setError(response === undefined);
+    setLoading(false);
   }, [seasonId]);
+
+  useEffect(() => {
+    void loadSeason();
+  }, [loadSeason]);
 
   if (loading) {
     return (
       <PageShell title="Temporada">
         <DetailSkeleton />
+      </PageShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageShell
+        title="Temporada"
+        back={{
+          label: 'Volver a temporadas',
+          onClick: () => navigate(APP_ROUTES.publicSeasons),
+        }}
+      >
+        <LoadErrorState
+          message="No pudimos cargar la temporada."
+          onRetry={() => void loadSeason()}
+        />
       </PageShell>
     );
   }

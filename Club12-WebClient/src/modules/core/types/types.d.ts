@@ -18,6 +18,15 @@ export interface Filtered {
   order?: Order;
 }
 
+/**
+ * Per-call options for a context GET method. `silent` suppresses the global
+ * blocking alert on failure so a public page can render a quiet inline retry
+ * state instead — mutations (save/delete) never pass it and keep their alerts.
+ */
+export interface FetchOptions {
+  silent?: boolean;
+}
+
 export type RequestProps = {
   method: string;
   resource: string;

@@ -17,6 +17,7 @@ import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import PageShell from '@/views/core/components/PageShell';
 import CategoryChip from '@/views/core/components/CategoryChip';
+import LoadErrorState from '@/views/core/components/LoadErrorState';
 import { CardGridSkeleton } from '@/views/core/components/skeletons';
 import {
   TOURNAMENT_STATUS_LABEL,
@@ -99,6 +100,7 @@ export function TournamentCard({ tournament }: { tournament: ITournamentResponse
 export default function PublicTournamentsPage() {
   const { tournaments, getAllTournamentsByFilter } = useTournament();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const getAllTournamentsRef = useRef(getAllTournamentsByFilter);
 
   useEffect(() => {
@@ -107,7 +109,14 @@ export default function PublicTournamentsPage() {
 
   const fetchTournaments = useCallback(async () => {
     setLoading(true);
-    await getAllTournamentsRef.current({ pageSize: PUBLIC_LISTING_PAGE_SIZE, pageNumber: 1 });
+    setError(false);
+    // Suppress the global blocking alert on the initial GET; a failed load
+    // returns void, which we surface as a quiet inline retry state instead.
+    const response = await getAllTournamentsRef.current(
+      { pageSize: PUBLIC_LISTING_PAGE_SIZE, pageNumber: 1 },
+      { silent: true }
+    );
+    setError(response === undefined);
     setLoading(false);
   }, []);
 
@@ -130,6 +139,11 @@ export default function PublicTournamentsPage() {
 
       {loading ? (
         <CardGridSkeleton count={6} />
+      ) : error ? (
+        <LoadErrorState
+          message="No pudimos cargar los torneos."
+          onRetry={() => void fetchTournaments()}
+        />
       ) : rows.length === 0 ? (
         <Typography sx={{
           color: "text.secondary"

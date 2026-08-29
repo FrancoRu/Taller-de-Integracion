@@ -1,4 +1,5 @@
 import {
+  FetchOptions,
   Filtered,
   GenericResponsePagination,
   GUID,
@@ -51,7 +52,8 @@ export interface IDivisionContextProps {
    * @returns A promise that resolves with a paginated response containing filtered divisions.
    */
   getDivisionsByFilters(
-    filter: DivisionFiltered
+    filter: DivisionFiltered,
+    options?: FetchOptions
   ): Promise<GenericResponsePagination<IDivisionResponse> | void>;
 
   /**

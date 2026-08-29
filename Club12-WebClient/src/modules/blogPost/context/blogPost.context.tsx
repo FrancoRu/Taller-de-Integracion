@@ -1,7 +1,11 @@
 import { AxiosError, AxiosResponse } from 'axios';
 import React, { createContext, ReactNode, useCallback, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
+import {
+  FetchOptions,
+  GenericResponsePagination,
+  GUID,
+} from '@/modules/core/types/types';
 import { useError } from '@/modules/error/hooks/error.hock';
 import { useUnknownErrorHandler } from '@/modules/error/hooks/useUnknownErrorHandler';
 import { blogPostService } from '@/modules/blogPost/service/blogPost.service';
@@ -121,7 +125,10 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const getBlogPostsById = useCallback(
-    async (idOrSlug: string): Promise<BlogPostResponse | void> => {
+    async (
+      idOrSlug: string,
+      options?: FetchOptions
+    ): Promise<BlogPostResponse | void> => {
       try {
         const response = await queryClient.fetchQuery({
           queryKey: blogPostKeys.byId(idOrSlug),
@@ -130,7 +137,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
 
         return response?.data;
       } catch (error: unknown) {
-        handleUnknownError(error);
+        if (!options?.silent) handleUnknownError(error);
       }
     },
     [queryClient, handleUnknownError]
@@ -138,7 +145,8 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
 
   const getBlogPostsByFilters = useCallback(
     async (
-      filter: GetBlogPostsFilteredRequest
+      filter: GetBlogPostsFilteredRequest,
+      options?: FetchOptions
     ): Promise<GenericResponsePagination<BlogPostResponse> | void> => {
       try {
         const response = await queryClient.fetchQuery({
@@ -149,7 +157,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
 
         return response?.data;
       } catch (error: unknown) {
-        handleUnknownError(error);
+        if (!options?.silent) handleUnknownError(error);
       }
     },
     [queryClient, handleUnknownError]

@@ -1,6 +1,7 @@
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
 import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
 import {
+  FetchOptions,
   Filtered,
   GenericResponsePagination,
   GUID,
@@ -38,15 +39,20 @@ export interface ITournamentContextProps {
    * @param idOrSlug The ID or slug of the tournament to fetch.
    * @returns A promise that resolves with the tournament details.
    */
-  getTournamentById(idOrSlug: string): Promise<ITournamentResponse | void>;
+  getTournamentById(
+    idOrSlug: string,
+    options?: FetchOptions
+  ): Promise<ITournamentResponse | void>;
 
   /**
    * Fetches tournaments based on filters.
    * @param filter The filters to apply when fetching tournaments.
+   * @param options Per-call options; `silent` suppresses the global alert on failure.
    * @returns A promise that resolves with the paginated response containing tournaments that match the filters.
    */
   getAllTournamentsByFilter(
-    filter: ITournamentFiltered
+    filter: ITournamentFiltered,
+    options?: FetchOptions
   ): Promise<GenericResponsePagination<ITournamentResponse> | void>;
 
   /**
