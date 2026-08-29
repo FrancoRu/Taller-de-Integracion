@@ -253,15 +253,17 @@ export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
           setMessage(res.status, [SUCCESS_MESSAGES.LOGIN_SUCCESS]);
           return true;
         }
-      } catch (error: unknown) {
-        setError(error as AxiosError);
+      } catch {
+        // A failed sign-in returns false so the login form shows its own
+        // Spanish inline message ("Usuario o contraseña incorrectos"). We do
+        // NOT surface the raw API error here — that popped a blocking, English
+        // ("Invalid credentials.") alert on top of the localized form error.
         return false;
       }
       return false;
     },
     [
       setMessage,
-      setError,
       signInMutation,
       applyAuthData,
       clearAuthTimeout,
