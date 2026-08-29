@@ -32,7 +32,8 @@ namespace Application.Services;
 public class TeamService(
     IUnitOfWork unitOfWork,
     IRosterCopyService rosterCopyService,
-    IDivisionService divisionService) : ITeamService
+    IDivisionService divisionService,
+    ITeamPointDeductionRepository pointDeductionRepository) : ITeamService
 {
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IRosterCopyService _rosterCopyService = rosterCopyService;
@@ -43,6 +44,8 @@ public class TeamService(
     private readonly IDivisionRepository _divisionRepository = unitOfWork.DivisionRepository;
     private readonly IMatchRepository _matchRepository = unitOfWork.MatchRepository;
     private readonly ITournamentRepository _tournamentRepository = unitOfWork.TournamentRepository;
+    private readonly IPlayerSanctionRepository _sanctionRepository = unitOfWork.PlayerSanctionRepository;
+    private readonly ITeamPointDeductionRepository _pointDeductionRepository = pointDeductionRepository;
 
     /// <summary>
     /// Creates a new team entity and persists it to the repository.
@@ -113,12 +116,36 @@ public class TeamService(
     }
 
     /// <summary>
-    /// Deletes a team entity by its unique identifier.
+    /// Deletes a team, guarding its competitive history. A team's identity
+    /// persists across seasons (HU-99), so deletion is rare and blocked whenever
+    /// the team carries history that removing it would orphan or silently
+    /// cascade away: any match participation (home/visitor/winner — those FKs are
+    /// NoAction and would raise an opaque database error), any sanction or point
+    /// deduction (Restrict FKs), or any tournament registration. Mirrors the
+    /// player delete guard. A team with none of these (e.g. a freshly created or
+    /// fully unenrolled club) is still deletable — its empty roster and any
+    /// season registrations cascade cleanly.
     /// </summary>
     /// <param name="id">The unique identifier of the team to delete.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown (mapped to 409) when the team has match history, sanctions, point
+    /// deductions or tournament registrations.
+    /// </exception>
     public async Task DeleteTeamAsync(Guid id)
     {
+        bool hasMatchHistory = await _matchRepository.ExistsAsync(
+            match => match.HomeTeamId == id || match.VisitorTeamId == id || match.WinningTeamId == id);
+        bool hasSanctions = await _sanctionRepository.ExistsAsync(sanction => sanction.TeamId == id);
+        bool hasPointDeductions = await _pointDeductionRepository.ExistsAsync(deduction => deduction.TeamId == id);
+        bool hasTournamentRegistrations = await _tournamentRegistrationRepository.ExistsAsync(
+            registration => registration.TeamId == id);
+
+        if (hasMatchHistory || hasSanctions || hasPointDeductions || hasTournamentRegistrations)
+        {
+            throw new InvalidOperationException(ErrorMessages.Team.HasHistoryCannotDelete);
+        }
+
         await _teamRepository.RemoveAsync(team => team.Id == id);
     }
 
