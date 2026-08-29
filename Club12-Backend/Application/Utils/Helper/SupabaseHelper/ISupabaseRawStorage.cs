@@ -20,23 +20,32 @@ namespace Application.Utils.Helper.SupabaseHelper;
 public interface ISupabaseRawStorage
 {
     /// <summary>
-    /// Uploads raw content to <paramref name="objectPath"/> in the configured bucket.
+    /// Uploads raw content to <paramref name="objectPath"/> in <paramref name="bucket"/>.
     /// </summary>
-    Task UploadRawAsync(string objectPath, Stream content);
+    /// <param name="objectPath">The exact destination path within the bucket.</param>
+    /// <param name="content">The content stream to upload.</param>
+    /// <param name="bucket">Target bucket; null uses the configured SupaBase:BucketName.</param>
+    Task UploadRawAsync(string objectPath, Stream content, string? bucket = null);
 
     /// <summary>
-    /// Lists raw objects under <paramref name="prefix"/> in the configured bucket.
+    /// Lists raw objects under <paramref name="prefix"/> in <paramref name="bucket"/>.
     /// </summary>
-    Task<IReadOnlyList<SupabaseStorageEntry>> ListRawAsync(string prefix);
+    /// <param name="prefix">The bucket-relative path prefix to list.</param>
+    /// <param name="bucket">Target bucket; null uses the configured SupaBase:BucketName.</param>
+    Task<IReadOnlyList<SupabaseStorageEntry>> ListRawAsync(string prefix, string? bucket = null);
 
     /// <summary>
-    /// Removes the raw object at <paramref name="objectPath"/> in the configured bucket.
+    /// Removes the raw object at <paramref name="objectPath"/> in <paramref name="bucket"/>.
     /// </summary>
-    Task RemoveRawAsync(string objectPath);
+    /// <param name="objectPath">The exact object path within the bucket.</param>
+    /// <param name="bucket">Target bucket; null uses the configured SupaBase:BucketName.</param>
+    Task RemoveRawAsync(string objectPath, string? bucket = null);
 
     /// <summary>
     /// Downloads the raw content of the object at <paramref name="objectPath"/>
-    /// in the configured bucket.
+    /// in <paramref name="bucket"/>.
     /// </summary>
-    Task<byte[]> DownloadRawAsync(string objectPath);
+    /// <param name="objectPath">The exact object path within the bucket.</param>
+    /// <param name="bucket">Target bucket; null uses the configured SupaBase:BucketName.</param>
+    Task<byte[]> DownloadRawAsync(string objectPath, string? bucket = null);
 }

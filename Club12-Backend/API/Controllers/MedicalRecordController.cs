@@ -66,7 +66,7 @@ public class MedicalRecordController(
         }
 
         string fileReference = await medicalRecordStorage.StoreAsync(
-            request.TournamentId,
+            request.TeamId,
             request.PlayerId,
             request.File.FileName,
             request.File.OpenReadStream());

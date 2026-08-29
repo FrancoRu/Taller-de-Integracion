@@ -58,5 +58,22 @@ public static class ConfigurationKeys
         /// placeholder logos without failing the seed.
         /// </summary>
         public const string LogosPath = "Seed:LogosPath";
+
+        /// <summary>
+        /// Filesystem path to the medical PDF the startup DataSeeder uploads
+        /// for every should-be-habilitado seeded registration
+        /// (medical-records-storage-eligibility, Part 3). Absent/missing file
+        /// warns and skips the whole backfill step without failing the seed.
+        /// </summary>
+        public const string MedicalRecordPath = "Seed:MedicalRecordPath";
+
+        /// <summary>
+        /// Bypasses the skip-if-teams-exist guard so the medical-records
+        /// backfill step can run as a standalone targeted backfill against an
+        /// already-seeded database, without a full <see cref="Reset"/> wipe.
+        /// The step also runs during a normal reset seed regardless of this
+        /// flag (medical-records-storage-eligibility, Part 3, ADR #8).
+        /// </summary>
+        public const string MedicalRecords = "Seed:MedicalRecords";
     }
 }

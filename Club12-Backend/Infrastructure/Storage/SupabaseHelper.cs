@@ -111,13 +111,14 @@ public class SupabaseHelper : ISupabaseRawStorage
     /// </summary>
     /// <param name="objectPath">The exact destination path within the bucket.</param>
     /// <param name="content">The content stream to upload.</param>
+    /// <param name="bucket">Target bucket; null uses the configured SupaBase:BucketName.</param>
     /// <exception cref="InvalidOperationException">Thrown when the upload fails.</exception>
-    public async Task UploadRawAsync(string objectPath, Stream content)
+    public async Task UploadRawAsync(string objectPath, Stream content, string? bucket = null)
     {
         try
         {
             await _client.Storage
-                .From(_bucketName)
+                .From(bucket ?? _bucketName)
                 .Upload(UseStreamDotReadMethod(content), objectPath, new() { Upsert = true });
         }
         catch (Exception ex)
@@ -132,12 +133,13 @@ public class SupabaseHelper : ISupabaseRawStorage
     /// DeleteImageAsync{T}.
     /// </summary>
     /// <param name="prefix">The bucket-relative path prefix to list.</param>
+    /// <param name="bucket">Target bucket; null uses the configured SupaBase:BucketName.</param>
     /// <exception cref="InvalidOperationException">Thrown when listing fails.</exception>
-    public async Task<IReadOnlyList<SupabaseStorageEntry>> ListRawAsync(string prefix)
+    public async Task<IReadOnlyList<SupabaseStorageEntry>> ListRawAsync(string prefix, string? bucket = null)
     {
         try
         {
-            List<Supabase.Storage.FileObject> files = await _client.Storage.From(_bucketName).List(prefix)
+            List<Supabase.Storage.FileObject> files = await _client.Storage.From(bucket ?? _bucketName).List(prefix)
                 ?? [];
             return files
                 .Select(file => new SupabaseStorageEntry(
@@ -159,12 +161,13 @@ public class SupabaseHelper : ISupabaseRawStorage
     /// sites are untouched.
     /// </summary>
     /// <param name="objectPath">The exact object path within the bucket.</param>
+    /// <param name="bucket">Target bucket; null uses the configured SupaBase:BucketName.</param>
     /// <exception cref="InvalidOperationException">Thrown when the removal fails.</exception>
-    public async Task RemoveRawAsync(string objectPath)
+    public async Task RemoveRawAsync(string objectPath, string? bucket = null)
     {
         try
         {
-            await _client.Storage.From(_bucketName).Remove(objectPath);
+            await _client.Storage.From(bucket ?? _bucketName).Remove(objectPath);
         }
         catch (Exception ex)
         {
@@ -178,12 +181,13 @@ public class SupabaseHelper : ISupabaseRawStorage
     /// or DeleteImageAsync{T}.
     /// </summary>
     /// <param name="objectPath">The exact object path within the bucket.</param>
+    /// <param name="bucket">Target bucket; null uses the configured SupaBase:BucketName.</param>
     /// <exception cref="InvalidOperationException">Thrown when the download fails.</exception>
-    public async Task<byte[]> DownloadRawAsync(string objectPath)
+    public async Task<byte[]> DownloadRawAsync(string objectPath, string? bucket = null)
     {
         try
         {
-            return await _client.Storage.From(_bucketName).Download(objectPath, (EventHandler<float>?)null);
+            return await _client.Storage.From(bucket ?? _bucketName).Download(objectPath, (EventHandler<float>?)null);
         }
         catch (Exception ex)
         {

@@ -11,6 +11,7 @@ using Infrastructure.Storage;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 using System.Collections.Generic;
@@ -37,16 +38,20 @@ public class MedicalRecordDownloadTests
     public async Task Storage_StoreThenDownload_RoundTripsBytes()
     {
         InMemoryRawStorage raw = new();
-        SupabaseMedicalRecordStorage storage = new(raw);
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>())
+            .Build();
+        SupabaseMedicalRecordStorage storage = new(raw, configuration);
         byte[] pdf = Encoding.UTF8.GetBytes("%PDF-1.4 fake medical record");
+        Guid teamId = Guid.NewGuid();
 
         string objectPath = await storage.StoreAsync(
-            Guid.NewGuid(), Guid.NewGuid(), "ficha.pdf", new MemoryStream(pdf));
+            teamId, Guid.NewGuid(), "ficha.pdf", new MemoryStream(pdf));
 
         byte[] downloaded = await storage.DownloadAsync(objectPath);
 
         Assert.Equal(pdf, downloaded);
-        Assert.StartsWith("medical-records/", objectPath);
+        Assert.StartsWith($"{teamId}/", objectPath);
     }
 
     [Fact]
@@ -137,7 +142,7 @@ public class MedicalRecordDownloadTests
     private sealed class FakeStorage(Dictionary<string, byte[]> objects) : IMedicalRecordStorage
     {
         public Task<string> StoreAsync(
-            Guid tournamentId, Guid playerId, string fileName, Stream content, CancellationToken ct = default)
+            Guid teamId, Guid playerId, string fileName, Stream content, CancellationToken ct = default)
             => Task.FromResult("unused");
 
         public Task<byte[]> DownloadAsync(string objectPath, CancellationToken ct = default)
@@ -148,18 +153,18 @@ public class MedicalRecordDownloadTests
     {
         private readonly Dictionary<string, byte[]> _objects = [];
 
-        public async Task UploadRawAsync(string objectPath, Stream content)
+        public async Task UploadRawAsync(string objectPath, Stream content, string? bucket = null)
         {
             using MemoryStream buffer = new();
             await content.CopyToAsync(buffer);
             _objects[objectPath] = buffer.ToArray();
         }
 
-        public Task<byte[]> DownloadRawAsync(string objectPath) => Task.FromResult(_objects[objectPath]);
+        public Task<byte[]> DownloadRawAsync(string objectPath, string? bucket = null) => Task.FromResult(_objects[objectPath]);
 
-        public Task<IReadOnlyList<SupabaseStorageEntry>> ListRawAsync(string prefix)
+        public Task<IReadOnlyList<SupabaseStorageEntry>> ListRawAsync(string prefix, string? bucket = null)
             => throw new System.NotImplementedException();
 
-        public Task RemoveRawAsync(string objectPath) => throw new System.NotImplementedException();
+        public Task RemoveRawAsync(string objectPath, string? bucket = null) => throw new System.NotImplementedException();
     }
 }

@@ -122,23 +122,24 @@ public class PlayerController(
     }
 
     /// <summary>
-    /// Retrieves a player by ID with complete data for admin view.
+    /// Retrieves a player by its id or its slug, with complete data for the admin view.
     /// </summary>
-    /// <param name="id">The unique identifier of the player.</param>
-    /// <returns>
-    /// Returns AdminPlayerResponse if the player is found; otherwise, returns a 400 Bad Request.
+    /// <param name="idOrSlug">The id (GUID) or exact slug of the player to retrieve.</param>
+    /// <returns>The player's complete admin data.
+    /// <para>Returns 200 (OK) with the <see cref="AdminPlayerResponse"/> if the player was found.</para>
+    /// <para>Returns 404 (Not Found) if no player matches the provided id or slug.</para>
     /// </returns>
     [Authorize(Roles = Roles.AdminOrOwner)]
-    [HttpGet("admin/{id:guid}")]
+    [HttpGet("admin/{idOrSlug}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AdminPlayerResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<AdminPlayerResponse>> GetPlayerByIdCompleteDataAsync(Guid id)
+    public async Task<ActionResult<AdminPlayerResponse>> GetPlayerByIdCompleteDataAsync(string idOrSlug)
     {
-        Player? player = await playerService.GetPlayerByIdAsync(id);
+        Player? player = await playerService.GetPlayerByIdOrSlugAsync(idOrSlug);
 
         if (player is null)
         {
-            return this.NotFoundProblem(nameof(Player), id);
+            return this.NotFoundProblem(nameof(Player), idOrSlug);
         }
 
         AdminPlayerResponse playerResponse = mapper.Map<AdminPlayerResponse>(player);

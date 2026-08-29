@@ -20,11 +20,32 @@ public class Player : EntityBase
     /// </summary>
     public required string Slug { get; set; }
 
-    /// <summary>Computed — not persisted to the database.</summary>
-    public string FullName => string.Concat(
-        LastName.ToUpper(),
-        string.IsNullOrWhiteSpace(SecondName) ? $" {FirstName}" : $" {FirstName} {SecondName}"
-    );
+    /// <summary>
+    /// The single canonical source string every slug is derived from —
+    /// <c>apellido nombre[ segundo]</c> in the player's raw casing, with NO
+    /// document number. Shared verbatim by <see cref="FullName"/> (display),
+    /// PlayerService create, the sample seeder and the re-backfill migration so
+    /// the three producers can never diverge.
+    /// </summary>
+    /// <param name="lastName">The player's last name.</param>
+    /// <param name="firstName">The player's first name.</param>
+    /// <param name="secondName">The optional second given name; blank is treated as absent.</param>
+    /// <returns>The space-joined name source, e.g. <c>"Lopez Carlos"</c>.</returns>
+    public static string BuildSlugSource(string lastName, string firstName, string? secondName)
+    {
+        if (string.IsNullOrWhiteSpace(secondName))
+        {
+            return $"{lastName} {firstName}";
+        }
+
+        return $"{lastName} {firstName} {secondName}";
+    }
+
+    /// <summary>Computed — not persisted. The canonical slug source for this player.</summary>
+    public string SlugSource => BuildSlugSource(LastName, FirstName, SecondName);
+
+    /// <summary>Computed — not persisted to the database. Display name with the last name upper-cased.</summary>
+    public string FullName => BuildSlugSource(LastName.ToUpper(), FirstName, SecondName);
 
     public required string DocumentNumber { get; set; }
     public required bool IsSanctioned { get; set; } = false;
@@ -61,13 +82,29 @@ public class Player : EntityBase
     public MedicalRecordStatus? MedicalRecordStatus { get; set; }
 
     /// <summary>
-    /// Transient, NOT persisted: whether the player is "habilitado" for the
-    /// season roster currently being viewed (HU-57) — i.e. their medical
-    /// record is Approved. Lets the frontend flag not-habilitado players
-    /// (HU-62). Sanctions are enforced separately in the match-sheet path.
+    /// Transient, NOT persisted: whether the season roster currently being
+    /// viewed set a real (non-legacy) stored medical-record file reference on
+    /// the matching <see cref="PlayerTeamRegistration"/> (see
+    /// TeamService.AttachSeasonRostersAsync). Deliberately a bool, not the
+    /// storage object path itself: <see cref="Player"/> feeds the
+    /// [AllowAnonymous] public player endpoints, so carrying the actual
+    /// private-bucket path here would be an unnecessary disclosure surface.
+    /// Defaults to false, matching today's "no season context" default.
     /// </summary>
     [NotMapped]
-    public bool IsHabilitado => MedicalRecordStatus == Domain.Enums.MedicalRecordStatus.Approved;
+    public bool HasMedicalRecordFile { get; set; }
+
+    /// <summary>
+    /// Transient, NOT persisted: whether the player is "habilitado" for the
+    /// season roster currently being viewed (HU-57) — i.e. their medical
+    /// record is Approved AND a real file was stored for it
+    /// (medical-records-storage-eligibility). Lets the frontend flag
+    /// not-habilitado players (HU-62). Sanctions are enforced separately in
+    /// the match-sheet path.
+    /// </summary>
+    [NotMapped]
+    public bool IsHabilitado =>
+        MedicalRecordStatus == Domain.Enums.MedicalRecordStatus.Approved && HasMedicalRecordFile;
 
     /// <summary>
     /// Transient, NOT persisted: the player's jersey number (dorsal) for the

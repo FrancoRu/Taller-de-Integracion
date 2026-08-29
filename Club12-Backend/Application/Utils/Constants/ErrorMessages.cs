@@ -343,6 +343,16 @@ public static class ErrorMessages
         public const string AlreadyApproved =
             "La ficha médica ya está aprobada; no se puede subir una nueva. Solo puede consultarse o descargarse.";
 
+        /// <summary>
+        /// User-facing (Spanish) message returned when an approve is attempted
+        /// against a registration with no real stored file (null/whitespace, or
+        /// a legacy <see cref="Domain.Entities.Models.PlayerTeamRegistration.LegacyReferencePrefix"/>
+        /// reference that no longer resolves): "Approved ⟺ file present" must
+        /// hold going forward (medical-records-storage-eligibility).
+        /// </summary>
+        public const string NoStoredFile =
+            "No se puede aprobar la ficha médica: no hay un archivo cargado. Subí la ficha antes de aprobarla.";
+
         public static string RegistrationNotFound(
             System.Guid playerId, System.Guid teamId, System.Guid tournamentId)
         {

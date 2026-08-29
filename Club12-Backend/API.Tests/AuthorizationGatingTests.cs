@@ -65,6 +65,35 @@ public class AuthorizationGatingTests : IClassFixture<CustomWebApplicationFactor
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    /// <summary>
+    /// The admin player-detail route now accepts an id OR a slug. Widening the
+    /// route parameter must not weaken the gate: an anonymous caller on the slug
+    /// form is still rejected before the handler runs.
+    /// </summary>
+    [Fact]
+    public async Task GetPlayerCompleteData_BySlug_Anonymous_ReturnsUnauthorized()
+    {
+        HttpClient client = _factory.CreateClient();
+
+        HttpResponseMessage response = await client.GetAsync("api/players/admin/lopez-carlos");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    /// <summary>
+    /// Guest is not a staff role, so the slug form of the admin player-detail
+    /// route is forbidden — never a routing 404, never 200.
+    /// </summary>
+    [Fact]
+    public async Task GetPlayerCompleteData_BySlug_WrongRole_ReturnsForbidden()
+    {
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Guest);
+
+        HttpResponseMessage response = await client.GetAsync("api/players/admin/lopez-carlos");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
     [Fact]
     public async Task CreateTournament_Anonymous_ReturnsUnauthorized()
     {

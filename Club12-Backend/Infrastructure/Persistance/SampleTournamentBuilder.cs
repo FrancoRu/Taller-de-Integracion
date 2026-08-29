@@ -40,11 +40,12 @@ public static class SampleTournamentBuilder
 {
     private const string CreatedBy = AuditConstants.SystemUser;
 
-    // Static ficha-médica reference attached to every habilitado (Approved)
-    // seeded registration so the "habilitado ⟺ ficha aprobada" invariant holds
-    // in the sample data: an Approved record always carries a file URL, file
-    // name and a review timestamp (HU-55/HU-57).
-    private const string SampleMedicalRecordFileUrl = "medical-records/sample/ficha-medica.pdf";
+    // No fake file reference is assigned to Approved seeded registrations
+    // (medical-records-storage-eligibility, Part 3): DataSeeder.SeedMedicalRecordsAsync
+    // fills MedicalRecordFileUrl/MedicalRecordFileName with a REAL uploaded
+    // object after Build() runs. Leaving it null here means an Approved
+    // registration correctly reads as NOT habilitado (Part 2's file-backed
+    // rule) until the seed's backfill step gives it a real file.
     private const string SampleMedicalRecordFileName = "ficha-medica.pdf";
     private static readonly DateTime SampleMedicalRecordReviewedAt =
         new(2026, 8, 1, 12, 0, 0, DateTimeKind.Utc);
@@ -131,10 +132,13 @@ public static class SampleTournamentBuilder
     {
         private readonly HashSet<string> _divisionSlugs = [];
         private readonly HashSet<string> _stageSlugs = [];
+        private readonly HashSet<string> _playerSlugs = [];
 
         public string ForDivision(string source) => Register(source, _divisionSlugs);
 
         public string ForStage(string source) => Register(source, _stageSlugs);
+
+        public string ForPlayer(string source) => Register(source, _playerSlugs);
 
         private static string Register(string source, HashSet<string> used)
         {
@@ -324,7 +328,7 @@ public static class SampleTournamentBuilder
                     CreatedBy = CreatedBy,
                     FirstName = firstName,
                     LastName = lastName,
-                    Slug = SlugGenerator.GenerateSlug($"{lastName} {firstName} {documentNumber}"),
+                    Slug = slugRegistry.ForPlayer(Player.BuildSlugSource(lastName, firstName, secondName: null)),
                     DocumentNumber = documentNumber,
                     IsSanctioned = false,
                     BirthDate = new DateTime(2026, 8, 18, 0, 0, 0, DateTimeKind.Utc)
@@ -336,11 +340,14 @@ public static class SampleTournamentBuilder
 
                 team.Players.Add(player);
 
-                // Most seeded players are habilitado (ficha Approved) so the
-                // sample data showcases the habilitado state; the last player of
-                // each team stays Pending (no ficha) to keep the upload/review
-                // flow demonstrable. Approved rows always carry the ficha
-                // reference, keeping "habilitado ⟺ ficha aprobada" consistent.
+                // Most seeded players' ficha is Approved so the sample data
+                // showcases that status; the last player of each team stays
+                // Pending (no ficha) to keep the upload/review flow demonstrable.
+                // Approved rows are seeded WITHOUT a file reference
+                // (medical-records-storage-eligibility, Part 3): DataSeeder.SeedMedicalRecordsAsync
+                // fills MedicalRecordFileUrl with a REAL uploaded object after
+                // Build() runs, so between Build() and that step an Approved row
+                // correctly reads as NOT habilitado under Part 2's file-backed rule.
                 bool isHabilitado = p < 7;
 
                 team.PlayerTeamRegistrations.Add(new PlayerTeamRegistration
@@ -355,7 +362,7 @@ public static class SampleTournamentBuilder
                     MedicalRecordStatus = isHabilitado
                         ? MedicalRecordStatus.Approved
                         : MedicalRecordStatus.Pending,
-                    MedicalRecordFileUrl = isHabilitado ? SampleMedicalRecordFileUrl : null,
+                    MedicalRecordFileUrl = null,
                     MedicalRecordFileName = isHabilitado ? SampleMedicalRecordFileName : null,
                     MedicalRecordReviewedAt = isHabilitado ? SampleMedicalRecordReviewedAt : null,
                 });

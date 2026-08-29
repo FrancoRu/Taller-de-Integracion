@@ -24,6 +24,11 @@ public class SampleTournamentBuilderSlugTests
     private static readonly Regex KebabPattern =
         new("^[a-z0-9]+(?:-[a-z0-9]+)*$", RegexOptions.Compiled);
 
+    // Any run of 8+ consecutive digits — how a DNI/document number would survive
+    // slugging if it were still part of the player slug source.
+    private static readonly Regex EightDigitRunPattern =
+        new("[0-9]{8}", RegexOptions.Compiled);
+
     [Fact]
     public void Build_DivisionAndStageSlugs_AreCleanKebabWithoutGuid()
     {
@@ -138,6 +143,65 @@ public class SampleTournamentBuilderSlugTests
         Assert.Contains("fase-de-grupos-primera", allStageSlugs);
         Assert.Contains("fase-de-grupos-primera-2", allStageSlugs);
         Assert.Equal(allStageSlugs.Count, allStageSlugs.Distinct().Count());
+    }
+
+    [Fact]
+    public void Build_PlayerSlugs_AreCleanKebabDniFreeAndDistinctAcrossTheBatch()
+    {
+        List<Venue> venues =
+        [
+            new() { Slug = "venue-uno", CreatedBy = "test", Name = "Cancha Uno", Address = "Calle 1" },
+        ];
+
+        SampleTournamentBuilder.TournamentDefinition Make(string name) => new(
+            Name: name,
+            Description: "Torneo de prueba.",
+            TeamRegistrationDeadline: new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            StartDate: new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc),
+            StageStartDate: new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc),
+            StageEndDate: new DateTime(2026, 4, 1, 0, 0, 0, DateTimeKind.Utc),
+            FinishedMatchesStart: new DateTime(2026, 2, 8, 0, 0, 0, DateTimeKind.Utc),
+            UpcomingMatchesStart: new DateTime(2026, 3, 8, 0, 0, 0, DateTimeKind.Utc),
+            Divisions:
+            [
+                new(
+                    "Primera",
+                    ["Equipo A", "Equipo B", "Equipo C", "Equipo D"],
+                    ["EQA", "EQB", "EQC", "EQD"],
+                    ["#111111", "#222222", "#333333", "#444444"]),
+                new(
+                    "Segunda",
+                    ["Equipo E", "Equipo F", "Equipo G", "Equipo H"],
+                    ["EQE", "EQF", "EQG", "EQH"],
+                    ["#555555", "#666666", "#777777", "#888888"]),
+            ]);
+
+        int playerCounter = 0;
+        SampleTournamentBuilder.SlugRegistry slugRegistry = new();
+
+        List<string> allPlayerSlugs = [];
+        foreach (string name in new[] { "Torneo Uno", "Torneo Dos", "Torneo Tres", "Torneo Cuatro" })
+        {
+            SampleTournamentBuilder.BuildResult result = SampleTournamentBuilder.Build(
+                Make(name), venues, ref playerCounter, includePlayoffs: false, slugRegistry);
+
+            allPlayerSlugs.AddRange(result.Tournament.Teams.SelectMany(t => t.Players).Select(p => p.Slug));
+        }
+
+        // The batch must actually contain players and repeated names (so the
+        // registry's numeric-suffix path is exercised, not vacuously satisfied).
+        Assert.True(allPlayerSlugs.Count >= 128);
+        Assert.Contains(allPlayerSlugs, s => s.EndsWith("-2"));
+
+        foreach (string slug in allPlayerSlugs)
+        {
+            AssertCleanSlug(slug);
+            Assert.DoesNotMatch(EightDigitRunPattern, slug);
+        }
+
+        // Distinct across the whole multi-tournament batch, so IX_Players_Slug
+        // is never violated when seed names repeat.
+        Assert.Equal(allPlayerSlugs.Count, allPlayerSlugs.Distinct().Count());
     }
 
     private static void AssertCleanSlug(string slug)

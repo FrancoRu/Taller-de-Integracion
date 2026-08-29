@@ -8,6 +8,7 @@ import {
   Divider,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { GUID } from '@/modules/core/types/types';
@@ -15,6 +16,7 @@ import { MedicalRecordStatus } from '@/modules/core/enum/medicalRecord/medicalRe
 import { useMedicalRecord } from '@/modules/medicalRecord/hook/medicalRecord.hook';
 import { medicalRecordService } from '@/modules/medicalRecord/service/medicalRecord.service';
 import { IMedicalRecordResponse } from '@/modules/medicalRecord/type/medicalRecord.d';
+import { isStoredMedicalRecordFile } from '@/modules/medicalRecord/utils/medicalRecordDisplay';
 import {
   notifyError,
   notifySuccess,
@@ -71,6 +73,10 @@ const PlayerMedicalRecordDialog: React.FC<PlayerMedicalRecordDialogProps> = ({
   // only be viewed/downloaded, never replaced (HU-57).
   const isApproved = effectiveStatus === MedicalRecordStatus.Approved;
   const hasStoredFile = Boolean(record?.fileUrl ?? record?.fileName);
+  // Approving requires a real (non-legacy) stored file reference — the
+  // backend rejects an approve with no file (medical-records-storage-eligibility
+  // Part 2), so the UI disables the action up front instead of surfacing a 409.
+  const canApprove = isStoredMedicalRecordFile(record?.fileUrl);
 
   const handleDownload = async () => {
     try {
@@ -308,14 +314,22 @@ const PlayerMedicalRecordDialog: React.FC<PlayerMedicalRecordDialogProps> = ({
                 slotProps={{ htmlInput: { maxLength: 500 } }}
               />
               <Stack direction="row" spacing={1}>
-                <Button
-                  variant="contained"
-                  color="success"
-                  onClick={() => void handleReview(true)}
-                  disabled={submitting}
+                <Tooltip
+                  title={
+                    canApprove ? '' : 'Subí la ficha médica antes de aprobarla.'
+                  }
                 >
-                  Aprobar
-                </Button>
+                  <span>
+                    <Button
+                      variant="contained"
+                      color="success"
+                      onClick={() => void handleReview(true)}
+                      disabled={submitting || !canApprove}
+                    >
+                      Aprobar
+                    </Button>
+                  </span>
+                </Tooltip>
                 <Button
                   variant="contained"
                   color="error"
