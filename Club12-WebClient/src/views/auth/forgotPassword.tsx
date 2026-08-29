@@ -14,6 +14,10 @@ import { authService } from '@/modules/auth/service/auth.service';
 import { useError } from '@/modules/error/hooks/error.hock';
 import { HttpStatus } from '@/modules/core/constants/httpStatus';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import {
+  isValidEmail,
+  VALIDATION_MESSAGES,
+} from '@/modules/core/utils/validators';
 
 /**
  * HU-10: self-service "Olvidé mi contraseña" screen. Posts the email to
@@ -28,9 +32,16 @@ export default function ForgotPassword() {
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
 
+  const emailError = email.length > 0 && !isValidEmail(email);
+
   const handleSubmit = async () => {
     if (!email.trim()) {
       setMessage(HttpStatus.BadRequest, ['El email es obligatorio.']);
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      setMessage(HttpStatus.BadRequest, [VALIDATION_MESSAGES.email + '.']);
       return;
     }
 
@@ -79,6 +90,8 @@ export default function ForgotPassword() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               disabled={sent}
+              error={emailError}
+              helperText={emailError ? VALIDATION_MESSAGES.email : undefined}
               onKeyDown={e => {
                 if (e.key === 'Enter') {
                   void handleSubmit();
@@ -101,7 +114,7 @@ export default function ForgotPassword() {
               <Button
                 variant="contained"
                 onClick={handleSubmit}
-                disabled={submitting || sent}
+                disabled={submitting || sent || emailError}
               >
                 {submitting ? 'Enviando...' : 'Enviar link'}
               </Button>

@@ -13,7 +13,7 @@ export default function Forbidden() {
         Acceso denegado
       </Typography>
       <Typography variant="body1" sx={{ color: 'text.secondary', maxWidth: 380 }}>
-        No tienes permisos para acceder a este recurso.
+        No tenés permisos para acceder a este recurso.
       </Typography>
       <ErrorPageActions showLogin />
     </ErrorPageLayout>

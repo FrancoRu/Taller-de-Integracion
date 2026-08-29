@@ -22,6 +22,7 @@ import {
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
+import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import {
@@ -279,6 +280,8 @@ const StagesPage: React.FC<StagesPageProps> = ({
         headerName: 'Tipo',
         flex: 1,
         minWidth: 140,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => formatStageType(params.row.stageType),
       },
       {
@@ -286,6 +289,8 @@ const StagesPage: React.FC<StagesPageProps> = ({
         headerName: 'Inicio',
         flex: 0.8,
         minWidth: 120,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => formatDate(params.row.startDate),
       },
       {
@@ -293,6 +298,8 @@ const StagesPage: React.FC<StagesPageProps> = ({
         headerName: 'Fin',
         flex: 0.8,
         minWidth: 120,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => formatDate(params.row.endDate),
       },
       {
@@ -300,11 +307,19 @@ const StagesPage: React.FC<StagesPageProps> = ({
         headerName: 'Activa',
         flex: 0.6,
         minWidth: 90,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => (params.row.isActive ? 'Sí' : 'No'),
       },
     ];
 
-    return [...baseColumns, buildActionsColumn(stageActions)];
+    return [
+      ...baseColumns,
+      buildActionsColumn(stageActions, {
+        align: 'center',
+        headerAlign: 'center',
+      }),
+    ];
   }, [stageActions]);
 
   // Scope the rendered rows to the current division. The `stages` context is
@@ -508,7 +523,7 @@ const StagesPage: React.FC<StagesPageProps> = ({
         autoHeight
         disableRowSelectionOnClick
         disableColumnMenu
-        localeText={{ noRowsLabel: noRowsMessage }}
+        localeText={dataGridLocaleText(noRowsMessage)}
         pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
         paginationModel={paginationModel}
         onPaginationModelChange={handlePaginationModelChange}

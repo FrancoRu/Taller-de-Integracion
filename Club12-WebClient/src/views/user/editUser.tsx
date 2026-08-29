@@ -20,6 +20,11 @@ import {
 } from '@/modules/core/constants/constants';
 import { HttpStatus } from '@/modules/core/constants/httpStatus';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import {
+  isValidEmail,
+  isValidPhone,
+  VALIDATION_MESSAGES,
+} from '@/modules/core/utils/validators';
 
 /**
  * Roles each caller may assign via the edit form, mirroring the backend's
@@ -129,8 +134,24 @@ const EditUser: React.FC = () => {
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
+  const emailValue = form.email ?? '';
+  const phoneValue = form.phone ?? '';
+  const emailError = emailValue.length > 0 && !isValidEmail(emailValue);
+  const phoneError = phoneValue.length > 0 && !isValidPhone(phoneValue);
+
   const handleSubmit = async () => {
     if (!targetUserId) return;
+
+    const messages: string[] = [];
+    if (emailValue.trim() && !isValidEmail(emailValue))
+      messages.push(VALIDATION_MESSAGES.email + '.');
+    if (phoneValue.trim() && !isValidPhone(phoneValue))
+      messages.push(VALIDATION_MESSAGES.phone + '.');
+
+    if (messages.length > 0) {
+      setMessage(HttpStatus.BadRequest, messages);
+      return;
+    }
 
     const roleChanged = canChangeRole && !!form.role && form.role !== initialRole;
 
@@ -231,6 +252,8 @@ const EditUser: React.FC = () => {
             type="email"
             value={form.email ?? ''}
             onChange={handleChange}
+            error={emailError}
+            helperText={emailError ? VALIDATION_MESSAGES.email : undefined}
           />
 
           <TextField
@@ -239,6 +262,8 @@ const EditUser: React.FC = () => {
             name="phone"
             value={form.phone ?? ''}
             onChange={handleChange}
+            error={phoneError}
+            helperText={phoneError ? VALIDATION_MESSAGES.phone : undefined}
           />
 
           {canChangeRole && (
@@ -282,7 +307,7 @@ const EditUser: React.FC = () => {
             <Button
               variant="contained"
               onClick={handleSubmit}
-              disabled={submitting}
+              disabled={submitting || emailError || phoneError}
             >
               {submitting ? 'Guardando...' : 'Guardar cambios'}
             </Button>

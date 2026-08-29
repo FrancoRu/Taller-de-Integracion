@@ -21,6 +21,7 @@ import {
   IDivisionResponse,
 } from '@/modules/division/type/division';
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
+import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import {
@@ -215,6 +216,8 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
         headerName: 'Estado',
         flex: 0.8,
         minWidth: 120,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => (params.row.isFinished ? 'Finalizada' : 'Activa'),
       },
       {
@@ -223,11 +226,19 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
         flex: 0.6,
         minWidth: 100,
         sortable: false,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => params.row.positions?.length ?? 0,
       },
     ];
 
-    return [...baseColumns, buildActionsColumn(divisionActions)];
+    return [
+      ...baseColumns,
+      buildActionsColumn(divisionActions, {
+        align: 'center',
+        headerAlign: 'center',
+      }),
+    ];
   }, [divisionActions]);
 
   // Scope the rendered rows to the current tournament. The `divisions` context
@@ -294,7 +305,7 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
         autoHeight
         disableRowSelectionOnClick
         disableColumnMenu
-        localeText={{ noRowsLabel: noRowsMessage }}
+        localeText={dataGridLocaleText(noRowsMessage)}
         pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
         paginationModel={paginationModel}
         onPaginationModelChange={handlePaginationModelChange}

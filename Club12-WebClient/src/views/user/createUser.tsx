@@ -13,6 +13,11 @@ import { useError } from '@/modules/error/hooks/error.hock';
 import { HttpStatus } from '@/modules/core/constants/httpStatus';
 import { USERNAME_LENGTH } from '@/modules/core/constants/constants';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import {
+  isValidEmail,
+  isValidPhone,
+  VALIDATION_MESSAGES,
+} from '@/modules/core/utils/validators';
 
 /**
  * Roles each caller may create, mirroring the backend's account-creation
@@ -58,10 +63,16 @@ const CreateUser: React.FC = () => {
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
+  const phone = form.phone ?? '';
+  const emailError = form.email.length > 0 && !isValidEmail(form.email);
+  const phoneError = phone.length > 0 && !isValidPhone(phone);
+
   const handleSubmit = async () => {
     const messages: string[] = [];
 
     if (!form.email.trim()) messages.push('El email es requerido.');
+    else if (!isValidEmail(form.email))
+      messages.push(VALIDATION_MESSAGES.email + '.');
     if (!form.username.trim())
       messages.push('El nombre de usuario es requerido.');
     if (
@@ -69,6 +80,8 @@ const CreateUser: React.FC = () => {
       (form.username.length < 3 || form.username.length > 50)
     )
       messages.push('El nombre de usuario debe tener entre 3 y 50 caracteres.');
+    if (phone.trim() && !isValidPhone(phone))
+      messages.push(VALIDATION_MESSAGES.phone + '.');
     if (!form.role) messages.push('El rol es requerido.');
 
     if (messages.length > 0) {
@@ -120,6 +133,8 @@ const CreateUser: React.FC = () => {
             type="email"
             value={form.email}
             onChange={handleChange}
+            error={emailError}
+            helperText={emailError ? VALIDATION_MESSAGES.email : undefined}
           />
 
           <TextField
@@ -142,6 +157,8 @@ const CreateUser: React.FC = () => {
             name="phone"
             value={form.phone ?? ''}
             onChange={handleChange}
+            error={phoneError}
+            helperText={phoneError ? VALIDATION_MESSAGES.phone : undefined}
           />
 
           <TextField
@@ -175,7 +192,7 @@ const CreateUser: React.FC = () => {
             <Button
               variant="contained"
               onClick={handleSubmit}
-              disabled={submitting}
+              disabled={submitting || emailError || phoneError}
             >
               {submitting ? 'Guardando...' : 'Crear usuario'}
             </Button>

@@ -25,6 +25,7 @@ import {
 } from '@/modules/venue/type/venue';
 import { useVenue } from '@/modules/venue/hook/venue.hook';
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
+import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import FormButtons from '@/views/core/components/FormButtons';
@@ -238,7 +239,13 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
       },
     ];
 
-    return [...baseColumns, buildActionsColumn(venueActions)];
+    return [
+      ...baseColumns,
+      buildActionsColumn(venueActions, {
+        align: 'center',
+        headerAlign: 'center',
+      }),
+    ];
   }, [venueActions]);
 
   const handleCreateSubmit = async () => {
@@ -366,7 +373,7 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
           autoHeight
           disableRowSelectionOnClick
           disableColumnMenu
-          localeText={{ noRowsLabel: noRowsMessage }}
+          localeText={dataGridLocaleText(noRowsMessage)}
           pageSizeOptions={[...TABLE_PAGE_SIZE_OPTIONS]}
           initialState={{
             pagination: { paginationModel: { pageSize: TABLE_ROWS_PER_PAGE } },
