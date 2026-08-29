@@ -25,6 +25,13 @@ public class SeedChampionsResolutionTests : IClassFixture<CustomWebApplicationFa
 {
     private readonly CustomWebApplicationFactory _factory;
 
+    // Both facts persist their players into the SAME shared class DB. Player
+    // slugs no longer carry the document number, so a shared registry (not the
+    // distinct counter bases) is what keeps every seeded Player.Slug unique
+    // across the two builds — exactly how DataSeeder/DataMaintenanceService
+    // share one registry across the tournaments they save together.
+    private static readonly SampleTournamentBuilder.SlugRegistry SharedSlugRegistry = new();
+
     public SeedChampionsResolutionTests(CustomWebApplicationFactory factory)
     {
         _factory = factory;
@@ -86,7 +93,7 @@ public class SeedChampionsResolutionTests : IClassFixture<CustomWebApplicationFa
         // collide with the other fact's players in the shared class DB.
         int playerCounter = 100_000;
         SampleTournamentBuilder.BuildResult result =
-            SampleTournamentBuilder.Build(definition, BuildVenues(), ref playerCounter, includePlayoffs: true);
+            SampleTournamentBuilder.Build(definition, BuildVenues(), ref playerCounter, includePlayoffs: true, SharedSlugRegistry);
 
         db.Tournaments.Add(result.Tournament);
         db.PlayerSanctions.AddRange(result.Sanctions);
@@ -140,7 +147,7 @@ public class SeedChampionsResolutionTests : IClassFixture<CustomWebApplicationFa
         // collide with the other fact's players in the shared class DB.
         int playerCounter = 500_000;
         SampleTournamentBuilder.BuildResult result =
-            SampleTournamentBuilder.Build(definition, BuildVenues(), ref playerCounter, includePlayoffs: false);
+            SampleTournamentBuilder.Build(definition, BuildVenues(), ref playerCounter, includePlayoffs: false, SharedSlugRegistry);
 
         db.Tournaments.Add(result.Tournament);
         db.PlayerSanctions.AddRange(result.Sanctions);

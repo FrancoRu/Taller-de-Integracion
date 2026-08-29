@@ -20,11 +20,32 @@ public class Player : EntityBase
     /// </summary>
     public required string Slug { get; set; }
 
-    /// <summary>Computed — not persisted to the database.</summary>
-    public string FullName => string.Concat(
-        LastName.ToUpper(),
-        string.IsNullOrWhiteSpace(SecondName) ? $" {FirstName}" : $" {FirstName} {SecondName}"
-    );
+    /// <summary>
+    /// The single canonical source string every slug is derived from —
+    /// <c>apellido nombre[ segundo]</c> in the player's raw casing, with NO
+    /// document number. Shared verbatim by <see cref="FullName"/> (display),
+    /// PlayerService create, the sample seeder and the re-backfill migration so
+    /// the three producers can never diverge.
+    /// </summary>
+    /// <param name="lastName">The player's last name.</param>
+    /// <param name="firstName">The player's first name.</param>
+    /// <param name="secondName">The optional second given name; blank is treated as absent.</param>
+    /// <returns>The space-joined name source, e.g. <c>"Lopez Carlos"</c>.</returns>
+    public static string BuildSlugSource(string lastName, string firstName, string? secondName)
+    {
+        if (string.IsNullOrWhiteSpace(secondName))
+        {
+            return $"{lastName} {firstName}";
+        }
+
+        return $"{lastName} {firstName} {secondName}";
+    }
+
+    /// <summary>Computed — not persisted. The canonical slug source for this player.</summary>
+    public string SlugSource => BuildSlugSource(LastName, FirstName, SecondName);
+
+    /// <summary>Computed — not persisted to the database. Display name with the last name upper-cased.</summary>
+    public string FullName => BuildSlugSource(LastName.ToUpper(), FirstName, SecondName);
 
     public required string DocumentNumber { get; set; }
     public required bool IsSanctioned { get; set; } = false;
