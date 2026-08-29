@@ -13,7 +13,6 @@ import {
   Typography,
   Button,
 } from '@mui/material';
-import { StadiumIcon } from '@/views/core/MUI/icons/icons';
 import { useNavigate } from 'react-router-dom';
 import {
   confirmDelete,
@@ -225,15 +224,15 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
             spacing={1}
             sx={{ alignItems: 'center', height: '100%' }}
           >
-            {/* A venue is a court, not a team — show its photo when it has one,
-                otherwise a stadium icon rather than an initials avatar. */}
-            <Avatar
-              src={params.row.photoUrl || undefined}
-              variant="rounded"
-              sx={{ width: 28, height: 28, bgcolor: 'secondary.main' }}
-            >
-              <StadiumIcon sx={{ fontSize: 18 }} />
-            </Avatar>
+            {/* A venue is a court, not a team — only show an avatar when it has
+                a real photo; no initials/icon placeholder otherwise. */}
+            {params.row.photoUrl && (
+              <Avatar
+                src={params.row.photoUrl}
+                variant="rounded"
+                sx={{ width: 28, height: 28 }}
+              />
+            )}
             <Typography variant="body2">{params.row.name}</Typography>
           </Stack>
         ),
