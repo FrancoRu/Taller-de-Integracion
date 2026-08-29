@@ -130,23 +130,6 @@ const DivisionStandings: React.FC<DivisionStandingsProps> = ({
                   }}>
                     <TeamLogo teamName={row.teamName} logoUrl={row.logoUrl} size={24} />
                     <Box component="span">{row.teamName}</Box>
-                    {range && (
-                      <Box
-                        component="span"
-                        sx={{
-                          px: 0.75,
-                          py: 0.125,
-                          borderRadius: 1,
-                          fontSize: '0.7rem',
-                          fontWeight: 600,
-                          color: 'text.secondary',
-                          border: `1px solid ${alpha(tierColor!, 0.5)}`,
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {range.cupName}
-                      </Box>
-                    )}
                   </Stack>
                 </TableCell>
                 <TableCell align="center">{row.matchesPlayed}</TableCell>
