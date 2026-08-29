@@ -106,7 +106,7 @@ const BlogPostsPage: React.FC = () => {
 
   const handleEdit = useCallback(
     (row: BlogPostResponse) => {
-      navigate(APP_ROUTES.panelBlogEdit.build(row.id));
+      navigate(APP_ROUTES.panelBlogEdit.build(row.slug ?? row.id));
     },
     [navigate]
   );
