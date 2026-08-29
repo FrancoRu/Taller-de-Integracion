@@ -2,7 +2,7 @@
 
 > Documento para continuar en un chat nuevo. Rama de integración: **develop** (deploya a staging: club12.argentum-solutions.com.ar). `main` NO se toca. Stack: .NET 8 backend (Clean/Hexagonal, EF Core + Npgsql/Postgres) + React 19/TS/MUI/Vite frontend (vitest, ESLint `--max-warnings 0`). Todo user-facing en **español (voseo)**; código en inglés.
 
-## ✅ MERGEADO a develop / en staging (PRs #53–#65)
+## ✅ MERGEADO a develop / en staging (PRs #53–#66)
 
 **Design system (base)**
 - `src/design/tokens.ts` (brand/surface/ink/semantic/radius/font/pageMinHeight/**gold**/**category**), `colorName.ts` (hex→fill+ink), `jerseyStyles.ts` (11 estilos).
@@ -56,15 +56,14 @@ Loop autónomo (mandato del owner: "armá un plan y seguilo, arreglá todo"). To
 4. **Error-handling público** ✅ — los GETs iniciales públicos ya NO disparan el SweetAlert bloqueante; muestran un estado inline `LoadErrorState` ("No pudimos cargar…" + "Reintentar"). Flag opt-in `{ silent }` en los métodos GET de los contexts (mutaciones intactas, mantienen su modal). Cubre home, temporadas, temporada, torneos, torneo, equipo, sanciones, blog.
 5. **Fix MUI Tabs** ✅ — deep-link a `?tab=<division>` antes de que carguen las divisiones tiraba un error de consola (value sin match); ahora cae a "info" hasta que exista el tab. Consola pública limpia (0 errores).
 
-## 🔄 EN PROGRESO — rama `feat/admin-organizing` (sale de develop post-#65, NO mergeado aún)
+## ✅ MERGEADO a develop vía **PR #66** — rama `feat/admin-organizing`
 
-Bloque admin-organizar (verificado por build+tests; el E2E admin en vivo requiere login del owner). Commits:
+Bloque admin-organizar + seguridad (verificado por build+tests; E2E admin en vivo requiere login del owner). Deployado a staging. Incluye:
 1. **Deducción de puntos** ✅ — entidad `TeamPointDeduction` (DivisionId/TeamId/Points/Reason) + migración `20260829101157_AddTeamPointDeduction` (guard verde) + endpoints `POST/GET api/divisions/{id}/point-deductions` + `DELETE api/point-deductions/{id}` (AdminOrOwner salvo el GET). `PositionCalculator.CalculatePositions` recibe las deducciones y las resta ANTES de los desempates (la tabla re-rankea); NO clampea en 0 (una sanción puede hundir al equipo, como en la realidad). Front: `PointDeductionManager` en el tab Posiciones del admin de división (dialog equipo+puntos+motivo, lista con borrar) + nota `-N` con motivo en la tabla pública. Migración aplicada a la DB dev.
 2. **Fases admin guard** ✅ — `StageService.CreateStageAsync`/`DeleteStageAsync` rechazan (409, "No se pueden agregar o quitar fases: el torneo ya arrancó.") cuando el torneo está Ongoing/Finished (fixture ya generado); editable mientras Scheduled/OpenForRegistration/RegistrationClosed. Front: el tab "Fases" del admin de división deshabilita "+ Nueva Fase" (tooltip) y oculta el borrar cuando arrancó. Sin migración.
 3. **Stats por temporada** ✅ (frontend) — la página admin Estadísticas ahora tiene filtro Temporada + Torneo (torneos derivados de la temporada elegida) que scopea el ranking de goleadores vía los params `season`/`tournamentId` que YA existen en el endpoint scorer; las cards resumen quedan globales. Default sin filtro. Helpers `statisticsFilters.ts` TDD.
 4. **Delete-integridad global** ✅ (backend, sin migración) — guards de borrado en los services de Team/Tournament/Division: bloquean (409 español) si hay historia competitiva (partidos jugados, Ongoing/Finished, deducciones, sanciones, inscripciones); si está vacío, borra con cascade coherente. OJO borra vía `ExecuteDeleteAsync` (bypassa EF → solo aplica OnDelete de la DB). ⚠️ FLAG (reportado, NO tocado, requiere migración): `MatchSeries→Team` y `Team→Players` son Cascade → un borrado crudo de Team borraría series/plantel; el guard de servicio lo previene, pero convendría endurecer el OnDelete en una migración futura.
 
-**→ Pendiente de PR a develop** (deducción + fases + stats + delete-integridad).
 
 PLAN restante (orden): SEO/meta; admin organizar (scoreboard/scoring por partido, deducción de puntos, fases bloqueadas con torneo arrancado, llaves editables); integridad+auditoría (delete-integridad global, AuditLog en toda mutación); features (staff DT, stats por temporada, canchas imagen+mapa, mensajes auth backend→español); E2E final del ciclo completo. Norte: organizar temporada de punta a punta, correcto.
 
