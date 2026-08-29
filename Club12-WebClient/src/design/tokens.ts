@@ -20,6 +20,20 @@ export const brand = {
   orangeInk: '#0B0F17',
   navy: '#0F172A',
   navyLight: '#1E293B',
+  /** The club's championship gold — used for champions, podium and finals. */
+  gold: '#E6A817',
+  goldLight: '#F5C542',
+} as const;
+
+/**
+ * Category accent colors taken from the club's own branding: masculine pieces
+ * are the warm orange, feminine pieces a vivid purple/magenta. Used to tint
+ * category chips and the masculine/feminine sections so a visitor tells them
+ * apart at a glance.
+ */
+export const category = {
+  masculine: brand.orange,
+  feminine: '#A32CC4',
 } as const;
 
 /**

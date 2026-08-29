@@ -9,13 +9,16 @@ interface NewEntityButtonProps {
   disabled?: boolean;
 }
 
+// Normalized (accent-stripped, lowercase) feminine entity nouns, so the button
+// reads "Nueva …" instead of "Nuevo …".
 const FEMININE_WORDS = new Set([
   'division',
-  'división',
   'sancion',
-  'sanción',
   'puntuacion',
-  'puntuación',
+  'publicacion',
+  'temporada',
+  'cancha',
+  'ficha',
 ]);
 
 const normalizeText = (value: string) =>
