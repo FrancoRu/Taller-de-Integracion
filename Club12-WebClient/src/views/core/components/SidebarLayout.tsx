@@ -146,15 +146,7 @@ const TEAM_CHILDREN: NavTab[] = [
 
 // Low-frequency "Sistema" pages grouped together so the important, everyday
 // entries stay at the top of the sidebar instead of being buried among them.
-const SYSTEM_CHILDREN_OWNER: NavTab[] = [
-  {
-    label: 'Registro de auditoría',
-    path: APP_ROUTES.panelAuditLogs,
-    icon: TAB_ICONS['Auditoria'],
-  },
-];
-
-const SYSTEM_CHILDREN_ADMIN: NavTab[] = [
+const SYSTEM_CHILDREN: NavTab[] = [
   {
     label: 'Estadísticas',
     path: APP_ROUTES.panelStatistics,
@@ -172,50 +164,39 @@ const SYSTEM_CHILDREN_ADMIN: NavTab[] = [
   },
 ];
 
+/**
+ * Admin and Owner are a single administrative level with identical access, so
+ * they share one menu. The only role with a different (empty) menu is the
+ * technical Guest.
+ */
+const ADMIN_TABS: NavTab[] = [
+  {
+    label: 'Competición',
+    icon: TAB_ICONS['Torneo'],
+    children: COMPETITION_CHILDREN_OWNER,
+  },
+  {
+    label: 'Gestión de equipos',
+    icon: TAB_ICONS['AdministracionDeEquipos'],
+    children: TEAM_CHILDREN,
+  },
+  { label: 'Novedades', path: APP_ROUTES.panelBlog, icon: TAB_ICONS['Blog'] },
+  { label: 'Usuarios', path: APP_ROUTES.panelUsers, icon: TAB_ICONS['Usuarios'] },
+  {
+    label: 'Sistema',
+    icon: TAB_ICONS['Administracion'],
+    children: SYSTEM_CHILDREN,
+  },
+  {
+    label: 'Configuración',
+    icon: TAB_ICONS['Configuracion'],
+    children: CONFIGURATION_CHILDREN,
+  },
+];
+
 const TABS_BY_ROLE: Record<UserRolesType, NavTab[]> = {
-  [UserRolesType.Owner]: [
-    {
-      label: 'Competición',
-      icon: TAB_ICONS['Torneo'],
-      children: COMPETITION_CHILDREN_OWNER,
-    },
-    {
-      label: 'Gestión de equipos',
-      icon: TAB_ICONS['AdministracionDeEquipos'],
-      children: TEAM_CHILDREN,
-    },
-    { label: 'Novedades', path: APP_ROUTES.panelBlog, icon: TAB_ICONS['Blog'] },
-    { label: 'Usuarios', path: APP_ROUTES.panelUsers, icon: TAB_ICONS['Usuarios'] },
-    {
-      label: 'Sistema',
-      icon: TAB_ICONS['Administracion'],
-      children: SYSTEM_CHILDREN_OWNER,
-    },
-    {
-      label: 'Configuración',
-      icon: TAB_ICONS['Configuracion'],
-      children: CONFIGURATION_CHILDREN,
-    },
-  ],
-  [UserRolesType.Admin]: [
-    {
-      label: 'Competición',
-      icon: TAB_ICONS['Torneo'],
-      children: COMPETITION_CHILDREN,
-    },
-    { label: 'Novedades', path: APP_ROUTES.panelBlog, icon: TAB_ICONS['Blog'] },
-    { label: 'Usuarios', path: APP_ROUTES.panelUsers, icon: TAB_ICONS['Usuarios'] },
-    {
-      label: 'Sistema',
-      icon: TAB_ICONS['Administracion'],
-      children: SYSTEM_CHILDREN_ADMIN,
-    },
-    {
-      label: 'Configuración',
-      icon: TAB_ICONS['Configuracion'],
-      children: CONFIGURATION_CHILDREN,
-    },
-  ],
+  [UserRolesType.Owner]: ADMIN_TABS,
+  [UserRolesType.Admin]: ADMIN_TABS,
   [UserRolesType.Guest]: [],
 };
 
