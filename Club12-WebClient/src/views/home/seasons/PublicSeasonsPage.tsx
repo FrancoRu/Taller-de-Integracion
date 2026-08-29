@@ -16,6 +16,10 @@ import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import PageShell from '@/views/core/components/PageShell';
 import LoadErrorState from '@/views/core/components/LoadErrorState';
 import { CardGridSkeleton } from '@/views/core/components/skeletons';
+import {
+  DEFAULT_PAGE_METADATA,
+  usePageMetadata,
+} from '@/modules/core/utils/pageMetadata';
 
 export function SeasonCard({ season }: { season: ISeasonResponse }) {
   const tournamentCount = season.tournaments?.length ?? 0;
@@ -68,6 +72,14 @@ export function SeasonCard({ season }: { season: ISeasonResponse }) {
 }
 
 export default function PublicSeasonsPage() {
+  usePageMetadata({
+    ...DEFAULT_PAGE_METADATA,
+    title: 'Temporadas',
+    description:
+      'Todas las temporadas de la liga Club 12: torneos, divisiones y ' +
+      'resultados de cada edición.',
+  });
+
   const { seasons, getSeasonsByFiltered } = useSeason();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);

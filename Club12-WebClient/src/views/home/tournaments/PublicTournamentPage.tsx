@@ -27,6 +27,10 @@ import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { TAB_CONTENT_MIN_HEIGHT } from '@/modules/core/constants/constants';
 import { TOURNAMENT_STATUS_LABEL } from '@/modules/tournament/utils/tournamentDisplay';
 import { formatDateAr } from '@/modules/core/utils/formatDate';
+import {
+  DEFAULT_PAGE_METADATA,
+  usePageMetadata,
+} from '@/modules/core/utils/pageMetadata';
 
 const formatDate = (value: Date | string) => formatDateAr(value);
 
@@ -215,6 +219,18 @@ export default function PublicTournamentPage() {
     const teamIds = new Set((activeDivision.positions ?? []).map(p => p.teamId));
     return teamRows.filter(team => teamIds.has(team.id));
   }, [activeDivision, teamRows]);
+
+  // Set the social/SEO title from the tournament name once it resolves; the
+  // hook keeps the site defaults while it is still undefined.
+  usePageMetadata({
+    ...DEFAULT_PAGE_METADATA,
+    title: tournament?.name,
+    description: tournament?.description
+      ? tournament.description
+      : tournament?.name
+        ? `Fixture, posiciones y resultados de ${tournament.name} en la liga Club 12.`
+        : undefined,
+  });
 
   if (loading || (divisionsLoading && divisions.length === 0)) {
     return (

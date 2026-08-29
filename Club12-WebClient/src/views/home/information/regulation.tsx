@@ -5,8 +5,20 @@ import {
   regulationIntro,
 } from '@/views/home/information/regulationContent';
 import PageShell from '@/views/core/components/PageShell';
+import {
+  DEFAULT_PAGE_METADATA,
+  usePageMetadata,
+} from '@/modules/core/utils/pageMetadata';
 
 const Regulation: React.FC = () => {
+  usePageMetadata({
+    ...DEFAULT_PAGE_METADATA,
+    title: 'Reglamento',
+    description:
+      'Reglamento oficial de la Liga de Básquet Libre Club 12 "La Vuelta": ' +
+      'normas, sanciones y funcionamiento.',
+  });
+
   return (
     <PageShell maxWidth="md">
       <Paper component="section" elevation={2} sx={{ p: { xs: 3, md: 6 } }}>

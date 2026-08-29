@@ -31,6 +31,10 @@ import {
 } from '@/modules/core/constants/pagination';
 import { FILTERS_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/constants';
 import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
+import {
+  DEFAULT_PAGE_METADATA,
+  usePageMetadata,
+} from '@/modules/core/utils/pageMetadata';
 
 const formatDate = (value?: string | Date | null) => formatDateAr(value);
 
@@ -103,6 +107,14 @@ const columns: GridColDef<IPlayerSanctionResponse>[] = [
 ];
 
 export default function PublicSanctionsPage() {
+  usePageMetadata({
+    ...DEFAULT_PAGE_METADATA,
+    title: 'Sanciones',
+    description:
+      'Listado de sanciones aplicadas a jugadores, equipos y staff de la ' +
+      'liga Club 12.',
+  });
+
   const { playerSanctions, getPlayerSanctionByFilter } = usePlayerSanction();
   const { tournaments, getAllTournamentsByFilter } = useTournament();
   const [selectedTournamentId, setSelectedTournamentId] = useState<GUID | ''>('');

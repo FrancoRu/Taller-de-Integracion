@@ -21,6 +21,10 @@ import { categoryColor } from '@/design/categoryColor';
 import { hexToRgba } from '@/design/colorName';
 import { brand, font } from '@/design/tokens';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import {
+  DEFAULT_PAGE_METADATA,
+  usePageMetadata,
+} from '@/modules/core/utils/pageMetadata';
 
 /**
  * A single champion card: division/cup label, its tournament, and the crowned
@@ -147,6 +151,14 @@ function ChampionCard({ entry }: { entry: IChampionHistory }) {
 }
 
 export default function PublicChampionsPage() {
+  usePageMetadata({
+    ...DEFAULT_PAGE_METADATA,
+    title: 'Campeones',
+    description:
+      'Todos los campeones de la liga Club 12, temporada por temporada y ' +
+      'por categoría.',
+  });
+
   const [loading, setLoading] = useState(true);
   const [history, setHistory] = useState<IChampionHistory[]>([]);
   const getChampionsHistoryRef = useRef(championService.getChampionsHistory);

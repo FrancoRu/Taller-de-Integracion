@@ -24,6 +24,10 @@ import {
   TOURNAMENT_STATUS_COLOR,
   formatTournamentDate,
 } from '@/modules/tournament/utils/tournamentDisplay';
+import {
+  DEFAULT_PAGE_METADATA,
+  usePageMetadata,
+} from '@/modules/core/utils/pageMetadata';
 
 export function TournamentCard({ tournament }: { tournament: ITournamentResponse }) {
   const status = tournament.status as TournamentStatus;
@@ -98,6 +102,14 @@ export function TournamentCard({ tournament }: { tournament: ITournamentResponse
 }
 
 export default function PublicTournamentsPage() {
+  usePageMetadata({
+    ...DEFAULT_PAGE_METADATA,
+    title: 'Torneos',
+    description:
+      'Todos los torneos de la liga Club 12: fechas, categorías y estado ' +
+      'de cada competencia.',
+  });
+
   const { tournaments, getAllTournamentsByFilter } = useTournament();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);

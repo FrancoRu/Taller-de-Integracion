@@ -53,6 +53,10 @@ import CategoryChip from '@/views/core/components/CategoryChip';
 import StatTile from '@/views/core/components/StatTile';
 import LoadErrorState from '@/views/core/components/LoadErrorState';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import {
+  DEFAULT_PAGE_METADATA,
+  usePageMetadata,
+} from '@/modules/core/utils/pageMetadata';
 
 /** A participation's option label, e.g. "Apertura 2025 · Temporada 2025". */
 const participationLabel = (participation: TeamParticipation): string =>
@@ -443,6 +447,17 @@ export default function PublicTeamPage() {
   const { summary, matches } = useTeamStandings(teamId, activeTournamentId);
   const { scorers } = useTeamScorers(team?.id, activeTournamentId);
   const { titles } = useTeamTitles(team?.id);
+
+  // Set the social/SEO title from the team name once it resolves; the hook
+  // keeps the site defaults while it is still undefined.
+  usePageMetadata({
+    ...DEFAULT_PAGE_METADATA,
+    title: team?.name,
+    description: team?.name
+      ? `Plantel, fixture, estadísticas y títulos de ${team.name} en la liga Club 12.`
+      : undefined,
+    image: team?.logoUrl ?? DEFAULT_PAGE_METADATA.image,
+  });
 
   if (loading) {
     return (

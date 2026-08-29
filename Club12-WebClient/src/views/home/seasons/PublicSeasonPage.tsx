@@ -24,6 +24,10 @@ import SectionHeading from '@/views/core/components/SectionHeading';
 import LoadErrorState from '@/views/core/components/LoadErrorState';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import {
+  DEFAULT_PAGE_METADATA,
+  usePageMetadata,
+} from '@/modules/core/utils/pageMetadata';
 
 function TournamentCard({ tournament }: { tournament: ISeasonTournament }) {
   return (
@@ -105,6 +109,16 @@ export default function PublicSeasonPage() {
   useEffect(() => {
     void loadSeason();
   }, [loadSeason]);
+
+  // Set the social/SEO title from the season name once it loads; while it is
+  // still undefined the hook keeps the site defaults in place.
+  usePageMetadata({
+    ...DEFAULT_PAGE_METADATA,
+    title: season?.name,
+    description: season?.name
+      ? `Torneos, divisiones y resultados de ${season.name} en la liga Club 12.`
+      : undefined,
+  });
 
   if (loading) {
     return (

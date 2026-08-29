@@ -2,6 +2,10 @@ import { Typography, Paper, Box, Chip } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import PageShell from '@/views/core/components/PageShell';
+import {
+  DEFAULT_PAGE_METADATA,
+  usePageMetadata,
+} from '@/modules/core/utils/pageMetadata';
 
 const steps = [
   {
@@ -21,6 +25,14 @@ const steps = [
 ];
 
 export default function MedicalRecord() {
+  usePageMetadata({
+    ...DEFAULT_PAGE_METADATA,
+    title: 'Ficha médica',
+    description:
+      'Descargá la ficha médica obligatoria para jugar en la liga Club 12 ' +
+      'y conocé cómo presentarla.',
+  });
+
   return (
     <PageShell maxWidth="md">
       <Paper component="section" elevation={2} sx={{ p: { xs: 3, md: 5 } }}>
