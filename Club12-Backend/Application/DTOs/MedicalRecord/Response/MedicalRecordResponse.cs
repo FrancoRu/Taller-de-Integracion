@@ -46,7 +46,7 @@ public class MedicalRecordResponse
             TeamId = registration.TeamId,
             TournamentId = registration.TournamentId,
             Status = registration.MedicalRecordStatus,
-            IsHabilitado = registration.MedicalRecordStatus == MedicalRecordStatus.Approved,
+            IsHabilitado = registration.IsHabilitado,
             FileUrl = registration.MedicalRecordFileUrl,
             FileName = registration.MedicalRecordFileName,
             ReviewReason = registration.MedicalRecordReviewReason,

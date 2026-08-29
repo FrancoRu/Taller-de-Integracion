@@ -108,11 +108,31 @@ describe('PlayerMedicalRecordDialog', () => {
     });
   });
 
-  it('approves the record via the review endpoint', async () => {
+  it('approves the record via the review endpoint once a file is stored', async () => {
+    // Approving requires a real stored file (medical-records-storage-eligibility
+    // Part 2 FE gate) — mock the fetched record with a new-scheme reference so
+    // "Aprobar" is enabled.
+    mockedGet.mockResolvedValue({
+      data: {
+        playerId,
+        teamId,
+        tournamentId,
+        status: MedicalRecordStatus.Pending,
+        isHabilitado: false,
+        fileUrl: `${teamId}/${playerId}/${'a'.repeat(8)}-guid.pdf`,
+        fileName: 'ficha.pdf',
+      },
+    } as Awaited<ReturnType<typeof medicalRecordService.getMedicalRecord>>);
+
     const user = userEvent.setup();
     renderDialog();
 
     const dialog = screen.getByRole('dialog');
+    await waitFor(() =>
+      expect(
+        within(dialog).getByRole('button', { name: /aprobar/i })
+      ).toBeEnabled()
+    );
     await user.click(within(dialog).getByRole('button', { name: /aprobar/i }));
 
     await waitFor(() => expect(reviewMedicalRecord).toHaveBeenCalledTimes(1));
@@ -123,6 +143,55 @@ describe('PlayerMedicalRecordDialog', () => {
         tournamentId,
         approve: true,
       })
+    );
+  });
+
+  it('disables "Aprobar" with a tooltip when there is no stored file, but never disables "Rechazar"', async () => {
+    // Default setup: getMedicalRecord rejects (404) -> no record, no file.
+    renderDialog();
+
+    const dialog = screen.getByRole('dialog');
+    const approveButton = within(dialog).getByRole('button', {
+      name: /aprobar/i,
+    });
+    const rejectButton = within(dialog).getByRole('button', {
+      name: /rechazar/i,
+    });
+
+    expect(approveButton).toBeDisabled();
+    expect(rejectButton).toBeEnabled();
+
+    // MUI wraps a disabled button in a non-disabled <span> so the Tooltip can
+    // still receive pointer events; hover that wrapper, not the button itself.
+    // The tooltip content renders in a Popper portal outside the dialog DOM,
+    // so it is looked up via the top-level `screen`, not `within(dialog)`.
+    const user = userEvent.setup();
+    await user.hover(approveButton.parentElement as HTMLElement);
+    expect(
+      await screen.findByText(/subí la ficha médica antes de aprobarla/i)
+    ).toBeInTheDocument();
+  });
+
+  it('disables "Aprobar" when the stored reference is a legacy medical-records/ ref', async () => {
+    mockedGet.mockResolvedValue({
+      data: {
+        playerId,
+        teamId,
+        tournamentId,
+        status: MedicalRecordStatus.Pending,
+        isHabilitado: false,
+        fileUrl: 'medical-records/some/object/path.pdf',
+        fileName: 'ficha.pdf',
+      },
+    } as Awaited<ReturnType<typeof medicalRecordService.getMedicalRecord>>);
+
+    renderDialog();
+
+    const dialog = screen.getByRole('dialog');
+    await waitFor(() =>
+      expect(
+        within(dialog).getByRole('button', { name: /aprobar/i })
+      ).toBeDisabled()
     );
   });
 

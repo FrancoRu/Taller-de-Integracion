@@ -62,3 +62,21 @@ export const getMedicalRecordDetail = (
 
   return `Ficha médica: ${MEDICAL_RECORD_STATUS_LABELS[status]}`;
 };
+
+/**
+ * Mirrors the backend Domain discriminator
+ * (`PlayerTeamRegistration.LegacyReferencePrefix`): refs written before the
+ * private-bucket relocation lived under this prefix inside `public-images`
+ * and no longer resolve.
+ */
+export const LEGACY_MEDICAL_RECORD_PREFIX = 'medical-records/';
+
+/**
+ * Whether `fileUrl` is a real, resolvable stored file reference — non-empty
+ * and not a legacy `LEGACY_MEDICAL_RECORD_PREFIX` ref. Drives the "Aprobar"
+ * gate in `PlayerMedicalRecordDialog`: approving with no real stored file is
+ * rejected server-side (409), so the UI disables the action up front.
+ */
+export const isStoredMedicalRecordFile = (
+  fileUrl?: string | null
+): boolean => Boolean(fileUrl) && !fileUrl!.startsWith(LEGACY_MEDICAL_RECORD_PREFIX);

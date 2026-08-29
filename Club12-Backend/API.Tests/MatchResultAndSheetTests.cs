@@ -449,12 +449,17 @@ public class MatchResultAndSheetTests : IClassFixture<CustomWebApplicationFactor
     {
         Player player = await SeedPlayerAsync(db, team, lastName, isSanctioned);
 
+        // File-backed habilitación (medical-records-storage-eligibility): an
+        // Approved registration must also carry a real stored file reference
+        // to read as habilitado, so this default-Approved fixture stores one.
+        bool approved = medicalStatus == MedicalRecordStatus.Approved;
         db.PlayerTeamRegistrations.Add(new PlayerTeamRegistration
         {
             PlayerId = player.Id,
             TeamId = team.Id,
             TournamentId = tournamentId,
             MedicalRecordStatus = medicalStatus,
+            MedicalRecordFileUrl = approved ? $"{team.Id}/{player.Id}/{Guid.NewGuid()}.pdf" : null,
             CreatedBy = "test",
         });
         await db.SaveChangesAsync();

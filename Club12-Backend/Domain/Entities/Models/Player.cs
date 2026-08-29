@@ -82,13 +82,29 @@ public class Player : EntityBase
     public MedicalRecordStatus? MedicalRecordStatus { get; set; }
 
     /// <summary>
-    /// Transient, NOT persisted: whether the player is "habilitado" for the
-    /// season roster currently being viewed (HU-57) — i.e. their medical
-    /// record is Approved. Lets the frontend flag not-habilitado players
-    /// (HU-62). Sanctions are enforced separately in the match-sheet path.
+    /// Transient, NOT persisted: whether the season roster currently being
+    /// viewed set a real (non-legacy) stored medical-record file reference on
+    /// the matching <see cref="PlayerTeamRegistration"/> (see
+    /// TeamService.AttachSeasonRostersAsync). Deliberately a bool, not the
+    /// storage object path itself: <see cref="Player"/> feeds the
+    /// [AllowAnonymous] public player endpoints, so carrying the actual
+    /// private-bucket path here would be an unnecessary disclosure surface.
+    /// Defaults to false, matching today's "no season context" default.
     /// </summary>
     [NotMapped]
-    public bool IsHabilitado => MedicalRecordStatus == Domain.Enums.MedicalRecordStatus.Approved;
+    public bool HasMedicalRecordFile { get; set; }
+
+    /// <summary>
+    /// Transient, NOT persisted: whether the player is "habilitado" for the
+    /// season roster currently being viewed (HU-57) — i.e. their medical
+    /// record is Approved AND a real file was stored for it
+    /// (medical-records-storage-eligibility). Lets the frontend flag
+    /// not-habilitado players (HU-62). Sanctions are enforced separately in
+    /// the match-sheet path.
+    /// </summary>
+    [NotMapped]
+    public bool IsHabilitado =>
+        MedicalRecordStatus == Domain.Enums.MedicalRecordStatus.Approved && HasMedicalRecordFile;
 
     /// <summary>
     /// Transient, NOT persisted: the player's jersey number (dorsal) for the

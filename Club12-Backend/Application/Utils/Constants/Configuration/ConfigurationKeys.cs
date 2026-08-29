@@ -56,5 +56,13 @@ public static class ConfigurationKeys
         public const string ProjectUrl = "ProjectUrl";
         public const string ServiceRole = "ServiceRole";
         public const string BucketName = "BucketName";
+
+        /// <summary>
+        /// Name of the private Supabase bucket medical-record PDFs are stored
+        /// in, separate from <see cref="BucketName"/> (public-images). Falls
+        /// back to <c>SupabaseMedicalRecordStorage.DefaultBucketName</c> when
+        /// unset.
+        /// </summary>
+        public const string MedicalRecordsBucketName = "MedicalRecordsBucketName";
     }
 }
