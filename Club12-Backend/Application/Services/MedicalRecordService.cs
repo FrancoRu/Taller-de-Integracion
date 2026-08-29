@@ -56,6 +56,16 @@ public class MedicalRecordService(IUnitOfWork unitOfWork) : IMedicalRecordServic
     {
         PlayerTeamRegistration registration = await GetRegistrationAsync(playerId, teamId, tournamentId);
 
+        // A ficha can only be approved against a file that is actually stored.
+        // Refs under the legacy medical-records/ prefix point into the old
+        // public bucket and no longer resolve, so they do not count as stored
+        // (medical-records-storage-eligibility). Rejecting with no file stays
+        // legal — only the approve transition is guarded.
+        if (approve && !PlayerTeamRegistration.IsStoredReference(registration.MedicalRecordFileUrl))
+        {
+            throw new InvalidOperationException(ErrorMessages.MedicalRecord.NoStoredFile);
+        }
+
         registration.MedicalRecordStatus = approve ? MedicalRecordStatus.Approved : MedicalRecordStatus.Rejected;
         registration.MedicalRecordReviewReason = approve ? null : reason;
         registration.MedicalRecordReviewedAt = DateTime.UtcNow;

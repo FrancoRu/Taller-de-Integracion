@@ -167,8 +167,10 @@ public static class StartupExtensions
         {
             bool reset = configuration.GetValue<bool>(ConfigurationKeys.Seed.Reset);
             string? logosPath = configuration[ConfigurationKeys.Seed.LogosPath];
+            string? medicalRecordPath = configuration[ConfigurationKeys.Seed.MedicalRecordPath];
+            bool medicalRecords = configuration.GetValue<bool>(ConfigurationKeys.Seed.MedicalRecords);
             DataSeeder dataSeeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
-            await dataSeeder.SeedAsync(reset, logosPath);
+            await dataSeeder.SeedAsync(reset, logosPath, medicalRecordPath, medicalRecords);
         }
     }
 

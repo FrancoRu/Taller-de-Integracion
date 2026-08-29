@@ -1,3 +1,5 @@
+using Application.Interfaces.Storage;
+
 using Domain.Entities.Models;
 using Domain.Enums;
 
@@ -42,7 +44,8 @@ namespace Infrastructure.Persistance;
 public sealed class DataSeeder(
     ApplicationDBContext db,
     ILogger<DataSeeder> logger,
-    SupabaseHelper supabaseHelper)
+    SupabaseHelper supabaseHelper,
+    IMedicalRecordStorage medicalRecordStorage)
 {
     /// <summary>
     /// Default folder team crest PNGs are read from when <c>Seed:LogosPath</c>
@@ -52,8 +55,21 @@ public sealed class DataSeeder(
     public const string DefaultLogosPath = @"D:\Escudos\Logos de Argentina\clubs\normal";
 #pragma warning restore S1075
 
+    /// <summary>
+    /// Default medical PDF read from when <c>Seed:MedicalRecordPath</c> is not
+    /// configured. Missing file warns and skips the whole backfill step
+    /// (medical-records-storage-eligibility, Part 3).
+    /// </summary>
+#pragma warning disable S1075 // Dev-only seed default path; overridden by the Seed:MedicalRecordPath config key.
+    public const string DefaultMedicalRecordPath = @"C:\Users\Franco\Downloads\ficha-medica-club12.pdf";
+#pragma warning restore S1075
+
     // Fixed seed keeps logo-to-team assignment reproducible across reseeds.
     private const int LogoShuffleSeed = 4212;
+
+    // Flushes progress every N uploaded rows so an interruption loses at most
+    // this many refs and the step stays resumable (medical-records-storage-eligibility, ADR #7).
+    private const int MedicalRecordSaveBatchSize = 50;
 
     // --- Masculine tournament — Primera División (8 real Paraná/Entre Ríos clubs).
     private static readonly string[] PrimeraNames =
@@ -164,7 +180,9 @@ public sealed class DataSeeder(
     /// <see cref="DefaultLogosPath"/>, and a missing folder degrades to
     /// placeholder logos.
     /// </summary>
-    public async Task SeedAsync(bool reset = false, string? logosPath = null)
+    public async Task SeedAsync(
+        bool reset = false, string? logosPath = null,
+        string? medicalRecordPath = null, bool forceMedicalRecords = false)
     {
         if (reset)
         {
@@ -172,6 +190,17 @@ public sealed class DataSeeder(
         }
         else if (await db.Teams.AnyAsync())
         {
+            // Standalone backfill (Seed:MedicalRecords=true): bypass the
+            // skip-if-teams-exist guard so the medical-records step alone can
+            // run against an already-seeded database, without a full reset
+            // (medical-records-storage-eligibility, Part 3, ADR #8).
+            if (forceMedicalRecords)
+            {
+                logger.LogInformation("Sample data already present — running the medical-records backfill only.");
+                await SeedMedicalRecordsAsync(medicalRecordPath);
+                return;
+            }
+
             logger.LogInformation("Sample data already present — skipping data seeding.");
             return;
         }
@@ -313,6 +342,11 @@ public sealed class DataSeeder(
 
         await db.SaveChangesAsync();
 
+        // Runs AFTER SaveChangesAsync: TeamId/PlayerId are store-generated
+        // (EntityBase.Id defaults to Guid.Empty), so there is no real object
+        // key to build from before this point (medical-records-storage-eligibility, ADR #6).
+        await SeedMedicalRecordsAsync(medicalRecordPath);
+
         int teamCount = allTeams.Count;
         int playerCount = allTeams.Sum(t => t.Players.Count);
         int divisionCount = results.Sum(r => r.Tournament.Divisions.Count);
@@ -354,6 +388,100 @@ public sealed class DataSeeder(
         await db.BlogPosts.ExecuteDeleteAsync();
 
         logger.LogInformation("Seed reset: existing sample domain data deleted before reseeding.");
+    }
+
+    /// <summary>
+    /// Uploads a real medical PDF (<paramref name="medicalRecordPath"/>, or
+    /// <see cref="DefaultMedicalRecordPath"/> when unset) for every
+    /// <c>Approved</c> registration whose file reference is null or a legacy
+    /// <see cref="PlayerTeamRegistration.LegacyReferencePrefix"/> ref, so it
+    /// stops reading as not-habilitado under Part 2's file-backed rule
+    /// (medical-records-storage-eligibility, Part 3). Idempotent (a
+    /// new-scheme ref is skipped), resumable (flushed every
+    /// <see cref="MedicalRecordSaveBatchSize"/> rows), and failure-tolerant: a
+    /// missing/unreadable PDF warns and skips the whole step, and a per-row
+    /// upload failure warns and continues — this step can never fail the
+    /// seed, exactly like <see cref="UploadTeamLogosAsync"/>.
+    /// </summary>
+    private async Task SeedMedicalRecordsAsync(string? medicalRecordPath)
+    {
+        string path = string.IsNullOrWhiteSpace(medicalRecordPath) ? DefaultMedicalRecordPath : medicalRecordPath;
+
+        byte[] pdf;
+        try
+        {
+            if (!File.Exists(path))
+            {
+                logger.LogWarning(
+                    "Seed medical-record file '{Path}' not found — skipping medical-record seeding.", path);
+                return;
+            }
+
+            pdf = await File.ReadAllBytesAsync(path);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Could not read seed medical record from '{Path}' — skipping.", path);
+            return;
+        }
+
+        string fileName = Path.GetFileName(path);
+
+        // Superset filter, EF-translatable (StartsWith on a constant -> LIKE 'medical-records/%').
+        // The per-row IsStoredReference check below is the authoritative
+        // skip-vs-upload decision — the same predicate the read sites and the
+        // approve-time write guard use, so the three can never drift.
+        List<PlayerTeamRegistration> candidates = await db.PlayerTeamRegistrations
+            .Where(r => r.MedicalRecordStatus == MedicalRecordStatus.Approved
+                && (r.MedicalRecordFileUrl == null
+                    || r.MedicalRecordFileUrl == ""
+                    || r.MedicalRecordFileUrl.StartsWith(PlayerTeamRegistration.LegacyReferencePrefix)))
+            .ToListAsync();
+
+        int uploaded = 0;
+        int failed = 0;
+        int pending = 0;
+        foreach (PlayerTeamRegistration registration in candidates)
+        {
+            if (PlayerTeamRegistration.IsStoredReference(registration.MedicalRecordFileUrl))
+            {
+                continue;
+            }
+
+            try
+            {
+                using MemoryStream content = new(pdf, writable: false);
+                string objectPath = await medicalRecordStorage.StoreAsync(
+                    registration.TeamId, registration.PlayerId, fileName, content);
+
+                registration.MedicalRecordFileUrl = objectPath;
+                registration.MedicalRecordFileName = fileName;
+                uploaded++;
+                pending++;
+            }
+            catch (Exception ex)
+            {
+                failed++;
+                logger.LogWarning(ex,
+                    "Failed to upload the seed medical record for player {PlayerId} / team {TeamId} — leaving it without a file.",
+                    registration.PlayerId, registration.TeamId);
+            }
+
+            if (pending >= MedicalRecordSaveBatchSize)
+            {
+                await db.SaveChangesAsync();
+                pending = 0;
+            }
+        }
+
+        if (pending > 0)
+        {
+            await db.SaveChangesAsync();
+        }
+
+        logger.LogInformation(
+            "Medical-record seed: {Uploaded} uploaded, {Failed} failed, {Total} candidates, from '{Path}'.",
+            uploaded, failed, candidates.Count, path);
     }
 
     /// <summary>

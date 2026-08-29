@@ -177,12 +177,14 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork) : IPlayerStatisticSe
                 throw new InvalidOperationException(ErrorMessages.MatchSheet.PlayerNotOnRoster(playerId));
             }
 
-            // Eligible only when NOT sanctioned (HU-61) AND the medical record
-            // is Approved for this team+tournament (HU-57/HU-60). A Pending or
-            // Rejected registration — including a brand-new season's, which
-            // never inherits a prior approval (HU-59) — is not habilitado.
+            // Eligible only when NOT sanctioned (HU-61) AND habilitado for this
+            // team+tournament (HU-57/HU-60): the medical record must be Approved
+            // AND carry a real stored file (medical-records-storage-eligibility)
+            // — Approved alone is not enough. A Pending or Rejected registration
+            // — including a brand-new season's, which never inherits a prior
+            // approval (HU-59) — is not habilitado either.
             bool sanctioned = !playersById.TryGetValue(playerId, out Player? player) || player.IsSanctioned;
-            if (sanctioned || registration.MedicalRecordStatus != MedicalRecordStatus.Approved)
+            if (sanctioned || !registration.IsHabilitado)
             {
                 throw new InvalidOperationException(ErrorMessages.MatchSheet.PlayerNotEligible(playerId));
             }

@@ -1,6 +1,7 @@
 using Domain.Enums;
 
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain.Entities.Models;
 
@@ -76,4 +77,34 @@ public class PlayerTeamRegistration : EntityBase
     /// while still Pending.
     /// </summary>
     public DateTime? MedicalRecordReviewedAt { get; set; }
+
+    /// <summary>
+    /// Refs written before the private-bucket relocation lived under this
+    /// prefix inside <c>public-images</c> and no longer resolve. They are NOT
+    /// real stored files (medical-records-storage-eligibility, ADR #4).
+    /// </summary>
+    public const string LegacyReferencePrefix = "medical-records/";
+
+    /// <summary>
+    /// Whether <paramref name="fileReference"/> is a real, resolvable stored
+    /// file reference: non-null, non-whitespace, and not a legacy
+    /// <see cref="LegacyReferencePrefix"/> ref abandoned by the private-bucket
+    /// relocation. The single source of truth reused by <see cref="IsHabilitado"/>,
+    /// the approve-time write guard, and the seed's skip-vs-upload decision so
+    /// the three can never drift.
+    /// </summary>
+    public static bool IsStoredReference(string? fileReference) =>
+        !string.IsNullOrWhiteSpace(fileReference)
+        && !fileReference.StartsWith(LegacyReferencePrefix, StringComparison.Ordinal);
+
+    /// <summary>
+    /// Whether this registration's player is "habilitado" (eligible to play)
+    /// for this season: the medical record must be <see cref="MedicalRecordStatus.Approved"/>
+    /// AND carry a real stored file reference. <c>Approved</c> alone is not
+    /// enough — a row can be Approved with no file (e.g. a legacy/seeded
+    /// reference), and that must read as NOT habilitado.
+    /// </summary>
+    [NotMapped]
+    public bool IsHabilitado =>
+        MedicalRecordStatus == Enums.MedicalRecordStatus.Approved && IsStoredReference(MedicalRecordFileUrl);
 }

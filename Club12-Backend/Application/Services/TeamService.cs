@@ -265,6 +265,9 @@ public class TeamService(
                         // player (transient, not persisted) so responses expose
                         // habilitado/not-habilitado per player (HU-57/HU-62).
                         r.Player!.MedicalRecordStatus = r.MedicalRecordStatus;
+                        // File-backed habilitación (medical-records-storage-eligibility):
+                        // a bool only, never the storage path — see Player.HasMedicalRecordFile.
+                        r.Player!.HasMedicalRecordFile = PlayerTeamRegistration.IsStoredReference(r.MedicalRecordFileUrl);
                         // Surface the season-scoped dorsal (HU-54) onto the
                         // roster player (transient, not persisted).
                         r.Player!.JerseyNumber = r.JerseyNumber;

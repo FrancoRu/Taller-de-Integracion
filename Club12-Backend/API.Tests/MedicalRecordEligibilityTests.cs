@@ -58,14 +58,15 @@ public class MedicalRecordEligibilityTests : IClassFixture<CustomWebApplicationF
         IMedicalRecordService medicalRecordService = scope.ServiceProvider.GetRequiredService<IMedicalRecordService>();
 
         Fixture fx = await SeedRegistrationAsync(db);
+        string fileReference = $"{fx.TeamId}/{fx.PlayerId}/{Guid.NewGuid()}.pdf";
 
         MedicalRecordResponse record = await medicalRecordService.RecordUploadAsync(
             fx.PlayerId, fx.TeamId, fx.TournamentId,
-            "medical-records/some/object/path.pdf", "ficha.pdf", "owner@club12");
+            fileReference, "ficha.pdf", "owner@club12");
 
         Assert.Equal(MedicalRecordStatus.Pending, record.Status);
         Assert.False(record.IsHabilitado);
-        Assert.Equal("medical-records/some/object/path.pdf", record.FileUrl);
+        Assert.Equal(fileReference, record.FileUrl);
         Assert.Equal("ficha.pdf", record.FileName);
     }
 
@@ -89,11 +90,12 @@ public class MedicalRecordEligibilityTests : IClassFixture<CustomWebApplicationF
         IMedicalRecordService medicalRecordService = scope.ServiceProvider.GetRequiredService<IMedicalRecordService>();
 
         Fixture fx = await SeedRegistrationAsync(db);
+        string originalRef = $"{fx.TeamId}/{fx.PlayerId}/{Guid.NewGuid()}.pdf";
 
         // Upload + approve so the record becomes habilitado.
         await medicalRecordService.RecordUploadAsync(
             fx.PlayerId, fx.TeamId, fx.TournamentId,
-            "medical-records/some/object/path.pdf", "ficha.pdf", "owner@club12");
+            originalRef, "ficha.pdf", "owner@club12");
         await medicalRecordService.ReviewAsync(
             fx.PlayerId, fx.TeamId, fx.TournamentId, approve: true, reason: null, actor: "owner@club12");
 
@@ -101,14 +103,14 @@ public class MedicalRecordEligibilityTests : IClassFixture<CustomWebApplicationF
         InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
             () => medicalRecordService.RecordUploadAsync(
                 fx.PlayerId, fx.TeamId, fx.TournamentId,
-                "medical-records/some/other/path.pdf", "otra-ficha.pdf", "owner@club12"));
+                $"{fx.TeamId}/{fx.PlayerId}/{Guid.NewGuid()}.pdf", "otra-ficha.pdf", "owner@club12"));
 
         Assert.Contains("ya está aprobada", ex.Message);
 
         // The originally approved ficha is untouched.
         MedicalRecordResponse? record = await medicalRecordService.GetAsync(fx.PlayerId, fx.TeamId, fx.TournamentId);
         Assert.Equal(MedicalRecordStatus.Approved, record!.Status);
-        Assert.Equal("medical-records/some/object/path.pdf", record.FileUrl);
+        Assert.Equal(originalRef, record.FileUrl);
         Assert.Equal("ficha.pdf", record.FileName);
     }
 
@@ -123,6 +125,11 @@ public class MedicalRecordEligibilityTests : IClassFixture<CustomWebApplicationF
 
         Fixture fx = await SeedRegistrationAsync(db);
 
+        // A file must be stored before an approve is allowed (Part 2 write guard).
+        await medicalRecordService.RecordUploadAsync(
+            fx.PlayerId, fx.TeamId, fx.TournamentId,
+            $"{fx.TeamId}/{fx.PlayerId}/{Guid.NewGuid()}.pdf", "ficha.pdf", "owner@club12");
+
         MedicalRecordResponse record = await medicalRecordService.ReviewAsync(
             fx.PlayerId, fx.TeamId, fx.TournamentId, approve: true, reason: null, actor: "owner@club12");
 
@@ -130,6 +137,57 @@ public class MedicalRecordEligibilityTests : IClassFixture<CustomWebApplicationF
         Assert.True(record.IsHabilitado);
         Assert.Null(record.ReviewReason);
         Assert.NotNull(record.ReviewedAt);
+    }
+
+    // ---------- Part 2: approve-time write guard (medical-records-storage-eligibility) ----------
+
+    [Fact]
+    public async Task Approve_WithNoStoredFile_IsRejected_AndRowStaysPending()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IMedicalRecordService medicalRecordService = scope.ServiceProvider.GetRequiredService<IMedicalRecordService>();
+
+        Fixture fx = await SeedRegistrationAsync(db);
+
+        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => medicalRecordService.ReviewAsync(fx.PlayerId, fx.TeamId, fx.TournamentId, approve: true, reason: null, actor: "owner@club12"));
+
+        Assert.Contains("no hay un archivo cargado", ex.Message);
+
+        MedicalRecordResponse? record = await medicalRecordService.GetAsync(fx.PlayerId, fx.TeamId, fx.TournamentId);
+        Assert.Equal(MedicalRecordStatus.Pending, record!.Status);
+    }
+
+    [Fact]
+    public async Task Approve_WithLegacyReference_IsRejected()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IMedicalRecordService medicalRecordService = scope.ServiceProvider.GetRequiredService<IMedicalRecordService>();
+
+        Fixture fx = await SeedRegistrationAsync(db);
+        await medicalRecordService.RecordUploadAsync(
+            fx.PlayerId, fx.TeamId, fx.TournamentId,
+            "medical-records/some/object/path.pdf", "ficha.pdf", "owner@club12");
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => medicalRecordService.ReviewAsync(fx.PlayerId, fx.TeamId, fx.TournamentId, approve: true, reason: null, actor: "owner@club12"));
+    }
+
+    [Fact]
+    public async Task Reject_WithNoStoredFile_IsStillAllowed()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IMedicalRecordService medicalRecordService = scope.ServiceProvider.GetRequiredService<IMedicalRecordService>();
+
+        Fixture fx = await SeedRegistrationAsync(db);
+
+        MedicalRecordResponse record = await medicalRecordService.ReviewAsync(
+            fx.PlayerId, fx.TeamId, fx.TournamentId, approve: false, reason: "Missing signature", actor: "owner@club12");
+
+        Assert.Equal(MedicalRecordStatus.Rejected, record.Status);
     }
 
     // ---------- HU-58: reject -> not habilitado + reason ----------
@@ -183,6 +241,11 @@ public class MedicalRecordEligibilityTests : IClassFixture<CustomWebApplicationF
 
         Fixture fx = await SeedFinishedMatchAsync(db, homeScore: 15, medicalStatus: MedicalRecordStatus.Pending);
 
+        // A file must be stored before an approve is allowed (Part 2 write guard),
+        // and the match-sheet gate itself now requires it too.
+        await medicalRecordService.RecordUploadAsync(
+            fx.PlayerId, fx.TeamId, fx.TournamentId,
+            $"{fx.TeamId}/{fx.PlayerId}/{Guid.NewGuid()}.pdf", "ficha.pdf", "owner");
         await medicalRecordService.ReviewAsync(fx.PlayerId, fx.TeamId, fx.TournamentId, approve: true, reason: null, actor: "owner");
 
         List<PlayerStatistic> created = await statisticService.LoadTeamMatchSheetAsync(new LoadMatchSheetRequest
@@ -195,6 +258,63 @@ public class MedicalRecordEligibilityTests : IClassFixture<CustomWebApplicationF
         Assert.Single(created);
     }
 
+    // ---------- Part 2: match-sheet gate rejects Approved-without-file ----------
+
+    [Fact]
+    public async Task LoadTeamMatchSheetAsync_ApprovedWithNoStoredFile_IsRejected()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IPlayerStatisticService statisticService = scope.ServiceProvider.GetRequiredService<IPlayerStatisticService>();
+
+        // Approved directly on the seeded row (bypassing the write guard), with
+        // no file reference — the exact "wrong today" shape this rule targets.
+        Fixture fx = await SeedFinishedMatchAsync(db, homeScore: 20, medicalStatus: MedicalRecordStatus.Approved);
+
+        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => statisticService.LoadTeamMatchSheetAsync(new LoadMatchSheetRequest
+            {
+                MatchId = fx.MatchId,
+                TeamId = fx.TeamId,
+                Scores = [new PlayerScoreEntry { PlayerId = fx.PlayerId, Points = 20 }],
+            }));
+
+        Assert.Contains("not eligible", ex.Message);
+    }
+
+    // ---------- Part 2: season roster surfacing reflects the file-backed rule ----------
+
+    [Fact]
+    public async Task GetTeamByIdAsync_ApprovedPlayerWithLegacyReference_ReadsAsNotHabilitado()
+    {
+        using IServiceScope seedScope = _factory.Services.CreateScope();
+        ApplicationDBContext seedDb = seedScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        Tournament tournament = await SeedTournamentAsync(seedDb);
+        Team team = await SeedTeamAsync(seedDb, tournament.Id);
+        Player player = await SeedPlayerAsync(seedDb, team);
+
+        seedDb.PlayerTeamRegistrations.Add(new PlayerTeamRegistration
+        {
+            PlayerId = player.Id,
+            TeamId = team.Id,
+            TournamentId = tournament.Id,
+            MedicalRecordStatus = MedicalRecordStatus.Approved,
+            MedicalRecordFileUrl = "medical-records/some/object/path.pdf",
+            CreatedBy = "test",
+        });
+        await seedDb.SaveChangesAsync();
+
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ITeamService teamService = scope.ServiceProvider.GetRequiredService<ITeamService>();
+
+        Team? loaded = await teamService.GetTeamByIdAsync(team.Id, tournament.Id);
+
+        Assert.NotNull(loaded);
+        Domain.Entities.Models.Player rosterPlayer = Assert.Single(loaded!.Players, p => p.Id == player.Id);
+        Assert.False(rosterPlayer.IsHabilitado);
+    }
+
     // ---------- HU-59: approval does NOT carry across seasons ----------
 
     [Fact]
@@ -205,8 +325,11 @@ public class MedicalRecordEligibilityTests : IClassFixture<CustomWebApplicationF
         IPlayerStatisticService statisticService = scope.ServiceProvider.GetRequiredService<IPlayerStatisticService>();
         IMedicalRecordService medicalRecordService = scope.ServiceProvider.GetRequiredService<IMedicalRecordService>();
 
-        // Season A: player approved for team A in tournament A.
+        // Season A: player approved for team A in tournament A (file stored first — Part 2 write guard).
         Fixture seasonA = await SeedFinishedMatchAsync(db, homeScore: 10, medicalStatus: MedicalRecordStatus.Pending);
+        await medicalRecordService.RecordUploadAsync(
+            seasonA.PlayerId, seasonA.TeamId, seasonA.TournamentId,
+            $"{seasonA.TeamId}/{seasonA.PlayerId}/{Guid.NewGuid()}.pdf", "ficha.pdf", "owner");
         await medicalRecordService.ReviewAsync(seasonA.PlayerId, seasonA.TeamId, seasonA.TournamentId, approve: true, reason: null, actor: "owner");
 
         // Season B: the SAME player registered to a different team in a

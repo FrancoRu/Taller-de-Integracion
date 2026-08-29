@@ -91,6 +91,31 @@ public class SampleTournamentBuilderCategoryTests
         Assert.Equal(TournamentCategory.Feminine, cup.Category);
     }
 
+    /// <summary>
+    /// medical-records-storage-eligibility (Part 3): the seeded fake ficha
+    /// reference is removed — an Approved registration must come out of
+    /// <c>Build()</c> with a null file reference, so before
+    /// <c>DataSeeder.SeedMedicalRecordsAsync</c> runs it correctly reads as
+    /// NOT habilitado under the Part 2 file-backed rule.
+    /// </summary>
+    [Fact]
+    public void Build_ApprovedRegistrations_HaveNullMedicalRecordFileUrl()
+    {
+        SampleTournamentBuilder.TournamentDefinition definition = MakeDefinition(
+            "Apertura Masculino", TournamentCategory.Masculine);
+
+        int playerCounter = 0;
+        SampleTournamentBuilder.BuildResult result =
+            SampleTournamentBuilder.Build(definition, BuildVenues(), ref playerCounter, includePlayoffs: true);
+
+        List<PlayerTeamRegistration> approved = [.. result.Tournament.Teams
+            .SelectMany(t => t.PlayerTeamRegistrations)
+            .Where(r => r.MedicalRecordStatus == MedicalRecordStatus.Approved)];
+
+        Assert.NotEmpty(approved);
+        Assert.All(approved, r => Assert.Null(r.MedicalRecordFileUrl));
+    }
+
     [Fact]
     public void Build_EverySeededTeam_HasANonEmptyLogoUrl()
     {
