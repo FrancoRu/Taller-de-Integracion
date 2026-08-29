@@ -26,7 +26,6 @@ import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import {
   DeleteIcon,
-  EditIcon,
   SearchIcon,
   SettingsSuggestIcon,
   VisibilityIcon,
@@ -223,13 +222,6 @@ const StagesPage: React.FC<StagesPageProps> = ({
     [navigate]
   );
 
-  const handleEdit = useCallback(
-    (row: IStageResponse) => {
-      navigate(APP_ROUTES.panelStageEdit.build(row.id));
-    },
-    [navigate]
-  );
-
   const handleDelete = useCallback(
     async (row: IStageResponse) => {
       const confirmed = await confirmDelete({
@@ -253,16 +245,10 @@ const StagesPage: React.FC<StagesPageProps> = ({
   const stageActions = useMemo<TableRowAction<IStageResponse>[]>(
     () => [
       {
-        label: 'Ver',
+        label: 'Ver partidos',
         color: 'info',
         icon: <VisibilityIcon fontSize="small" />,
         onClick: handleView,
-      },
-      {
-        label: 'Editar',
-        color: 'primary',
-        icon: <EditIcon fontSize="small" />,
-        onClick: handleEdit,
       },
       {
         label: 'Eliminar',
@@ -271,7 +257,7 @@ const StagesPage: React.FC<StagesPageProps> = ({
         onClick: handleDelete,
       },
     ],
-    [handleDelete, handleEdit, handleView]
+    [handleDelete, handleView]
   );
 
   const columns: GridColDef<IStageResponse>[] = useMemo(() => {
@@ -315,14 +301,21 @@ const StagesPage: React.FC<StagesPageProps> = ({
     return [...baseColumns, buildActionsColumn(stageActions)];
   }, [stageActions]);
 
+  // Scope the rendered rows to the current division. The `stages` context is
+  // shared across every list/detail that reads it, so right after navigating
+  // between divisions it can still hold the previous division's stages until
+  // this view's refetch resolves — filtering by `divisionId` guarantees a fresh
+  // list never shows another division's stale rows.
   const rows = useMemo(
     () =>
-      [...(stages ?? [])].sort(
-        (a, b) =>
-          (a.order ?? Number.MAX_SAFE_INTEGER) -
-          (b.order ?? Number.MAX_SAFE_INTEGER)
-      ),
-    [stages]
+      [...(stages ?? [])]
+        .filter(stage => (divisionId ? stage.divisionId === divisionId : true))
+        .sort(
+          (a, b) =>
+            (a.order ?? Number.MAX_SAFE_INTEGER) -
+            (b.order ?? Number.MAX_SAFE_INTEGER)
+        ),
+    [stages, divisionId]
   );
 
   const hasActiveFilters = useMemo(

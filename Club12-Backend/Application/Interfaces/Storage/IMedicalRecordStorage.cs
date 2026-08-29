@@ -28,4 +28,18 @@ public interface IMedicalRecordStorage
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The stored object path used as the persisted file reference.</returns>
     Task<string> StoreAsync(Guid tournamentId, Guid playerId, string fileName, Stream content, CancellationToken ct = default);
+
+    /// <summary>
+    /// Downloads the raw bytes of a previously stored medical-record object.
+    /// The medical-records area is private, so the file can only be served back
+    /// through the API (there is no public URL); the download endpoint streams
+    /// these bytes to the authorized caller (HU-55/HU-56).
+    /// </summary>
+    /// <param name="objectPath">
+    /// The stored object path returned by <see cref="StoreAsync"/> and persisted
+    /// on the season registration as its file reference.
+    /// </param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The raw file content.</returns>
+    Task<byte[]> DownloadAsync(string objectPath, CancellationToken ct = default);
 }

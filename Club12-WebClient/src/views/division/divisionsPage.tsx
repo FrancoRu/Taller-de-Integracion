@@ -145,8 +145,12 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
     [navigate]
   );
 
-  /** No-op until the panel route for editing a division by id is implemented. */
-  const handleEdit = useCallback((_row: IDivisionResponse) => {}, []);
+  const handleEdit = useCallback(
+    (row: IDivisionResponse) => {
+      navigate(APP_ROUTES.panelDivisionEdit.build(row.id));
+    },
+    [navigate]
+  );
 
   const handleDelete = useCallback(
     async (row: IDivisionResponse) => {
@@ -181,7 +185,6 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
         color: 'primary',
         icon: <EditIcon fontSize="small" />,
         onClick: handleEdit,
-        disabled: true,
       },
       {
         label: 'Eliminar',
@@ -221,7 +224,18 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
     return [...baseColumns, buildActionsColumn(divisionActions)];
   }, [divisionActions]);
 
-  const rows = useMemo(() => divisions ?? [], [divisions]);
+  // Scope the rendered rows to the current tournament. The `divisions` context
+  // is shared across every list/detail that reads it, so right after navigating
+  // between tournaments it can still hold the previous tournament's divisions
+  // until this view's refetch resolves — filtering by `tournamentId` guarantees
+  // a fresh list never shows another tournament's stale rows.
+  const rows = useMemo(
+    () =>
+      (divisions ?? []).filter(division =>
+        tournamentId ? division.tournamentId === tournamentId : true
+      ),
+    [divisions, tournamentId]
+  );
   const hasActiveFilters = useMemo(() => Boolean(filters.name), [filters.name]);
   const noRowsMessage = hasActiveFilters
     ? 'No se encontraron divisiones para el filtro aplicado.'

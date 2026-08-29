@@ -165,6 +165,35 @@ public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionServ
         }
     }
 
+    /// <inheritdoc />
+    public async Task<(string? PlayerFullName, string? TeamName, string? StaffName)> ResolveSubjectAsync(PlayerSanction sanction)
+    {
+        switch (sanction.SubjectType)
+        {
+            case SanctionSubjectType.Team:
+                string? teamName = sanction.Team?.Name;
+                if (teamName is null && sanction.TeamId.HasValue)
+                {
+                    Team? team = await _teamRepository.GetByIdAsync(sanction.TeamId.Value);
+                    teamName = team?.Name;
+                }
+                return (null, teamName, null);
+
+            case SanctionSubjectType.Staff:
+                return (null, null, sanction.StaffName);
+
+            // SanctionSubjectType.Player and any future/default value.
+            default:
+                string? playerFullName = sanction.Player?.FullName;
+                if (playerFullName is null && sanction.PlayerId.HasValue)
+                {
+                    Player? player = await _playerRepository.GetByIdAsync(sanction.PlayerId.Value);
+                    playerFullName = player?.FullName;
+                }
+                return (playerFullName, null, null);
+        }
+    }
+
     public async Task<PlayerSanction?> GetPlayerSanctionByIdAsync(Guid playerSanctionId)
     {
         return await _playerSanctionRepository.GetByIdAsync(playerSanctionId);

@@ -74,4 +74,19 @@ public interface IPlayerSanctionService
     /// <param name="filter">The filtering and pagination request.</param>
     /// <returns>A paginated response containing the player sanctions.</returns>
     Task<PaginatedResponse<PlayerSanction>> GetPlayerSanctionsAsync(GetPlayerSanctionsFilteredRequest filter);
+
+    /// <summary>
+    /// Resolves the human-readable subject of a sanction (HU-77) into the three
+    /// mutually-exclusive display fields the response exposes, so the sanctions
+    /// list shows WHO was sanctioned regardless of subject type and independent
+    /// of which navigations happen to be loaded on the entity:
+    /// the player's full name for a player sanction, the team's name for a team
+    /// sanction, or the staff member's name for a staff sanction.
+    /// </summary>
+    /// <param name="sanction">The sanction whose subject to resolve.</param>
+    /// <returns>
+    /// The player, team and staff display names; exactly one is non-null for a
+    /// well-formed sanction, the others are null.
+    /// </returns>
+    Task<(string? PlayerFullName, string? TeamName, string? StaffName)> ResolveSubjectAsync(PlayerSanction sanction);
 }

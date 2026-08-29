@@ -37,9 +37,9 @@ import TournamentWizardPage from './views/tournament/wizard/TournamentWizardPage
 import DivisionPage from './views/division/divisionPage';
 import DivisionsPage from './views/division/divisionsPage';
 import DivisionCreatePage from './views/division/divisionCreatePage';
+import DivisionEditPage from './views/division/divisionEditPage';
 import StagePage from './views/stage/stagePage';
 import StageCreatePage from './views/stage/stageCreatePage';
-import StageEditPage from './views/stage/stageEditPage';
 import StagesPage from '@/views/stage/stagesPage';
 import MatchPage from './views/match/matchPage';
 import MatchesPage from './views/match/matchesPage';
@@ -185,6 +185,11 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
     element: <DivisionCreatePage />,
   },
   {
+    path: APP_ROUTES.panelDivisionEdit.pattern,
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
+    element: <DivisionEditPage />,
+  },
+  {
     path: APP_ROUTES.panelDivision.pattern,
     allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <DivisionPage />,
@@ -198,11 +203,6 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
     path: APP_ROUTES.panelStageCreate,
     allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <StageCreatePage />,
-  },
-  {
-    path: APP_ROUTES.panelStageEdit.pattern,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
-    element: <StageEditPage />,
   },
   {
     path: APP_ROUTES.panelStage.pattern,

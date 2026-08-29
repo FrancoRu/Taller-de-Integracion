@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import TournamentPage from '@/views/tournament/TournamentPage';
@@ -71,6 +72,7 @@ const renderPage = () =>
           path="/panel/torneos/:tournamentId"
           element={<TournamentPage />}
         />
+        <Route path="/panel/torneos" element={<div>listado-torneos</div>} />
       </Routes>
     </MemoryRouter>
   );
@@ -97,6 +99,36 @@ describe('TournamentPage — enrolled-teams tab gate (HU-107)', () => {
     expect(
       screen.queryByRole('tab', { name: 'Equipos inscriptos' })
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('TournamentPage — read-only detail (QA wave 1)', () => {
+  it('does NOT expose inline status editing on the "Ver" detail view', async () => {
+    // Registration-closed is a status that previously offered a "Cambiar
+    // estado" control right on the detail page. The detail is now read-only:
+    // status changes belong to the "Editar torneo" path only.
+    setup(TournamentStatus.RegistrationClosed);
+    renderPage();
+
+    await screen.findByRole('tab', { name: 'Detalle' });
+    expect(screen.queryByText('Cambiar estado')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Aplicar/i })
+    ).not.toBeInTheDocument();
+    // The edit affordance stays.
+    expect(
+      screen.getByRole('button', { name: 'Editar torneo' })
+    ).toBeInTheDocument();
+  });
+
+  it('"Volver" navigates back to the tournaments list', async () => {
+    setup(TournamentStatus.Scheduled);
+    renderPage();
+
+    const volver = await screen.findByRole('button', { name: 'Volver' });
+    await userEvent.click(volver);
+
+    expect(screen.getByText('listado-torneos')).toBeInTheDocument();
   });
 });
 
