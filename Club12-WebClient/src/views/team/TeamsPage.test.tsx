@@ -214,7 +214,7 @@ describe('TeamsPage — pagination', () => {
     getTeamsByFiltered.mockClear();
 
     const nextPageButton = screen.getByRole('button', {
-      name: /go to next page/i,
+      name: /ir a la página siguiente/i,
     });
     fireEvent.click(nextPageButton);
 

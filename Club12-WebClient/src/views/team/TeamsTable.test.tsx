@@ -135,7 +135,7 @@ describe('TeamsTable', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /go to next page/i }));
+    fireEvent.click(screen.getByRole('button', { name: /ir a la página siguiente/i }));
 
     expect(onPaginationModelChange).toHaveBeenCalledWith(
       expect.objectContaining({ page: 1 }),

@@ -55,11 +55,15 @@ const NavMenu = () => {
           component={Link}
           to={RoutesNavigationViews.Home}
           sx={{
-            display: 'flex',
+            display: 'inline-flex',
             alignItems: 'center',
             bgcolor: LOGO_BACKGROUND_COLOR,
-            borderRadius: 1.5,
-            p: 0.5,
+            borderRadius: 2,
+            px: 1.25,
+            py: 0.75,
+            border: '1px solid',
+            borderColor: 'rgba(255, 255, 255, 0.12)',
+            boxShadow: 3,
           }}
         >
           <Box
