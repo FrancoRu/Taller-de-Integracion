@@ -85,6 +85,10 @@ export const APP_ROUTES = {
     build: (venueId: string) => `/panel/canchas/${venueId}`,
   },
   panelSeasons: '/panel/temporadas',
+  panelSeason: {
+    pattern: '/panel/temporadas/:seasonId',
+    build: (seasonId: string) => `/panel/temporadas/${seasonId}`,
+  },
   panelTournaments: '/panel/torneos',
   panelTournamentWizard: '/panel/torneos/asistente',
   panelDivisions: '/panel/divisiones',

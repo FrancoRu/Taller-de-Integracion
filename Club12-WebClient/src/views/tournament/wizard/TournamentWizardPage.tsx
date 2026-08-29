@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Box, Button, Step, StepLabel, Stepper } from '@mui/material';
 import PageShell from '@/views/core/components/PageShell';
 import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
@@ -31,12 +31,29 @@ const STEP_LABELS = ['Torneo', 'Divisiones', 'Copa cruzada', 'Revisión'];
 
 export default function TournamentWizardPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { addTournament } = useTournament();
   const { addDivision } = useDivision();
   const { addStage } = useStage();
 
+  // The wizard can be launched pre-scoped to a season (from the admin season
+  // hub) via router state. Standalone launches have no state and keep the
+  // "Sin temporada" default. The id is locked in only for the initial state,
+  // so the admin can still change it in the step.
+  const seededSeasonId =
+    (location.state as { seasonId?: string } | null)?.seasonId ?? '';
+
   const [activeStep, setActiveStep] = useState(0);
-  const [state, setState] = useState(createInitialWizardState);
+  const [state, setState] = useState(() => {
+    const initial = createInitialWizardState();
+    if (!seededSeasonId) {
+      return initial;
+    }
+    return {
+      ...initial,
+      tournament: { ...initial.tournament, seasonId: seededSeasonId },
+    };
+  });
   const [submitting, setSubmitting] = useState(false);
 
   const treeNodes = useMemo(() => buildWizardTree(state), [state]);
@@ -144,6 +161,7 @@ export default function TournamentWizardPage() {
             <TorneoStep
               value={state.tournament}
               onChange={tournament => setState(prev => ({ ...prev, tournament }))}
+              seasonPreset={Boolean(seededSeasonId)}
             />
           )}
           {activeStep === 1 && (
