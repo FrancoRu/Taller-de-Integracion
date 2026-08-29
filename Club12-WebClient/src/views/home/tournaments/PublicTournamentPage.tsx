@@ -286,7 +286,16 @@ export default function PublicTournamentPage() {
       <Divider sx={{ mb: 3 }} />
 
       <Tabs
-        value={tab}
+        // A deep link can request a division tab (`?tab=primera-division`) before
+        // the divisions have loaded, when only the "info" tab exists — passing an
+        // unmatched value makes MUI warn. Fall back to "info" until the requested
+        // division tab actually exists; the content below still keys off `tab`.
+        value={
+          tab === INFO_TAB ||
+          divisions.some(division => (division.slug ?? division.id) === tab)
+            ? tab
+            : INFO_TAB
+        }
         onChange={(_, value: Tab) => setTab(value)}
         variant="scrollable"
         scrollButtons="auto"
