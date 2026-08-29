@@ -3,14 +3,14 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Button,
-  CircularProgress,
-  Container,
   Divider,
   Grid,
   Tab,
   Tabs,
   Typography,
 } from '@mui/material';
+import PageShell from '@/views/core/components/PageShell';
+import { DetailSkeleton, TableSkeleton } from '@/views/core/components/skeletons';
 import { GUID } from '@/modules/core/types/types';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useTeam } from '@/modules/team/hook/team.hook';
@@ -176,25 +176,23 @@ export default function PublicTournamentPage() {
 
   if (loading || (divisionsLoading && divisions.length === 0)) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          py: 10
-        }}>
-        <CircularProgress />
-      </Box>
+      <PageShell>
+        <DetailSkeleton />
+      </PageShell>
     );
   }
 
   if (!tournament || (tournament.id !== tournamentId && tournament.slug !== tournamentId)) {
     return (
-      <Container maxWidth="md" sx={{ py: 5 }}>
+      <PageShell maxWidth="md">
         <Typography variant="h5" component="h1" sx={{
           mb: 2
         }}>Torneo no encontrado</Typography>
+        <Typography sx={{ color: 'text.secondary', mb: 3 }}>
+          El torneo que buscás no existe o ya no está disponible.
+        </Typography>
         <Button onClick={() => navigate(APP_ROUTES.publicTournaments)}>Volver a torneos</Button>
-      </Container>
+      </PageShell>
     );
   }
 
@@ -239,11 +237,12 @@ export default function PublicTournamentPage() {
   );
 
   return (
-    <Container maxWidth="lg" sx={{ py: 5 }}>
-      <Button onClick={() => navigate(APP_ROUTES.publicTournaments)} sx={{ mb: 3, pl: 0 }} color="inherit">
-        ← Volver a torneos
-      </Button>
-
+    <PageShell
+      back={{
+        label: 'Volver a torneos',
+        onClick: () => navigate(APP_ROUTES.publicTournaments),
+      }}
+    >
       <Typography
         variant="h4"
         component="h1"
@@ -341,14 +340,7 @@ export default function PublicTournamentPage() {
 
       {tab !== INFO_TAB && tab !== TEAMS_TAB && (
         divisionsLoading && !activeDivision ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              py: 5
-            }}>
-            <CircularProgress />
-          </Box>
+          <TableSkeleton rows={6} columns={4} />
         ) : activeDivision ? (
           // key forces a fresh mount per division — without it React reuses
           // the same instance across division switches and its lazy-loaded
@@ -359,6 +351,6 @@ export default function PublicTournamentPage() {
         ) : null
       )}
       </Box>
-    </Container>
+    </PageShell>
   );
 }

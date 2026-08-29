@@ -29,7 +29,7 @@ import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatu
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { confirmAction } from '@/modules/core/utils/confirmDialog';
 import { completabilityIssueMessage } from '@/modules/tournament/utils/completabilityMessages';
-import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import { DetailSkeleton } from '@/views/core/components/skeletons';
 
 interface TournamentDivisionAssignmentProps {
   tournament: ITournamentResponse;
@@ -175,7 +175,7 @@ const TournamentDivisionAssignment: React.FC<
   }
 
   if (loading) {
-    return <LoadingIndicator />;
+    return <DetailSkeleton />;
   }
 
   // "One team, one zone": a team assigned to any regular zone must not be

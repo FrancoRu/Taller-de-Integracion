@@ -1,15 +1,8 @@
 import { AxiosError } from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Button,
-  Card,
-  CardContent,
-  MenuItem,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Button, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import PageShell from '@/views/core/components/PageShell';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { authService } from '@/modules/auth/service/auth.service';
 import { InviteUserRequest } from '@/modules/auth/type/auth';
@@ -104,12 +97,11 @@ const InviteUser: React.FC = () => {
   if (!isAdmin && !isOwner) return null;
 
   return (
-    <Card sx={{ maxWidth: 520, mx: 'auto', mt: 3 }}>
-      <CardContent>
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          Invitar usuario
-        </Typography>
-
+    <PageShell
+      title="Invitar usuario"
+      maxWidth="sm"
+      back={{ label: 'Volver', onClick: () => navigate(APP_ROUTES.panelUsers) }}
+    >
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Se crea la cuenta sin contraseña y se le envía un link de activación
           por email para que la defina.
@@ -170,8 +162,7 @@ const InviteUser: React.FC = () => {
             </Button>
           </Stack>
         </Stack>
-      </CardContent>
-    </Card>
+    </PageShell>
   );
 };
 

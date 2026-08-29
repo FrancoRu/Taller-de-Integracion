@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import {
   Box,
-  Card,
-  CardContent,
   Dialog,
   DialogActions,
   DialogContent,
@@ -31,6 +29,8 @@ import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import FormButtons from '@/views/core/components/FormButtons';
 import TeamLogo from '@/views/core/components/TeamLogo';
+import PageShell from '@/views/core/components/PageShell';
+import FilterBar from '@/views/core/components/FilterBar';
 import {
   DeleteIcon,
   EditIcon,
@@ -118,6 +118,10 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
       ...prev,
       [name]: value || undefined,
     }));
+  };
+
+  const handleClearFilters = () => {
+    setFilters(EMPTY_FILTERS);
   };
 
   const rows = useMemo(() => venues ?? [], [venues]);
@@ -304,29 +308,20 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
     await fetchVenues();
   };
 
-  const content = (
-    <>
-      <Stack
-        direction="row"
-        sx={{
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 2
-        }}>
-        <Typography variant="h6">{title}</Typography>
-        <NewEntityButton
-          type="Cancha"
-          gender="feminine"
-          onClick={() => {
-            resetVenueForm();
-            setIsCreateModalOpen(true);
-          }}
-        />
-      </Stack>
+  const createButton = (
+    <NewEntityButton
+      type="Cancha"
+      gender="feminine"
+      onClick={() => {
+        resetVenueForm();
+        setIsCreateModalOpen(true);
+      }}
+    />
+  );
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{
-        mb: 2
-      }}>
+  const body = (
+    <>
+      <FilterBar onClear={handleClearFilters} ariaLabel="Filtros de canchas">
         <TextField
           label="Nombre"
           name="name"
@@ -360,7 +355,7 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
             }
           }}
         />
-      </Stack>
+      </FilterBar>
 
       <Box sx={{ width: '100%' }}>
         <DataGrid
@@ -481,13 +476,20 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
 
   if (wrapInCard) {
     return (
-      <Card>
-        <CardContent>{content}</CardContent>
-      </Card>
+      <PageShell title={title} actions={createButton}>
+        {body}
+      </PageShell>
     );
   }
 
-  return <Box sx={{ width: '100%' }}>{content}</Box>;
+  return (
+    <Box sx={{ width: '100%' }}>
+      <Stack direction="row" sx={{ justifyContent: 'flex-end', mb: 2 }}>
+        {createButton}
+      </Stack>
+      {body}
+    </Box>
+  );
 };
 
 export default VenuesPage;

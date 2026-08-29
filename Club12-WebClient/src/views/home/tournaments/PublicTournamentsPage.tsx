@@ -6,8 +6,6 @@ import {
   CardActionArea,
   CardContent,
   Chip,
-  CircularProgress,
-  Container,
   Grid,
   Typography,
 } from '@mui/material';
@@ -16,6 +14,8 @@ import { ITournamentResponse } from '@/modules/tournament/type/tournament';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
+import PageShell from '@/views/core/components/PageShell';
+import { CardGridSkeleton } from '@/views/core/components/skeletons';
 import {
   TOURNAMENT_STATUS_LABEL,
   TOURNAMENT_STATUS_COLOR,
@@ -109,16 +109,7 @@ export default function PublicTournamentsPage() {
   const rows = useMemo(() => tournaments ?? [], [tournaments]);
 
   return (
-    <Container maxWidth="lg" sx={{ py: 5 }}>
-      <Typography
-        variant="h4"
-        component="h1"
-        sx={{
-          fontWeight: "bold",
-          mb: 1
-        }}>
-        Torneos
-      </Typography>
+    <PageShell title="Torneos">
       <Typography
         variant="body1"
         sx={{
@@ -129,20 +120,15 @@ export default function PublicTournamentsPage() {
       </Typography>
 
       {loading ? (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            py: 8
-          }}>
-          <CircularProgress />
-        </Box>
+        <CardGridSkeleton count={6} />
       ) : rows.length === 0 ? (
         <Typography sx={{
           color: "text.secondary"
-        }}>No hay torneos disponibles.</Typography>
+        }}>
+          Todavía no hay torneos publicados. Volvé a consultar más adelante.
+        </Typography>
       ) : (
-        <Grid container spacing={3}>
+        <Grid container spacing={3} component="section">
           {rows.map(tournament => (
             <Grid
               key={tournament.id}
@@ -156,6 +142,6 @@ export default function PublicTournamentsPage() {
           ))}
         </Grid>
       )}
-    </Container>
+    </PageShell>
   );
 }

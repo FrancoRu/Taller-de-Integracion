@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { formatDateAr } from '@/modules/core/utils/formatDate';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
 import { BlogPostResponse } from '@/modules/blogPost/type/blogPost';
 import ErrorPageLayout from '@/views/core/components/ErrorPageLayout';
 import ErrorPageActions from '@/views/core/components/ErrorPageActions';
+import PageShell from '@/views/core/components/PageShell';
+import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { usePageMetadata } from '@/modules/core/utils/pageMetadata';
 
 const BLOG_META_DESCRIPTION_LENGTH = 200;
@@ -62,9 +64,9 @@ const BlogPostDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
-        <CircularProgress />
-      </Box>
+      <PageShell maxWidth="md">
+        <DetailSkeleton />
+      </PageShell>
     );
   }
 
@@ -83,29 +85,32 @@ const BlogPostDetailPage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ maxWidth: 720, mx: 'auto', p: 3 }}>
-      <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 1 }}>
-        {post.title}
-      </Typography>
-      <Typography
-        variant="subtitle1"
-        component="p"
-        sx={{
-          color: "text.secondary",
-          mb: 3
-        }}>
-        {post.author} · {formatDateAr(post.createdAt)}
-      </Typography>
-      {post.photoUrl && (
-        <Box
-          component="img"
-          src={post.photoUrl}
-          alt={post.title}
-          sx={{ width: '100%', borderRadius: 2, mb: 3 }}
-        />
-      )}
-      <div dangerouslySetInnerHTML={{ __html: post.markdownText }} />
-    </Box>
+    <PageShell maxWidth="md">
+      <Box component="article">
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 1 }}>
+          {post.title}
+        </Typography>
+        <Typography
+          variant="subtitle1"
+          component="p"
+          sx={{
+            color: 'text.secondary',
+            mb: 3,
+          }}
+        >
+          {post.author} · {formatDateAr(post.createdAt)}
+        </Typography>
+        {post.photoUrl && (
+          <Box
+            component="img"
+            src={post.photoUrl}
+            alt={post.title}
+            sx={{ width: '100%', borderRadius: 2, mb: 3 }}
+          />
+        )}
+        <div dangerouslySetInnerHTML={{ __html: post.markdownText }} />
+      </Box>
+    </PageShell>
   );
 };
 

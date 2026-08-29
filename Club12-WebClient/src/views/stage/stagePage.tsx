@@ -1,17 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  Button,
-  Card,
-  CardContent,
-  Grid,
-  Stack,
-  Tab,
-  Tabs,
-  Typography,
-} from '@mui/material';
+import { Button, Grid, Tab, Tabs, Typography } from '@mui/material';
 import { useStage } from '@/modules/stage/hook/stage.hook';
-import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import PageShell from '@/views/core/components/PageShell';
+import { DetailSkeleton } from '@/views/core/components/skeletons';
 import MatchesPage from '@/views/match/matchesPage';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
@@ -59,24 +51,20 @@ const StagePage: React.FC = () => {
 
   if (!targetStageId) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">Fase</Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              mt: 1
-            }}>
-            No se recibió una fase para visualizar.
-          </Typography>
-        </CardContent>
-      </Card>
+      <PageShell title="Fase">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          No se recibió una fase para visualizar.
+        </Typography>
+      </PageShell>
     );
   }
 
   if (loading) {
-    return <LoadingIndicator />;
+    return (
+      <PageShell title="Fase">
+        <DetailSkeleton />
+      </PageShell>
+    );
   }
 
   if (
@@ -84,58 +72,35 @@ const StagePage: React.FC = () => {
     (stage.id !== targetStageId && stage.slug !== targetStageId)
   ) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">Fase no encontrada</Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              mt: 1
-            }}>
-            No fue posible cargar la información de la fase.
-          </Typography>
-          <Typography
-            component="button"
-            onClick={() => navigate(APP_ROUTES.panelStages)}
-            sx={{
-              mt: 2,
-              border: 0,
-              background: 'none',
-              color: 'primary.main',
-              cursor: 'pointer',
-              p: 0,
-            }}
-          >
-            Volver al listado
-          </Typography>
-        </CardContent>
-      </Card>
+      <PageShell title="Fase no encontrada">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          No fue posible cargar la información de la fase.
+        </Typography>
+        <Button
+          variant="text"
+          onClick={() => navigate(APP_ROUTES.panelStages)}
+          sx={{ mt: 2, px: 0 }}
+        >
+          Volver al listado
+        </Button>
+      </PageShell>
     );
   }
 
   return (
-    <Card>
-      <CardContent>
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          sx={{
-            justifyContent: "space-between",
-            alignItems: { xs: 'flex-start', sm: 'center' },
-            mb: 2,
-            gap: 1
-          }}>
-          <Typography variant="h6">{stage.name}</Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => navigate(APP_ROUTES.panelStages)}
-          >
-            Volver
-          </Button>
-        </Stack>
-
-        <Tabs
+    <PageShell
+      title={stage.name}
+      actions={
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => navigate(APP_ROUTES.panelStages)}
+        >
+          Volver
+        </Button>
+      }
+    >
+      <Tabs
           value={tab}
           onChange={(_, value) => setTab(value)}
           sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
@@ -248,8 +213,7 @@ const StagePage: React.FC = () => {
             wrapInCard={false}
           />
         )}
-      </CardContent>
-    </Card>
+    </PageShell>
   );
 };
 

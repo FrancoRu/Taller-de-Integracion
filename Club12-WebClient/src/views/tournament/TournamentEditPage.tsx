@@ -1,20 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  Button,
-  Card,
-  CardContent,
-  Grid,
-  MenuItem,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Button, Grid, MenuItem, TextField, Typography } from '@mui/material';
 import { notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
-import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import PageShell from '@/views/core/components/PageShell';
+import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { IPutTournamentRequest } from '@/modules/tournament/type/tournament';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import {
@@ -122,60 +114,45 @@ const TournamentEditPage: React.FC = () => {
 
   if (!tournamentId) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">Torneo</Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              mt: 1
-            }}>
-            No se recibió un torneo para editar.
-          </Typography>
-        </CardContent>
-      </Card>
+      <PageShell title="Editar torneo">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          No se recibió un torneo para editar.
+        </Typography>
+      </PageShell>
     );
   }
 
   if (loading) {
-    return <LoadingIndicator />;
+    return (
+      <PageShell title="Editar torneo">
+        <DetailSkeleton />
+      </PageShell>
+    );
   }
 
   if (!tournament || (tournament.id !== tournamentId && tournament.slug !== tournamentId)) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">Torneo no encontrado</Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              mt: 1
-            }}>
-            No fue posible cargar la información del torneo.
-          </Typography>
-          <Typography
-            component="button"
-            onClick={() => navigate(APP_ROUTES.panelTournaments)}
-            sx={{
-              mt: 2,
-              border: 0,
-              background: 'none',
-              color: 'primary.main',
-              cursor: 'pointer',
-              p: 0,
-            }}
-          >
-            Volver al listado
-          </Typography>
-        </CardContent>
-      </Card>
+      <PageShell title="Torneo no encontrado">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          No fue posible cargar la información del torneo.
+        </Typography>
+        <Button
+          variant="text"
+          onClick={() => navigate(APP_ROUTES.panelTournaments)}
+          sx={{ mt: 2, px: 0 }}
+        >
+          Volver al listado
+        </Button>
+      </PageShell>
     );
   }
 
   if (!form) {
-    return <LoadingIndicator />;
+    return (
+      <PageShell title="Editar torneo">
+        <DetailSkeleton />
+      </PageShell>
+    );
   }
 
   const handleFormChange = (
@@ -259,28 +236,20 @@ const TournamentEditPage: React.FC = () => {
   };
 
   return (
-    <Card>
-      <CardContent>
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={1}
-          sx={{
-            justifyContent: "space-between",
-            alignItems: { xs: 'flex-start', sm: 'center' },
-            mb: 2
-          }}>
-          <Typography variant="h6">Editar torneo</Typography>
-          <Stack direction="row" spacing={1}>
-            <Button variant="outlined" onClick={handleCancel} disabled={saving}>
-              Cancelar
-            </Button>
-            <Button variant="contained" onClick={handleSave} disabled={saving}>
-              {saving ? 'Guardando...' : 'Guardar cambios'}
-            </Button>
-          </Stack>
-        </Stack>
-
-        <Grid container spacing={2}>
+    <PageShell
+      title="Editar torneo"
+      actions={
+        <>
+          <Button variant="outlined" onClick={handleCancel} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button variant="contained" onClick={handleSave} disabled={saving}>
+            {saving ? 'Guardando...' : 'Guardar cambios'}
+          </Button>
+        </>
+      }
+    >
+      <Grid container spacing={2}>
           <Grid
             size={{
               xs: 12,
@@ -370,8 +339,7 @@ const TournamentEditPage: React.FC = () => {
             />
           </Grid>
         </Grid>
-      </CardContent>
-    </Card>
+    </PageShell>
   );
 };
 

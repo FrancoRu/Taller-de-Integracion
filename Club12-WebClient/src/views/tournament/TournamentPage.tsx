@@ -1,23 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Grid,
-  Stack,
-  Tab,
-  Tabs,
-  Typography,
-} from '@mui/material';
+import { Button, Chip, Grid, Stack, Tab, Tabs, Typography } from '@mui/material';
+import PageShell from '@/views/core/components/PageShell';
+import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { GUID } from '@/modules/core/types/types';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
 import { TOURNAMENT_CATEGORY_LABELS } from '@/modules/core/enum/tournament/tournamentCategory';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
-import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import DivisionsPage from '@/views/division/divisionsPage';
 import TeamsPage from '@/views/team/TeamsPage';
 import TournamentEnrolledTeams from '@/views/tournament/TournamentEnrolledTeams';
@@ -62,55 +53,36 @@ const TournamentPage: React.FC = () => {
 
   if (!tournamentId) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">Torneo</Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              mt: 1
-            }}>
-            No se recibió un torneo para visualizar.
-          </Typography>
-        </CardContent>
-      </Card>
+      <PageShell title="Torneo">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          No se recibió un torneo para visualizar.
+        </Typography>
+      </PageShell>
     );
   }
 
   if (loading) {
-    return <LoadingIndicator />;
+    return (
+      <PageShell title="Torneo">
+        <DetailSkeleton />
+      </PageShell>
+    );
   }
 
   if (!tournament || (tournament.id !== tournamentId && tournament.slug !== tournamentId)) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">Torneo no encontrado</Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              mt: 1
-            }}>
-            No fue posible cargar la información del torneo.
-          </Typography>
-          <Typography
-            component="button"
-            onClick={() => navigate(APP_ROUTES.panelTournaments)}
-            sx={{
-              mt: 2,
-              border: 0,
-              background: 'none',
-              color: 'primary.main',
-              cursor: 'pointer',
-              p: 0,
-            }}
-          >
-            Volver al listado
-          </Typography>
-        </CardContent>
-      </Card>
+      <PageShell title="Torneo no encontrado">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          No fue posible cargar la información del torneo.
+        </Typography>
+        <Button
+          variant="text"
+          onClick={() => navigate(APP_ROUTES.panelTournaments)}
+          sx={{ mt: 2, px: 0 }}
+        >
+          Volver al listado
+        </Button>
+      </PageShell>
     );
   }
 
@@ -132,48 +104,38 @@ const TournamentPage: React.FC = () => {
   };
 
   return (
-    <Card>
-      <CardContent>
-        <Grid
-          container
-          sx={{
-            alignItems: "center",
-            justifyContent: "space-between",
-            mb: 2
-          }}>
-          <Grid>
-            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-              <Typography variant="h6">{tournament.name}</Typography>
-              <Chip
-                size="small"
-                color="secondary"
-                label={TOURNAMENT_CATEGORY_LABELS[tournament.category]}
-              />
-            </Stack>
-          </Grid>
-          <Grid>
-            <Stack direction="row" spacing={1}>
-              {canEditTournament && (
-                <Button
-                  variant="contained"
-                  onClick={() =>
-                    navigate(APP_ROUTES.panelTournamentEdit.build(tournamentId))
-                  }
-                >
-                  Editar torneo
-                </Button>
-              )}
-              <Button
-                variant="outlined"
-                onClick={() => navigate(APP_ROUTES.panelTournaments)}
-              >
-                Volver
-              </Button>
-            </Stack>
-          </Grid>
-        </Grid>
+    <PageShell
+      title={tournament.name}
+      actions={
+        <>
+          {canEditTournament && (
+            <Button
+              variant="contained"
+              onClick={() =>
+                navigate(APP_ROUTES.panelTournamentEdit.build(tournamentId))
+              }
+            >
+              Editar torneo
+            </Button>
+          )}
+          <Button
+            variant="outlined"
+            onClick={() => navigate(APP_ROUTES.panelTournaments)}
+          >
+            Volver
+          </Button>
+        </>
+      }
+    >
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 2 }}>
+        <Chip
+          size="small"
+          color="secondary"
+          label={TOURNAMENT_CATEGORY_LABELS[tournament.category]}
+        />
+      </Stack>
 
-        <Tabs
+      <Tabs
           value={tab}
           onChange={(_, value) => setTab(value)}
           sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
@@ -285,8 +247,7 @@ const TournamentPage: React.FC = () => {
         {tab === 'asignacion' && isRegistrationClosed && (
           <TournamentDivisionAssignment tournament={tournament} />
         )}
-      </CardContent>
-    </Card>
+    </PageShell>
   );
 };
 

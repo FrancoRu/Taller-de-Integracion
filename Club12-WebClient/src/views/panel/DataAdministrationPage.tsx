@@ -1,5 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Box, Button, Card, CardContent, Stack, Typography } from '@mui/material';
+import {
+  Button,
+  Card,
+  CardContent,
+  CircularProgress,
+  Dialog,
+  DialogContent,
+  Stack,
+  Typography,
+} from '@mui/material';
 import { isAxiosError } from 'axios';
 import {
   BackupIcon,
@@ -9,6 +18,7 @@ import {
 import { dataMaintenanceService } from '@/modules/dataMaintenance/service/dataMaintenance.service';
 import { useBackups } from '@/modules/backup/hook/backup.hook';
 import BackupsTable from '@/views/panel/components/BackupsTable';
+import PageShell from '@/views/core/components/PageShell';
 import {
   confirmDelete,
   notifyError,
@@ -18,6 +28,7 @@ import {
 const DataAdministrationPage: React.FC = () => {
   const [isWiping, setIsWiping] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
+  const [activeOperation, setActiveOperation] = useState<string | null>(null);
   const {
     backups,
     loading,
@@ -44,6 +55,7 @@ const DataAdministrationPage: React.FC = () => {
     }
 
     setIsWiping(true);
+    setActiveOperation('Borrando todos los datos de prueba…');
     try {
       const response = await dataMaintenanceService.wipeSampleData();
       await notifySuccess({
@@ -57,11 +69,13 @@ const DataAdministrationPage: React.FC = () => {
       });
     } finally {
       setIsWiping(false);
+      setActiveOperation(null);
     }
   };
 
   const handleSeed = async (): Promise<void> => {
     setIsSeeding(true);
+    setActiveOperation('Cargando datos de prueba…');
     try {
       const response = await dataMaintenanceService.seedSampleData();
       await notifySuccess({
@@ -78,52 +92,66 @@ const DataAdministrationPage: React.FC = () => {
       });
     } finally {
       setIsSeeding(false);
+      setActiveOperation(null);
     }
   };
 
   const handleGenerateBackup = async (): Promise<void> => {
-    const created = await createBackup();
-    if (!created) {
-      await notifyError({
-        title: 'No se pudo generar el respaldo',
-        text: 'Puede haber otra operación de respaldo/restauración en curso. Volvé a intentar en unos segundos.',
-      });
-      return;
-    }
+    setActiveOperation('Generando el respaldo de la base de datos…');
+    try {
+      const created = await createBackup();
+      if (!created) {
+        await notifyError({
+          title: 'No se pudo generar el respaldo',
+          text: 'Puede haber otra operación de respaldo/restauración en curso. Volvé a intentar en unos segundos.',
+        });
+        return;
+      }
 
-    await notifySuccess({ title: 'Respaldo generado' });
+      await notifySuccess({ title: 'Respaldo generado' });
+    } finally {
+      setActiveOperation(null);
+    }
   };
 
   const handleDeleteBackup = async (backup: {
     id: string;
   }): Promise<void> => {
-    const deleted = await deleteBackup(backup.id);
-    if (!deleted) {
-      await notifyError({ title: 'No se pudo eliminar el respaldo' });
-      return;
-    }
+    setActiveOperation('Eliminando el respaldo…');
+    try {
+      const deleted = await deleteBackup(backup.id);
+      if (!deleted) {
+        await notifyError({ title: 'No se pudo eliminar el respaldo' });
+        return;
+      }
 
-    await notifySuccess({ title: 'Respaldo eliminado' });
+      await notifySuccess({ title: 'Respaldo eliminado' });
+    } finally {
+      setActiveOperation(null);
+    }
   };
 
   const handleRestoreBackup = async (backup: {
     id: string;
   }): Promise<void> => {
-    const restored = await restoreBackup(backup.id);
-    if (!restored) {
-      await notifyError({ title: 'No se pudo restaurar el respaldo' });
-      return;
-    }
+    setActiveOperation(
+      'Restaurando la base de datos desde el respaldo. No cierres ni recargues esta página…'
+    );
+    try {
+      const restored = await restoreBackup(backup.id);
+      if (!restored) {
+        await notifyError({ title: 'No se pudo restaurar el respaldo' });
+        return;
+      }
 
-    await notifySuccess({ title: 'Base de datos restaurada' });
+      await notifySuccess({ title: 'Base de datos restaurada' });
+    } finally {
+      setActiveOperation(null);
+    }
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h5" sx={{ mb: 2 }}>
-        Administración de datos
-      </Typography>
-
+    <PageShell title="Administración de datos">
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Typography variant="h6" sx={{ mb: 2 }}>
@@ -172,7 +200,35 @@ const DataAdministrationPage: React.FC = () => {
           </Button>
         </CardContent>
       </Card>
-    </Box>
+
+      {/* Blocking overlay: while a destructive/long data operation runs, cover
+          the panel so no other action (or navigation via the controls behind
+          it) can start until it finishes. */}
+      <Dialog
+        open={Boolean(activeOperation)}
+        aria-labelledby="data-admin-operation-title"
+      >
+        <DialogContent>
+          <Stack spacing={2} sx={{ alignItems: 'center', py: 2, px: 3 }}>
+            <CircularProgress />
+            <Typography
+              id="data-admin-operation-title"
+              variant="subtitle1"
+              sx={{ textAlign: 'center' }}
+            >
+              {activeOperation}
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ color: 'text.secondary', textAlign: 'center' }}
+            >
+              La operación puede tardar unos segundos. Esperá a que termine sin
+              cerrar esta ventana.
+            </Typography>
+          </Stack>
+        </DialogContent>
+      </Dialog>
+    </PageShell>
   );
 };
 

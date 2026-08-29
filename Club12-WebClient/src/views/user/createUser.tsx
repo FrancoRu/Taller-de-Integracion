@@ -1,14 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Button,
-  Card,
-  CardContent,
-  MenuItem,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Button, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import PageShell from '@/views/core/components/PageShell';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { useUser } from '@/modules/user/hook/user.hook';
 import { RegisterUserRequest } from '@/modules/user/type/user';
@@ -102,14 +95,11 @@ const CreateUser: React.FC = () => {
   if (!isAdmin && !isOwner) return null;
 
   return (
-    <Card sx={{ maxWidth: 520, mx: 'auto', mt: 3 }}>
-      <CardContent>
-        <Typography variant="h6" sx={{
-          mb: 2
-        }}>
-          Registrar nuevo usuario
-        </Typography>
-
+    <PageShell
+      title="Registrar nuevo usuario"
+      maxWidth="sm"
+      back={{ label: 'Volver', onClick: () => navigate(APP_ROUTES.panelUsers) }}
+    >
         {errors && errors.length > 0 && (
           <Stack spacing={0.5} sx={{
             mb: 2
@@ -191,8 +181,7 @@ const CreateUser: React.FC = () => {
             </Button>
           </Stack>
         </Stack>
-      </CardContent>
-    </Card>
+    </PageShell>
   );
 };
 

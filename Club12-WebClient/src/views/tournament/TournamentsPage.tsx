@@ -6,16 +6,9 @@ import React, {
   useState,
 } from 'react';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
-import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  InputAdornment,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Box, Chip, InputAdornment, TextField } from '@mui/material';
+import PageShell from '@/views/core/components/PageShell';
+import FilterBar from '@/views/core/components/FilterBar';
 import {
   confirmDelete,
   notifySuccess,
@@ -37,7 +30,6 @@ import {
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
-import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import { useNavigate } from 'react-router-dom';
 import {
   TABLE_PAGE_SIZE_OPTIONS,
@@ -234,6 +226,13 @@ const TournamentsPage: React.FC = () => {
     setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
   };
 
+  const handleClearFilters = () => {
+    setFilters(EMPTY_FILTERS);
+    setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
+  };
+
+  const hasActiveFilters = Boolean(filters.name) || Boolean(filters.description);
+
   const handlePaginationModelChange = useCallback(
     (nextPaginationModel: GridPaginationModel) => {
       setPaginationModel(prev =>
@@ -257,77 +256,70 @@ const TournamentsPage: React.FC = () => {
   }
 
   return (
-    <Card>
-      <CardContent>
-        <Stack
-          direction="row"
-          sx={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 2
-          }}>
-          <Typography variant="h6">Torneos</Typography>
-          <NewEntityButton type="Torneo" onClick={handleCreateTournament} />
-        </Stack>
+    <PageShell
+      title="Torneos"
+      actions={<NewEntityButton type="Torneo" onClick={handleCreateTournament} />}
+    >
+      <FilterBar
+        onClear={hasActiveFilters ? handleClearFilters : undefined}
+        ariaLabel="Filtros de torneos"
+      >
+        <TextField
+          label="Nombre"
+          name="name"
+          size="small"
+          value={filters.name ?? ''}
+          onChange={handleFilterChange}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+        <TextField
+          label="Descripción"
+          name="description"
+          size="small"
+          value={filters.description ?? ''}
+          onChange={handleFilterChange}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+      </FilterBar>
 
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{
-          mb: 2
-        }}>
-          <TextField
-            label="Nombre"
-            name="name"
-            size="small"
-            value={filters.name ?? ''}
-            onChange={handleFilterChange}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-              }
-            }}
-          />
-          <TextField
-            label="Descripción"
-            name="description"
-            size="small"
-            value={filters.description ?? ''}
-            onChange={handleFilterChange}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-              }
-            }}
-          />
-        </Stack>
-
-        {loading ? (
-          <LoadingIndicator />
-        ) : (
-          <Box sx={{ width: '100%' }}>
-            <DataGrid
-              rows={rows}
-              columns={columns}
-              getRowId={row => row.id}
-              autoHeight
-              disableRowSelectionOnClick
-              disableColumnMenu
-              pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
-              paginationModel={paginationModel}
-              onPaginationModelChange={handlePaginationModelChange}
-              paginationMode="server"
-              rowCount={rowCount}
-            />
-          </Box>
-        )}
-      </CardContent>
-    </Card>
+      <Box sx={{ width: '100%' }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          loading={loading}
+          getRowId={row => row.id}
+          autoHeight
+          disableRowSelectionOnClick
+          disableColumnMenu
+          localeText={{
+            noRowsLabel: hasActiveFilters
+              ? 'No se encontraron torneos para el filtro aplicado.'
+              : 'Todavía no hay torneos. Creá el primero para empezar.',
+          }}
+          pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+          paginationModel={paginationModel}
+          onPaginationModelChange={handlePaginationModelChange}
+          paginationMode="server"
+          rowCount={rowCount}
+        />
+      </Box>
+    </PageShell>
   );
 };
 

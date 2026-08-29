@@ -3,8 +3,6 @@ import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { formatDateTimeAr } from '@/modules/core/utils/formatDate';
 import {
   Box,
-  Card,
-  CardContent,
   InputAdornment,
   MenuItem,
   Stack,
@@ -12,6 +10,8 @@ import {
   Typography,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import PageShell from '@/views/core/components/PageShell';
+import FilterBar from '@/views/core/components/FilterBar';
 import {
   confirmDelete,
   notifySuccess,
@@ -226,6 +226,12 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
     }
 
     setFilters(updated);
+    setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
+  };
+
+  const handleClearFilters = () => {
+    setFilters(EMPTY_FILTERS);
+    setDebouncedFilters(EMPTY_FILTERS);
     setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
   };
 
@@ -460,8 +466,20 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
   // Partido 1..2, …"), never by calendar date. The filterable global grid is
   // only used for the cross-tournament matches list (no stageId).
   if (stageId) {
-    const stageContent = (
-      <>
+    const stageCreateButton = createType ? (
+      <NewEntityButton type={createType} onClick={handleCreateMatch} />
+    ) : null;
+
+    if (wrapInCard) {
+      return (
+        <PageShell title={title} actions={stageCreateButton}>
+          <StageMatchesByRound stageId={stageId} emptyMessage={emptyMessage} />
+        </PageShell>
+      );
+    }
+
+    return (
+      <Box sx={{ width: '100%' }}>
         {(title || createType) && (
           <Stack
             direction="row"
@@ -472,43 +490,24 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
             }}
           >
             {title ? <Typography variant="h6">{title}</Typography> : <Box />}
-            <NewEntityButton type={createType} onClick={handleCreateMatch} />
+            {stageCreateButton}
           </Stack>
         )}
         <StageMatchesByRound stageId={stageId} emptyMessage={emptyMessage} />
-      </>
+      </Box>
     );
-
-    if (wrapInCard) {
-      return (
-        <Card>
-          <CardContent>{stageContent}</CardContent>
-        </Card>
-      );
-    }
-
-    return <Box sx={{ width: '100%' }}>{stageContent}</Box>;
   }
 
-  const content = (
-    <>
-      {(title || createType) && (
-        <Stack
-          direction="row"
-          sx={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 2
-          }}>
-          {title ? <Typography variant="h6">{title}</Typography> : <Box />}
-          <NewEntityButton type={createType} onClick={handleCreateMatch} />
-        </Stack>
-      )}
+  const createButton = createType ? (
+    <NewEntityButton type={createType} onClick={handleCreateMatch} />
+  ) : null;
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{
-        mb: 2
-      }}>
-        {!stageId && (
+  const filterBar = (
+    <FilterBar
+      onClear={hasActiveFilters ? handleClearFilters : undefined}
+      ariaLabel="Filtros de partidos"
+    >
+      {!stageId && (
           <TextField
             select
             label="Tipo"
@@ -640,37 +639,57 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
             }
           }}
         />
-      </Stack>
+    </FilterBar>
+  );
 
-      <Box sx={{ width: '100%' }}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          loading={loading}
-          getRowId={row => row.id}
-          autoHeight
-          disableRowSelectionOnClick
-          disableColumnMenu
-          localeText={{ noRowsLabel: noRowsMessage }}
-          pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
-          paginationModel={paginationModel}
-          onPaginationModelChange={handlePaginationModelChange}
-          paginationMode="server"
-          rowCount={rowCount}
-        />
-      </Box>
-    </>
+  const grid = (
+    <Box sx={{ width: '100%' }}>
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        loading={loading}
+        getRowId={row => row.id}
+        autoHeight
+        disableRowSelectionOnClick
+        disableColumnMenu
+        localeText={{ noRowsLabel: noRowsMessage }}
+        pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+        paginationModel={paginationModel}
+        onPaginationModelChange={handlePaginationModelChange}
+        paginationMode="server"
+        rowCount={rowCount}
+      />
+    </Box>
   );
 
   if (wrapInCard) {
     return (
-      <Card>
-        <CardContent>{content}</CardContent>
-      </Card>
+      <PageShell title={title} actions={createButton}>
+        {filterBar}
+        {grid}
+      </PageShell>
     );
   }
 
-  return <Box sx={{ width: '100%' }}>{content}</Box>;
+  return (
+    <Box sx={{ width: '100%' }}>
+      {(title || createType) && (
+        <Stack
+          direction="row"
+          sx={{
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 2,
+          }}
+        >
+          {title ? <Typography variant="h6">{title}</Typography> : <Box />}
+          {createButton}
+        </Stack>
+      )}
+      {filterBar}
+      {grid}
+    </Box>
+  );
 };
 
 export default MatchesPage;

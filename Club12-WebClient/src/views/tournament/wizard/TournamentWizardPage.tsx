@@ -1,15 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Step,
-  StepLabel,
-  Stepper,
-  Typography,
-} from '@mui/material';
+import { Box, Button, Step, StepLabel, Stepper } from '@mui/material';
+import PageShell from '@/views/core/components/PageShell';
 import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useDivision } from '@/modules/division/hook/division.hook';
@@ -138,15 +130,8 @@ export default function TournamentWizardPage() {
   }, [state, addTournament, addDivision, addStage, navigate]);
 
   return (
-    <Card>
-      <CardContent>
-        <Typography variant="h6" sx={{
-          mb: 2
-        }}>
-          Asistente de creación de torneo
-        </Typography>
-
-        <Stepper activeStep={activeStep} sx={{ mb: 3 }}>
+    <PageShell title="Asistente de creación de torneo">
+      <Stepper activeStep={activeStep} sx={{ mb: 3 }}>
           {STEP_LABELS.map(label => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
@@ -199,7 +184,6 @@ export default function TournamentWizardPage() {
             </Button>
           )}
         </Box>
-      </CardContent>
-    </Card>
+    </PageShell>
   );
 }

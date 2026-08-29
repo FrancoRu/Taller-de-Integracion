@@ -2,15 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import {
   Box,
-  Card,
-  CardContent,
   Chip,
   FormControl,
   InputAdornment,
   InputLabel,
   MenuItem,
   Select,
-  Stack,
   TextField,
   Typography,
 } from '@mui/material';
@@ -22,6 +19,8 @@ import {
   IAuditLogResponse,
 } from '@/modules/auditLog/type/auditLog';
 import { SearchIcon } from '@/views/core/MUI/icons/icons';
+import PageShell from '@/views/core/components/PageShell';
+import FilterBar from '@/views/core/components/FilterBar';
 import {
   TABLE_PAGE_SIZE_OPTIONS,
   TABLE_ROWS_PER_PAGE,
@@ -116,6 +115,11 @@ const AuditLogsPage: React.FC = () => {
     []
   );
 
+  const handleClearFilters = () => {
+    setFilters(EMPTY_FILTERS);
+    setDebouncedFilters(EMPTY_FILTERS);
+  };
+
   const columns: GridColDef<IAuditLogResponse>[] = useMemo(
     () => [
       {
@@ -169,85 +173,72 @@ const AuditLogsPage: React.FC = () => {
   );
 
   return (
-    <Card>
-      <CardContent>
-        <Stack
-          direction="row"
-          sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
-        >
-          <Typography variant="h6">Registro de auditoría</Typography>
-        </Stack>
+    <PageShell title="Registro de auditoría">
+      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+        Trazabilidad de acciones sensibles: borrados totales, restauraciones,
+        cambios de estado de torneo y blanqueos de contraseña.
+      </Typography>
 
-        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-          Trazabilidad de acciones sensibles: borrados totales, restauraciones,
-          cambios de estado de torneo y blanqueos de contraseña.
-        </Typography>
-
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={2}
-          sx={{ mb: 2 }}
-        >
-          <TextField
-            label="Responsable"
-            name="actor"
-            size="small"
-            value={filters.actor ?? ''}
+      <FilterBar onClear={handleClearFilters} ariaLabel="Filtros de auditoría">
+        <TextField
+          label="Responsable"
+          name="actor"
+          size="small"
+          value={filters.actor ?? ''}
+          onChange={e =>
+            setFilters(prev => ({ ...prev, actor: e.target.value }))
+          }
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+        <FormControl size="small" sx={{ minWidth: 220 }}>
+          <InputLabel id="audit-action-filter-label">Acción</InputLabel>
+          <Select
+            labelId="audit-action-filter-label"
+            label="Acción"
+            value={filters.action ?? ''}
             onChange={e =>
-              setFilters(prev => ({ ...prev, actor: e.target.value }))
+              setFilters(prev => ({
+                ...prev,
+                action: e.target.value as AuditAction | '',
+              }))
             }
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-          <FormControl size="small" sx={{ minWidth: 220 }}>
-            <InputLabel id="audit-action-filter-label">Acción</InputLabel>
-            <Select
-              labelId="audit-action-filter-label"
-              label="Acción"
-              value={filters.action ?? ''}
-              onChange={e =>
-                setFilters(prev => ({
-                  ...prev,
-                  action: e.target.value as AuditAction | '',
-                }))
-              }
-            >
-              <MenuItem value="">Todas</MenuItem>
-              {ACTION_OPTIONS.map(action => (
-                <MenuItem key={action} value={action}>
-                  {ACTION_LABELS[action]}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Stack>
+          >
+            <MenuItem value="">Todas</MenuItem>
+            {ACTION_OPTIONS.map(action => (
+              <MenuItem key={action} value={action}>
+                {ACTION_LABELS[action]}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </FilterBar>
 
-        <Box sx={{ width: '100%' }}>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            loading={loading}
-            getRowId={row => row.id}
-            autoHeight
-            disableRowSelectionOnClick
-            disableColumnMenu
-            localeText={{ noRowsLabel: 'No hay acciones registradas.' }}
-            pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
-            paginationModel={paginationModel}
-            onPaginationModelChange={handlePaginationModelChange}
-            paginationMode="server"
-            rowCount={rowCount}
-          />
-        </Box>
-      </CardContent>
-    </Card>
+      <Box sx={{ width: '100%' }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          loading={loading}
+          getRowId={row => row.id}
+          autoHeight
+          disableRowSelectionOnClick
+          disableColumnMenu
+          localeText={{ noRowsLabel: 'No hay acciones registradas.' }}
+          pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+          paginationModel={paginationModel}
+          onPaginationModelChange={handlePaginationModelChange}
+          paginationMode="server"
+          rowCount={rowCount}
+        />
+      </Box>
+    </PageShell>
   );
 };
 

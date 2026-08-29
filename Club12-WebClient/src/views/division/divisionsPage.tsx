@@ -2,14 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import {
   Box,
-  Card,
-  CardContent,
   InputAdornment,
   Stack,
   TextField,
   Typography,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import PageShell from '@/views/core/components/PageShell';
+import FilterBar from '@/views/core/components/FilterBar';
 import {
   confirmDelete,
   notifySuccess,
@@ -123,6 +123,12 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
     } as DivisionSearchFilters;
 
     setFilters(updated);
+    setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
+  };
+
+  const handleClearFilters = () => {
+    setFilters(EMPTY_FILTERS);
+    setDebouncedFilters(EMPTY_FILTERS);
     setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
   };
 
@@ -250,71 +256,82 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
     navigate(APP_ROUTES.panelDivisionCreate);
   }, [onCreate, navigate]);
 
-  const content = (
-    <>
-      {(title || createType) && (
-        <Stack
-          direction="row"
-          sx={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 2
-          }}>
-          {title ? <Typography variant="h6">{title}</Typography> : <Box />}
-          <NewEntityButton type={createType} onClick={handleCreateDivision} />
-        </Stack>
-      )}
+  const createButton = createType ? (
+    <NewEntityButton type={createType} onClick={handleCreateDivision} />
+  ) : null;
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{
-        mb: 2
-      }}>
-        <TextField
-          label="Nombre"
-          name="name"
-          size="small"
-          value={filters.name ?? ''}
-          onChange={handleFilterChange}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            }
-          }}
-        />
-      </Stack>
+  const filterBar = (
+    <FilterBar
+      onClear={hasActiveFilters ? handleClearFilters : undefined}
+      ariaLabel="Filtros de divisiones"
+    >
+      <TextField
+        label="Nombre"
+        name="name"
+        size="small"
+        value={filters.name ?? ''}
+        onChange={handleFilterChange}
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          },
+        }}
+      />
+    </FilterBar>
+  );
 
-      <Box sx={{ width: '100%' }}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          loading={loading}
-          getRowId={row => row.id}
-          autoHeight
-          disableRowSelectionOnClick
-          disableColumnMenu
-          localeText={{ noRowsLabel: noRowsMessage }}
-          pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
-          paginationModel={paginationModel}
-          onPaginationModelChange={handlePaginationModelChange}
-          paginationMode="server"
-          rowCount={rowCount}
-        />
-      </Box>
-    </>
+  const grid = (
+    <Box sx={{ width: '100%' }}>
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        loading={loading}
+        getRowId={row => row.id}
+        autoHeight
+        disableRowSelectionOnClick
+        disableColumnMenu
+        localeText={{ noRowsLabel: noRowsMessage }}
+        pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+        paginationModel={paginationModel}
+        onPaginationModelChange={handlePaginationModelChange}
+        paginationMode="server"
+        rowCount={rowCount}
+      />
+    </Box>
   );
 
   if (wrapInCard) {
     return (
-      <Card>
-        <CardContent>{content}</CardContent>
-      </Card>
+      <PageShell title={title} actions={createButton}>
+        {filterBar}
+        {grid}
+      </PageShell>
     );
   }
 
-  return <Box sx={{ width: '100%' }}>{content}</Box>;
+  return (
+    <Box sx={{ width: '100%' }}>
+      {(title || createType) && (
+        <Stack
+          direction="row"
+          sx={{
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 2,
+          }}
+        >
+          {title ? <Typography variant="h6">{title}</Typography> : <Box />}
+          {createButton}
+        </Stack>
+      )}
+      {filterBar}
+      {grid}
+    </Box>
+  );
 };
 
 export default DivisionsPage;

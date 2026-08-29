@@ -2,15 +2,8 @@ import React, { useMemo, useState } from 'react';
 import Cookies from 'js-cookie';
 import { decodeToken } from 'react-jwt';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  Button,
-  Card,
-  CardContent,
-  Divider,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Button, Divider, Stack, TextField, Typography } from '@mui/material';
+import PageShell from '@/views/core/components/PageShell';
 import { useError } from '@/modules/error/hooks/error.hock';
 import { useUser } from '@/modules/user/hook/user.hook';
 import { COOKIE_SIGNIN_TOKEN } from '@/modules/core/constants/constants';
@@ -209,14 +202,7 @@ const UpdatePassword: React.FC<UpdatePasswordProps> = ({
   };
 
   return (
-    <Card sx={{ maxWidth: 520, mx: 'auto', mt: 2 }}>
-      <CardContent>
-        <Typography variant="h6" sx={{
-          mb: 2
-        }}>
-          Cambiar contraseña
-        </Typography>
-
+    <PageShell title="Cambiar contraseña" maxWidth="sm">
         {errors && errors.length > 0 && (
           <Stack spacing={0.5} sx={{
             mb: 2
@@ -345,8 +331,7 @@ const UpdatePassword: React.FC<UpdatePasswordProps> = ({
             </Button>
           </Stack>
         </Stack>
-      </CardContent>
-    </Card>
+    </PageShell>
   );
 };
 

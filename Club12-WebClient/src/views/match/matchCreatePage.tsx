@@ -1,14 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  Card,
-  CardContent,
-  Grid,
-  MenuItem,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Grid, MenuItem, Stack, TextField } from '@mui/material';
+import PageShell from '@/views/core/components/PageShell';
 import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { useStage } from '@/modules/stage/hook/stage.hook';
@@ -124,12 +117,9 @@ const MatchCreatePage: React.FC = () => {
   }, [stageId, homeTeamId, visitorTeamId, matchDate, venueId, addMatch, handleCancel]);
 
   return (
-    <Card>
-      <CardContent>
-        <Stack spacing={2}>
-          <Typography variant="h6">Nuevo partido</Typography>
-
-          <Grid container spacing={2}>
+    <PageShell title="Nuevo partido" maxWidth="md">
+      <Stack spacing={2}>
+        <Grid container spacing={2}>
             {!isStageContext && (
               <Grid size={12}>
                 <TextField
@@ -244,21 +234,18 @@ const MatchCreatePage: React.FC = () => {
                 ))}
               </TextField>
             </Grid>
-          </Grid>
+        </Grid>
 
-          <Stack direction="row" sx={{
-            justifyContent: "flex-end"
-          }}>
-            <FormButtons
-              onCancel={handleCancel}
-              onConfirm={() => void handleCreate()}
-              confirmLabel="Crear"
-              disabled={submitting}
-            />
-          </Stack>
+        <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>
+          <FormButtons
+            onCancel={handleCancel}
+            onConfirm={() => void handleCreate()}
+            confirmLabel="Crear"
+            disabled={submitting}
+          />
         </Stack>
-      </CardContent>
-    </Card>
+      </Stack>
+    </PageShell>
   );
 };
 

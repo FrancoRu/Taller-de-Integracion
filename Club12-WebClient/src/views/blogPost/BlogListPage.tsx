@@ -1,27 +1,20 @@
-import { Container, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
+import PageShell from '@/views/core/components/PageShell';
 import ShowPosts from '@/views/blogPost/showPosts';
 
 export default function BlogListPage() {
   return (
-    <Container maxWidth="lg" sx={{ py: 5 }}>
-      <Typography
-        variant="h4"
-        component="h1"
-        sx={{
-          fontWeight: "bold",
-          mb: 1
-        }}>
-        Novedades
-      </Typography>
+    <PageShell title="Novedades">
       <Typography
         variant="body1"
         sx={{
-          color: "text.secondary",
-          mb: 4
-        }}>
+          color: 'text.secondary',
+          mb: 4,
+        }}
+      >
         Últimas noticias de la liga Club 12.
       </Typography>
       <ShowPosts />
-    </Container>
+    </PageShell>
   );
 }

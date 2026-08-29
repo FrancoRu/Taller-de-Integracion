@@ -3,8 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { formatDateTimeAr } from '@/modules/core/utils/formatDate';
 import {
   Button,
-  Card,
-  CardContent,
   Chip,
   Dialog,
   DialogContent,
@@ -29,7 +27,8 @@ import {
 } from '@/modules/playerSanction/utils/sanctionDisplay';
 import { usePlayer } from '@/modules/player/hook/player.hook';
 import { useMatch } from '@/modules/match/hook/match.hook';
-import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import PageShell from '@/views/core/components/PageShell';
+import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
 const APPEAL_STATUS_LABEL: Record<SanctionAppealStatus, string> = {
@@ -162,24 +161,20 @@ const PlayerSanctionPage: React.FC = () => {
 
   if (!targetSanctionId) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">Sanción</Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              mt: 1
-            }}>
-            No se recibió una sanción para visualizar.
-          </Typography>
-        </CardContent>
-      </Card>
+      <PageShell title="Sanción">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          No se recibió una sanción para visualizar.
+        </Typography>
+      </PageShell>
     );
   }
 
   if (loading) {
-    return <LoadingIndicator />;
+    return (
+      <PageShell title="Sanción">
+        <DetailSkeleton />
+      </PageShell>
+    );
   }
 
   if (
@@ -188,57 +183,28 @@ const PlayerSanctionPage: React.FC = () => {
       playerSanction.slug !== targetSanctionId)
   ) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">Sanción no encontrada</Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              mt: 1
-            }}>
-            No fue posible cargar la información de la sanción.
-          </Typography>
-          <Typography
-            component="button"
-            onClick={() => navigate(APP_ROUTES.panelSanctions)}
-            sx={{
-              mt: 2,
-              border: 0,
-              background: 'none',
-              color: 'primary.main',
-              cursor: 'pointer',
-              p: 0,
-            }}
-          >
-            Volver al listado
-          </Typography>
-        </CardContent>
-      </Card>
+      <PageShell
+        title="Sanción no encontrada"
+        back={{
+          label: 'Volver al listado',
+          onClick: () => navigate(APP_ROUTES.panelSanctions),
+        }}
+      >
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          No fue posible cargar la información de la sanción.
+        </Typography>
+      </PageShell>
     );
   }
 
   return (
-    <Card>
-      <CardContent>
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={2}
-          sx={{
-            alignItems: { xs: 'flex-start', sm: 'center' },
-            justifyContent: "space-between",
-            mb: 2
-          }}>
-          <Typography variant="h6">Sanción</Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => navigate(APP_ROUTES.panelSanctions)}
-          >
-            Volver
-          </Button>
-        </Stack>
-
+    <PageShell
+      title="Sanción"
+      back={{
+        label: 'Volver al listado',
+        onClick: () => navigate(APP_ROUTES.panelSanctions),
+      }}
+    >
         <Tabs
           value={tab}
           onChange={(_, value) => setTab(value)}
@@ -439,7 +405,7 @@ const PlayerSanctionPage: React.FC = () => {
         {tab === 'jugador' && (
           <>
             {playerLoading ? (
-              <LoadingIndicator />
+              <DetailSkeleton />
             ) : !player || player.id !== playerSanction.playerId ? (
               <Typography variant="body2" sx={{
                 color: "text.secondary"
@@ -520,7 +486,7 @@ const PlayerSanctionPage: React.FC = () => {
         {tab === 'partido' && (
           <>
             {matchLoading ? (
-              <LoadingIndicator />
+              <DetailSkeleton />
             ) : !match || match.id !== playerSanction.matchId ? (
               <Typography variant="body2" sx={{
                 color: "text.secondary"
@@ -595,7 +561,6 @@ const PlayerSanctionPage: React.FC = () => {
             )}
           </>
         )}
-      </CardContent>
 
       <Dialog
         open={appealDialogOpen}
@@ -695,7 +660,7 @@ const PlayerSanctionPage: React.FC = () => {
           </Stack>
         </DialogContent>
       </Dialog>
-    </Card>
+    </PageShell>
   );
 };
 

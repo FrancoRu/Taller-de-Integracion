@@ -2,16 +2,9 @@ import React, { useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
 import { decodeToken } from 'react-jwt';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  Button,
-  Card,
-  CardContent,
-  CircularProgress,
-  MenuItem,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Button, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import PageShell from '@/views/core/components/PageShell';
+import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { useUser } from '@/modules/user/hook/user.hook';
 import { GUID } from '@/modules/core/types/types';
@@ -168,45 +161,42 @@ const EditUser: React.FC = () => {
     }
   };
 
+  const pageTitle = isSelfProfileMode ? 'Editar perfil' : 'Editar usuario';
+  const handleBack = () =>
+    navigate(
+      isSelfProfileMode
+        ? APP_ROUTES.panelEditProfile
+        : APP_ROUTES.panelUser.build(targetUserId as string)
+    );
+
   if (loading) {
     return (
-      <Card sx={{ maxWidth: 520, mx: 'auto', mt: 3 }}>
-        <CardContent>
-          <Stack
-            sx={{
-              alignItems: "center",
-              py: 3
-            }}>
-            <CircularProgress />
-          </Stack>
-        </CardContent>
-      </Card>
+      <PageShell title={pageTitle} maxWidth="sm">
+        <DetailSkeleton />
+      </PageShell>
     );
   }
 
   if (!user) {
     return (
-      <Card sx={{ maxWidth: 520, mx: 'auto', mt: 3 }}>
-        <CardContent>
-          <Typography sx={{
-            color: "text.secondary"
-          }}>
-            No se encontró el usuario.
-          </Typography>
-        </CardContent>
-      </Card>
+      <PageShell
+        title={pageTitle}
+        maxWidth="sm"
+        back={{ label: 'Volver', onClick: handleBack }}
+      >
+        <Typography sx={{ color: 'text.secondary' }}>
+          No se encontró el usuario.
+        </Typography>
+      </PageShell>
     );
   }
 
   return (
-    <Card sx={{ maxWidth: 520, mx: 'auto', mt: 3 }}>
-      <CardContent>
-        <Typography variant="h6" sx={{
-          mb: 2
-        }}>
-          {isSelfProfileMode ? 'Editar perfil' : 'Editar usuario'}
-        </Typography>
-
+    <PageShell
+      title={pageTitle}
+      maxWidth="sm"
+      back={{ label: 'Volver', onClick: handleBack }}
+    >
         {errors && errors.length > 0 && (
           <Stack spacing={0.5} sx={{
             mb: 2
@@ -298,8 +288,7 @@ const EditUser: React.FC = () => {
             </Button>
           </Stack>
         </Stack>
-      </CardContent>
-    </Card>
+    </PageShell>
   );
 };
 

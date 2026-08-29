@@ -1,9 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  Button,
-  Card,
-  CardContent,
   Chip,
   Grid,
   List,
@@ -19,7 +16,8 @@ import { usePlayerStatistic } from '@/modules/playerStatistic/hook/playerStatist
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
-import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import PageShell from '@/views/core/components/PageShell';
+import { DetailSkeleton } from '@/views/core/components/skeletons';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PlayerStatisticCreatePage from '@/views/playerStatistic/playerStatisticCreatePage';
 import PlayerStatisticCard from '@/views/playerStatistic/PlayerStatisticCard';
@@ -117,24 +115,20 @@ const PlayerPage: React.FC = () => {
 
   if (!targetPlayerId) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">Jugador</Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              mt: 1
-            }}>
-            No se recibió un jugador para visualizar.
-          </Typography>
-        </CardContent>
-      </Card>
+      <PageShell title="Jugador">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          No se recibió un jugador para visualizar.
+        </Typography>
+      </PageShell>
     );
   }
 
   if (loading) {
-    return <LoadingIndicator />;
+    return (
+      <PageShell title="Jugador">
+        <DetailSkeleton />
+      </PageShell>
+    );
   }
 
   if (
@@ -142,57 +136,28 @@ const PlayerPage: React.FC = () => {
     (player.id !== targetPlayerId && player.slug !== targetPlayerId)
   ) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">Jugador no encontrado</Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              mt: 1
-            }}>
-            No fue posible cargar la información del jugador.
-          </Typography>
-          <Typography
-            component="button"
-            onClick={() => navigate(APP_ROUTES.panelPlayers)}
-            sx={{
-              mt: 2,
-              border: 0,
-              background: 'none',
-              color: 'primary.main',
-              cursor: 'pointer',
-              p: 0,
-            }}
-          >
-            Volver al listado
-          </Typography>
-        </CardContent>
-      </Card>
+      <PageShell
+        title="Jugador no encontrado"
+        back={{
+          label: 'Volver al listado',
+          onClick: () => navigate(APP_ROUTES.panelPlayers),
+        }}
+      >
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          No fue posible cargar la información del jugador.
+        </Typography>
+      </PageShell>
     );
   }
 
   return (
-    <Card>
-      <CardContent>
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={2}
-          sx={{
-            alignItems: { xs: 'flex-start', sm: 'center' },
-            justifyContent: "space-between",
-            mb: 2
-          }}>
-          <Typography variant="h6">{player.fullName}</Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => navigate(APP_ROUTES.panelPlayers)}
-          >
-            Volver
-          </Button>
-        </Stack>
-
+    <PageShell
+      title={player.fullName}
+      back={{
+        label: 'Volver al listado',
+        onClick: () => navigate(APP_ROUTES.panelPlayers),
+      }}
+    >
         <Tabs
           value={tab}
           onChange={(_, value) => setTab(value)}
@@ -367,7 +332,6 @@ const PlayerPage: React.FC = () => {
             )}
           </>
         )}
-      </CardContent>
 
       <PlayerStatisticCreatePage
         open={statisticDialogOpen}
@@ -379,7 +343,7 @@ const PlayerPage: React.FC = () => {
         onClose={() => setSanctionDialogOpen(false)}
         onCreated={refreshSanctions}
       />
-    </Card>
+    </PageShell>
   );
 };
 

@@ -3,8 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
   Button,
-  CircularProgress,
-  Container,
   Divider,
   Stack,
   Typography,
@@ -12,6 +10,8 @@ import {
 import { useMatch } from '@/modules/match/hook/match.hook';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import MatchStatusChip from '@/views/match/MatchStatusChip';
+import PageShell from '@/views/core/components/PageShell';
+import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { formatMatchScore } from '@/modules/match/utils/matchDisplay';
 import { formatLongDateTimeAr } from '@/modules/core/utils/formatDate';
@@ -34,39 +34,39 @@ export default function PublicMatchPage() {
     void fetch();
   }, [matchId, getMatchById]);
 
+  const goToTournaments = () => navigate(APP_ROUTES.publicTournaments);
+
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-        <CircularProgress />
-      </Box>
+      <PageShell maxWidth="md">
+        <DetailSkeleton />
+      </PageShell>
     );
   }
 
   if (!match || (match.id !== matchId && match.slug !== matchId)) {
     return (
-      <Container maxWidth="md" sx={{ py: 5 }}>
+      <PageShell maxWidth="md">
         <Typography variant="h5" component="h1" sx={{ mb: 2 }}>
           Partido no encontrado
         </Typography>
-        <Button onClick={() => navigate(APP_ROUTES.publicTournaments)}>
+        <Typography sx={{ color: 'text.secondary', mb: 3 }}>
+          El partido que buscás no existe o ya no está disponible.
+        </Typography>
+        <Button onClick={goToTournaments}>
           Volver a torneos
         </Button>
-      </Container>
+      </PageShell>
     );
   }
 
   const { homeTeam, visitorTeam, isFinished, venue } = match;
 
   return (
-    <Container maxWidth="md" sx={{ py: 5 }}>
-      <Button
-        onClick={() => navigate(APP_ROUTES.publicTournaments)}
-        sx={{ mb: 3, pl: 0 }}
-        color="inherit"
-      >
-        ← Volver a torneos
-      </Button>
-
+    <PageShell
+      maxWidth="md"
+      back={{ label: 'Volver a torneos', onClick: goToTournaments }}
+    >
       <Stack sx={{ alignItems: 'center', mb: 3 }} spacing={1}>
         <MatchStatusChip status={match.status} isFinished={isFinished} />
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
@@ -116,6 +116,6 @@ export default function PublicMatchPage() {
           </Box>
         )}
       </Stack>
-    </Container>
+    </PageShell>
   );
 }

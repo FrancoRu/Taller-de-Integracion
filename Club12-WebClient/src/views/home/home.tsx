@@ -8,7 +8,6 @@ import {
   CardActionArea,
   CardContent,
   CardMedia,
-  CircularProgress,
   Container,
   Grid,
   Stack,
@@ -23,6 +22,8 @@ import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { BLOG_HOME_EXCERPT_LENGTH } from '@/modules/blogPost/constants/blogPost';
 import { TournamentCard } from '@/views/home/tournaments/PublicTournamentsPage';
 import BasketballCourtPattern from '@/views/core/components/BasketballCourtPattern';
+import PageShell from '@/views/core/components/PageShell';
+import { CardGridSkeleton } from '@/views/core/components/skeletons';
 import {
   DEFAULT_PAGE_METADATA,
   usePageMetadata,
@@ -165,8 +166,8 @@ export default function Home() {
         </Container>
       </Box>
 
-      <Container maxWidth="lg" sx={{ py: 6 }}>
-        <Grid container spacing={2} sx={{
+      <PageShell>
+        <Grid container spacing={2} component="nav" aria-label="Accesos rápidos" sx={{
           mb: 6
         }}>
           {QUICK_NAV_ITEMS.map(item => (
@@ -196,10 +197,11 @@ export default function Home() {
           ))}
         </Grid>
 
-        <Box sx={{
+        <Box component="section" sx={{
           mb: 6
         }}>
           <Box
+            component="header"
             sx={{
               display: "flex",
               justifyContent: "space-between",
@@ -215,18 +217,13 @@ export default function Home() {
           </Box>
 
           {tournamentsLoading ? (
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                py: 4
-              }}>
-              <CircularProgress />
-            </Box>
+            <CardGridSkeleton count={3} />
           ) : featuredTournaments.length === 0 ? (
             <Typography sx={{
               color: "text.secondary"
-            }}>No hay torneos disponibles.</Typography>
+            }}>
+              Todavía no hay torneos publicados. Volvé a consultar más adelante.
+            </Typography>
           ) : (
             <Grid container spacing={3}>
               {featuredTournaments.map(tournament => (
@@ -244,8 +241,9 @@ export default function Home() {
           )}
         </Box>
 
-        <Box>
+        <Box component="section">
           <Box
+            component="header"
             sx={{
               display: "flex",
               justifyContent: "space-between",
@@ -261,18 +259,13 @@ export default function Home() {
           </Box>
 
           {postsLoading ? (
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                py: 4
-              }}>
-              <CircularProgress />
-            </Box>
+            <CardGridSkeleton count={3} />
           ) : posts.length === 0 ? (
             <Typography sx={{
               color: "text.secondary"
-            }}>No hay novedades por el momento.</Typography>
+            }}>
+              Todavía no publicamos novedades. Pronto vas a encontrar noticias acá.
+            </Typography>
           ) : (
             <Grid container spacing={3}>
               {posts.map(post => (
@@ -283,7 +276,7 @@ export default function Home() {
                     sm: 6,
                     md: 4
                   }}>
-                  <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <Card component="article" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <CardActionArea
                       onClick={() => void handleReadMore(post.slug)}
                       sx={{ height: '100%', alignItems: 'flex-start', display: 'flex', flexDirection: 'column' }}
@@ -351,7 +344,7 @@ export default function Home() {
             </Grid>
           )}
         </Box>
-      </Container>
+      </PageShell>
     </>
   );
 }

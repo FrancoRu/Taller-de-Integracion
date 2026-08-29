@@ -9,7 +9,7 @@ const paragraphs = [
 export default function HowWeAre() {
   return (
     <Box>
-      <Box sx={{ bgcolor: 'secondary.main', color: '#fff', py: { xs: 6, md: 8 } }}>
+      <Box component="header" sx={{ bgcolor: 'secondary.main', color: '#fff', py: { xs: 6, md: 8 } }}>
         <Container maxWidth="md">
           <Typography
             variant="h3"
@@ -32,7 +32,7 @@ export default function HowWeAre() {
         </Container>
       </Box>
 
-      <Box sx={{ bgcolor: 'background.default', color: 'text.primary', py: { xs: 5, md: 6 } }}>
+      <Box component="section" sx={{ bgcolor: 'background.default', color: 'text.primary', py: { xs: 5, md: 6 } }}>
         <Container maxWidth="md">
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {paragraphs.map((text, index) => (

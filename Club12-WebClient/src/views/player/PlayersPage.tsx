@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import {
   Box,
-  Card,
-  CardContent,
   Dialog,
   DialogActions,
   DialogContent,
@@ -38,6 +36,8 @@ import {
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
+import PageShell from '@/views/core/components/PageShell';
+import FilterBar from '@/views/core/components/FilterBar';
 import {
   DeleteIcon,
   EditIcon,
@@ -259,6 +259,11 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     } as PlayersSearchFilters;
 
     setFilters(updated);
+    setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
+  };
+
+  const handleClearFilters = () => {
+    setFilters(EMPTY_FILTERS);
     setPaginationModel(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
   };
 
@@ -626,24 +631,13 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     });
   };
 
-  const content = (
-    <>
-      {(title || createType) && (
-        <Stack
-          direction="row"
-          sx={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 2
-          }}>
-          {title ? <Typography variant="h6">{title}</Typography> : <Box />}
-          <NewEntityButton type={createType} onClick={handleCreatePlayer} />
-        </Stack>
-      )}
+  const createButton = createType ? (
+    <NewEntityButton type={createType} onClick={handleCreatePlayer} />
+  ) : null;
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{
-        mb: 2
-      }}>
+  const body = (
+    <>
+      <FilterBar onClear={handleClearFilters} ariaLabel="Filtros de jugadores">
         <TextField
           label="Nombre"
           name="names"
@@ -708,7 +702,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
             }
           }}
         />
-      </Stack>
+      </FilterBar>
 
       <Box sx={{ width: '100%' }}>
         <DataGrid
@@ -1029,13 +1023,25 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
 
   if (wrapInCard) {
     return (
-      <Card>
-        <CardContent>{content}</CardContent>
-      </Card>
+      <PageShell title={title} actions={createButton}>
+        {body}
+      </PageShell>
     );
   }
 
-  return <Box sx={{ width: '100%' }}>{content}</Box>;
+  return (
+    <Box sx={{ width: '100%' }}>
+      {createButton && (
+        <Stack
+          direction="row"
+          sx={{ justifyContent: 'flex-end', mb: 2 }}
+        >
+          {createButton}
+        </Stack>
+      )}
+      {body}
+    </Box>
+  );
 };
 
 export default PlayersPage;

@@ -1,14 +1,15 @@
 import React from 'react';
-import { Container, Typography, Box, Paper, Divider } from '@mui/material';
+import { Typography, Box, Paper, Divider } from '@mui/material';
 import {
   regulationBlocks,
   regulationIntro,
 } from '@/views/home/information/regulationContent';
+import PageShell from '@/views/core/components/PageShell';
 
 const Regulation: React.FC = () => {
   return (
-    <Container maxWidth="md" sx={{ py: 6 }}>
-      <Paper elevation={2} sx={{ p: { xs: 3, md: 6 } }}>
+    <PageShell maxWidth="md">
+      <Paper component="section" elevation={2} sx={{ p: { xs: 3, md: 6 } }}>
         <Typography
           variant="h3"
           component="h1"
@@ -78,7 +79,7 @@ const Regulation: React.FC = () => {
           }
         })}
       </Paper>
-    </Container>
+    </PageShell>
   );
 };
 

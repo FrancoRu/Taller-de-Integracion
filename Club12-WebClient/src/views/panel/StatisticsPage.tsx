@@ -3,7 +3,6 @@ import {
   Box,
   Card,
   CardContent,
-  CircularProgress,
   Grid,
   LinearProgress,
   Stack,
@@ -14,6 +13,8 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
+import PageShell from '@/views/core/components/PageShell';
+import { CardGridSkeleton } from '@/views/core/components/skeletons';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useTeam } from '@/modules/team/hook/team.hook';
 import { useMatch } from '@/modules/match/hook/match.hook';
@@ -150,14 +151,9 @@ const StatisticsPage = () => {
 
   if (loading || !summary) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          py: 10
-        }}>
-        <CircularProgress />
-      </Box>
+      <PageShell title="Estadísticas">
+        <CardGridSkeleton count={4} />
+      </PageShell>
     );
   }
 
@@ -167,16 +163,7 @@ const StatisticsPage = () => {
   const maxScorerPoints = summary.topScorers[0]?.points ?? 0;
 
   return (
-    <Box>
-      <Typography
-        variant="h5"
-        sx={{
-          fontWeight: "bold",
-          mb: 3
-        }}>
-        Estadísticas
-      </Typography>
-
+    <PageShell title="Estadísticas">
       <Grid container spacing={2} sx={{
         mb: 1
       }}>
@@ -397,7 +384,7 @@ const StatisticsPage = () => {
           </Card>
         </Grid>
       </Grid>
-    </Box>
+    </PageShell>
   );
 };
 

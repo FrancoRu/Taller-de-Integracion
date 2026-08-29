@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Card,
-  CardContent,
   FormControlLabel,
   Grid,
   MenuItem,
   Stack,
   Switch,
   TextField,
-  Typography,
 } from '@mui/material';
+import PageShell from '@/views/core/components/PageShell';
 import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
@@ -96,12 +94,9 @@ const DivisionCreatePage: React.FC = () => {
   }, [name, tournamentId, isCrossDivisionCup, addDivision, navigate]);
 
   return (
-    <Card>
-      <CardContent>
-        <Stack spacing={2}>
-          <Typography variant="h6">Nueva división</Typography>
-
-          <Grid container spacing={2}>
+    <PageShell title="Nueva división" maxWidth="md">
+      <Stack spacing={2}>
+        <Grid container spacing={2}>
             {!isTournamentContext && (
               <Grid size={12}>
                 <TextField
@@ -147,19 +142,16 @@ const DivisionCreatePage: React.FC = () => {
             </Grid>
           </Grid>
 
-          <Stack direction="row" sx={{
-            justifyContent: "flex-end"
-          }}>
-            <FormButtons
-              onCancel={handleCancel}
-              onConfirm={() => void handleCreate()}
-              confirmLabel="Crear"
-              disabled={submitting}
-            />
-          </Stack>
+        <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>
+          <FormButtons
+            onCancel={handleCancel}
+            onConfirm={() => void handleCreate()}
+            confirmLabel="Crear"
+            disabled={submitting}
+          />
         </Stack>
-      </CardContent>
-    </Card>
+      </Stack>
+    </PageShell>
   );
 };
 

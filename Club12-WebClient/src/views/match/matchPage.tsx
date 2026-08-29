@@ -38,7 +38,11 @@ import {
   notifySuccess,
   notifyWarning,
 } from '@/modules/core/utils/confirmDialog';
-import LoadingIndicator from '@/views/core/components/LoadingIndicator';
+import PageShell from '@/views/core/components/PageShell';
+import {
+  CardGridSkeleton,
+  DetailSkeleton,
+} from '@/views/core/components/skeletons';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import MatchStatisticsTab from '@/views/match/MatchStatisticsTab';
 import MatchStatusChip from '@/views/match/MatchStatusChip';
@@ -193,55 +197,36 @@ const MatchPage: React.FC = () => {
 
   if (!targetMatchId) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">Partido</Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              mt: 1
-            }}>
-            No se recibió un partido para visualizar.
-          </Typography>
-        </CardContent>
-      </Card>
+      <PageShell title="Partido">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          No se recibió un partido para visualizar.
+        </Typography>
+      </PageShell>
     );
   }
 
   if (loading) {
-    return <LoadingIndicator />;
+    return (
+      <PageShell title="Partido">
+        <DetailSkeleton />
+      </PageShell>
+    );
   }
 
   if (!match || (match.id !== targetMatchId && match.slug !== targetMatchId)) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">Partido no encontrado</Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              mt: 1
-            }}>
-            No fue posible cargar la información del partido.
-          </Typography>
-          <Typography
-            component="button"
-            onClick={() => navigate(APP_ROUTES.panelMatches)}
-            sx={{
-              mt: 2,
-              border: 0,
-              background: 'none',
-              color: 'primary.main',
-              cursor: 'pointer',
-              p: 0,
-            }}
-          >
-            Volver al listado
-          </Typography>
-        </CardContent>
-      </Card>
+      <PageShell title="Partido no encontrado">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          No fue posible cargar la información del partido.
+        </Typography>
+        <Button
+          variant="text"
+          onClick={() => navigate(APP_ROUTES.panelMatches)}
+          sx={{ mt: 2, px: 0 }}
+        >
+          Volver al listado
+        </Button>
+      </PageShell>
     );
   }
 
@@ -290,27 +275,19 @@ const MatchPage: React.FC = () => {
   );
 
   return (
-    <Card>
-      <CardContent>
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={2}
-          sx={{
-            alignItems: { xs: 'flex-start', sm: 'center' },
-            justifyContent: "space-between",
-            mb: 3
-          }}>
-          <Typography variant="h6">Partido</Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => navigate(APP_ROUTES.panelMatches)}
-          >
-            Volver
-          </Button>
-        </Stack>
-
-        <Tabs
+    <PageShell
+      title="Partido"
+      actions={
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => navigate(APP_ROUTES.panelMatches)}
+        >
+          Volver
+        </Button>
+      }
+    >
+      <Tabs
           value={tab}
           onChange={(_, value) => setTab(value)}
           sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}
@@ -486,7 +463,7 @@ const MatchPage: React.FC = () => {
             </Stack>
 
             {sanctionsLoading ? (
-              <LoadingIndicator />
+              <CardGridSkeleton count={2} />
             ) : sanctions.length > 0 ? (
               <Grid container spacing={2}>
                 {sanctions.map((sanction: IPlayerSanctionResponse) => (
@@ -558,7 +535,6 @@ const MatchPage: React.FC = () => {
             )}
           </>
         )}
-      </CardContent>
 
       <PlayerSanctionCreatePage
         open={sanctionDialogOpen}
@@ -660,7 +636,7 @@ const MatchPage: React.FC = () => {
           </Stack>
         </DialogContent>
       </Dialog>
-    </Card>
+    </PageShell>
   );
 };
 
