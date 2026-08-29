@@ -38,50 +38,6 @@ const MobileNavItems: React.FC<MobileNavItemsProps> = ({ onCloseDrawer }) => {
 
       <ListItemButton
         component={Link}
-        to={RoutesNavigationViews.How_We_Are}
-        selected={isSelected(RoutesNavigationViews.How_We_Are)}
-        onClick={() =>
-          handleNavigationAndCloseDrawer(RoutesNavigationViews.How_We_Are)
-        }
-      >
-        <ListItemText primary="Quiénes somos" />
-      </ListItemButton>
-
-      <ListItemButton onClick={toggleInfoCollapse}>
-        <ListItemText primary="Información" />
-        {openInfoCollapse ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-      </ListItemButton>
-      <Collapse in={openInfoCollapse} timeout="auto" unmountOnExit>
-        <List component="div" disablePadding>
-          <ListItemButton
-            component={Link}
-            to={RoutesNavigationViews.Medical_Record}
-            selected={isSelected(RoutesNavigationViews.Medical_Record)}
-            sx={{ pl: 4 }}
-            onClick={() =>
-              handleNavigationAndCloseDrawer(
-                RoutesNavigationViews.Medical_Record
-              )
-            }
-          >
-            <ListItemText primary="Ficha Medica" />
-          </ListItemButton>
-          <ListItemButton
-            component={Link}
-            to={RoutesNavigationViews.Rules}
-            selected={isSelected(RoutesNavigationViews.Rules)}
-            sx={{ pl: 4 }}
-            onClick={() =>
-              handleNavigationAndCloseDrawer(RoutesNavigationViews.Rules)
-            }
-          >
-            <ListItemText primary="Reglamento" />
-          </ListItemButton>
-        </List>
-      </Collapse>
-
-      <ListItemButton
-        component={Link}
         to={`/${RoutesNavigationViews.Tournaments}`}
         selected={location.pathname.startsWith('/torneos')}
         onClick={() =>
@@ -112,6 +68,50 @@ const MobileNavItems: React.FC<MobileNavItemsProps> = ({ onCloseDrawer }) => {
       >
         <ListItemText primary="Novedades" />
       </ListItemButton>
+
+      <ListItemButton
+        component={Link}
+        to={RoutesNavigationViews.How_We_Are}
+        selected={isSelected(RoutesNavigationViews.How_We_Are)}
+        onClick={() =>
+          handleNavigationAndCloseDrawer(RoutesNavigationViews.How_We_Are)
+        }
+      >
+        <ListItemText primary="Quiénes somos" />
+      </ListItemButton>
+
+      <ListItemButton onClick={toggleInfoCollapse}>
+        <ListItemText primary="Información" />
+        {openInfoCollapse ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+      </ListItemButton>
+      <Collapse in={openInfoCollapse} timeout="auto" unmountOnExit>
+        <List component="div" disablePadding>
+          <ListItemButton
+            component={Link}
+            to={RoutesNavigationViews.Medical_Record}
+            selected={isSelected(RoutesNavigationViews.Medical_Record)}
+            sx={{ pl: 4 }}
+            onClick={() =>
+              handleNavigationAndCloseDrawer(
+                RoutesNavigationViews.Medical_Record
+              )
+            }
+          >
+            <ListItemText primary="Ficha médica" />
+          </ListItemButton>
+          <ListItemButton
+            component={Link}
+            to={RoutesNavigationViews.Rules}
+            selected={isSelected(RoutesNavigationViews.Rules)}
+            sx={{ pl: 4 }}
+            onClick={() =>
+              handleNavigationAndCloseDrawer(RoutesNavigationViews.Rules)
+            }
+          >
+            <ListItemText primary="Reglamento" />
+          </ListItemButton>
+        </List>
+      </Collapse>
     </List>
     </Box>
   );

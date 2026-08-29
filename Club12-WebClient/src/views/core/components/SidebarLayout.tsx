@@ -88,22 +88,18 @@ const CONFIGURATION_CHILDREN: NavTab[] = [
 ];
 
 /**
- * Tournament-structure pages: Admin and Owner can both reach these
- * (mirrors the Admin/Owner backend policy on
- * TournamentController/PlayerSanctionController/VenueController). Kept
- * separate from ADMINISTRATION_CHILDREN below, which also includes
- * Puntuaciones — Admin is not authorized for that one — so Admin's sidebar
- * never links to a page that bounces to /forbidden.
+ * "Competición" groups the day-to-day league pages Admin and Owner both reach
+ * (mirrors the Admin/Owner backend policy on Tournament/PlayerSanction/Venue
+ * controllers). Puntuaciones is Owner-only, so it lives in the Owner variant
+ * below — Admin's sidebar never links to a page that bounces to /forbidden.
  *
- * HU-26: Divisiones, Fases and Partidos are no longer standalone sidebar
- * entries — they are managed from within a tournament (the tournament
- * detail view drills into its divisions, stages and matches). HU-27: the
- * tournament wizard ("Asistente de torneo") is reached only via the
- * "Nuevo torneo" button on the tournaments page, not from the sidebar.
- * The underlying routes (panelDivisions/panelStages/panelMatches/
- * panelTournamentWizard) still exist and stay reachable from those flows.
+ * HU-26: Divisiones, Fases and Partidos are not standalone entries — they are
+ * managed from within a tournament (the tournament detail drills into its
+ * divisions, stages and matches). HU-27: the tournament wizard is reached from
+ * the "Nuevo torneo" button on the tournaments page, not the sidebar. Those
+ * routes still exist and stay reachable from those flows.
  */
-const TOURNAMENT_STRUCTURE_CHILDREN: NavTab[] = [
+const COMPETITION_CHILDREN: NavTab[] = [
   {
     label: 'Torneos',
     path: APP_ROUTES.panelTournaments,
@@ -121,8 +117,8 @@ const TOURNAMENT_STRUCTURE_CHILDREN: NavTab[] = [
   },
 ];
 
-const ADMINISTRATION_CHILDREN: NavTab[] = [
-  ...TOURNAMENT_STRUCTURE_CHILDREN,
+const COMPETITION_CHILDREN_OWNER: NavTab[] = [
+  ...COMPETITION_CHILDREN,
   {
     label: 'Puntuaciones',
     path: APP_ROUTES.panelScorers,
@@ -130,14 +126,14 @@ const ADMINISTRATION_CHILDREN: NavTab[] = [
   },
 ];
 
-const TEAM_ADMINISTRATION_CHILDREN: NavTab[] = [
+const TEAM_CHILDREN: NavTab[] = [
   {
     label: 'Equipos',
     path: APP_ROUTES.panelTeams,
     icon: TAB_ICONS['Equipos'],
   },
   {
-    label: 'Registro',
+    label: 'Inscripción de equipos',
     path: APP_ROUTES.panelTeamRegister,
     icon: TAB_ICONS['Registro'],
   },
@@ -148,24 +144,52 @@ const TEAM_ADMINISTRATION_CHILDREN: NavTab[] = [
   },
 ];
 
+// Low-frequency "Sistema" pages grouped together so the important, everyday
+// entries stay at the top of the sidebar instead of being buried among them.
+const SYSTEM_CHILDREN_OWNER: NavTab[] = [
+  {
+    label: 'Registro de auditoría',
+    path: APP_ROUTES.panelAuditLogs,
+    icon: TAB_ICONS['Auditoria'],
+  },
+];
+
+const SYSTEM_CHILDREN_ADMIN: NavTab[] = [
+  {
+    label: 'Estadísticas',
+    path: APP_ROUTES.panelStatistics,
+    icon: TAB_ICONS['Estadisticas'],
+  },
+  {
+    label: 'Registro de auditoría',
+    path: APP_ROUTES.panelAuditLogs,
+    icon: TAB_ICONS['Auditoria'],
+  },
+  {
+    label: 'Administración de datos',
+    path: APP_ROUTES.panelDataAdministration,
+    icon: TAB_ICONS['AdministracionDeDatos'],
+  },
+];
+
 const TABS_BY_ROLE: Record<UserRolesType, NavTab[]> = {
   [UserRolesType.Owner]: [
     {
-      label: 'Administracion',
-      icon: TAB_ICONS['Administracion'],
-      children: ADMINISTRATION_CHILDREN,
+      label: 'Competición',
+      icon: TAB_ICONS['Torneo'],
+      children: COMPETITION_CHILDREN_OWNER,
     },
     {
-      label: 'Gestion de Equipos',
+      label: 'Gestión de equipos',
       icon: TAB_ICONS['AdministracionDeEquipos'],
-      children: TEAM_ADMINISTRATION_CHILDREN,
+      children: TEAM_CHILDREN,
     },
+    { label: 'Novedades', path: APP_ROUTES.panelBlog, icon: TAB_ICONS['Blog'] },
     { label: 'Usuarios', path: APP_ROUTES.panelUsers, icon: TAB_ICONS['Usuarios'] },
-    { label: 'Blog', path: APP_ROUTES.panelBlog, icon: TAB_ICONS['Blog'] },
     {
-      label: 'Registro de auditoría',
-      path: APP_ROUTES.panelAuditLogs,
-      icon: TAB_ICONS['Auditoria'],
+      label: 'Sistema',
+      icon: TAB_ICONS['Administracion'],
+      children: SYSTEM_CHILDREN_OWNER,
     },
     {
       label: 'Configuración',
@@ -175,31 +199,21 @@ const TABS_BY_ROLE: Record<UserRolesType, NavTab[]> = {
   ],
   [UserRolesType.Admin]: [
     {
-      label: 'Administracion',
-      icon: TAB_ICONS['Administracion'],
-      children: TOURNAMENT_STRUCTURE_CHILDREN,
+      label: 'Competición',
+      icon: TAB_ICONS['Torneo'],
+      children: COMPETITION_CHILDREN,
     },
+    { label: 'Novedades', path: APP_ROUTES.panelBlog, icon: TAB_ICONS['Blog'] },
     { label: 'Usuarios', path: APP_ROUTES.panelUsers, icon: TAB_ICONS['Usuarios'] },
-    { label: 'Blog', path: APP_ROUTES.panelBlog, icon: TAB_ICONS['Blog'] },
+    {
+      label: 'Sistema',
+      icon: TAB_ICONS['Administracion'],
+      children: SYSTEM_CHILDREN_ADMIN,
+    },
     {
       label: 'Configuración',
       icon: TAB_ICONS['Configuracion'],
       children: CONFIGURATION_CHILDREN,
-    },
-    {
-      label: 'Estadisticas',
-      path: APP_ROUTES.panelStatistics,
-      icon: TAB_ICONS['Estadisticas'],
-    },
-    {
-      label: 'Registro de auditoría',
-      path: APP_ROUTES.panelAuditLogs,
-      icon: TAB_ICONS['Auditoria'],
-    },
-    {
-      label: 'Administración de datos',
-      path: APP_ROUTES.panelDataAdministration,
-      icon: TAB_ICONS['AdministracionDeDatos'],
     },
   ],
   [UserRolesType.Guest]: [],
@@ -214,9 +228,10 @@ const SidebarLayout: React.FC<{ children: React.ReactNode }> = ({
   const [openSections, setOpenSections] = React.useState<
     Record<string, boolean>
   >({
-    Administracion: true,
-    'Gestion de Equipos': true,
-    Configuracion: location.pathname.startsWith(APP_ROUTES.panelSettings),
+    Competición: true,
+    'Gestión de equipos': true,
+    Sistema: false,
+    Configuración: location.pathname.startsWith(APP_ROUTES.panelSettings),
   });
 
   // HU-105: on small screens the drawer is a temporary overlay toggled from

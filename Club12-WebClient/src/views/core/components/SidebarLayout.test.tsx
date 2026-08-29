@@ -80,7 +80,7 @@ describe('SidebarLayout — HU-26/HU-27 slimmed navigation', () => {
   it('keeps the tournament-management and admin entries', () => {
     renderSidebar();
 
-    ['Torneos', 'Sanciones', 'Canchas', 'Equipos', 'Usuarios', 'Blog'].forEach(
+    ['Torneos', 'Sanciones', 'Canchas', 'Equipos', 'Usuarios', 'Novedades'].forEach(
       label => expect(screen.getByText(label)).toBeInTheDocument()
     );
   });
