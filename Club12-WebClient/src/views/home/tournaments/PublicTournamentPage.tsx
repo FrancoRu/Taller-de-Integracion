@@ -16,6 +16,9 @@ import { useTeam } from '@/modules/team/hook/team.hook';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { divisionService } from '@/modules/division/service/division.service';
 import { IDivisionResponse } from '@/modules/division/type/division';
+import { championService } from '@/modules/champion/service/champion.service';
+import { IPodium } from '@/modules/champion/type/champion.d';
+import { GUID } from '@/modules/core/types/types';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
 import PublicDivisionPanel from '@/views/home/tournaments/PublicDivisionPanel';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
@@ -61,6 +64,9 @@ export default function PublicTournamentPage() {
   const [loading, setLoading] = useState(false);
   const [divisions, setDivisions] = useState<IDivisionResponse[]>([]);
   const [divisionsLoading, setDivisionsLoading] = useState(false);
+  const [podiumsByDivision, setPodiumsByDivision] = useState<Map<GUID, IPodium>>(
+    new Map()
+  );
 
   /**
    * The active tab lives in the URL (not local state) so the browser back
@@ -144,6 +150,31 @@ export default function PublicTournamentPage() {
   useEffect(() => {
     if (!tournamentGuid) return;
     void getTeamsRef.current({ tournamentId: tournamentGuid, pageSize: PUBLIC_LISTING_PAGE_SIZE, pageNumber: 1 });
+  }, [tournamentGuid]);
+
+  // The podium (top three per division) is surfaced at the top of each
+  // division's panel once it has a decided champion. Fetched once the
+  // tournament resolves; failures degrade silently (no podium banner).
+  useEffect(() => {
+    if (!tournamentGuid) return;
+    let cancelled = false;
+
+    const fetchChampions = async () => {
+      try {
+        const response = await championService.getTournamentChampions(tournamentGuid);
+        if (cancelled) return;
+        const next = new Map<GUID, IPodium>();
+        (response.data ?? []).forEach(podium => next.set(podium.divisionId, podium));
+        setPodiumsByDivision(next);
+      } catch {
+        if (!cancelled) setPodiumsByDivision(new Map());
+      }
+    };
+
+    void fetchChampions();
+    return () => {
+      cancelled = true;
+    };
   }, [tournamentGuid]);
 
   const teamRows = useMemo(() => teams ?? [], [teams]);
@@ -274,6 +305,7 @@ export default function PublicTournamentPage() {
             key={activeDivision.id}
             division={activeDivision}
             teams={activeDivisionTeams}
+            podium={podiumsByDivision.get(activeDivision.id) ?? null}
           />
         ) : null
       )}

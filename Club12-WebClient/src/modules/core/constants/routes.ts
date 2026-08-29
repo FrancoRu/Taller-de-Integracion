@@ -5,6 +5,7 @@ const routes = {
   backups: 'backups',
   clubs: 'clubs',
   blogposts: 'blogposts',
+  champions: 'champions',
   maintenance: 'maintenance',
   dataMaintenance: 'data-maintenance',
   divisions: 'divisions',

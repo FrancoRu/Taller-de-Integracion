@@ -250,7 +250,7 @@ const TournamentEditPage: React.FC = () => {
     setSaving(true);
     try {
       await putTournamentById(tournament.id, payload);
-      navigate(APP_ROUTES.panelTournamentDetail.build(tournament.id));
+      navigate(APP_ROUTES.panelTournamentDetail.build(tournament.slug ?? tournament.id));
     } finally {
       setSaving(false);
     }

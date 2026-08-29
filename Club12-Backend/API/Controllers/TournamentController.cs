@@ -1,6 +1,7 @@
 ﻿using API.Utils;
 
 using Application.DTOs.Abstract.Response;
+using Application.DTOs.Champions.Response;
 using Application.DTOs.Team.Response;
 using Application.DTOs.Tournament.Request;
 using Application.DTOs.Tournament.Response;
@@ -16,6 +17,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace API.Controllers;
@@ -32,6 +34,7 @@ namespace API.Controllers;
 public class TournamentController(
     ITournamentService tournamentService,
     ITeamService teamService,
+    IChampionService championService,
     IMapper mapper) : ControllerBase
 {
     /// <summary>
@@ -105,6 +108,35 @@ public class TournamentController(
 
         TournamentResponse tournamentResponse = mapper.Map<TournamentResponse>(tournament);
         return Ok(tournamentResponse);
+    }
+
+    /// <summary>
+    /// Retrieves the podium of every division of a tournament: for each division
+    /// its champion (1st), runner-up (2nd) and third place, decided by the top
+    /// cup's Final when the division has a playoff, or by the group standings
+    /// otherwise. Every division is included; places that are not yet decided are
+    /// null.
+    /// </summary>
+    /// <param name="idOrSlug">Tournament identifier (GUID) or slug.</param>
+    /// <returns>
+    /// Returns 200 (OK) with one podium per division.
+    /// Returns 404 (Not Found) if the tournament does not exist.
+    /// </returns>
+    [AllowAnonymous]
+    [HttpGet("{idOrSlug}/champions")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<PodiumResponse>))]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<List<PodiumResponse>>> GetTournamentChampions(string idOrSlug)
+    {
+        Tournament? tournament = await tournamentService.GetTournamentByIdOrSlugAsync(idOrSlug);
+
+        if (tournament is null)
+        {
+            return this.NotFoundProblem(nameof(Tournament), idOrSlug);
+        }
+
+        List<PodiumResponse> podiums = await championService.GetTournamentChampionsAsync(tournament.Id);
+        return Ok(podiums);
     }
 
     /// <summary>

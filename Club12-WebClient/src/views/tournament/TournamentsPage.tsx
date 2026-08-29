@@ -78,7 +78,7 @@ const TournamentsPage: React.FC = () => {
 
   const handleEdit = useCallback(
     (row: ITournamentResponse) => {
-      navigate(APP_ROUTES.panelTournamentEdit.build(row.id));
+      navigate(APP_ROUTES.panelTournamentEdit.build(row.slug ?? row.id));
     },
     [navigate]
   );

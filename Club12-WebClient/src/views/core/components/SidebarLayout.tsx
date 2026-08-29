@@ -124,15 +124,6 @@ const COMPETITION_CHILDREN: NavTab[] = [
   },
 ];
 
-const COMPETITION_CHILDREN_OWNER: NavTab[] = [
-  ...COMPETITION_CHILDREN,
-  {
-    label: 'Puntuaciones',
-    path: APP_ROUTES.panelScorers,
-    icon: TAB_ICONS['Puntuaciones'],
-  },
-];
-
 const TEAM_CHILDREN: NavTab[] = [
   {
     label: 'Equipos',
@@ -180,7 +171,7 @@ const ADMIN_TABS: NavTab[] = [
   {
     label: 'Competición',
     icon: TAB_ICONS['Torneo'],
-    children: COMPETITION_CHILDREN_OWNER,
+    children: COMPETITION_CHILDREN,
   },
   {
     label: 'Gestión de equipos',

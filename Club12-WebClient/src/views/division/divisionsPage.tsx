@@ -154,7 +154,7 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
 
   const handleEdit = useCallback(
     (row: IDivisionResponse) => {
-      navigate(APP_ROUTES.panelDivisionEdit.build(row.id));
+      navigate(APP_ROUTES.panelDivisionEdit.build(row.slug ?? row.id));
     },
     [navigate]
   );

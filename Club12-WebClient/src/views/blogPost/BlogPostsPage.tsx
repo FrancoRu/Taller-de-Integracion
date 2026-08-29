@@ -106,7 +106,7 @@ const BlogPostsPage: React.FC = () => {
 
   const handleEdit = useCallback(
     (row: BlogPostResponse) => {
-      navigate(APP_ROUTES.panelBlogEdit.build(row.id));
+      navigate(APP_ROUTES.panelBlogEdit.build(row.slug ?? row.id));
     },
     [navigate]
   );
@@ -177,7 +177,7 @@ const BlogPostsPage: React.FC = () => {
 
   return (
     <PageShell
-      title="Blog"
+      title="Novedades"
       actions={<NewEntityButton type="Publicación" onClick={handleCreate} />}
     >
       <FilterBar onClear={handleClearFilters} ariaLabel="Filtros de publicaciones">

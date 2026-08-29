@@ -268,7 +268,7 @@ const PlayerSanctionsPage: React.FC = () => {
 
   const handleEdit = useCallback(
     (row: IPlayerSanctionResponse) => {
-      navigate(APP_ROUTES.panelSanctionEdit.build(row.id));
+      navigate(APP_ROUTES.panelSanctionEdit.build(row.slug ?? row.id));
     },
     [navigate]
   );
