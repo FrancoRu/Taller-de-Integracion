@@ -73,7 +73,7 @@ import ScorersPage from './views/scorer/scorersPage';
 
 const FIRST_TAB_BY_ROLE: Partial<Record<UserRolesType, string>> = {
   [UserRolesType.Owner]: APP_ROUTES.panelTournaments,
-  [UserRolesType.Admin]: APP_ROUTES.panelUsers,
+  [UserRolesType.Admin]: APP_ROUTES.panelTournaments,
 };
 
 interface AdminRouteConfig {
@@ -86,7 +86,7 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
   { path: APP_ROUTES.passwordReset, element: <PasswordReset /> },
   {
     path: APP_ROUTES.panelPlayers,
-    allowedRoles: [UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <PlayersPage />,
   },
   {
@@ -96,7 +96,7 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
   },
   {
     path: APP_ROUTES.panelTeam,
-    allowedRoles: [UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <TeamPage />,
   },
   {
@@ -106,7 +106,7 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
   },
   {
     path: APP_ROUTES.panelTournament,
-    allowedRoles: [UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <TournamentPage />,
   },
   {
@@ -121,7 +121,7 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
   },
   {
     path: APP_ROUTES.panelTeams,
-    allowedRoles: [UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <TeamsPage title="Equipos" wrapInCard />,
   },
   {
@@ -131,7 +131,7 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
   },
   {
     path: APP_ROUTES.panelTeamRegister,
-    allowedRoles: [UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <TeamRegisterPage />,
   },
   {
@@ -151,7 +151,7 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
   },
   {
     path: APP_ROUTES.panelScorers,
-    allowedRoles: [UserRolesType.Owner],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <ScorersPage />,
   },
   {
@@ -280,7 +280,7 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
   },
   {
     path: APP_ROUTES.panelStatistics,
-    allowedRoles: [UserRolesType.Admin],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <StatisticsPage />,
   },
   {
@@ -290,7 +290,7 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
   },
   {
     path: APP_ROUTES.panelDataAdministration,
-    allowedRoles: [UserRolesType.Admin],
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <DataAdministrationPage />,
   },
   { path: '*', element: <NotFound /> },

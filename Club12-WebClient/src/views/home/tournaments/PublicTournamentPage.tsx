@@ -11,15 +11,12 @@ import {
 } from '@mui/material';
 import PageShell from '@/views/core/components/PageShell';
 import { DetailSkeleton, TableSkeleton } from '@/views/core/components/skeletons';
-import { GUID } from '@/modules/core/types/types';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useTeam } from '@/modules/team/hook/team.hook';
-import { ITeamResponse } from '@/modules/team/type/team.d';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { divisionService } from '@/modules/division/service/division.service';
 import { IDivisionResponse } from '@/modules/division/type/division';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
-import TeamLogo from '@/views/core/components/TeamLogo';
 import PublicDivisionPanel from '@/views/home/tournaments/PublicDivisionPanel';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
@@ -30,10 +27,11 @@ import { formatDateAr } from '@/modules/core/utils/formatDate';
 const formatDate = (value: Date | string) => formatDateAr(value);
 
 const INFO_TAB = 'info';
-const TEAMS_TAB = 'equipos';
 const TAB_QUERY_PARAM = 'tab';
 
-type Tab = typeof INFO_TAB | typeof TEAMS_TAB | GUID;
+// The active tab is either the info tab or a division, keyed by the division's
+// slug (readable, shareable URLs) with its id accepted as a fallback.
+type Tab = string;
 
 const ZONA_NAME_PATTERN = /^zona\s/i;
 
@@ -141,38 +139,30 @@ export default function PublicTournamentPage() {
     };
   }, [tournamentGuid]);
 
+  // Teams are needed by every division's "Equipos" sub-tab, so fetch them once
+  // the tournament resolves rather than only when a teams tab is opened.
   useEffect(() => {
-    if (!tournamentGuid || tab !== TEAMS_TAB) return;
+    if (!tournamentGuid) return;
     void getTeamsRef.current({ tournamentId: tournamentGuid, pageSize: PUBLIC_LISTING_PAGE_SIZE, pageNumber: 1 });
-  }, [tab, tournamentGuid]);
+  }, [tournamentGuid]);
 
   const teamRows = useMemo(() => teams ?? [], [teams]);
   const activeDivision = useMemo(
-    () => divisions.find(division => division.id === tab),
+    () => divisions.find(division => division.slug === tab || division.id === tab),
     [divisions, tab]
   );
 
   /**
-   * A team has no direct division field — membership only exists through
-   * its stage assignments, already surfaced in each division's `positions`.
-   * A team can legitimately appear under more than one group (e.g. its
-   * home zone AND a cross-division cup), so this groups rather than picks
-   * a single owner. Anything not assigned to any division yet (newly
-   * registered, not placed in a group) falls into "Sin división asignada".
+   * A team has no direct division field — membership only exists through its
+   * stage assignments, already surfaced in each division's `positions`. The
+   * active division's teams feed its own "Equipos" sub-tab (HU: teams live
+   * inside their zone, not in a separate tournament-wide tab).
    */
-  const teamsByDivision = useMemo(() => {
-    const groups = divisions
-      .map(division => {
-        const teamIds = new Set((division.positions ?? []).map(p => p.teamId));
-        return { division, teams: teamRows.filter(team => teamIds.has(team.id)) };
-      })
-      .filter(group => group.teams.length > 0);
-
-    const assignedTeamIds = new Set(groups.flatMap(g => g.teams.map(t => t.id)));
-    const unassigned = teamRows.filter(team => !assignedTeamIds.has(team.id));
-
-    return { groups, unassigned };
-  }, [divisions, teamRows]);
+  const activeDivisionTeams = useMemo(() => {
+    if (!activeDivision) return [];
+    const teamIds = new Set((activeDivision.positions ?? []).map(p => p.teamId));
+    return teamRows.filter(team => teamIds.has(team.id));
+  }, [activeDivision, teamRows]);
 
   if (loading || (divisionsLoading && divisions.length === 0)) {
     return (
@@ -197,44 +187,6 @@ export default function PublicTournamentPage() {
   }
 
   const status = tournament.status as TournamentStatus;
-
-  const renderTeamGrid = (teamsToRender: ITeamResponse[]) => (
-    <Grid container spacing={2}>
-      {teamsToRender.map(team => (
-        <Grid
-          key={team.id}
-          size={{
-            xs: 12,
-            sm: 6,
-            md: 4
-          }}>
-          <Box
-            onClick={() => navigate(APP_ROUTES.publicTeam.build(team.slug ?? team.id))}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 1.5,
-              p: 1.5,
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 1,
-              cursor: 'pointer',
-              '&:hover': { bgcolor: 'action.hover' }
-            }}>
-            <TeamLogo teamName={team.name} logoUrl={team.logoUrl} size={36} />
-            <Box>
-              <Typography variant="body2" sx={{
-                fontWeight: 500
-              }}>{team.name}</Typography>
-              <Typography variant="caption" sx={{
-                color: "text.secondary"
-              }}>{team.threeLetterCode}</Typography>
-            </Box>
-          </Box>
-        </Grid>
-      ))}
-    </Grid>
-  );
 
   return (
     <PageShell
@@ -272,9 +224,8 @@ export default function PublicTournamentPage() {
         sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}
       >
         <Tab label="Información" value={INFO_TAB} />
-        <Tab label="Equipos" value={TEAMS_TAB} />
         {divisions.map(division => (
-          <Tab key={division.id} label={division.name} value={division.id} />
+          <Tab key={division.id} label={division.name} value={division.slug ?? division.id} />
         ))}
       </Tabs>
 
@@ -310,35 +261,7 @@ export default function PublicTournamentPage() {
         </Grid>
       )}
 
-      {tab === TEAMS_TAB && (
-        teamRows.length === 0 ? (
-          <Typography sx={{
-            color: "text.secondary"
-          }}>No hay equipos inscriptos en este torneo.</Typography>
-        ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {teamsByDivision.groups.map(({ division, teams: divisionTeams }) => (
-              <Box key={division.id}>
-                <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
-                  {division.name}
-                </Typography>
-                {renderTeamGrid(divisionTeams)}
-              </Box>
-            ))}
-
-            {teamsByDivision.unassigned.length > 0 && (
-              <Box>
-                <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
-                  Sin división asignada
-                </Typography>
-                {renderTeamGrid(teamsByDivision.unassigned)}
-              </Box>
-            )}
-          </Box>
-        )
-      )}
-
-      {tab !== INFO_TAB && tab !== TEAMS_TAB && (
+      {tab !== INFO_TAB && (
         divisionsLoading && !activeDivision ? (
           <TableSkeleton rows={6} columns={4} />
         ) : activeDivision ? (
@@ -347,7 +270,11 @@ export default function PublicTournamentPage() {
           // state (stages/matches/brackets/top scorers) never resets, so a
           // different division's Partidos/Llaves/Goleadores view would keep
           // showing whichever division's data loaded first.
-          <PublicDivisionPanel key={activeDivision.id} division={activeDivision} />
+          <PublicDivisionPanel
+            key={activeDivision.id}
+            division={activeDivision}
+            teams={activeDivisionTeams}
+          />
         ) : null
       )}
       </Box>

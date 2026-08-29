@@ -5,10 +5,10 @@ using System.Net;
 namespace API.Tests;
 
 /// <summary>
-/// Proves every api/backups endpoint is Admin-only, mirroring the
-/// pattern in DataMaintenanceAuthorizationTests.cs. Only the
-/// negative paths (anonymous/non-Admin) and the safe read (GET, Admin) are
-/// exercised via the real HTTP pipeline — POST/DELETE as Admin would invoke
+/// Proves every api/backups endpoint is staff-only (Admin or Owner),
+/// mirroring the pattern in DataMaintenanceAuthorizationTests.cs. Only the
+/// negative paths (anonymous/Guest) and the safe read (GET, staff) are
+/// exercised via the real HTTP pipeline — POST/DELETE as staff would invoke
 /// the real BackupOperationsService (pg_dump), which has no
 /// binary available in this test environment; that outcome-mapping behavior
 /// is covered instead by the pure unit tests in
@@ -33,22 +33,22 @@ public class BackupAuthorizationTests : IClassFixture<CustomWebApplicationFactor
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Theory]
-    [InlineData(Roles.Owner)]
-    [InlineData(Roles.Guest)]
-    public async Task GetBackups_NonAdminRole_ReturnsForbidden(string role)
+    [Fact]
+    public async Task GetBackups_GuestRole_ReturnsForbidden()
     {
-        HttpClient client = _factory.CreateAuthenticatedClient(role);
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Guest);
 
         HttpResponseMessage response = await client.GetAsync("api/backups");
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
-    [Fact]
-    public async Task GetBackups_AdminRole_Succeeds()
+    [Theory]
+    [InlineData(Roles.Admin)]
+    [InlineData(Roles.Owner)]
+    public async Task GetBackups_StaffRole_Succeeds(string role)
     {
-        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Admin);
+        HttpClient client = _factory.CreateAuthenticatedClient(role);
 
         HttpResponseMessage response = await client.GetAsync("api/backups");
 
@@ -65,11 +65,10 @@ public class BackupAuthorizationTests : IClassFixture<CustomWebApplicationFactor
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Theory]
-    [InlineData(Roles.Owner)]
-    [InlineData(Roles.Guest)]
-    public async Task CreateBackup_NonAdminRole_ReturnsForbidden(string role)
+    [Fact]
+    public async Task CreateBackup_GuestRole_ReturnsForbidden()
     {
+        string role = Roles.Guest;
         HttpClient client = _factory.CreateAuthenticatedClient(role);
 
         HttpResponseMessage response = await client.PostAsync("api/backups", null);
@@ -87,11 +86,10 @@ public class BackupAuthorizationTests : IClassFixture<CustomWebApplicationFactor
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Theory]
-    [InlineData(Roles.Owner)]
-    [InlineData(Roles.Guest)]
-    public async Task DeleteBackup_NonAdminRole_ReturnsForbidden(string role)
+    [Fact]
+    public async Task DeleteBackup_GuestRole_ReturnsForbidden()
     {
+        string role = Roles.Guest;
         HttpClient client = _factory.CreateAuthenticatedClient(role);
 
         HttpResponseMessage response = await client.DeleteAsync($"api/backups/{Guid.NewGuid()}");
@@ -109,11 +107,10 @@ public class BackupAuthorizationTests : IClassFixture<CustomWebApplicationFactor
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Theory]
-    [InlineData(Roles.Owner)]
-    [InlineData(Roles.Guest)]
-    public async Task RestoreBackup_NonAdminRole_ReturnsForbidden(string role)
+    [Fact]
+    public async Task RestoreBackup_GuestRole_ReturnsForbidden()
     {
+        string role = Roles.Guest;
         HttpClient client = _factory.CreateAuthenticatedClient(role);
 
         HttpResponseMessage response = await client.PostAsync($"api/backups/{Guid.NewGuid()}/restore", null);

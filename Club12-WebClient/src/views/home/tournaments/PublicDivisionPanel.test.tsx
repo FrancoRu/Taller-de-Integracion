@@ -63,7 +63,7 @@ const division = (overrides: Partial<IDivisionResponse>): IDivisionResponse => (
 const renderPanel = (value: IDivisionResponse) =>
   render(
     <MemoryRouter>
-      <PublicDivisionPanel division={value} />
+      <PublicDivisionPanel division={value} teams={[]} />
     </MemoryRouter>
   );
 
