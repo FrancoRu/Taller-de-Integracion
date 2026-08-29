@@ -2,7 +2,7 @@
 
 > Documento para continuar en un chat nuevo. Rama de integración: **develop** (deploya a staging: club12.argentum-solutions.com.ar). `main` NO se toca. Stack: .NET 8 backend (Clean/Hexagonal, EF Core + Npgsql/Postgres) + React 19/TS/MUI/Vite frontend (vitest, ESLint `--max-warnings 0`). Todo user-facing en **español (voseo)**; código en inglés.
 
-## ✅ MERGEADO a develop / en staging (PRs #53–#66)
+## ✅ MERGEADO a develop / en staging (PRs #53–#69)
 
 **Design system (base)**
 - `src/design/tokens.ts` (brand/surface/ink/semantic/radius/font/pageMinHeight/**gold**/**category**), `colorName.ts` (hex→fill+ink), `jerseyStyles.ts` (11 estilos).
@@ -64,12 +64,20 @@ Bloque admin-organizar + seguridad (verificado por build+tests; E2E admin en viv
 3. **Stats por temporada** ✅ (frontend) — la página admin Estadísticas ahora tiene filtro Temporada + Torneo (torneos derivados de la temporada elegida) que scopea el ranking de goleadores vía los params `season`/`tournamentId` que YA existen en el endpoint scorer; las cards resumen quedan globales. Default sin filtro. Helpers `statisticsFilters.ts` TDD.
 4. **Delete-integridad global** ✅ (backend, sin migración) — guards de borrado en los services de Team/Tournament/Division: bloquean (409 español) si hay historia competitiva (partidos jugados, Ongoing/Finished, deducciones, sanciones, inscripciones); si está vacío, borra con cascade coherente. OJO borra vía `ExecuteDeleteAsync` (bypassa EF → solo aplica OnDelete de la DB). ⚠️ FLAG (reportado, NO tocado, requiere migración): `MatchSeries→Team` y `Team→Players` son Cascade → un borrado crudo de Team borraría series/plantel; el guard de servicio lo previene, pero convendría endurecer el OnDelete en una migración futura.
 
-## 🔄 EN PROGRESO — rama `feat/scoreboard-and-polish` (sale de develop post-#66, NO mergeado aún)
+## ✅ MERGEADO a develop vía **PR #69** — rama `feat/scoreboard-and-polish`
 
-1. **Scoreboard del partido público** ✅ — `PublicMatchPage` rediseñada como scoreboard: marcador grande (Oswald, ganador resaltado en primary, perdedor atenuado), escudos iguales, chip de estado, fecha/cancha, "VS" si está programado; goleadores por equipo (2 columnas) + sanciones. Liga neutral (sin local/visita). Admin de partido intacto. Helpers `getScoreboardEmphasis`/`sortScorersByPoints` TDD. ⚠️ Observación: el GET de match no incluye los `scorers` del partido → "Sin goleadores cargados" aunque el seed carga scoring; revisar el include del endpoint de match (data, no layout).
+1. **Scoreboard del partido público** ✅ — `PublicMatchPage` rediseñada como scoreboard: marcador grande (Oswald, ganador resaltado en primary, perdedor atenuado), escudos iguales, chip de estado, fecha/cancha, "VS" si está programado; goleadores por equipo (2 columnas) + sanciones. Liga neutral (sin local/visita). Admin de partido intacto. Helpers `getScoreboardEmphasis`/`sortScorersByPoints` TDD.
+   - NOTA: se mergeó `origin/develop` (#68 medical-records-storage-eligibility + rebackfill de player-slugs) a esta rama antes del PR.
 
-## 📋 BACKLOG restante (post scoreboard)
-Llaves admin editables (cargar resultado desde el bracket), staff de equipo (DT/asistente/DT-jugador), canchas imagen+mapa (Venue lat/lng + Leaflet/OSM), auditoría completa (AuditLog en toda mutación admin), mensajes auth backend→español (ErrorMessages.Auth.*; ojo tests que asertan texto), y el **E2E final** del ciclo completo (crear temporada→torneo→estructura→inscripción→fichas→arrancar→resultados→posiciones→playoffs→campeones, verificando que todo sea correcto — el norte).
+## 📋 BACKLOG restante (prioridad)
+0. **[FOLLOW-UP INMEDIATO] Goleadores en el scoreboard** — el GET de match NO incluye los goleadores → `homeTeam.scorers`/`visitorTeam.scorers` vienen `[]` y la sección "Goleadores del partido" queda vacía. Causa CONFIRMADA: (a) `MatchService.GetMatchByIdOrSlugAsync` incluye solo Home/Visitor team, falta `Scorers` + `Scorer.Player`; (b) el AutoMapper de `DetailedMatchResponse` no popula `TeamDetailedMatchResponse.Scorers`. Atribución del scorer al equipo = vía `Scorer.Player.TeamId` (Scorer NO tiene TeamId). Fix chico (un agente lo empezó pero cayó por límite de sesión — dejó un test parcial que se removió).
+1. **Llaves admin editables** — cargar resultado desde el bracket (ahí están los partidos).
+2. **Staff de equipo** (DT/asistente/DT-jugador) — entidad/rol por equipo+temporada (+migración).
+3. **Canchas imagen+mapa** — Venue lat/lng + Leaflet/OSM + display/edit de imagen (+migración).
+4. **Auditoría completa** — extender `AuditLog` a TODA mutación admin (actor+entidad+acción+timestamp).
+5. **Mensajes auth backend→español** — `ErrorMessages.Auth.*` están en inglés (ojo: tests que asertan el texto exacto de los títulos del GlobalExceptionHandler).
+6. **Endurecer OnDelete** peligroso (`MatchSeries/Team→Cascade`) en una migración (flagged en #66).
+7. **E2E FINAL** del ciclo completo (crear temporada→torneo→estructura→inscripción→fichas→arrancar→cargar resultados→posiciones→playoffs→campeones), verificando que TODO sea correcto — el norte.
 
 
 PLAN restante (orden): SEO/meta; admin organizar (scoreboard/scoring por partido, deducción de puntos, fases bloqueadas con torneo arrancado, llaves editables); integridad+auditoría (delete-integridad global, AuditLog en toda mutación); features (staff DT, stats por temporada, canchas imagen+mapa, mensajes auth backend→español); E2E final del ciclo completo. Norte: organizar temporada de punta a punta, correcto.
