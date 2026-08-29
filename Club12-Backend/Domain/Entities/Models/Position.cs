@@ -69,4 +69,12 @@ public class Position
     /// standings UI show why each tie was broken.
     /// </summary>
     public TiebreakerCriterion? ResolvedBy { get; set; }
+
+    /// <summary>
+    /// The disciplinary point deduction applied to this team, when any. Null
+    /// when the team has no deduction. When present, <see cref="Points"/> has
+    /// already had the deduction subtracted; this only carries the amount and
+    /// reason so the standings can show a "-N (motivo)" note.
+    /// </summary>
+    public AppliedPointDeduction? PointDeduction { get; set; }
 }

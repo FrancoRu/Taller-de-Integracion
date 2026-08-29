@@ -33,7 +33,8 @@ public class DivisionService(
     IMatchService matchService,
     ITeamRepository teamRepository,
     IStageTeamMatchRepository stageTeamMatchRepository,
-    ITournamentRepository tournamentRepository) : IDivisionService
+    ITournamentRepository tournamentRepository,
+    ITeamPointDeductionRepository pointDeductionRepository) : IDivisionService
 {
     /// <summary>
     /// Creates a new division entity asynchronously.
@@ -205,6 +206,8 @@ public class DivisionService(
         int pointsForWin = division?.PointsForWin ?? PositionCalculator.DefaultPointsForWin;
         int pointsForLoss = division?.PointsForLoss ?? PositionCalculator.DefaultPointsForLoss;
 
+        List<TeamPointDeduction> deductions = await GetDeductionsAsync(divisionId);
+
         PaginatedResponse<Match> matches = await matchService.GetAllMatchesAsync(new GetMatchesFilteredRequest
         {
             StageId = groupStage.Id,
@@ -212,7 +215,20 @@ public class DivisionService(
             PageSize = PaginationDefaults.MaxPageSize,
         });
 
-        return PositionCalculator.CalculatePositions(matches.Items, pointsForWin, pointsForLoss);
+        return PositionCalculator.CalculatePositions(matches.Items, pointsForWin, pointsForLoss, deductions);
+    }
+
+    /// <summary>
+    /// Loads every disciplinary point deduction (deducción de puntos) applied
+    /// in a division, threaded into the standings calculation so each affected
+    /// team's total is subtracted. Deductions are keyed by team, so passing the
+    /// whole division list to every group's table is safe — only the group
+    /// that actually holds a penalised team is adjusted.
+    /// </summary>
+    private async Task<List<TeamPointDeduction>> GetDeductionsAsync(Guid divisionId)
+    {
+        return [.. await pointDeductionRepository.FindAsync(
+            deduction => deduction.DivisionId == divisionId)];
     }
 
     /// <summary>
@@ -246,6 +262,8 @@ public class DivisionService(
         int pointsForWin = division?.PointsForWin ?? PositionCalculator.DefaultPointsForWin;
         int pointsForLoss = division?.PointsForLoss ?? PositionCalculator.DefaultPointsForLoss;
 
+        List<TeamPointDeduction> deductions = await GetDeductionsAsync(divisionId);
+
         List<GroupStandings> result = [];
 
         foreach (Stage groupStage in groupStages)
@@ -261,7 +279,7 @@ public class DivisionService(
             {
                 StageId = groupStage.Id,
                 StageName = groupStage.Name,
-                Positions = PositionCalculator.CalculatePositions(matches.Items, pointsForWin, pointsForLoss),
+                Positions = PositionCalculator.CalculatePositions(matches.Items, pointsForWin, pointsForLoss, deductions),
             });
         }
 
