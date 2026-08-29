@@ -149,6 +149,21 @@ const DivisionPage: React.FC = () => {
     return registrationClosedByDate || registrationClosedByStatus;
   }, [division?.tournamentId, tournament]);
 
+  // Once the tournament has started its fixture is generated, so the division's
+  // phase (fase) structure is frozen: adding or removing a stage would corrupt
+  // the bracket. This mirrors the backend guard in StageService (the source of
+  // truth) and is used to disable the "Nueva Fase" / delete affordances.
+  const isTournamentStarted = useMemo(() => {
+    if (!division?.tournamentId || tournament?.id !== division.tournamentId) {
+      return false;
+    }
+
+    return (
+      tournament.status === TournamentStatus.Ongoing ||
+      tournament.status === TournamentStatus.Finished
+    );
+  }, [division?.tournamentId, tournament]);
+
   // Teams that can receive a point deduction: those present in the division's
   // standings (pooled positions cover both regular zones and multi-group cups),
   // deduped by team id.
@@ -309,6 +324,7 @@ const DivisionPage: React.FC = () => {
           <StagesPage
             divisionId={division.id}
             showGenerateStagesButton={canGenerateStages}
+            stageStructureLocked={isTournamentStarted}
             title={undefined}
             wrapInCard={false}
           />

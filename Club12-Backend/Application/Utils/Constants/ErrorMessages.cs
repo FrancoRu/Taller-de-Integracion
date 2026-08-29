@@ -181,6 +181,16 @@ public static class ErrorMessages
         public const string SeedMissingStandings = "Cannot seed: not every team assigned to this stage has a finished-group-stage position yet.";
         public const string GroupStageAlreadyExistsInDivision = "This division already has a Group stage. A division can only have one Group stage.";
 
+        /// <summary>
+        /// User-facing (Spanish) message returned when a stage (fase) is added
+        /// to or removed from a division whose tournament has already started —
+        /// i.e. its fixture is generated (status Ongoing/Finished). Editing the
+        /// phase structure at that point would corrupt the bracket/fixture, so
+        /// it is blocked (mapped to 409 by the global handler).
+        /// </summary>
+        public const string StructureLockedTournamentStarted =
+            "No se pueden agregar o quitar fases: el torneo ya arrancó.";
+
         public static string NotFoundById(System.Guid id)
         {
             return $"Stage with id {id} not found.";

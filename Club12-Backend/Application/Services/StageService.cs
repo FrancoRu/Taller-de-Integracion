@@ -99,9 +99,59 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     /// Deletes a stage by its unique identifier.
     /// </summary>
     /// <param name="id">The unique identifier of the stage to delete.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the stage's tournament has already started (its fixture is
+    /// generated); removing a phase then would corrupt the bracket/fixture.
+    /// </exception>
     public async Task DeleteStageAsync(Guid id)
     {
+        Stage? stage = await _stageRepository.GetByIdAsync(id);
+
+        if (stage is not null)
+        {
+            await EnsureDivisionStructureEditableAsync(stage.DivisionId);
+        }
+
         await _stageRepository.RemoveAsync(stage => stage.Id == id);
+    }
+
+    /// <summary>
+    /// Guards manual phase (stage) structure edits against the state of the
+    /// division's tournament. A division's stages may only be added or removed
+    /// while the tournament has not started yet — i.e. before its fixture is
+    /// generated. The fixture is generated when the tournament transitions to
+    /// <see cref="TournamentStatus.Ongoing"/> (see TournamentService.ChangeStatusAsync);
+    /// once that has happened (<see cref="TournamentStatus.Ongoing"/> or
+    /// <see cref="TournamentStatus.Finished"/>) the matches already reference the
+    /// existing set of stages, so adding or removing a stage would corrupt the
+    /// bracket. Editing stays allowed while the tournament is
+    /// <see cref="TournamentStatus.Scheduled"/>,
+    /// <see cref="TournamentStatus.OpenForRegistration"/>, or
+    /// <see cref="TournamentStatus.RegistrationClosed"/> (structure still
+    /// editable). A division whose tournament cannot be resolved is left for the
+    /// normal not-found handling downstream.
+    /// </summary>
+    /// <param name="divisionId">The division whose tournament is checked.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown (mapped to 409) when the tournament has already started.
+    /// </exception>
+    private async Task EnsureDivisionStructureEditableAsync(Guid divisionId)
+    {
+        Division? division = await _divisionRepository.GetByIdAsync(
+            divisionId, includes: [division => division.Tournament]);
+
+        if (division?.Tournament is null)
+        {
+            return;
+        }
+
+        bool fixtureGenerated = division.Tournament.Status
+            is TournamentStatus.Ongoing or TournamentStatus.Finished;
+
+        if (fixtureGenerated)
+        {
+            throw new InvalidOperationException(ErrorMessages.Stage.StructureLockedTournamentStarted);
+        }
     }
 
     /// <summary>
@@ -130,6 +180,8 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
     /// </exception>
     public async Task<Stage> CreateStageAsync(Stage stageEntity)
     {
+        await EnsureDivisionStructureEditableAsync(stageEntity.DivisionId);
+
         bool existStage = await _stageRepository.ExistsAsync(
             s => s.Name == stageEntity.Name && s.DivisionId == stageEntity.DivisionId);
 

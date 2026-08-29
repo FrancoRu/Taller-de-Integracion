@@ -7,6 +7,7 @@ import {
   MenuItem,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -48,7 +49,19 @@ interface StagesPageProps {
   wrapInCard?: boolean;
   createType?: string;
   onCreate?: () => void;
+  /**
+   * When true, the division's phase (fase) structure is frozen because its
+   * tournament has already started (its fixture is generated). Adding or
+   * removing a phase now would corrupt the bracket, so the "Nueva Fase"
+   * button is disabled (with an explanatory tooltip) and the per-row delete
+   * action is hidden. Mirrors the backend guard in StageService, which is the
+   * source of truth and rejects the operation regardless of the UI.
+   */
+  stageStructureLocked?: boolean;
 }
+
+/** Tooltip/helper text shown when phase editing is locked by a started tournament. */
+const STRUCTURE_LOCKED_REASON = 'El torneo ya arrancó';
 
 const EMPTY_FILTERS: IStageListFilters = {};
 
@@ -74,6 +87,7 @@ const StagesPage: React.FC<StagesPageProps> = ({
   wrapInCard = false,
   createType = 'Fase',
   onCreate,
+  stageStructureLocked = false,
 }) => {
   const navigate = useNavigate();
   const { divisions, getDivisionsByFilters } = useDivision();
@@ -245,23 +259,29 @@ const StagesPage: React.FC<StagesPageProps> = ({
     [deleteStagesById]
   );
 
-  const stageActions = useMemo<TableRowAction<IStageResponse>[]>(
-    () => [
+  const stageActions = useMemo<TableRowAction<IStageResponse>[]>(() => {
+    const actions: TableRowAction<IStageResponse>[] = [
       {
         label: 'Ver partidos',
         color: 'info',
         icon: <VisibilityIcon fontSize="small" />,
         onClick: handleView,
       },
-      {
+    ];
+
+    // Removing a phase after the tournament started would corrupt the fixture,
+    // so the delete action is hidden once the structure is locked.
+    if (!stageStructureLocked) {
+      actions.push({
         label: 'Eliminar',
         color: 'error',
         icon: <DeleteIcon fontSize="small" />,
         onClick: handleDelete,
-      },
-    ],
-    [handleDelete, handleView]
-  );
+      });
+    }
+
+    return actions;
+  }, [handleDelete, handleView, stageStructureLocked]);
 
   const columns: GridColDef<IStageResponse>[] = useMemo(() => {
     const baseColumns: GridColDef<IStageResponse>[] = [
@@ -414,13 +434,22 @@ const StagesPage: React.FC<StagesPageProps> = ({
           Generar fases
         </Button>
       )}
-      {createType && (
-        <NewEntityButton
-          gender="feminine"
-          type={createType}
-          onClick={handleCreateStage}
-        />
-      )}
+      {createType &&
+        (stageStructureLocked ? (
+          <Tooltip title={STRUCTURE_LOCKED_REASON}>
+            {/* A disabled MUI Button swallows hover events, so the tooltip needs
+                a non-disabled wrapper element to anchor to. */}
+            <span>
+              <NewEntityButton gender="feminine" type={createType} disabled />
+            </span>
+          </Tooltip>
+        ) : (
+          <NewEntityButton
+            gender="feminine"
+            type={createType}
+            onClick={handleCreateStage}
+          />
+        ))}
     </Stack>
   );
 
