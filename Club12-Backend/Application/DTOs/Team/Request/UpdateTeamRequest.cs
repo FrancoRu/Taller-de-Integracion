@@ -22,4 +22,17 @@ public class UpdateTeamRequest
     /// The color of the team's shirt.
     /// </summary>
     public string? ShirtColor { get; set; }
+
+    /// <summary>
+    /// The jersey kit pattern applied over the primary shirt color. Left
+    /// unchanged when not supplied.
+    /// </summary>
+    [MaxLength(20)]
+    public string? JerseyStyle { get; set; }
+
+    /// <summary>
+    /// Optional secondary #rrggbb hex color used for the jersey pattern/trim.
+    /// </summary>
+    [MaxLength(9)]
+    public string? ShirtSecondaryColor { get; set; }
 }

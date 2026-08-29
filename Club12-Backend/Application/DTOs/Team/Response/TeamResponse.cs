@@ -32,6 +32,19 @@ public class TeamResponse : BaseEntityResponse
     public required string ShirtColor { get; set; }
 
     /// <summary>
+    /// The jersey kit pattern applied over the primary shirt color
+    /// (solid, stripes, hoops, diagonal, chevron, sash, sides, halves,
+    /// circles, gradient, vneck).
+    /// </summary>
+    public string JerseyStyle { get; set; } = "solid";
+
+    /// <summary>
+    /// Optional secondary #rrggbb hex color used for the jersey pattern/trim.
+    /// Null when the kit has no accent color.
+    /// </summary>
+    public string? ShirtSecondaryColor { get; set; }
+
+    /// <summary>
     /// The URL of the team's logo.
     /// </summary>
     public required string LogoUrl { get; set; }

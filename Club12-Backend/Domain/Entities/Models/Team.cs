@@ -17,6 +17,20 @@ public class Team : EntityBase
     public required string ThreeLetterCode { get; set; }
     public required string LogoUrl { get; set; }
     public required string ShirtColor { get; set; }
+
+    /// <summary>
+    /// The jersey kit pattern applied over the primary <see cref="ShirtColor"/>.
+    /// One of: solid, stripes, hoops, diagonal, chevron, sash, sides, halves,
+    /// circles, gradient, vneck. Defaults to "solid".
+    /// </summary>
+    public string JerseyStyle { get; set; } = "solid";
+
+    /// <summary>
+    /// Optional secondary <c>#rrggbb</c> hex color used for the jersey
+    /// pattern/trim. Null when the kit is a plain solid with no accent.
+    /// </summary>
+    public string? ShirtSecondaryColor { get; set; }
+
     public Tournament? Tournament { get; set; }
     public Guid? TournamentId { get; set; }
 

@@ -30,6 +30,19 @@ public class CreateTeamRequest
     public required string ShirtColor { get; set; }
 
     /// <summary>
+    /// The jersey kit pattern applied over the primary shirt color. Defaults
+    /// to "solid" when not supplied.
+    /// </summary>
+    [MaxLength(20)]
+    public string JerseyStyle { get; set; } = "solid";
+
+    /// <summary>
+    /// Optional secondary #rrggbb hex color used for the jersey pattern/trim.
+    /// </summary>
+    [MaxLength(9)]
+    public string? ShirtSecondaryColor { get; set; }
+
+    /// <summary>
     /// The logo image file to upload (must be JPEG or PNG).
     /// </summary>
     [Required(ErrorMessage = "The Logo image is required.")]

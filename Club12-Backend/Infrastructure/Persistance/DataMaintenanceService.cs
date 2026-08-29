@@ -32,6 +32,10 @@ public sealed class DataMaintenanceService(
         ["ATC", "DNO", "CBE", "UDS", "RPO", "DOE", "SLV", "GYT"];
     private static readonly string[] PrimeraColors =
         ["#1E3A8A", "#DC2626", "#16A34A", "#EA580C", "#0891B2", "#7C3AED", "#CA8A04", "#0D9488"];
+    private static readonly string[] PrimeraStyles =
+        ["stripes", "hoops", "diagonal", "chevron", "sash", "sides", "halves", "circles"];
+    private static readonly string[] PrimeraSecondaryColors =
+        ["#FFFFFF", "#FFFFFF", "#FFFFFF", "#1E293B", "#FFFFFF", "#FDE047", "#1E293B", "#FFFFFF"];
 
     // Main tournament — Segunda División (8 teams).
     private static readonly string[] SegundaNames =
@@ -43,6 +47,10 @@ public sealed class DataMaintenanceService(
         ["JUN", "SPO", "EAZ", "NRV", "FAN", "TDN", "HDL", "VSE"];
     private static readonly string[] SegundaColors =
         ["#4338CA", "#B91C1C", "#4D7C0F", "#9333EA", "#0284C7", "#65A30D", "#C026D3", "#B45309"];
+    private static readonly string[] SegundaStyles =
+        ["gradient", "vneck", "solid", "halves", "sides", "circles", "stripes", "hoops"];
+    private static readonly string[] SegundaSecondaryColors =
+        ["#FDE047", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#1E293B", "#FFFFFF", "#FDE047"];
 
     // Playoff cups shared by both main divisions: Copa Oro (positions 1-4),
     // Copa Plata (positions 5-8), each a best-of-3 SemiFinal + Final bracket.
@@ -154,8 +162,10 @@ public sealed class DataMaintenanceService(
             UpcomingMatchesStart: new DateTime(2026, 9, 7, 0, 0, 0, DateTimeKind.Utc),
             Divisions:
             [
-                new("Primera División", PrimeraNames, PrimeraCodes, PrimeraColors, MainCups),
-                new("Segunda División", SegundaNames, SegundaCodes, SegundaColors, MainCups),
+                new("Primera División", PrimeraNames, PrimeraCodes, PrimeraColors, MainCups,
+                    TeamStyles: PrimeraStyles, TeamSecondaryColors: PrimeraSecondaryColors),
+                new("Segunda División", SegundaNames, SegundaCodes, SegundaColors, MainCups,
+                    TeamStyles: SegundaStyles, TeamSecondaryColors: SegundaSecondaryColors),
             ],
             CrossCup: new("Copa Club 12", GroupCount: 4, QualifiersPerGroup: 1));
 
