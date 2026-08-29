@@ -23,7 +23,7 @@ namespace API.Controllers;
 /// </summary>
 [Route("api/maintenance")]
 [ApiController]
-[Authorize(Roles = Roles.Admin)]
+[Authorize(Roles = Roles.AdminOrOwner)]
 public class MaintenanceController(IMaintenanceModeState maintenanceModeState) : ControllerBase
 {
     [HttpGet]

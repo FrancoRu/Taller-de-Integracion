@@ -10,8 +10,8 @@ using System.Net;
 namespace API.Tests;
 
 /// <summary>
-/// Proves both data-maintenance endpoints are Admin-only, mirroring the
-/// pattern in AuthorizationGatingTests.cs.
+/// Proves both data-maintenance endpoints are staff-only (Admin or Owner),
+/// mirroring the pattern in AuthorizationGatingTests.cs.
 /// </summary>
 public class DataMaintenanceAuthorizationTests : IClassFixture<CustomWebApplicationFactory>
 {
@@ -32,22 +32,22 @@ public class DataMaintenanceAuthorizationTests : IClassFixture<CustomWebApplicat
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Theory]
-    [InlineData(Roles.Owner)]
-    [InlineData(Roles.Guest)]
-    public async Task Seed_NonAdminRole_ReturnsForbidden(string role)
+    [Fact]
+    public async Task Seed_GuestRole_ReturnsForbidden()
     {
-        HttpClient client = _factory.CreateAuthenticatedClient(role);
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Guest);
 
         HttpResponseMessage response = await client.PostAsync("api/data-maintenance/seed", null);
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
-    [Fact]
-    public async Task Seed_AdminRole_Succeeds()
+    [Theory]
+    [InlineData(Roles.Admin)]
+    [InlineData(Roles.Owner)]
+    public async Task Seed_StaffRole_Succeeds(string role)
     {
-        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Admin);
+        HttpClient client = _factory.CreateAuthenticatedClient(role);
 
         // Wipe first: this class shares one CustomWebApplicationFactory (and
         // therefore one database) across every [Fact] via IClassFixture, and
@@ -71,22 +71,22 @@ public class DataMaintenanceAuthorizationTests : IClassFixture<CustomWebApplicat
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Theory]
-    [InlineData(Roles.Owner)]
-    [InlineData(Roles.Guest)]
-    public async Task Wipe_NonAdminRole_ReturnsForbidden(string role)
+    [Fact]
+    public async Task Wipe_GuestRole_ReturnsForbidden()
     {
-        HttpClient client = _factory.CreateAuthenticatedClient(role);
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Guest);
 
         HttpResponseMessage response = await client.PostAsync("api/data-maintenance/wipe", null);
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
-    [Fact]
-    public async Task Wipe_AdminRole_Succeeds()
+    [Theory]
+    [InlineData(Roles.Admin)]
+    [InlineData(Roles.Owner)]
+    public async Task Wipe_StaffRole_Succeeds(string role)
     {
-        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Admin);
+        HttpClient client = _factory.CreateAuthenticatedClient(role);
 
         HttpResponseMessage response = await client.PostAsync("api/data-maintenance/wipe", null);
 

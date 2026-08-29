@@ -9,13 +9,13 @@ using System.Net;
 namespace API.Tests;
 
 /// <summary>
-/// Proves every api/maintenance endpoint is Admin-only, mirroring the
-/// pattern in BackupAuthorizationTests.cs and
+/// Proves every api/maintenance endpoint is staff-only (Admin or Owner),
+/// mirroring the pattern in BackupAuthorizationTests.cs and
 /// DataMaintenanceAuthorizationTests.cs. The DELETE (escape-hatch)
 /// tests explicitly put the shared IMaintenanceModeState into an
 /// active window first — threat-matrix "Escape-hatch abuse": the
 /// middleware allow-lists this path so the request reaches MVC, but
-/// [Authorize(Roles = Admin)] must still reject anonymous/non-Admin
+/// [Authorize(Roles = AdminOrOwner)] must still reject anonymous/Guest
 /// callers even while maintenance is active.
 /// </summary>
 public class MaintenanceAuthorizationTests : IClassFixture<CustomWebApplicationFactory>
@@ -37,22 +37,22 @@ public class MaintenanceAuthorizationTests : IClassFixture<CustomWebApplicationF
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Theory]
-    [InlineData(Roles.Owner)]
-    [InlineData(Roles.Guest)]
-    public async Task GetStatus_NonAdminRole_ReturnsForbidden(string role)
+    [Fact]
+    public async Task GetStatus_GuestRole_ReturnsForbidden()
     {
-        HttpClient client = _factory.CreateAuthenticatedClient(role);
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Guest);
 
         HttpResponseMessage response = await client.GetAsync("api/maintenance");
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
-    [Fact]
-    public async Task GetStatus_AdminRole_Succeeds()
+    [Theory]
+    [InlineData(Roles.Admin)]
+    [InlineData(Roles.Owner)]
+    public async Task GetStatus_StaffRole_Succeeds(string role)
     {
-        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Admin);
+        HttpClient client = _factory.CreateAuthenticatedClient(role);
 
         HttpResponseMessage response = await client.GetAsync("api/maintenance");
 
@@ -78,11 +78,10 @@ public class MaintenanceAuthorizationTests : IClassFixture<CustomWebApplicationF
         }
     }
 
-    [Theory]
-    [InlineData(Roles.Owner)]
-    [InlineData(Roles.Guest)]
-    public async Task ExitMaintenance_NonAdminRoleWhileActive_ReturnsForbidden(string role)
+    [Fact]
+    public async Task ExitMaintenance_GuestRoleWhileActive_ReturnsForbidden()
     {
+        string role = Roles.Guest;
         IMaintenanceModeState state = _factory.Services.GetRequiredService<IMaintenanceModeState>();
         state.Enter("test: restore in progress");
         try
@@ -99,12 +98,14 @@ public class MaintenanceAuthorizationTests : IClassFixture<CustomWebApplicationF
         }
     }
 
-    [Fact]
-    public async Task ExitMaintenance_AdminRoleWhileActive_Succeeds_AndClearsState()
+    [Theory]
+    [InlineData(Roles.Admin)]
+    [InlineData(Roles.Owner)]
+    public async Task ExitMaintenance_StaffRoleWhileActive_Succeeds_AndClearsState(string role)
     {
         IMaintenanceModeState state = _factory.Services.GetRequiredService<IMaintenanceModeState>();
         state.Enter("test: restore in progress");
-        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Admin);
+        HttpClient client = _factory.CreateAuthenticatedClient(role);
 
         HttpResponseMessage response = await client.DeleteAsync("api/maintenance");
 

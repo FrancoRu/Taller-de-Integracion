@@ -32,7 +32,7 @@ namespace API.Controllers;
 /// </summary>
 [Route("api/backups")]
 [ApiController]
-[Authorize(Roles = Roles.Admin)]
+[Authorize(Roles = Roles.AdminOrOwner)]
 #pragma warning disable S6960
 public class BackupController(IBackupCatalog catalog, IBackupOperationsService operations) : ControllerBase
 #pragma warning restore S6960

@@ -20,7 +20,7 @@ namespace API.Controllers;
 /// </summary>
 [Route("api/data-maintenance")]
 [ApiController]
-[Authorize(Roles = Roles.Admin)]
+[Authorize(Roles = Roles.AdminOrOwner)]
 public class DataMaintenanceController(IDataMaintenanceService dataMaintenanceService) : ControllerBase
 {
     /// <summary>
