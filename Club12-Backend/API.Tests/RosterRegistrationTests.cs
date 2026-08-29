@@ -62,7 +62,10 @@ public class RosterRegistrationTests : IClassFixture<CustomWebApplicationFactory
 
         // Build a PlayerService with a deliberately tiny cap so the test is
         // deterministic without seeding dozens of players.
-        PlayerService service = new(unitOfWork, Options.Create(new RosterOptions { MaxPlayersPerTeam = 2 }));
+        PlayerService service = new(
+            unitOfWork,
+            scope.ServiceProvider.GetRequiredService<IScorerRepository>(),
+            Options.Create(new RosterOptions { MaxPlayersPerTeam = 2 }));
 
         await service.RegisterPlayerToTeamAsync(players[0], teamId, tournamentId, jerseyNumber: 1);
         await service.RegisterPlayerToTeamAsync(players[1], teamId, tournamentId, jerseyNumber: 2);

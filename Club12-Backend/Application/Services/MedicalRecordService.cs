@@ -29,6 +29,14 @@ public class MedicalRecordService(IUnitOfWork unitOfWork) : IMedicalRecordServic
     {
         PlayerTeamRegistration registration = await GetRegistrationAsync(playerId, teamId, tournamentId);
 
+        // HU-57: once the ficha is Approved the player is habilitado and the
+        // record is frozen — it can only be viewed/downloaded, never replaced
+        // by a new upload.
+        if (registration.MedicalRecordStatus == MedicalRecordStatus.Approved)
+        {
+            throw new InvalidOperationException(ErrorMessages.MedicalRecord.AlreadyApproved);
+        }
+
         registration.MedicalRecordFileUrl = fileReference;
         registration.MedicalRecordFileName = fileName;
         // Uploading a (new) file always requires a fresh review — it never

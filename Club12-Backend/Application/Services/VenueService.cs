@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 using Application.Utils.Helper.Slug;
 
 using Domain.Entities.Models;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Application.Services;
 
-public class VenueService(IVenueRepository venueRepository) : IVenueService
+public class VenueService(IVenueRepository venueRepository, IMatchRepository matchRepository) : IVenueService
 {
     public async Task<Venue> CreateVenueAsync(Venue venueEntity)
     {
@@ -47,6 +48,15 @@ public class VenueService(IVenueRepository venueRepository) : IVenueService
 
     public async Task DeleteVenueAsync(Guid id)
     {
+        // Integrity: a venue (cancha) referenced by one or more matches cannot
+        // be deleted — doing so would leave those matches without their venue.
+        bool referencedByMatches = await matchRepository.ExistsAsync(match => match.VenueId == id);
+
+        if (referencedByMatches)
+        {
+            throw new InvalidOperationException(ErrorMessages.Venue.ReferencedByMatches);
+        }
+
         await venueRepository.RemoveAsync(venue => venue.Id == id);
     }
 

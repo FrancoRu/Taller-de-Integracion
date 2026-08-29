@@ -79,6 +79,39 @@ public class MedicalRecordEligibilityTests : IClassFixture<CustomWebApplicationF
             Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "ref", "ficha.pdf", "owner@club12"));
     }
 
+    // ---------- HU-57: once Approved the ficha cannot be re-uploaded ----------
+
+    [Fact]
+    public async Task RecordUpload_AfterApproval_IsRejected()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IMedicalRecordService medicalRecordService = scope.ServiceProvider.GetRequiredService<IMedicalRecordService>();
+
+        Fixture fx = await SeedRegistrationAsync(db);
+
+        // Upload + approve so the record becomes habilitado.
+        await medicalRecordService.RecordUploadAsync(
+            fx.PlayerId, fx.TeamId, fx.TournamentId,
+            "medical-records/some/object/path.pdf", "ficha.pdf", "owner@club12");
+        await medicalRecordService.ReviewAsync(
+            fx.PlayerId, fx.TeamId, fx.TournamentId, approve: true, reason: null, actor: "owner@club12");
+
+        // A second upload on an Approved record is rejected (view/download only).
+        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => medicalRecordService.RecordUploadAsync(
+                fx.PlayerId, fx.TeamId, fx.TournamentId,
+                "medical-records/some/other/path.pdf", "otra-ficha.pdf", "owner@club12"));
+
+        Assert.Contains("ya está aprobada", ex.Message);
+
+        // The originally approved ficha is untouched.
+        MedicalRecordResponse? record = await medicalRecordService.GetAsync(fx.PlayerId, fx.TeamId, fx.TournamentId);
+        Assert.Equal(MedicalRecordStatus.Approved, record!.Status);
+        Assert.Equal("medical-records/some/object/path.pdf", record.FileUrl);
+        Assert.Equal("ficha.pdf", record.FileName);
+    }
+
     // ---------- HU-58: approve -> habilitado ----------
 
     [Fact]

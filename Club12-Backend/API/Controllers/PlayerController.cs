@@ -202,6 +202,7 @@ public class PlayerController(
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> DeletePlayerByIdAsync(Guid id)
     {
         await playerService.DeletePlayerAsync(id);

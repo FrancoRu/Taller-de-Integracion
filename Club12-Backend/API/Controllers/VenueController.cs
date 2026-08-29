@@ -123,6 +123,7 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> DeleteVenueById(Guid id)
     {
         Venue? venue = await venueService.GetVenueByIdAsync(id);
@@ -132,13 +133,17 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
             return this.NotFoundProblem(nameof(Venue), id);
         }
 
+        // Run the integrity guard first (throws 409 when the venue is still
+        // referenced by matches) so the stored photo is only removed once the
+        // venue row is actually gone.
+        await venueService.DeleteVenueAsync(id);
+
         if (!string.IsNullOrWhiteSpace(venue.PhotoUrl))
         {
             string[] photoUrlSegments = venue.PhotoUrl.Split('/');
             await supabaseHelper.DeleteImageAsync<Venue>(photoUrlSegments[^1]);
         }
 
-        await venueService.DeleteVenueAsync(id);
         return NoContent();
     }
 
