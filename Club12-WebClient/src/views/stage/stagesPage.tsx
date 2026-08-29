@@ -38,6 +38,7 @@ import {
 } from '@/modules/core/constants/pagination';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { FILTERS_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/constants';
+import { translateStageType } from '@/modules/core/utils/translateStageType';
 
 interface StagesPageProps {
   divisionId?: GUID;
@@ -64,11 +65,6 @@ const formatDate = (value?: string | null) => {
   return parsed.toLocaleDateString('es-AR');
 };
 
-const formatStageType = (value: string) =>
-  value
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace('Final', 'Final')
-    .trim();
 
 const StagesPage: React.FC<StagesPageProps> = ({
   divisionId,
@@ -282,7 +278,7 @@ const StagesPage: React.FC<StagesPageProps> = ({
         minWidth: 140,
         align: 'center',
         headerAlign: 'center',
-        renderCell: params => formatStageType(params.row.stageType),
+        renderCell: params => translateStageType(params.row.stageType),
       },
       {
         field: 'startDate',
