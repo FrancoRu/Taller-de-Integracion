@@ -57,6 +57,7 @@ const INITIAL_TEAM_FORM: TeamFormState = {
   shirtSecondaryColor: '',
   jerseyStyle: 'solid',
   logo: null,
+  logoUrl: '',
 };
 
 const TeamsPage: React.FC<TeamsScreenProps> = ({
@@ -68,8 +69,14 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
   onCreate,
 }) => {
   const navigate = useNavigate();
-  const { teams, addTeam, putTeamById, getTeamsByFiltered, deleteTeamById } =
-    useTeam();
+  const {
+    teams,
+    addTeam,
+    putTeamById,
+    putTeamLogoById,
+    getTeamsByFiltered,
+    deleteTeamById,
+  } = useTeam();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [rowCount, setRowCount] = useState(0);
@@ -186,6 +193,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
       shirtSecondaryColor: row.shirtSecondaryColor ?? '',
       jerseyStyle: row.jerseyStyle ?? 'solid',
       logo: null,
+      logoUrl: row.logoUrl ?? '',
     });
   }, []);
 
@@ -378,12 +386,19 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
       jerseyStyle: teamForm.jerseyStyle,
     };
 
-    const updatedTeam = await putTeamById(editingTeam.id, payload);
-    setSubmitting(false);
+    const ok = await putTeamById(editingTeam.id, payload);
 
-    if (!updatedTeam) {
+    if (!ok) {
+      setSubmitting(false);
       return;
     }
+
+    // The team fields and its logo are two separate endpoints; upload the new
+    // logo (if the admin picked one) as part of the same save.
+    if (teamForm.logo) {
+      await putTeamLogoById(editingTeam.id, teamForm.logo);
+    }
+    setSubmitting(false);
 
     setEditingTeam(null);
     resetTeamForm();
@@ -439,7 +454,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
       />
 
       <TeamFormDialog
-        withLogo={false}
+        withLogo
         open={Boolean(editingTeam)}
         title="Editar equipo"
         confirmLabel="Guardar"

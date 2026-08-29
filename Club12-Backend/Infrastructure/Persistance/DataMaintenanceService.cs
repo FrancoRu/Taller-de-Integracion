@@ -187,10 +187,15 @@ public sealed class DataMaintenanceService(
             Status: TournamentStatus.Finished);
 
         int playerCounter = 0;
+        // Both tournaments are saved in the same transaction, so their division
+        // and stage slugs must be unique across the whole batch (each has a DB
+        // unique index). A shared registry disambiguates repeated base slugs
+        // with numeric suffixes instead of the GUIDs the builder used to append.
+        SampleTournamentBuilder.SlugRegistry slugRegistry = new();
         SampleTournamentBuilder.BuildResult result1 =
-            SampleTournamentBuilder.Build(tournament1, venues, ref playerCounter, includePlayoffs: true);
+            SampleTournamentBuilder.Build(tournament1, venues, ref playerCounter, includePlayoffs: true, slugRegistry);
         SampleTournamentBuilder.BuildResult result2 =
-            SampleTournamentBuilder.Build(tournament2, venues, ref playerCounter, includePlayoffs: true);
+            SampleTournamentBuilder.Build(tournament2, venues, ref playerCounter, includePlayoffs: true, slugRegistry);
 
         db.Tournaments.Add(result1.Tournament);
         db.Tournaments.Add(result2.Tournament);

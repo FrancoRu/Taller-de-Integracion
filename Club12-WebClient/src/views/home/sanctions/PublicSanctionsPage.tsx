@@ -29,6 +29,7 @@ import {
   FILTER_OPTIONS_PAGE_SIZE,
 } from '@/modules/core/constants/pagination';
 import { FILTERS_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/constants';
+import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 
 const formatDate = (value?: string | Date | null) => formatDateAr(value);
 
@@ -46,6 +47,8 @@ const columns: GridColDef<IPlayerSanctionResponse>[] = [
     headerName: 'Tipo',
     flex: 0.6,
     minWidth: 100,
+    align: 'center',
+    headerAlign: 'center',
     renderCell: params => getSanctionSubjectTypeLabel(params.row),
   },
   {
@@ -53,6 +56,8 @@ const columns: GridColDef<IPlayerSanctionResponse>[] = [
     headerName: 'Duración',
     flex: 0.7,
     minWidth: 120,
+    align: 'center',
+    headerAlign: 'center',
     renderCell: params => formatSanctionDurationFechas(params.row.duration),
   },
   {
@@ -60,6 +65,8 @@ const columns: GridColDef<IPlayerSanctionResponse>[] = [
     headerName: 'Fechas restantes',
     flex: 0.7,
     minWidth: 130,
+    align: 'center',
+    headerAlign: 'center',
     renderCell: params => formatFechasRemaining(params.row.fechasRemaining),
   },
   {
@@ -67,6 +74,8 @@ const columns: GridColDef<IPlayerSanctionResponse>[] = [
     headerName: 'Estado',
     flex: 0.6,
     minWidth: 110,
+    align: 'center',
+    headerAlign: 'center',
     renderCell: params => (
       <Chip
         size="small"
@@ -80,6 +89,8 @@ const columns: GridColDef<IPlayerSanctionResponse>[] = [
     headerName: 'Fecha',
     flex: 0.8,
     minWidth: 120,
+    align: 'center',
+    headerAlign: 'center',
     renderCell: params => formatDate(params.row.issuedDate),
   },
   {
@@ -247,11 +258,11 @@ export default function PublicSanctionsPage() {
           pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
           paginationModel={paginationModel}
           onPaginationModelChange={handlePaginationModelChange}
-          localeText={{
-            noRowsLabel: selectedTournamentId || description
+          localeText={dataGridLocaleText(
+            selectedTournamentId || description
               ? 'No se encontraron sanciones para el filtro aplicado.'
-              : 'No hay sanciones registradas.',
-          }}
+              : 'No hay sanciones registradas.'
+          )}
         />
       </Box>
     </PageShell>

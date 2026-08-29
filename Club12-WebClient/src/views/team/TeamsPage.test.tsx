@@ -54,7 +54,7 @@ const setupHook = (teams: ITeamResponse[] = [buildTeam()]) => {
   addTeam = vi.fn<ITeamContextProps['addTeam']>();
   addTeam.mockResolvedValue(buildTeam());
   putTeamById = vi.fn<ITeamContextProps['putTeamById']>();
-  putTeamById.mockResolvedValue(buildTeam());
+  putTeamById.mockResolvedValue(true);
   deleteTeamById = vi.fn<ITeamContextProps['deleteTeamById']>();
   deleteTeamById.mockResolvedValue(undefined);
 
@@ -256,7 +256,7 @@ describe('TeamsPage — create dialog', () => {
       within(dialog).getByRole('radiogroup', { name: /modelo de camiseta/i })
     ).toBeInTheDocument();
     expect(
-      within(dialog).getByRole('button', { name: /seleccionar logo/i })
+      within(dialog).getByRole('button', { name: /seleccionar escudo/i })
     ).toBeInTheDocument();
   });
 

@@ -24,6 +24,7 @@ import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { useStage } from '@/modules/stage/hook/stage.hook';
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
+import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import TeamLogo from '@/views/core/components/TeamLogo';
@@ -309,6 +310,8 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
         headerName: 'Fecha',
         flex: 1,
         minWidth: 170,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => formatDateTime(params.row.matchDate),
       },
       {
@@ -363,6 +366,8 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
         flex: 0.8,
         minWidth: 120,
         sortable: false,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => {
           const homeScore = params.row.homeTeam?.score;
           const visitorScore = params.row.visitorTeam?.score;
@@ -379,6 +384,8 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
         headerName: 'Tipo',
         flex: 0.8,
         minWidth: 120,
+        align: 'center',
+        headerAlign: 'center',
       },
       {
         field: 'venue',
@@ -394,6 +401,8 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
         flex: 0.8,
         minWidth: 130,
         sortable: false,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => (
           <MatchStatusChip
             status={params.row.status}
@@ -403,7 +412,13 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
       },
     ];
 
-    return [...baseColumns, buildActionsColumn(matchActions)];
+    return [
+      ...baseColumns,
+      buildActionsColumn(matchActions, {
+        align: 'center',
+        headerAlign: 'center',
+      }),
+    ];
   }, [matchActions]);
 
   const rows = useMemo(() => matches ?? [], [matches]);
@@ -652,7 +667,7 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
         autoHeight
         disableRowSelectionOnClick
         disableColumnMenu
-        localeText={{ noRowsLabel: noRowsMessage }}
+        localeText={dataGridLocaleText(noRowsMessage)}
         pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
         paginationModel={paginationModel}
         onPaginationModelChange={handlePaginationModelChange}

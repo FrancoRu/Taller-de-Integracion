@@ -10,6 +10,7 @@ import type { IBackupRecordResponse } from '@/modules/backup/type/backup';
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import { DeleteIcon, RestoreIcon } from '@/views/core/MUI/icons/icons';
+import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 
 interface BackupsTableProps {
   backups: IBackupRecordResponse[];
@@ -79,6 +80,8 @@ const BackupsTable: React.FC<BackupsTableProps> = ({
         headerName: 'Fecha',
         flex: 1,
         minWidth: 180,
+        align: 'center',
+        headerAlign: 'center',
         valueFormatter: (value: string) =>
           new Date(value).toLocaleString('es-AR'),
       },
@@ -87,6 +90,8 @@ const BackupsTable: React.FC<BackupsTableProps> = ({
         headerName: 'Peso',
         flex: 0.6,
         minWidth: 100,
+        align: 'center',
+        headerAlign: 'center',
         valueFormatter: (value: number) => formatBytes(value),
       },
       {
@@ -94,9 +99,11 @@ const BackupsTable: React.FC<BackupsTableProps> = ({
         headerName: 'Forma de creación',
         flex: 0.8,
         minWidth: 160,
+        align: 'center',
+        headerAlign: 'center',
         valueFormatter: (value: 'Manual' | 'Job') => BACKUP_ORIGIN_LABELS[value],
       },
-      buildActionsColumn(actions),
+      buildActionsColumn(actions, { align: 'center', headerAlign: 'center' }),
     ],
     [actions]
   );
@@ -111,7 +118,7 @@ const BackupsTable: React.FC<BackupsTableProps> = ({
         autoHeight
         disableRowSelectionOnClick
         disableColumnMenu
-        localeText={{ noRowsLabel: 'Todavía no hay respaldos generados.' }}
+        localeText={dataGridLocaleText('Todavía no hay respaldos generados.')}
       />
     </Box>
   );

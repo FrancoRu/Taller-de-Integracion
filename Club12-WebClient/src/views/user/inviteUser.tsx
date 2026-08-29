@@ -13,6 +13,11 @@ import {
 import { useError } from '@/modules/error/hooks/error.hock';
 import { HttpStatus } from '@/modules/core/constants/httpStatus';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import {
+  isValidEmail,
+  isValidPhone,
+  VALIDATION_MESSAGES,
+} from '@/modules/core/utils/validators';
 
 /**
  * HU-09: "Invitar usuario" form (Admin/Owner). Creates a passwordless account
@@ -59,9 +64,16 @@ const InviteUser: React.FC = () => {
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
+  const emailError = form.email.length > 0 && !isValidEmail(form.email);
+  const phoneError = form.phone.length > 0 && !isValidPhone(form.phone);
+
   const handleSubmit = async () => {
     const messages: string[] = [];
     if (!form.email.trim()) messages.push('El email es requerido.');
+    else if (!isValidEmail(form.email))
+      messages.push(VALIDATION_MESSAGES.email + '.');
+    if (form.phone.trim() && !isValidPhone(form.phone))
+      messages.push(VALIDATION_MESSAGES.phone + '.');
     if (!form.role) messages.push('El rol es requerido.');
 
     if (messages.length > 0) {
@@ -115,6 +127,8 @@ const InviteUser: React.FC = () => {
             type="email"
             value={form.email}
             onChange={handleChange}
+            error={emailError}
+            helperText={emailError ? VALIDATION_MESSAGES.email : undefined}
           />
 
           <TextField
@@ -123,6 +137,8 @@ const InviteUser: React.FC = () => {
             name="phone"
             value={form.phone}
             onChange={handleChange}
+            error={phoneError}
+            helperText={phoneError ? VALIDATION_MESSAGES.phone : undefined}
           />
 
           <TextField
@@ -156,7 +172,7 @@ const InviteUser: React.FC = () => {
             <Button
               variant="contained"
               onClick={handleSubmit}
-              disabled={submitting}
+              disabled={submitting || emailError || phoneError}
             >
               {submitting ? 'Enviando...' : 'Enviar invitación'}
             </Button>

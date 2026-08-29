@@ -13,7 +13,10 @@ export type TeamFormState = {
   shirtSecondaryColor: string;
   /** Selected jersey kit template (e.g. `solid`, `stripes`). */
   jerseyStyle: string;
+  /** A newly picked logo file to upload, if any. */
   logo: File | null;
+  /** The team's existing logo URL (shown as a preview while editing). */
+  logoUrl: string;
 };
 
 /** The editable text/select fields of {@link TeamFormState}. */

@@ -192,6 +192,8 @@ const UsersPage: React.FC = () => {
         headerName: 'Rol',
         flex: 1,
         minWidth: 160,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params =>
           USER_ROLE_LABELS[params.row.role as UserRolesType] ?? params.row.role,
       },
@@ -200,6 +202,8 @@ const UsersPage: React.FC = () => {
         headerName: 'Estado',
         flex: 0.7,
         minWidth: 110,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => (
           <Chip
             size="small"
@@ -211,7 +215,13 @@ const UsersPage: React.FC = () => {
       },
     ];
 
-    return [...baseColumns, buildActionsColumn(userActions)];
+    return [
+      ...baseColumns,
+      buildActionsColumn(userActions, {
+        align: 'center',
+        headerAlign: 'center',
+      }),
+    ];
   }, [userActions]);
 
   const fetchUsers = useCallback(

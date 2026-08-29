@@ -29,6 +29,7 @@ import { useStage } from '@/modules/stage/hook/stage.hook';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import { usePlayer } from '@/modules/player/hook/player.hook';
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
+import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PageShell from '@/views/core/components/PageShell';
@@ -332,6 +333,8 @@ const PlayerSanctionsPage: React.FC = () => {
         headerName: 'Tipo',
         flex: 0.6,
         minWidth: 100,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => getSanctionSubjectTypeLabel(params.row),
       },
       {
@@ -339,6 +342,8 @@ const PlayerSanctionsPage: React.FC = () => {
         headerName: 'Duración (fechas)',
         flex: 0.7,
         minWidth: 130,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => formatSanctionDurationFechas(params.row.duration),
       },
       {
@@ -346,6 +351,8 @@ const PlayerSanctionsPage: React.FC = () => {
         headerName: 'Fechas restantes',
         flex: 0.7,
         minWidth: 130,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => formatFechasRemaining(params.row.fechasRemaining),
       },
       {
@@ -353,6 +360,8 @@ const PlayerSanctionsPage: React.FC = () => {
         headerName: 'Estado',
         flex: 0.6,
         minWidth: 110,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => (
           <Chip
             size="small"
@@ -366,6 +375,8 @@ const PlayerSanctionsPage: React.FC = () => {
         headerName: 'Fecha',
         flex: 0.9,
         minWidth: 150,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => formatDateTime(params.row.issuedDate),
       },
       {
@@ -376,7 +387,13 @@ const PlayerSanctionsPage: React.FC = () => {
       },
     ];
 
-    return [...baseColumns, buildActionsColumn(sanctionActions)];
+    return [
+      ...baseColumns,
+      buildActionsColumn(sanctionActions, {
+        align: 'center',
+        headerAlign: 'center',
+      }),
+    ];
   }, [sanctionActions]);
 
   const rows = useMemo(() => playerSanctions ?? [], [playerSanctions]);
@@ -586,7 +603,7 @@ const PlayerSanctionsPage: React.FC = () => {
             autoHeight
             disableRowSelectionOnClick
             disableColumnMenu
-            localeText={{ noRowsLabel: noRowsMessage }}
+            localeText={dataGridLocaleText(noRowsMessage)}
             pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
             paginationModel={paginationModel}
             onPaginationModelChange={handlePaginationModelChange}

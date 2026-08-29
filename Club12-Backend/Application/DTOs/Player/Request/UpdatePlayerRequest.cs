@@ -43,6 +43,7 @@ public class UpdatePlayerRequest
     /// The phone number of the player.
     /// </summary>
     [MaxLength(PlayerFieldLengths.PhoneNumberMaxLength, ErrorMessage = "The PhoneNumber field must not exceed 15 characters.")]
+    [RegularExpression(ValidationPatterns.PhoneNumber, ErrorMessage = ValidationPatterns.PhoneNumberError)]
     public string? PhoneNumber { get; set; }
 
     /// <summary>

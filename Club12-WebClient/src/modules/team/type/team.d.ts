@@ -25,9 +25,10 @@ export interface ITeamContextProps {
    * Updates an existing team by its ID.
    * @param id The ID of the team to update.
    * @param data The updated team data.
-   * @returns A promise that resolves with the updated team details.
+   * @returns A promise that resolves to whether the update succeeded (a PUT
+   * answers 204 with no body, so there is no updated entity to return).
    */
-  putTeamById(id: GUID, data: IPutTeamRequest): Promise<ITeamResponse | void>;
+  putTeamById(id: GUID, data: IPutTeamRequest): Promise<boolean>;
 
   /**
    * Updates the logo of an existing team.

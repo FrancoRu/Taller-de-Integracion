@@ -23,6 +23,7 @@ import {
   notifyWarning,
 } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
+import { isValidPhone, VALIDATION_MESSAGES } from '@/modules/core/utils/validators';
 import { TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
 import { TABLE_PAGE_SIZE_OPTIONS } from '@/modules/core/constants/pagination';
 import { usePlayer } from '@/modules/player/hook/player.hook';
@@ -34,6 +35,7 @@ import {
   PlayerFiltered,
 } from '@/modules/player/type/player.d';
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
+import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PageShell from '@/views/core/components/PageShell';
@@ -383,6 +385,8 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         headerName: 'Documento',
         flex: 0.8,
         minWidth: 140,
+        align: 'center',
+        headerAlign: 'center',
       },
       {
         field: 'phoneNumber',
@@ -408,6 +412,8 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         minWidth: 100,
         sortable: false,
         filterable: false,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => {
           const dorsal = currentDorsalFor(params.row);
           return dorsal === null || dorsal === undefined ? '—' : dorsal;
@@ -423,6 +429,8 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         minWidth: 150,
         sortable: false,
         filterable: false,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => {
           const info = medicalByPlayerId?.get(params.row.id);
           return (
@@ -435,7 +443,13 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       });
     }
 
-    return [...baseColumns, buildActionsColumn(playerActions)];
+    return [
+      ...baseColumns,
+      buildActionsColumn(playerActions, {
+        align: 'center',
+        headerAlign: 'center',
+      }),
+    ];
   }, [
     currentDorsalFor,
     medicalByPlayerId,
@@ -482,6 +496,14 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       return false;
     }
 
+    if (!isValidPhone(playerForm.phoneNumber)) {
+      void notifyWarning({
+        title: 'Teléfono inválido',
+        text: `${VALIDATION_MESSAGES.phone}.`,
+      });
+      return false;
+    }
+
     if (!resolvedTeamId) {
       void notifyWarning({
         title: 'Equipo requerido',
@@ -492,6 +514,9 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
 
     return true;
   };
+
+  const phoneError =
+    playerForm.phoneNumber.length > 0 && !isValidPhone(playerForm.phoneNumber);
 
   const handleCreatePlayer = useCallback(() => {
     if (onCreate) {
@@ -713,7 +738,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
           autoHeight
           disableRowSelectionOnClick
           disableColumnMenu
-          localeText={{ noRowsLabel: noRowsMessage }}
+          localeText={dataGridLocaleText(noRowsMessage)}
           pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
           paginationModel={paginationModel}
           onPaginationModelChange={handlePaginationModelChange}
@@ -792,6 +817,8 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
                 }))
               }
               fullWidth
+              error={phoneError}
+              helperText={phoneError ? VALIDATION_MESSAGES.phone : undefined}
             />
             <TextField
               label="Obra social"
@@ -836,7 +863,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
             }}
             onConfirm={() => void handleCreateSubmit()}
             confirmLabel="Crear"
-            disabled={submitting}
+            disabled={submitting || phoneError}
           />
         </DialogActions>
       </Dialog>
@@ -911,6 +938,8 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
                 }))
               }
               fullWidth
+              error={phoneError}
+              helperText={phoneError ? VALIDATION_MESSAGES.phone : undefined}
             />
             <TextField
               label="Obra social"
@@ -953,7 +982,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
             }}
             onConfirm={() => void handleEditSubmit()}
             confirmLabel="Guardar"
-            disabled={submitting}
+            disabled={submitting || phoneError}
           />
         </DialogActions>
       </Dialog>

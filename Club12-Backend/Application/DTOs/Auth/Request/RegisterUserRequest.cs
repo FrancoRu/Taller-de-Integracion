@@ -24,7 +24,8 @@ public sealed class RegisterUserRequest
     /// <summary>
     /// Optional contact phone number.
     /// </summary>
-    [Phone(ErrorMessage = "Invalid phone number format.")]
+    [RegularExpression(ValidationPatterns.PhoneNumber, ErrorMessage = ValidationPatterns.PhoneNumberError)]
+    [MaxLength(UserFieldLengths.PhoneMaxLength, ErrorMessage = "Phone number must not exceed 15 characters.")]
     public string? Phone { get; set; }
 
     /// <summary>

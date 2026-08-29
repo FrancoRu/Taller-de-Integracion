@@ -12,6 +12,7 @@ import {
   Typography,
 } from '@mui/material';
 import { formatDateTimeAr } from '@/modules/core/utils/formatDate';
+import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import { useAuditLog } from '@/modules/auditLog/hook/auditLog.hook';
 import {
   AuditAction,
@@ -127,6 +128,8 @@ const AuditLogsPage: React.FC = () => {
         headerName: 'Fecha y hora',
         flex: 1,
         minWidth: 170,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => formatDateTimeAr(params.row.timestamp),
       },
       {
@@ -140,6 +143,8 @@ const AuditLogsPage: React.FC = () => {
         headerName: 'Acción',
         flex: 1.1,
         minWidth: 200,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => (
           <Chip size="small" label={actionLabel(params.row.action)} />
         ),
@@ -230,7 +235,7 @@ const AuditLogsPage: React.FC = () => {
           autoHeight
           disableRowSelectionOnClick
           disableColumnMenu
-          localeText={{ noRowsLabel: 'No hay acciones registradas.' }}
+          localeText={dataGridLocaleText('No hay acciones registradas.')}
           pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
           paginationModel={paginationModel}
           onPaginationModelChange={handlePaginationModelChange}

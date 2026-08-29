@@ -22,6 +22,7 @@ import ScorerScopeToggle from '@/views/scorer/ScorerScopeToggle';
 import ExportCsvButton from '@/views/core/components/ExportCsvButton';
 import { downloadCsv } from '@/modules/core/utils/csv';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
+import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 
 /** Upper bound of rows fetched in one page for a CSV export (HU-89). */
 const CSV_EXPORT_PAGE_SIZE = 1000;
@@ -205,6 +206,8 @@ const PlayerScorersTab: React.FC = () => {
         headerName: 'Puntos',
         flex: 0.8,
         minWidth: 120,
+        align: 'center',
+        headerAlign: 'center',
       },
     ],
     []
@@ -274,9 +277,9 @@ const PlayerScorersTab: React.FC = () => {
         pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
         paginationModel={paginationModel}
         onPaginationModelChange={handlePaginationModelChange}
-        localeText={{
-          noRowsLabel: 'No hay puntuaciones registradas por jugador.',
-        }}
+        localeText={dataGridLocaleText(
+          'No hay puntuaciones registradas por jugador.'
+        )}
       />
     </>
   );

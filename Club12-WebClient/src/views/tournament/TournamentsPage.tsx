@@ -36,6 +36,7 @@ import {
   TABLE_ROWS_PER_PAGE,
 } from '@/modules/core/constants/pagination';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import {
   TOURNAMENT_STATUS_LABEL,
   TOURNAMENT_STATUS_COLOR,
@@ -145,6 +146,8 @@ const TournamentsPage: React.FC = () => {
         headerName: 'Cierre inscripción',
         flex: 1,
         minWidth: 150,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => formatDateAr(params.row.teamRegistrationDeadline),
       },
       {
@@ -152,6 +155,8 @@ const TournamentsPage: React.FC = () => {
         headerName: 'Inicio',
         flex: 1,
         minWidth: 120,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => formatDateAr(params.row.startDate),
       },
       {
@@ -159,6 +164,8 @@ const TournamentsPage: React.FC = () => {
         headerName: 'Estado',
         flex: 1,
         minWidth: 160,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => {
           const status = resolveTournamentStatus(params.row.status);
           return (
@@ -175,7 +182,13 @@ const TournamentsPage: React.FC = () => {
       },
     ];
 
-    return [...baseColumns, buildActionsColumn(tournamentActions)];
+    return [
+      ...baseColumns,
+      buildActionsColumn(tournamentActions, {
+        align: 'center',
+        headerAlign: 'center',
+      }),
+    ];
   }, [tournamentActions]);
 
   const fetchTournaments = useCallback(
@@ -307,11 +320,11 @@ const TournamentsPage: React.FC = () => {
           autoHeight
           disableRowSelectionOnClick
           disableColumnMenu
-          localeText={{
-            noRowsLabel: hasActiveFilters
+          localeText={dataGridLocaleText(
+            hasActiveFilters
               ? 'No se encontraron torneos para el filtro aplicado.'
-              : 'Todavía no hay torneos. Creá el primero para empezar.',
-          }}
+              : 'Todavía no hay torneos. Creá el primero para empezar.'
+          )}
           pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
           paginationModel={paginationModel}
           onPaginationModelChange={handlePaginationModelChange}
