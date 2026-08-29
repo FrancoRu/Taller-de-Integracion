@@ -17,6 +17,7 @@ const routes = {
   seasons: 'seasons',
   scorer: 'scorer',
   playerSanctions: 'player-sanctions',
+  pointDeductions: 'point-deductions',
   playerStatistics: 'player-statistics',
   statistics: 'statistics',
   staff: 'staffs',

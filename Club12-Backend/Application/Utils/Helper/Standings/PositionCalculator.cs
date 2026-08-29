@@ -29,10 +29,20 @@ public static class PositionCalculator
     /// <param name="matches">The zone's matches.</param>
     /// <param name="pointsForWin">Table points for a win (HU-79). Defaults to 2.</param>
     /// <param name="pointsForLoss">Table points for a loss (HU-79). Defaults to 1.</param>
+    /// <param name="deductions">
+    /// Disciplinary point deductions to subtract from the affected teams'
+    /// totals before ranking. Each team's deductions are summed and subtracted
+    /// from its <see cref="Position.Points"/>; the amount and reason are
+    /// surfaced on <see cref="Position.PointDeduction"/>. The subtraction is
+    /// raw and is never clamped — a heavy penalty may legitimately drop a
+    /// team's total below zero and below other teams. Null/empty leaves every
+    /// total untouched.
+    /// </param>
     public static List<Position> CalculatePositions(
         IEnumerable<Match> matches,
         int pointsForWin = DefaultPointsForWin,
-        int pointsForLoss = DefaultPointsForLoss)
+        int pointsForLoss = DefaultPointsForLoss,
+        IEnumerable<TeamPointDeduction>? deductions = null)
     {
         List<Match> finishedMatches = [.. matches.Where(IsSeededAndFinished)];
 
@@ -51,7 +61,57 @@ public static class PositionCalculator
             position.PointsDifference = position.PointsFor - position.PointsAgainst;
         }
 
+        // Subtract disciplinary deductions BEFORE ranking so the full HU-80
+        // tiebreaker chain (PTS/PG/DG/H2H) sees the penalised totals and the
+        // table re-orders correctly around a deducted team.
+        ApplyDeductions(positionsByTeamId.Values, deductions);
+
         return OrderWithTiebreakers(positionsByTeamId.Values, finishedMatches, pointsForWin, pointsForLoss);
+    }
+
+    /// <summary>
+    /// Subtracts each team's accumulated disciplinary deductions from its
+    /// standings total (deducción de puntos). Deductions are summed per team,
+    /// their reasons combined, and the result is recorded on
+    /// <see cref="Position.PointDeduction"/>. Only teams that appear in the
+    /// standings (i.e. have played at least one finished match) are affected.
+    /// The subtraction is intentionally NOT clamped at zero: a penalty may sink
+    /// a team below zero, mirroring real disciplinary rulings, and the value is
+    /// displayed as-is.
+    /// </summary>
+    public static void ApplyDeductions(
+        IEnumerable<Position> positions,
+        IEnumerable<TeamPointDeduction>? deductions)
+    {
+        if (deductions is null)
+        {
+            return;
+        }
+
+        Dictionary<Guid, List<TeamPointDeduction>> byTeam = deductions
+            .GroupBy(deduction => deduction.TeamId)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
+        if (byTeam.Count == 0)
+        {
+            return;
+        }
+
+        foreach (Position position in positions)
+        {
+            if (!byTeam.TryGetValue(position.TeamId, out List<TeamPointDeduction>? teamDeductions))
+            {
+                continue;
+            }
+
+            int totalDeducted = teamDeductions.Sum(deduction => deduction.Points);
+            position.Points -= totalDeducted;
+            position.PointDeduction = new AppliedPointDeduction
+            {
+                Points = totalDeducted,
+                Reason = string.Join("; ", teamDeductions.Select(deduction => deduction.Reason)),
+            };
+        }
     }
 
     private static bool IsSeededAndFinished(Match match)

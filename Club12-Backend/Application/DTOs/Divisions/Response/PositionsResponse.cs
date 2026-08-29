@@ -1,4 +1,7 @@
 ﻿using System;
+
+using Application.DTOs.PointDeductions.Response;
+
 namespace Application.DTOs.Divisions.Response;
 
 
@@ -54,6 +57,15 @@ public class PositionResponse
 
     /// <summary>
     /// The total points accumulated by the team, calculated based on wins and losses (2 points per win, 1 point per loss).
+    /// Any disciplinary deduction (see <see cref="PointDeduction"/>) has
+    /// already been subtracted from this value.
     /// </summary>
     public required int Points { get; set; }
+
+    /// <summary>
+    /// The disciplinary point deduction applied to this team, when any. Null
+    /// when the team has no deduction. Lets the standings show a "-N (motivo)"
+    /// note; the subtraction is already reflected in <see cref="Points"/>.
+    /// </summary>
+    public AppliedPointDeductionResponse? PointDeduction { get; set; }
 }

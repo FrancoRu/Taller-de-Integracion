@@ -145,9 +145,65 @@ public class TournamentService(
         return matches.FirstOrDefault();
     }
 
+    /// <summary>
+    /// Deletes a tournament, guarding its competitive history. A tournament OWNS
+    /// its divisions, stages, matches and registrations (every one of those FKs
+    /// cascades at the database level), so a raw delete would silently erase all
+    /// of that. The deletion is therefore BLOCKED once the tournament has real
+    /// history — it has already started (Ongoing/Finished) or has any played
+    /// (finished) match. A tournament with no such history is still deletable:
+    /// its divisions/stages cascade cleanly, and the denormalized
+    /// <see cref="Team.TournamentId"/> "current-season" pointer of any enrolled
+    /// team is cleared first (that FK is NoAction, so leaving it set would raise
+    /// an opaque database error instead of a clean delete). The team identities
+    /// themselves persist across seasons and are never removed here.
+    /// </summary>
+    /// <param name="id">The id of the tournament to delete.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown (mapped to 409) when the tournament has already started or has
+    /// played matches.
+    /// </exception>
     public async Task DeleteTournamentAsync(Guid id)
     {
-        await tournamentRepository.RemoveAsync(tournament => tournament.Id == id);
+        Tournament? tournament = await tournamentRepository.GetByIdAsync(id);
+
+        // Nothing to delete: keep the historical no-op behavior (idempotent).
+        if (tournament is null)
+        {
+            return;
+        }
+
+        bool hasStarted = tournament.Status is TournamentStatus.Ongoing or TournamentStatus.Finished;
+        bool hasPlayedMatches = await unitOfWork.MatchRepository.ExistsAsync(
+            match => match.IsFinished && match.Stage.Division.TournamentId == id);
+
+        if (hasStarted || hasPlayedMatches)
+        {
+            throw new InvalidOperationException(ErrorMessages.Tournament.HasHistoryCannotDelete);
+        }
+
+        await unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            // Clear the denormalized current-season pointer of any team pointing
+            // at this tournament before the cascade delete: Team -> Tournament is
+            // NoAction, so a still-set pointer would abort the delete with an
+            // opaque FK error. The team's TeamTournamentRegistration for this
+            // season cascades away; the team identity survives.
+            List<Team> pointingTeams = [.. await unitOfWork.TeamRepository.FindAsync(
+                team => team.TournamentId == id)];
+
+            foreach (Team team in pointingTeams)
+            {
+                team.TournamentId = null;
+            }
+
+            if (pointingTeams.Count > 0)
+            {
+                await unitOfWork.TeamRepository.UpdateRangeAsync(pointingTeams);
+            }
+
+            await tournamentRepository.RemoveAsync(tournament => tournament.Id == id);
+        });
     }
 
     public async Task UpdateTournamentAsync(Tournament tournamentEntity)

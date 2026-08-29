@@ -144,6 +144,27 @@ const DivisionStandings: React.FC<DivisionStandingsProps> = ({
                   }}>
                     {row.points}
                   </Box>
+                  {row.pointDeduction && (
+                    <Tooltip
+                      title={`Deducción de ${row.pointDeduction.points} ${
+                        row.pointDeduction.points === 1 ? 'punto' : 'puntos'
+                      }: ${row.pointDeduction.reason}`}
+                    >
+                      <Typography
+                        component="span"
+                        variant="caption"
+                        sx={{
+                          display: 'block',
+                          color: 'error.main',
+                          fontWeight: 600,
+                          lineHeight: 1,
+                        }}
+                        aria-label={`Deducción de ${row.pointDeduction.points} puntos: ${row.pointDeduction.reason}`}
+                      >
+                        -{row.pointDeduction.points}
+                      </Typography>
+                    </Tooltip>
+                  )}
                 </TableCell>
               </TableRow>
               );

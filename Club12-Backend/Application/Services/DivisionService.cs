@@ -33,7 +33,9 @@ public class DivisionService(
     IMatchService matchService,
     ITeamRepository teamRepository,
     IStageTeamMatchRepository stageTeamMatchRepository,
-    ITournamentRepository tournamentRepository) : IDivisionService
+    ITournamentRepository tournamentRepository,
+    ITeamPointDeductionRepository pointDeductionRepository,
+    IMatchRepository matchRepository) : IDivisionService
 {
     /// <summary>
     /// Creates a new division entity asynchronously.
@@ -55,11 +57,32 @@ public class DivisionService(
     }
 
     /// <summary>
-    /// Deletes a division entity by its unique identifier asynchronously.
+    /// Deletes a division, guarding its competitive history. A division OWNS its
+    /// stages (and through them its matches, statistics and results) plus its
+    /// point deductions, every one of which cascades at the database level, so a
+    /// raw delete would silently erase that history. The deletion is therefore
+    /// BLOCKED when the division already has any played (finished) match — and
+    /// thus standings — or any point deduction. A division with no such history
+    /// (e.g. structure built but no fixture played yet) stays deletable: its
+    /// empty stages and playoff mappings cascade cleanly.
     /// </summary>
     /// <param name="id">The unique identifier of the division to delete.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown (mapped to 409) when the division has played matches or point
+    /// deductions.
+    /// </exception>
     public async Task DeleteDivisionAsync(Guid id)
     {
+        bool hasPlayedMatches = await matchRepository.ExistsAsync(
+            match => match.IsFinished && match.Stage.DivisionId == id);
+        bool hasPointDeductions = await pointDeductionRepository.ExistsAsync(
+            deduction => deduction.DivisionId == id);
+
+        if (hasPlayedMatches || hasPointDeductions)
+        {
+            throw new InvalidOperationException(ErrorMessages.Division.HasHistoryCannotDelete);
+        }
+
         await divisionRepository.RemoveAsync(division => division.Id == id);
     }
 
@@ -205,6 +228,8 @@ public class DivisionService(
         int pointsForWin = division?.PointsForWin ?? PositionCalculator.DefaultPointsForWin;
         int pointsForLoss = division?.PointsForLoss ?? PositionCalculator.DefaultPointsForLoss;
 
+        List<TeamPointDeduction> deductions = await GetDeductionsAsync(divisionId);
+
         PaginatedResponse<Match> matches = await matchService.GetAllMatchesAsync(new GetMatchesFilteredRequest
         {
             StageId = groupStage.Id,
@@ -212,7 +237,20 @@ public class DivisionService(
             PageSize = PaginationDefaults.MaxPageSize,
         });
 
-        return PositionCalculator.CalculatePositions(matches.Items, pointsForWin, pointsForLoss);
+        return PositionCalculator.CalculatePositions(matches.Items, pointsForWin, pointsForLoss, deductions);
+    }
+
+    /// <summary>
+    /// Loads every disciplinary point deduction (deducción de puntos) applied
+    /// in a division, threaded into the standings calculation so each affected
+    /// team's total is subtracted. Deductions are keyed by team, so passing the
+    /// whole division list to every group's table is safe — only the group
+    /// that actually holds a penalised team is adjusted.
+    /// </summary>
+    private async Task<List<TeamPointDeduction>> GetDeductionsAsync(Guid divisionId)
+    {
+        return [.. await pointDeductionRepository.FindAsync(
+            deduction => deduction.DivisionId == divisionId)];
     }
 
     /// <summary>
@@ -246,6 +284,8 @@ public class DivisionService(
         int pointsForWin = division?.PointsForWin ?? PositionCalculator.DefaultPointsForWin;
         int pointsForLoss = division?.PointsForLoss ?? PositionCalculator.DefaultPointsForLoss;
 
+        List<TeamPointDeduction> deductions = await GetDeductionsAsync(divisionId);
+
         List<GroupStandings> result = [];
 
         foreach (Stage groupStage in groupStages)
@@ -261,7 +301,7 @@ public class DivisionService(
             {
                 StageId = groupStage.Id,
                 StageName = groupStage.Name,
-                Positions = PositionCalculator.CalculatePositions(matches.Items, pointsForWin, pointsForLoss),
+                Positions = PositionCalculator.CalculatePositions(matches.Items, pointsForWin, pointsForLoss, deductions),
             });
         }
 

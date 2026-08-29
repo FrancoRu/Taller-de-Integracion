@@ -15,8 +15,11 @@ import { buildBrackets } from '@/modules/playoff/buildBracket';
 import { BracketGroup } from '@/modules/playoff/type/bracket.d';
 import StagesPage from '@/views/stage/stagesPage';
 import DivisionStandings from '@/views/division/divisionStandings';
+import PointDeductionManager from '@/views/division/PointDeductionManager';
 import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import { useAuth } from '@/modules/auth/hook/auth.hook';
+import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 
 /**
  * Explicit pageSize for the "Llaves" tab's Stage/Match fetch — the same
@@ -30,6 +33,9 @@ const DivisionPage: React.FC = () => {
   const navigate = useNavigate();
   const { division, getDivisionsById } = useDivision();
   const { tournament, getTournamentById } = useTournament();
+  const { role } = useAuth();
+  const isAdminOrOwner =
+    role === UserRolesType.Admin || role === UserRolesType.Owner;
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<'detalle' | 'posiciones' | 'fases' | 'llaves'>(
     'detalle'
@@ -143,6 +149,41 @@ const DivisionPage: React.FC = () => {
     return registrationClosedByDate || registrationClosedByStatus;
   }, [division?.tournamentId, tournament]);
 
+  // Once the tournament has started its fixture is generated, so the division's
+  // phase (fase) structure is frozen: adding or removing a stage would corrupt
+  // the bracket. This mirrors the backend guard in StageService (the source of
+  // truth) and is used to disable the "Nueva Fase" / delete affordances.
+  const isTournamentStarted = useMemo(() => {
+    if (!division?.tournamentId || tournament?.id !== division.tournamentId) {
+      return false;
+    }
+
+    return (
+      tournament.status === TournamentStatus.Ongoing ||
+      tournament.status === TournamentStatus.Finished
+    );
+  }, [division?.tournamentId, tournament]);
+
+  // Teams that can receive a point deduction: those present in the division's
+  // standings (pooled positions cover both regular zones and multi-group cups),
+  // deduped by team id.
+  const divisionTeams = useMemo(() => {
+    const pooled = [
+      ...(division?.positions ?? []),
+      ...(division?.groupStandings?.flatMap(group => group.positions) ?? []),
+    ];
+    const byId = new Map<GUID, { id: GUID; name: string }>();
+    pooled.forEach(position => {
+      if (!byId.has(position.teamId)) {
+        byId.set(position.teamId, {
+          id: position.teamId,
+          name: position.teamName,
+        });
+      }
+    });
+    return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }, [division?.positions, division?.groupStandings]);
+
   if (!targetDivisionId) {
     return (
       <PageShell title="División">
@@ -248,6 +289,15 @@ const DivisionPage: React.FC = () => {
           </Grid>
         )}
 
+        {tab === 'posiciones' && isAdminOrOwner && (
+          <Box sx={{ mb: 3 }}>
+            <PointDeductionManager
+              divisionId={division.id}
+              teams={divisionTeams}
+            />
+          </Box>
+        )}
+
         {tab === 'posiciones' &&
           (division.groupStandings && division.groupStandings.length > 1 ? (
             // Multi-group cross-division cup (HU-110): one standings table per
@@ -274,6 +324,7 @@ const DivisionPage: React.FC = () => {
           <StagesPage
             divisionId={division.id}
             showGenerateStagesButton={canGenerateStages}
+            stageStructureLocked={isTournamentStarted}
             title={undefined}
             wrapInCard={false}
           />

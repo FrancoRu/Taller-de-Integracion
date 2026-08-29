@@ -2,7 +2,7 @@
 
 > Documento para continuar en un chat nuevo. Rama de integración: **develop** (deploya a staging: club12.argentum-solutions.com.ar). `main` NO se toca. Stack: .NET 8 backend (Clean/Hexagonal, EF Core + Npgsql/Postgres) + React 19/TS/MUI/Vite frontend (vitest, ESLint `--max-warnings 0`). Todo user-facing en **español (voseo)**; código en inglés.
 
-## ✅ MERGEADO a develop / en staging (PRs #53–#64)
+## ✅ MERGEADO a develop / en staging (PRs #53–#65)
 
 **Design system (base)**
 - `src/design/tokens.ts` (brand/surface/ink/semantic/radius/font/pageMinHeight/**gold**/**category**), `colorName.ts` (hex→fill+ink), `jerseyStyles.ts` (11 estilos).
@@ -47,14 +47,24 @@ Loop autónomo de mejora de páginas públicas + data real. Todo verde (backend 
 6. **Home rediseñado** — hero cálido (gradiente naranja→granate, court pattern, Oswald "CLUB 12", eyebrow dorado, CTAs Ver temporadas/Campeones), torneos destacados con `CategoryChip`+estado, **franja "Campeones recientes"** (oro, crests reales), noticias, y accesos rápidos como pill strip secundario. `TournamentCard` ahora muestra su chip de categoría (también en la página de Torneos).
 7. **Sweep E2E público (con Playwright en 3002) + 2 bugfixes**: verificado el ciclo completo Home → Temporadas → Temporada (masc/fem) → Torneo → División (posiciones/goleadores/partidos/llaves) → Campeones → perfil de equipo, todo con data real. BUGS ARREGLADOS: (a) **Temporadas pública salía vacía** — el endpoint `GET /api/seasons` devuelve un array plano pero el context leía `res.data.items` (undefined); era latente (no había Season antes). (b) **Podio "Campeones" se mostraba en torneos En curso** — `PublicTournamentPage` traía el podio sin gatear por estado; ahora solo si `TournamentStatus.Finished` (Apertura muestra podio, Clausura no).
 
-## 🔄 EN PROGRESO — rama `feat/admin-season-first` (sale de develop post-#64, NO mergeado aún)
+## ✅ MERGEADO a develop vía **PR #65** — rama `feat/admin-season-first`
 
-Loop autónomo continúa (mandato del owner: "armá un plan y seguilo, arreglá todo"). Commits en la rama (todo verde):
+Loop autónomo (mandato del owner: "armá un plan y seguilo, arreglá todo"). Todo verde (backend 648 / frontend 458) y deployado a staging. Incluye:
 1. **Fix login en español** — el `signIn` del auth context disparaba un alert global BLOQUEANTE con el mensaje crudo del API en inglés ("Invalid credentials."); ahora el login solo muestra su error inline en español ("Usuario o contraseña incorrectos"). Pendiente menor: traducir `ErrorMessages.Auth.*` del backend (asoman en flujos de auth de borde).
 2. **Admin season-first** — admins/owners aterrizan en **Temporadas**; nueva página admin de detalle de temporada (`/panel/temporadas/:seasonId`) que lista los torneos de esa temporada agrupados por categoría con CTA "Nuevo Torneo" que abre el wizard **pre-scopeado** a esa temporada; drill-in "Ver torneos" desde la lista. ADITIVO: la ruta plana de Torneos y el path "Sin temporada" del wizard quedan intactos.
 3. **Posiciones coloreadas** ✅ VERIFICADO — backend deriva `QualificationRanges` (from/to/copa/order) de `Division.PlayoffMappings` y las expone en el detalle de división; front colorea las filas que clasifican por tier de copa (oro/plata/bronce) + chip "Copa Oro"/"Copa Plata" por fila + leyenda. El seed ahora da Copa Oro (1-4) + Copa Plata (5-8) a las divisiones de torneos finalizados (via `SeedCupPlayoffs`), campeón desde la copa top. Playwright confirmó el coloreado en Apertura Primera. (Nota menor: el 3er puesto del podio sale "A definir" en copas BestOf=1 sin partido por 3er puesto.)
 4. **Error-handling público** ✅ — los GETs iniciales públicos ya NO disparan el SweetAlert bloqueante; muestran un estado inline `LoadErrorState` ("No pudimos cargar…" + "Reintentar"). Flag opt-in `{ silent }` en los métodos GET de los contexts (mutaciones intactas, mantienen su modal). Cubre home, temporadas, temporada, torneos, torneo, equipo, sanciones, blog.
 5. **Fix MUI Tabs** ✅ — deep-link a `?tab=<division>` antes de que carguen las divisiones tiraba un error de consola (value sin match); ahora cae a "info" hasta que exista el tab. Consola pública limpia (0 errores).
+
+## 🔄 EN PROGRESO — rama `feat/admin-organizing` (sale de develop post-#65, NO mergeado aún)
+
+Bloque admin-organizar (verificado por build+tests; el E2E admin en vivo requiere login del owner). Commits:
+1. **Deducción de puntos** ✅ — entidad `TeamPointDeduction` (DivisionId/TeamId/Points/Reason) + migración `20260829101157_AddTeamPointDeduction` (guard verde) + endpoints `POST/GET api/divisions/{id}/point-deductions` + `DELETE api/point-deductions/{id}` (AdminOrOwner salvo el GET). `PositionCalculator.CalculatePositions` recibe las deducciones y las resta ANTES de los desempates (la tabla re-rankea); NO clampea en 0 (una sanción puede hundir al equipo, como en la realidad). Front: `PointDeductionManager` en el tab Posiciones del admin de división (dialog equipo+puntos+motivo, lista con borrar) + nota `-N` con motivo en la tabla pública. Migración aplicada a la DB dev.
+2. **Fases admin guard** ✅ — `StageService.CreateStageAsync`/`DeleteStageAsync` rechazan (409, "No se pueden agregar o quitar fases: el torneo ya arrancó.") cuando el torneo está Ongoing/Finished (fixture ya generado); editable mientras Scheduled/OpenForRegistration/RegistrationClosed. Front: el tab "Fases" del admin de división deshabilita "+ Nueva Fase" (tooltip) y oculta el borrar cuando arrancó. Sin migración.
+3. **Stats por temporada** ✅ (frontend) — la página admin Estadísticas ahora tiene filtro Temporada + Torneo (torneos derivados de la temporada elegida) que scopea el ranking de goleadores vía los params `season`/`tournamentId` que YA existen en el endpoint scorer; las cards resumen quedan globales. Default sin filtro. Helpers `statisticsFilters.ts` TDD.
+4. **Delete-integridad global** ✅ (backend, sin migración) — guards de borrado en los services de Team/Tournament/Division: bloquean (409 español) si hay historia competitiva (partidos jugados, Ongoing/Finished, deducciones, sanciones, inscripciones); si está vacío, borra con cascade coherente. OJO borra vía `ExecuteDeleteAsync` (bypassa EF → solo aplica OnDelete de la DB). ⚠️ FLAG (reportado, NO tocado, requiere migración): `MatchSeries→Team` y `Team→Players` son Cascade → un borrado crudo de Team borraría series/plantel; el guard de servicio lo previene, pero convendría endurecer el OnDelete en una migración futura.
+
+**→ Pendiente de PR a develop** (deducción + fases + stats + delete-integridad).
 
 PLAN restante (orden): SEO/meta; admin organizar (scoreboard/scoring por partido, deducción de puntos, fases bloqueadas con torneo arrancado, llaves editables); integridad+auditoría (delete-integridad global, AuditLog en toda mutación); features (staff DT, stats por temporada, canchas imagen+mapa, mensajes auth backend→español); E2E final del ciclo completo. Norte: organizar temporada de punta a punta, correcto.
 

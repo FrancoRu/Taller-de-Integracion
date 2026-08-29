@@ -1,27 +1,41 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box,
   Card,
   CardContent,
   Grid,
   LinearProgress,
+  MenuItem,
   Stack,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
+  TextField,
   Typography,
 } from '@mui/material';
 import PageShell from '@/views/core/components/PageShell';
-import { CardGridSkeleton } from '@/views/core/components/skeletons';
+import FilterBar from '@/views/core/components/FilterBar';
+import { CardGridSkeleton, TableSkeleton } from '@/views/core/components/skeletons';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useTeam } from '@/modules/team/hook/team.hook';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import { useScorer } from '@/modules/scorer/hook/scorer.hook';
+import { useSeason } from '@/modules/season/hook/season.hook';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
+import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
+import { GUID } from '@/modules/core/types/types';
 import { IScorerByPlayerResponse } from '@/modules/scorer/type/scorer.d';
+import { buildScorerScopeParams } from '@/modules/scorer/utils/scorerScope';
+import {
+  deriveTournamentOptions,
+  resolveSeasonYear,
+} from '@/views/panel/statisticsFilters';
+
+/** Rows fetched for the top goleadores ranking card. */
+const TOP_SCORERS_COUNT = 5;
 
 const STATUS_LABEL: Record<TournamentStatus, string> = {
   Scheduled: 'Programados',
@@ -48,7 +62,6 @@ interface Summary {
   matchesPlayed: number;
   matchesScheduled: number;
   sanctionsTotal: number;
-  topScorers: IScorerByPlayerResponse[];
 }
 
 const StatCard = ({
@@ -77,19 +90,31 @@ const StatCard = ({
 );
 
 const StatisticsPage = () => {
-  const { getAllTournamentsByFilter } = useTournament();
+  const { tournaments, getAllTournamentsByFilter } = useTournament();
   const { getTeamsByFiltered } = useTeam();
   const { getMatchByFilter } = useMatch();
   const { getScorersByPlayerFiltered } = useScorer();
+  const { seasons, getSeasonsByFiltered } = useSeason();
   const { getPlayerSanctionByFilter } = usePlayerSanction();
 
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<Summary | null>(null);
 
+  // Scope filter (HU): a temporada and/or a torneo. Both empty = global stats,
+  // preserving the original behaviour.
+  const [selectedSeasonId, setSelectedSeasonId] = useState<GUID | ''>('');
+  const [selectedTournamentId, setSelectedTournamentId] = useState<GUID | ''>(
+    ''
+  );
+
+  const [topScorers, setTopScorers] = useState<IScorerByPlayerResponse[]>([]);
+  const [scorersLoading, setScorersLoading] = useState(true);
+
   const tournamentsRef = useRef(getAllTournamentsByFilter);
   const teamsRef = useRef(getTeamsByFiltered);
   const matchesRef = useRef(getMatchByFilter);
   const scorersRef = useRef(getScorersByPlayerFiltered);
+  const seasonsRef = useRef(getSeasonsByFiltered);
   const sanctionsRef = useRef(getPlayerSanctionByFilter);
 
   useEffect(() => {
@@ -105,21 +130,30 @@ const StatisticsPage = () => {
     scorersRef.current = getScorersByPlayerFiltered;
   }, [getScorersByPlayerFiltered]);
   useEffect(() => {
+    seasonsRef.current = getSeasonsByFiltered;
+  }, [getSeasonsByFiltered]);
+  useEffect(() => {
     sanctionsRef.current = getPlayerSanctionByFilter;
   }, [getPlayerSanctionByFilter]);
 
+  // Load the global summary cards and the filter option sources (tournaments +
+  // seasons) once. These cards stay global; only the goleadores ranking is
+  // scoped by the filter below.
   useEffect(() => {
     const load = async () => {
       setLoading(true);
 
-      const [tournaments, teams, played, scheduled, sanctions, scorers] =
+      const [tournamentsPage, teams, played, scheduled, sanctions] =
         await Promise.all([
-          tournamentsRef.current({ pageSize: 100, pageNumber: 1 }),
+          tournamentsRef.current({
+            pageSize: FILTER_OPTIONS_PAGE_SIZE,
+            pageNumber: 1,
+          }),
           teamsRef.current({ pageSize: 1, pageNumber: 1 }),
           matchesRef.current({ pageSize: 1, pageNumber: 1, isFinished: true }),
           matchesRef.current({ pageSize: 1, pageNumber: 1, isFinished: false }),
           sanctionsRef.current({ pageSize: 1, pageNumber: 1 }),
-          scorersRef.current({ pageSize: 5, pageNumber: 1 }),
+          seasonsRef.current({}),
         ]);
 
       const byStatus: Record<TournamentStatus, number> = {
@@ -130,24 +164,81 @@ const StatisticsPage = () => {
         Finished: 0,
         Canceled: 0,
       };
-      (tournaments?.items ?? []).forEach(t => {
+      (tournamentsPage?.items ?? []).forEach(t => {
         byStatus[t.status] = (byStatus[t.status] ?? 0) + 1;
       });
 
       setSummary({
-        tournamentsTotal: tournaments?.totalCount ?? 0,
+        tournamentsTotal: tournamentsPage?.totalCount ?? 0,
         tournamentsByStatus: byStatus,
         teamsTotal: teams?.totalCount ?? 0,
         matchesPlayed: played?.totalCount ?? 0,
         matchesScheduled: scheduled?.totalCount ?? 0,
         sanctionsTotal: sanctions?.totalCount ?? 0,
-        topScorers: scorers?.items ?? [],
       });
       setLoading(false);
     };
 
     void load();
   }, []);
+
+  const tournamentOptions = useMemo(
+    () => deriveTournamentOptions(seasons, selectedSeasonId, tournaments),
+    [seasons, selectedSeasonId, tournaments]
+  );
+
+  // The goleadores scope resolved to Scorer/by-player query params: a chosen
+  // torneo wins (most specific); otherwise the chosen temporada's calendar
+  // year; otherwise the all-time ranking.
+  const scorerScopeParams = useMemo(() => {
+    const seasonYear = resolveSeasonYear(seasons, selectedSeasonId);
+    const scope = selectedTournamentId
+      ? 'tournament'
+      : seasonYear !== ''
+        ? 'season'
+        : 'allTime';
+    return buildScorerScopeParams(scope, {
+      tournamentId: selectedTournamentId,
+      season: seasonYear,
+    });
+  }, [seasons, selectedSeasonId, selectedTournamentId]);
+
+  const isScoped = selectedSeasonId !== '' || selectedTournamentId !== '';
+
+  // Reload the goleadores ranking whenever the scope changes.
+  useEffect(() => {
+    const loadScorers = async () => {
+      setScorersLoading(true);
+      const scorers = await scorersRef.current({
+        ...scorerScopeParams,
+        pageSize: TOP_SCORERS_COUNT,
+        pageNumber: 1,
+      });
+      setTopScorers(scorers?.items ?? []);
+      setScorersLoading(false);
+    };
+
+    void loadScorers();
+  }, [scorerScopeParams]);
+
+  const handleSeasonChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setSelectedSeasonId(event.target.value as GUID | '');
+    // Reset the torneo: its options depend on the chosen temporada.
+    setSelectedTournamentId('');
+  };
+
+  const handleTournamentChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setSelectedTournamentId(event.target.value as GUID | '');
+  };
+
+  const handleClearFilters = () => {
+    setSelectedSeasonId('');
+    setSelectedTournamentId('');
+  };
 
   if (loading || !summary) {
     return (
@@ -160,10 +251,47 @@ const StatisticsPage = () => {
   const matchesTotal = summary.matchesPlayed + summary.matchesScheduled;
   const playedPercent =
     matchesTotal === 0 ? 0 : (summary.matchesPlayed / matchesTotal) * 100;
-  const maxScorerPoints = summary.topScorers[0]?.points ?? 0;
+  const maxScorerPoints = topScorers[0]?.points ?? 0;
 
   return (
     <PageShell title="Estadísticas">
+      <FilterBar
+        ariaLabel="Filtros de estadísticas"
+        onClear={isScoped ? handleClearFilters : undefined}
+      >
+        <TextField
+          select
+          label="Temporada"
+          size="small"
+          value={selectedSeasonId}
+          onChange={handleSeasonChange}
+          sx={{ minWidth: 200 }}
+        >
+          <MenuItem value="">Todas</MenuItem>
+          {(seasons ?? []).map(season => (
+            <MenuItem key={season.id} value={season.id}>
+              {season.name}
+            </MenuItem>
+          ))}
+        </TextField>
+
+        <TextField
+          select
+          label="Torneo"
+          size="small"
+          value={selectedTournamentId}
+          onChange={handleTournamentChange}
+          sx={{ minWidth: 220 }}
+        >
+          <MenuItem value="">Todos</MenuItem>
+          {tournamentOptions.map(option => (
+            <MenuItem key={option.id} value={option.id}>
+              {option.name}
+            </MenuItem>
+          ))}
+        </TextField>
+      </FilterBar>
+
       <Grid container spacing={2} sx={{
         mb: 1
       }}>
@@ -335,11 +463,15 @@ const StatisticsPage = () => {
               }}>
                 Top goleadores
               </Typography>
-              {summary.topScorers.length === 0 ? (
+              {scorersLoading ? (
+                <TableSkeleton rows={TOP_SCORERS_COUNT} columns={3} />
+              ) : topScorers.length === 0 ? (
                 <Typography variant="body2" sx={{
                   color: "text.secondary"
                 }}>
-                  Sin datos de goleadores.
+                  {isScoped
+                    ? 'No hay goleadores para el filtro seleccionado.'
+                    : 'Sin datos de goleadores.'}
                 </Typography>
               ) : (
                 <Table size="small">
@@ -351,7 +483,7 @@ const StatisticsPage = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {summary.topScorers.map((scorer, index) => (
+                    {topScorers.map((scorer, index) => (
                       <TableRow key={scorer.playerId}>
                         <TableCell>{index + 1}</TableCell>
                         <TableCell>

@@ -105,6 +105,28 @@ public static class ErrorMessages
             return "Teams can only be removed while the tournament is OpenForRegistration or " +
                 $"RegistrationClosed; this tournament is '{status}'.";
         }
+
+        /// <summary>
+        /// User-facing (Spanish) message returned when a tournament that has
+        /// already started (Ongoing/Finished) or has played matches is deleted:
+        /// removing it would cascade away its divisions, stages, matches and
+        /// results, erasing competitive history, so the deletion is blocked.
+        /// </summary>
+        public const string HasHistoryCannotDelete =
+            "No se puede eliminar el torneo: tiene partidos jugados o ya arrancó.";
+    }
+
+    public static class Division
+    {
+        /// <summary>
+        /// User-facing (Spanish) message returned when a division that already
+        /// has played matches (and therefore standings) or point deductions is
+        /// deleted: removing it would cascade away that competitive history, so
+        /// the deletion is blocked. A division with no such history is deletable
+        /// (its empty stages and playoff mappings cascade cleanly).
+        /// </summary>
+        public const string HasHistoryCannotDelete =
+            "No se puede eliminar la división: tiene partidos jugados o deducciones de puntos registradas.";
     }
 
     public static class Team
@@ -113,6 +135,16 @@ public static class ErrorMessages
         {
             return $"There is no Team with id: {teamId}.";
         }
+
+        /// <summary>
+        /// User-facing (Spanish) message returned when a team that carries
+        /// competitive history — match participations, sanctions, point
+        /// deductions or tournament registrations — is deleted: the team's
+        /// identity persists across seasons and removing it would orphan or
+        /// cascade away that history, so the deletion is blocked.
+        /// </summary>
+        public const string HasHistoryCannotDelete =
+            "No se puede eliminar el equipo: tiene historial de partidos, sanciones, deducciones o inscripciones a torneos.";
 
         public static string NotInTournament(System.Guid teamId)
         {
@@ -180,6 +212,16 @@ public static class ErrorMessages
         public const string InvalidStageType = "Invalid stage type";
         public const string SeedMissingStandings = "Cannot seed: not every team assigned to this stage has a finished-group-stage position yet.";
         public const string GroupStageAlreadyExistsInDivision = "This division already has a Group stage. A division can only have one Group stage.";
+
+        /// <summary>
+        /// User-facing (Spanish) message returned when a stage (fase) is added
+        /// to or removed from a division whose tournament has already started —
+        /// i.e. its fixture is generated (status Ongoing/Finished). Editing the
+        /// phase structure at that point would corrupt the bracket/fixture, so
+        /// it is blocked (mapped to 409 by the global handler).
+        /// </summary>
+        public const string StructureLockedTournamentStarted =
+            "No se pueden agregar o quitar fases: el torneo ya arrancó.";
 
         public static string NotFoundById(System.Guid id)
         {

@@ -320,10 +320,33 @@ export type Position = {
   pointsDifference: number;
 
   /**
-   * The total points the team has earned.
+   * The total points the team has earned. Any disciplinary deduction
+   * (see `pointDeduction`) is already subtracted from this value.
    * @type {number}
    */
   points: number;
+
+  /**
+   * The disciplinary point deduction (deducción de puntos) applied to this
+   * team, when any. Absent when the team has no deduction. The subtraction is
+   * already reflected in `points`; this only carries the amount and reason so
+   * the standings can show a subtle "-N (motivo)" note.
+   */
+  pointDeduction?: AppliedPointDeduction;
+};
+
+/**
+ * The point-deduction summary attached to a standings row when a team carries
+ * one or more disciplinary deductions. Mirrors the backend
+ * `AppliedPointDeductionResponse` DTO.
+ * @type AppliedPointDeduction
+ */
+export type AppliedPointDeduction = {
+  /** The total table points subtracted from the team. Always positive. */
+  points: number;
+
+  /** The combined disciplinary reason(s). */
+  reason: string;
 };
 
 /**
