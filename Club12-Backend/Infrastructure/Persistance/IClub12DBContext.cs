@@ -68,6 +68,11 @@ public interface IClub12DBContext
 
 
     /// <summary>
+    /// DbSet{Season} of seasons ("Temporadas") that group tournaments.
+    /// </summary>
+    DbSet<Season> Seasons { get; }
+
+    /// <summary>
     /// DbSet{Stage} of Stages in the system.
     /// </summary>
     DbSet<Stage> Stages { get; }

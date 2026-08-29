@@ -53,4 +53,16 @@ public class TournamentResponse : BaseEntityResponse
     /// competition is played as its own separate tournament.
     /// </summary>
     public TournamentCategory Category { get; set; }
+
+    /// <summary>
+    /// Id of the season ("Temporada") this tournament belongs to, or null when
+    /// it is not grouped under any season.
+    /// </summary>
+    public Guid? SeasonId { get; set; }
+
+    /// <summary>
+    /// Name of the season this tournament belongs to, when the season is
+    /// loaded; null otherwise.
+    /// </summary>
+    public string? SeasonName { get; set; }
 }

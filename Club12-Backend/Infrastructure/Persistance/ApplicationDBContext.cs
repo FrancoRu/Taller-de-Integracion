@@ -49,6 +49,7 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
     public virtual required DbSet<PlayerStatistic> PlayersStatistics { get; set; }
     public virtual required DbSet<PlayerSanction> PlayerSanctions { get; set; }
     public virtual required DbSet<Venue> Venues { get; set; }
+    public virtual required DbSet<Season> Seasons { get; set; }
     public virtual required DbSet<BlogPost> BlogPosts { get; set; }
     public virtual required DbSet<Stage> Stages { get; set; }
     public virtual required DbSet<StageTeamMatch> StageTeamMatches { get; set; }

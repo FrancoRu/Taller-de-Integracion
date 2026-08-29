@@ -92,6 +92,10 @@ public sealed class DataMaintenanceService(
             int teams = await db.Teams.ExecuteDeleteAsync(ct);
             int divisions = await db.Divisions.ExecuteDeleteAsync(ct);
             int tournaments = await db.Tournaments.ExecuteDeleteAsync(ct);
+            // Seasons are deleted after their tournaments so re-seeding never
+            // collides on the season's unique slug. Not surfaced in the
+            // DataWipeResult counters (kept stable for the admin UI summary).
+            await db.Seasons.ExecuteDeleteAsync(ct);
             int venues = await db.Venues.ExecuteDeleteAsync(ct);
             int blogPosts = await db.BlogPosts.ExecuteDeleteAsync(ct);
 
@@ -197,6 +201,20 @@ public sealed class DataMaintenanceService(
         SampleTournamentBuilder.BuildResult result2 =
             SampleTournamentBuilder.Build(tournament2, venues, ref playerCounter, includePlayoffs: true, slugRegistry);
 
+        // Group both 2026 tournaments under one season ("Temporada"), so the
+        // additive Season grouping is visible in seeded data. Each tournament
+        // keeps its own category (HU-48) — the season only groups them.
+        Season season2026 = new()
+        {
+            CreatedBy = Domain.Constants.AuditConstants.SystemUser,
+            Name = "Temporada 2026",
+            Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug("Temporada 2026"),
+            Year = 2026,
+        };
+        result1.Tournament.Season = season2026;
+        result2.Tournament.Season = season2026;
+
+        db.Seasons.Add(season2026);
         db.Tournaments.Add(result1.Tournament);
         db.Tournaments.Add(result2.Tournament);
         db.PlayerSanctions.AddRange(result1.Sanctions);

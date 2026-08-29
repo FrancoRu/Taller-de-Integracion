@@ -41,4 +41,12 @@ public class CreateTournamentRequest
     /// <see cref="TournamentCategory.Masculine"/> when omitted.
     /// </summary>
     public TournamentCategory Category { get; set; } = TournamentCategory.Masculine;
+
+    /// <summary>
+    /// Optional id of the season ("Temporada") this tournament belongs to. When
+    /// supplied the tournament is grouped under that season; omitting it leaves
+    /// the tournament ungrouped. Purely additive — it never affects
+    /// <see cref="Category"/> (HU-48).
+    /// </summary>
+    public Guid? SeasonId { get; set; }
 }

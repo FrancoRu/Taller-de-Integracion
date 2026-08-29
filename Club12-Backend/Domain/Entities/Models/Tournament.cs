@@ -53,6 +53,20 @@ public class Tournament : EntityBase
     public TournamentCategory Category { get; set; } = TournamentCategory.Masculine;
 
     /// <summary>
+    /// The id of the season this tournament belongs to (optional). A tournament
+    /// may be grouped under a <see cref="Season"/> ("Temporada") alongside other
+    /// tournaments of the same period; belonging to a season is purely additive
+    /// and never affects the tournament's own <see cref="Category"/> (HU-48).
+    /// </summary>
+    public Guid? SeasonId { get; set; }
+
+    /// <summary>
+    /// The season this tournament belongs to, or null when it is not grouped
+    /// under any season.
+    /// </summary>
+    public virtual Season? Season { get; set; }
+
+    /// <summary>
     /// The divisions associated with the tournament.
     /// </summary>
     public virtual required ICollection<Division> Divisions { get; set; }

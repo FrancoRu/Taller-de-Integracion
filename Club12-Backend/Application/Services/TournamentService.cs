@@ -126,7 +126,9 @@ public class TournamentService(
 
     public async Task<Tournament?> GetTournamentByIdAsync(Guid tournamentId)
     {
-        return await tournamentRepository.GetByIdAsync(tournamentId, includes: [tournament => tournament.Divisions]);
+        return await tournamentRepository.GetByIdAsync(
+            tournamentId,
+            includes: [tournament => tournament.Divisions, tournament => tournament.Season!]);
     }
 
     public async Task<Tournament?> GetTournamentByIdOrSlugAsync(string idOrSlug)
@@ -138,7 +140,7 @@ public class TournamentService(
 
         IEnumerable<Tournament> matches = await tournamentRepository.FindAsync(
             tournament => tournament.Slug == idOrSlug,
-            includes: [tournament => tournament.Divisions]);
+            includes: [tournament => tournament.Divisions, tournament => tournament.Season!]);
 
         return matches.FirstOrDefault();
     }

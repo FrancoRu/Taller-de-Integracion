@@ -19,6 +19,10 @@ public class TournamentProfile : Profile
     {
         _ = CreateMap<Tournament, TournamentResponse>()
             .ForMember(dest => dest.Divisions, opt => opt.MapFrom(src => src.Divisions))
+            // SeasonId flows by name convention; SeasonName is resolved from the
+            // (optionally loaded) Season navigation, degrading to null when the
+            // tournament is ungrouped or the season was not included.
+            .ForMember(dest => dest.SeasonName, opt => opt.MapFrom(src => src.Season != null ? src.Season.Name : null))
             .ReverseMap();
 
         _ = CreateMap<CreateTournamentRequest, Tournament>();

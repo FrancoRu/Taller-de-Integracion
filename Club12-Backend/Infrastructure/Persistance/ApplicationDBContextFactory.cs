@@ -71,6 +71,7 @@ public sealed class ApplicationDBContextFactory : IDesignTimeDbContextFactory<Ap
             PlayersStatistics = null!,
             PlayerSanctions = null!,
             Venues = null!,
+            Seasons = null!,
             BlogPosts = null!,
             Stages = null!,
             StageTeamMatches = null!,
