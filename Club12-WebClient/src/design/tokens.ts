@@ -26,6 +26,19 @@ export const brand = {
 } as const;
 
 /**
+ * Playoff qualification tier colors (HU-45), used to highlight the standings
+ * rows that qualify to each cup. Gold-silver-bronze for the top three cups,
+ * then the brand orange for any further cup below the podium three. Silver and
+ * bronze are muted metallics tuned to stay legible on the dark canvas.
+ */
+export const cupTier = {
+  gold: brand.gold,
+  silver: '#C7CDD6',
+  bronze: '#CD8E5A',
+  accent: brand.orange,
+} as const;
+
+/**
  * Category accent colors taken from the club's own branding: masculine pieces
  * are the warm orange, feminine pieces a vivid purple/magenta. Used to tint
  * category chips and the masculine/feminine sections so a visitor tells them

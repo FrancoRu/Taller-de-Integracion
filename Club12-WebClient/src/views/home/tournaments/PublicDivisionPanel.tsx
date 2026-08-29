@@ -264,6 +264,7 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
             positions={division.positions}
             divisionId={division.id}
             divisionName={division.name}
+            qualificationRanges={division.qualificationRanges}
           />
         ))}
 

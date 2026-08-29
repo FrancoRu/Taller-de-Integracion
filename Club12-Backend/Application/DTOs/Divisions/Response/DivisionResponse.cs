@@ -79,4 +79,12 @@ public class DivisionResponse
     /// The division's position-range → playoff-destination mapping (HU-45).
     /// </summary>
     public List<PlayoffMappingResponse>? PlayoffMappings { get; set; }
+
+    /// <summary>
+    /// The standings-position ranges that qualify to a playoff cup (HU-45),
+    /// ordered top-down (0 = top cup). Derived from <see cref="PlayoffMappings"/>
+    /// so the public standings table can highlight the qualifying rows and show
+    /// a per-cup legend. Empty when the division has no playoff mappings.
+    /// </summary>
+    public List<QualificationRangeResponse>? QualificationRanges { get; set; }
 }

@@ -149,6 +149,30 @@ export interface AddDivisionRequest {
 }
 
 /**
+ * One standings-position range that qualifies to a playoff cup (HU-45),
+ * shaped for the public standings table so it can highlight the qualifying
+ * rows and render a per-cup legend. Mirrors the backend
+ * `QualificationRangeResponse` DTO.
+ * @interface QualificationRange
+ */
+export interface QualificationRange {
+  /** First standings position in the range (1-based, inclusive). */
+  fromPosition: number;
+
+  /** Last standings position in the range (1-based, inclusive). */
+  toPosition: number;
+
+  /** The cup the teams in this range qualify for (e.g. "Copa Oro"). */
+  cupName: string;
+
+  /**
+   * The cup's rank, top-down: 0 is the top cup ("Copa Oro"), 1 the next, and
+   * so on. Drives the color painted on each qualifying row.
+   */
+  order: number;
+}
+
+/**
  * The response structure for a division, including details about the division, its matches, and positions.
  * @interface IDivisionResponse
  */
@@ -206,6 +230,15 @@ export interface IDivisionResponse {
    * @type {boolean}
    */
   isCrossDivisionCup: boolean;
+
+  /**
+   * The standings-position ranges that qualify to a playoff cup (HU-45),
+   * ordered top-down (order 0 = top cup). Lets the public standings table
+   * highlight the qualifying rows and render a per-cup legend. Absent/empty
+   * when the division has no playoff mappings.
+   * @type {QualificationRange[]}
+   */
+  qualificationRanges?: QualificationRange[];
 }
 
 /**
