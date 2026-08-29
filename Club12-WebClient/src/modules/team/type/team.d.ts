@@ -85,6 +85,18 @@ export interface IAddTeamRequest {
   shirtColor: string;
 
   /**
+   * The secondary shirt color, used for the jersey pattern and trim.
+   * @type {string | null}
+   */
+  shirtSecondaryColor?: string | null;
+
+  /**
+   * The selected jersey kit template (e.g. `solid`, `stripes`).
+   * @type {string | null}
+   */
+  jerseyStyle?: string | null;
+
+  /**
    * The logo file of the team.
    * @type {File}
    */
@@ -133,6 +145,18 @@ export interface ITeamResponse {
   shirtColor: string;
 
   /**
+   * The secondary shirt color, used for the jersey pattern and trim.
+   * @type {string | null}
+   */
+  shirtSecondaryColor?: string | null;
+
+  /**
+   * The selected jersey kit template (e.g. `solid`, `stripes`).
+   * @type {string | null}
+   */
+  jerseyStyle?: string | null;
+
+  /**
    * The URL of the team's logo.
    * @type {string}
    */
@@ -176,6 +200,18 @@ export interface IPutTeamRequest {
    * @type {string}
    */
   shirtColor?: string;
+
+  /**
+   * The updated secondary shirt color, used for the jersey pattern and trim.
+   * @type {string | null}
+   */
+  shirtSecondaryColor?: string | null;
+
+  /**
+   * The updated jersey kit template (e.g. `solid`, `stripes`).
+   * @type {string | null}
+   */
+  jerseyStyle?: string | null;
 }
 
 /**

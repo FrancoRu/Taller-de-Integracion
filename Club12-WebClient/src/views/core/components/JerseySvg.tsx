@@ -4,27 +4,26 @@ import { resolveShirtColor } from '@/design/colorName';
 import { JerseyStyle } from '@/design/jerseyStyles';
 
 /**
- * The basketball tank silhouette, on a 100x124 canvas. Straps over the
- * shoulders, a scooped neck, wide armholes, tapering to the hem. Patterns are
- * clipped to this exact outline so every template shares one recognizable
- * shape (the "kit" convention). Kept as a module constant so the path is
+ * The basketball tank silhouette. Straps over the shoulders, a shallow scooped
+ * neck, and a body that flares from the underarm down to a straight hem — the
+ * recognizable "kit" shape. Patterns are clipped to this outline so every
+ * template shares one silhouette. Authored on a ~230×350 canvas; the viewBox
+ * frames it with a little padding. Kept as a module constant so the path is
  * defined once regardless of how many jerseys render.
  */
 const BODY_PATH =
-  'M30,22 C34,18 40,17 44,18 L46,21 C48,27 52,27 54,21 L56,18 ' +
-  'C60,17 66,18 70,22 L82,30 C85,32 85,35 82,41 L70,51 ' +
-  'C68,53 68,55 68,59 L72,108 C72,111 70,112 67,112 L33,112 ' +
-  'C30,112 28,111 28,108 L32,59 C32,55 32,53 30,51 L18,41 ' +
-  'C15,35 15,32 18,30 Z';
+  'M148 53 L183 51 C193 58 207 61 225 61 C243 61 257 58 267 51 L300 58 ' +
+  'C298 84 299 111 304 132 C309 157 321 184 339 202 L339 400 L109 400 ' +
+  'L109 211 C126 196 138 174 145 151 C153 126 153 86 148 53 Z';
 
-/** The V-neck collar triangle, used by the `vneck` template. */
-const VNECK_PATH = 'M42,20 L58,20 L50,44 Z';
+/** The V-neck collar, used by the `vneck` template. */
+const VNECK_PATH = 'M195 52 L253 52 L224 128 Z';
 
 /** The diagonal sash band, used by the `sash` template (clipped to the body). */
-const SASH_POINTS = '12,60 46,28 90,72 56,104';
+const SASH_POINTS = '96,236 214,86 352,250 236,398';
 
-/** Chevron (downward "V") bands, used by the `chevron` template. */
-const CHEVRON_YS = [40, 62, 84];
+/** Chevron (downward "V") band top edges, used by the `chevron` template. */
+const CHEVRON_YS = [150, 232, 314];
 
 export interface JerseySvgProps {
   /** The team's primary shirt color, as a `#rrggbb` hex. */
@@ -79,8 +78,8 @@ export default function JerseySvg({
       role="img"
       aria-label={label}
       width={size}
-      height={size * 1.24}
-      viewBox="0 0 100 124"
+      height={size * 1.49}
+      viewBox="100 44 248 362"
       xmlns="http://www.w3.org/2000/svg"
     >
       <title>{label}</title>
@@ -91,18 +90,18 @@ export default function JerseySvg({
         {style === 'diagonal' && (
           <pattern
             id={stripePatId}
-            width="18"
-            height="18"
+            width="52"
+            height="52"
             patternUnits="userSpaceOnUse"
             patternTransform="rotate(45)"
           >
-            <rect width="18" height="18" fill={primary.fill} />
-            <rect width="9" height="18" fill={secondary.fill} />
+            <rect width="52" height="52" fill={primary.fill} />
+            <rect width="26" height="52" fill={secondary.fill} />
           </pattern>
         )}
         {style === 'circles' && (
-          <pattern id={dotPatId} width="22" height="22" patternUnits="userSpaceOnUse">
-            <circle cx="11" cy="11" r="5" fill={secondary.fill} />
+          <pattern id={dotPatId} width="58" height="58" patternUnits="userSpaceOnUse">
+            <circle cx="29" cy="29" r="14" fill={secondary.fill} />
           </pattern>
         )}
         {style === 'gradient' && (
@@ -115,44 +114,44 @@ export default function JerseySvg({
 
       {/* Body fill + pattern, all clipped to the jersey outline. */}
       <g clipPath={`url(#${clipId})`}>
-        <rect x="0" y="0" width="100" height="124" fill={bodyFill} />
+        <rect x="100" y="44" width="248" height="362" fill={bodyFill} />
 
         {style === 'stripes' &&
-          [18, 32, 46, 60, 74].map(x => (
-            <rect key={x} x={x} y="0" width="7" height="124" fill={secondary.fill} />
+          [118, 163, 208, 253, 298].map(x => (
+            <rect key={x} x={x} y="44" width="22" height="362" fill={secondary.fill} />
           ))}
 
         {style === 'hoops' &&
-          [24, 44, 64, 84, 104].map(y => (
-            <rect key={y} x="0" y={y} width="100" height="10" fill={secondary.fill} />
+          [80, 140, 200, 260, 320].map(y => (
+            <rect key={y} x="100" y={y} width="248" height="28" fill={secondary.fill} />
           ))}
 
         {style === 'diagonal' && (
-          <rect x="0" y="0" width="100" height="124" fill={`url(#${stripePatId})`} />
+          <rect x="100" y="44" width="248" height="362" fill={`url(#${stripePatId})`} />
         )}
 
         {style === 'circles' && (
-          <rect x="0" y="0" width="100" height="124" fill={`url(#${dotPatId})`} />
+          <rect x="100" y="44" width="248" height="362" fill={`url(#${dotPatId})`} />
         )}
 
         {style === 'chevron' &&
           CHEVRON_YS.map(y => (
             <polygon
               key={y}
-              points={`14,${y} 50,${y + 16} 86,${y} 86,${y + 8} 50,${y + 24} 14,${y + 8}`}
+              points={`120,${y} 224,${y + 50} 328,${y} 328,${y + 26} 224,${y + 76} 120,${y + 26}`}
               fill={secondary.fill}
             />
           ))}
 
         {style === 'sides' && (
           <>
-            <rect x="14" y="0" width="14" height="124" fill={secondary.fill} />
-            <rect x="72" y="0" width="14" height="124" fill={secondary.fill} />
+            <rect x="100" y="44" width="46" height="362" fill={secondary.fill} />
+            <rect x="302" y="44" width="46" height="362" fill={secondary.fill} />
           </>
         )}
 
         {style === 'halves' && (
-          <rect x="50" y="0" width="50" height="124" fill={secondary.fill} />
+          <rect x="224" y="44" width="124" height="362" fill={secondary.fill} />
         )}
 
         {style === 'sash' && <polygon points={SASH_POINTS} fill={secondary.fill} />}
@@ -160,12 +159,12 @@ export default function JerseySvg({
         {style === 'vneck' && <path d={VNECK_PATH} fill={secondary.fill} />}
       </g>
 
-      {/* Neck + armhole trim traces the secondary color along the outline. */}
+      {/* Neck + hem trim traces the secondary color along the outline. */}
       <path
         d={BODY_PATH}
         fill="none"
         stroke={secondary.fill}
-        strokeWidth="2.5"
+        strokeWidth="8"
         strokeLinejoin="round"
       />
       {/* Thin definition edge so the kit reads on any background. */}
@@ -173,19 +172,19 @@ export default function JerseySvg({
         d={BODY_PATH}
         fill="none"
         stroke={outline}
-        strokeWidth="0.75"
+        strokeWidth="2"
         strokeLinejoin="round"
       />
 
       {number != null && (
         <text
-          x="50"
-          y="82"
+          x="224"
+          y="215"
           textAnchor="middle"
           dominantBaseline="middle"
           fontFamily="'Oswald', sans-serif"
           fontWeight="700"
-          fontSize="34"
+          fontSize="96"
           fill={primary.ink}
         >
           {number}

@@ -1,7 +1,20 @@
 import { createTheme, type PaletteMode, type Theme } from '@mui/material/styles';
 import { esES as dataGridEsES } from '@mui/x-data-grid/locales';
+import {
+  brand,
+  surface,
+  ink,
+  semantic,
+  dividerColor,
+  cancelColor,
+  logoBackground,
+} from '@/design/tokens';
 
-export const CANCEL_BUTTON_COLOR = '#d33';
+/* The MUI theme is assembled entirely from the shared design tokens
+   (`@/design/tokens`) so components and one-off surfaces read the same hues
+   the theme is built from. These local aliases preserve the original names
+   used throughout the overrides below without duplicating any hex value. */
+export const CANCEL_BUTTON_COLOR = cancelColor;
 
 /**
  * The Club 12 logo asset has its dark maroon backdrop baked into the PNG
@@ -9,35 +22,35 @@ export const CANCEL_BUTTON_COLOR = '#d33';
  * the logo wherever it's placed, so the image's rectangular edge reads as
  * an intentional badge rather than a stray box.
  */
-export const LOGO_BACKGROUND_COLOR = '#4D0000';
+export const LOGO_BACKGROUND_COLOR = logoBackground;
 
 /* Brand hues. Orange is the single accent — CTAs, active states, focus rings,
    highlights. Navy is the secondary "scoreboard" hue used for chrome. */
-const ORANGE = '#FF5A1F';
-const ORANGE_LIGHT = '#FF8A50';
-const ORANGE_DARK = '#C43E00';
-const NAVY = '#0F172A';
-const NAVY_LIGHT = '#1E293B';
+const ORANGE = brand.orange;
+const ORANGE_LIGHT = brand.orangeLight;
+const ORANGE_DARK = brand.orangeDark;
+const NAVY = brand.navy;
+const NAVY_LIGHT = brand.navyLight;
 
 /* Layered dark surfaces (canvas -> paper -> raised). Kept as a deliberate
    three-step scale so depth reads through elevation, never through a colored
    MUI overlay (see MuiPaper.backgroundImage: 'none' below). */
-const DARK_BG = '#111827'; // L0 app canvas
-const DARK_PAPER = '#1A2232'; // L1 cards, drawers, app surfaces
-const DARK_RAISED = '#232D3F'; // L2 inputs, menus, hovered rows
-const DARK_TEXT_PRIMARY = '#E7EAF0';
-const DARK_TEXT_SECONDARY = '#98A2B3';
-const DARK_DIVIDER = 'rgba(231, 234, 240, 0.12)';
+const DARK_BG = surface.canvas; // L0 app canvas
+const DARK_PAPER = surface.paper; // L1 cards, drawers, app surfaces
+const DARK_RAISED = surface.raised; // L2 inputs, menus, hovered rows
+const DARK_TEXT_PRIMARY = ink.primary;
+const DARK_TEXT_SECONDARY = ink.secondary;
+const DARK_DIVIDER = dividerColor.dark;
 
 /* Near-black ink used as the label color on filled orange (AA-safe:
    ~5.6:1 vs #FF5A1F, where white would only reach ~3.1:1). */
-const ORANGE_INK = '#0B0F17';
+const ORANGE_INK = brand.orangeInk;
 
 /* Semantic hues tuned to stay legible on the dark canvas. error is left to
    MUI's default (#d32f2f) so it matches the SweetAlert cancel affordance. */
-const SUCCESS = '#00C853';
-const WARNING = '#F5A524';
-const INFO = '#38BDF8';
+const SUCCESS = semantic.success;
+const WARNING = semantic.warning;
+const INFO = semantic.info;
 
 /**
  * Builds the MUI theme for the requested color mode. The app is dark-first;
