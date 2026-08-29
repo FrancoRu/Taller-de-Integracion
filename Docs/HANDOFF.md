@@ -56,6 +56,11 @@ Loop autónomo (mandato del owner: "armá un plan y seguilo, arreglá todo"). To
 4. **Error-handling público** ✅ — los GETs iniciales públicos ya NO disparan el SweetAlert bloqueante; muestran un estado inline `LoadErrorState` ("No pudimos cargar…" + "Reintentar"). Flag opt-in `{ silent }` en los métodos GET de los contexts (mutaciones intactas, mantienen su modal). Cubre home, temporadas, temporada, torneos, torneo, equipo, sanciones, blog.
 5. **Fix MUI Tabs** ✅ — deep-link a `?tab=<division>` antes de que carguen las divisiones tiraba un error de consola (value sin match); ahora cae a "info" hasta que exista el tab. Consola pública limpia (0 errores).
 
+## 🔄 EN PROGRESO — rama `feat/admin-organizing` (sale de develop post-#65, NO mergeado aún)
+
+Bloque admin-organizar (verificado por build+tests; el E2E admin en vivo requiere login del owner). Commits:
+1. **Deducción de puntos** ✅ — entidad `TeamPointDeduction` (DivisionId/TeamId/Points/Reason) + migración `20260829101157_AddTeamPointDeduction` (guard verde) + endpoints `POST/GET api/divisions/{id}/point-deductions` + `DELETE api/point-deductions/{id}` (AdminOrOwner salvo el GET). `PositionCalculator.CalculatePositions` recibe las deducciones y las resta ANTES de los desempates (la tabla re-rankea); NO clampea en 0 (una sanción puede hundir al equipo, como en la realidad). Front: `PointDeductionManager` en el tab Posiciones del admin de división (dialog equipo+puntos+motivo, lista con borrar) + nota `-N` con motivo en la tabla pública. Migración aplicada a la DB dev.
+
 PLAN restante (orden): SEO/meta; admin organizar (scoreboard/scoring por partido, deducción de puntos, fases bloqueadas con torneo arrancado, llaves editables); integridad+auditoría (delete-integridad global, AuditLog en toda mutación); features (staff DT, stats por temporada, canchas imagen+mapa, mensajes auth backend→español); E2E final del ciclo completo. Norte: organizar temporada de punta a punta, correcto.
 
 ## 📋 BACKLOG PENDIENTE (con specs, prioridad sugerida)
