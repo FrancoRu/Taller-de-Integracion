@@ -238,21 +238,26 @@ const SidebarLayout: React.FC<{ children: React.ReactNode }> = ({
 
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Toolbar sx={{ px: 2, display: 'flex', alignItems: 'center' }}>
+      <Toolbar sx={{ px: 2, display: 'flex', justifyContent: 'center' }}>
         <Box
           sx={{
-            display: 'flex',
+            display: 'inline-flex',
             alignItems: 'center',
+            justifyContent: 'center',
             bgcolor: LOGO_BACKGROUND_COLOR,
-            borderRadius: 1.5,
-            p: 0.5,
+            borderRadius: 2,
+            px: 1.25,
+            py: 0.75,
+            border: '1px solid',
+            borderColor: 'rgba(255, 255, 255, 0.12)',
+            boxShadow: 3,
           }}
         >
           <Box
             component="img"
             src="/assets/logo-club12.png"
             alt="Club 12"
-            sx={{ height: 40, width: 'auto', display: 'block' }}
+            sx={{ height: 44, width: 'auto', display: 'block' }}
           />
         </Box>
       </Toolbar>
@@ -400,18 +405,22 @@ const SidebarLayout: React.FC<{ children: React.ReactNode }> = ({
           </IconButton>
           <Box
             sx={{
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               bgcolor: LOGO_BACKGROUND_COLOR,
               borderRadius: 1.5,
-              p: 0.5,
+              px: 1,
+              py: 0.5,
+              border: '1px solid',
+              borderColor: 'rgba(255, 255, 255, 0.12)',
+              boxShadow: 2,
             }}
           >
             <Box
               component="img"
               src="/assets/logo-club12.png"
               alt="Club 12"
-              sx={{ height: 32, width: 'auto', display: 'block' }}
+              sx={{ height: 34, width: 'auto', display: 'block' }}
             />
           </Box>
         </Toolbar>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GridColDef, GridPaginationModel } from '@mui/x-data-grid';
-import { Box, Card, CardContent, Stack, Typography } from '@mui/material';
+import { Box, Stack, Typography } from '@mui/material';
+import PageShell from '@/views/core/components/PageShell';
 import { useNavigate } from 'react-router-dom';
 import {
   confirmDelete,
@@ -249,9 +250,11 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
         flex: 1.3,
         minWidth: 220,
         renderCell: params => (
-          <Stack direction="row" spacing={1} sx={{
-            alignItems: "center"
-          }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ alignItems: 'center', height: '100%' }}
+          >
             <TeamLogo
               teamName={params.row.name}
               logoUrl={params.row.logoUrl}
@@ -266,6 +269,8 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
         headerName: 'Código',
         flex: 0.6,
         minWidth: 110,
+        align: 'center',
+        headerAlign: 'center',
       },
       {
         field: 'shirtColor',
@@ -273,8 +278,12 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
         flex: 1,
         minWidth: 140,
         sortable: false,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: params => (
-          <Stack sx={{ height: '100%', justifyContent: 'center' }}>
+          <Stack
+            sx={{ height: '100%', justifyContent: 'center', alignItems: 'center' }}
+          >
             <JerseySvg
               color={params.row.shirtColor}
               secondaryColor={params.row.shirtSecondaryColor}
@@ -287,7 +296,10 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
       },
     ];
 
-    return [...baseColumns, buildActionsColumn(teamActions)];
+    return [
+      ...baseColumns,
+      buildActionsColumn(teamActions, { align: 'center', headerAlign: 'center' }),
+    ];
   }, [teamActions]);
 
   const rows = useMemo(() => teams ?? [], [teams]);
@@ -409,21 +421,12 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
     });
   };
 
-  const content = (
-    <>
-      {(title || createType) && (
-        <Stack
-          direction="row"
-          sx={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 2
-          }}>
-          {title ? <Typography variant="h6">{title}</Typography> : <Box />}
-          <NewEntityButton type={createType} onClick={handleCreateTeam} />
-        </Stack>
-      )}
+  const createButton = (
+    <NewEntityButton type={createType} onClick={handleCreateTeam} />
+  );
 
+  const body = (
+    <>
       <TeamsFilterBar filters={filters} onFilterChange={handleFilterChange} />
 
       <TeamsTable
@@ -471,15 +474,31 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
     </>
   );
 
+  // Standalone route: fill the panel area (no boxed card), matching the other
+  // admin list pages — the PageShell gives one h1 title + the create action.
   if (wrapInCard) {
     return (
-      <Card>
-        <CardContent>{content}</CardContent>
-      </Card>
+      <PageShell title={title} actions={createButton}>
+        {body}
+      </PageShell>
     );
   }
 
-  return <Box sx={{ width: '100%' }}>{content}</Box>;
+  // Embedded (e.g. inside a tournament tab): keep an inline header.
+  return (
+    <Box sx={{ width: '100%' }}>
+      {(title || createType) && (
+        <Stack
+          direction="row"
+          sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+        >
+          {title ? <Typography variant="h6">{title}</Typography> : <Box />}
+          {createButton}
+        </Stack>
+      )}
+      {body}
+    </Box>
+  );
 };
 
 export default TeamsPage;

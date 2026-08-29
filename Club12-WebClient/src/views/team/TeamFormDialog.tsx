@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -82,6 +83,21 @@ const TeamFormDialog: React.FC<TeamFormDialogProps> = ({
   const selectedStyle = toJerseyStyle(form.jerseyStyle);
   const previewSecondary = hasSecondary ? secondaryValue : undefined;
 
+  // Preview a freshly picked escudo file immediately (object URL), falling back
+  // to the team's stored logo. The URL is revoked when the file changes or the
+  // dialog unmounts so it doesn't leak.
+  const [logoPreview, setLogoPreview] = useState('');
+  useEffect(() => {
+    if (!form.logo) {
+      setLogoPreview('');
+      return;
+    }
+    const url = URL.createObjectURL(form.logo);
+    setLogoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [form.logo]);
+  const displayedLogoUrl = logoPreview || form.logoUrl;
+
   return (
     <Dialog
       open={open}
@@ -92,6 +108,37 @@ const TeamFormDialog: React.FC<TeamFormDialogProps> = ({
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
+          {/* The escudo is the team's primary identity, so it leads the form. */}
+          {withLogo && (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+              <TeamLogo teamName={form.name || '—'} logoUrl={displayedLogoUrl} size={88} />
+              <Button variant="outlined" component="label" size="small">
+                {form.logoUrl || form.logo ? 'Cambiar escudo' : 'Seleccionar escudo'}
+                <input
+                  hidden
+                  type="file"
+                  accept="image/*"
+                  onChange={event => {
+                    const selectedFile = event.target.files?.[0] ?? null;
+                    onLogoChange(selectedFile);
+                  }}
+                />
+              </Button>
+              {form.logo && (
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  {form.logo.name}
+                </Typography>
+              )}
+            </Box>
+          )}
+
           <TextField
             label="Nombre"
             value={form.name}
@@ -242,38 +289,6 @@ const TeamFormDialog: React.FC<TeamFormDialogProps> = ({
             </Box>
           </Box>
 
-          {withLogo && (
-            <Box>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                Escudo
-              </Typography>
-              <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-                <TeamLogo teamName={form.name || '—'} logoUrl={form.logoUrl} size={56} />
-                <Box>
-                  <Button variant="outlined" component="label" size="small">
-                    {form.logoUrl || form.logo ? 'Cambiar escudo' : 'Seleccionar escudo'}
-                    <input
-                      hidden
-                      type="file"
-                      accept="image/*"
-                      onChange={event => {
-                        const selectedFile = event.target.files?.[0] ?? null;
-                        onLogoChange(selectedFile);
-                      }}
-                    />
-                  </Button>
-                  {form.logo && (
-                    <Typography
-                      variant="caption"
-                      sx={{ display: 'block', mt: 0.5, color: 'text.secondary' }}
-                    >
-                      {form.logo.name}
-                    </Typography>
-                  )}
-                </Box>
-              </Stack>
-            </Box>
-          )}
         </Stack>
       </DialogContent>
       <DialogActions>

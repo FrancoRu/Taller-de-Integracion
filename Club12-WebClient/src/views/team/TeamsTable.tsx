@@ -1,6 +1,7 @@
 import { Box } from '@mui/material';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import type { ITeamResponse } from '@/modules/team/type/team.d';
+import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 
 interface TeamsTableProps {
   rows: ITeamResponse[];
@@ -32,7 +33,7 @@ const TeamsTable: React.FC<TeamsTableProps> = ({
       autoHeight
       disableRowSelectionOnClick
       disableColumnMenu
-      localeText={{ noRowsLabel: noRowsMessage }}
+      localeText={dataGridLocaleText(noRowsMessage)}
       pageSizeOptions={pageSizeOptions}
       paginationModel={paginationModel}
       onPaginationModelChange={onPaginationModelChange}
