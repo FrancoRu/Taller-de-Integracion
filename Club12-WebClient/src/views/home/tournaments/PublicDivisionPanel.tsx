@@ -9,13 +9,16 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Tabs,
   Typography,
 } from '@mui/material';
 import { TableSkeleton, ListSkeleton } from '@/views/core/components/skeletons';
 import { GUID } from '@/modules/core/types/types';
 import { TAB_CONTENT_MIN_HEIGHT } from '@/modules/core/constants/constants';
 import { IDivisionResponse } from '@/modules/division/type/division';
+import { ITeamResponse } from '@/modules/team/type/team.d';
+import PublicTeamGrid from '@/views/home/tournaments/PublicTeamGrid';
+import SectionHeading from '@/views/core/components/SectionHeading';
+import SecondaryTabs from '@/views/core/components/SecondaryTabs';
 import { IScorerByPlayerResponse } from '@/modules/scorer/type/scorer.d';
 import { scorerService } from '@/modules/scorer/service/scorer.service';
 import { stageService } from '@/modules/stage/service/stage.service';
@@ -36,10 +39,12 @@ const STAGE_NAME_DIVISION_SEPARATOR = ' - ';
 const DEFAULT_SUB_TAB: DivisionSubTab = 'posiciones';
 const VIEW_QUERY_PARAM = 'view';
 
-type DivisionSubTab = 'posiciones' | 'goleadores' | 'partidos' | 'llaves';
+type DivisionSubTab = 'equipos' | 'posiciones' | 'goleadores' | 'partidos' | 'llaves';
 
 interface PublicDivisionPanelProps {
   division: IDivisionResponse;
+  /** The teams that play in this division (shown in its "Equipos" tab). */
+  teams: ITeamResponse[];
 }
 
 /**
@@ -55,7 +60,7 @@ const stageSectionLabel = (stage: IStageResponse, divisionName: string): string 
   return stage.name.startsWith(prefix) ? stage.name.slice(prefix.length) : stageLabel(stage);
 };
 
-const VALID_SUB_TABS: readonly DivisionSubTab[] = ['posiciones', 'goleadores', 'partidos', 'llaves'];
+const VALID_SUB_TABS: readonly DivisionSubTab[] = ['equipos', 'posiciones', 'goleadores', 'partidos', 'llaves'];
 const isDivisionSubTab = (value: string | null): value is DivisionSubTab =>
   VALID_SUB_TABS.includes(value as DivisionSubTab);
 
@@ -66,7 +71,7 @@ const isDivisionSubTab = (value: string | null): value is DivisionSubTab =>
  * (not for every division up front), and loading state is always cleared in
  * a `finally` so a failed request can't leave the spinner running forever.
  */
-export default function PublicDivisionPanel({ division }: PublicDivisionPanelProps) {
+export default function PublicDivisionPanel({ division, teams }: PublicDivisionPanelProps) {
   /**
    * Lives in the URL for the same reason the parent tournament tab does:
    * the browser back button should undo one sub-tab switch at a time
@@ -200,18 +205,26 @@ export default function PublicDivisionPanel({ division }: PublicDivisionPanelPro
 
   return (
     <Box>
-      <Tabs
+      <SecondaryTabs
         value={subTab}
-        onChange={(_, value: DivisionSubTab) => setSubTab(value)}
-        sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}
+        onChange={(_, value) => setSubTab(value as DivisionSubTab)}
+        aria-label={`Vistas de ${division.name}`}
       >
+        <Tab label="Equipos" value="equipos" />
         <Tab label="Posiciones" value="posiciones" />
         <Tab label="Goleadores" value="goleadores" />
         <Tab label="Partidos" value="partidos" />
         <Tab label="Llaves" value="llaves" />
-      </Tabs>
+      </SecondaryTabs>
 
       <Box sx={{ minHeight: TAB_CONTENT_MIN_HEIGHT }}>
+      {subTab === 'equipos' && (
+        <PublicTeamGrid
+          teams={teams}
+          emptyLabel="Todavía no hay equipos asignados a esta división."
+        />
+      )}
+
       {subTab === 'posiciones' &&
         (division.groupStandings && division.groupStandings.length > 1 ? (
           // Multi-group cross-division cup (HU-110): one standings table per
@@ -220,9 +233,7 @@ export default function PublicDivisionPanel({ division }: PublicDivisionPanelPro
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {division.groupStandings.map(group => (
               <Box key={group.stageId}>
-                <Typography variant="subtitle1" component="h3" sx={{ mb: 1.5 }}>
-                  {group.stageName}
-                </Typography>
+                <SectionHeading>{group.stageName}</SectionHeading>
                 <DivisionStandings positions={group.positions} />
               </Box>
             ))}
@@ -276,9 +287,7 @@ export default function PublicDivisionPanel({ division }: PublicDivisionPanelPro
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {matchSections.map(({ stage, label, matches: stageMatches }) => (
               <Box key={stage.id}>
-                <Typography variant="subtitle1" component="h3" sx={{ mb: 1.5 }}>
-                  {label}
-                </Typography>
+                <SectionHeading>{label}</SectionHeading>
                 <MatchFixtureList matches={stageMatches} exportTitle={label} />
               </Box>
             ))}
