@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { useTeam } from '@/modules/team/hook/team.hook';
 import TeamHero from '@/views/core/components/TeamHero';
+import TeamBackdrop from '@/views/core/components/TeamBackdrop';
 import JerseySvg from '@/views/core/components/JerseySvg';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
@@ -57,8 +58,9 @@ export default function PublicTeamPage() {
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 5 }}>
-      <Button
+    <TeamBackdrop shirtColor={team.shirtColor} logoUrl={team.logoUrl}>
+      <Container maxWidth="md" sx={{ py: 5 }}>
+        <Button
         onClick={() => navigate(APP_ROUTES.publicTournaments)}
         sx={{ mb: 3, pl: 0 }}
         color="inherit"
@@ -143,6 +145,7 @@ export default function PublicTeamPage() {
           ))}
         </Grid>
       )}
-    </Container>
+      </Container>
+    </TeamBackdrop>
   );
 }

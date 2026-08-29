@@ -23,6 +23,21 @@ const expandHex = (hex: string): string => {
 export const isHexColor = (value?: string | null): boolean =>
   typeof value === 'string' && HEX_RE.test(value.trim());
 
+/**
+ * Turns a `#rgb`/`#rrggbb` hex into an `rgba()` string at the given alpha, so a
+ * brand hue can be used as a translucent tint/overlay. Non-hex values fall back
+ * to the navy chrome hue so a surface never renders with a broken color.
+ */
+export const hexToRgba = (hex: string, alpha: number): string => {
+  const full = HEX_RE.test(hex.trim())
+    ? expandHex(hex.trim())
+    : brand.navyLight;
+  const r = parseInt(full.slice(1, 3), 16);
+  const g = parseInt(full.slice(3, 5), 16);
+  const b = parseInt(full.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 /** Relative luminance (WCAG) of a #rrggbb color, in the 0..1 range. */
 export const luminance = (hex: string): number => {
   const full = expandHex(hex);
