@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import {
+  Avatar,
   Box,
   Dialog,
   DialogActions,
@@ -12,6 +13,7 @@ import {
   Typography,
   Button,
 } from '@mui/material';
+import { StadiumIcon } from '@/views/core/MUI/icons/icons';
 import { useNavigate } from 'react-router-dom';
 import {
   confirmDelete,
@@ -29,7 +31,6 @@ import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import FormButtons from '@/views/core/components/FormButtons';
-import TeamLogo from '@/views/core/components/TeamLogo';
 import PageShell from '@/views/core/components/PageShell';
 import FilterBar from '@/views/core/components/FilterBar';
 import {
@@ -224,11 +225,15 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
             spacing={1}
             sx={{ alignItems: 'center', height: '100%' }}
           >
-            <TeamLogo
-              teamName={params.row.name}
-              logoUrl={params.row.photoUrl}
-              size={28}
-            />
+            {/* A venue is a court, not a team — show its photo when it has one,
+                otherwise a stadium icon rather than an initials avatar. */}
+            <Avatar
+              src={params.row.photoUrl || undefined}
+              variant="rounded"
+              sx={{ width: 28, height: 28, bgcolor: 'secondary.main' }}
+            >
+              <StadiumIcon sx={{ fontSize: 18 }} />
+            </Avatar>
             <Typography variant="body2">{params.row.name}</Typography>
           </Stack>
         ),
