@@ -177,7 +177,7 @@ const BlogPostsPage: React.FC = () => {
 
   return (
     <PageShell
-      title="Blog"
+      title="Novedades"
       actions={<NewEntityButton type="Publicación" onClick={handleCreate} />}
     >
       <FilterBar onClear={handleClearFilters} ariaLabel="Filtros de publicaciones">
