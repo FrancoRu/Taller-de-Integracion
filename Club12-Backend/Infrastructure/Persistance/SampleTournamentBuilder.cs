@@ -102,6 +102,45 @@ public static class SampleTournamentBuilder
     public sealed record BuildResult(Tournament Tournament, List<PlayerSanction> Sanctions);
 
     /// <summary>
+    /// Hands out clean, collision-free kebab-case slugs for the divisions and
+    /// stages built in one seeding run. Because the whole object graph is built
+    /// in memory before it is saved, there is no repository to ask "does this
+    /// slug already exist?"; instead every issued slug is remembered per table
+    /// so a repeated base slug gets the same numeric suffix (-2, -3, ...) that
+    /// <see cref="SlugGenerator.GenerateUniqueSlugAsync"/> would apply against a
+    /// real database. Division and Stage slugs are tracked separately because
+    /// each has its own unique index. Share ONE instance across every
+    /// <see cref="Build"/> call that is persisted together (e.g. the two sample
+    /// tournaments the DataMaintenanceService saves in a single transaction) so
+    /// slugs stay unique across the whole batch, never colliding on the DB's
+    /// unique index — and never falling back to a GUID.
+    /// </summary>
+    public sealed class SlugRegistry
+    {
+        private readonly HashSet<string> _divisionSlugs = [];
+        private readonly HashSet<string> _stageSlugs = [];
+
+        public string ForDivision(string source) => Register(source, _divisionSlugs);
+
+        public string ForStage(string source) => Register(source, _stageSlugs);
+
+        private static string Register(string source, HashSet<string> used)
+        {
+            string baseSlug = SlugGenerator.GenerateSlug(source);
+            string candidate = baseSlug;
+            int suffix = 1;
+
+            while (!used.Add(candidate))
+            {
+                suffix++;
+                candidate = $"{baseSlug}-{suffix}";
+            }
+
+            return candidate;
+        }
+    }
+
+    /// <summary>
     /// Builds one Tournament with every division in <paramref name="definition"/>.
     /// <paramref name="playerCounter"/> is threaded through (and must keep
     /// incrementing) across multiple calls so player names/document numbers
@@ -116,8 +155,11 @@ public static class SampleTournamentBuilder
         TournamentDefinition definition,
         List<Venue> venues,
         ref int playerCounter,
-        bool includePlayoffs = false)
+        bool includePlayoffs = false,
+        SlugRegistry? slugRegistry = null)
     {
+        slugRegistry ??= new SlugRegistry();
+
         Tournament tournament = new()
         {
             CreatedBy = CreatedBy,
@@ -144,6 +186,7 @@ public static class SampleTournamentBuilder
                 divisionDef.TeamColors,
                 divisionDef.TeamStyles,
                 divisionDef.TeamSecondaryColors,
+                slugRegistry,
                 ref playerCounter);
 
             tournament.Divisions.Add(division);
@@ -157,7 +200,7 @@ public static class SampleTournamentBuilder
             {
                 CreatedBy = CreatedBy,
                 Name = StageTemplate.Group.Name,
-                Slug = SlugGenerator.GenerateSlug($"{StageTemplate.Group.Name} {division.Name} {Guid.NewGuid()}"),
+                Slug = slugRegistry.ForStage($"{StageTemplate.Group.Name} {division.Name}"),
                 StageType = StageType.Group,
                 IsActive = true,
                 StartDate = definition.StageStartDate,
@@ -179,11 +222,11 @@ public static class SampleTournamentBuilder
             {
                 if (divisionDef.PlayoffCups is { Length: > 0 } cups)
                 {
-                    SeedCupPlayoffs(division, stage, teams, venues, cups);
+                    SeedCupPlayoffs(division, stage, teams, venues, cups, slugRegistry);
                 }
                 else
                 {
-                    SeedPlayoffStages(division, stage, teams, venues);
+                    SeedPlayoffStages(division, stage, teams, venues, slugRegistry);
                 }
             }
         }
@@ -191,7 +234,7 @@ public static class SampleTournamentBuilder
         if (includePlayoffs && definition.CrossCup is not null)
         {
             SeedCrossDivisionCup(
-                tournament, definition.CrossCup, allTeams, venues, definition.StageStartDate);
+                tournament, definition.CrossCup, allTeams, venues, definition.StageStartDate, slugRegistry);
         }
 
         List<PlayerSanction> sanctions = SeedSanctions(regularGroupStages);
@@ -207,13 +250,14 @@ public static class SampleTournamentBuilder
         string[] teamColors,
         string[]? teamStyles,
         string[]? teamSecondaryColors,
+        SlugRegistry slugRegistry,
         ref int playerCounter)
     {
         Division division = new()
         {
             CreatedBy = CreatedBy,
             Name = divisionName,
-            Slug = SlugGenerator.GenerateSlug($"{divisionName} {Guid.NewGuid()}"),
+            Slug = slugRegistry.ForDivision(divisionName),
             Tournament = tournament,
             Stages = [],
         };
@@ -381,7 +425,7 @@ public static class SampleTournamentBuilder
     /// historical tournaments that have no position-range cups. With 4 teams
     /// the bracket is SemiFinal(2) -> ThirdPlace(1) + Final(1).
     /// </summary>
-    private static void SeedPlayoffStages(Division division, Stage groupStage, List<Team> teams, List<Venue> venues)
+    private static void SeedPlayoffStages(Division division, Stage groupStage, List<Team> teams, List<Venue> venues, SlugRegistry slugRegistry)
     {
         List<Position> standings = PositionCalculator.CalculatePositions(groupStage.Matches);
         Dictionary<Guid, Team> teamsById = teams.ToDictionary(t => t.Id);
@@ -392,7 +436,7 @@ public static class SampleTournamentBuilder
         {
             CreatedBy = CreatedBy,
             Name = StageTemplate.SemiFinal.Name,
-            Slug = SlugGenerator.GenerateSlug($"{StageTemplate.SemiFinal.Name} {division.Name} {Guid.NewGuid()}"),
+            Slug = slugRegistry.ForStage($"{StageTemplate.SemiFinal.Name} {division.Name}"),
             StageType = StageType.SemiFinal,
             IsActive = true,
             IsElimination = true,
@@ -431,7 +475,7 @@ public static class SampleTournamentBuilder
         {
             CreatedBy = CreatedBy,
             Name = StageTemplate.ThirdPlace.Name,
-            Slug = SlugGenerator.GenerateSlug($"{StageTemplate.ThirdPlace.Name} {division.Name} {Guid.NewGuid()}"),
+            Slug = slugRegistry.ForStage($"{StageTemplate.ThirdPlace.Name} {division.Name}"),
             StageType = StageType.ThirdPlace,
             IsActive = true,
             IsElimination = true,
@@ -454,7 +498,7 @@ public static class SampleTournamentBuilder
         {
             CreatedBy = CreatedBy,
             Name = StageTemplate.Final.Name,
-            Slug = SlugGenerator.GenerateSlug($"{StageTemplate.Final.Name} {division.Name} {Guid.NewGuid()}"),
+            Slug = slugRegistry.ForStage($"{StageTemplate.Final.Name} {division.Name}"),
             StageType = StageType.Final,
             IsActive = true,
             IsElimination = true,
@@ -487,7 +531,8 @@ public static class SampleTournamentBuilder
         Stage groupStage,
         List<Team> teams,
         List<Venue> venues,
-        PlayoffCupDefinition[] cups)
+        PlayoffCupDefinition[] cups,
+        SlugRegistry slugRegistry)
     {
         List<Position> standings = PositionCalculator.CalculatePositions(
             groupStage.Matches, division.PointsForWin, division.PointsForLoss);
@@ -525,7 +570,7 @@ public static class SampleTournamentBuilder
             {
                 CreatedBy = CreatedBy,
                 Name = $"{StageTemplate.SemiFinal.Name} {cup.BracketName}",
-                Slug = SlugGenerator.GenerateSlug($"{StageTemplate.SemiFinal.Name} {cup.BracketName} {division.Name} {Guid.NewGuid()}"),
+                Slug = slugRegistry.ForStage($"{StageTemplate.SemiFinal.Name} {cup.BracketName} {division.Name}"),
                 StageType = StageType.SemiFinal,
                 IsActive = true,
                 IsElimination = true,
@@ -571,7 +616,7 @@ public static class SampleTournamentBuilder
             {
                 CreatedBy = CreatedBy,
                 Name = $"{StageTemplate.Final.Name} {cup.BracketName}",
-                Slug = SlugGenerator.GenerateSlug($"{StageTemplate.Final.Name} {cup.BracketName} {division.Name} {Guid.NewGuid()}"),
+                Slug = slugRegistry.ForStage($"{StageTemplate.Final.Name} {cup.BracketName} {division.Name}"),
                 StageType = StageType.Final,
                 IsActive = true,
                 IsElimination = true,
@@ -609,13 +654,14 @@ public static class SampleTournamentBuilder
         CrossCupDefinition crossCup,
         List<Team> allTeams,
         List<Venue> venues,
-        DateTime anchorDate)
+        DateTime anchorDate,
+        SlugRegistry slugRegistry)
     {
         Division cupDivision = new()
         {
             CreatedBy = CreatedBy,
             Name = crossCup.DivisionName,
-            Slug = SlugGenerator.GenerateSlug($"{crossCup.DivisionName} {Guid.NewGuid()}"),
+            Slug = slugRegistry.ForDivision(crossCup.DivisionName),
             Tournament = tournament,
             Stages = [],
             IsCrossDivisionCup = true,
@@ -639,7 +685,7 @@ public static class SampleTournamentBuilder
             {
                 CreatedBy = CreatedBy,
                 Name = $"Grupo {g + 1}",
-                Slug = SlugGenerator.GenerateSlug($"Grupo {g + 1} {cupDivision.Name} {Guid.NewGuid()}"),
+                Slug = slugRegistry.ForStage($"Grupo {g + 1} {cupDivision.Name}"),
                 StageType = StageType.Group,
                 IsActive = true,
                 StartDate = anchorDate,
@@ -674,7 +720,7 @@ public static class SampleTournamentBuilder
         {
             CreatedBy = CreatedBy,
             Name = StageTemplate.SemiFinal.Name,
-            Slug = SlugGenerator.GenerateSlug($"{StageTemplate.SemiFinal.Name} {cupDivision.Name} {Guid.NewGuid()}"),
+            Slug = slugRegistry.ForStage($"{StageTemplate.SemiFinal.Name} {cupDivision.Name}"),
             StageType = StageType.SemiFinal,
             IsActive = true,
             IsElimination = true,
@@ -717,7 +763,7 @@ public static class SampleTournamentBuilder
         {
             CreatedBy = CreatedBy,
             Name = StageTemplate.Final.Name,
-            Slug = SlugGenerator.GenerateSlug($"{StageTemplate.Final.Name} {cupDivision.Name} {Guid.NewGuid()}"),
+            Slug = slugRegistry.ForStage($"{StageTemplate.Final.Name} {cupDivision.Name}"),
             StageType = StageType.Final,
             IsActive = true,
             IsElimination = true,

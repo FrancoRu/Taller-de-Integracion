@@ -14,7 +14,8 @@ public sealed class UpdateUserRequest
     [EmailAddress]
     public string? Email { get; set; }
 
-    [Phone]
+    [RegularExpression(ValidationPatterns.PhoneNumber, ErrorMessage = ValidationPatterns.PhoneNumberError)]
+    [MaxLength(UserFieldLengths.PhoneMaxLength, ErrorMessage = "Phone number must not exceed 15 characters.")]
     public string? Phone { get; set; }
 
     /// <summary>
