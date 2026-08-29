@@ -40,7 +40,7 @@ interface QuickNavItem {
 }
 
 const QUICK_NAV_ITEMS: QuickNavItem[] = [
-  { label: 'Torneos', description: 'Divisiones, posiciones, goleadores, partidos y copa', path: APP_ROUTES.publicTournaments },
+  { label: 'Temporadas', description: 'Torneos, divisiones, posiciones y resultados', path: APP_ROUTES.publicSeasons },
   { label: 'Sanciones', description: 'Suspensiones vigentes', path: APP_ROUTES.publicSanctions },
 ];
 
@@ -158,9 +158,9 @@ export default function Home() {
               variant="contained"
               size="large"
               component={Link}
-              to={APP_ROUTES.publicTournaments}
+              to={APP_ROUTES.publicSeasons}
             >
-              Ver torneos
+              Ver temporadas
             </Button>
           </Stack>
         </Container>
