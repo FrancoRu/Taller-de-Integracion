@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import {
+  Avatar,
   Box,
   Dialog,
   DialogActions,
@@ -29,7 +30,6 @@ import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import FormButtons from '@/views/core/components/FormButtons';
-import TeamLogo from '@/views/core/components/TeamLogo';
 import PageShell from '@/views/core/components/PageShell';
 import FilterBar from '@/views/core/components/FilterBar';
 import {
@@ -219,14 +219,20 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
         flex: 1,
         minWidth: 200,
         renderCell: params => (
-          <Stack direction="row" spacing={1} sx={{
-            alignItems: "center"
-          }}>
-            <TeamLogo
-              teamName={params.row.name}
-              logoUrl={params.row.photoUrl}
-              size={28}
-            />
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ alignItems: 'center', height: '100%' }}
+          >
+            {/* A venue is a court, not a team — only show an avatar when it has
+                a real photo; no initials/icon placeholder otherwise. */}
+            {params.row.photoUrl && (
+              <Avatar
+                src={params.row.photoUrl}
+                variant="rounded"
+                sx={{ width: 28, height: 28 }}
+              />
+            )}
             <Typography variant="body2">{params.row.name}</Typography>
           </Stack>
         ),

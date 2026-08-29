@@ -13,6 +13,7 @@ const routes = {
   matchSeries: 'match-series',
   medicalRecords: 'medical-records',
   players: 'players',
+  seasons: 'seasons',
   scorer: 'scorer',
   playerSanctions: 'player-sanctions',
   playerStatistics: 'player-statistics',

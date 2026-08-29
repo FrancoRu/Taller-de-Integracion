@@ -150,6 +150,11 @@ export interface TournamentStepState {
    * category-match rule.
    */
   category: TournamentCategory;
+  /**
+   * Optional season ("Temporada") the tournament is grouped under. Empty string
+   * means "no season". Threaded onto the addTournament payload as `seasonId`.
+   */
+  seasonId?: string;
 }
 
 export interface WizardState {
@@ -192,6 +197,7 @@ export const createInitialWizardState = (): WizardState => ({
     startDate: '',
     teamRegistrationDeadline: '',
     category: TournamentCategory.Masculine,
+    seasonId: '',
   },
   zones: [],
   crossCup: {

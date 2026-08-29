@@ -13,6 +13,7 @@ import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
 import ManageAccountsSharpIcon from '@mui/icons-material/ManageAccountsSharp';
 import SportsIcon from '@mui/icons-material/Sports';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import GroupsIcon from '@mui/icons-material/Groups';
 import PersonIcon from '@mui/icons-material/Person';
 import PeopleIcon from '@mui/icons-material/People';
@@ -65,6 +66,7 @@ export {
   ManageAccountsSharpIcon,
   SportsIcon,
   EmojiEventsIcon,
+  CalendarMonthIcon,
   GroupsIcon,
   PersonIcon,
   PeopleIcon,

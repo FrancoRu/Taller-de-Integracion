@@ -211,6 +211,13 @@ export interface IAddTournamentRequest {
    * @type {TournamentCategory}
    */
   category?: TournamentCategory;
+
+  /**
+   * Optional season ("Temporada") the tournament is grouped under. Omit to
+   * leave the tournament without a season.
+   * @type {GUID}
+   */
+  seasonId?: GUID | null;
 }
 
 /**
@@ -273,6 +280,20 @@ export interface ITournamentResponse {
    * @type {TournamentCategory}
    */
   category: TournamentCategory;
+
+  /**
+   * The season ("Temporada") the tournament is grouped under, or `null` when
+   * it belongs to no season.
+   * @type {GUID}
+   */
+  seasonId: GUID | null;
+
+  /**
+   * The name of the season the tournament belongs to, or `null` when it
+   * belongs to no season.
+   * @type {string}
+   */
+  seasonName: string | null;
 }
 
 /**
@@ -334,6 +355,13 @@ export interface IPutTournamentRequest {
    * @type {TournamentStatus}
    */
   status?: TournamentStatus;
+
+  /**
+   * Optional season ("Temporada") the tournament is grouped under. Send `null`
+   * to detach the tournament from its season.
+   * @type {GUID}
+   */
+  seasonId?: GUID | null;
 }
 
 export type StatisticsPositions = {

@@ -16,5 +16,6 @@ export enum RoutesNavigationViews {
   Sanctions = 'sanciones',
   Matches = 'partidos',
   Tournaments = 'torneos',
+  Seasons = 'temporadas',
   Blog = 'blog',
 }

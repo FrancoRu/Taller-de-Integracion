@@ -11,6 +11,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { ErrorProvider } from './modules/error/context/error.context';
 import { TournamentProvider } from './modules/tournament/context/tournament.context';
 import { VenueProvider } from './modules/venue/context/venue.context';
+import { SeasonProvider } from './modules/season/context/season.context';
 import { TeamProvider } from './modules/team/context/team.context';
 import { ClubProvider } from './modules/club/context/club.context';
 import { UserProvider } from './modules/user/context/user.context';
@@ -37,6 +38,7 @@ const providers: ComponentType<{ children: ReactNode }>[] = [
   ErrorProvider,
   AuthProvider,
   VenueProvider,
+  SeasonProvider,
   TeamProvider,
   ClubProvider,
   PlayerProvider,

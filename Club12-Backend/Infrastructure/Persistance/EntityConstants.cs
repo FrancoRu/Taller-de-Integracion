@@ -44,6 +44,7 @@ public static class EntityConstants
         public const string PlayerTeamRegistration = "PlayerTeamRegistrations";
         public const string Position = "Positions";
         public const string Scorer = "Scorers";
+        public const string Season = "Seasons";
         public const string Stage = "Stages";
         public const string StageTeamMatch = "StageTeamMatches";
         public const string Staff = "Staffs";

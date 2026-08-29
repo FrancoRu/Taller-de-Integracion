@@ -25,6 +25,11 @@ export const APP_ROUTES = {
     pattern: '/partidos/:matchId',
     build: (matchId: string) => `/partidos/${matchId}`,
   },
+  publicSeasons: '/temporadas',
+  publicSeason: {
+    pattern: '/temporadas/:seasonId',
+    build: (seasonId: string) => `/temporadas/${seasonId}`,
+  },
   publicTournaments: '/torneos',
   publicTournament: {
     pattern: '/torneos/:tournamentId',
@@ -78,6 +83,7 @@ export const APP_ROUTES = {
     pattern: '/panel/canchas/:venueId',
     build: (venueId: string) => `/panel/canchas/${venueId}`,
   },
+  panelSeasons: '/panel/temporadas',
   panelTournaments: '/panel/torneos',
   panelTournamentWizard: '/panel/torneos/asistente',
   panelDivisions: '/panel/divisiones',
