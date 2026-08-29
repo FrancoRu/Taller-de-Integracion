@@ -131,10 +131,13 @@ public static class SampleTournamentBuilder
     {
         private readonly HashSet<string> _divisionSlugs = [];
         private readonly HashSet<string> _stageSlugs = [];
+        private readonly HashSet<string> _playerSlugs = [];
 
         public string ForDivision(string source) => Register(source, _divisionSlugs);
 
         public string ForStage(string source) => Register(source, _stageSlugs);
+
+        public string ForPlayer(string source) => Register(source, _playerSlugs);
 
         private static string Register(string source, HashSet<string> used)
         {
@@ -324,7 +327,7 @@ public static class SampleTournamentBuilder
                     CreatedBy = CreatedBy,
                     FirstName = firstName,
                     LastName = lastName,
-                    Slug = SlugGenerator.GenerateSlug($"{lastName} {firstName} {documentNumber}"),
+                    Slug = slugRegistry.ForPlayer(Player.BuildSlugSource(lastName, firstName, secondName: null)),
                     DocumentNumber = documentNumber,
                     IsSanctioned = false,
                     BirthDate = new DateTime(2026, 8, 18, 0, 0, 0, DateTimeKind.Utc)

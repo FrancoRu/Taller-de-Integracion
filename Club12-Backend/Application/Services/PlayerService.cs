@@ -35,7 +35,7 @@ public class PlayerService(
     public async Task<Player> CreatePlayerAsync(Player playerEntity, Guid tournamentId)
     {
         playerEntity.Slug = await SlugGenerator.GenerateUniqueSlugAsync(
-            playerEntity.FullName,
+            playerEntity.SlugSource,
             candidate => _playerRepository.ExistsAsync(player => player.Slug == candidate));
 
         await _playerRepository.AddAsync(playerEntity);
