@@ -78,7 +78,10 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const putTeamById = useCallback(
-    async (id: GUID, data: IPutTeamRequest): Promise<ITeamResponse | void> => {
+    // Returns whether the update succeeded. A successful PUT answers 204 (no
+    // body), so the caller can't rely on a returned entity — it must key off
+    // this boolean to decide whether to close the dialog and refresh.
+    async (id: GUID, data: IPutTeamRequest): Promise<boolean> => {
       try {
         const res: AxiosResponse<ITeamResponse> =
           await putTeamMutation.mutateAsync({
@@ -97,9 +100,10 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
           }
           await queryClient.invalidateQueries({ queryKey: teamKeys.list() });
         }
-        return res?.data;
+        return true;
       } catch (error: unknown) {
         handleUnknownError(error);
+        return false;
       }
     },
     [putTeamMutation, queryClient, handleUnknownError]

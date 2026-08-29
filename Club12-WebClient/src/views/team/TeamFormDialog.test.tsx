@@ -11,6 +11,7 @@ const emptyForm: TeamFormState = {
   shirtSecondaryColor: '',
   jerseyStyle: 'solid',
   logo: null,
+  logoUrl: '',
 };
 
 describe('TeamFormDialog', () => {
@@ -35,7 +36,7 @@ describe('TeamFormDialog', () => {
 
     const dialog = screen.getByRole('dialog');
     expect(
-      within(dialog).getByRole('button', { name: /seleccionar logo/i })
+      within(dialog).getByRole('button', { name: /seleccionar escudo/i })
     ).toBeInTheDocument();
 
     const file = new File(['logo'], 'logo.png', { type: 'image/png' });
@@ -65,7 +66,7 @@ describe('TeamFormDialog', () => {
 
     const dialog = screen.getByRole('dialog');
     expect(
-      within(dialog).queryByRole('button', { name: /seleccionar logo/i })
+      within(dialog).queryByRole('button', { name: /seleccionar escudo/i })
     ).not.toBeInTheDocument();
   });
 

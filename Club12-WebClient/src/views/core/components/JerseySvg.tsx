@@ -186,6 +186,13 @@ export default function JerseySvg({
           fontWeight="700"
           fontSize="96"
           fill={primary.ink}
+          // A contrasting halo (the opposite of the ink) drawn behind the
+          // glyphs keeps the dorsal legible even where it crosses a pattern
+          // in the secondary color (stripes, sash, halves, ...).
+          stroke={primary.isLight ? '#f5f5f5' : '#0b0f17'}
+          strokeWidth="6"
+          strokeLinejoin="round"
+          paintOrder="stroke"
         >
           {number}
         </text>

@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import FormButtons from '@/views/core/components/FormButtons';
 import JerseySvg from '@/views/core/components/JerseySvg';
+import TeamLogo from '@/views/core/components/TeamLogo';
 import { isHexColor } from '@/design/colorName';
 import { JERSEY_STYLES, toJerseyStyle } from '@/design/jerseyStyles';
 import type { TeamFormField, TeamFormState } from '@/views/team/teams.types';
@@ -214,10 +215,15 @@ const TeamFormDialog: React.FC<TeamFormDialogProps> = ({
                       p: 1,
                       cursor: 'pointer',
                       background: 'none',
+                      // A native <button> defaults to the browser's black text
+                      // color, which is invisible on the dark dialog — force the
+                      // theme ink so the model labels stay legible.
+                      color: 'text.primary',
                       borderRadius: 1,
                       border: '2px solid',
                       borderColor: selected ? 'primary.main' : 'divider',
                       boxShadow: selected ? 2 : 0,
+                      '&:hover': { borderColor: 'primary.main' },
                     }}
                   >
                     <JerseySvg
@@ -227,7 +233,9 @@ const TeamFormDialog: React.FC<TeamFormDialogProps> = ({
                       size={44}
                       title={option.label}
                     />
-                    <Typography variant="caption">{option.label}</Typography>
+                    <Typography variant="caption" sx={{ color: 'text.primary' }}>
+                      {option.label}
+                    </Typography>
                   </Box>
                 );
               })}
@@ -235,18 +243,36 @@ const TeamFormDialog: React.FC<TeamFormDialogProps> = ({
           </Box>
 
           {withLogo && (
-            <Button variant="outlined" component="label">
-              {form.logo ? `Logo: ${form.logo.name}` : 'Seleccionar logo'}
-              <input
-                hidden
-                type="file"
-                accept="image/*"
-                onChange={event => {
-                  const selectedFile = event.target.files?.[0] ?? null;
-                  onLogoChange(selectedFile);
-                }}
-              />
-            </Button>
+            <Box>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                Escudo
+              </Typography>
+              <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+                <TeamLogo teamName={form.name || '—'} logoUrl={form.logoUrl} size={56} />
+                <Box>
+                  <Button variant="outlined" component="label" size="small">
+                    {form.logoUrl || form.logo ? 'Cambiar escudo' : 'Seleccionar escudo'}
+                    <input
+                      hidden
+                      type="file"
+                      accept="image/*"
+                      onChange={event => {
+                        const selectedFile = event.target.files?.[0] ?? null;
+                        onLogoChange(selectedFile);
+                      }}
+                    />
+                  </Button>
+                  {form.logo && (
+                    <Typography
+                      variant="caption"
+                      sx={{ display: 'block', mt: 0.5, color: 'text.secondary' }}
+                    >
+                      {form.logo.name}
+                    </Typography>
+                  )}
+                </Box>
+              </Stack>
+            </Box>
           )}
         </Stack>
       </DialogContent>
