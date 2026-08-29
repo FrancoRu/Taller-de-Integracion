@@ -3,6 +3,7 @@ import {
   DEFAULT_PAGE_METADATA,
   resetPageMetadata,
   setPageMetadata,
+  toAbsoluteUrl,
 } from '@/modules/core/utils/pageMetadata';
 
 const metaContent = (attribute: 'property' | 'name', key: string) =>
@@ -10,9 +11,49 @@ const metaContent = (attribute: 'property' | 'name', key: string) =>
     .querySelector<HTMLMetaElement>(`meta[${attribute}="${key}"]`)
     ?.getAttribute('content');
 
+const canonicalHref = () =>
+  document.head
+    .querySelector<HTMLLinkElement>('link[rel="canonical"]')
+    ?.getAttribute('href');
+
+describe('toAbsoluteUrl', () => {
+  it('returns undefined for an empty path', () => {
+    expect(toAbsoluteUrl(undefined, 'https://club12.com')).toBeUndefined();
+    expect(toAbsoluteUrl('', 'https://club12.com')).toBeUndefined();
+  });
+
+  it('leaves an already-absolute URL untouched', () => {
+    expect(toAbsoluteUrl('https://cdn/x.png', 'https://club12.com')).toBe(
+      'https://cdn/x.png'
+    );
+    expect(toAbsoluteUrl('http://cdn/x.png', 'https://club12.com')).toBe(
+      'http://cdn/x.png'
+    );
+  });
+
+  it('joins a root-relative path onto the origin', () => {
+    expect(toAbsoluteUrl('/assets/logo.png', 'https://club12.com')).toBe(
+      'https://club12.com/assets/logo.png'
+    );
+  });
+
+  it('joins a bare path onto the origin with a separator', () => {
+    expect(toAbsoluteUrl('assets/logo.png', 'https://club12.com')).toBe(
+      'https://club12.com/assets/logo.png'
+    );
+  });
+
+  it('returns the relative path unchanged when there is no origin', () => {
+    expect(toAbsoluteUrl('/assets/logo.png', '')).toBe('/assets/logo.png');
+  });
+});
+
 describe('pageMetadata', () => {
   afterEach(() => {
     document.head.querySelectorAll('meta').forEach(meta => meta.remove());
+    document.head
+      .querySelectorAll('link[rel="canonical"]')
+      .forEach(link => link.remove());
     document.title = '';
   });
 
@@ -63,5 +104,21 @@ describe('pageMetadata', () => {
     expect(metaContent('property', 'og:description')).toBe(
       DEFAULT_PAGE_METADATA.description
     );
+  });
+
+  it('writes a canonical link defaulting to the current origin + path', () => {
+    setPageMetadata({ title: 'Campeones' });
+
+    const canonical = canonicalHref();
+    expect(canonical).toBeDefined();
+    expect(canonical).toBe(
+      `${window.location.origin}${window.location.pathname}`
+    );
+  });
+
+  it('honours an explicit canonical url', () => {
+    setPageMetadata({ title: 'Post', url: 'https://club12.com/blog/x' });
+
+    expect(canonicalHref()).toBe('https://club12.com/blog/x');
   });
 });

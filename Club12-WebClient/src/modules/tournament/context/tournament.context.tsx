@@ -7,6 +7,7 @@ import {
   useMemo,
 } from 'react';
 import {
+  FetchOptions,
   GenericResponsePagination,
   GUID,
   ProviderProps,
@@ -110,7 +111,10 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
   );
 
   const getTournamentById = useCallback(
-    async (id: string): Promise<ITournamentResponse | void> => {
+    async (
+      id: string,
+      options?: FetchOptions
+    ): Promise<ITournamentResponse | void> => {
       try {
         const existTournament = tournaments?.find(
           e => e.id === id || e.slug === id
@@ -129,6 +133,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
           return res.data;
         }
       } catch (error: unknown) {
+        if (options?.silent) return;
         if (error instanceof AxiosError) {
           setError(error);
         } else {
@@ -141,7 +146,8 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
 
   const getAllTournamentsByFilter = useCallback(
     async (
-      filter: ITournamentFiltered
+      filter: ITournamentFiltered,
+      options?: FetchOptions
     ): Promise<GenericResponsePagination<ITournamentResponse> | void> => {
       try {
         return await fetchAndSetList<ITournamentResponse, ITournamentFiltered>({
@@ -151,6 +157,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
           filter: filter,
         });
       } catch (error: unknown) {
+        if (options?.silent) return;
         if (error instanceof AxiosError) {
           setError(error);
         } else {

@@ -1,5 +1,6 @@
 using Application.DTOs.Divisions.Request;
 using Application.DTOs.Divisions.Response;
+using Application.Utils.Helper.Playoff;
 
 using AutoMapper;
 
@@ -18,6 +19,13 @@ public class DivisionProfile : Profile
     public DivisionProfile()
     {
         _ = CreateMap<Division, DivisionResponse>()
+            // QualificationRanges is derived from PlayoffMappings (HU-45): the
+            // same ranges re-shaped and ordered top-down for the public
+            // standings highlight. It has no Division counterpart, so it is
+            // computed here and ignored on the reverse map.
+            .ForMember(
+                dest => dest.QualificationRanges,
+                opt => opt.MapFrom(src => QualificationRangeBuilder.Build(src.PlayoffMappings)))
             .ReverseMap();
 
         _ = CreateMap<Division, MinimalDivisionResponse>()

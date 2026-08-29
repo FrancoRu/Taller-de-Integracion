@@ -11,9 +11,19 @@ import { TournamentStepState } from '../types';
 interface TorneoStepProps {
   value: TournamentStepState;
   onChange: (value: TournamentStepState) => void;
+  /**
+   * True when the wizard was launched pre-scoped to a season (from the admin
+   * season hub). The season is preselected and its helper text explains where
+   * it came from, but it stays editable so the admin can still change it.
+   */
+  seasonPreset?: boolean;
 }
 
-export default function TorneoStep({ value, onChange }: TorneoStepProps) {
+export default function TorneoStep({
+  value,
+  onChange,
+  seasonPreset = false,
+}: TorneoStepProps) {
   const { seasons, getSeasonsByFiltered } = useSeason();
   const getSeasonsRef = useRef(getSeasonsByFiltered);
 
@@ -81,7 +91,11 @@ export default function TorneoStep({ value, onChange }: TorneoStepProps) {
           value={value.seasonId ?? ''}
           onChange={e => onChange({ ...value, seasonId: e.target.value })}
           fullWidth
-          helperText="Agrupá el torneo dentro de una temporada. Podés dejarlo vacío."
+          helperText={
+            seasonPreset
+              ? 'Temporada tomada de donde creaste el torneo. Podés cambiarla si querés.'
+              : 'Agrupá el torneo dentro de una temporada. Podés dejarlo vacío.'
+          }
         >
           <MenuItem value="">
             <em>Sin temporada</em>

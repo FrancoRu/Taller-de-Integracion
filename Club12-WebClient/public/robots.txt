@@ -1,0 +1,12 @@
+# Club 12 — robots policy
+# Public site: allow all crawlers.
+User-agent: *
+Allow: /
+
+# The admin panel and auth flows are behind login and hold no public value.
+Disallow: /panel
+Disallow: /login
+Disallow: /auth
+
+# Update the host below to the production origin when known.
+Sitemap: https://club12.com/sitemap.xml

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -10,6 +10,7 @@ import {
   Typography,
 } from '@mui/material';
 import PageShell from '@/views/core/components/PageShell';
+import LoadErrorState from '@/views/core/components/LoadErrorState';
 import { DetailSkeleton, TableSkeleton } from '@/views/core/components/skeletons';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useTeam } from '@/modules/team/hook/team.hook';
@@ -26,6 +27,10 @@ import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { TAB_CONTENT_MIN_HEIGHT } from '@/modules/core/constants/constants';
 import { TOURNAMENT_STATUS_LABEL } from '@/modules/tournament/utils/tournamentDisplay';
 import { formatDateAr } from '@/modules/core/utils/formatDate';
+import {
+  DEFAULT_PAGE_METADATA,
+  usePageMetadata,
+} from '@/modules/core/utils/pageMetadata';
 
 const formatDate = (value: Date | string) => formatDateAr(value);
 
@@ -62,6 +67,7 @@ export default function PublicTournamentPage() {
   const { teams, getTeamsByFiltered } = useTeam();
   const { getDivisionsByFilters } = useDivision();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const [divisions, setDivisions] = useState<IDivisionResponse[]>([]);
   const [divisionsLoading, setDivisionsLoading] = useState(false);
   const [podiumsByDivision, setPodiumsByDivision] = useState<Map<GUID, IPodium>>(
@@ -104,15 +110,22 @@ export default function PublicTournamentPage() {
   useEffect(() => { getTeamsRef.current = getTeamsByFiltered; }, [getTeamsByFiltered]);
   useEffect(() => { getDivisionsRef.current = getDivisionsByFilters; }, [getDivisionsByFilters]);
 
-  useEffect(() => {
+  const loadTournament = useCallback(async () => {
     if (!tournamentId) return;
-    const fetch = async () => {
-      setLoading(true);
-      await getTournamentRef.current(tournamentId);
-      setLoading(false);
-    };
-    void fetch();
+    setLoading(true);
+    setError(false);
+    // Suppress the global blocking alert on the initial GET; a failed load
+    // returns void, which we surface as a quiet inline retry state instead.
+    const response = await getTournamentRef.current(tournamentId, {
+      silent: true,
+    });
+    setError(response === undefined);
+    setLoading(false);
   }, [tournamentId]);
+
+  useEffect(() => {
+    void loadTournament();
+  }, [loadTournament]);
 
   useEffect(() => {
     if (!tournamentGuid) return;
@@ -121,11 +134,14 @@ export default function PublicTournamentPage() {
     const fetchDivisions = async () => {
       setDivisionsLoading(true);
       try {
-        const response = await getDivisionsRef.current({
-          tournamentId: tournamentGuid,
-          pageSize: PUBLIC_LISTING_PAGE_SIZE,
-          pageNumber: 1,
-        });
+        const response = await getDivisionsRef.current(
+          {
+            tournamentId: tournamentGuid,
+            pageSize: PUBLIC_LISTING_PAGE_SIZE,
+            pageNumber: 1,
+          },
+          { silent: true }
+        );
         const divisionsList = response?.items ?? [];
         const detailed = await Promise.all(
           divisionsList.map(async division => {
@@ -149,7 +165,10 @@ export default function PublicTournamentPage() {
   // the tournament resolves rather than only when a teams tab is opened.
   useEffect(() => {
     if (!tournamentGuid) return;
-    void getTeamsRef.current({ tournamentId: tournamentGuid, pageSize: PUBLIC_LISTING_PAGE_SIZE, pageNumber: 1 });
+    void getTeamsRef.current(
+      { tournamentId: tournamentGuid, pageSize: PUBLIC_LISTING_PAGE_SIZE, pageNumber: 1 },
+      { silent: true }
+    );
   }, [tournamentGuid]);
 
   // The podium (top three per division) is surfaced at the top of each
@@ -201,10 +220,39 @@ export default function PublicTournamentPage() {
     return teamRows.filter(team => teamIds.has(team.id));
   }, [activeDivision, teamRows]);
 
+  // Set the social/SEO title from the tournament name once it resolves; the
+  // hook keeps the site defaults while it is still undefined.
+  usePageMetadata({
+    ...DEFAULT_PAGE_METADATA,
+    title: tournament?.name,
+    description: tournament?.description
+      ? tournament.description
+      : tournament?.name
+        ? `Fixture, posiciones y resultados de ${tournament.name} en la liga Club 12.`
+        : undefined,
+  });
+
   if (loading || (divisionsLoading && divisions.length === 0)) {
     return (
       <PageShell>
         <DetailSkeleton />
+      </PageShell>
+    );
+  }
+
+  if (error && !tournament) {
+    return (
+      <PageShell
+        maxWidth="md"
+        back={{
+          label: 'Volver a torneos',
+          onClick: () => navigate(APP_ROUTES.publicTournaments),
+        }}
+      >
+        <LoadErrorState
+          message="No pudimos cargar el torneo."
+          onRetry={() => void loadTournament()}
+        />
       </PageShell>
     );
   }
@@ -254,7 +302,16 @@ export default function PublicTournamentPage() {
       <Divider sx={{ mb: 3 }} />
 
       <Tabs
-        value={tab}
+        // A deep link can request a division tab (`?tab=primera-division`) before
+        // the divisions have loaded, when only the "info" tab exists — passing an
+        // unmatched value makes MUI warn. Fall back to "info" until the requested
+        // division tab actually exists; the content below still keys off `tab`.
+        value={
+          tab === INFO_TAB ||
+          divisions.some(division => (division.slug ?? division.id) === tab)
+            ? tab
+            : INFO_TAB
+        }
         onChange={(_, value: Tab) => setTab(value)}
         variant="scrollable"
         scrollButtons="auto"

@@ -120,7 +120,11 @@ public class DivisionService(
     /// <returns>The Division entity if found; otherwise, null.</returns>
     public async Task<Division?> GetSimpleDivisionByIdAsync(Guid divisionId)
     {
-        return await divisionRepository.GetByIdAsync(divisionId);
+        // Eager-load the playoff mappings so the public division detail can
+        // expose its qualification ranges (HU-45) without a second round-trip.
+        return await divisionRepository.GetByIdAsync(
+            divisionId,
+            includes: [division => division.PlayoffMappings]);
     }
 
     /// <summary>
@@ -138,7 +142,8 @@ public class DivisionService(
         }
 
         IEnumerable<Division> matches = await divisionRepository.FindAsync(
-            division => division.Slug == idOrSlug);
+            division => division.Slug == idOrSlug,
+            includes: [division => division.PlayoffMappings]);
 
         return matches.FirstOrDefault();
     }

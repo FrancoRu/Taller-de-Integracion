@@ -8,7 +8,11 @@ import React, {
   useState,
 } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { GenericResponsePagination, GUID } from '@/modules/core/types/types';
+import {
+  FetchOptions,
+  GenericResponsePagination,
+  GUID,
+} from '@/modules/core/types/types';
 import { useUnknownErrorHandler } from '@/modules/error/hooks/useUnknownErrorHandler';
 import { playerSanctionService } from '@/modules/playerSanction/service/playerSanction.service';
 import {
@@ -112,7 +116,8 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
 
   const getPlayerSanctionByFilter = useCallback(
     async (
-      filter: IPlayerSanctionFiltered
+      filter: IPlayerSanctionFiltered,
+      options?: FetchOptions
     ): Promise<GenericResponsePagination<IPlayerSanctionResponse> | void> => {
       try {
         const res = await queryClient.fetchQuery({
@@ -126,7 +131,7 @@ export const PlayerSanctionProvider: React.FC<{ children: ReactNode }> = ({
           return res.data;
         }
       } catch (error: unknown) {
-        handleUnknownError(error);
+        if (!options?.silent) handleUnknownError(error);
       }
     },
     [queryClient, handleUnknownError]

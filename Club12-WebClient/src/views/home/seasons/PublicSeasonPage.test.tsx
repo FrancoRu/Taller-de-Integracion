@@ -54,6 +54,8 @@ describe('PublicSeasonPage — groups tournaments by category', () => {
     expect(screen.getByText('Femenino')).toBeInTheDocument();
     expect(screen.getByText('Apertura Masculino')).toBeInTheDocument();
     expect(screen.getByText('Apertura Femenino')).toBeInTheDocument();
-    expect(getSeasonById).toHaveBeenCalledWith('temporada-2026');
+    expect(getSeasonById).toHaveBeenCalledWith('temporada-2026', {
+      silent: true,
+    });
   });
 });

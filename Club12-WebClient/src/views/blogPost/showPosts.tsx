@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Grid,
@@ -20,6 +20,7 @@ import { useNavigate } from 'react-router-dom';
 import { TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { BLOG_EXCERPT_LENGTH } from '@/modules/blogPost/constants/blogPost';
+import LoadErrorState from '@/views/core/components/LoadErrorState';
 
 const CARD_IMAGE_HEIGHT = 160;
 
@@ -35,6 +36,7 @@ const ShowPosts: React.FC = () => {
   const { getBlogPostsByFilters } = useBlogPost();
   const [posts, setPosts] = useState<BlogPostResponse[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const [pagination, setPagination] = useState({
     page: 1,
     pageSize: TABLE_ROWS_PER_PAGE,
@@ -52,22 +54,25 @@ const ShowPosts: React.FC = () => {
     [pagination.page, pagination.pageSize]
   );
 
-  useEffect(() => {
-    const loadPosts = async () => {
-      setLoading(true);
-      try {
-        const response = await getBlogPostsByFilters(filterParams);
-        if (response) {
-          const { items, page, pageSize, totalCount } = response;
-          setPosts(items);
-          setPagination({ page, pageSize, totalCount });
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-    void loadPosts();
+  const loadPosts = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    // Suppress the global blocking alert on the initial GET; a failed load
+    // returns void, which we surface as a quiet inline retry state instead.
+    const response = await getBlogPostsByFilters(filterParams, { silent: true });
+    if (response) {
+      const { items, page, pageSize, totalCount } = response;
+      setPosts(items);
+      setPagination({ page, pageSize, totalCount });
+    } else {
+      setError(true);
+    }
+    setLoading(false);
   }, [filterParams, getBlogPostsByFilters]);
+
+  useEffect(() => {
+    void loadPosts();
+  }, [loadPosts]);
 
   const handlePageChange = (direction: 'next' | 'previous') => {
     if (loading) return;
@@ -88,6 +93,15 @@ const ShowPosts: React.FC = () => {
   const handleReadMore = (post: BlogPostResponse) => {
     navigate(APP_ROUTES.blogPost.build(post.slug), { state: { post } });
   };
+
+  if (error) {
+    return (
+      <LoadErrorState
+        message="No pudimos cargar las novedades."
+        onRetry={() => void loadPosts()}
+      />
+    );
+  }
 
   return (
     <div>

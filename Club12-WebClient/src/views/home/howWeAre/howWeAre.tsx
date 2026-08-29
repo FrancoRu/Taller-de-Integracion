@@ -1,4 +1,8 @@
 import { Container, Typography, Box } from '@mui/material';
+import {
+  DEFAULT_PAGE_METADATA,
+  usePageMetadata,
+} from '@/modules/core/utils/pageMetadata';
 
 const paragraphs = [
   'La Liga de Básquet Club 12 "La Vuelta" está pensada para todos aquellos jugadores, ex jugadores y aficionados al básquet que quieran compartir un momento de ocio y volver a disfrutar de un partido completo, con todas las características y exigencias que presenta cada partido.',
@@ -7,6 +11,14 @@ const paragraphs = [
 ];
 
 export default function HowWeAre() {
+  usePageMetadata({
+    ...DEFAULT_PAGE_METADATA,
+    title: 'Quiénes somos',
+    description:
+      'Conocé la Liga de Básquet Club 12 "La Vuelta": una liga amateur ' +
+      'hecha por y para quienes aman este deporte.',
+  });
+
   return (
     <Box>
       <Box component="header" sx={{ bgcolor: 'secondary.main', color: '#fff', py: { xs: 6, md: 8 } }}>

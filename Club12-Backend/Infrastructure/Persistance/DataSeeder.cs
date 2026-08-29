@@ -132,6 +132,18 @@ public sealed class DataSeeder(
     private static readonly string[] ClausuraDamasSecondaryColors =
         ["#FFFFFF", "#FDE047", "#FFFFFF", "#1E293B", "#FFFFFF", "#1E293B", "#FFFFFF", "#FDE047"];
 
+    // Position-range playoff cups every FINISHED regular division earns from its
+    // final group standings (HU-45): 1-4 -> Copa Oro, 5-8 -> Copa Plata. Seeded
+    // via SeedCupPlayoffs, so each registers a DivisionPlayoffMapping the
+    // standings colouring reads to tint the qualifying positions. Single-game
+    // brackets (BestOf = 1) keep the seed simple; the division champion is the
+    // top cup's (Copa Oro) Final winner.
+    private static readonly SampleTournamentBuilder.PlayoffCupDefinition[] MainCups =
+    [
+        new("Copa Oro", FromPosition: 1, ToPosition: 4, BestOf: 1),
+        new("Copa Plata", FromPosition: 5, ToPosition: 8, BestOf: 1),
+    ];
+
     // Cross-division cup shared shape: 4 internal groups, top 1 per group pooled
     // into the bracket. With 16 masculine teams that is 4 per group; with 8
     // feminine teams, 2 per group — both yield a full 4-seed bracket.
@@ -181,9 +193,9 @@ public sealed class DataSeeder(
             UpcomingMatchesStart: new DateTime(2026, 6, 30, 0, 0, 0, DateTimeKind.Utc),
             Divisions:
             [
-                new("Primera División", PrimeraNames, PrimeraCodes, PrimeraColors,
+                new("Primera División", PrimeraNames, PrimeraCodes, PrimeraColors, MainCups,
                     TeamStyles: PrimeraStyles, TeamSecondaryColors: PrimeraSecondaryColors),
-                new("Reserva", ReservaNames, ReservaCodes, ReservaColors,
+                new("Reserva", ReservaNames, ReservaCodes, ReservaColors, MainCups,
                     TeamStyles: ReservaStyles, TeamSecondaryColors: ReservaSecondaryColors),
             ],
             CrossCup: CopaClub12,
@@ -201,7 +213,7 @@ public sealed class DataSeeder(
             UpcomingMatchesStart: new DateTime(2026, 6, 30, 0, 0, 0, DateTimeKind.Utc),
             Divisions:
             [
-                new("Damas A", DamasNames, DamasCodes, DamasColors,
+                new("Damas A", DamasNames, DamasCodes, DamasColors, MainCups,
                     TeamStyles: DamasStyles, TeamSecondaryColors: DamasSecondaryColors),
             ],
             CrossCup: CopaClub12,

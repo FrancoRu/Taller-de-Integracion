@@ -71,7 +71,8 @@ describe('ShowPosts — bounded fetch on pagination changes', () => {
     );
     expect(getBlogPostsByFilters).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining({ pageNumber: 1, pageSize: 10 })
+      expect.objectContaining({ pageNumber: 1, pageSize: 10 }),
+      { silent: true }
     );
 
     for (let i = 0; i < 3; i += 1) {
@@ -87,7 +88,8 @@ describe('ShowPosts — bounded fetch on pagination changes', () => {
     );
     expect(getBlogPostsByFilters).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining({ pageNumber: 1, pageSize: 25 })
+      expect.objectContaining({ pageNumber: 1, pageSize: 25 }),
+      { silent: true }
     );
   });
 });

@@ -1,4 +1,5 @@
 import {
+  FetchOptions,
   Filtered,
   GenericResponsePagination,
   GUID,
@@ -44,15 +45,20 @@ export interface ITeamContextProps {
    * @returns A promise that resolves with the paginated response containing teams that match the filters.
    */
   getTeamsByFiltered(
-    filters: TeamFiltered
+    filters: TeamFiltered,
+    options?: FetchOptions
   ): Promise<GenericResponsePagination<ITeamResponse> | void>;
 
   /**
    * Fetches a team by its ID or its public slug.
    * @param idOrSlug The ID or slug of the team to fetch.
+   * @param options Per-call options; `silent` suppresses the global alert on failure.
    * @returns A promise that resolves with the team details.
    */
-  getTeamById(idOrSlug: string): Promise<ITeamResponse | void>;
+  getTeamById(
+    idOrSlug: string,
+    options?: FetchOptions
+  ): Promise<ITeamResponse | void>;
 
   /**
    * Deletes a team by its ID.

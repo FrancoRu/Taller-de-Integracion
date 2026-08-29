@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import PageShell from '@/views/core/components/PageShell';
 import FilterBar from '@/views/core/components/FilterBar';
+import LoadErrorState from '@/views/core/components/LoadErrorState';
 import { GUID } from '@/modules/core/types/types';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import { IPlayerSanctionResponse } from '@/modules/playerSanction/type/playerSanction.d';
@@ -30,6 +31,10 @@ import {
 } from '@/modules/core/constants/pagination';
 import { FILTERS_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/constants';
 import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
+import {
+  DEFAULT_PAGE_METADATA,
+  usePageMetadata,
+} from '@/modules/core/utils/pageMetadata';
 
 const formatDate = (value?: string | Date | null) => formatDateAr(value);
 
@@ -102,12 +107,21 @@ const columns: GridColDef<IPlayerSanctionResponse>[] = [
 ];
 
 export default function PublicSanctionsPage() {
+  usePageMetadata({
+    ...DEFAULT_PAGE_METADATA,
+    title: 'Sanciones',
+    description:
+      'Listado de sanciones aplicadas a jugadores, equipos y staff de la ' +
+      'liga Club 12.',
+  });
+
   const { playerSanctions, getPlayerSanctionByFilter } = usePlayerSanction();
   const { tournaments, getAllTournamentsByFilter } = useTournament();
   const [selectedTournamentId, setSelectedTournamentId] = useState<GUID | ''>('');
   const [description, setDescription] = useState('');
   const [debouncedDescription, setDebouncedDescription] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const [rowCount, setRowCount] = useState(0);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
     page: 0,
@@ -126,7 +140,12 @@ export default function PublicSanctionsPage() {
   }, [getPlayerSanctionByFilter]);
 
   useEffect(() => {
-    void getAllTournamentsRef.current({ pageSize: FILTER_OPTIONS_PAGE_SIZE });
+    // Filter options are non-critical; failure stays silent (no alert, no
+    // inline error) and simply leaves the tournament filter empty.
+    void getAllTournamentsRef.current(
+      { pageSize: FILTER_OPTIONS_PAGE_SIZE },
+      { silent: true }
+    );
   }, []);
 
   useEffect(() => {
@@ -144,13 +163,20 @@ export default function PublicSanctionsPage() {
       pagination: GridPaginationModel
     ) => {
       setLoading(true);
-      const response = await getPlayerSanctionByFilterRef.current({
-        tournamentId: tournamentId || undefined,
-        description: desc || undefined,
-        pageNumber: pagination.page + 1,
-        pageSize: pagination.pageSize,
-      });
+      setError(false);
+      // Suppress the global blocking alert on the initial GET; a failed load
+      // returns void, which we surface as a quiet inline retry state instead.
+      const response = await getPlayerSanctionByFilterRef.current(
+        {
+          tournamentId: tournamentId || undefined,
+          description: desc || undefined,
+          pageNumber: pagination.page + 1,
+          pageSize: pagination.pageSize,
+        },
+        { silent: true }
+      );
       setRowCount(response?.totalCount ?? 0);
+      setError(response === undefined);
       setLoading(false);
     },
     []
@@ -245,25 +271,38 @@ export default function PublicSanctionsPage() {
       </FilterBar>
 
       <Box sx={{ width: '100%' }}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          loading={loading}
-          getRowId={row => row.id}
-          autoHeight
-          disableRowSelectionOnClick
-          disableColumnMenu
-          paginationMode="server"
-          rowCount={rowCount}
-          pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
-          paginationModel={paginationModel}
-          onPaginationModelChange={handlePaginationModelChange}
-          localeText={dataGridLocaleText(
-            selectedTournamentId || description
-              ? 'No se encontraron sanciones para el filtro aplicado.'
-              : 'No hay sanciones registradas.'
-          )}
-        />
+        {error ? (
+          <LoadErrorState
+            message="No pudimos cargar las sanciones."
+            onRetry={() =>
+              void fetchSanctions(
+                selectedTournamentId,
+                debouncedDescription,
+                paginationModel
+              )
+            }
+          />
+        ) : (
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            loading={loading}
+            getRowId={row => row.id}
+            autoHeight
+            disableRowSelectionOnClick
+            disableColumnMenu
+            paginationMode="server"
+            rowCount={rowCount}
+            pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+            paginationModel={paginationModel}
+            onPaginationModelChange={handlePaginationModelChange}
+            localeText={dataGridLocaleText(
+              selectedTournamentId || description
+                ? 'No se encontraron sanciones para el filtro aplicado.'
+                : 'No hay sanciones registradas.'
+            )}
+          />
+        )}
       </Box>
     </PageShell>
   );

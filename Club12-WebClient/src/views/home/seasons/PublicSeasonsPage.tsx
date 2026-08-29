@@ -14,7 +14,12 @@ import { ISeasonResponse } from '@/modules/season/type/season';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import PageShell from '@/views/core/components/PageShell';
+import LoadErrorState from '@/views/core/components/LoadErrorState';
 import { CardGridSkeleton } from '@/views/core/components/skeletons';
+import {
+  DEFAULT_PAGE_METADATA,
+  usePageMetadata,
+} from '@/modules/core/utils/pageMetadata';
 
 export function SeasonCard({ season }: { season: ISeasonResponse }) {
   const tournamentCount = season.tournaments?.length ?? 0;
@@ -67,8 +72,17 @@ export function SeasonCard({ season }: { season: ISeasonResponse }) {
 }
 
 export default function PublicSeasonsPage() {
+  usePageMetadata({
+    ...DEFAULT_PAGE_METADATA,
+    title: 'Temporadas',
+    description:
+      'Todas las temporadas de la liga Club 12: torneos, divisiones y ' +
+      'resultados de cada edición.',
+  });
+
   const { seasons, getSeasonsByFiltered } = useSeason();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const getSeasonsRef = useRef(getSeasonsByFiltered);
 
   useEffect(() => {
@@ -77,10 +91,17 @@ export default function PublicSeasonsPage() {
 
   const fetchSeasons = useCallback(async () => {
     setLoading(true);
-    await getSeasonsRef.current({
-      pageSize: PUBLIC_LISTING_PAGE_SIZE,
-      pageNumber: 1,
-    });
+    setError(false);
+    // Suppress the global blocking alert on the initial GET; a failed load
+    // returns void, which we surface as a quiet inline retry state instead.
+    const response = await getSeasonsRef.current(
+      {
+        pageSize: PUBLIC_LISTING_PAGE_SIZE,
+        pageNumber: 1,
+      },
+      { silent: true }
+    );
+    setError(response === undefined);
     setLoading(false);
   }, []);
 
@@ -98,6 +119,11 @@ export default function PublicSeasonsPage() {
 
       {loading ? (
         <CardGridSkeleton count={6} />
+      ) : error ? (
+        <LoadErrorState
+          message="No pudimos cargar las temporadas."
+          onRetry={() => void fetchSeasons()}
+        />
       ) : rows.length === 0 ? (
         <Typography sx={{ color: 'text.secondary' }}>
           Todavía no hay temporadas publicadas. Volvé a consultar más adelante.

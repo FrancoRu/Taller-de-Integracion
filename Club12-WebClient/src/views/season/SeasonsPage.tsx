@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import {
   Box,
@@ -21,6 +22,7 @@ import {
   ISeasonResponse,
 } from '@/modules/season/type/season';
 import { useSeason } from '@/modules/season/hook/season.hook';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
 import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
@@ -28,7 +30,12 @@ import NewEntityButton from '@/views/core/components/NewEntityButton';
 import FormButtons from '@/views/core/components/FormButtons';
 import PageShell from '@/views/core/components/PageShell';
 import FilterBar from '@/views/core/components/FilterBar';
-import { DeleteIcon, EditIcon, SearchIcon } from '@/views/core/MUI/icons/icons';
+import {
+  DeleteIcon,
+  EditIcon,
+  SearchIcon,
+  VisibilityIcon,
+} from '@/views/core/MUI/icons/icons';
 import { FILTERS_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/constants';
 import {
   FILTER_OPTIONS_PAGE_SIZE,
@@ -65,6 +72,7 @@ const SeasonsPage: React.FC<SeasonsPageProps> = ({
 }) => {
   const { seasons, addSeason, putSeasonById, deleteSeasonById, getSeasonsByFiltered } =
     useSeason();
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -134,6 +142,13 @@ const SeasonsPage: React.FC<SeasonsPageProps> = ({
     ? 'No se encontraron temporadas para el filtro aplicado.'
     : emptyMessage;
 
+  const handleView = useCallback(
+    (row: ISeasonResponse) => {
+      navigate(APP_ROUTES.panelSeason.build(row.slug ?? row.id));
+    },
+    [navigate]
+  );
+
   const handleEdit = useCallback((row: ISeasonResponse) => {
     setEditingSeason(row);
     setSeasonForm({
@@ -168,6 +183,12 @@ const SeasonsPage: React.FC<SeasonsPageProps> = ({
   const seasonActions = useMemo<TableRowAction<ISeasonResponse>[]>(
     () => [
       {
+        label: 'Ver torneos',
+        color: 'primary',
+        icon: <VisibilityIcon fontSize="small" />,
+        onClick: handleView,
+      },
+      {
         label: 'Editar',
         color: 'primary',
         icon: <EditIcon fontSize="small" />,
@@ -180,7 +201,7 @@ const SeasonsPage: React.FC<SeasonsPageProps> = ({
         onClick: handleDelete,
       },
     ],
-    [handleDelete, handleEdit]
+    [handleDelete, handleEdit, handleView]
   );
 
   const columns: GridColDef<ISeasonResponse>[] = useMemo(() => {

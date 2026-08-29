@@ -2,7 +2,7 @@
 
 > Documento para continuar en un chat nuevo. Rama de integración: **develop** (deploya a staging: club12.argentum-solutions.com.ar). `main` NO se toca. Stack: .NET 8 backend (Clean/Hexagonal, EF Core + Npgsql/Postgres) + React 19/TS/MUI/Vite frontend (vitest, ESLint `--max-warnings 0`). Todo user-facing en **español (voseo)**; código en inglés.
 
-## ✅ MERGEADO a develop / en staging (PRs #53–#62)
+## ✅ MERGEADO a develop / en staging (PRs #53–#64)
 
 **Design system (base)**
 - `src/design/tokens.ts` (brand/surface/ink/semantic/radius/font/pageMinHeight/**gold**/**category**), `colorName.ts` (hex→fill+ink), `jerseyStyles.ts` (11 estilos).
@@ -35,9 +35,9 @@
 **Bugs/UX sueltos arreglados**
 - Slug: navegaciones admin por slug (torneo/división/sanción/blog); el SEED pegaba `Guid.NewGuid()` al slug de división/fase → SlugRegistry + migración re-backfill. Contraste: labels de modelo de camiseta, dorsal (halo), ícono ficha médica (era `secondary` navy). Canchas: centrado + ícono estadio→avatar-solo-con-foto. "Group"→"Fase de grupos" (translateStageType). "Novedades" unificado (era "Blog" en admin). Validaciones email/teléfono (front+back). 403 en voseo. Columnas numéricas/estado centradas.
 
-## 🔄 EN PROGRESO — sesión 2026-08-29 (rama `feat/branding-category-apply`, sale de develop, NO mergeado aún)
+## ✅ MERGEADO a develop vía **PR #64** — sesión 2026-08-29 (rama `feat/branding-category-apply`)
 
-Loop autónomo de mejora de páginas públicas + data real. Commits en la rama (verde: backend 0 warnings/tests, frontend tsc/eslint/vitest):
+Loop autónomo de mejora de páginas públicas + data real. Todo verde (backend 648 tests / 0 warnings, frontend 446 / tsc / eslint) y verificado E2E con Playwright. Deployado a staging.
 
 1. **Branding por categoría** — `categoryColor()` (single source masc→naranja `#FF5A1F` / fem→púrpura `#A32CC4`, ink por luminancia), `CategoryChip` reutilizable, `SectionHeading` con prop `accentColor`, Podio 1º naranja→**oro** (`brand.gold`).
 2. **TeamBackdrop** — fondo de identidad en `PublicTeamPage`: glow del color del equipo + escudo watermark transparente en diagonal desde abajo-derecha, con fade al footer. `hexToRgba` extraído a `colorName.ts` (DRY). Va en el FONDO de la página, NO en el hero.
@@ -46,6 +46,17 @@ Loop autónomo de mejora de páginas públicas + data real. Commits en la rama (
 5. **Seed real** — `DataSeeder` reconstruido: **1 Season "Temporada 2026"** con 4 torneos: **Apertura masc + fem (Finished → campeones)** y **Clausura masc + fem (Ongoing, doble rueda, 8 fechas jugadas + 6 próximas, sin playoffs)**. Cada uno con divisiones + `Copa Club 12` cross-cup. 40 clubes reales de Entre Ríos/Paraná (Echagüe, Estudiantes de Paraná, Rowing, Sionista, Talleres, Patronato, Central Entrerriano…), **escudos reales random** subidos a Supabase desde `Seed:LogosPath` (default `D:\Escudos\Logos de Argentina\clubs\normal`) vía `SupabaseHelper.UploadImageAsync<Team>`. Blog posts contextuales. Config nuevo: `Seed:Reset` (fuerza wipe+reseed FK-safe, dev-only bajo `Seed:Enabled`) y `Seed:LogosPath`. **Reseed ejecutado + verificado** (Campeones muestra campeones masc/fem bajo Temporada 2026; Clausura en curso con Últimos+Próximos). NOTA: cada torneo tiene su propio set de clubes (Team.Slug único) → el selector de temporada del perfil muestra 1 participación por ahora (reuse cross-torneo quedó pendiente, tradeoff documentado).
 6. **Home rediseñado** — hero cálido (gradiente naranja→granate, court pattern, Oswald "CLUB 12", eyebrow dorado, CTAs Ver temporadas/Campeones), torneos destacados con `CategoryChip`+estado, **franja "Campeones recientes"** (oro, crests reales), noticias, y accesos rápidos como pill strip secundario. `TournamentCard` ahora muestra su chip de categoría (también en la página de Torneos).
 7. **Sweep E2E público (con Playwright en 3002) + 2 bugfixes**: verificado el ciclo completo Home → Temporadas → Temporada (masc/fem) → Torneo → División (posiciones/goleadores/partidos/llaves) → Campeones → perfil de equipo, todo con data real. BUGS ARREGLADOS: (a) **Temporadas pública salía vacía** — el endpoint `GET /api/seasons` devuelve un array plano pero el context leía `res.data.items` (undefined); era latente (no había Season antes). (b) **Podio "Campeones" se mostraba en torneos En curso** — `PublicTournamentPage` traía el podio sin gatear por estado; ahora solo si `TournamentStatus.Finished` (Apertura muestra podio, Clausura no).
+
+## 🔄 EN PROGRESO — rama `feat/admin-season-first` (sale de develop post-#64, NO mergeado aún)
+
+Loop autónomo continúa (mandato del owner: "armá un plan y seguilo, arreglá todo"). Commits en la rama (todo verde):
+1. **Fix login en español** — el `signIn` del auth context disparaba un alert global BLOQUEANTE con el mensaje crudo del API en inglés ("Invalid credentials."); ahora el login solo muestra su error inline en español ("Usuario o contraseña incorrectos"). Pendiente menor: traducir `ErrorMessages.Auth.*` del backend (asoman en flujos de auth de borde).
+2. **Admin season-first** — admins/owners aterrizan en **Temporadas**; nueva página admin de detalle de temporada (`/panel/temporadas/:seasonId`) que lista los torneos de esa temporada agrupados por categoría con CTA "Nuevo Torneo" que abre el wizard **pre-scopeado** a esa temporada; drill-in "Ver torneos" desde la lista. ADITIVO: la ruta plana de Torneos y el path "Sin temporada" del wizard quedan intactos.
+3. **Posiciones coloreadas** ✅ VERIFICADO — backend deriva `QualificationRanges` (from/to/copa/order) de `Division.PlayoffMappings` y las expone en el detalle de división; front colorea las filas que clasifican por tier de copa (oro/plata/bronce) + chip "Copa Oro"/"Copa Plata" por fila + leyenda. El seed ahora da Copa Oro (1-4) + Copa Plata (5-8) a las divisiones de torneos finalizados (via `SeedCupPlayoffs`), campeón desde la copa top. Playwright confirmó el coloreado en Apertura Primera. (Nota menor: el 3er puesto del podio sale "A definir" en copas BestOf=1 sin partido por 3er puesto.)
+4. **Error-handling público** ✅ — los GETs iniciales públicos ya NO disparan el SweetAlert bloqueante; muestran un estado inline `LoadErrorState` ("No pudimos cargar…" + "Reintentar"). Flag opt-in `{ silent }` en los métodos GET de los contexts (mutaciones intactas, mantienen su modal). Cubre home, temporadas, temporada, torneos, torneo, equipo, sanciones, blog.
+5. **Fix MUI Tabs** ✅ — deep-link a `?tab=<division>` antes de que carguen las divisiones tiraba un error de consola (value sin match); ahora cae a "info" hasta que exista el tab. Consola pública limpia (0 errores).
+
+PLAN restante (orden): SEO/meta; admin organizar (scoreboard/scoring por partido, deducción de puntos, fases bloqueadas con torneo arrancado, llaves editables); integridad+auditoría (delete-integridad global, AuditLog en toda mutación); features (staff DT, stats por temporada, canchas imagen+mapa, mensajes auth backend→español); E2E final del ciclo completo. Norte: organizar temporada de punta a punta, correcto.
 
 ## 📋 BACKLOG PENDIENTE (con specs, prioridad sugerida)
 

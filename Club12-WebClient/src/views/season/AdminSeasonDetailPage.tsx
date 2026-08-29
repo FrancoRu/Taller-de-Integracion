@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -14,27 +14,21 @@ import {
   ISeasonResponse,
   ISeasonTournament,
 } from '@/modules/season/type/season';
-import {
-  TOURNAMENT_CATEGORY_LABELS,
-  TournamentCategory,
-} from '@/modules/core/enum/tournament/tournamentCategory';
-import { categoryColor } from '@/design/categoryColor';
+import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
+import CategoryChip from '@/views/core/components/CategoryChip';
+import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PageShell from '@/views/core/components/PageShell';
-import SectionHeading from '@/views/core/components/SectionHeading';
-import LoadErrorState from '@/views/core/components/LoadErrorState';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
-import {
-  DEFAULT_PAGE_METADATA,
-  usePageMetadata,
-} from '@/modules/core/utils/pageMetadata';
 
 function TournamentCard({ tournament }: { tournament: ISeasonTournament }) {
   return (
     <Card sx={{ height: '100%' }}>
       <CardActionArea
         component={Link}
-        to={APP_ROUTES.publicTournament.build(tournament.slug ?? tournament.id)}
+        to={APP_ROUTES.panelTournamentDetail.build(
+          tournament.slug ?? tournament.id
+        )}
         sx={{ height: '100%' }}
       >
         <CardContent sx={{ width: '100%' }}>
@@ -54,35 +48,32 @@ function CategorySection({
   category: TournamentCategory;
   tournaments: ISeasonTournament[];
 }) {
+  if (tournaments.length === 0) {
+    return null;
+  }
+
   return (
     <Box component="section" sx={{ mb: 4 }}>
-      <SectionHeading accentColor={categoryColor(category).fill}>
-        {TOURNAMENT_CATEGORY_LABELS[category]}
-      </SectionHeading>
-      {tournaments.length === 0 ? (
-        <Typography sx={{ color: 'text.secondary' }}>
-          No hay torneos en esta categoría.
-        </Typography>
-      ) : (
-        <Grid container spacing={3}>
-          {tournaments.map(tournament => (
-            <Grid key={tournament.id} size={{ xs: 12, sm: 6, md: 4 }}>
-              <TournamentCard tournament={tournament} />
-            </Grid>
-          ))}
-        </Grid>
-      )}
+      <Box sx={{ mb: 2 }}>
+        <CategoryChip category={category} size="medium" />
+      </Box>
+      <Grid container spacing={3}>
+        {tournaments.map(tournament => (
+          <Grid key={tournament.id} size={{ xs: 12, sm: 6, md: 4 }}>
+            <TournamentCard tournament={tournament} />
+          </Grid>
+        ))}
+      </Grid>
     </Box>
   );
 }
 
-export default function PublicSeasonPage() {
+export default function AdminSeasonDetailPage() {
   const { seasonId } = useParams<{ seasonId: string }>();
   const navigate = useNavigate();
   const { getSeasonById } = useSeason();
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
   const [season, setSeason] = useState<ISeasonResponse | null>(null);
   const getSeasonByIdRef = useRef(getSeasonById);
 
@@ -90,57 +81,26 @@ export default function PublicSeasonPage() {
     getSeasonByIdRef.current = getSeasonById;
   }, [getSeasonById]);
 
-  const loadSeason = useCallback(async () => {
-    if (!seasonId) {
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(false);
-    // Suppress the global blocking alert on the initial GET; a failed load
-    // returns void, which we surface as a quiet inline retry state instead.
-    const response = await getSeasonByIdRef.current(seasonId, { silent: true });
-    setSeason(response ?? null);
-    setError(response === undefined);
-    setLoading(false);
-  }, [seasonId]);
-
   useEffect(() => {
-    void loadSeason();
-  }, [loadSeason]);
+    const fetch = async () => {
+      if (!seasonId) {
+        setLoading(false);
+        return;
+      }
 
-  // Set the social/SEO title from the season name once it loads; while it is
-  // still undefined the hook keeps the site defaults in place.
-  usePageMetadata({
-    ...DEFAULT_PAGE_METADATA,
-    title: season?.name,
-    description: season?.name
-      ? `Torneos, divisiones y resultados de ${season.name} en la liga Club 12.`
-      : undefined,
-  });
+      setLoading(true);
+      const response = await getSeasonByIdRef.current(seasonId);
+      setSeason(response ?? null);
+      setLoading(false);
+    };
+
+    void fetch();
+  }, [seasonId]);
 
   if (loading) {
     return (
       <PageShell title="Temporada">
         <DetailSkeleton />
-      </PageShell>
-    );
-  }
-
-  if (error) {
-    return (
-      <PageShell
-        title="Temporada"
-        back={{
-          label: 'Volver a temporadas',
-          onClick: () => navigate(APP_ROUTES.publicSeasons),
-        }}
-      >
-        <LoadErrorState
-          message="No pudimos cargar la temporada."
-          onRetry={() => void loadSeason()}
-        />
       </PageShell>
     );
   }
@@ -151,7 +111,7 @@ export default function PublicSeasonPage() {
         title="Temporada no encontrada"
         back={{
           label: 'Volver a temporadas',
-          onClick: () => navigate(APP_ROUTES.publicSeasons),
+          onClick: () => navigate(APP_ROUTES.panelSeasons),
         }}
       >
         <Typography sx={{ color: 'text.secondary' }}>
@@ -160,6 +120,15 @@ export default function PublicSeasonPage() {
       </PageShell>
     );
   }
+
+  // The wizard is pre-scoped with the RESOLVED season id (a GUID), not the URL
+  // param — which may be a slug — so the "Temporada" select preselects the
+  // right season regardless of how this page was reached.
+  const startNewTournament = () => {
+    navigate(APP_ROUTES.panelTournamentWizard, {
+      state: { seasonId: season.id },
+    });
+  };
 
   const tournaments = season.tournaments ?? [];
   const masculineTournaments = tournaments.filter(
@@ -173,8 +142,9 @@ export default function PublicSeasonPage() {
     <PageShell
       back={{
         label: 'Volver a temporadas',
-        onClick: () => navigate(APP_ROUTES.publicSeasons),
+        onClick: () => navigate(APP_ROUTES.panelSeasons),
       }}
+      actions={<NewEntityButton type="Torneo" onClick={startNewTournament} />}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
         <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
@@ -187,7 +157,8 @@ export default function PublicSeasonPage() {
 
       {tournaments.length === 0 ? (
         <Typography sx={{ color: 'text.secondary' }}>
-          Esta temporada todavía no tiene torneos asociados.
+          Esta temporada todavía no tiene torneos asociados. Creá el primero con
+          el botón “Nuevo torneo”.
         </Typography>
       ) : (
         <>

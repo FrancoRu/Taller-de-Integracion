@@ -18,7 +18,7 @@ import {
   ISeasonResponse,
   SeasonFiltered,
 } from '@/modules/season/type/season';
-import { GUID } from '@/modules/core/types/types';
+import { FetchOptions, GUID } from '@/modules/core/types/types';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { seasonKeys } from '@/modules/season/queryKeys';
 import { HttpStatus } from '@/modules/core/constants/httpStatus';
@@ -126,7 +126,10 @@ export const SeasonProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const getSeasonsByFiltered = useCallback(
-    async (filter: SeasonFiltered): Promise<ISeasonResponse[] | void> => {
+    async (
+      filter: SeasonFiltered,
+      options?: FetchOptions
+    ): Promise<ISeasonResponse[] | void> => {
       try {
         // The seasons endpoint returns a plain array (seasons are few, no
         // pagination), so the list is `res.data` itself — not a `.items` page.
@@ -141,14 +144,17 @@ export const SeasonProvider: React.FC<{ children: ReactNode }> = ({
         }
         return res.data;
       } catch (error: unknown) {
-        handleUnknownError(error);
+        if (!options?.silent) handleUnknownError(error);
       }
     },
     [queryClient, handleUnknownError]
   );
 
   const getSeasonById = useCallback(
-    async (idOrSlug: string): Promise<ISeasonResponse | void> => {
+    async (
+      idOrSlug: string,
+      options?: FetchOptions
+    ): Promise<ISeasonResponse | void> => {
       try {
         const existingSeason = seasons?.find(
           e => e.id === idOrSlug || e.slug === idOrSlug
@@ -170,7 +176,7 @@ export const SeasonProvider: React.FC<{ children: ReactNode }> = ({
 
         return res.data;
       } catch (error: unknown) {
-        handleUnknownError(error);
+        if (!options?.silent) handleUnknownError(error);
       }
     },
     [seasons, queryClient, handleUnknownError]

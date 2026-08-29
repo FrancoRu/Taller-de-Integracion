@@ -192,4 +192,73 @@ public class AutoMapperProfilesTests
 
         Assert.Equal(1, division.QualifiersPerGroup);
     }
+
+    private static Division CreateDivision(params DivisionPlayoffMapping[] mappings)
+    {
+        return new Division
+        {
+            Id = Guid.NewGuid(),
+            CreatedBy = "system",
+            Name = "Primera",
+            Slug = "primera",
+            Tournament = null!,
+            Stages = [],
+            PlayoffMappings = mappings,
+        };
+    }
+
+    /// <summary>
+    /// HU-45: a division WITH playoff mappings exposes them as ordered
+    /// qualification ranges on the response — top cup first (Order 0), cup name
+    /// carried from the mapping destination — so the public standings table can
+    /// highlight the qualifying rows.
+    /// </summary>
+    [Fact]
+    public void Map_DivisionWithPlayoffMappings_ExposesOrderedQualificationRanges()
+    {
+        MapperConfiguration configuration = new(cfg => cfg.AddProfile<DivisionProfile>(), NullLoggerFactory.Instance);
+        IMapper mapper = configuration.CreateMapper();
+
+        Division division = CreateDivision(
+            new DivisionPlayoffMapping { FromPosition = 5, ToPosition = 8, Destination = "Copa Plata", CreatedBy = "system" },
+            new DivisionPlayoffMapping { FromPosition = 1, ToPosition = 4, Destination = "Copa Oro", CreatedBy = "system" });
+
+        DivisionResponse response = mapper.Map<DivisionResponse>(division);
+
+        Assert.NotNull(response.QualificationRanges);
+        Assert.Collection(
+            response.QualificationRanges!,
+            top =>
+            {
+                Assert.Equal(1, top.FromPosition);
+                Assert.Equal(4, top.ToPosition);
+                Assert.Equal("Copa Oro", top.CupName);
+                Assert.Equal(0, top.Order);
+            },
+            next =>
+            {
+                Assert.Equal(5, next.FromPosition);
+                Assert.Equal(8, next.ToPosition);
+                Assert.Equal("Copa Plata", next.CupName);
+                Assert.Equal(1, next.Order);
+            });
+    }
+
+    /// <summary>
+    /// A division WITHOUT playoff mappings exposes an empty qualification-range
+    /// list, so the public standings table simply renders no highlight/legend.
+    /// </summary>
+    [Fact]
+    public void Map_DivisionWithoutPlayoffMappings_ExposesEmptyQualificationRanges()
+    {
+        MapperConfiguration configuration = new(cfg => cfg.AddProfile<DivisionProfile>(), NullLoggerFactory.Instance);
+        IMapper mapper = configuration.CreateMapper();
+
+        Division division = CreateDivision();
+
+        DivisionResponse response = mapper.Map<DivisionResponse>(division);
+
+        Assert.NotNull(response.QualificationRanges);
+        Assert.Empty(response.QualificationRanges!);
+    }
 }

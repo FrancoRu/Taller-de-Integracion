@@ -73,11 +73,12 @@ import PlayerSanctionEditPage from './views/playerSanction/playerSanctionEditPag
 import VenuesPage from './views/venue/VenuesPage';
 import VenuePage from './views/venue/venuePage';
 import SeasonsPage from './views/season/SeasonsPage';
+import AdminSeasonDetailPage from './views/season/AdminSeasonDetailPage';
 import ScorersPage from './views/scorer/scorersPage';
 
 const FIRST_TAB_BY_ROLE: Partial<Record<UserRolesType, string>> = {
-  [UserRolesType.Owner]: APP_ROUTES.panelTournaments,
-  [UserRolesType.Admin]: APP_ROUTES.panelTournaments,
+  [UserRolesType.Owner]: APP_ROUTES.panelSeasons,
+  [UserRolesType.Admin]: APP_ROUTES.panelSeasons,
 };
 
 interface AdminRouteConfig {
@@ -172,6 +173,11 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
     path: APP_ROUTES.panelSeasons,
     allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <SeasonsPage />,
+  },
+  {
+    path: APP_ROUTES.panelSeason.pattern,
+    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
+    element: <AdminSeasonDetailPage />,
   },
   {
     path: APP_ROUTES.panelTournaments,
