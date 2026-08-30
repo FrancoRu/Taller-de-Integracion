@@ -2,7 +2,33 @@
 
 > Documento para continuar en un chat nuevo. Rama de integración: **develop** (deploya a staging: club12.argentum-solutions.com.ar). `main` NO se toca. Stack: .NET 8 backend (Clean/Hexagonal, EF Core + Npgsql/Postgres) + React 19/TS/MUI/Vite frontend (vitest, ESLint `--max-warnings 0`). Todo user-facing en **español (voseo)**; código en inglés.
 
-## ✅ MERGEADO a develop / en staging (PRs #53–#70)
+## 🔴 FIXES PRIORITARIOS — feedback del owner (2026-08-30). "Staff es lo último, NO agregar más features. Estabilizar build + E2E del ciclo completo (crear temporada → torneos → jugarlo → todo anda)."
+
+Modelo mental confirmado: **División = tier**; los **playoffs se juegan por sub-tier/copa (Oro, Plata, Bronce)**. Ordenar todo con esa lógica.
+
+Progreso (rama `fix/ux-consolidation-e2e`, sale de develop tras #71):
+- 561e86e Home season-first + wizard temporada obligatoria + season header sin chip
+- e0e08aa fix del cuelgue del panel "Administración de datos" (deadlock de modales)
+- 6b1db53 loader consistente en Novedades + card de Torneos sin texto apretado
+- 064c452 ocultar 3er puesto en playoff sin partido por el 3º
+
+1. ✅ **Home**: hecho (561e86e). Orden Novedades → Temporadas → Campeones, sin accesos rápidos ni torneos, hero recortado.
+2. ✅ **Detalle de Temporada**: chip del año quitado (561e86e).
+3. ✅ **Wizard de torneo — temporada obligatoria**: hecho (561e86e). Sin helpers, temporada required + bloqueada si viene pre-scopeada. (FALTA aún: mover el punto de entrada para crear torneo SIEMPRE desde dentro de la temporada / sacar la entrada standalone del nav.)
+4. ⏳ **Campeones — jerarquía**: Temporada → **Torneo** → División → **sub-copa (Oro/Plata/Bronce)**. (Hoy Temporada→Categoría→División.) BACKEND+FRONT.
+5. ⏳ **Campeones — sub-copas**: incluir ganador de Copa Plata (y Bronce). Hoy `ChampionService.GetChampionsHistoryAsync` sólo toma `podium.First` de la copa TOP (Oro). Hay que resolver un campeón POR copa/bracket y agregar `CupName` a `ChampionHistoryResponse`. `ChampionResolver.ResolvePlayoffPodium` sólo mira el top bracket → nuevo método `ResolveAllCupChampions`.
+6. ⏳ **Campeones — 3er puesto**: ✅ frontend hecho (064c452, oculta el 3º cuando `hasPlayoff && third==null`). FALTA backend: exponer `HasThirdPlace` en `PodiumResponse` (más robusto que la heurística), y el **wizard de playoff debe permitir configurar "Partido por el 3er puesto"** (crea un `StageType.ThirdPlace`). Hoy NO se puede elegir.
+7. ⏳ **Posiciones — copa cruzada**: la tabla de la copa cruzada NO colorea los que clasifican a playoff. Agregar `qualificationRanges` también para la división copa-cruzada.
+8. ⏳ **Loaders/skeletons**: parcial. Novedades ✅ (6b1db53). Barrer el resto de páginas para consistencia (usar `CardGridSkeleton`/`DetailSkeleton`, nunca mensaje-vacío + spinner juntos).
+9. ⏳ **Anchos/altos de textos**: parcial. Card de Torneos ✅ (6b1db53). Revisar el resto.
+10. ⏳ **Mapa**: usar **OpenStreetMap** (embed/link free), no Google. (Público: PublicMatchPage "Ver en el mapa"; admin canchas.)
+11. ✅ **Admin "Administración de datos"**: cuelgue arreglado (e0e08aa) — era un deadlock: el Dialog bloqueante de MUI (z-index 1300) tapaba el SweetAlert (z-index ~1060), su OK no se podía clickear, el await no resolvía y el `finally` que cierra el overlay nunca corría. Ahora se cierra el overlay ANTES de notificar.
+12. ⏳ **Todo por slug** (recordatorio; verificar en las páginas nuevas/tocadas).
+13. ⏳ **Staff de equipo** (último feature): `TeamStaff` (el `Staff` histórico se dropeó en `20260315232746_cleanDB`) + roles DT/Asistente/DT-Jugador, season-scoped, admin + vista pública, seed.
+14. ⏳ **E2E FINAL** del ciclo completo con build estable.
+15. ⏳ **Creación de torneo ATÓMICA (owner 2026-08-30, Image #12)**: hoy el wizard (`submitWizard.ts`) crea todo con MUCHOS requests secuenciales (POST tournaments → PUT open-registration → POST divisions → POST stages uno por uno). Debe ser UN endpoint transaccional único (crear torneo + divisiones + stages + copas + copa cruzada en una sola transacción DB, todo o nada). Es el fix más importante para "que el flujo de crear torneos ande bien".
+
+## ✅ MERGEADO a develop / en staging (PRs #53–#71)
 
 **Design system (base)**
 - `src/design/tokens.ts` (brand/surface/ink/semantic/radius/font/pageMinHeight/**gold**/**category**), `colorName.ts` (hex→fill+ink), `jerseyStyles.ts` (11 estilos).
@@ -73,7 +99,7 @@ Bloque admin-organizar + seguridad (verificado por build+tests; E2E admin en viv
 0. **Goleadores del scoreboard** ✅ (PR #70) — `MatchRepository.GetDetailByIdOrSlugAsync` incluye Home/Visitor/Venue + `Scorers.ThenInclude(Player)` + `Stage.Division`; el mapping atribuye scorers al equipo vía `Scorer.Player.TeamId` y agrega por jugador. Además: cada goleador muestra la **camiseta (kit del equipo) + dorsal** (de la inscripción del torneo; `Player.JerseyNumber` es `[NotMapped]`, el real vive en `PlayerTeamRegistration.JerseyNumber`), se sacó la sección Sanciones del partido, y el seed reparte los puntos entre 5 jugadores + asigna dorsales 4-11 únicos por equipo. Verificado con Playwright.
 1. **Llaves admin editables** — cargar resultado desde el bracket (ahí están los partidos).
 2. **Staff de equipo** (DT/asistente/DT-jugador) — entidad/rol por equipo+temporada (+migración).
-3. **Canchas imagen+mapa** — Venue lat/lng + Leaflet/OSM + display/edit de imagen (+migración).
+3. **Canchas imagen+mapa** ✅ (PR #71) — `Venue.Latitude/Longitude` (migración `AddVenueImageAndLocation`) + `PUT /venues/{id}/photo`; admin edita coords+imagen (preview); vista pública muestra imagen + botón "Ver en el mapa" (Google Maps por coords, sin dep de mapa). Seed con **6 canchas reales de Paraná** (Estadio Ángel Malvicino/Echagüe, Estudiantes, Rowing, Sionista, Talleres, Polideportivo Municipal) con coordenadas, en ambos seed paths (`DataSeeder` + `DataMaintenanceService`). Verificado (un partido juega en Estadio Ángel Malvicino).
 4. **Auditoría completa** — extender `AuditLog` a TODA mutación admin (actor+entidad+acción+timestamp).
 5. **Mensajes auth backend→español** — `ErrorMessages.Auth.*` están en inglés (ojo: tests que asertan el texto exacto de los títulos del GlobalExceptionHandler).
 6. **Endurecer OnDelete** peligroso (`MatchSeries/Team→Cascade`) en una migración (flagged en #66).

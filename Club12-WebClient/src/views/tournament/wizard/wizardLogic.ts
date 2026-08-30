@@ -23,6 +23,11 @@ export const validateTournamentStep = (state: WizardState): ValidationResult => 
     errors.push('El nombre del torneo es obligatorio.');
   }
 
+  // A tournament always belongs to a season — it is created within one.
+  if (!tournament.seasonId) {
+    errors.push('El torneo debe pertenecer a una temporada.');
+  }
+
   if (!tournament.startDate) {
     errors.push('La fecha de inicio es obligatoria.');
   }

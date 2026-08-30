@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Box,
   Card,
   CardActionArea,
   CardContent,
@@ -40,37 +39,29 @@ export function TournamentCard({ tournament }: { tournament: ITournamentResponse
         sx={{ height: '100%', alignItems: 'flex-start', display: 'flex', flexDirection: 'column' }}
       >
         <CardContent sx={{ width: '100%' }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              mb: 1
-            }}>
-            <Typography
-              variant="h6"
-              component="h2"
-              sx={{
-                lineHeight: 1.3,
-                flex: 1,
-                mr: 1
-              }}>
-              {tournament.name}
-            </Typography>
-            <Stack
-              direction="row"
-              spacing={0.5}
-              sx={{ flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}
-            >
-              <CategoryChip category={tournament.category} />
-              <Chip
-                label={TOURNAMENT_STATUS_LABEL[status] ?? status}
-                color={TOURNAMENT_STATUS_COLOR[status] ?? 'default'}
-                size="small"
-                variant={status === 'Scheduled' ? 'outlined' : 'filled'}
-              />
-            </Stack>
-          </Box>
+          {/* Chips on their own row so the title always spans the full width and
+              never gets squeezed into an awkward multi-line wrap beside them. */}
+          <Stack
+            direction="row"
+            spacing={0.5}
+            sx={{ flexWrap: 'wrap', mb: 1 }}
+          >
+            <CategoryChip category={tournament.category} />
+            <Chip
+              label={TOURNAMENT_STATUS_LABEL[status] ?? status}
+              color={TOURNAMENT_STATUS_COLOR[status] ?? 'default'}
+              size="small"
+              variant={status === 'Scheduled' ? 'outlined' : 'filled'}
+            />
+          </Stack>
+
+          <Typography
+            variant="h6"
+            component="h2"
+            sx={{ lineHeight: 1.3, mb: 1 }}
+          >
+            {tournament.name}
+          </Typography>
 
           {tournament.description && (
             <Typography

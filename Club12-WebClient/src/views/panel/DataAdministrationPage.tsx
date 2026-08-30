@@ -43,6 +43,11 @@ const DataAdministrationPage: React.FC = () => {
     void fetchBackups();
   }, [fetchBackups]);
 
+  // IMPORTANT: the blocking overlay (a MUI Dialog, z-index 1300) sits ABOVE the
+  // SweetAlert toasts (z-index ~1060). So the overlay MUST be closed BEFORE any
+  // notify* call — otherwise the toast renders behind the overlay backdrop, its
+  // "OK" is unclickable, the awaited promise never resolves, and the panel
+  // freezes. Every handler clears activeOperation first, then notifies.
   const handleWipe = async (): Promise<void> => {
     const confirmed = await confirmDelete({
       title: '¿Borrar todos los datos de prueba?',
@@ -56,79 +61,103 @@ const DataAdministrationPage: React.FC = () => {
 
     setIsWiping(true);
     setActiveOperation('Borrando todos los datos de prueba…');
+    let response: Awaited<
+      ReturnType<typeof dataMaintenanceService.wipeSampleData>
+    > | null = null;
+    let failed = false;
     try {
-      const response = await dataMaintenanceService.wipeSampleData();
-      await notifySuccess({
-        title: 'Base de datos vaciada',
-        text: `${response.data.tournaments} torneos, ${response.data.teams} equipos y ${response.data.players} jugadores eliminados.`,
-      });
+      response = await dataMaintenanceService.wipeSampleData();
     } catch {
-      await notifyError({
-        title: 'No se pudo borrar la base de datos',
-        text: 'Volvé a intentar en unos segundos.',
-      });
+      failed = true;
     } finally {
       setIsWiping(false);
       setActiveOperation(null);
     }
+
+    if (failed || !response) {
+      await notifyError({
+        title: 'No se pudo borrar la base de datos',
+        text: 'Volvé a intentar en unos segundos.',
+      });
+      return;
+    }
+
+    await notifySuccess({
+      title: 'Base de datos vaciada',
+      text: `${response.data.tournaments} torneos, ${response.data.teams} equipos y ${response.data.players} jugadores eliminados.`,
+    });
   };
 
   const handleSeed = async (): Promise<void> => {
     setIsSeeding(true);
     setActiveOperation('Cargando datos de prueba…');
+    let response: Awaited<
+      ReturnType<typeof dataMaintenanceService.seedSampleData>
+    > | null = null;
+    let caught: unknown = null;
     try {
-      const response = await dataMaintenanceService.seedSampleData();
-      await notifySuccess({
-        title: 'Datos de prueba cargados',
-        text: `${response.data.tournaments} torneos, ${response.data.teams} equipos y ${response.data.players} jugadores creados.`,
-      });
+      response = await dataMaintenanceService.seedSampleData();
     } catch (error) {
-      const isConflict = isAxiosError(error) && error.response?.status === 409;
+      caught = error;
+    } finally {
+      setIsSeeding(false);
+      setActiveOperation(null);
+    }
+
+    if (caught || !response) {
+      const isConflict = isAxiosError(caught) && caught.response?.status === 409;
       await notifyError({
         title: 'No se pudieron cargar los datos de prueba',
         text: isConflict
           ? 'La base ya tiene datos. Borrala primero con "Borrar DB".'
           : 'Volvé a intentar en unos segundos.',
       });
-    } finally {
-      setIsSeeding(false);
-      setActiveOperation(null);
+      return;
     }
+
+    await notifySuccess({
+      title: 'Datos de prueba cargados',
+      text: `${response.data.tournaments} torneos, ${response.data.teams} equipos y ${response.data.players} jugadores creados.`,
+    });
   };
 
   const handleGenerateBackup = async (): Promise<void> => {
     setActiveOperation('Generando el respaldo de la base de datos…');
+    let created: boolean;
     try {
-      const created = await createBackup();
-      if (!created) {
-        await notifyError({
-          title: 'No se pudo generar el respaldo',
-          text: 'Puede haber otra operación de respaldo/restauración en curso. Volvé a intentar en unos segundos.',
-        });
-        return;
-      }
-
-      await notifySuccess({ title: 'Respaldo generado' });
+      created = await createBackup();
     } finally {
       setActiveOperation(null);
     }
+
+    if (!created) {
+      await notifyError({
+        title: 'No se pudo generar el respaldo',
+        text: 'Puede haber otra operación de respaldo/restauración en curso. Volvé a intentar en unos segundos.',
+      });
+      return;
+    }
+
+    await notifySuccess({ title: 'Respaldo generado' });
   };
 
   const handleDeleteBackup = async (backup: {
     id: string;
   }): Promise<void> => {
     setActiveOperation('Eliminando el respaldo…');
+    let deleted: boolean;
     try {
-      const deleted = await deleteBackup(backup.id);
-      if (!deleted) {
-        await notifyError({ title: 'No se pudo eliminar el respaldo' });
-        return;
-      }
-
-      await notifySuccess({ title: 'Respaldo eliminado' });
+      deleted = await deleteBackup(backup.id);
     } finally {
       setActiveOperation(null);
     }
+
+    if (!deleted) {
+      await notifyError({ title: 'No se pudo eliminar el respaldo' });
+      return;
+    }
+
+    await notifySuccess({ title: 'Respaldo eliminado' });
   };
 
   const handleRestoreBackup = async (backup: {
@@ -137,17 +166,19 @@ const DataAdministrationPage: React.FC = () => {
     setActiveOperation(
       'Restaurando la base de datos desde el respaldo. No cierres ni recargues esta página…'
     );
+    let restored: boolean;
     try {
-      const restored = await restoreBackup(backup.id);
-      if (!restored) {
-        await notifyError({ title: 'No se pudo restaurar el respaldo' });
-        return;
-      }
-
-      await notifySuccess({ title: 'Base de datos restaurada' });
+      restored = await restoreBackup(backup.id);
     } finally {
       setActiveOperation(null);
     }
+
+    if (!restored) {
+      await notifyError({ title: 'No se pudo restaurar el respaldo' });
+      return;
+    }
+
+    await notifySuccess({ title: 'Base de datos restaurada' });
   };
 
   return (

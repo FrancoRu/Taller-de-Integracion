@@ -35,13 +35,22 @@ describe('Podium', () => {
     expect(screen.getByText('Los Cóndores')).toBeInTheDocument();
   });
 
-  it('shows an "A definir" placeholder for undecided places', () => {
+  it('shows an "A definir" placeholder for undecided standings places', () => {
     render(
-      <Podium podium={podium({ second: null, third: null })} />
+      <Podium podium={podium({ hasPlayoff: false, second: null, third: null })} />
     );
 
     expect(screen.getByText('Los Halcones')).toBeInTheDocument();
     expect(screen.getAllByText('A definir')).toHaveLength(2);
+  });
+
+  it('omits the 3rd place in a playoff with no third-place match', () => {
+    render(<Podium podium={podium({ third: null })} />);
+
+    expect(screen.getByText('1º')).toBeInTheDocument();
+    expect(screen.getByText('2º')).toBeInTheDocument();
+    expect(screen.queryByText('3º')).not.toBeInTheDocument();
+    expect(screen.queryByText('A definir')).not.toBeInTheDocument();
   });
 
   it('renders a top-three read straight from standings (no playoff)', () => {

@@ -23,6 +23,7 @@ const makeValidState = (): WizardState => {
     startDate: '2026-03-01',
     teamRegistrationDeadline: '2026-02-15',
     category: TournamentCategory.Masculine,
+    seasonId: 'season-1',
   };
   state.zones = [
     {
@@ -50,6 +51,12 @@ const makeValidState = (): WizardState => {
 describe('validateTournamentStep', () => {
   it('accepts a fully filled, consistent tournament step', () => {
     expect(validateTournamentStep(makeValidState())).toEqual([]);
+  });
+
+  it('rejects a tournament with no season (a tournament always belongs to one)', () => {
+    const state = makeValidState();
+    state.tournament.seasonId = '';
+    expect(validateTournamentStep(state).length).toBeGreaterThan(0);
   });
 
   it('rejects a missing name', () => {
