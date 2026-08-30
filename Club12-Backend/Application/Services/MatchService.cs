@@ -83,6 +83,21 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
         await _matchRepository.RemoveAsync(match => match.Id == id);
     }
 
+    public async Task<bool> HasVenueScheduleConflictAsync(Guid venueId, DateTime matchDate, Guid excludeMatchId)
+    {
+        // Two matches on the same court must be at least 2 hours apart, so a
+        // conflict is any OTHER match at this venue strictly within the ±2h
+        // window (exactly 2 hours apart is allowed).
+        DateTime windowStart = matchDate.AddHours(-2);
+        DateTime windowEnd = matchDate.AddHours(2);
+
+        return await _matchRepository.ExistsAsync(match =>
+            match.Id != excludeMatchId
+            && match.VenueId == venueId
+            && match.MatchDate > windowStart
+            && match.MatchDate < windowEnd);
+    }
+
     public async Task UpdateMatchAsync(Match matchEntity)
     {
         await _matchRepository.UpdateAsync(matchEntity);

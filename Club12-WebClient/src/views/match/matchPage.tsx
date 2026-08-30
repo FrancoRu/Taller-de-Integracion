@@ -20,6 +20,16 @@ import {
 } from '@mui/material';
 import { GUID } from '@/modules/core/types/types';
 import { useMatch } from '@/modules/match/hook/match.hook';
+import { useVenue } from '@/modules/venue/hook/venue.hook';
+
+/** Formats an ISO date into the `YYYY-MM-DDTHH:mm` a datetime-local input needs. */
+const toDatetimeLocalValue = (iso?: string | null): string => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import { IPlayerSanctionResponse } from '@/modules/playerSanction/type/playerSanction.d';
 import {
@@ -58,8 +68,14 @@ type MatchTab = 'detalle' | 'puntuaciones' | 'sanciones';
 const MatchPage: React.FC = () => {
   const { matchId } = useParams<{ matchId: GUID }>();
   const navigate = useNavigate();
-  const { match, getMatchById, putMatchScoreByMatchId, loadWalkOver } =
-    useMatch();
+  const {
+    match,
+    getMatchById,
+    putMatchScoreByMatchId,
+    putMatchByMatchId,
+    loadWalkOver,
+  } = useMatch();
+  const { venues, getAllVenues } = useVenue();
   const { playerSanctions, getPlayerSanctionByFilter } = usePlayerSanction();
   const [loading, setLoading] = useState(false);
   const [sanctionsLoading, setSanctionsLoading] = useState(false);
@@ -71,6 +87,11 @@ const MatchPage: React.FC = () => {
   const [homeScore, setHomeScore] = useState('0');
   const [visitorScore, setVisitorScore] = useState('0');
   const [presentTeamId, setPresentTeamId] = useState<GUID | ''>('');
+  // Edit dialog (venue + date).
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editDate, setEditDate] = useState('');
+  const [editVenueId, setEditVenueId] = useState<GUID | ''>('');
+  const [submittingEdit, setSubmittingEdit] = useState(false);
 
   const targetMatchId = useMemo(
     () => matchId ?? match?.id,
@@ -114,11 +135,53 @@ const MatchPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, match?.id]);
 
+  // The venue options for the edit dialog.
+  useEffect(() => {
+    void getAllVenues();
+  }, [getAllVenues]);
+
   const openResultDialog = useCallback(() => {
     setHomeScore(String(match?.homeTeam?.score ?? 0));
     setVisitorScore(String(match?.visitorTeam?.score ?? 0));
     setResultDialogOpen(true);
   }, [match?.homeTeam?.score, match?.visitorTeam?.score]);
+
+  const openEditDialog = useCallback(() => {
+    setEditDate(toDatetimeLocalValue(match?.matchDate));
+    setEditVenueId((match?.venue?.id as GUID | undefined) ?? '');
+    setEditDialogOpen(true);
+  }, [match?.matchDate, match?.venue?.id]);
+
+  const handleSaveEdit = useCallback(async () => {
+    if (!match?.id) {
+      return;
+    }
+
+    if (!editDate) {
+      await notifyWarning({
+        title: 'Falta la fecha',
+        text: 'Elegí la fecha y hora del partido.',
+      });
+      return;
+    }
+
+    setSubmittingEdit(true);
+    // The backend rejects a venue double-booking (same court within 2 hours) —
+    // its 409 message surfaces through the global handler.
+    const updated = await putMatchByMatchId(match.id, {
+      matchDate: new Date(editDate).toISOString(),
+      venueId: editVenueId || undefined,
+    });
+    setSubmittingEdit(false);
+
+    if (!updated) {
+      return;
+    }
+
+    setEditDialogOpen(false);
+    await getMatchById(match.id);
+    await notifySuccess({ title: 'Partido actualizado' });
+  }, [match?.id, editDate, editVenueId, putMatchByMatchId, getMatchById]);
 
   const handleLoadResult = useCallback(async () => {
     if (!match?.id) {
@@ -306,6 +369,9 @@ const MatchPage: React.FC = () => {
               spacing={1}
               sx={{ justifyContent: 'flex-end', flexWrap: 'wrap', mb: 2 }}
             >
+              <Button variant="outlined" onClick={openEditDialog}>
+                Editar (cancha/fecha)
+              </Button>
               <Button variant="contained" onClick={openResultDialog}>
                 Cargar resultado
               </Button>
@@ -542,6 +608,63 @@ const MatchPage: React.FC = () => {
         onCreated={refreshSanctions}
         presetMatch={match}
       />
+
+      <Dialog
+        open={editDialogOpen}
+        onClose={() => !submittingEdit && setEditDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Editar partido</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              type="datetime-local"
+              label="Fecha y hora"
+              value={editDate}
+              onChange={e => setEditDate(e.target.value)}
+              fullWidth
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+            <TextField
+              select
+              label="Cancha"
+              value={editVenueId}
+              onChange={e => setEditVenueId(e.target.value as GUID | '')}
+              fullWidth
+            >
+              <MenuItem value="">
+                <em>Sin cancha</em>
+              </MenuItem>
+              {(venues ?? []).map(venue => (
+                <MenuItem key={venue.id} value={venue.id}>
+                  {venue.name}
+                </MenuItem>
+              ))}
+            </TextField>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              No se puede programar otro partido en la misma cancha con menos de
+              2 horas de diferencia.
+            </Typography>
+          </Stack>
+          <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', mt: 2 }}>
+            <Button
+              color="inherit"
+              onClick={() => setEditDialogOpen(false)}
+              disabled={submittingEdit}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => void handleSaveEdit()}
+              disabled={submittingEdit}
+            >
+              Guardar
+            </Button>
+          </Stack>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={resultDialogOpen}

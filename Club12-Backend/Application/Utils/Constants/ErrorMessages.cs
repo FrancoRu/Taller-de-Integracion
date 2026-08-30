@@ -279,6 +279,9 @@ public static class ErrorMessages
     {
         public const string CannotUpdateStartedOrFinished = "Cannot update a match that has already started or finished.";
         public const string TeamsNotAssignedToStage = "Cannot update match date because one or both teams are not assigned to the stage.";
+        public const string VenueScheduleConflict =
+            "Esa cancha ya tiene otro partido a menos de 2 horas de esa hora. " +
+            "Elegí otro horario (mínimo 2 horas de diferencia) u otra cancha.";
         public const string StageAlreadyHasMatches = "Cannot process the current request because the current stage already has some matches.";
         public const string NoGroupStagesForDivision = "No group stages found for the division.";
         public const string NoTeamsRegistered = "No teams are registered in the tournament.";
