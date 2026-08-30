@@ -58,6 +58,21 @@ Progreso (rama `fix/ux-consolidation-e2e`, sale de develop tras #71):
 
 **Staff (feature, worker cayó 3x por límite de sesión):** worktree `.claude/worktrees/agent-a5058e93cc2358d01` tiene una migración creada pero el feature quedó incompleto y sin verificar. Rehacer/completar cuando haya budget.
 
+## 🔬 E2E en staging (2026-08-30) — hallazgos + fixes (PRs #78–#80)
+
+Hecho con Chrome MCP sobre la sesión logueada del owner + consultas directas a la API con el token.
+
+- ✅ **BREAK "se rompió al iniciar torneo" (PR #78)**: causa raíz = "Iniciar torneo" estaba habilitado con inscripción ABIERTA, pero el backend sólo permite `OpenForRegistration → RegistrationClosed → Ongoing` (error *"Cannot change status from OpenForRegistration to Ongoing"*). Fix: "Iniciar torneo" ahora **cierra la inscripción primero y después inicia** (encadena las transiciones); sigue exigiendo que ningún inscripto quede sin zona; `putTournamentById` devuelve éxito para encadenar. El 500 que vio el owner ("después anduvo") era esa transición inválida / un fallo transitorio del fixture — ahora el mensaje sugiere reintentar.
+- ✅ **Divisiones se veían vacías en el admin (PR #79)**: la API devolvía las 4 zonas (200) pero el listado admin mostraba "0-0 de 0" porque derivaba las filas del context compartido (race). Ahora renderiza la respuesta del fetch. ESTO era por qué el owner creía que "no se asignaron equipos a ninguna división". **Los datos estaban SANOS**: Zona A con 11 equipos, 6 stages (Grupo + Copa Oro + Copa Plata), **315 partidos** generados.
+- ✅ **ABM de Fases quitado (PR #80)**: el tab "Fases" del detalle de división se eliminó (es todo automático). NOTA: quedan las rutas globales huérfanas `/panel/fases` (`panelStages`/`panelStageCreate`/`panelStage` en App.tsx) sin link en el nav — se pueden borrar en una limpieza.
+
+### ⏳ Pendiente de la E2E / owner (nav & tabs — "que sea coherente"):
+- **Árbol de navegación con jerarquía**: "Torneos" NO debe ser item top-level del nav; va DENTRO de "Temporadas" (temporada → torneos). Rediseñar el sitemap del admin.
+- **Tabs del torneo redundantes**: "EQUIPOS" y "EQUIPOS INSCRIPTOS" muestran los mismos equipos (Images #28/#29). Definir/consolidar el modelo Equipos ↔ Inscriptos y dejar tabs coherentes.
+- **Renderer se colgó** una vez en la tab Divisiones (CDP timeout) — vigilar si se repite (posible loop de render con muchos datos).
+- Robustez del **500 al generar fixture** (transitorio) — necesita logs del backend / perfilar la generación con ~40 equipos.
+- UI flaky: los clicks a veces no registran justo tras cargar (hidratación) — no bloqueante.
+
 ## ✅ MERGEADO a develop / en staging (PRs #53–#71)
 
 **Design system (base)**
