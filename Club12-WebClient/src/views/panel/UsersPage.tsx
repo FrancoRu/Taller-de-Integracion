@@ -24,7 +24,6 @@ import FilterBar from '@/views/core/components/FilterBar';
 import { TableSkeleton } from '@/views/core/components/skeletons';
 import {
   DeleteIcon,
-  EditIcon,
   LockIcon,
   LockOpenIcon,
   SearchIcon,
@@ -63,13 +62,6 @@ const UsersPage: React.FC = () => {
   const handleView = useCallback(
     (row: UserResponse) => {
       navigate(APP_ROUTES.panelUser.build(row.userId));
-    },
-    [navigate]
-  );
-
-  const handleEdit = useCallback(
-    (row: UserResponse) => {
-      navigate(APP_ROUTES.panelUserEdit.build(row.userId));
     },
     [navigate]
   );
@@ -137,12 +129,6 @@ const UsersPage: React.FC = () => {
         onClick: handleView,
       },
       {
-        label: 'Editar',
-        color: 'primary',
-        icon: <EditIcon fontSize="small" />,
-        onClick: handleEdit,
-      },
-      {
         label: 'Desactivar',
         color: 'warning',
         icon: <LockIcon fontSize="small" />,
@@ -163,7 +149,7 @@ const UsersPage: React.FC = () => {
         onClick: handleDelete,
       },
     ],
-    [handleDelete, handleEdit, handleToggleActive, handleView]
+    [handleDelete, handleToggleActive, handleView]
   );
 
   const columns: GridColDef<UserResponse>[] = useMemo(() => {

@@ -32,7 +32,6 @@ import MatchStatusChip from '@/views/match/MatchStatusChip';
 import StageMatchesByRound from '@/views/match/StageMatchesByRound';
 import {
   DeleteIcon,
-  EditIcon,
   SearchIcon,
   VisibilityIcon,
 } from '@/views/core/MUI/icons/icons';
@@ -255,9 +254,6 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
     [navigate]
   );
 
-  /** No-op until the panel route for editing a match by id is implemented. */
-  const handleEdit = useCallback((_row: IMatchResponse) => {}, []);
-
   const handleDelete = useCallback(
     async (row: IMatchResponse) => {
       const confirmed = await confirmDelete({
@@ -287,20 +283,13 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
         onClick: handleView,
       },
       {
-        label: 'Editar',
-        color: 'primary',
-        icon: <EditIcon fontSize="small" />,
-        onClick: handleEdit,
-        disabled: true,
-      },
-      {
         label: 'Eliminar',
         color: 'error',
         icon: <DeleteIcon fontSize="small" />,
         onClick: handleDelete,
       },
     ],
-    [handleDelete, handleEdit, handleView]
+    [handleDelete, handleView]
   );
 
   const columns: GridColDef<IMatchResponse>[] = useMemo(() => {
