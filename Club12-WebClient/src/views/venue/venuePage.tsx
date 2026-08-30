@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Box, Button, Stack, Typography } from '@mui/material';
+import { Box, Stack, Typography } from '@mui/material';
 import { IVenueResponse } from '@/modules/venue/type/venue';
 import { useVenue } from '@/modules/venue/hook/venue.hook';
 import PageShell from '@/views/core/components/PageShell';
+import OpenStreetMapEmbed from '@/views/core/components/OpenStreetMapEmbed';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
@@ -72,16 +73,11 @@ const VenuePage: React.FC = () => {
         </Stack>
 
         {hasCoordinates && (
-          <Button
-            variant="outlined"
-            component="a"
-            href={`https://www.google.com/maps?q=${venue.latitude},${venue.longitude}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            sx={{ alignSelf: 'flex-start' }}
-          >
-            Ver en el mapa
-          </Button>
+          <OpenStreetMapEmbed
+            latitude={venue.latitude as number}
+            longitude={venue.longitude as number}
+            title={venue.name}
+          />
         )}
 
         {venue.photoUrl && (
