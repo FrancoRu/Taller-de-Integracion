@@ -6,14 +6,12 @@ import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { GUID } from '@/modules/core/types/types';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
-import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
 import { stageService } from '@/modules/stage/service/stage.service';
 import { matchService } from '@/modules/match/service/match.service';
 import { matchSeriesService } from '@/modules/matchSeries/service/matchSeries.service';
 import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
 import { buildBrackets } from '@/modules/playoff/buildBracket';
 import { BracketGroup } from '@/modules/playoff/type/bracket.d';
-import StagesPage from '@/views/stage/stagesPage';
 import DivisionStandings from '@/views/division/divisionStandings';
 import PointDeductionManager from '@/views/division/PointDeductionManager';
 import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
@@ -131,39 +129,6 @@ const DivisionPage: React.FC = () => {
     void fetchBrackets();
   }, [tab, division?.id]);
 
-  const canGenerateStages = useMemo(() => {
-    if (!division?.tournamentId || tournament?.id !== division.tournamentId) {
-      return false;
-    }
-
-    const registrationDeadline = new Date(tournament.teamRegistrationDeadline);
-    const registrationClosedByDate =
-      !Number.isNaN(registrationDeadline.getTime()) &&
-      registrationDeadline.getTime() <= Date.now();
-
-    const registrationClosedByStatus =
-      tournament.status === TournamentStatus.Ongoing ||
-      tournament.status === TournamentStatus.Finished ||
-      tournament.status === TournamentStatus.Canceled;
-
-    return registrationClosedByDate || registrationClosedByStatus;
-  }, [division?.tournamentId, tournament]);
-
-  // Once the tournament has started its fixture is generated, so the division's
-  // phase (fase) structure is frozen: adding or removing a stage would corrupt
-  // the bracket. This mirrors the backend guard in StageService (the source of
-  // truth) and is used to disable the "Nueva Fase" / delete affordances.
-  const isTournamentStarted = useMemo(() => {
-    if (!division?.tournamentId || tournament?.id !== division.tournamentId) {
-      return false;
-    }
-
-    return (
-      tournament.status === TournamentStatus.Ongoing ||
-      tournament.status === TournamentStatus.Finished
-    );
-  }, [division?.tournamentId, tournament]);
-
   // Teams that can receive a point deduction: those present in the division's
   // standings (pooled positions cover both regular zones and multi-group cups),
   // deduped by team id.
@@ -242,7 +207,6 @@ const DivisionPage: React.FC = () => {
         >
           <Tab label="Detalle" value="detalle" />
           <Tab label="Posiciones" value="posiciones" />
-          <Tab label="Fases" value="fases" />
           <Tab label="Llaves" value="llaves" />
         </Tabs>
 
@@ -319,16 +283,6 @@ const DivisionPage: React.FC = () => {
               divisionName={division.name}
             />
           ))}
-
-        {tab === 'fases' && (
-          <StagesPage
-            divisionId={division.id}
-            showGenerateStagesButton={canGenerateStages}
-            stageStructureLocked={isTournamentStarted}
-            title={undefined}
-            wrapInCard={false}
-          />
-        )}
 
         {tab === 'llaves' &&
           (bracketsLoading ? (
