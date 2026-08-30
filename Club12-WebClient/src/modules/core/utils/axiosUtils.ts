@@ -286,9 +286,10 @@ export const sendGet = async <T>(
  */
 export const sendDelete = async <T>(
   resource: string,
-  configOverride?: ConfigOverride
+  configOverride?: ConfigOverride,
+  body?: unknown
 ): Promise<AxiosResponse<T>> =>
-  await sendRequest<T>('DELETE', resource, configOverride);
+  await sendRequest<T>('DELETE', resource, configOverride, body);
 
 /**
  * Downloads a file from the server.

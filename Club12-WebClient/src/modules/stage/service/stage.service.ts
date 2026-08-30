@@ -90,6 +90,19 @@ export const stageService = {
     sendPost(`${routes.stages}/${id}/assign-team`, { teamIds, auto }),
 
   /**
+   * Unassigns one or more teams from a stage (removes them from that zone's
+   * group). Used when moving a team to another zone or clearing its slot.
+   * @param {GUID} id - The stage to remove the teams from.
+   * @param {GUID[]} teamIds - The teams to unassign.
+   * @returns {Promise<AxiosResponse<void>>} The response confirming the removal.
+   */
+  unassignTeamsFromStage: async (
+    id: GUID,
+    teamIds: GUID[]
+  ): Promise<AxiosResponse<void>> =>
+    sendDelete(`${routes.stages}/${id}/unassign-team`, undefined, { teamIds }),
+
+  /**
    * Seeds an elimination stage's already-generated matches from the
    * division's group-stage standings.
    * @param {GUID} id - The elimination stage to seed.

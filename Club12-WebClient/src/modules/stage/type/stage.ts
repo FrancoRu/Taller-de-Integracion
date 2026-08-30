@@ -75,6 +75,15 @@ export interface IStageContextProps {
   ): Promise<boolean | void>;
 
   /**
+   * Unassigns one or more teams from a stage (removes them from that zone's
+   * group), e.g. when moving a team to another zone.
+   * @param {GUID} id - The stage to remove the teams from.
+   * @param {GUID[]} teamIds - The teams to unassign.
+   * @returns {Promise<boolean | void>} A promise resolving to true on success, or void on failure.
+   */
+  unassignTeamsFromStage(id: GUID, teamIds: GUID[]): Promise<boolean | void>;
+
+  /**
    * Seeds an elimination stage's already-generated matches from the
    * division's group-stage standings, in classic bracket seed order.
    * @param {GUID} id - The elimination stage to seed.

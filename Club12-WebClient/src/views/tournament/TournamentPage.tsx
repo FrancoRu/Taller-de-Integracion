@@ -99,6 +99,10 @@ const TournamentPage: React.FC = () => {
   // the RegistrationClosed phase, once the fixture skeleton exists.
   const isRegistrationClosed =
     currentStatus === TournamentStatus.RegistrationClosed;
+  // Assignment is available as a DRAFT while registration is still open, so the
+  // organizer can place teams into zones as teams enroll, and stays available
+  // once registration closes (when the tournament can finally start).
+  const canAssign = isOpenForRegistration || isRegistrationClosed;
 
   const handleCreateDivision = () => {
     navigate(`${APP_ROUTES.panelDivisionCreate}?tournamentId=${tournament.id}`);
@@ -143,7 +147,7 @@ const TournamentPage: React.FC = () => {
           {isOpenForRegistration && (
             <Tab label="Equipos inscriptos" value="inscriptos" />
           )}
-          {isRegistrationClosed && (
+          {canAssign && (
             <Tab label="Asignación" value="asignacion" />
           )}
         </Tabs>
@@ -241,7 +245,7 @@ const TournamentPage: React.FC = () => {
           <TournamentEnrolledTeams tournamentId={tournament.id} />
         )}
 
-        {tab === 'asignacion' && isRegistrationClosed && (
+        {tab === 'asignacion' && canAssign && (
           <TournamentDivisionAssignment tournament={tournament} />
         )}
     </PageShell>
