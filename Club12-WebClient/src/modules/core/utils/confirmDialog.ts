@@ -5,6 +5,20 @@ const theme = getTheme('dark');
 const DIALOG_BACKGROUND = theme.palette.background.paper;
 const DIALOG_TEXT_COLOR = theme.palette.text.primary;
 
+// SweetAlert's container defaults to z-index 1060, which sits BELOW MUI's
+// modals/dialogs (1300+). A confirm/notify fired while a MUI Dialog is open
+// then renders behind it — its buttons unclickable and the awaited promise
+// never resolving. Lifting the container above every MUI layer keeps alerts
+// on top wherever they are triggered from.
+const OVER_MUI_ZINDEX = '2000';
+
+const liftAboveMuiModals = () => {
+  const container = Swal.getContainer();
+  if (container) {
+    container.style.zIndex = OVER_MUI_ZINDEX;
+  }
+};
+
 type NotifyIcon = 'success' | 'error' | 'warning' | 'info';
 
 interface NotifyOptions {
@@ -36,6 +50,7 @@ async function notify(icon: NotifyIcon, options: NotifyOptions): Promise<void> {
     confirmButtonColor: theme.palette.primary.main,
     background: DIALOG_BACKGROUND,
     color: DIALOG_TEXT_COLOR,
+    didOpen: liftAboveMuiModals,
   });
 }
 
@@ -87,6 +102,7 @@ export async function confirmAction(options: ConfirmActionOptions): Promise<bool
     cancelButtonText: options.cancelButtonText ?? 'Cancelar',
     background: DIALOG_BACKGROUND,
     color: DIALOG_TEXT_COLOR,
+    didOpen: liftAboveMuiModals,
   });
 
   return result.isConfirmed;

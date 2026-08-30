@@ -147,11 +147,18 @@ const TeamFormDialog: React.FC<TeamFormDialogProps> = ({
             fullWidth
           />
           <TextField
-            label="Código"
+            label="Código (3 letras)"
             value={form.threeLetterCode}
-            onChange={e => onFieldChange('threeLetterCode', e.target.value)}
+            onChange={e =>
+              onFieldChange(
+                'threeLetterCode',
+                e.target.value.toUpperCase().slice(0, 3)
+              )
+            }
             required
             fullWidth
+            helperText="Sigla de 3 letras del equipo (ej. CAC)."
+            slotProps={{ htmlInput: { maxLength: 3 } }}
           />
 
           {/* Kit designer: colors, template gallery and a live preview. */}
