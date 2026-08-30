@@ -44,7 +44,6 @@ import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import {
   confirmAction,
   notifyError,
-  notifySuccess,
 } from '@/modules/core/utils/confirmDialog';
 import { completabilityIssueMessage } from '@/modules/tournament/utils/completabilityMessages';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
@@ -464,10 +463,6 @@ const TournamentDivisionAssignment: React.FC<
       }
 
       await refreshCompletability();
-      await notifySuccess({
-        title: 'Torneo iniciado',
-        text: 'El fixture se generó y el torneo está en curso.',
-      });
     } finally {
       setBusy(false);
     }

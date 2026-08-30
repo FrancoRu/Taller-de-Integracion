@@ -1,4 +1,11 @@
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { AxiosError } from 'axios';
 import Swal from 'sweetalert2';
 import { ProviderProps } from '@/modules/core/types/types';
@@ -35,10 +42,28 @@ const extractMessage = (data: BadRequestResponse): string => {
 
 export const ErrorProvider: React.FC<ProviderProps> = ({ children }) => {
   const [errors, setErrors] = useState<string[]>([]);
+  // Remembers the last toast so an identical message fired again within a short
+  // window (e.g. two chained requests that both succeed, or the same error
+  // surfaced by both an interceptor and a catch) shows only ONCE instead of
+  // stacking repeated alerts.
+  const lastToastRef = useRef<{ message: string; at: number }>({
+    message: '',
+    at: 0,
+  });
 
   const setMessage = useCallback((status: number, message: string[]) => {
     const stat = status < 400 ? 'success' : 'error';
     const messages = message.join(', ');
+
+    const now = Date.now();
+    if (
+      lastToastRef.current.message === messages &&
+      now - lastToastRef.current.at < 2500
+    ) {
+      return;
+    }
+    lastToastRef.current = { message: messages, at: now };
+
     void Swal.fire({
       position: 'center',
       icon: stat,
@@ -47,6 +72,14 @@ export const ErrorProvider: React.FC<ProviderProps> = ({ children }) => {
       timer: 1500,
       background: DIALOG_BACKGROUND,
       color: DIALOG_TEXT_COLOR,
+      // Keep toasts above MUI's modal layer so one fired while a Dialog is open
+      // is not hidden behind it.
+      didOpen: () => {
+        const container = Swal.getContainer();
+        if (container) {
+          container.style.zIndex = '2000';
+        }
+      },
     });
   }, []);
 
