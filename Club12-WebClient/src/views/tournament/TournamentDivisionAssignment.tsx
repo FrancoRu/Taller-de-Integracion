@@ -38,11 +38,14 @@ import { ITeamResponse } from '@/modules/team/type/team.d';
 import {
   ITournamentCompletability,
   ITournamentResponse,
-  IPutTournamentRequest,
 } from '@/modules/tournament/type/tournament';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
-import { confirmAction } from '@/modules/core/utils/confirmDialog';
+import {
+  confirmAction,
+  notifyError,
+  notifySuccess,
+} from '@/modules/core/utils/confirmDialog';
 import { completabilityIssueMessage } from '@/modules/tournament/utils/completabilityMessages';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
 import TeamLogo from '@/views/core/components/TeamLogo';
@@ -412,7 +415,7 @@ const TournamentDivisionAssignment: React.FC<
   const handleStart = async () => {
     const confirmed = await confirmAction({
       title: 'Iniciar torneo',
-      text: 'Se generará el fixture y comenzará el torneo. Esta acción no se puede revertir. ¿Continuar?',
+      text: 'Se cerrará la inscripción, se generará el fixture y comenzará el torneo. Esta acción no se puede revertir. ¿Continuar?',
       confirmButtonText: 'Iniciar torneo',
     });
 
@@ -420,18 +423,51 @@ const TournamentDivisionAssignment: React.FC<
       return;
     }
 
-    const payload: IPutTournamentRequest = {
+    const base = {
       name: tournament.name,
       description: tournament.description,
       startDate: new Date(tournament.startDate),
       teamRegistrationDeadline: new Date(tournament.teamRegistrationDeadline),
-      status: TournamentStatus.Ongoing,
     };
 
     setBusy(true);
     try {
-      await putTournamentById(tournament.id, payload);
+      // The backend state machine requires RegistrationClosed before Ongoing.
+      // When the organizer starts straight from an open-registration draft, we
+      // close the registration first, then start — so there is no hidden
+      // "cerrar inscripción" step to hunt for in the edit screen.
+      if (tournament.status === TournamentStatus.OpenForRegistration) {
+        const closed = await putTournamentById(tournament.id, {
+          ...base,
+          status: TournamentStatus.RegistrationClosed,
+        });
+        if (!closed) {
+          await notifyError({
+            title: 'No se pudo cerrar la inscripción',
+            text: 'Volvé a intentar en unos segundos.',
+          });
+          return;
+        }
+      }
+
+      const started = await putTournamentById(tournament.id, {
+        ...base,
+        status: TournamentStatus.Ongoing,
+      });
+
+      if (!started) {
+        await notifyError({
+          title: 'No se pudo iniciar el torneo',
+          text: 'Puede ser un problema momentáneo al generar el fixture. Esperá unos segundos y volvé a intentar.',
+        });
+        return;
+      }
+
       await refreshCompletability();
+      await notifySuccess({
+        title: 'Torneo iniciado',
+        text: 'El fixture se generó y el torneo está en curso.',
+      });
     } finally {
       setBusy(false);
     }
@@ -489,8 +525,15 @@ const TournamentDivisionAssignment: React.FC<
     return <DetailSkeleton />;
   }
 
-  const canStart = completability?.canStart ?? false;
   const issues = completability?.issues ?? [];
+  const hasUnassigned = unassignedTeams.length > 0;
+  // The start button independently requires that NO enrolled team is left
+  // without a zone — a safety net over the backend completability so the
+  // tournament can never start with unassigned teams / empty divisions.
+  // Ready when every enrolled team has a zone and the backend agrees. Starting
+  // from an open-registration draft is allowed — handleStart closes the
+  // registration first before starting, so no separate step is needed.
+  const readyToStart = (completability?.canStart ?? false) && !hasUnassigned;
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -503,7 +546,7 @@ const TournamentDivisionAssignment: React.FC<
         <Button
           variant="contained"
           onClick={() => void handleStart()}
-          disabled={!canStart || busy}
+          disabled={!readyToStart || busy}
         >
           Iniciar torneo
         </Button>
@@ -511,15 +554,23 @@ const TournamentDivisionAssignment: React.FC<
 
       {!isRegistrationClosed && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          Podés ir asignando los equipos a sus zonas como borrador. Para iniciar
-          el torneo, primero cerrá la inscripción desde «Editar torneo».
+          Podés ir asignando los equipos a sus zonas como borrador mientras la
+          inscripción sigue abierta. Cuando estén todos asignados, «Iniciar
+          torneo» cierra la inscripción y genera el fixture automáticamente.
         </Alert>
       )}
 
-      {issues.length > 0 ? (
+      {issues.length > 0 || hasUnassigned ? (
         <Alert severity="warning" sx={{ mb: 2 }}>
           <AlertTitle>El torneo todavía no puede iniciarse</AlertTitle>
           <List dense disablePadding>
+            {hasUnassigned && (
+              <ListItem disableGutters>
+                <ListItemText
+                  primary={`Hay ${unassignedTeams.length} equipo(s) sin zona asignada. Asignálos todos antes de iniciar.`}
+                />
+              </ListItem>
+            )}
             {issues.map((issue, index) => (
               <ListItem key={`${issue.code}-${index}`} disableGutters>
                 <ListItemText primary={completabilityIssueMessage(issue)} />

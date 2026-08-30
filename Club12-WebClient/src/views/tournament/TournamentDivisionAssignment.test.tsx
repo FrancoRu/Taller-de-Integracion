@@ -167,7 +167,7 @@ const setup = (options: {
   getCompletability.mockResolvedValue(completability);
 
   putTournamentById = vi.fn<ITournamentContextProps['putTournamentById']>();
-  putTournamentById.mockResolvedValue(undefined);
+  putTournamentById.mockResolvedValue(true);
 
   mockedUseTeam.mockReturnValue({
     team: null,
@@ -476,6 +476,35 @@ describe('TournamentDivisionAssignment — start button', () => {
 
     await waitFor(() => expect(putTournamentById).toHaveBeenCalledTimes(1));
     expect(putTournamentById).toHaveBeenCalledWith(
+      TOURNAMENT_ID,
+      expect.objectContaining({ status: TournamentStatus.Ongoing })
+    );
+  });
+
+  it('closes registration then starts when launched from an open-registration draft', async () => {
+    const { tournament } = setup({
+      status: TournamentStatus.OpenForRegistration,
+      divisions: [],
+      completability: { canStart: true, issues: [] },
+    });
+
+    const user = userEvent.setup();
+    renderComponent(tournament);
+
+    const startButton = await screen.findByRole('button', {
+      name: /iniciar torneo/i,
+    });
+    await waitFor(() => expect(startButton).toBeEnabled());
+    await user.click(startButton);
+
+    await waitFor(() => expect(putTournamentById).toHaveBeenCalledTimes(2));
+    expect(putTournamentById).toHaveBeenNthCalledWith(
+      1,
+      TOURNAMENT_ID,
+      expect.objectContaining({ status: TournamentStatus.RegistrationClosed })
+    );
+    expect(putTournamentById).toHaveBeenNthCalledWith(
+      2,
       TOURNAMENT_ID,
       expect.objectContaining({ status: TournamentStatus.Ongoing })
     );

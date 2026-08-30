@@ -77,7 +77,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
     async (
       id: GUID,
       tournamentRequest: IPutTournamentRequest
-    ): Promise<void> => {
+    ): Promise<boolean | void> => {
       try {
         const res: AxiosResponse<void> =
           await tournamentService.putTournamentById(id, tournamentRequest);
@@ -98,6 +98,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
             };
           });
           setMessage(res.status, ['Torneo actualizado correctamente']);
+          return true;
         }
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
