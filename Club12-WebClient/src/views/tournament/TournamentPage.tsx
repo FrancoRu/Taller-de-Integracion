@@ -15,6 +15,7 @@ import TeamsPage from '@/views/team/TeamsPage';
 import TournamentEnrolledTeams from '@/views/tournament/TournamentEnrolledTeams';
 import TournamentDivisionAssignment from '@/views/tournament/TournamentDivisionAssignment';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import { confirmAction, notifyError } from '@/modules/core/utils/confirmDialog';
 import {
   TOURNAMENT_STATUS_LABEL,
   resolveTournamentStatus,
@@ -25,7 +26,7 @@ const TournamentPage: React.FC = () => {
   const { tournamentId } = useParams<{ tournamentId: GUID }>();
   const navigate = useNavigate();
   const { role } = useAuth();
-  const { tournament, getTournamentById } = useTournament();
+  const { tournament, getTournamentById, putTournamentById } = useTournament();
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<
     'detalle' | 'divisiones' | 'equipos' | 'inscriptos' | 'asignacion'
@@ -91,6 +92,36 @@ const TournamentPage: React.FC = () => {
     role === UserRolesType.Owner || role === UserRolesType.Admin;
 
   const currentStatus = resolveTournamentStatus(tournament.status);
+  const isOngoing = currentStatus === TournamentStatus.Ongoing;
+
+  const handleRevertToDraft = async () => {
+    const confirmed = await confirmAction({
+      title: 'Revertir a borrador',
+      text: 'El torneo vuelve a "Inscripción cerrada" y se ELIMINA el fixture generado (los partidos). Las asignaciones de equipos a zonas se conservan, para que corrijas lo que haga falta y vuelvas a iniciar. Esta acción no se puede deshacer. ¿Continuar?',
+      confirmButtonText: 'Revertir a borrador',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    const ok = await putTournamentById(tournament.id, {
+      name: tournament.name,
+      description: tournament.description,
+      startDate: new Date(tournament.startDate),
+      teamRegistrationDeadline: new Date(tournament.teamRegistrationDeadline),
+      status: TournamentStatus.RegistrationClosed,
+    });
+
+    if (ok) {
+      await getTournamentById(tournament.id);
+    } else {
+      await notifyError({
+        title: 'No se pudo revertir el torneo',
+        text: 'Volvé a intentar en unos segundos.',
+      });
+    }
+  };
   // HU-107: enrolled-team management is the registration phase, only available
   // while the tournament is accepting registrations.
   const isOpenForRegistration =
@@ -113,6 +144,15 @@ const TournamentPage: React.FC = () => {
       title={tournament.name}
       actions={
         <>
+          {canEditTournament && isOngoing && (
+            <Button
+              variant="outlined"
+              color="warning"
+              onClick={() => void handleRevertToDraft()}
+            >
+              Revertir a borrador
+            </Button>
+          )}
           {canEditTournament && (
             <Button
               variant="contained"
