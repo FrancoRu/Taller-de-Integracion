@@ -21,12 +21,12 @@ import {
   IDivisionResponse,
 } from '@/modules/division/type/division';
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
+import CategoryChip from '@/views/core/components/CategoryChip';
 import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import {
   DeleteIcon,
-  EditIcon,
   SearchIcon,
   VisibilityIcon,
 } from '@/views/core/MUI/icons/icons';
@@ -157,13 +157,6 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
     [navigate]
   );
 
-  const handleEdit = useCallback(
-    (row: IDivisionResponse) => {
-      navigate(APP_ROUTES.panelDivisionEdit.build(row.slug ?? row.id));
-    },
-    [navigate]
-  );
-
   const handleDelete = useCallback(
     async (row: IDivisionResponse) => {
       const confirmed = await confirmDelete({
@@ -194,19 +187,13 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
         onClick: handleView,
       },
       {
-        label: 'Editar',
-        color: 'primary',
-        icon: <EditIcon fontSize="small" />,
-        onClick: handleEdit,
-      },
-      {
         label: 'Eliminar',
         color: 'error',
         icon: <DeleteIcon fontSize="small" />,
         onClick: handleDelete,
       },
     ],
-    [handleDelete, handleEdit, handleView]
+    [handleDelete, handleView]
   );
 
   const columns: GridColDef<IDivisionResponse>[] = useMemo(() => {
@@ -216,6 +203,21 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
         headerName: 'Nombre',
         flex: 1.2,
         minWidth: 180,
+      },
+      {
+        field: 'category',
+        headerName: 'Categoría',
+        flex: 0.8,
+        minWidth: 130,
+        align: 'center',
+        headerAlign: 'center',
+        sortable: false,
+        renderCell: params =>
+          params.row.category ? (
+            <CategoryChip category={params.row.category} />
+          ) : (
+            '—'
+          ),
       },
       {
         field: 'isFinished',
