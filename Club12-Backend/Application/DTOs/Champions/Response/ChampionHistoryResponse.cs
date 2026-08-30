@@ -31,6 +31,15 @@ public class ChampionHistoryResponse
     /// <summary>The name of the division that was won.</summary>
     public required string DivisionName { get; set; }
 
-    /// <summary>The team that won the division (its 1st place).</summary>
+    /// <summary>
+    /// The name of the sub-cup (playoff bracket) that was won, e.g. "Copa Oro"
+    /// or "Copa Plata", when the division splits its playoff into several cups
+    /// by sub-tier. Null when the division crowns a single champion (a single
+    /// bracket, a cross-division cup, or a group-only division), so the caller
+    /// can omit a redundant cup label in that case.
+    /// </summary>
+    public string? CupName { get; set; }
+
+    /// <summary>The team that won this cup (its 1st place).</summary>
     public required PodiumTeamResponse ChampionTeam { get; set; }
 }

@@ -30,6 +30,14 @@ public static class ChampionResolver
     }
 
     /// <summary>
+    /// The champion of a single sub-cup (playoff bracket) of a division.
+    /// <see cref="CupName"/> is the bracket's name (e.g. "Copa Oro"); it is null
+    /// only for a single unnamed bracket. <see cref="SeedOrder"/> orders the cups
+    /// by tier — the top cup (seeded from standings position #1) comes first.
+    /// </summary>
+    public sealed record CupChampion(string? CupName, int SeedOrder, TeamRef Champion);
+
+    /// <summary>
     /// Resolves the podium of a division that has a playoff. The top cup is the
     /// bracket seeded from standings position #1: when the division maps several
     /// cups (HU-45/HU-81) it is the destination of the mapping with the lowest
@@ -77,6 +85,68 @@ public static class ChampionResolver
             Second = finalOutcome is null ? null : Lookup(teamsById, finalOutcome.Value.Loser),
             Third = thirdOutcome is null ? null : Lookup(teamsById, thirdOutcome.Value.Winner),
         };
+    }
+
+    /// <summary>
+    /// Resolves the champion of EVERY sub-cup (playoff bracket) of a division,
+    /// not just the top one. Each distinct <see cref="Stage.BracketName"/> is a
+    /// cup; its champion is the winner of that cup's <see cref="StageType.Final"/>.
+    /// Cups whose Final is undecided are omitted. Results are ordered by tier: the
+    /// cup seeded from the lowest standings position (via <paramref name="mappings"/>)
+    /// comes first, then the rest by name. When the division has a single bracket
+    /// its <see cref="CupChampion.CupName"/> is null (no sub-tier distinction).
+    /// </summary>
+    public static IReadOnlyList<CupChampion> ResolveCupChampions(
+        IReadOnlyList<Stage> eliminationStages,
+        IReadOnlyList<DivisionPlayoffMapping> mappings,
+        IReadOnlyList<Match> eliminationMatches,
+        IReadOnlyList<MatchSeries> series)
+    {
+        List<string?> bracketNames = [.. eliminationStages
+            .Select(stage => stage.BracketName)
+            .Distinct()];
+
+        bool singleBracket = bracketNames.Count <= 1;
+        Dictionary<Guid, TeamRef> teamsById = BuildTeamLookup(eliminationMatches, series);
+
+        // Seed order per bracket: the cup receiving the lowest FromPosition is the
+        // top tier. Brackets not named by any mapping sort after, by name.
+        Dictionary<string, int> seedByBracket = mappings
+            .GroupBy(mapping => mapping.Destination)
+            .ToDictionary(group => group.Key, group => group.Min(m => m.FromPosition));
+
+        List<CupChampion> champions = [];
+
+        foreach (string? bracketName in bracketNames)
+        {
+            Stage? finalStage = eliminationStages
+                .Where(stage => stage.BracketName == bracketName && stage.StageType == StageType.Final)
+                .OrderBy(stage => stage.Order)
+                .FirstOrDefault();
+
+            if (finalStage is null)
+            {
+                continue;
+            }
+
+            (Guid Winner, Guid Loser)? outcome = ResolveStageOutcome(finalStage, eliminationMatches, series);
+            TeamRef? champion = outcome is null ? null : Lookup(teamsById, outcome.Value.Winner);
+
+            if (champion is null)
+            {
+                continue;
+            }
+
+            int seedOrder = bracketName is not null && seedByBracket.TryGetValue(bracketName, out int seed)
+                ? seed
+                : int.MaxValue;
+
+            champions.Add(new CupChampion(singleBracket ? null : bracketName, seedOrder, champion));
+        }
+
+        return [.. champions
+            .OrderBy(c => c.SeedOrder)
+            .ThenBy(c => c.CupName, StringComparer.Ordinal)];
     }
 
     /// <summary>
