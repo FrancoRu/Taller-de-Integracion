@@ -31,6 +31,14 @@ public interface IMatchService
     Task UpdateMatchAsync(Match matchEntity);
 
     /// <summary>
+    /// True when another match (not <paramref name="excludeMatchId"/>) is
+    /// scheduled at the same venue less than 2 hours from
+    /// <paramref name="matchDate"/> — two matches on one court must be at least
+    /// 2 hours apart.
+    /// </summary>
+    Task<bool> HasVenueScheduleConflictAsync(Guid venueId, DateTime matchDate, Guid excludeMatchId);
+
+    /// <summary>
     /// Loads a decisive final result for a match (HU-69/HU-70), rejecting a
     /// tied score. Returns the updated match, or null if it does not exist.
     /// </summary>

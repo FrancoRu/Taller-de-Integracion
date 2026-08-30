@@ -161,6 +161,15 @@ public class MatchController(IMatchService matchService, IStageTeamMatchService 
         }
 
         mapper.Map(updateRequest, existingMatch);
+
+        // A court cannot host two matches less than 2 hours apart.
+        if (existingMatch.VenueId.HasValue
+            && await matchService.HasVenueScheduleConflictAsync(
+                existingMatch.VenueId.Value, existingMatch.MatchDate, existingMatch.Id))
+        {
+            return BadRequest(ErrorMessages.Match.VenueScheduleConflict);
+        }
+
         await matchService.UpdateMatchAsync(existingMatch);
         DetailedMatchResponse detailedMatch = mapper.Map<DetailedMatchResponse>(existingMatch);
         return Ok(detailedMatch);
