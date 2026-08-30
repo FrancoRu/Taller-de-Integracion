@@ -111,6 +111,12 @@ interface PodiumProps {
  * podium came from a playoff bracket or straight from the final standings.
  */
 export default function Podium({ podium }: PodiumProps) {
+  // A playoff only has a 3rd place when its bracket includes a third-place
+  // match. When it does not, `third` is null and we omit the slot entirely
+  // rather than showing a permanent "A definir". A standings podium always
+  // keeps the three places (its third comes straight from the table).
+  const showThird = !podium.hasPlayoff || podium.third != null;
+
   return (
     <Box component="section" aria-label={`Podio de ${podium.divisionName}`}>
       <Box
@@ -124,7 +130,7 @@ export default function Podium({ podium }: PodiumProps) {
       >
         <PodiumPlace rank={1} team={podium.first} />
         <PodiumPlace rank={2} team={podium.second} />
-        <PodiumPlace rank={3} team={podium.third} />
+        {showThird && <PodiumPlace rank={3} team={podium.third} />}
       </Box>
     </Box>
   );
