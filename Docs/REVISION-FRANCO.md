@@ -15,8 +15,10 @@
 > - #89 tabs **"Partidos"** (fixture de la división → Ver → editar) y **"Equipos"** en el detalle de división. ✅ (tu prioridad #1)
 > - Overlays bloqueantes al iniciar/revertir torneo (#87) + "Nueva División" oculta En curso.
 >
+> **#90 Nav jerárquico Temporadas → Torneos → Divisiones** ✅ (tu prioridad #2): se sacó "Torneos" del sidebar; se llega a un torneo por su temporada; "Volver" del torneo → su temporada.
+>
 > **PENDIENTE INMEDIATO (en orden):**
-> 1. **Nav jerárquico: Temporadas → Torneos → Divisiones** (tu prioridad #2). Rediseño del sitemap del admin.
+> 1. **Bug: brackets sin byes** (Copa Plata 5 equipos → 5,6,7 semis, 8,9 cuartos) — generación de bracket backend para qualifiers no potencia-de-2. + el bracket se corta visualmente.
 > 2. **Loading/skeleton mal en varias públicas** (ej. página pública de equipos): muestra "no hay datos" ANTES del fetch. Siempre mostrar loading hasta tener datos; el vacío sólo si realmente no hay nada tras cargar. (mismo patrón que se arregló en Novedades)
 > 3. **Bug: llaves vacías en algunas zonas** (Image #37): Zona D generó su bracket pero Zona A (11 equipos) muestra "No hay fases de eliminación" en Copa Oro/Plata. Fixture/bracket generado inconsistente entre zonas — probablemente ligado a los byes/qualifiers no potencia-de-2 (11 equipos → Oro 1-4 / Plata 5-8). INVESTIGAR generación de fixture por zona.
 > 4. **Bug: el bracket "se corta"** visualmente (Image #35) — overflow/ancho del componente `PlayoffBracket` (usa lib de brackets); revisar el clip del SVG/contenedor.
