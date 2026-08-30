@@ -8,14 +8,19 @@
 > - #84 Ver/Editar unificado en Usuarios y Match.
 > - #85 **"Revertir a borrador"**: des-iniciar un torneo En curso (Ongoing→RegistrationClosed) que borra el fixture pero conserva las asignaciones; guarda: rechazado si hay partidos jugados. → permite corregir la asignación de un torneo ya iniciado y volver a iniciar.
 >
+> **Más fixes:** #86 "Volver" de división vuelve al torneo (no a la lista global que mezclaba divisiones de todos los torneos) + se sacó el sub-label ruidoso del código.
+>
 > **PENDIENTE INMEDIATO (en orden):**
 > 1. Tab **"Partidos"** en el detalle de división (admin): asignar cancha, cambiar fecha, cargar resultado + goleadores. (feature grande, reusar componentes de match)
-> 2. Quitar el **sub-label** ruidoso del campo "Código (3 letras)" (Image #34).
-> 3. **Loading/skeleton mal en varias públicas** (ej. página pública de equipos): muestra "no hay datos" ANTES del fetch. Siempre mostrar loading hasta tener datos; el vacío sólo si realmente no hay nada tras cargar. (mismo patrón que se arregló en Novedades)
-> 4. Ver/Editar en el resto de entidades por MODAL (equipos, canchas, jugadores, temporadas) — mover el form de edición al detalle. Blog y sanciones: su "Ver" no tiene edición → agregarla al detalle.
-> 5. Nav jerárquico: Torneos dentro de Temporadas.
-> 6. README + manual de usuario.
-> 7. Byes de bracket (Copa Plata 5 equipos: seeds 5,6,7 con bye a semis).
+> 2. **Loading/skeleton mal en varias públicas** (ej. página pública de equipos): muestra "no hay datos" ANTES del fetch. Siempre mostrar loading hasta tener datos; el vacío sólo si realmente no hay nada tras cargar. (mismo patrón que se arregló en Novedades)
+> 3. **Bug: llaves vacías en algunas zonas** (Image #37): Zona D generó su bracket pero Zona A (11 equipos) muestra "No hay fases de eliminación" en Copa Oro/Plata. Fixture/bracket generado inconsistente entre zonas — probablemente ligado a los byes/qualifiers no potencia-de-2 (11 equipos → Oro 1-4 / Plata 5-8). INVESTIGAR generación de fixture por zona.
+> 4. **Bug: el bracket "se corta"** visualmente (Image #35) — overflow/ancho del componente `PlayoffBracket` (usa lib de brackets); revisar el clip del SVG/contenedor.
+> 5. **Nav jerárquico (IMPORTANTE, reiterado): Torneos DENTRO de Temporadas** (temporada → torneos → divisiones). Rediseñar el sitemap del admin; esto también evita la lista global de divisiones que mezcla torneos.
+> 6. Ver/Editar en el resto de entidades por MODAL (equipos, canchas, jugadores, temporadas) — mover el form de edición al detalle. Blog y sanciones: su "Ver" no tiene edición → agregarla al detalle.
+> 7. README + manual de usuario.
+> 8. Byes de bracket (Copa Plata 5 equipos: seeds 5,6,7 con bye a semis) — verificar generación para qualifiers no potencia-de-2.
+>
+> **Feito recién:** #86 (Volver división + label código).
 
 
 Fecha: 2026-08-30. Rama de integración: `develop`. Todo lo marcado ✅ ya está mergeado a `develop` (PRs #72–#81) y va a staging.
