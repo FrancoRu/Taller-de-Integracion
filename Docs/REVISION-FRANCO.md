@@ -10,8 +10,13 @@
 >
 > **Más fixes:** #86 "Volver" de división vuelve al torneo (no a la lista global que mezclaba divisiones de todos los torneos) + se sacó el sub-label ruidoso del código.
 >
+> **Más features (#88, #89):**
+> - #88 el detalle admin de partido edita **cancha + fecha** (además de resultado+goleadores); regla **no 2 partidos en la misma cancha con <2h** (validado en backend).
+> - #89 tabs **"Partidos"** (fixture de la división → Ver → editar) y **"Equipos"** en el detalle de división. ✅ (tu prioridad #1)
+> - Overlays bloqueantes al iniciar/revertir torneo (#87) + "Nueva División" oculta En curso.
+>
 > **PENDIENTE INMEDIATO (en orden):**
-> 1. Tab **"Partidos"** en el detalle de división (admin): asignar cancha, cambiar fecha, cargar resultado + goleadores. (feature grande, reusar componentes de match)
+> 1. **Nav jerárquico: Temporadas → Torneos → Divisiones** (tu prioridad #2). Rediseño del sitemap del admin.
 > 2. **Loading/skeleton mal en varias públicas** (ej. página pública de equipos): muestra "no hay datos" ANTES del fetch. Siempre mostrar loading hasta tener datos; el vacío sólo si realmente no hay nada tras cargar. (mismo patrón que se arregló en Novedades)
 > 3. **Bug: llaves vacías en algunas zonas** (Image #37): Zona D generó su bracket pero Zona A (11 equipos) muestra "No hay fases de eliminación" en Copa Oro/Plata. Fixture/bracket generado inconsistente entre zonas — probablemente ligado a los byes/qualifiers no potencia-de-2 (11 equipos → Oro 1-4 / Plata 5-8). INVESTIGAR generación de fixture por zona.
 > 4. **Bug: el bracket "se corta"** visualmente (Image #35) — overflow/ancho del componente `PlayoffBracket` (usa lib de brackets); revisar el clip del SVG/contenedor.

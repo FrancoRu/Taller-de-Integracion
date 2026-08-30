@@ -49,6 +49,12 @@ Un bracket de eliminación con N equipos que NO es potencia de 2 debe usar **bye
 - **Estado actual (BUG):** la generación crea una primera ronda "llena" (ej. Copa Plata muestra "4 partidos" en Cuartos) sin byes. Hay que corregir la **generación de stages/partidos de eliminación** (qualifiersToStageTypes + seeding con byes) en backend, y el render del bracket.
 - Además el bracket **se corta** visualmente en el detalle de división (overflow del componente `PlayoffBracket`).
 
+## 3.b) Programación de partidos (cancha + fecha)
+
+- Se puede editar **cancha y fecha/hora** de un partido no jugado (detalle admin del partido, o vía el tab "Partidos" de la división). #88
+- **Regla:** una misma cancha NO puede tener dos partidos con **menos de 2 horas** de diferencia (exactamente 2h está permitido). Validado en backend (409) al guardar. #88
+- No se puede editar un partido ya iniciado/finalizado.
+
 ## 4) Equipos vs Equipos inscriptos (a definir)
 
 Hoy conviven "Equipos" (creados en el torneo, `Team.TournamentId`) y "Equipos inscriptos" (registro). En la práctica muestran lo mismo → el owner pide **coherencia**: definir el modelo y dejar una sola noción/tab clara. La asignación y la completabilidad razonan sobre los inscriptos.
