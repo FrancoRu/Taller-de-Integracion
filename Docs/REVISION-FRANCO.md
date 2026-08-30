@@ -25,6 +25,20 @@ Lo que se percibía como "no se asignaron equipos / no anda nada" **NO era la DB
 - ✅ **Alertas duplicadas / apiladas (#81).** El toast global ahora deduplica mensajes idénticos dentro de 2.5s (dos requests encadenados o el mismo error surfaceado dos veces ya no apilan). "Iniciar torneo" dejó de mostrar un dialog extra encima del toast.
 - ✅ **ABM de Fases quitado (#80).** El detalle de división ya no tiene tab "Fases" (es todo automático).
 
+## Más arreglos (E2E, PRs #82 + rama `feat/view-edit-consolidation`)
+
+- ✅ **Posiciones en 0 al iniciar** ya se ven todos los equipos en 0-0 (siembra del roster, #81, deployado).
+- ✅ **Leyenda de posiciones** (#82): un solo marcador + nombre de copa (sin el glifo redundante ni el "(1-8)").
+- ✅ **Coloreado de posiciones en el panel** (#82): el detalle de división del admin ahora pasa `qualificationRanges` → filas coloreadas también en el admin.
+- ✅ **Lista global de divisiones con columna Categoría**: para diferenciar zonas del mismo nombre entre masculino y femenino (los "2 Zona A").
+- ⏳ **Ver/Editar unificado** (EN PROGRESO): ya hecho para **Torneos** y **Divisiones** (una sola acción "Ver"; el editar está dentro del detalle). FALTA replicar en: blog, usuarios, sanciones, match (edición por página, fácil) y **equipos, canchas, jugadores, temporadas** (edición por MODAL — hay que mover el form de edición al detalle; es más trabajo por entidad).
+
+### Operación de datos pendiente (owner)
+- **Mover Club Español + Looneys de Zona A a Zona B** en el "Torneo Apertura 2026" (masculino, EN CURSO). NO se puede por cirugía SQL simple: el torneo ya tiene el fixture generado (315 partidos), así que mover los equipos exige **regenerar el fixture**. Además, inyectar writes por el browser da 401 (el token de escritura vive en memoria/cookie httpOnly). Forma correcta: revertir el torneo a borrador (RegistrationClosed) → reasignar en la UI (ya arreglada) → reiniciar (regenera el fixture). Alternativa: resetear los datos de prueba.
+
+### Lógica de bracket a revisar
+- **Byes en Copa de Plata (5 equipos, pos 5-9)**: seeds 5,6,7 deberían ir con **bye a semifinales** y 8,9 jugar cuartos. Verificar la generación del bracket para qualifiers que no son potencia de 2.
+
 ## Bugs/UX arreglados antes (PRs #72–#77)
 
 - ✅ Home season-first, wizard con temporada obligatoria, cuelgue del panel "Administración de datos" (deadlock de modales), loader de Novedades, cards de Torneos.
