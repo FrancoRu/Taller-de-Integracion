@@ -107,7 +107,14 @@ const BlogPostDetailPage: React.FC = () => {
             component="img"
             src={post.photoUrl}
             alt={post.title}
-            sx={{ width: '100%', borderRadius: 2, mb: 3 }}
+            sx={{
+              display: 'block',
+              width: '100%',
+              maxHeight: 340,
+              objectFit: 'cover',
+              borderRadius: 2,
+              mb: 3,
+            }}
           />
         )}
         <div dangerouslySetInnerHTML={{ __html: post.markdownText }} />

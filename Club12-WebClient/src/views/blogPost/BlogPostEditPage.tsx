@@ -58,6 +58,10 @@ const BlogPostEditPage: React.FC = () => {
   const [photoFile, setPhotoFile] = useState<File | undefined>(undefined);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  // The URL param may be a SLUG, but the update/photo endpoints require the
+  // post's GUID — so we keep the resolved id from the loaded post and save with
+  // it, instead of PUTting to a slug URL (which 404s).
+  const [resolvedId, setResolvedId] = useState<GUID | undefined>(undefined);
 
   useEffect(() => {
     if (!blogPostId) {
@@ -69,6 +73,7 @@ const BlogPostEditPage: React.FC = () => {
       setLoading(true);
       const post = await getBlogPostsById(blogPostId);
       if (post) {
+        setResolvedId(post.id);
         setForm({
           author: post.author,
           title: post.title,
@@ -105,7 +110,7 @@ const BlogPostEditPage: React.FC = () => {
   }, [navigate]);
 
   const handleSave = useCallback(async () => {
-    if (!blogPostId) {
+    if (!resolvedId) {
       return;
     }
 
@@ -120,7 +125,7 @@ const BlogPostEditPage: React.FC = () => {
     }
 
     setSubmitting(true);
-    const updated = await putBlogPostById(blogPostId, {
+    const updated = await putBlogPostById(resolvedId, {
       title: form.title.trim(),
       author: form.author.trim(),
       markdownText: form.markdownText,
@@ -133,13 +138,13 @@ const BlogPostEditPage: React.FC = () => {
     }
 
     if (photoFile) {
-      await putPhotoBlogPostById(blogPostId, photoFile);
+      await putPhotoBlogPostById(resolvedId, photoFile);
     }
     setSubmitting(false);
 
     await notifySuccess({ title: 'Publicación actualizada', text: 'Los cambios se guardaron correctamente.' });
     navigate(APP_ROUTES.panelBlog);
-  }, [blogPostId, form, photoFile, putBlogPostById, putPhotoBlogPostById, navigate]);
+  }, [resolvedId, form, photoFile, putBlogPostById, putPhotoBlogPostById, navigate]);
 
   if (loading) {
     return (
