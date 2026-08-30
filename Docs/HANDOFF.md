@@ -28,6 +28,35 @@ Progreso (rama `fix/ux-consolidation-e2e`, sale de develop tras #71):
 14. ⏳ **E2E FINAL** del ciclo completo con build estable.
 15. ⏳ **Creación de torneo ATÓMICA (owner 2026-08-30, Image #12)**: hoy el wizard (`submitWizard.ts`) crea todo con MUCHOS requests secuenciales (POST tournaments → PUT open-registration → POST divisions → POST stages uno por uno). Debe ser UN endpoint transaccional único (crear torneo + divisiones + stages + copas + copa cruzada en una sola transacción DB, todo o nada). Es el fix más importante para "que el flujo de crear torneos ande bien".
 
+## 🔴🔴 FEEDBACK 2 — owner (2026-08-30, tarde). BLOCKER del ciclo + tanda de bugs de admin/UX
+
+**PRIORIDAD MÁXIMA (el ciclo no cierra sin esto):**
+- **A1. Asignar equipos inscriptos a divisiones/zonas.** No existe/no se encuentra la UI para asignar cada equipo inscripto a una zona/división creada. Backend probable: `StageTeamMatchService` (asigna equipos a stage + genera matches), `TournamentEnrolledTeams.tsx`. Hay que poder agregar equipos inscriptos DENTRO de cada zona (Image #16), y después **generar el fixture** por stage.
+- **A2. Stages "no activan".** En Fases (Image #15) todas salen ACTIVA=No, sólo se puede ver/eliminar, no activar → no tiene sentido. Además aparecen DUPLICADAS (2x Fase de Grupos, 2x Copa ORO Final, etc. — 18 fases). Revisar por qué se duplican y cómo se activa una fase.
+- **A3. "Equipos" vs "Equipos inscriptos".** ¿Por qué hay dos tabs (Image #17/#18)? En la página de inscripción los equipos ya inscriptos aparecen igual con "Ya registrado" y checkeados (Image #16/#19) → deben EXCLUIRSE los ya inscriptos de la lista de "disponibles para registrar". Definir/limpiar la relación Equipos ↔ Equipos inscriptos.
+
+**Bugs de modales/alertas (recurrente):**
+- Muchos modales se abren/apilan → bug, se resetea o se muestran doble. Alertas se disparan 2+ veces de distinta forma. Modales quedan DETRÁS de otros (mismo patrón z-index que el fix del panel de datos). Barrer todo el admin.
+- Al crear equipo, el error de validación aparece DETRÁS del modal (Image #14).
+
+**Equipos:**
+- **Escudo con fondo naranja (Image #13/#14)**: se suben PNG transparentes pero se muestran con fondo naranja. Preservar transparencia del escudo.
+- **Label "Código"**: es de 3 letras pero el label no lo dice → agregar hint "(3 letras)".
+
+**Canchas:**
+- La cancha NO debería tener imagen (quitar imagen de cancha).
+- Debería dejar ELEGIR en el mapa dónde está (map picker), y al "ver" mostrar en el mapa el punto + la dirección.
+- Editar cancha no carga la imagen → el modal queda vacío y se pierde la imagen (bug de edición).
+
+**Novedades / público:**
+- Al abrir una noticia como visitante, la página queda centrada → debe ir al TOP (scroll to top on navigate). (Image #20)
+- La imagen destacada de la noticia debería ser más chica.
+- Editar publicación da **404 not found**.
+- Revisar el contador de vistas (¿se arregló?).
+- La cancha de básquet (BasketballCourtPattern) del hero del home "está re mal" → rehacer/quitar.
+
+**Staff (feature, worker cayó 3x por límite de sesión):** worktree `.claude/worktrees/agent-a5058e93cc2358d01` tiene una migración creada pero el feature quedó incompleto y sin verificar. Rehacer/completar cuando haya budget.
+
 ## ✅ MERGEADO a develop / en staging (PRs #53–#71)
 
 **Design system (base)**
