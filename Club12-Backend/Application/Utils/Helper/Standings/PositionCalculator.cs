@@ -38,15 +38,33 @@ public static class PositionCalculator
     /// team's total below zero and below other teams. Null/empty leaves every
     /// total untouched.
     /// </param>
+    /// <param name="rosterTeams">
+    /// Optional teams assigned to the zone. When provided, each is seeded into
+    /// the table at 0-0 so every assigned team shows from the start, before any
+    /// match is played. Null keeps the legacy behavior (only teams with a
+    /// finished match appear).
+    /// </param>
     public static List<Position> CalculatePositions(
         IEnumerable<Match> matches,
         int pointsForWin = DefaultPointsForWin,
         int pointsForLoss = DefaultPointsForLoss,
-        IEnumerable<TeamPointDeduction>? deductions = null)
+        IEnumerable<TeamPointDeduction>? deductions = null,
+        IEnumerable<Team>? rosterTeams = null)
     {
         List<Match> finishedMatches = [.. matches.Where(IsSeededAndFinished)];
 
         Dictionary<Guid, Position> positionsByTeamId = [];
+
+        // Seed every team assigned to the zone so the table shows all of them
+        // (at 0-0) from the moment the tournament starts, before any match is
+        // played — instead of an empty standings table until the first result.
+        if (rosterTeams is not null)
+        {
+            foreach (Team team in rosterTeams)
+            {
+                EnsurePosition(positionsByTeamId, team);
+            }
+        }
 
         foreach (Match match in finishedMatches)
         {
@@ -253,14 +271,14 @@ public static class PositionCalculator
         }
     }
 
-    private static void ApplyResult(
+    /// <summary>
+    /// Returns the team's <see cref="Position"/>, creating a zeroed one on first
+    /// touch. Used both to seed the assigned roster (0-0) and lazily when a
+    /// finished match introduces a team.
+    /// </summary>
+    private static Position EnsurePosition(
         Dictionary<Guid, Position> positionsByTeamId,
-        Team team,
-        int pointsFor,
-        int pointsAgainst,
-        bool won,
-        int pointsForWin,
-        int pointsForLoss)
+        Team team)
     {
         if (!positionsByTeamId.TryGetValue(team.Id, out Position? position))
         {
@@ -279,6 +297,20 @@ public static class PositionCalculator
             };
             positionsByTeamId[team.Id] = position;
         }
+
+        return position;
+    }
+
+    private static void ApplyResult(
+        Dictionary<Guid, Position> positionsByTeamId,
+        Team team,
+        int pointsFor,
+        int pointsAgainst,
+        bool won,
+        int pointsForWin,
+        int pointsForLoss)
+    {
+        Position position = EnsurePosition(positionsByTeamId, team);
 
         position.MatchesPlayed += 1;
         position.PointsFor += pointsFor;
