@@ -191,13 +191,23 @@ const DivisionPage: React.FC = () => {
     <PageShell
       title={division.name}
       actions={
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => navigate(APP_ROUTES.panelDivisions)}
-        >
-          Volver
-        </Button>
+        <>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() =>
+              navigate(APP_ROUTES.panelDivisionEdit.build(division.slug ?? division.id))
+            }
+          >
+            Editar
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => navigate(APP_ROUTES.panelDivisions)}
+          >
+            Volver
+          </Button>
+        </>
       }
     >
       <Tabs

@@ -17,7 +17,6 @@ import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import {
   DeleteIcon,
-  EditIcon,
   SearchIcon,
   VisibilityIcon,
 } from '@/views/core/MUI/icons/icons';
@@ -76,13 +75,6 @@ const TournamentsPage: React.FC = () => {
     [navigate]
   );
 
-  const handleEdit = useCallback(
-    (row: ITournamentResponse) => {
-      navigate(APP_ROUTES.panelTournamentEdit.build(row.slug ?? row.id));
-    },
-    [navigate]
-  );
-
   const handleDelete = useCallback(
     async (row: ITournamentResponse) => {
       const confirmed = await confirmDelete({
@@ -112,19 +104,13 @@ const TournamentsPage: React.FC = () => {
         onClick: handleView,
       },
       {
-        label: 'Editar',
-        color: 'primary',
-        icon: <EditIcon fontSize="small" />,
-        onClick: handleEdit,
-      },
-      {
         label: 'Eliminar',
         color: 'error',
         icon: <DeleteIcon fontSize="small" />,
         onClick: handleDelete,
       },
     ],
-    [handleDelete, handleEdit, handleView]
+    [handleDelete, handleView]
   );
 
   const columns: GridColDef<ITournamentResponse>[] = useMemo(() => {
