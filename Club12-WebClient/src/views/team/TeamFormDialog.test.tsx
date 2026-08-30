@@ -95,7 +95,8 @@ describe('TeamFormDialog', () => {
       within(dialog).getByRole('textbox', { name: /^Código/ }),
       { target: { value: 'riv' } }
     );
-    expect(onFieldChange).toHaveBeenCalledWith('threeLetterCode', 'riv');
+    // The field normalizes to an uppercase 3-letter code.
+    expect(onFieldChange).toHaveBeenCalledWith('threeLetterCode', 'RIV');
 
     fireEvent.click(within(dialog).getByRole('button', { name: /crear/i }));
     expect(onConfirm).toHaveBeenCalledTimes(1);
