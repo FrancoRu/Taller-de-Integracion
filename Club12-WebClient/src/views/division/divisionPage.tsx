@@ -13,6 +13,8 @@ import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
 import { buildBrackets } from '@/modules/playoff/buildBracket';
 import { BracketGroup } from '@/modules/playoff/type/bracket.d';
 import DivisionStandings from '@/views/division/divisionStandings';
+import MatchesPage from '@/views/match/matchesPage';
+import TeamLogo from '@/views/core/components/TeamLogo';
 import PointDeductionManager from '@/views/division/PointDeductionManager';
 import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
@@ -35,9 +37,9 @@ const DivisionPage: React.FC = () => {
   const isAdminOrOwner =
     role === UserRolesType.Admin || role === UserRolesType.Owner;
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState<'detalle' | 'posiciones' | 'fases' | 'llaves'>(
-    'detalle'
-  );
+  const [tab, setTab] = useState<
+    'detalle' | 'posiciones' | 'equipos' | 'partidos' | 'llaves'
+  >('detalle');
   const [bracketGroups, setBracketGroups] = useState<BracketGroup[]>([]);
   const [seriesById, setSeriesById] = useState<Map<GUID, IMatchSeriesResponse>>(new Map());
   const [bracketsLoading, setBracketsLoading] = useState(false);
@@ -137,12 +139,16 @@ const DivisionPage: React.FC = () => {
       ...(division?.positions ?? []),
       ...(division?.groupStandings?.flatMap(group => group.positions) ?? []),
     ];
-    const byId = new Map<GUID, { id: GUID; name: string }>();
+    const byId = new Map<
+      GUID,
+      { id: GUID; name: string; logoUrl?: string | null }
+    >();
     pooled.forEach(position => {
       if (!byId.has(position.teamId)) {
         byId.set(position.teamId, {
           id: position.teamId,
           name: position.teamName,
+          logoUrl: position.logoUrl,
         });
       }
     });
@@ -222,7 +228,9 @@ const DivisionPage: React.FC = () => {
           sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
         >
           <Tab label="Detalle" value="detalle" />
+          <Tab label="Equipos" value="equipos" />
           <Tab label="Posiciones" value="posiciones" />
+          <Tab label="Partidos" value="partidos" />
           <Tab label="Llaves" value="llaves" />
         </Tabs>
 
@@ -267,6 +275,46 @@ const DivisionPage: React.FC = () => {
               <Typography>{division.positions?.length ?? 0}</Typography>
             </Grid>
           </Grid>
+        )}
+
+        {tab === 'equipos' && (
+          divisionTeams.length === 0 ? (
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              Esta división todavía no tiene equipos asignados.
+            </Typography>
+          ) : (
+            <Grid container spacing={2}>
+              {divisionTeams.map(team => (
+                <Grid key={team.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.5,
+                      p: 1.5,
+                      border: 1,
+                      borderColor: 'divider',
+                      borderRadius: 1,
+                    }}
+                  >
+                    <TeamLogo teamName={team.name} logoUrl={team.logoUrl} size={36} />
+                    <Typography sx={{ minWidth: 0 }} noWrap>
+                      {team.name}
+                    </Typography>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+          )
+        )}
+
+        {tab === 'partidos' && (
+          <MatchesPage
+            divisionId={division.id}
+            title={undefined}
+            wrapInCard={false}
+            createType={undefined}
+          />
         )}
 
         {tab === 'posiciones' && isAdminOrOwner && (
