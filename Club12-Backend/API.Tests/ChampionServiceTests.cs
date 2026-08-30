@@ -194,6 +194,46 @@ public class ChampionServiceTests : IClassFixture<CustomWebApplicationFactory>
             && entry.DivisionName == finishedDivision.Name
             && entry.ChampionTeam.TeamId == finishedTeams[0].Id);
         Assert.DoesNotContain(history, entry => entry.TournamentId == ongoing.Id);
+
+        // A single-bracket division crowns one champion with no sub-cup label.
+        ChampionHistoryResponse single = history.Single(entry =>
+            entry.TournamentId == finished.Id && entry.DivisionName == finishedDivision.Name);
+        Assert.Null(single.CupName);
+    }
+
+    [Fact]
+    public async Task GetChampionsHistoryAsync_MultipleCups_ReturnsOneChampionPerCup()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IChampionService championService = scope.ServiceProvider.GetRequiredService<IChampionService>();
+
+        Tournament tournament = await SeedTournamentAsync(db, TournamentStatus.Finished);
+        Division division = await SeedDivisionAsync(db, tournament);
+        List<Team> teams = await SeedTeamsAsync(db, tournament, 4);
+
+        // Two sub-cups: Copa Oro (top tier, seeded from position 1) and Copa Plata.
+        await SeedMappingAsync(db, division, 1, 2, "Copa Oro");
+        await SeedMappingAsync(db, division, 3, 4, "Copa Plata");
+
+        Stage goldFinal = await SeedStageAsync(db, division, tournament, StageType.Final, bracketName: "Copa Oro");
+        Stage silverFinal = await SeedStageAsync(db, division, tournament, StageType.Final, bracketName: "Copa Plata");
+
+        await SeedFinishedMatchAsync(db, goldFinal, teams[0], teams[1], 88, 70);
+        await SeedFinishedMatchAsync(db, silverFinal, teams[2], teams[3], 66, 60);
+
+        List<ChampionHistoryResponse> history = await championService.GetChampionsHistoryAsync(seasonId: null);
+
+        List<ChampionHistoryResponse> divisionChampions = [.. history
+            .Where(entry => entry.TournamentId == tournament.Id && entry.DivisionName == division.Name)];
+
+        // Both cups crown a champion: Copa Oro → teams[0], Copa Plata → teams[2].
+        Assert.Equal(2, divisionChampions.Count);
+        Assert.Contains(divisionChampions, e => e.CupName == "Copa Oro" && e.ChampionTeam.TeamId == teams[0].Id);
+        Assert.Contains(divisionChampions, e => e.CupName == "Copa Plata" && e.ChampionTeam.TeamId == teams[2].Id);
+
+        // The top cup (Copa Oro) is listed before the lower tier (Copa Plata).
+        Assert.Equal("Copa Oro", divisionChampions[0].CupName);
     }
 
     private static async Task<Tournament> SeedTournamentAsync(

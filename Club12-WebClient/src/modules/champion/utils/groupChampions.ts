@@ -1,70 +1,79 @@
 import { IChampionHistory } from '@/modules/champion/type/champion.d';
 import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
+import { GUID } from '@/modules/core/types/types';
 
-/** A category bucket inside a season, holding its champion entries in order. */
-export interface ChampionCategoryGroup {
-  category: TournamentCategory;
+/** A division bucket inside a tournament, holding its per-cup champions in order. */
+export interface ChampionDivisionGroup {
+  divisionName: string;
   entries: IChampionHistory[];
 }
 
-/** A season bucket holding its present category subsections. */
+/** A tournament bucket inside a season, holding its divisions. Carries the
+ *  tournament's category so the view can badge it. */
+export interface ChampionTournamentGroup {
+  tournamentId: GUID;
+  tournamentName: string;
+  category: TournamentCategory;
+  divisions: ChampionDivisionGroup[];
+}
+
+/** A season bucket holding its tournaments. */
 export interface ChampionSeasonGroup {
   seasonName: string;
-  categories: ChampionCategoryGroup[];
+  tournaments: ChampionTournamentGroup[];
 }
 
 /** Fallback label for tournaments not yet assigned to a season. */
 const NO_SEASON_LABEL = 'Sin temporada';
 
 /**
- * Category render order: masculine competition first, then feminine. Only
- * categories that actually have entries are emitted, so a season with a single
- * category never shows an empty subsection.
- */
-const CATEGORY_ORDER: TournamentCategory[] = [
-  TournamentCategory.Masculine,
-  TournamentCategory.Feminine,
-];
-
-/**
- * Shapes the flat champion history into a two-level hierarchy for the public
- * page: Season -> Category -> entries. Season order follows the backend's
- * ordering (the first time a season appears fixes its position); entries with a
- * null/empty season fall into a single "Sin temporada" bucket. Within a season,
- * categories are ordered masculine-then-feminine and only present categories are
- * kept. Entry order inside each category mirrors the input order.
+ * Shapes the flat champion history into the public page's hierarchy:
+ * Season → Tournament → Division → per-cup champion entries. Order follows the
+ * backend's ordering (first appearance fixes position at each level), so the
+ * within-division entries keep the backend's tier order (Copa Oro before Copa
+ * Plata). Entries with a null/empty season fall into a single "Sin temporada"
+ * bucket. A tournament already implies its category, so category is carried on
+ * the tournament rather than used as a grouping level.
  */
 export const groupChampions = (
   history: IChampionHistory[]
 ): ChampionSeasonGroup[] => {
   const seasonOrder: string[] = [];
-  const bySeason = new Map<string, Map<TournamentCategory, IChampionHistory[]>>();
+  const bySeason = new Map<string, ChampionSeasonGroup>();
 
   history.forEach(entry => {
     const seasonKey = entry.seasonName || NO_SEASON_LABEL;
-    let categories = bySeason.get(seasonKey);
-    if (!categories) {
-      categories = new Map();
-      bySeason.set(seasonKey, categories);
+
+    let season = bySeason.get(seasonKey);
+    if (!season) {
+      season = { seasonName: seasonKey, tournaments: [] };
+      bySeason.set(seasonKey, season);
       seasonOrder.push(seasonKey);
     }
 
-    const existing = categories.get(entry.category);
-    if (existing) {
-      existing.push(entry);
-    } else {
-      categories.set(entry.category, [entry]);
+    let tournament = season.tournaments.find(
+      t => t.tournamentId === entry.tournamentId
+    );
+    if (!tournament) {
+      tournament = {
+        tournamentId: entry.tournamentId,
+        tournamentName: entry.tournamentName,
+        category: entry.category,
+        divisions: [],
+      };
+      season.tournaments.push(tournament);
     }
+
+    let division = tournament.divisions.find(
+      d => d.divisionName === entry.divisionName
+    );
+    if (!division) {
+      division = { divisionName: entry.divisionName, entries: [] };
+      tournament.divisions.push(division);
+    }
+
+    division.entries.push(entry);
   });
 
-  return seasonOrder.map(seasonName => {
-    const categories = bySeason.get(seasonName);
-    return {
-      seasonName,
-      categories: CATEGORY_ORDER.flatMap(category => {
-        const entries = categories?.get(category);
-        return entries ? [{ category, entries }] : [];
-      }),
-    };
-  });
+  return seasonOrder.map(seasonName => bySeason.get(seasonName)!);
 };

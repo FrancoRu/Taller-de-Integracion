@@ -142,9 +142,27 @@ function ChampionCard({ entry }: { entry: IChampionHistory }) {
           </Typography>
         </Link>
 
-        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-          {entry.divisionName} · {entry.tournamentName}
-        </Typography>
+        {entry.cupName ? (
+          <Typography
+            component="span"
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.5,
+              fontWeight: 700,
+              fontSize: '0.78rem',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              color: brand.gold,
+            }}
+          >
+            {entry.cupName}
+          </Typography>
+        ) : (
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Campeón
+          </Typography>
+        )}
       </CardContent>
     </Card>
   );
@@ -202,39 +220,65 @@ export default function PublicChampionsPage() {
         </Typography>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-          {seasons.map(({ seasonName, categories }) => (
+          {seasons.map(({ seasonName, tournaments }) => (
             <Box component="section" key={seasonName}>
               <SectionHeading component="h2" accentColor={brand.gold}>
                 {seasonName}
               </SectionHeading>
 
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {categories.map(({ category, entries }) => (
-                  <Box component="section" key={category}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {tournaments.map(({ tournamentId, tournamentName, category, divisions }) => (
+                  <Box component="section" key={tournamentId}>
                     <Box
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: 1.25,
-                        mb: 1.5,
+                        mb: 2,
                         pb: 1,
                         borderBottom: '2px solid',
                         borderBottomColor: categoryColor(category).fill,
                       }}
                     >
+                      <Typography
+                        component="h3"
+                        sx={{
+                          fontFamily: font.display,
+                          fontWeight: 700,
+                          fontSize: '1.25rem',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.01em',
+                        }}
+                      >
+                        {tournamentName}
+                      </Typography>
                       <CategoryChip category={category} />
                     </Box>
 
-                    <Grid container spacing={2}>
-                      {entries.map(entry => (
-                        <Grid
-                          key={`${entry.tournamentId}-${entry.divisionName}`}
-                          size={{ xs: 12, sm: 6, md: 4 }}
-                        >
-                          <ChampionCard entry={entry} />
-                        </Grid>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                      {divisions.map(({ divisionName, entries }) => (
+                        <Box component="section" key={divisionName}>
+                          <Typography
+                            component="h4"
+                            variant="subtitle2"
+                            sx={{ color: 'text.secondary', mb: 1.25 }}
+                          >
+                            {divisionName}
+                          </Typography>
+
+                          <Grid container spacing={2}>
+                            {entries.map(entry => (
+                              <Grid
+                                key={`${entry.tournamentId}-${entry.divisionName}-${entry.cupName ?? 'unica'}`}
+                                size={{ xs: 12, sm: 6, md: 4 }}
+                              >
+                                <ChampionCard entry={entry} />
+                              </Grid>
+                            ))}
+                          </Grid>
+                        </Box>
                       ))}
-                    </Grid>
+                    </Box>
                   </Box>
                 ))}
               </Box>

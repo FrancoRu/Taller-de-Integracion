@@ -86,27 +86,66 @@ public class ChampionService(
         {
             foreach (Division division in tournament.Divisions)
             {
-                PodiumResponse podium = await GetDivisionPodiumAsync(division.Id)
-                    ?? throw new InvalidOperationException($"Division {division.Id} vanished while building champions history.");
+                // One row PER sub-cup (Copa Oro, Copa Plata, …). A single-bracket
+                // or group-only division yields exactly one row with a null CupName.
+                List<(string? CupName, PodiumTeamResponse Champion)> champions =
+                    await GetDivisionChampionsAsync(division.Id);
 
-                if (podium.First is null)
+                foreach ((string? cupName, PodiumTeamResponse champion) in champions)
                 {
-                    continue;
+                    history.Add(new ChampionHistoryResponse
+                    {
+                        TournamentId = tournament.Id,
+                        TournamentName = tournament.Name,
+                        SeasonName = tournament.Season?.Name,
+                        Category = division.Category.ToString(),
+                        DivisionName = division.Name,
+                        CupName = cupName,
+                        ChampionTeam = champion,
+                    });
                 }
-
-                history.Add(new ChampionHistoryResponse
-                {
-                    TournamentId = tournament.Id,
-                    TournamentName = tournament.Name,
-                    SeasonName = tournament.Season?.Name,
-                    Category = division.Category.ToString(),
-                    DivisionName = division.Name,
-                    ChampionTeam = podium.First,
-                });
             }
         }
 
         return history;
+    }
+
+    /// <summary>
+    /// Resolves the champion of every sub-cup of a division (Copa Oro, Copa
+    /// Plata, …), or the standings leader for a group-only division. Each entry's
+    /// CupName is null when the division crowns a single champion. Undecided cups
+    /// are omitted.
+    /// </summary>
+    private async Task<List<(string? CupName, PodiumTeamResponse Champion)>> GetDivisionChampionsAsync(Guid divisionId)
+    {
+        Division? division = await divisionRepository.GetByIdAsync(
+            divisionId,
+            includes: [d => d.Stages, d => d.PlayoffMappings]);
+
+        if (division is null)
+        {
+            return [];
+        }
+
+        List<Stage> eliminationStages = [.. division.Stages.Where(stage => stage.StageType != StageType.Group)];
+
+        if (eliminationStages.Count > 0)
+        {
+            (List<Match> matches, List<MatchSeries> series) = await LoadEliminationDataAsync(eliminationStages);
+
+            IReadOnlyList<ChampionResolver.CupChampion> cupChampions = ChampionResolver.ResolveCupChampions(
+                eliminationStages,
+                [.. division.PlayoffMappings],
+                matches,
+                series);
+
+            return [.. cupChampions.Select(cup => (cup.CupName, ToTeamResponse(cup.Champion)!))];
+        }
+
+        List<Position> standings = await divisionService.GetPositionsByDivisionIdAsync(division.Id);
+        PodiumTeamResponse? leader = ToTeamResponse(standings.ElementAtOrDefault(0));
+
+        return leader is null ? [] : [((string?)null, leader)];
     }
 
     /// <summary>
@@ -133,15 +172,7 @@ public class ChampionService(
     /// </summary>
     private async Task<PodiumResponse> BuildPlayoffPodiumAsync(Division division, List<Stage> eliminationStages)
     {
-        List<Guid> eliminationStageIds = [.. eliminationStages.Select(stage => stage.Id)];
-
-        List<Match> eliminationMatches = [.. await matchRepository.FindAsync(
-            match => eliminationStageIds.Contains(match.StageId),
-            includes: [m => m.HomeTeam!, m => m.VisitorTeam!, m => m.WinningTeam!])];
-
-        List<MatchSeries> series = [.. await matchSeriesRepository.FindAsync(
-            matchSeries => eliminationStageIds.Contains(matchSeries.StageId),
-            includes: [s => s.HomeTeam!, s => s.VisitorTeam!, s => s.WinningTeam!])];
+        (List<Match> eliminationMatches, List<MatchSeries> series) = await LoadEliminationDataAsync(eliminationStages);
 
         ChampionResolver.Podium podium = ChampionResolver.ResolvePlayoffPodium(
             eliminationStages,
@@ -177,6 +208,26 @@ public class ChampionService(
             Second = ToTeamResponse(standings.ElementAtOrDefault(1)),
             Third = ToTeamResponse(standings.ElementAtOrDefault(2)),
         };
+    }
+
+    /// <summary>
+    /// Loads the matches and best-of-N series of a set of elimination stages,
+    /// with their team navigations, so the bracket resolver can read outcomes.
+    /// </summary>
+    private async Task<(List<Match> Matches, List<MatchSeries> Series)> LoadEliminationDataAsync(
+        List<Stage> eliminationStages)
+    {
+        List<Guid> eliminationStageIds = [.. eliminationStages.Select(stage => stage.Id)];
+
+        List<Match> eliminationMatches = [.. await matchRepository.FindAsync(
+            match => eliminationStageIds.Contains(match.StageId),
+            includes: [m => m.HomeTeam!, m => m.VisitorTeam!, m => m.WinningTeam!])];
+
+        List<MatchSeries> series = [.. await matchSeriesRepository.FindAsync(
+            matchSeries => eliminationStageIds.Contains(matchSeries.StageId),
+            includes: [s => s.HomeTeam!, s => s.VisitorTeam!, s => s.WinningTeam!])];
+
+        return (eliminationMatches, series);
     }
 
     private static PodiumTeamResponse? ToTeamResponse(ChampionResolver.TeamRef? team)

@@ -12,6 +12,7 @@ const entry = (overrides: Partial<IChampionHistory> = {}): IChampionHistory => (
   seasonName: 'Temporada 2025',
   category: TournamentCategory.Masculine,
   divisionName: 'Zona A',
+  cupName: null,
   championTeam: {
     teamId: guid('team-1'),
     teamName: 'Los Halcones',
@@ -47,44 +48,25 @@ describe('groupChampions', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].seasonName).toBe('Sin temporada');
-    expect(result[0].categories[0].entries).toHaveLength(2);
   });
 
-  it('orders categories masculine first, then feminine', () => {
-    const result = groupChampions([
-      entry({ category: TournamentCategory.Feminine }),
-      entry({ category: TournamentCategory.Masculine }),
-    ]);
-
-    expect(result[0].categories.map(c => c.category)).toEqual([
-      TournamentCategory.Masculine,
-      TournamentCategory.Feminine,
-    ]);
-  });
-
-  it('only includes categories that actually have entries', () => {
-    const result = groupChampions([
-      entry({ category: TournamentCategory.Feminine }),
-    ]);
-
-    expect(result[0].categories).toHaveLength(1);
-    expect(result[0].categories[0].category).toBe(TournamentCategory.Feminine);
-  });
-
-  it('groups entries into their season and category buckets', () => {
+  it('nests Season -> Tournament -> Division, carrying the category on the tournament', () => {
     const result = groupChampions([
       entry({
-        seasonName: 'Temporada 2025',
+        tournamentId: guid('t-masc'),
+        tournamentName: 'Apertura Masculino',
         category: TournamentCategory.Masculine,
         divisionName: 'Zona A',
       }),
       entry({
-        seasonName: 'Temporada 2025',
+        tournamentId: guid('t-fem'),
+        tournamentName: 'Apertura Femenino',
         category: TournamentCategory.Feminine,
         divisionName: 'Zona Única',
       }),
       entry({
-        seasonName: 'Temporada 2025',
+        tournamentId: guid('t-masc'),
+        tournamentName: 'Apertura Masculino',
         category: TournamentCategory.Masculine,
         divisionName: 'Zona B',
       }),
@@ -92,19 +74,28 @@ describe('groupChampions', () => {
 
     expect(result).toHaveLength(1);
     const [season] = result;
-    expect(season.categories).toHaveLength(2);
-
-    const masculine = season.categories.find(
-      c => c.category === TournamentCategory.Masculine
-    );
-    const feminine = season.categories.find(
-      c => c.category === TournamentCategory.Feminine
-    );
-
-    expect(masculine?.entries.map(e => e.divisionName)).toEqual([
-      'Zona A',
-      'Zona B',
+    expect(season.tournaments.map(t => t.tournamentName)).toEqual([
+      'Apertura Masculino',
+      'Apertura Femenino',
     ]);
-    expect(feminine?.entries.map(e => e.divisionName)).toEqual(['Zona Única']);
+
+    const masc = season.tournaments.find(t => t.tournamentId === guid('t-masc'));
+    expect(masc?.category).toBe(TournamentCategory.Masculine);
+    expect(masc?.divisions.map(d => d.divisionName)).toEqual(['Zona A', 'Zona B']);
+  });
+
+  it('keeps every sub-cup champion of a division, in backend (tier) order', () => {
+    const result = groupChampions([
+      entry({ divisionName: 'Primera', cupName: 'Copa Oro', championTeam: {
+        teamId: guid('gold'), teamName: 'Oro FC', logoUrl: null,
+      } }),
+      entry({ divisionName: 'Primera', cupName: 'Copa Plata', championTeam: {
+        teamId: guid('silver'), teamName: 'Plata FC', logoUrl: null,
+      } }),
+    ]);
+
+    const division = result[0].tournaments[0].divisions[0];
+    expect(division.divisionName).toBe('Primera');
+    expect(division.entries.map(e => e.cupName)).toEqual(['Copa Oro', 'Copa Plata']);
   });
 });
