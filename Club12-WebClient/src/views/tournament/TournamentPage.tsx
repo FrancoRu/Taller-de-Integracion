@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button, Grid, Stack, Tab, Tabs, Typography } from '@mui/material';
 import PageShell from '@/views/core/components/PageShell';
+import BlockingOverlay from '@/views/core/components/BlockingOverlay';
 import CategoryChip from '@/views/core/components/CategoryChip';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { GUID } from '@/modules/core/types/types';
@@ -28,6 +29,7 @@ const TournamentPage: React.FC = () => {
   const { role } = useAuth();
   const { tournament, getTournamentById, putTournamentById } = useTournament();
   const [loading, setLoading] = useState(false);
+  const [reverting, setReverting] = useState(false);
   const [tab, setTab] = useState<
     'detalle' | 'divisiones' | 'equipos' | 'inscriptos' | 'asignacion'
   >('detalle');
@@ -105,6 +107,9 @@ const TournamentPage: React.FC = () => {
       return;
     }
 
+    // Block the whole screen while the revert (which tears down the fixture)
+    // runs, then hard-reload so every view re-fetches the reverted state.
+    setReverting(true);
     const ok = await putTournamentById(tournament.id, {
       name: tournament.name,
       description: tournament.description,
@@ -114,13 +119,15 @@ const TournamentPage: React.FC = () => {
     });
 
     if (ok) {
-      await getTournamentById(tournament.id);
-    } else {
-      await notifyError({
-        title: 'No se pudo revertir el torneo',
-        text: 'Volvé a intentar en unos segundos.',
-      });
+      window.location.reload();
+      return;
     }
+
+    setReverting(false);
+    await notifyError({
+      title: 'No se pudo revertir el torneo',
+      text: 'Volvé a intentar en unos segundos.',
+    });
   };
   // HU-107: enrolled-team management is the registration phase, only available
   // while the tournament is accepting registrations.
@@ -149,6 +156,7 @@ const TournamentPage: React.FC = () => {
               variant="outlined"
               color="warning"
               onClick={() => void handleRevertToDraft()}
+              disabled={reverting}
             >
               Revertir a borrador
             </Button>
@@ -172,6 +180,11 @@ const TournamentPage: React.FC = () => {
         </>
       }
     >
+      <BlockingOverlay
+        open={reverting}
+        message="Revirtiendo el torneo a borrador. No cierres esta página…"
+      />
+
       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 2 }}>
         <CategoryChip category={tournament.category} />
       </Stack>
@@ -274,7 +287,9 @@ const TournamentPage: React.FC = () => {
             tournamentId={tournament.id}
             title={undefined}
             wrapInCard={false}
-            createType="División"
+            // Structure is frozen once the tournament is Ongoing, so hide the
+            // "Nueva División" affordance then.
+            createType={isOngoing ? undefined : 'División'}
             onCreate={handleCreateDivision}
           />
         )}

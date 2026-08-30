@@ -47,6 +47,7 @@ import {
 } from '@/modules/core/utils/confirmDialog';
 import { completabilityIssueMessage } from '@/modules/tournament/utils/completabilityMessages';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
+import BlockingOverlay from '@/views/core/components/BlockingOverlay';
 import TeamLogo from '@/views/core/components/TeamLogo';
 
 interface TournamentDivisionAssignmentProps {
@@ -232,6 +233,7 @@ const TournamentDivisionAssignment: React.FC<
   const [completability, setCompletability] =
     useState<ITournamentCompletability | null>(null);
   const [busy, setBusy] = useState(false);
+  const [starting, setStarting] = useState(false);
   const [picker, setPicker] = useState<PickerTarget | null>(null);
   const [collapsed, setCollapsed] = useState<Set<GUID>>(new Set());
 
@@ -429,7 +431,11 @@ const TournamentDivisionAssignment: React.FC<
       teamRegistrationDeadline: new Date(tournament.teamRegistrationDeadline),
     };
 
+    // Block the whole screen while starting (closing registration + generating
+    // the fixture can take a moment) and hard-reload on success so every view
+    // reflects the started tournament.
     setBusy(true);
+    setStarting(true);
     try {
       // The backend state machine requires RegistrationClosed before Ongoing.
       // When the organizer starts straight from an open-registration draft, we
@@ -462,9 +468,10 @@ const TournamentDivisionAssignment: React.FC<
         return;
       }
 
-      await refreshCompletability();
+      window.location.reload();
     } finally {
       setBusy(false);
+      setStarting(false);
     }
   };
 
@@ -532,6 +539,11 @@ const TournamentDivisionAssignment: React.FC<
 
   return (
     <Box sx={{ width: '100%' }}>
+      <BlockingOverlay
+        open={starting}
+        message="Iniciando el torneo y generando el fixture. No cierres ni cambies de pantalla…"
+      />
+
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         spacing={1}
