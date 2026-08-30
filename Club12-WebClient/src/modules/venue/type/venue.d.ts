@@ -75,10 +75,10 @@ export interface IAddVenueRequest {
   address: string;
 
   /**
-   * The image file of the venue's photo.
+   * Optional photo of the venue. A venue does not require an image.
    * @type {File}
    */
-  imageFile: File;
+  imageFile?: File | null;
 
   /**
    * Optional geographic latitude of the venue.

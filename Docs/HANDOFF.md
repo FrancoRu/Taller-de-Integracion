@@ -35,25 +35,26 @@ Progreso (rama `fix/ux-consolidation-e2e`, sale de develop tras #71):
 - **A2. Stages "no activan".** En Fases (Image #15) todas salen ACTIVA=No, sólo se puede ver/eliminar, no activar → no tiene sentido. Además aparecen DUPLICADAS (2x Fase de Grupos, 2x Copa ORO Final, etc. — 18 fases). Revisar por qué se duplican y cómo se activa una fase.
 - **A3. "Equipos" vs "Equipos inscriptos".** ¿Por qué hay dos tabs (Image #17/#18)? En la página de inscripción los equipos ya inscriptos aparecen igual con "Ya registrado" y checkeados (Image #16/#19) → deben EXCLUIRSE los ya inscriptos de la lista de "disponibles para registrar". Definir/limpiar la relación Equipos ↔ Equipos inscriptos.
 
+**PROGRESO FEEDBACK 2 (PRs #74–#76):**
+- ✅ Asignación rehecha (PR #74): draft con inscripción abierta, picker buscador multiselect, quitar equipo, pool sin zona, sin recargar. + zonas colapsables (PR #75).
+- ✅ Escudo transparente + código 3 letras + alertas sobre modales (PR #75).
+- ✅ Scroll-to-top + editar publicación 404 + imagen noticia más chica (PR #76). Contador de vistas: ya OK (GET admin no incrementa).
+
 **Bugs de modales/alertas (recurrente):**
-- Muchos modales se abren/apilan → bug, se resetea o se muestran doble. Alertas se disparan 2+ veces de distinta forma. Modales quedan DETRÁS de otros (mismo patrón z-index que el fix del panel de datos). Barrer todo el admin.
-- Al crear equipo, el error de validación aparece DETRÁS del modal (Image #14).
+- ✅ Modales/alertas que quedaban DETRÁS: SweetAlert ahora sobre la capa de MUI (PR #75). Y el panel de datos ya no se cuelga (PR #72).
+- ⏳ FALTA: alertas que "se disparan 2+ veces de distinta forma" (doble-fire) — investigar (probable doble handler / doble notify en flujos de inscripción). "Muchos modales apilados se resetean/muestran doble."
 
-**Equipos:**
-- **Escudo con fondo naranja (Image #13/#14)**: se suben PNG transparentes pero se muestran con fondo naranja. Preservar transparencia del escudo.
-- **Label "Código"**: es de 3 letras pero el label no lo dice → agregar hint "(3 letras)".
-
-**Canchas:**
+**Canchas (⏳ pendiente):**
 - La cancha NO debería tener imagen (quitar imagen de cancha).
-- Debería dejar ELEGIR en el mapa dónde está (map picker), y al "ver" mostrar en el mapa el punto + la dirección.
+- Debería dejar ELEGIR en el mapa dónde está (map picker OSM), y al "ver" mostrar en el mapa el punto + la dirección.
 - Editar cancha no carga la imagen → el modal queda vacío y se pierde la imagen (bug de edición).
 
 **Novedades / público:**
-- Al abrir una noticia como visitante, la página queda centrada → debe ir al TOP (scroll to top on navigate). (Image #20)
-- La imagen destacada de la noticia debería ser más chica.
-- Editar publicación da **404 not found**.
-- Revisar el contador de vistas (¿se arregló?).
-- La cancha de básquet (BasketballCourtPattern) del hero del home "está re mal" → rehacer/quitar.
+- ✅ scroll-to-top, ✅ imagen más chica, ✅ editar 404, ✅ contador de vistas (ya estaba).
+- ⏳ La cancha de básquet (BasketballCourtPattern) del hero del home "está re mal" → rehacer/quitar.
+
+**Equipos:**
+- ✅ Escudo transparente, ✅ código 3 letras.
 
 **Staff (feature, worker cayó 3x por límite de sesión):** worktree `.claude/worktrees/agent-a5058e93cc2358d01` tiene una migración creada pero el feature quedó incompleto y sin verificar. Rehacer/completar cuando haya budget.
 

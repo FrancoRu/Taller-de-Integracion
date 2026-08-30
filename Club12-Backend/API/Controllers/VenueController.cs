@@ -48,9 +48,16 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<VenueResponse>> CreateVenue([FromForm] CreateVenueRequest venueRequest)
     {
-        string logoUrl = await supabaseHelper.UploadImageAsync<Venue>(venueRequest.ImageFile.OpenReadStream(), venueRequest.ImageFile.FileName);
         Venue venue = mapper.Map<Venue>(venueRequest);
-        venue.PhotoUrl = logoUrl;
+
+        // A venue photo is optional: only upload and set it when one was sent.
+        if (venueRequest.ImageFile is not null)
+        {
+            venue.PhotoUrl = await supabaseHelper.UploadImageAsync<Venue>(
+                venueRequest.ImageFile.OpenReadStream(),
+                venueRequest.ImageFile.FileName);
+        }
+
         await venueService.CreateVenueAsync(venue);
         VenueResponse venueResponse = mapper.Map<VenueResponse>(venue);
         return CreatedAtAction(nameof(GetVenueById), new { idOrSlug = venueResponse.Id }, venueResponse);

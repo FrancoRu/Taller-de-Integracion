@@ -28,7 +28,9 @@ export const venueService = {
     const formData = new FormData();
     formData.append('Name', venue.name);
     formData.append('Address', venue.address);
-    formData.append('ImageFile', venue.imageFile);
+    if (venue.imageFile) {
+      formData.append('ImageFile', venue.imageFile);
+    }
     if (venue.latitude !== undefined) {
       formData.append('Latitude', String(venue.latitude));
     }
