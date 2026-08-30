@@ -29,6 +29,7 @@ const entry = (overrides: Partial<IChampionHistory> = {}): IChampionHistory => (
   seasonName: 'Temporada 2025',
   category: TournamentCategory.Masculine,
   divisionName: 'Zona A',
+  cupName: null,
   championTeam: {
     teamId: guid('team-1'),
     teamName: 'Los Halcones',
@@ -47,6 +48,7 @@ describe('PublicChampionsPage', () => {
       data: [
         entry(),
         entry({
+          tournamentId: guid('tournament-2'),
           tournamentName: 'Clausura 2025',
           divisionName: 'Zona Única',
           category: TournamentCategory.Feminine,

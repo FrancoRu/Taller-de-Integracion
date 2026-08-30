@@ -37,5 +37,11 @@ export interface IChampionHistory {
   seasonName: string | null;
   category: TournamentCategory;
   divisionName: string;
+  /**
+   * The sub-cup (playoff bracket) that was won, e.g. "Copa Oro" / "Copa Plata",
+   * when the division splits its playoff into tiers. Null when the division
+   * crowns a single champion (a single bracket or a group-only division).
+   */
+  cupName: string | null;
   championTeam: IPodiumTeam;
 }
