@@ -5,7 +5,6 @@ import {
   Card,
   CardActionArea,
   CardContent,
-  Chip,
   Grid,
   Typography,
 } from '@mui/material';
@@ -176,14 +175,9 @@ export default function PublicSeasonPage() {
         onClick: () => navigate(APP_ROUTES.publicSeasons),
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
-          {season.name}
-        </Typography>
-        {season.year != null && (
-          <Chip label={season.year} color="primary" size="small" />
-        )}
-      </Box>
+      <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', mb: 3 }}>
+        {season.name}
+      </Typography>
 
       {tournaments.length === 0 ? (
         <Typography sx={{ color: 'text.secondary' }}>

@@ -2,6 +2,25 @@
 
 > Documento para continuar en un chat nuevo. Rama de integración: **develop** (deploya a staging: club12.argentum-solutions.com.ar). `main` NO se toca. Stack: .NET 8 backend (Clean/Hexagonal, EF Core + Npgsql/Postgres) + React 19/TS/MUI/Vite frontend (vitest, ESLint `--max-warnings 0`). Todo user-facing en **español (voseo)**; código en inglés.
 
+## 🔴 FIXES PRIORITARIOS — feedback del owner (2026-08-30). "Staff es lo último, NO agregar más features. Estabilizar build + E2E del ciclo completo (crear temporada → torneos → jugarlo → todo anda)."
+
+Modelo mental confirmado: **División = tier**; los **playoffs se juegan por sub-tier/copa (Oro, Plata, Bronce)**. Ordenar todo con esa lógica.
+
+1. **Home**: sacar "Accesos rápidos" (ya está el nav). Orden nuevo: **Últimas noticias primero → Temporadas → Campeones**. NO mostrar Torneos. Hero: menos palabras (investigar bien qué es Club 12; el subtítulo actual es largo).
+2. **Detalle de Temporada**: sacar el chip del año, mejor jerarquía. Sacar el subtexto de la temporada.
+3. **Wizard de torneo**: **Temporada NO puede ser opcional** — un torneo SIEMPRE pertenece a una temporada; y la creación de torneo va **DENTRO de la temporada** (desde el detalle admin de temporada, ya pre-scopeado), no en el wizard standalone. Sacar el helper "La categoría femenina se juega como un torneo aparte" y el subtexto de temporada.
+4. **Campeones — jerarquía**: Temporada → **Torneo** → División → **sub-copa (Oro/Plata/Bronce)**. (Hoy es Temporada→Categoría→División/Copa.) SIN chip; mejor jerarquía.
+5. **Campeones — sub-copas**: incluir el **ganador de Copa Plata** (y Bronce, etc.), no solo Oro. Cada sub-copa de una división corona un campeón.
+6. **Campeones — 3er puesto**: si NO hubo partido por el 3er puesto en el playoff, NO mostrar el 3º ("A definir") en el podio. **ADEMÁS**: el wizard de playoff NO deja configurar si el bracket tiene partido por el 3er puesto → agregar esa opción (checkbox "Partido por el 3er puesto") y solo entonces resolver/mostrar el 3º.
+7. **Posiciones — copa cruzada**: la tabla de la copa cruzada NO colorea los que pasan a playoff → agregar el coloreado de clasificación también ahí.
+8. **Loaders/skeletons**: agregar spinner/skeleton/loader a TODAS las páginas, CONSISTENTES (ej. Novedades muestra "No hay novedades" + un loader raro abajo — inconsistente/roto).
+9. **Anchos/altos de textos**: revisar que no se vea raro en ningún lado (ej. cards de Torneos con el nombre cortado feo).
+10. **Mapa**: usar **OpenStreetMap** (o algo free real), no solo un link a Google Maps.
+11. **Admin "Administración de datos"**: al clickear "Borrar datos" o "Generar respaldo" se cuelga con un modal "Borrando todos los datos de prueba…"; back muestra un modal ilegible y se cuelga. ARREGLAR (bug bloqueante).
+12. **Todo por slug** (recordatorio).
+13. **Staff de equipo** (último feature, incompleto — el worker cayó por límite): crear entidad `TeamStaff` (el `Staff` histórico se dropeó en `20260315232746_cleanDB`) + roles DT/Asistente/DT-Jugador, season-scoped, admin + vista pública, seed.
+14. **E2E FINAL** del ciclo completo con build estable.
+
 ## ✅ MERGEADO a develop / en staging (PRs #53–#71)
 
 **Design system (base)**

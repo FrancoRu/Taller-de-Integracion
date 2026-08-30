@@ -36,10 +36,10 @@ export default function TournamentWizardPage() {
   const { addDivision } = useDivision();
   const { addStage } = useStage();
 
-  // The wizard can be launched pre-scoped to a season (from the admin season
-  // hub) via router state. Standalone launches have no state and keep the
-  // "Sin temporada" default. The id is locked in only for the initial state,
-  // so the admin can still change it in the step.
+  // The wizard is normally launched pre-scoped to a season (from the admin
+  // season hub) via router state, which locks the season in the first step. A
+  // standalone launch has no state and must pick a season before continuing —
+  // a tournament always belongs to a season.
   const seededSeasonId =
     (location.state as { seasonId?: string } | null)?.seasonId ?? '';
 

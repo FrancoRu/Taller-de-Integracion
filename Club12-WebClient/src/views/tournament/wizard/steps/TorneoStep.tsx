@@ -74,7 +74,6 @@ export default function TorneoStep({
           }
           required
           fullWidth
-          helperText="La categoría femenina se juega como un torneo aparte y no se puede cambiar luego."
         >
           {Object.values(TournamentCategory).map(category => (
             <MenuItem key={category} value={category}>
@@ -87,19 +86,15 @@ export default function TorneoStep({
       <Grid size={12}>
         <TextField
           select
-          label="Temporada (opcional)"
+          label="Temporada"
           value={value.seasonId ?? ''}
           onChange={e => onChange({ ...value, seasonId: e.target.value })}
+          required
           fullWidth
-          helperText={
-            seasonPreset
-              ? 'Temporada tomada de donde creaste el torneo. Podés cambiarla si querés.'
-              : 'Agrupá el torneo dentro de una temporada. Podés dejarlo vacío.'
-          }
+          // A tournament always belongs to a season. When the wizard is launched
+          // from a season hub the season is fixed and cannot be changed here.
+          disabled={seasonPreset}
         >
-          <MenuItem value="">
-            <em>Sin temporada</em>
-          </MenuItem>
           {(seasons ?? []).map(season => (
             <MenuItem key={season.id} value={season.id}>
               {season.name}

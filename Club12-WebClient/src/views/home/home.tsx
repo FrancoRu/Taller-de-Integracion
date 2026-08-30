@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import SportsBasketballIcon from '@mui/icons-material/SportsBasketball';
 import { EmojiEventsIcon } from '@/views/core/MUI/icons/icons';
-import { useTournament } from '@/modules/tournament/hook/tournament.hook';
+import { useSeason } from '@/modules/season/hook/season.hook';
 import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
 import { BlogPostResponse } from '@/modules/blogPost/type/blogPost';
 import { championService } from '@/modules/champion/service/champion.service';
@@ -24,7 +24,7 @@ import { TOURNAMENT_CATEGORY_LABELS } from '@/modules/core/enum/tournament/tourn
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { BLOG_HOME_EXCERPT_LENGTH } from '@/modules/blogPost/constants/blogPost';
-import { TournamentCard } from '@/views/home/tournaments/PublicTournamentsPage';
+import { SeasonCard } from '@/views/home/seasons/PublicSeasonsPage';
 import BasketballCourtPattern from '@/views/core/components/BasketballCourtPattern';
 import PageShell from '@/views/core/components/PageShell';
 import SectionHeading from '@/views/core/components/SectionHeading';
@@ -38,21 +38,10 @@ import {
   usePageMetadata,
 } from '@/modules/core/utils/pageMetadata';
 
-const FEATURED_TOURNAMENTS_COUNT = 3;
 const LATEST_POSTS_COUNT = 3;
+const FEATURED_SEASONS_COUNT = 3;
 const RECENT_CHAMPIONS_COUNT = 4;
 const CARD_IMAGE_HEIGHT = 160;
-
-interface QuickNavItem {
-  label: string;
-  path: string;
-}
-
-const QUICK_NAV_ITEMS: QuickNavItem[] = [
-  { label: 'Temporadas', path: APP_ROUTES.publicSeasons },
-  { label: 'Sanciones', path: APP_ROUTES.publicSanctions },
-  { label: 'Novedades', path: APP_ROUTES.publicBlog },
-];
 
 const stripHtml = (html: string) => {
   const withoutTags = html.replace(/<[^>]*>/g, ' ');
@@ -168,33 +157,33 @@ export default function Home() {
   usePageMetadata(DEFAULT_PAGE_METADATA);
 
   const navigate = useNavigate();
-  const { tournaments, getAllTournamentsByFilter } = useTournament();
+  const { seasons, getSeasonsByFiltered } = useSeason();
   const { getBlogPostsByFilters, getBlogPostsById } = useBlogPost();
   const [posts, setPosts] = useState<BlogPostResponse[]>([]);
   const [champions, setChampions] = useState<IChampionHistory[]>([]);
   const [postsLoading, setPostsLoading] = useState(false);
-  const [tournamentsLoading, setTournamentsLoading] = useState(false);
+  const [seasonsLoading, setSeasonsLoading] = useState(false);
   const [postsError, setPostsError] = useState(false);
-  const [tournamentsError, setTournamentsError] = useState(false);
+  const [seasonsError, setSeasonsError] = useState(false);
 
-  const getAllTournamentsRef = useRef(getAllTournamentsByFilter);
+  const getSeasonsRef = useRef(getSeasonsByFiltered);
   const getBlogPostsRef = useRef(getBlogPostsByFilters);
   const getChampionsHistoryRef = useRef(championService.getChampionsHistory);
 
-  useEffect(() => { getAllTournamentsRef.current = getAllTournamentsByFilter; }, [getAllTournamentsByFilter]);
+  useEffect(() => { getSeasonsRef.current = getSeasonsByFiltered; }, [getSeasonsByFiltered]);
   useEffect(() => { getBlogPostsRef.current = getBlogPostsByFilters; }, [getBlogPostsByFilters]);
 
   // The landing sections fetch on mount but must NOT pop the global blocking
   // alert if a GET fails — each degrades to its own quiet inline retry state.
-  const fetchTournaments = useCallback(async () => {
-    setTournamentsLoading(true);
-    setTournamentsError(false);
-    const response = await getAllTournamentsRef.current(
+  const fetchSeasons = useCallback(async () => {
+    setSeasonsLoading(true);
+    setSeasonsError(false);
+    const response = await getSeasonsRef.current(
       { pageSize: PUBLIC_LISTING_PAGE_SIZE, pageNumber: 1 },
       { silent: true }
     );
-    setTournamentsError(response === undefined);
-    setTournamentsLoading(false);
+    setSeasonsError(response === undefined);
+    setSeasonsLoading(false);
   }, []);
 
   const fetchPosts = useCallback(async () => {
@@ -215,8 +204,8 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    void fetchTournaments();
-  }, [fetchTournaments]);
+    void fetchSeasons();
+  }, [fetchSeasons]);
 
   useEffect(() => {
     void fetchPosts();
@@ -238,9 +227,9 @@ export default function Home() {
     };
   }, []);
 
-  const featuredTournaments = useMemo(
-    () => (tournaments ?? []).slice(0, FEATURED_TOURNAMENTS_COUNT),
-    [tournaments]
+  const featuredSeasons = useMemo(
+    () => (seasons ?? []).slice(0, FEATURED_SEASONS_COUNT),
+    [seasons]
   );
 
   const recentChampions = useMemo(
@@ -317,14 +306,13 @@ export default function Home() {
             component="p"
             sx={{
               fontWeight: 400,
-              maxWidth: 640,
+              maxWidth: 560,
               mb: 4,
               fontSize: { xs: '1.05rem', md: '1.25rem' },
               color: 'rgba(255,255,255,0.94)',
             }}
           >
-            Paraná, Entre Ríos · Masculino y Femenino. Torneos, resultados y
-            estadísticas de todas las divisiones en un solo lugar.
+            Paraná, Entre Ríos · Masculino y femenino.
           </Typography>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <Button
@@ -358,75 +346,7 @@ export default function Home() {
       </Box>
 
       <PageShell>
-        {/* Torneos destacados */}
-        <Box component="section" sx={{ mb: 6 }}>
-          <SectionHeading
-            component="h2"
-            action={
-              <Button component={Link} to={APP_ROUTES.publicSeasons} color="primary">
-                Ver temporadas
-              </Button>
-            }
-          >
-            Torneos destacados
-          </SectionHeading>
-
-          {tournamentsLoading ? (
-            <CardGridSkeleton count={3} />
-          ) : tournamentsError ? (
-            <LoadErrorState
-              message="No pudimos cargar los torneos."
-              onRetry={() => void fetchTournaments()}
-            />
-          ) : featuredTournaments.length === 0 ? (
-            <Typography sx={{ color: 'text.secondary' }}>
-              Todavía no hay torneos publicados. Volvé a consultar más adelante.
-            </Typography>
-          ) : (
-            <Grid container spacing={3}>
-              {featuredTournaments.map(tournament => (
-                <Grid
-                  key={tournament.id}
-                  size={{ xs: 12, sm: 6, md: 4 }}>
-                  <TournamentCard tournament={tournament} />
-                </Grid>
-              ))}
-            </Grid>
-          )}
-        </Box>
-
-        {/* Campeones recientes — hidden entirely when there are none. */}
-        {recentChampions.length > 0 && (
-          <Box component="section" sx={{ mb: 6 }}>
-            <SectionHeading
-              component="h2"
-              accentColor={brand.gold}
-              action={
-                <Button
-                  component={Link}
-                  to={APP_ROUTES.publicChampions}
-                  sx={{ color: brand.gold, '&:hover': { color: brand.goldLight } }}
-                >
-                  Ver campeones
-                </Button>
-              }
-            >
-              Campeones recientes
-            </SectionHeading>
-
-            <Grid container spacing={2}>
-              {recentChampions.map(entry => (
-                <Grid
-                  key={`${entry.tournamentId}-${entry.divisionName}`}
-                  size={{ xs: 12, sm: 6, md: 3 }}>
-                  <ChampionStripCard entry={entry} />
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        )}
-
-        {/* Últimas noticias */}
+        {/* Últimas noticias — the freshest thing first. */}
         <Box component="section" sx={{ mb: 6 }}>
           <SectionHeading
             component="h2"
@@ -520,41 +440,73 @@ export default function Home() {
           )}
         </Box>
 
-        {/* Accesos rápidos — a light secondary strip, not competing with the hero. */}
-        <Box
-          component="nav"
-          aria-label="Accesos rápidos"
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            gap: 1,
-            pt: 3,
-            borderTop: '1px solid',
-            borderColor: 'divider',
-          }}
-        >
-          <Typography
-            component="span"
-            variant="overline"
-            sx={{ color: 'text.secondary', mr: 1 }}
+        {/* Temporadas */}
+        <Box component="section" sx={{ mb: 6 }}>
+          <SectionHeading
+            component="h2"
+            action={
+              <Button component={Link} to={APP_ROUTES.publicSeasons} color="primary">
+                Ver todas
+              </Button>
+            }
           >
-            Accesos rápidos
-          </Typography>
-          {QUICK_NAV_ITEMS.map(item => (
-            <Button
-              key={item.path}
-              component={Link}
-              to={item.path}
-              size="small"
-              variant="outlined"
-              color="secondary"
-              sx={{ borderRadius: `${radius.pill}px` }}
-            >
-              {item.label}
-            </Button>
-          ))}
+            Temporadas
+          </SectionHeading>
+
+          {seasonsLoading ? (
+            <CardGridSkeleton count={3} />
+          ) : seasonsError ? (
+            <LoadErrorState
+              message="No pudimos cargar las temporadas."
+              onRetry={() => void fetchSeasons()}
+            />
+          ) : featuredSeasons.length === 0 ? (
+            <Typography sx={{ color: 'text.secondary' }}>
+              Todavía no hay temporadas publicadas. Volvé a consultar más adelante.
+            </Typography>
+          ) : (
+            <Grid container spacing={3}>
+              {featuredSeasons.map(season => (
+                <Grid
+                  key={season.id}
+                  size={{ xs: 12, sm: 6, md: 4 }}>
+                  <SeasonCard season={season} />
+                </Grid>
+              ))}
+            </Grid>
+          )}
         </Box>
+
+        {/* Campeones recientes — hidden entirely when there are none. */}
+        {recentChampions.length > 0 && (
+          <Box component="section" sx={{ mb: 6 }}>
+            <SectionHeading
+              component="h2"
+              accentColor={brand.gold}
+              action={
+                <Button
+                  component={Link}
+                  to={APP_ROUTES.publicChampions}
+                  sx={{ color: brand.gold, '&:hover': { color: brand.goldLight } }}
+                >
+                  Ver campeones
+                </Button>
+              }
+            >
+              Campeones recientes
+            </SectionHeading>
+
+            <Grid container spacing={2}>
+              {recentChampions.map(entry => (
+                <Grid
+                  key={`${entry.tournamentId}-${entry.divisionName}`}
+                  size={{ xs: 12, sm: 6, md: 3 }}>
+                  <ChampionStripCard entry={entry} />
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+        )}
       </PageShell>
     </>
   );
