@@ -6,6 +6,7 @@ import {
   Button,
   Checkbox,
   Chip,
+  Collapse,
   Dialog,
   DialogActions,
   DialogContent,
@@ -24,6 +25,8 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { GUID } from '@/modules/core/types/types';
 import { useTeam } from '@/modules/team/hook/team.hook';
 import { useStage } from '@/modules/stage/hook/stage.hook';
@@ -228,6 +231,19 @@ const TournamentDivisionAssignment: React.FC<
     useState<ITournamentCompletability | null>(null);
   const [busy, setBusy] = useState(false);
   const [picker, setPicker] = useState<PickerTarget | null>(null);
+  const [collapsed, setCollapsed] = useState<Set<GUID>>(new Set());
+
+  const toggleCollapsed = (divisionId: GUID) => {
+    setCollapsed(prev => {
+      const next = new Set(prev);
+      if (next.has(divisionId)) {
+        next.delete(divisionId);
+      } else {
+        next.add(divisionId);
+      }
+      return next;
+    });
+  };
 
   // Draft assignment is allowed while registration is open and once it closes;
   // it is only unavailable once the tournament has already started.
@@ -567,6 +583,11 @@ const TournamentDivisionAssignment: React.FC<
           {assignments.map(assignment => {
             const { division, groups } = assignment;
             const showGroupHeadings = division.isCrossDivisionCup;
+            const isCollapsed = collapsed.has(division.id);
+            const divisionTeamCount = groups.reduce(
+              (total, group) => total + group.assignedTeams.length,
+              0
+            );
 
             return (
               <Box
@@ -578,21 +599,36 @@ const TournamentDivisionAssignment: React.FC<
                 <Stack
                   direction="row"
                   spacing={1}
-                  sx={{ alignItems: 'center', mb: 1.5 }}
+                  onClick={() => toggleCollapsed(division.id)}
+                  sx={{ alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
                 >
+                  <IconButton
+                    size="small"
+                    aria-label={isCollapsed ? 'Expandir' : 'Colapsar'}
+                    aria-expanded={!isCollapsed}
+                  >
+                    {isCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+                  </IconButton>
                   <Typography variant="subtitle1">{division.name}</Typography>
                   {division.isCrossDivisionCup && (
                     <Chip size="small" color="secondary" label="Copa cruzada" />
                   )}
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    label={`${divisionTeamCount} equipos`}
+                  />
                 </Stack>
 
-                {groups.length === 0 ? (
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Esta división no tiene fase de grupos para asignar equipos.
-                  </Typography>
-                ) : (
-                  <Stack spacing={2}>
-                    {groups.map(({ stage, assignedTeams }) => (
+                <Collapse in={!isCollapsed}>
+                  <Box sx={{ pt: 1.5 }}>
+                    {groups.length === 0 ? (
+                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        Esta división no tiene fase de grupos para asignar equipos.
+                      </Typography>
+                    ) : (
+                      <Stack spacing={2}>
+                        {groups.map(({ stage, assignedTeams }) => (
                       <Box
                         key={stage.id}
                         component="section"
@@ -662,9 +698,11 @@ const TournamentDivisionAssignment: React.FC<
                           </Stack>
                         )}
                       </Box>
-                    ))}
-                  </Stack>
-                )}
+                        ))}
+                      </Stack>
+                    )}
+                  </Box>
+                </Collapse>
               </Box>
             );
           })}
