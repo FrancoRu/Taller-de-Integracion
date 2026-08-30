@@ -203,7 +203,13 @@ const DivisionPage: React.FC = () => {
           </Button>
           <Button
             variant="outlined"
-            onClick={() => navigate(APP_ROUTES.panelDivisions)}
+            onClick={() =>
+              navigate(
+                division.tournamentId
+                  ? APP_ROUTES.panelTournamentDetail.build(division.tournamentId)
+                  : APP_ROUTES.panelTournaments
+              )
+            }
           >
             Volver
           </Button>

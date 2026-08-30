@@ -157,7 +157,6 @@ const TeamFormDialog: React.FC<TeamFormDialogProps> = ({
             }
             required
             fullWidth
-            helperText="Sigla de 3 letras del equipo (ej. CAC)."
             slotProps={{ htmlInput: { maxLength: 3 } }}
           />
 
