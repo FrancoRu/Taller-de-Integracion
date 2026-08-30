@@ -1,5 +1,23 @@
 # Revisión Club 12 — estado, bugs y pendientes (para Franco)
 
+> **CHANGELOG VIVO (se actualiza a medida que se trabaja, por si el trabajo queda a mitad).**
+>
+> **Mergeado a develop (PRs #72–#85):** además de lo listado más abajo, los últimos:
+> - #82 leyenda de posiciones limpia + coloreado en el panel admin.
+> - #83 Ver/Editar unificado en Torneos y Divisiones + columna Categoría en divisiones.
+> - #84 Ver/Editar unificado en Usuarios y Match.
+> - #85 **"Revertir a borrador"**: des-iniciar un torneo En curso (Ongoing→RegistrationClosed) que borra el fixture pero conserva las asignaciones; guarda: rechazado si hay partidos jugados. → permite corregir la asignación de un torneo ya iniciado y volver a iniciar.
+>
+> **PENDIENTE INMEDIATO (en orden):**
+> 1. Tab **"Partidos"** en el detalle de división (admin): asignar cancha, cambiar fecha, cargar resultado + goleadores. (feature grande, reusar componentes de match)
+> 2. Quitar el **sub-label** ruidoso del campo "Código (3 letras)" (Image #34).
+> 3. **Loading/skeleton mal en varias públicas** (ej. página pública de equipos): muestra "no hay datos" ANTES del fetch. Siempre mostrar loading hasta tener datos; el vacío sólo si realmente no hay nada tras cargar. (mismo patrón que se arregló en Novedades)
+> 4. Ver/Editar en el resto de entidades por MODAL (equipos, canchas, jugadores, temporadas) — mover el form de edición al detalle. Blog y sanciones: su "Ver" no tiene edición → agregarla al detalle.
+> 5. Nav jerárquico: Torneos dentro de Temporadas.
+> 6. README + manual de usuario.
+> 7. Byes de bracket (Copa Plata 5 equipos: seeds 5,6,7 con bye a semis).
+
+
 Fecha: 2026-08-30. Rama de integración: `develop`. Todo lo marcado ✅ ya está mergeado a `develop` (PRs #72–#81) y va a staging.
 
 Este documento resume: (1) qué se arregló, (2) qué falta / qué revisar, y (3) verificación de la base de datos. Complementa `Docs/HANDOFF.md`.
