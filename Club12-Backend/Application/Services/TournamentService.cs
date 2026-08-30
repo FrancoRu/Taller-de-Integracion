@@ -253,6 +253,16 @@ public class TournamentService(
             await GenerateFixtureAsync(tournament);
         }
 
+        // "Revertir a borrador": moving Ongoing → RegistrationClosed reopens the
+        // assignment phase, so the fixture generated at start is now stale and is
+        // torn down. Team-to-zone assignments are KEPT, so the organizer only
+        // adjusts what is wrong and re-starts, which rebuilds the fixture.
+        if (tournament.Status == TournamentStatus.Ongoing
+            && newStatus == TournamentStatus.RegistrationClosed)
+        {
+            await TeardownFixtureAsync(tournament);
+        }
+
         TournamentStatus previousStatus = tournament.Status;
         tournament.Status = newStatus;
         await tournamentRepository.UpdateAsync(tournament);
@@ -298,6 +308,47 @@ public class TournamentService(
                 await matchService.CreateAutomatedMatchesAsync(stageId);
             }
         }
+    }
+
+    /// <summary>
+    /// Deletes every generated match (and best-of-N series) of every stage of
+    /// every division of the tournament, so a reverted tournament goes back to a
+    /// clean, fixture-less RegistrationClosed state. Team assignments
+    /// (StageTeamMatch) are intentionally left untouched.
+    /// </summary>
+    private async Task TeardownFixtureAsync(Tournament tournament)
+    {
+        List<Guid> stageIds = [];
+
+        foreach (Division division in tournament.Divisions)
+        {
+            PaginatedResponse<Stage> stages = await stageService.GetAllStagesAsync(new GetStagesFilteredRequest
+            {
+                DivisionId = division.Id,
+                PageSize = PaginationDefaults.MaxPageSize,
+            });
+
+            stageIds.AddRange(stages.Items.Select(stage => stage.Id));
+        }
+
+        if (stageIds.Count == 0)
+        {
+            return;
+        }
+
+        // Reverting is only safe while nothing has been played: a finished match
+        // carries results (and scorers) that tearing down the fixture would lose.
+        int playedMatches = await unitOfWork.MatchRepository.CountAsync(
+            match => stageIds.Contains(match.StageId) && match.IsFinished);
+
+        if (playedMatches > 0)
+        {
+            throw new InvalidOperationException(ErrorMessages.Tournament.CannotRevertWithPlayedMatches);
+        }
+
+        // Matches first (they may reference a series), then the series.
+        await unitOfWork.MatchRepository.RemoveAsync(match => stageIds.Contains(match.StageId));
+        await unitOfWork.MatchSeriesRepository.RemoveAsync(series => stageIds.Contains(series.StageId));
     }
 
     /// <inheritdoc/>

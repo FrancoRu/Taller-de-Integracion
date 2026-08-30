@@ -16,6 +16,8 @@ public class TournamentStatusTransitionRulesTests
     [InlineData(TournamentStatus.OpenForRegistration, TournamentStatus.RegistrationClosed)]
     [InlineData(TournamentStatus.RegistrationClosed, TournamentStatus.Ongoing)]
     [InlineData(TournamentStatus.Ongoing, TournamentStatus.Finished)]
+    // Revert-to-draft: un-starting a tournament back to RegistrationClosed.
+    [InlineData(TournamentStatus.Ongoing, TournamentStatus.RegistrationClosed)]
     public void IsValidTransition_ForwardHappyPath_IsAllowed(TournamentStatus from, TournamentStatus to)
     {
         Assert.True(TournamentStatusTransitions.IsValidTransition(from, to));
@@ -40,7 +42,6 @@ public class TournamentStatusTransitionRulesTests
     // Going backward.
     [InlineData(TournamentStatus.OpenForRegistration, TournamentStatus.Scheduled)]
     [InlineData(TournamentStatus.RegistrationClosed, TournamentStatus.OpenForRegistration)]
-    [InlineData(TournamentStatus.Ongoing, TournamentStatus.RegistrationClosed)]
     [InlineData(TournamentStatus.Finished, TournamentStatus.Ongoing)]
     public void IsValidTransition_SkippingOrBackward_IsRejected(TournamentStatus from, TournamentStatus to)
     {

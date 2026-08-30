@@ -65,6 +65,11 @@ public static class ErrorMessages
 
     public static class Tournament
     {
+        /// <summary>Blocks reverting an Ongoing tournament that already has results.</summary>
+        public const string CannotRevertWithPlayedMatches =
+            "No se puede revertir a borrador: el torneo ya tiene partidos jugados. " +
+            "Sólo se puede revertir un torneo en curso sin resultados cargados.";
+
         public static string NotFound(System.Guid tournamentId)
         {
             return $"There is no Tournament with id: {tournamentId}.";
