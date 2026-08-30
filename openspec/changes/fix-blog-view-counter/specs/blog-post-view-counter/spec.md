@@ -18,16 +18,25 @@ not prescribe the client framework implementation.
 ### Requirement: In-App Read Increments the View Counter
 
 A public reader (anonymous, or an authenticated user who is neither Admin nor
-Owner) opening a published post through in-app navigation — the "Leer más"
-action from the post list, which passes the post object in router state — MUST
-cause exactly one `GET /api/blogposts/{idOrSlug}` for that post, and that request
-MUST increment the post's `Views` by exactly 1.
+Owner) opening a published post through in-app navigation — whether from the
+"Leer más" action on the Novedades list or a "Últimas noticias" card on the home
+page, both of which pass the post object in router state — MUST cause exactly one
+`GET /api/blogposts/{idOrSlug}` for that post, and that request MUST increment
+the post's `Views` by exactly 1. No in-app entry point may pre-fetch the post
+before navigating: the detail page is the single owner of that request.
 
 #### Scenario: "Leer más" from the list counts one view
 
 - GIVEN a published post with `Views = N` and a public reader on the post list
 - WHEN the reader activates "Leer más" and the detail page is shown with the post supplied in router state
 - THEN exactly one `GET /api/blogposts/{idOrSlug}` is issued for that post
+- AND the post's persisted `Views` becomes `N + 1`
+
+#### Scenario: "Últimas noticias" card on the home page counts one view
+
+- GIVEN a published post with `Views = N` shown in the home page "Últimas noticias" section
+- WHEN a public reader activates the card and the detail page is shown with the post supplied in router state
+- THEN no request is issued before navigation, and exactly one `GET /api/blogposts/{idOrSlug}` is issued by the detail page
 - AND the post's persisted `Views` becomes `N + 1`
 
 ### Requirement: Direct-URL Read Increments the View Counter
@@ -114,5 +123,8 @@ same post by the same visitor within one session.
 - Per-session, per-day, or per-visitor view deduplication.
 - Any change to Admin/Owner counting rules (already enforced server-side).
 - Rendering the `Views` value on the public detail page.
+- A dedicated increment endpoint decoupled from the data `GET` (kept as a
+  follow-up; the current design relies on every in-app entry point routing its
+  single `GET` through the detail page).
 - Any backend, controller, endpoint, DTO, or database change.
 - Deciding the `404`-specific background-GET outcome (design phase).

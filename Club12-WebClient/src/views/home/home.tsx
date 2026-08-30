@@ -158,7 +158,7 @@ export default function Home() {
 
   const navigate = useNavigate();
   const { seasons, getSeasonsByFiltered } = useSeason();
-  const { getBlogPostsByFilters, getBlogPostsById } = useBlogPost();
+  const { getBlogPostsByFilters } = useBlogPost();
   const [posts, setPosts] = useState<BlogPostResponse[]>([]);
   const [champions, setChampions] = useState<IChampionHistory[]>([]);
   const [postsLoading, setPostsLoading] = useState(false);
@@ -237,11 +237,14 @@ export default function Home() {
     [champions]
   );
 
-  const handleReadMore = async (idOrSlug: string) => {
-    const postDetails = await getBlogPostsById(idOrSlug);
-    if (postDetails) {
-      navigate(APP_ROUTES.blogPost.build(idOrSlug), { state: { post: postDetails } });
-    }
+  // The "Últimas noticias" cards already hold the full post (markdownText
+  // included) from the list fetch, so navigate with it instead of re-fetching
+  // by slug. That pre-fetch fired GET /api/blogposts/{slug} — the only Views++
+  // trigger — a first time, and the detail page fired it again, so a visit
+  // from the home page counted as two. The detail page is the single owner of
+  // that request now.
+  const handleReadMore = (post: BlogPostResponse) => {
+    navigate(APP_ROUTES.blogPost.build(post.slug), { state: { post } });
   };
 
   return (
@@ -378,7 +381,7 @@ export default function Home() {
                   size={{ xs: 12, sm: 6, md: 4 }}>
                   <Card component="article" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <CardActionArea
-                      onClick={() => void handleReadMore(post.slug)}
+                      onClick={() => handleReadMore(post)}
                       sx={{ height: '100%', alignItems: 'flex-start', display: 'flex', flexDirection: 'column' }}
                     >
                       {post.photoUrl ? (
