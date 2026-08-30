@@ -281,6 +281,7 @@ const DivisionPage: React.FC = () => {
               positions={division.positions}
               divisionId={division.id}
               divisionName={division.name}
+              qualificationRanges={division.qualificationRanges}
             />
           ))}
 

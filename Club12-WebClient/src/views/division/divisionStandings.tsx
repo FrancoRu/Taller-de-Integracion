@@ -17,7 +17,6 @@ import { Position, QualificationRange } from '@/modules/division/type/division.d
 import { sortPositions } from '@/modules/division/utils/sortPositions';
 import {
   cupTierColor,
-  cupTierMarker,
   findQualificationRange,
 } from '@/modules/division/utils/qualificationRange';
 import PrintableResultsSheet from '@/views/division/PrintableResultsSheet';
@@ -199,7 +198,7 @@ const DivisionStandings: React.FC<DivisionStandingsProps> = ({
                 }}
               />
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                {cupTierMarker(range.order)} {range.cupName} ({range.fromPosition}-{range.toPosition})
+                {range.cupName}
               </Typography>
             </Stack>
           ))}
