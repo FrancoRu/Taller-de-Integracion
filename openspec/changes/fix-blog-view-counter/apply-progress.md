@@ -87,3 +87,31 @@ None. Backend untouched and green. No `eslint-disable` anywhere; `react-hooks/ex
 **Verification**: `BlogPostDetailPage.test.tsx` 9/9 · frontend suite **503/503** (106 files) · `eslint --max-warnings 0` + `tsc --noEmit` clean · backend untouched. 5.3 manual re-check (Network tab now shows **1** GET per visit in dev) still pending a running stack on the user side.
 
 **Design doc**: Decision 2 was reversed — the `countedForRef`-style guard is now implemented (in a form that also fixes the cold-path skeleton). `design.md` updated.
+
+Batch 2 shipped as PR #91 (merged to `develop`, commit `5f4be40`).
+
+---
+
+## Batch 3 — post-QA fix: home page pre-fetch double-count
+
+**Trigger**: after PR #91 was in production the user still saw the counter move **"de a 2"** — but only when opening a post **from the home page** ("Últimas noticias"), two GETs sequential with a gap.
+
+**Root cause** (systematic-debugging, `grep getBlogPostsById` across the whole frontend): `home.tsx` `handleReadMore` **pre-fetched** the post — `await getBlogPostsById(idOrSlug)` fires `GET /api/blogposts/{slug}` (the only `Views++` trigger) — and *then* navigated with the result in router state. The detail page (Batch 1/2) then fires the same GET again. Two increments per home-originated visit. The Novedades path (`showPosts.tsx`) never had this because it navigates with the in-memory list post and does not pre-fetch. The exploration mapped `showPosts.tsx` but not `home.tsx`'s news section; a frontend-wide grep for `getBlogPostsById` at exploration time would have caught it.
+
+**Fix** (`home.tsx` only, still frontend-only):
+- `handleReadMore(post)` now navigates with the post it already holds from the `getBlogPostsByFilters` list fetch (`{ state: { post } }`), matching `showPosts.tsx`. No pre-fetch.
+- `getBlogPostsById` removed from the `useBlogPost()` destructure (now unused in `home.tsx`).
+- The detail page is the single owner of `GET /api/blogposts/{slug}` for every public entry point (Novedades, home, direct URL).
+
+**Test** (NEW `src/views/home/home.test.tsx`):
+- `navigates with the already-loaded post and does not pre-fetch it` — RED against pre-fix code (`getBlogPostsById` called 1×), GREEN after. Asserts `navigate('/blog/{slug}', { state: { post } })` and `getBlogPostsById` **not** called.
+
+**Verification**: `home.test.tsx` + `src/views/blogPost/` 10/10 · frontend suite **504/504** (107 files) · `eslint src/views/home --max-warnings 0` + `tsc --noEmit` clean · backend untouched.
+
+**Entry-point matrix after Batch 3** — every public visit counts exactly once:
+| Entry point | Pre-fetch? | Detail GET | Increment |
+|---|---|---|---|
+| Novedades → "Leer más" | no | 1 | +1 |
+| Home → "Últimas noticias" | no (was yes) | 1 | +1 |
+| Direct URL / refresh | n/a | 1 | +1 |
+| Admin "Ver" | no | 1 | +0 (server skips on JWT role) |
