@@ -102,15 +102,13 @@ const CONFIGURATION_CHILDREN: NavTab[] = [
  * routes still exist and stay reachable from those flows.
  */
 const COMPETITION_CHILDREN: NavTab[] = [
+  // Tournaments live INSIDE a season (Temporadas → Torneos → Divisiones), so
+  // there is no standalone "Torneos" nav entry — a tournament is reached through
+  // its season's detail.
   {
     label: 'Temporadas',
     path: APP_ROUTES.panelSeasons,
     icon: TAB_ICONS['Temporadas'],
-  },
-  {
-    label: 'Torneos',
-    path: APP_ROUTES.panelTournaments,
-    icon: TAB_ICONS['Torneos'],
   },
   {
     label: 'Sanciones',

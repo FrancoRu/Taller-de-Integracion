@@ -173,7 +173,13 @@ const TournamentPage: React.FC = () => {
           )}
           <Button
             variant="outlined"
-            onClick={() => navigate(APP_ROUTES.panelTournaments)}
+            onClick={() =>
+              navigate(
+                tournament.seasonId
+                  ? APP_ROUTES.panelSeason.build(tournament.seasonId)
+                  : APP_ROUTES.panelSeasons
+              )
+            }
           >
             Volver
           </Button>

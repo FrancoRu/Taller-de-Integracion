@@ -75,6 +75,7 @@ const renderPage = () =>
           element={<TournamentPage />}
         />
         <Route path="/panel/torneos" element={<div>listado-torneos</div>} />
+        <Route path="/panel/temporadas" element={<div>listado-temporadas</div>} />
       </Routes>
     </MemoryRouter>
   );
@@ -123,14 +124,16 @@ describe('TournamentPage — read-only detail (QA wave 1)', () => {
     ).toBeInTheDocument();
   });
 
-  it('"Volver" navigates back to the tournaments list', async () => {
+  it('"Volver" navigates back to the seasons list (a tournament without a season)', async () => {
+    // Tournaments live inside a season now; with no season, "Volver" falls back
+    // to the seasons list rather than a standalone tournaments list.
     setup(TournamentStatus.Scheduled);
     renderPage();
 
     const volver = await screen.findByRole('button', { name: 'Volver' });
     await userEvent.click(volver);
 
-    expect(screen.getByText('listado-torneos')).toBeInTheDocument();
+    expect(screen.getByText('listado-temporadas')).toBeInTheDocument();
   });
 });
 

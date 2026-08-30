@@ -80,8 +80,11 @@ describe('SidebarLayout — HU-26/HU-27 slimmed navigation', () => {
   it('keeps the tournament-management and admin entries', () => {
     renderSidebar();
 
-    ['Torneos', 'Sanciones', 'Canchas', 'Equipos', 'Usuarios', 'Novedades'].forEach(
+    // Tournaments live inside a season now, so there is no standalone "Torneos"
+    // nav entry — a tournament is reached through its season.
+    ['Temporadas', 'Sanciones', 'Canchas', 'Equipos', 'Usuarios', 'Novedades'].forEach(
       label => expect(screen.getByText(label)).toBeInTheDocument()
     );
+    expect(screen.queryByText('Torneos')).not.toBeInTheDocument();
   });
 });
