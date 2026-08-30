@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { formatDateAr } from '@/modules/core/utils/formatDate';
 import { Box, Typography } from '@mui/material';
@@ -31,28 +31,76 @@ const BlogPostDetailPage: React.FC = () => {
   const { idOrSlug } = useParams<{ idOrSlug: string }>();
   const location = useLocation();
   const { getBlogPostsById } = useBlogPost();
-  const [post, setPost] = useState<BlogPostResponse | undefined>(
-    (location.state as BlogPostLocationState | undefined)?.post
+  const seededPost = (location.state as BlogPostLocationState | undefined)?.post;
+  const [post, setPost] = useState<BlogPostResponse | undefined>(seededPost);
+  const [loading, setLoading] = useState(!seededPost);
+
+  /**
+   * The `idOrSlug` the currently displayed post belongs to, or undefined when
+   * nothing is displayed. Deliberately a ref, not state: the fetch effect has to
+   * consult it, and taking `post` as a dependency would re-run the effect on
+   * every setPost — with staleTime 0 that is an unbounded fetch/increment loop.
+   * Seeding it with `idOrSlug` is sound because the navigation that supplies
+   * `location.state.post` builds the URL from that same post.
+   */
+  const routeKeyRef = useRef<string | undefined>(
+    seededPost ? idOrSlug : undefined
   );
-  const [loading, setLoading] = useState(!post);
+
+  /**
+   * The `idOrSlug` the background GET has already been fired for. React
+   * StrictMode (dev) mounts every component twice, and in the browser the gap
+   * between the two mounts is long enough for the first GET to resolve — with
+   * `staleTime` 0 the second mount then fires a SECOND GET and a second
+   * `Views++` on the server (in dev the counter moved "de a 2"). Firing at most
+   * once per `idOrSlug` collapses that. A real navigation unmounts this
+   * component and resets the ref, so re-opening a post still counts.
+   */
+  const requestedForRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
-    if (post || !idOrSlug) return;
+    if (!idOrSlug || requestedForRef.current === idOrSlug) return;
+    requestedForRef.current = idOrSlug;
+    const requestedFor = idOrSlug;
+
+    // The GET is the *only* thing that increments Views on the server, so it
+    // must fire on the router-state path too — skipping it there is what kept
+    // the "Vistas" column flat.
+    //
+    // COUPLING: relies on the QueryClient keeping staleTime 0
+    // (QueryProvider.tsx) so fetchQuery reaches the network. A non-zero
+    // staleTime — global or per-query — would serve this from cache and
+    // silently stop the counter.
+    //
+    // Only blank the page when nothing for THIS route is on screen. When the
+    // post came in via location.state the refresh runs invisibly underneath it.
+    if (routeKeyRef.current !== requestedFor) setLoading(true);
 
     const loadPost = async () => {
-      setLoading(true);
       try {
-        // Suppress the global blocking alert on the initial GET; a failed
-        // load falls through to the quiet inline "not found" state below.
-        const fetchedPost = await getBlogPostsById(idOrSlug, { silent: true });
-        setPost(fetchedPost ?? undefined);
+        // silent: a failed refresh must not raise the global blocking alert
+        // over an article the reader is already reading.
+        const fetchedPost = await getBlogPostsById(requestedFor, {
+          silent: true,
+        });
+        // A later navigation has superseded this request.
+        if (requestedForRef.current !== requestedFor) return;
+
+        if (fetchedPost) {
+          setPost(fetchedPost);
+          routeKeyRef.current = requestedFor;
+        } else if (routeKeyRef.current !== requestedFor) {
+          // Cold path only. `undefined` conflates 404 / 500 / offline, so it
+          // must not tear down an article that is already readable.
+          setPost(undefined);
+        }
       } finally {
-        setLoading(false);
+        if (requestedForRef.current === requestedFor) setLoading(false);
       }
     };
 
-    loadPost();
-  }, [idOrSlug, post, getBlogPostsById]);
+    void loadPost();
+  }, [idOrSlug, getBlogPostsById]);
 
   // HU-17: set per-post Open Graph / Twitter tags so a shared blog URL renders
   // a rich card (title, description, image). Empty strings while the post is
