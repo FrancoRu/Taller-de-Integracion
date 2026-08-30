@@ -7,7 +7,6 @@ import {
   CardMedia,
   Typography,
   Button,
-  CircularProgress,
   Stack,
 } from '@mui/material';
 import SportsBasketballIcon from '@mui/icons-material/SportsBasketball';
@@ -21,6 +20,7 @@ import { TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { BLOG_EXCERPT_LENGTH } from '@/modules/blogPost/constants/blogPost';
 import LoadErrorState from '@/views/core/components/LoadErrorState';
+import { CardGridSkeleton } from '@/views/core/components/skeletons';
 
 const CARD_IMAGE_HEIGHT = 160;
 
@@ -94,6 +94,12 @@ const ShowPosts: React.FC = () => {
     navigate(APP_ROUTES.blogPost.build(post.slug), { state: { post } });
   };
 
+  // Consistent with the rest of the site: a skeleton grid while loading, so the
+  // empty-state message never flashes alongside a spinner during the fetch.
+  if (loading) {
+    return <CardGridSkeleton count={6} />;
+  }
+
   if (error) {
     return (
       <LoadErrorState
@@ -103,13 +109,20 @@ const ShowPosts: React.FC = () => {
     );
   }
 
+  if (posts.length === 0) {
+    return (
+      <Typography variant="body1" color="text.secondary">
+        No hay novedades disponibles.
+      </Typography>
+    );
+  }
+
   return (
     <div>
       <Grid container spacing={3} sx={{
         justifyContent: "center"
       }}>
-        {posts.length > 0 ? (
-          posts.map(post => (
+        {posts.map(post => (
             <Grid
               key={post.id}
               size={{
@@ -160,15 +173,10 @@ const ShowPosts: React.FC = () => {
                 </CardContent>
               </Card>
             </Grid>
-          ))
-        ) : (
-          <Typography variant="body1" color="text.secondary">
-            No hay novedades disponibles.
-          </Typography>
-        )}
+          ))}
       </Grid>
 
-      {!loading && pagination.totalCount > 0 && (
+      {pagination.totalCount > 0 && (
         <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 3 }}>
           Mostrando {(pagination.page - 1) * pagination.pageSize + 1}
           –{Math.min(pagination.page * pagination.pageSize, pagination.totalCount)} de{' '}
@@ -177,30 +185,24 @@ const ShowPosts: React.FC = () => {
       )}
 
       <Stack direction="row" spacing={2} sx={{ justifyContent: 'center', mt: 1 }}>
-        {loading ? (
-          <CircularProgress />
-        ) : (
-          <>
-            {pagination.page > 1 && (
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={() => handlePageChange('previous')}
-              >
-                Anterior
-              </Button>
-            )}
+        {pagination.page > 1 && (
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => handlePageChange('previous')}
+          >
+            Anterior
+          </Button>
+        )}
 
-            {pagination.page * pagination.pageSize < pagination.totalCount && (
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => handlePageChange('next')}
-              >
-                Siguiente
-              </Button>
-            )}
-          </>
+        {pagination.page * pagination.pageSize < pagination.totalCount && (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => handlePageChange('next')}
+          >
+            Siguiente
+          </Button>
         )}
       </Stack>
     </div>
