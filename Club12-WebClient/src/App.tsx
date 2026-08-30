@@ -64,6 +64,7 @@ import PasswordReset from './views/auth/passwordReset';
 import ForgotPassword from './views/auth/forgotPassword';
 import ActivateAccount from './views/auth/activateAccount';
 import PrivateRoute from './views/core/privateRoute';
+import ScrollToTop from './views/core/components/ScrollToTop';
 import TeamsPage from './views/team/TeamsPage';
 import TeamRegisterPage from './views/team/TeamRegisterPage';
 import ClubHistoryPage from './views/club/ClubHistoryPage';
@@ -357,7 +358,9 @@ function App() {
   // admin panel is only mounted when authenticated, under one persistent
   // SidebarLayout (via <Outlet />) so the sidebar survives panel navigation.
   return (
-    <Routes>
+    <>
+      <ScrollToTop />
+      <Routes>
       <Route element={<PublicLayout />}>
         {PUBLIC_ROUTES.map(({ path, element }) => (
           <Route key={path} path={path} element={element} />
@@ -400,7 +403,8 @@ function App() {
       )}
 
       <Route path="*" element={<NotFound />} />
-    </Routes>
+      </Routes>
+    </>
   );
 }
 
