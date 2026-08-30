@@ -32,7 +32,10 @@ export interface ITournamentContextProps {
    * @param tournament The updated tournament data.
    * @returns A promise that resolves when the tournament is successfully updated.
    */
-  putTournamentById(id: GUID, tournament: IPutTournamentRequest): Promise<void>;
+  putTournamentById(
+    id: GUID,
+    tournament: IPutTournamentRequest
+  ): Promise<boolean | void>;
 
   /**
    * Fetches a tournament by its ID or its public slug.
