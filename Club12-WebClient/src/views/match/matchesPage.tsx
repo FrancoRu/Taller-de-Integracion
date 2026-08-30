@@ -45,6 +45,8 @@ import { FILTERS_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/constants';
 
 interface MatchesPageProps {
   stageId?: GUID;
+  /** Scopes the paginated grid to one division (its whole fixture across stages). */
+  divisionId?: GUID;
   emptyMessage?: string;
   title?: string;
   wrapInCard?: boolean;
@@ -69,6 +71,7 @@ const formatDateTime = (value?: string | null) => formatDateTimeAr(value);
 
 const MatchesPage: React.FC<MatchesPageProps> = ({
   stageId,
+  divisionId,
   emptyMessage = 'No hay partidos cargados.',
   title = 'Partidos',
   wrapInCard = false,
@@ -156,9 +159,11 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
             }
           : {
               tournamentId: activeFilters.tournamentId,
-              divisionId: activeFilters.divisionId,
               stageId: activeFilters.stageId,
               ...activeFilters,
+              // When scoped to a division (the division's "Partidos" tab), force
+              // that division regardless of the (hidden) filter dropdowns.
+              divisionId: divisionId ?? activeFilters.divisionId,
               pageNumber: activePaginationModel.page + 1,
               pageSize: activePaginationModel.pageSize,
             }
@@ -166,7 +171,7 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
       setRowCount(response?.totalCount ?? 0);
       setLoading(false);
     },
-    [stageId]
+    [stageId, divisionId]
   );
 
   useEffect(() => {
@@ -552,7 +557,7 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
           </TextField>
         )}
 
-        {!stageId && (
+        {!stageId && !divisionId && (
           <TextField
             select
             label="Torneo"
@@ -571,7 +576,7 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
           </TextField>
         )}
 
-        {!stageId && (
+        {!stageId && !divisionId && (
           <TextField
             select
             label="División"
@@ -591,7 +596,7 @@ const MatchesPage: React.FC<MatchesPageProps> = ({
           </TextField>
         )}
 
-        {!stageId && (
+        {!stageId && !divisionId && (
           <TextField
             select
             label="Fase"
