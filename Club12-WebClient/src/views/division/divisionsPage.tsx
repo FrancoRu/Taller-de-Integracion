@@ -59,9 +59,9 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
   onCreate,
 }) => {
   const navigate = useNavigate();
-  const { divisions, getDivisionsByFilters, deleteDivisionsById } =
-    useDivision();
+  const { getDivisionsByFilters, deleteDivisionsById } = useDivision();
   const [loading, setLoading] = useState(false);
+  const [rows, setRows] = useState<IDivisionResponse[]>([]);
   const [rowCount, setRowCount] = useState(0);
   const [filters, setFilters] = useState<DivisionSearchFilters>(EMPTY_FILTERS);
   const [debouncedFilters, setDebouncedFilters] =
@@ -96,6 +96,11 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
               pageSize: activePaginationModel.pageSize,
             }
       );
+      // Render exactly the page the API returned. Reading from the shared
+      // division context instead was race-prone (a concurrent reader could
+      // leave it stale/empty), which showed an empty list even though the
+      // fetch succeeded.
+      setRows(response?.items ?? []);
       setRowCount(response?.totalCount ?? 0);
       setLoading(false);
     },
@@ -175,8 +180,9 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
         title: '¡Eliminada!',
         text: 'La división ha sido eliminada.',
       });
+      await fetchDivisions(debouncedFilters, paginationModel);
     },
-    [deleteDivisionsById]
+    [deleteDivisionsById, fetchDivisions, debouncedFilters, paginationModel]
   );
 
   const divisionActions = useMemo<TableRowAction<IDivisionResponse>[]>(
@@ -241,18 +247,6 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
     ];
   }, [divisionActions]);
 
-  // Scope the rendered rows to the current tournament. The `divisions` context
-  // is shared across every list/detail that reads it, so right after navigating
-  // between tournaments it can still hold the previous tournament's divisions
-  // until this view's refetch resolves — filtering by `tournamentId` guarantees
-  // a fresh list never shows another tournament's stale rows.
-  const rows = useMemo(
-    () =>
-      (divisions ?? []).filter(division =>
-        tournamentId ? division.tournamentId === tournamentId : true
-      ),
-    [divisions, tournamentId]
-  );
   const hasActiveFilters = useMemo(() => Boolean(filters.name), [filters.name]);
   const noRowsMessage = hasActiveFilters
     ? 'No se encontraron divisiones para el filtro aplicado.'
