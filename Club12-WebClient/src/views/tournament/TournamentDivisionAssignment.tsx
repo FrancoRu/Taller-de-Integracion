@@ -489,8 +489,13 @@ const TournamentDivisionAssignment: React.FC<
     return <DetailSkeleton />;
   }
 
-  const canStart = completability?.canStart ?? false;
   const issues = completability?.issues ?? [];
+  const hasUnassigned = unassignedTeams.length > 0;
+  // The start button independently requires that NO enrolled team is left
+  // without a zone — a safety net over the backend completability so the
+  // tournament can never start with unassigned teams / empty divisions.
+  const readyToStart =
+    (completability?.canStart ?? false) && !hasUnassigned && isRegistrationClosed;
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -503,7 +508,7 @@ const TournamentDivisionAssignment: React.FC<
         <Button
           variant="contained"
           onClick={() => void handleStart()}
-          disabled={!canStart || busy}
+          disabled={!readyToStart || busy}
         >
           Iniciar torneo
         </Button>
@@ -516,10 +521,17 @@ const TournamentDivisionAssignment: React.FC<
         </Alert>
       )}
 
-      {issues.length > 0 ? (
+      {issues.length > 0 || hasUnassigned ? (
         <Alert severity="warning" sx={{ mb: 2 }}>
           <AlertTitle>El torneo todavía no puede iniciarse</AlertTitle>
           <List dense disablePadding>
+            {hasUnassigned && (
+              <ListItem disableGutters>
+                <ListItemText
+                  primary={`Hay ${unassignedTeams.length} equipo(s) sin zona asignada. Asignálos todos antes de iniciar.`}
+                />
+              </ListItem>
+            )}
             {issues.map((issue, index) => (
               <ListItem key={`${issue.code}-${index}`} disableGutters>
                 <ListItemText primary={completabilityIssueMessage(issue)} />
