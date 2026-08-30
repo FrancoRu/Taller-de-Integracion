@@ -1,17 +1,29 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   AlertTitle,
   Box,
   Button,
+  Checkbox,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
+  IconButton,
+  InputAdornment,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
   Stack,
+  TextField,
   Typography,
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import SearchIcon from '@mui/icons-material/Search';
+import AddIcon from '@mui/icons-material/Add';
 import { GUID } from '@/modules/core/types/types';
 import { useTeam } from '@/modules/team/hook/team.hook';
 import { useStage } from '@/modules/stage/hook/stage.hook';
@@ -30,6 +42,7 @@ import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { confirmAction } from '@/modules/core/utils/confirmDialog';
 import { completabilityIssueMessage } from '@/modules/tournament/utils/completabilityMessages';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
+import TeamLogo from '@/views/core/components/TeamLogo';
 
 interface TournamentDivisionAssignmentProps {
   tournament: ITournamentResponse;
@@ -51,20 +64,160 @@ interface DivisionAssignment {
   groups: StageGroup[];
 }
 
+/** The target of the team picker: a specific group stage and its eligible pool. */
+interface PickerTarget {
+  stage: IStageResponse;
+  title: string;
+  eligible: ITeamResponse[];
+}
+
+const TEAM_LOGO_SIZE = 32;
+
+/** A compact team row (crest + name), reused in zones, the pool and the picker. */
+function TeamIdentity({ team }: { team: ITeamResponse }) {
+  return (
+    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
+      <TeamLogo teamName={team.name} logoUrl={team.logoUrl} size={TEAM_LOGO_SIZE} />
+      <Typography variant="body2" noWrap sx={{ minWidth: 0 }}>
+        {team.name}
+      </Typography>
+    </Stack>
+  );
+}
+
 /**
- * Division-assignment workspace for the RegistrationClosed phase (HU-108 +
- * HU-109). For every regular zone it lists the teams assigned to that zone's
- * group stage and offers the enrolled-but-unassigned teams to add — enforcing
- * "one team, one zone" across every regular zone while leaving the
- * cross-division cup as a parallel, independent membership. A live
- * completability panel surfaces every blocking issue and gates the "Iniciar
- * torneo" transition until the backend reports the tournament can start.
+ * A searchable multi-select dialog to add teams to a zone. Shows each eligible
+ * team as a card (crest + name) with a checkbox, filtered by a search box, and
+ * confirms the whole selection in one call.
+ */
+function TeamPickerDialog({
+  target,
+  busy,
+  onClose,
+  onConfirm,
+}: {
+  target: PickerTarget | null;
+  busy: boolean;
+  onClose: () => void;
+  onConfirm: (stage: IStageResponse, teamIds: GUID[]) => void;
+}) {
+  const [query, setQuery] = useState('');
+  const [selected, setSelected] = useState<Set<GUID>>(new Set());
+
+  // Reset the search and selection whenever a different picker target opens.
+  useEffect(() => {
+    setQuery('');
+    setSelected(new Set());
+  }, [target?.stage.id]);
+
+  const filtered = useMemo(() => {
+    if (!target) return [];
+    const q = query.trim().toLowerCase();
+    return q
+      ? target.eligible.filter(team => team.name.toLowerCase().includes(q))
+      : target.eligible;
+  }, [target, query]);
+
+  const toggle = (teamId: GUID) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(teamId)) {
+        next.delete(teamId);
+      } else {
+        next.add(teamId);
+      }
+      return next;
+    });
+  };
+
+  return (
+    <Dialog open={target !== null} onClose={onClose} fullWidth maxWidth="xs">
+      <DialogTitle sx={{ pr: 6 }}>
+        Agregar equipos{target ? ` · ${target.title}` : ''}
+        <IconButton
+          aria-label="Cerrar"
+          onClick={onClose}
+          sx={{ position: 'absolute', right: 8, top: 8 }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent dividers>
+        <TextField
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Buscar equipo…"
+          size="small"
+          fullWidth
+          autoFocus
+          sx={{ mb: 1.5 }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+
+        {filtered.length === 0 ? (
+          <Typography variant="body2" sx={{ color: 'text.secondary', py: 2 }}>
+            No hay equipos disponibles para agregar.
+          </Typography>
+        ) : (
+          <List dense disablePadding sx={{ maxHeight: 320, overflowY: 'auto' }}>
+            {filtered.map(team => (
+              <ListItemButton
+                key={team.id}
+                onClick={() => toggle(team.id)}
+                sx={{ borderRadius: 1 }}
+              >
+                <Checkbox
+                  edge="start"
+                  checked={selected.has(team.id)}
+                  tabIndex={-1}
+                  disableRipple
+                  sx={{ mr: 0.5 }}
+                />
+                <TeamIdentity team={team} />
+              </ListItemButton>
+            ))}
+          </List>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={busy}>
+          Cancelar
+        </Button>
+        <Button
+          variant="contained"
+          disabled={busy || selected.size === 0 || !target}
+          onClick={() => target && onConfirm(target.stage, [...selected])}
+        >
+          Agregar{selected.size > 0 ? ` (${selected.size})` : ''}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+/**
+ * Division-assignment workspace (HU-108 + HU-109). Available as a DRAFT while
+ * registration is open and once it closes: for every regular zone it shows the
+ * teams already placed there (each removable) and a searchable "+ Agregar
+ * equipos" picker for the enrolled-but-unassigned teams — enforcing "one team,
+ * one zone" across regular zones while leaving the cross-division cup as a
+ * parallel membership. Assign/remove update the view in place (no full reload).
+ * A live completability panel gates the "Iniciar torneo" transition.
  */
 const TournamentDivisionAssignment: React.FC<
   TournamentDivisionAssignmentProps
 > = ({ tournament }) => {
   const { getTeamsByFiltered } = useTeam();
-  const { getStagesByFilters, assignTeamsToStage } = useStage();
+  const { getStagesByFilters, assignTeamsToStage, unassignTeamsFromStage } =
+    useStage();
   const { getDivisionsByFilters } = useDivision();
   const { getCompletability, putTournamentById } = useTournament();
 
@@ -74,13 +227,18 @@ const TournamentDivisionAssignment: React.FC<
   const [completability, setCompletability] =
     useState<ITournamentCompletability | null>(null);
   const [busy, setBusy] = useState(false);
-  const [reloadToken, setReloadToken] = useState(0);
+  const [picker, setPicker] = useState<PickerTarget | null>(null);
 
+  // Draft assignment is allowed while registration is open and once it closes;
+  // it is only unavailable once the tournament has already started.
+  const canAssign =
+    tournament.status === TournamentStatus.OpenForRegistration ||
+    tournament.status === TournamentStatus.RegistrationClosed;
   const isRegistrationClosed =
     tournament.status === TournamentStatus.RegistrationClosed;
 
   useEffect(() => {
-    if (!isRegistrationClosed) {
+    if (!canAssign) {
       return;
     }
 
@@ -112,10 +270,6 @@ const TournamentDivisionAssignment: React.FC<
               pageSize: FILTER_OPTIONS_PAGE_SIZE,
             });
 
-            // A cross-division cup (HU-110) has more than one Group stage, so
-            // we keep every one and let the admin assign teams to each; a
-            // regular zone still resolves to a single group. Order them by
-            // their stage `order` so "Grupo 1"…"Grupo N" stay in sequence.
             const items = stagesResult?.items ?? [];
             const groupStages = items
               .filter(stage => stage.stageType === StageType.Group)
@@ -156,67 +310,83 @@ const TournamentDivisionAssignment: React.FC<
       active = false;
     };
   }, [
-    isRegistrationClosed,
+    canAssign,
     tournament.id,
-    reloadToken,
     getCompletability,
     getDivisionsByFilters,
     getTeamsByFiltered,
     getStagesByFilters,
   ]);
 
-  if (!isRegistrationClosed) {
-    return (
-      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-        La asignación estará disponible cuando la inscripción del torneo esté
-        cerrada.
-      </Typography>
+  // Refetch ONLY the completability verdict after a change, so the start-gate
+  // stays live without reloading the whole assignment view.
+  const refreshCompletability = useCallback(async () => {
+    const result = await getCompletability(tournament.id);
+    setCompletability(result ?? null);
+  }, [getCompletability, tournament.id]);
+
+  const addTeamsLocally = (stageId: GUID, teams: ITeamResponse[]) => {
+    setAssignments(prev =>
+      prev.map(assignment => ({
+        ...assignment,
+        groups: assignment.groups.map(group =>
+          group.stage.id === stageId
+            ? {
+                ...group,
+                assignedTeams: [
+                  ...group.assignedTeams,
+                  ...teams.filter(
+                    team => !group.assignedTeams.some(t => t.id === team.id)
+                  ),
+                ],
+              }
+            : group
+        ),
+      }))
     );
-  }
-
-  if (loading) {
-    return <DetailSkeleton />;
-  }
-
-  // "One team, one zone": a team assigned to any regular zone must not be
-  // offered in another. The cross-division cup is a parallel membership, so it
-  // is excluded from this set and only filters against its own assignments.
-  const teamsInRegularZones = new Set<GUID>();
-  assignments.forEach(({ division, groups }) => {
-    if (!division.isCrossDivisionCup) {
-      groups.forEach(group =>
-        group.assignedTeams.forEach(team => teamsInRegularZones.add(team.id))
-      );
-    }
-  });
-
-  // Teams eligible for a division's groups. A regular zone bars any team
-  // already placed in another regular zone. A cross-division cup (HU-110) is a
-  // parallel membership: a team may join a cup group even if it also plays a
-  // regular zone, but it must not sit in two different groups of the SAME cup,
-  // so every team already in ANY of this cup's groups is excluded from all of
-  // them.
-  const eligibleTeamsFor = ({
-    division,
-    groups,
-  }: DivisionAssignment): ITeamResponse[] => {
-    if (division.isCrossDivisionCup) {
-      const alreadyInCup = new Set<GUID>();
-      groups.forEach(group =>
-        group.assignedTeams.forEach(team => alreadyInCup.add(team.id))
-      );
-      return enrolledTeams.filter(team => !alreadyInCup.has(team.id));
-    }
-
-    return enrolledTeams.filter(team => !teamsInRegularZones.has(team.id));
   };
 
-  const handleAssign = async (groupStageId: GUID, teamId: GUID) => {
+  const removeTeamLocally = (stageId: GUID, teamId: GUID) => {
+    setAssignments(prev =>
+      prev.map(assignment => ({
+        ...assignment,
+        groups: assignment.groups.map(group =>
+          group.stage.id === stageId
+            ? {
+                ...group,
+                assignedTeams: group.assignedTeams.filter(t => t.id !== teamId),
+              }
+            : group
+        ),
+      }))
+    );
+  };
+
+  const handleAdd = async (stage: IStageResponse, teamIds: GUID[]) => {
+    const teams = teamIds
+      .map(id => enrolledTeams.find(team => team.id === id))
+      .filter((team): team is ITeamResponse => team !== undefined);
+
     setBusy(true);
     try {
-      const success = await assignTeamsToStage(groupStageId, [teamId]);
-      if (success) {
-        setReloadToken(token => token + 1);
+      const ok = await assignTeamsToStage(stage.id, teamIds);
+      if (ok) {
+        addTeamsLocally(stage.id, teams);
+        setPicker(null);
+        await refreshCompletability();
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleRemove = async (stage: IStageResponse, team: ITeamResponse) => {
+    setBusy(true);
+    try {
+      const ok = await unassignTeamsFromStage(stage.id, [team.id]);
+      if (ok) {
+        removeTeamLocally(stage.id, team.id);
+        await refreshCompletability();
       }
     } finally {
       setBusy(false);
@@ -234,11 +404,6 @@ const TournamentDivisionAssignment: React.FC<
       return;
     }
 
-    // Reuse the existing status-change flow: the tournament PUT routes the
-    // requested status through the backend state machine, which rejects a
-    // not-yet-completable start with 409 (surfaced by the global error
-    // handler). Refetch completability afterwards so the panel reflects the
-    // server's current verdict.
     const payload: IPutTournamentRequest = {
       name: tournament.name,
       description: tournament.description,
@@ -250,50 +415,145 @@ const TournamentDivisionAssignment: React.FC<
     setBusy(true);
     try {
       await putTournamentById(tournament.id, payload);
-      setReloadToken(token => token + 1);
+      await refreshCompletability();
     } finally {
       setBusy(false);
     }
   };
+
+  // "One team, one zone": every team already in a regular zone.
+  const teamsInRegularZones = useMemo(() => {
+    const set = new Set<GUID>();
+    assignments.forEach(({ division, groups }) => {
+      if (!division.isCrossDivisionCup) {
+        groups.forEach(group =>
+          group.assignedTeams.forEach(team => set.add(team.id))
+        );
+      }
+    });
+    return set;
+  }, [assignments]);
+
+  const unassignedTeams = useMemo(
+    () => enrolledTeams.filter(team => !teamsInRegularZones.has(team.id)),
+    [enrolledTeams, teamsInRegularZones]
+  );
+
+  // Teams eligible for a division's group. A regular zone bars any team already
+  // placed in another regular zone; a cross-division cup (parallel membership)
+  // only bars teams already in one of its own groups.
+  const eligibleTeamsFor = (
+    { division, groups }: DivisionAssignment,
+    stageId: GUID
+  ): ITeamResponse[] => {
+    if (division.isCrossDivisionCup) {
+      const alreadyInCup = new Set<GUID>();
+      groups.forEach(group =>
+        group.assignedTeams.forEach(team => alreadyInCup.add(team.id))
+      );
+      return enrolledTeams.filter(team => !alreadyInCup.has(team.id));
+    }
+
+    const group = groups.find(g => g.stage.id === stageId);
+    const here = new Set((group?.assignedTeams ?? []).map(t => t.id));
+    return enrolledTeams.filter(
+      team => !teamsInRegularZones.has(team.id) || here.has(team.id)
+    ).filter(team => !here.has(team.id));
+  };
+
+  if (!canAssign) {
+    return (
+      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+        La asignación no está disponible una vez que el torneo comenzó.
+      </Typography>
+    );
+  }
+
+  if (loading) {
+    return <DetailSkeleton />;
+  }
 
   const canStart = completability?.canStart ?? false;
   const issues = completability?.issues ?? [];
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Typography variant="h6" sx={{ mb: 2 }}>
-        Asignación de equipos a zonas
-      </Typography>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={1}
+        sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between', mb: 2 }}
+      >
+        <Typography variant="h6">Asignación de equipos a zonas</Typography>
+        <Button
+          variant="contained"
+          onClick={() => void handleStart()}
+          disabled={!canStart || busy}
+        >
+          Iniciar torneo
+        </Button>
+      </Stack>
 
-      <Box sx={{ mb: 3 }}>
-        {issues.length > 0 ? (
-          <Alert severity="warning">
-            <AlertTitle>
-              El torneo todavía no puede iniciarse
-            </AlertTitle>
-            <List dense disablePadding>
-              {issues.map((issue, index) => (
-                <ListItem key={`${issue.code}-${index}`} disableGutters>
-                  <ListItemText primary={completabilityIssueMessage(issue)} />
-                </ListItem>
-              ))}
-            </List>
-          </Alert>
+      {!isRegistrationClosed && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Podés ir asignando los equipos a sus zonas como borrador. Para iniciar
+          el torneo, primero cerrá la inscripción desde «Editar torneo».
+        </Alert>
+      )}
+
+      {issues.length > 0 ? (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          <AlertTitle>El torneo todavía no puede iniciarse</AlertTitle>
+          <List dense disablePadding>
+            {issues.map((issue, index) => (
+              <ListItem key={`${issue.code}-${index}`} disableGutters>
+                <ListItemText primary={completabilityIssueMessage(issue)} />
+              </ListItem>
+            ))}
+          </List>
+        </Alert>
+      ) : (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          Todos los equipos están asignados: el torneo está listo para iniciarse.
+        </Alert>
+      )}
+
+      {/* Pool of enrolled teams not yet placed in any regular zone. */}
+      <Box
+        component="section"
+        aria-label="Equipos sin zona"
+        sx={{
+          border: 1,
+          borderColor: unassignedTeams.length > 0 ? 'warning.main' : 'divider',
+          borderRadius: 1,
+          p: 2,
+          mb: 3,
+        }}
+      >
+        <Typography variant="subtitle2" sx={{ mb: 1 }}>
+          Equipos sin zona ({unassignedTeams.length})
+        </Typography>
+        {unassignedTeams.length === 0 ? (
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Todos los equipos inscriptos tienen una zona asignada.
+          </Typography>
         ) : (
-          <Alert severity="success">
-            El torneo está listo para iniciarse.
-          </Alert>
+          <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+            {unassignedTeams.map(team => (
+              <Chip
+                key={team.id}
+                avatar={
+                  <TeamLogo
+                    teamName={team.name}
+                    logoUrl={team.logoUrl}
+                    size={24}
+                  />
+                }
+                label={team.name}
+                variant="outlined"
+              />
+            ))}
+          </Stack>
         )}
-
-        <Stack direction="row" sx={{ mt: 2 }}>
-          <Button
-            variant="contained"
-            onClick={() => void handleStart()}
-            disabled={!canStart || busy}
-          >
-            Iniciar torneo
-          </Button>
-        </Stack>
       </Box>
 
       <Divider sx={{ mb: 3 }} />
@@ -306,9 +566,6 @@ const TournamentDivisionAssignment: React.FC<
         <Stack spacing={3}>
           {assignments.map(assignment => {
             const { division, groups } = assignment;
-            const eligibleTeams = eligibleTeamsFor(assignment);
-            // A cross-division cup shows its N groups each under its own
-            // heading; a regular zone has a single group and needs none.
             const showGroupHeadings = division.isCrossDivisionCup;
 
             return (
@@ -316,17 +573,12 @@ const TournamentDivisionAssignment: React.FC<
                 key={division.id}
                 component="section"
                 aria-label={division.name}
-                sx={{
-                  border: 1,
-                  borderColor: 'divider',
-                  borderRadius: 1,
-                  p: 2,
-                }}
+                sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}
               >
                 <Stack
                   direction="row"
                   spacing={1}
-                  sx={{ alignItems: 'center', mb: 1 }}
+                  sx={{ alignItems: 'center', mb: 1.5 }}
                 >
                   <Typography variant="subtitle1">{division.name}</Typography>
                   {division.isCrossDivisionCup && (
@@ -346,66 +598,66 @@ const TournamentDivisionAssignment: React.FC<
                         component="section"
                         aria-label={stage.name}
                       >
-                        {showGroupHeadings && (
-                          <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-                            {stage.name}
-                          </Typography>
-                        )}
-
-                        <Typography
-                          variant="subtitle2"
-                          sx={{ color: 'text.secondary', mb: 0.5 }}
+                        <Stack
+                          direction="row"
+                          sx={{
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            mb: 1,
+                          }}
                         >
-                          Equipos asignados
-                        </Typography>
-                        {assignedTeams.length === 0 ? (
-                          <Typography
-                            variant="body2"
-                            sx={{ color: 'text.secondary', mb: 1 }}
+                          <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
+                            {showGroupHeadings ? stage.name : 'Equipos'} (
+                            {assignedTeams.length})
+                          </Typography>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={<AddIcon />}
+                            disabled={busy}
+                            onClick={() =>
+                              setPicker({
+                                stage,
+                                title: showGroupHeadings
+                                  ? `${division.name} · ${stage.name}`
+                                  : division.name,
+                                eligible: eligibleTeamsFor(assignment, stage.id),
+                              })
+                            }
                           >
-                            Todavía no hay equipos asignados a esta zona.
-                          </Typography>
-                        ) : (
-                          <List dense disablePadding sx={{ mb: 1 }}>
-                            {assignedTeams.map(team => (
-                              <ListItem key={team.id} disableGutters>
-                                <ListItemText primary={team.name} />
-                              </ListItem>
-                            ))}
-                          </List>
-                        )}
+                            Agregar equipos
+                          </Button>
+                        </Stack>
 
-                        <Typography
-                          variant="subtitle2"
-                          sx={{ color: 'text.secondary', mb: 0.5 }}
-                        >
-                          Agregar equipos
-                        </Typography>
-                        {eligibleTeams.length === 0 ? (
+                        {assignedTeams.length === 0 ? (
                           <Typography
                             variant="body2"
                             sx={{ color: 'text.secondary' }}
                           >
-                            No hay equipos disponibles para agregar a esta zona.
+                            Todavía no hay equipos en esta zona.
                           </Typography>
                         ) : (
-                          <Stack
-                            direction="row"
-                            spacing={1}
-                            sx={{ flexWrap: 'wrap', gap: 1 }}
-                          >
-                            {eligibleTeams.map(team => (
-                              <Button
+                          <Stack spacing={0.5}>
+                            {assignedTeams.map(team => (
+                              <Stack
                                 key={team.id}
-                                size="small"
-                                variant="outlined"
-                                disabled={busy}
-                                onClick={() =>
-                                  void handleAssign(stage.id, team.id)
-                                }
+                                direction="row"
+                                sx={{
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  py: 0.5,
+                                }}
                               >
-                                Agregar {team.name}
-                              </Button>
+                                <TeamIdentity team={team} />
+                                <IconButton
+                                  size="small"
+                                  aria-label={`Quitar ${team.name}`}
+                                  disabled={busy}
+                                  onClick={() => void handleRemove(stage, team)}
+                                >
+                                  <CloseIcon fontSize="small" />
+                                </IconButton>
+                              </Stack>
                             ))}
                           </Stack>
                         )}
@@ -418,6 +670,13 @@ const TournamentDivisionAssignment: React.FC<
           })}
         </Stack>
       )}
+
+      <TeamPickerDialog
+        target={picker}
+        busy={busy}
+        onClose={() => setPicker(null)}
+        onConfirm={(stage, teamIds) => void handleAdd(stage, teamIds)}
+      />
     </Box>
   );
 };

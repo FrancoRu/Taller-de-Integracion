@@ -72,6 +72,11 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
     }) => stageService.assignTeamsToStage(id, teamIds, auto),
   });
 
+  const unassignTeamsMutation = useMutation({
+    mutationFn: ({ id, teamIds }: { id: GUID; teamIds: GUID[] }) =>
+      stageService.unassignTeamsFromStage(id, teamIds),
+  });
+
   const seedKnockoutStageMutation = useMutation({
     mutationFn: stageService.seedKnockoutStage,
   });
@@ -220,6 +225,21 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
     [assignTeamsMutation, queryClient, handleUnknownError]
   );
 
+  const unassignTeamsFromStage = useCallback(
+    async (id: GUID, teamIds: GUID[]): Promise<boolean | void> => {
+      try {
+        const res = await unassignTeamsMutation.mutateAsync({ id, teamIds });
+        if (res) {
+          await queryClient.invalidateQueries({ queryKey: stageKeys.list() });
+          return true;
+        }
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [unassignTeamsMutation, queryClient, handleUnknownError]
+  );
+
   const seedKnockoutStage = useCallback(
     async (id: GUID): Promise<boolean | void> => {
       try {
@@ -246,6 +266,7 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
       deleteStagesById,
       generateStagesAutomatically,
       assignTeamsToStage,
+      unassignTeamsFromStage,
       seedKnockoutStage,
     }),
     [
@@ -258,6 +279,7 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
       deleteStagesById,
       generateStagesAutomatically,
       assignTeamsToStage,
+      unassignTeamsFromStage,
       seedKnockoutStage,
     ]
   );

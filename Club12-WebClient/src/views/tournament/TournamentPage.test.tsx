@@ -135,7 +135,7 @@ describe('TournamentPage — read-only detail (QA wave 1)', () => {
 });
 
 describe('TournamentPage — assignment tab gate (HU-108/HU-109)', () => {
-  it('shows the "Asignación" tab only while RegistrationClosed', async () => {
+  it('shows the "Asignación" tab while registration is closed', async () => {
     setup(TournamentStatus.RegistrationClosed);
     renderPage();
 
@@ -144,8 +144,17 @@ describe('TournamentPage — assignment tab gate (HU-108/HU-109)', () => {
     ).toBeInTheDocument();
   });
 
-  it('hides the "Asignación" tab for other statuses', async () => {
+  it('shows the "Asignación" tab as a draft while registration is open', async () => {
     setup(TournamentStatus.OpenForRegistration);
+    renderPage();
+
+    expect(
+      await screen.findByRole('tab', { name: 'Asignación' })
+    ).toBeInTheDocument();
+  });
+
+  it('hides the "Asignación" tab once the tournament has started', async () => {
+    setup(TournamentStatus.Ongoing);
     renderPage();
 
     await screen.findByRole('tab', { name: 'Detalle' });
