@@ -234,6 +234,13 @@ export interface IDivisionResponse {
   isCrossDivisionCup: boolean;
 
   /**
+   * Competitive category (gender) of the division — matches its tournament.
+   * Used to tell apart same-named zones across masculine/feminine tournaments.
+   * @type {TournamentCategory}
+   */
+  category?: TournamentCategory;
+
+  /**
    * The standings-position ranges that qualify to a playoff cup (HU-45),
    * ordered top-down (order 0 = top cup). Lets the public standings table
    * highlight the qualifying rows and render a per-cup legend. Absent/empty
