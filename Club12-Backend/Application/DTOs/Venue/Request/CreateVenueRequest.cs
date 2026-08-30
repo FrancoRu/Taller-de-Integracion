@@ -25,11 +25,11 @@ public class CreateVenueRequest
     public required string Address { get; set; }
 
     /// <summary>
-    /// The logo image file to upload (must be JPEG or PNG).
+    /// Optional photo of the venue (JPEG or PNG). A venue does not require a
+    /// photo, so this may be omitted.
     /// </summary>
-    [Required(ErrorMessage = "The image file image is required.")]
     [DataType(DataType.Upload)]
-    public required IFormFile ImageFile { get; init; }
+    public IFormFile? ImageFile { get; init; }
 
     /// <summary>
     /// Optional geographic latitude of the venue (e.g. pasted from Google Maps).
