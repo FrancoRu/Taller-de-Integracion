@@ -46,6 +46,52 @@ public class PositionCalculatorTests
     }
 
     [Fact]
+    public void CalculatePositions_WithRoster_SeedsAllAssignedTeamsAtZeroBeforeAnyMatch()
+    {
+        Team a = MakeTeam("Alpha");
+        Team b = MakeTeam("Bravo");
+        Team c = MakeTeam("Charlie");
+
+        // No matches played yet, but three teams are assigned to the zone.
+        List<Position> positions = PositionCalculator.CalculatePositions(
+            [],
+            rosterTeams: [a, b, c]);
+
+        Assert.Equal(3, positions.Count);
+        Assert.All(positions, p =>
+        {
+            Assert.Equal(0, p.MatchesPlayed);
+            Assert.Equal(0, p.Wins);
+            Assert.Equal(0, p.Losses);
+            Assert.Equal(0, p.Points);
+        });
+    }
+
+    [Fact]
+    public void CalculatePositions_WithRoster_OverlaysFinishedResultsOnSeededTeams()
+    {
+        Team home = MakeTeam("Home");
+        Team visitor = MakeTeam("Visitor");
+        Team bench = MakeTeam("Bench");
+        List<Match> matches = [MakeFinishedMatch(home, visitor, 80, 70)];
+
+        List<Position> positions = PositionCalculator.CalculatePositions(
+            matches,
+            rosterTeams: [home, visitor, bench]);
+
+        // All three assigned teams appear; the bench team that has not played is
+        // still listed, at 0-0.
+        Assert.Equal(3, positions.Count);
+        Position benchPosition = Assert.Single(positions, p => p.TeamId == bench.Id);
+        Assert.Equal(0, benchPosition.MatchesPlayed);
+        Assert.Equal(0, benchPosition.Points);
+
+        Position homePosition = Assert.Single(positions, p => p.TeamId == home.Id);
+        Assert.Equal(1, homePosition.MatchesPlayed);
+        Assert.Equal(2, homePosition.Points);
+    }
+
+    [Fact]
     public void CalculatePositions_TwoTeamsOneMatch_AwardsTwoPointsForWinOneForLoss()
     {
         Team home = MakeTeam("Home");

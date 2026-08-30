@@ -237,7 +237,28 @@ public class DivisionService(
             PageSize = PaginationDefaults.MaxPageSize,
         });
 
-        return PositionCalculator.CalculatePositions(matches.Items, pointsForWin, pointsForLoss, deductions);
+        // Seed the table with every team assigned to the zone so the standings
+        // list all of them (at 0-0) from the start, not only once they have a
+        // finished match.
+        List<Team> rosterTeams = await GetAssignedTeamsAsync(groupStage.Id);
+
+        return PositionCalculator.CalculatePositions(matches.Items, pointsForWin, pointsForLoss, deductions, rosterTeams);
+    }
+
+    /// <summary>
+    /// The teams currently assigned to a (group) stage, resolved through their
+    /// <see cref="StageTeamMatch"/> membership with the Team navigation loaded.
+    /// </summary>
+    private async Task<List<Team>> GetAssignedTeamsAsync(Guid stageId)
+    {
+        IEnumerable<StageTeamMatch> assignments = await stageTeamMatchRepository.FindAsync(
+            stm => stm.StageId == stageId,
+            includes: [stm => stm.Team!]);
+
+        return [.. assignments
+            .Select(stm => stm.Team)
+            .Where(team => team is not null)
+            .Cast<Team>()];
     }
 
     /// <summary>
@@ -297,11 +318,13 @@ public class DivisionService(
                 PageSize = PaginationDefaults.MaxPageSize,
             });
 
+            List<Team> rosterTeams = await GetAssignedTeamsAsync(groupStage.Id);
+
             result.Add(new GroupStandings
             {
                 StageId = groupStage.Id,
                 StageName = groupStage.Name,
-                Positions = PositionCalculator.CalculatePositions(matches.Items, pointsForWin, pointsForLoss, deductions),
+                Positions = PositionCalculator.CalculatePositions(matches.Items, pointsForWin, pointsForLoss, deductions, rosterTeams),
             });
         }
 
