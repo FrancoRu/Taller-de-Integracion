@@ -165,46 +165,80 @@ ConnectionStrings__DbConnection=Host=db;Port=5432;Database=postgres;Username=pos
 ### 7.3 Dump fresco de Supabase
 
 Desde el host, usando `postgres:17-alpine` como cliente (no depende de la versión de
-`pg_dump` del host):
+`pg_dump` del host). Los datos del app viven en **dos** schemas: `public` (Identity /
+`AspNet*`) y `Club12` (todo lo demás). Pasá las credenciales como variables de entorno
+para no pelear con el URL-encoding de la contraseña; sacá los valores del `.env` actual
+(`grep -i DbConnection /home/docker-compose/Club12/.env`) — `User Id=` → `PGUSER`,
+`Password=` → `PGPASSWORD`, `Server=` → `PGHOST`.
 
 ```bash
+set +H                          # bash: desactiva la expansión de '!' en la password
 cd /home/docker/backups/club12
-docker run --rm -v "$PWD:/out" postgres:17-alpine \
-  pg_dump "postgresql://postgres.<ref>:<pass-supabase>@aws-1-us-east-2.pooler.supabase.com:5432/postgres" \
-  --format=custom --no-owner --no-privileges --schema=public \
-  --file=/out/club12-cutover-$(date +%F).dump
 
-docker run --rm -v "$PWD:/out" postgres:17-alpine \
-  pg_restore --list /out/club12-cutover-$(date +%F).dump | head -30   # sanity check
+docker run --rm -v "$PWD:/out" \
+  -e PGHOST=aws-1-us-east-2.pooler.supabase.com -e PGPORT=5432 -e PGDATABASE=postgres \
+  -e PGUSER='<User Id>' -e PGPASSWORD='<Password>' -e PGSSLMODE=require \
+  postgres:17-alpine \
+  pg_dump --format=custom --no-owner --no-privileges \
+  --schema=public --schema='"Club12"' \
+  --file=/out/club12-cutover-$(date +%F).dump
 ```
+
+> `--schema='"Club12"'` **con comillas dobles adentro**: `pg_dump` pasa los patrones de
+> `--schema` a minúsculas, así que `--schema=Club12` no matchea nada y el dump sale con
+> solo la mitad de las tablas.
+
+Verificá que estén los dos schemas:
+
+```bash
+docker run --rm -v "$PWD:/out" postgres:17-alpine \
+  pg_restore --list "/out/club12-cutover-$(date +%F).dump" | grep "TABLE DATA"
+```
+
+Tenés que ver ~22 tablas en `Club12` (`Teams`, `Players`, `Tournaments`, `Matches`, …) y
+8 en `public` (`AspNetUsers`, `__EFMigrationsHistory`, …).
 
 ### 7.4 Cutover (ventana corta — el backend se reinicia)
 
 ```bash
 cd /home/docker-compose/Club12
+DUMP=/home/docker/backups/club12/club12-cutover-$(date +%F).dump
 
 # 1. Levantar SOLO la base y esperar a que esté healthy
 docker compose up -d db
-docker compose ps db
+docker compose ps db                       # STATUS = healthy
 
 # 2. Restaurar el dump dentro del contenedor
-#    (ignorar "schema public already exists" / "role ... does not exist")
-cat /home/docker/backups/club12/club12-cutover-*.dump | \
-  docker compose exec -T db pg_restore --no-owner --no-privileges --clean --if-exists \
-  -U postgres -d postgres
+docker compose cp "$DUMP" db:/tmp/restore.dump
+docker compose exec -T db pg_restore --no-owner --no-privileges -U postgres -d postgres /tmp/restore.dump
+docker compose exec -T db rm /tmp/restore.dump
+#    El único error esperado es `schema "public" already exists` (1, ignorado) — benigno.
+#    Cualquier otro error rojo: frená y revisá antes de seguir.
 
-# 3. Verificación rápida
-docker compose exec -T db psql -U postgres -d postgres -c '\dt' | head
-docker compose exec -T db psql -U postgres -d postgres -c 'select count(*) from "Teams";'
+# 3. Verificación
+docker compose exec -T db psql -U postgres -d postgres -c '\dt "Club12".*'
+docker compose exec -T db psql -U postgres -d postgres -c 'select count(*) from "Club12"."Teams";'
+docker compose exec -T db psql -U postgres -d postgres -c 'select count(*) from "public"."AspNetUsers";'
 
-# 4. Con el .env ya editado (7.2), reiniciar el backend
+# 4. Con el .env ya editado (7.2 — cambiar ConnectionStrings__DbConnection a Host=db;…),
+#    recrear el backend
 docker compose up -d backend
-docker compose logs -f backend            # migraciones sin error, "Now listening"
-curl -fsS http://localhost:8080/health/ready && echo OK
+docker compose logs --tail=40 backend      # sin errores de migración, "Now listening on: http://[::]:8080"
+
+# 5. Bouncear el frontend: su nginx tiene cacheada la IP vieja del backend → si no,
+#    todo /api/* da 502 hasta reiniciarlo.
+docker compose restart frontend
+
+# 6. Verificar (el backend no está publicado en el host — va por el proxy :5001)
+docker compose ps
+curl -s -o /dev/null -w 'http=%{http_code}\n' 'http://localhost:5001/api/tournaments?pageSize=300'
 ```
 
 En el arranque, `MigrateAsync` ve el schema ya restaurado y no hace nada (o aplica sólo
 migraciones más nuevas que el dump). El seed está en `Seed:Enabled=false` en producción.
+
+> El paso 5 (`restart frontend`) queda automatizado en `deploy-backend.yml` para los
+> deploys de CI; en el cutover manual hay que hacerlo a mano.
 
 ### 7.5 Backup automático (cron semanal)
 

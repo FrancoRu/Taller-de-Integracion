@@ -27,7 +27,7 @@ PG13+. Nothing Supabase-specific is relied on at the database level.
 | 3 | DB data on a **bind mount** `/home/docker/club12/db` (user-confirmed) | Default named volume | Docker's volume dir is on the 31 GB `/` partition; the DB belongs on the 420 GB `/home` partition. The host README's own rule is "persistent data under `/home/docker/<project>/`". Bind mount is explicit about where bytes land. |
 | 4 | `db` **not published** on any host port; `SSL Mode=Disable` in the connection string | Publish `5432` for external tools; require TLS on the internal hop | Traffic never leaves the compose bridge. No published port ⇒ no UFW rule, no exposure, and TLS on a localhost-equivalent hop is pure overhead. External DB access, if ever needed, is `docker compose exec db psql`. |
 | 5 | `db` mem limit ~512 MB, `shared_buffers` ~128 MB, `effective_cache_size` ~512 MB, default `random_page_cost` | Postgres defaults (no limit); aggressive tuning | 5.7 GB RAM already carries 2 Postgres + OpenMU + Nextcloud + backend + 2 frontends. A cap protects the host; conservative `shared_buffers` suits a small HDD box; `random_page_cost` stays at 4 because the disk is spinning. |
-| 6 | Add `EnableRetryOnFailure()` + `CommandTimeout` to both `UseNpgsql` registrations, in this change | Separate change; leave defaults | ~4 lines, directly de-risks the cutover window (container restart, first-boot races). `UnitOfWork.ExecuteInTransactionAsync` already calls `CreateExecutionStrategy()`, so it is already compatible with a retrying strategy. |
+| 6 | `CommandTimeout(30)` on both `UseNpgsql` registrations. **No `EnableRetryOnFailure`** (was added, then removed in the follow-up — see below). | Retry-on-failure; leave defaults | A bounded timeout turns a stuck query into a fast failure. Retry was reverted: `NpgsqlRetryingExecutionStrategy` rejects the raw `BeginTransactionAsync` in `DataMaintenanceService` (only `UnitOfWork` wraps its transaction in `CreateExecutionStrategy`), and a local container DB has no transient network faults for retry to absorb. Not caught in CI because `CustomWebApplicationFactory` swaps in SQLite. |
 | 7 | Cutover data move = **operator restore of a pre-made backup**, not a code path or a compose init step | `pg_dump \| psql` piped in a one-shot container; EF `MigrateAsync` on empty DB + re-seed | Preserves real data (teams, tournaments, Identity users, history). Keeping it out of code keeps the compose stack idempotent and dev-safe. Sequencing (restore → then backend) avoids the `MigrateAsync`/seed race. |
 | 8 | `AsNoTracking` sweep, batched `SaveChanges`, DTO projection **excluded** | Bundle the query fixes here | Real wins but orthogonal to DB location and much larger blast radius. Separate performance follow-up after this lands and latency is re-measured. |
 | 9 | No Redis / caching layer | Cache-aside on all GETs | Rejected in the analysis: write path stays slow, invalidation is hard in this relational domain, single backend replica. Revisit only if specific public endpoints stay hot post-cutover (then `HybridCache`, not Redis). |
@@ -201,8 +201,9 @@ a production system.
 
 - `API.Tests` run on SQLite in-memory (`WebApplicationFactory`) — no runtime DB
   dependency, unaffected.
-- Strict TDD applies to the thin code change: a test asserting the Npgsql options are
-  configured (retry enabled, command timeout set) on both contexts' `DbContextOptions`.
+- Strict TDD applies to the thin code change: `NpgsqlOptionsTests` asserts
+  `CommandTimeout == 30` and `CreateExecutionStrategy().RetriesOnFailure == false` on
+  both contexts.
 - A `docker-compose.yml` / `.env.example` contract test. `API.Tests` has **no YAML
   parser** and adding `YamlDotNet` for this is not worth it — assert with plain-text /
   regex reads of the repo-root files: `db` service block present, no `ports:` under
@@ -214,3 +215,24 @@ a production system.
   `RequestLoggingMiddleware` `ElapsedMs`, image/PDF upload still works, admin login,
   one heavy endpoint (`GET /api/tournaments/{idOrSlug}/completability`), one weekly
   backup cycle + a test `pg_restore` into a scratch DB.
+
+## Post-Merge Follow-Up (fix/selfhosted-postgres-followups)
+
+The 2026-08-30 cutover surfaced three issues, fixed in a follow-up PR:
+
+1. **`EnableRetryOnFailure` broke `DataMaintenanceService`.** The retrying execution
+   strategy rejects `db.Database.BeginTransactionAsync(...)` unless the whole unit runs
+   inside `CreateExecutionStrategy().ExecuteAsync(...)`. `UnitOfWork` does that;
+   `DataMaintenanceService.WipeSampleDataAsync` / `SeedSampleDataAsync` do not, so
+   `POST /api/data-maintenance/wipe` threw `InvalidOperationException`. SQLite in the
+   test host masked it. **Fix:** drop `EnableRetryOnFailure`, keep `CommandTimeout(30)`
+   (decision 6). A local DB has no transient faults for retry to absorb anyway.
+2. **Frontend nginx 502s after every backend deploy.** `Club12-WebClient/nginx.conf`
+   uses `proxy_pass http://backend:8080` (literal host, no `resolver`), so nginx caches
+   the backend container IP at start-up. `deploy-backend.yml` recreates the backend
+   with a new IP → every `/api/*` is an instant 502 until the frontend restarts.
+   **Fix:** a `docker compose restart frontend` step in `deploy-backend.yml`, and the
+   same step documented in the manual cutover runbook (`DEPLOYMENT.md` §7.4).
+3. **`pg_dump` schema scope.** `ApplicationDBContext` tables live in schema `Club12`
+   (not `public`); `pg_dump`'s `--schema` pattern is lower-cased, so `--schema=Club12`
+   silently dumps nothing. The runbook now uses `--schema=public --schema='"Club12"'`.

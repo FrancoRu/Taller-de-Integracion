@@ -85,14 +85,22 @@ public static class StartupExtensions
     }
 
     /// <summary>
-    /// Shared Npgsql options for every DbContext. Retry-on-failure plus a
-    /// bounded command timeout keep a request short and recoverable when the
-    /// database is briefly unreachable (container restart, deploy, cutover)
-    /// rather than hanging. Both DbContexts MUST use this so they stay in sync.
+    /// Shared Npgsql options for every DbContext, so both stay in sync.
+    /// A bounded command timeout turns a pathological query into a fast failure
+    /// instead of a hung request.
     /// </summary>
+    /// <remarks>
+    /// Deliberately NOT calling <c>EnableRetryOnFailure</c>: it swaps in
+    /// <c>NpgsqlRetryingExecutionStrategy</c>, which rejects any user-initiated
+    /// transaction (<c>Database.BeginTransactionAsync</c>) unless the whole unit
+    /// runs inside <c>CreateExecutionStrategy().ExecuteAsync(...)</c>.
+    /// <see cref="Infrastructure.Repositories.UnitOfWork"/> does that correctly,
+    /// but <c>DataMaintenanceService</c> opens a raw transaction and would throw.
+    /// The database is now a local container (sub-ms, no transient network
+    /// faults), so retry buys almost nothing here anyway.
+    /// </remarks>
     private static void ConfigureNpgsql(NpgsqlDbContextOptionsBuilder npgsql)
     {
-        npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorCodesToAdd: null);
         npgsql.CommandTimeout(30);
     }
 
