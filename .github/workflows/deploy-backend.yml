@@ -110,6 +110,20 @@ jobs:
           docker compose up -d --no-deps --no-build "$SERVICE"
           docker compose ps "$SERVICE"
 
+      - name: Re-point the frontend proxy at the new backend
+        working-directory: /home/docker-compose/Club12
+        run: |
+          set -euo pipefail
+          # The frontend's nginx resolves `backend` once at start-up. Recreating
+          # the backend gives it a new container IP, so without this restart
+          # every /api/* request 502s until the frontend is bounced.
+          if docker compose ps --status running --services | grep -qx frontend; then
+            docker compose restart frontend
+            docker compose ps frontend
+          else
+            echo "frontend not running on this host - skipping proxy refresh"
+          fi
+
       - name: Prune dangling images
         run: |
           set -euo pipefail

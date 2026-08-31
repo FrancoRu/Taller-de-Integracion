@@ -5,19 +5,18 @@ using Infrastructure.Persistance;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace API.Tests;
 
 /// <summary>
-/// The self-hosted-Postgres change hardens the Npgsql registrations so a brief
-/// database outage during a container restart or cutover fails fast and retries
-/// instead of hanging a request. Both DbContexts must carry the same options.
-///
-/// Asserted through the public <see cref="RelationalOptionsExtension"/> base
-/// (the Npgsql extension derives from it) rather than the provider's internal
-/// options type.
+/// The self-hosted-Postgres change sets a bounded <c>CommandTimeout</c> on both
+/// DbContexts and deliberately does NOT enable retry-on-failure: a retrying
+/// execution strategy rejects the raw transactions that
+/// <c>DataMaintenanceService</c> opens, and the local DB has no transient
+/// network faults for retry to absorb. These tests pin both facts.
 /// </summary>
 public class NpgsqlOptionsTests
 {
@@ -32,38 +31,44 @@ public class NpgsqlOptionsTests
             })
             .Build();
 
-    private static RelationalOptionsExtension RelationalExtensionFor<TContext>(IServiceProvider provider)
+    private static ServiceProvider BuildProvider(Action<IServiceCollection> register)
+    {
+        ServiceCollection services = new();
+        services.AddSingleton(Configuration());
+        register(services);
+        return services.BuildServiceProvider();
+    }
+
+    private static int? CommandTimeoutOf<TContext>(IServiceProvider provider)
         where TContext : DbContext
     {
         DbContextOptions<TContext> options = provider.GetRequiredService<DbContextOptions<TContext>>();
-        return options.Extensions.OfType<RelationalOptionsExtension>().Single();
+        return options.Extensions.OfType<RelationalOptionsExtension>().Single().CommandTimeout;
+    }
+
+    private static bool RetriesOnFailureOf<TContext>(IServiceProvider provider)
+        where TContext : DbContext
+    {
+        using IServiceScope scope = provider.CreateScope();
+        TContext context = scope.ServiceProvider.GetRequiredService<TContext>();
+        return context.Database.CreateExecutionStrategy().RetriesOnFailure;
     }
 
     [Fact]
-    public void AddDbContextConfig_EnablesRetryAndCommandTimeout_OnApplicationDbContext()
+    public void AddDbContextConfig_SetsCommandTimeout_AndDoesNotRetry()
     {
-        ServiceCollection services = new();
-        services.AddSingleton(Configuration());
-        services.AddDbContextConfig(Configuration());
+        using ServiceProvider provider = BuildProvider(s => s.AddDbContextConfig(Configuration()));
 
-        using ServiceProvider provider = services.BuildServiceProvider();
-        RelationalOptionsExtension extension = RelationalExtensionFor<ApplicationDBContext>(provider);
-
-        Assert.NotNull(extension.ExecutionStrategyFactory);
-        Assert.Equal(30, extension.CommandTimeout);
+        Assert.Equal(30, CommandTimeoutOf<ApplicationDBContext>(provider));
+        Assert.False(RetriesOnFailureOf<ApplicationDBContext>(provider));
     }
 
     [Fact]
-    public void AddIdentityConfig_EnablesRetryAndCommandTimeout_OnIdentityDbContext()
+    public void AddIdentityConfig_SetsCommandTimeout_AndDoesNotRetry()
     {
-        ServiceCollection services = new();
-        services.AddSingleton(Configuration());
-        services.AddIdentityConfig(Configuration());
+        using ServiceProvider provider = BuildProvider(s => s.AddIdentityConfig(Configuration()));
 
-        using ServiceProvider provider = services.BuildServiceProvider();
-        RelationalOptionsExtension extension = RelationalExtensionFor<IdentityAppDbContext>(provider);
-
-        Assert.NotNull(extension.ExecutionStrategyFactory);
-        Assert.Equal(30, extension.CommandTimeout);
+        Assert.Equal(30, CommandTimeoutOf<IdentityAppDbContext>(provider));
+        Assert.False(RetriesOnFailureOf<IdentityAppDbContext>(provider));
     }
 }
