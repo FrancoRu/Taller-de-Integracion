@@ -228,7 +228,7 @@ useEffect(() => {
 }, [idOrSlug, post, getBlogPostsById]);          // ← `post` is only safe while the guard exists
 ```
 
-**After**:
+**After** (as shipped in commit `0d7eda9`, incl. the Batch 2 `requestedForRef` guard):
 
 ```tsx
 const { idOrSlug } = useParams<{ idOrSlug: string }>();
@@ -243,56 +243,63 @@ const [loading, setLoading] = useState(!seededPost);
  * nothing is displayed. Deliberately a ref, not state: the fetch effect has to
  * consult it, and taking `post` as a dependency would re-run the effect on every
  * setPost — with staleTime 0 that is an unbounded fetch/increment loop.
- * Seeding it with `idOrSlug` is sound because the navigation that supplies
- * `location.state.post` builds the URL from that same post.
  */
 const routeKeyRef = useRef<string | undefined>(seededPost ? idOrSlug : undefined);
 
+/**
+ * The `idOrSlug` the background GET has already fired for. StrictMode (dev)
+ * double-mounts, and in the browser the gap between the two mounts lets the
+ * first GET resolve — with staleTime 0 the second mount then fires a second GET
+ * and a second Views++. Fetch (and count) at most once per idOrSlug. A real
+ * navigation unmounts this component and resets the ref, so reopens still count.
+ */
+const requestedForRef = useRef<string | undefined>(undefined);
+
 useEffect(() => {
-  if (!idOrSlug) return;
+  if (!idOrSlug || requestedForRef.current === idOrSlug) return;
+  requestedForRef.current = idOrSlug;
+  const requestedFor = idOrSlug;
 
-  // The GET is unconditional on purpose: GET /api/blogposts/{idOrSlug} is the
-  // *only* thing that increments Views on the server, so skipping it when the
-  // post arrived via router state is what made the "Vistas" column stay flat.
+  // The GET is the *only* thing that increments Views on the server, so it must
+  // fire on the router-state path too — skipping it there kept "Vistas" flat.
   //
-  // COUPLING: this relies on the QueryClient keeping staleTime 0
-  // (QueryProvider.tsx) so fetchQuery always reaches the network. A non-zero
-  // staleTime — global or per-query — would serve this from cache and silently
-  // stop the counter. BlogPostDetailPage.test.tsx locks it behaviourally with a
-  // mount → unmount → mount test that expects two network GETs.
-  let cancelled = false;
-
-  // Only blank the page when nothing for THIS route is on screen. When the post
-  // came in via location.state the refresh runs invisibly underneath it.
-  if (routeKeyRef.current !== idOrSlug) setLoading(true);
+  // COUPLING: relies on the QueryClient keeping staleTime 0 (QueryProvider.tsx)
+  // so fetchQuery reaches the network. A non-zero staleTime would serve this
+  // from cache and silently stop the counter.
+  //
+  // Only blank the page when nothing for THIS route is on screen.
+  if (routeKeyRef.current !== requestedFor) setLoading(true);
 
   const loadPost = async () => {
     try {
       // silent: a failed refresh must not raise the global blocking alert over
       // an article the reader is already reading.
-      const fetchedPost = await getBlogPostsById(idOrSlug, { silent: true });
-      if (cancelled) return;
+      const fetchedPost = await getBlogPostsById(requestedFor, { silent: true });
+      // A later navigation has superseded this request.
+      if (requestedForRef.current !== requestedFor) return;
 
       if (fetchedPost) {
         setPost(fetchedPost);
-        routeKeyRef.current = idOrSlug;
-      } else if (routeKeyRef.current !== idOrSlug) {
+        routeKeyRef.current = requestedFor;
+      } else if (routeKeyRef.current !== requestedFor) {
         // Cold path only. `undefined` conflates 404 / 500 / offline, so it may
         // not tear down an article that is already readable.
         setPost(undefined);
       }
     } finally {
-      if (!cancelled) setLoading(false);
+      if (requestedForRef.current === requestedFor) setLoading(false);
     }
   };
 
   void loadPost();
-
-  return () => {
-    cancelled = true;
-  };
 }, [idOrSlug, getBlogPostsById]);
 ```
+
+> The original design used a per-effect `let cancelled = false` cleanup flag for
+> stale-response protection. Batch 2 removed it: with the `requestedForRef` guard
+> early-returning on StrictMode's second setup, a `cancelled` first load left the
+> cold-path skeleton stuck. Staleness is now decided by
+> `requestedForRef.current !== requestedFor`.
 
 Everything from `usePageMetadata` (`:60-65`) downward is unchanged. The metadata
 hook re-runs with the fetched post and updates the OG tags to the server copy —
@@ -386,7 +393,7 @@ confirm it does **not** increment.
 
 | File | Action | Description |
 |------|--------|-------------|
-| `Club12-WebClient/src/views/blogPost/BlogPostDetailPage.tsx:1,30-55` | Modify | Import `useRef`; `seededPost` extraction; `routeKeyRef`; guard → `if (!idOrSlug) return;`; conditional `setLoading(true)`; `cancelled` cleanup; conditional `setPost`; deps → `[idOrSlug, getBlogPostsById]`; comments replaced |
+| `Club12-WebClient/src/views/blogPost/BlogPostDetailPage.tsx:1,30-55` | Modify | Import `useRef`; `seededPost` extraction; `routeKeyRef`; **`requestedForRef` (fetch once per idOrSlug — Batch 2)**; guard → `if (!idOrSlug || requestedForRef.current === idOrSlug) return;`; conditional `setLoading(true)`; conditional `setPost`; stale check `requestedForRef.current !== requestedFor` (no `cancelled` flag); deps → `[idOrSlug, getBlogPostsById]`; comments replaced |
 | `Club12-WebClient/src/views/blogPost/BlogPostDetailPage.test.tsx` | Modify | Test 1 rewritten (inverted assertion); Tests 2, 3, 4c added; Test 5 added in a second `describe` with axios-level mocks; `deferred` helper |
 
 No other file changes. `showPosts.tsx`, `BlogPostsPage.tsx`, `blogPost.hook.ts`,

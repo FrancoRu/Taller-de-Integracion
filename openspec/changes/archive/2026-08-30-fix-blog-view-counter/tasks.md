@@ -42,7 +42,8 @@ Author these against the current source; each MUST be observed failing with the 
 
 ## Phase 3: GREEN — implementation (`BlogPostDetailPage.tsx:1,30-55`)
 
-- [x] 3.1 Apply the design's after-sketch: import `useRef`; extract `seededPost`; `loading` starts `!seededPost`; add `routeKeyRef = useRef(seededPost ? idOrSlug : undefined)`; guard → `if (!idOrSlug) return;`; `if (routeKeyRef.current !== idOrSlug) setLoading(true)`; `let cancelled = false` cleanup flag; on resolve `setPost(fetched)` + `routeKeyRef.current = idOrSlug`, else `setPost(undefined)` only when `routeKeyRef.current !== idOrSlug`; `post` leaves deps → `[idOrSlug, getBlogPostsById]`. Run `npm run test --prefix Club12-WebClient` — Tests 1–5 GREEN.
+- [x] 3.1 Apply the design's after-sketch: import `useRef`; extract `seededPost`; `loading` starts `!seededPost`; add `routeKeyRef = useRef(seededPost ? idOrSlug : undefined)`; guard → `if (!idOrSlug) return;`; `setLoading(true)` only when `routeKeyRef.current !== requestedFor`; on resolve `setPost(fetched)` + `routeKeyRef.current = requestedFor`, else `setPost(undefined)` only when `routeKeyRef.current !== requestedFor`; `post` leaves deps → `[idOrSlug, getBlogPostsById]`. Run `npm run test --prefix Club12-WebClient` — Tests 1–5 GREEN.
+  - **Batch 2 (post-QA)**: shipped implementation adds `requestedForRef` (fetch/count at most once per `idOrSlug`) and **removes** the `cancelled` cleanup flag — it left the cold-path skeleton stuck when paired with the guard's early return. Stale-response protection is now `if (requestedForRef.current !== requestedFor) return;` inside the async body. See `apply-progress.md` "Batch 2" and `design.md` "StrictMode double-invoke — QA UPDATE".
 
 ## Phase 4: REFACTOR — comments
 
@@ -51,8 +52,8 @@ Author these against the current source; each MUST be observed failing with the 
 ## Phase 5: Verification
 
 - [x] 5.1 Lint + typecheck: `cd Club12-WebClient && npx eslint src/views/blogPost --max-warnings 0 && npx tsc --noEmit` — exit 0, no `exhaustive-deps` suppression. (both exit 0)
-- [x] 5.2 Full suite: `dotnet test Club12-Backend/Solution/Club12.sln && npm run test --prefix Club12-WebClient` — all green; backend byte-identical. (frontend 501/501, backend 728/728; no backend files in `git diff`)
-- [ ] 5.3 Manual: as anonymous user open a post via "Leer más" → confirm `/panel` `Vistas` +1 (exactly one). Repeat via admin "Ver" → confirm `Vistas` unchanged. Spec: *In-App Read Increments*, *Admin and Owner Reads Do Not Increment*. **PENDING — requires a running stack + browser; not executable in this environment. Automated proxies green: Test 1 + Test 5 (exactly one GET / network count per mount), backend `BlogPostViewCounterTests` for the admin non-increment rule.**
+- [x] 5.2 Full suite: `dotnet test Club12-Backend/Solution/Club12.sln && npm run test --prefix Club12-WebClient` — all green; backend byte-identical. (frontend **503/503** after Batch 2, backend 728/728 in the apply run; commit `0d7eda9` touches no backend file)
+- [x] 5.3 Manual: as anonymous user open a post via "Leer más" → confirm `/panel` `Vistas` +1 (exactly one). Repeat via admin "Ver" → confirm `Vistas` unchanged. Spec: *In-App Read Increments*, *Admin and Owner Reads Do Not Increment*. **NOW DONE — user verified in production** (Batch 3 complete; task re-checked per final-state authority).
 
 ## Key Learnings
 
