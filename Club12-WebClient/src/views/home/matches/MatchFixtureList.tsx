@@ -25,6 +25,7 @@ import ExportCsvButton from '@/views/core/components/ExportCsvButton';
 export default function MatchFixtureList({
   matches,
   exportTitle,
+  buildHref,
 }: {
   matches: IMatchResponse[];
   /**
@@ -33,6 +34,11 @@ export default function MatchFixtureList({
    * export affordance.
    */
   exportTitle?: string;
+  /**
+   * Builds each match row's link target. Omit to link to the public match page
+   * (default); admin callers pass a builder pointing at the panel match page.
+   */
+  buildHref?: (match: IMatchResponse) => string;
 }) {
   const rounds = useMemo(() => groupMatchesByRound(matches), [matches]);
   const stageTeamNames = useMemo(() => collectStageTeamNames(matches), [matches]);
@@ -71,7 +77,7 @@ export default function MatchFixtureList({
             <Paper variant="outlined">
               <Stack divider={<Divider />}>
                 {round.matches.map(match => (
-                  <MatchRow key={match.id} match={match} />
+                  <MatchRow key={match.id} match={match} buildHref={buildHref} />
                 ))}
                 {byes.map(teamName => (
                   <Stack

@@ -44,7 +44,20 @@ function TeamSide({ name, logoUrl, align }: TeamSideProps) {
   );
 }
 
-export default function MatchRow({ match }: { match: IMatchResponse }) {
+const defaultBuildHref = (match: IMatchResponse) =>
+  APP_ROUTES.publicMatch.build(match.slug ?? match.id);
+
+export default function MatchRow({
+  match,
+  buildHref = defaultBuildHref,
+}: {
+  match: IMatchResponse;
+  /**
+   * Builds the row's link target. Defaults to the public match page; admin
+   * callers pass a builder pointing at the panel match page instead.
+   */
+  buildHref?: (match: IMatchResponse) => string;
+}) {
   const home = match.homeTeam;
   const visitor = match.visitorTeam;
   const finished = match.isFinished;
@@ -52,7 +65,7 @@ export default function MatchRow({ match }: { match: IMatchResponse }) {
   return (
     <Box
       component={Link}
-      to={APP_ROUTES.publicMatch.build(match.slug ?? match.id)}
+      to={buildHref(match)}
       sx={{
         display: 'grid',
         gridTemplateColumns: { xs: '56px 1fr auto 1fr', sm: '56px 1fr auto 1fr 140px' },

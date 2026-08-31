@@ -25,11 +25,11 @@ import { stageService } from '@/modules/stage/service/stage.service';
 import { matchService } from '@/modules/match/service/match.service';
 import { matchSeriesService } from '@/modules/matchSeries/service/matchSeries.service';
 import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
-import { IStageResponse, StageType } from '@/modules/stage/type/stage';
+import { IStageResponse } from '@/modules/stage/type/stage';
 import { IMatchResponse } from '@/modules/match/type/match.d';
+import { buildDivisionFixtureSections } from '@/modules/match/utils/divisionFixtureSections';
 import { buildBrackets } from '@/modules/playoff/buildBracket';
 import { BracketGroup } from '@/modules/playoff/type/bracket.d';
-import { stageLabel } from '@/modules/stage/utils/stageLabel';
 import DivisionStandings from '@/views/division/divisionStandings';
 import MatchFixtureList from '@/views/home/matches/MatchFixtureList';
 import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
@@ -37,7 +37,6 @@ import Podium from '@/views/champion/Podium';
 import { IPodium } from '@/modules/champion/type/champion.d';
 
 const FETCH_PAGE_SIZE = 100;
-const STAGE_NAME_DIVISION_SEPARATOR = ' - ';
 const DEFAULT_SUB_TAB: DivisionSubTab = 'posiciones';
 const VIEW_QUERY_PARAM = 'view';
 
@@ -53,19 +52,6 @@ interface PublicDivisionPanelProps {
    */
   podium?: IPodium | null;
 }
-
-/**
- * Stage names follow a "{Division} - {Specific}" convention (e.g.
- * "Copa Club12 - ZONA 3"). We're already inside that division's tab, so
- * strip the redundant prefix and show the specific part — this is what
- * distinguishes stages sharing the same type (e.g. a cup division with
- * several parallel group stages, all "Group" type with no bracketName,
- * which stageLabel() alone can't tell apart).
- */
-const stageSectionLabel = (stage: IStageResponse, divisionName: string): string => {
-  const prefix = `${divisionName}${STAGE_NAME_DIVISION_SEPARATOR}`;
-  return stage.name.startsWith(prefix) ? stage.name.slice(prefix.length) : stageLabel(stage);
-};
 
 const VALID_SUB_TABS: readonly DivisionSubTab[] = ['equipos', 'posiciones', 'goleadores', 'partidos', 'llaves'];
 const isDivisionSubTab = (value: string | null): value is DivisionSubTab =>
@@ -189,26 +175,10 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
     };
   }, [subTab, structureLoaded, division.id]);
 
-  const matchSections = useMemo(() => {
-    const stageIdsInOrder = [...stages].sort(
-      (a, b) => a.order - b.order || a.name.localeCompare(b.name, 'es', { numeric: true })
-    );
-    // A multi-group cross-division cup has several parallel Group stages
-    // ("Grupo 1".."Grupo N"). stageSectionLabel would collapse them all to the
-    // generic "Fase de grupos", so label each by its own stage name instead —
-    // that is the only thing distinguishing one group's fixture from another.
-    const groupStageCount = stages.filter(stage => stage.stageType === StageType.Group).length;
-    return stageIdsInOrder
-      .map(stage => {
-        const isDistinctGroup = stage.stageType === StageType.Group && groupStageCount > 1;
-        return {
-          stage,
-          label: isDistinctGroup ? stage.name : stageSectionLabel(stage, division.name),
-          matches: matches.filter(match => match.stageId === stage.id),
-        };
-      })
-      .filter(section => section.matches.length > 0);
-  }, [stages, matches, division.name]);
+  const matchSections = useMemo(
+    () => buildDivisionFixtureSections(stages, matches, division.name),
+    [stages, matches, division.name]
+  );
 
   return (
     <Box>
