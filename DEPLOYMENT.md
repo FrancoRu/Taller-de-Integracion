@@ -117,6 +117,127 @@ máquina de desarrollo:
 docker compose build && docker compose up -d
 ```
 
+En un host que no sea Linux, la ruta absoluta del bind mount del servicio `db`
+(`/home/docker/club12/db`) no aplica: usar un `docker-compose.override.yml` (ignorado por
+git) que reemplace esa línea de volumen por un volumen nombrado local.
+
+## 7. Migración a Postgres self-hosted (manual, una sola vez)
+
+A partir del cambio `selfhosted-postgres-db`, `docker-compose.yml` incluye un servicio
+`db` (`postgres:17-alpine`) en la red interna `club12`, **sin puerto publicado**. El
+backend deja de hablar con Supabase Postgres y pasa a usar ese contenedor. Supabase
+**Storage** (buckets de imágenes y fichas médicas) se sigue usando igual — no se toca.
+
+El pipeline de CI **no** levanta `db` (`deploy-backend.yml` usa `--no-deps`). El servicio
+se levanta una vez en el cutover y se mantiene solo por `restart: unless-stopped`.
+
+### 7.1 Preparar el host
+
+```bash
+# Directorio de datos de Postgres — en /home (420 GB), NO en la partición raíz (31 GB)
+sudo mkdir -p /home/docker/club12/db
+sudo chown 999:999 /home/docker/club12/db      # uid del usuario postgres en la imagen alpine
+
+# Directorio de backups
+sudo mkdir -p /home/docker/backups/club12
+```
+
+### 7.2 Completar el `.env` de producción
+
+En `/home/docker-compose/Club12/.env` (owner `gh-runner:gh-runner`, mode 600) agregar las
+tres claves nuevas y reescribir la connection string. Elegir la contraseña ahora
+(`openssl rand -base64 24`); `Username`/`Password` de la connection string **deben
+coincidir** con `POSTGRES_USER`/`POSTGRES_PASSWORD`.
+
+```bash
+POSTGRES_USER=postgres
+POSTGRES_DB=postgres
+POSTGRES_PASSWORD=<contraseña-fuerte-elegida-ahora>
+
+# reemplaza el valor anterior (pooler de Supabase):
+ConnectionStrings__DbConnection=Host=db;Port=5432;Database=postgres;Username=postgres;Password=<misma-contraseña>;SSL Mode=Disable
+```
+
+> Las variables `POSTGRES_*` sólo inicializan la base en el **primer arranque** del
+> contenedor (directorio de datos vacío). Después, para cambiar la contraseña hay que
+> hacerlo con `ALTER USER` dentro de la base.
+
+### 7.3 Dump fresco de Supabase
+
+Desde el host, usando `postgres:17-alpine` como cliente (no depende de la versión de
+`pg_dump` del host):
+
+```bash
+cd /home/docker/backups/club12
+docker run --rm -v "$PWD:/out" postgres:17-alpine \
+  pg_dump "postgresql://postgres.<ref>:<pass-supabase>@aws-1-us-east-2.pooler.supabase.com:5432/postgres" \
+  --format=custom --no-owner --no-privileges --schema=public \
+  --file=/out/club12-cutover-$(date +%F).dump
+
+docker run --rm -v "$PWD:/out" postgres:17-alpine \
+  pg_restore --list /out/club12-cutover-$(date +%F).dump | head -30   # sanity check
+```
+
+### 7.4 Cutover (ventana corta — el backend se reinicia)
+
+```bash
+cd /home/docker-compose/Club12
+
+# 1. Levantar SOLO la base y esperar a que esté healthy
+docker compose up -d db
+docker compose ps db
+
+# 2. Restaurar el dump dentro del contenedor
+#    (ignorar "schema public already exists" / "role ... does not exist")
+cat /home/docker/backups/club12/club12-cutover-*.dump | \
+  docker compose exec -T db pg_restore --no-owner --no-privileges --clean --if-exists \
+  -U postgres -d postgres
+
+# 3. Verificación rápida
+docker compose exec -T db psql -U postgres -d postgres -c '\dt' | head
+docker compose exec -T db psql -U postgres -d postgres -c 'select count(*) from "Teams";'
+
+# 4. Con el .env ya editado (7.2), reiniciar el backend
+docker compose up -d backend
+docker compose logs -f backend            # migraciones sin error, "Now listening"
+curl -fsS http://localhost:8080/health/ready && echo OK
+```
+
+En el arranque, `MigrateAsync` ve el schema ya restaurado y no hace nada (o aplica sólo
+migraciones más nuevas que el dump). El seed está en `Seed:Enabled=false` en producción.
+
+### 7.5 Backup automático (cron semanal)
+
+```bash
+sudo cp <checkout>/scripts/backup-club12-db.sh /home/docker/backup-club12-db.sh
+sudo chmod +x /home/docker/backup-club12-db.sh
+/home/docker/backup-club12-db.sh                        # probarlo a mano una vez
+ls -lh /home/docker/backups/club12/
+
+sudo crontab -e
+# agregar (domingos 03:00):
+0 3 * * 0  /home/docker/backup-club12-db.sh >> /var/log/club12-db-backup.log 2>&1
+```
+
+Cada tanto, restaurar un `.dump` en una base scratch para verificar que sirve.
+
+### 7.6 Rollback
+
+```bash
+# En el .env, volver ConnectionStrings__DbConnection al valor del pooler de Supabase
+docker compose up -d backend
+```
+
+No hay migración de schema que revertir. Dejar el contenedor `db` y
+`/home/docker/club12/db` en su lugar hasta confirmar que el cutover quedó estable; recién
+ahí dar de baja el proyecto de Supabase (los buckets de Storage siguen en uso).
+
+### 7.7 `docker compose down` — cuidado
+
+Los datos de `db` son un bind mount: sobreviven `down` y `down -v`. Aun así, `-v`
+elimina los volúmenes nombrados (`backup-data`), y borrar `/home/docker/club12/db` a mano
+destruye la base.
+
 ## Checklist post-merge
 
 Estos pasos **no están cubiertos por el cambio de código en sí** — son responsabilidad del
