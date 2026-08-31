@@ -124,6 +124,18 @@ export function formatDateTimeInput(date: Date): string {
 }
 
 /**
+ * Formats an ISO/UTC date string into the "YYYY-MM-DDTHH:mm" value an
+ * <input type="datetime-local"> needs, or "" for empty/unparseable input.
+ * Used to preload a datetime-local field (e.g. a match's date when editing it
+ * or issuing a sanction from that match).
+ */
+export function toDatetimeLocalValue(iso?: string | null): string {
+  if (!iso) return '';
+  const parsed = new Date(iso);
+  return Number.isNaN(parsed.getTime()) ? '' : formatDateTimeInput(parsed);
+}
+
+/**
  * Compares whether a deadline date is after the current date.
  * @param {Date} deadline - The deadline to compare.
  * @returns {boolean} - 'true' if the deadline has not yet passed, 'false' if it has already passed.
