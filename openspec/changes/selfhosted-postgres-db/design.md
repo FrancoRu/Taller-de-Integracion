@@ -133,7 +133,7 @@ Operator                     db container                 backend container
    │                              │  /health/ready → 200          │
    │ verify: latency, storage, login, a multi-query endpoint      │
    │ keep Supabase project reachable until cutover is stable      │
-   │ install the weekly backup crontab entry                      │
+   │ enable Backup:Enabled=true (app's built-in scheduled backup)  │
 ```
 
 If `MigrateAsync` finds the restored schema **behind** the code's migration set, it
@@ -151,32 +151,6 @@ The deploy job runs `docker compose up -d --no-deps --no-build backend` as `gh-r
 - *Optional fast follow* (not in this change): add `docker compose up -d db` before the
   backend restart so CI self-heals if `db` is ever removed. One line, idempotent.
 - Dropping `--no-deps` (would also pull `frontend`) is rejected.
-
-## Backup: Weekly `pg_dump` Cron (in this change)
-
-Self-hosting makes DB backups this host's responsibility (previously Supabase's). This
-change ships a script; the operator installs the crontab entry once.
-
-- **Script** `scripts/backup-club12-db.sh` (committed): runs
-  `docker compose -f /home/docker-compose/Club12/docker-compose.yml exec -T db pg_dump
-  -U "$POSTGRES_USER" -Fc "$POSTGRES_DB"` → `/home/docker/backups/club12/club12-YYYYmmdd-HHMM.dump`,
-  then prunes to the newest N (default 8 ≈ 2 months at weekly cadence). Reads
-  `POSTGRES_*` from `/home/docker-compose/Club12/.env`. Exits non-zero on `pg_dump`
-  failure so cron mail surfaces it.
-- **Crontab** (operator, documented in `DEPLOYMENT.md`), every 7 days:
-  `0 3 * * 0  /path/to/scripts/backup-club12-db.sh >> /var/log/club12-db-backup.log 2>&1`
-  (Sundays 03:00 — adjust to taste; `*/7` on day-of-month is uneven, prefer a weekday.)
-- `/home/docker/backups/club12/` is on the 420 GB `/home` partition. `-Fc` (custom
-  format) restores with `pg_restore`.
-
-Not chosen: the app's built-in `Backup:` feature (interval-based `IHostedService`).
-It works, but a host cron matches the existing `backup-mu-db.sh` precedent, needs no
-`.env` toggles, and keeps backup cadence independent of the app process. The app
-feature stays available if the operator later prefers it.
-
-Backups live on the same host/disk as the DB. An offsite copy (rsync to Nextcloud,
-Cloudflare R2) is a follow-up, not blocking cutover — acceptable because this is not
-a production system.
 
 ## Rejected Alternatives
 
@@ -236,3 +210,37 @@ The 2026-08-30 cutover surfaced three issues, fixed in a follow-up PR:
 3. **`pg_dump` schema scope.** `ApplicationDBContext` tables live in schema `Club12`
    (not `public`); `pg_dump`'s `--schema` pattern is lower-cased, so `--schema=Club12`
    silently dumps nothing. The runbook now uses `--schema=public --schema='"Club12"'`.
+
+## Post-Merge Follow-Up 2 (chore/retire-backup-cron)
+
+This change originally shipped a weekly host cron (`scripts/backup-club12-db.sh` +
+a `crontab` entry, Sundays 03:00) that ran `pg_dump` against the `db` container and
+wrote to `/home/docker/backups/club12/`. Rationale at the time: it matched the
+existing `backup-mu-db.sh` precedent, needed no `.env` toggles, and kept backup
+cadence independent of the app process. The app's built-in `Backup:` feature
+(interval-based `IHostedService`) was considered and explicitly dismissed as "not
+chosen."
+
+That decision is reverted here. The host cron turned out to be a second, disconnected
+backup system: it never inserted a row into `BackupRecord`, so its dumps never showed
+up in the admin panel, and restoring one required SSH-ing into the server and running
+`pg_restore` by hand — no click-to-restore.
+
+The backend already had a complete backup system doing the same job better:
+`DatabaseBackupHostedService` runs `pg_dump` as a subprocess on its own schedule,
+records every run in `BackupRecord` (visible in the panel, tagged "Programado" for
+automatic runs / "Manual" for on-demand ones), and supports one-click restore from the
+panel (`POST /api/backups/{id}/restore`, with an automatic safety backup taken first)
+— no SSH needed. Retired:
+
+- `scripts/backup-club12-db.sh` (deleted).
+- The host `crontab` entry (removed by the operator).
+
+Enabled instead, in the production `.env` (already done by the operator):
+
+- `Backup__Enabled=true` — turns on the existing scheduled-backup hosted service.
+
+Why: running two independent, disconnected backup mechanisms adds operational
+confusion for no benefit — the app's own feature already satisfies the real goal
+behind the original cron, which was being able to restore a backup without SSH
+access to the server. See `DEPLOYMENT.md` §7.5 for the updated operator runbook.
