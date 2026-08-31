@@ -37,6 +37,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
+using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
+
 using Serilog;
 
 using System;
@@ -74,12 +76,24 @@ public static class StartupExtensions
             Log.Fatal("Connection string is missing. Using default or fallback connection string.");
             throw new ArgumentException(ErrorMessages.Configuration.ConnectionStringMissing);
         }
-        services.AddDbContext<ApplicationDBContext>(options => options.UseNpgsql(connectionString));
+        services.AddDbContext<ApplicationDBContext>(options => options.UseNpgsql(connectionString, ConfigureNpgsql));
         services.AddScoped<IClub12DBContext, ApplicationDBContext>();
         services.AddScoped<DataSeeder>();
         services.AddScoped<IDataMaintenanceService, DataMaintenanceService>();
 
         return services;
+    }
+
+    /// <summary>
+    /// Shared Npgsql options for every DbContext. Retry-on-failure plus a
+    /// bounded command timeout keep a request short and recoverable when the
+    /// database is briefly unreachable (container restart, deploy, cutover)
+    /// rather than hanging. Both DbContexts MUST use this so they stay in sync.
+    /// </summary>
+    private static void ConfigureNpgsql(NpgsqlDbContextOptionsBuilder npgsql)
+    {
+        npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorCodesToAdd: null);
+        npgsql.CommandTimeout(30);
     }
 
     /// <summary>
@@ -377,7 +391,7 @@ public static class StartupExtensions
             throw new ArgumentException(ErrorMessages.Configuration.ConnectionStringMissing);
         }
 
-        services.AddDbContext<IdentityAppDbContext>(options => options.UseNpgsql(connectionString));
+        services.AddDbContext<IdentityAppDbContext>(options => options.UseNpgsql(connectionString, ConfigureNpgsql));
 
         services.AddIdentityCore<ApplicationUser>(options =>
         {
