@@ -156,6 +156,10 @@ POSTGRES_PASSWORD=<contraseña-fuerte-elegida-ahora>
 
 # reemplaza el valor anterior (pooler de Supabase):
 ConnectionStrings__DbConnection=Host=db;Port=5432;Database=postgres;Username=postgres;Password=<misma-contraseña>;SSL Mode=Disable
+
+# activa el backup periódico + restore-desde-panel ya incluido en la app
+# (reemplaza al cron manual — ver §7.5):
+Backup__Enabled=true
 ```
 
 > Las variables `POSTGRES_*` sólo inicializan la base en el **primer arranque** del
@@ -240,20 +244,33 @@ migraciones más nuevas que el dump). El seed está en `Seed:Enabled=false` en p
 > El paso 5 (`restart frontend`) queda automatizado en `deploy-backend.yml` para los
 > deploys de CI; en el cutover manual hay que hacerlo a mano.
 
-### 7.5 Backup automático (cron semanal)
+### 7.5 Backup automático (feature integrado del backend)
+
+El backend ya trae un sistema de backups completo — no hace falta cron ni script en el
+host. Se activa con la variable agregada en §7.2:
 
 ```bash
-sudo cp <checkout>/scripts/backup-club12-db.sh /home/docker/backup-club12-db.sh
-sudo chmod +x /home/docker/backup-club12-db.sh
-/home/docker/backup-club12-db.sh                        # probarlo a mano una vez
-ls -lh /home/docker/backups/club12/
-
-sudo crontab -e
-# agregar (domingos 03:00):
-0 3 * * 0  /home/docker/backup-club12-db.sh >> /var/log/club12-db-backup.log 2>&1
+Backup__Enabled=true
+# opcionales, si se quiere otra cadencia (defaults entre paréntesis):
+# Backup__IntervalHours=24      (24)
+# Backup__RetentionCount=7      (7)
 ```
 
-Cada tanto, restaurar un `.dump` en una base scratch para verificar que sirve.
+Con `Backup__Enabled=true`, un `DatabaseBackupHostedService` corre dentro del propio
+proceso backend cada `Backup__IntervalHours` horas, genera el dump con `pg_dump` (ya
+instalado en la imagen del backend) y lo guarda en el volumen `backup-data`
+(`Backup__LocalStoragePath`, default `/app/backups`), podando al `Backup__RetentionCount`
+más reciente.
+
+- **Ver los backups:** panel admin → sección de backups. Cada fila muestra su origen
+  ("Programado" para los automáticos, "Manual" para los que se disparan a mano desde el
+  mismo panel).
+- **Restaurar:** botón de restore en el panel (`POST /api/backups/{id}/restore`) — sin
+  SSH al servidor. Antes de restaurar, la app crea automáticamente un backup de
+  seguridad del estado actual.
+- **Verificar la integridad de un dump sin arriesgar producción:** descargarlo desde el
+  panel y restaurarlo en una base "scratch" separada (no usar el botón de restore de
+  producción solo para testear que un dump sirve).
 
 ### 7.6 Rollback
 
