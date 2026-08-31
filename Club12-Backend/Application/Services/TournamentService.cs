@@ -57,6 +57,7 @@ public class TournamentService(
             TeamRegistrationDeadline = request.TeamRegistrationDeadline,
             StartDate = request.StartDate,
             Category = request.Category,
+            SeasonId = request.SeasonId,
             Status = TournamentStatus.OpenForRegistration,
             Divisions = [],
             Teams = [],
