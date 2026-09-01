@@ -26,6 +26,11 @@ public class DivisionProfile : Profile
             .ForMember(
                 dest => dest.QualificationRanges,
                 opt => opt.MapFrom(src => QualificationRangeBuilder.Build(src.PlayoffMappings)))
+            // TournamentSlug is resolved from the (optionally loaded) Tournament
+            // navigation, degrading to null when it was not included.
+            .ForMember(
+                dest => dest.TournamentSlug,
+                opt => opt.MapFrom(src => src.Tournament != null ? src.Tournament.Slug : null))
             .ReverseMap();
 
         _ = CreateMap<Division, MinimalDivisionResponse>()
