@@ -57,6 +57,24 @@ public interface ITeamService
     Task UpdateTeamAsync(Team teamEntity);
 
     /// <summary>
+    /// Guards a team's identity edit: a team's
+    /// <see cref="Team.Name"/> and <see cref="Team.ThreeLetterCode"/> are frozen
+    /// while the team is participating in a tournament that is
+    /// <see cref="Domain.Enums.TournamentStatus.Ongoing"/> (its current
+    /// <see cref="Team.TournamentId"/> points at an Ongoing tournament), so
+    /// fixtures, standings and match sheets stay consistent. Other fields
+    /// (colors, jersey style, logo) remain editable. Only the supplied
+    /// (non-null) request values are considered — a null field means "not
+    /// changed". No-op when neither identity field actually changes or the team
+    /// has no current tournament / a non-Ongoing one.
+    /// </summary>
+    /// <param name="existingTeam">The team as currently persisted (original identity + current TournamentId), read BEFORE the request is mapped over it.</param>
+    /// <param name="requestedName">The requested new name, or null when the request does not change the name.</param>
+    /// <param name="requestedThreeLetterCode">The requested new three-letter code, or null when the request does not change it.</param>
+    /// <exception cref="System.InvalidOperationException">Thrown (mapped to 409) when an identity change is attempted while the team's current tournament is Ongoing.</exception>
+    Task EnsureTeamIdentityEditableAsync(Team existingTeam, string? requestedName, string? requestedThreeLetterCode);
+
+    /// <summary>
     /// Updates multiple teams asynchronously.
     /// </summary>
     /// <param name="teams">The list of team entities to update.</param>

@@ -151,6 +151,19 @@ public static class ErrorMessages
         public const string HasHistoryCannotDelete =
             "No se puede eliminar el equipo: tiene historial de partidos, sanciones, deducciones o inscripciones a torneos.";
 
+        /// <summary>
+        /// User-facing (Spanish) message returned when a team's identity
+        /// (<see cref="Domain.Entities.Models.Team.Name"/> or
+        /// <see cref="Domain.Entities.Models.Team.ThreeLetterCode"/>) is edited
+        /// while the team is participating in a tournament that is Ongoing (en
+        /// curso): its identity is frozen for the duration so fixtures, standings
+        /// and match sheets stay consistent. Other fields (colors, jersey style,
+        /// logo) remain editable. Mapped to 409 by the global handler.
+        /// </summary>
+        public const string IdentityFrozenWhileOngoing =
+            "No se puede cambiar el nombre ni la sigla del equipo mientras participa en un torneo en curso. " +
+            "Podés editar los colores y el escudo.";
+
         public static string NotInTournament(System.Guid teamId)
         {
             return $"Team '{teamId}' is not currently registered to any tournament, so players cannot be registered to it.";

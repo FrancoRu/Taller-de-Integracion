@@ -159,6 +159,36 @@ public class TeamService(
         await _teamRepository.UpdateAsync(teamEntity);
     }
 
+    /// <inheritdoc />
+    public async Task EnsureTeamIdentityEditableAsync(Team existingTeam, string? requestedName, string? requestedThreeLetterCode)
+    {
+        // Only a supplied (non-null) request field can change identity; the
+        // three-letter code is normalized to upper-case on the way in, so
+        // compare it case-insensitively.
+        bool nameChanged = requestedName is not null
+            && !string.Equals(requestedName, existingTeam.Name, StringComparison.Ordinal);
+        bool codeChanged = requestedThreeLetterCode is not null
+            && !string.Equals(requestedThreeLetterCode, existingTeam.ThreeLetterCode, StringComparison.OrdinalIgnoreCase);
+
+        if (!nameChanged && !codeChanged)
+        {
+            return;
+        }
+
+        // Identity is only frozen while the team is actually in an Ongoing
+        // tournament (via its denormalized current-season pointer).
+        if (existingTeam.TournamentId is not Guid tournamentId)
+        {
+            return;
+        }
+
+        Tournament? tournament = await _tournamentRepository.GetByIdAsync(tournamentId);
+        if (tournament?.Status == TournamentStatus.Ongoing)
+        {
+            throw new InvalidOperationException(ErrorMessages.Team.IdentityFrozenWhileOngoing);
+        }
+    }
+
     /// <summary>
     /// Updates a collection of team entities in bulk.
     /// </summary>
