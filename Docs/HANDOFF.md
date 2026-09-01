@@ -44,10 +44,11 @@ Progreso (rama `fix/ux-consolidation-e2e`, sale de develop tras #71):
 - ✅ Modales/alertas que quedaban DETRÁS: SweetAlert ahora sobre la capa de MUI (PR #75). Y el panel de datos ya no se cuelga (PR #72).
 - ⏳ FALTA: alertas que "se disparan 2+ veces de distinta forma" (doble-fire) — investigar (probable doble handler / doble notify en flujos de inscripción). "Muchos modales apilados se resetean/muestran doble."
 
-**Canchas (⏳ pendiente):**
-- La cancha NO debería tener imagen (quitar imagen de cancha).
-- Debería dejar ELEGIR en el mapa dónde está (map picker OSM), y al "ver" mostrar en el mapa el punto + la dirección.
-- Editar cancha no carga la imagen → el modal queda vacío y se pierde la imagen (bug de edición).
+**Canchas:**
+- ⚠️ REVERTIDO (2026-09-01, decisión del owner): la cancha SÍ debe tener imagen de nuevo — se reintrodujo el upload de foto (create+edit) que `fix/venue-no-image` había sacado. Motivo: pedido explícito del owner en sesión, override consciente de la decisión anterior "la cancha no debería tener imagen".
+- ✅ Buscar dirección en el mapa (geocoding vía Nominatim/OSM) al crear/editar — completa lat/lng automáticamente y muestra preview del mapa en el propio form.
+- ⏳ FALTA: picker de mapa clickeable (elegir/arrastrar el pin a mano), hoy solo hay geocoding por dirección + edición manual de lat/lng.
+- ✅ Vista de cancha rediseñada: foto como hero (o placeholder), dirección + mapa en tarjetas.
 
 **Novedades / público:**
 - ✅ scroll-to-top, ✅ imagen más chica, ✅ editar 404, ✅ contador de vistas (ya estaba).
