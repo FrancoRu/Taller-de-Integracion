@@ -72,6 +72,39 @@ public class MatchScorersMappingTests
         Assert.Equal(10, response.VisitorTeam!.Scorers[0].Points);
     }
 
+    /// <summary>
+    /// A not-yet-seeded bracket slot (both teams still unknown) must map both
+    /// sides to null so the frontend renders "A definir" — regression test for
+    /// a ForPath(dest.HomeTeam!.Score, ...) mapping that used to force
+    /// AutoMapper to instantiate a fake HomeTeam (Guid.Empty id, null name)
+    /// just to have somewhere to put the score, even with no team assigned.
+    /// </summary>
+    [Fact]
+    public void DetailedMatch_WithNoTeamsAssignedYet_MapsBothSidesToNull()
+    {
+        Match match = new()
+        {
+            Id = Guid.NewGuid(),
+            CreatedBy = "system",
+            MatchDate = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            Type = Domain.Enums.MatchType.Playoff,
+            Slug = "",
+            IsFinished = false,
+            HomeTeam = null,
+            HomeTeamId = null,
+            VisitorTeam = null,
+            VisitorTeamId = null,
+            HomeScore = null,
+            VisitorScore = null,
+            Scorers = [],
+        };
+
+        DetailedMatchResponse response = CreateMapper().Map<DetailedMatchResponse>(match);
+
+        Assert.Null(response.HomeTeam);
+        Assert.Null(response.VisitorTeam);
+    }
+
     private static Team CreateTeam(string name)
     {
         return new()
