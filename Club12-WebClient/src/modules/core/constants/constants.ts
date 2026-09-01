@@ -8,6 +8,7 @@ export const ERROR_MESSAGES = {
   GENERIC_ERROR: 'Ocurrió un error. Por favor, intentá nuevamente.',
   NETWORK_ERROR:
     'No se pudo conectar con el servidor. Verificá tu conexión e intentá nuevamente.',
+  LOGIN_FAILED: 'Usuario o contraseña incorrectos',
 };
 
 export const EXPIRATION_TIME = {

@@ -22,6 +22,7 @@ import {
 
 import {
   COOKIE_SIGNIN_TOKEN,
+  ERROR_MESSAGES,
   SUCCESS_MESSAGES,
   EXPIRATION_TIME,
   JWT,
@@ -254,10 +255,11 @@ export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
           return true;
         }
       } catch {
-        // A failed sign-in returns false so the login form shows its own
-        // Spanish inline message ("Usuario o contraseña incorrectos"). We do
-        // NOT surface the raw API error here — that popped a blocking, English
-        // ("Invalid credentials.") alert on top of the localized form error.
+        // Fire the one standard Spanish toast (same as every other flow) and
+        // return false so the caller doesn't also show its own message. We
+        // deliberately do NOT surface the raw API error text here — that's
+        // the backend's English "Invalid credentials.", not this message.
+        setMessage(HttpStatus.Unauthorized, [ERROR_MESSAGES.LOGIN_FAILED]);
         return false;
       }
       return false;

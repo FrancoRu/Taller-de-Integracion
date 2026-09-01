@@ -22,18 +22,17 @@ export default function Login() {
     email: '',
     password: '',
   });
-  const [error, setError] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
   };
 
   const handleLogin = async () => {
+    // A failed sign-in already shows the standard Spanish toast (setMessage
+    // inside signIn) — nothing to do here beyond navigating on success.
     const success = await signIn(credentials);
     if (success) {
       navigate(APP_ROUTES.panel);
-    } else {
-      setError('Usuario o contraseña incorrectos');
     }
   };
 
@@ -56,16 +55,6 @@ export default function Login() {
           >
             Administrador
           </Typography>
-          {error && (
-            <Typography
-              color="error"
-              variant="body2"
-              align="center"
-              gutterBottom
-            >
-              {error}
-            </Typography>
-          )}
           <TextField
             fullWidth
             label="Usuario"
