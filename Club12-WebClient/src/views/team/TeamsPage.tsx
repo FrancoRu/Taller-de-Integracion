@@ -184,12 +184,13 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
       }
 
       await deleteTeamById(row.id);
+      await fetchTeams(debouncedFilters, paginationModel);
       await notifySuccess({
         title: '¡Eliminado!',
         text: 'El equipo ha sido eliminado.',
       });
     },
-    [deleteTeamById]
+    [deleteTeamById, fetchTeams, debouncedFilters, paginationModel]
   );
 
   const teamActions = useMemo<TableRowAction<ITeamResponse>[]>(

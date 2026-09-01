@@ -75,6 +75,27 @@ const TournamentsPage: React.FC = () => {
     [navigate]
   );
 
+  const fetchTournaments = useCallback(
+    async (
+      activeFilters: ITournamentFiltered,
+      activePaginationModel: GridPaginationModel
+    ) => {
+      if (!canLoadTournaments) {
+        return;
+      }
+
+      setLoading(true);
+      const response = await getAllTournamentsByFilterRef.current({
+        ...activeFilters,
+        pageNumber: activePaginationModel.page + 1,
+        pageSize: activePaginationModel.pageSize,
+      });
+      setRowCount(response?.totalCount ?? 0);
+      setLoading(false);
+    },
+    [canLoadTournaments]
+  );
+
   const handleDelete = useCallback(
     async (row: ITournamentResponse) => {
       const confirmed = await confirmDelete({
@@ -87,12 +108,13 @@ const TournamentsPage: React.FC = () => {
       }
 
       await deleteTournamentById(row.id);
+      await fetchTournaments(filters, paginationModel);
       await notifySuccess({
         title: '¡Eliminado!',
         text: 'El torneo ha sido eliminado.',
       });
     },
-    [deleteTournamentById]
+    [deleteTournamentById, fetchTournaments, filters, paginationModel]
   );
 
   const tournamentActions = useMemo<TableRowAction<ITournamentResponse>[]>(
@@ -176,27 +198,6 @@ const TournamentsPage: React.FC = () => {
       }),
     ];
   }, [tournamentActions]);
-
-  const fetchTournaments = useCallback(
-    async (
-      activeFilters: ITournamentFiltered,
-      activePaginationModel: GridPaginationModel
-    ) => {
-      if (!canLoadTournaments) {
-        return;
-      }
-
-      setLoading(true);
-      const response = await getAllTournamentsByFilterRef.current({
-        ...activeFilters,
-        pageNumber: activePaginationModel.page + 1,
-        pageSize: activePaginationModel.pageSize,
-      });
-      setRowCount(response?.totalCount ?? 0);
-      setLoading(false);
-    },
-    [canLoadTournaments]
-  );
 
   useEffect(() => {
     if (!canLoadTournaments) {
