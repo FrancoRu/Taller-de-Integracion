@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Box, Button, Grid, Stack, Tab, Tabs, Typography } from '@mui/material';
 import PageShell from '@/views/core/components/PageShell';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
@@ -40,9 +40,24 @@ const DivisionPage: React.FC = () => {
   const isAdminOrOwner =
     role === UserRolesType.Admin || role === UserRolesType.Owner;
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState<
-    'detalle' | 'posiciones' | 'equipos' | 'partidos' | 'playoff'
-  >('detalle');
+  type DivisionTab = 'detalle' | 'posiciones' | 'equipos' | 'partidos' | 'playoff';
+  const DEFAULT_TAB: DivisionTab = 'detalle';
+  const TAB_QUERY_PARAM = 'tab';
+  // Kept in the URL (not local state) so leaving to a match's detail and
+  // clicking "Volver" (which pops one history entry) lands back on the same
+  // tab instead of resetting to Detalle — mirrors PublicTournamentPage's tab.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = (searchParams.get(TAB_QUERY_PARAM) ?? DEFAULT_TAB) as DivisionTab;
+  const setTab = (value: DivisionTab) => {
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev);
+        next.set(TAB_QUERY_PARAM, value);
+        return next;
+      },
+      { replace: true }
+    );
+  };
   const [bracketGroups, setBracketGroups] = useState<BracketGroup[]>([]);
   const [seriesById, setSeriesById] = useState<Map<GUID, IMatchSeriesResponse>>(new Map());
   const [bracketsLoading, setBracketsLoading] = useState(false);
@@ -317,6 +332,7 @@ const DivisionPage: React.FC = () => {
               {divisionTeams.map(team => (
                 <Grid key={team.id} size={{ xs: 12, sm: 6, md: 4 }}>
                   <Box
+                    onClick={() => navigate(APP_ROUTES.panelTeamDetail.build(team.id))}
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
@@ -325,6 +341,8 @@ const DivisionPage: React.FC = () => {
                       border: 1,
                       borderColor: 'divider',
                       borderRadius: 1,
+                      cursor: 'pointer',
+                      '&:hover': { borderColor: 'primary.main' },
                     }}
                   >
                     <TeamLogo teamName={team.name} logoUrl={team.logoUrl} size={36} />
