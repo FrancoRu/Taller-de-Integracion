@@ -18,6 +18,7 @@ import { GUID } from '@/modules/core/types/types';
 import { useTeam } from '@/modules/team/hook/team.hook';
 import { usePlayerStatistic } from '@/modules/playerStatistic/hook/playerStatistic.hook';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
+import { IPutTeamRequest } from '@/modules/team/type/team.d';
 import LoadingIndicator from '@/views/core/components/LoadingIndicator';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import JerseySvg from '@/views/core/components/JerseySvg';
@@ -28,9 +29,22 @@ import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PlayerStatisticCreatePage from '@/views/playerStatistic/playerStatisticCreatePage';
 import PlayerSanctionCreatePage from '@/views/playerSanction/playerSanctionCreatePage';
 import RosterImportDialog from '@/views/team/RosterImportDialog';
+import TeamFormDialog from '@/views/team/TeamFormDialog';
+import type { TeamFormState, TeamFormField } from '@/views/team/teams.types';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { STATISTIC_TYPE_LABELS } from '@/modules/playerStatistic/utils/playerStatisticDisplay';
+import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
+
+const EMPTY_TEAM_FORM: TeamFormState = {
+  name: '',
+  threeLetterCode: '',
+  shirtColor: '#1E5FCC',
+  shirtSecondaryColor: '',
+  jerseyStyle: 'solid',
+  logo: null,
+  logoUrl: '',
+};
 
 const formatDate = (value?: string | Date | null) => {
   if (!value) {
@@ -54,7 +68,7 @@ const TeamPage: React.FC<TeamPageProps> = ({
 }) => {
   const { teamId } = useParams<{ teamId: GUID }>();
   const navigate = useNavigate();
-  const { team, getTeamById } = useTeam();
+  const { team, getTeamById, putTeamById, putTeamLogoById } = useTeam();
   const { playerStatistics, getPlayerStatisticsByFilter } = usePlayerStatistic();
   const { playerSanctions, getPlayerSanctionByFilter } = usePlayerSanction();
   const [loading, setLoading] = useState(false);
@@ -64,6 +78,9 @@ const TeamPage: React.FC<TeamPageProps> = ({
   const [statisticDialogOpen, setStatisticDialogOpen] = useState(false);
   const [sanctionDialogOpen, setSanctionDialogOpen] = useState(false);
   const [rosterImportOpen, setRosterImportOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [teamForm, setTeamForm] = useState<TeamFormState>(EMPTY_TEAM_FORM);
+  const [editSubmitting, setEditSubmitting] = useState(false);
 
   const targetTeamId = useMemo(
     () => teamIdOverride ?? teamId ?? team?.id,
@@ -140,6 +157,74 @@ const TeamPage: React.FC<TeamPageProps> = ({
     void getTeamById(targetTeamId);
   }, [getTeamById, targetTeamId]);
 
+  const handleTeamFieldChange = useCallback((field: TeamFormField, value: string) => {
+    setTeamForm(prev => ({
+      ...prev,
+      [field]: field === 'threeLetterCode' ? value.toUpperCase() : value,
+    }));
+  }, []);
+
+  const handleLogoChange = useCallback((file: File | null) => {
+    setTeamForm(prev => ({ ...prev, logo: file }));
+  }, []);
+
+  const openEditDialog = () => {
+    if (!team) return;
+
+    setTeamForm({
+      name: team.name,
+      threeLetterCode: team.threeLetterCode,
+      shirtColor: team.shirtColor,
+      shirtSecondaryColor: team.shirtSecondaryColor ?? '',
+      jerseyStyle: team.jerseyStyle ?? 'solid',
+      logo: null,
+      logoUrl: team.logoUrl ?? '',
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSubmit = async () => {
+    if (!team) return;
+
+    if (!teamForm.name.trim() || !teamForm.threeLetterCode.trim()) {
+      void notifyWarning({
+        title: 'Campos incompletos',
+        text: 'Nombre y código son obligatorios.',
+      });
+      return;
+    }
+
+    setEditSubmitting(true);
+    const payload: IPutTeamRequest = {
+      name: teamForm.name.trim(),
+      threeLetterCode: teamForm.threeLetterCode.trim(),
+      shirtColor: teamForm.shirtColor.trim(),
+      shirtSecondaryColor: teamForm.shirtSecondaryColor.trim() || null,
+      jerseyStyle: teamForm.jerseyStyle,
+    };
+
+    const ok = await putTeamById(team.id, payload);
+
+    if (!ok) {
+      setEditSubmitting(false);
+      return;
+    }
+
+    // The team fields and its logo are two separate endpoints; upload the new
+    // logo (if the admin picked one) as part of the same save.
+    if (teamForm.logo) {
+      await putTeamLogoById(team.id, teamForm.logo);
+    }
+    setEditSubmitting(false);
+
+    setEditDialogOpen(false);
+    refreshTeam();
+    await notifySuccess({
+      title: 'Equipo actualizado',
+      text: 'El equipo se actualizó correctamente.',
+    });
+  };
+
   if (!targetTeamId) {
     return (
       <Card>
@@ -210,15 +295,20 @@ const TeamPage: React.FC<TeamPageProps> = ({
           <TeamLogo teamName={team.name} logoUrl={team.logoUrl} size={44} />
           <Typography variant="h6">{team.name}</Typography>
         </Stack>
-        {!hideBackLink && (
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => navigate(APP_ROUTES.panelTeams)}
-          >
-            Volver
+        <Stack direction="row" spacing={1.5}>
+          <Button variant="outlined" color="primary" onClick={openEditDialog}>
+            Editar equipo
           </Button>
-        )}
+          {!hideBackLink && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => navigate(APP_ROUTES.panelTeams)}
+            >
+              Volver
+            </Button>
+          )}
+        </Stack>
       </Stack>
 
       <Tabs
@@ -430,6 +520,18 @@ const TeamPage: React.FC<TeamPageProps> = ({
           onImported={refreshTeam}
         />
       )}
+      <TeamFormDialog
+        withLogo
+        open={editDialogOpen}
+        title="Editar equipo"
+        confirmLabel="Guardar"
+        form={teamForm}
+        submitting={editSubmitting}
+        onFieldChange={handleTeamFieldChange}
+        onLogoChange={handleLogoChange}
+        onClose={() => setEditDialogOpen(false)}
+        onConfirm={() => void handleEditSubmit()}
+      />
     </>
   );
 

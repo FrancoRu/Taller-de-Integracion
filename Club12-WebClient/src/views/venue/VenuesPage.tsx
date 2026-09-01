@@ -1,16 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import {
-  Box,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  InputAdornment,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Box, InputAdornment, Stack, TextField, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import {
   confirmDelete,
@@ -18,25 +8,21 @@ import {
   notifySuccess,
   notifyWarning,
 } from '@/modules/core/utils/confirmDialog';
-import {
-  IAddVenueRequest,
-  IPutVenueRequest,
-  IVenueResponse,
-} from '@/modules/venue/type/venue';
+import { IAddVenueRequest, IVenueResponse } from '@/modules/venue/type/venue';
 import { useVenue } from '@/modules/venue/hook/venue.hook';
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
 import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
-import FormButtons from '@/views/core/components/FormButtons';
 import PageShell from '@/views/core/components/PageShell';
 import FilterBar from '@/views/core/components/FilterBar';
-import {
-  DeleteIcon,
-  EditIcon,
-  SearchIcon,
-  VisibilityIcon,
-} from '@/views/core/MUI/icons/icons';
+import { DeleteIcon, SearchIcon, VisibilityIcon } from '@/views/core/MUI/icons/icons';
+import VenueFormDialog from '@/views/venue/VenueFormDialog';
+import type {
+  VenueFormField,
+  VenueFormState,
+  VenueSearchFilters,
+} from '@/views/venue/venues.types';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { FILTERS_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/constants';
 import {
@@ -50,18 +36,6 @@ interface VenuesPageProps {
   wrapInCard?: boolean;
 }
 
-type VenueSearchFilters = {
-  name?: string;
-  address?: string;
-};
-
-type VenueFormState = {
-  name: string;
-  address: string;
-  latitude: string;
-  longitude: string;
-};
-
 const EMPTY_FILTERS: VenueSearchFilters = {};
 
 const INITIAL_VENUE_FORM: VenueFormState = {
@@ -69,9 +43,9 @@ const INITIAL_VENUE_FORM: VenueFormState = {
   address: '',
   latitude: '',
   longitude: '',
+  photo: null,
+  photoUrl: '',
 };
-
-const COORDINATES_HELPER_TEXT = 'Pegá las coordenadas de Google Maps.';
 
 /**
  * Parses a coordinate text input into a number. Empty or invalid input yields
@@ -92,13 +66,7 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
   wrapInCard = true,
 }) => {
   const navigate = useNavigate();
-  const {
-    venues,
-    addVenue,
-    putVenueById,
-    deleteVenueById,
-    getAllVenues,
-  } = useVenue();
+  const { venues, addVenue, deleteVenueById, getAllVenues } = useVenue();
 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -106,7 +74,6 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
   const [debouncedFilters, setDebouncedFilters] =
     useState<VenueSearchFilters>(EMPTY_FILTERS);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingVenue, setEditingVenue] = useState<IVenueResponse | null>(null);
   const [venueForm, setVenueForm] =
     useState<VenueFormState>(INITIAL_VENUE_FORM);
 
@@ -176,16 +143,6 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
     [navigate]
   );
 
-  const handleEdit = useCallback((row: IVenueResponse) => {
-    setEditingVenue(row);
-    setVenueForm({
-      name: row.name,
-      address: row.address,
-      latitude: row.latitude?.toString() ?? '',
-      longitude: row.longitude?.toString() ?? '',
-    });
-  }, []);
-
   const handleDelete = useCallback(
     async (row: IVenueResponse) => {
       const confirmed = await confirmDelete({
@@ -228,19 +185,13 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
         onClick: handleView,
       },
       {
-        label: 'Editar',
-        color: 'primary',
-        icon: <EditIcon fontSize="small" />,
-        onClick: handleEdit,
-      },
-      {
         label: 'Eliminar',
         color: 'error',
         icon: <DeleteIcon fontSize="small" />,
         onClick: handleDelete,
       },
     ],
-    [handleDelete, handleEdit, handleView]
+    [handleDelete, handleView]
   );
 
   const columns: GridColDef<IVenueResponse>[] = useMemo(() => {
@@ -277,6 +228,17 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
     ];
   }, [venueActions]);
 
+  const handleVenueFieldChange = useCallback(
+    (field: VenueFormField, value: string) => {
+      setVenueForm(prev => ({ ...prev, [field]: value }));
+    },
+    []
+  );
+
+  const handlePhotoChange = useCallback((file: File | null) => {
+    setVenueForm(prev => ({ ...prev, photo: file }));
+  }, []);
+
   const handleCreateSubmit = async () => {
     if (!venueForm.name.trim() || !venueForm.address.trim()) {
       await notifyWarning({
@@ -292,6 +254,7 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
       address: venueForm.address.trim(),
       latitude: parseCoordinate(venueForm.latitude),
       longitude: parseCoordinate(venueForm.longitude),
+      imageFile: venueForm.photo,
     };
 
     const created = await addVenue(payload);
@@ -305,63 +268,6 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
     resetVenueForm();
     await fetchVenues();
   };
-
-  const handleEditSubmit = async () => {
-    if (!editingVenue) {
-      return;
-    }
-
-    if (!venueForm.name.trim() || !venueForm.address.trim()) {
-      await notifyWarning({
-        title: 'Campos incompletos',
-        text: 'Nombre y dirección son obligatorios.',
-      });
-      return;
-    }
-
-    setSubmitting(true);
-    const payload: IPutVenueRequest = {
-      name: venueForm.name.trim(),
-      address: venueForm.address.trim(),
-      latitude: parseCoordinate(venueForm.latitude),
-      longitude: parseCoordinate(venueForm.longitude),
-    };
-
-    const updated = await putVenueById(editingVenue.id, payload);
-    setSubmitting(false);
-
-    if (updated === undefined) {
-      return;
-    }
-
-    setEditingVenue(null);
-    resetVenueForm();
-    await fetchVenues();
-  };
-
-  const coordinateFields = (
-    <>
-      <TextField
-        label="Latitud"
-        type="number"
-        value={venueForm.latitude}
-        onChange={e =>
-          setVenueForm(prev => ({ ...prev, latitude: e.target.value }))
-        }
-        fullWidth
-        helperText={COORDINATES_HELPER_TEXT}
-      />
-      <TextField
-        label="Longitud"
-        type="number"
-        value={venueForm.longitude}
-        onChange={e =>
-          setVenueForm(prev => ({ ...prev, longitude: e.target.value }))
-        }
-        fullWidth
-      />
-    </>
-  );
 
   const createButton = (
     <NewEntityButton
@@ -429,91 +335,21 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
         />
       </Box>
 
-      <Dialog
+      <VenueFormDialog
+        withPhoto
         open={isCreateModalOpen}
-        onClose={() => !submitting && setIsCreateModalOpen(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>Nueva cancha</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="Nombre"
-              value={venueForm.name}
-              onChange={e =>
-                setVenueForm(prev => ({ ...prev, name: e.target.value }))
-              }
-              required
-              fullWidth
-            />
-            <TextField
-              label="Dirección"
-              value={venueForm.address}
-              onChange={e =>
-                setVenueForm(prev => ({ ...prev, address: e.target.value }))
-              }
-              required
-              fullWidth
-            />
-            {coordinateFields}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <FormButtons
-            onCancel={() => {
-              setIsCreateModalOpen(false);
-              resetVenueForm();
-            }}
-            onConfirm={() => void handleCreateSubmit()}
-            confirmLabel="Crear"
-            disabled={submitting}
-          />
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={Boolean(editingVenue)}
-        onClose={() => !submitting && setEditingVenue(null)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>Editar cancha</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="Nombre"
-              value={venueForm.name}
-              onChange={e =>
-                setVenueForm(prev => ({ ...prev, name: e.target.value }))
-              }
-              required
-              fullWidth
-            />
-            <TextField
-              label="Dirección"
-              value={venueForm.address}
-              onChange={e =>
-                setVenueForm(prev => ({ ...prev, address: e.target.value }))
-              }
-              required
-              fullWidth
-            />
-            {coordinateFields}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <FormButtons
-            onCancel={() => {
-              setEditingVenue(null);
-              resetVenueForm();
-            }}
-            onConfirm={() => void handleEditSubmit()}
-            confirmLabel="Guardar"
-            disabled={submitting}
-          />
-        </DialogActions>
-      </Dialog>
+        title="Nueva cancha"
+        confirmLabel="Crear"
+        form={venueForm}
+        submitting={submitting}
+        onFieldChange={handleVenueFieldChange}
+        onPhotoChange={handlePhotoChange}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          resetVenueForm();
+        }}
+        onConfirm={() => void handleCreateSubmit()}
+      />
     </>
   );
 

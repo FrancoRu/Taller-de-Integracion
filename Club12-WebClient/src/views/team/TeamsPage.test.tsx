@@ -339,68 +339,15 @@ describe('TeamsPage — create dialog', () => {
   });
 });
 
-describe('TeamsPage — edit dialog', () => {
-  it('opens prefilled with the selected row values', async () => {
-    setupHook([
-      buildTeam({ name: 'River', threeLetterCode: 'RIV', shirtColor: 'Rojo' }),
-    ]);
-    renderTeamsPage();
+// The edit dialog now lives on TeamPage (the detail/view page) — see
+// TeamPage.test.tsx — per the "list = Ver/Eliminar, edit lives inside the
+// view" convention. TeamsPage only keeps create + Ver/Eliminar.
+it('does not offer an Editar row action — editing lives inside the team detail page', async () => {
+  setupHook([buildTeam({ name: 'River' })]);
+  renderTeamsPage();
 
-    const editIcon = await screen.findByTestId('EditIcon');
-    fireEvent.click(editIcon.closest('button') as HTMLButtonElement);
-
-    const dialog = screen.getByRole('dialog');
-    expect(
-      within(dialog).getByRole('textbox', { name: /^Nombre/ })
-    ).toHaveValue('River');
-    expect(
-      within(dialog).getByRole('textbox', { name: /^Código/ })
-    ).toHaveValue('RIV');
-    // The color is now edited through the kit designer's pickers/gallery
-    // rather than a plain textbox.
-    expect(
-      within(dialog).getByRole('radiogroup', { name: /modelo de camiseta/i })
-    ).toBeInTheDocument();
-  });
-
-  it('calls putTeamById with trimmed values, closes, refetches and shows a success alert', async () => {
-    setupHook([
-      buildTeam({ name: 'River', threeLetterCode: 'RIV', shirtColor: 'Rojo' }),
-    ]);
-    const user = userEvent.setup();
-    renderTeamsPage();
-
-    await waitFor(() => expect(getTeamsByFiltered).toHaveBeenCalledTimes(1));
-    getTeamsByFiltered.mockClear();
-
-    const editIcon = await screen.findByTestId('EditIcon');
-    fireEvent.click(editIcon.closest('button') as HTMLButtonElement);
-
-    const dialog = screen.getByRole('dialog');
-    const nameInput = within(dialog).getByRole('textbox', {
-      name: /^Nombre/,
-    });
-    await user.clear(nameInput);
-    await user.type(nameInput, ' Racing ');
-
-    await user.click(
-      within(dialog).getByRole('button', { name: /guardar/i })
-    );
-
-    await waitFor(() => expect(putTeamById).toHaveBeenCalledTimes(1));
-    const [, payload] = putTeamById.mock.calls[0];
-    expect(payload).toEqual(
-      expect.objectContaining({ name: 'Racing', threeLetterCode: 'RIV' })
-    );
-
-    await waitFor(() =>
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    );
-    await waitFor(() => expect(getTeamsByFiltered).toHaveBeenCalledTimes(1));
-    expect(mockedSwalFire).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Equipo actualizado' })
-    );
-  });
+  await screen.findByText('River');
+  expect(screen.queryByTestId('EditIcon')).not.toBeInTheDocument();
 });
 
 describe('TeamsPage — delete confirmation', () => {
