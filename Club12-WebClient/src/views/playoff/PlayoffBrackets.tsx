@@ -7,6 +7,8 @@ import PlayoffBracket from '@/views/playoff/PlayoffBracket';
 interface PlayoffBracketsProps {
   groups: BracketGroup[];
   seriesById?: Map<GUID, IMatchSeriesResponse>;
+  /** See {@link PlayoffBracket}'s `onMatchClick` — omitted in read-only contexts. */
+  onMatchClick?: (matchId: GUID) => void;
 }
 
 /**
@@ -16,7 +18,7 @@ interface PlayoffBracketsProps {
  * heading — multiple brackets only appear when the admin actually named
  * more than one (e.g. two parallel cups within the same division).
  */
-export default function PlayoffBrackets({ groups, seriesById }: PlayoffBracketsProps) {
+export default function PlayoffBrackets({ groups, seriesById, onMatchClick }: PlayoffBracketsProps) {
   const hasContent = groups.some(
     group => group.model.rounds.length > 0 || (group.model.thirdPlace?.matches.length ?? 0) > 0
   );
@@ -49,7 +51,7 @@ export default function PlayoffBrackets({ groups, seriesById }: PlayoffBracketsP
               {group.bracketName}
             </Typography>
           )}
-          <PlayoffBracket model={group.model} seriesById={seriesById} />
+          <PlayoffBracket model={group.model} seriesById={seriesById} onMatchClick={onMatchClick} />
         </Stack>
       ))}
     </Stack>

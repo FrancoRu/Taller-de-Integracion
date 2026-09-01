@@ -4,9 +4,15 @@ import MatchStatisticsTab from '@/views/match/MatchStatisticsTab';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import { GUID } from '@/modules/core/types/types';
 import { IMatchResponse } from '@/modules/match/type/match';
+import { PlayerStatisticResponse } from '@/modules/playerStatistic/type/playerStatistic.d';
 
 const getPlayerStatisticsByFilter = vi.fn(() =>
-  Promise.resolve({ items: [], totalCount: 0, pageNumber: 1, pageSize: 300 })
+  Promise.resolve({
+    items: [] as PlayerStatisticResponse[],
+    totalCount: 0,
+    pageNumber: 1,
+    pageSize: 300,
+  })
 );
 
 vi.mock('@/modules/playerStatistic/hook/playerStatistic.hook', () => ({
@@ -155,11 +161,12 @@ describe('MatchStatisticsTab — result derived from both teams\' sheets', () =>
     getPlayerStatisticsByFilter.mockResolvedValue({
       items: [
         {
-          id: 'stat-1',
-          matchId: 'aaaa-aaaa-aaaa-aaaa-aaaa',
+          id: guid('stat-1-stat-1-stat-1-stat-1'),
+          matchId: guid('aaaa-aaaa-aaaa-aaaa-aaaa'),
           playerId: HOME_PLAYER_ID,
           type: 'Points',
           value: 20,
+          matchDate: null,
         },
       ],
       totalCount: 1,

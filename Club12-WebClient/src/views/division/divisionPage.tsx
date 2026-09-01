@@ -1,11 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Box, Button, Grid, Tab, Tabs, Typography } from '@mui/material';
+import { Box, Button, Grid, Stack, Tab, Tabs, Typography } from '@mui/material';
 import PageShell from '@/views/core/components/PageShell';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { GUID } from '@/modules/core/types/types';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
+import { useStage } from '@/modules/stage/hook/stage.hook';
 import { stageService } from '@/modules/stage/service/stage.service';
 import { matchService } from '@/modules/match/service/match.service';
 import { matchSeriesService } from '@/modules/matchSeries/service/matchSeries.service';
@@ -34,6 +35,7 @@ const DivisionPage: React.FC = () => {
   const navigate = useNavigate();
   const { division, getDivisionsById } = useDivision();
   const { tournament, getTournamentById } = useTournament();
+  const { seedKnockoutStage } = useStage();
   const { role } = useAuth();
   const isAdminOrOwner =
     role === UserRolesType.Admin || role === UserRolesType.Owner;
@@ -76,6 +78,50 @@ const DivisionPage: React.FC = () => {
     void getTournamentById(division.tournamentId);
   }, [division?.tournamentId, tournament?.id, getTournamentById]);
 
+  const fetchBrackets = useCallback(async (resolvedDivisionId: GUID) => {
+    setBracketsLoading(true);
+
+    const [stagesResponse, matchesResponse] = await Promise.all([
+      stageService.getStagesByFilters({
+        divisionId: resolvedDivisionId,
+        isElimination: true,
+        pageSize: BRACKET_FETCH_PAGE_SIZE,
+      }),
+      matchService.getMatchByFilter({
+        divisionId: resolvedDivisionId,
+        pageSize: BRACKET_FETCH_PAGE_SIZE,
+      }),
+    ]);
+
+    const stages = stagesResponse.data?.items ?? [];
+    const matches = matchesResponse.data?.items ?? [];
+    const seriesStages = stages.filter(stage => stage.bestOf > 1);
+
+    const seriesByStageId = new Map<GUID, IMatchSeriesResponse[]>();
+    const nextSeriesById = new Map<GUID, IMatchSeriesResponse>();
+
+    if (seriesStages.length > 0) {
+      const seriesResponses = await Promise.all(
+        seriesStages.map(stage =>
+          matchSeriesService.getMatchSeriesByFilters({
+            stageId: stage.id,
+            pageSize: BRACKET_FETCH_PAGE_SIZE,
+          })
+        )
+      );
+
+      seriesStages.forEach((stage, index) => {
+        const seriesList = seriesResponses[index].data?.items ?? [];
+        seriesByStageId.set(stage.id, seriesList);
+        seriesList.forEach(series => nextSeriesById.set(series.id, series));
+      });
+    }
+
+    setBracketGroups(buildBrackets(stages, matches, seriesByStageId));
+    setSeriesById(nextSeriesById);
+    setBracketsLoading(false);
+  }, []);
+
   useEffect(() => {
     // Filters below are keyed by the real division GUID, so the elimination
     // brackets only fetch once the slug-or-id param has resolved to a
@@ -85,52 +131,28 @@ const DivisionPage: React.FC = () => {
       return;
     }
 
-    const fetchBrackets = async () => {
-      setBracketsLoading(true);
+    void fetchBrackets(resolvedDivisionId);
+  }, [tab, division?.id, fetchBrackets]);
 
-      const [stagesResponse, matchesResponse] = await Promise.all([
-        stageService.getStagesByFilters({
-          divisionId: resolvedDivisionId,
-          isElimination: true,
-          pageSize: BRACKET_FETCH_PAGE_SIZE,
-        }),
-        matchService.getMatchByFilter({
-          divisionId: resolvedDivisionId,
-          pageSize: BRACKET_FETCH_PAGE_SIZE,
-        }),
-      ]);
-
-      const stages = stagesResponse.data?.items ?? [];
-      const matches = matchesResponse.data?.items ?? [];
-      const seriesStages = stages.filter(stage => stage.bestOf > 1);
-
-      const seriesByStageId = new Map<GUID, IMatchSeriesResponse[]>();
-      const nextSeriesById = new Map<GUID, IMatchSeriesResponse>();
-
-      if (seriesStages.length > 0) {
-        const seriesResponses = await Promise.all(
-          seriesStages.map(stage =>
-            matchSeriesService.getMatchSeriesByFilters({
-              stageId: stage.id,
-              pageSize: BRACKET_FETCH_PAGE_SIZE,
-            })
-          )
-        );
-
-        seriesStages.forEach((stage, index) => {
-          const seriesList = seriesResponses[index].data?.items ?? [];
-          seriesByStageId.set(stage.id, seriesList);
-          seriesList.forEach(series => nextSeriesById.set(series.id, series));
-        });
+  const handleSeedBracket = useCallback(
+    async (stageId: GUID) => {
+      const resolvedDivisionId = division?.id;
+      if (!resolvedDivisionId) {
+        return;
       }
 
-      setBracketGroups(buildBrackets(stages, matches, seriesByStageId));
-      setSeriesById(nextSeriesById);
-      setBracketsLoading(false);
-    };
+      const seeded = await seedKnockoutStage(stageId);
+      if (seeded) {
+        await fetchBrackets(resolvedDivisionId);
+      }
+    },
+    [division?.id, seedKnockoutStage, fetchBrackets]
+  );
 
-    void fetchBrackets();
-  }, [tab, division?.id]);
+  const handleMatchClick = useCallback(
+    (matchId: GUID) => navigate(APP_ROUTES.panelMatch.build(matchId)),
+    [navigate]
+  );
 
   // Teams that can receive a point deduction: those present in the division's
   // standings (pooled positions cover both regular zones and multi-group cups),
@@ -364,7 +386,40 @@ const DivisionPage: React.FC = () => {
           (bracketsLoading ? (
             <DetailSkeleton />
           ) : (
-            <PlayoffBrackets groups={bracketGroups} seriesById={seriesById} />
+            <Stack spacing={2}>
+              {isAdminOrOwner && (
+                <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+                  {bracketGroups
+                    .filter(group => group.model.rounds.length > 0)
+                    .map(group => {
+                      const firstRound = group.model.rounds[0];
+                      const alreadySeeded = firstRound.matches.some(
+                        match => match.homeTeam || match.visitorTeam
+                      );
+
+                      if (alreadySeeded) {
+                        return null;
+                      }
+
+                      return (
+                        <Button
+                          key={firstRound.stageId}
+                          variant="outlined"
+                          size="small"
+                          onClick={() => void handleSeedBracket(firstRound.stageId)}
+                        >
+                          Sembrar bracket{group.bracketName ? ` — ${group.bracketName}` : ''}
+                        </Button>
+                      );
+                    })}
+                </Stack>
+              )}
+              <PlayoffBrackets
+                groups={bracketGroups}
+                seriesById={seriesById}
+                onMatchClick={isAdminOrOwner ? handleMatchClick : undefined}
+              />
+            </Stack>
           ))}
     </PageShell>
   );
