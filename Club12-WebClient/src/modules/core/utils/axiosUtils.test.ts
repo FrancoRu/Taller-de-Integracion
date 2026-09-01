@@ -1,7 +1,8 @@
 import { AxiosError } from 'axios';
 import axios from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { sendDelete, sendGet } from './axiosUtils';
+import { sendDelete, sendGet, sendPost } from './axiosUtils';
+import { getActiveRequestCount } from './requestActivity';
 
 const originalLocation = window.location;
 
@@ -126,5 +127,48 @@ describe('sendGet error pipeline', () => {
     vi.mocked(axios.request).mockRejectedValueOnce(notFoundError);
 
     await expect(sendGet('divisions/123')).rejects.toBe(notFoundError);
+  });
+});
+
+describe('mutating-request activity tracking (drives GlobalLoadingOverlay)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('increments the active count while a POST is in flight, then releases it on success', async () => {
+    let resolveRequest: (value: unknown) => void = () => {};
+    const pending = new Promise(resolve => {
+      resolveRequest = resolve;
+    });
+    vi.mocked(axios.request).mockReturnValueOnce(pending as never);
+
+    expect(getActiveRequestCount()).toBe(0);
+    const requestPromise = sendPost('teams', { name: 'River' });
+    await Promise.resolve();
+    expect(getActiveRequestCount()).toBe(1);
+
+    resolveRequest({ data: {}, status: 201, statusText: 'Created', headers: {}, config: {} });
+    await requestPromise;
+    expect(getActiveRequestCount()).toBe(0);
+  });
+
+  it('releases the active count even when the mutating request fails', async () => {
+    vi.mocked(axios.request).mockRejectedValueOnce(buildNotFoundError());
+
+    await expect(sendPost('teams', { name: 'River' })).rejects.toBeTruthy();
+    expect(getActiveRequestCount()).toBe(0);
+  });
+
+  it('does NOT affect the active count for a GET (page data keeps its own skeleton loading)', async () => {
+    vi.mocked(axios.request).mockResolvedValueOnce({
+      data: {},
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {},
+    });
+
+    await sendGet('teams');
+    expect(getActiveRequestCount()).toBe(0);
   });
 });

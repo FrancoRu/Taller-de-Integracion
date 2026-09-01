@@ -60,6 +60,7 @@ import ForgotPassword from './views/auth/forgotPassword';
 import ActivateAccount from './views/auth/activateAccount';
 import PrivateRoute from './views/core/privateRoute';
 import ScrollToTop from './views/core/components/ScrollToTop';
+import GlobalLoadingOverlay from './views/core/components/GlobalLoadingOverlay';
 import TeamsPage from './views/team/TeamsPage';
 import TeamRegisterPage from './views/team/TeamRegisterPage';
 import ClubHistoryPage from './views/club/ClubHistoryPage';
@@ -330,6 +331,7 @@ function App() {
   return (
     <>
       <ScrollToTop />
+      <GlobalLoadingOverlay />
       <Routes>
       <Route element={<PublicLayout />}>
         {PUBLIC_ROUTES.map(({ path, element }) => (
