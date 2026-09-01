@@ -1,5 +1,6 @@
 import { FetchOptions, Filtered, GUID } from '@/modules/core/types/types';
 import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
+import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
 
 /**
  * A tournament that belongs to a season, as embedded in a {@link ISeasonResponse}.
@@ -17,6 +18,8 @@ export interface ISeasonTournament {
   slug: string;
   /** Competitive category (gender) of the tournament (HU-48). */
   category: TournamentCategory;
+  /** The tournament's lifecycle status. */
+  status: TournamentStatus;
 }
 
 /**

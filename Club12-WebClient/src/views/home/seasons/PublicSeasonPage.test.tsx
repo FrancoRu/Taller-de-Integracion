@@ -5,6 +5,7 @@ import PublicSeasonPage from '@/views/home/seasons/PublicSeasonPage';
 import { useSeason } from '@/modules/season/hook/season.hook';
 import type { ISeasonResponse } from '@/modules/season/type/season';
 import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
+import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
 import type { GUID } from '@/modules/core/types/types';
 
 vi.mock('@/modules/season/hook/season.hook');
@@ -22,12 +23,14 @@ const buildSeason = (): ISeasonResponse => ({
       name: 'Apertura Masculino',
       slug: 'apertura-masculino',
       category: TournamentCategory.Masculine,
+      status: TournamentStatus.OpenForRegistration,
     },
     {
       id: '22222222-2222-2222-2222-222222222222' as GUID,
       name: 'Apertura Femenino',
       slug: 'apertura-femenino',
       category: TournamentCategory.Feminine,
+      status: TournamentStatus.OpenForRegistration,
     },
   ],
 });

@@ -18,6 +18,11 @@ import {
   ISeasonTournament,
 } from '@/modules/season/type/season';
 import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
+import {
+  TOURNAMENT_STATUS_COLOR,
+  TOURNAMENT_STATUS_LABEL,
+  resolveTournamentStatus,
+} from '@/modules/tournament/utils/tournamentDisplay';
 import CategoryChip from '@/views/core/components/CategoryChip';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PageShell from '@/views/core/components/PageShell';
@@ -48,9 +53,14 @@ function TournamentCard({ tournament }: { tournament: ISeasonTournament }) {
         sx={{ height: '100%' }}
       >
         <CardContent sx={{ width: '100%' }}>
-          <Typography variant="h6" component="h3" sx={{ lineHeight: 1.3 }}>
+          <Typography variant="h6" component="h3" sx={{ lineHeight: 1.3, mb: 1 }}>
             {tournament.name}
           </Typography>
+          <Chip
+            label={TOURNAMENT_STATUS_LABEL[resolveTournamentStatus(tournament.status)]}
+            color={TOURNAMENT_STATUS_COLOR[resolveTournamentStatus(tournament.status)]}
+            size="small"
+          />
         </CardContent>
       </CardActionArea>
     </Card>
