@@ -33,7 +33,7 @@ El proyecto está dividido en dos aplicaciones independientes dentro del mismo r
 ```
 Club12/
 ├── Club12-Backend/     .NET 8 · ASP.NET Core Web API
-└── Club12-WebClient/   React 18 · TypeScript · Vite
+└── Club12-WebClient/   React 19 · TypeScript · Vite
 ```
 
 ### Backend — Arquitectura Limpia (Clean Architecture)
@@ -71,7 +71,7 @@ src/
 
 Cada uno de los 13 dominios (equipos, jugadores, partidos, torneos, divisiones, sanciones, estadísticas, goleadores, etapas, canchas, usuarios, autenticación, blog) repite este mismo patrón, lo que hace que el código sea predecible: para entender cualquier funcionalidad alcanza con mirar su carpeta.
 
-**Stack**: React 18, TypeScript, Vite, Material UI (MUI), TanStack Query (cacheo y sincronización de datos del servidor), React Router, Axios.
+**Stack**: React 19, TypeScript, Vite, Material UI (MUI), TanStack Query (cacheo y sincronización de datos del servidor), React Router, Axios.
 
 ### Diagrama de flujo general
 
