@@ -24,6 +24,7 @@ import {
   useTeamStandings,
   useTeamTitles,
 } from '@/modules/team/hook/useTeamProfile';
+import { useTeamStaff } from '@/modules/teamStaff/hook/teamStaff.hook';
 import {
   computeRecord,
   deriveStreak,
@@ -49,6 +50,7 @@ import TeamBackdrop from '@/views/core/components/TeamBackdrop';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import JerseySvg from '@/views/core/components/JerseySvg';
 import SectionHeading from '@/views/core/components/SectionHeading';
+import TeamStaffSection from '@/views/home/teams/TeamStaffSection';
 import CategoryChip from '@/views/core/components/CategoryChip';
 import StatTile from '@/views/core/components/StatTile';
 import LoadErrorState from '@/views/core/components/LoadErrorState';
@@ -446,6 +448,7 @@ export default function PublicTeamPage() {
   const { summary, matches } = useTeamStandings(teamId, activeTournamentId);
   const { scorers } = useTeamScorers(team?.id, activeTournamentId);
   const { titles } = useTeamTitles(team?.id);
+  const { staff } = useTeamStaff(team?.id, activeTournamentId);
 
   // Set the social/SEO title from the team name once it resolves; the hook
   // keeps the site defaults while it is still undefined.
@@ -548,6 +551,8 @@ export default function PublicTeamPage() {
         </Box>
 
         <TitlesBlock titles={titles} />
+
+        <TeamStaffSection staff={staff} />
 
         <Divider sx={{ my: 4 }} />
 
