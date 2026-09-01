@@ -609,6 +609,10 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     playerForm.birthDate.length > 0 &&
     !isAtLeastMinimumPlayerAge(playerForm.birthDate);
   const maxBirthDate = useMemo(getMaxBirthDate, []);
+  // The dorsal field only ever applies to the roster context's own team —
+  // reassigning the player to a different team resets their dorsal on the
+  // backend, so editing it here alongside a team change would be misleading.
+  const isEditingSameTeamContext = rosterEnabled && playerForm.teamId === teamId;
 
   const handleCreatePlayer = useCallback(() => {
     if (onCreate) {
@@ -667,7 +671,13 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       return;
     }
 
-    const parsedDorsal = rosterEnabled
+    // If the admin also reassigned the player to a different team in this
+    // same submit, that move already resets the dorsal on the backend (a
+    // carried-over number could collide with the new team's roster), and
+    // syncing it here against the OLD team would either misapply it or be
+    // rejected outright (a player can't be re-registered to a team they've
+    // just left).
+    const parsedDorsal = isEditingSameTeamContext
       ? parseDorsalValue(playerForm.jerseyNumber)
       : ({ success: true, jerseyNumber: null } as const);
 
@@ -700,7 +710,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       return;
     }
 
-    if (rosterEnabled && teamId && tournamentId) {
+    if (isEditingSameTeamContext && teamId && tournamentId) {
       const dorsalResult = await registerPlayerToTeam(editingPlayer.id, {
         teamId,
         tournamentId,
@@ -1093,7 +1103,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               <TextField
                 label="Dorsal"
                 type="number"
-                value={playerForm.jerseyNumber}
+                value={isEditingSameTeamContext ? playerForm.jerseyNumber : ''}
                 onChange={e =>
                   setPlayerForm(prev => ({
                     ...prev,
@@ -1101,7 +1111,12 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
                   }))
                 }
                 fullWidth
-                helperText="Único por equipo y temporada. Dejar vacío para quitarlo."
+                disabled={!isEditingSameTeamContext}
+                helperText={
+                  isEditingSameTeamContext
+                    ? 'Único por equipo y temporada. Dejar vacío para quitarlo.'
+                    : 'Se reinicia al cambiar de equipo: asignalo desde la acción Dorsal después de guardar.'
+                }
                 slotProps={{ htmlInput: { min: 0, max: 99, step: 1 } }}
               />
             )}
