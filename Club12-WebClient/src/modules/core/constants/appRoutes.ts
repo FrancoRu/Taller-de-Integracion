@@ -76,7 +76,6 @@ export const APP_ROUTES = {
     build: (playerSanctionId: string) =>
       `/panel/sanciones/editar/${playerSanctionId}`,
   },
-  panelScorers: '/panel/puntuaciones',
   panelVenues: '/panel/canchas',
   panelVenue: {
     pattern: '/panel/canchas/:venueId',
