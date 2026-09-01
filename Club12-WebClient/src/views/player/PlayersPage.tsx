@@ -625,10 +625,10 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
 
     if (trimmed !== '') {
       const parsed = Number(trimmed);
-      if (!Number.isInteger(parsed) || parsed <= 0) {
+      if (!Number.isInteger(parsed) || parsed < 0 || parsed > 99) {
         void notifyWarning({
           title: 'Dorsal inválido',
-          text: 'El dorsal debe ser un número entero positivo.',
+          text: 'El dorsal debe ser un número entero entre 0 y 99.',
         });
         return;
       }
@@ -1016,7 +1016,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               onChange={e => setDorsalValue(e.target.value)}
               fullWidth
               helperText="Único por equipo y temporada. Dejar vacío para quitarlo."
-              slotProps={{ htmlInput: { min: 1, step: 1 } }}
+              slotProps={{ htmlInput: { min: 0, max: 99, step: 1 } }}
             />
           </Stack>
         </DialogContent>

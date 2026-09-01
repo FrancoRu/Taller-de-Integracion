@@ -17,6 +17,10 @@ public class RegisterPlayerToTeamRequest
     [Required]
     public required Guid TournamentId { get; set; }
 
-    /// <summary>The player's jersey number (dorsal) for this team/season, or null.</summary>
+    /// <summary>
+    /// The player's jersey number (dorsal) for this team/season, or null. A
+    /// dorsal is a two-digit number: 0 to 99 inclusive, never negative.
+    /// </summary>
+    [Range(0, 99, ErrorMessage = "El dorsal debe ser un número entre 0 y 99.")]
     public int? JerseyNumber { get; set; }
 }
