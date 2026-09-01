@@ -258,7 +258,7 @@ export default function Home() {
         }}
       >
         <BasketballCourtPattern
-          sx={{ color: '#fff', opacity: 0.07, strokeWidth: 3 }}
+          sx={{ color: '#fff', opacity: 0.18, strokeWidth: 3 }}
         />
         {/* Legibility scrim: darkens the warm-but-bright left edge so white text
             stays AA-legible over the orange. */}
@@ -312,7 +312,8 @@ export default function Home() {
               color: 'rgba(255,255,255,0.94)',
             }}
           >
-            Paraná, Entre Ríos · Masculino y femenino.
+            Una liga amateur hecha por y para quienes aman el básquet:
+            competencia, compañerismo y la vuelta a la cancha.
           </Typography>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <Button
