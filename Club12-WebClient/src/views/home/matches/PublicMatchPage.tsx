@@ -73,7 +73,14 @@ export default function PublicMatchPage() {
     void fetch();
   }, [matchId, getMatchById]);
 
-  const goToTournaments = () => navigate(APP_ROUTES.publicTournaments);
+  // Back goes to the match's own tournament — falling back to the seasons
+  // list (not the orphaned /torneos listing) only when the match has no
+  // stage/tournament resolved yet.
+  const backRoute = match?.tournamentId
+    ? APP_ROUTES.publicTournament.build(match.tournamentId)
+    : APP_ROUTES.publicSeasons;
+  const backLabel = match?.tournamentId ? 'Volver al torneo' : 'Volver a temporadas';
+  const goToTournaments = () => navigate(backRoute);
 
   const matchup =
     match?.homeTeam?.name && match?.visitorTeam?.name
@@ -107,7 +114,7 @@ export default function PublicMatchPage() {
         <Typography sx={{ color: 'text.secondary', mb: 3 }}>
           El partido que buscás no existe o ya no está disponible.
         </Typography>
-        <Button onClick={goToTournaments}>Volver a torneos</Button>
+        <Button onClick={goToTournaments}>{backLabel}</Button>
       </PageShell>
     );
   }
@@ -220,7 +227,7 @@ export default function PublicMatchPage() {
   return (
     <PageShell
       maxWidth="md"
-      back={{ label: 'Volver a torneos', onClick: goToTournaments }}
+      back={{ label: backLabel, onClick: goToTournaments }}
     >
       {/* The matchup is the page's heading; kept visually hidden because the
           design leads with the centred crest-vs-crest scoreboard instead. */}

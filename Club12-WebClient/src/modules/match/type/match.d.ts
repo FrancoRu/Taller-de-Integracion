@@ -239,6 +239,13 @@ export interface IMatchResponse {
   stageId: GUID | null;
 
   /**
+   * @property {GUID | null} tournamentId - The tournament this match belongs
+   * to (via its stage's division), used to navigate back to the tournament
+   * from the public match page. Null for a match with no stage assigned yet.
+   */
+  tournamentId?: GUID | null;
+
+  /**
    * @property {string | null} winningTeamName - The name of the winning team, or null if the match is not finished or was a draw.
    */
   winningTeamName: string | null;
