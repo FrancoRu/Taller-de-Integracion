@@ -14,7 +14,6 @@ import { buildBrackets } from '@/modules/playoff/buildBracket';
 import { BracketGroup } from '@/modules/playoff/type/bracket.d';
 import DivisionStandings from '@/views/division/divisionStandings';
 import DivisionFixture from '@/views/division/DivisionFixture';
-import NewEntityButton from '@/views/core/components/NewEntityButton';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import PointDeductionManager from '@/views/division/PointDeductionManager';
 import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
@@ -310,21 +309,12 @@ const DivisionPage: React.FC = () => {
         )}
 
         {tab === 'partidos' && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {isAdminOrOwner && (
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <NewEntityButton
-                  type="Partido"
-                  onClick={() => navigate(APP_ROUTES.panelMatchCreate)}
-                />
-              </Box>
-            )}
-            <DivisionFixture
-              divisionId={division.id}
-              divisionName={division.name}
-              buildMatchHref={m => APP_ROUTES.panelMatch.build(m.slug ?? m.id)}
-            />
-          </Box>
+          <DivisionFixture
+            divisionId={division.id}
+            divisionName={division.name}
+            variant="carousel"
+            buildMatchHref={m => APP_ROUTES.panelMatch.build(m.slug ?? m.id)}
+          />
         )}
 
         {tab === 'posiciones' && isAdminOrOwner && (
