@@ -82,6 +82,10 @@ type PlayerFormState = {
   phoneNumber: string;
   socialSecurity: string;
   teamId: GUID | '';
+  /** Dorsal for the current team/tournament roster (HU-54), editable only
+   * when `rosterEnabled` — a dorsal is season-scoped, so it's meaningless
+   * outside a team+tournament context. */
+  jerseyNumber: string;
 };
 
 const EMPTY_FILTERS: PlayersSearchFilters = {};
@@ -95,6 +99,25 @@ const INITIAL_PLAYER_FORM: PlayerFormState = {
   phoneNumber: '',
   socialSecurity: '',
   teamId: '',
+  jerseyNumber: '',
+};
+
+/** Shared 0-99 dorsal parsing/validation for both the standalone Dorsal
+ * dialog and the dorsal field inside "Editar jugador". */
+const parseDorsalValue = (
+  value: string
+): { success: true; jerseyNumber: number | null } | { success: false } => {
+  const trimmed = value.trim();
+  if (trimmed === '') {
+    return { success: true, jerseyNumber: null };
+  }
+
+  const parsed = Number(trimmed);
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 99) {
+    return { success: false };
+  }
+
+  return { success: true, jerseyNumber: parsed };
 };
 
 interface PlayersPageProps {
@@ -310,6 +333,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   const handleEdit = useCallback(
     (row: IPlayerResponse) => {
       setEditingPlayer(row);
+      const dorsal = currentDorsalFor(row);
       setPlayerForm({
         firstName: row.firstName,
         secondName: row.secondName ?? '',
@@ -319,10 +343,12 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         phoneNumber: row.phoneNumber ?? '',
         socialSecurity: row.socialSecurity ?? '',
         teamId: row.teamId,
+        jerseyNumber:
+          dorsal === null || dorsal === undefined ? '' : String(dorsal),
       });
       void loadTeamsForDropdown();
     },
-    [loadTeamsForDropdown]
+    [currentDorsalFor, loadTeamsForDropdown]
   );
 
   const handleDelete = useCallback(
@@ -631,6 +657,18 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       return;
     }
 
+    const parsedDorsal = rosterEnabled
+      ? parseDorsalValue(playerForm.jerseyNumber)
+      : ({ success: true, jerseyNumber: null } as const);
+
+    if (!parsedDorsal.success) {
+      void notifyWarning({
+        title: 'Dorsal inválido',
+        text: 'El dorsal debe ser un número entero entre 0 y 99.',
+      });
+      return;
+    }
+
     setSubmitting(true);
     const payload: IPutPlayerRequest = {
       firstName: playerForm.firstName.trim(),
@@ -646,12 +684,32 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     };
 
     const updatedPlayer = await putPlayerById(editingPlayer.id, payload);
-    setSubmitting(false);
 
     if (!updatedPlayer) {
+      setSubmitting(false);
       return;
     }
 
+    if (rosterEnabled && teamId && tournamentId) {
+      const dorsalResult = await registerPlayerToTeam(editingPlayer.id, {
+        teamId,
+        tournamentId,
+        jerseyNumber: parsedDorsal.jerseyNumber,
+      });
+
+      if (!dorsalResult.success) {
+        setSubmitting(false);
+        await notifyError({
+          title: 'No se pudo asignar el dorsal',
+          text: dorsalResult.errorMessage,
+        });
+        return;
+      }
+
+      onMedicalChange?.();
+    }
+
+    setSubmitting(false);
     setEditingPlayer(null);
     resetPlayerForm();
     await fetchPlayers(debouncedFilters, paginationModel);
@@ -666,20 +724,15 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       return;
     }
 
-    const trimmed = dorsalValue.trim();
-    let jerseyNumber: number | null = null;
-
-    if (trimmed !== '') {
-      const parsed = Number(trimmed);
-      if (!Number.isInteger(parsed) || parsed < 0 || parsed > 99) {
-        void notifyWarning({
-          title: 'Dorsal inválido',
-          text: 'El dorsal debe ser un número entero entre 0 y 99.',
-        });
-        return;
-      }
-      jerseyNumber = parsed;
+    const parsedDorsal = parseDorsalValue(dorsalValue);
+    if (!parsedDorsal.success) {
+      void notifyWarning({
+        title: 'Dorsal inválido',
+        text: 'El dorsal debe ser un número entero entre 0 y 99.',
+      });
+      return;
     }
+    const jerseyNumber = parsedDorsal.jerseyNumber;
 
     setSubmitting(true);
     const result = await registerPlayerToTeam(dorsalPlayer.id, {
@@ -1026,6 +1079,22 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               }
               fullWidth
             />
+            {rosterEnabled && (
+              <TextField
+                label="Dorsal"
+                type="number"
+                value={playerForm.jerseyNumber}
+                onChange={e =>
+                  setPlayerForm(prev => ({
+                    ...prev,
+                    jerseyNumber: e.target.value,
+                  }))
+                }
+                fullWidth
+                helperText="Único por equipo y temporada. Dejar vacío para quitarlo."
+                slotProps={{ htmlInput: { min: 0, max: 99, step: 1 } }}
+              />
+            )}
             <FormControl fullWidth required>
               <InputLabel id="edit-player-team-label">Equipo</InputLabel>
               <Select

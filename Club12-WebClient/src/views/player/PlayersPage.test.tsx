@@ -138,3 +138,61 @@ describe('PlayersPage — "Ver" action', () => {
     );
   });
 });
+
+describe('PlayersPage — dorsal in "Editar jugador"', () => {
+  const TOURNAMENT_ID = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb' as GUID;
+
+  it('is hidden outside a team/tournament roster context', async () => {
+    renderPlayersPage();
+
+    const editIcon = await screen.findByTestId('EditIcon');
+    fireEvent.click(editIcon.closest('button') as HTMLButtonElement);
+
+    await screen.findByText('Editar jugador');
+    expect(screen.queryByLabelText('Dorsal')).not.toBeInTheDocument();
+  });
+
+  it('saves the dorsal via registerPlayerToTeam when team+tournament are in scope', async () => {
+    const putPlayerById = vi.fn().mockResolvedValue(PLAYER);
+    const registerPlayerToTeam = vi
+      .fn()
+      .mockResolvedValue({ success: true, data: {} });
+    mockedUsePlayer.mockReturnValue({
+      player: null,
+      players: [PLAYER],
+      addPlayer: vi.fn(),
+      getPlayerById: vi.fn(),
+      getPlayersByFilter,
+      putPlayerById,
+      deletePlayerById: vi.fn().mockResolvedValue({ success: true }),
+      registerPlayerToTeam,
+    } as unknown as IPlayerContextProps);
+
+    render(
+      <MemoryRouter>
+        <PlayersPage teamId={PLAYER.teamId} tournamentId={TOURNAMENT_ID} />
+      </MemoryRouter>
+    );
+
+    const editIcon = await screen.findByTestId('EditIcon');
+    fireEvent.click(editIcon.closest('button') as HTMLButtonElement);
+
+    const dorsalInput = await screen.findByRole('spinbutton', {
+      name: 'Dorsal',
+    });
+    fireEvent.change(dorsalInput, { target: { value: '7' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    await waitFor(() =>
+      expect(registerPlayerToTeam).toHaveBeenCalledWith(
+        PLAYER.id,
+        expect.objectContaining({
+          teamId: PLAYER.teamId,
+          tournamentId: TOURNAMENT_ID,
+          jerseyNumber: 7,
+        })
+      )
+    );
+  });
+});
