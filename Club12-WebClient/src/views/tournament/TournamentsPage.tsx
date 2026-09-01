@@ -41,7 +41,7 @@ import {
   TOURNAMENT_STATUS_COLOR,
   resolveTournamentStatus,
 } from '@/modules/tournament/utils/tournamentDisplay';
-import { formatDateAr } from '@/modules/core/utils/formatDate';
+import { formatCalendarDate } from '@/modules/core/utils/formatDate';
 
 const EMPTY_FILTERS: ITournamentFiltered = {};
 
@@ -156,7 +156,7 @@ const TournamentsPage: React.FC = () => {
         minWidth: 150,
         align: 'center',
         headerAlign: 'center',
-        renderCell: params => formatDateAr(params.row.teamRegistrationDeadline),
+        renderCell: params => formatCalendarDate(params.row.teamRegistrationDeadline),
       },
       {
         field: 'startDate',
@@ -165,7 +165,7 @@ const TournamentsPage: React.FC = () => {
         minWidth: 120,
         align: 'center',
         headerAlign: 'center',
-        renderCell: params => formatDateAr(params.row.startDate),
+        renderCell: params => formatCalendarDate(params.row.startDate),
       },
       {
         field: 'status',

@@ -30,13 +30,13 @@ import {
   TOURNAMENT_STATUS_LABEL,
   TOURNAMENT_STATUS_COLOR,
 } from '@/modules/tournament/utils/tournamentDisplay';
-import { formatDateAr } from '@/modules/core/utils/formatDate';
+import { formatCalendarDate } from '@/modules/core/utils/formatDate';
 import {
   DEFAULT_PAGE_METADATA,
   usePageMetadata,
 } from '@/modules/core/utils/pageMetadata';
 
-const formatDate = (value: Date | string) => formatDateAr(value);
+const formatDate = (value: Date | string) => formatCalendarDate(value);
 
 const INFO_TAB = 'info';
 const TAB_QUERY_PARAM = 'tab';

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  formatCalendarDate,
   formatDateAr,
   formatDateTimeAr,
   formatTimeAr,
@@ -49,5 +50,26 @@ describe('Argentina-time formatting helpers', () => {
     expect(formatDateTimeAr(null)).toBe('—');
     expect(formatDateAr('not-a-date')).toBe('—');
     expect(toArDayKey('')).toBe('unknown');
+  });
+});
+
+// A pure calendar date (tournament start date, registration deadline, birth
+// date) is submitted from an <input type="date"> as UTC midnight of the
+// intended day ("2026-10-10" -> new Date() -> "2026-10-10T00:00:00.000Z").
+// It has no real time-of-day, so — unlike a genuine instant — it must NOT be
+// shifted into Argentina time on display: formatDateAr would roll UTC
+// midnight back to 21:00 the previous day in Buenos Aires (UTC-3),
+// displaying the wrong day for every viewer west of UTC.
+describe('formatCalendarDate — pure date fields, no timezone shift', () => {
+  it('renders UTC midnight as the same calendar day, not the previous one', () => {
+    expect(formatCalendarDate('2026-10-10T00:00:00.000Z')).toBe('10/10/2026');
+    // formatDateAr on the same value demonstrates the bug this guards against.
+    expect(formatDateAr('2026-10-10T00:00:00.000Z')).toBe('09/10/2026');
+  });
+
+  it('returns a placeholder for empty or invalid input', () => {
+    expect(formatCalendarDate('')).toBe('—');
+    expect(formatCalendarDate(null)).toBe('—');
+    expect(formatCalendarDate('not-a-date')).toBe('—');
   });
 });

@@ -12,6 +12,7 @@ import {
   Tabs,
   Typography,
 } from '@mui/material';
+import { formatCalendarDate } from '@/modules/core/utils/formatDate';
 import { usePlayer } from '@/modules/player/hook/player.hook';
 import { usePlayerStatistic } from '@/modules/playerStatistic/hook/playerStatistic.hook';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
@@ -364,11 +365,7 @@ const PlayerPage: React.FC = () => {
               }}>
                 Fecha de nacimiento
               </Typography>
-              <Typography>
-                {player.birthDate
-                  ? new Date(player.birthDate).toLocaleDateString('es-AR')
-                  : '—'}
-              </Typography>
+              <Typography>{formatCalendarDate(player.birthDate)}</Typography>
             </Grid>
             <Grid
               size={{

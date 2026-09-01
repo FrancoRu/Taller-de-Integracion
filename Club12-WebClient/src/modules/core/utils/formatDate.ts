@@ -28,6 +28,25 @@ export function formatDateAr(value?: Date | string | null): string {
 }
 
 /**
+ * Formats a pure calendar date (no time-of-day meaning — a tournament's
+ * start date, a registration deadline, a birth date) as "16/08/2026".
+ *
+ * Unlike {@link formatDateAr}, this does NOT shift the value into Argentina
+ * time: a date-only field is submitted as UTC midnight of the intended day
+ * (`new Date("2026-10-10")` → `2026-10-10T00:00:00.000Z`) and stored as-is,
+ * so applying any timezone conversion on display — Argentina or otherwise —
+ * rolls it back to the previous day for any viewer west of UTC. Reading the
+ * value's UTC calendar-date components directly is the only correct way to
+ * round-trip a date-only value regardless of viewer timezone.
+ * Returns "—" for empty or unparseable input.
+ */
+export function formatCalendarDate(value?: Date | string | null): string {
+  if (!value) return '—';
+  const parsed = dayjs.utc(value);
+  return parsed.isValid() ? parsed.format('DD/MM/YYYY') : '—';
+}
+
+/**
  * Formats a UTC value as a short Argentina-time date and time, e.g.
  * "16/08/2026 14:30". Returns "—" for empty or unparseable input.
  */

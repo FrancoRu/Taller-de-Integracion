@@ -22,7 +22,7 @@ import {
   TOURNAMENT_STATUS_COLOR,
   resolveTournamentStatus,
 } from '@/modules/tournament/utils/tournamentDisplay';
-import { formatDateAr } from '@/modules/core/utils/formatDate';
+import { formatCalendarDate } from '@/modules/core/utils/formatDate';
 
 const TournamentPage: React.FC = () => {
   const { tournamentId } = useParams<{ tournamentId: GUID }>();
@@ -288,7 +288,7 @@ const TournamentPage: React.FC = () => {
               }}>
                 Inicio
               </Typography>
-              <Typography>{formatDateAr(tournament.startDate)}</Typography>
+              <Typography>{formatCalendarDate(tournament.startDate)}</Typography>
             </Grid>
             <Grid
               size={{
@@ -301,7 +301,7 @@ const TournamentPage: React.FC = () => {
                 Cierre de inscripción
               </Typography>
               <Typography>
-                {formatDateAr(tournament.teamRegistrationDeadline)}
+                {formatCalendarDate(tournament.teamRegistrationDeadline)}
               </Typography>
             </Grid>
           </Grid>

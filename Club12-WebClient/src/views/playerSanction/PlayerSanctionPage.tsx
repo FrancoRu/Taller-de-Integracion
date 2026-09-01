@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { formatDateTimeAr } from '@/modules/core/utils/formatDate';
+import { formatCalendarDate, formatDateTimeAr } from '@/modules/core/utils/formatDate';
 import {
   Button,
   Chip,
@@ -477,11 +477,7 @@ const PlayerSanctionPage: React.FC = () => {
                   }}>
                     Fecha de nacimiento
                   </Typography>
-                  <Typography>
-                    {player.birthDate
-                      ? new Date(player.birthDate).toLocaleDateString('es-AR')
-                      : '—'}
-                  </Typography>
+                  <Typography>{formatCalendarDate(player.birthDate)}</Typography>
                 </Grid>
                 <Grid
                   size={{
