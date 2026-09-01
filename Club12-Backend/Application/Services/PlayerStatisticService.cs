@@ -4,6 +4,7 @@ using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Utils.Constants;
 using Application.Utils.Extensions;
+using Application.Utils.Helper.MatchResult;
 
 using Domain.Constants;
 using Domain.Entities.Models;
@@ -120,7 +121,7 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork) : IPlayerStatisticSe
         Team teamEntity = (teamIsHome ? match.HomeTeam : match.VisitorTeam)
             ?? throw new InvalidOperationException(ErrorMessages.MatchSheet.TeamNotInMatch(request.TeamId));
 
-        await ValidateRosterEligibilityAsync(request, teamEntity);
+        await ValidateRosterEligibilityAsync(request.Scores, request.TeamId, teamEntity);
 
         await ReplaceTeamPointsForMatchAsync(request.MatchId, request.TeamId);
 
@@ -142,13 +143,81 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork) : IPlayerStatisticSe
     }
 
     /// <summary>
+    /// Finishes a match by loading BOTH teams' scoring sheets in one coherent
+    /// operation (HU-72): the final score is DERIVED as the sum of each
+    /// team's listed player points — not typed in separately and checked
+    /// against a sheet afterward, the way <see cref="LoadTeamMatchSheetAsync"/>
+    /// requires. Validates every listed player is on their team's roster and
+    /// eligible, then finalizes the match (rejecting a tie, HU-70) and
+    /// replaces both teams' Points statistics with the new sheets. Any
+    /// failure throws before anything is persisted.
+    /// </summary>
+    /// <param name="request">The match and both teams' per-player points.</param>
+    /// <returns>The finalized match (score, winner, IsFinished all set), or null if no match with that id exists.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when a player is ineligible/off the roster or the resulting
+    /// score is tied.
+    /// </exception>
+    public async Task<Match?> LoadMatchResultFromSheetsAsync(LoadMatchResultFromSheetsRequest request)
+    {
+        Match? match = await _matchRepository.GetByIdAsync(request.MatchId,
+            includes: [m => m.HomeTeam!, m => m.VisitorTeam!, m => m.Stage]);
+
+        if (match is null)
+        {
+            return null;
+        }
+
+        Team homeTeam = match.HomeTeam
+            ?? throw new InvalidOperationException(ErrorMessages.MatchSheet.MatchMissingTeams(request.MatchId));
+        Team visitorTeam = match.VisitorTeam
+            ?? throw new InvalidOperationException(ErrorMessages.MatchSheet.MatchMissingTeams(request.MatchId));
+
+        await ValidateRosterEligibilityAsync(request.HomeScores, homeTeam.Id, homeTeam);
+        await ValidateRosterEligibilityAsync(request.VisitorScores, visitorTeam.Id, visitorTeam);
+
+        int homeScore = request.HomeScores.Sum(entry => entry.Points);
+        int visitorScore = request.VisitorScores.Sum(entry => entry.Points);
+
+        // Validated above and the tie-check below both throw before this line
+        // touches the database — nothing is written on a rejected sheet.
+        MatchResultFinalizer.ApplyResult(match, homeScore, visitorScore);
+        await _matchRepository.UpdateAsync(match);
+
+        await ReplaceTeamPointsForMatchAsync(match.Id, homeTeam.Id);
+        await ReplaceTeamPointsForMatchAsync(match.Id, visitorTeam.Id);
+
+        List<PlayerStatistic> created = [
+            .. BuildPointsStatistics(match.Id, request.HomeScores, homeTeam),
+            .. BuildPointsStatistics(match.Id, request.VisitorScores, visitorTeam),
+        ];
+
+        if (created.Count > 0)
+        {
+            await _playerStatisticRepository.AddRangeAsync(created);
+        }
+
+        return match;
+    }
+
+    private static List<PlayerStatistic> BuildPointsStatistics(Guid matchId, List<PlayerScoreEntry> scores, Team teamEntity) =>
+        [.. scores.Select(entry => new PlayerStatistic
+        {
+            MatchId = matchId,
+            PlayerId = entry.PlayerId,
+            Value = entry.Points,
+            Type = StatisticType.Points,
+            CreatedBy = teamEntity.UpdatedBy ?? teamEntity.CreatedBy ?? AuditConstants.SystemUser,
+        })];
+
+    /// <summary>
     /// Ensures every listed player is registered to the team for the match's
     /// season (HU-98) and is eligible — an approved registration and no active
     /// sanction (HU-60/HU-61).
     /// </summary>
-    private async Task ValidateRosterEligibilityAsync(LoadMatchSheetRequest request, Team teamEntity)
+    private async Task ValidateRosterEligibilityAsync(List<PlayerScoreEntry> scores, Guid teamId, Team teamEntity)
     {
-        List<Guid> playerIds = [.. request.Scores.Select(entry => entry.PlayerId).Distinct()];
+        List<Guid> playerIds = [.. scores.Select(entry => entry.PlayerId).Distinct()];
         if (playerIds.Count == 0)
         {
             return;
@@ -162,7 +231,7 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork) : IPlayerStatisticSe
         Guid tournamentId = teamEntity.TournamentId.Value;
 
         Dictionary<Guid, PlayerTeamRegistration> registrationsByPlayer = (await _playerTeamRegistrationRepository.FindAsync(
-            registration => registration.TeamId == request.TeamId
+            registration => registration.TeamId == teamId
                 && registration.TournamentId == tournamentId
                 && playerIds.Contains(registration.PlayerId)))
             .ToDictionary(registration => registration.PlayerId);

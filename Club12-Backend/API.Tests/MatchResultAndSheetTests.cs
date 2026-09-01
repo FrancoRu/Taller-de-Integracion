@@ -9,6 +9,7 @@ using Domain.Enums;
 
 using Infrastructure.Persistance;
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 using MatchType = Domain.Enums.MatchType;
@@ -294,6 +295,174 @@ public class MatchResultAndSheetTests : IClassFixture<CustomWebApplicationFactor
             }));
 
         Assert.Contains("no está habilitado", ex.Message);
+    }
+
+    // ---------- HU-72: result derived from both teams' sheets in one shot ----------
+
+    [Fact]
+    public async Task LoadMatchResultFromSheetsAsync_ValidSheets_DerivesScoreAndFinishesMatch()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IPlayerStatisticService statisticService = scope.ServiceProvider.GetRequiredService<IPlayerStatisticService>();
+        IScorerRepository scorerRepository = scope.ServiceProvider.GetRequiredService<IScorerRepository>();
+
+        Seeded seeded = await SeedMatchAsync(db, StageType.Group);
+        Player homeA = await SeedRosterPlayerAsync(db, seeded.HomeTeam, seeded.TournamentId, "Alpha");
+        Player homeB = await SeedRosterPlayerAsync(db, seeded.HomeTeam, seeded.TournamentId, "Bravo");
+        Player visitorA = await SeedRosterPlayerAsync(db, seeded.VisitorTeam, seeded.TournamentId, "Charlie");
+
+        Match? updated = await statisticService.LoadMatchResultFromSheetsAsync(new LoadMatchResultFromSheetsRequest
+        {
+            MatchId = seeded.Match.Id,
+            HomeScores =
+            [
+                new PlayerScoreEntry { PlayerId = homeA.Id, Points = 55 },
+                new PlayerScoreEntry { PlayerId = homeB.Id, Points = 35 },
+            ],
+            VisitorScores = [new PlayerScoreEntry { PlayerId = visitorA.Id, Points = 80 }],
+        });
+
+        Assert.NotNull(updated);
+        Assert.Equal(90, updated!.HomeScore);
+        Assert.Equal(80, updated.VisitorScore);
+        Assert.True(updated.IsFinished);
+        Assert.Equal(MatchStatus.Played, updated.Status);
+        Assert.Equal(seeded.HomeTeam.Id, updated.WinningTeamId);
+
+        Match reloaded = await ReloadMatchAsync(db, seeded.Match.Id);
+        Assert.Equal(90, reloaded.HomeScore);
+        Assert.Equal(80, reloaded.VisitorScore);
+
+        (IEnumerable<ScorerByPlayerResponse> items, _) =
+            await scorerRepository.GetPlayerScoresAsync(new GetScorerFilteredRequest { MatchId = seeded.Match.Id });
+        List<ScorerByPlayerResponse> ranking = [.. items];
+        Assert.Equal(55, Assert.Single(ranking, r => r.PlayerId == homeA.Id).Points);
+        Assert.Equal(35, Assert.Single(ranking, r => r.PlayerId == homeB.Id).Points);
+        Assert.Equal(80, Assert.Single(ranking, r => r.PlayerId == visitorA.Id).Points);
+    }
+
+    [Fact]
+    public async Task LoadMatchResultFromSheetsAsync_TiedSums_IsRejectedAndPersistsNothing()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IPlayerStatisticService statisticService = scope.ServiceProvider.GetRequiredService<IPlayerStatisticService>();
+
+        Seeded seeded = await SeedMatchAsync(db, StageType.Group);
+        Player homePlayer = await SeedRosterPlayerAsync(db, seeded.HomeTeam, seeded.TournamentId, "Alpha");
+        Player visitorPlayer = await SeedRosterPlayerAsync(db, seeded.VisitorTeam, seeded.TournamentId, "Bravo");
+
+        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => statisticService.LoadMatchResultFromSheetsAsync(new LoadMatchResultFromSheetsRequest
+            {
+                MatchId = seeded.Match.Id,
+                HomeScores = [new PlayerScoreEntry { PlayerId = homePlayer.Id, Points = 70 }],
+                VisitorScores = [new PlayerScoreEntry { PlayerId = visitorPlayer.Id, Points = 70 }],
+            }));
+
+        Assert.Contains("no puede terminar empatado", ex.Message);
+
+        Match reloaded = await ReloadMatchAsync(db, seeded.Match.Id);
+        Assert.False(reloaded.IsFinished);
+        Assert.Equal(MatchStatus.Scheduled, reloaded.Status);
+        Assert.Empty(await db.PlayersStatistics.Where(s => s.MatchId == seeded.Match.Id).ToListAsync());
+    }
+
+    [Fact]
+    public async Task LoadMatchResultFromSheetsAsync_PlayerNotOnRoster_IsRejected()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IPlayerStatisticService statisticService = scope.ServiceProvider.GetRequiredService<IPlayerStatisticService>();
+
+        Seeded seeded = await SeedMatchAsync(db, StageType.Group);
+        Player stranger = await SeedPlayerAsync(db, seeded.HomeTeam, "Stranger");
+        Player visitorPlayer = await SeedRosterPlayerAsync(db, seeded.VisitorTeam, seeded.TournamentId, "Bravo");
+
+        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => statisticService.LoadMatchResultFromSheetsAsync(new LoadMatchResultFromSheetsRequest
+            {
+                MatchId = seeded.Match.Id,
+                HomeScores = [new PlayerScoreEntry { PlayerId = stranger.Id, Points = 10 }],
+                VisitorScores = [new PlayerScoreEntry { PlayerId = visitorPlayer.Id, Points = 8 }],
+            }));
+
+        Assert.Contains("no está en el plantel", ex.Message);
+    }
+
+    [Fact]
+    public async Task LoadMatchResultFromSheetsAsync_SanctionedPlayer_IsRejected()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IPlayerStatisticService statisticService = scope.ServiceProvider.GetRequiredService<IPlayerStatisticService>();
+
+        Seeded seeded = await SeedMatchAsync(db, StageType.Group);
+        Player sanctioned = await SeedRosterPlayerAsync(db, seeded.HomeTeam, seeded.TournamentId, "Banned", isSanctioned: true);
+        Player visitorPlayer = await SeedRosterPlayerAsync(db, seeded.VisitorTeam, seeded.TournamentId, "Bravo");
+
+        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => statisticService.LoadMatchResultFromSheetsAsync(new LoadMatchResultFromSheetsRequest
+            {
+                MatchId = seeded.Match.Id,
+                HomeScores = [new PlayerScoreEntry { PlayerId = sanctioned.Id, Points = 12 }],
+                VisitorScores = [new PlayerScoreEntry { PlayerId = visitorPlayer.Id, Points = 9 }],
+            }));
+
+        Assert.Contains("no está habilitado", ex.Message);
+    }
+
+    [Fact]
+    public async Task LoadMatchResultFromSheetsAsync_NonExistentMatch_ReturnsNull()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        IPlayerStatisticService statisticService = scope.ServiceProvider.GetRequiredService<IPlayerStatisticService>();
+
+        Match? updated = await statisticService.LoadMatchResultFromSheetsAsync(new LoadMatchResultFromSheetsRequest
+        {
+            MatchId = Guid.NewGuid(),
+            HomeScores = [],
+            VisitorScores = [],
+        });
+
+        Assert.Null(updated);
+    }
+
+    [Fact]
+    public async Task LoadMatchResultFromSheetsAsync_Correction_ReplacesBothTeamsPreviousSheetsAndScore()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IPlayerStatisticService statisticService = scope.ServiceProvider.GetRequiredService<IPlayerStatisticService>();
+        IScorerRepository scorerRepository = scope.ServiceProvider.GetRequiredService<IScorerRepository>();
+
+        Seeded seeded = await SeedMatchAsync(db, StageType.Group);
+        Player homePlayer = await SeedRosterPlayerAsync(db, seeded.HomeTeam, seeded.TournamentId, "Alpha");
+        Player visitorPlayer = await SeedRosterPlayerAsync(db, seeded.VisitorTeam, seeded.TournamentId, "Bravo");
+
+        await statisticService.LoadMatchResultFromSheetsAsync(new LoadMatchResultFromSheetsRequest
+        {
+            MatchId = seeded.Match.Id,
+            HomeScores = [new PlayerScoreEntry { PlayerId = homePlayer.Id, Points = 40 }],
+            VisitorScores = [new PlayerScoreEntry { PlayerId = visitorPlayer.Id, Points = 30 }],
+        });
+
+        Match? corrected = await statisticService.LoadMatchResultFromSheetsAsync(new LoadMatchResultFromSheetsRequest
+        {
+            MatchId = seeded.Match.Id,
+            HomeScores = [new PlayerScoreEntry { PlayerId = homePlayer.Id, Points = 44 }],
+            VisitorScores = [new PlayerScoreEntry { PlayerId = visitorPlayer.Id, Points = 30 }],
+        });
+
+        Assert.NotNull(corrected);
+        Assert.Equal(44, corrected!.HomeScore);
+
+        (IEnumerable<ScorerByPlayerResponse> items, _) =
+            await scorerRepository.GetPlayerScoresAsync(new GetScorerFilteredRequest { MatchId = seeded.Match.Id });
+        List<ScorerByPlayerResponse> ranking = [.. items];
+        Assert.Equal(44, Assert.Single(ranking, r => r.PlayerId == homePlayer.Id).Points);
+        Assert.Single(ranking, r => r.PlayerId == homePlayer.Id);
     }
 
     // ---------- seeding ----------

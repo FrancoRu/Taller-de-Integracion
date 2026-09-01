@@ -3,6 +3,7 @@
 using Application.DTOs.Abstract.Response;
 using Application.DTOs.Match.Request;
 using Application.DTOs.Match.Response;
+using Application.DTOs.PlayerStatistic.Request;
 using Application.Interfaces.Services;
 using Application.Utils.Constants;
 
@@ -29,11 +30,17 @@ namespace API.Controllers;
 /// <param name="matchService">The Match service.</param>
 /// <param name="stageTeamMatchService">The stage-team match service.</param>
 /// <param name="matchSeriesService">The playoff series service.</param>
+/// <param name="playerStatisticService">The player-statistic service.</param>
 /// <param name="mapper">The AutoMapper instance.</param>
 [Route("api/matches/")]
 [ApiController]
 [Authorize(Roles = Roles.AdminOrOwner)]
-public class MatchController(IMatchService matchService, IStageTeamMatchService stageTeamMatchService, IMatchSeriesService matchSeriesService, IMapper mapper) : ControllerBase
+public class MatchController(
+    IMatchService matchService,
+    IStageTeamMatchService stageTeamMatchService,
+    IMatchSeriesService matchSeriesService,
+    IPlayerStatisticService playerStatisticService,
+    IMapper mapper) : ControllerBase
 {
     /// <summary>
     /// Creates a new match.
@@ -271,6 +278,39 @@ public class MatchController(IMatchService matchService, IStageTeamMatchService 
     public async Task<ActionResult> UpdateMatchScore(Guid id, UpdateMatchScoreRequest scoreRequest)
     {
         Match? updatedMatch = await matchService.LoadMatchResultAsync(id, scoreRequest.HomeScore, scoreRequest.VisitorScore);
+        if (updatedMatch is null)
+        {
+            return this.NotFoundProblem(nameof(Match), id);
+        }
+
+        if (updatedMatch.SeriesId.HasValue)
+        {
+            await matchSeriesService.RecalculateSeriesWinnerAsync(updatedMatch.SeriesId.Value);
+        }
+
+        DetailedMatchResponse detailedMatch = mapper.Map<DetailedMatchResponse>(updatedMatch);
+        return Ok(detailedMatch);
+    }
+
+    /// <summary>
+    /// Finishes a match by loading both teams' scoring sheets in one
+    /// coherent operation (HU-72): the final score is DERIVED as the sum of
+    /// each team's listed player points, instead of being typed in separately
+    /// and checked against a sheet afterward (the older <c>match-sheet</c>
+    /// flow, still available for corrections one team at a time).
+    /// </summary>
+    /// <param name="id">The id of the match to finish.</param>
+    /// <param name="request">Both teams' per-player points.</param>
+    /// <returns>The finalized match.</returns>
+    [HttpPut("{id:guid}/result-from-sheets")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedMatchResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult> LoadMatchResultFromSheets(Guid id, LoadMatchResultFromSheetsRequest request)
+    {
+        request.MatchId = id;
+        Match? updatedMatch = await playerStatisticService.LoadMatchResultFromSheetsAsync(request);
         if (updatedMatch is null)
         {
             return this.NotFoundProblem(nameof(Match), id);

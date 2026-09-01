@@ -5,6 +5,7 @@ using Application.Interfaces.Services;
 using Application.Utils.Constants;
 using Application.Utils.Constants.Stage;
 using Application.Utils.Extensions;
+using Application.Utils.Helper.MatchResult;
 using Application.Utils.Helper.Playoff;
 using Application.Utils.Helper.RoundRobin;
 using Application.Utils.Helper.Slug;
@@ -125,23 +126,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
             return null;
         }
 
-        if (homeScore == visitorScore)
-        {
-            throw new InvalidOperationException(
-                match.Stage.StageType == StageType.Group
-                    ? ErrorMessages.Match.GroupStageTieNotAllowed
-                    : ErrorMessages.Match.PlayoffTieNotAllowed);
-        }
-
-        match.HomeScore = homeScore;
-        match.VisitorScore = visitorScore;
-
-        bool homeWon = homeScore > visitorScore;
-        match.WinningTeam = homeWon ? match.HomeTeam : match.VisitorTeam;
-        match.WinningTeamId = homeWon ? match.HomeTeamId : match.VisitorTeamId;
-
-        match.IsFinished = true;
-        match.Status = MatchStatus.Played;
+        MatchResultFinalizer.ApplyResult(match, homeScore, visitorScore);
 
         await _matchRepository.UpdateAsync(match);
         return match;
