@@ -4,13 +4,7 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
 } from '@mui/material';
@@ -27,10 +21,25 @@ import { TableSkeleton } from '@/views/core/components/skeletons';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import HabilitacionBadge from '@/views/medicalRecord/HabilitacionBadge';
 import { resolveIsHabilitado } from '@/modules/medicalRecord/utils/medicalRecordDisplay';
+import TeamLogo from '@/views/core/components/TeamLogo';
+import JerseySvg from '@/views/core/components/JerseySvg';
+import { font } from '@/design/tokens';
+import { ScoreEmphasis } from '@/modules/match/utils/matchDisplay';
 
 interface MatchStatisticsTabProps {
   match: IMatchResponse;
 }
+
+/** Same reading as the public match page's finished scoreboard, but derived
+ *  live from what's currently typed rather than from a recorded winner —
+ *  the leading side reads ahead while the sheets are still being filled in. */
+const scoreColor: Record<ScoreEmphasis, string> = {
+  winner: 'primary.main',
+  loser: 'text.disabled',
+  neutral: 'text.primary',
+};
+
+const CREST_SIZE = 56;
 
 /**
  * Sums the Points statistics for a match, keyed by player id, so each team's
@@ -64,6 +73,10 @@ const sumForm = (form: Record<string, string>): number =>
  * team's players scored, instead of being typed in separately and then
  * checked against a sheet loaded here afterward. This is the only place a
  * match's result is loaded — the score is always what the players add up to.
+ *
+ * Styled as a live scoreboard (crest, big Oswald score, box score below) —
+ * the same broadcast-scoreboard language the public match page already uses
+ * once a game is finished, applied here while it's still being entered.
  */
 export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
   const { loadMatchResultFromSheets } = useMatch();
@@ -113,6 +126,12 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
   const isTie = homeSum === visitorSum;
   const rostersReady = homePlayers.length > 0 && visitorPlayers.length > 0;
 
+  const emphasis: { home: ScoreEmphasis; visitor: ScoreEmphasis } = isTie
+    ? { home: 'neutral', visitor: 'neutral' }
+    : homeSum > visitorSum
+      ? { home: 'winner', visitor: 'loser' }
+      : { home: 'loser', visitor: 'winner' };
+
   const handleSaveResult = useCallback(async () => {
     if (!rostersReady || isTie) {
       return;
@@ -152,25 +171,55 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
     loadStatistics,
   ]);
 
-  const renderTeamCard = (
+  const renderScoreNumber = (value: number, side: ScoreEmphasis) => (
+    <Typography
+      component="span"
+      sx={{
+        fontFamily: font.display,
+        fontWeight: 700,
+        fontSize: { xs: '2.5rem', md: '3.25rem' },
+        lineHeight: 1,
+        color: scoreColor[side],
+        transition: 'color 0.15s ease',
+      }}
+    >
+      {value}
+    </Typography>
+  );
+
+  const renderTeamHeader = (
+    team: ITeamMatchResponse | null,
+    fallbackLabel: string,
+    side: ScoreEmphasis
+  ) => (
+    <Stack spacing={1} sx={{ alignItems: 'center', flex: 1, minWidth: 0, textAlign: 'center' }}>
+      <TeamLogo teamName={team?.name ?? fallbackLabel} logoUrl={team?.logoUrl} size={CREST_SIZE} />
+      <Typography
+        variant="subtitle1"
+        noWrap
+        sx={{
+          maxWidth: '100%',
+          fontWeight: side === 'winner' ? 700 : 600,
+          color: side === 'loser' ? 'text.secondary' : 'text.primary',
+        }}
+      >
+        {team?.name ?? fallbackLabel}
+      </Typography>
+    </Stack>
+  );
+
+  const renderBoxScore = (
     team: ITeamMatchResponse | null,
     fallbackLabel: string,
     players: IPublicPlayerResponse[],
     form: Record<string, string>,
-    setForm: React.Dispatch<React.SetStateAction<Record<string, string>>>,
-    sum: number
+    setForm: React.Dispatch<React.SetStateAction<Record<string, string>>>
   ) => (
-    <Card variant="outlined">
+    <Card variant="outlined" sx={{ height: '100%' }}>
       <CardContent>
-        <Stack
-          direction="row"
-          sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
-        >
-          <Typography variant="subtitle1">
-            {team?.name || fallbackLabel}
-          </Typography>
-          <Chip size="small" label={`Suma: ${sum}`} />
-        </Stack>
+        <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 1.5 }} noWrap>
+          {team?.name ?? fallbackLabel}
+        </Typography>
 
         {players.length === 0 ? (
           <Stack spacing={1} sx={{ alignItems: 'flex-start' }}>
@@ -190,58 +239,55 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
             )}
           </Stack>
         ) : (
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Jugador</TableCell>
-                <TableCell align="center">Puntos</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {players.map(player => (
-                <TableRow key={player.id}>
-                  <TableCell>
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      sx={{ alignItems: 'center' }}
-                    >
-                      <span>{player.fullName}</span>
-                      {!resolveIsHabilitado(
-                        player.isHabilitado,
-                        player.medicalRecordStatus
-                      ) && (
-                        <HabilitacionBadge
-                          isHabilitado={player.isHabilitado}
-                          status={player.medicalRecordStatus}
-                        />
-                      )}
-                    </Stack>
-                  </TableCell>
-                  <TableCell align="center">
-                    <TextField
-                      type="number"
-                      size="small"
-                      value={form[player.id] ?? '0'}
-                      onChange={e =>
-                        setForm(prev => ({
-                          ...prev,
-                          [player.id]: e.target.value,
-                        }))
-                      }
-                      slotProps={{
-                        htmlInput: {
-                          min: 0,
-                          style: { width: 72 },
-                          'aria-label': `Puntos de ${player.fullName}`,
-                        },
-                      }}
+          <Stack spacing={0.5}>
+            {players.map(player => (
+              <Stack
+                key={player.id}
+                direction="row"
+                spacing={1.25}
+                sx={{ alignItems: 'center', py: 0.5 }}
+              >
+                <JerseySvg
+                  color={team?.shirtColor}
+                  secondaryColor={team?.shirtSecondaryColor}
+                  style={team?.jerseyStyle}
+                  number={player.jerseyNumber ?? undefined}
+                  size={28}
+                  title={`Camiseta de ${player.fullName}`}
+                />
+                <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', flex: 1, minWidth: 0 }}>
+                  <Typography variant="body2" noWrap>
+                    {player.fullName}
+                  </Typography>
+                  {!resolveIsHabilitado(player.isHabilitado, player.medicalRecordStatus) && (
+                    <HabilitacionBadge
+                      isHabilitado={player.isHabilitado}
+                      status={player.medicalRecordStatus}
                     />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  )}
+                </Stack>
+                <TextField
+                  type="number"
+                  size="small"
+                  variant="standard"
+                  value={form[player.id] ?? '0'}
+                  onChange={e =>
+                    setForm(prev => ({
+                      ...prev,
+                      [player.id]: e.target.value,
+                    }))
+                  }
+                  slotProps={{
+                    htmlInput: {
+                      min: 0,
+                      style: { width: 32, textAlign: 'center', fontWeight: 700 },
+                      'aria-label': `Puntos de ${player.fullName}`,
+                    },
+                  }}
+                />
+              </Stack>
+            ))}
+          </Stack>
         )}
       </CardContent>
     </Card>
@@ -252,12 +298,36 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
   }
 
   return (
-    <Stack spacing={2}>
-      <Typography variant="body1">
-        El resultado del partido se calcula sumando los puntos de cada
-        jugador. Cargá la planilla de ambos equipos y guardá para finalizar
-        el partido.
+    <Stack spacing={3}>
+      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+        El resultado se calcula sumando los puntos de cada jugador. Cargá la
+        planilla de ambos equipos y guardá para finalizar el partido.
       </Typography>
+
+      {/* Live scoreboard: same crest-vs-crest, big-Oswald-score language as
+          the public match page, reading the currently-typed sums instead of
+          a recorded result. */}
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={{ xs: 2, sm: 3 }}
+        sx={{ alignItems: 'center', justifyContent: 'center' }}
+      >
+        {renderTeamHeader(match.homeTeam, 'Equipo local', emphasis.home)}
+
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexShrink: 0 }}>
+          {renderScoreNumber(homeSum, emphasis.home)}
+          <Typography
+            component="span"
+            aria-hidden
+            sx={{ fontFamily: font.display, fontWeight: 300, fontSize: { xs: '1.75rem', md: '2rem' }, color: 'text.secondary' }}
+          >
+            :
+          </Typography>
+          {renderScoreNumber(visitorSum, emphasis.visitor)}
+        </Stack>
+
+        {renderTeamHeader(match.visitorTeam, 'Equipo visitante', emphasis.visitor)}
+      </Stack>
 
       <Box
         sx={{
@@ -266,33 +336,15 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
           gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
         }}
       >
-        {renderTeamCard(
-          match.homeTeam,
-          'Equipo local',
-          homePlayers,
-          homeForm,
-          setHomeForm,
-          homeSum
-        )}
-        {renderTeamCard(
-          match.visitorTeam,
-          'Equipo visitante',
-          visitorPlayers,
-          visitorForm,
-          setVisitorForm,
-          visitorSum
-        )}
+        {renderBoxScore(match.homeTeam, 'Equipo local', homePlayers, homeForm, setHomeForm)}
+        {renderBoxScore(match.visitorTeam, 'Equipo visitante', visitorPlayers, visitorForm, setVisitorForm)}
       </Box>
 
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         spacing={2}
-        sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' } }}
+        sx={{ justifyContent: 'flex-end', alignItems: { sm: 'center' } }}
       >
-        <Typography variant="body2">
-          Local: <strong>{homeSum}</strong> — Visitante:{' '}
-          <strong>{visitorSum}</strong>
-        </Typography>
         {isTie && (
           <Typography variant="body2" color="error">
             No se permiten empates: el partido debe tener un ganador.
@@ -304,9 +356,6 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
             resultado.
           </Typography>
         )}
-      </Stack>
-
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
         <Button
           variant="contained"
           onClick={() => void handleSaveResult()}
@@ -314,7 +363,7 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
         >
           Guardar resultado
         </Button>
-      </Box>
+      </Stack>
     </Stack>
   );
 }
