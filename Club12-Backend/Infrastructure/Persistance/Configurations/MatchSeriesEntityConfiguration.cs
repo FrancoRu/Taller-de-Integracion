@@ -24,20 +24,29 @@ public class MatchSeriesEntityConfiguration : BaseEntityConfiguration<MatchSerie
             .HasForeignKey(ms => ms.StageId)
             .IsRequired();
 
+        // Explicit Restrict (not EF's default Cascade for required FKs): a
+        // team with an active series must never be silently deleted along
+        // with its series/game history — TeamService.DeleteTeamAsync already
+        // guards this in the normal API path, but the DB itself should also
+        // refuse rather than cascade-wipe series data if that guard is ever
+        // bypassed (e.g. a future bulk/raw delete).
         builder.HasOne(ms => ms.HomeTeam)
             .WithMany()
             .HasForeignKey(ms => ms.HomeTeamId)
-            .IsRequired();
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(ms => ms.VisitorTeam)
             .WithMany()
             .HasForeignKey(ms => ms.VisitorTeamId)
-            .IsRequired();
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(ms => ms.WinningTeam)
             .WithMany()
             .HasForeignKey(ms => ms.WinningTeamId)
-            .IsRequired(false);
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(ms => ms.Matches)
             .WithOne(m => m.Series)

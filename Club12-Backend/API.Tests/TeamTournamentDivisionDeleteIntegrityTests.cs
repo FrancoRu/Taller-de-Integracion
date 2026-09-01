@@ -101,6 +101,59 @@ public class TeamTournamentDivisionDeleteIntegrityTests : IClassFixture<CustomWe
     }
 
     [Fact]
+    public async Task DeleteTeam_WithPlayerHavingIndividualSanction_IsBlocked()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        ITeamService teamService = scope.ServiceProvider.GetRequiredService<ITeamService>();
+
+        (Team team, Stage stage, _) = await SeedTeamAndStageAsync(db);
+        Match match = await SeedMatchAsync(db, stage, homeTeamId: null, isFinished: false);
+
+        Player player = new()
+        {
+            FirstName = "Carlos",
+            LastName = "Lopez",
+            Slug = $"player-{Guid.NewGuid()}",
+            DocumentNumber = Guid.NewGuid().ToString("N")[..8],
+            IsSanctioned = true,
+            BirthDate = DateTime.UtcNow.AddYears(-20),
+            SocialSecurity = "OSDE",
+            Team = team,
+            TeamId = team.Id,
+            CreatedBy = "test",
+        };
+        db.Set<Player>().Add(player);
+        await db.SaveChangesAsync();
+
+        db.Set<PlayerSanction>().Add(new PlayerSanction
+        {
+            Duration = 1,
+            IssuedDate = DateTime.UtcNow,
+            Description = "Test sanction",
+            SubjectType = Domain.Enums.SanctionSubjectType.Player,
+            Player = player,
+            PlayerId = player.Id,
+            Match = match,
+            MatchId = match.Id,
+            Slug = $"sanction-{Guid.NewGuid()}",
+            CreatedBy = "test",
+        });
+        await db.SaveChangesAsync();
+
+        // Team-level checks (hasSanctions filters on PlayerSanction.TeamId,
+        // which is null for a Player-subject sanction) must not miss this —
+        // Team.Players cascades, which would otherwise silently wipe the
+        // player and their sanction along with the team.
+        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => teamService.DeleteTeamAsync(team.Id));
+
+        Assert.Contains("No se puede eliminar", ex.Message);
+        Assert.True(await db.Teams.AnyAsync(t => t.Id == team.Id));
+        Assert.True(await db.Set<Player>().AnyAsync(p => p.Id == player.Id));
+    }
+
+    [Fact]
     public async Task DeleteTeam_WithoutDependents_RemovesTeam()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
