@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button, Grid, Stack, Tab, Tabs, Typography } from '@mui/material';
 import PageShell from '@/views/core/components/PageShell';
 import BlockingOverlay from '@/views/core/components/BlockingOverlay';
@@ -30,9 +30,23 @@ const TournamentPage: React.FC = () => {
   const { tournament, getTournamentById, putTournamentById } = useTournament();
   const [loading, setLoading] = useState(false);
   const [reverting, setReverting] = useState(false);
-  const [tab, setTab] = useState<
-    'detalle' | 'divisiones' | 'equipos' | 'inscriptos' | 'asignacion'
-  >('detalle');
+  type TournamentTab = 'detalle' | 'divisiones' | 'equipos' | 'inscriptos' | 'asignacion';
+  const TAB_QUERY_PARAM = 'tab';
+  // Kept in the URL (not local state) so leaving to a division/team's detail
+  // page and clicking "Volver" back here lands on the same tab instead of
+  // resetting to Detalle — same pattern as DivisionPage/PublicTournamentPage.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = (searchParams.get(TAB_QUERY_PARAM) ?? 'detalle') as TournamentTab;
+  const setTab = (value: TournamentTab) => {
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev);
+        next.set(TAB_QUERY_PARAM, value);
+        return next;
+      },
+      { replace: true }
+    );
+  };
 
   useEffect(() => {
     if (!tournamentId) {

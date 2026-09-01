@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -70,7 +70,22 @@ const MatchPage: React.FC = () => {
   const { playerSanctions, getPlayerSanctionByFilter } = usePlayerSanction();
   const [loading, setLoading] = useState(false);
   const [sanctionsLoading, setSanctionsLoading] = useState(false);
-  const [tab, setTab] = useState<MatchTab>('detalle');
+  const TAB_QUERY_PARAM = 'tab';
+  // Kept in the URL (not local state) so leaving to e.g. a sanctioned
+  // player's detail and clicking "Volver" back here lands on the same tab
+  // instead of resetting to Detalle.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = (searchParams.get(TAB_QUERY_PARAM) ?? 'detalle') as MatchTab;
+  const setTab = (value: MatchTab) => {
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev);
+        next.set(TAB_QUERY_PARAM, value);
+        return next;
+      },
+      { replace: true }
+    );
+  };
   const [sanctionDialogOpen, setSanctionDialogOpen] = useState(false);
   const [walkoverDialogOpen, setWalkoverDialogOpen] = useState(false);
   const [submittingResult, setSubmittingResult] = useState(false);
