@@ -502,3 +502,6 @@ appsettings.Tomi.json
 /Club12-WebClient/test-results/
 /Club12-WebClient/playwright-report/
 /Club12-WebClient/blob-report/
+
+# Playwright MCP (browser-automation tool) session snapshots/logs
+/.playwright-mcp/
