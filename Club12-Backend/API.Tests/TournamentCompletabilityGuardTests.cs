@@ -64,6 +64,7 @@ public class TournamentCompletabilityGuardTests : IClassFixture<CustomWebApplica
         {
             Team team = await SeedTeamAsync(db, tournament.Id);
             await AssignAndEnrollAsync(db, tournament, group, team);
+            await SeedPlayersAsync(db, team, tournament, count: 5);
         }
 
         await tournamentService.ChangeStatusAsync(tournament.Id, TournamentStatus.Ongoing);
@@ -114,6 +115,7 @@ public class TournamentCompletabilityGuardTests : IClassFixture<CustomWebApplica
             {
                 Team team = await SeedTeamAsync(db, tournament.Id);
                 await AssignAndEnrollAsync(db, tournament, group, team);
+                await SeedPlayersAsync(db, team, tournament, count: 5);
             }
             tournamentId = tournament.Id;
         }
@@ -130,6 +132,67 @@ public class TournamentCompletabilityGuardTests : IClassFixture<CustomWebApplica
     }
 
     [Fact]
+    public async Task ChangeStatusIntoOngoing_TeamTooFewPlayers_IsBlockedAndKeepsStatus()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        ITournamentService tournamentService = scope.ServiceProvider.GetRequiredService<ITournamentService>();
+
+        Tournament tournament = await SeedTournamentAsync(db, TournamentStatus.RegistrationClosed);
+        Division zone = await SeedDivisionAsync(db, tournament, crossCup: false);
+        Stage group = await SeedGroupStageAsync(db, zone);
+
+        Team fullTeam = await SeedTeamAsync(db, tournament.Id);
+        await AssignAndEnrollAsync(db, tournament, group, fullTeam);
+        await SeedPlayersAsync(db, fullTeam, tournament, count: 5);
+
+        Team shortTeam = await SeedTeamAsync(db, tournament.Id);
+        await AssignAndEnrollAsync(db, tournament, group, shortTeam);
+        await SeedPlayersAsync(db, shortTeam, tournament, count: 4);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => tournamentService.ChangeStatusAsync(tournament.Id, TournamentStatus.Ongoing));
+
+        Tournament reloaded = await db.Tournaments.AsNoTracking().SingleAsync(t => t.Id == tournament.Id);
+        Assert.Equal(TournamentStatus.RegistrationClosed, reloaded.Status);
+        Assert.Equal(0, await db.Matches.CountAsync(m => m.StageId == group.Id));
+    }
+
+    [Fact]
+    public async Task GetCompletability_TeamTooFewPlayers_ReturnsIssueWithPlayerCount()
+    {
+        Guid tournamentId;
+        using (IServiceScope scope = _factory.Services.CreateScope())
+        {
+            ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+            Tournament tournament = await SeedTournamentAsync(db, TournamentStatus.RegistrationClosed);
+            Division zone = await SeedDivisionAsync(db, tournament, crossCup: false);
+            Stage group = await SeedGroupStageAsync(db, zone);
+
+            Team fullTeam = await SeedTeamAsync(db, tournament.Id);
+            await AssignAndEnrollAsync(db, tournament, group, fullTeam);
+            await SeedPlayersAsync(db, fullTeam, tournament, count: 5);
+
+            Team shortTeam = await SeedTeamAsync(db, tournament.Id);
+            await AssignAndEnrollAsync(db, tournament, group, shortTeam);
+            await SeedPlayersAsync(db, shortTeam, tournament, count: 3);
+
+            tournamentId = tournament.Id;
+        }
+
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Admin);
+
+        HttpResponseMessage response = await client.GetAsync($"api/tournaments/{tournamentId}/completability");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        CompletabilityResponseDto? body = await response.Content.ReadFromJsonAsync<CompletabilityResponseDto>();
+        Assert.NotNull(body);
+        Assert.False(body!.CanStart);
+        IssueDto issue = Assert.Single(body.Issues, i => i.Code == "TeamTooFewPlayers");
+        Assert.Equal(3, issue.PlayerCount);
+    }
+
+    [Fact]
     public async Task GetCompletability_UnknownTournament_ReturnsNotFound()
     {
         HttpClient client = _factory.CreateAuthenticatedClient(Roles.Admin);
@@ -141,7 +204,7 @@ public class TournamentCompletabilityGuardTests : IClassFixture<CustomWebApplica
 
     private sealed record CompletabilityResponseDto(bool CanStart, List<IssueDto> Issues);
 
-    private sealed record IssueDto(string Code, string? DivisionName, string? TeamName, int? FromPosition, int? AssignedTeams);
+    private sealed record IssueDto(string Code, string? DivisionName, string? TeamName, int? FromPosition, int? AssignedTeams, int? PlayerCount);
 
     private static async Task<Tournament> SeedTournamentAsync(ApplicationDBContext db, TournamentStatus status)
     {
@@ -240,6 +303,37 @@ public class TournamentCompletabilityGuardTests : IClassFixture<CustomWebApplica
             TournamentId = tournament.Id,
             CreatedBy = "test",
         });
+
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task SeedPlayersAsync(ApplicationDBContext db, Team team, Tournament tournament, int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            Player player = new()
+            {
+                FirstName = $"Player{i}",
+                LastName = $"Test{Guid.NewGuid()}",
+                Slug = $"player-{Guid.NewGuid()}",
+                DocumentNumber = $"3{Random.Shared.Next(1000000, 9999999)}",
+                IsSanctioned = false,
+                BirthDate = DateTime.UtcNow.Date.AddYears(-20),
+                SocialSecurity = "OSDE",
+                Team = team,
+                CreatedBy = "test",
+            };
+            db.Players.Add(player);
+            await db.SaveChangesAsync();
+
+            db.PlayerTeamRegistrations.Add(new PlayerTeamRegistration
+            {
+                PlayerId = player.Id,
+                TeamId = team.Id,
+                TournamentId = tournament.Id,
+                CreatedBy = "test",
+            });
+        }
 
         await db.SaveChangesAsync();
     }

@@ -441,6 +441,11 @@ public class TournamentService(
                 registration => registration.TournamentId == tournamentId,
                 includes: [registration => registration.Team!])];
 
+        Dictionary<Guid, int> playerCountsByTeam = (await unitOfWork.PlayerTeamRegistrationRepository.FindAsync(
+                registration => registration.TournamentId == tournamentId))
+            .GroupBy(registration => registration.TeamId)
+            .ToDictionary(group => group.Key, group => group.Count());
+
         Tournament graph = new()
         {
             Name = string.Empty,
@@ -453,7 +458,7 @@ public class TournamentService(
             CreatedBy = AuditConstants.SystemUser,
         };
 
-        return TournamentCompletabilityValidator.Validate(graph, registrations);
+        return TournamentCompletabilityValidator.Validate(graph, registrations, playerCountsByTeam);
     }
 
     /// <summary>
@@ -474,6 +479,8 @@ public class TournamentService(
                 $"zone '{issue.DivisionName}' has a playoff range starting at position {issue.FromPosition} but only {issue.AssignedTeams} team(s) assigned",
             CompletabilityIssueCodes.CrossCupGroupTooFewTeams =>
                 $"cross-cup '{issue.DivisionName}' group has {issue.AssignedTeams} team(s), needs at least {TournamentCompletabilityValidator.MinTeamsPerZone}",
+            CompletabilityIssueCodes.TeamTooFewPlayers =>
+                $"team '{issue.TeamName}' has {issue.PlayerCount} player(s), needs at least {TournamentCompletabilityValidator.MinPlayersPerTeam}",
             _ => issue.Code,
         }));
     }
