@@ -97,19 +97,9 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
     element: <PlayerPage />,
   },
   {
-    path: APP_ROUTES.panelTeam,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
-    element: <TeamPage />,
-  },
-  {
     path: APP_ROUTES.panelTeamDetail.pattern,
     allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <TeamPage />,
-  },
-  {
-    path: APP_ROUTES.panelTournament,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
-    element: <TournamentPage />,
   },
   {
     path: APP_ROUTES.panelTournamentDetail.pattern,

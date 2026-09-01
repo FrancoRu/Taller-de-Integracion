@@ -91,9 +91,8 @@ const CONFIGURATION_CHILDREN: NavTab[] = [
 
 /**
  * "Competición" groups the day-to-day league pages Admin and Owner both reach
- * (mirrors the Admin/Owner backend policy on Tournament/PlayerSanction/Venue
- * controllers). Puntuaciones is Owner-only, so it lives in the Owner variant
- * below — Admin's sidebar never links to a page that bounces to /forbidden.
+ * (mirrors the Admin/Owner backend policy on Tournament/PlayerSanction/Venue/
+ * PlayerStatistic controllers — all [Authorize(Roles = AdminOrOwner)]).
  *
  * HU-26: Divisiones, Fases and Partidos are not standalone entries — they are
  * managed from within a tournament (the tournament detail drills into its
@@ -109,6 +108,11 @@ const COMPETITION_CHILDREN: NavTab[] = [
     label: 'Temporadas',
     path: APP_ROUTES.panelSeasons,
     icon: TAB_ICONS['Temporadas'],
+  },
+  {
+    label: 'Puntuaciones',
+    path: APP_ROUTES.panelScorers,
+    icon: TAB_ICONS['Puntuaciones'],
   },
   {
     label: 'Sanciones',

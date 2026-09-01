@@ -48,12 +48,10 @@ export const APP_ROUTES = {
     pattern: '/panel/jugadores/:playerId',
     build: (playerId: string) => `/panel/jugadores/${playerId}`,
   },
-  panelTeam: '/panel/equipo',
   panelTeamDetail: {
     pattern: '/panel/equipos/:teamId',
     build: (teamId: string) => `/panel/equipos/${teamId}`,
   },
-  panelTournament: '/panel/torneo',
   panelTournamentDetail: {
     pattern: '/panel/torneos/:tournamentId',
     build: (tournamentId: string) => `/panel/torneos/${tournamentId}`,
