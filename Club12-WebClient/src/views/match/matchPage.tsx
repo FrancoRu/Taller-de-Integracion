@@ -276,10 +276,10 @@ const MatchPage: React.FC = () => {
         </Typography>
         <Button
           variant="text"
-          onClick={() => navigate(APP_ROUTES.panelMatches)}
+          onClick={() => navigate(-1)}
           sx={{ mt: 2, px: 0 }}
         >
-          Volver al listado
+          Volver
         </Button>
       </PageShell>
     );
@@ -336,7 +336,7 @@ const MatchPage: React.FC = () => {
         <Button
           variant="contained"
           color="primary"
-          onClick={() => navigate(APP_ROUTES.panelMatches)}
+          onClick={() => navigate(-1)}
         >
           Volver
         </Button>

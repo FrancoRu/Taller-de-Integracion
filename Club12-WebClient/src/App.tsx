@@ -41,12 +41,7 @@ import DivisionPage from './views/division/divisionPage';
 import DivisionsPage from './views/division/divisionsPage';
 import DivisionCreatePage from './views/division/divisionCreatePage';
 import DivisionEditPage from './views/division/divisionEditPage';
-import StagePage from './views/stage/stagePage';
-import StageCreatePage from './views/stage/stageCreatePage';
-import StagesPage from '@/views/stage/stagesPage';
 import MatchPage from './views/match/matchPage';
-import MatchesPage from './views/match/matchesPage';
-import MatchCreatePage from './views/match/matchCreatePage';
 import UsersPage from './views/panel/UsersPage';
 import UserDetails from './views/user/userDetails';
 import CreateUser from './views/user/createUser';
@@ -209,31 +204,6 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
     path: APP_ROUTES.panelDivision.pattern,
     allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <DivisionPage />,
-  },
-  {
-    path: APP_ROUTES.panelStages,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
-    element: <StagesPage wrapInCard />,
-  },
-  {
-    path: APP_ROUTES.panelStageCreate,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
-    element: <StageCreatePage />,
-  },
-  {
-    path: APP_ROUTES.panelStage.pattern,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
-    element: <StagePage />,
-  },
-  {
-    path: APP_ROUTES.panelMatches,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
-    element: <MatchesPage wrapInCard />,
-  },
-  {
-    path: APP_ROUTES.panelMatchCreate,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
-    element: <MatchCreatePage />,
   },
   {
     path: APP_ROUTES.panelMatch.pattern,

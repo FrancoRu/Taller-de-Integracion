@@ -317,6 +317,14 @@ export interface ITournamentResponse {
    * @type {string}
    */
   seasonName: string | null;
+
+  /**
+   * Slug of the season this tournament belongs to, when the season was
+   * resolved by the backend; null otherwise. Prefer this over `seasonId`
+   * when building a link back to the season, so the URL never shows a raw
+   * UUID.
+   */
+  seasonSlug?: string | null;
 }
 
 /**

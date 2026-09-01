@@ -212,7 +212,9 @@ const DivisionPage: React.FC = () => {
             onClick={() =>
               navigate(
                 division.tournamentId
-                  ? APP_ROUTES.panelTournamentDetail.build(division.tournamentId)
+                  ? APP_ROUTES.panelTournamentDetail.build(
+                      division.tournamentSlug ?? division.tournamentId
+                    )
                   : APP_ROUTES.panelTournaments
               )
             }

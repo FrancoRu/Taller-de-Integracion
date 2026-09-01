@@ -227,6 +227,14 @@ export interface IDivisionResponse {
   tournamentId: GUID;
 
   /**
+   * The parent tournament's slug, when it was resolved by the backend; null
+   * otherwise. Prefer this over `tournamentId` when building a link back to
+   * the tournament, so the URL never shows a raw UUID.
+   * @type {string | null}
+   */
+  tournamentSlug?: string | null;
+
+  /**
    * Whether this division is a cross-division cup (exempt from the "one
    * team, one division" rule).
    * @type {boolean}

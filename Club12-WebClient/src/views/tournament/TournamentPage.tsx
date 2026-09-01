@@ -176,7 +176,9 @@ const TournamentPage: React.FC = () => {
             onClick={() =>
               navigate(
                 tournament.seasonId
-                  ? APP_ROUTES.panelSeason.build(tournament.seasonId)
+                  ? APP_ROUTES.panelSeason.build(
+                      tournament.seasonSlug ?? tournament.seasonId
+                    )
                   : APP_ROUTES.panelSeasons
               )
             }
