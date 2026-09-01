@@ -15,6 +15,7 @@ import { TableSkeleton, ListSkeleton } from '@/views/core/components/skeletons';
 import { GUID } from '@/modules/core/types/types';
 import { TAB_CONTENT_MIN_HEIGHT } from '@/modules/core/constants/constants';
 import { IDivisionResponse } from '@/modules/division/type/division';
+import { buildCrossCupGroupQualificationRange } from '@/modules/division/utils/qualificationRange';
 import { ITeamResponse } from '@/modules/team/type/team.d';
 import PublicTeamGrid from '@/views/home/tournaments/PublicTeamGrid';
 import SectionHeading from '@/views/core/components/SectionHeading';
@@ -84,6 +85,11 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
       { replace: true }
     );
   };
+
+  const crossCupGroupQualificationRange = useMemo(
+    () => buildCrossCupGroupQualificationRange(division),
+    [division]
+  );
 
   const [topScores, setTopScores] = useState<IScorerByPlayerResponse[]>([]);
   const [topScoresLoading, setTopScoresLoading] = useState(false);
@@ -220,12 +226,19 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
         (division.groupStandings && division.groupStandings.length > 1 ? (
           // Multi-group cross-division cup (HU-110): one standings table per
           // internal group, each labelled by its stage name ("Grupo 1", …) and
-          // computed over that group's own matches.
+          // computed over that group's own matches. The division carries no
+          // PlayoffMappings here (it pools every group into ONE bracket, not a
+          // per-division cup breakdown — see DivisionProfile.cs), so the
+          // qualifying rows are highlighted from `qualifiersPerGroup` directly:
+          // the top N of EVERY group advance into the pooled knockout.
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {division.groupStandings.map(group => (
               <Box key={group.stageId}>
                 <SectionHeading>{group.stageName}</SectionHeading>
-                <DivisionStandings positions={group.positions} />
+                <DivisionStandings
+                  positions={group.positions}
+                  qualificationRanges={crossCupGroupQualificationRange}
+                />
               </Box>
             ))}
           </Box>

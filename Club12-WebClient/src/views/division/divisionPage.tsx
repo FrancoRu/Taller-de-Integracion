@@ -13,6 +13,7 @@ import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
 import { buildBrackets } from '@/modules/playoff/buildBracket';
 import { BracketGroup } from '@/modules/playoff/type/bracket.d';
 import DivisionStandings from '@/views/division/divisionStandings';
+import { buildCrossCupGroupQualificationRange } from '@/modules/division/utils/qualificationRange';
 import DivisionFixture from '@/views/division/DivisionFixture';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import PointDeductionManager from '@/views/division/PointDeductionManager';
@@ -154,6 +155,11 @@ const DivisionPage: React.FC = () => {
     });
     return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
   }, [division?.positions, division?.groupStandings]);
+
+  const crossCupGroupQualificationRange = useMemo(
+    () => (division ? buildCrossCupGroupQualificationRange(division) : undefined),
+    [division]
+  );
 
   if (!targetDivisionId) {
     return (
@@ -338,7 +344,10 @@ const DivisionPage: React.FC = () => {
                   <Typography variant="subtitle1" component="h3" sx={{ mb: 1.5 }}>
                     {group.stageName}
                   </Typography>
-                  <DivisionStandings positions={group.positions} />
+                  <DivisionStandings
+                    positions={group.positions}
+                    qualificationRanges={crossCupGroupQualificationRange}
+                  />
                 </Box>
               ))}
             </Box>

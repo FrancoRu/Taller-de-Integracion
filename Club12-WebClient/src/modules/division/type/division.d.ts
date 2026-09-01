@@ -242,6 +242,14 @@ export interface IDivisionResponse {
   isCrossDivisionCup: boolean;
 
   /**
+   * For a cross-division cup (HU-110): how many teams advance from EACH of
+   * the cup's internal groups into the pooled knockout bracket. Meaningless
+   * (defaults to 1) outside a cross-division cup.
+   * @type {number}
+   */
+  qualifiersPerGroup?: number;
+
+  /**
    * Competitive category (gender) of the division — matches its tournament.
    * Used to tell apart same-named zones across masculine/feminine tournaments.
    * @type {TournamentCategory}
