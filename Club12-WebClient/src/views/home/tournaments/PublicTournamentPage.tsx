@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Button,
+  Chip,
   Divider,
   Grid,
   Tab,
@@ -25,7 +26,10 @@ import PublicDivisionPanel from '@/views/home/tournaments/PublicDivisionPanel';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { TAB_CONTENT_MIN_HEIGHT } from '@/modules/core/constants/constants';
-import { TOURNAMENT_STATUS_LABEL } from '@/modules/tournament/utils/tournamentDisplay';
+import {
+  TOURNAMENT_STATUS_LABEL,
+  TOURNAMENT_STATUS_COLOR,
+} from '@/modules/tournament/utils/tournamentDisplay';
 import { formatDateAr } from '@/modules/core/utils/formatDate';
 import {
   DEFAULT_PAGE_METADATA,
@@ -321,15 +325,12 @@ export default function PublicTournamentPage() {
         }}>
         {tournament.name}
       </Typography>
-      <Typography
-        variant="subtitle1"
-        component="p"
-        sx={{
-          color: "text.secondary",
-          mb: 3
-        }}>
-        {TOURNAMENT_STATUS_LABEL[status] ?? status}
-      </Typography>
+      <Chip
+        label={TOURNAMENT_STATUS_LABEL[status] ?? status}
+        color={TOURNAMENT_STATUS_COLOR[status] ?? 'default'}
+        size="small"
+        sx={{ mb: 3 }}
+      />
 
       <Divider sx={{ mb: 3 }} />
 
