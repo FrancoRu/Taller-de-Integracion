@@ -1,7 +1,7 @@
 /**
  * Looks up an address's coordinates via OpenStreetMap's free Nominatim
- * search API (no API key required). Meant for a single, admin-triggered
- * "buscar en el mapa" click — not for bulk/automatic geocoding, per
+ * search API (no API key required). Callers must debounce their own calls
+ * (e.g. on a pause in typing) rather than firing on every keystroke, per
  * Nominatim's usage policy (https://operations.osmfoundation.org/policies/nominatim/).
  * @param address The free-text address to look up.
  * @returns The first match's coordinates, or null if nothing was found or the

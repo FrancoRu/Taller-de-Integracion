@@ -1,6 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import VenueFormFields from './VenueFormFields';
 import { geocodeAddress } from '@/modules/core/utils/geocoding';
 import type { VenueFormState } from './venues.types';
@@ -19,17 +18,21 @@ const EMPTY_FORM: VenueFormState = {
   photoUrl: '',
 };
 
+beforeEach(() => {
+  vi.useFakeTimers();
+});
+
 afterEach(() => {
+  vi.useRealTimers();
   vi.clearAllMocks();
 });
 
-describe('VenueFormFields — buscar en el mapa', () => {
-  it('fills latitude/longitude from the geocoded address and shows the map preview', async () => {
+describe('VenueFormFields — auto-geocoding the address', () => {
+  it('debounces, geocodes the typed address and fills latitude/longitude', async () => {
     mockedGeocodeAddress.mockResolvedValue({ latitude: -34.6037, longitude: -58.3816 });
     const onFieldChange = vi.fn();
-    const user = userEvent.setup();
 
-    const { rerender } = render(
+    render(
       <VenueFormFields
         withPhoto={false}
         form={{ ...EMPTY_FORM, address: 'Av. Corrientes 1000' }}
@@ -38,32 +41,19 @@ describe('VenueFormFields — buscar en el mapa', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: 'Buscar en el mapa' }));
+    expect(mockedGeocodeAddress).not.toHaveBeenCalled();
 
-    await waitFor(() => expect(mockedGeocodeAddress).toHaveBeenCalledWith('Av. Corrientes 1000'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+
+    expect(mockedGeocodeAddress).toHaveBeenCalledWith('Av. Corrientes 1000');
     expect(onFieldChange).toHaveBeenCalledWith('latitude', '-34.6037');
     expect(onFieldChange).toHaveBeenCalledWith('longitude', '-58.3816');
-
-    rerender(
-      <VenueFormFields
-        withPhoto={false}
-        form={{
-          ...EMPTY_FORM,
-          address: 'Av. Corrientes 1000',
-          latitude: '-34.6037',
-          longitude: '-58.3816',
-        }}
-        onFieldChange={onFieldChange}
-        onPhotoChange={vi.fn()}
-      />
-    );
-
-    expect(screen.getByTitle('Mapa de Cancha Norte')).toBeInTheDocument();
   });
 
   it('does not call the network when the address is empty', async () => {
     const onFieldChange = vi.fn();
-    const user = userEvent.setup();
 
     render(
       <VenueFormFields
@@ -74,7 +64,9 @@ describe('VenueFormFields — buscar en el mapa', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: 'Buscar en el mapa' }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
 
     expect(mockedGeocodeAddress).not.toHaveBeenCalled();
     expect(onFieldChange).not.toHaveBeenCalled();
@@ -83,7 +75,6 @@ describe('VenueFormFields — buscar en el mapa', () => {
   it('leaves coordinates untouched when the address cannot be found', async () => {
     mockedGeocodeAddress.mockResolvedValue(null);
     const onFieldChange = vi.fn();
-    const user = userEvent.setup();
 
     render(
       <VenueFormFields
@@ -94,9 +85,40 @@ describe('VenueFormFields — buscar en el mapa', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: 'Buscar en el mapa' }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
 
-    await waitFor(() => expect(mockedGeocodeAddress).toHaveBeenCalledTimes(1));
+    expect(mockedGeocodeAddress).toHaveBeenCalledTimes(1);
     expect(onFieldChange).not.toHaveBeenCalled();
+  });
+
+  it('always renders an interactive map, even with no coordinates yet (defaults to Paraná)', () => {
+    render(
+      <VenueFormFields
+        withPhoto={false}
+        form={EMPTY_FORM}
+        onFieldChange={vi.fn()}
+        onPhotoChange={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.getByRole('group', { name: 'Mapa de Cancha Norte' })
+    ).toBeInTheDocument();
+  });
+
+  it('renders the map interactively at the given coordinates', () => {
+    render(
+      <VenueFormFields
+        withPhoto={false}
+        form={{ ...EMPTY_FORM, latitude: '-31.7333', longitude: '-60.5297' }}
+        onFieldChange={vi.fn()}
+        onPhotoChange={vi.fn()}
+      />
+    );
+
+    const map = screen.getByRole('group', { name: 'Mapa de Cancha Norte' });
+    expect(map.querySelector('.leaflet-container')).toBeInTheDocument();
   });
 });

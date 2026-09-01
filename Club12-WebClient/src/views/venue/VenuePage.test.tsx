@@ -42,7 +42,7 @@ describe('VenuePage — HU-15 slug route', () => {
     expect(getVenueById).toHaveBeenCalledWith('cancha-central');
   });
 
-  it('shows an OpenStreetMap embed + link when coordinates exist', async () => {
+  it('shows an interactive map when coordinates exist', async () => {
     const getVenueById = vi.fn().mockResolvedValue(
       buildVenue({ latitude: -34.603722, longitude: -58.381592 })
     );
@@ -52,21 +52,12 @@ describe('VenuePage — HU-15 slug route', () => {
 
     renderAt('/panel/canchas/cancha-central');
 
-    const mapLink = await screen.findByRole('link', { name: 'Ver en el mapa' });
-    expect(mapLink).toHaveAttribute(
-      'href',
-      'https://www.openstreetmap.org/?mlat=-34.603722&mlon=-58.381592#map=16/-34.603722/-58.381592'
-    );
-    expect(mapLink).toHaveAttribute('target', '_blank');
-
-    const mapFrame = screen.getByTitle('Mapa de Cancha Central');
-    expect(mapFrame).toHaveAttribute(
-      'src',
-      expect.stringContaining('openstreetmap.org/export/embed.html')
-    );
+    expect(
+      await screen.findByRole('group', { name: 'Mapa de Cancha Central' })
+    ).toBeInTheDocument();
   });
 
-  it('omits the map link when the venue has no coordinates', async () => {
+  it('omits the map when the venue has no coordinates', async () => {
     const getVenueById = vi.fn().mockResolvedValue(buildVenue());
     mockedUseVenue.mockReturnValue({
       getVenueById,
@@ -76,7 +67,7 @@ describe('VenuePage — HU-15 slug route', () => {
 
     await screen.findByText('Cancha Central');
     expect(
-      screen.queryByRole('link', { name: 'Ver en el mapa' })
+      screen.queryByRole('group', { name: 'Mapa de Cancha Central' })
     ).not.toBeInTheDocument();
   });
 });

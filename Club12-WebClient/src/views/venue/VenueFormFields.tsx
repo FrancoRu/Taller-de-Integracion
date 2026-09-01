@@ -1,12 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Box, Button, FormLabel, Stack, TextField, Typography } from '@mui/material';
 import { geocodeAddress } from '@/modules/core/utils/geocoding';
-import { notifyWarning } from '@/modules/core/utils/confirmDialog';
-import OpenStreetMapEmbed from '@/views/core/components/OpenStreetMapEmbed';
+import { FILTERS_DEBOUNCE_DELAY_LONG_MS } from '@/modules/core/constants/constants';
+import LeafletMap from '@/views/core/components/LeafletMap';
 import type { VenueFormField, VenueFormState } from '@/views/venue/venues.types';
 
 const COORDINATES_HELPER_TEXT =
-  'Se completan automáticamente al buscar la dirección en el mapa; podés ajustarlas a mano si el resultado no es exacto.';
+  'Se completan solas al escribir la dirección; podés ajustar el pin en el mapa o las coordenadas a mano.';
+
+/** Paraná, Entre Ríos — the league's home city, used as a sensible default
+ * map center for a brand-new venue with no address/coordinates yet. */
+const DEFAULT_LATITUDE = -31.7333;
+const DEFAULT_LONGITUDE = -60.5297;
 
 export interface VenueFormFieldsProps {
   withPhoto: boolean;
@@ -42,7 +47,6 @@ export default function VenueFormFields({
   }, [form.photo]);
   const displayedPhotoUrl = photoPreview || form.photoUrl;
 
-  const [geocoding, setGeocoding] = useState(false);
   const parsedLatitude = Number(form.latitude);
   const parsedLongitude = Number(form.longitude);
   const hasCoordinates =
@@ -50,30 +54,36 @@ export default function VenueFormFields({
     form.longitude.trim() !== '' &&
     Number.isFinite(parsedLatitude) &&
     Number.isFinite(parsedLongitude);
+  const mapLatitude = hasCoordinates ? parsedLatitude : DEFAULT_LATITUDE;
+  const mapLongitude = hasCoordinates ? parsedLongitude : DEFAULT_LONGITUDE;
 
-  const handleSearchOnMap = async () => {
-    if (!form.address.trim()) {
-      void notifyWarning({
-        title: 'Falta la dirección',
-        text: 'Ingresá una dirección antes de buscarla en el mapa.',
-      });
+  // Auto-geocode the typed address (debounced) so the map recenters on its
+  // own — no "buscar" button to click. Only fires again when the address
+  // text itself changes, so a pin the admin just dragged/clicked into place
+  // isn't clobbered by an unrelated re-render.
+  const lastGeocodedAddress = useRef('');
+  useEffect(() => {
+    const trimmed = form.address.trim();
+    if (!trimmed || trimmed === lastGeocodedAddress.current) {
       return;
     }
 
-    setGeocoding(true);
-    const result = await geocodeAddress(form.address);
-    setGeocoding(false);
-
-    if (!result) {
-      void notifyWarning({
-        title: 'No se encontró la dirección',
-        text: 'No pudimos ubicar esa dirección en el mapa. Podés ingresar las coordenadas manualmente.',
+    const timeoutId = setTimeout(() => {
+      void geocodeAddress(trimmed).then(result => {
+        if (!result) return;
+        lastGeocodedAddress.current = trimmed;
+        onFieldChange('latitude', String(result.latitude));
+        onFieldChange('longitude', String(result.longitude));
       });
-      return;
-    }
+    }, FILTERS_DEBOUNCE_DELAY_LONG_MS);
 
-    onFieldChange('latitude', String(result.latitude));
-    onFieldChange('longitude', String(result.longitude));
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.address]);
+
+  const handlePinMoved = (latitude: number, longitude: number) => {
+    onFieldChange('latitude', String(latitude));
+    onFieldChange('longitude', String(longitude));
   };
 
   return (
@@ -146,32 +156,27 @@ export default function VenueFormFields({
         required
         fullWidth
       />
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-        <TextField
-          label="Dirección"
-          value={form.address}
-          onChange={e => onFieldChange('address', e.target.value)}
-          required
-          fullWidth
-        />
-        <Button
-          variant="outlined"
-          onClick={() => void handleSearchOnMap()}
-          disabled={geocoding}
-          sx={{ whiteSpace: 'nowrap' }}
-        >
-          {geocoding ? 'Buscando…' : 'Buscar en el mapa'}
-        </Button>
-      </Stack>
+      <TextField
+        label="Dirección"
+        value={form.address}
+        onChange={e => onFieldChange('address', e.target.value)}
+        required
+        fullWidth
+      />
 
-      {hasCoordinates && (
-        <OpenStreetMapEmbed
-          latitude={parsedLatitude}
-          longitude={parsedLongitude}
+      <Box>
+        <FormLabel sx={{ display: 'block', mb: 1 }}>Ubicación en el mapa</FormLabel>
+        <LeafletMap
+          latitude={mapLatitude}
+          longitude={mapLongitude}
           title={form.name || 'la cancha'}
-          height={240}
+          height={280}
+          onLocationChange={handlePinMoved}
         />
-      )}
+        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+          Hacé click en el mapa o arrastrá el pin para ajustar la ubicación exacta.
+        </Typography>
+      </Box>
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
         <TextField

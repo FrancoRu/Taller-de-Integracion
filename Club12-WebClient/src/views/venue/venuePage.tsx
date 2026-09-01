@@ -4,7 +4,7 @@ import { Box, Button, Grid, Paper, Stack, Typography } from '@mui/material';
 import { IVenueResponse, IPutVenueRequest } from '@/modules/venue/type/venue';
 import { useVenue } from '@/modules/venue/hook/venue.hook';
 import PageShell from '@/views/core/components/PageShell';
-import OpenStreetMapEmbed from '@/views/core/components/OpenStreetMapEmbed';
+import LeafletMap from '@/views/core/components/LeafletMap';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
@@ -199,7 +199,7 @@ const VenuePage: React.FC = () => {
               {!hasCoordinates && (
                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                   Esta cancha todavía no tiene coordenadas cargadas — editala para
-                  ubicarla en el mapa buscando su dirección.
+                  ubicarla en el mapa.
                 </Typography>
               )}
             </Paper>
@@ -207,7 +207,7 @@ const VenuePage: React.FC = () => {
 
           {hasCoordinates && (
             <Grid size={{ xs: 12, md: 7 }}>
-              <OpenStreetMapEmbed
+              <LeafletMap
                 latitude={venue.latitude as number}
                 longitude={venue.longitude as number}
                 title={venue.name}
