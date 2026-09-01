@@ -49,11 +49,18 @@ export default function VenueFormFields({
 
   const parsedLatitude = Number(form.latitude);
   const parsedLongitude = Number(form.longitude);
+  // Range-checked, not just finite: a corrupted stored value (e.g. a
+  // geocode that lost its decimal point) is still a finite number but an
+  // impossible one, and Leaflet hangs the tab trying to project it instead
+  // of throwing — falling back to the default center keeps this picker
+  // openable so the admin can actually fix a venue in that state.
   const hasCoordinates =
     form.latitude.trim() !== '' &&
     form.longitude.trim() !== '' &&
     Number.isFinite(parsedLatitude) &&
-    Number.isFinite(parsedLongitude);
+    Number.isFinite(parsedLongitude) &&
+    Math.abs(parsedLatitude) <= 90 &&
+    Math.abs(parsedLongitude) <= 180;
   const mapLatitude = hasCoordinates ? parsedLatitude : DEFAULT_LATITUDE;
   const mapLongitude = hasCoordinates ? parsedLongitude : DEFAULT_LONGITUDE;
 

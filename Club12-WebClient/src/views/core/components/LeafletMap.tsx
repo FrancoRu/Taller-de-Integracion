@@ -88,7 +88,21 @@ export default function LeafletMap({
         '& .leaflet-container': { width: '100%', height: '100%' },
       }}
     >
-      <MapContainer center={[latitude, longitude]} zoom={zoom} scrollWheelZoom>
+      <MapContainer
+        center={[latitude, longitude]}
+        zoom={zoom}
+        // Read-only display (no onLocationChange, e.g. a venue's detail
+        // page) is a static view of the pin — zoom/pan would just invite
+        // the admin to drag it around a map that has nothing else to show.
+        // The interactive picker keeps full pan/zoom/click-to-place.
+        scrollWheelZoom={Boolean(onLocationChange)}
+        zoomControl={Boolean(onLocationChange)}
+        doubleClickZoom={Boolean(onLocationChange)}
+        touchZoom={Boolean(onLocationChange)}
+        boxZoom={Boolean(onLocationChange)}
+        dragging={Boolean(onLocationChange)}
+        keyboard={Boolean(onLocationChange)}
+      >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

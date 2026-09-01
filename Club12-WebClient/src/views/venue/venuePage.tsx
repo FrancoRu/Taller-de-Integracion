@@ -140,11 +140,16 @@ const VenuePage: React.FC = () => {
     );
   }
 
+  // Beyond finiteness, an out-of-range value (e.g. a corrupted geocode that
+  // lost its decimal point, like -6052382618888541 instead of -60.52...)
+  // sends Leaflet a technically-numeric but physically impossible longitude.
+  // Its Web Mercator projection math doesn't throw on that — it hangs the
+  // tab computing/requesting tiles across an astronomically wide range.
   const hasCoordinates =
-    venue.latitude !== undefined &&
-    venue.latitude !== null &&
-    venue.longitude !== undefined &&
-    venue.longitude !== null;
+    Number.isFinite(venue.latitude) &&
+    Number.isFinite(venue.longitude) &&
+    Math.abs(venue.latitude as number) <= 90 &&
+    Math.abs(venue.longitude as number) <= 180;
 
   return (
     <PageShell

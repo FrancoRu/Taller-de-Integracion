@@ -22,7 +22,6 @@ import {
   ShieldIcon,
   SportsIcon,
   StadiumIcon,
-  StarIcon,
   StorageIcon,
 } from '@/views/core/MUI/icons/icons';
 import {
@@ -72,7 +71,6 @@ const TAB_ICONS: Record<string, React.ReactNode> = {
   CambiarPassword: <LockIcon />,
   EditarPerfil: <BadgeIcon />,
   Sanciones: <GavelIcon />,
-  Puntuaciones: <StarIcon />,
   Canchas: <StadiumIcon />,
 };
 
@@ -108,11 +106,6 @@ const COMPETITION_CHILDREN: NavTab[] = [
     label: 'Temporadas',
     path: APP_ROUTES.panelSeasons,
     icon: TAB_ICONS['Temporadas'],
-  },
-  {
-    label: 'Puntuaciones',
-    path: APP_ROUTES.panelScorers,
-    icon: TAB_ICONS['Puntuaciones'],
   },
   {
     label: 'Sanciones',
