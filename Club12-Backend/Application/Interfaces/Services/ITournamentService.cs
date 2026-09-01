@@ -38,6 +38,20 @@ public interface ITournamentService
     Task<Tournament> CreateFullTournamentAsync(CreateFullTournamentRequest request);
 
     /// <summary>
+    /// HU-31/HU-112: adds ONE division (with its group stage, cups and playoff
+    /// mappings) to an already-existing tournament, in a single transaction —
+    /// the same structure guarantee <see cref="CreateFullTournamentAsync"/>
+    /// gives each of its divisions. Unlike the granular division-create
+    /// endpoint, this never leaves a bare division with no stages behind. Only
+    /// allowed while the tournament is <see cref="TournamentStatus.OpenForRegistration"/>
+    /// (enforced by the same guard the granular create uses).
+    /// </summary>
+    /// <param name="tournament">The already-loaded parent tournament.</param>
+    /// <param name="divisionRequest">The division's structure (zone or cross-cup).</param>
+    /// <returns>The created Division.</returns>
+    Task<Division> AddFullDivisionAsync(Tournament tournament, CreateFullDivisionRequest divisionRequest);
+
+    /// <summary>
     /// Retrieves a Tournament by its id asynchronously.
     /// </summary>
     /// <param name="tournamentId">The id of the Tournament to retrieve.</param>
