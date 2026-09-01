@@ -68,7 +68,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
         }
 
         throw new AxiosError(
-          'Invalid response data',
+          'Respuesta del servidor inválida.',
           undefined,
           undefined,
           response
