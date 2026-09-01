@@ -6,6 +6,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormLabel,
   Stack,
   TextField,
   Typography,
@@ -118,8 +119,14 @@ const TeamFormDialog: React.FC<TeamFormDialogProps> = ({
                 gap: 1,
               }}
             >
+              <FormLabel required>Escudo</FormLabel>
               <TeamLogo teamName={form.name || '—'} logoUrl={displayedLogoUrl} size={88} />
-              <Button variant="outlined" component="label" size="small">
+              <Button
+                variant="outlined"
+                component="label"
+                size="small"
+                color={displayedLogoUrl ? 'primary' : 'error'}
+              >
                 {form.logoUrl || form.logo ? 'Cambiar escudo' : 'Seleccionar escudo'}
                 <input
                   hidden
