@@ -41,7 +41,7 @@ const FETCH_PAGE_SIZE = 100;
 const DEFAULT_SUB_TAB: DivisionSubTab = 'posiciones';
 const VIEW_QUERY_PARAM = 'view';
 
-type DivisionSubTab = 'equipos' | 'posiciones' | 'goleadores' | 'partidos' | 'llaves';
+type DivisionSubTab = 'equipos' | 'posiciones' | 'goleadores' | 'partidos' | 'playoff';
 
 interface PublicDivisionPanelProps {
   division: IDivisionResponse;
@@ -54,7 +54,7 @@ interface PublicDivisionPanelProps {
   podium?: IPodium | null;
 }
 
-const VALID_SUB_TABS: readonly DivisionSubTab[] = ['equipos', 'posiciones', 'goleadores', 'partidos', 'llaves'];
+const VALID_SUB_TABS: readonly DivisionSubTab[] = ['equipos', 'posiciones', 'goleadores', 'partidos', 'playoff'];
 const isDivisionSubTab = (value: string | null): value is DivisionSubTab =>
   VALID_SUB_TABS.includes(value as DivisionSubTab);
 
@@ -130,7 +130,7 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
   }, [subTab, topScoresLoaded, division.id]);
 
   useEffect(() => {
-    if ((subTab !== 'partidos' && subTab !== 'llaves') || structureLoaded) return;
+    if ((subTab !== 'partidos' && subTab !== 'playoff') || structureLoaded) return;
     let cancelled = false;
 
     const fetchStructure = async () => {
@@ -181,9 +181,17 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
     };
   }, [subTab, structureLoaded, division.id]);
 
+  // Elimination-stage matches live in the Playoff tab's bracket, not here —
+  // otherwise a division with playoffs shows the same games twice. `stages`
+  // is shared with the bracket fetch above (which needs every stage), so the
+  // exclusion happens here rather than in the query.
+  const groupStages = useMemo(
+    () => stages.filter(stage => !stage.isElimination),
+    [stages]
+  );
   const matchSections = useMemo(
-    () => buildDivisionFixtureSections(stages, matches, division.name),
-    [stages, matches, division.name]
+    () => buildDivisionFixtureSections(groupStages, matches, division.name),
+    [groupStages, matches, division.name]
   );
 
   return (
@@ -211,7 +219,7 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
         <Tab label="Posiciones" value="posiciones" />
         <Tab label="Goleadores" value="goleadores" />
         <Tab label="Partidos" value="partidos" />
-        <Tab label="Llaves" value="llaves" />
+        <Tab label="Playoff" value="playoff" />
       </SecondaryTabs>
 
       <Box sx={{ minHeight: TAB_CONTENT_MIN_HEIGHT }}>
@@ -299,7 +307,7 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
           </Box>
         ))}
 
-      {subTab === 'llaves' &&
+      {subTab === 'playoff' &&
         (structureLoading ? (
           <ListSkeleton items={5} />
         ) : (

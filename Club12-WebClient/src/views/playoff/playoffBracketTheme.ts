@@ -6,10 +6,11 @@ import { getTheme } from '@/theme';
  * round and every card regardless of content (a plain match or a
  * best-of-N series card with its per-game breakdown). The library
  * absolutely-positions each match within this box, so the card content
- * must stay within it — see `BracketMatchNode`'s single-line, non-wrapping
- * per-game summary.
+ * must stay within it — see `BracketMatchNode`'s 2-line-clamped per-game
+ * summary. Tall enough to fit a best-of-7 series' game summary wrapped
+ * onto two lines instead of truncating to one.
  */
-export const PLAYOFF_BRACKET_BOX_HEIGHT = 116;
+export const PLAYOFF_BRACKET_BOX_HEIGHT = 140;
 
 const darkTheme = getTheme('dark');
 

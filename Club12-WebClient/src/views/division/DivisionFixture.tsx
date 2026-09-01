@@ -66,7 +66,14 @@ export default function DivisionFixture({
       setLoading(true);
       try {
         const [stagesResponse, matchesResponse] = await Promise.all([
-          stageService.getStagesByFilters({ divisionId, pageSize: FETCH_PAGE_SIZE }),
+          // Elimination-stage matches live in the Playoff tab's bracket, not
+          // here — otherwise a division with playoffs shows the same games
+          // twice.
+          stageService.getStagesByFilters({
+            divisionId,
+            isElimination: false,
+            pageSize: FETCH_PAGE_SIZE,
+          }),
           matchService.getMatchByFilter({ divisionId, pageSize: FETCH_PAGE_SIZE }),
         ]);
         if (!cancelled) {
