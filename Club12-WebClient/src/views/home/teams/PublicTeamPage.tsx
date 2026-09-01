@@ -288,54 +288,53 @@ function TeamMatchRow({ match }: { match: TeamMatch }) {
   );
 }
 
-/** "Próximos" and "Últimos" fixture lists, or a quiet empty state. */
+/**
+ * Only the team's next match and its last result — not the whole remaining
+ * fixture — each with a quiet fallback line when there isn't one (no game
+ * scheduled yet, or the team hasn't played its first match). The full
+ * fixture lives on the division's own Partidos tab; this page is a summary.
+ */
 function FixtureBlock({ matches }: { matches: TeamMatch[] }) {
   const { upcoming, recent } = splitFixture(matches);
-
-  if (upcoming.length === 0 && recent.length === 0) {
-    return (
-      <Typography sx={{ color: 'text.secondary' }}>
-        Sin partidos para este torneo todavía.
-      </Typography>
-    );
-  }
+  const nextMatch = upcoming[0];
+  const lastMatch = recent[0];
 
   return (
     <Stack spacing={3}>
-      {upcoming.length > 0 && (
-        <Box>
-          <Typography
-            variant="overline"
-            sx={{ color: 'text.secondary', display: 'block', mb: 1 }}
-          >
-            Próximos
-          </Typography>
+      <Box>
+        <Typography
+          variant="overline"
+          sx={{ color: 'text.secondary', display: 'block', mb: 1 }}
+        >
+          Próximo partido
+        </Typography>
+        {nextMatch ? (
           <Paper variant="outlined">
-            <Stack divider={<Divider />}>
-              {upcoming.map(match => (
-                <TeamMatchRow key={match.matchId} match={match} />
-              ))}
-            </Stack>
+            <TeamMatchRow match={nextMatch} />
           </Paper>
-        </Box>
-      )}
-      {recent.length > 0 && (
-        <Box>
-          <Typography
-            variant="overline"
-            sx={{ color: 'text.secondary', display: 'block', mb: 1 }}
-          >
-            Últimos
+        ) : (
+          <Typography sx={{ color: 'text.secondary' }}>
+            No tiene un próximo partido programado.
           </Typography>
+        )}
+      </Box>
+      <Box>
+        <Typography
+          variant="overline"
+          sx={{ color: 'text.secondary', display: 'block', mb: 1 }}
+        >
+          Último resultado
+        </Typography>
+        {lastMatch ? (
           <Paper variant="outlined">
-            <Stack divider={<Divider />}>
-              {recent.map(match => (
-                <TeamMatchRow key={match.matchId} match={match} />
-              ))}
-            </Stack>
+            <TeamMatchRow match={lastMatch} />
           </Paper>
-        </Box>
-      )}
+        ) : (
+          <Typography sx={{ color: 'text.secondary' }}>
+            Todavía no jugó ningún partido.
+          </Typography>
+        )}
+      </Box>
     </Stack>
   );
 }

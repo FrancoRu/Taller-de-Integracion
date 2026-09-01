@@ -198,6 +198,68 @@ describe('PublicTeamPage', () => {
     expect(screen.getByText('42')).toBeInTheDocument();
   });
 
+  it('shows only the single next match and the single last result, not the whole fixture', async () => {
+    getTeamMatches.mockResolvedValue({
+      data: [
+        finishedMatch({ matchId: guid('match-1'), opponentName: 'Los Cuervos', matchDate: '2025-01-01T20:00:00Z' }),
+        finishedMatch({ matchId: guid('match-2'), opponentName: 'Los Tigres', matchDate: '2025-01-08T20:00:00Z' }),
+        {
+          matchId: guid('match-3'),
+          matchDate: '2025-02-01T20:00:00Z',
+          isFinished: false,
+          status: 'Scheduled',
+          isHome: true,
+          opponentTeamId: guid('opp-3'),
+          opponentName: 'Los Osos',
+          opponentLogoUrl: null,
+          teamScore: null,
+          opponentScore: null,
+          result: null,
+          venueName: 'Gimnasio Central',
+        },
+        {
+          matchId: guid('match-4'),
+          matchDate: '2025-02-08T20:00:00Z',
+          isFinished: false,
+          status: 'Scheduled',
+          isHome: true,
+          opponentTeamId: guid('opp-4'),
+          opponentName: 'Los Leones',
+          opponentLogoUrl: null,
+          teamScore: null,
+          opponentScore: null,
+          result: null,
+          venueName: 'Gimnasio Central',
+        },
+      ],
+    });
+
+    renderPage();
+
+    // The most recently finished match ("Los Tigres") shows; the older one
+    // ("Los Cuervos") does not.
+    await waitFor(() => expect(screen.getByText('Los Tigres')).toBeInTheDocument());
+    expect(screen.queryByText('Los Cuervos')).not.toBeInTheDocument();
+
+    // The nearest upcoming match ("Los Osos") shows; the later one
+    // ("Los Leones") does not.
+    expect(screen.getByText('Los Osos')).toBeInTheDocument();
+    expect(screen.queryByText('Los Leones')).not.toBeInTheDocument();
+  });
+
+  it('shows a fallback line when the team has no upcoming match and none played yet', async () => {
+    getTeamMatches.mockResolvedValue({ data: [] });
+
+    renderPage();
+
+    await waitFor(() =>
+      expect(
+        screen.getByText('No tiene un próximo partido programado.')
+      ).toBeInTheDocument()
+    );
+    expect(screen.getByText('Todavía no jugó ningún partido.')).toBeInTheDocument();
+  });
+
   it('renders a tournament selector only when the team has more than one participation', async () => {
     getTeamParticipations.mockResolvedValue({
       data: [
