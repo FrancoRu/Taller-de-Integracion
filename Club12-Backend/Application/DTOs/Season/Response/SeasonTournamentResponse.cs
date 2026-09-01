@@ -26,4 +26,10 @@ public class SeasonTournamentResponse : BaseEntityResponse
     /// tournament even when grouped under a season.
     /// </summary>
     public TournamentCategory Category { get; set; }
+
+    /// <summary>
+    /// The tournament's lifecycle status, so the season's tournament cards can
+    /// show the same status chip every other tournament list view does.
+    /// </summary>
+    public TournamentStatus Status { get; set; }
 }

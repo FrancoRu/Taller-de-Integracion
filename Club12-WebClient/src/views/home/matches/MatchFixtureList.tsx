@@ -171,15 +171,21 @@ export default function MatchFixtureList({
             <Collapse in={isExpanded}>
               <Paper variant="outlined">
                 <Stack divider={<Divider />}>
-                  {round.matches.map(match => (
-                    <MatchRow key={match.id} match={match} buildHref={buildHref} />
-                  ))}
+                  {round.matches
+                    // A round-robin bye is derived purely from the roster diff
+                    // (byeTeamNamesForRound) below — a fixture-generation slot
+                    // with neither team assigned is corrupt data, not a real
+                    // match, and must not render its own broken "—" vs "—" row.
+                    .filter(match => match.homeTeam || match.visitorTeam)
+                    .map(match => (
+                      <MatchRow key={match.id} match={match} buildHref={buildHref} />
+                    ))}
                   {byes.map(teamName => (
                     <Box
                       key={`bye-${teamName}`}
                       sx={{
                         display: 'grid',
-                        gridTemplateColumns: { xs: '56px 1fr auto', sm: '56px 1fr auto 140px' },
+                        gridTemplateColumns: { xs: '56px 1fr auto 1fr', sm: '56px 1fr auto 1fr 140px' },
                         alignItems: 'center',
                         gap: { xs: 1, sm: 2 },
                         px: 2,
@@ -187,15 +193,16 @@ export default function MatchFixtureList({
                       }}
                     >
                       <Box />
-                      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'center', minWidth: 0 }}>
+                      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'flex-end', minWidth: 0 }}>
                         <TeamLogo teamName={teamName} logoUrl={teamLogoByName.get(teamName)} size={28} />
                         <Typography variant="body2" noWrap sx={{ fontWeight: 500, minWidth: 0 }}>
                           {teamName}
                         </Typography>
                       </Stack>
-                      <Box sx={{ justifySelf: 'end' }}>
+                      <Box sx={{ textAlign: 'center', minWidth: 56 }}>
                         <Chip label={BYE_TEAM_LABEL} size="small" variant="outlined" />
                       </Box>
+                      <Box />
                     </Box>
                   ))}
                 </Stack>

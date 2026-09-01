@@ -30,12 +30,15 @@ function TeamSide({ name, logoUrl, align }: TeamSideProps) {
 
   return (
     <Stack
-      direction={align === 'left' ? 'row' : 'row-reverse'}
+      direction="row"
       spacing={1}
       sx={{
         alignItems: "center",
         flex: 1,
         minWidth: 0,
+        // The crest always precedes the name (reading order), regardless of
+        // which side of the row this team is on — only the packing changes,
+        // so each side still hugs its edge of the row.
         justifyContent: align === 'left' ? 'flex-start' : 'flex-end'
       }}>
       {logo}
