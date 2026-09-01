@@ -61,7 +61,17 @@ const DivisionCreatePage: React.FC = () => {
     });
   }, [tournamentId, getTournamentById]);
 
-  const tournamentOptions = useMemo(() => tournaments ?? [], [tournaments]);
+  // Only tournaments still accepting structural changes can receive a new
+  // division (enforced server-side too, EnsureTournamentAllowsDivisionAsync)
+  // — filtering them out of the picker means there is never a selectable
+  // option that will just fail on submit.
+  const tournamentOptions = useMemo(
+    () =>
+      (tournaments ?? []).filter(
+        tournament => tournament.status === TournamentStatus.OpenForRegistration
+      ),
+    [tournaments]
+  );
 
   const isStructureFrozen =
     Boolean(resolvedTournament) &&

@@ -1,4 +1,5 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GUID } from '@/modules/core/types/types';
@@ -77,6 +78,11 @@ const renderPage = () =>
     <MemoryRouter initialEntries={['/match-1']}>
       <Routes>
         <Route path="/:matchId" element={<PublicMatchPage />} />
+        <Route path="/temporadas" element={<div>listado-temporadas</div>} />
+        <Route
+          path="/torneos/:tournamentId"
+          element={<div>detalle-torneo</div>}
+        />
       </Routes>
     </MemoryRouter>
   );
@@ -156,5 +162,31 @@ describe('PublicMatchPage scoreboard', () => {
 
     expect(names[0]).toContain('Beto');
     expect(names[1]).toContain('Ana');
+  });
+});
+
+describe('PublicMatchPage — "Volver" target', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('goes to the match\'s own tournament, not the orphaned /torneos listing', async () => {
+    state.match = match({ tournamentId: guid('tournament-1') });
+    renderPage();
+
+    const back = await screen.findByRole('button', { name: /Volver al torneo/ });
+    await userEvent.click(back);
+
+    expect(screen.getByText('detalle-torneo')).toBeInTheDocument();
+  });
+
+  it('falls back to the seasons list when the match has no tournament resolved', async () => {
+    state.match = match({ tournamentId: null });
+    renderPage();
+
+    const back = await screen.findByRole('button', { name: /Volver a temporadas/ });
+    await userEvent.click(back);
+
+    expect(screen.getByText('listado-temporadas')).toBeInTheDocument();
   });
 });

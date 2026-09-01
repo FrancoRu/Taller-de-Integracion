@@ -74,4 +74,11 @@ public class DetailedMatchResponse : BaseEntityResponse
     /// The Id of the stage.
     /// </summary>
     public Guid? StageId { get; set; }
+
+    /// <summary>
+    /// The Id of the tournament this match belongs to (via Stage.Division),
+    /// so the public match page can navigate back to its tournament instead
+    /// of a generic listing.
+    /// </summary>
+    public Guid? TournamentId { get; set; }
 }

@@ -53,6 +53,8 @@ public class MatchProfile : Profile
                     dest.VisitorTeam.Score = src.VisitorScore ?? 0;
                     dest.VisitorTeam.Scorers = ScorersForTeam(src, src.VisitorTeamId);
                 }
+
+                dest.TournamentId = src.Stage?.Division?.TournamentId;
             });
 
         _ = CreateMap<Match, MinimalMatchResponse>()

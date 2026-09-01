@@ -126,6 +126,57 @@ public class AutoMapperProfilesTests
     }
 
     /// <summary>
+    /// The match's tournament (via Stage.Division.TournamentId) flows through
+    /// to the response DTO so the public match page can navigate back to its
+    /// tournament instead of an orphaned listing.
+    /// </summary>
+    [Fact]
+    public void Map_ToDetailedMatchResponse_ExposesTournamentIdFromStageDivision()
+    {
+        Guid tournamentId = Guid.NewGuid();
+        Match match = CreateMatch(homeTeam: null, visitorTeam: null);
+        match.Stage = new Stage
+        {
+            Id = Guid.NewGuid(),
+            CreatedBy = "system",
+            Name = "Fase de grupos",
+            Slug = $"fase-{Guid.NewGuid()}",
+            StageType = Domain.Enums.StageType.Group,
+            IsActive = true,
+            StartDate = match.MatchDate,
+            EndDate = match.MatchDate,
+            DivisionId = Guid.NewGuid(),
+            Division = new Division
+            {
+                Id = Guid.NewGuid(),
+                CreatedBy = "system",
+                Name = "Zona A",
+                Slug = $"zona-a-{Guid.NewGuid()}",
+                TournamentId = tournamentId,
+                Tournament = new Tournament
+                {
+                    Id = tournamentId,
+                    CreatedBy = "system",
+                    Name = "Apertura",
+                    Slug = "apertura",
+                    Description = "Torneo de prueba",
+                    TeamRegistrationDeadline = match.MatchDate,
+                    StartDate = match.MatchDate,
+                    Divisions = [],
+                    Teams = [],
+                },
+                Stages = [],
+            },
+            Matches = [],
+        };
+        IMapper mapper = CreateMapper();
+
+        DetailedMatchResponse response = mapper.Map<DetailedMatchResponse>(match);
+
+        Assert.Equal(tournamentId, response.TournamentId);
+    }
+
+    /// <summary>
     /// The team's ClubId flows through to the response DTO so the frontend can
     /// link a team back to its club.
     /// </summary>

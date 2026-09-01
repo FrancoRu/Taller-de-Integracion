@@ -262,13 +262,23 @@ export default function PublicTournamentPage() {
     );
   }
 
+  // "Volver" goes back to the tournament's season (the actual place a visitor
+  // came from — Torneos is no longer a top-level nav destination), falling
+  // back to the seasons list only when the tournament has no season yet.
+  const backRoute = tournament?.seasonId
+    ? APP_ROUTES.publicSeason.build(tournament.seasonSlug ?? tournament.seasonId)
+    : APP_ROUTES.publicSeasons;
+  const backLabel = tournament?.seasonName
+    ? `Volver a ${tournament.seasonName}`
+    : 'Volver a temporadas';
+
   if (error && !tournament) {
     return (
       <PageShell
         maxWidth="md"
         back={{
-          label: 'Volver a torneos',
-          onClick: () => navigate(APP_ROUTES.publicTournaments),
+          label: backLabel,
+          onClick: () => navigate(backRoute),
         }}
       >
         <LoadErrorState
@@ -288,7 +298,7 @@ export default function PublicTournamentPage() {
         <Typography sx={{ color: 'text.secondary', mb: 3 }}>
           El torneo que buscás no existe o ya no está disponible.
         </Typography>
-        <Button onClick={() => navigate(APP_ROUTES.publicTournaments)}>Volver a torneos</Button>
+        <Button onClick={() => navigate(backRoute)}>{backLabel}</Button>
       </PageShell>
     );
   }
@@ -298,8 +308,8 @@ export default function PublicTournamentPage() {
   return (
     <PageShell
       back={{
-        label: 'Volver a torneos',
-        onClick: () => navigate(APP_ROUTES.publicTournaments),
+        label: backLabel,
+        onClick: () => navigate(backRoute),
       }}
     >
       <Typography

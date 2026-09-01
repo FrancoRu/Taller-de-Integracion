@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import PublicTournamentPage from '@/views/home/tournaments/PublicTournamentPage';
@@ -44,9 +45,42 @@ const renderPage = () =>
     <MemoryRouter initialEntries={[`/torneos/${TOURNAMENT_ID}`]}>
       <Routes>
         <Route path="/torneos/:tournamentId" element={<PublicTournamentPage />} />
+        <Route path="/temporadas" element={<div>listado-temporadas</div>} />
+        <Route
+          path="/temporadas/:seasonId"
+          element={<div>detalle-temporada</div>}
+        />
       </Routes>
     </MemoryRouter>
   );
+
+const mockDivisionsAndTeams = () => {
+  mockedUseDivision.mockReturnValue({
+    division: null,
+    divisions: null,
+    addDivision: vi.fn(),
+    generateFixtureByDivisionId: vi.fn(),
+    putDivisionById: vi.fn(),
+    getDivisionsById: vi.fn(),
+    getDivisionsByFilters: vi
+      .fn()
+      .mockResolvedValue({ items: [], page: 1, pageSize: 20, totalCount: 0 }),
+    deleteDivisionsById: vi.fn(),
+  } as IDivisionContextProps);
+
+  mockedUseTeam.mockReturnValue({
+    team: null,
+    teams: null,
+    addTeam: vi.fn(),
+    putTeamById: vi.fn(),
+    putTeamLogoById: vi.fn(),
+    getTeamsByFiltered: vi
+      .fn()
+      .mockResolvedValue({ items: [], page: 1, pageSize: 20, totalCount: 0 }),
+    getTeamById: vi.fn(),
+    deleteTeamById: vi.fn(),
+  } as ITeamContextProps);
+};
 
 describe('PublicTournamentPage — loading gate', () => {
   it('keeps the skeleton up while the teams fetch is still in flight, even after tournament and divisions resolve', async () => {
@@ -104,5 +138,70 @@ describe('PublicTournamentPage — loading gate', () => {
     resolveTeams({ items: [], page: 1, pageSize: 20, totalCount: 0 });
 
     await waitFor(() => expect(screen.getByRole('tablist')).toBeInTheDocument());
+  });
+});
+
+describe('PublicTournamentPage — "Volver" target', () => {
+  it('goes to the tournament\'s season, not the orphaned /torneos listing', async () => {
+    const tournamentWithSeason: ITournamentResponse = {
+      ...buildTournament(),
+      seasonId: 'season-1' as unknown as GUID,
+      seasonSlug: 'xxvii-temporada',
+      seasonName: 'XXVII Temporada',
+    };
+
+    mockedUseTournament.mockReturnValue({
+      tournament: tournamentWithSeason,
+      tournaments: null,
+      addTournament: vi.fn(),
+      createFullTournament: vi.fn(),
+      addFullDivision: vi.fn(),
+      getAllTournamentsByFilter: vi.fn(),
+      getTournamentById: vi.fn().mockResolvedValue(tournamentWithSeason),
+      putTournamentById: vi.fn(),
+      deleteTournamentById: vi.fn(),
+      registerTeamsByTournamentId: vi.fn(),
+      enrollTeam: vi.fn(),
+      unenrollTeam: vi.fn(),
+      getCompletability: vi.fn(),
+    } as ITournamentContextProps);
+    mockDivisionsAndTeams();
+
+    renderPage();
+
+    const back = await screen.findByRole('button', {
+      name: /Volver a XXVII Temporada/,
+    });
+    await userEvent.click(back);
+
+    expect(screen.getByText('detalle-temporada')).toBeInTheDocument();
+  });
+
+  it('falls back to the seasons list when the tournament has no season', async () => {
+    mockedUseTournament.mockReturnValue({
+      tournament: buildTournament(),
+      tournaments: null,
+      addTournament: vi.fn(),
+      createFullTournament: vi.fn(),
+      addFullDivision: vi.fn(),
+      getAllTournamentsByFilter: vi.fn(),
+      getTournamentById: vi.fn().mockResolvedValue(buildTournament()),
+      putTournamentById: vi.fn(),
+      deleteTournamentById: vi.fn(),
+      registerTeamsByTournamentId: vi.fn(),
+      enrollTeam: vi.fn(),
+      unenrollTeam: vi.fn(),
+      getCompletability: vi.fn(),
+    } as ITournamentContextProps);
+    mockDivisionsAndTeams();
+
+    renderPage();
+
+    const back = await screen.findByRole('button', {
+      name: /Volver a temporadas/,
+    });
+    await userEvent.click(back);
+
+    expect(screen.getByText('listado-temporadas')).toBeInTheDocument();
   });
 });
