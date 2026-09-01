@@ -41,6 +41,7 @@ const buildTeam = (overrides: Partial<ITeamResponse> = {}): ITeamResponse => ({
 });
 
 let getTeamsByFiltered: Mock<ITeamContextProps['getTeamsByFiltered']>;
+let addTeam: Mock<ITeamContextProps['addTeam']>;
 let enrollTeam: Mock<ITournamentContextProps['enrollTeam']>;
 let unenrollTeam: Mock<ITournamentContextProps['unenrollTeam']>;
 
@@ -58,6 +59,8 @@ const setup = (options: {
       : { items: all, page: 1, pageSize: 300, totalCount: all.length }
   );
 
+  addTeam = vi.fn<ITeamContextProps['addTeam']>();
+
   enrollTeam = vi.fn<ITournamentContextProps['enrollTeam']>();
   enrollTeam.mockResolvedValue(true);
 
@@ -67,7 +70,7 @@ const setup = (options: {
   mockedUseTeam.mockReturnValue({
     team: null,
     teams: null,
-    addTeam: vi.fn(),
+    addTeam,
     putTeamById: vi.fn(),
     putTeamLogoById: vi.fn(),
     getTeamsByFiltered,
@@ -145,8 +148,10 @@ describe('TournamentEnrolledTeams — enrolled list', () => {
 });
 
 describe('TournamentEnrolledTeams — enroll new team', () => {
-  it('enrolls a brand-new team by name and refreshes the list', async () => {
+  it('creates a new team with its identity fields, then enrolls it', async () => {
     setup({ enrolled: [], all: [] });
+    const created = buildTeam({ name: 'Racing', threeLetterCode: 'RAC' });
+    addTeam.mockResolvedValue(created);
     const user = userEvent.setup();
 
     renderComponent();
@@ -154,21 +159,37 @@ describe('TournamentEnrolledTeams — enroll new team', () => {
 
     const dialog = await openDialog(user);
     await user.type(
-      within(dialog).getByRole('textbox', { name: /nombre del equipo/i }),
-      '  Racing  '
+      within(dialog).getByRole('textbox', { name: /^nombre$/i }),
+      'Racing'
     );
+    await user.type(
+      within(dialog).getByRole('textbox', { name: /código/i }),
+      'rac'
+    );
+    const logoFile = new File(['logo'], 'racing.png', { type: 'image/png' });
+    const fileInput = dialog.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(fileInput, logoFile);
+
     await user.click(within(dialog).getByRole('button', { name: /inscribir/i }));
 
+    await waitFor(() => expect(addTeam).toHaveBeenCalledTimes(1));
+    expect(addTeam).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Racing',
+        threeLetterCode: 'RAC',
+        logo: logoFile,
+      })
+    );
     await waitFor(() => expect(enrollTeam).toHaveBeenCalledTimes(1));
     expect(enrollTeam).toHaveBeenCalledWith(TOURNAMENT_ID, {
-      newTeamName: 'Racing',
+      existingTeamId: created.id,
     });
     expect(mockedSwalFire).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Equipo inscripto' })
     );
   });
 
-  it('does not enroll when the new-team name is blank', async () => {
+  it('does not create a team when name/code/logo are missing', async () => {
     setup({ enrolled: [], all: [] });
     const user = userEvent.setup();
 
@@ -179,9 +200,10 @@ describe('TournamentEnrolledTeams — enroll new team', () => {
 
     await waitFor(() =>
       expect(mockedSwalFire).toHaveBeenCalledWith(
-        expect.objectContaining({ title: 'Nombre requerido' })
+        expect.objectContaining({ title: 'Campos incompletos' })
       )
     );
+    expect(addTeam).not.toHaveBeenCalled();
     expect(enrollTeam).not.toHaveBeenCalled();
   });
 });
