@@ -172,7 +172,8 @@ const RosterImportDialog: React.FC<RosterImportDialogProps> = ({
           {!clubId ? (
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               Este equipo todavía no está vinculado a un club, por lo que no
-              hay temporadas anteriores para importar.
+              hay temporadas anteriores para importar. Los equipos nuevos se
+              vinculan automáticamente al crearse.
             </Typography>
           ) : (
             <TextField
@@ -186,13 +187,13 @@ const RosterImportDialog: React.FC<RosterImportDialogProps> = ({
                 loading
                   ? 'Cargando temporadas anteriores…'
                   : options.length === 0
-                    ? 'No hay planteles de temporadas anteriores disponibles.'
-                    : undefined
+                    ? 'Este club todavía no tiene otro equipo de una temporada anterior del que importar.'
+                    : 'Elegí el equipo y la temporada de los que copiar el plantel de jugadores.'
               }
               fullWidth
             >
               <MenuItem value="" disabled>
-                Seleccionar plantel origen
+                Seleccioná un equipo y temporada
               </MenuItem>
               {options.map(option => (
                 <MenuItem key={option.value} value={option.value}>
@@ -207,7 +208,7 @@ const RosterImportDialog: React.FC<RosterImportDialogProps> = ({
               onCancel={handleClose}
               onConfirm={() => void handleImport()}
               confirmLabel="Importar"
-              disabled={submitting || !clubId}
+              disabled={submitting || !clubId || options.length === 0}
             />
           </Stack>
         </Stack>
