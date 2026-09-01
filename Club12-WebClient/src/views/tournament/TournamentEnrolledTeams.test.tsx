@@ -185,9 +185,10 @@ describe('TournamentEnrolledTeams — enroll new team', () => {
     expect(enrollTeam).toHaveBeenCalledWith(TOURNAMENT_ID, {
       existingTeamId: created.id,
     });
-    expect(mockedSwalFire).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Equipo inscripto' })
-    );
+    // enrollTeam (mocked here) already shows its own success toast in the
+    // real context — the component must not fire a second, differently
+    // worded one on top of it.
+    expect(mockedSwalFire).not.toHaveBeenCalled();
   });
 
   it('does not create a team when name/code/logo are missing', async () => {
@@ -326,8 +327,9 @@ describe('TournamentEnrolledTeams — unenroll team (HU-108)', () => {
         expect.objectContaining({ tournamentId: TOURNAMENT_ID })
       )
     );
-    expect(mockedSwalFire).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Equipo dado de baja' })
-    );
+    // Only the confirmDelete prompt itself should have called Swal — the
+    // component must not additionally fire its own success toast on top of
+    // unenrollTeam's (mocked here, real in the context) toast.
+    expect(mockedSwalFire).toHaveBeenCalledTimes(1);
   });
 });
