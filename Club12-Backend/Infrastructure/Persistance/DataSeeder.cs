@@ -339,6 +339,7 @@ public sealed class DataSeeder(
             db.PlayerSanctions.AddRange(result.Sanctions);
         }
         db.BlogPosts.AddRange(BuildBlogPosts());
+        db.TeamStaffs.AddRange(BuildTeamStaff(results));
 
         await db.SaveChangesAsync();
 
@@ -371,6 +372,7 @@ public sealed class DataSeeder(
         await db.Scorers.ExecuteDeleteAsync();
         await db.PlayersStatistics.ExecuteDeleteAsync();
         await db.PlayerSanctions.ExecuteDeleteAsync();
+        await db.TeamStaffs.ExecuteDeleteAsync();
         await db.StageTeamMatches.ExecuteDeleteAsync();
         await db.PlayerTeamRegistrations.ExecuteDeleteAsync();
         await db.TeamTournamentRegistrations.ExecuteDeleteAsync();
@@ -555,6 +557,63 @@ public sealed class DataSeeder(
             int j = random.Next(i + 1);
             (values[i], values[j]) = (values[j], values[i]);
         }
+    }
+
+    // Cuerpo técnico (HU-cuerpo-tecnico): 8 plausible Argentine coach/assistant
+    // name pairs, cycled by team index so every seeded team gets one DT and
+    // one Asistente for its current tournament.
+    private static readonly string[] CoachFirstNames =
+        ["Carlos", "Fernando", "Miguel", "Diego", "Sergio", "Pablo", "Martín", "Gustavo"];
+    private static readonly string[] CoachLastNames =
+        ["Gómez", "Rodríguez", "Fernández", "Sosa", "Benítez", "Acosta", "Ibarra", "Peralta"];
+    private static readonly string[] AssistantFirstNames =
+        ["Javier", "Alejandro", "Nicolás", "Ezequiel", "Federico", "Rodrigo", "Matías", "Emiliano"];
+    private static readonly string[] AssistantLastNames =
+        ["Coronel", "Duarte", "Aguirre", "Medina", "Bordón", "Cabrera", "Zabala", "Leguizamón"];
+
+    /// <summary>
+    /// Builds a DT + Asistente for every seeded team, scoped to the tournament
+    /// it was built for. Uses the Team/Tournament navigations (rather than
+    /// their ids) because these entities have not been saved yet at this
+    /// point, so EF resolves the TeamId/TournamentId FKs via relationship
+    /// fixup once the batch is persisted.
+    /// </summary>
+    private static List<TeamStaff> BuildTeamStaff(SampleTournamentBuilder.BuildResult[] results)
+    {
+        List<TeamStaff> staff = [];
+        int index = 0;
+
+        IEnumerable<(Team Team, Tournament Tournament)> teamsByTournament = results
+            .SelectMany(result => result.Tournament.Teams.Select(team => (team, result.Tournament)));
+
+        foreach ((Team team, Tournament tournament) in teamsByTournament)
+        {
+            string coachName =
+                $"{CoachFirstNames[index % CoachFirstNames.Length]} {CoachLastNames[index % CoachLastNames.Length]}";
+            string assistantName =
+                $"{AssistantFirstNames[index % AssistantFirstNames.Length]} {AssistantLastNames[index % AssistantLastNames.Length]}";
+
+            staff.Add(new TeamStaff
+            {
+                CreatedBy = Domain.Constants.AuditConstants.SystemUser,
+                Team = team,
+                Tournament = tournament,
+                FullName = coachName,
+                Role = TeamStaffRole.Coach,
+            });
+            staff.Add(new TeamStaff
+            {
+                CreatedBy = Domain.Constants.AuditConstants.SystemUser,
+                Team = team,
+                Tournament = tournament,
+                FullName = assistantName,
+                Role = TeamStaffRole.AssistantCoach,
+            });
+
+            index++;
+        }
+
+        return staff;
     }
 
     private static List<Venue> BuildVenues()

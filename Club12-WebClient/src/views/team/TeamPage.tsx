@@ -30,6 +30,7 @@ import PlayerStatisticCreatePage from '@/views/playerStatistic/playerStatisticCr
 import PlayerSanctionCreatePage from '@/views/playerSanction/playerSanctionCreatePage';
 import RosterImportDialog from '@/views/team/RosterImportDialog';
 import TeamFormDialog from '@/views/team/TeamFormDialog';
+import TeamStaffManager from '@/views/team/TeamStaffManager';
 import type { TeamFormState, TeamFormField } from '@/views/team/teams.types';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
@@ -72,7 +73,12 @@ const TeamPage: React.FC<TeamPageProps> = ({
   const { playerStatistics, getPlayerStatisticsByFilter } = usePlayerStatistic();
   const { playerSanctions, getPlayerSanctionByFilter } = usePlayerSanction();
   const [loading, setLoading] = useState(false);
-  type TeamTab = 'detalle' | 'jugadores' | 'puntuaciones' | 'sanciones';
+  type TeamTab =
+    | 'detalle'
+    | 'jugadores'
+    | 'puntuaciones'
+    | 'sanciones'
+    | 'cuerpoTecnico';
   const TAB_QUERY_PARAM = 'tab';
   // Kept in the URL (not local state) so leaving to e.g. a player's detail
   // and clicking "Volver" back here lands on the same tab instead of
@@ -334,6 +340,9 @@ const TeamPage: React.FC<TeamPageProps> = ({
         <Tab label="Jugadores" value="jugadores" />
         <Tab label="Puntuaciones" value="puntuaciones" />
         <Tab label="Sanciones" value="sanciones" />
+        {team.tournamentId && (
+          <Tab label="Cuerpo técnico" value="cuerpoTecnico" />
+        )}
       </Tabs>
 
       {tab === 'detalle' && (
@@ -512,6 +521,10 @@ const TeamPage: React.FC<TeamPageProps> = ({
             </Typography>
           )}
         </>
+      )}
+
+      {tab === 'cuerpoTecnico' && team.tournamentId && (
+        <TeamStaffManager teamId={team.id} tournamentId={team.tournamentId} />
       )}
 
       <PlayerStatisticCreatePage

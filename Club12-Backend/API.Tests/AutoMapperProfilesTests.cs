@@ -5,10 +5,12 @@ using Application.DTOs.Divisions.Response;
 using Application.DTOs.Match.Request;
 using Application.DTOs.Match.Response;
 using Application.DTOs.Team.Response;
+using Application.DTOs.TeamStaff.Response;
 
 using AutoMapper;
 
 using Domain.Entities.Models;
+using Domain.Enums;
 
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -311,5 +313,61 @@ public class AutoMapperProfilesTests
 
         Assert.NotNull(response.QualificationRanges);
         Assert.Empty(response.QualificationRanges!);
+    }
+
+    /// <summary>
+    /// A TeamStaff member maps to TeamStaffResponse exposing Role as its
+    /// string name (not the numeric enum value) and TeamName resolved from
+    /// the loaded Team navigation.
+    /// </summary>
+    [Fact]
+    public void Map_ToTeamStaffResponse_ExposesRoleAsStringAndTeamName()
+    {
+        MapperConfiguration configuration = new(cfg => cfg.AddProfile<TeamStaffProfile>(), NullLoggerFactory.Instance);
+        IMapper mapper = configuration.CreateMapper();
+
+        Team team = CreateTeam("River Plate");
+        TeamStaff staff = new()
+        {
+            Id = Guid.NewGuid(),
+            CreatedBy = "system",
+            TeamId = team.Id,
+            Team = team,
+            TournamentId = Guid.NewGuid(),
+            FullName = "Carlos Gómez",
+            Role = TeamStaffRole.Coach,
+        };
+
+        TeamStaffResponse response = mapper.Map<TeamStaffResponse>(staff);
+
+        Assert.Equal("Coach", response.Role);
+        Assert.Equal("River Plate", response.TeamName);
+    }
+
+    /// <summary>
+    /// When the Team navigation was not loaded, TeamName degrades to null
+    /// instead of throwing.
+    /// </summary>
+    [Fact]
+    public void Map_ToTeamStaffResponse_WithNoTeamLoaded_TeamNameIsNull()
+    {
+        MapperConfiguration configuration = new(cfg => cfg.AddProfile<TeamStaffProfile>(), NullLoggerFactory.Instance);
+        IMapper mapper = configuration.CreateMapper();
+
+        TeamStaff staff = new()
+        {
+            Id = Guid.NewGuid(),
+            CreatedBy = "system",
+            TeamId = Guid.NewGuid(),
+            Team = null,
+            TournamentId = Guid.NewGuid(),
+            FullName = "Javier Coronel",
+            Role = TeamStaffRole.AssistantCoach,
+        };
+
+        TeamStaffResponse response = mapper.Map<TeamStaffResponse>(staff);
+
+        Assert.Equal("AssistantCoach", response.Role);
+        Assert.Null(response.TeamName);
     }
 }

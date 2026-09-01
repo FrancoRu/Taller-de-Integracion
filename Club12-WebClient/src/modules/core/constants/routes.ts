@@ -20,7 +20,7 @@ const routes = {
   pointDeductions: 'point-deductions',
   playerStatistics: 'player-statistics',
   statistics: 'statistics',
-  staff: 'staffs',
+  staff: 'staff',
   teams: 'teams',
   tournaments: 'tournaments',
   users: 'users',

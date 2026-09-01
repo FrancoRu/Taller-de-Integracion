@@ -66,6 +66,15 @@ vi.mock('@/modules/champion/service/champion.service', () => ({
   },
 }));
 
+const getTeamStaffByTeamId = vi.fn();
+
+vi.mock('@/modules/teamStaff/service/teamStaff.service', () => ({
+  teamStaffService: {
+    getTeamStaffByTeamId: (...args: unknown[]) =>
+      getTeamStaffByTeamId(...args),
+  },
+}));
+
 const participation = (
   overrides: Partial<TeamParticipation> = {}
 ): TeamParticipation => ({
@@ -130,6 +139,7 @@ describe('PublicTeamPage', () => {
     getTeamMatches.mockResolvedValue({ data: [finishedMatch()] });
     getScorersByPlayerFiltered.mockResolvedValue({ data: { items: [] } });
     getChampionsHistory.mockResolvedValue({ data: [] });
+    getTeamStaffByTeamId.mockResolvedValue({ data: [] });
   });
 
   it('renders the box-score tiles: position from the standing, record/differential from all matches', async () => {
@@ -278,6 +288,40 @@ describe('PublicTeamPage', () => {
     await waitFor(() => {
       expect(screen.getByLabelText('Torneo')).toBeInTheDocument();
     });
+  });
+
+  it('renders the technical staff section fed by the active tournament', async () => {
+    getTeamStaffByTeamId.mockResolvedValue({
+      data: [
+        {
+          id: guid('staff-1'),
+          teamId: guid(TEAM_ID),
+          tournamentId: guid('tournament-1'),
+          fullName: 'Juan Pérez',
+          role: 'Coach',
+          dateCreated: '2026-01-01T00:00:00Z',
+        },
+      ],
+    });
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText('Cuerpo técnico')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
+    expect(screen.getByText('DT')).toBeInTheDocument();
+  });
+
+  it('does not render the technical staff section when there is none', async () => {
+    getTeamStaffByTeamId.mockResolvedValue({ data: [] });
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText('Los Cuervos')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Cuerpo técnico')).not.toBeInTheDocument();
   });
 
   it('renders the titles section only when the team has won something', async () => {

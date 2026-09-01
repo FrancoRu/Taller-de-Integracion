@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Button, Grid, Stack, Tab, Tabs, Typography } from '@mui/material';
+import { Button, Chip, Grid, Stack, Tab, Tabs, Typography } from '@mui/material';
 import PageShell from '@/views/core/components/PageShell';
 import BlockingOverlay from '@/views/core/components/BlockingOverlay';
 import CategoryChip from '@/views/core/components/CategoryChip';
@@ -19,6 +19,7 @@ import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { confirmAction, notifyError } from '@/modules/core/utils/confirmDialog';
 import {
   TOURNAMENT_STATUS_LABEL,
+  TOURNAMENT_STATUS_COLOR,
   resolveTournamentStatus,
 } from '@/modules/tournament/utils/tournamentDisplay';
 import { formatDateAr } from '@/modules/core/utils/formatDate';
@@ -209,6 +210,11 @@ const TournamentPage: React.FC = () => {
 
       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 2 }}>
         <CategoryChip category={tournament.category} />
+        <Chip
+          label={TOURNAMENT_STATUS_LABEL[currentStatus]}
+          color={TOURNAMENT_STATUS_COLOR[currentStatus]}
+          size="small"
+        />
       </Stack>
 
       <Tabs
