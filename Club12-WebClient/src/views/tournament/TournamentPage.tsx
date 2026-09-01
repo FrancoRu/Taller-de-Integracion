@@ -30,7 +30,7 @@ const TournamentPage: React.FC = () => {
   const { tournament, getTournamentById, putTournamentById } = useTournament();
   const [loading, setLoading] = useState(false);
   const [reverting, setReverting] = useState(false);
-  type TournamentTab = 'detalle' | 'divisiones' | 'equipos' | 'inscriptos' | 'asignacion';
+  type TournamentTab = 'detalle' | 'divisiones' | 'equipos' | 'asignacion';
   const TAB_QUERY_PARAM = 'tab';
   // Kept in the URL (not local state) so leaving to a division/team's detail
   // page and clicking "Volver" back here lands on the same tab instead of
@@ -95,10 +95,10 @@ const TournamentPage: React.FC = () => {
         </Typography>
         <Button
           variant="text"
-          onClick={() => navigate(APP_ROUTES.panelTournaments)}
+          onClick={() => navigate(APP_ROUTES.panelSeasons)}
           sx={{ mt: 2, px: 0 }}
         >
-          Volver al listado
+          Volver a temporadas
         </Button>
       </PageShell>
     );
@@ -219,9 +219,6 @@ const TournamentPage: React.FC = () => {
           <Tab label="Detalle" value="detalle" />
           <Tab label="Divisiones" value="divisiones" />
           <Tab label="Equipos" value="equipos" />
-          {isOpenForRegistration && (
-            <Tab label="Equipos inscriptos" value="inscriptos" />
-          )}
           {canAssign && (
             <Tab label="Asignación" value="asignacion" />
           )}
@@ -318,11 +315,17 @@ const TournamentPage: React.FC = () => {
           />
         )}
 
-        {tab === 'equipos' && <TeamsPage tournamentId={tournament.id} />}
-
-        {tab === 'inscriptos' && isOpenForRegistration && (
-          <TournamentEnrolledTeams tournamentId={tournament.id} />
-        )}
+        {/* While registration is open, "Equipos" IS the registration-management
+            view (enroll/unenroll) — showing a second, read-only "Equipos
+            inscriptos" tab with the same list was pure duplication. Once
+            registration closes, enroll/unenroll is no longer possible, so the
+            tab falls back to the plain roster list. */}
+        {tab === 'equipos' &&
+          (isOpenForRegistration ? (
+            <TournamentEnrolledTeams tournamentId={tournament.id} />
+          ) : (
+            <TeamsPage tournamentId={tournament.id} />
+          ))}
 
         {tab === 'asignacion' && canAssign && (
           <TournamentDivisionAssignment tournament={tournament} />

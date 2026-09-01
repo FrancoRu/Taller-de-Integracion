@@ -18,6 +18,11 @@ vi.mock('@/modules/auth/hook/auth.hook');
 vi.mock('@/views/tournament/TournamentEnrolledTeams', () => ({
   default: () => <div>enrolled-teams-panel</div>,
 }));
+// The read-only roster (shown once registration closes) pulls in the team
+// data hook it does not need for this gate test; stub it out too.
+vi.mock('@/views/team/TeamsPage', () => ({
+  default: () => <div>teams-page-panel</div>,
+}));
 // The assignment tab pulls in division/stage/team/tournament data hooks it does
 // not need for this gate test; stub the whole subtree so only the tab wiring is
 // exercised.
@@ -86,24 +91,30 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe('TournamentPage — enrolled-teams tab gate (HU-107)', () => {
-  it('shows the "Equipos inscriptos" tab only while OpenForRegistration', async () => {
+describe('TournamentPage — "Equipos" tab content gate (HU-107)', () => {
+  // Equipos/Equipos inscriptos used to be two separate tabs showing the same
+  // enrolled-team list. They're now one tab whose content depends on whether
+  // registration is still open (enroll/unenroll) or not (read-only roster).
+  it('shows the enroll/unenroll panel under "Equipos" while OpenForRegistration', async () => {
     setup(TournamentStatus.OpenForRegistration);
     renderPage();
 
-    expect(
-      await screen.findByRole('tab', { name: 'Equipos inscriptos' })
-    ).toBeInTheDocument();
-  });
+    await userEvent.click(await screen.findByRole('tab', { name: 'Equipos' }));
 
-  it('hides the "Equipos inscriptos" tab for other statuses', async () => {
-    setup(TournamentStatus.Scheduled);
-    renderPage();
-
-    await screen.findByRole('tab', { name: 'Detalle' });
+    expect(await screen.findByText('enrolled-teams-panel')).toBeInTheDocument();
     expect(
       screen.queryByRole('tab', { name: 'Equipos inscriptos' })
     ).not.toBeInTheDocument();
+  });
+
+  it('shows the read-only roster under "Equipos" for other statuses', async () => {
+    setup(TournamentStatus.Scheduled);
+    renderPage();
+
+    await userEvent.click(await screen.findByRole('tab', { name: 'Equipos' }));
+
+    expect(await screen.findByText('teams-page-panel')).toBeInTheDocument();
+    expect(screen.queryByText('enrolled-teams-panel')).not.toBeInTheDocument();
   });
 });
 

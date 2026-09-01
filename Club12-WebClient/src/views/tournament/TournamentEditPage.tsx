@@ -156,10 +156,10 @@ const TournamentEditPage: React.FC = () => {
         </Typography>
         <Button
           variant="text"
-          onClick={() => navigate(APP_ROUTES.panelTournaments)}
+          onClick={() => navigate(APP_ROUTES.panelSeasons)}
           sx={{ mt: 2, px: 0 }}
         >
-          Volver al listado
+          Volver a temporadas
         </Button>
       </PageShell>
     );
