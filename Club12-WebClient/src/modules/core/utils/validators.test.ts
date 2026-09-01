@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  formatArgentinePhone,
   formatDocumentNumber,
   isAtLeastMinimumPlayerAge,
   isValidDocumentNumber,
@@ -74,6 +75,28 @@ describe('isValidDocumentNumber', () => {
     '30.111.222', // formatted with dots — reject, not accept-and-strip
   ])('rejects a non-digits-only document number: %s', value => {
     expect(isValidDocumentNumber(value)).toBe(false);
+  });
+});
+
+describe('formatArgentinePhone', () => {
+  it('formats a bare 10-digit local number', () => {
+    expect(formatArgentinePhone('3435551234')).toBe('+54 9 343 555-1234');
+  });
+
+  it('is idempotent when the country code and mobile marker are already present', () => {
+    expect(formatArgentinePhone('+54 9 343 555-1234')).toBe(
+      '+54 9 343 555-1234'
+    );
+    expect(formatArgentinePhone('5493435551234')).toBe('+54 9 343 555-1234');
+  });
+
+  it('handles the country code without the mobile marker', () => {
+    expect(formatArgentinePhone('543435551234')).toBe('+54 9 343 555-1234');
+  });
+
+  it('returns a number of unexpected length unchanged', () => {
+    expect(formatArgentinePhone('123')).toBe('123');
+    expect(formatArgentinePhone('123456789012')).toBe('123456789012');
   });
 });
 

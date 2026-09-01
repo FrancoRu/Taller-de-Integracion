@@ -78,6 +78,35 @@ export function isAtLeastMinimumPlayerAge(birthDate: string): boolean {
 }
 
 /**
+ * Formats a phone number as an Argentine mobile number for display, e.g.
+ * "3435551234" → "+54 9 343 555-1234". Accepts the number with or without
+ * the "+54"/"9" prefixes already present (idempotent either way). Only a
+ * 10-digit local number (area code + line, the shape every phone in this
+ * app is stored as) can be confidently split into area/exchange/line
+ * without an area-code length table, so anything else is returned
+ * unchanged rather than mangled.
+ */
+export function formatArgentinePhone(value: string): string {
+  const digits = value.replace(/\D/g, '');
+  let local = digits;
+  if (local.startsWith('54')) {
+    local = local.slice(2);
+  }
+  if (local.startsWith('9')) {
+    local = local.slice(1);
+  }
+
+  if (local.length !== 10) {
+    return value;
+  }
+
+  const area = local.slice(0, 3);
+  const exchange = local.slice(3, 6);
+  const line = local.slice(6);
+  return `+54 9 ${area} ${exchange}-${line}`;
+}
+
+/**
  * Formats a DNI/document number with dot thousands-separators for display
  * (e.g. "38742615" → "38.742.615", matching the printed-DNI convention).
  * Non-numeric input (legacy/test data) is returned unchanged rather than

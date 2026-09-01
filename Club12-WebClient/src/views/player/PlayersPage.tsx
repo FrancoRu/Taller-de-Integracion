@@ -24,6 +24,7 @@ import {
 } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import {
+  formatArgentinePhone,
   formatDocumentNumber,
   isAtLeastMinimumPlayerAge,
   isValidDocumentNumber,
@@ -423,7 +424,10 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         headerName: 'Teléfono',
         flex: 0.9,
         minWidth: 140,
-        renderCell: params => params.row.phoneNumber || '—',
+        renderCell: params =>
+          params.row.phoneNumber
+            ? formatArgentinePhone(params.row.phoneNumber)
+            : '—',
       },
       {
         field: 'socialSecurity',
