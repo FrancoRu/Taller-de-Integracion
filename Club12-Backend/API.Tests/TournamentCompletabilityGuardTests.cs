@@ -193,6 +193,53 @@ public class TournamentCompletabilityGuardTests : IClassFixture<CustomWebApplica
     }
 
     [Fact]
+    public async Task ChangeStatusIntoOngoing_FailurePartwayThroughFixtureGeneration_RollsBackEveryDivision()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        ITournamentService tournamentService = scope.ServiceProvider.GetRequiredService<ITournamentService>();
+
+        Tournament tournament = await SeedTournamentAsync(db, TournamentStatus.RegistrationClosed);
+
+        // Division A: a perfectly valid, completable zone — generating its
+        // fixture alone would succeed.
+        Division zoneA = await SeedDivisionAsync(db, tournament, crossCup: false);
+        Stage groupA = await SeedGroupStageAsync(db, zoneA);
+        for (int i = 0; i < 4; i++)
+        {
+            Team team = await SeedTeamAsync(db, tournament.Id);
+            await AssignAndEnrollAsync(db, tournament, groupA, team);
+            await SeedPlayersAsync(db, team, tournament, count: 5);
+        }
+
+        // Division B: a completable group stage (so the HU-109 guard passes)
+        // PLUS a RoundOf16 stage — a knockout type CreateAutomatedMatchesAsync
+        // does not support. Fixture generation reaches this stage only after
+        // successfully generating division B's own group matches, so this
+        // also proves a same-division partial success rolls back too.
+        Division zoneB = await SeedDivisionAsync(db, tournament, crossCup: false);
+        Stage groupB = await SeedGroupStageAsync(db, zoneB);
+        for (int i = 0; i < 2; i++)
+        {
+            Team team = await SeedTeamAsync(db, tournament.Id);
+            await AssignAndEnrollAsync(db, tournament, groupB, team);
+            await SeedPlayersAsync(db, team, tournament, count: 5);
+        }
+        await SeedRoundOf16StageAsync(db, zoneB);
+
+        await Assert.ThrowsAsync<NotSupportedException>(
+            () => tournamentService.ChangeStatusAsync(tournament.Id, TournamentStatus.Ongoing));
+
+        Tournament reloaded = await db.Tournaments.AsNoTracking().SingleAsync(t => t.Id == tournament.Id);
+        Assert.Equal(TournamentStatus.RegistrationClosed, reloaded.Status);
+        // Neither division's matches survive — the whole attempt rolls back
+        // together: division A succeeded fully, division B's OWN group stage
+        // even succeeded before its RoundOf16 stage threw, but none of it sticks.
+        Assert.Equal(0, await db.Matches.CountAsync(m => m.StageId == groupA.Id));
+        Assert.Equal(0, await db.Matches.CountAsync(m => m.StageId == groupB.Id));
+    }
+
+    [Fact]
     public async Task GetCompletability_UnknownTournament_ReturnsNotFound()
     {
         HttpClient client = _factory.CreateAuthenticatedClient(Roles.Admin);
@@ -256,6 +303,35 @@ public class TournamentCompletabilityGuardTests : IClassFixture<CustomWebApplica
             Name = $"Group-{Guid.NewGuid()}",
             StageType = StageType.Group,
             IsActive = true,
+            StartDate = start,
+            EndDate = start.AddDays(14),
+            DivisionId = division.Id,
+            Division = division,
+            Matches = [],
+            CreatedBy = "test",
+        };
+
+        db.Stages.Add(stage);
+        await db.SaveChangesAsync();
+        return stage;
+    }
+
+    /// <summary>
+    /// A knockout stage type CreateAutomatedMatchesAsync does not support —
+    /// used to force a deterministic failure partway through fixture
+    /// generation for the rollback test.
+    /// </summary>
+    private static async Task<Stage> SeedRoundOf16StageAsync(ApplicationDBContext db, Division division)
+    {
+        DateTime start = DateTime.UtcNow.Date.AddDays(30);
+
+        Stage stage = new()
+        {
+            Slug = $"stage-{Guid.NewGuid()}",
+            Name = $"RoundOf16-{Guid.NewGuid()}",
+            StageType = StageType.RoundOf16,
+            IsActive = true,
+            IsElimination = true,
             StartDate = start,
             EndDate = start.AddDays(14),
             DivisionId = division.Id,

@@ -287,7 +287,13 @@ public class TournamentService(
                     ErrorMessages.Tournament.NotCompletable(SummarizeIssues(issues)));
             }
 
-            await GenerateFixtureAsync(tournament);
+            // Wrapped so a failure partway through one division's stages (each
+            // CreateAutomatedMatchesAsync call self-commits) rolls back every
+            // match already generated in THIS attempt too — otherwise the
+            // tournament would correctly stay RegistrationClosed, but with a
+            // genuinely half-built fixture (some stages seeded, some not)
+            // instead of a clean slate to retry from.
+            await unitOfWork.ExecuteInTransactionAsync(() => GenerateFixtureAsync(tournament));
         }
 
         // "Revertir a borrador": moving Ongoing → RegistrationClosed reopens the

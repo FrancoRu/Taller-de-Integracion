@@ -311,10 +311,14 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
     /// <summary>
     /// Assigns a unique slug to every match in a freshly built batch (e.g. a
     /// stage's full fixture) before it is persisted. Team names are
-    /// prefetched once for the whole batch to avoid N+1 queries. Uniqueness
-    /// is checked against both already-persisted matches and the slugs
-    /// already assigned earlier in this same batch, since none of the
-    /// batch's matches exist in the repository yet when this runs.
+    /// prefetched once for the whole batch to avoid N+1 queries, and so is
+    /// slug uniqueness: every match's base slug is pure/synchronous, so the
+    /// whole batch's candidates are checked against already-persisted
+    /// matches in ONE query up front, instead of one EXISTS round trip per
+    /// match. A real collision (rare — slugs are team names plus a
+    /// timestamp) still falls back to a live per-candidate check via
+    /// GenerateUniqueSlugAsync's normal -2/-3 retry loop, since the
+    /// suffixed candidates aren't covered by the prefetch.
     /// </summary>
     private async Task AssignMatchSlugsAsync(List<Match> matches)
     {
@@ -329,17 +333,42 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
             : (await _teamRepository.FindAsync(team => teamIds.Contains(team.Id)))
                 .ToDictionary(team => team.Id, team => team.Name);
 
+        Dictionary<Match, string> baseSlugByMatch = matches.ToDictionary(
+            match => match,
+            match => SlugGenerator.GenerateSlug(MatchSlugSourceBuilder.Build(
+                ResolveTeamNameFromMap(match.HomeTeamId, teamNamesById),
+                ResolveTeamNameFromMap(match.VisitorTeamId, teamNamesById),
+                match.MatchDate)));
+
+        HashSet<string> baseSlugs = [.. baseSlugByMatch.Values.Distinct()];
+        HashSet<string> existingSlugs = [.. (await _matchRepository.FindAsync(
+            m => baseSlugs.Contains(m.Slug)))
+            .Select(m => m.Slug)];
+
         HashSet<string> slugsAssignedInBatch = [];
 
         foreach (Match match in matches)
         {
-            string homeTeamName = ResolveTeamNameFromMap(match.HomeTeamId, teamNamesById);
-            string visitorTeamName = ResolveTeamNameFromMap(match.VisitorTeamId, teamNamesById);
+            string baseSlug = baseSlugByMatch[match];
 
-            match.Slug = await SlugGenerator.GenerateUniqueSlugAsync(
-                MatchSlugSourceBuilder.Build(homeTeamName, visitorTeamName, match.MatchDate),
-                async candidate => slugsAssignedInBatch.Contains(candidate)
-                    || await _matchRepository.ExistsAsync(m => m.Slug == candidate));
+            // Fast, IO-free path: the prefetch already proved this exact
+            // base slug is free, and nothing earlier in this batch claimed
+            // it either.
+            if (!existingSlugs.Contains(baseSlug) && !slugsAssignedInBatch.Contains(baseSlug))
+            {
+                match.Slug = baseSlug;
+            }
+            else
+            {
+                string homeTeamName = ResolveTeamNameFromMap(match.HomeTeamId, teamNamesById);
+                string visitorTeamName = ResolveTeamNameFromMap(match.VisitorTeamId, teamNamesById);
+
+                match.Slug = await SlugGenerator.GenerateUniqueSlugAsync(
+                    MatchSlugSourceBuilder.Build(homeTeamName, visitorTeamName, match.MatchDate),
+                    async candidate => slugsAssignedInBatch.Contains(candidate)
+                        || existingSlugs.Contains(candidate)
+                        || await _matchRepository.ExistsAsync(m => m.Slug == candidate));
+            }
 
             slugsAssignedInBatch.Add(match.Slug);
         }
