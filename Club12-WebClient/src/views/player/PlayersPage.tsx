@@ -503,11 +503,21 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       });
     }
 
+    // The actions column's width must grow with how many icon buttons are
+    // actually visible (Ver/Editar/Eliminar always, plus Ficha médica/Dorsal
+    // in roster context) — a fixed width clips the later ones instead of
+    // rendering them, so they're invisible and unclickable rather than
+    // absent (HU: "no puedo editar o borrar jugadores desde el plantel").
+    const visibleActionCount = playerActions.filter(
+      action => action.hidden !== true
+    ).length;
+
     return [
       ...baseColumns,
       buildActionsColumn(playerActions, {
         align: 'center',
         headerAlign: 'center',
+        minWidth: 40 * visibleActionCount + 40,
       }),
     ];
   }, [
