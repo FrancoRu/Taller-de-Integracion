@@ -34,12 +34,7 @@ import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PageShell from '@/views/core/components/PageShell';
 import FilterBar from '@/views/core/components/FilterBar';
-import {
-  DeleteIcon,
-  EditIcon,
-  SearchIcon,
-  VisibilityIcon,
-} from '@/views/core/MUI/icons/icons';
+import { DeleteIcon, SearchIcon, VisibilityIcon } from '@/views/core/MUI/icons/icons';
 import PlayerSanctionCreatePage from '@/views/playerSanction/playerSanctionCreatePage';
 import PlayerSanctionDeletePage from '@/views/playerSanction/playerSanctionDeletePage';
 import {
@@ -266,13 +261,6 @@ const PlayerSanctionsPage: React.FC = () => {
     [navigate]
   );
 
-  const handleEdit = useCallback(
-    (row: IPlayerSanctionResponse) => {
-      navigate(APP_ROUTES.panelSanctionEdit.build(row.slug ?? row.id));
-    },
-    [navigate]
-  );
-
   const handleDelete = useCallback((row: IPlayerSanctionResponse) => {
     setDeletingSanction(row);
   }, []);
@@ -286,19 +274,13 @@ const PlayerSanctionsPage: React.FC = () => {
         onClick: handleView,
       },
       {
-        label: 'Editar',
-        color: 'primary',
-        icon: <EditIcon fontSize="small" />,
-        onClick: handleEdit,
-      },
-      {
         label: 'Eliminar',
         color: 'error',
         icon: <DeleteIcon fontSize="small" />,
         onClick: handleDelete,
       },
     ],
-    [handleDelete, handleEdit, handleView]
+    [handleDelete, handleView]
   );
 
   const handleCreateSanction = useCallback(() => {

@@ -204,6 +204,21 @@ const PlayerSanctionPage: React.FC = () => {
         label: 'Volver al listado',
         onClick: () => navigate(APP_ROUTES.panelSanctions),
       }}
+      actions={
+        <Button
+          variant="outlined"
+          color="primary"
+          onClick={() =>
+            navigate(
+              APP_ROUTES.panelSanctionEdit.build(
+                playerSanction.slug ?? playerSanction.id
+              )
+            )
+          }
+        >
+          Editar sanción
+        </Button>
+      }
     >
         <Tabs
           value={tab}

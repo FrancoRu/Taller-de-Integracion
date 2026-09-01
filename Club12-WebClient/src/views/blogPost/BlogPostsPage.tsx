@@ -20,12 +20,7 @@ import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PageShell from '@/views/core/components/PageShell';
 import FilterBar from '@/views/core/components/FilterBar';
 import { TableSkeleton } from '@/views/core/components/skeletons';
-import {
-  DeleteIcon,
-  EditIcon,
-  SearchIcon,
-  VisibilityIcon,
-} from '@/views/core/MUI/icons/icons';
+import { DeleteIcon, SearchIcon, VisibilityIcon } from '@/views/core/MUI/icons/icons';
 import {
   TABLE_PAGE_SIZE_OPTIONS,
   TABLE_ROWS_PER_PAGE,
@@ -104,13 +99,6 @@ const BlogPostsPage: React.FC = () => {
     [navigate]
   );
 
-  const handleEdit = useCallback(
-    (row: BlogPostResponse) => {
-      navigate(APP_ROUTES.panelBlogEdit.build(row.slug ?? row.id));
-    },
-    [navigate]
-  );
-
   const handleDelete = useCallback(
     async (row: BlogPostResponse) => {
       const confirmed = await confirmDelete({
@@ -132,10 +120,9 @@ const BlogPostsPage: React.FC = () => {
   const postActions = useMemo<TableRowAction<BlogPostResponse>[]>(
     () => [
       { label: 'Ver', color: 'info', icon: <VisibilityIcon fontSize="small" />, onClick: handleView },
-      { label: 'Editar', color: 'primary', icon: <EditIcon fontSize="small" />, onClick: handleEdit },
       { label: 'Eliminar', color: 'error', icon: <DeleteIcon fontSize="small" />, onClick: handleDelete },
     ],
-    [handleDelete, handleEdit, handleView]
+    [handleDelete, handleView]
   );
 
   const columns: GridColDef<BlogPostResponse>[] = useMemo(() => {
