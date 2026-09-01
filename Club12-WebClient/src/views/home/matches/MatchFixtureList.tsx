@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import { IMatchResponse } from '@/modules/match/type/match.d';
 import MatchRow from '@/views/home/matches/MatchRow';
+import TeamLogo from '@/views/core/components/TeamLogo';
 import {
   BYE_TEAM_LABEL,
   byeTeamNamesForRound,
@@ -76,6 +77,18 @@ export default function MatchFixtureList({
   const rounds = useMemo(() => groupMatchesByRound(matches), [matches]);
   const stageTeamNames = useMemo(() => collectStageTeamNames(matches), [matches]);
   const currentRound = useMemo(() => nearestRoundKey(rounds), [rounds]);
+
+  // A bye team is still a real team with its own escudo — it just isn't
+  // playing this round. Look its logo up from any match it played elsewhere
+  // in the stage, the same way its name is derived (byeTeamNamesForRound).
+  const teamLogoByName = useMemo(() => {
+    const logos = new Map<string, string | undefined>();
+    matches.forEach(match => {
+      if (match.homeTeam) logos.set(match.homeTeam.name, match.homeTeam.logoUrl);
+      if (match.visitorTeam) logos.set(match.visitorTeam.name, match.visitorTeam.logoUrl);
+    });
+    return logos;
+  }, [matches]);
 
   // Every collapsible (non-current) round starts collapsed; toggling adds/
   // removes it from this set. Keyed by round number, with `null` (knockout
@@ -162,17 +175,28 @@ export default function MatchFixtureList({
                     <MatchRow key={match.id} match={match} buildHref={buildHref} />
                   ))}
                   {byes.map(teamName => (
-                    <Stack
+                    <Box
                       key={`bye-${teamName}`}
-                      direction="row"
-                      spacing={1}
-                      sx={{ alignItems: 'center', px: 2, py: 1.25 }}
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: { xs: '56px 1fr auto', sm: '56px 1fr auto 140px' },
+                        alignItems: 'center',
+                        gap: { xs: 1, sm: 2 },
+                        px: 2,
+                        py: 1.25,
+                      }}
                     >
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {teamName}
-                      </Typography>
-                      <Chip label={BYE_TEAM_LABEL} size="small" variant="outlined" />
-                    </Stack>
+                      <Box />
+                      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'center', minWidth: 0 }}>
+                        <TeamLogo teamName={teamName} logoUrl={teamLogoByName.get(teamName)} size={28} />
+                        <Typography variant="body2" noWrap sx={{ fontWeight: 500, minWidth: 0 }}>
+                          {teamName}
+                        </Typography>
+                      </Stack>
+                      <Box sx={{ justifySelf: 'end' }}>
+                        <Chip label={BYE_TEAM_LABEL} size="small" variant="outlined" />
+                      </Box>
+                    </Box>
                   ))}
                 </Stack>
               </Paper>
