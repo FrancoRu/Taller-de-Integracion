@@ -1,16 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
+  Button,
   Card,
   CardActionArea,
   CardContent,
   Chip,
   Grid,
+  Stack,
   Typography,
 } from '@mui/material';
 import { useSeason } from '@/modules/season/hook/season.hook';
 import {
+  IPutSeasonRequest,
   ISeasonResponse,
   ISeasonTournament,
 } from '@/modules/season/type/season';
@@ -20,6 +23,19 @@ import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PageShell from '@/views/core/components/PageShell';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
+import SeasonFormDialog, { SeasonFormState } from '@/views/season/SeasonFormDialog';
+
+const EMPTY_SEASON_FORM: SeasonFormState = { name: '', year: '' };
+
+const parseYear = (value: string): number | null => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+};
 
 function TournamentCard({ tournament }: { tournament: ISeasonTournament }) {
   return (
@@ -71,31 +87,83 @@ function CategorySection({
 export default function AdminSeasonDetailPage() {
   const { seasonId } = useParams<{ seasonId: string }>();
   const navigate = useNavigate();
-  const { getSeasonById } = useSeason();
+  const { getSeasonById, putSeasonById } = useSeason();
 
   const [loading, setLoading] = useState(true);
   const [season, setSeason] = useState<ISeasonResponse | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [seasonForm, setSeasonForm] = useState<SeasonFormState>(EMPTY_SEASON_FORM);
   const getSeasonByIdRef = useRef(getSeasonById);
 
   useEffect(() => {
     getSeasonByIdRef.current = getSeasonById;
   }, [getSeasonById]);
 
-  useEffect(() => {
-    const fetch = async () => {
-      if (!seasonId) {
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      const response = await getSeasonByIdRef.current(seasonId);
-      setSeason(response ?? null);
+  const fetchSeason = useCallback(async () => {
+    if (!seasonId) {
       setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const response = await getSeasonByIdRef.current(seasonId);
+    setSeason(response ?? null);
+    setLoading(false);
+  }, [seasonId]);
+
+  useEffect(() => {
+    void fetchSeason();
+  }, [fetchSeason]);
+
+  const handleSeasonFieldChange = useCallback(
+    (field: keyof SeasonFormState, value: string) => {
+      setSeasonForm(prev => ({ ...prev, [field]: value }));
+    },
+    []
+  );
+
+  const openEditDialog = () => {
+    if (!season) return;
+
+    setSeasonForm({
+      name: season.name,
+      year: season.year != null ? String(season.year) : '',
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSubmit = async () => {
+    if (!season) return;
+
+    if (!seasonForm.name.trim()) {
+      void notifyWarning({
+        title: 'Campos incompletos',
+        text: 'El nombre es obligatorio.',
+      });
+      return;
+    }
+
+    setEditSubmitting(true);
+    const payload: IPutSeasonRequest = {
+      name: seasonForm.name.trim(),
+      year: parseYear(seasonForm.year),
     };
 
-    void fetch();
-  }, [seasonId]);
+    const updated = await putSeasonById(season.id, payload);
+    setEditSubmitting(false);
+
+    if (!updated) {
+      return;
+    }
+
+    setEditDialogOpen(false);
+    await fetchSeason();
+    await notifySuccess({
+      title: 'Temporada actualizada',
+      text: 'La temporada se actualizó correctamente.',
+    });
+  };
 
   if (loading) {
     return (
@@ -144,7 +212,14 @@ export default function AdminSeasonDetailPage() {
         label: 'Volver a temporadas',
         onClick: () => navigate(APP_ROUTES.panelSeasons),
       }}
-      actions={<NewEntityButton type="Torneo" onClick={startNewTournament} />}
+      actions={
+        <Stack direction="row" spacing={1.5}>
+          <Button variant="outlined" color="primary" onClick={openEditDialog}>
+            Editar temporada
+          </Button>
+          <NewEntityButton type="Torneo" onClick={startNewTournament} />
+        </Stack>
+      }
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
         <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
@@ -172,6 +247,17 @@ export default function AdminSeasonDetailPage() {
           />
         </>
       )}
+
+      <SeasonFormDialog
+        open={editDialogOpen}
+        title="Editar temporada"
+        confirmLabel="Guardar"
+        form={seasonForm}
+        submitting={editSubmitting}
+        onFieldChange={handleSeasonFieldChange}
+        onClose={() => setEditDialogOpen(false)}
+        onConfirm={() => void handleEditSubmit()}
+      />
     </PageShell>
   );
 }

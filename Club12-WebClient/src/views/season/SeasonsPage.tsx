@@ -1,41 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import {
-  Box,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  InputAdornment,
-  Stack,
-  TextField,
-} from '@mui/material';
-import {
-  notifySuccess,
-  notifyWarning,
-  confirmDelete,
-} from '@/modules/core/utils/confirmDialog';
-import {
-  IAddSeasonRequest,
-  IPutSeasonRequest,
-  ISeasonResponse,
-} from '@/modules/season/type/season';
+import { Box, InputAdornment, Stack, TextField } from '@mui/material';
+import { notifySuccess, notifyWarning, confirmDelete } from '@/modules/core/utils/confirmDialog';
+import { IAddSeasonRequest, ISeasonResponse } from '@/modules/season/type/season';
 import { useSeason } from '@/modules/season/hook/season.hook';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
 import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
-import FormButtons from '@/views/core/components/FormButtons';
 import PageShell from '@/views/core/components/PageShell';
 import FilterBar from '@/views/core/components/FilterBar';
-import {
-  DeleteIcon,
-  EditIcon,
-  SearchIcon,
-  VisibilityIcon,
-} from '@/views/core/MUI/icons/icons';
+import { DeleteIcon, SearchIcon, VisibilityIcon } from '@/views/core/MUI/icons/icons';
+import SeasonFormDialog, { SeasonFormState } from '@/views/season/SeasonFormDialog';
 import { FILTERS_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/constants';
 import {
   FILTER_OPTIONS_PAGE_SIZE,
@@ -53,11 +31,6 @@ type SeasonSearchFilters = {
   name?: string;
 };
 
-type SeasonFormState = {
-  name: string;
-  year: string;
-};
-
 const EMPTY_FILTERS: SeasonSearchFilters = {};
 
 const INITIAL_SEASON_FORM: SeasonFormState = {
@@ -70,8 +43,7 @@ const SeasonsPage: React.FC<SeasonsPageProps> = ({
   title = 'Temporadas',
   wrapInCard = true,
 }) => {
-  const { seasons, addSeason, putSeasonById, deleteSeasonById, getSeasonsByFiltered } =
-    useSeason();
+  const { seasons, addSeason, deleteSeasonById, getSeasonsByFiltered } = useSeason();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
@@ -80,9 +52,6 @@ const SeasonsPage: React.FC<SeasonsPageProps> = ({
   const [debouncedFilters, setDebouncedFilters] =
     useState<SeasonSearchFilters>(EMPTY_FILTERS);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingSeason, setEditingSeason] = useState<ISeasonResponse | null>(
-    null
-  );
   const [seasonForm, setSeasonForm] =
     useState<SeasonFormState>(INITIAL_SEASON_FORM);
 
@@ -149,14 +118,6 @@ const SeasonsPage: React.FC<SeasonsPageProps> = ({
     [navigate]
   );
 
-  const handleEdit = useCallback((row: ISeasonResponse) => {
-    setEditingSeason(row);
-    setSeasonForm({
-      name: row.name,
-      year: row.year != null ? String(row.year) : '',
-    });
-  }, []);
-
   const handleDelete = useCallback(
     async (row: ISeasonResponse) => {
       const confirmed = await confirmDelete({
@@ -189,19 +150,13 @@ const SeasonsPage: React.FC<SeasonsPageProps> = ({
         onClick: handleView,
       },
       {
-        label: 'Editar',
-        color: 'primary',
-        icon: <EditIcon fontSize="small" />,
-        onClick: handleEdit,
-      },
-      {
         label: 'Eliminar',
         color: 'error',
         icon: <DeleteIcon fontSize="small" />,
         onClick: handleDelete,
       },
     ],
-    [handleDelete, handleEdit, handleView]
+    [handleDelete, handleView]
   );
 
   const columns: GridColDef<ISeasonResponse>[] = useMemo(() => {
@@ -276,36 +231,12 @@ const SeasonsPage: React.FC<SeasonsPageProps> = ({
     await fetchSeasons();
   };
 
-  const handleEditSubmit = async () => {
-    if (!editingSeason) {
-      return;
-    }
-
-    if (!seasonForm.name.trim()) {
-      await notifyWarning({
-        title: 'Campos incompletos',
-        text: 'El nombre es obligatorio.',
-      });
-      return;
-    }
-
-    setSubmitting(true);
-    const payload: IPutSeasonRequest = {
-      name: seasonForm.name.trim(),
-      year: parseYear(seasonForm.year),
-    };
-
-    const updated = await putSeasonById(editingSeason.id, payload);
-    setSubmitting(false);
-
-    if (updated === undefined) {
-      return;
-    }
-
-    setEditingSeason(null);
-    resetSeasonForm();
-    await fetchSeasons();
-  };
+  const handleSeasonFieldChange = useCallback(
+    (field: keyof SeasonFormState, value: string) => {
+      setSeasonForm(prev => ({ ...prev, [field]: value }));
+    },
+    []
+  );
 
   const createButton = (
     <NewEntityButton
@@ -356,89 +287,19 @@ const SeasonsPage: React.FC<SeasonsPageProps> = ({
         />
       </Box>
 
-      <Dialog
+      <SeasonFormDialog
         open={isCreateModalOpen}
-        onClose={() => !submitting && setIsCreateModalOpen(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>Nueva temporada</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="Nombre"
-              value={seasonForm.name}
-              onChange={e =>
-                setSeasonForm(prev => ({ ...prev, name: e.target.value }))
-              }
-              required
-              fullWidth
-            />
-            <TextField
-              label="Año"
-              type="number"
-              value={seasonForm.year}
-              onChange={e =>
-                setSeasonForm(prev => ({ ...prev, year: e.target.value }))
-              }
-              fullWidth
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <FormButtons
-            onCancel={() => {
-              setIsCreateModalOpen(false);
-              resetSeasonForm();
-            }}
-            onConfirm={() => void handleCreateSubmit()}
-            confirmLabel="Crear"
-            disabled={submitting}
-          />
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={Boolean(editingSeason)}
-        onClose={() => !submitting && setEditingSeason(null)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>Editar temporada</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="Nombre"
-              value={seasonForm.name}
-              onChange={e =>
-                setSeasonForm(prev => ({ ...prev, name: e.target.value }))
-              }
-              required
-              fullWidth
-            />
-            <TextField
-              label="Año"
-              type="number"
-              value={seasonForm.year}
-              onChange={e =>
-                setSeasonForm(prev => ({ ...prev, year: e.target.value }))
-              }
-              fullWidth
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <FormButtons
-            onCancel={() => {
-              setEditingSeason(null);
-              resetSeasonForm();
-            }}
-            onConfirm={() => void handleEditSubmit()}
-            confirmLabel="Guardar"
-            disabled={submitting}
-          />
-        </DialogActions>
-      </Dialog>
+        title="Nueva temporada"
+        confirmLabel="Crear"
+        form={seasonForm}
+        submitting={submitting}
+        onFieldChange={handleSeasonFieldChange}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          resetSeasonForm();
+        }}
+        onConfirm={() => void handleCreateSubmit()}
+      />
     </>
   );
 
