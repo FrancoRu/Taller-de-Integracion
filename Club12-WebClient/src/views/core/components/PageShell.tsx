@@ -66,7 +66,11 @@ export default function PageShell({
               display: 'flex',
               flexDirection: { xs: 'column', sm: 'row' },
               alignItems: { xs: 'flex-start', sm: 'center' },
-              justifyContent: 'space-between',
+              // With no `title` (a page rendering its own heading in
+              // children), `actions` is the row's only flex child —
+              // space-between then collapses it to the start instead of
+              // the end, misaligning every action row on that page.
+              justifyContent: title ? 'space-between' : 'flex-end',
               gap: 2,
             }}
           >
