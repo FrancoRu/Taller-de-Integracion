@@ -159,7 +159,7 @@ export interface ICompletabilityIssue {
   /**
    * Stable issue code (e.g. `ZoneTooFewTeams`, `TeamNotAssigned`,
    * `TeamInMultipleZones`, `PlayoffRangeExceedsTeams`,
-   * `CrossCupGroupTooFewTeams`).
+   * `CrossCupGroupTooFewTeams`, `TeamTooFewPlayers`).
    * @type {string}
    */
   code: string;
@@ -175,6 +175,9 @@ export interface ICompletabilityIssue {
 
   /** Number of teams assigned to the offending zone/group, when applicable. */
   assignedTeams?: number;
+
+  /** The offending team's registered player count, for TeamTooFewPlayers. */
+  playerCount?: number;
 }
 
 /**

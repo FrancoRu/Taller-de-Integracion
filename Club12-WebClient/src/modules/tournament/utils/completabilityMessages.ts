@@ -24,6 +24,8 @@ export const completabilityIssueMessage = (
       return `En ${issue.divisionName}, un rango de playoff arranca en la posición ${issue.fromPosition} pero solo hay ${issue.assignedTeams} equipos.`;
     case 'CrossCupGroupTooFewTeams':
       return `Un grupo de la copa cruzada tiene ${issue.assignedTeams} equipos (mínimo 2).`;
+    case 'TeamTooFewPlayers':
+      return `${issue.teamName} tiene ${issue.playerCount} jugador(es) (mínimo 5).`;
     default:
       return 'Hay un problema de configuración que impide iniciar el torneo.';
   }
