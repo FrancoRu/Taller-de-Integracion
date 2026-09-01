@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
 import { GUID } from '@/modules/core/types/types';
 import { IMatchResponse } from '@/modules/match/type/match.d';
 import { IMatchSeriesResponse, ISeriesGameResponse } from '@/modules/matchSeries/type/matchSeries.d';
@@ -170,5 +171,88 @@ describe('PlayoffBracket', () => {
 
     expect(screen.getByText('Black Mamba')).toBeInTheDocument();
     expect(screen.getByText('Halcones')).toBeInTheDocument();
+  });
+
+  it('clicking a BestOf>1 series card navigates to its next unfinished game, never the synthetic series id', async () => {
+    const sfStage = guid('sf');
+    const series = guid('series-1');
+
+    const seriesMatch: IMatchResponse = {
+      id: series,
+      matchDate: '2026-01-01T18:00:00Z',
+      matchType: 'Playoff' as IMatchResponse['matchType'],
+      slug: '',
+      homeTeam: { id: guid('black-mamba'), name: 'Black Mamba', logoUrl: '', score: 60, players: [], scorers: [] },
+      visitorTeam: { id: guid('nti'), name: 'NTI', logoUrl: '', score: 55, players: [], scorers: [] },
+      isFinished: false,
+      winningTeamId: null,
+      winningTeamName: null,
+      venue: null,
+      stageId: sfStage,
+    };
+
+    const model: BracketModel = {
+      rounds: [{ stageId: sfStage, stageType: StageType.SemiFinal, matches: [seriesMatch] }],
+      edges: [],
+    };
+
+    const nextGame = guid('g2');
+    const seriesById = new Map<GUID, IMatchSeriesResponse>([
+      [
+        series,
+        {
+          id: series,
+          stageId: sfStage,
+          homeTeamId: guid('black-mamba'),
+          homeTeamName: 'Black Mamba',
+          visitorTeamId: guid('nti'),
+          visitorTeamName: 'NTI',
+          bestOf: 3,
+          winningTeamId: null,
+          winningTeamName: null,
+          games: [
+            makeGame({ id: guid('g1'), gameNumber: 1, isFinished: true, homeScore: 60, visitorScore: 55, winningTeamName: 'Black Mamba' }),
+            makeGame({ id: nextGame, gameNumber: 2, isFinished: false }),
+          ],
+        },
+      ],
+    ]);
+
+    const onMatchClick = vi.fn();
+    render(<PlayoffBracket model={model} seriesById={seriesById} onMatchClick={onMatchClick} />);
+
+    await userEvent.click(screen.getByText('Black Mamba'));
+
+    expect(onMatchClick).toHaveBeenCalledWith(nextGame);
+    expect(onMatchClick).not.toHaveBeenCalledWith(series);
+  });
+
+  it('does not attach a click handler to a still-TBD slot', async () => {
+    const finalStage = guid('final');
+    const tbdMatch: IMatchResponse = {
+      id: guid('m-final'),
+      matchDate: '2026-01-08T18:00:00Z',
+      matchType: 'Playoff' as IMatchResponse['matchType'],
+      slug: '',
+      homeTeam: null,
+      visitorTeam: null,
+      isFinished: false,
+      winningTeamId: null,
+      winningTeamName: null,
+      venue: null,
+      stageId: finalStage,
+    };
+
+    const model: BracketModel = {
+      rounds: [{ stageId: finalStage, stageType: StageType.Final, matches: [tbdMatch] }],
+      edges: [],
+    };
+
+    const onMatchClick = vi.fn();
+    render(<PlayoffBracket model={model} onMatchClick={onMatchClick} />);
+
+    await userEvent.click(screen.getAllByText('A definir')[0]);
+
+    expect(onMatchClick).not.toHaveBeenCalled();
   });
 });

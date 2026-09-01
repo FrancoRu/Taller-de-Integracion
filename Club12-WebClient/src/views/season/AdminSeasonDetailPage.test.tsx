@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -10,6 +10,7 @@ import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCat
 import type { GUID } from '@/modules/core/types/types';
 
 vi.mock('@/modules/season/hook/season.hook');
+vi.mock('sweetalert2', () => ({ default: { fire: vi.fn() } }));
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async importOriginal => {
@@ -115,5 +116,62 @@ describe('AdminSeasonDetailPage', () => {
     expect(
       screen.getByRole('button', { name: /nuevo torneo/i })
     ).toBeInTheDocument();
+  });
+
+  it('opens the edit dialog prefilled with the season\'s current values', async () => {
+    const getSeasonById = vi.fn().mockResolvedValue(buildSeason());
+    mockedUseSeason.mockReturnValue({
+      getSeasonById,
+      putSeasonById: vi.fn(),
+    } as unknown as ReturnType<typeof useSeason>);
+
+    const user = userEvent.setup();
+    renderAt('/panel/temporadas/temporada-2026');
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Editar temporada' })
+    );
+
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByRole('textbox', { name: /^Nombre/ })).toHaveValue(
+      'Temporada 2026'
+    );
+    expect(within(dialog).getByRole('spinbutton', { name: /^Año/ })).toHaveValue(
+      2026
+    );
+  });
+
+  it('saves via putSeasonById, closes the dialog and refreshes the season', async () => {
+    const getSeasonById = vi.fn().mockResolvedValue(buildSeason());
+    const putSeasonById = vi.fn().mockResolvedValue(buildSeason());
+    mockedUseSeason.mockReturnValue({
+      getSeasonById,
+      putSeasonById,
+    } as unknown as ReturnType<typeof useSeason>);
+
+    const user = userEvent.setup();
+    renderAt('/panel/temporadas/temporada-2026');
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Editar temporada' })
+    );
+
+    const dialog = screen.getByRole('dialog');
+    const nameInput = within(dialog).getByRole('textbox', { name: /^Nombre/ });
+    await user.clear(nameInput);
+    await user.type(nameInput, 'Temporada 2027');
+
+    getSeasonById.mockClear();
+    await user.click(within(dialog).getByRole('button', { name: /guardar/i }));
+
+    await waitFor(() => expect(putSeasonById).toHaveBeenCalledTimes(1));
+    const [id, payload] = putSeasonById.mock.calls[0];
+    expect(id).toBe(SEASON_ID);
+    expect(payload).toEqual(expect.objectContaining({ name: 'Temporada 2027' }));
+
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    );
+    await waitFor(() => expect(getSeasonById).toHaveBeenCalledTimes(1));
   });
 });

@@ -1288,7 +1288,7 @@ namespace Persistance.Migrations
                     b.HasOne("Domain.Entities.Models.Team", "HomeTeam")
                         .WithMany()
                         .HasForeignKey("HomeTeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.Models.Stage", "Stage")
@@ -1300,12 +1300,13 @@ namespace Persistance.Migrations
                     b.HasOne("Domain.Entities.Models.Team", "VisitorTeam")
                         .WithMany()
                         .HasForeignKey("VisitorTeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.Models.Team", "WinningTeam")
                         .WithMany()
-                        .HasForeignKey("WinningTeamId");
+                        .HasForeignKey("WinningTeamId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("HomeTeam");
 

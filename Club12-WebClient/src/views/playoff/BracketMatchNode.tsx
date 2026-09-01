@@ -25,6 +25,12 @@ interface BracketMatchNodeProps {
    * client-inferred tie, never both.
    */
   legs?: IMatchResponse[];
+  /**
+   * When provided, the whole card becomes clickable (e.g. the admin panel
+   * wires this to open the match's full detail/edit page). Omitted in
+   * read-only contexts like the public division page.
+   */
+  onClick?: () => void;
 }
 
 type Participant = IMatchResponse['homeTeam'];
@@ -79,7 +85,12 @@ const tieCaption = (legCount: number): string =>
  * tally and a compact one-line summary of each individual game/leg is
  * shown underneath.
  */
-export default function BracketMatchNode({ match, series, legs }: BracketMatchNodeProps) {
+export default function BracketMatchNode({
+  match,
+  series,
+  legs,
+  onClick,
+}: BracketMatchNodeProps) {
   const sides: Array<{ key: string; team: Participant }> = [
     { key: 'home', team: match.homeTeam },
     { key: 'visitor', team: match.visitorTeam },
@@ -91,6 +102,7 @@ export default function BracketMatchNode({ match, series, legs }: BracketMatchNo
   return (
     <Paper
       variant="outlined"
+      onClick={onClick}
       sx={{
         display: 'flex',
         flexDirection: 'column',
@@ -104,6 +116,10 @@ export default function BracketMatchNode({ match, series, legs }: BracketMatchNo
         borderRadius: 1.5,
         borderColor: 'divider',
         boxSizing: 'border-box',
+        cursor: onClick ? 'pointer' : 'default',
+        ...(onClick && {
+          '&:hover': { borderColor: 'primary.main' },
+        }),
       }}
     >
       {series && (

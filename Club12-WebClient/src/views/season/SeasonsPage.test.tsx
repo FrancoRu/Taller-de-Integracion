@@ -39,4 +39,23 @@ describe('SeasonsPage — admin CRUD listing', () => {
 
     expect(await screen.findByText('Temporada 2026')).toBeInTheDocument();
   });
+
+  it('does not offer an Editar row action — editing lives inside the season detail page', async () => {
+    mockedUseSeason.mockReturnValue({
+      seasons: [buildSeason()],
+      addSeason: vi.fn(),
+      putSeasonById: vi.fn(),
+      deleteSeasonById: vi.fn(),
+      getSeasonsByFiltered: vi.fn().mockResolvedValue(undefined),
+    } as unknown as ReturnType<typeof useSeason>);
+
+    render(
+      <MemoryRouter>
+        <SeasonsPage />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Temporada 2026');
+    expect(screen.queryByTestId('EditIcon')).not.toBeInTheDocument();
+  });
 });

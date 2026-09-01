@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
+  Button,
   Chip,
   Grid,
   List,
@@ -14,8 +15,11 @@ import {
 import { usePlayer } from '@/modules/player/hook/player.hook';
 import { usePlayerStatistic } from '@/modules/playerStatistic/hook/playerStatistic.hook';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
+import { useTeam } from '@/modules/team/hook/team.hook';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
+import { GUID } from '@/modules/core/types/types';
+import { IPutPlayerRequest } from '@/modules/player/type/player.d';
 import PageShell from '@/views/core/components/PageShell';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
@@ -23,13 +27,33 @@ import PlayerStatisticCreatePage from '@/views/playerStatistic/playerStatisticCr
 import PlayerStatisticCard from '@/views/playerStatistic/PlayerStatisticCard';
 import PlayerHistory from '@/views/playerStatistic/PlayerHistory';
 import PlayerSanctionCreatePage from '@/views/playerSanction/playerSanctionCreatePage';
+import PlayerFormDialog from '@/views/player/PlayerFormDialog';
+import type { PlayerFormField, PlayerFormState } from '@/views/player/players.types';
+import { toDateInputValue } from '@/views/player/players.types';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
-import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
+import { FILTER_OPTIONS_PAGE_SIZE, TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
 import { STATISTIC_TYPE_LABELS } from '@/modules/playerStatistic/utils/playerStatisticDisplay';
 import {
   formatArgentinePhone,
   formatDocumentNumber,
+  isAtLeastMinimumPlayerAge,
+  isValidDocumentNumber,
+  isValidPhone,
+  VALIDATION_MESSAGES,
 } from '@/modules/core/utils/validators';
+import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
+
+const EMPTY_PLAYER_FORM: PlayerFormState = {
+  firstName: '',
+  secondName: '',
+  lastName: '',
+  documentNumber: '',
+  birthDate: '',
+  phoneNumber: '',
+  socialSecurity: '',
+  teamId: '',
+  jerseyNumber: '',
+};
 
 const formatDate = (value?: string | Date | null) => {
   if (!value) {
@@ -44,7 +68,7 @@ const PlayerPage: React.FC = () => {
   const { playerId } = useParams<{ playerId: string }>();
   const navigate = useNavigate();
   const { role } = useAuth();
-  const { player, getPlayerById } = usePlayer();
+  const { player, getPlayerById, putPlayerById } = usePlayer();
   const {
     playerStatistics,
     getPlayerStatisticsByFilter,
@@ -54,12 +78,16 @@ const PlayerPage: React.FC = () => {
     getPlayerHistory,
   } = usePlayerStatistic();
   const { playerSanctions, getPlayerSanctionByFilter } = usePlayerSanction();
+  const { teams, getTeamsByFiltered } = useTeam();
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<
     'detalle' | 'ficha' | 'historial' | 'puntuaciones' | 'sanciones'
   >('detalle');
   const [statisticDialogOpen, setStatisticDialogOpen] = useState(false);
   const [sanctionDialogOpen, setSanctionDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [playerForm, setPlayerForm] = useState<PlayerFormState>(EMPTY_PLAYER_FORM);
 
   const targetPlayerId = useMemo(
     () => playerId ?? player?.id,
@@ -117,6 +145,110 @@ const PlayerPage: React.FC = () => {
     void fetchPlayer();
   }, [getPlayerById, isAdministrative, targetPlayerId]);
 
+  const phoneError =
+    playerForm.phoneNumber.length > 0 && !isValidPhone(playerForm.phoneNumber);
+  const documentNumberError =
+    playerForm.documentNumber.length > 0 &&
+    !isValidDocumentNumber(playerForm.documentNumber);
+  const birthDateError =
+    playerForm.birthDate.length > 0 &&
+    !isAtLeastMinimumPlayerAge(playerForm.birthDate);
+
+  const handlePlayerFieldChange = useCallback(
+    (field: PlayerFormField, value: string) => {
+      setPlayerForm(prev => ({
+        ...prev,
+        [field]: field === 'documentNumber' ? value.replace(/\D/g, '') : value,
+      }));
+    },
+    []
+  );
+
+  const openEditDialog = () => {
+    if (!player) return;
+
+    setPlayerForm({
+      firstName: player.firstName,
+      secondName: player.secondName ?? '',
+      lastName: player.lastName,
+      documentNumber: player.documentNumber,
+      birthDate: toDateInputValue(player.birthDate),
+      phoneNumber: player.phoneNumber ?? '',
+      socialSecurity: player.socialSecurity ?? '',
+      teamId: player.teamId,
+      jerseyNumber: '',
+    });
+    void getTeamsByFiltered({ pageSize: TABLE_ROWS_PER_PAGE });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSubmit = async () => {
+    if (!player) return;
+
+    if (
+      !playerForm.firstName.trim() ||
+      !playerForm.lastName.trim() ||
+      !playerForm.documentNumber.trim() ||
+      !playerForm.birthDate.trim() ||
+      !playerForm.phoneNumber.trim() ||
+      !playerForm.socialSecurity.trim() ||
+      !playerForm.teamId
+    ) {
+      void notifyWarning({
+        title: 'Campos incompletos',
+        text: 'Nombre, apellido, documento, fecha de nacimiento, teléfono, seguro social y equipo son obligatorios.',
+      });
+      return;
+    }
+
+    if (!isValidPhone(playerForm.phoneNumber)) {
+      void notifyWarning({ title: 'Teléfono inválido', text: `${VALIDATION_MESSAGES.phone}.` });
+      return;
+    }
+
+    if (!isValidDocumentNumber(playerForm.documentNumber)) {
+      void notifyWarning({
+        title: 'Documento inválido',
+        text: `${VALIDATION_MESSAGES.documentNumber}.`,
+      });
+      return;
+    }
+
+    if (!isAtLeastMinimumPlayerAge(playerForm.birthDate)) {
+      void notifyWarning({
+        title: 'Fecha de nacimiento inválida',
+        text: `${VALIDATION_MESSAGES.minimumPlayerAge}.`,
+      });
+      return;
+    }
+
+    setEditSubmitting(true);
+    const payload: IPutPlayerRequest = {
+      firstName: playerForm.firstName.trim(),
+      secondName: playerForm.secondName.trim() || undefined,
+      lastName: playerForm.lastName.trim(),
+      documentNumber: playerForm.documentNumber.trim(),
+      birthDate: new Date(playerForm.birthDate),
+      phoneNumber: playerForm.phoneNumber.trim(),
+      socialSecurity: playerForm.socialSecurity.trim(),
+      teamId: playerForm.teamId as GUID,
+    };
+
+    const updatedPlayer = await putPlayerById(player.id, payload);
+    setEditSubmitting(false);
+
+    if (!updatedPlayer) {
+      return;
+    }
+
+    setEditDialogOpen(false);
+    await getPlayerById(player.id, isAdministrative);
+    await notifySuccess({
+      title: 'Jugador actualizado',
+      text: 'El jugador se actualizó correctamente.',
+    });
+  };
+
   if (!targetPlayerId) {
     return (
       <PageShell title="Jugador">
@@ -161,6 +293,11 @@ const PlayerPage: React.FC = () => {
         label: 'Volver al listado',
         onClick: () => navigate(APP_ROUTES.panelPlayers),
       }}
+      actions={
+        <Button variant="outlined" color="primary" onClick={openEditDialog}>
+          Editar jugador
+        </Button>
+      }
     >
         <Tabs
           value={tab}
@@ -350,6 +487,22 @@ const PlayerPage: React.FC = () => {
         open={sanctionDialogOpen}
         onClose={() => setSanctionDialogOpen(false)}
         onCreated={refreshSanctions}
+      />
+      <PlayerFormDialog
+        open={editDialogOpen}
+        title="Editar jugador"
+        confirmLabel="Guardar"
+        form={playerForm}
+        submitting={editSubmitting}
+        confirmDisabled={phoneError || documentNumberError || birthDateError}
+        showTeamSelect
+        teamOptions={teams ?? []}
+        onTeamChange={nextTeamId =>
+          setPlayerForm(prev => ({ ...prev, teamId: nextTeamId }))
+        }
+        onFieldChange={handlePlayerFieldChange}
+        onClose={() => setEditDialogOpen(false)}
+        onConfirm={() => void handleEditSubmit()}
       />
     </PageShell>
   );

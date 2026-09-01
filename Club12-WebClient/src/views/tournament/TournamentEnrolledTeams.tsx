@@ -17,7 +17,7 @@ import { ITeamResponse } from '@/modules/team/type/team.d';
 import { IEnrollTeamRequest } from '@/modules/tournament/type/tournament';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
-import { confirmDelete, notifySuccess } from '@/modules/core/utils/confirmDialog';
+import { confirmDelete } from '@/modules/core/utils/confirmDialog';
 import { ListSkeleton } from '@/views/core/components/skeletons';
 import EnrollTeamDialog from '@/views/tournament/EnrollTeamDialog';
 
@@ -78,6 +78,9 @@ const TournamentEnrolledTeams: React.FC<TournamentEnrolledTeamsProps> = ({
   const handleEnroll = async (request: IEnrollTeamRequest) => {
     setSubmitting(true);
     try {
+      // enrollTeam already shows its own success toast ("Equipo inscripto
+      // correctamente") — a second one here would double-fire two
+      // differently-worded alerts for the same action.
       const success = await enrollTeam(tournamentId, request);
       if (!success) {
         return;
@@ -86,10 +89,6 @@ const TournamentEnrolledTeams: React.FC<TournamentEnrolledTeamsProps> = ({
       setDialogOpen(false);
       await loadEnrolledTeams();
       await loadAllTeams();
-      await notifySuccess({
-        title: 'Equipo inscripto',
-        text: 'El equipo se inscribió correctamente en el torneo.',
-      });
     } finally {
       setSubmitting(false);
     }
@@ -106,9 +105,10 @@ const TournamentEnrolledTeams: React.FC<TournamentEnrolledTeamsProps> = ({
       return;
     }
 
-    // The backend rejects an unenroll once the tournament has started (409);
-    // that message is surfaced by the global error handler, so only the
-    // success path notifies and refreshes here.
+    // unenrollTeam already shows its own toast on both the success path
+    // ("Equipo dado de baja correctamente") and failure (the backend's 409
+    // once the tournament has started, surfaced by the global error
+    // handler) — no notify needed here either way.
     const success = await unenrollTeam(tournamentId, team.id);
     if (!success) {
       return;
@@ -116,10 +116,6 @@ const TournamentEnrolledTeams: React.FC<TournamentEnrolledTeamsProps> = ({
 
     await loadEnrolledTeams();
     await loadAllTeams();
-    await notifySuccess({
-      title: 'Equipo dado de baja',
-      text: 'El equipo se dio de baja del torneo.',
-    });
   };
 
   return (

@@ -2,11 +2,14 @@ import type { LibraryMatchComponentProps } from '@/modules/playoff/type/gLootBra
 import { GUID } from '@/modules/core/types/types';
 import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
 import { PlayoffLibraryMatch } from '@/modules/playoff/bracketAdapter';
+import { resolveClickTargetMatchId } from '@/modules/playoff/bracketMatchNavigation';
 import BracketMatchNode from '@/views/playoff/BracketMatchNode';
 
 interface BracketMatchLibraryAdapterProps extends Pick<LibraryMatchComponentProps, 'match'> {
   /** Maps a bracket node's id (the MatchSeries id, for BestOf > 1 rounds) to its full series data. */
   seriesById?: Map<GUID, IMatchSeriesResponse>;
+  /** See {@link resolveClickTargetMatchId} — omitted in read-only contexts. */
+  onMatchClick?: (matchId: GUID) => void;
 }
 
 /**
@@ -18,7 +21,21 @@ interface BracketMatchLibraryAdapterProps extends Pick<LibraryMatchComponentProp
  * derives everything it needs straight from the original `IMatchResponse`
  * carried on `match.raw` by {@link toLibraryMatches}.
  */
-export default function BracketMatchLibraryAdapter({ match, seriesById }: BracketMatchLibraryAdapterProps) {
+export default function BracketMatchLibraryAdapter({
+  match,
+  seriesById,
+  onMatchClick,
+}: BracketMatchLibraryAdapterProps) {
   const { raw, legs } = match as unknown as PlayoffLibraryMatch;
-  return <BracketMatchNode match={raw} series={seriesById?.get(raw.id)} legs={legs} />;
+  const series = seriesById?.get(raw.id);
+  const targetId = onMatchClick ? resolveClickTargetMatchId(raw, series, legs) : undefined;
+
+  return (
+    <BracketMatchNode
+      match={raw}
+      series={series}
+      legs={legs}
+      onClick={targetId ? () => onMatchClick!(targetId) : undefined}
+    />
+  );
 }

@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import BlogPostDetailPage from '@/views/blogPost/BlogPostDetailPage';
 import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
+import { useAuth } from '@/modules/auth/hook/auth.hook';
+import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 import { BlogPostProvider } from '@/modules/blogPost/context/blogPost.context';
 import { ErrorProvider } from '@/modules/error/context/error.context';
 import { sendGet } from '@/modules/core/utils/axiosUtils';
@@ -12,6 +14,7 @@ import type { BlogPostResponse } from '@/modules/blogPost/type/blogPost';
 import type { GUID } from '@/modules/core/types/types';
 
 vi.mock('@/modules/blogPost/hook/blogPost.hook');
+vi.mock('@/modules/auth/hook/auth.hook');
 vi.mock('@/modules/core/utils/axiosUtils', () => ({
   sendGet: vi.fn(),
   sendPost: vi.fn(),
@@ -23,6 +26,7 @@ vi.mock('sweetalert2', () => ({
 }));
 
 const mockedUseBlogPost = vi.mocked(useBlogPost);
+const mockedUseAuth = vi.mocked(useAuth);
 const mockedSendGet = vi.mocked(sendGet);
 
 /**
@@ -68,6 +72,12 @@ const withGetBlogPostsById = (getBlogPostsById: ReturnType<typeof vi.fn>) => {
     getBlogPostsById,
   } as unknown as ReturnType<typeof useBlogPost>);
 };
+
+beforeEach(() => {
+  mockedUseAuth.mockReturnValue({
+    role: UserRolesType.Guest,
+  } as unknown as ReturnType<typeof useAuth>);
+});
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -292,5 +302,31 @@ describe('BlogPostDetailPage — network boundary', () => {
 
     renderWithRealProviders(client);
     await waitFor(() => expect(mockedSendGet).toHaveBeenCalledTimes(2));
+  });
+});
+
+describe('BlogPostDetailPage — Editar trigger', () => {
+  it('hides the edit button from a guest (public reader)', async () => {
+    withGetBlogPostsById(vi.fn().mockResolvedValue(buildPost()));
+
+    renderAt('/blog/titulo', { post: buildPost() });
+
+    await screen.findByText('Titulo');
+    expect(
+      screen.queryByRole('button', { name: 'Editar publicación' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows the edit button to an admin/owner', async () => {
+    mockedUseAuth.mockReturnValue({
+      role: UserRolesType.Admin,
+    } as unknown as ReturnType<typeof useAuth>);
+    withGetBlogPostsById(vi.fn().mockResolvedValue(buildPost()));
+
+    renderAt('/blog/titulo', { post: buildPost() });
+
+    expect(
+      await screen.findByRole('button', { name: 'Editar publicación' })
+    ).toBeInTheDocument();
   });
 });

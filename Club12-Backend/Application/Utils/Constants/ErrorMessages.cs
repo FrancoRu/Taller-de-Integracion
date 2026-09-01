@@ -340,6 +340,11 @@ public static class ErrorMessages
             return $"No se puede cargar la planilla del partido {matchId} porque todavía no tiene un resultado final cargado.";
         }
 
+        public static string MatchMissingTeams(System.Guid matchId)
+        {
+            return $"El partido {matchId} todavía no tiene los dos equipos asignados, así que no se le puede cargar un resultado.";
+        }
+
         public static string TeamNotInMatch(System.Guid teamId)
         {
             return $"El equipo {teamId} no jugó este partido, así que no se pueden cargar sus puntos acá.";

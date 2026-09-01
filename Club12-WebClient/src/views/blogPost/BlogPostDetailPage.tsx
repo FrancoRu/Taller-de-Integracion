@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { formatDateAr } from '@/modules/core/utils/formatDate';
-import { Box, Typography } from '@mui/material';
+import { Box, Button, Stack, Typography } from '@mui/material';
 import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
 import { BlogPostResponse } from '@/modules/blogPost/type/blogPost';
+import { useAuth } from '@/modules/auth/hook/auth.hook';
+import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import ErrorPageLayout from '@/views/core/components/ErrorPageLayout';
 import ErrorPageActions from '@/views/core/components/ErrorPageActions';
 import PageShell from '@/views/core/components/PageShell';
@@ -30,7 +33,10 @@ interface BlogPostLocationState {
 const BlogPostDetailPage: React.FC = () => {
   const { idOrSlug } = useParams<{ idOrSlug: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
   const { getBlogPostsById } = useBlogPost();
+  const { role } = useAuth();
+  const isAdminOrOwner = role === UserRolesType.Admin || role === UserRolesType.Owner;
   const seededPost = (location.state as BlogPostLocationState | undefined)?.post;
   const [post, setPost] = useState<BlogPostResponse | undefined>(seededPost);
   const [loading, setLoading] = useState(!seededPost);
@@ -137,9 +143,27 @@ const BlogPostDetailPage: React.FC = () => {
   return (
     <PageShell maxWidth="md">
       <Box component="article">
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 1 }}>
-          {post.title}
-        </Typography>
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }}
+        >
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 1 }}>
+            {post.title}
+          </Typography>
+          {isAdminOrOwner && (
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() =>
+                navigate(APP_ROUTES.panelBlogEdit.build(post.slug ?? post.id))
+              }
+              sx={{ flexShrink: 0 }}
+            >
+              Editar publicación
+            </Button>
+          )}
+        </Stack>
         <Typography
           variant="subtitle1"
           component="p"

@@ -10,11 +10,7 @@ import {
 } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { useTeam } from '@/modules/team/hook/team.hook';
-import {
-  IAddTeamRequest,
-  ITeamResponse,
-  IPutTeamRequest,
-} from '@/modules/team/type/team.d';
+import { IAddTeamRequest, ITeamResponse } from '@/modules/team/type/team.d';
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import TeamLogo from '@/views/core/components/TeamLogo';
@@ -22,7 +18,6 @@ import JerseySvg from '@/views/core/components/JerseySvg';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import {
   DeleteIcon,
-  EditIcon,
   VisibilityIcon,
 } from '@/views/core/MUI/icons/icons';
 import {
@@ -70,14 +65,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
   onCreate,
 }) => {
   const navigate = useNavigate();
-  const {
-    teams,
-    addTeam,
-    putTeamById,
-    putTeamLogoById,
-    getTeamsByFiltered,
-    deleteTeamById,
-  } = useTeam();
+  const { teams, addTeam, getTeamsByFiltered, deleteTeamById } = useTeam();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [rowCount, setRowCount] = useState(0);
@@ -95,7 +83,6 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
   }, [getTeamsByFiltered]);
   const [teamForm, setTeamForm] = useState<TeamFormState>(INITIAL_TEAM_FORM);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingTeam, setEditingTeam] = useState<ITeamResponse | null>(null);
 
   const fetchTeams = useCallback(
     async (
@@ -185,19 +172,6 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
     [navigate]
   );
 
-  const handleEdit = useCallback((row: ITeamResponse) => {
-    setEditingTeam(row);
-    setTeamForm({
-      name: row.name,
-      threeLetterCode: row.threeLetterCode,
-      shirtColor: row.shirtColor,
-      shirtSecondaryColor: row.shirtSecondaryColor ?? '',
-      jerseyStyle: row.jerseyStyle ?? 'solid',
-      logo: null,
-      logoUrl: row.logoUrl ?? '',
-    });
-  }, []);
-
   const handleDelete = useCallback(
     async (row: ITeamResponse) => {
       const confirmed = await confirmDelete({
@@ -227,19 +201,13 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
         onClick: handleView,
       },
       {
-        label: 'Editar',
-        color: 'primary',
-        icon: <EditIcon fontSize="small" />,
-        onClick: handleEdit,
-      },
-      {
         label: 'Eliminar',
         color: 'error',
         icon: <DeleteIcon fontSize="small" />,
         onClick: handleDelete,
       },
     ],
-    [handleDelete, handleEdit, handleView]
+    [handleDelete, handleView]
   );
 
   const columns: GridColDef<ITeamResponse>[] = useMemo(() => {
@@ -376,51 +344,6 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
     });
   };
 
-  const handleEditSubmit = async () => {
-    if (!editingTeam) {
-      return;
-    }
-
-    if (!teamForm.name.trim() || !teamForm.threeLetterCode.trim()) {
-      void notifyWarning({
-        title: 'Campos incompletos',
-        text: 'Nombre y código son obligatorios.',
-      });
-      return;
-    }
-
-    setSubmitting(true);
-    const payload: IPutTeamRequest = {
-      name: teamForm.name.trim(),
-      threeLetterCode: teamForm.threeLetterCode.trim(),
-      shirtColor: teamForm.shirtColor.trim(),
-      shirtSecondaryColor: teamForm.shirtSecondaryColor.trim() || null,
-      jerseyStyle: teamForm.jerseyStyle,
-    };
-
-    const ok = await putTeamById(editingTeam.id, payload);
-
-    if (!ok) {
-      setSubmitting(false);
-      return;
-    }
-
-    // The team fields and its logo are two separate endpoints; upload the new
-    // logo (if the admin picked one) as part of the same save.
-    if (teamForm.logo) {
-      await putTeamLogoById(editingTeam.id, teamForm.logo);
-    }
-    setSubmitting(false);
-
-    setEditingTeam(null);
-    resetTeamForm();
-    await fetchTeams(debouncedFilters, paginationModel);
-    await notifySuccess({
-      title: 'Equipo actualizado',
-      text: 'El equipo se actualizó correctamente.',
-    });
-  };
-
   const createButton = (
     <NewEntityButton type={createType} onClick={handleCreateTeam} />
   );
@@ -454,22 +377,6 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
           resetTeamForm();
         }}
         onConfirm={() => void handleCreateSubmit()}
-      />
-
-      <TeamFormDialog
-        withLogo
-        open={Boolean(editingTeam)}
-        title="Editar equipo"
-        confirmLabel="Guardar"
-        form={teamForm}
-        submitting={submitting}
-        onFieldChange={handleTeamFieldChange}
-        onLogoChange={handleLogoChange}
-        onClose={() => {
-          setEditingTeam(null);
-          resetTeamForm();
-        }}
-        onConfirm={() => void handleEditSubmit()}
       />
     </>
   );

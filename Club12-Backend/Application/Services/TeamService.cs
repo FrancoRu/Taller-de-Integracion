@@ -34,7 +34,8 @@ public class TeamService(
     IRosterCopyService rosterCopyService,
     IDivisionService divisionService,
     IClubService clubService,
-    ITeamPointDeductionRepository pointDeductionRepository) : ITeamService
+    ITeamPointDeductionRepository pointDeductionRepository,
+    IScorerRepository scorerRepository) : ITeamService
 {
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IRosterCopyService _rosterCopyService = rosterCopyService;
@@ -47,6 +48,8 @@ public class TeamService(
     private readonly IMatchRepository _matchRepository = unitOfWork.MatchRepository;
     private readonly ITournamentRepository _tournamentRepository = unitOfWork.TournamentRepository;
     private readonly IPlayerSanctionRepository _sanctionRepository = unitOfWork.PlayerSanctionRepository;
+    private readonly IPlayerStatisticRepository _statisticRepository = unitOfWork.PlayerStatisticRepository;
+    private readonly IScorerRepository _scorerRepository = scorerRepository;
     private readonly ITeamPointDeductionRepository _pointDeductionRepository = pointDeductionRepository;
 
     /// <summary>
@@ -149,7 +152,20 @@ public class TeamService(
         bool hasTournamentRegistrations = await _tournamentRegistrationRepository.ExistsAsync(
             registration => registration.TeamId == id);
 
-        if (hasMatchHistory || hasSanctions || hasPointDeductions || hasTournamentRegistrations)
+        // Team.Players is a DB-level cascade delete: removing the team also
+        // removes every player currently on its roster (Player.TeamId == id).
+        // `hasSanctions` above only covers TEAM-subject sanctions
+        // (PlayerSanction.TeamId), so a player with their OWN statistics,
+        // scorer records or player-subject sanctions would otherwise be
+        // silently wiped out along with their team, bypassing the exact
+        // history guard PlayerService.DeletePlayerAsync enforces when a
+        // player is deleted directly.
+        bool hasPlayersWithHistory =
+            await _statisticRepository.ExistsAsync(statistic => statistic.Player!.TeamId == id)
+            || await _scorerRepository.ExistsAsync(scorer => scorer.Player!.TeamId == id)
+            || await _sanctionRepository.ExistsAsync(sanction => sanction.Player!.TeamId == id);
+
+        if (hasMatchHistory || hasSanctions || hasPointDeductions || hasTournamentRegistrations || hasPlayersWithHistory)
         {
             throw new InvalidOperationException(ErrorMessages.Team.HasHistoryCannotDelete);
         }

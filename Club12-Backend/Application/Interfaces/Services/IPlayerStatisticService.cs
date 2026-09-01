@@ -43,4 +43,12 @@ public interface IPlayerStatisticService
     /// player must be on the roster and eligible, or nothing is saved.
     /// </summary>
     Task<List<PlayerStatistic>> LoadTeamMatchSheetAsync(LoadMatchSheetRequest request);
+
+    /// <summary>
+    /// Finishes a match by loading both teams' scoring sheets in one
+    /// operation (HU-72): the final score is derived as the sum of each
+    /// team's listed player points, rather than typed in separately.
+    /// </summary>
+    /// <returns>The finalized match, or null if no match with that id exists.</returns>
+    Task<Match?> LoadMatchResultFromSheetsAsync(LoadMatchResultFromSheetsRequest request);
 }

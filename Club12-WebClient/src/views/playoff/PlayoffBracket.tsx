@@ -6,6 +6,7 @@ import { BracketModel } from '@/modules/playoff/type/bracket.d';
 import { GUID } from '@/modules/core/types/types';
 import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
 import { toLibraryMatches, libraryRoundLabels } from '@/modules/playoff/bracketAdapter';
+import { resolveClickTargetMatchId } from '@/modules/playoff/bracketMatchNavigation';
 import BracketMatchNode from '@/views/playoff/BracketMatchNode';
 import BracketMatchLibraryAdapter from '@/views/playoff/BracketMatchLibraryAdapter';
 import {
@@ -22,6 +23,8 @@ interface PlayoffBracketProps {
    * BracketMatchNode can show the per-game breakdown.
    */
   seriesById?: Map<GUID, IMatchSeriesResponse>;
+  /** See {@link resolveClickTargetMatchId} — omitted in read-only contexts. */
+  onMatchClick?: (matchId: GUID) => void;
 }
 
 /**
@@ -32,7 +35,11 @@ interface PlayoffBracketProps {
  * swaps in this app's own `BracketMatchNode` card (team logos, best-of-N
  * series breakdown, dark theme) in place of the library's default look.
  */
-export default function PlayoffBracket({ model, seriesById }: PlayoffBracketProps) {
+export default function PlayoffBracket({
+  model,
+  seriesById,
+  onMatchClick,
+}: PlayoffBracketProps) {
   const matches = useMemo(() => toLibraryMatches(model), [model]);
   const roundLabels = useMemo(() => libraryRoundLabels(model), [model]);
 
@@ -49,7 +56,11 @@ export default function PlayoffBracket({ model, seriesById }: PlayoffBracketProp
   }
 
   const matchComponent = ({ match }: LibraryMatchComponentProps) => (
-    <BracketMatchLibraryAdapter match={match} seriesById={seriesById} />
+    <BracketMatchLibraryAdapter
+      match={match}
+      seriesById={seriesById}
+      onMatchClick={onMatchClick}
+    />
   );
 
   return (
@@ -92,15 +103,24 @@ export default function PlayoffBracket({ model, seriesById }: PlayoffBracketProp
               Tercer puesto
             </Typography>
             <Stack spacing={2}>
-              {model.thirdPlace.matches.map(match => (
-                <Box key={match.id} sx={{ height: PLAYOFF_BRACKET_BOX_HEIGHT }}>
-                  <BracketMatchNode
-                    match={match}
-                    series={seriesById?.get(match.id)}
-                    legs={model.thirdPlace?.legsByMatchId?.get(match.id)}
-                  />
-                </Box>
-              ))}
+              {model.thirdPlace.matches.map(match => {
+                const series = seriesById?.get(match.id);
+                const legs = model.thirdPlace?.legsByMatchId?.get(match.id);
+                const targetId = onMatchClick
+                  ? resolveClickTargetMatchId(match, series, legs)
+                  : undefined;
+
+                return (
+                  <Box key={match.id} sx={{ height: PLAYOFF_BRACKET_BOX_HEIGHT }}>
+                    <BracketMatchNode
+                      match={match}
+                      series={series}
+                      legs={legs}
+                      onClick={targetId ? () => onMatchClick!(targetId) : undefined}
+                    />
+                  </Box>
+                );
+              })}
             </Stack>
           </Stack>
         )}

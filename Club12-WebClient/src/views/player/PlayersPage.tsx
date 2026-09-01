@@ -6,11 +6,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControl,
   InputAdornment,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
   TextField,
   Typography,
@@ -35,22 +31,15 @@ import { TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
 import { TABLE_PAGE_SIZE_OPTIONS } from '@/modules/core/constants/pagination';
 import { usePlayer } from '@/modules/player/hook/player.hook';
 import FormButtons from '@/views/core/components/FormButtons';
-import {
-  IAddPlayerRequest,
-  IPlayerResponse,
-  IPutPlayerRequest,
-  PlayerFiltered,
-} from '@/modules/player/type/player.d';
+import { IAddPlayerRequest, IPlayerResponse } from '@/modules/player/type/player.d';
 import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
 import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PageShell from '@/views/core/components/PageShell';
-import FieldInfoTooltip from '@/views/core/components/FieldInfoTooltip';
 import FilterBar from '@/views/core/components/FilterBar';
 import {
   DeleteIcon,
-  EditIcon,
   MedicalInformationIcon,
   NumbersIcon,
   SearchIcon,
@@ -62,32 +51,15 @@ import { FILTERS_DEBOUNCE_DELAY_LONG_MS } from '@/modules/core/constants/constan
 import { MedicalRecordStatus } from '@/modules/core/enum/medicalRecord/medicalRecordStatus';
 import HabilitacionBadge from '@/views/medicalRecord/HabilitacionBadge';
 import PlayerMedicalRecordDialog from '@/views/medicalRecord/PlayerMedicalRecordDialog';
+import PlayerFormDialog from '@/views/player/PlayerFormDialog';
+import type { PlayerFormField, PlayerFormState } from '@/views/player/players.types';
+import type { PlayersSearchFilters } from '@/views/player/players.types';
 
 /** Per-player medical / eligibility signal keyed by player id (HU-57/HU-62). */
 export interface PlayerMedicalInfo {
   status?: MedicalRecordStatus | null;
   isHabilitado?: boolean;
 }
-
-type PlayersSearchFilters = Pick<
-  PlayerFiltered,
-  'names' | 'lastName' | 'documentNumber' | 'phoneNumber'
->;
-
-type PlayerFormState = {
-  firstName: string;
-  secondName: string;
-  lastName: string;
-  documentNumber: string;
-  birthDate: string;
-  phoneNumber: string;
-  socialSecurity: string;
-  teamId: GUID | '';
-  /** Dorsal for the current team/tournament roster (HU-54), editable only
-   * when `rosterEnabled` — a dorsal is season-scoped, so it's meaningless
-   * outside a team+tournament context. */
-  jerseyNumber: string;
-};
 
 const EMPTY_FILTERS: PlayersSearchFilters = {};
 
@@ -143,31 +115,6 @@ interface PlayersPageProps {
   onMedicalChange?: () => void;
 }
 
-const getDateValue = (value?: Date) => {
-  if (!value) {
-    return '';
-  }
-
-  const dateValue = new Date(value);
-  if (Number.isNaN(dateValue.getTime())) {
-    return '';
-  }
-
-  return dateValue.toISOString().slice(0, 10);
-};
-
-/** Latest birth date an `<input type="date">` should accept: today minus the
- * minimum player age, so the picker itself steers users away from an
- * underage date instead of only rejecting it on submit. */
-const getMaxBirthDate = () => {
-  const date = new Date();
-  date.setFullYear(date.getFullYear() - 15);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
 const PlayersPage: React.FC<PlayersPageProps> = ({
   teamId,
   title = 'Jugadores',
@@ -184,7 +131,6 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   const {
     players,
     addPlayer,
-    putPlayerById,
     getPlayersByFilter,
     deletePlayerById,
     registerPlayerToTeam,
@@ -206,9 +152,6 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     getPlayersByFilterRef.current = getPlayersByFilter;
   }, [getPlayersByFilter]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingPlayer, setEditingPlayer] = useState<IPlayerResponse | null>(
-    null
-  );
   const [playerForm, setPlayerForm] =
     useState<PlayerFormState>(INITIAL_PLAYER_FORM);
   const [medicalPlayer, setMedicalPlayer] = useState<IPlayerResponse | null>(
@@ -294,6 +237,16 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     });
   }, [teamId]);
 
+  const handlePlayerFieldChange = useCallback(
+    (field: PlayerFormField, value: string) => {
+      setPlayerForm(prev => ({
+        ...prev,
+        [field]: field === 'documentNumber' ? value.replace(/\D/g, '') : value,
+      }));
+    },
+    []
+  );
+
   const handleFilterChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -329,27 +282,6 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       navigate(APP_ROUTES.panelPlayer.build(row.slug));
     },
     [navigate]
-  );
-
-  const handleEdit = useCallback(
-    (row: IPlayerResponse) => {
-      setEditingPlayer(row);
-      const dorsal = currentDorsalFor(row);
-      setPlayerForm({
-        firstName: row.firstName,
-        secondName: row.secondName ?? '',
-        lastName: row.lastName,
-        documentNumber: row.documentNumber,
-        birthDate: getDateValue(row.birthDate),
-        phoneNumber: row.phoneNumber ?? '',
-        socialSecurity: row.socialSecurity ?? '',
-        teamId: row.teamId,
-        jerseyNumber:
-          dorsal === null || dorsal === undefined ? '' : String(dorsal),
-      });
-      void loadTeamsForDropdown();
-    },
-    [currentDorsalFor, loadTeamsForDropdown]
   );
 
   const handleDelete = useCallback(
@@ -406,12 +338,6 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         hidden: !rosterEnabled,
       },
       {
-        label: 'Editar',
-        color: 'primary',
-        icon: <EditIcon fontSize="small" />,
-        onClick: handleEdit,
-      },
-      {
         label: 'Eliminar',
         color: 'error',
         icon: <DeleteIcon fontSize="small" />,
@@ -420,7 +346,6 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     ],
     [
       handleDelete,
-      handleEdit,
       handleOpenDorsal,
       handleOpenMedical,
       handleView,
@@ -505,8 +430,8 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     }
 
     // The actions column's width must grow with how many icon buttons are
-    // actually visible (Ver/Editar/Eliminar always, plus Ficha médica/Dorsal
-    // in roster context) — a fixed width clips the later ones instead of
+    // actually visible (Ver/Eliminar always, plus Ficha médica/Dorsal in
+    // roster context) — a fixed width clips the later ones instead of
     // rendering them, so they're invisible and unclickable rather than
     // absent (HU: "no puedo editar o borrar jugadores desde el plantel").
     const visibleActionCount = playerActions.filter(
@@ -609,12 +534,6 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   const birthDateError =
     playerForm.birthDate.length > 0 &&
     !isAtLeastMinimumPlayerAge(playerForm.birthDate);
-  const maxBirthDate = useMemo(getMaxBirthDate, []);
-  // The dorsal field only ever applies to the roster context's own team —
-  // reassigning the player to a different team resets their dorsal on the
-  // backend, so editing it here alongside a team change would be misleading.
-  const isEditingSameTeamContext = rosterEnabled && playerForm.teamId === teamId;
-
   const handleCreatePlayer = useCallback(() => {
     if (onCreate) {
       onCreate();
@@ -660,83 +579,6 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     await notifySuccess({
       title: 'Jugador creado',
       text: 'El jugador se creó correctamente.',
-    });
-  };
-
-  const handleEditSubmit = async () => {
-    if (!editingPlayer) {
-      return;
-    }
-
-    if (!validatePlayerForm(playerForm.teamId)) {
-      return;
-    }
-
-    // If the admin also reassigned the player to a different team in this
-    // same submit, that move already resets the dorsal on the backend (a
-    // carried-over number could collide with the new team's roster), and
-    // syncing it here against the OLD team would either misapply it or be
-    // rejected outright (a player can't be re-registered to a team they've
-    // just left).
-    const parsedDorsal = isEditingSameTeamContext
-      ? parseDorsalValue(playerForm.jerseyNumber)
-      : ({ success: true, jerseyNumber: null } as const);
-
-    if (!parsedDorsal.success) {
-      void notifyWarning({
-        title: 'Dorsal inválido',
-        text: 'El dorsal debe ser un número entero entre 0 y 99.',
-      });
-      return;
-    }
-
-    setSubmitting(true);
-    const payload: IPutPlayerRequest = {
-      firstName: playerForm.firstName.trim(),
-      secondName: playerForm.secondName.trim() || undefined,
-      lastName: playerForm.lastName.trim(),
-      documentNumber: playerForm.documentNumber.trim(),
-      birthDate: playerForm.birthDate
-        ? new Date(playerForm.birthDate)
-        : undefined,
-      phoneNumber: playerForm.phoneNumber.trim() || undefined,
-      socialSecurity: playerForm.socialSecurity.trim() || undefined,
-      teamId: playerForm.teamId as GUID,
-    };
-
-    const updatedPlayer = await putPlayerById(editingPlayer.id, payload);
-
-    if (!updatedPlayer) {
-      setSubmitting(false);
-      return;
-    }
-
-    if (isEditingSameTeamContext && teamId && tournamentId) {
-      const dorsalResult = await registerPlayerToTeam(editingPlayer.id, {
-        teamId,
-        tournamentId,
-        jerseyNumber: parsedDorsal.jerseyNumber,
-      });
-
-      if (!dorsalResult.success) {
-        setSubmitting(false);
-        await notifyError({
-          title: 'No se pudo asignar el dorsal',
-          text: dorsalResult.errorMessage,
-        });
-        return;
-      }
-
-      onMedicalChange?.();
-    }
-
-    setSubmitting(false);
-    setEditingPlayer(null);
-    resetPlayerForm();
-    await fetchPlayers(debouncedFilters, paginationModel);
-    await notifySuccess({
-      title: 'Jugador actualizado',
-      text: 'El jugador se actualizó correctamente.',
     });
   };
 
@@ -877,300 +719,25 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         />
       </Box>
 
-      <Dialog
+      <PlayerFormDialog
         open={isCreateModalOpen}
-        onClose={() => !submitting && setIsCreateModalOpen(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>Nuevo jugador</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="Nombre"
-              value={playerForm.firstName}
-              onChange={e =>
-                setPlayerForm(prev => ({ ...prev, firstName: e.target.value }))
-              }
-              required
-              fullWidth
-            />
-            <TextField
-              label="Segundo nombre"
-              value={playerForm.secondName}
-              onChange={e =>
-                setPlayerForm(prev => ({ ...prev, secondName: e.target.value }))
-              }
-              fullWidth
-              slotProps={{
-                input: {
-                  endAdornment: (
-                    <FieldInfoTooltip title="Opcional, por si el jugador tiene un segundo nombre." />
-                  ),
-                },
-              }}
-            />
-            <TextField
-              label="Apellido"
-              value={playerForm.lastName}
-              onChange={e =>
-                setPlayerForm(prev => ({ ...prev, lastName: e.target.value }))
-              }
-              required
-              fullWidth
-            />
-            <TextField
-              label="Documento"
-              value={playerForm.documentNumber}
-              onChange={e =>
-                setPlayerForm(prev => ({
-                  ...prev,
-                  documentNumber: e.target.value.replace(/\D/g, ''),
-                }))
-              }
-              required
-              fullWidth
-              error={documentNumberError}
-              helperText={
-                documentNumberError ? VALIDATION_MESSAGES.documentNumber : undefined
-              }
-            />
-            <TextField
-              label="Fecha de nacimiento"
-              type="date"
-              value={playerForm.birthDate}
-              onChange={e =>
-                setPlayerForm(prev => ({ ...prev, birthDate: e.target.value }))
-              }
-              fullWidth
-              error={birthDateError}
-              helperText={
-                birthDateError ? VALIDATION_MESSAGES.minimumPlayerAge : undefined
-              }
-              slotProps={{
-                inputLabel: { shrink: true },
-                htmlInput: { max: maxBirthDate },
-              }}
-            />
-            <TextField
-              label="Teléfono"
-              value={playerForm.phoneNumber}
-              onChange={e =>
-                setPlayerForm(prev => ({
-                  ...prev,
-                  phoneNumber: e.target.value,
-                }))
-              }
-              fullWidth
-              error={phoneError}
-              helperText={phoneError ? VALIDATION_MESSAGES.phone : undefined}
-            />
-            <TextField
-              label="Obra social"
-              value={playerForm.socialSecurity}
-              onChange={e =>
-                setPlayerForm(prev => ({
-                  ...prev,
-                  socialSecurity: e.target.value,
-                }))
-              }
-              fullWidth
-            />
-            {!teamId && (
-              <FormControl fullWidth required>
-                <InputLabel id="create-player-team-label">Equipo</InputLabel>
-                <Select
-                  labelId="create-player-team-label"
-                  label="Equipo"
-                  value={playerForm.teamId}
-                  onChange={e =>
-                    setPlayerForm(prev => ({
-                      ...prev,
-                      teamId: e.target.value as GUID,
-                    }))
-                  }
-                >
-                  {teamOptions.map(teamOption => (
-                    <MenuItem key={teamOption.id} value={teamOption.id}>
-                      {teamOption.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <FormButtons
-            onCancel={() => {
-              setIsCreateModalOpen(false);
-              resetPlayerForm();
-            }}
-            onConfirm={() => void handleCreateSubmit()}
-            confirmLabel="Crear"
-            disabled={
-              submitting || phoneError || documentNumberError || birthDateError
-            }
-          />
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={Boolean(editingPlayer)}
-        onClose={() => !submitting && setEditingPlayer(null)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>Editar jugador</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="Nombre"
-              value={playerForm.firstName}
-              onChange={e =>
-                setPlayerForm(prev => ({ ...prev, firstName: e.target.value }))
-              }
-              required
-              fullWidth
-            />
-            <TextField
-              label="Segundo nombre"
-              value={playerForm.secondName}
-              onChange={e =>
-                setPlayerForm(prev => ({ ...prev, secondName: e.target.value }))
-              }
-              fullWidth
-              slotProps={{
-                input: {
-                  endAdornment: (
-                    <FieldInfoTooltip title="Opcional, por si el jugador tiene un segundo nombre." />
-                  ),
-                },
-              }}
-            />
-            <TextField
-              label="Apellido"
-              value={playerForm.lastName}
-              onChange={e =>
-                setPlayerForm(prev => ({ ...prev, lastName: e.target.value }))
-              }
-              required
-              fullWidth
-            />
-            <TextField
-              label="Documento"
-              value={playerForm.documentNumber}
-              onChange={e =>
-                setPlayerForm(prev => ({
-                  ...prev,
-                  documentNumber: e.target.value.replace(/\D/g, ''),
-                }))
-              }
-              required
-              fullWidth
-              error={documentNumberError}
-              helperText={
-                documentNumberError ? VALIDATION_MESSAGES.documentNumber : undefined
-              }
-            />
-            <TextField
-              label="Fecha de nacimiento"
-              type="date"
-              value={playerForm.birthDate}
-              onChange={e =>
-                setPlayerForm(prev => ({ ...prev, birthDate: e.target.value }))
-              }
-              fullWidth
-              error={birthDateError}
-              helperText={
-                birthDateError ? VALIDATION_MESSAGES.minimumPlayerAge : undefined
-              }
-              slotProps={{
-                inputLabel: { shrink: true },
-                htmlInput: { max: maxBirthDate },
-              }}
-            />
-            <TextField
-              label="Teléfono"
-              value={playerForm.phoneNumber}
-              onChange={e =>
-                setPlayerForm(prev => ({
-                  ...prev,
-                  phoneNumber: e.target.value,
-                }))
-              }
-              fullWidth
-              error={phoneError}
-              helperText={phoneError ? VALIDATION_MESSAGES.phone : undefined}
-            />
-            <TextField
-              label="Obra social"
-              value={playerForm.socialSecurity}
-              onChange={e =>
-                setPlayerForm(prev => ({
-                  ...prev,
-                  socialSecurity: e.target.value,
-                }))
-              }
-              fullWidth
-            />
-            {rosterEnabled && (
-              <TextField
-                label="Dorsal"
-                type="number"
-                value={isEditingSameTeamContext ? playerForm.jerseyNumber : ''}
-                onChange={e =>
-                  setPlayerForm(prev => ({
-                    ...prev,
-                    jerseyNumber: e.target.value,
-                  }))
-                }
-                fullWidth
-                disabled={!isEditingSameTeamContext}
-                helperText={
-                  isEditingSameTeamContext
-                    ? 'Único por equipo y temporada. Dejar vacío para quitarlo.'
-                    : 'Se reinicia al cambiar de equipo: asignalo desde la acción Dorsal después de guardar.'
-                }
-                slotProps={{ htmlInput: { min: 0, max: 99, step: 1 } }}
-              />
-            )}
-            <FormControl fullWidth required>
-              <InputLabel id="edit-player-team-label">Equipo</InputLabel>
-              <Select
-                labelId="edit-player-team-label"
-                label="Equipo"
-                value={playerForm.teamId}
-                onChange={e =>
-                  setPlayerForm(prev => ({
-                    ...prev,
-                    teamId: e.target.value as GUID,
-                  }))
-                }
-              >
-                {teamOptions.map(teamOption => (
-                  <MenuItem key={teamOption.id} value={teamOption.id}>
-                    {teamOption.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <FormButtons
-            onCancel={() => {
-              setEditingPlayer(null);
-              resetPlayerForm();
-            }}
-            onConfirm={() => void handleEditSubmit()}
-            confirmLabel="Guardar"
-            disabled={
-              submitting || phoneError || documentNumberError || birthDateError
-            }
-          />
-        </DialogActions>
-      </Dialog>
+        title="Nuevo jugador"
+        confirmLabel="Crear"
+        form={playerForm}
+        submitting={submitting}
+        confirmDisabled={phoneError || documentNumberError || birthDateError}
+        showTeamSelect={!teamId}
+        teamOptions={teamOptions}
+        onTeamChange={nextTeamId =>
+          setPlayerForm(prev => ({ ...prev, teamId: nextTeamId }))
+        }
+        onFieldChange={handlePlayerFieldChange}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          resetPlayerForm();
+        }}
+        onConfirm={() => void handleCreateSubmit()}
+      />
 
       <Dialog
         open={Boolean(dorsalPlayer)}

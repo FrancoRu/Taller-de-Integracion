@@ -1,12 +1,14 @@
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import PlayerPage from '@/views/player/PlayerPage';
 import { PlayerProvider } from '@/modules/player/context/player.context';
-import { sendGet } from '@/modules/core/utils/axiosUtils';
+import { sendGet, sendPut } from '@/modules/core/utils/axiosUtils';
 import { usePlayerStatistic } from '@/modules/playerStatistic/hook/playerStatistic.hook';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
+import { useTeam } from '@/modules/team/hook/team.hook';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 
 vi.mock('@/modules/core/utils/axiosUtils', () => ({
@@ -24,7 +26,9 @@ vi.mock('@/modules/error/hooks/useUnknownErrorHandler', () => ({
 
 vi.mock('@/modules/playerStatistic/hook/playerStatistic.hook');
 vi.mock('@/modules/playerSanction/hook/playerSanction.hook');
+vi.mock('@/modules/team/hook/team.hook');
 vi.mock('@/modules/auth/hook/auth.hook');
+vi.mock('sweetalert2', () => ({ default: { fire: vi.fn() } }));
 
 // Child dialogs/cards pull in unrelated feature contexts (match, tournament,
 // division, stage) that are irrelevant to the fetch under test.
@@ -40,8 +44,10 @@ vi.mock('@/views/playerStatistic/PlayerStatisticCard', () => ({
 vi.mock('@/views/playerStatistic/PlayerHistory', () => ({ default: () => null }));
 
 const mockedSendGet = vi.mocked(sendGet);
+const mockedSendPut = vi.mocked(sendPut);
 const mockedUsePlayerStatistic = vi.mocked(usePlayerStatistic);
 const mockedUsePlayerSanction = vi.mocked(usePlayerSanction);
+const mockedUseTeam = vi.mocked(useTeam);
 const mockedUseAuth = vi.mocked(useAuth);
 
 const renderAt = (param: string) =>
@@ -63,7 +69,10 @@ beforeEach(() => {
       id: '11111111-1111-1111-1111-111111111111',
       slug: 'lopez-carlos',
       fullName: 'LÓPEZ Carlos',
+      firstName: 'Carlos',
+      lastName: 'López',
       documentNumber: '30000001',
+      teamId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     },
   } as Awaited<ReturnType<typeof sendGet>>);
 
@@ -80,6 +89,11 @@ beforeEach(() => {
     playerSanctions: [],
     getPlayerSanctionByFilter: vi.fn(),
   } as unknown as ReturnType<typeof usePlayerSanction>);
+
+  mockedUseTeam.mockReturnValue({
+    teams: [{ id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', name: 'River' }],
+    getTeamsByFiltered: vi.fn(),
+  } as unknown as ReturnType<typeof useTeam>);
 
   mockedUseAuth.mockReturnValue({
     role: 'ADMIN',
@@ -105,6 +119,69 @@ describe('PlayerPage — admin detail fetch', () => {
     await waitFor(() =>
       expect(mockedSendGet).toHaveBeenCalledWith(
         'players/admin/22222222-2222-2222-2222-222222222222'
+      )
+    );
+  });
+});
+
+describe('PlayerPage — edit trigger', () => {
+  it('opens the edit dialog prefilled with the player\'s current values', async () => {
+    const user = userEvent.setup();
+    renderAt('lopez-carlos');
+
+    await user.click(await screen.findByRole('button', { name: 'Editar jugador' }));
+
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByRole('textbox', { name: /^Documento/ })).toHaveValue(
+      '30000001'
+    );
+  });
+
+  it('saves via putPlayerById, closes the dialog and refreshes the player', async () => {
+    mockedSendPut.mockResolvedValue({
+      data: { id: '11111111-1111-1111-1111-111111111111' },
+    } as Awaited<ReturnType<typeof sendPut>>);
+
+    const user = userEvent.setup();
+    renderAt('lopez-carlos');
+
+    await user.click(await screen.findByRole('button', { name: 'Editar jugador' }));
+
+    const dialog = screen.getByRole('dialog');
+    await user.type(
+      within(dialog).getByRole('textbox', { name: /^Nombre/ }),
+      'Carlos'
+    );
+    await user.type(
+      within(dialog).getByRole('textbox', { name: /^Apellido/ }),
+      'López'
+    );
+    await user.type(
+      within(dialog).getByLabelText(/Fecha de nacimiento/),
+      '2000-01-01'
+    );
+    await user.type(
+      within(dialog).getByRole('textbox', { name: /^Teléfono/ }),
+      '3510000000'
+    );
+    await user.type(
+      within(dialog).getByRole('textbox', { name: /^Obra social/ }),
+      'OSDE'
+    );
+
+    mockedSendGet.mockClear();
+    await user.click(within(dialog).getByRole('button', { name: /guardar/i }));
+
+    await waitFor(() => expect(mockedSendPut).toHaveBeenCalledTimes(1));
+    const [url] = mockedSendPut.mock.calls[0];
+    expect(url).toBe('players/11111111-1111-1111-1111-111111111111');
+
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    );
+    await waitFor(() =>
+      expect(mockedSendGet).toHaveBeenCalledWith(
+        'players/admin/11111111-1111-1111-1111-111111111111'
       )
     );
   });
