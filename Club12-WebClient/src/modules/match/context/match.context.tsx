@@ -129,14 +129,16 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
           setMatch(res.data);
           queryClient.setQueryData(matchKeys.byId(id), res);
           await queryClient.invalidateQueries({ queryKey: matchKeys.list() });
-          setMessage(res.status, ['Partido actualizado correctamente']);
+          // matchPage.tsx already shows its own "Resultado cargado" toast on
+          // success — firing one here too showed two different messages
+          // back to back for the same action.
         }
         return res.data;
       } catch (error: unknown) {
         handleUnknownError(error);
       }
     },
-    [putMatchScoreMutation, queryClient, setMessage, handleUnknownError]
+    [putMatchScoreMutation, queryClient, handleUnknownError]
   );
 
   const putMatchByMatchId = useCallback(
@@ -151,14 +153,17 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
           setMatch(res.data);
           queryClient.setQueryData(matchKeys.byId(id), res);
           await queryClient.invalidateQueries({ queryKey: matchKeys.list() });
-          setMessage(res.status, ['Partido creado satisfactoriamente']);
+          // matchPage.tsx already shows its own "Partido actualizado" toast
+          // on success — firing one here too showed two different messages
+          // back to back for the same action (and this one was mislabeled
+          // "creado" for what is always an update, never a create).
         }
         return res.data;
       } catch (error: unknown) {
         handleUnknownError(error);
       }
     },
-    [putMatchMutation, queryClient, setMessage, handleUnknownError]
+    [putMatchMutation, queryClient, handleUnknownError]
   );
 
   const loadWalkOver = useCallback(
@@ -173,14 +178,16 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
           setMatch(res.data);
           queryClient.setQueryData(matchKeys.byId(id), res);
           await queryClient.invalidateQueries({ queryKey: matchKeys.list() });
-          setMessage(res.status, ['Walkover cargado correctamente']);
+          // matchPage.tsx already shows its own "Walkover cargado" toast on
+          // success — firing one here too showed two different messages
+          // back to back for the same action.
         }
         return res.data;
       } catch (error: unknown) {
         handleUnknownError(error);
       }
     },
-    [loadWalkOverMutation, queryClient, setMessage, handleUnknownError]
+    [loadWalkOverMutation, queryClient, handleUnknownError]
   );
 
   const getMatchById = useCallback(
