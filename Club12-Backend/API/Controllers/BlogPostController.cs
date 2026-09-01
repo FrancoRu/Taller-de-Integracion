@@ -73,19 +73,22 @@ public class BlogPostController(
     /// <summary>
     /// Updates an existing blog post by its id.
     /// </summary>
-    /// <param name="id">The id of the blog post to update.</param>
+    /// <param name="idOrSlug">The id (GUID) or slug of the blog post to update.</param>
     /// <param name="blogPostRequest">The blog post request with updated content.</param>
     /// <returns>Returns 200 (OK) with the updated blog post response if the update was successful, or 400 (Bad Request) if the blog post was not found.</returns>
-    [HttpPut("{id:guid}")]
+    [HttpPut("{idOrSlug}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BlogPostResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> UpdateBlogPost(Guid id, UpdateBlogPostRequest blogPostRequest)
+    public async Task<ActionResult> UpdateBlogPost(string idOrSlug, [FromForm] UpdateBlogPostRequest blogPostRequest)
     {
-        BlogPost? existingPost = await blogPostService.GetBlogPostByIdAsync(id);
+        // Resolve by id OR slug (like the GET) so the admin can save a post the
+        // same way it was opened — by its slug — instead of forcing a GUID URL.
+        // includeUnpublished: true so a draft can still be edited (HU-16).
+        BlogPost? existingPost = await blogPostService.GetBlogPostByIdOrSlugAsync(idOrSlug, includeUnpublished: true);
 
         if (existingPost is null)
         {
-            return this.NotFoundProblem(nameof(BlogPost), id);
+            return this.NotFoundProblem(nameof(BlogPost), idOrSlug);
         }
 
         mapper.Map(blogPostRequest, existingPost);
@@ -98,23 +101,23 @@ public class BlogPostController(
     /// <summary>
     /// Updates the photo of a blog post.
     /// </summary>
-    /// <param name="id">The id of the blog post to update the photo.</param>
+    /// <param name="idOrSlug">The id (GUID) or slug of the blog post to update the photo.</param>
     /// <param name="photoRequest">The update blog post photo request.</param>
     /// <returns>Returns 200 (OK) if the photo was successfully updated.</returns>
-    [HttpPut("{id:guid}/photo")]
+    [HttpPut("{idOrSlug}/photo")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> UpdateBlogPostPhoto(Guid id, [FromForm] UpdateBlogPostPhotoRequest photoRequest)
+    public async Task<ActionResult> UpdateBlogPostPhoto(string idOrSlug, [FromForm] UpdateBlogPostPhotoRequest photoRequest)
     {
         if (!photoRequest.PhotoFile.IsValidImageFile())
         {
             return BadRequest(ErrorMessages.Media.InvalidImageFile);
         }
 
-        BlogPost? blogPost = await blogPostService.GetBlogPostByIdAsync(id);
+        BlogPost? blogPost = await blogPostService.GetBlogPostByIdOrSlugAsync(idOrSlug, includeUnpublished: true);
         if (blogPost is null)
         {
-            return this.NotFoundProblem(nameof(BlogPost), id);
+            return this.NotFoundProblem(nameof(BlogPost), idOrSlug);
         }
 
         blogPost.PhotoUrl = await supabaseHelper.UploadImageAsync<BlogPost>(
