@@ -143,6 +143,14 @@ const PlayerMedicalRecordDialog: React.FC<PlayerMedicalRecordDialogProps> = ({
       return;
     }
 
+    if (selectedFile.size === 0) {
+      void notifyWarning({
+        title: 'Archivo vacío',
+        text: 'El PDF seleccionado está vacío. Elegí un archivo válido.',
+      });
+      return;
+    }
+
     setSubmitting(true);
     const result = await uploadMedicalRecord({
       playerId,
