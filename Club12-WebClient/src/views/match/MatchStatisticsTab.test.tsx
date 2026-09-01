@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MatchStatisticsTab from '@/views/match/MatchStatisticsTab';
 import { useMatch } from '@/modules/match/hook/match.hook';
@@ -108,7 +109,11 @@ beforeEach(() => {
 
 describe('MatchStatisticsTab — result derived from both teams\' sheets', () => {
   it('blocks saving while both teams sum to the same score (a tie)', async () => {
-    render(<MatchStatisticsTab match={buildMatch()} />);
+    render(
+      <MemoryRouter>
+        <MatchStatisticsTab match={buildMatch()} />
+      </MemoryRouter>
+    );
 
     await screen.findByLabelText('Puntos de Juan Perez');
 
@@ -121,7 +126,11 @@ describe('MatchStatisticsTab — result derived from both teams\' sheets', () =>
   });
 
   it('saves the result once the sums differ, calling loadMatchResultFromSheets with both sheets', async () => {
-    render(<MatchStatisticsTab match={buildMatch()} />);
+    render(
+      <MemoryRouter>
+        <MatchStatisticsTab match={buildMatch()} />
+      </MemoryRouter>
+    );
 
     const homeInput = await screen.findByLabelText('Puntos de Juan Perez');
     const visitorInput = await screen.findByLabelText('Puntos de Ana Gomez');
@@ -145,7 +154,11 @@ describe('MatchStatisticsTab — result derived from both teams\' sheets', () =>
   });
 
   it('disables saving when either team has no registered players', async () => {
-    render(<MatchStatisticsTab match={buildMatch({ visitorPlayers: [] })} />);
+    render(
+      <MemoryRouter>
+        <MatchStatisticsTab match={buildMatch({ visitorPlayers: [] })} />
+      </MemoryRouter>
+    );
 
     await screen.findByText(/sin jugadores registrados/i);
 
@@ -174,7 +187,11 @@ describe('MatchStatisticsTab — result derived from both teams\' sheets', () =>
       pageSize: 300,
     });
 
-    render(<MatchStatisticsTab match={buildMatch()} />);
+    render(
+      <MemoryRouter>
+        <MatchStatisticsTab match={buildMatch()} />
+      </MemoryRouter>
+    );
 
     const homeInput = (await screen.findByLabelText(
       'Puntos de Juan Perez'

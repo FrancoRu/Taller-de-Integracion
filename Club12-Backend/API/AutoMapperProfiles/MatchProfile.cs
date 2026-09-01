@@ -29,10 +29,13 @@ public class MatchProfile : Profile
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
             .ForMember(dest => dest.HomeTeam, opt => opt.MapFrom(src => src.HomeTeam))
             .ForMember(dest => dest.VisitorTeam, opt => opt.MapFrom(src => src.VisitorTeam))
-            .ForPath(dest => dest.HomeTeam!.Score, opt => opt.MapFrom(src => src.HomeScore))
-            .ForPath(dest => dest.VisitorTeam!.Score, opt => opt.MapFrom(src => src.VisitorScore))
             .ForMember(dest => dest.WinningTeamName, opt => opt.MapFrom(src => src.WinningTeam != null ? src.WinningTeam.Name : null))
             .ForMember(dest => dest.WinningTeamId, opt => opt.MapFrom(src => src.WinningTeam != null ? src.WinningTeam.Id : (Guid?) null))
+            // Score/Scorers are set here rather than via ForPath — a ForPath
+            // targeting dest.HomeTeam!.Score forces AutoMapper to instantiate
+            // HomeTeam even when src.HomeTeam is null (a not-yet-seeded bracket
+            // slot), producing a fake team (Guid.Empty id, null name) instead of
+            // a genuinely empty slot the frontend can render as "A definir".
             // Attribute each of the match's scorers to its team via the player's
             // TeamId (Scorer has no TeamId) and aggregate per player, so the match
             // page can list "goleadores del partido" per side. Requires the match
@@ -41,11 +44,13 @@ public class MatchProfile : Profile
             {
                 if (dest.HomeTeam is not null)
                 {
+                    dest.HomeTeam.Score = src.HomeScore ?? 0;
                     dest.HomeTeam.Scorers = ScorersForTeam(src, src.HomeTeamId);
                 }
 
                 if (dest.VisitorTeam is not null)
                 {
+                    dest.VisitorTeam.Score = src.VisitorScore ?? 0;
                     dest.VisitorTeam.Scorers = ScorersForTeam(src, src.VisitorTeamId);
                 }
             });

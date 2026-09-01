@@ -14,7 +14,9 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { Link } from 'react-router-dom';
 import { notifySuccess } from '@/modules/core/utils/confirmDialog';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { IMatchResponse } from '@/modules/match/type/match';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import { ITeamMatchResponse } from '@/modules/team/type/team';
@@ -171,10 +173,22 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
         </Stack>
 
         {players.length === 0 ? (
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Sin jugadores registrados. No se puede cargar un resultado hasta
-            que el equipo tenga jugadores en el plantel.
-          </Typography>
+          <Stack spacing={1} sx={{ alignItems: 'flex-start' }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              Sin jugadores registrados. No se puede cargar un resultado hasta
+              que el equipo tenga jugadores en el plantel.
+            </Typography>
+            {team?.id && (
+              <Button
+                component={Link}
+                to={APP_ROUTES.panelTeamDetail.build(team.id)}
+                size="small"
+                variant="outlined"
+              >
+                Ver plantel
+              </Button>
+            )}
+          </Stack>
         ) : (
           <Table size="small">
             <TableHead>
