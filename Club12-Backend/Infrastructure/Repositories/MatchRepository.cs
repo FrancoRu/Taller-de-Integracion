@@ -25,7 +25,9 @@ public class MatchRepository(ApplicationDBContext context)
     {
         IQueryable<Match> query = _context.Set<Match>()
             .Include(match => match.HomeTeam)
+                .ThenInclude(team => team!.Players)
             .Include(match => match.VisitorTeam)
+                .ThenInclude(team => team!.Players)
             .Include(match => match.Venue)
             // Stage → Division gives the match's tournament, used to pick each
             // scorer's jersey number from that tournament's roster registration.

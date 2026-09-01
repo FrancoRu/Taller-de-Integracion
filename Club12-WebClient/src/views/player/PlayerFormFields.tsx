@@ -1,12 +1,5 @@
 import { useMemo } from 'react';
-import {
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
-  TextField,
-} from '@mui/material';
+import { Autocomplete, Stack, TextField } from '@mui/material';
 import { GUID } from '@/modules/core/types/types';
 import {
   isAtLeastMinimumPlayerAge,
@@ -153,21 +146,16 @@ export default function PlayerFormFields({
       )}
 
       {showTeamSelect && (
-        <FormControl fullWidth required>
-          <InputLabel id="player-team-select-label">Equipo</InputLabel>
-          <Select
-            labelId="player-team-select-label"
-            label="Equipo"
-            value={form.teamId}
-            onChange={e => onTeamChange(e.target.value as GUID)}
-          >
-            {teamOptions.map(teamOption => (
-              <MenuItem key={teamOption.id} value={teamOption.id}>
-                {teamOption.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Autocomplete
+          options={teamOptions}
+          getOptionLabel={teamOption => teamOption.name}
+          isOptionEqualToValue={(option, value) => option.id === value.id}
+          value={teamOptions.find(teamOption => teamOption.id === form.teamId) ?? null}
+          onChange={(_, selected) => selected && onTeamChange(selected.id as GUID)}
+          renderInput={params => (
+            <TextField {...params} label="Equipo" required fullWidth />
+          )}
+        />
       )}
     </Stack>
   );

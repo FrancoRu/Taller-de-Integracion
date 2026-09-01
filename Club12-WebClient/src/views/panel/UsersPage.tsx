@@ -66,6 +66,23 @@ const UsersPage: React.FC = () => {
     [navigate]
   );
 
+  const fetchUsers = useCallback(
+    async (
+      activeFilters: UserFilterRequest,
+      activePaginationModel: GridPaginationModel
+    ) => {
+      setLoading(true);
+      const response = await getAllUsersRef.current({
+        ...activeFilters,
+        pageNumber: activePaginationModel.page + 1,
+        pageSize: activePaginationModel.pageSize,
+      });
+      setRowCount(response?.totalCount ?? 0);
+      setLoading(false);
+    },
+    []
+  );
+
   const handleDelete = useCallback(
     async (row: UserResponse) => {
       const confirmed = await confirmAction({
@@ -83,13 +100,14 @@ const UsersPage: React.FC = () => {
 
       const deleted = await deleteUser(row.userId);
       if (deleted) {
+        await fetchUsers(filters, paginationModel);
         await notifySuccess({
           title: 'Eliminado',
           text: 'El usuario fue eliminado correctamente.',
         });
       }
     },
-    [deleteUser]
+    [deleteUser, fetchUsers, filters, paginationModel]
   );
 
   const handleToggleActive = useCallback(
@@ -112,12 +130,13 @@ const UsersPage: React.FC = () => {
 
       const updated = await setUserActive(row.userId, !row.isActive);
       if (updated) {
+        await fetchUsers(filters, paginationModel);
         await notifySuccess({
           title: deactivating ? 'Usuario desactivado' : 'Usuario activado',
         });
       }
     },
-    [setUserActive]
+    [setUserActive, fetchUsers, filters, paginationModel]
   );
 
   const userActions = useMemo<TableRowAction<UserResponse>[]>(
@@ -209,23 +228,6 @@ const UsersPage: React.FC = () => {
       }),
     ];
   }, [userActions]);
-
-  const fetchUsers = useCallback(
-    async (
-      activeFilters: UserFilterRequest,
-      activePaginationModel: GridPaginationModel
-    ) => {
-      setLoading(true);
-      const response = await getAllUsersRef.current({
-        ...activeFilters,
-        pageNumber: activePaginationModel.page + 1,
-        pageSize: activePaginationModel.pageSize,
-      });
-      setRowCount(response?.totalCount ?? 0);
-      setLoading(false);
-    },
-    []
-  );
 
   useEffect(() => {
     void fetchUsers(filters, paginationModel);

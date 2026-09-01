@@ -31,7 +31,7 @@ import PlayerFormDialog from '@/views/player/PlayerFormDialog';
 import type { PlayerFormField, PlayerFormState } from '@/views/player/players.types';
 import { toDateInputValue } from '@/views/player/players.types';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
-import { FILTER_OPTIONS_PAGE_SIZE, TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
+import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { STATISTIC_TYPE_LABELS } from '@/modules/playerStatistic/utils/playerStatisticDisplay';
 import {
   formatArgentinePhone,
@@ -171,14 +171,17 @@ const PlayerPage: React.FC = () => {
       firstName: player.firstName,
       secondName: player.secondName ?? '',
       lastName: player.lastName,
-      documentNumber: player.documentNumber,
+      // Defensive strip: some legacy rows were stored with the display-formatted
+      // value (dots) before digits-only was enforced on save — re-editing one
+      // must not immediately trip the "solo números" validation.
+      documentNumber: player.documentNumber.replace(/\D/g, ''),
       birthDate: toDateInputValue(player.birthDate),
       phoneNumber: player.phoneNumber ?? '',
       socialSecurity: player.socialSecurity ?? '',
       teamId: player.teamId,
       jerseyNumber: '',
     });
-    void getTeamsByFiltered({ pageSize: TABLE_ROWS_PER_PAGE });
+    void getTeamsByFiltered({ pageSize: FILTER_OPTIONS_PAGE_SIZE });
     setEditDialogOpen(true);
   };
 

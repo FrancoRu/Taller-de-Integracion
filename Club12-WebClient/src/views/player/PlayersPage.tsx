@@ -29,6 +29,7 @@ import {
 } from '@/modules/core/utils/validators';
 import { TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
 import { TABLE_PAGE_SIZE_OPTIONS } from '@/modules/core/constants/pagination';
+import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { usePlayer } from '@/modules/player/hook/player.hook';
 import FormButtons from '@/views/core/components/FormButtons';
 import { IAddPlayerRequest, IPlayerResponse } from '@/modules/player/type/player.d';
@@ -227,8 +228,21 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   }, [debouncedFilters, fetchPlayers, paginationModel]);
 
   const loadTeamsForDropdown = useCallback(async () => {
-    await getTeamsByFiltered({ pageSize: TABLE_ROWS_PER_PAGE });
+    await getTeamsByFiltered({ pageSize: FILTER_OPTIONS_PAGE_SIZE });
   }, [getTeamsByFiltered]);
+
+  // Also needed just to render the list's "Equipo" column — a player always
+  // belongs to a team, so load the lookup once up front rather than only
+  // when the create dialog opens.
+  useEffect(() => {
+    void loadTeamsForDropdown();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const teamNameById = useMemo(
+    () => new Map((teams ?? []).map(team => [team.id, team.name])),
+    [teams]
+  );
 
   const resetPlayerForm = useCallback(() => {
     setPlayerForm({
@@ -307,12 +321,13 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         return;
       }
 
+      await fetchPlayers(debouncedFilters, paginationModel);
       await notifySuccess({
         title: '¡Eliminado!',
         text: 'El jugador ha sido eliminado.',
       });
     },
-    [deletePlayerById]
+    [deletePlayerById, fetchPlayers, debouncedFilters, paginationModel]
   );
 
   const playerActions = useMemo<TableRowAction<IPlayerResponse>[]>(
@@ -370,6 +385,13 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         align: 'center',
         headerAlign: 'center',
         renderCell: params => formatDocumentNumber(params.row.documentNumber),
+      },
+      {
+        field: 'teamId',
+        headerName: 'Equipo',
+        flex: 1,
+        minWidth: 160,
+        renderCell: params => teamNameById.get(params.row.teamId) ?? '—',
       },
       {
         field: 'phoneNumber',
@@ -452,6 +474,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     medicalEnabled,
     playerActions,
     rosterEnabled,
+    teamNameById,
   ]);
 
   const rows = useMemo(() => players ?? [], [players]);
