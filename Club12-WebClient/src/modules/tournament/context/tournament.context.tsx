@@ -23,6 +23,7 @@ import {
   ITournamentFiltered,
   ITournamentResponse,
 } from '@/modules/tournament/type/tournament';
+import { ICreateFullTournamentRequest } from '@/modules/tournament/type/createFullTournament.d';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 import { fetchAndSetList } from '@/modules/core/utils/comparator';
@@ -56,6 +57,30 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       try {
         const res: AxiosResponse<ITournamentResponse> =
           await tournamentService.addTournament(tournamentRequest);
+
+        if (res && res.data) {
+          setTournament(res.data);
+          setMessage(res.status, []);
+        }
+        return res.data;
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+          setError(error);
+        } else {
+          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+        }
+      }
+    },
+    [setTournament, setError, setMessage]
+  );
+
+  const createFullTournament = useCallback(
+    async (
+      request: ICreateFullTournamentRequest
+    ): Promise<ITournamentResponse | void> => {
+      try {
+        const res: AxiosResponse<ITournamentResponse> =
+          await tournamentService.createFullTournament(request);
 
         if (res && res.data) {
           setTournament(res.data);
@@ -286,6 +311,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       tournament,
       tournaments,
       addTournament,
+      createFullTournament,
       getAllTournamentsByFilter,
       getTournamentById,
       putTournamentById,
@@ -299,6 +325,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       tournament,
       tournaments,
       addTournament,
+      createFullTournament,
       getAllTournamentsByFilter,
       getTournamentById,
       putTournamentById,

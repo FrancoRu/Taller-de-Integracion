@@ -4,11 +4,6 @@ import { Box, Button, Step, StepLabel, Stepper } from '@mui/material';
 import PageShell from '@/views/core/components/PageShell';
 import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
-import { useDivision } from '@/modules/division/hook/division.hook';
-import { useStage } from '@/modules/stage/hook/stage.hook';
-import { tournamentService } from '@/modules/tournament/service/tournament.service';
-import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
-import { GUID } from '@/modules/core/types/types';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { createInitialWizardState } from './types';
 import {
@@ -32,9 +27,7 @@ const STEP_LABELS = ['Torneo', 'Divisiones', 'Copa cruzada', 'Revisión'];
 export default function TournamentWizardPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addTournament } = useTournament();
-  const { addDivision } = useDivision();
-  const { addStage } = useStage();
+  const { createFullTournament } = useTournament();
 
   // The wizard is normally launched pre-scoped to a season (from the admin
   // season hub) via router state, which locks the season in the first step. A
@@ -89,32 +82,12 @@ export default function TournamentWizardPage() {
   const handleSubmit = useCallback(async () => {
     setSubmitting(true);
     try {
-      const result = await submitWizard(state, {
-        addTournament,
-        // Structure can only be built while OpenForRegistration (HU-31), and a
-        // new tournament starts Scheduled — so open registration right after
-        // creating it, before any division/stage. Uses the raw service so the
-        // orchestration can tell success from failure (the context method
-        // returns void). Errors surface through submitWizard's result.
-        openRegistration: async (tournamentId: GUID) => {
-          try {
-            await tournamentService.putTournamentById(tournamentId, {
-              name: state.tournament.name.trim(),
-              description: state.tournament.description.trim(),
-              startDate: new Date(state.tournament.startDate),
-              teamRegistrationDeadline: new Date(
-                state.tournament.teamRegistrationDeadline
-              ),
-              status: TournamentStatus.OpenForRegistration,
-            });
-            return true;
-          } catch {
-            return false;
-          }
-        },
-        addDivision,
-        addStage,
-      });
+      // HU-38: the whole tournament (base fields + every division/zone with its
+      // points, cups, playoff mappings and stages) is created in ONE atomic
+      // backend call. All-or-nothing — a single failure leaves no partial
+      // tournament behind — and the backend creates it already
+      // OpenForRegistration, so there is no separate open-registration call.
+      const result = await submitWizard(state, { createFullTournament });
 
       if (!result.success) {
         await notifyWarning({
@@ -124,27 +97,23 @@ export default function TournamentWizardPage() {
         return;
       }
 
-      if (result.warnings.length > 0) {
-        await notifyWarning({
-          title: 'Torneo creado con observaciones',
-          text: `${result.warnings.length} paso(s) no se completaron del todo. Podés terminarlos desde el panel: ${result.warnings[0]}`,
-        });
-      } else {
-        await notifySuccess({
-          title: 'Torneo creado',
-          text: 'El torneo y su estructura se crearon correctamente. La inscripción quedó abierta: ya podés inscribir equipos.',
-        });
-      }
+      await notifySuccess({
+        title: 'Torneo creado',
+        text: 'El torneo y su estructura se crearon correctamente. La inscripción quedó abierta: ya podés inscribir equipos.',
+      });
 
+      // Prefer the created tournament's slug for the detail route, falling back
+      // to its id, and to the list when neither is available.
+      const detailKey = result.slug ?? result.tournamentId;
       navigate(
-        result.tournamentId
-          ? APP_ROUTES.panelTournamentDetail.build(result.tournamentId)
+        detailKey
+          ? APP_ROUTES.panelTournamentDetail.build(detailKey)
           : APP_ROUTES.panelTournaments
       );
     } finally {
       setSubmitting(false);
     }
-  }, [state, addTournament, addDivision, addStage, navigate]);
+  }, [state, createFullTournament, navigate]);
 
   return (
     <PageShell title="Asistente de creación de torneo">

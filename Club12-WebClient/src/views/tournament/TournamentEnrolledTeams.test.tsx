@@ -79,6 +79,7 @@ const setup = (options: {
     tournament: null,
     tournaments: null,
     addTournament: vi.fn(),
+    createFullTournament: vi.fn(),
     getAllTournamentsByFilter: vi.fn(),
     getTournamentById: vi.fn(),
     putTournamentById: vi.fn(),

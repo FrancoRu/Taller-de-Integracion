@@ -7,6 +7,7 @@ import {
   GUID,
 } from '@/modules/core/types/types';
 import { IMinimalDivisionResponse } from '@/modules/division/type/division';
+import { ICreateFullTournamentRequest } from '@/modules/tournament/type/createFullTournament.d';
 
 /**
  * Context properties and methods for managing tournaments.
@@ -24,6 +25,19 @@ export interface ITournamentContextProps {
    */
   addTournament(
     tournament: IAddTournamentRequest
+  ): Promise<ITournamentResponse | void>;
+
+  /**
+   * HU-38: creates a whole tournament (base fields + every division with its
+   * points, cups, playoff mappings and stages) in ONE atomic backend call
+   * (`POST /api/tournaments/full`). All-or-nothing: a failure leaves no partial
+   * tournament behind, and the tournament is created already
+   * `OpenForRegistration`.
+   * @param request The full tournament-wizard payload.
+   * @returns A promise resolving with the created tournament (including its divisions).
+   */
+  createFullTournament(
+    request: ICreateFullTournamentRequest
   ): Promise<ITournamentResponse | void>;
 
   /**
