@@ -24,6 +24,7 @@ import {
 } from '@/modules/core/utils/confirmDialog';
 import { DownloadIcon, UploadFileIcon } from '@/views/core/MUI/icons/icons';
 import HabilitacionBadge from '@/views/medicalRecord/HabilitacionBadge';
+import FieldInfoTooltip from '@/views/core/components/FieldInfoTooltip';
 
 interface PlayerMedicalRecordDialogProps {
   open: boolean;
@@ -305,13 +306,20 @@ const PlayerMedicalRecordDialog: React.FC<PlayerMedicalRecordDialogProps> = ({
                 Revisión (aprobar / rechazar)
               </Typography>
               <TextField
-                label="Motivo de rechazo (opcional)"
+                label="Motivo de rechazo"
                 value={rejectReason}
                 onChange={e => setRejectReason(e.target.value)}
                 fullWidth
                 multiline
                 minRows={2}
-                slotProps={{ htmlInput: { maxLength: 500 } }}
+                slotProps={{
+                  htmlInput: { maxLength: 500 },
+                  input: {
+                    endAdornment: (
+                      <FieldInfoTooltip title="Opcional. Se muestra al jugador/equipo junto con el rechazo." />
+                    ),
+                  },
+                }}
               />
               <Stack direction="row" spacing={1}>
                 <Tooltip

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import PageShell from '@/views/core/components/PageShell';
+import FieldInfoTooltip from '@/views/core/components/FieldInfoTooltip';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { useUser } from '@/modules/user/hook/user.hook';
 import { RegisterUserRequest } from '@/modules/user/type/user';
@@ -153,12 +154,19 @@ const CreateUser: React.FC = () => {
 
           <TextField
             fullWidth
-            label="Teléfono (opcional)"
+            label="Teléfono"
             name="phone"
             value={form.phone ?? ''}
             onChange={handleChange}
             error={phoneError}
             helperText={phoneError ? VALIDATION_MESSAGES.phone : undefined}
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <FieldInfoTooltip title="Opcional. Se usa para contactar al usuario si hace falta." />
+                ),
+              },
+            }}
           />
 
           <TextField

@@ -223,7 +223,7 @@ export default function StageMatchesByRound({
               se reprograma sin cambiar su jornada.
             </Typography>
             <TextField
-              label="Nueva fecha y hora (opcional)"
+              label="Nueva fecha y hora"
               type="datetime-local"
               value={newDate}
               onChange={event => setNewDate(event.target.value)}

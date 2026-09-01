@@ -46,6 +46,7 @@ import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PageShell from '@/views/core/components/PageShell';
+import FieldInfoTooltip from '@/views/core/components/FieldInfoTooltip';
 import FilterBar from '@/views/core/components/FilterBar';
 import {
   DeleteIcon,
@@ -895,12 +896,19 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               fullWidth
             />
             <TextField
-              label="Segundo nombre (opcional)"
+              label="Segundo nombre"
               value={playerForm.secondName}
               onChange={e =>
                 setPlayerForm(prev => ({ ...prev, secondName: e.target.value }))
               }
               fullWidth
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <FieldInfoTooltip title="Opcional, por si el jugador tiene un segundo nombre." />
+                  ),
+                },
+              }}
             />
             <TextField
               label="Apellido"
@@ -1026,12 +1034,19 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               fullWidth
             />
             <TextField
-              label="Segundo nombre (opcional)"
+              label="Segundo nombre"
               value={playerForm.secondName}
               onChange={e =>
                 setPlayerForm(prev => ({ ...prev, secondName: e.target.value }))
               }
               fullWidth
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <FieldInfoTooltip title="Opcional, por si el jugador tiene un segundo nombre." />
+                  ),
+                },
+              }}
             />
             <TextField
               label="Apellido"
