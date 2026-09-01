@@ -127,6 +127,57 @@ public class ClubTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Contains(entry2027.Seasons, s => s.TournamentId == season2027.Id);
     }
 
+    /// <summary>
+    /// A newly created team is linked to a club immediately — the roster
+    /// import feature (HU-53) must have a club history to search from day
+    /// one, not only after someone remembers to run the bulk backfill.
+    /// </summary>
+    [Fact]
+    public async Task CreateTeam_IsLinkedToAClub_Immediately()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ITeamService teamService = scope.ServiceProvider.GetRequiredService<ITeamService>();
+
+        Team created = await teamService.CreateTeamAsync(NewUnsavedTeam($"Newell's {Guid.NewGuid()}"));
+
+        Team persisted = await ReadTeamAsync(created.Id);
+        Assert.NotNull(persisted.ClubId);
+    }
+
+    /// <summary>
+    /// A second team created later with the same name joins the SAME club as
+    /// the first, instead of getting its own — mirroring the backfill's
+    /// same-name-collapses-onto-one-club rule (HU-99).
+    /// </summary>
+    [Fact]
+    public async Task CreateTeam_WithNameOfExistingClub_JoinsTheSameClub()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ITeamService teamService = scope.ServiceProvider.GetRequiredService<ITeamService>();
+
+        string sharedName = $"Boca Paraná {Guid.NewGuid()}";
+        Team first = await teamService.CreateTeamAsync(NewUnsavedTeam(sharedName));
+        Team second = await teamService.CreateTeamAsync(NewUnsavedTeam(sharedName));
+
+        Team linkedFirst = await ReadTeamAsync(first.Id);
+        Team linkedSecond = await ReadTeamAsync(second.Id);
+
+        Assert.NotNull(linkedFirst.ClubId);
+        Assert.Equal(linkedFirst.ClubId, linkedSecond.ClubId);
+    }
+
+    private static Team NewUnsavedTeam(string name) => new()
+    {
+        Name = name,
+        // CreateTeamAsync overwrites this with a generated unique slug.
+        Slug = $"team-{Guid.NewGuid()}",
+        ThreeLetterCode = Guid.NewGuid().ToString("N")[..3].ToUpperInvariant(),
+        LogoUrl = "https://example.test/logo.png",
+        ShirtColor = "Green",
+        Players = [],
+        CreatedBy = "test",
+    };
+
     private async Task<ClubBackfillResult> BackfillAsync()
     {
         using IServiceScope scope = _factory.Services.CreateScope();

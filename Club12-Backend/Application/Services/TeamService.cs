@@ -33,11 +33,13 @@ public class TeamService(
     IUnitOfWork unitOfWork,
     IRosterCopyService rosterCopyService,
     IDivisionService divisionService,
+    IClubService clubService,
     ITeamPointDeductionRepository pointDeductionRepository) : ITeamService
 {
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IRosterCopyService _rosterCopyService = rosterCopyService;
     private readonly IDivisionService _divisionService = divisionService;
+    private readonly IClubService _clubService = clubService;
     private readonly ITeamRepository _teamRepository = unitOfWork.TeamRepository;
     private readonly IPlayerTeamRegistrationRepository _registrationRepository = unitOfWork.PlayerTeamRegistrationRepository;
     private readonly ITeamTournamentRegistrationRepository _tournamentRegistrationRepository = unitOfWork.TeamTournamentRegistrationRepository;
@@ -59,6 +61,12 @@ public class TeamService(
             candidate => _teamRepository.ExistsAsync(team => team.Slug == candidate));
 
         await _teamRepository.AddAsync(teamEntity);
+
+        // So "Importar plantel de una temporada anterior" (HU-53/HU-99) has a
+        // club history to search from day one, instead of only working after
+        // someone remembers to run the bulk backfill.
+        await _clubService.EnsureTeamLinkedToClubAsync(teamEntity);
+
         return teamEntity;
     }
 

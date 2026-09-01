@@ -1,5 +1,7 @@
 using Application.DTOs.Club.Response;
 
+using Domain.Entities.Models;
+
 using System.Threading.Tasks;
 
 namespace Application.Interfaces.Services;
@@ -21,6 +23,17 @@ public interface IClubService
     /// </summary>
     /// <returns>How many clubs were created and teams linked (zeros on a re-run).</returns>
     Task<ClubBackfillResult> BackfillClubsAsync();
+
+    /// <summary>
+    /// Idempotently links a single team to its stable club (same name/slug
+    /// match as <see cref="BackfillClubsAsync"/>), creating the club if this
+    /// is the first team with that name. Called right after a team is
+    /// created so "Importar plantel de una temporada anterior" (HU-53) has a
+    /// club history to search from day one, instead of only after someone
+    /// remembers to run the bulk backfill.
+    /// </summary>
+    /// <param name="team">A persisted team. Left untouched if already linked.</param>
+    Task EnsureTeamLinkedToClubAsync(Team team);
 
     /// <summary>
     /// Returns a club and its trajectory across seasons: every per-season team
