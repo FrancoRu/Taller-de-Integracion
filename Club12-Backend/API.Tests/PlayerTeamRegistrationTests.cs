@@ -1,4 +1,7 @@
+using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Services;
+using Application.Utils.Options;
 
 using Domain.Entities.Models;
 
@@ -6,6 +9,7 @@ using Infrastructure.Persistance;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace API.Tests;
 
@@ -163,6 +167,101 @@ public class PlayerTeamRegistrationTests : IClassFixture<CustomWebApplicationFac
         Assert.Equal(apertura.Id, onlyRegistration.TournamentId);
     }
 
+    [Fact]
+    public async Task UpdatePlayerAsync_TeamChangedWithinSameSeason_ClearsStaleJerseyNumber()
+    {
+        using IServiceScope seedScope = _factory.Services.CreateScope();
+        ApplicationDBContext seedDb = seedScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        Tournament apertura = await SeedTournamentAsync(seedDb, "Apertura");
+        Team originalTeam = await SeedTeamAsync(seedDb, apertura.Id);
+        Team newTeam = await SeedTeamAsync(seedDb, apertura.Id);
+
+        // Another player already wears #7 on the destination team.
+        Player incumbent = await SeedPlayerAsync(seedDb, newTeam);
+        await SeedRegistrationAsync(seedDb, incumbent, newTeam, apertura, jerseyNumber: 7);
+
+        // The moving player wears the SAME #7, but on the original team.
+        Player mover = await SeedPlayerAsync(seedDb, originalTeam);
+        await SeedRegistrationAsync(seedDb, mover, originalTeam, apertura, jerseyNumber: 7);
+
+        using (IServiceScope actScope = _factory.Services.CreateScope())
+        {
+            IPlayerService playerService = actScope.ServiceProvider.GetRequiredService<IPlayerService>();
+            ApplicationDBContext actDb = actScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+            Player tracked = await actDb.Players.SingleAsync(p => p.Id == mover.Id);
+            tracked.TeamId = newTeam.Id;
+
+            // Must not throw the unique (TeamId, TournamentId, JerseyNumber)
+            // constraint violation despite both players sharing dorsal #7.
+            await playerService.UpdatePlayerAsync(tracked, apertura.Id);
+        }
+
+        using IServiceScope verifyScope = _factory.Services.CreateScope();
+        ApplicationDBContext verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        PlayerTeamRegistration moverRegistration = await verifyDb.PlayerTeamRegistrations
+            .AsNoTracking().SingleAsync(r => r.PlayerId == mover.Id);
+        Assert.Equal(newTeam.Id, moverRegistration.TeamId);
+        Assert.Null(moverRegistration.JerseyNumber);
+
+        PlayerTeamRegistration incumbentRegistration = await verifyDb.PlayerTeamRegistrations
+            .AsNoTracking().SingleAsync(r => r.PlayerId == incumbent.Id);
+        Assert.Equal(7, incumbentRegistration.JerseyNumber);
+    }
+
+    [Fact]
+    public async Task UpdatePlayerAsync_TeamChangedToFullTeam_ThrowsAndKeepsPlayerOnOriginalTeam()
+    {
+        using IServiceScope seedScope = _factory.Services.CreateScope();
+        ApplicationDBContext seedDb = seedScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        Tournament apertura = await SeedTournamentAsync(seedDb, "Apertura");
+        Team originalTeam = await SeedTeamAsync(seedDb, apertura.Id);
+        Team fullTeam = await SeedTeamAsync(seedDb, apertura.Id);
+
+        Player p1 = await SeedPlayerAsync(seedDb, fullTeam);
+        await SeedRegistrationAsync(seedDb, p1, fullTeam, apertura);
+        Player p2 = await SeedPlayerAsync(seedDb, fullTeam);
+        await SeedRegistrationAsync(seedDb, p2, fullTeam, apertura);
+
+        Player mover = await SeedPlayerAsync(seedDb, originalTeam);
+        await SeedRegistrationAsync(seedDb, mover, originalTeam, apertura);
+
+        using (IServiceScope actScope = _factory.Services.CreateScope())
+        {
+            IUnitOfWork unitOfWork = actScope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+            ApplicationDBContext actDb = actScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+            // Deliberately tiny cap so the destination team ("fullTeam", with
+            // 2 players already) is full without seeding dozens of players.
+            PlayerService playerService = new(
+                unitOfWork,
+                actScope.ServiceProvider.GetRequiredService<IScorerRepository>(),
+                Options.Create(new RosterOptions { MaxPlayersPerTeam = 2 }));
+
+            Player tracked = await actDb.Players.SingleAsync(p => p.Id == mover.Id);
+            tracked.TeamId = fullTeam.Id;
+
+            InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => playerService.UpdatePlayerAsync(tracked, apertura.Id));
+            Assert.Contains("máximo", ex.Message);
+        }
+
+        using IServiceScope verifyScope = _factory.Services.CreateScope();
+        ApplicationDBContext verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        // Rejected move must leave BOTH the Player pointer and the season
+        // registration on the original team — no partial write.
+        Player reloadedPlayer = await verifyDb.Players.AsNoTracking().SingleAsync(p => p.Id == mover.Id);
+        Assert.Equal(originalTeam.Id, reloadedPlayer.TeamId);
+
+        PlayerTeamRegistration registration = await verifyDb.PlayerTeamRegistrations
+            .AsNoTracking().SingleAsync(r => r.PlayerId == mover.Id);
+        Assert.Equal(originalTeam.Id, registration.TeamId);
+    }
+
     /// <summary>
     /// Replicates, as an EF/LINQ query, the exact backfill join performed by
     /// the 20260817082125_AddPlayerTeamRegistrationTable migration's raw SQL
@@ -265,13 +364,14 @@ public class PlayerTeamRegistrationTests : IClassFixture<CustomWebApplicationFac
     }
 
     private static async Task<PlayerTeamRegistration> SeedRegistrationAsync(
-        ApplicationDBContext db, Player player, Team team, Tournament tournament)
+        ApplicationDBContext db, Player player, Team team, Tournament tournament, int? jerseyNumber = null)
     {
         PlayerTeamRegistration registration = new()
         {
             PlayerId = player.Id,
             TeamId = team.Id,
             TournamentId = tournament.Id,
+            JerseyNumber = jerseyNumber,
             CreatedBy = "test",
         };
 
