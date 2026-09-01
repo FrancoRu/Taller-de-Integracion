@@ -34,12 +34,14 @@ public class CreatePlayerRequest
     /// </summary>
     [Required(ErrorMessage = "The DocumentNumber field is required.")]
     [MaxLength(PlayerFieldLengths.DocumentNumberMaxLength, ErrorMessage = "The DocumentNumber field must not exceed 15 characters.")]
+    [RegularExpression(ValidationPatterns.DocumentNumber, ErrorMessage = ValidationPatterns.DocumentNumberError)]
     public required string DocumentNumber { get; set; }
 
     /// <summary>
-    /// The birthdate of the player.
+    /// The birthdate of the player. Must be at least 15 years ago.
     /// </summary>
     [Required(ErrorMessage = "The BirthDate field is required.")]
+    [MinimumAge(15)]
     public required DateTime BirthDate { get; set; }
 
     /// <summary>
