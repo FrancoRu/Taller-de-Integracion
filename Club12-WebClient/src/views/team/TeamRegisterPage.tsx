@@ -20,10 +20,7 @@ import {
 import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
-import {
-  FILTER_OPTIONS_PAGE_SIZE,
-  TABLE_ROWS_PER_PAGE,
-} from '@/modules/core/constants/pagination';
+import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useTeam } from '@/modules/team/hook/team.hook';
 import { ITeamResponse } from '@/modules/team/type/team.d';
@@ -47,10 +44,12 @@ const TeamRegisterPage: React.FC = () => {
   useEffect(() => {
     const fetch = async () => {
       setLoadingTournaments(true);
-      await getAllTournamentsByFilter({
-        pageSize: TABLE_ROWS_PER_PAGE,
-        status: TournamentStatus.OpenForRegistration,
-      });
+      // Fetch every tournament, not just the OpenForRegistration ones — a
+      // team can be currently assigned to a tournament in ANY status, and
+      // its name is needed to explain why that team isn't selectable here
+      // (see visibleTeams below). tournamentOptions still filters this same
+      // list down to OpenForRegistration for the "Torneo" select.
+      await getAllTournamentsByFilter({ pageSize: FILTER_OPTIONS_PAGE_SIZE });
       setLoadingTournaments(false);
     };
     void fetch();
@@ -74,18 +73,24 @@ const TeamRegisterPage: React.FC = () => {
     void fetch();
   }, [selectedTournamentId, getTeamsByFiltered]);
 
-  /** Teams whose tournamentId is the selected one, or unassigned (null/undefined). */
+  /** Tournament name lookup, so a team tied up elsewhere can say where. */
+  const tournamentNameById = useMemo(
+    () => new Map((tournaments ?? []).map(t => [t.id, t.name])),
+    [tournaments]
+  );
+
+  /** Every team. One tied up in a DIFFERENT tournament is still shown here
+   * — disabled, labelled with that tournament's name — instead of silently
+   * disappearing, so it's clear WHY it isn't selectable (it must be
+   * unenrolled from its current tournament first, from that tournament's
+   * "Equipos inscriptos" tab) rather than looking like there are simply no
+   * teams left to register.
+   */
   const visibleTeams = useMemo<ITeamResponse[]>(() => {
     if (!selectedTournamentId || !teams) {
       return [];
     }
-    // A team is enrollable here when it is already in the selected tournament
-    // (pre-checked) or belongs to NO tournament yet. `!t.tournamentId` catches
-    // both null and undefined (an absent field), which a strict `=== null`
-    // missed — that hid unassigned clubs.
-    return teams.filter(
-      t => t.tournamentId === selectedTournamentId || !t.tournamentId
-    );
+    return teams;
   }, [teams, selectedTournamentId]);
 
   /** Sync checkboxes when visible teams change: pre-check those already in the tournament. */
@@ -222,42 +227,63 @@ const TeamRegisterPage: React.FC = () => {
                 </Typography>
               ) : (
                 <List dense disablePadding>
-                  {visibleTeams.map(team => (
-                    <ListItem
-                      key={team.id}
-                      disablePadding
-                      onClick={() => handleToggle(team.id)}
-                      sx={{
-                        cursor: 'pointer',
-                        borderRadius: 1,
-                        px: 1,
-                        '&:hover': { backgroundColor: 'action.hover' },
-                      }}
-                    >
-                      <ListItemIcon sx={{ minWidth: 36 }}>
-                        <Checkbox
-                          edge="start"
-                          checked={checkedTeamIds.has(team.id)}
-                          tabIndex={-1}
-                          disableRipple
-                          color="primary"
-                        />
-                      </ListItemIcon>
-                      <ListItemIcon sx={{ minWidth: 36 }}>
-                        <TeamLogo
-                          teamName={team.name}
-                          logoUrl={team.logoUrl}
-                          size={28}
-                        />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={team.name}
-                        secondary={
-                          team.tournamentId ? 'Ya registrado' : 'Sin torneo'
+                  {visibleTeams.map(team => {
+                    const registeredElsewhere =
+                      Boolean(team.tournamentId) &&
+                      team.tournamentId !== selectedTournamentId;
+                    const otherTournamentName = registeredElsewhere
+                      ? tournamentNameById.get(team.tournamentId as GUID)
+                      : undefined;
+
+                    return (
+                      <ListItem
+                        key={team.id}
+                        disablePadding
+                        onClick={
+                          registeredElsewhere
+                            ? undefined
+                            : () => handleToggle(team.id)
                         }
-                      />
-                    </ListItem>
-                  ))}
+                        sx={{
+                          cursor: registeredElsewhere ? 'default' : 'pointer',
+                          borderRadius: 1,
+                          px: 1,
+                          opacity: registeredElsewhere ? 0.6 : 1,
+                          '&:hover': registeredElsewhere
+                            ? undefined
+                            : { backgroundColor: 'action.hover' },
+                        }}
+                      >
+                        <ListItemIcon sx={{ minWidth: 36 }}>
+                          <Checkbox
+                            edge="start"
+                            checked={checkedTeamIds.has(team.id)}
+                            disabled={registeredElsewhere}
+                            tabIndex={-1}
+                            disableRipple
+                            color="primary"
+                          />
+                        </ListItemIcon>
+                        <ListItemIcon sx={{ minWidth: 36 }}>
+                          <TeamLogo
+                            teamName={team.name}
+                            logoUrl={team.logoUrl}
+                            size={28}
+                          />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={team.name}
+                          secondary={
+                            registeredElsewhere
+                              ? `Registrado en ${otherTournamentName ?? 'otro torneo'} — desinscribilo desde ahí primero`
+                              : team.tournamentId
+                                ? 'Ya registrado'
+                                : 'Sin torneo'
+                          }
+                        />
+                      </ListItem>
+                    );
+                  })}
                 </List>
               )}
 
