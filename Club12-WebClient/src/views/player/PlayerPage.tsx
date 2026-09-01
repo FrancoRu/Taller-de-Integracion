@@ -26,6 +26,7 @@ import PlayerSanctionCreatePage from '@/views/playerSanction/playerSanctionCreat
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { STATISTIC_TYPE_LABELS } from '@/modules/playerStatistic/utils/playerStatisticDisplay';
+import { formatDocumentNumber } from '@/modules/core/utils/validators';
 
 const formatDate = (value?: string | Date | null) => {
   if (!value) {
@@ -194,7 +195,7 @@ const PlayerPage: React.FC = () => {
               }}>
                 Documento
               </Typography>
-              <Typography>{player.documentNumber}</Typography>
+              <Typography>{formatDocumentNumber(player.documentNumber)}</Typography>
             </Grid>
             <Grid
               size={{

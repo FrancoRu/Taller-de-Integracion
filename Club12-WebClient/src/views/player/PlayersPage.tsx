@@ -23,7 +23,13 @@ import {
   notifyWarning,
 } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
-import { isValidPhone, VALIDATION_MESSAGES } from '@/modules/core/utils/validators';
+import {
+  formatDocumentNumber,
+  isAtLeastMinimumPlayerAge,
+  isValidDocumentNumber,
+  isValidPhone,
+  VALIDATION_MESSAGES,
+} from '@/modules/core/utils/validators';
 import { TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
 import { TABLE_PAGE_SIZE_OPTIONS } from '@/modules/core/constants/pagination';
 import { usePlayer } from '@/modules/player/hook/player.hook';
@@ -123,6 +129,18 @@ const getDateValue = (value?: Date) => {
   }
 
   return dateValue.toISOString().slice(0, 10);
+};
+
+/** Latest birth date an `<input type="date">` should accept: today minus the
+ * minimum player age, so the picker itself steers users away from an
+ * underage date instead of only rejecting it on submit. */
+const getMaxBirthDate = () => {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - 15);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 const PlayersPage: React.FC<PlayersPageProps> = ({
@@ -398,6 +416,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         minWidth: 140,
         align: 'center',
         headerAlign: 'center',
+        renderCell: params => formatDocumentNumber(params.row.documentNumber),
       },
       {
         field: 'phoneNumber',
@@ -514,6 +533,22 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       return false;
     }
 
+    if (!isValidDocumentNumber(playerForm.documentNumber)) {
+      void notifyWarning({
+        title: 'Documento inválido',
+        text: `${VALIDATION_MESSAGES.documentNumber}.`,
+      });
+      return false;
+    }
+
+    if (!isAtLeastMinimumPlayerAge(playerForm.birthDate)) {
+      void notifyWarning({
+        title: 'Fecha de nacimiento inválida',
+        text: `${VALIDATION_MESSAGES.minimumPlayerAge}.`,
+      });
+      return false;
+    }
+
     if (!resolvedTeamId) {
       void notifyWarning({
         title: 'Equipo requerido',
@@ -527,6 +562,13 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
 
   const phoneError =
     playerForm.phoneNumber.length > 0 && !isValidPhone(playerForm.phoneNumber);
+  const documentNumberError =
+    playerForm.documentNumber.length > 0 &&
+    !isValidDocumentNumber(playerForm.documentNumber);
+  const birthDateError =
+    playerForm.birthDate.length > 0 &&
+    !isAtLeastMinimumPlayerAge(playerForm.birthDate);
+  const maxBirthDate = useMemo(getMaxBirthDate, []);
 
   const handleCreatePlayer = useCallback(() => {
     if (onCreate) {
@@ -798,11 +840,15 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               onChange={e =>
                 setPlayerForm(prev => ({
                   ...prev,
-                  documentNumber: e.target.value,
+                  documentNumber: e.target.value.replace(/\D/g, ''),
                 }))
               }
               required
               fullWidth
+              error={documentNumberError}
+              helperText={
+                documentNumberError ? VALIDATION_MESSAGES.documentNumber : undefined
+              }
             />
             <TextField
               label="Fecha de nacimiento"
@@ -812,8 +858,13 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
                 setPlayerForm(prev => ({ ...prev, birthDate: e.target.value }))
               }
               fullWidth
+              error={birthDateError}
+              helperText={
+                birthDateError ? VALIDATION_MESSAGES.minimumPlayerAge : undefined
+              }
               slotProps={{
-                inputLabel: { shrink: true }
+                inputLabel: { shrink: true },
+                htmlInput: { max: maxBirthDate },
               }}
             />
             <TextField
@@ -872,7 +923,9 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
             }}
             onConfirm={() => void handleCreateSubmit()}
             confirmLabel="Crear"
-            disabled={submitting || phoneError}
+            disabled={
+              submitting || phoneError || documentNumberError || birthDateError
+            }
           />
         </DialogActions>
       </Dialog>
@@ -918,11 +971,15 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               onChange={e =>
                 setPlayerForm(prev => ({
                   ...prev,
-                  documentNumber: e.target.value,
+                  documentNumber: e.target.value.replace(/\D/g, ''),
                 }))
               }
               required
               fullWidth
+              error={documentNumberError}
+              helperText={
+                documentNumberError ? VALIDATION_MESSAGES.documentNumber : undefined
+              }
             />
             <TextField
               label="Fecha de nacimiento"
@@ -932,8 +989,13 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
                 setPlayerForm(prev => ({ ...prev, birthDate: e.target.value }))
               }
               fullWidth
+              error={birthDateError}
+              helperText={
+                birthDateError ? VALIDATION_MESSAGES.minimumPlayerAge : undefined
+              }
               slotProps={{
-                inputLabel: { shrink: true }
+                inputLabel: { shrink: true },
+                htmlInput: { max: maxBirthDate },
               }}
             />
             <TextField
@@ -990,7 +1052,9 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
             }}
             onConfirm={() => void handleEditSubmit()}
             confirmLabel="Guardar"
-            disabled={submitting || phoneError}
+            disabled={
+              submitting || phoneError || documentNumberError || birthDateError
+            }
           />
         </DialogActions>
       </Dialog>
