@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Button,
   Card,
@@ -72,9 +72,23 @@ const TeamPage: React.FC<TeamPageProps> = ({
   const { playerStatistics, getPlayerStatisticsByFilter } = usePlayerStatistic();
   const { playerSanctions, getPlayerSanctionByFilter } = usePlayerSanction();
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState<
-    'detalle' | 'jugadores' | 'puntuaciones' | 'sanciones'
-  >('detalle');
+  type TeamTab = 'detalle' | 'jugadores' | 'puntuaciones' | 'sanciones';
+  const TAB_QUERY_PARAM = 'tab';
+  // Kept in the URL (not local state) so leaving to e.g. a player's detail
+  // and clicking "Volver" back here lands on the same tab instead of
+  // resetting to Detalle.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = (searchParams.get(TAB_QUERY_PARAM) ?? 'detalle') as TeamTab;
+  const setTab = (value: TeamTab) => {
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev);
+        next.set(TAB_QUERY_PARAM, value);
+        return next;
+      },
+      { replace: true }
+    );
+  };
   const [statisticDialogOpen, setStatisticDialogOpen] = useState(false);
   const [sanctionDialogOpen, setSanctionDialogOpen] = useState(false);
   const [rosterImportOpen, setRosterImportOpen] = useState(false);

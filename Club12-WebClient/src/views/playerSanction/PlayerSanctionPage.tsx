@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { formatDateTimeAr } from '@/modules/core/utils/formatDate';
 import {
   Button,
@@ -64,9 +64,23 @@ const PlayerSanctionPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [playerLoading, setPlayerLoading] = useState(false);
   const [matchLoading, setMatchLoading] = useState(false);
-  const [tab, setTab] = useState<
-    'detalle' | 'jugador' | 'partido' | 'apelacion'
-  >('detalle');
+  type SanctionTab = 'detalle' | 'jugador' | 'partido' | 'apelacion';
+  const TAB_QUERY_PARAM = 'tab';
+  // Kept in the URL (not local state) so leaving to the sanctioned player's
+  // or match's detail and clicking "Volver" back here lands on the same tab
+  // instead of resetting to Detalle.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = (searchParams.get(TAB_QUERY_PARAM) ?? 'detalle') as SanctionTab;
+  const setTab = (value: SanctionTab) => {
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev);
+        next.set(TAB_QUERY_PARAM, value);
+        return next;
+      },
+      { replace: true }
+    );
+  };
   const [appealDialogOpen, setAppealDialogOpen] = useState(false);
   const [resolveDialogOpen, setResolveDialogOpen] = useState(false);
   const [reasonText, setReasonText] = useState('');
