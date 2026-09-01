@@ -63,7 +63,6 @@ const MatchPage: React.FC = () => {
   const {
     match,
     getMatchById,
-    putMatchScoreByMatchId,
     putMatchByMatchId,
     loadWalkOver,
   } = useMatch();
@@ -73,11 +72,8 @@ const MatchPage: React.FC = () => {
   const [sanctionsLoading, setSanctionsLoading] = useState(false);
   const [tab, setTab] = useState<MatchTab>('detalle');
   const [sanctionDialogOpen, setSanctionDialogOpen] = useState(false);
-  const [resultDialogOpen, setResultDialogOpen] = useState(false);
   const [walkoverDialogOpen, setWalkoverDialogOpen] = useState(false);
   const [submittingResult, setSubmittingResult] = useState(false);
-  const [homeScore, setHomeScore] = useState('0');
-  const [visitorScore, setVisitorScore] = useState('0');
   const [presentTeamId, setPresentTeamId] = useState<GUID | ''>('');
   // Edit dialog (venue + date).
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -132,12 +128,6 @@ const MatchPage: React.FC = () => {
     void getAllVenues();
   }, [getAllVenues]);
 
-  const openResultDialog = useCallback(() => {
-    setHomeScore(String(match?.homeTeam?.score ?? 0));
-    setVisitorScore(String(match?.visitorTeam?.score ?? 0));
-    setResultDialogOpen(true);
-  }, [match?.homeTeam?.score, match?.visitorTeam?.score]);
-
   const openEditDialog = useCallback(() => {
     setEditDate(toDatetimeLocalValue(match?.matchDate));
     setEditVenueId((match?.venue?.id as GUID | undefined) ?? '');
@@ -174,44 +164,6 @@ const MatchPage: React.FC = () => {
     await getMatchById(match.id);
     await notifySuccess({ title: 'Partido actualizado' });
   }, [match?.id, editDate, editVenueId, putMatchByMatchId, getMatchById]);
-
-  const handleLoadResult = useCallback(async () => {
-    if (!match?.id) {
-      return;
-    }
-
-    const home = Number(homeScore);
-    const visitor = Number(visitorScore);
-
-    if (Number.isNaN(home) || Number.isNaN(visitor)) {
-      await notifyWarning({ title: 'Ingrese un marcador válido.' });
-      return;
-    }
-
-    // Mirror the backend no-draws rule (HU-70) client-side so the operator
-    // gets an immediate, clear message instead of a round-trip 409.
-    if (home === visitor) {
-      await notifyWarning({
-        title: 'No se permiten empates',
-        text: 'En básquet todo partido cargado debe tener un ganador.',
-      });
-      return;
-    }
-
-    setSubmittingResult(true);
-    const result = await putMatchScoreByMatchId(match.id, {
-      homeScore: home,
-      visitorScore: visitor,
-    });
-    setSubmittingResult(false);
-
-    if (!result) {
-      return;
-    }
-
-    setResultDialogOpen(false);
-    await notifySuccess({ title: 'Resultado cargado' });
-  }, [homeScore, visitorScore, match?.id, putMatchScoreByMatchId]);
 
   const openWalkoverDialog = useCallback(() => {
     setPresentTeamId(match?.homeTeam?.id ?? match?.visitorTeam?.id ?? '');
@@ -350,7 +302,7 @@ const MatchPage: React.FC = () => {
           scrollButtons="auto"
         >
           <Tab label="Detalle" value="detalle" />
-          <Tab label="Puntuaciones" value="puntuaciones" />
+          <Tab label="Resultado" value="puntuaciones" />
           <Tab label="Sanciones" value="sanciones" />
         </Tabs>
 
@@ -363,9 +315,6 @@ const MatchPage: React.FC = () => {
             >
               <Button variant="outlined" onClick={openEditDialog}>
                 Editar (cancha/fecha)
-              </Button>
-              <Button variant="contained" onClick={openResultDialog}>
-                Cargar resultado
               </Button>
               <Button
                 variant="outlined"
@@ -651,54 +600,6 @@ const MatchPage: React.FC = () => {
               variant="contained"
               onClick={() => void handleSaveEdit()}
               disabled={submittingEdit}
-            >
-              Guardar
-            </Button>
-          </Stack>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={resultDialogOpen}
-        onClose={() => !submittingResult && setResultDialogOpen(false)}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle>Cargar resultado</DialogTitle>
-        <DialogContent>
-          <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              type="number"
-              label={homeTeam?.name || 'Local'}
-              value={homeScore}
-              onChange={e => setHomeScore(e.target.value)}
-              slotProps={{ htmlInput: { min: 0 } }}
-              fullWidth
-            />
-            <TextField
-              type="number"
-              label={visitorTeam?.name || 'Visitante'}
-              value={visitorScore}
-              onChange={e => setVisitorScore(e.target.value)}
-              slotProps={{ htmlInput: { min: 0 } }}
-              fullWidth
-            />
-          </Stack>
-          <Typography variant="caption" sx={{ color: 'text.secondary', mt: 1, display: 'block' }}>
-            No se permiten empates: el partido debe tener un ganador.
-          </Typography>
-          <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', mt: 2 }}>
-            <Button
-              color="inherit"
-              onClick={() => setResultDialogOpen(false)}
-              disabled={submittingResult}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="contained"
-              onClick={() => void handleLoadResult()}
-              disabled={submittingResult || homeScore === visitorScore}
             >
               Guardar
             </Button>

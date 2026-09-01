@@ -20,6 +20,7 @@ import {
   IMatchResponse,
   IMinimalMatchResponse,
   IPutMatchRequest,
+  IPutMatchResultFromSheetsRequest,
   IPutMatchScoreRequest,
   IRoundMatchesResponse,
   ISuspendMatchRequest,
@@ -64,6 +65,16 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       id: GUID;
       matchDate: IPutMatchRequest;
     }) => matchService.putMatchByMatchId(id, matchDate),
+  });
+
+  const loadMatchResultFromSheetsMutation = useMutation({
+    mutationFn: ({
+      id,
+      request,
+    }: {
+      id: GUID;
+      request: IPutMatchResultFromSheetsRequest;
+    }) => matchService.loadMatchResultFromSheets(id, request),
   });
 
   const deleteMatchMutation = useMutation({
@@ -164,6 +175,28 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       }
     },
     [putMatchMutation, queryClient, handleUnknownError]
+  );
+
+  const loadMatchResultFromSheets = useCallback(
+    async (
+      id: GUID,
+      request: IPutMatchResultFromSheetsRequest
+    ): Promise<IMatchResponse | void> => {
+      try {
+        const res: AxiosResponse<IMatchResponse> =
+          await loadMatchResultFromSheetsMutation.mutateAsync({ id, request });
+        if (res) {
+          setMatch(res.data);
+          queryClient.setQueryData(matchKeys.byId(id), res);
+          await queryClient.invalidateQueries({ queryKey: matchKeys.list() });
+          // The page shows its own "Resultado cargado" toast on success.
+        }
+        return res.data;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [loadMatchResultFromSheetsMutation, queryClient, handleUnknownError]
   );
 
   const loadWalkOver = useCallback(
@@ -317,6 +350,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       addMatch,
       putMatchByMatchId,
       putMatchScoreByMatchId,
+      loadMatchResultFromSheets,
       loadWalkOver,
       getMatchById,
       getMatchByFilter,
@@ -331,6 +365,7 @@ export const MatchProvider: React.FC<{ children: ReactNode }> = ({
       addMatch,
       putMatchByMatchId,
       putMatchScoreByMatchId,
+      loadMatchResultFromSheets,
       loadWalkOver,
       getMatchById,
       getMatchByFilter,

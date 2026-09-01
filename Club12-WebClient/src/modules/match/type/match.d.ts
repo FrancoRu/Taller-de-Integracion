@@ -3,6 +3,7 @@ import { MatchType } from '@/modules/core/enum/match/matchType';
 import { MatchStatus } from '@/modules/core/enum/match/matchStatus';
 import { ITeamMatchResponse } from '@/modules/team/type/team';
 import { IVenueResponse } from '@/modules/venue/type/venue';
+import { PlayerScoreEntry } from '@/modules/playerStatistic/type/playerStatistic';
 
 /**
  * Context properties and methods for managing matches in a sports system.
@@ -28,6 +29,19 @@ export interface IMatchContextProps {
   putMatchScoreByMatchId(
     id: GUID,
     matchScore: IPutMatchScoreRequest
+  ): Promise<IMatchResponse | void>;
+
+  /**
+   * Finishes a match by loading both teams' scoring sheets in one operation
+   * (HU-72): the final score is derived as the sum of each team's listed
+   * player points, instead of typing the score in separately.
+   * @param id The ID of the match.
+   * @param request Both teams' per-player points.
+   * @returns A promise that resolves with the finalized match.
+   */
+  loadMatchResultFromSheets(
+    id: GUID,
+    request: IPutMatchResultFromSheetsRequest
   ): Promise<IMatchResponse | void>;
 
   /**
@@ -366,6 +380,25 @@ export interface IPutMatchScoreRequest {
    * @type {number}
    */
   visitorScore: number;
+}
+
+/**
+ * The request body structure for finishing a match by deriving its score
+ * from both teams' scoring sheets (HU-72).
+ * @interface IPutMatchResultFromSheetsRequest
+ */
+export interface IPutMatchResultFromSheetsRequest {
+  /**
+   * The home team's per-player points.
+   * @type {PlayerScoreEntry[]}
+   */
+  homeScores: PlayerScoreEntry[];
+
+  /**
+   * The visitor team's per-player points.
+   * @type {PlayerScoreEntry[]}
+   */
+  visitorScores: PlayerScoreEntry[];
 }
 
 /**

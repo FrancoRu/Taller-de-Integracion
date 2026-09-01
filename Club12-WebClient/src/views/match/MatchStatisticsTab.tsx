@@ -5,9 +5,6 @@ import {
   Card,
   CardContent,
   Chip,
-  Dialog,
-  DialogContent,
-  DialogTitle,
   Stack,
   Table,
   TableBody,
@@ -18,15 +15,12 @@ import {
   Typography,
 } from '@mui/material';
 import { notifySuccess } from '@/modules/core/utils/confirmDialog';
-import { GUID } from '@/modules/core/types/types';
 import { IMatchResponse } from '@/modules/match/type/match';
+import { useMatch } from '@/modules/match/hook/match.hook';
 import { ITeamMatchResponse } from '@/modules/team/type/team';
 import { IPublicPlayerResponse } from '@/modules/player/type/player.d';
 import { usePlayerStatistic } from '@/modules/playerStatistic/hook/playerStatistic.hook';
-import {
-  PlayerScoreEntry,
-  PlayerStatisticResponse,
-} from '@/modules/playerStatistic/type/playerStatistic';
+import { PlayerStatisticResponse } from '@/modules/playerStatistic/type/playerStatistic';
 import { TableSkeleton } from '@/views/core/components/skeletons';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import HabilitacionBadge from '@/views/medicalRecord/HabilitacionBadge';
@@ -34,14 +28,6 @@ import { resolveIsHabilitado } from '@/modules/medicalRecord/utils/medicalRecord
 
 interface MatchStatisticsTabProps {
   match: IMatchResponse;
-}
-
-/** The team currently being edited in the sheet dialog. */
-interface ActiveTeam {
-  id: GUID;
-  name: string;
-  score: number;
-  players: IPublicPlayerResponse[];
 }
 
 /**
@@ -58,29 +44,44 @@ const buildPointsMap = (
       return acc;
     }, {});
 
-const toActiveTeam = (team: ITeamMatchResponse | null): ActiveTeam | null =>
-  team
-    ? {
-        id: team.id,
-        name: team.name,
-        score: team.score ?? 0,
-        players: team.players ?? [],
-      }
-    : null;
+const buildFormFromPoints = (
+  players: IPublicPlayerResponse[],
+  pointsByPlayer: Record<string, number>
+): Record<string, string> =>
+  players.reduce<Record<string, string>>((acc, player) => {
+    acc[player.id] = String(pointsByPlayer[player.id] ?? 0);
+    return acc;
+  }, {});
 
+const sumForm = (form: Record<string, string>): number =>
+  Object.values(form).reduce((total, value) => total + (Number(value) || 0), 0);
+
+/**
+ * Loads a match's result by entering each player's points for BOTH teams in
+ * one place (HU-72): the final score is derived as the sum of what each
+ * team's players scored, instead of being typed in separately and then
+ * checked against a sheet loaded here afterward. This is the only place a
+ * match's result is loaded — the score is always what the players add up to.
+ */
 export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
-  const { getPlayerStatisticsByFilter, loadMatchSheet } = usePlayerStatistic();
+  const { loadMatchResultFromSheets } = useMatch();
+  const { getPlayerStatisticsByFilter } = usePlayerStatistic();
 
-  const [statistics, setStatistics] = useState<PlayerStatisticResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [activeTeam, setActiveTeam] = useState<ActiveTeam | null>(null);
-  const [form, setForm] = useState<Record<string, string>>({});
+  const [homeForm, setHomeForm] = useState<Record<string, string>>({});
+  const [visitorForm, setVisitorForm] = useState<Record<string, string>>({});
 
   const getStatisticsRef = useRef(getPlayerStatisticsByFilter);
   useEffect(() => {
     getStatisticsRef.current = getPlayerStatisticsByFilter;
   }, [getPlayerStatisticsByFilter]);
+
+  const homePlayers = useMemo(() => match.homeTeam?.players ?? [], [match.homeTeam]);
+  const visitorPlayers = useMemo(
+    () => match.visitorTeam?.players ?? [],
+    [match.visitorTeam]
+  );
 
   const loadStatistics = useCallback(async () => {
     setLoading(true);
@@ -89,200 +90,92 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
       pageSize: FILTER_OPTIONS_PAGE_SIZE,
       pageNumber: 1,
     });
-    setStatistics(response?.items ?? []);
+    const items = response?.items ?? [];
+
+    const pointsByPlayer = buildPointsMap(items);
+    setHomeForm(buildFormFromPoints(homePlayers, pointsByPlayer));
+    setVisitorForm(buildFormFromPoints(visitorPlayers, pointsByPlayer));
     setLoading(false);
+    // homePlayers/visitorPlayers are derived from `match` on every render;
+    // re-running this whenever the match's own id changes is enough and
+    // avoids re-fetching on every unrelated match update.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [match.id]);
 
   useEffect(() => {
     void loadStatistics();
   }, [loadStatistics]);
 
-  const pointsByPlayer = useMemo(() => buildPointsMap(statistics), [statistics]);
+  const homeSum = useMemo(() => sumForm(homeForm), [homeForm]);
+  const visitorSum = useMemo(() => sumForm(visitorForm), [visitorForm]);
+  const isTie = homeSum === visitorSum;
+  const rostersReady = homePlayers.length > 0 && visitorPlayers.length > 0;
 
-  const openDialog = useCallback((team: ActiveTeam) => {
-    const initialForm: Record<string, string> = {};
-    team.players.forEach(player => {
-      initialForm[player.id] = '0';
-    });
-    setForm(initialForm);
-    setActiveTeam(team);
-  }, []);
-
-  const closeDialog = useCallback(() => {
-    if (submitting) {
+  const handleSaveResult = useCallback(async () => {
+    if (!rostersReady || isTie) {
       return;
     }
-    setActiveTeam(null);
-  }, [submitting]);
-
-  const currentSum = useMemo(
-    () =>
-      Object.values(form).reduce(
-        (total, value) => total + (Number(value) || 0),
-        0
-      ),
-    [form]
-  );
-
-  const targetScore = activeTeam?.score ?? 0;
-  const difference = currentSum - targetScore;
-  const sumMatches = difference === 0;
-
-  const handleSave = useCallback(async () => {
-    if (!activeTeam || !sumMatches) {
-      return;
-    }
-
-    const scores: PlayerScoreEntry[] = activeTeam.players.map(player => ({
-      playerId: player.id,
-      points: Number(form[player.id]) || 0,
-    }));
 
     setSubmitting(true);
-    const result = await loadMatchSheet({
-      matchId: match.id,
-      teamId: activeTeam.id,
-      scores,
+    const result = await loadMatchResultFromSheets(match.id, {
+      homeScores: homePlayers.map(player => ({
+        playerId: player.id,
+        points: Number(homeForm[player.id]) || 0,
+      })),
+      visitorScores: visitorPlayers.map(player => ({
+        playerId: player.id,
+        points: Number(visitorForm[player.id]) || 0,
+      })),
     });
     setSubmitting(false);
 
-    // A falsy result means the backend rejected the sheet (e.g. a 409 sum
-    // mismatch or an ineligible player); the message is surfaced globally and
-    // the dialog stays open so the operator can correct it.
+    // A falsy result means the backend rejected the sheets (e.g. a tied sum,
+    // an ineligible player, or a 409); the message is surfaced globally and
+    // the form stays as-is so the operator can correct it.
     if (!result) {
       return;
     }
 
-    setActiveTeam(null);
     await loadStatistics();
-    await notifySuccess({ title: 'Planilla cargada' });
-  }, [activeTeam, form, loadMatchSheet, loadStatistics, match.id, sumMatches]);
+    await notifySuccess({ title: 'Resultado cargado' });
+  }, [
+    rostersReady,
+    isTie,
+    loadMatchResultFromSheets,
+    match.id,
+    homePlayers,
+    visitorPlayers,
+    homeForm,
+    visitorForm,
+    loadStatistics,
+  ]);
 
   const renderTeamCard = (
     team: ITeamMatchResponse | null,
-    fallbackLabel: string
-  ) => {
-    const activeCandidate = toActiveTeam(team);
-    const teamPlayers = team?.players ?? [];
-    const loadedTotal = teamPlayers.reduce(
-      (total, player) => total + (pointsByPlayer[player.id] ?? 0),
-      0
-    );
+    fallbackLabel: string,
+    players: IPublicPlayerResponse[],
+    form: Record<string, string>,
+    setForm: React.Dispatch<React.SetStateAction<Record<string, string>>>,
+    sum: number
+  ) => (
+    <Card variant="outlined">
+      <CardContent>
+        <Stack
+          direction="row"
+          sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
+        >
+          <Typography variant="subtitle1">
+            {team?.name || fallbackLabel}
+          </Typography>
+          <Chip size="small" label={`Suma: ${sum}`} />
+        </Stack>
 
-    return (
-      <Card variant="outlined">
-        <CardContent>
-          <Stack
-            direction="row"
-            sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
-          >
-            <Typography variant="subtitle1">
-              {team?.name || fallbackLabel}
-            </Typography>
-            <Chip
-              size="small"
-              label={`Marcador: ${team?.score ?? 0}`}
-              color={loadedTotal === (team?.score ?? 0) ? 'success' : 'default'}
-            />
-          </Stack>
-
-          {teamPlayers.length === 0 ? (
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              Sin jugadores registrados.
-            </Typography>
-          ) : (
-            <>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Jugador</TableCell>
-                    <TableCell align="center">Puntos</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {teamPlayers.map(player => (
-                    <TableRow key={player.id}>
-                      <TableCell>
-                        <Stack
-                          direction="row"
-                          spacing={1}
-                          sx={{ alignItems: 'center' }}
-                        >
-                          <span>{player.fullName}</span>
-                          {!resolveIsHabilitado(
-                            player.isHabilitado,
-                            player.medicalRecordStatus
-                          ) && (
-                            <HabilitacionBadge
-                              isHabilitado={player.isHabilitado}
-                              status={player.medicalRecordStatus}
-                            />
-                          )}
-                        </Stack>
-                      </TableCell>
-                      <TableCell align="center">
-                        {pointsByPlayer[player.id] ?? 0}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <Typography
-                variant="caption"
-                sx={{ color: 'text.secondary', mt: 1, display: 'block' }}
-              >
-                Cargado: {loadedTotal} / {team?.score ?? 0}
-              </Typography>
-            </>
-          )}
-
-          <Box sx={{ mt: 2 }}>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={() =>
-                activeCandidate && openDialog(activeCandidate)
-              }
-              disabled={teamPlayers.length === 0}
-            >
-              Cargar planilla
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
-    );
-  };
-
-  if (loading) {
-    return <TableSkeleton rows={5} columns={5} />;
-  }
-
-  return (
-    <Stack spacing={2}>
-      <Typography variant="body1">
-        Planilla de puntos por jugador. La suma de cada equipo debe coincidir
-        con su marcador.
-      </Typography>
-
-      <Box
-        sx={{
-          display: 'grid',
-          gap: 2,
-          gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
-        }}
-      >
-        {renderTeamCard(match.homeTeam, 'Equipo local')}
-        {renderTeamCard(match.visitorTeam, 'Equipo visitante')}
-      </Box>
-
-      <Dialog
-        open={Boolean(activeTeam)}
-        onClose={closeDialog}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Planilla — {activeTeam?.name}</DialogTitle>
-        <DialogContent>
+        {players.length === 0 ? (
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Sin jugadores registrados. No se puede cargar un resultado hasta
+            que el equipo tenga jugadores en el plantel.
+          </Typography>
+        ) : (
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -291,7 +184,7 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
               </TableRow>
             </TableHead>
             <TableBody>
-              {(activeTeam?.players ?? []).map(player => (
+              {players.map(player => (
                 <TableRow key={player.id}>
                   <TableCell>
                     <Stack
@@ -335,43 +228,79 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
               ))}
             </TableBody>
           </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
 
-          <Stack
-            direction="row"
-            spacing={2}
-            sx={{ justifyContent: 'space-between', alignItems: 'center', mt: 2 }}
-          >
-            <Typography variant="body2">
-              Suma: <strong>{currentSum}</strong> / Marcador:{' '}
-              <strong>{targetScore}</strong>
-            </Typography>
-            {!sumMatches && (
-              <Typography variant="body2" color="error">
-                {difference > 0
-                  ? `Sobran ${difference} puntos`
-                  : `Faltan ${Math.abs(difference)} puntos`}
-              </Typography>
-            )}
-          </Stack>
+  if (loading) {
+    return <TableSkeleton rows={5} columns={5} />;
+  }
 
-          <Stack
-            direction="row"
-            spacing={1}
-            sx={{ justifyContent: 'flex-end', mt: 2 }}
-          >
-            <Button onClick={closeDialog} disabled={submitting} color="inherit">
-              Cancelar
-            </Button>
-            <Button
-              variant="contained"
-              onClick={() => void handleSave()}
-              disabled={submitting || !sumMatches}
-            >
-              Guardar planilla
-            </Button>
-          </Stack>
-        </DialogContent>
-      </Dialog>
+  return (
+    <Stack spacing={2}>
+      <Typography variant="body1">
+        El resultado del partido se calcula sumando los puntos de cada
+        jugador. Cargá la planilla de ambos equipos y guardá para finalizar
+        el partido.
+      </Typography>
+
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 2,
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+        }}
+      >
+        {renderTeamCard(
+          match.homeTeam,
+          'Equipo local',
+          homePlayers,
+          homeForm,
+          setHomeForm,
+          homeSum
+        )}
+        {renderTeamCard(
+          match.visitorTeam,
+          'Equipo visitante',
+          visitorPlayers,
+          visitorForm,
+          setVisitorForm,
+          visitorSum
+        )}
+      </Box>
+
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={2}
+        sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' } }}
+      >
+        <Typography variant="body2">
+          Local: <strong>{homeSum}</strong> — Visitante:{' '}
+          <strong>{visitorSum}</strong>
+        </Typography>
+        {isTie && (
+          <Typography variant="body2" color="error">
+            No se permiten empates: el partido debe tener un ganador.
+          </Typography>
+        )}
+        {!rostersReady && (
+          <Typography variant="body2" color="error">
+            Ambos equipos necesitan jugadores en el plantel para cargar el
+            resultado.
+          </Typography>
+        )}
+      </Stack>
+
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <Button
+          variant="contained"
+          onClick={() => void handleSaveResult()}
+          disabled={submitting || isTie || !rostersReady}
+        >
+          Guardar resultado
+        </Button>
+      </Box>
     </Stack>
   );
 }

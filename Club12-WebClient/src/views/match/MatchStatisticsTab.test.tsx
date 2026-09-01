@@ -1,20 +1,26 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MatchStatisticsTab from '@/views/match/MatchStatisticsTab';
+import { useMatch } from '@/modules/match/hook/match.hook';
 import { GUID } from '@/modules/core/types/types';
 import { IMatchResponse } from '@/modules/match/type/match';
 
 const getPlayerStatisticsByFilter = vi.fn(() =>
   Promise.resolve({ items: [], totalCount: 0, pageNumber: 1, pageSize: 300 })
 );
-const loadMatchSheet = vi.fn(() => Promise.resolve([{ id: 'x' }]));
 
 vi.mock('@/modules/playerStatistic/hook/playerStatistic.hook', () => ({
   usePlayerStatistic: () => ({
     getPlayerStatisticsByFilter,
-    loadMatchSheet,
   }),
 }));
+
+const loadMatchResultFromSheets = vi.fn(() =>
+  Promise.resolve({ id: 'match-1' })
+);
+
+vi.mock('@/modules/match/hook/match.hook');
+const mockedUseMatch = vi.mocked(useMatch);
 
 vi.mock('@/modules/core/utils/confirmDialog', () => ({
   notifySuccess: vi.fn(() => Promise.resolve()),
@@ -23,17 +29,23 @@ vi.mock('@/modules/core/utils/confirmDialog', () => ({
 const guid = (value: string) => value as GUID;
 
 const HOME_TEAM_ID = guid('1111-1111-1111-1111-1111');
-const PLAYER_ID = guid('2222-2222-2222-2222-2222');
+const VISITOR_TEAM_ID = guid('3333-3333-3333-3333-3333');
+const HOME_PLAYER_ID = guid('2222-2222-2222-2222-2222');
+const VISITOR_PLAYER_ID = guid('4444-4444-4444-4444-4444');
 
-const buildMatch = (): IMatchResponse =>
+const buildMatch = (
+  overrides: {
+    visitorPlayers?: unknown[];
+  } = {}
+): IMatchResponse =>
   ({
     id: guid('aaaa-aaaa-aaaa-aaaa-aaaa'),
     matchDate: '2026-01-01T00:00:00Z',
     matchType: 'Regular',
     slug: 'match-1',
-    isFinished: true,
-    winningTeamId: HOME_TEAM_ID,
-    winningTeamName: 'Local',
+    isFinished: false,
+    winningTeamId: null,
+    winningTeamName: null,
     venue: null,
     stageId: null,
     status: null,
@@ -41,11 +53,11 @@ const buildMatch = (): IMatchResponse =>
       id: HOME_TEAM_ID,
       name: 'Local FC',
       logoUrl: '',
-      score: 50,
+      score: 0,
       scorers: [],
       players: [
         {
-          id: PLAYER_ID,
+          id: HOME_PLAYER_ID,
           firstName: 'Juan',
           secondName: '',
           lastName: 'Perez',
@@ -55,52 +67,112 @@ const buildMatch = (): IMatchResponse =>
       ],
     },
     visitorTeam: {
-      id: guid('3333-3333-3333-3333-3333'),
+      id: VISITOR_TEAM_ID,
       name: 'Visitante FC',
       logoUrl: '',
       score: 0,
       scorers: [],
-      players: [],
+      players:
+        overrides.visitorPlayers ??
+        [
+          {
+            id: VISITOR_PLAYER_ID,
+            firstName: 'Ana',
+            secondName: '',
+            lastName: 'Gomez',
+            fullName: 'Ana Gomez',
+            teamId: VISITOR_TEAM_ID,
+          },
+        ],
     },
   }) as unknown as IMatchResponse;
 
-describe('MatchStatisticsTab match-sheet', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+beforeEach(() => {
+  vi.clearAllMocks();
+  getPlayerStatisticsByFilter.mockResolvedValue({
+    items: [],
+    totalCount: 0,
+    pageNumber: 1,
+    pageSize: 300,
   });
+  mockedUseMatch.mockReturnValue({
+    loadMatchResultFromSheets,
+  } as unknown as ReturnType<typeof useMatch>);
+});
 
-  it('blocks submit while the sum does not match the score, then loads the sheet', async () => {
+describe('MatchStatisticsTab — result derived from both teams\' sheets', () => {
+  it('blocks saving while both teams sum to the same score (a tie)', async () => {
     render(<MatchStatisticsTab match={buildMatch()} />);
 
-    // Wait for the initial statistics load to finish.
-    const loadButtons = await screen.findAllByRole('button', {
-      name: 'Cargar planilla',
-    });
-    // The home team (index 0) has players; open its sheet dialog.
-    fireEvent.click(loadButtons[0]);
+    await screen.findByLabelText('Puntos de Juan Perez');
+
+    expect(
+      screen.getByText(/no se permiten empates/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Guardar resultado' })
+    ).toBeDisabled();
+  });
+
+  it('saves the result once the sums differ, calling loadMatchResultFromSheets with both sheets', async () => {
+    render(<MatchStatisticsTab match={buildMatch()} />);
+
+    const homeInput = await screen.findByLabelText('Puntos de Juan Perez');
+    const visitorInput = await screen.findByLabelText('Puntos de Ana Gomez');
+
+    fireEvent.change(homeInput, { target: { value: '55' } });
+    fireEvent.change(visitorInput, { target: { value: '40' } });
 
     const saveButton = await screen.findByRole('button', {
-      name: 'Guardar planilla',
+      name: 'Guardar resultado',
     });
-
-    // Sum starts at 0 but the score is 50 -> submit is blocked.
-    expect(saveButton).toBeDisabled();
-    expect(screen.getByText(/Faltan 50 puntos/)).toBeInTheDocument();
-
-    // Enter the matching points -> submit is enabled.
-    const pointsInput = screen.getByLabelText('Puntos de Juan Perez');
-    fireEvent.change(pointsInput, { target: { value: '50' } });
-
     await waitFor(() => expect(saveButton).toBeEnabled());
 
     fireEvent.click(saveButton);
 
     await waitFor(() =>
-      expect(loadMatchSheet).toHaveBeenCalledWith({
-        matchId: 'aaaa-aaaa-aaaa-aaaa-aaaa',
-        teamId: HOME_TEAM_ID,
-        scores: [{ playerId: PLAYER_ID, points: 50 }],
+      expect(loadMatchResultFromSheets).toHaveBeenCalledWith('aaaa-aaaa-aaaa-aaaa-aaaa', {
+        homeScores: [{ playerId: HOME_PLAYER_ID, points: 55 }],
+        visitorScores: [{ playerId: VISITOR_PLAYER_ID, points: 40 }],
       })
     );
+  });
+
+  it('disables saving when either team has no registered players', async () => {
+    render(<MatchStatisticsTab match={buildMatch({ visitorPlayers: [] })} />);
+
+    await screen.findByText(/sin jugadores registrados/i);
+
+    expect(
+      screen.getByText(/ambos equipos necesitan jugadores/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Guardar resultado' })
+    ).toBeDisabled();
+  });
+
+  it('pre-fills the forms from already-loaded Points statistics', async () => {
+    getPlayerStatisticsByFilter.mockResolvedValue({
+      items: [
+        {
+          id: 'stat-1',
+          matchId: 'aaaa-aaaa-aaaa-aaaa-aaaa',
+          playerId: HOME_PLAYER_ID,
+          type: 'Points',
+          value: 20,
+        },
+      ],
+      totalCount: 1,
+      pageNumber: 1,
+      pageSize: 300,
+    });
+
+    render(<MatchStatisticsTab match={buildMatch()} />);
+
+    const homeInput = (await screen.findByLabelText(
+      'Puntos de Juan Perez'
+    )) as HTMLInputElement;
+
+    expect(homeInput.value).toBe('20');
   });
 });

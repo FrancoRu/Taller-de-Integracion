@@ -15,6 +15,7 @@ import {
   IMatchResponse,
   IMinimalMatchResponse,
   IPutMatchRequest,
+  IPutMatchResultFromSheetsRequest,
   IPutMatchScoreRequest,
   IRoundMatchesResponse,
   ISuspendMatchRequest,
@@ -45,6 +46,20 @@ export const matchService = {
     matchScore: IPutMatchScoreRequest
   ): Promise<AxiosResponse<IMatchResponse>> =>
     sendPut<IMatchResponse>(`${routes.matches}/${id}/score`, matchScore),
+
+  /**
+   * Finishes a match by loading both teams' scoring sheets in one operation
+   * (HU-72): the final score is derived as the sum of each team's listed
+   * player points.
+   * @param {string} id - The ID of the match to finish.
+   * @param {IPutMatchResultFromSheetsRequest} request - Both teams' per-player points.
+   * @returns {Promise<AxiosResponse<IMatchResponse>>} - A promise that resolves with the server response.
+   */
+  loadMatchResultFromSheets: async (
+    id: GUID,
+    request: IPutMatchResultFromSheetsRequest
+  ): Promise<AxiosResponse<IMatchResponse>> =>
+    sendPut<IMatchResponse>(`${routes.matches}/${id}/result-from-sheets`, request),
 
   /**
    * Updates the date of an existing match.
