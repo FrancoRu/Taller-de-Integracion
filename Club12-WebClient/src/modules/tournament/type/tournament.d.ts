@@ -6,8 +6,14 @@ import {
   GenericResponsePagination,
   GUID,
 } from '@/modules/core/types/types';
-import { IMinimalDivisionResponse } from '@/modules/division/type/division';
-import { ICreateFullTournamentRequest } from '@/modules/tournament/type/createFullTournament.d';
+import {
+  IDivisionResponse,
+  IMinimalDivisionResponse,
+} from '@/modules/division/type/division';
+import {
+  ICreateFullDivisionRequest,
+  ICreateFullTournamentRequest,
+} from '@/modules/tournament/type/createFullTournament.d';
 
 /**
  * Context properties and methods for managing tournaments.
@@ -39,6 +45,20 @@ export interface ITournamentContextProps {
   createFullTournament(
     request: ICreateFullTournamentRequest
   ): Promise<ITournamentResponse | void>;
+
+  /**
+   * HU-31/HU-112: adds ONE division (group stage + cups + playoff mappings) to
+   * an already-existing tournament in a single atomic transaction — the same
+   * structure guarantee a wizard-created division gets, instead of the bare
+   * division the granular add-division endpoint leaves behind.
+   * @param tournamentId The parent tournament's id.
+   * @param request The division's structure (zone or cross-cup).
+   * @returns A promise resolving with the created division.
+   */
+  addFullDivision(
+    tournamentId: GUID,
+    request: ICreateFullDivisionRequest
+  ): Promise<IDivisionResponse | void>;
 
   /**
    * Updates an existing tournament by its ID.

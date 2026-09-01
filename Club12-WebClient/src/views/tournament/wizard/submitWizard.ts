@@ -134,7 +134,7 @@ const buildCupStages = (
  * HU-112), an optional group stage, and its playoff cup shells. Returns the
  * nested division payload for the atomic `POST /api/tournaments/full` call.
  */
-const buildZoneDivision = (
+export const buildZoneDivision = (
   zone: ZoneConfig,
   startDate: Date,
   category: TournamentCategory
@@ -193,7 +193,7 @@ const buildZoneDivision = (
  * pools the top-`qualifiersPerGroup` of every group, sized automatically when
  * the fixture is generated. Teams are not assigned here.
  */
-const buildCrossCupDivision = (
+export const buildCrossCupDivision = (
   crossCup: CrossCupConfig,
   startDate: Date,
   category: TournamentCategory

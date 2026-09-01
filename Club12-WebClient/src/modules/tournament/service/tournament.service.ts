@@ -16,7 +16,11 @@ import {
   ITournamentFiltered,
   ITournamentResponse,
 } from '@/modules/tournament/type/tournament.d';
-import { ICreateFullTournamentRequest } from '@/modules/tournament/type/createFullTournament.d';
+import {
+  ICreateFullDivisionRequest,
+  ICreateFullTournamentRequest,
+} from '@/modules/tournament/type/createFullTournament.d';
+import { IDivisionResponse } from '@/modules/division/type/division.d';
 
 /**
  * Service for managing tournaments.
@@ -46,6 +50,22 @@ export const tournamentService = {
     request: ICreateFullTournamentRequest
   ): Promise<AxiosResponse<ITournamentResponse>> =>
     await sendPost(`${routes.tournaments}/full`, request),
+
+  /**
+   * HU-31/HU-112: adds ONE division (group stage + cups + playoff mappings) to
+   * an already-existing tournament in a single atomic transaction via
+   * `POST /api/tournaments/{tournamentId}/divisions/full` — the same structure
+   * guarantee a wizard-created division gets, instead of the bare division the
+   * granular `POST /api/divisions` endpoint leaves behind (no stages, no cups).
+   * @param {GUID} tournamentId - The parent tournament's id.
+   * @param {ICreateFullDivisionRequest} request - The division's structure (zone or cross-cup).
+   * @returns {Promise<AxiosResponse<IDivisionResponse>>} The created division.
+   */
+  addFullDivision: async (
+    tournamentId: GUID,
+    request: ICreateFullDivisionRequest
+  ): Promise<AxiosResponse<IDivisionResponse>> =>
+    await sendPost(`${routes.tournaments}/${tournamentId}/divisions/full`, request),
 
   /**
    * Updates an existing tournament.

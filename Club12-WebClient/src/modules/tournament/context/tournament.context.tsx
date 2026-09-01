@@ -23,7 +23,11 @@ import {
   ITournamentFiltered,
   ITournamentResponse,
 } from '@/modules/tournament/type/tournament';
-import { ICreateFullTournamentRequest } from '@/modules/tournament/type/createFullTournament.d';
+import {
+  ICreateFullDivisionRequest,
+  ICreateFullTournamentRequest,
+} from '@/modules/tournament/type/createFullTournament.d';
+import { IDivisionResponse } from '@/modules/division/type/division.d';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { ERROR_MESSAGES } from '@/modules/core/constants/constants';
 import { fetchAndSetList } from '@/modules/core/utils/comparator';
@@ -96,6 +100,30 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       }
     },
     [setTournament, setError, setMessage]
+  );
+
+  const addFullDivision = useCallback(
+    async (
+      tournamentId: GUID,
+      request: ICreateFullDivisionRequest
+    ): Promise<IDivisionResponse | void> => {
+      try {
+        const res: AxiosResponse<IDivisionResponse> =
+          await tournamentService.addFullDivision(tournamentId, request);
+
+        if (res && res.data) {
+          setMessage(res.status, []);
+        }
+        return res.data;
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+          setError(error);
+        } else {
+          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+        }
+      }
+    },
+    [setError, setMessage]
   );
 
   const putTournamentById = useCallback(
@@ -312,6 +340,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       tournaments,
       addTournament,
       createFullTournament,
+      addFullDivision,
       getAllTournamentsByFilter,
       getTournamentById,
       putTournamentById,
@@ -326,6 +355,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       tournaments,
       addTournament,
       createFullTournament,
+      addFullDivision,
       getAllTournamentsByFilter,
       getTournamentById,
       putTournamentById,

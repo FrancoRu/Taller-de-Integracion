@@ -295,9 +295,11 @@ const TournamentPage: React.FC = () => {
             tournamentId={tournament.id}
             title={undefined}
             wrapInCard={false}
-            // Structure is frozen once the tournament is Ongoing, so hide the
-            // "Nueva División" affordance then.
-            createType={isOngoing ? undefined : 'División'}
+            // Divisions can only be created while the tournament is
+            // OpenForRegistration (HU-31, DivisionService.CreateDivisionAsync) —
+            // hide the "Nueva División" affordance for every other status
+            // instead of showing a button that always 409s.
+            createType={isOpenForRegistration ? 'División' : undefined}
             onCreate={handleCreateDivision}
           />
         )}
