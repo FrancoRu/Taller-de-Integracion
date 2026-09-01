@@ -46,7 +46,7 @@ public class MatchResultAndSheetTests : IClassFixture<CustomWebApplicationFactor
         InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
             () => matchService.LoadMatchResultAsync(seeded.Match.Id, homeScore: 70, visitorScore: 70));
 
-        Assert.Contains("cannot end tied", ex.Message);
+        Assert.Contains("no puede terminar empatado", ex.Message);
 
         // Nothing persisted: the match stays scheduled and unfinished.
         Match reloaded = await ReloadMatchAsync(db, seeded.Match.Id);
@@ -66,7 +66,7 @@ public class MatchResultAndSheetTests : IClassFixture<CustomWebApplicationFactor
         InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
             () => matchService.LoadMatchResultAsync(seeded.Match.Id, homeScore: 88, visitorScore: 88));
 
-        Assert.Contains("overtime", ex.Message);
+        Assert.Contains("tiempo suplementario", ex.Message);
     }
 
     // ---------- HU-69: status transitions + winner (no silent visitor) ----------
@@ -244,7 +244,7 @@ public class MatchResultAndSheetTests : IClassFixture<CustomWebApplicationFactor
             }));
 
         // 90 (team score) - 85 (players sum) = difference of 5.
-        Assert.Contains("difference of 5", ex.Message);
+        Assert.Contains("diferencia de 5", ex.Message);
     }
 
     [Fact]
@@ -269,7 +269,7 @@ public class MatchResultAndSheetTests : IClassFixture<CustomWebApplicationFactor
                 Scores = [new PlayerScoreEntry { PlayerId = stranger.Id, Points = 10 }],
             }));
 
-        Assert.Contains("not on this team's roster", ex.Message);
+        Assert.Contains("no está en el plantel", ex.Message);
     }
 
     [Fact]
@@ -293,7 +293,7 @@ public class MatchResultAndSheetTests : IClassFixture<CustomWebApplicationFactor
                 Scores = [new PlayerScoreEntry { PlayerId = sanctioned.Id, Points = 12 }],
             }));
 
-        Assert.Contains("not eligible", ex.Message);
+        Assert.Contains("no está habilitado", ex.Message);
     }
 
     // ---------- seeding ----------

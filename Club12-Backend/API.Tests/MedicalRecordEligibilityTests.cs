@@ -228,7 +228,7 @@ public class MedicalRecordEligibilityTests : IClassFixture<CustomWebApplicationF
                 Scores = [new PlayerScoreEntry { PlayerId = fx.PlayerId, Points = 20 }],
             }));
 
-        Assert.Contains("not eligible", ex.Message);
+        Assert.Contains("no está habilitado", ex.Message);
     }
 
     [Fact]
@@ -279,7 +279,7 @@ public class MedicalRecordEligibilityTests : IClassFixture<CustomWebApplicationF
                 Scores = [new PlayerScoreEntry { PlayerId = fx.PlayerId, Points = 20 }],
             }));
 
-        Assert.Contains("not eligible", ex.Message);
+        Assert.Contains("no está habilitado", ex.Message);
     }
 
     // ---------- Part 2: season roster surfacing reflects the file-backed rule ----------
@@ -357,7 +357,7 @@ public class MedicalRecordEligibilityTests : IClassFixture<CustomWebApplicationF
                 TeamId = teamB.Id,
                 Scores = [new PlayerScoreEntry { PlayerId = seasonA.PlayerId, Points = 10 }],
             }));
-        Assert.Contains("not eligible", ex.Message);
+        Assert.Contains("no está habilitado", ex.Message);
 
         // ...and season B's record is still Pending while season A stays Approved.
         MedicalRecordResponse? recordB = await medicalRecordService.GetAsync(seasonA.PlayerId, teamB.Id, tournamentB.Id);
