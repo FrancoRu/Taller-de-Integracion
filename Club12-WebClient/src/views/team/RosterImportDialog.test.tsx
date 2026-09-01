@@ -159,6 +159,22 @@ describe('RosterImportDialog', () => {
     expect(onImported).toHaveBeenCalledTimes(1);
   });
 
+  it('disables Importar when the club has no other season to import from', async () => {
+    getClubHistory.mockResolvedValueOnce({
+      ...HISTORY,
+      // Only the target team/season itself — nothing importable.
+      teams: [HISTORY.teams[1]],
+    });
+
+    renderDialog();
+    await waitFor(() => expect(getClubHistory).toHaveBeenCalledWith(CLUB_ID));
+
+    expect(
+      await screen.findByText(/todavía no tiene otro equipo/i)
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Importar/i })).toBeDisabled();
+  });
+
   it('does not call copyRoster when no source is selected', async () => {
     const user = userEvent.setup();
     renderDialog();

@@ -227,11 +227,27 @@ export interface IDivisionResponse {
   tournamentId: GUID;
 
   /**
+   * The parent tournament's slug, when it was resolved by the backend; null
+   * otherwise. Prefer this over `tournamentId` when building a link back to
+   * the tournament, so the URL never shows a raw UUID.
+   * @type {string | null}
+   */
+  tournamentSlug?: string | null;
+
+  /**
    * Whether this division is a cross-division cup (exempt from the "one
    * team, one division" rule).
    * @type {boolean}
    */
   isCrossDivisionCup: boolean;
+
+  /**
+   * For a cross-division cup (HU-110): how many teams advance from EACH of
+   * the cup's internal groups into the pooled knockout bracket. Meaningless
+   * (defaults to 1) outside a cross-division cup.
+   * @type {number}
+   */
+  qualifiersPerGroup?: number;
 
   /**
    * Competitive category (gender) of the division — matches its tournament.

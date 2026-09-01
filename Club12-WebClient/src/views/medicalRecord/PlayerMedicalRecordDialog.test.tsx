@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Mock } from 'vitest';
@@ -106,6 +112,48 @@ describe('PlayerMedicalRecordDialog', () => {
       tournamentId,
       file,
     });
+  });
+
+  it('rejects an empty (0-byte) PDF before uploading', async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    const dialog = screen.getByRole('dialog');
+    const emptyFile = new File([], 'ficha.pdf', { type: 'application/pdf' });
+    const fileInput = dialog.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
+    await user.upload(fileInput, emptyFile);
+
+    await user.click(
+      within(dialog).getByRole('button', { name: /subir ficha/i })
+    );
+
+    expect(uploadMedicalRecord).not.toHaveBeenCalled();
+  });
+
+  it('rejects a non-PDF file before uploading', async () => {
+    // A real <input accept="application/pdf,.pdf"> — and userEvent.upload,
+    // which honors it — would normally keep a non-matching file from ever
+    // being selected. This exercises the component's OWN isPdf() guard as
+    // defense-in-depth (e.g. drag-and-drop bypasses `accept`), so it sets
+    // the file directly via fireEvent instead of the accept-aware upload().
+    renderDialog();
+
+    const dialog = screen.getByRole('dialog');
+    const wordFile = new File(['contenido'], 'ficha.docx', {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    });
+    const fileInput = dialog.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
+    fireEvent.change(fileInput, { target: { files: [wordFile] } });
+
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: /subir ficha/i })
+    );
+
+    expect(uploadMedicalRecord).not.toHaveBeenCalled();
   });
 
   it('approves the record via the review endpoint once a file is stored', async () => {

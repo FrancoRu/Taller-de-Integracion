@@ -65,4 +65,11 @@ public class TournamentResponse : BaseEntityResponse
     /// loaded; null otherwise.
     /// </summary>
     public string? SeasonName { get; set; }
+
+    /// <summary>
+    /// Slug of the season this tournament belongs to, when the season is
+    /// loaded; null otherwise. Lets callers build a clean `/temporadas/{slug}`
+    /// link back to the season instead of falling back to its GUID.
+    /// </summary>
+    public string? SeasonSlug { get; set; }
 }

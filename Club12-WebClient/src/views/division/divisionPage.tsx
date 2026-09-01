@@ -13,7 +13,8 @@ import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
 import { buildBrackets } from '@/modules/playoff/buildBracket';
 import { BracketGroup } from '@/modules/playoff/type/bracket.d';
 import DivisionStandings from '@/views/division/divisionStandings';
-import MatchesPage from '@/views/match/matchesPage';
+import { buildCrossCupGroupQualificationRange } from '@/modules/division/utils/qualificationRange';
+import DivisionFixture from '@/views/division/DivisionFixture';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import PointDeductionManager from '@/views/division/PointDeductionManager';
 import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
@@ -22,7 +23,7 @@ import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 
 /**
- * Explicit pageSize for the "Llaves" tab's Stage/Match fetch — the same
+ * Explicit pageSize for the "Playoff" tab's Stage/Match fetch — the same
  * generous size PublicTournamentPage uses, so a deep elimination bracket
  * is never silently truncated by the default table page size.
  */
@@ -38,7 +39,7 @@ const DivisionPage: React.FC = () => {
     role === UserRolesType.Admin || role === UserRolesType.Owner;
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<
-    'detalle' | 'posiciones' | 'equipos' | 'partidos' | 'llaves'
+    'detalle' | 'posiciones' | 'equipos' | 'partidos' | 'playoff'
   >('detalle');
   const [bracketGroups, setBracketGroups] = useState<BracketGroup[]>([]);
   const [seriesById, setSeriesById] = useState<Map<GUID, IMatchSeriesResponse>>(new Map());
@@ -80,7 +81,7 @@ const DivisionPage: React.FC = () => {
     // brackets only fetch once the slug-or-id param has resolved to a
     // loaded division.
     const resolvedDivisionId = division?.id;
-    if (tab !== 'llaves' || !resolvedDivisionId) {
+    if (tab !== 'playoff' || !resolvedDivisionId) {
       return;
     }
 
@@ -155,6 +156,11 @@ const DivisionPage: React.FC = () => {
     return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
   }, [division?.positions, division?.groupStandings]);
 
+  const crossCupGroupQualificationRange = useMemo(
+    () => (division ? buildCrossCupGroupQualificationRange(division) : undefined),
+    [division]
+  );
+
   if (!targetDivisionId) {
     return (
       <PageShell title="División">
@@ -212,7 +218,9 @@ const DivisionPage: React.FC = () => {
             onClick={() =>
               navigate(
                 division.tournamentId
-                  ? APP_ROUTES.panelTournamentDetail.build(division.tournamentId)
+                  ? APP_ROUTES.panelTournamentDetail.build(
+                      division.tournamentSlug ?? division.tournamentId
+                    )
                   : APP_ROUTES.panelTournaments
               )
             }
@@ -231,7 +239,7 @@ const DivisionPage: React.FC = () => {
           <Tab label="Equipos" value="equipos" />
           <Tab label="Posiciones" value="posiciones" />
           <Tab label="Partidos" value="partidos" />
-          <Tab label="Llaves" value="llaves" />
+          <Tab label="Playoff" value="playoff" />
         </Tabs>
 
         {tab === 'detalle' && (
@@ -309,11 +317,11 @@ const DivisionPage: React.FC = () => {
         )}
 
         {tab === 'partidos' && (
-          <MatchesPage
+          <DivisionFixture
             divisionId={division.id}
-            title={undefined}
-            wrapInCard={false}
-            createType={undefined}
+            divisionName={division.name}
+            variant="carousel"
+            buildMatchHref={m => APP_ROUTES.panelMatch.build(m.slug ?? m.id)}
           />
         )}
 
@@ -336,7 +344,10 @@ const DivisionPage: React.FC = () => {
                   <Typography variant="subtitle1" component="h3" sx={{ mb: 1.5 }}>
                     {group.stageName}
                   </Typography>
-                  <DivisionStandings positions={group.positions} />
+                  <DivisionStandings
+                    positions={group.positions}
+                    qualificationRanges={crossCupGroupQualificationRange}
+                  />
                 </Box>
               ))}
             </Box>
@@ -349,7 +360,7 @@ const DivisionPage: React.FC = () => {
             />
           ))}
 
-        {tab === 'llaves' &&
+        {tab === 'playoff' &&
           (bracketsLoading ? (
             <DetailSkeleton />
           ) : (

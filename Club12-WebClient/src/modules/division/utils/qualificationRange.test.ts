@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { QualificationRange } from '@/modules/division/type/division.d';
 import {
+  buildCrossCupGroupQualificationRange,
   cupTierColor,
   cupTierMarker,
   findQualificationRange,
@@ -42,6 +43,28 @@ describe('cupTierColor', () => {
     expect(cupTierColor(2)).toBe(cupTier.bronze);
     expect(cupTierColor(3)).toBe(cupTier.accent);
     expect(cupTierColor(7)).toBe(cupTier.accent);
+  });
+});
+
+describe('buildCrossCupGroupQualificationRange', () => {
+  it('builds a single range covering positions 1..qualifiersPerGroup, named after the cup', () => {
+    const result = buildCrossCupGroupQualificationRange({
+      name: 'Copa Club12',
+      qualifiersPerGroup: 2,
+    });
+
+    expect(result).toEqual([
+      { fromPosition: 1, toPosition: 2, cupName: 'Copa Club12', order: 0 },
+    ]);
+  });
+
+  it('returns undefined when qualifiersPerGroup is missing or non-positive', () => {
+    expect(
+      buildCrossCupGroupQualificationRange({ name: 'Zona A', qualifiersPerGroup: undefined })
+    ).toBeUndefined();
+    expect(
+      buildCrossCupGroupQualificationRange({ name: 'Zona A', qualifiersPerGroup: 0 })
+    ).toBeUndefined();
   });
 });
 

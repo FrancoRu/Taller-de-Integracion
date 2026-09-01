@@ -150,15 +150,12 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
   const getDivisionsById = useCallback(
     async (idOrSlug: string): Promise<IDivisionResponse | void> => {
       try {
-        const existingDivision: IDivisionResponse | undefined = divisions?.find(
-          e => e.id === idOrSlug || e.slug === idOrSlug
-        );
-
-        if (existingDivision) {
-          setDivision(existingDivision);
-          return existingDivision;
-        }
-
+        // Always fetch the full `/detail` projection. The cached list version
+        // (from getDivisionsByFilters) is a lighter shape without positions,
+        // group standings or qualificationRanges, so short-circuiting to it
+        // left the admin detail view's standings uncoloured (HU-45) — unlike
+        // the public panel, which calls the service directly and always hits
+        // `/detail`.
         const res: AxiosResponse<IDivisionResponse> =
           await queryClient.fetchQuery({
             queryKey: divisionKeys.byId(idOrSlug),
@@ -174,7 +171,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [divisions, setDivision, queryClient, handleUnknownError]
+    [setDivision, queryClient, handleUnknownError]
   );
 
   const getDivisionsByFilters = useCallback(

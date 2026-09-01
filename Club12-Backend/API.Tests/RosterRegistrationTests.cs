@@ -48,7 +48,7 @@ public class RosterRegistrationTests : IClassFixture<CustomWebApplicationFactory
         InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
             () => service.RegisterPlayerToTeamAsync(players[1], teamId, tournamentId, jerseyNumber: 10));
 
-        Assert.Contains("Jersey number", ex.Message);
+        Assert.Contains("dorsal", ex.Message);
     }
 
     [Fact]
@@ -73,7 +73,7 @@ public class RosterRegistrationTests : IClassFixture<CustomWebApplicationFactory
         InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
             () => service.RegisterPlayerToTeamAsync(players[2], teamId, tournamentId, jerseyNumber: 3));
 
-        Assert.Contains("maximum", ex.Message);
+        Assert.Contains("máximo", ex.Message);
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public class RosterRegistrationTests : IClassFixture<CustomWebApplicationFactory
         InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
             () => service.RegisterPlayerToTeamAsync(players[0], teamBId, tournamentId, jerseyNumber: 8));
 
-        Assert.Contains("two teams in the same tournament", ex.Message);
+        Assert.Contains("dos equipos del mismo torneo", ex.Message);
     }
 
     /// <summary>

@@ -41,6 +41,14 @@ public static class TournamentCompletabilityValidator
     public const int MinTeamsPerZone = 2;
 
     /// <summary>
+    /// Minimum number of players an enrolled team must have registered on its
+    /// season roster (<see cref="PlayerTeamRegistration"/>) for the tournament
+    /// to be completable — five is a basketball team's on-court minimum, so
+    /// fewer players means the team could never field a lineup.
+    /// </summary>
+    public const int MinPlayersPerTeam = 5;
+
+    /// <summary>
     /// Evaluates every completability rule against the loaded tournament graph
     /// and returns one issue per violation. An empty result means the
     /// tournament is completable and may be started.
@@ -53,9 +61,17 @@ public static class TournamentCompletabilityValidator
     /// The tournament's team registrations (enrolled teams), each ideally with
     /// its Team loaded so team names can be reported.
     /// </param>
+    /// <param name="playerCountsByTeam">
+    /// Each enrolled team's registered player count for this tournament
+    /// (<see cref="PlayerTeamRegistration"/>), used by the TeamTooFewPlayers
+    /// rule. Omitted (null) skips that rule entirely — callers that don't have
+    /// this data loaded (e.g. tests focused on the zone/team rules) are
+    /// unaffected.
+    /// </param>
     public static IReadOnlyList<CompletabilityIssue> Validate(
         Domain.Entities.Models.Tournament tournament,
-        IReadOnlyCollection<TeamTournamentRegistration> enrolledRegistrations)
+        IReadOnlyCollection<TeamTournamentRegistration> enrolledRegistrations,
+        IReadOnlyDictionary<Guid, int>? playerCountsByTeam = null)
     {
         ArgumentNullException.ThrowIfNull(tournament);
         ArgumentNullException.ThrowIfNull(enrolledRegistrations);
@@ -164,6 +180,26 @@ public static class TournamentCompletabilityValidator
                         Code = CompletabilityIssueCodes.CrossCupGroupTooFewTeams,
                         DivisionName = crossCup.Name,
                         AssignedTeams = assigned,
+                    });
+                }
+            }
+        }
+
+        // Rule 6 — TeamTooFewPlayers: every enrolled team needs >= MinPlayersPerTeam
+        // registered players — basketball's on-court minimum — to ever field a
+        // lineup. Skipped when the caller didn't load player-count data.
+        if (playerCountsByTeam is not null)
+        {
+            foreach (Guid teamId in enrolledTeamIds.OrderBy(id => ResolveTeamName(teamNames, id)))
+            {
+                int playerCount = playerCountsByTeam.GetValueOrDefault(teamId);
+                if (playerCount < MinPlayersPerTeam)
+                {
+                    issues.Add(new CompletabilityIssue
+                    {
+                        Code = CompletabilityIssueCodes.TeamTooFewPlayers,
+                        TeamName = ResolveTeamName(teamNames, teamId),
+                        PlayerCount = playerCount,
                     });
                 }
             }

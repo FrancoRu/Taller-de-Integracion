@@ -7,6 +7,7 @@ import {
   JWT,
 } from '@/modules/core/constants/constants';
 import { HttpStatus } from '@/modules/core/constants/httpStatus';
+import { beginRequest, endRequest } from '@/modules/core/utils/requestActivity';
 
 const TOKEN_KEY: string = COOKIE_SIGNIN_TOKEN;
 const INVALID_TOKEN_PATH = routes.tokenInvalido;
@@ -193,6 +194,14 @@ const sendRequest = async <T>(
     delete headers['Content-Type'];
   }
   const url = buildEndpoint(resource, query);
+
+  // Mutations (loading/uploading/saving something) block the whole screen
+  // via GlobalLoadingOverlay; GETs keep their own skeleton-loading pattern.
+  const isMutation = method !== 'GET';
+  if (isMutation) {
+    beginRequest();
+  }
+
   try {
     const result: AxiosResponse<T> = await axios.request({
       method,
@@ -203,6 +212,10 @@ const sendRequest = async <T>(
     return result;
   } catch (error: unknown) {
     throw throwError(error);
+  } finally {
+    if (isMutation) {
+      endRequest();
+    }
   }
 };
 

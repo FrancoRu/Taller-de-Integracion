@@ -20,7 +20,10 @@ import {
 import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
-import { TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
+import {
+  FILTER_OPTIONS_PAGE_SIZE,
+  TABLE_ROWS_PER_PAGE,
+} from '@/modules/core/constants/pagination';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useTeam } from '@/modules/team/hook/team.hook';
 import { ITeamResponse } from '@/modules/team/type/team.d';
@@ -60,8 +63,11 @@ const TeamRegisterPage: React.FC = () => {
     }
 
     const fetch = async () => {
+      // Load the full team catalogue (not just one table page) so every
+      // enrollable team — including clubs not assigned to any tournament — is
+      // available to filter client-side.
       setLoadingTeams(true);
-      await getTeamsByFiltered({ pageSize: TABLE_ROWS_PER_PAGE });
+      await getTeamsByFiltered({ pageSize: FILTER_OPTIONS_PAGE_SIZE });
       setLoadingTeams(false);
     };
 
@@ -73,8 +79,12 @@ const TeamRegisterPage: React.FC = () => {
     if (!selectedTournamentId || !teams) {
       return [];
     }
+    // A team is enrollable here when it is already in the selected tournament
+    // (pre-checked) or belongs to NO tournament yet. `!t.tournamentId` catches
+    // both null and undefined (an absent field), which a strict `=== null`
+    // missed — that hid unassigned clubs.
     return teams.filter(
-      t => t.tournamentId === selectedTournamentId || t.tournamentId === null
+      t => t.tournamentId === selectedTournamentId || !t.tournamentId
     );
   }, [teams, selectedTournamentId]);
 

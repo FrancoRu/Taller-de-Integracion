@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { GUID } from '@/modules/core/types/types';
@@ -90,6 +91,39 @@ describe('MatchFixtureList', () => {
     expect(
       screen.getByRole('button', { name: /exportar csv/i })
     ).toBeInTheDocument();
+  });
+});
+
+describe('MatchFixtureList — collapsible fechas (all but the current one)', () => {
+  it('collapses a past fecha by default but keeps the current/nearest one always expanded, with no toggle', async () => {
+    const user = userEvent.setup();
+    renderFixture([
+      match({
+        round: 1,
+        matchDate: '2020-01-01T20:00:00Z',
+        homeTeam: team('A'),
+        visitorTeam: team('B'),
+      }),
+      match({
+        round: 2,
+        matchDate: '2099-01-01T20:00:00Z',
+        homeTeam: team('C'),
+        visitorTeam: team('D'),
+      }),
+    ]);
+
+    // Fecha 2 is the nearest to "now" (its match is in the future) — always
+    // expanded, no toggle button for it.
+    const fecha2Row = screen.getByText('Fecha 2').closest('div');
+    expect(fecha2Row?.querySelector('button')).toBeNull();
+    expect(screen.getAllByText('C').length).toBeGreaterThan(0);
+
+    // Fecha 1 is in the past — collapsed by default, with a toggle.
+    const fecha1Toggle = screen.getByRole('button', { name: /Fecha 1/i });
+    expect(fecha1Toggle).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(fecha1Toggle);
+    expect(fecha1Toggle).toHaveAttribute('aria-expanded', 'true');
   });
 });
 

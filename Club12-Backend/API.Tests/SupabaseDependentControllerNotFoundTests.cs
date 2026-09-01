@@ -171,6 +171,11 @@ public class SupabaseDependentControllerNotFoundTests
             throw new NotImplementedException();
         }
 
+        public Task EnsureTeamIdentityEditableAsync(Team existingTeam, string? requestedName, string? requestedThreeLetterCode)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task UpdateTeamsAsync(IEnumerable<Team> teams)
         {
             throw new NotImplementedException();

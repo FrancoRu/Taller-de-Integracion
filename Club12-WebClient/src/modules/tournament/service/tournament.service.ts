@@ -16,6 +16,11 @@ import {
   ITournamentFiltered,
   ITournamentResponse,
 } from '@/modules/tournament/type/tournament.d';
+import {
+  ICreateFullDivisionRequest,
+  ICreateFullTournamentRequest,
+} from '@/modules/tournament/type/createFullTournament.d';
+import { IDivisionResponse } from '@/modules/division/type/division.d';
 
 /**
  * Service for managing tournaments.
@@ -30,6 +35,37 @@ export const tournamentService = {
     tournament: IAddTournamentRequest
   ): Promise<AxiosResponse<ITournamentResponse>> =>
     await sendPost(`${routes.tournaments}`, tournament),
+
+  /**
+   * HU-38: creates a WHOLE tournament — base fields plus every division
+   * (zone/cross-cup) with its points, cups, playoff mappings and stages — in a
+   * single atomic transaction via `POST /api/tournaments/full`. A failure at any
+   * step persists nothing (all-or-nothing), and the backend creates the
+   * tournament already `OpenForRegistration`, so no separate open-registration
+   * call is needed.
+   * @param {ICreateFullTournamentRequest} request - The full tournament-wizard payload.
+   * @returns {Promise<AxiosResponse<ITournamentResponse>>} The created tournament (with its divisions).
+   */
+  createFullTournament: async (
+    request: ICreateFullTournamentRequest
+  ): Promise<AxiosResponse<ITournamentResponse>> =>
+    await sendPost(`${routes.tournaments}/full`, request),
+
+  /**
+   * HU-31/HU-112: adds ONE division (group stage + cups + playoff mappings) to
+   * an already-existing tournament in a single atomic transaction via
+   * `POST /api/tournaments/{tournamentId}/divisions/full` — the same structure
+   * guarantee a wizard-created division gets, instead of the bare division the
+   * granular `POST /api/divisions` endpoint leaves behind (no stages, no cups).
+   * @param {GUID} tournamentId - The parent tournament's id.
+   * @param {ICreateFullDivisionRequest} request - The division's structure (zone or cross-cup).
+   * @returns {Promise<AxiosResponse<IDivisionResponse>>} The created division.
+   */
+  addFullDivision: async (
+    tournamentId: GUID,
+    request: ICreateFullDivisionRequest
+  ): Promise<AxiosResponse<IDivisionResponse>> =>
+    await sendPost(`${routes.tournaments}/${tournamentId}/divisions/full`, request),
 
   /**
    * Updates an existing tournament.

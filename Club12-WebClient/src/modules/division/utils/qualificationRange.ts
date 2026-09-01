@@ -1,4 +1,4 @@
-import { QualificationRange } from '@/modules/division/type/division.d';
+import { IDivisionResponse, QualificationRange } from '@/modules/division/type/division.d';
 import { cupTier } from '@/design/tokens';
 
 /**
@@ -30,6 +30,32 @@ export const cupTierColor = (order: number): string => {
     default:
       return cupTier.accent;
   }
+};
+
+/**
+ * HU-110/HU-112: a multi-group cross-division cup pools the top
+ * `qualifiersPerGroup` of EVERY internal group into one bracket — there is no
+ * per-division `PlayoffMappings` breakdown to derive from (the cross cup
+ * carries none, see backend `DivisionProfile.cs`). This is the single range
+ * every group's standings table highlights, named after the cup itself.
+ * Returns `undefined` when the division has no positive qualifiers-per-group
+ * (a regular zone, or a misconfigured cross cup).
+ */
+export const buildCrossCupGroupQualificationRange = (
+  division: Pick<IDivisionResponse, 'qualifiersPerGroup' | 'name'>
+): QualificationRange[] | undefined => {
+  if (!division.qualifiersPerGroup || division.qualifiersPerGroup < 1) {
+    return undefined;
+  }
+
+  return [
+    {
+      fromPosition: 1,
+      toPosition: division.qualifiersPerGroup,
+      cupName: division.name,
+      order: 0,
+    },
+  ];
 };
 
 /**

@@ -22,6 +22,9 @@ public static class CompletabilityIssueCodes
 
     /// <summary>A cross-division-cup group has fewer than the required assigned teams.</summary>
     public const string CrossCupGroupTooFewTeams = nameof(CrossCupGroupTooFewTeams);
+
+    /// <summary>An enrolled team has fewer than the required registered players.</summary>
+    public const string TeamTooFewPlayers = nameof(TeamTooFewPlayers);
 }
 
 /// <summary>
@@ -62,4 +65,9 @@ public class CompletabilityIssue
     /// CrossCupGroupTooFewTeams).
     /// </summary>
     public int? AssignedTeams { get; set; }
+
+    /// <summary>
+    /// The offending team's registered player count, for TeamTooFewPlayers.
+    /// </summary>
+    public int? PlayerCount { get; set; }
 }

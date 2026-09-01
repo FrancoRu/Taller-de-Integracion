@@ -14,9 +14,12 @@ import {
   Typography,
 } from '@mui/material';
 import FormButtons from '@/views/core/components/FormButtons';
+import TeamFormFields from '@/views/team/TeamFormFields';
+import type { TeamFormField, TeamFormState } from '@/views/team/teams.types';
 import { GUID } from '@/modules/core/types/types';
-import { ITeamResponse } from '@/modules/team/type/team.d';
+import { ITeamResponse, IAddTeamRequest } from '@/modules/team/type/team.d';
 import { IEnrollTeamRequest } from '@/modules/tournament/type/tournament';
+import { useTeam } from '@/modules/team/hook/team.hook';
 import { notifyWarning } from '@/modules/core/utils/confirmDialog';
 
 type EnrollMode = 'new' | 'existing';
@@ -35,11 +38,27 @@ interface EnrollTeamDialogProps {
 
 const INITIAL_MODE: EnrollMode = 'new';
 
+const INITIAL_TEAM_FORM: TeamFormState = {
+  name: '',
+  threeLetterCode: '',
+  shirtColor: '#1E5FCC',
+  shirtSecondaryColor: '',
+  jerseyStyle: 'solid',
+  logo: null,
+  logoUrl: '',
+};
+
 /**
  * Dialog to enroll a team into a tournament (HU-107). Two mutually exclusive
- * modes: create a brand-new team by name, or pick an existing team — with an
- * optional "copy roster from previous season" toggle. The resulting request
- * always carries exactly one of `newTeamName` / `existingTeamId`.
+ * modes: create a brand-new team, or pick an existing team — with an
+ * optional "copy roster from previous season" toggle.
+ *
+ * A brand-new team goes through the same identity fields (name, code,
+ * escudo, kit) as the standalone Equipos admin form via the shared
+ * {@link TeamFormFields} — enrolling a team is not an excuse to skip the
+ * validations every other team must satisfy. It is created first (via
+ * `addTeam`, same as the Equipos page) and then enrolled as an existing
+ * team, so the enroll call itself always carries `existingTeamId`.
  */
 const EnrollTeamDialog: React.FC<EnrollTeamDialogProps> = ({
   open,
@@ -48,40 +67,73 @@ const EnrollTeamDialog: React.FC<EnrollTeamDialogProps> = ({
   onClose,
   onConfirm,
 }) => {
+  const { addTeam } = useTeam();
   const [mode, setMode] = useState<EnrollMode>(INITIAL_MODE);
-  const [newTeamName, setNewTeamName] = useState('');
+  const [teamForm, setTeamForm] = useState<TeamFormState>(INITIAL_TEAM_FORM);
+  const [creatingTeam, setCreatingTeam] = useState(false);
   const [existingTeamId, setExistingTeamId] = useState<GUID | ''>('');
   const [copyRoster, setCopyRoster] = useState(false);
 
   const reset = () => {
     setMode(INITIAL_MODE);
-    setNewTeamName('');
+    setTeamForm(INITIAL_TEAM_FORM);
     setExistingTeamId('');
     setCopyRoster(false);
   };
 
   const handleClose = () => {
-    if (submitting) {
+    if (submitting || creatingTeam) {
       return;
     }
     reset();
     onClose();
   };
 
+  const handleTeamFieldChange = (field: TeamFormField, value: string) => {
+    setTeamForm(prev => ({ ...prev, [field]: value }));
+  };
+
   const selectedTeam = availableTeams.find(team => team.id === existingTeamId);
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (mode === 'new') {
-      const trimmed = newTeamName.trim();
-      if (!trimmed) {
+      const name = teamForm.name.trim();
+      const threeLetterCode = teamForm.threeLetterCode.trim();
+
+      if (!name || !threeLetterCode) {
         void notifyWarning({
-          title: 'Nombre requerido',
-          text: 'Ingresá el nombre del nuevo equipo.',
+          title: 'Campos incompletos',
+          text: 'Nombre y código son obligatorios.',
         });
         return;
       }
 
-      onConfirm({ newTeamName: trimmed });
+      if (!teamForm.logo) {
+        void notifyWarning({
+          title: 'Logo requerido',
+          text: 'Debe seleccionar un logo para crear el equipo.',
+        });
+        return;
+      }
+
+      const payload: IAddTeamRequest = {
+        name,
+        threeLetterCode,
+        shirtColor: teamForm.shirtColor.trim(),
+        shirtSecondaryColor: teamForm.shirtSecondaryColor.trim() || null,
+        jerseyStyle: teamForm.jerseyStyle,
+        logo: teamForm.logo,
+      };
+
+      setCreatingTeam(true);
+      const createdTeam = await addTeam(payload);
+      setCreatingTeam(false);
+
+      if (!createdTeam) {
+        return;
+      }
+
+      onConfirm({ existingTeamId: createdTeam.id });
       reset();
       return;
     }
@@ -102,6 +154,8 @@ const EnrollTeamDialog: React.FC<EnrollTeamDialogProps> = ({
     onConfirm(request);
     reset();
   };
+
+  const busy = submitting || creatingTeam;
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
@@ -126,12 +180,11 @@ const EnrollTeamDialog: React.FC<EnrollTeamDialogProps> = ({
           </RadioGroup>
 
           {mode === 'new' ? (
-            <TextField
-              label="Nombre del equipo"
-              value={newTeamName}
-              onChange={event => setNewTeamName(event.target.value)}
-              required
-              fullWidth
+            <TeamFormFields
+              withLogo
+              form={teamForm}
+              onFieldChange={handleTeamFieldChange}
+              onLogoChange={file => setTeamForm(prev => ({ ...prev, logo: file }))}
             />
           ) : (
             <>
@@ -183,9 +236,9 @@ const EnrollTeamDialog: React.FC<EnrollTeamDialogProps> = ({
       <DialogActions>
         <FormButtons
           onCancel={handleClose}
-          onConfirm={handleConfirm}
+          onConfirm={() => void handleConfirm()}
           confirmLabel="Inscribir"
-          disabled={submitting}
+          disabled={busy}
         />
       </DialogActions>
     </Dialog>

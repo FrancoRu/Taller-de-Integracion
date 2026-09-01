@@ -141,6 +141,57 @@ public class TournamentCompletabilityValidatorTests
     }
 
     [Fact]
+    public void Validate_TeamWithFewerThanFivePlayers_FiresTeamTooFewPlayers()
+    {
+        Tournament tournament = NewTournament();
+        Team t1 = MakeTeam("Alpha");
+        Team t2 = MakeTeam("Bravo");
+        AddZone(tournament, "Zone A", [t1, t2]);
+
+        IReadOnlyList<CompletabilityIssue> issues = CompletabilityValidator.Validate(
+            tournament,
+            [Reg(tournament, t1), Reg(tournament, t2)],
+            playerCountsByTeam: new Dictionary<Guid, int> { [t1.Id] = 5, [t2.Id] = 4 });
+
+        CompletabilityIssue issue = Assert.Single(issues, i => i.Code == CompletabilityIssueCodes.TeamTooFewPlayers);
+        Assert.Equal("Bravo", issue.TeamName);
+        Assert.Equal(4, issue.PlayerCount);
+    }
+
+    [Fact]
+    public void Validate_TeamMissingFromPlayerCounts_TreatedAsZeroPlayers_FiresTeamTooFewPlayers()
+    {
+        Tournament tournament = NewTournament();
+        Team t1 = MakeTeam("Alpha");
+        AddZone(tournament, "Zone A", [t1, MakeTeam("Bravo")]);
+
+        IReadOnlyList<CompletabilityIssue> issues = CompletabilityValidator.Validate(
+            tournament,
+            [Reg(tournament, t1)],
+            playerCountsByTeam: new Dictionary<Guid, int>());
+
+        CompletabilityIssue issue = Assert.Single(issues, i => i.Code == CompletabilityIssueCodes.TeamTooFewPlayers);
+        Assert.Equal("Alpha", issue.TeamName);
+        Assert.Equal(0, issue.PlayerCount);
+    }
+
+    [Fact]
+    public void Validate_PlayerCountsOmitted_SkipsTeamTooFewPlayersRule()
+    {
+        // Callers that don't load player-count data (e.g. other unit tests)
+        // must not be affected by this rule.
+        Tournament tournament = NewTournament();
+        Team t1 = MakeTeam("Alpha");
+        Team t2 = MakeTeam("Bravo");
+        AddZone(tournament, "Zone A", [t1, t2]);
+
+        IReadOnlyList<CompletabilityIssue> issues = CompletabilityValidator.Validate(
+            tournament, [Reg(tournament, t1), Reg(tournament, t2)]);
+
+        Assert.Empty(issues);
+    }
+
+    [Fact]
     public void Validate_EmptyTournament_ReturnsNoIssues()
     {
         // No divisions and no enrolled teams: nothing to complete, nothing blocks.

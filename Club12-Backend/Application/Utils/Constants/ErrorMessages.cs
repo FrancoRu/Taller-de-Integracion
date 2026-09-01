@@ -3,63 +3,68 @@ namespace Application.Utils.Constants;
 /// <summary>
 /// Centralized user-facing and exception message text, so a message never
 /// needs to be typed twice and a wording change happens in one place.
+/// User-facing categories (the ones an admin can actually see surfaced as a
+/// toast/alert in the panel) are in Spanish. A handful of internal/ops-level
+/// categories that only ever reach logs — <see cref="Configuration"/>,
+/// <see cref="Storage"/>, <see cref="Query"/>, <see cref="Serialization"/> —
+/// are left in English on purpose: nobody using the app ever sees them.
 /// </summary>
 public static class ErrorMessages
 {
     public static class Media
     {
-        public const string InvalidImageFile = "The photo file must be a valid JPEG/PNG image.";
+        public const string InvalidImageFile = "El archivo de la foto debe ser una imagen JPEG/PNG válida.";
     }
 
     public static class Auth
     {
-        public const string EmailAlreadyExists = "A user with this email already exists.";
-        public const string InvalidCredentials = "Invalid credentials.";
-        public const string AccountDeactivated = "This account is deactivated.";
-        public const string NoAccountForEmail = "No account found for that email.";
-        public const string InvalidMagicLink = "Invalid magic-link.";
-        public const string MagicLinkAlreadyUsed = "Magic-link is invalid or has already been used.";
-        public const string InvalidPasswordResetRequest = "Invalid password reset request.";
-        public const string InvalidRefreshToken = "Refresh token is invalid.";
-        public const string RefreshTokenExpired = "Refresh token has expired. Please log in again.";
-        public const string RoleClaimMissing = "Role claim is missing from the token.";
-        public const string IdClaimMissing = "Id claim is missing from the token.";
-        public const string AccessDenied = "Access denied.";
+        public const string EmailAlreadyExists = "Ya existe un usuario con ese email.";
+        public const string InvalidCredentials = "Credenciales inválidas.";
+        public const string AccountDeactivated = "Esta cuenta está desactivada.";
+        public const string NoAccountForEmail = "No se encontró ninguna cuenta para ese email.";
+        public const string InvalidMagicLink = "El magic-link no es válido.";
+        public const string MagicLinkAlreadyUsed = "El magic-link no es válido o ya fue usado.";
+        public const string InvalidPasswordResetRequest = "Solicitud de restablecimiento de contraseña inválida.";
+        public const string InvalidRefreshToken = "El refresh token no es válido.";
+        public const string RefreshTokenExpired = "El refresh token venció. Iniciá sesión de nuevo.";
+        public const string RoleClaimMissing = "Falta el claim de rol en el token.";
+        public const string IdClaimMissing = "Falta el claim de id en el token.";
+        public const string AccessDenied = "Acceso denegado.";
 
         public static string UserCreationFailed(string errors)
         {
-            return $"User creation failed: {errors}";
+            return $"No se pudo crear el usuario: {errors}";
         }
 
         public static string RoleNotAllowedToCreate(string callerRole, string targetRole)
         {
-            return $"Role '{callerRole}' is not allowed to create users with role '{targetRole}'.";
+            return $"El rol '{callerRole}' no puede crear usuarios con rol '{targetRole}'.";
         }
     }
 
     public static class User
     {
-        public const string InsufficientPermissionsToListUsers = "Insufficient permissions to list users.";
-        public const string CurrentPasswordRequired = "CurrentPassword is required when changing your own password.";
-        public const string CannotChangeOwnActiveState = "You cannot change the active state of your own account.";
-        public const string InsufficientPermissionsToDelete = "Insufficient permissions to delete this user.";
-        public const string PasswordResetRestricted = "Only Admins and Owners (for their own subordinates) can reset passwords.";
-        public const string CannotChangeOwnRole = "You cannot change your own role.";
-        public const string InsufficientPermissionsToChangeRole = "Insufficient permissions to change this user's role.";
+        public const string InsufficientPermissionsToListUsers = "No tenés permisos suficientes para listar usuarios.";
+        public const string CurrentPasswordRequired = "Debés indicar la contraseña actual para cambiar tu propia contraseña.";
+        public const string CannotChangeOwnActiveState = "No podés cambiar el estado activo de tu propia cuenta.";
+        public const string InsufficientPermissionsToDelete = "No tenés permisos suficientes para eliminar este usuario.";
+        public const string PasswordResetRestricted = "Solo Admins y Owners (para sus subordinados) pueden blanquear contraseñas.";
+        public const string CannotChangeOwnRole = "No podés cambiar tu propio rol.";
+        public const string InsufficientPermissionsToChangeRole = "No tenés permisos suficientes para cambiar el rol de este usuario.";
 
         public static string NotFound(string userId)
         {
-            return $"User '{userId}' not found.";
+            return $"No se encontró el usuario '{userId}'.";
         }
 
         public static string InvalidRole(object role)
         {
-            return $"'{role}' is not a valid role.";
+            return $"'{role}' no es un rol válido.";
         }
 
         public static string RoleNotAllowedToAssign(string callerRole, string targetRole)
         {
-            return $"Role '{callerRole}' is not allowed to assign role '{targetRole}'.";
+            return $"El rol '{callerRole}' no puede asignar el rol '{targetRole}'.";
         }
     }
 
@@ -72,43 +77,43 @@ public static class ErrorMessages
 
         public static string NotFound(System.Guid tournamentId)
         {
-            return $"There is no Tournament with id: {tournamentId}.";
+            return $"No existe un torneo con id: {tournamentId}.";
         }
 
         public static string InvalidStatusTransition(
             Domain.Enums.TournamentStatus from, Domain.Enums.TournamentStatus to)
         {
-            return $"Cannot change tournament status from '{from}' to '{to}'. " +
-                "Allowed flow is Scheduled -> OpenForRegistration -> RegistrationClosed -> " +
-                "Ongoing -> Finished; a tournament may be Canceled from any non-terminal state, " +
-                "and Finished/Canceled are terminal.";
+            return $"No se puede cambiar el estado del torneo de '{from}' a '{to}'. " +
+                "El flujo permitido es Scheduled -> OpenForRegistration -> RegistrationClosed -> " +
+                "Ongoing -> Finished; un torneo puede pasar a Canceled desde cualquier estado no terminal, " +
+                "y Finished/Canceled son terminales.";
         }
 
         public static string StructuralEditNotAllowed(Domain.Enums.TournamentStatus status)
         {
-            return $"Structural changes (divisions and team registrations) are only allowed while " +
-                $"the tournament is OpenForRegistration; this tournament is '{status}'.";
+            return "Los cambios estructurales (divisiones e inscripción de equipos) solo se permiten " +
+                $"mientras el torneo está OpenForRegistration; este torneo está '{status}'.";
         }
 
         public static string CategoryMismatch(
             Domain.Enums.TournamentCategory divisionCategory,
             Domain.Enums.TournamentCategory tournamentCategory)
         {
-            return $"A '{divisionCategory}' division cannot belong to a '{tournamentCategory}' tournament " +
-                "(HU-48): the feminine competition is a separate tournament and cannot be mixed with the " +
-                "masculine one. Create the division under a tournament of the same category.";
+            return $"Una división '{divisionCategory}' no puede pertenecer a un torneo '{tournamentCategory}' " +
+                "(HU-48): la competencia femenina es un torneo aparte y no puede mezclarse con la masculina. " +
+                "Creá la división dentro de un torneo de la misma categoría.";
         }
 
         public static string NotCompletable(string issueSummaries)
         {
-            return "Cannot start the tournament because it is not completable in its current state (HU-109): " +
-                $"{issueSummaries}. Resolve every issue before starting.";
+            return "No se puede iniciar el torneo porque no está completo en su estado actual (HU-109): " +
+                $"{issueSummaries}. Resolvé todos los problemas antes de iniciar.";
         }
 
         public static string UnenrollNotAllowed(Domain.Enums.TournamentStatus status)
         {
-            return "Teams can only be removed while the tournament is OpenForRegistration or " +
-                $"RegistrationClosed; this tournament is '{status}'.";
+            return "Los equipos solo se pueden dar de baja mientras el torneo está OpenForRegistration o " +
+                $"RegistrationClosed; este torneo está '{status}'.";
         }
 
         /// <summary>
@@ -138,7 +143,7 @@ public static class ErrorMessages
     {
         public static string NotFound(System.Guid teamId)
         {
-            return $"There is no Team with id: {teamId}.";
+            return $"No existe un equipo con id: {teamId}.";
         }
 
         /// <summary>
@@ -151,19 +156,32 @@ public static class ErrorMessages
         public const string HasHistoryCannotDelete =
             "No se puede eliminar el equipo: tiene historial de partidos, sanciones, deducciones o inscripciones a torneos.";
 
+        /// <summary>
+        /// User-facing (Spanish) message returned when a team's identity
+        /// (<see cref="Domain.Entities.Models.Team.Name"/> or
+        /// <see cref="Domain.Entities.Models.Team.ThreeLetterCode"/>) is edited
+        /// while the team is participating in a tournament that is Ongoing (en
+        /// curso): its identity is frozen for the duration so fixtures, standings
+        /// and match sheets stay consistent. Other fields (colors, jersey style,
+        /// logo) remain editable. Mapped to 409 by the global handler.
+        /// </summary>
+        public const string IdentityFrozenWhileOngoing =
+            "No se puede cambiar el nombre ni la sigla del equipo mientras participa en un torneo en curso. " +
+            "Podés editar los colores y el escudo.";
+
         public static string NotInTournament(System.Guid teamId)
         {
-            return $"Team '{teamId}' is not currently registered to any tournament, so players cannot be registered to it.";
+            return $"El equipo '{teamId}' no está inscripto en ningún torneo actualmente, así que no se pueden registrar jugadores en él.";
         }
 
         public static string AlreadyEnrolled(System.Guid teamId, System.Guid tournamentId)
         {
-            return $"Team '{teamId}' is already enrolled in tournament '{tournamentId}'. A team can be enrolled only once per tournament.";
+            return $"El equipo '{teamId}' ya está inscripto en el torneo '{tournamentId}'. Un equipo solo puede inscribirse una vez por torneo.";
         }
 
         public static string NotEnrolled(System.Guid teamId, System.Guid tournamentId)
         {
-            return $"Team '{teamId}' is not enrolled in tournament '{tournamentId}'.";
+            return $"El equipo '{teamId}' no está inscripto en el torneo '{tournamentId}'.";
         }
     }
 
@@ -171,17 +189,17 @@ public static class ErrorMessages
     {
         public static string PlayerAlreadyInAnotherTeam(System.Guid playerId, System.Guid tournamentId)
         {
-            return $"Player '{playerId}' is already registered to another team in tournament '{tournamentId}'. A player cannot be registered to two teams in the same tournament.";
+            return $"El jugador '{playerId}' ya está registrado en otro equipo del torneo '{tournamentId}'. Un jugador no puede estar en dos equipos del mismo torneo.";
         }
 
         public static string RosterFull(System.Guid teamId, int maxPlayers)
         {
-            return $"Team '{teamId}' already has the maximum of {maxPlayers} players for this tournament.";
+            return $"El equipo '{teamId}' ya tiene el máximo de {maxPlayers} jugadores para este torneo.";
         }
 
         public static string DuplicateJerseyNumber(int jerseyNumber, System.Guid teamId, System.Guid tournamentId)
         {
-            return $"Jersey number {jerseyNumber} is already used by another player in team '{teamId}' for tournament '{tournamentId}'.";
+            return $"El dorsal {jerseyNumber} ya lo usa otro jugador del equipo '{teamId}' en el torneo '{tournamentId}'.";
         }
     }
 
@@ -209,14 +227,14 @@ public static class ErrorMessages
 
     public static class Stage
     {
-        public const string NotFoundGeneric = "Stage not found.";
-        public const string DivisionNotFound = "Division not found.";
-        public const string DivisionAlreadyHasStages = "Cannot process the current request because the current division already has some stage.";
-        public const string GenerateMatchesBeforeSeeding = "Generate this stage's matches before seeding it.";
-        public const string AlreadySeeded = "This stage has already been seeded.";
-        public const string InvalidStageType = "Invalid stage type";
-        public const string SeedMissingStandings = "Cannot seed: not every team assigned to this stage has a finished-group-stage position yet.";
-        public const string GroupStageAlreadyExistsInDivision = "This division already has a Group stage. A division can only have one Group stage.";
+        public const string NotFoundGeneric = "No se encontró la fase.";
+        public const string DivisionNotFound = "No se encontró la división.";
+        public const string DivisionAlreadyHasStages = "No se puede procesar la solicitud porque la división ya tiene alguna fase.";
+        public const string GenerateMatchesBeforeSeeding = "Generá los partidos de esta fase antes de sembrarla.";
+        public const string AlreadySeeded = "Esta fase ya fue sembrada.";
+        public const string InvalidStageType = "Tipo de fase inválido.";
+        public const string SeedMissingStandings = "No se puede sembrar: todavía no todos los equipos asignados a esta fase tienen una posición de la fase de grupos finalizada.";
+        public const string GroupStageAlreadyExistsInDivision = "Esta división ya tiene una fase de grupos. Una división solo puede tener una fase de grupos.";
 
         /// <summary>
         /// User-facing (Spanish) message returned when a stage (fase) is added
@@ -230,80 +248,80 @@ public static class ErrorMessages
 
         public static string NotFoundById(System.Guid id)
         {
-            return $"Stage with id {id} not found.";
+            return $"No se encontró la fase con id {id}.";
         }
 
         public static string NotFoundById(string idOrSlug)
         {
-            return $"Stage with id or slug {idOrSlug} not found.";
+            return $"No se encontró la fase con id o slug {idOrSlug}.";
         }
 
         public static string AlreadyExistsInDivision(string stageName)
         {
-            return $"Stage with name '{stageName}' already exists in the current division.";
+            return $"Ya existe una fase con el nombre '{stageName}' en la división actual.";
         }
 
         public static string MaxTeamsReached(int maxTeams)
         {
-            return $"This Stage already has the maximum of {maxTeams} teams.";
+            return $"Esta fase ya tiene el máximo de {maxTeams} equipos.";
         }
 
         public static string NotEnoughSlots(int requested, int available)
         {
-            return $"Cannot add {requested} teams. Only {available} slots available.";
+            return $"No se pueden agregar {requested} equipos. Solo hay {available} lugares disponibles.";
         }
 
         public static string InvalidTournamentSize(int registeredTeams, string validSizes)
         {
-            return $"Invalid number of registered teams: {registeredTeams}. Valid sizes are {validSizes} teams.";
+            return $"Cantidad inválida de equipos inscriptos: {registeredTeams}. Los tamaños válidos son {validSizes} equipos.";
         }
 
         public static string TeamsNotDivisibleForGroups(int registeredTeams, int groupSize)
         {
-            return $"The number of registered teams ({registeredTeams}) must be divisible by {groupSize} to generate group stages.";
+            return $"La cantidad de equipos inscriptos ({registeredTeams}) debe ser divisible por {groupSize} para generar las fases de grupos.";
         }
 
         public static string ConflictingTeamAssignment(string teamIds)
         {
-            return $"Cannot assign team(s) {teamIds} to this division: already assigned to another division of the same tournament.";
+            return $"No se puede asignar el/los equipo(s) {teamIds} a esta división: ya está(n) asignado(s) a otra división del mismo torneo.";
         }
 
         public static string SeedTeamCountOutOfRange(int assignedCount, int slotCapacity)
         {
-            return $"Cannot seed: {assignedCount} team(s) assigned to this stage, expected between 2 and {slotCapacity}. " +
-            "A team count below the full bracket is fine (the strongest seeds get a bye), but it cannot exceed the generated slots.";
+            return $"No se puede sembrar: hay {assignedCount} equipo(s) asignado(s) a esta fase, se esperaba entre 2 y {slotCapacity}. " +
+            "Una cantidad de equipos menor al cuadro completo está bien (los mejores seeds pasan con bye), pero no puede superar los lugares generados.";
         }
     }
 
     public static class Match
     {
-        public const string CannotUpdateStartedOrFinished = "Cannot update a match that has already started or finished.";
-        public const string TeamsNotAssignedToStage = "Cannot update match date because one or both teams are not assigned to the stage.";
+        public const string CannotUpdateStartedOrFinished = "No se puede editar un partido que ya arrancó o finalizó.";
+        public const string TeamsNotAssignedToStage = "No se puede actualizar la fecha del partido porque uno o ambos equipos no están asignados a la fase.";
         public const string VenueScheduleConflict =
             "Esa cancha ya tiene otro partido a menos de 2 horas de esa hora. " +
             "Elegí otro horario (mínimo 2 horas de diferencia) u otra cancha.";
-        public const string StageAlreadyHasMatches = "Cannot process the current request because the current stage already has some matches.";
-        public const string NoGroupStagesForDivision = "No group stages found for the division.";
-        public const string NoTeamsRegistered = "No teams are registered in the tournament.";
-        public const string NotEnoughTeamsPerGroup = "At least 2 teams per group are required to generate matches.";
-        public const string InvalidKnockoutStageType = "Invalid knockout stage type.";
-        public const string MatchCountMustBePositive = "Match count must be greater than zero.";
-        public const string EndDateBeforeStartDate = "End date must be after start date.";
-        public const string StageTypeNotSupportedForAutomatedCreation = "Stage type not supported for automated match creation.";
+        public const string StageAlreadyHasMatches = "No se puede procesar la solicitud porque la fase actual ya tiene partidos.";
+        public const string NoGroupStagesForDivision = "No se encontraron fases de grupos para la división.";
+        public const string NoTeamsRegistered = "No hay equipos inscriptos en el torneo.";
+        public const string NotEnoughTeamsPerGroup = "Se necesitan al menos 2 equipos por grupo para generar los partidos.";
+        public const string InvalidKnockoutStageType = "Tipo de fase eliminatoria inválido.";
+        public const string MatchCountMustBePositive = "La cantidad de partidos debe ser mayor a cero.";
+        public const string EndDateBeforeStartDate = "La fecha de fin debe ser posterior a la fecha de inicio.";
+        public const string StageTypeNotSupportedForAutomatedCreation = "Este tipo de fase no admite la generación automática de partidos.";
 
         // HU-70: basketball has no draws — a played match must have a winner.
         public const string GroupStageTieNotAllowed =
-            "A group-stage match cannot end tied; basketball has no draws. Load a decisive score with a winner.";
+            "Un partido de fase de grupos no puede terminar empatado; el básquet no tiene empates. Cargá un resultado con un ganador.";
         public const string PlayoffTieNotAllowed =
-            "A playoff match cannot end tied; it must be resolved by overtime. Load the final decisive score with a winner.";
+            "Un partido de playoff no puede terminar empatado; debe resolverse en un tiempo suplementario. Cargá el resultado final con un ganador.";
 
         // HU-73: walkover.
         public const string WalkOverTeamNotInMatch =
-            "The present team must be either the home or the visitor team of this match.";
+            "El equipo presente tiene que ser el local o el visitante de este partido.";
 
         public static string TeamsNotDistributableAcrossGroups(int registeredTeams, int totalGroups)
         {
-            return $"Registered teams ({registeredTeams}) cannot be distributed evenly across {totalGroups} groups.";
+            return $"Los equipos inscriptos ({registeredTeams}) no se pueden distribuir de forma pareja entre {totalGroups} grupos.";
         }
     }
 
@@ -313,34 +331,34 @@ public static class ErrorMessages
         public static string ScoreMismatch(int teamScore, int playersSum)
         {
             int difference = teamScore - playersSum;
-            return $"The players' points do not add up to the team's score: the team scored {teamScore} " +
-                $"but the loaded players sum {playersSum} (difference of {difference}). Fix the sheet before saving.";
+            return $"Los puntos de los jugadores no coinciden con el resultado del equipo: el equipo anotó {teamScore} " +
+                $"pero la suma de los jugadores cargados da {playersSum} (diferencia de {difference}). Corregí la planilla antes de guardar.";
         }
 
         public static string MatchNotFinished(System.Guid matchId)
         {
-            return $"Cannot load the match sheet for match {matchId} because it has no final score loaded yet.";
+            return $"No se puede cargar la planilla del partido {matchId} porque todavía no tiene un resultado final cargado.";
         }
 
         public static string TeamNotInMatch(System.Guid teamId)
         {
-            return $"Team {teamId} did not play in this match, so its players' points cannot be loaded here.";
+            return $"El equipo {teamId} no jugó este partido, así que no se pueden cargar sus puntos acá.";
         }
 
         public static string PlayerNotOnRoster(System.Guid playerId)
         {
-            return $"Player {playerId} is not on this team's roster for this season, so their points cannot be loaded.";
+            return $"El jugador {playerId} no está en el plantel del equipo para esta temporada, así que no se pueden cargar sus puntos.";
         }
 
         public static string PlayerNotEligible(System.Guid playerId)
         {
-            return $"Player {playerId} is not eligible (missing approved registration or under an active sanction).";
+            return $"El jugador {playerId} no está habilitado (le falta la inscripción aprobada o tiene una sanción activa).";
         }
     }
 
     public static class MedicalRecord
     {
-        public const string InvalidPdfFile = "The medical-record file must be a valid PDF.";
+        public const string InvalidPdfFile = "El archivo de la ficha médica debe ser un PDF válido.";
 
         /// <summary>
         /// User-facing (Spanish) message returned when a new ficha upload is
@@ -364,64 +382,64 @@ public static class ErrorMessages
         public static string RegistrationNotFound(
             System.Guid playerId, System.Guid teamId, System.Guid tournamentId)
         {
-            return $"Player {playerId} has no registration to team {teamId} for tournament " +
-                $"{tournamentId}, so a medical record cannot be attached or reviewed.";
+            return $"El jugador {playerId} no tiene una inscripción al equipo {teamId} para el torneo " +
+                $"{tournamentId}, así que no se puede adjuntar ni revisar una ficha médica.";
         }
     }
 
     public static class MatchSeries
     {
-        public const string RequiresTwoDifferentTeams = "A series requires two different teams.";
-        public const string AlreadyExistsForStage = "A series between these two teams already exists for this stage.";
-        public const string NotFound = "Series not found.";
-        public const string AlreadyDecided = "Cannot add a game to a series that has already been decided.";
+        public const string RequiresTwoDifferentTeams = "Una serie requiere dos equipos distintos.";
+        public const string AlreadyExistsForStage = "Ya existe una serie entre estos dos equipos para esta fase.";
+        public const string NotFound = "No se encontró la serie.";
+        public const string AlreadyDecided = "No se puede agregar un partido a una serie que ya se definió.";
 
         public static string NotFoundById(System.Guid id)
         {
-            return $"Series with id {id} not found.";
+            return $"No se encontró la serie con id {id}.";
         }
 
         public static string MaxGamesReached(int bestOf)
         {
-            return $"This series already has the maximum of {bestOf} games.";
+            return $"Esta serie ya tiene el máximo de {bestOf} partidos.";
         }
 
         public static string TeamNotAssignedToStage(System.Guid teamId)
         {
-            return $"Team {teamId} is not assigned to this stage.";
+            return $"El equipo {teamId} no está asignado a esta fase.";
         }
     }
 
     public static class PlayerSanction
     {
-        public const string AppealAlreadyPending = "This sanction already has a pending appeal.";
-        public const string NoPendingAppealToResolve = "There is no pending appeal to resolve for this sanction.";
+        public const string AppealAlreadyPending = "Esta sanción ya tiene una apelación pendiente.";
+        public const string NoPendingAppealToResolve = "No hay ninguna apelación pendiente para resolver en esta sanción.";
     }
 
     public static class Playoff
     {
-        public const string NotEnoughRankedTeams = "Seeding requires at least two ranked teams.";
-        public const string EmptyDestination = "A playoff position range must have a non-empty destination.";
-        public const string NoMappingsConfigured = "This division has no playoff position-range mapping configured.";
+        public const string NotEnoughRankedTeams = "Para sembrar se necesitan al menos dos equipos rankeados.";
+        public const string EmptyDestination = "Un rango de posiciones de playoff debe tener un destino no vacío.";
+        public const string NoMappingsConfigured = "Esta división no tiene ningún mapeo de rango de posiciones a playoff configurado.";
 
         public static string InvalidRange(int from, int to)
         {
-            return $"Invalid playoff position range {from}-{to}: positions must be 1-based and 'from' must be less than or equal to 'to'.";
+            return $"Rango de posiciones de playoff inválido {from}-{to}: las posiciones empiezan en 1 y 'desde' debe ser menor o igual a 'hasta'.";
         }
 
         public static string OverlappingRanges(int firstFrom, int firstTo, int secondFrom, int secondTo)
         {
-            return $"Playoff position ranges {firstFrom}-{firstTo} and {secondFrom}-{secondTo} overlap; each position must map to at most one destination.";
+            return $"Los rangos de posiciones de playoff {firstFrom}-{firstTo} y {secondFrom}-{secondTo} se superponen; cada posición debe mapear a un solo destino.";
         }
 
         public static string CupStageNotFound(string destination)
         {
-            return $"No unseeded first-round elimination stage found for playoff destination '{destination}'.";
+            return $"No se encontró una fase eliminatoria de primera ronda sin sembrar para el destino de playoff '{destination}'.";
         }
 
         public static string InvalidQualifiersPerGroup(int qualifiersPerGroup)
         {
-            return $"QualifiersPerGroup must be at least 1, but was {qualifiersPerGroup}.";
+            return $"QualifiersPerGroup debe ser al menos 1, pero era {qualifiersPerGroup}.";
         }
     }
 

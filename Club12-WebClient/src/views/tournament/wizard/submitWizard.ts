@@ -1,8 +1,12 @@
 import { GUID } from '@/modules/core/types/types';
-import { IAddTournamentRequest, ITournamentResponse } from '@/modules/tournament/type/tournament.d';
-import { AddDivisionRequest, IDivisionResponse } from '@/modules/division/type/division';
-import { IAddStageRequest, IStageResponse, StageType } from '@/modules/stage/type/stage';
+import { ITournamentResponse } from '@/modules/tournament/type/tournament.d';
+import {
+  ICreateFullDivisionRequest,
+  ICreateFullStageRequest,
+  ICreateFullTournamentRequest,
+} from '@/modules/tournament/type/createFullTournament.d';
 import { PlayoffMappingRequest } from '@/modules/division/type/division.d';
+import { StageType } from '@/modules/stage/type/stage';
 import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
 import {
   CrossCupConfig,
@@ -15,36 +19,35 @@ import {
 } from './types';
 
 /**
- * The wizard's persistence dependencies, injected so the orchestration
- * logic below can be unit-tested without mounting React or hitting the
- * network — every wizard-context hook exposes a function matching one of
- * these signatures already.
+ * The wizard's single persistence dependency, injected so the build logic
+ * below can be unit-tested without mounting React or hitting the network.
  *
- * HU-106: the wizard creates STRUCTURE ONLY (tournament + divisions +
- * stages). Team registration, stage assignment, and fixture generation are
- * deliberately absent — teams are registered later (registration phase) and
- * the fixture is generated when the tournament's registration closes
- * (HU-38 / HU-107 / HU-108).
+ * HU-38: the wizard now persists the WHOLE tournament — base fields plus every
+ * division (zone/cross-cup) with its points, cups, playoff mappings and stages
+ * — in ONE atomic backend call (`POST /api/tournaments/full`). The graph is
+ * created in a single transaction, so it is all-or-nothing: no partial
+ * tournament is ever left behind, and there are no per-division/per-stage calls
+ * to sequence or partially fail. The backend also creates the tournament
+ * already `OpenForRegistration`, so no separate open-registration call is
+ * needed.
+ *
+ * HU-106: the wizard still creates STRUCTURE ONLY. Team registration, stage
+ * assignment, and fixture generation are deliberately absent — teams are
+ * registered later (registration phase) and the fixture is generated when the
+ * tournament's registration closes (HU-38 / HU-107 / HU-108).
  */
 export interface WizardServices {
-  addTournament(request: IAddTournamentRequest): Promise<ITournamentResponse | void>;
-  /**
-   * Moves the freshly-created tournament from its initial `Scheduled` status
-   * to `OpenForRegistration`. The backend freezes structural edits unless the
-   * tournament is `OpenForRegistration` (HU-31), so this MUST run before any
-   * division/stage is created — otherwise every `addDivision` is rejected with
-   * 409. Leaves the tournament open for the registration phase (HU-106).
-   */
-  openRegistration(tournamentId: GUID): Promise<boolean | void>;
-  addDivision(request: AddDivisionRequest): Promise<IDivisionResponse | void>;
-  addStage(request: IAddStageRequest): Promise<IStageResponse | void>;
+  createFullTournament(
+    request: ICreateFullTournamentRequest
+  ): Promise<ITournamentResponse | void>;
 }
 
 export interface WizardSubmissionResult {
   success: boolean;
   tournamentId?: GUID;
+  /** The created tournament's public slug, preferred for navigation when present. */
+  slug?: string;
   error?: string;
-  warnings: string[];
 }
 
 const GROUP_STAGE_DURATION_DAYS = 21;
@@ -86,7 +89,7 @@ const deriveCupMappings = (cups: CupConfig[]): PlayoffMappingRequest[] => {
 };
 
 /**
- * Creates each cup's elimination stages (structure only). HU-112: the rounds
+ * Builds each cup's elimination stages (structure only). HU-112: the rounds
  * are DERIVED from how many teams qualify to the cup, so the bracket always
  * fits its qualifiers (2 → Final; 4 → Semis + Final; 8 → Cuartos + Semis +
  * Final; …). Every round uses the cup's single `bestOf`. Team assignment and
@@ -94,14 +97,13 @@ const deriveCupMappings = (cups: CupConfig[]): PlayoffMappingRequest[] => {
  * standings that do not exist yet). `qualifiersOverride` lets the cross cup
  * derive its rounds from the pooled group total (groups × qualifiersPerGroup).
  */
-const createCupStages = async (
-  services: WizardServices,
-  divisionId: GUID,
+const buildCupStages = (
   startDate: Date,
   cups: CupConfig[],
-  warnings: string[],
   qualifiersOverride?: number
-): Promise<void> => {
+): ICreateFullStageRequest[] => {
+  const stages: ICreateFullStageRequest[] = [];
+
   for (const cup of cups) {
     const qualifiers = qualifiersOverride ?? cup.qualifiers;
     let roundStartDate = startDate;
@@ -109,66 +111,38 @@ const createCupStages = async (
     for (const stageType of qualifiersToStageTypes(qualifiers)) {
       const roundEndDate = addDays(roundStartDate, ROUND_DURATION_DAYS);
 
-      const stage = await services.addStage({
+      stages.push({
         name: `${cup.name} - ${roundLabel(stageType)}`,
         stageType,
         isElimination: true,
         startDate: roundStartDate,
         endDate: roundEndDate,
-        divisionId,
         bracketName: cup.name,
         bestOf: getStageBestOf(cup, stageType),
       });
 
-      if (!stage) {
-        warnings.push(`No se pudo crear la ronda "${roundLabel(stageType)}" de "${cup.name}".`);
-      }
-
       roundStartDate = roundEndDate;
     }
   }
+
+  return stages;
 };
 
-const createZoneStructure = async (
-  services: WizardServices,
-  tournamentId: GUID,
-  zoneName: string,
-  hasGroupStage: boolean,
-  roundRobinLegs: number,
-  cups: CupConfig[],
+/**
+ * Builds one regular zone (division) as STRUCTURE ONLY (HU-106): its
+ * per-division scoring (HU-79), derived standings→cup position ranges (HU-45 /
+ * HU-112), an optional group stage, and its playoff cup shells. Returns the
+ * nested division payload for the atomic `POST /api/tournaments/full` call.
+ */
+export const buildZoneDivision = (
+  zone: ZoneConfig,
   startDate: Date,
-  isCrossDivisionCup: boolean,
-  pointsForWin: number,
-  pointsForLoss: number,
-  category: TournamentCategory,
-  warnings: string[]
-): Promise<IDivisionResponse | null> => {
-  const division = await services.addDivision({
-    name: zoneName,
-    tournamentId,
-    isCrossDivisionCup,
-    // Per-division scoring (HU-79). The standings→cup position ranges (HU-45)
-    // are DERIVED from the cups' order and qualifier counts (HU-112); the
-    // backend uses them to seed each cup from the final group-stage table
-    // (HU-81) when the tournament closes.
-    pointsForWin,
-    pointsForLoss,
-    // HU-48: every division MUST carry the tournament's category. The backend
-    // rejects a division whose category differs from its tournament, and its
-    // Division.Category defaults to Masculine — so a Feminine tournament would
-    // have its zones rejected unless we send Feminine explicitly here.
-    category,
-    playoffMappings: deriveCupMappings(cups),
-  });
-
-  if (!division) {
-    warnings.push(`No se pudo crear la zona "${zoneName}".`);
-    return null;
-  }
-
+  category: TournamentCategory
+): ICreateFullDivisionRequest => {
+  const stages: ICreateFullStageRequest[] = [];
   let nextStartDate = startDate;
 
-  if (hasGroupStage) {
+  if (zone.hasGroupStage) {
     const groupEndDate = addDays(startDate, GROUP_STAGE_DURATION_DAYS);
 
     // HU-106: the group stage is created as STRUCTURE ONLY. Teams are not
@@ -176,180 +150,153 @@ const createZoneStructure = async (
     // generates the group-stage fixture later, when the tournament's
     // registration is closed (HU-38 / HU-107 / HU-108), from the teams that
     // registered during the registration phase.
-    const groupStage = await services.addStage({
+    stages.push({
       name: 'Fase de Grupos',
       stageType: StageType.Group,
       isElimination: false,
       startDate,
       endDate: groupEndDate,
-      divisionId: division.id,
-      roundRobinLegs,
+      roundRobinLegs: zone.roundRobinLegs,
     });
-
-    if (!groupStage) {
-      warnings.push(`No se pudo crear la fase de grupos de "${zoneName}".`);
-    }
 
     nextStartDate = groupEndDate;
   }
 
-  await createCupStages(services, division.id, nextStartDate, cups, warnings);
+  stages.push(...buildCupStages(nextStartDate, zone.cups));
 
-  return division;
+  return {
+    name: zone.name.trim(),
+    isCrossDivisionCup: false,
+    // Per-division scoring (HU-79). The standings→cup position ranges (HU-45)
+    // are DERIVED from the cups' order and qualifier counts (HU-112); the
+    // backend uses them to seed each cup from the final group-stage table
+    // (HU-81) when the tournament closes.
+    pointsForWin: zone.pointsForWin,
+    pointsForLoss: zone.pointsForLoss,
+    // HU-48: every division MUST carry the tournament's category. The backend
+    // rejects a division whose category differs from its tournament, and its
+    // Division.Category defaults to Masculine — so a Feminine tournament would
+    // have its zones rejected unless we send Feminine explicitly here.
+    category,
+    playoffMappings: deriveCupMappings(zone.cups),
+    stages,
+  };
 };
 
 /**
- * Materializes the cross-division cup (HU-110) as STRUCTURE ONLY: one
- * division flagged `isCrossDivisionCup` carrying `qualifiersPerGroup`, then
- * ONE group stage per configured group ("Grupo 1"…"Grupo N") — every group
- * shares the group-phase window and its own configured RoundRobinLegs — and
- * finally the bracket/cup stages after the groups. Unlike a regular zone
- * (exactly one group), the cross cup fans out into N parallel groups; the
- * backend later pools the top-`qualifiersPerGroup` of every group, sized
- * automatically when the fixture is generated. Teams are not assigned here.
+ * Builds the cross-division cup (HU-110) as STRUCTURE ONLY: one division
+ * flagged `isCrossDivisionCup` carrying `qualifiersPerGroup`, then ONE group
+ * stage per configured group ("Grupo 1"…"Grupo N") — every group shares the
+ * group-phase window and its own configured RoundRobinLegs — and finally the
+ * bracket/cup stages after the groups. Unlike a regular zone (exactly one
+ * group), the cross cup fans out into N parallel groups; the backend later
+ * pools the top-`qualifiersPerGroup` of every group, sized automatically when
+ * the fixture is generated. Teams are not assigned here.
  */
-const createCrossCupStructure = async (
-  services: WizardServices,
-  tournamentId: GUID,
+export const buildCrossCupDivision = (
   crossCup: CrossCupConfig,
   startDate: Date,
-  category: TournamentCategory,
-  warnings: string[]
-): Promise<void> => {
+  category: TournamentCategory
+): ICreateFullDivisionRequest => {
   const cupName = crossCup.name.trim();
+  const groupEndDate = addDays(startDate, GROUP_STAGE_DURATION_DAYS);
+  const stages: ICreateFullStageRequest[] = [];
 
-  const division = await services.addDivision({
+  // One Group stage per configured group. The backend allows more than one
+  // Group stage in a cross-cup division (HU-110). Each runs in the same window;
+  // the wizard sends no match count — the bracket auto-sizes later.
+  for (let groupNumber = 1; groupNumber <= crossCup.groupCount; groupNumber += 1) {
+    stages.push({
+      name: `Grupo ${groupNumber}`,
+      stageType: StageType.Group,
+      isElimination: false,
+      startDate,
+      endDate: groupEndDate,
+      roundRobinLegs: crossCup.roundRobinLegs,
+    });
+  }
+
+  // HU-112: the cross-cup bracket's rounds are derived from the pooled group
+  // total (groups × qualifiers-per-group), not a per-cup qualifier field.
+  stages.push(
+    ...buildCupStages(
+      groupEndDate,
+      crossCup.cups,
+      crossCup.groupCount * crossCup.qualifiersPerGroup
+    )
+  );
+
+  return {
     name: cupName,
-    tournamentId,
     isCrossDivisionCup: true,
     // HU-110: how many teams advance per group into the pooled bracket.
     qualifiersPerGroup: crossCup.qualifiersPerGroup,
     pointsForWin: crossCup.pointsForWin,
     pointsForLoss: crossCup.pointsForLoss,
     category,
-    // The cross cup pools the top teams of every group into its bracket via
-    // the backend seeder (HU-110) — it is NOT seeded from a single division's
+    // The cross cup pools the top teams of every group into its bracket via the
+    // backend seeder (HU-110) — it is NOT seeded from a single division's
     // standings, so it carries no position-range mappings.
     playoffMappings: [],
-  });
-
-  if (!division) {
-    warnings.push(`No se pudo crear la copa cruzada "${cupName}".`);
-    return;
-  }
-
-  const groupEndDate = addDays(startDate, GROUP_STAGE_DURATION_DAYS);
-
-  // One Group stage per configured group. The backend now allows more than
-  // one Group stage in a cross-cup division (HU-110). Each runs in the same
-  // window; the wizard sends no match count — the bracket auto-sizes later.
-  for (let groupNumber = 1; groupNumber <= crossCup.groupCount; groupNumber += 1) {
-    const groupStage = await services.addStage({
-      name: `Grupo ${groupNumber}`,
-      stageType: StageType.Group,
-      isElimination: false,
-      startDate,
-      endDate: groupEndDate,
-      divisionId: division.id,
-      roundRobinLegs: crossCup.roundRobinLegs,
-    });
-
-    if (!groupStage) {
-      warnings.push(`No se pudo crear el grupo ${groupNumber} de "${cupName}".`);
-    }
-  }
-
-  // HU-112: the cross-cup bracket's rounds are derived from the pooled group
-  // total (groups × qualifiers-per-group), not a per-cup qualifier field.
-  await createCupStages(
-    services,
-    division.id,
-    groupEndDate,
-    crossCup.cups,
-    warnings,
-    crossCup.groupCount * crossCup.qualifiersPerGroup
-  );
+    stages,
+  };
 };
 
 /**
- * Sequences every API call needed to materialize a wizard's local state as
- * STRUCTURE ONLY (HU-106): the tournament, each zone (division + optional
- * group stage + playoff cup shells), and the optional cross-division cup.
- * No teams are registered and no fixture is generated — the tournament is
- * left in OpenForRegistration for the later registration phase. Nothing is
- * transactional — if a step fails, prior steps are NOT rolled back (that
- * state is real and left for the admin to fix from the normal panel), and
- * the failure is surfaced as a warning rather than aborting the whole run,
- * except for the tournament itself: without it nothing else can proceed.
+ * HU-38: builds ONE {@link ICreateFullTournamentRequest} from the wizard's
+ * local state and persists the WHOLE tournament — base fields plus every zone
+ * and the optional cross-division cup, each with its points, cups, playoff
+ * mappings and stages — in a single atomic backend call. Because the create is
+ * transactional, it is all-or-nothing: a single failure fails the whole thing
+ * and leaves NO partial tournament behind (so there are no per-step "warnings"
+ * to accumulate anymore).
+ *
+ * HU-106: still STRUCTURE ONLY — no teams are registered and no fixture is
+ * generated. The backend creates the tournament already `OpenForRegistration`
+ * for the later registration phase.
  */
 export const submitWizard = async (
   state: WizardState,
   services: WizardServices
 ): Promise<WizardSubmissionResult> => {
-  const warnings: string[] = [];
+  const startDate = new Date(state.tournament.startDate);
+  const category = state.tournament.category;
 
-  const tournament = await services.addTournament({
+  const divisions: ICreateFullDivisionRequest[] = state.zones.map(zone =>
+    buildZoneDivision(zone, startDate, category)
+  );
+
+  if (state.crossCup.enabled) {
+    divisions.push(buildCrossCupDivision(state.crossCup, startDate, category));
+  }
+
+  const payload: ICreateFullTournamentRequest = {
     name: state.tournament.name.trim(),
     description: state.tournament.description.trim(),
-    startDate: new Date(state.tournament.startDate),
+    startDate,
     teamRegistrationDeadline: new Date(state.tournament.teamRegistrationDeadline),
     // HU-48: the category is set at creation and immutable afterwards.
-    category: state.tournament.category,
-    // Optional grouping into a season ("Temporada"). Only sent when chosen so
-    // an unset select leaves the tournament without a season.
+    category,
+    // The season ("Temporada") the tournament belongs to. The wizard always
+    // carries the RESOLVED season GUID in state.tournament.seasonId — seeded
+    // from the season hub launch (preset, locked select) or chosen manually in
+    // the Temporada select — and the /full endpoint persists it (HU-38), so the
+    // created tournament is correctly grouped under its season.
     ...(state.tournament.seasonId
       ? { seasonId: state.tournament.seasonId as GUID }
       : {}),
-  });
+    divisions,
+  };
+
+  const tournament = await services.createFullTournament(payload);
 
   if (!tournament) {
-    return { success: false, error: 'No se pudo crear el torneo.', warnings };
+    return { success: false, error: 'No se pudo crear el torneo.' };
   }
 
-  // Open registration BEFORE building the structure: the backend rejects any
-  // division/stage creation unless the tournament is OpenForRegistration
-  // (HU-31), and a new tournament starts as Scheduled. Without this, every
-  // zone fails with 409. If it fails the structure can't be built, so abort.
-  const opened = await services.openRegistration(tournament.id);
-  if (!opened) {
-    return {
-      success: false,
-      tournamentId: tournament.id,
-      error:
-        'El torneo se creó pero no se pudo abrir la inscripción, así que no se pudieron crear las zonas. Abrí la inscripción desde el panel y agregá las divisiones.',
-      warnings,
-    };
-  }
-
-  const startDate = new Date(state.tournament.startDate);
-
-  for (const zone of state.zones as ZoneConfig[]) {
-    await createZoneStructure(
-      services,
-      tournament.id,
-      zone.name.trim(),
-      zone.hasGroupStage,
-      zone.roundRobinLegs,
-      zone.cups,
-      startDate,
-      false,
-      zone.pointsForWin,
-      zone.pointsForLoss,
-      state.tournament.category,
-      warnings
-    );
-  }
-
-  if (state.crossCup.enabled) {
-    await createCrossCupStructure(
-      services,
-      tournament.id,
-      state.crossCup,
-      startDate,
-      state.tournament.category,
-      warnings
-    );
-  }
-
-  return { success: true, tournamentId: tournament.id, warnings };
+  return {
+    success: true,
+    tournamentId: tournament.id,
+    slug: tournament.slug,
+  };
 };

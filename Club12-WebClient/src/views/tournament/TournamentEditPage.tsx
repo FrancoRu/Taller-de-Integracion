@@ -328,7 +328,7 @@ const TournamentEditPage: React.FC = () => {
               fullWidth
               name="seasonId"
               size="small"
-              label="Temporada (opcional)"
+              label="Temporada"
               value={form.seasonId}
               onChange={handleFormChange}
               helperText="Agrupá el torneo dentro de una temporada. Podés dejarlo vacío."

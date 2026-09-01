@@ -17,4 +17,10 @@ public static class ValidationPatterns
 
     /// <summary>Human-facing message for a phone number that fails the pattern.</summary>
     public const string PhoneNumberError = "Invalid phone number format.";
+
+    /// <summary>A player's DNI/document number: digits only, 6 to 15 of them.</summary>
+    public const string DocumentNumber = @"^\d{6,15}$";
+
+    /// <summary>Human-facing message for a document number that fails the pattern.</summary>
+    public const string DocumentNumberError = "El documento debe contener solo números.";
 }

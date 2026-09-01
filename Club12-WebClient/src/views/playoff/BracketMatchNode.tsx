@@ -159,8 +159,18 @@ export default function BracketMatchNode({ match, series, legs }: BracketMatchNo
         <Typography
           variant="caption"
           title={summaryLine}
-          noWrap
-          sx={{ color: 'text.secondary', lineHeight: 1.2 }}
+          sx={{
+            color: 'text.secondary',
+            lineHeight: 1.2,
+            // Every finished game must stay visible (a decided bo7 can have
+            // up to 7) — wrap onto 2 lines instead of truncating to one, and
+            // only clamp/ellipsize past that as a last resort. `title` still
+            // carries the full text for the rare case it doesn't fit.
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}
         >
           {summaryLine}
         </Typography>

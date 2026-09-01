@@ -155,8 +155,44 @@ public class PlayerService(
 
     public async Task UpdatePlayerAsync(Player playerEntity, Guid tournamentId)
     {
+        // Validate the roster move BEFORE persisting the Player row: this
+        // repository commits immediately (no shared transaction), so if the
+        // Player.TeamId write landed first and the registration move then
+        // threw (e.g. destination roster full), Player.TeamId would point at
+        // a team the player was never actually validly registered to for
+        // this season — a silent inconsistency between the "current team"
+        // pointer and the season-scoped source of truth.
+        await ValidateRegistrationMoveAsync(playerEntity, tournamentId);
         await _playerRepository.UpdateAsync(playerEntity);
         await EnsureRegistrationAsync(playerEntity, tournamentId);
+    }
+
+    /// <summary>
+    /// Mirrors RegisterPlayerToTeamAsync's roster-size cap for a mid-season
+    /// team change via UpdatePlayerAsync, so moving a player can't silently
+    /// push the destination team past the configured limit the way a
+    /// brand-new registration would be blocked from doing.
+    /// </summary>
+    private async Task ValidateRegistrationMoveAsync(Player playerEntity, Guid tournamentId)
+    {
+        PlayerTeamRegistration? registration = (await _registrationRepository.FindAsync(
+            r => r.PlayerId == playerEntity.Id && r.TournamentId == tournamentId)).FirstOrDefault();
+
+        if (registration is null || registration.TeamId == playerEntity.TeamId)
+        {
+            return;
+        }
+
+        int destinationRosterSize = await _registrationRepository.CountAsync(
+            candidate => candidate.TeamId == playerEntity.TeamId
+                && candidate.TournamentId == tournamentId
+                && candidate.PlayerId != playerEntity.Id);
+
+        if (destinationRosterSize >= _maxPlayersPerTeam)
+        {
+            throw new InvalidOperationException(
+                ErrorMessages.Roster.RosterFull(playerEntity.TeamId, _maxPlayersPerTeam));
+        }
     }
 
     public async Task<PaginatedResponse<Player>> GetAllPlayersAsync(PlayerFilterRequestBase filter)
@@ -206,7 +242,17 @@ public class PlayerService(
 
         if (registration.TeamId != playerEntity.TeamId)
         {
+            // Capacity was already validated by ValidateRegistrationMoveAsync
+            // before the Player row was persisted.
             registration.TeamId = playerEntity.TeamId;
+
+            // The dorsal is unique within (TeamId, TournamentId, JerseyNumber) —
+            // carrying it over to the new team could collide with a player
+            // already wearing it there and throw a raw DB constraint violation
+            // instead of a friendly error. Reset it; the admin re-assigns a
+            // dorsal on the new team explicitly after the move.
+            registration.JerseyNumber = null;
+
             registration.DateUpdated = DateTime.UtcNow;
             registration.UpdatedBy = playerEntity.UpdatedBy ?? playerEntity.CreatedBy;
             await _registrationRepository.UpdateAsync(registration);

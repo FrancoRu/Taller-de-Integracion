@@ -21,15 +21,6 @@ import {
 import { GUID } from '@/modules/core/types/types';
 import { useMatch } from '@/modules/match/hook/match.hook';
 import { useVenue } from '@/modules/venue/hook/venue.hook';
-
-/** Formats an ISO date into the `YYYY-MM-DDTHH:mm` a datetime-local input needs. */
-const toDatetimeLocalValue = (iso?: string | null): string => {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-};
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import { IPlayerSanctionResponse } from '@/modules/playerSanction/type/playerSanction.d';
 import {
@@ -42,6 +33,7 @@ import {
 import {
   formatMatchDateToString,
   formatLongDateTimeAr,
+  toDatetimeLocalValue,
 } from '@/modules/core/utils/formatDate';
 import {
   confirmAction,
@@ -284,10 +276,10 @@ const MatchPage: React.FC = () => {
         </Typography>
         <Button
           variant="text"
-          onClick={() => navigate(APP_ROUTES.panelMatches)}
+          onClick={() => navigate(-1)}
           sx={{ mt: 2, px: 0 }}
         >
-          Volver al listado
+          Volver
         </Button>
       </PageShell>
     );
@@ -344,7 +336,7 @@ const MatchPage: React.FC = () => {
         <Button
           variant="contained"
           color="primary"
-          onClick={() => navigate(APP_ROUTES.panelMatches)}
+          onClick={() => navigate(-1)}
         >
           Volver
         </Button>

@@ -88,6 +88,13 @@ public class TeamController(
             return this.NotFoundProblem(nameof(Team), id);
         }
 
+        // A team's identity (name and three-letter code) is frozen while it
+        // participates in an Ongoing tournament: reject a Name/ThreeLetterCode
+        // change (mapped to 409) BEFORE the request is mapped over the entity,
+        // so the original identity is still available to compare. Colors, jersey
+        // style and logo stay editable.
+        await teamService.EnsureTeamIdentityEditableAsync(existingTeam, teamRequest.Name, teamRequest.ThreeLetterCode);
+
         mapper.Map(teamRequest, existingTeam);
 
         await teamService.UpdateTeamAsync(existingTeam);

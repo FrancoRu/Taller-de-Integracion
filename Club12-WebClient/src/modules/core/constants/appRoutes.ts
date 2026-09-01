@@ -48,12 +48,10 @@ export const APP_ROUTES = {
     pattern: '/panel/jugadores/:playerId',
     build: (playerId: string) => `/panel/jugadores/${playerId}`,
   },
-  panelTeam: '/panel/equipo',
   panelTeamDetail: {
     pattern: '/panel/equipos/:teamId',
     build: (teamId: string) => `/panel/equipos/${teamId}`,
   },
-  panelTournament: '/panel/torneo',
   panelTournamentDetail: {
     pattern: '/panel/torneos/:tournamentId',
     build: (tournamentId: string) => `/panel/torneos/${tournamentId}`,
@@ -101,14 +99,6 @@ export const APP_ROUTES = {
     pattern: '/panel/divisiones/:divisionId',
     build: (divisionId: string) => `/panel/divisiones/${divisionId}`,
   },
-  panelStages: '/panel/fases',
-  panelStageCreate: '/panel/fases/crear',
-  panelStage: {
-    pattern: '/panel/fases/:stageId',
-    build: (stageId: string) => `/panel/fases/${stageId}`,
-  },
-  panelMatches: '/panel/partidos',
-  panelMatchCreate: '/panel/partidos/crear',
   panelMatch: {
     pattern: '/panel/partidos/:matchId',
     build: (matchId: string) => `/panel/partidos/${matchId}`,

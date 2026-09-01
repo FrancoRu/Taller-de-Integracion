@@ -23,7 +23,14 @@ import {
   notifyWarning,
 } from '@/modules/core/utils/confirmDialog';
 import { GUID } from '@/modules/core/types/types';
-import { isValidPhone, VALIDATION_MESSAGES } from '@/modules/core/utils/validators';
+import {
+  formatArgentinePhone,
+  formatDocumentNumber,
+  isAtLeastMinimumPlayerAge,
+  isValidDocumentNumber,
+  isValidPhone,
+  VALIDATION_MESSAGES,
+} from '@/modules/core/utils/validators';
 import { TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
 import { TABLE_PAGE_SIZE_OPTIONS } from '@/modules/core/constants/pagination';
 import { usePlayer } from '@/modules/player/hook/player.hook';
@@ -39,6 +46,7 @@ import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PageShell from '@/views/core/components/PageShell';
+import FieldInfoTooltip from '@/views/core/components/FieldInfoTooltip';
 import FilterBar from '@/views/core/components/FilterBar';
 import {
   DeleteIcon,
@@ -75,6 +83,10 @@ type PlayerFormState = {
   phoneNumber: string;
   socialSecurity: string;
   teamId: GUID | '';
+  /** Dorsal for the current team/tournament roster (HU-54), editable only
+   * when `rosterEnabled` — a dorsal is season-scoped, so it's meaningless
+   * outside a team+tournament context. */
+  jerseyNumber: string;
 };
 
 const EMPTY_FILTERS: PlayersSearchFilters = {};
@@ -88,6 +100,25 @@ const INITIAL_PLAYER_FORM: PlayerFormState = {
   phoneNumber: '',
   socialSecurity: '',
   teamId: '',
+  jerseyNumber: '',
+};
+
+/** Shared 0-99 dorsal parsing/validation for both the standalone Dorsal
+ * dialog and the dorsal field inside "Editar jugador". */
+const parseDorsalValue = (
+  value: string
+): { success: true; jerseyNumber: number | null } | { success: false } => {
+  const trimmed = value.trim();
+  if (trimmed === '') {
+    return { success: true, jerseyNumber: null };
+  }
+
+  const parsed = Number(trimmed);
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 99) {
+    return { success: false };
+  }
+
+  return { success: true, jerseyNumber: parsed };
 };
 
 interface PlayersPageProps {
@@ -123,6 +154,18 @@ const getDateValue = (value?: Date) => {
   }
 
   return dateValue.toISOString().slice(0, 10);
+};
+
+/** Latest birth date an `<input type="date">` should accept: today minus the
+ * minimum player age, so the picker itself steers users away from an
+ * underage date instead of only rejecting it on submit. */
+const getMaxBirthDate = () => {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - 15);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 const PlayersPage: React.FC<PlayersPageProps> = ({
@@ -291,6 +334,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   const handleEdit = useCallback(
     (row: IPlayerResponse) => {
       setEditingPlayer(row);
+      const dorsal = currentDorsalFor(row);
       setPlayerForm({
         firstName: row.firstName,
         secondName: row.secondName ?? '',
@@ -300,10 +344,12 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         phoneNumber: row.phoneNumber ?? '',
         socialSecurity: row.socialSecurity ?? '',
         teamId: row.teamId,
+        jerseyNumber:
+          dorsal === null || dorsal === undefined ? '' : String(dorsal),
       });
       void loadTeamsForDropdown();
     },
-    [loadTeamsForDropdown]
+    [currentDorsalFor, loadTeamsForDropdown]
   );
 
   const handleDelete = useCallback(
@@ -398,13 +444,17 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         minWidth: 140,
         align: 'center',
         headerAlign: 'center',
+        renderCell: params => formatDocumentNumber(params.row.documentNumber),
       },
       {
         field: 'phoneNumber',
         headerName: 'Teléfono',
         flex: 0.9,
         minWidth: 140,
-        renderCell: params => params.row.phoneNumber || '—',
+        renderCell: params =>
+          params.row.phoneNumber
+            ? formatArgentinePhone(params.row.phoneNumber)
+            : '—',
       },
       {
         field: 'socialSecurity',
@@ -454,11 +504,21 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       });
     }
 
+    // The actions column's width must grow with how many icon buttons are
+    // actually visible (Ver/Editar/Eliminar always, plus Ficha médica/Dorsal
+    // in roster context) — a fixed width clips the later ones instead of
+    // rendering them, so they're invisible and unclickable rather than
+    // absent (HU: "no puedo editar o borrar jugadores desde el plantel").
+    const visibleActionCount = playerActions.filter(
+      action => action.hidden !== true
+    ).length;
+
     return [
       ...baseColumns,
       buildActionsColumn(playerActions, {
         align: 'center',
         headerAlign: 'center',
+        minWidth: 40 * visibleActionCount + 40,
       }),
     ];
   }, [
@@ -514,6 +574,22 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       return false;
     }
 
+    if (!isValidDocumentNumber(playerForm.documentNumber)) {
+      void notifyWarning({
+        title: 'Documento inválido',
+        text: `${VALIDATION_MESSAGES.documentNumber}.`,
+      });
+      return false;
+    }
+
+    if (!isAtLeastMinimumPlayerAge(playerForm.birthDate)) {
+      void notifyWarning({
+        title: 'Fecha de nacimiento inválida',
+        text: `${VALIDATION_MESSAGES.minimumPlayerAge}.`,
+      });
+      return false;
+    }
+
     if (!resolvedTeamId) {
       void notifyWarning({
         title: 'Equipo requerido',
@@ -527,6 +603,17 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
 
   const phoneError =
     playerForm.phoneNumber.length > 0 && !isValidPhone(playerForm.phoneNumber);
+  const documentNumberError =
+    playerForm.documentNumber.length > 0 &&
+    !isValidDocumentNumber(playerForm.documentNumber);
+  const birthDateError =
+    playerForm.birthDate.length > 0 &&
+    !isAtLeastMinimumPlayerAge(playerForm.birthDate);
+  const maxBirthDate = useMemo(getMaxBirthDate, []);
+  // The dorsal field only ever applies to the roster context's own team —
+  // reassigning the player to a different team resets their dorsal on the
+  // backend, so editing it here alongside a team change would be misleading.
+  const isEditingSameTeamContext = rosterEnabled && playerForm.teamId === teamId;
 
   const handleCreatePlayer = useCallback(() => {
     if (onCreate) {
@@ -585,6 +672,24 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       return;
     }
 
+    // If the admin also reassigned the player to a different team in this
+    // same submit, that move already resets the dorsal on the backend (a
+    // carried-over number could collide with the new team's roster), and
+    // syncing it here against the OLD team would either misapply it or be
+    // rejected outright (a player can't be re-registered to a team they've
+    // just left).
+    const parsedDorsal = isEditingSameTeamContext
+      ? parseDorsalValue(playerForm.jerseyNumber)
+      : ({ success: true, jerseyNumber: null } as const);
+
+    if (!parsedDorsal.success) {
+      void notifyWarning({
+        title: 'Dorsal inválido',
+        text: 'El dorsal debe ser un número entero entre 0 y 99.',
+      });
+      return;
+    }
+
     setSubmitting(true);
     const payload: IPutPlayerRequest = {
       firstName: playerForm.firstName.trim(),
@@ -600,12 +705,32 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     };
 
     const updatedPlayer = await putPlayerById(editingPlayer.id, payload);
-    setSubmitting(false);
 
     if (!updatedPlayer) {
+      setSubmitting(false);
       return;
     }
 
+    if (isEditingSameTeamContext && teamId && tournamentId) {
+      const dorsalResult = await registerPlayerToTeam(editingPlayer.id, {
+        teamId,
+        tournamentId,
+        jerseyNumber: parsedDorsal.jerseyNumber,
+      });
+
+      if (!dorsalResult.success) {
+        setSubmitting(false);
+        await notifyError({
+          title: 'No se pudo asignar el dorsal',
+          text: dorsalResult.errorMessage,
+        });
+        return;
+      }
+
+      onMedicalChange?.();
+    }
+
+    setSubmitting(false);
     setEditingPlayer(null);
     resetPlayerForm();
     await fetchPlayers(debouncedFilters, paginationModel);
@@ -620,20 +745,15 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       return;
     }
 
-    const trimmed = dorsalValue.trim();
-    let jerseyNumber: number | null = null;
-
-    if (trimmed !== '') {
-      const parsed = Number(trimmed);
-      if (!Number.isInteger(parsed) || parsed <= 0) {
-        void notifyWarning({
-          title: 'Dorsal inválido',
-          text: 'El dorsal debe ser un número entero positivo.',
-        });
-        return;
-      }
-      jerseyNumber = parsed;
+    const parsedDorsal = parseDorsalValue(dorsalValue);
+    if (!parsedDorsal.success) {
+      void notifyWarning({
+        title: 'Dorsal inválido',
+        text: 'El dorsal debe ser un número entero entre 0 y 99.',
+      });
+      return;
     }
+    const jerseyNumber = parsedDorsal.jerseyNumber;
 
     setSubmitting(true);
     const result = await registerPlayerToTeam(dorsalPlayer.id, {
@@ -776,12 +896,19 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               fullWidth
             />
             <TextField
-              label="Segundo nombre (opcional)"
+              label="Segundo nombre"
               value={playerForm.secondName}
               onChange={e =>
                 setPlayerForm(prev => ({ ...prev, secondName: e.target.value }))
               }
               fullWidth
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <FieldInfoTooltip title="Opcional, por si el jugador tiene un segundo nombre." />
+                  ),
+                },
+              }}
             />
             <TextField
               label="Apellido"
@@ -798,11 +925,15 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               onChange={e =>
                 setPlayerForm(prev => ({
                   ...prev,
-                  documentNumber: e.target.value,
+                  documentNumber: e.target.value.replace(/\D/g, ''),
                 }))
               }
               required
               fullWidth
+              error={documentNumberError}
+              helperText={
+                documentNumberError ? VALIDATION_MESSAGES.documentNumber : undefined
+              }
             />
             <TextField
               label="Fecha de nacimiento"
@@ -812,8 +943,13 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
                 setPlayerForm(prev => ({ ...prev, birthDate: e.target.value }))
               }
               fullWidth
+              error={birthDateError}
+              helperText={
+                birthDateError ? VALIDATION_MESSAGES.minimumPlayerAge : undefined
+              }
               slotProps={{
-                inputLabel: { shrink: true }
+                inputLabel: { shrink: true },
+                htmlInput: { max: maxBirthDate },
               }}
             />
             <TextField
@@ -872,7 +1008,9 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
             }}
             onConfirm={() => void handleCreateSubmit()}
             confirmLabel="Crear"
-            disabled={submitting || phoneError}
+            disabled={
+              submitting || phoneError || documentNumberError || birthDateError
+            }
           />
         </DialogActions>
       </Dialog>
@@ -896,12 +1034,19 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               fullWidth
             />
             <TextField
-              label="Segundo nombre (opcional)"
+              label="Segundo nombre"
               value={playerForm.secondName}
               onChange={e =>
                 setPlayerForm(prev => ({ ...prev, secondName: e.target.value }))
               }
               fullWidth
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <FieldInfoTooltip title="Opcional, por si el jugador tiene un segundo nombre." />
+                  ),
+                },
+              }}
             />
             <TextField
               label="Apellido"
@@ -918,11 +1063,15 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               onChange={e =>
                 setPlayerForm(prev => ({
                   ...prev,
-                  documentNumber: e.target.value,
+                  documentNumber: e.target.value.replace(/\D/g, ''),
                 }))
               }
               required
               fullWidth
+              error={documentNumberError}
+              helperText={
+                documentNumberError ? VALIDATION_MESSAGES.documentNumber : undefined
+              }
             />
             <TextField
               label="Fecha de nacimiento"
@@ -932,8 +1081,13 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
                 setPlayerForm(prev => ({ ...prev, birthDate: e.target.value }))
               }
               fullWidth
+              error={birthDateError}
+              helperText={
+                birthDateError ? VALIDATION_MESSAGES.minimumPlayerAge : undefined
+              }
               slotProps={{
-                inputLabel: { shrink: true }
+                inputLabel: { shrink: true },
+                htmlInput: { max: maxBirthDate },
               }}
             />
             <TextField
@@ -960,6 +1114,27 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               }
               fullWidth
             />
+            {rosterEnabled && (
+              <TextField
+                label="Dorsal"
+                type="number"
+                value={isEditingSameTeamContext ? playerForm.jerseyNumber : ''}
+                onChange={e =>
+                  setPlayerForm(prev => ({
+                    ...prev,
+                    jerseyNumber: e.target.value,
+                  }))
+                }
+                fullWidth
+                disabled={!isEditingSameTeamContext}
+                helperText={
+                  isEditingSameTeamContext
+                    ? 'Único por equipo y temporada. Dejar vacío para quitarlo.'
+                    : 'Se reinicia al cambiar de equipo: asignalo desde la acción Dorsal después de guardar.'
+                }
+                slotProps={{ htmlInput: { min: 0, max: 99, step: 1 } }}
+              />
+            )}
             <FormControl fullWidth required>
               <InputLabel id="edit-player-team-label">Equipo</InputLabel>
               <Select
@@ -990,7 +1165,9 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
             }}
             onConfirm={() => void handleEditSubmit()}
             confirmLabel="Guardar"
-            disabled={submitting || phoneError}
+            disabled={
+              submitting || phoneError || documentNumberError || birthDateError
+            }
           />
         </DialogActions>
       </Dialog>
@@ -1016,7 +1193,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               onChange={e => setDorsalValue(e.target.value)}
               fullWidth
               helperText="Único por equipo y temporada. Dejar vacío para quitarlo."
-              slotProps={{ htmlInput: { min: 1, step: 1 } }}
+              slotProps={{ htmlInput: { min: 0, max: 99, step: 1 } }}
             />
           </Stack>
         </DialogContent>

@@ -61,6 +61,18 @@ describe('completabilityIssueMessage', () => {
     );
   });
 
+  it('describes a team with too few registered players', () => {
+    const issue: ICompletabilityIssue = {
+      code: 'TeamTooFewPlayers',
+      teamName: 'Independiente',
+      playerCount: 3,
+    };
+
+    expect(completabilityIssueMessage(issue)).toBe(
+      'Independiente tiene 3 jugador(es) (mínimo 5).'
+    );
+  });
+
   it('falls back to a generic message for an unknown code', () => {
     const issue: ICompletabilityIssue = { code: 'SomethingElse' };
 

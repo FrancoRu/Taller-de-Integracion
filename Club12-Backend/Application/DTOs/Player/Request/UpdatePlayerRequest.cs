@@ -32,11 +32,13 @@ public class UpdatePlayerRequest
     /// The document number of the player.
     /// </summary>
     [MaxLength(PlayerFieldLengths.DocumentNumberMaxLength, ErrorMessage = "The DocumentNumber field must not exceed 15 characters.")]
+    [RegularExpression(ValidationPatterns.DocumentNumber, ErrorMessage = ValidationPatterns.DocumentNumberError)]
     public string? DocumentNumber { get; set; }
 
     /// <summary>
-    /// The birthdate of the player.
+    /// The birthdate of the player. Must be at least 15 years ago.
     /// </summary>
+    [MinimumAge(15)]
     public DateTime? BirthDate { get; set; }
 
     /// <summary>

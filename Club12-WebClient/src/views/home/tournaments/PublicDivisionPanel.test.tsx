@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GUID } from '@/modules/core/types/types';
@@ -7,7 +7,13 @@ import {
   IDivisionResponse,
   Position,
 } from '@/modules/division/type/division.d';
+import { IStageResponse, StageType } from '@/modules/stage/type/stage';
+import { IMatchResponse } from '@/modules/match/type/match.d';
+import { MatchType } from '@/modules/core/enum/match/matchType';
 import PublicDivisionPanel from '@/views/home/tournaments/PublicDivisionPanel';
+
+const getStagesByFilters = vi.fn().mockResolvedValue({ data: { items: [] } });
+const getMatchByFilter = vi.fn().mockResolvedValue({ data: { items: [] } });
 
 // The POSICIONES tab renders synchronously from the division prop, but child
 // components (PrintableResultsSheet) and the panel's other tabs lazily hit
@@ -18,10 +24,10 @@ vi.mock('@/modules/scorer/service/scorer.service', () => ({
   },
 }));
 vi.mock('@/modules/stage/service/stage.service', () => ({
-  stageService: { getStagesByFilters: vi.fn().mockResolvedValue({ data: { items: [] } }) },
+  stageService: { getStagesByFilters: (...args: unknown[]) => getStagesByFilters(...args) },
 }));
 vi.mock('@/modules/match/service/match.service', () => ({
-  matchService: { getMatchByFilter: vi.fn().mockResolvedValue({ data: { items: [] } }) },
+  matchService: { getMatchByFilter: (...args: unknown[]) => getMatchByFilter(...args) },
 }));
 vi.mock('@/modules/matchSeries/service/matchSeries.service', () => ({
   matchSeriesService: {
@@ -122,5 +128,99 @@ describe('PublicDivisionPanel — POSICIONES (HU-110)', () => {
     // Single-group zones keep the single-table layout: no per-group subheader.
     expect(screen.queryByRole('heading', { name: 'Grupo 1' })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Fase de Grupos' })).not.toBeInTheDocument();
+  });
+});
+
+describe('PublicDivisionPanel — Partidos vs Playoff split', () => {
+  const groupStage: IStageResponse = {
+    id: guid('stage-group'),
+    name: 'Zona A - Fase de Grupos',
+    slug: 'zona-a-fase-de-grupos',
+    stageType: StageType.Group,
+    isActive: true,
+    isElimination: false,
+    startDate: '2026-01-01T00:00:00Z',
+    endDate: '2026-02-01T00:00:00Z',
+    divisionId: guid('division-1'),
+    order: 0,
+    bestOf: 1,
+    roundRobinLegs: 1,
+  };
+
+  const koStage: IStageResponse = {
+    id: guid('stage-final'),
+    name: 'Zona A - Final',
+    slug: 'zona-a-final',
+    stageType: StageType.Final,
+    isActive: true,
+    isElimination: true,
+    startDate: '2026-02-01T00:00:00Z',
+    endDate: '2026-02-08T00:00:00Z',
+    divisionId: guid('division-1'),
+    order: 1,
+    bestOf: 1,
+    roundRobinLegs: 1,
+  };
+
+  const buildMatch = (id: string, stageId: GUID, opponentName: string): IMatchResponse => ({
+    id: guid(id),
+    matchDate: '2026-01-15T20:00:00Z',
+    matchType: MatchType.Regular,
+    slug: id,
+    homeTeam: {
+      id: guid('team-home'),
+      name: 'Equipo Local',
+      logoUrl: '',
+      score: 0,
+      players: [],
+      scorers: [],
+    },
+    visitorTeam: {
+      id: guid('team-away'),
+      name: opponentName,
+      logoUrl: '',
+      score: 0,
+      players: [],
+      scorers: [],
+    },
+    isFinished: false,
+    winningTeamId: null,
+    winningTeamName: null,
+    venue: null,
+    stageId,
+  });
+
+  beforeEach(() => {
+    getStagesByFilters.mockResolvedValue({ data: { items: [groupStage, koStage] } });
+    getMatchByFilter.mockResolvedValue({
+      data: {
+        items: [
+          buildMatch('match-group', groupStage.id, 'Rival de grupos'),
+          buildMatch('match-final', koStage.id, 'Rival de la final'),
+        ],
+      },
+    });
+  });
+
+  it('shows the group-stage match under Partidos but not the playoff match', async () => {
+    render(
+      <MemoryRouter initialEntries={['/?view=partidos']}>
+        <PublicDivisionPanel division={division({ name: 'Zona A' })} teams={[]} />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(screen.getByText('Rival de grupos')).toBeInTheDocument());
+    expect(screen.queryByText('Rival de la final')).not.toBeInTheDocument();
+  });
+
+  it('renames the bracket tab to "Playoff"', () => {
+    render(
+      <MemoryRouter>
+        <PublicDivisionPanel division={division({ name: 'Zona A' })} teams={[]} />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole('tab', { name: 'Playoff' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Llaves' })).not.toBeInTheDocument();
   });
 });

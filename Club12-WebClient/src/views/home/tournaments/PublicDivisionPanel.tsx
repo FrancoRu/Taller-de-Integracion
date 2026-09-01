@@ -15,6 +15,7 @@ import { TableSkeleton, ListSkeleton } from '@/views/core/components/skeletons';
 import { GUID } from '@/modules/core/types/types';
 import { TAB_CONTENT_MIN_HEIGHT } from '@/modules/core/constants/constants';
 import { IDivisionResponse } from '@/modules/division/type/division';
+import { buildCrossCupGroupQualificationRange } from '@/modules/division/utils/qualificationRange';
 import { ITeamResponse } from '@/modules/team/type/team.d';
 import PublicTeamGrid from '@/views/home/tournaments/PublicTeamGrid';
 import SectionHeading from '@/views/core/components/SectionHeading';
@@ -25,11 +26,11 @@ import { stageService } from '@/modules/stage/service/stage.service';
 import { matchService } from '@/modules/match/service/match.service';
 import { matchSeriesService } from '@/modules/matchSeries/service/matchSeries.service';
 import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
-import { IStageResponse, StageType } from '@/modules/stage/type/stage';
+import { IStageResponse } from '@/modules/stage/type/stage';
 import { IMatchResponse } from '@/modules/match/type/match.d';
+import { buildDivisionFixtureSections } from '@/modules/match/utils/divisionFixtureSections';
 import { buildBrackets } from '@/modules/playoff/buildBracket';
 import { BracketGroup } from '@/modules/playoff/type/bracket.d';
-import { stageLabel } from '@/modules/stage/utils/stageLabel';
 import DivisionStandings from '@/views/division/divisionStandings';
 import MatchFixtureList from '@/views/home/matches/MatchFixtureList';
 import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
@@ -37,11 +38,10 @@ import Podium from '@/views/champion/Podium';
 import { IPodium } from '@/modules/champion/type/champion.d';
 
 const FETCH_PAGE_SIZE = 100;
-const STAGE_NAME_DIVISION_SEPARATOR = ' - ';
 const DEFAULT_SUB_TAB: DivisionSubTab = 'posiciones';
 const VIEW_QUERY_PARAM = 'view';
 
-type DivisionSubTab = 'equipos' | 'posiciones' | 'goleadores' | 'partidos' | 'llaves';
+type DivisionSubTab = 'equipos' | 'posiciones' | 'goleadores' | 'partidos' | 'playoff';
 
 interface PublicDivisionPanelProps {
   division: IDivisionResponse;
@@ -54,20 +54,7 @@ interface PublicDivisionPanelProps {
   podium?: IPodium | null;
 }
 
-/**
- * Stage names follow a "{Division} - {Specific}" convention (e.g.
- * "Copa Club12 - ZONA 3"). We're already inside that division's tab, so
- * strip the redundant prefix and show the specific part — this is what
- * distinguishes stages sharing the same type (e.g. a cup division with
- * several parallel group stages, all "Group" type with no bracketName,
- * which stageLabel() alone can't tell apart).
- */
-const stageSectionLabel = (stage: IStageResponse, divisionName: string): string => {
-  const prefix = `${divisionName}${STAGE_NAME_DIVISION_SEPARATOR}`;
-  return stage.name.startsWith(prefix) ? stage.name.slice(prefix.length) : stageLabel(stage);
-};
-
-const VALID_SUB_TABS: readonly DivisionSubTab[] = ['equipos', 'posiciones', 'goleadores', 'partidos', 'llaves'];
+const VALID_SUB_TABS: readonly DivisionSubTab[] = ['equipos', 'posiciones', 'goleadores', 'partidos', 'playoff'];
 const isDivisionSubTab = (value: string | null): value is DivisionSubTab =>
   VALID_SUB_TABS.includes(value as DivisionSubTab);
 
@@ -98,6 +85,11 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
       { replace: true }
     );
   };
+
+  const crossCupGroupQualificationRange = useMemo(
+    () => buildCrossCupGroupQualificationRange(division),
+    [division]
+  );
 
   const [topScores, setTopScores] = useState<IScorerByPlayerResponse[]>([]);
   const [topScoresLoading, setTopScoresLoading] = useState(false);
@@ -138,7 +130,7 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
   }, [subTab, topScoresLoaded, division.id]);
 
   useEffect(() => {
-    if ((subTab !== 'partidos' && subTab !== 'llaves') || structureLoaded) return;
+    if ((subTab !== 'partidos' && subTab !== 'playoff') || structureLoaded) return;
     let cancelled = false;
 
     const fetchStructure = async () => {
@@ -189,26 +181,18 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
     };
   }, [subTab, structureLoaded, division.id]);
 
-  const matchSections = useMemo(() => {
-    const stageIdsInOrder = [...stages].sort(
-      (a, b) => a.order - b.order || a.name.localeCompare(b.name, 'es', { numeric: true })
-    );
-    // A multi-group cross-division cup has several parallel Group stages
-    // ("Grupo 1".."Grupo N"). stageSectionLabel would collapse them all to the
-    // generic "Fase de grupos", so label each by its own stage name instead —
-    // that is the only thing distinguishing one group's fixture from another.
-    const groupStageCount = stages.filter(stage => stage.stageType === StageType.Group).length;
-    return stageIdsInOrder
-      .map(stage => {
-        const isDistinctGroup = stage.stageType === StageType.Group && groupStageCount > 1;
-        return {
-          stage,
-          label: isDistinctGroup ? stage.name : stageSectionLabel(stage, division.name),
-          matches: matches.filter(match => match.stageId === stage.id),
-        };
-      })
-      .filter(section => section.matches.length > 0);
-  }, [stages, matches, division.name]);
+  // Elimination-stage matches live in the Playoff tab's bracket, not here —
+  // otherwise a division with playoffs shows the same games twice. `stages`
+  // is shared with the bracket fetch above (which needs every stage), so the
+  // exclusion happens here rather than in the query.
+  const groupStages = useMemo(
+    () => stages.filter(stage => !stage.isElimination),
+    [stages]
+  );
+  const matchSections = useMemo(
+    () => buildDivisionFixtureSections(groupStages, matches, division.name),
+    [groupStages, matches, division.name]
+  );
 
   return (
     <Box>
@@ -235,7 +219,7 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
         <Tab label="Posiciones" value="posiciones" />
         <Tab label="Goleadores" value="goleadores" />
         <Tab label="Partidos" value="partidos" />
-        <Tab label="Llaves" value="llaves" />
+        <Tab label="Playoff" value="playoff" />
       </SecondaryTabs>
 
       <Box sx={{ minHeight: TAB_CONTENT_MIN_HEIGHT }}>
@@ -250,12 +234,19 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
         (division.groupStandings && division.groupStandings.length > 1 ? (
           // Multi-group cross-division cup (HU-110): one standings table per
           // internal group, each labelled by its stage name ("Grupo 1", …) and
-          // computed over that group's own matches.
+          // computed over that group's own matches. The division carries no
+          // PlayoffMappings here (it pools every group into ONE bracket, not a
+          // per-division cup breakdown — see DivisionProfile.cs), so the
+          // qualifying rows are highlighted from `qualifiersPerGroup` directly:
+          // the top N of EVERY group advance into the pooled knockout.
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {division.groupStandings.map(group => (
               <Box key={group.stageId}>
                 <SectionHeading>{group.stageName}</SectionHeading>
-                <DivisionStandings positions={group.positions} />
+                <DivisionStandings
+                  positions={group.positions}
+                  qualificationRanges={crossCupGroupQualificationRange}
+                />
               </Box>
             ))}
           </Box>
@@ -316,7 +307,7 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
           </Box>
         ))}
 
-      {subTab === 'llaves' &&
+      {subTab === 'playoff' &&
         (structureLoading ? (
           <ListSkeleton items={5} />
         ) : (

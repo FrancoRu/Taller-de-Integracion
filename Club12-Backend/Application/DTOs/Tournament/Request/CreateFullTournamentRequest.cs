@@ -34,6 +34,15 @@ public class CreateFullTournamentRequest
     public TournamentCategory Category { get; set; } = TournamentCategory.Masculine;
 
     /// <summary>
+    /// Optional id of the season ("Temporada") this tournament belongs to. When
+    /// supplied the tournament is grouped under that season; omitting it leaves
+    /// the tournament ungrouped. Mirrors <see cref="CreateTournamentRequest.SeasonId"/>
+    /// so the compound create keeps the tournament linked to its season the same
+    /// way the incremental base create does.
+    /// </summary>
+    public Guid? SeasonId { get; set; }
+
+    /// <summary>
     /// The divisions (zones and optional cross-division cup) to create under
     /// this tournament, each with its own stages and playoff mappings.
     /// </summary>

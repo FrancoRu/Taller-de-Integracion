@@ -6,7 +6,14 @@ import {
   GenericResponsePagination,
   GUID,
 } from '@/modules/core/types/types';
-import { IMinimalDivisionResponse } from '@/modules/division/type/division';
+import {
+  IDivisionResponse,
+  IMinimalDivisionResponse,
+} from '@/modules/division/type/division';
+import {
+  ICreateFullDivisionRequest,
+  ICreateFullTournamentRequest,
+} from '@/modules/tournament/type/createFullTournament.d';
 
 /**
  * Context properties and methods for managing tournaments.
@@ -25,6 +32,33 @@ export interface ITournamentContextProps {
   addTournament(
     tournament: IAddTournamentRequest
   ): Promise<ITournamentResponse | void>;
+
+  /**
+   * HU-38: creates a whole tournament (base fields + every division with its
+   * points, cups, playoff mappings and stages) in ONE atomic backend call
+   * (`POST /api/tournaments/full`). All-or-nothing: a failure leaves no partial
+   * tournament behind, and the tournament is created already
+   * `OpenForRegistration`.
+   * @param request The full tournament-wizard payload.
+   * @returns A promise resolving with the created tournament (including its divisions).
+   */
+  createFullTournament(
+    request: ICreateFullTournamentRequest
+  ): Promise<ITournamentResponse | void>;
+
+  /**
+   * HU-31/HU-112: adds ONE division (group stage + cups + playoff mappings) to
+   * an already-existing tournament in a single atomic transaction — the same
+   * structure guarantee a wizard-created division gets, instead of the bare
+   * division the granular add-division endpoint leaves behind.
+   * @param tournamentId The parent tournament's id.
+   * @param request The division's structure (zone or cross-cup).
+   * @returns A promise resolving with the created division.
+   */
+  addFullDivision(
+    tournamentId: GUID,
+    request: ICreateFullDivisionRequest
+  ): Promise<IDivisionResponse | void>;
 
   /**
    * Updates an existing tournament by its ID.
@@ -125,7 +159,7 @@ export interface ICompletabilityIssue {
   /**
    * Stable issue code (e.g. `ZoneTooFewTeams`, `TeamNotAssigned`,
    * `TeamInMultipleZones`, `PlayoffRangeExceedsTeams`,
-   * `CrossCupGroupTooFewTeams`).
+   * `CrossCupGroupTooFewTeams`, `TeamTooFewPlayers`).
    * @type {string}
    */
   code: string;
@@ -141,6 +175,9 @@ export interface ICompletabilityIssue {
 
   /** Number of teams assigned to the offending zone/group, when applicable. */
   assignedTeams?: number;
+
+  /** The offending team's registered player count, for TeamTooFewPlayers. */
+  playerCount?: number;
 }
 
 /**
@@ -303,6 +340,14 @@ export interface ITournamentResponse {
    * @type {string}
    */
   seasonName: string | null;
+
+  /**
+   * Slug of the season this tournament belongs to, when the season was
+   * resolved by the backend; null otherwise. Prefer this over `seasonId`
+   * when building a link back to the season, so the URL never shows a raw
+   * UUID.
+   */
+  seasonSlug?: string | null;
 }
 
 /**

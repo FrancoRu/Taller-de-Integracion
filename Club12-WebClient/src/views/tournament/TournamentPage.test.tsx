@@ -51,6 +51,8 @@ const setup = (status: TournamentStatus) => {
     tournament: buildTournament(status),
     tournaments: null,
     addTournament: vi.fn(),
+    createFullTournament: vi.fn(),
+    addFullDivision: vi.fn(),
     getAllTournamentsByFilter: vi.fn(),
     getTournamentById: vi.fn().mockResolvedValue(buildTournament(status)),
     putTournamentById: vi.fn(),

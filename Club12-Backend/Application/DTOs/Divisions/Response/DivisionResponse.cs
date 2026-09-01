@@ -52,6 +52,13 @@ public class DivisionResponse
     public Guid TournamentId { get; set; }
 
     /// <summary>
+    /// The parent tournament's slug, when its Tournament navigation was
+    /// loaded; null otherwise. Lets callers build a clean `/torneos/{slug}`
+    /// link back to the tournament instead of falling back to its GUID.
+    /// </summary>
+    public string? TournamentSlug { get; set; }
+
+    /// <summary>
     /// Whether this division is a cross-division cup that intentionally
     /// draws teams from every other division in the tournament.
     /// </summary>

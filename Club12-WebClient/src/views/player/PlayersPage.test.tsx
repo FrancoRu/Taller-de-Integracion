@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Mock } from 'vitest';
@@ -136,5 +137,115 @@ describe('PlayersPage — "Ver" action', () => {
     expect(mockNavigate).not.toHaveBeenCalledWith(
       `/panel/jugadores/${PLAYER.id}`
     );
+  });
+});
+
+describe('PlayersPage — dorsal in "Editar jugador"', () => {
+  const TOURNAMENT_ID = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb' as GUID;
+
+  it('is hidden outside a team/tournament roster context', async () => {
+    renderPlayersPage();
+
+    const editIcon = await screen.findByTestId('EditIcon');
+    fireEvent.click(editIcon.closest('button') as HTMLButtonElement);
+
+    await screen.findByText('Editar jugador');
+    expect(screen.queryByLabelText('Dorsal')).not.toBeInTheDocument();
+  });
+
+  it('saves the dorsal via registerPlayerToTeam when team+tournament are in scope', async () => {
+    const putPlayerById = vi.fn().mockResolvedValue(PLAYER);
+    const registerPlayerToTeam = vi
+      .fn()
+      .mockResolvedValue({ success: true, data: {} });
+    mockedUsePlayer.mockReturnValue({
+      player: null,
+      players: [PLAYER],
+      addPlayer: vi.fn(),
+      getPlayerById: vi.fn(),
+      getPlayersByFilter,
+      putPlayerById,
+      deletePlayerById: vi.fn().mockResolvedValue({ success: true }),
+      registerPlayerToTeam,
+    } as unknown as IPlayerContextProps);
+
+    render(
+      <MemoryRouter>
+        <PlayersPage teamId={PLAYER.teamId} tournamentId={TOURNAMENT_ID} />
+      </MemoryRouter>
+    );
+
+    const editIcon = await screen.findByTestId('EditIcon');
+    fireEvent.click(editIcon.closest('button') as HTMLButtonElement);
+
+    const dorsalInput = await screen.findByRole('spinbutton', {
+      name: 'Dorsal',
+    });
+    fireEvent.change(dorsalInput, { target: { value: '7' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    await waitFor(() =>
+      expect(registerPlayerToTeam).toHaveBeenCalledWith(
+        PLAYER.id,
+        expect.objectContaining({
+          teamId: PLAYER.teamId,
+          tournamentId: TOURNAMENT_ID,
+          jerseyNumber: 7,
+        })
+      )
+    );
+  });
+
+  it('disables the dorsal and skips registerPlayerToTeam when the team is changed in the same edit', async () => {
+    const user = userEvent.setup();
+    const OTHER_TEAM_ID = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee' as GUID;
+    const putPlayerById = vi.fn().mockResolvedValue(PLAYER);
+    const registerPlayerToTeam = vi
+      .fn()
+      .mockResolvedValue({ success: true, data: {} });
+    mockedUsePlayer.mockReturnValue({
+      player: null,
+      players: [PLAYER],
+      addPlayer: vi.fn(),
+      getPlayerById: vi.fn(),
+      getPlayersByFilter,
+      putPlayerById,
+      deletePlayerById: vi.fn().mockResolvedValue({ success: true }),
+      registerPlayerToTeam,
+    } as unknown as IPlayerContextProps);
+    mockedUseTeam.mockReturnValue({
+      teams: [
+        { id: PLAYER.teamId, name: 'Equipo actual' },
+        { id: OTHER_TEAM_ID, name: 'Otro equipo' },
+      ],
+      getTeamsByFiltered: vi.fn().mockResolvedValue(undefined),
+    } as unknown as ReturnType<typeof useTeam>);
+
+    render(
+      <MemoryRouter>
+        <PlayersPage teamId={PLAYER.teamId} tournamentId={TOURNAMENT_ID} />
+      </MemoryRouter>
+    );
+
+    const editIcon = await screen.findByTestId('EditIcon');
+    fireEvent.click(editIcon.closest('button') as HTMLButtonElement);
+
+    const dorsalInput = await screen.findByRole('spinbutton', {
+      name: 'Dorsal',
+    });
+    expect(dorsalInput).toBeEnabled();
+
+    await user.click(screen.getByRole('combobox', { name: /Equipo/i }));
+    await user.click(
+      await screen.findByRole('option', { name: 'Otro equipo' })
+    );
+
+    expect(dorsalInput).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    await waitFor(() => expect(putPlayerById).toHaveBeenCalled());
+    expect(registerPlayerToTeam).not.toHaveBeenCalled();
   });
 });

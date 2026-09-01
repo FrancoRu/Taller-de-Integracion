@@ -238,6 +238,36 @@ public class TournamentEnrollTeamTests : IClassFixture<CustomWebApplicationFacto
     }
 
     /// <summary>
+    /// Integrity guard: teams cannot be enrolled once the tournament is Ongoing
+    /// (en curso) — the roster is frozen after it starts. Mapped to 409 by the
+    /// global handler (InvalidOperationException).
+    /// </summary>
+    [Fact]
+    public async Task EnrollTeam_TournamentOngoing_IsRejected()
+    {
+        Guid tournamentId;
+        using (IServiceScope scope = _factory.Services.CreateScope())
+        {
+            ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+            Tournament tournament = await SeedTournamentAsync(db, TournamentStatus.Ongoing);
+            tournamentId = tournament.Id;
+        }
+
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Admin);
+
+        HttpResponseMessage response = await client.PostAsJsonAsync(
+            $"api/tournaments/{tournamentId}/enroll-team",
+            new { newTeamName = $"New {Guid.NewGuid():N}" });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+
+        using IServiceScope verify = _factory.Services.CreateScope();
+        ApplicationDBContext verifyDb = verify.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        Assert.Equal(0, await verifyDb.TeamTournamentRegistrations.AsNoTracking()
+            .CountAsync(r => r.TournamentId == tournamentId));
+    }
+
+    /// <summary>
     /// Exactly one of ExistingTeamId / NewTeamName must be provided — both is a 400.
     /// </summary>
     [Fact]

@@ -41,12 +41,7 @@ import DivisionPage from './views/division/divisionPage';
 import DivisionsPage from './views/division/divisionsPage';
 import DivisionCreatePage from './views/division/divisionCreatePage';
 import DivisionEditPage from './views/division/divisionEditPage';
-import StagePage from './views/stage/stagePage';
-import StageCreatePage from './views/stage/stageCreatePage';
-import StagesPage from '@/views/stage/stagesPage';
 import MatchPage from './views/match/matchPage';
-import MatchesPage from './views/match/matchesPage';
-import MatchCreatePage from './views/match/matchCreatePage';
 import UsersPage from './views/panel/UsersPage';
 import UserDetails from './views/user/userDetails';
 import CreateUser from './views/user/createUser';
@@ -65,6 +60,7 @@ import ForgotPassword from './views/auth/forgotPassword';
 import ActivateAccount from './views/auth/activateAccount';
 import PrivateRoute from './views/core/privateRoute';
 import ScrollToTop from './views/core/components/ScrollToTop';
+import GlobalLoadingOverlay from './views/core/components/GlobalLoadingOverlay';
 import TeamsPage from './views/team/TeamsPage';
 import TeamRegisterPage from './views/team/TeamRegisterPage';
 import ClubHistoryPage from './views/club/ClubHistoryPage';
@@ -101,19 +97,9 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
     element: <PlayerPage />,
   },
   {
-    path: APP_ROUTES.panelTeam,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
-    element: <TeamPage />,
-  },
-  {
     path: APP_ROUTES.panelTeamDetail.pattern,
     allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <TeamPage />,
-  },
-  {
-    path: APP_ROUTES.panelTournament,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
-    element: <TournamentPage />,
   },
   {
     path: APP_ROUTES.panelTournamentDetail.pattern,
@@ -209,31 +195,6 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
     path: APP_ROUTES.panelDivision.pattern,
     allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <DivisionPage />,
-  },
-  {
-    path: APP_ROUTES.panelStages,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
-    element: <StagesPage wrapInCard />,
-  },
-  {
-    path: APP_ROUTES.panelStageCreate,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
-    element: <StageCreatePage />,
-  },
-  {
-    path: APP_ROUTES.panelStage.pattern,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
-    element: <StagePage />,
-  },
-  {
-    path: APP_ROUTES.panelMatches,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
-    element: <MatchesPage wrapInCard />,
-  },
-  {
-    path: APP_ROUTES.panelMatchCreate,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
-    element: <MatchCreatePage />,
   },
   {
     path: APP_ROUTES.panelMatch.pattern,
@@ -360,6 +321,7 @@ function App() {
   return (
     <>
       <ScrollToTop />
+      <GlobalLoadingOverlay />
       <Routes>
       <Route element={<PublicLayout />}>
         {PUBLIC_ROUTES.map(({ path, element }) => (

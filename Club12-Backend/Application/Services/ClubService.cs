@@ -48,18 +48,7 @@ public class ClubService(IUnitOfWork unitOfWork) : IClubService
 
         foreach (Team team in unlinkedTeams)
         {
-            string key = !string.IsNullOrWhiteSpace(team.Name)
-                ? team.Name.Trim()
-                : team.ThreeLetterCode;
-
-            string slug = SlugGenerator.GenerateSlug(key);
-            if (string.IsNullOrEmpty(slug))
-            {
-                // No alphanumeric characters to slug — fall back to the team id
-                // so the club still gets a unique, non-null slug.
-                slug = team.Id.ToString();
-            }
-
+            string slug = ClubSlugForTeam(team);
             slugByTeam[team.Id] = slug;
 
             if (!clubsBySlug.ContainsKey(slug))
@@ -67,7 +56,7 @@ public class ClubService(IUnitOfWork unitOfWork) : IClubService
                 Club club = new()
                 {
                     Id = Guid.Empty,
-                    Name = key,
+                    Name = !string.IsNullOrWhiteSpace(team.Name) ? team.Name.Trim() : team.ThreeLetterCode,
                     Slug = slug,
                     LogoUrl = string.IsNullOrWhiteSpace(team.LogoUrl) ? null : team.LogoUrl,
                     DateCreated = DateTime.UtcNow,
@@ -98,6 +87,51 @@ public class ClubService(IUnitOfWork unitOfWork) : IClubService
             ClubsCreated = clubsToCreate.Count,
             TeamsLinked = unlinkedTeams.Count,
         };
+    }
+
+    /// <inheritdoc />
+    public async Task EnsureTeamLinkedToClubAsync(Team team)
+    {
+        if (team.ClubId is not null)
+        {
+            return;
+        }
+
+        string slug = ClubSlugForTeam(team);
+
+        Club? club = (await _clubRepository.FindAsync(candidate => candidate.Slug == slug)).FirstOrDefault();
+
+        if (club is null)
+        {
+            club = new Club
+            {
+                Id = Guid.Empty,
+                Name = !string.IsNullOrWhiteSpace(team.Name) ? team.Name.Trim() : team.ThreeLetterCode,
+                Slug = slug,
+                LogoUrl = string.IsNullOrWhiteSpace(team.LogoUrl) ? null : team.LogoUrl,
+                DateCreated = DateTime.UtcNow,
+                CreatedBy = AuditConstants.SystemUser,
+            };
+            await _clubRepository.AddAsync(club);
+        }
+
+        team.ClubId = club.Id;
+        await _teamRepository.UpdateAsync(team);
+    }
+
+    /// <summary>
+    /// The stable identity key shared by <see cref="BackfillClubsAsync"/> and
+    /// <see cref="EnsureTeamLinkedToClubAsync"/>: same-named teams generate the
+    /// same slug and therefore collapse onto a single club.
+    /// </summary>
+    private static string ClubSlugForTeam(Team team)
+    {
+        string key = !string.IsNullOrWhiteSpace(team.Name) ? team.Name.Trim() : team.ThreeLetterCode;
+        string slug = SlugGenerator.GenerateSlug(key);
+
+        // No alphanumeric characters to slug — fall back to the team id so
+        // the club still gets a unique, non-null slug.
+        return string.IsNullOrEmpty(slug) ? team.Id.ToString() : slug;
     }
 
     /// <inheritdoc />

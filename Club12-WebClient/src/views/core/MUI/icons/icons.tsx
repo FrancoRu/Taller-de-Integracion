@@ -50,6 +50,7 @@ import BackupIcon from '@mui/icons-material/Backup';
 import RestoreIcon from '@mui/icons-material/Restore';
 import StorageIcon from '@mui/icons-material/Storage';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 export {
   DeleteIcon,
@@ -104,4 +105,5 @@ export {
   RestoreIcon,
   StorageIcon,
   DeleteSweepIcon,
+  InfoOutlinedIcon,
 };

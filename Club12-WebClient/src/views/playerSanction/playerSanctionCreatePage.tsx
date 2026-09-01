@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { formatDateTimeAr } from '@/modules/core/utils/formatDate';
+import {
+  formatDateTimeAr,
+  toDatetimeLocalValue,
+} from '@/modules/core/utils/formatDate';
 import {
   Dialog,
   DialogContent,
@@ -52,6 +55,9 @@ const buildInitialForm = (
         ...INITIAL_FORM,
         stageId: presetMatch.stageId ?? '',
         matchId: presetMatch.id,
+        // A sanction issued from a match defaults its "fecha de emisión" to the
+        // match's own date — the admin can still adjust it before saving.
+        issuedDate: toDatetimeLocalValue(presetMatch.matchDate),
       }
     : INITIAL_FORM;
 

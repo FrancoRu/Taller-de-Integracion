@@ -2,6 +2,7 @@
 
 using Application.DTOs.Abstract.Response;
 using Application.DTOs.Champions.Response;
+using Application.DTOs.Divisions.Response;
 using Application.DTOs.Team.Response;
 using Application.DTOs.Tournament.Request;
 using Application.DTOs.Tournament.Response;
@@ -83,6 +84,39 @@ public class TournamentController(
         TournamentResponse tournamentResponse = mapper.Map<TournamentResponse>(createdTournament);
 
         return new ObjectResult(tournamentResponse) { StatusCode = StatusCodes.Status201Created };
+    }
+
+    /// <summary>
+    /// HU-31/HU-112: adds one division (group stage + cups + playoff mappings)
+    /// to an already-existing tournament in a single atomic transaction — the
+    /// same structure guarantee a wizard-created division gets. Only allowed
+    /// while the tournament is OpenForRegistration.
+    /// </summary>
+    /// <param name="tournamentId">The parent tournament's id.</param>
+    /// <param name="request">The division's structure (zone or cross-cup).</param>
+    /// <returns>
+    /// Returns 201 (Created) with the created division.
+    /// Returns 404 (Not Found) if the tournament does not exist.
+    /// Returns 409 (Conflict) if the tournament is not OpenForRegistration or
+    /// the division's category does not match the tournament's.
+    /// </returns>
+    [HttpPost("{tournamentId:guid}/divisions/full")]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(DivisionResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<DivisionResponse>> AddFullDivision(
+        Guid tournamentId, CreateFullDivisionRequest request)
+    {
+        Tournament? tournament = await tournamentService.GetTournamentByIdAsync(tournamentId);
+        if (tournament is null)
+        {
+            return this.NotFoundProblem(nameof(Tournament), tournamentId);
+        }
+
+        Division createdDivision = await tournamentService.AddFullDivisionAsync(tournament, request);
+        DivisionResponse divisionResponse = mapper.Map<DivisionResponse>(createdDivision);
+
+        return new ObjectResult(divisionResponse) { StatusCode = StatusCodes.Status201Created };
     }
 
     /// <summary>
