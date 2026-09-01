@@ -70,6 +70,7 @@ export default function PublicTournamentPage() {
   const [error, setError] = useState(false);
   const [divisions, setDivisions] = useState<IDivisionResponse[]>([]);
   const [divisionsLoading, setDivisionsLoading] = useState(false);
+  const [teamsLoading, setTeamsLoading] = useState(false);
   const [podiumsByDivision, setPodiumsByDivision] = useState<Map<GUID, IPodium>>(
     new Map()
   );
@@ -163,12 +164,29 @@ export default function PublicTournamentPage() {
 
   // Teams are needed by every division's "Equipos" sub-tab, so fetch them once
   // the tournament resolves rather than only when a teams tab is opened.
+  // Tracked with its own loading flag (below, folded into the page's loading
+  // gate) so the "Equipos" sub-tab doesn't render "no hay equipos" for the
+  // instant this fetch is still in flight.
   useEffect(() => {
     if (!tournamentGuid) return;
-    void getTeamsRef.current(
-      { tournamentId: tournamentGuid, pageSize: PUBLIC_LISTING_PAGE_SIZE, pageNumber: 1 },
-      { silent: true }
-    );
+    let cancelled = false;
+
+    const fetchTeams = async () => {
+      setTeamsLoading(true);
+      try {
+        await getTeamsRef.current(
+          { tournamentId: tournamentGuid, pageSize: PUBLIC_LISTING_PAGE_SIZE, pageNumber: 1 },
+          { silent: true }
+        );
+      } finally {
+        if (!cancelled) setTeamsLoading(false);
+      }
+    };
+
+    void fetchTeams();
+    return () => {
+      cancelled = true;
+    };
   }, [tournamentGuid]);
 
   // The podium (top three per division) is surfaced at the top of each
@@ -232,7 +250,11 @@ export default function PublicTournamentPage() {
         : undefined,
   });
 
-  if (loading || (divisionsLoading && divisions.length === 0)) {
+  if (
+    loading ||
+    (divisionsLoading && divisions.length === 0) ||
+    (teamsLoading && teamRows.length === 0)
+  ) {
     return (
       <PageShell>
         <DetailSkeleton />
