@@ -177,10 +177,10 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
         // venue row is actually gone.
         await venueService.DeleteVenueAsync(id);
 
-        if (!string.IsNullOrWhiteSpace(venue.PhotoUrl))
+        if (Uri.TryCreate(venue.PhotoUrl, UriKind.Absolute, out Uri? photoUri)
+            && (photoUri.Scheme == Uri.UriSchemeHttp || photoUri.Scheme == Uri.UriSchemeHttps))
         {
-            string[] photoUrlSegments = venue.PhotoUrl.Split('/');
-            await supabaseHelper.DeleteImageAsync<Venue>(photoUrlSegments[^1]);
+            await supabaseHelper.DeleteImageAsync<Venue>(photoUri.Segments[^1]);
         }
 
         return NoContent();

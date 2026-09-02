@@ -11,7 +11,9 @@ using Domain.Enums;
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Text;
 
 namespace Infrastructure.Persistance;
 
@@ -357,6 +359,10 @@ public static class SampleTournamentBuilder
 
         for (int i = 0; i < teamNames.Length; i++)
         {
+            string jerseyStyle = teamStyles is not null && i < teamStyles.Length ? teamStyles[i] : "solid";
+            string? secondaryColor =
+                teamSecondaryColors is not null && i < teamSecondaryColors.Length ? teamSecondaryColors[i] : null;
+
             Team team = new()
             {
                 Id = Guid.NewGuid(),
@@ -364,10 +370,10 @@ public static class SampleTournamentBuilder
                 Name = teamNames[i],
                 Slug = slugRegistry.ForTeam(teamNames[i]),
                 ThreeLetterCode = teamCodes[i],
-                LogoUrl = $"https://placehold.co/128x128?text={teamCodes[i]}",
+                LogoUrl = BuildCrestDataUri(teamCodes[i], teamColors[i], secondaryColor, jerseyStyle),
                 ShirtColor = teamColors[i],
-                JerseyStyle = teamStyles is not null && i < teamStyles.Length ? teamStyles[i] : "solid",
-                ShirtSecondaryColor = teamSecondaryColors is not null && i < teamSecondaryColors.Length ? teamSecondaryColors[i] : null,
+                JerseyStyle = jerseyStyle,
+                ShirtSecondaryColor = secondaryColor,
                 Tournament = tournament,
                 Players = [],
             };
@@ -442,6 +448,103 @@ public static class SampleTournamentBuilder
         }
 
         return (division, teams);
+    }
+
+    /// <summary>
+    /// The team's crest, generated from its own kit: a round badge in the club's
+    /// shirt colour carrying its three-letter code, with a band in the secondary
+    /// colour following the shirt's <paramref name="jerseyStyle"/>. Returned as a
+    /// self-contained <c>data:</c> SVG URI, so a seeded league has distinct,
+    /// offline crests without a logos folder, an upload, or a call to an external
+    /// placeholder service. <c>DataSeeder.UploadTeamLogosAsync</c> still replaces
+    /// it with a real PNG when <c>Seed:LogosPath</c> holds one.
+    /// </summary>
+    private static string BuildCrestDataUri(
+        string code, string primaryColor, string? secondaryColor, string jerseyStyle)
+    {
+        string secondary = string.IsNullOrWhiteSpace(secondaryColor) ? "#FFFFFF" : secondaryColor;
+        string ink = ContrastInk(primaryColor);
+
+        // Each band is drawn across the whole square and clipped to the badge, so
+        // a style only has to describe its own shape.
+        string band = jerseyStyle switch
+        {
+            "stripes" => $"<path d='M34 0h20v128H34zM74 0h20v128H74z' fill='{secondary}'/>",
+            "hoops" => $"<path d='M0 34h128v20H0zM0 74h128v20H0z' fill='{secondary}'/>",
+            "diagonal" => $"<path d='M0 128L128 0v34L34 128z' fill='{secondary}'/>",
+            "sash" => $"<path d='M0 96L96 0h26L0 122z' fill='{secondary}'/>",
+            "halves" => $"<path d='M64 0h64v128H64z' fill='{secondary}'/>",
+            "sides" => $"<path d='M0 0h26v128H0zM102 0h26v128h-26z' fill='{secondary}'/>",
+            "chevron" => $"<path d='M64 34l44 44v26L64 60 20 104V78z' fill='{secondary}'/>",
+            "circles" => $"<circle cx='64' cy='64' r='40' fill='none' stroke='{secondary}' stroke-width='12'/>",
+            "vneck" => $"<path d='M20 0h88L64 52z' fill='{secondary}'/>",
+            "gradient" => "<rect width='128' height='128' fill='url(#g)'/>",
+            _ => string.Empty,
+        };
+
+        string gradient = jerseyStyle == "gradient"
+            ? "<linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>"
+                + $"<stop offset='0' stop-color='{primaryColor}'/><stop offset='1' stop-color='{secondary}'/>"
+                + "</linearGradient>"
+            : string.Empty;
+
+        string svg =
+            "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128' width='128' height='128'>"
+            + $"<defs>{gradient}<clipPath id='c'><circle cx='64' cy='64' r='58'/></clipPath></defs>"
+            + $"<g clip-path='url(#c)'><rect width='128' height='128' fill='{primaryColor}'/>{band}</g>"
+            + $"<circle cx='64' cy='64' r='58' fill='none' stroke='{ink}' stroke-width='4' stroke-opacity='0.55'/>"
+            + "<text x='64' y='80' text-anchor='middle' font-family='Helvetica,Arial,sans-serif' "
+            + $"font-size='38' font-weight='700' fill='{ink}'>{code}</text>"
+            + "</svg>";
+
+        return "data:image/svg+xml;base64," + Convert.ToBase64String(Encoding.UTF8.GetBytes(svg));
+    }
+
+    /// <summary>Near-black ink, the alternative to white for a crest's code.</summary>
+    private const string DarkInk = "#0F172A";
+
+    /// <summary>
+    /// Whichever of white and <see cref="DarkInk"/> reads better on
+    /// <paramref name="backgroundColor"/> (an "#RRGGBB" shirt colour), by actual
+    /// WCAG contrast ratio rather than a hand-picked luminance threshold — the
+    /// mid greens and cyans in the club palette sit right where a threshold
+    /// guesses wrong and would leave a code at ~1.8:1 on its own shirt colour.
+    /// </summary>
+    private static string ContrastInk(string backgroundColor)
+    {
+        double? luminance = RelativeLuminance(backgroundColor);
+        if (luminance is not double background)
+        {
+            return "#FFFFFF";
+        }
+
+        double onDark = (background + 0.05) / ((RelativeLuminance(DarkInk) ?? 0) + 0.05);
+        double onWhite = 1.05 / (background + 0.05);
+
+        return onDark >= onWhite ? DarkInk : "#FFFFFF";
+    }
+
+    /// <summary>
+    /// WCAG relative luminance of an "#RRGGBB" colour (channels linearised out
+    /// of sRGB first), or null when the string is not one.
+    /// </summary>
+    private static double? RelativeLuminance(string color)
+    {
+        if (color.Length != 7
+            || color[0] != '#'
+            || !int.TryParse(color.AsSpan(1), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int rgb))
+        {
+            return null;
+        }
+
+        double red = Linearise(((rgb >> 16) & 0xFF) / 255.0);
+        double green = Linearise(((rgb >> 8) & 0xFF) / 255.0);
+        double blue = Linearise((rgb & 0xFF) / 255.0);
+
+        return (0.2126 * red) + (0.7152 * green) + (0.0722 * blue);
+
+        static double Linearise(double channel) =>
+            channel <= 0.03928 ? channel / 12.92 : Math.Pow((channel + 0.055) / 1.055, 2.4);
     }
 
     /// <summary>

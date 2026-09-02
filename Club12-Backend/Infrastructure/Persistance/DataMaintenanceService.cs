@@ -267,6 +267,7 @@ public sealed class DataMaintenanceService(
                 Name = name,
                 Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug(name),
                 Address = address,
+                PhotoUrl = SampleArtwork.VenuePhotoDataUri(name),
                 Latitude = latitude,
                 Longitude = longitude,
             });
@@ -330,6 +331,7 @@ public sealed class DataMaintenanceService(
                 Author = "Redacción Club12",
                 Title = title,
                 Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug(title),
+                PhotoUrl = SampleArtwork.BlogCoverDataUri(title),
                 MarkdownText = body,
                 Views = 0,
                 IsPublished = published,

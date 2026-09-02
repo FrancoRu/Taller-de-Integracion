@@ -274,10 +274,10 @@ public class TeamController(
             return this.NotFoundProblem(nameof(Team), id);
         }
 
-        if (!string.IsNullOrWhiteSpace(team.LogoUrl))
+        if (Uri.TryCreate(team.LogoUrl, UriKind.Absolute, out Uri? logoUri)
+            && (logoUri.Scheme == Uri.UriSchemeHttp || logoUri.Scheme == Uri.UriSchemeHttps))
         {
-            string[] logoUrlSegments = team.LogoUrl.Split('/');
-            await supabaseHelper.DeleteImageAsync<Team>(logoUrlSegments[^1]);
+            await supabaseHelper.DeleteImageAsync<Team>(logoUri.Segments[^1]);
         }
         await teamService.DeleteTeamAsync(id);
         return NoContent();

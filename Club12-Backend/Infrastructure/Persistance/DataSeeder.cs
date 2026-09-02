@@ -835,9 +835,9 @@ public sealed class DataSeeder(
     /// <summary>
     /// Uploads a real PNG crest per team from <paramref name="logosPath"/> using
     /// the same Supabase image path the team endpoints use, replacing each team's
-    /// placeholder <see cref="Team.LogoUrl"/>. Best-effort: a missing folder, no
-    /// PNGs, or any per-file failure logs a warning and leaves the placeholder in
-    /// place — logos never fail the seed. Assignment is deterministic (fixed-seed
+    /// generated SVG crest (<c>SampleTournamentBuilder.BuildCrestDataUri</c>).
+    /// Best-effort: a missing folder, no PNGs, or any per-file failure logs a
+    /// warning and leaves the generated crest in place — logos never fail the seed. Assignment is deterministic (fixed-seed
     /// shuffle) and distinct while the folder holds at least as many files as
     /// teams.
     /// </summary>
@@ -849,7 +849,7 @@ public sealed class DataSeeder(
             if (!Directory.Exists(logosPath))
             {
                 logger.LogWarning(
-                    "Seed logos path '{Path}' not found — keeping placeholder team logos.", logosPath);
+                    "Seed logos path '{Path}' not found — keeping the generated team crests.", logosPath);
                 return;
             }
 
@@ -858,14 +858,14 @@ public sealed class DataSeeder(
         catch (Exception ex)
         {
             logger.LogWarning(
-                ex, "Could not read seed logos from '{Path}' — keeping placeholder team logos.", logosPath);
+                ex, "Could not read seed logos from '{Path}' — keeping the generated team crests.", logosPath);
             return;
         }
 
         if (files.Length == 0)
         {
             logger.LogWarning(
-                "No PNG logos found in '{Path}' — keeping placeholder team logos.", logosPath);
+                "No PNG logos found in '{Path}' — keeping the generated team crests.", logosPath);
             return;
         }
 
@@ -892,7 +892,7 @@ public sealed class DataSeeder(
             catch (Exception ex)
             {
                 logger.LogWarning(
-                    ex, "Failed to upload logo '{File}' for club '{Club}' — keeping placeholder.",
+                    ex, "Failed to upload logo '{File}' for club '{Club}' — keeping its generated crest.",
                     file, byClub[i].Key);
             }
         }
@@ -1000,6 +1000,7 @@ public sealed class DataSeeder(
                 Name = name,
                 Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug(name),
                 Address = address,
+                PhotoUrl = SampleArtwork.VenuePhotoDataUri(name),
                 Latitude = latitude,
                 Longitude = longitude,
             });
@@ -1078,6 +1079,7 @@ public sealed class DataSeeder(
                 Author = "Redacción Club 12",
                 Title = title,
                 Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug(title),
+                PhotoUrl = SampleArtwork.BlogCoverDataUri(title),
                 MarkdownText = body,
                 Views = 0,
             });
