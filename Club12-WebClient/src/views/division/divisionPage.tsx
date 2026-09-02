@@ -16,10 +16,7 @@ import { IStageResponse } from '@/modules/stage/type/stage';
 import { IMatchResponse } from '@/modules/match/type/match.d';
 import { buildBrackets } from '@/modules/playoff/buildBracket';
 import { BracketGroup } from '@/modules/playoff/type/bracket.d';
-import {
-  buildDivisionFixtureSections,
-  groupFixtureSectionsByBracket,
-} from '@/modules/match/utils/divisionFixtureSections';
+import { buildDivisionFixtureSections } from '@/modules/match/utils/divisionFixtureSections';
 import DivisionStandings from '@/views/division/divisionStandings';
 import DivisionScorersTable from '@/views/division/DivisionScorersTable';
 import { buildCrossCupGroupQualificationRange } from '@/modules/division/utils/qualificationRange';
@@ -27,8 +24,8 @@ import DivisionFixture from '@/views/division/DivisionFixture';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import PointDeductionManager from '@/views/division/PointDeductionManager';
 import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
+import PlayoffMatchSections from '@/views/playoff/PlayoffMatchSections';
 import SeriesInProgressPanel from '@/views/playoff/SeriesInProgressPanel';
-import MatchFixtureList from '@/views/home/matches/MatchFixtureList';
 import SectionHeading from '@/views/core/components/SectionHeading';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
@@ -240,12 +237,6 @@ const DivisionPage: React.FC = () => {
   const playoffMatchSections = useMemo(
     () => buildDivisionFixtureSections(playoffStages, playoffMatches, division?.name ?? ''),
     [playoffStages, playoffMatches, division?.name]
-  );
-  // Grouped by cup (Copa Oro, Copa Plata, …) so a multi-cup division's
-  // rounds don't all read as one flat, undifferentiated list.
-  const playoffBracketGroups = useMemo(
-    () => groupFixtureSectionsByBracket(playoffMatchSections),
-    [playoffMatchSections]
   );
 
   if (!targetDivisionId) {
@@ -499,32 +490,11 @@ const DivisionPage: React.FC = () => {
               {playoffMatchSections.length > 0 && (
                 <Box>
                   <SectionHeading>Partidos de playoff</SectionHeading>
-                  <Stack spacing={4}>
-                    {playoffBracketGroups.map(group => (
-                      <Box key={group.bracketName ?? 'default'}>
-                        {group.bracketName && (
-                          <SectionHeading component="h4" accentColor="text.secondary">
-                            {group.bracketName}
-                          </SectionHeading>
-                        )}
-                        <Stack spacing={3}>
-                          {group.sections.map(({ stage, label, matches: stageMatches }) => (
-                            <Box key={stage.id}>
-                              <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 1 }}>
-                                {label}
-                              </Typography>
-                              <MatchFixtureList
-                                matches={stageMatches}
-                                exportTitle={group.bracketName ? `${group.bracketName}-${label}` : label}
-                                buildHref={m => APP_ROUTES.panelMatch.build(m.slug ?? m.id)}
-                                seriesById={seriesById}
-                              />
-                            </Box>
-                          ))}
-                        </Stack>
-                      </Box>
-                    ))}
-                  </Stack>
+                  <PlayoffMatchSections
+                    sections={playoffMatchSections}
+                    seriesById={seriesById}
+                    buildHref={m => APP_ROUTES.panelMatch.build(m.slug ?? m.id)}
+                  />
                 </Box>
               )}
             </Stack>

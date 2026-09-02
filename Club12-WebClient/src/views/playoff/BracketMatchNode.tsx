@@ -140,18 +140,19 @@ export default function BracketMatchNode({
               bgcolor: winner ? 'rgba(255, 90, 31, 0.12)' : 'transparent',
             }}
           >
-            <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0 }}>
+            <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0, flex: 1 }}>
               <TeamLogo teamName={team?.name ?? '?'} logoUrl={team?.logoUrl} size={BRACKET_TEAM_LOGO_SIZE} />
               <Typography
                 variant="body2"
                 color={team ? 'text.primary' : 'text.secondary'}
                 noWrap
                 title={bracketTeamLabel(team, match)}
-                // A fixed (not max-) width so every card's name column takes
-                // up exactly the same space regardless of how long the
-                // team's name is — otherwise the score ends up at a
-                // different horizontal position on every card.
-                sx={{ fontWeight: winner ? 700 : 500, width: 120 }}
+                // Grows to fill whatever room the card actually has (minus
+                // the crest and the score) instead of a fixed width picked
+                // for an old, narrower card size — that hardcoded width
+                // truncated most real team names ("Independiente de…") even
+                // though the card had plenty of unused space to the right.
+                sx={{ fontWeight: winner ? 700 : 500, minWidth: 0 }}
               >
                 {bracketTeamLabel(team, match)}
               </Typography>
