@@ -1,5 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
+import {
+  DataGrid,
+  GridCellParams,
+  GridColDef,
+  GridPaginationModel,
+  GridRenderEditCellParams,
+  GridRowId,
+  GridRowModes,
+  GridRowModesModel,
+  useGridApiContext,
+} from '@mui/x-data-grid';
 import {
   Box,
   Dialog,
@@ -33,13 +43,14 @@ import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { usePlayer } from '@/modules/player/hook/player.hook';
 import FormButtons from '@/views/core/components/FormButtons';
 import { IAddPlayerRequest, IPlayerResponse } from '@/modules/player/type/player.d';
-import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
 import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
-import { TableRowAction } from '@/views/core/components/TableRowActions';
+import TableRowActions, { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PageShell from '@/views/core/components/PageShell';
 import FilterBar from '@/views/core/components/FilterBar';
 import {
+  CheckIcon,
+  CloseIcon,
   DeleteIcon,
   MedicalInformationIcon,
   NumbersIcon,
@@ -52,8 +63,6 @@ import { FILTERS_DEBOUNCE_DELAY_LONG_MS } from '@/modules/core/constants/constan
 import { MedicalRecordStatus } from '@/modules/core/enum/medicalRecord/medicalRecordStatus';
 import HabilitacionBadge from '@/views/medicalRecord/HabilitacionBadge';
 import PlayerMedicalRecordDialog from '@/views/medicalRecord/PlayerMedicalRecordDialog';
-import PlayerFormDialog from '@/views/player/PlayerFormDialog';
-import type { PlayerFormField, PlayerFormState } from '@/views/player/players.types';
 import type { PlayersSearchFilters } from '@/views/player/players.types';
 
 /** Per-player medical / eligibility signal keyed by player id (HU-57/HU-62). */
@@ -64,17 +73,10 @@ export interface PlayerMedicalInfo {
 
 const EMPTY_FILTERS: PlayersSearchFilters = {};
 
-const INITIAL_PLAYER_FORM: PlayerFormState = {
-  firstName: '',
-  secondName: '',
-  lastName: '',
-  documentNumber: '',
-  birthDate: '',
-  phoneNumber: '',
-  socialSecurity: '',
-  teamId: '',
-  jerseyNumber: '',
-};
+/** A row rendered by the roster grid — either a real, persisted player, or an
+ * in-progress draft row being filled in directly in the table before it's
+ * saved (replaces the old "Nuevo jugador" popup form). */
+type PlayerRow = IPlayerResponse & { isNew?: boolean };
 
 /** Shared 0-99 dorsal parsing/validation for both the standalone Dorsal
  * dialog and the dorsal field inside "Editar jugador". */
@@ -92,6 +94,81 @@ const parseDorsalValue = (
   }
 
   return { success: true, jerseyNumber: parsed };
+};
+
+/** A draft row's birthDate is always a plain 'yyyy-MM-dd' string (what its
+ * date input produces) — this is only ever called on draft rows, never on a
+ * persisted player's row (whose birthDate may be a real Date/ISO string). */
+const rowBirthDateValue = (row: PlayerRow): string =>
+  row.birthDate ? String(row.birthDate).slice(0, 10) : '';
+
+const validateDraftRow = (
+  row: PlayerRow,
+  resolvedTeamId: GUID | ''
+): { title: string; text: string } | null => {
+  const birthDateValue = rowBirthDateValue(row);
+
+  if (
+    !row.firstName.trim() ||
+    !row.lastName.trim() ||
+    !row.documentNumber.trim() ||
+    !birthDateValue.trim() ||
+    !row.phoneNumber.trim() ||
+    !row.socialSecurity.trim()
+  ) {
+    return {
+      title: 'Campos incompletos',
+      text: 'Nombre, apellido, documento, fecha de nacimiento, teléfono y seguro social son obligatorios. El segundo nombre es opcional.',
+    };
+  }
+
+  if (!isValidPhone(row.phoneNumber)) {
+    return { title: 'Teléfono inválido', text: `${VALIDATION_MESSAGES.phone}.` };
+  }
+
+  if (!isValidDocumentNumber(row.documentNumber)) {
+    return {
+      title: 'Documento inválido',
+      text: `${VALIDATION_MESSAGES.documentNumber}.`,
+    };
+  }
+
+  if (!isAtLeastMinimumPlayerAge(birthDateValue)) {
+    return {
+      title: 'Fecha de nacimiento inválida',
+      text: `${VALIDATION_MESSAGES.minimumPlayerAge}.`,
+    };
+  }
+
+  if (!resolvedTeamId) {
+    return { title: 'Equipo requerido', text: 'Debe seleccionar un equipo.' };
+  }
+
+  return null;
+};
+
+/** A plain `<input type="date">` edit cell for the birthDate column. The
+ * DataGrid's built-in `type: 'date'` column expects a real `Date` value and
+ * round-trips awkwardly against the API's string shape, so this keeps the
+ * same 'yyyy-MM-dd' string the rest of the create flow already works with. */
+const BirthDateEditCell: React.FC<GridRenderEditCellParams<PlayerRow>> = props => {
+  const { id, field, value } = props;
+  const apiRef = useGridApiContext();
+
+  return (
+    <TextField
+      type="date"
+      value={typeof value === 'string' ? value : ''}
+      onChange={e =>
+        void apiRef.current.setEditCellValue({ id, field, value: e.target.value })
+      }
+      autoFocus
+      fullWidth
+      size="small"
+      sx={{ px: 1 }}
+      slotProps={{ inputLabel: { shrink: true } }}
+    />
+  );
 };
 
 interface PlayersPageProps {
@@ -152,9 +229,10 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   useEffect(() => {
     getPlayersByFilterRef.current = getPlayersByFilter;
   }, [getPlayersByFilter]);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [playerForm, setPlayerForm] =
-    useState<PlayerFormState>(INITIAL_PLAYER_FORM);
+
+  const [draftRows, setDraftRows] = useState<PlayerRow[]>([]);
+  const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
+  const draftCounterRef = useRef(0);
   const [medicalPlayer, setMedicalPlayer] = useState<IPlayerResponse | null>(
     null
   );
@@ -233,7 +311,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
 
   // Also needed just to render the list's "Equipo" column — a player always
   // belongs to a team, so load the lookup once up front rather than only
-  // when the create dialog opens.
+  // when a draft row is added.
   useEffect(() => {
     void loadTeamsForDropdown();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -243,23 +321,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     () => new Map((teams ?? []).map(team => [team.id, team.name])),
     [teams]
   );
-
-  const resetPlayerForm = useCallback(() => {
-    setPlayerForm({
-      ...INITIAL_PLAYER_FORM,
-      teamId: teamId ?? '',
-    });
-  }, [teamId]);
-
-  const handlePlayerFieldChange = useCallback(
-    (field: PlayerFormField, value: string) => {
-      setPlayerForm(prev => ({
-        ...prev,
-        [field]: field === 'documentNumber' ? value.replace(/\D/g, '') : value,
-      }));
-    },
-    []
-  );
+  const teamOptions = useMemo(() => teams ?? [], [teams]);
 
   const handleFilterChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -330,7 +392,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     [deletePlayerById, fetchPlayers, debouncedFilters, paginationModel]
   );
 
-  const playerActions = useMemo<TableRowAction<IPlayerResponse>[]>(
+  const playerActions = useMemo<TableRowAction<PlayerRow>[]>(
     () => [
       {
         label: 'Ver',
@@ -369,13 +431,173 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
     ]
   );
 
-  const columns: GridColDef<IPlayerResponse>[] = useMemo(() => {
-    const baseColumns: GridColDef<IPlayerResponse>[] = [
+  const buildDraftRow = useCallback((): PlayerRow => {
+    const id = `draft-${draftCounterRef.current++}` as GUID;
+    return {
+      id,
+      slug: '',
+      fullName: '',
+      firstName: '',
+      secondName: '',
+      lastName: '',
+      documentNumber: '',
+      birthDate: '' as unknown as Date,
+      phoneNumber: '',
+      socialSecurity: '',
+      teamId: (teamId ?? '') as GUID,
+      isFederated: false,
+      club: '',
+      category: '',
+      isNew: true,
+    };
+  }, [teamId]);
+
+  const handleCreatePlayer = useCallback(() => {
+    if (onCreate) {
+      onCreate();
+      return;
+    }
+
+    if (!teamId) {
+      void loadTeamsForDropdown();
+    }
+
+    const draft = buildDraftRow();
+    setDraftRows(prev => [draft, ...prev]);
+    setRowModesModel(prev => ({
+      ...prev,
+      [draft.id]: { mode: GridRowModes.Edit, fieldToFocus: 'firstName' },
+    }));
+  }, [onCreate, teamId, loadTeamsForDropdown, buildDraftRow]);
+
+  const handleDiscardDraftRow = useCallback((id: GridRowId) => {
+    setRowModesModel(prev => ({
+      ...prev,
+      [id]: { mode: GridRowModes.View, ignoreModifications: true },
+    }));
+    setDraftRows(prev => prev.filter(row => row.id !== id));
+  }, []);
+
+  const handleSaveDraftRow = useCallback((id: GridRowId) => {
+    setRowModesModel(prev => ({ ...prev, [id]: { mode: GridRowModes.View } }));
+  }, []);
+
+  const processRowUpdate = useCallback(
+    async (newRow: PlayerRow): Promise<PlayerRow> => {
+      const resolvedTeamId = (teamId ?? newRow.teamId) as GUID | '';
+      const validationError = validateDraftRow(newRow, resolvedTeamId);
+      if (validationError) {
+        void notifyWarning(validationError);
+        throw validationError;
+      }
+
+      setSubmitting(true);
+      const payload: IAddPlayerRequest = {
+        firstName: newRow.firstName.trim(),
+        secondName: newRow.secondName?.trim() || undefined,
+        lastName: newRow.lastName.trim(),
+        documentNumber: newRow.documentNumber.trim(),
+        birthDate: new Date(rowBirthDateValue(newRow)),
+        phoneNumber: newRow.phoneNumber.trim(),
+        socialSecurity: newRow.socialSecurity.trim(),
+        teamId: resolvedTeamId as GUID,
+      };
+
+      const createdPlayer = await addPlayer(payload);
+      setSubmitting(false);
+
+      if (!createdPlayer) {
+        // addPlayer already surfaced the failure via the global error
+        // handler — throw so the row stays in edit mode and nothing typed
+        // is lost.
+        throw new Error('No se pudo crear el jugador.');
+      }
+
+      setDraftRows(prev => prev.filter(row => row.id !== newRow.id));
+      await fetchPlayers(debouncedFilters, paginationModel);
+      void notifySuccess({
+        title: 'Jugador creado',
+        text: 'El jugador se creó correctamente.',
+      });
+
+      return newRow;
+    },
+    [teamId, addPlayer, fetchPlayers, debouncedFilters, paginationModel]
+  );
+
+  const handleProcessRowUpdateError = useCallback(() => {
+    // Validation/API failures are already surfaced inside processRowUpdate
+    // (notifyWarning / the global error handler) — MUI just requires this
+    // handler to exist so the rejection isn't logged as an uncaught error.
+  }, []);
+
+  const draftRowActions = useMemo<TableRowAction<PlayerRow>[]>(
+    () => [
       {
-        field: 'fullName',
-        headerName: 'Jugador',
-        flex: 1.4,
-        minWidth: 220,
+        label: 'Guardar',
+        color: 'primary',
+        icon: <CheckIcon fontSize="small" />,
+        onClick: row => handleSaveDraftRow(row.id),
+      },
+      {
+        label: 'Descartar',
+        color: 'error',
+        icon: <CloseIcon fontSize="small" />,
+        onClick: row => handleDiscardDraftRow(row.id),
+      },
+    ],
+    [handleSaveDraftRow, handleDiscardDraftRow]
+  );
+
+  const isDraftCellEditable = useCallback(
+    (params: GridCellParams<PlayerRow>) => Boolean(params.row.isNew),
+    []
+  );
+
+  const columns: GridColDef<PlayerRow>[] = useMemo(() => {
+    const teamColumn: GridColDef<PlayerRow> = teamId
+      ? {
+          field: 'teamId',
+          headerName: 'Equipo',
+          flex: 1,
+          minWidth: 160,
+          renderCell: params => teamNameById.get(params.row.teamId) ?? '—',
+        }
+      : {
+          field: 'teamId',
+          headerName: 'Equipo',
+          flex: 1,
+          minWidth: 160,
+          editable: true,
+          type: 'singleSelect',
+          valueOptions: teamOptions.map(team => ({
+            value: team.id,
+            label: team.name,
+          })),
+          renderCell: params => teamNameById.get(params.row.teamId) ?? '—',
+        };
+
+    const baseColumns: GridColDef<PlayerRow>[] = [
+      {
+        field: 'firstName',
+        headerName: 'Nombre',
+        flex: 0.9,
+        minWidth: 140,
+        editable: true,
+      },
+      {
+        field: 'secondName',
+        headerName: 'Segundo nombre',
+        flex: 0.9,
+        minWidth: 140,
+        editable: true,
+      },
+      {
+        field: 'lastName',
+        headerName: 'Apellido',
+        flex: 0.9,
+        minWidth: 140,
+        editable: true,
       },
       {
         field: 'documentNumber',
@@ -384,23 +606,39 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         minWidth: 140,
         align: 'center',
         headerAlign: 'center',
+        editable: true,
         renderCell: params =>
           params.row.documentNumber
             ? formatDocumentNumber(params.row.documentNumber)
             : '—',
       },
       {
-        field: 'teamId',
-        headerName: 'Equipo',
-        flex: 1,
-        minWidth: 160,
-        renderCell: params => teamNameById.get(params.row.teamId) ?? '—',
+        field: 'birthDate',
+        headerName: 'Fecha de nacimiento',
+        flex: 0.9,
+        minWidth: 170,
+        editable: true,
+        renderEditCell: params => <BirthDateEditCell {...params} />,
+        renderCell: params => {
+          const value = params.row.isNew
+            ? rowBirthDateValue(params.row)
+            : params.row.birthDate;
+          if (!value) {
+            return '—';
+          }
+          const date = new Date(value);
+          return Number.isNaN(date.getTime())
+            ? '—'
+            : date.toLocaleDateString('es-AR');
+        },
       },
+      teamColumn,
       {
         field: 'phoneNumber',
         headerName: 'Teléfono',
         flex: 0.9,
         minWidth: 140,
+        editable: true,
         renderCell: params =>
           params.row.phoneNumber
             ? formatArgentinePhone(params.row.phoneNumber)
@@ -411,6 +649,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         headerName: 'Obra social',
         flex: 1,
         minWidth: 160,
+        editable: true,
         renderCell: params => params.row.socialSecurity || '—',
       },
     ];
@@ -463,25 +702,39 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
       action => action.hidden !== true
     ).length;
 
-    return [
-      ...baseColumns,
-      buildActionsColumn(playerActions, {
-        align: 'center',
-        headerAlign: 'center',
-        minWidth: 40 * visibleActionCount + 40,
-      }),
-    ];
+    baseColumns.push({
+      field: 'actions',
+      headerName: 'Acciones',
+      sortable: false,
+      filterable: false,
+      align: 'center',
+      headerAlign: 'center',
+      minWidth: 40 * visibleActionCount + 40,
+      renderCell: params =>
+        params.row.isNew ? (
+          <TableRowActions row={params.row} actions={draftRowActions} />
+        ) : (
+          <TableRowActions row={params.row} actions={playerActions} />
+        ),
+    });
+
+    return baseColumns;
   }, [
     currentDorsalFor,
+    draftRowActions,
     medicalByPlayerId,
     medicalEnabled,
     playerActions,
     rosterEnabled,
+    teamId,
     teamNameById,
+    teamOptions,
   ]);
 
-  const rows = useMemo(() => players ?? [], [players]);
-  const teamOptions = useMemo(() => teams ?? [], [teams]);
+  const rows = useMemo(
+    () => [...draftRows, ...(players ?? [])],
+    [draftRows, players]
+  );
 
   const hasActiveFilters = useMemo(
     () =>
@@ -500,113 +753,6 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   const noRowsMessage = hasActiveFilters
     ? 'No se encontraron jugadores para el filtro aplicado.'
     : emptyMessage;
-
-  const validatePlayerForm = (resolvedTeamId: GUID | '') => {
-    if (
-      !playerForm.firstName.trim() ||
-      !playerForm.lastName.trim() ||
-      !playerForm.documentNumber.trim() ||
-      !playerForm.birthDate.trim() ||
-      !playerForm.phoneNumber.trim() ||
-      !playerForm.socialSecurity.trim()
-    ) {
-      void notifyWarning({
-        title: 'Campos incompletos',
-        text: 'Nombre, apellido, documento, fecha de nacimiento, teléfono y seguro social son obligatorios. El segundo nombre es opcional.',
-      });
-      return false;
-    }
-
-    if (!isValidPhone(playerForm.phoneNumber)) {
-      void notifyWarning({
-        title: 'Teléfono inválido',
-        text: `${VALIDATION_MESSAGES.phone}.`,
-      });
-      return false;
-    }
-
-    if (!isValidDocumentNumber(playerForm.documentNumber)) {
-      void notifyWarning({
-        title: 'Documento inválido',
-        text: `${VALIDATION_MESSAGES.documentNumber}.`,
-      });
-      return false;
-    }
-
-    if (!isAtLeastMinimumPlayerAge(playerForm.birthDate)) {
-      void notifyWarning({
-        title: 'Fecha de nacimiento inválida',
-        text: `${VALIDATION_MESSAGES.minimumPlayerAge}.`,
-      });
-      return false;
-    }
-
-    if (!resolvedTeamId) {
-      void notifyWarning({
-        title: 'Equipo requerido',
-        text: 'Debe seleccionar un equipo.',
-      });
-      return false;
-    }
-
-    return true;
-  };
-
-  const phoneError =
-    playerForm.phoneNumber.length > 0 && !isValidPhone(playerForm.phoneNumber);
-  const documentNumberError =
-    playerForm.documentNumber.length > 0 &&
-    !isValidDocumentNumber(playerForm.documentNumber);
-  const birthDateError =
-    playerForm.birthDate.length > 0 &&
-    !isAtLeastMinimumPlayerAge(playerForm.birthDate);
-  const handleCreatePlayer = useCallback(() => {
-    if (onCreate) {
-      onCreate();
-      return;
-    }
-
-    resetPlayerForm();
-    if (!teamId) {
-      void loadTeamsForDropdown();
-    }
-    setIsCreateModalOpen(true);
-  }, [loadTeamsForDropdown, onCreate, resetPlayerForm, teamId]);
-
-  const handleCreateSubmit = async () => {
-    const resolvedTeamId = (teamId ?? playerForm.teamId) as GUID | '';
-
-    if (!validatePlayerForm(resolvedTeamId)) {
-      return;
-    }
-
-    setSubmitting(true);
-    const payload: IAddPlayerRequest = {
-      firstName: playerForm.firstName.trim(),
-      secondName: playerForm.secondName.trim() || undefined,
-      lastName: playerForm.lastName.trim(),
-      documentNumber: playerForm.documentNumber.trim(),
-      birthDate: new Date(playerForm.birthDate),
-      phoneNumber: playerForm.phoneNumber.trim(),
-      socialSecurity: playerForm.socialSecurity.trim(),
-      teamId: resolvedTeamId as GUID,
-    };
-
-    const createdPlayer = await addPlayer(payload);
-    setSubmitting(false);
-
-    if (!createdPlayer) {
-      return;
-    }
-
-    setIsCreateModalOpen(false);
-    resetPlayerForm();
-    await fetchPlayers(debouncedFilters, paginationModel);
-    await notifySuccess({
-      title: 'Jugador creado',
-      text: 'El jugador se creó correctamente.',
-    });
-  };
 
   const handleDorsalSubmit = async () => {
     if (!dorsalPlayer || !teamId || !tournamentId) {
@@ -736,6 +882,12 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
           autoHeight
           disableRowSelectionOnClick
           disableColumnMenu
+          editMode="row"
+          isCellEditable={isDraftCellEditable}
+          rowModesModel={rowModesModel}
+          onRowModesModelChange={setRowModesModel}
+          processRowUpdate={processRowUpdate}
+          onProcessRowUpdateError={handleProcessRowUpdateError}
           localeText={dataGridLocaleText(noRowsMessage)}
           pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
           paginationModel={paginationModel}
@@ -744,26 +896,6 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
           rowCount={rowCount}
         />
       </Box>
-
-      <PlayerFormDialog
-        open={isCreateModalOpen}
-        title="Nuevo jugador"
-        confirmLabel="Crear"
-        form={playerForm}
-        submitting={submitting}
-        confirmDisabled={phoneError || documentNumberError || birthDateError}
-        showTeamSelect={!teamId}
-        teamOptions={teamOptions}
-        onTeamChange={nextTeamId =>
-          setPlayerForm(prev => ({ ...prev, teamId: nextTeamId }))
-        }
-        onFieldChange={handlePlayerFieldChange}
-        onClose={() => {
-          setIsCreateModalOpen(false);
-          resetPlayerForm();
-        }}
-        onConfirm={() => void handleCreateSubmit()}
-      />
 
       <Dialog
         open={Boolean(dorsalPlayer)}

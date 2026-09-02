@@ -5,6 +5,7 @@ import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
 import MouseIcon from '@mui/icons-material/Mouse';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -60,6 +61,7 @@ export {
   SearchIcon,
   VisibilityIcon,
   CheckIcon,
+  CloseIcon,
   MouseIcon,
   ArrowForwardIcon,
   ArrowBackIcon,

@@ -144,7 +144,8 @@ describe('PlayersPage — resilient rendering', () => {
     setupHooks([{ ...PLAYER, documentNumber: undefined as unknown as string }]);
     renderPlayersPage();
 
-    expect(await screen.findByText('LÓPEZ Carlos')).toBeInTheDocument();
+    expect(await screen.findByText('Carlos')).toBeInTheDocument();
+    expect(screen.getByText('López')).toBeInTheDocument();
     expect(screen.getAllByText('—').length).toBeGreaterThan(0);
   });
 });
@@ -206,6 +207,92 @@ describe('PlayersPage — Dorsal action (roster context)', () => {
           teamId: PLAYER.teamId,
           tournamentId: TOURNAMENT_ID,
           jerseyNumber: 7,
+        })
+      )
+    );
+  });
+});
+
+describe('PlayersPage — "Nuevo Jugador" adds an inline editable row (tabla editable)', () => {
+  it('adds a draft row with Guardar/Descartar actions, and Descartar removes it', async () => {
+    renderPlayersPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nuevo Jugador' }));
+
+    await screen.findByTestId('CheckIcon');
+    const discardButton = screen
+      .getByTestId('CloseIcon')
+      .closest('button') as HTMLButtonElement;
+
+    fireEvent.click(discardButton);
+
+    await waitFor(() =>
+      expect(screen.queryByTestId('CheckIcon')).not.toBeInTheDocument()
+    );
+  });
+
+  it('saves a filled-in draft row via addPlayer instead of opening a popup form', async () => {
+    const addPlayer = vi.fn().mockResolvedValue({ ...PLAYER, id: 'new-id' as GUID });
+    const getPlayersByFilterEmpty = vi.fn().mockResolvedValue({
+      items: [],
+      page: 1,
+      pageSize: TABLE_ROWS_PER_PAGE,
+      totalCount: 0,
+    });
+    mockedUsePlayer.mockReturnValue({
+      player: null,
+      players: [],
+      addPlayer,
+      getPlayerById: vi.fn(),
+      getPlayersByFilter: getPlayersByFilterEmpty,
+      putPlayerById: vi.fn(),
+      deletePlayerById: vi.fn().mockResolvedValue({ success: true }),
+      registerPlayerToTeam: vi.fn(),
+    } as unknown as IPlayerContextProps);
+
+    // Rendered with a fixed teamId (a team's roster context), so the "Equipo"
+    // column isn't itself editable and the draft row's team is implied —
+    // matching how this component is actually used from a team's roster tab.
+    const { container } = render(
+      <MemoryRouter>
+        <PlayersPage teamId={PLAYER.teamId} />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nuevo Jugador' }));
+    await screen.findByTestId('CheckIcon');
+
+    // `apiRef.setEditCellValue` commits asynchronously, so each field is
+    // awaited before moving to the next one — otherwise a later change can
+    // race ahead of an earlier one still being processed.
+    const setCellValue = async (field: string, value: string) => {
+      const input = container.querySelector(
+        `[data-field="${field}"] input`
+      ) as HTMLInputElement;
+      fireEvent.change(input, { target: { value } });
+      await waitFor(() => expect(input).toHaveValue(value));
+    };
+
+    await setCellValue('firstName', 'Nueva');
+    await setCellValue('lastName', 'Persona');
+    await setCellValue('documentNumber', '30111222');
+    await setCellValue('birthDate', '2000-05-05');
+    await setCellValue('phoneNumber', '3511234567');
+    await setCellValue('socialSecurity', 'OSDE');
+
+    fireEvent.click(
+      screen.getByTestId('CheckIcon').closest('button') as HTMLButtonElement
+    );
+
+    await waitFor(() =>
+      expect(addPlayer).toHaveBeenCalledWith(
+        expect.objectContaining({
+          firstName: 'Nueva',
+          lastName: 'Persona',
+          documentNumber: '30111222',
+          phoneNumber: '3511234567',
+          socialSecurity: 'OSDE',
+          teamId: PLAYER.teamId,
         })
       )
     );
