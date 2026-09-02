@@ -40,13 +40,14 @@ interface PlayoffCupsProps {
  * When a division splits its bracket into several tiers, they are NOT
  * shown as equal-weight peers: the top cup (seeded from standings
  * position #1 — first in `bracketGroups`, see ChampionResolver on the
- * backend) is the division's real championship and stays fully open by
- * default; every lower cup (Copa Plata, Copa Bronce, …) is a consolation
- * bracket for teams that didn't make the top group, so it renders
- * collapsed behind its own accordion — visible and one click away, but
- * never competing with the top cup for the reader's attention. A
- * single-bracket division (no named cups) renders with no tiering at all,
- * identical to a division that never had this distinction.
+ * backend) is the division's real championship, with a trophy-icon
+ * heading; every lower cup (Copa Plata, Copa Bronce, …) is a consolation
+ * bracket for teams that didn't make the top group, so it gets a smaller,
+ * muted heading — still an accordion so it CAN be collapsed to declutter,
+ * but open by default (`defaultExpanded`), since nothing here should be
+ * hidden without the reader choosing to hide it. A single-bracket division
+ * (no named cups) renders with no tiering at all, identical to a division
+ * that never had this distinction.
  */
 export default function PlayoffCups({
   bracketGroups,
@@ -139,6 +140,7 @@ export default function PlayoffCups({
             key={group.bracketName ?? 'default'}
             variant="outlined"
             disableGutters
+            defaultExpanded
             sx={{
               borderRadius: 2,
               '&:before': { display: 'none' },

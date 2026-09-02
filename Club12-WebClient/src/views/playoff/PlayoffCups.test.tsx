@@ -85,7 +85,7 @@ describe('PlayoffCups', () => {
     expect(screen.getAllByText('Exportar CSV')).toHaveLength(1);
   });
 
-  it('shows the top cup expanded and lower cups collapsed behind an accordion, one CSV export each', async () => {
+  it('shows every cup open by default (top cup prominent, lower cups collapsible but not hidden), one CSV export each', async () => {
     const oroMatches = [match('oro-semi', 'Echagüe', 'Neptunia')];
     const plataMatches = [match('plata-semi', 'Bovril', 'Viale')];
     const groups = [
@@ -103,16 +103,16 @@ describe('PlayoffCups', () => {
       </MemoryRouter>
     );
 
-    // Top cup's own matches are visible immediately, no interaction needed.
+    // Both cups' matches are visible immediately, no interaction needed —
+    // Copa Plata is de-emphasized (smaller, muted heading), not hidden.
     expect(screen.getAllByText('Echagüe').length).toBeGreaterThan(0);
-    // Copa Plata is a real title of a collapsed accordion, not "gone" or hidden
-    // entirely — but it starts collapsed, matching the fact that it's a
-    // secondary/consolation cup, not a peer of Copa Oro.
+    expect(screen.getAllByText('Bovril').length).toBeGreaterThan(0);
     const plataToggle = screen.getByText('Copa Plata');
-    expect(plataToggle.closest('[aria-expanded]')).toHaveAttribute('aria-expanded', 'false');
-
-    await userEvent.click(plataToggle);
     expect(plataToggle.closest('[aria-expanded]')).toHaveAttribute('aria-expanded', 'true');
+
+    // Still collapsible on demand, for a reader who wants to declutter.
+    await userEvent.click(plataToggle);
+    expect(plataToggle.closest('[aria-expanded]')).toHaveAttribute('aria-expanded', 'false');
 
     // One export button per cup — not one per round within a cup.
     expect(screen.getAllByText('Exportar CSV')).toHaveLength(2);
