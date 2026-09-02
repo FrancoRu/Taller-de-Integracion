@@ -29,11 +29,13 @@ export interface IVenueContextProps {
 
   /**
    * Uploads a new photo for an existing venue. The image is stored separately
-   * from the venue's other fields (mirrors the team logo endpoint).
+   * from the venue's other fields (mirrors the team logo endpoint). Resolves
+   * with the venue re-fetched from the backend so the caller gets the fresh
+   * photo URL without a page reload.
    * @param id The ID of the venue whose photo to replace.
    * @param image The new image file.
    */
-  putVenuePhotoById(id: GUID, image: File): Promise<void>;
+  putVenuePhotoById(id: GUID, image: File): Promise<IVenueResponse | void>;
 
   /**
    * Fetches all venues from the system.

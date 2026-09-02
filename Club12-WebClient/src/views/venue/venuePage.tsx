@@ -106,13 +106,20 @@ const VenuePage: React.FC = () => {
 
     // The venue fields and its photo are two separate endpoints; upload the
     // new photo (if the admin picked one) as part of the same save.
+    let refreshed: IVenueResponse = updated;
     if (venueForm.photo) {
-      await putVenuePhotoById(venue.id, venueForm.photo);
+      const withPhoto = await putVenuePhotoById(venue.id, venueForm.photo);
+      if (withPhoto) {
+        refreshed = withPhoto;
+      }
     }
     setEditSubmitting(false);
 
+    // Use the venue the mutations just returned: putVenuePhotoById already
+    // re-fetched it from the backend, and fetchVenue() would only hand back the
+    // stale cached copy here.
+    setVenue(refreshed);
     setEditDialogOpen(false);
-    await fetchVenue();
     await notifySuccess({
       title: 'Cancha actualizada',
       text: 'La cancha se actualizó correctamente.',

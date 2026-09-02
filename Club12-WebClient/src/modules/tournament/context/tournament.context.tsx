@@ -88,7 +88,6 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
 
         if (res && res.data) {
           setTournament(res.data);
-          setMessage(res.status, []);
         }
         return res.data;
       } catch (error: unknown) {
@@ -99,7 +98,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
         }
       }
     },
-    [setTournament, setError, setMessage]
+    [setTournament, setError]
   );
 
   const addFullDivision = useCallback(
@@ -111,9 +110,6 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
         const res: AxiosResponse<IDivisionResponse> =
           await tournamentService.addFullDivision(tournamentId, request);
 
-        if (res && res.data) {
-          setMessage(res.status, []);
-        }
         return res.data;
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
@@ -123,7 +119,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
         }
       }
     },
-    [setError, setMessage]
+    [setError]
   );
 
   const putTournamentById = useCallback(
@@ -247,9 +243,8 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
         const res: AxiosResponse<boolean> =
           await tournamentService.registerTeamsByTournamentId(id, teamsId);
 
-        if (res) {
-          setMessage(res.status, ['Registro de equipo exitoso']);
-        }
+        // Success feedback belongs to the calling page (TeamRegisterPage shows
+        // its own confirmation) — a toast here too means two modals.
         return (
           res.status === HttpStatus.Ok || res.status === HttpStatus.NoContent
         );
@@ -261,7 +256,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
         }
       }
     },
-    [setError, setMessage]
+    [setError]
   );
 
   const enrollTeam = useCallback(

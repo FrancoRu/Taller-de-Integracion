@@ -1,7 +1,12 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import GlobalLoadingOverlay from './GlobalLoadingOverlay';
-import { beginRequest, endRequest } from '@/modules/core/utils/requestActivity';
+import {
+  beginRequest,
+  clearBlockingMessage,
+  endRequest,
+  setBlockingMessage,
+} from '@/modules/core/utils/requestActivity';
 
 // The Backdrop's exit transition keeps the spinner mounted for a moment after
 // `open` flips to false, so "hidden" assertions wait it out via waitFor
@@ -34,6 +39,26 @@ describe('GlobalLoadingOverlay', () => {
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
 
     act(() => endRequest());
+    await waitFor(() =>
+      expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+    );
+  });
+
+  it('shows a contextual message (and the spinner) when one is set, with no request in flight', async () => {
+    render(<GlobalLoadingOverlay />);
+
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+
+    let id = 0;
+    act(() => {
+      id = setBlockingMessage('Restaurando la base de datos. No cierres esta página…');
+    });
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    expect(
+      screen.getByText('Restaurando la base de datos. No cierres esta página…')
+    ).toBeInTheDocument();
+
+    act(() => clearBlockingMessage(id));
     await waitFor(() =>
       expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
     );
