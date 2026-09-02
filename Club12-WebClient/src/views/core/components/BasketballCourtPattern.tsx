@@ -16,11 +16,12 @@ export default function BasketballCourtPattern({ sx }: BasketballCourtPatternPro
   return (
     <Box
       component="svg"
-      // Padded well beyond the court's own 28x15 so it reads as a zoomed-out
-      // pattern (lines and key visible at a glance) instead of "slice" scaling
-      // the court up to fill the container edge-to-edge, which crops it down
-      // to an unrecognizable close-up of just the paint/hoop area.
-      viewBox="-16 -8 60 31"
+      // Padded beyond the court's own 28x15 so "slice" doesn't scale it up to
+      // fill the container edge-to-edge (which crops it down to an
+      // unrecognizable close-up of just the paint/hoop area) — but only a
+      // little: enough padding to read as a court at a glance, not so much
+      // that the lines shrink into an unremarkable texture.
+      viewBox="-4 -2 36 19"
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
       sx={{
