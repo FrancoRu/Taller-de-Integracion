@@ -387,6 +387,7 @@ const DivisionPage: React.FC = () => {
                   <DivisionStandings
                     positions={group.positions}
                     qualificationRanges={crossCupGroupQualificationRange}
+                    showPrintSheet={false}
                   />
                 </Box>
               ))}
@@ -394,7 +395,6 @@ const DivisionPage: React.FC = () => {
           ) : (
             <DivisionStandings
               positions={division.positions}
-              divisionId={division.id}
               divisionName={division.name}
               qualificationRanges={division.qualificationRanges}
             />

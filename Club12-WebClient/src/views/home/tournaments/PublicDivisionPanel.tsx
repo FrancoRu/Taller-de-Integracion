@@ -246,6 +246,7 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
                 <DivisionStandings
                   positions={group.positions}
                   qualificationRanges={crossCupGroupQualificationRange}
+                  showPrintSheet={false}
                 />
               </Box>
             ))}
@@ -253,7 +254,6 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
         ) : (
           <DivisionStandings
             positions={division.positions}
-            divisionId={division.id}
             divisionName={division.name}
             qualificationRanges={division.qualificationRanges}
           />

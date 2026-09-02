@@ -12,7 +12,6 @@ import {
   Typography,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import { GUID } from '@/modules/core/types/types';
 import { Position, QualificationRange } from '@/modules/division/type/division.d';
 import { sortPositions } from '@/modules/division/utils/sortPositions';
 import {
@@ -24,7 +23,6 @@ import TeamLogo from '@/views/core/components/TeamLogo';
 
 interface DivisionStandingsProps {
   positions?: Position[];
-  divisionId?: GUID;
   divisionName?: string;
   /**
    * The position ranges that qualify to a playoff cup (HU-45). When present,
@@ -32,13 +30,20 @@ interface DivisionStandingsProps {
    * table. May be empty (e.g. the multi-group cup path has no per-group ranges).
    */
   qualificationRanges?: QualificationRange[];
+  /**
+   * Shows the "Imprimir"/"Exportar CSV" sheet above the table. Defaults to
+   * true for a single division's own standings; the cross-cup multi-group
+   * view renders one `DivisionStandings` per group and passes `false` so it
+   * doesn't get one redundant print sheet per group.
+   */
+  showPrintSheet?: boolean;
 }
 
 const DivisionStandings: React.FC<DivisionStandingsProps> = ({
   positions,
-  divisionId,
   divisionName,
   qualificationRanges,
+  showPrintSheet = true,
 }) => {
   const rows = useMemo(() => sortPositions(positions ?? []), [positions]);
   // The legend lists only the ranges actually present, in top-down cup order.
@@ -58,12 +63,8 @@ const DivisionStandings: React.FC<DivisionStandingsProps> = ({
 
   return (
     <Box>
-      {divisionId && (
-        <PrintableResultsSheet
-          divisionId={divisionId}
-          divisionName={divisionName}
-          positions={rows}
-        />
+      {showPrintSheet && (
+        <PrintableResultsSheet divisionName={divisionName} positions={rows} />
       )}
       <TableContainer>
         <Table size="small">
