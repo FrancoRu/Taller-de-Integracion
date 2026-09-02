@@ -149,7 +149,12 @@ export default function MatchFixtureList({
       {rounds.map(round => {
         const byes = byeTeamNamesForRound(round.matches, stageTeamNames);
         const roundKey = round.round ?? -1;
-        const isDefaultExpanded = round.round === defaultExpandedRound;
+        // A caller that already scoped `matches` down to a single fecha (the
+        // admin division page's carousel — one fecha at a time, with its own
+        // prev/next controls) has nothing left to declutter by collapsing
+        // it too: that fecha IS the thing the reader navigated to, so it
+        // must default open regardless of whether its matches are finished.
+        const isDefaultExpanded = rounds.length === 1 || round.round === defaultExpandedRound;
         // A knockout stage's single implicit group (null round) renders no
         // header/toggle at all below (the caller already labels the stage) —
         // so it must always stay expanded. Once every match in the stage

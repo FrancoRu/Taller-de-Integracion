@@ -174,6 +174,24 @@ describe('MatchFixtureList — collapsible fechas (every one, including the curr
       'false'
     );
   });
+
+  it('starts expanded when scoped to a single fecha, even if every one of its matches already finished (the admin panel\'s per-fecha carousel)', () => {
+    renderFixture([
+      match({
+        round: 17,
+        matchDate: '2020-01-01T20:00:00Z',
+        homeTeam: team('A'),
+        visitorTeam: team('B'),
+        isFinished: true,
+      }),
+    ]);
+
+    expect(screen.getByRole('button', { name: /Fecha 17/i })).toHaveAttribute(
+      'aria-expanded',
+      'true'
+    );
+    expect(screen.getAllByText('A').length).toBeGreaterThan(0);
+  });
 });
 
 describe('MatchFixtureList — playoff series grouping', () => {
