@@ -21,7 +21,7 @@ export default function BasketballCourtPattern({ sx }: BasketballCourtPatternPro
       // unrecognizable close-up of just the paint/hoop area) — but only a
       // little: enough padding to read as a court at a glance, not so much
       // that the lines shrink into an unremarkable texture.
-      viewBox="-4 -2 36 19"
+      viewBox="-2 -1 32 17"
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
       sx={{
