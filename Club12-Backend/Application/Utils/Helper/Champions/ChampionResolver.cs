@@ -27,7 +27,26 @@ public static class ChampionResolver
         public TeamRef? First { get; init; }
         public TeamRef? Second { get; init; }
         public TeamRef? Third { get; init; }
+
+        /// <summary>
+        /// True when <see cref="Third"/> is null only because the top cup never
+        /// had a real bracket round to draw a third place from (no RoundOf16/
+        /// QuarterFinal/SemiFinal — just a Final bolted onto group standings to
+        /// crown 1st/2nd, e.g. a top-2 "Copa de Oro" decider). The caller should
+        /// then fall back to standings position 3 as the implicit bronze. A real
+        /// bracket (a SemiFinal exists) that simply opted out of a third-place
+        /// match is a deliberate, valid two-team podium — this stays false there,
+        /// so the caller must NOT substitute a standings-based third for it.
+        /// </summary>
+        public bool ImplicitThirdFromStandings { get; init; }
     }
+
+    private static readonly HashSet<StageType> BracketDepthStageTypes =
+    [
+        StageType.RoundOf16,
+        StageType.QuarterFinal,
+        StageType.SemiFinal,
+    ];
 
     /// <summary>
     /// The champion of a single sub-cup (playoff bracket) of a division.
@@ -79,11 +98,17 @@ public static class ChampionResolver
             ? null
             : ResolveStageOutcome(thirdPlaceStage, eliminationMatches, series);
 
+        TeamRef? third = thirdOutcome is null ? null : Lookup(teamsById, thirdOutcome.Value.Winner);
+
+        bool hasBracketDepth = eliminationStages
+            .Any(stage => stage.BracketName == topBracket && BracketDepthStageTypes.Contains(stage.StageType));
+
         return new Podium
         {
             First = finalOutcome is null ? null : Lookup(teamsById, finalOutcome.Value.Winner),
             Second = finalOutcome is null ? null : Lookup(teamsById, finalOutcome.Value.Loser),
-            Third = thirdOutcome is null ? null : Lookup(teamsById, thirdOutcome.Value.Winner),
+            Third = third,
+            ImplicitThirdFromStandings = third is null && !hasBracketDepth,
         };
     }
 

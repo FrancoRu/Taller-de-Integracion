@@ -89,6 +89,83 @@ public class ChampionServiceTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task GetDivisionPodiumAsync_FinalOnlyCupWithNoThirdPlaceStage_FallsBackToStandingsThird()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IChampionService championService = scope.ServiceProvider.GetRequiredService<IChampionService>();
+
+        Tournament tournament = await SeedTournamentAsync(db);
+        Division division = await SeedDivisionAsync(db, tournament);
+        List<Team> teams = await SeedTeamsAsync(db, tournament, 4);
+
+        // A round-robin group stage decides the full standings...
+        Stage groupStage = await SeedStageAsync(db, division, tournament, StageType.Group, bracketName: null);
+        for (int i = 0; i < teams.Count; i++)
+        {
+            for (int j = i + 1; j < teams.Count; j++)
+            {
+                await SeedFinishedMatchAsync(db, groupStage, teams[i], teams[j], 90, 80);
+            }
+        }
+
+        // ...and a bare Final (no SemiFinal, no ThirdPlace stage) crowns the
+        // top two into a "Copa de Oro"-style title decider — there is no
+        // bracket round to draw a real third place from, so it must fall
+        // back to the group standings' position 3 (teams[2]) instead of
+        // leaving the podium's third place empty.
+        Stage finalStage = await SeedStageAsync(db, division, tournament, StageType.Final, bracketName: null);
+        await SeedFinishedMatchAsync(db, finalStage, teams[0], teams[1], 88, 70);
+
+        PodiumResponse? podium = await championService.GetDivisionPodiumAsync(division.Id);
+
+        Assert.NotNull(podium);
+        Assert.True(podium!.HasPlayoff);
+        Assert.Equal(teams[0].Id, podium.First!.TeamId);
+        Assert.Equal(teams[1].Id, podium.Second!.TeamId);
+        Assert.Equal(teams[2].Id, podium.Third!.TeamId);
+    }
+
+    [Fact]
+    public async Task GetDivisionPodiumAsync_DeepBracketWithNoThirdPlaceStage_KeepsThirdEmpty()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IChampionService championService = scope.ServiceProvider.GetRequiredService<IChampionService>();
+
+        Tournament tournament = await SeedTournamentAsync(db);
+        Division division = await SeedDivisionAsync(db, tournament);
+        List<Team> teams = await SeedTeamsAsync(db, tournament, 4);
+
+        // A real bracket (SemiFinal -> Final) that opted out of a third-place
+        // match is a deliberate two-team podium — it must NOT be papered over
+        // with a standings-based third, even though standings would have one.
+        Stage groupStage = await SeedStageAsync(db, division, tournament, StageType.Group, bracketName: null);
+        for (int i = 0; i < teams.Count; i++)
+        {
+            for (int j = i + 1; j < teams.Count; j++)
+            {
+                await SeedFinishedMatchAsync(db, groupStage, teams[i], teams[j], 90, 80);
+            }
+        }
+
+        Stage semiStage = await SeedStageAsync(db, division, tournament, StageType.SemiFinal, bracketName: null);
+        await SeedFinishedMatchAsync(db, semiStage, teams[0], teams[3], 70, 60);
+        await SeedFinishedMatchAsync(db, semiStage, teams[1], teams[2], 65, 62);
+
+        Stage finalStage = await SeedStageAsync(db, division, tournament, StageType.Final, bracketName: null);
+        await SeedFinishedMatchAsync(db, finalStage, teams[0], teams[1], 88, 70);
+
+        PodiumResponse? podium = await championService.GetDivisionPodiumAsync(division.Id);
+
+        Assert.NotNull(podium);
+        Assert.True(podium!.HasPlayoff);
+        Assert.Equal(teams[0].Id, podium.First!.TeamId);
+        Assert.Equal(teams[1].Id, podium.Second!.TeamId);
+        Assert.Null(podium.Third);
+    }
+
+    [Fact]
     public async Task GetDivisionPodiumAsync_UndecidedFinal_ReturnsNoChampion()
     {
         using IServiceScope scope = _factory.Services.CreateScope();

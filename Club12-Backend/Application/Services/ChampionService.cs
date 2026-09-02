@@ -180,6 +180,18 @@ public class ChampionService(
             eliminationMatches,
             series);
 
+        // The top cup never had real bracket rounds to draw a third place from
+        // (just a Final bolted onto group standings, e.g. a top-2 "Copa de Oro"
+        // decider) — position 3 in the table is the implicit bronze there. A
+        // real bracket that opted out of a third-place match keeps podium.Third
+        // null instead (see ImplicitThirdFromStandings).
+        PodiumTeamResponse? third = ToTeamResponse(podium.Third);
+        if (third is null && podium.ImplicitThirdFromStandings)
+        {
+            List<Position> standings = await divisionService.GetPositionsByDivisionIdAsync(division.Id);
+            third = ToTeamResponse(standings.ElementAtOrDefault(2));
+        }
+
         return new PodiumResponse
         {
             DivisionId = division.Id,
@@ -187,7 +199,7 @@ public class ChampionService(
             HasPlayoff = true,
             First = ToTeamResponse(podium.First),
             Second = ToTeamResponse(podium.Second),
-            Third = ToTeamResponse(podium.Third),
+            Third = third,
         };
     }
 
