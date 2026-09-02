@@ -6,7 +6,6 @@ import {
   GenericResponsePagination,
   GUID,
 } from '@/modules/core/types/types';
-import { useError } from '@/modules/error/hooks/error.hock';
 import { useUnknownErrorHandler } from '@/modules/error/hooks/useUnknownErrorHandler';
 import { blogPostService } from '@/modules/blogPost/service/blogPost.service';
 import {
@@ -26,7 +25,6 @@ export const BlogPostContext = createContext<IBlogPostContextProps | undefined>(
 export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const { setMessage } = useError();
   const queryClient = useQueryClient();
 
   const handleUnknownError = useUnknownErrorHandler();
@@ -56,7 +54,8 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
           await addBlogPostMutation.mutateAsync(post);
 
         if (response && response.data) {
-          setMessage(response.status, ['Blog Post created successfully']);
+          // Success feedback belongs to the calling page (addBlogPostForm.tsx
+          // shows its own confirmation) — a toast here too means two modals.
           queryClient.setQueryData(
             blogPostKeys.byId(response.data.id),
             response
@@ -77,7 +76,7 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [addBlogPostMutation, setMessage, queryClient, handleUnknownError]
+    [addBlogPostMutation, queryClient, handleUnknownError]
   );
 
   /**

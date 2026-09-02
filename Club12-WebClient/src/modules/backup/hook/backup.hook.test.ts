@@ -95,7 +95,7 @@ describe('useBackups — fetchBackups', () => {
 });
 
 describe('useBackups — createBackup', () => {
-  it('sets busy during the request, prepends the new record, and resolves true on success', async () => {
+  it('sets busy during the request, refetches the catalog, and resolves true on success', async () => {
     const created = buildRecord({ id: 'guid-new' });
     let resolveCreate: (value: AxiosResponse<IBackupRecordResponse>) => void =
       () => {};
@@ -105,6 +105,9 @@ describe('useBackups — createBackup', () => {
           resolveCreate = resolve;
         })
     );
+    // The server applies retention pruning, so the hook must re-read the
+    // authoritative catalog instead of optimistically prepending the new row.
+    mockedBackupService.getBackups.mockResolvedValue(buildResponse([created]));
 
     const { result } = renderHook(() => useBackups());
 
@@ -122,6 +125,7 @@ describe('useBackups — createBackup', () => {
 
     await expect(createPromise!).resolves.toBe(true);
     expect(result.current.busy).toBe(false);
+    expect(mockedBackupService.getBackups).toHaveBeenCalled();
     expect(result.current.backups).toEqual([created]);
   });
 
@@ -192,10 +196,16 @@ describe('useBackups — deleteBackup', () => {
 });
 
 describe('useBackups — restoreBackup', () => {
-  it('prepends the safety backup returned by the server and resolves true on success', async () => {
-    const safetyBackup = buildRecord({ id: 'guid-safety', origin: 'Job' });
+  it('refetches the catalog after a successful restore and resolves true', async () => {
+    // A restore replays a full-schema dump, so the real catalog reverts to the
+    // restored snapshot's state — the hook must re-read it, never trust the
+    // pre-restore safety-backup record the endpoint returns.
+    const restoredCatalog = [buildRecord({ id: 'guid-from-snapshot' })];
     mockedBackupService.restoreBackup.mockResolvedValueOnce(
-      buildResponse(safetyBackup)
+      buildResponse(buildRecord({ id: 'guid-safety', origin: 'Job' }))
+    );
+    mockedBackupService.getBackups.mockResolvedValueOnce(
+      buildResponse(restoredCatalog)
     );
 
     const { result } = renderHook(() => useBackups());
@@ -206,7 +216,8 @@ describe('useBackups — restoreBackup', () => {
     });
 
     expect(restored).toBe(true);
-    expect(result.current.backups).toEqual([safetyBackup]);
+    expect(mockedBackupService.getBackups).toHaveBeenCalled();
+    expect(result.current.backups).toEqual(restoredCatalog);
   });
 
   it('sets busy true while in flight and resolves false on failure (500)', async () => {

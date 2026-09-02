@@ -113,6 +113,8 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
         const res: AxiosResponse<IDivisionResponse> =
           await putDivisionMutation.mutateAsync({ id, divisionRequest });
 
+        // Success feedback belongs to the calling page (divisionEditPage.tsx
+        // shows its own confirmation) — a toast here too means two modals.
         if (res && res.status === HttpStatus.NoContent) {
           setDivision(prev => {
             if (!prev || prev.id !== id) return prev;
@@ -122,9 +124,6 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
               name: divisionRequest.name,
             };
           });
-          setMessage(res.status, [
-            'La información de la división fue actualizada correctamente',
-          ]);
           await queryClient.invalidateQueries({
             queryKey: divisionKeys.list(),
           });
@@ -132,9 +131,6 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
         } else if (res && res.data) {
           setDivision(res.data);
           queryClient.setQueryData(divisionKeys.byId(id), res);
-          setMessage(res.status, [
-            'La información de la división fue actualizada correctamente',
-          ]);
           await queryClient.invalidateQueries({
             queryKey: divisionKeys.list(),
           });
@@ -144,7 +140,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [putDivisionMutation, setDivision, setMessage, queryClient, handleUnknownError]
+    [putDivisionMutation, setDivision, queryClient, handleUnknownError]
   );
 
   const getDivisionsById = useCallback(
@@ -205,14 +201,15 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
         setDivisions(prev => (prev ? prev.filter(e => e.id !== id) : null));
         queryClient.removeQueries({ queryKey: divisionKeys.byId(id) });
         await queryClient.invalidateQueries({ queryKey: divisionKeys.list() });
-        setMessage(HttpStatus.NoContent, ['La división ha sido eliminada.']);
+        // Success feedback belongs to the calling page (divisionsPage.tsx shows
+        // its own "¡Eliminada!" confirmation) — a toast here too means two modals.
         return true;
       } catch (error: unknown) {
         handleUnknownError(error);
         return false;
       }
     },
-    [deleteDivisionMutation, queryClient, setMessage, handleUnknownError]
+    [deleteDivisionMutation, queryClient, handleUnknownError]
   );
 
   const container: IDivisionContextProps = useMemo(

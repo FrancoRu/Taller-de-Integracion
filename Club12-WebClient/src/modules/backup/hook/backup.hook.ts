@@ -22,31 +22,40 @@ export const useBackups = (): UseBackupsResult => {
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const fetchBackups = useCallback(async (): Promise<void> => {
-    setLoading(true);
+  // Pull the authoritative catalog from the server. Errors are swallowed: the
+  // caller keeps the previous list and page-level notify* handles messaging.
+  const refreshCatalog = useCallback(async (): Promise<void> => {
     try {
       const response = await backupService.getBackups();
       setBackups(response.data);
     } catch {
-      // Swallow: caller keeps the previous list, page-level error handling
-      // (toast/notify) is the consumer's responsibility.
+      // keep the previous list
+    }
+  }, []);
+
+  const fetchBackups = useCallback(async (): Promise<void> => {
+    setLoading(true);
+    try {
+      await refreshCatalog();
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [refreshCatalog]);
 
   const createBackup = useCallback(async (): Promise<boolean> => {
     setBusy(true);
     try {
-      const response = await backupService.createBackup();
-      setBackups(prev => [response.data, ...prev]);
+      await backupService.createBackup();
+      // Refetch, not an optimistic prepend: a manual backup applies server-side
+      // retention pruning, so the new row is not the only change to the catalog.
+      await refreshCatalog();
       return true;
     } catch {
       return false;
     } finally {
       setBusy(false);
     }
-  }, []);
+  }, [refreshCatalog]);
 
   const deleteBackup = useCallback(async (id: string): Promise<boolean> => {
     setBusy(true);
@@ -64,15 +73,19 @@ export const useBackups = (): UseBackupsResult => {
   const restoreBackup = useCallback(async (id: string): Promise<boolean> => {
     setBusy(true);
     try {
-      const response = await backupService.restoreBackup(id);
-      setBackups(prev => [response.data, ...prev]);
+      await backupService.restoreBackup(id);
+      // Refetch, never optimistic: a restore replays a full-schema dump
+      // (BackupRecords included), so the catalog reverts to the restored
+      // snapshot's state — later backups, later deletions and the just-created
+      // pre-restore safety backup are all gone from the real table.
+      await refreshCatalog();
       return true;
     } catch {
       return false;
     } finally {
       setBusy(false);
     }
-  }, []);
+  }, [refreshCatalog]);
 
   return {
     backups,

@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 import BlockingOverlay from '@/views/core/components/BlockingOverlay';
 import {
   getActiveRequestCount,
+  getBlockingMessage,
   subscribeToRequestActivity,
 } from '@/modules/core/utils/requestActivity';
 
@@ -11,7 +12,8 @@ import {
  * take a moment) is in flight, so no screen has to wire its own submitting
  * state just to stop the user from clicking twice or navigating away
  * mid-save. Subscribes to the axios-level request-activity store instead of
- * tracking anything itself.
+ * tracking anything itself. A screen can add a contextual message for a
+ * specific operation via `runWithBlockingMessage`.
  */
 export default function GlobalLoadingOverlay() {
   const activeCount = useSyncExternalStore(
@@ -19,6 +21,16 @@ export default function GlobalLoadingOverlay() {
     getActiveRequestCount,
     getActiveRequestCount
   );
+  const message = useSyncExternalStore(
+    subscribeToRequestActivity,
+    getBlockingMessage,
+    getBlockingMessage
+  );
 
-  return <BlockingOverlay open={activeCount > 0} />;
+  return (
+    <BlockingOverlay
+      open={activeCount > 0 || message !== null}
+      message={message ?? undefined}
+    />
+  );
 }

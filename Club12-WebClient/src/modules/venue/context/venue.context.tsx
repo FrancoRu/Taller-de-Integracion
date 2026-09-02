@@ -90,6 +90,9 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
           await putVenueMutation.mutateAsync({ id, venue });
 
         if (res) {
+          // Success feedback belongs to the calling page (venuePage.tsx /
+          // VenuesPage.tsx already show their own confirmation) — firing a
+          // toast here too shows the user two modals for one save.
           if (res.status === HttpStatus.NoContent) {
             const currentVenue =
               venues?.find(existingVenue => existingVenue.id === id) ?? null;
@@ -107,9 +110,6 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
             await queryClient.invalidateQueries({
               queryKey: venueKeys.list(),
             });
-            setMessage(res.status, [
-              'La información de la cancha fue actualizada correctamente',
-            ]);
             return updatedVenue;
           } else if (res.data) {
             setVenue(res.data);
@@ -118,9 +118,6 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
             await queryClient.invalidateQueries({
               queryKey: venueKeys.list(),
             });
-            setMessage(res.status, [
-              'La información de la cancha fue actualizada correctamente',
-            ]);
             return res.data;
           }
         }
@@ -128,15 +125,25 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [putVenueMutation, queryClient, setMessage, venues, handleUnknownError]
+    [putVenueMutation, queryClient, venues, handleUnknownError]
   );
 
   const putVenuePhotoById = useCallback(
-    async (id: GUID, image: File): Promise<void> => {
+    async (id: GUID, image: File): Promise<IVenueResponse | void> => {
       try {
         await venueService.putVenuePhotoById(id, image);
-        await queryClient.invalidateQueries({ queryKey: venueKeys.byId(id) });
+        // The photo endpoint returns no body and each upload lands at a new
+        // unique URL, so the fresh photoUrl is only knowable via a real GET.
+        // Call the service directly to bypass the in-memory `venues`
+        // short-circuit in getVenueById, which still holds the pre-upload URL —
+        // without this the image only updates after a full page reload.
+        const res: AxiosResponse<IVenueResponse> =
+          await venueService.getVenueById(id);
+        setVenue(res.data);
+        setVenues(prev => upsertListById(prev, res.data));
+        queryClient.setQueryData(venueKeys.byId(id), res);
         await queryClient.invalidateQueries({ queryKey: venueKeys.list() });
+        return res.data;
       } catch (error: unknown) {
         handleUnknownError(error);
       }
@@ -208,7 +215,8 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
         setVenues(prev => (prev ? prev.filter(e => e.id !== id) : null));
         queryClient.removeQueries({ queryKey: venueKeys.byId(id) });
         await queryClient.invalidateQueries({ queryKey: venueKeys.list() });
-        setMessage(HttpStatus.NoContent, ['La cancha ha sido eliminada.']);
+        // Success feedback belongs to the calling page (VenuesPage shows its own
+        // "¡Eliminada!" confirmation) — a toast here too means two modals.
         return { success: true };
       } catch (error: unknown) {
         return {
@@ -219,7 +227,7 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
         };
       }
     },
-    [deleteVenueMutation, queryClient, setMessage]
+    [deleteVenueMutation, queryClient]
   );
 
   const container: IVenueContextProps = useMemo(
