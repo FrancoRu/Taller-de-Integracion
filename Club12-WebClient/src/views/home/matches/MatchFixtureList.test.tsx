@@ -6,6 +6,7 @@ import { GUID } from '@/modules/core/types/types';
 import { MatchType } from '@/modules/core/enum/match/matchType';
 import { IMatchResponse } from '@/modules/match/type/match';
 import { ITeamMatchResponse } from '@/modules/team/type/team';
+import { IMatchSeriesResponse, ISeriesGameResponse } from '@/modules/matchSeries/type/matchSeries.d';
 import MatchFixtureList from '@/views/home/matches/MatchFixtureList';
 import { buildFixtureCsvRows } from '@/modules/match/utils/matchFixtureCsv';
 
@@ -124,6 +125,123 @@ describe('MatchFixtureList — collapsible fechas (all but the current one)', ()
 
     await user.click(fecha1Toggle);
     expect(fecha1Toggle).toHaveAttribute('aria-expanded', 'true');
+  });
+});
+
+describe('MatchFixtureList — playoff series grouping', () => {
+  const asGame = (m: IMatchResponse, gameNumber: number): ISeriesGameResponse => ({
+    id: m.id,
+    matchDate: m.matchDate,
+    homeTeamName: m.homeTeam!.name,
+    visitorTeamName: m.visitorTeam!.name,
+    homeScore: m.homeTeam!.score,
+    visitorScore: m.visitorTeam!.score,
+    winningTeamName: m.winningTeamName,
+    isFinished: m.isFinished,
+    matchType: m.matchType,
+    gameNumber,
+  });
+
+  it("groups a series' games under one shared header instead of listing them as unrelated rows", () => {
+    const sionista = team('Sionista');
+    const estudiantes = team('Estudiantes');
+    const g1 = match({ round: null, homeTeam: sionista, visitorTeam: estudiantes, isFinished: true });
+    const g2 = match({ round: null, homeTeam: sionista, visitorTeam: estudiantes, isFinished: true });
+
+    const series: IMatchSeriesResponse = {
+      id: guid('series-1'),
+      stageId: guid('stage-1'),
+      homeTeamId: sionista.id,
+      homeTeamName: 'Sionista',
+      visitorTeamId: estudiantes.id,
+      visitorTeamName: 'Estudiantes',
+      bestOf: 3,
+      winningTeamId: sionista.id,
+      winningTeamName: 'Sionista',
+      games: [asGame(g1, 1), asGame(g2, 2)],
+    };
+
+    render(
+      <MemoryRouter>
+        <MatchFixtureList
+          matches={[g1, g2]}
+          seriesById={new Map([[series.id, series]])}
+        />
+      </MemoryRouter>
+    );
+
+    expect(
+      screen.getByText('Serie: Sionista vs Estudiantes · Al mejor de 3 · Ganó Sionista')
+    ).toBeInTheDocument();
+  });
+
+  it('keeps two different series under the same stage in separate groups, even interleaved by date', () => {
+    const sionista = team('Sionista');
+    const estudiantes = team('Estudiantes');
+    const rocamora = team('Rocamora');
+    const olimpia = team('Olimpia');
+
+    const a1 = match({ round: null, matchDate: '2026-05-13T00:00:00Z', homeTeam: sionista, visitorTeam: estudiantes });
+    const b1 = match({ round: null, matchDate: '2026-05-14T00:00:00Z', homeTeam: rocamora, visitorTeam: olimpia });
+    const a2 = match({ round: null, matchDate: '2026-05-15T00:00:00Z', homeTeam: sionista, visitorTeam: estudiantes });
+
+    const seriesA: IMatchSeriesResponse = {
+      id: guid('series-a'),
+      stageId: guid('stage-1'),
+      homeTeamId: sionista.id,
+      homeTeamName: 'Sionista',
+      visitorTeamId: estudiantes.id,
+      visitorTeamName: 'Estudiantes',
+      bestOf: 3,
+      winningTeamId: null,
+      winningTeamName: null,
+      games: [asGame(a1, 1), asGame(a2, 2)],
+    };
+    const seriesB: IMatchSeriesResponse = {
+      id: guid('series-b'),
+      stageId: guid('stage-1'),
+      homeTeamId: rocamora.id,
+      homeTeamName: 'Rocamora',
+      visitorTeamId: olimpia.id,
+      visitorTeamName: 'Olimpia',
+      bestOf: 3,
+      winningTeamId: null,
+      winningTeamName: null,
+      games: [asGame(b1, 1)],
+    };
+
+    render(
+      <MemoryRouter>
+        <MatchFixtureList
+          matches={[a1, b1, a2]}
+          seriesById={
+            new Map([
+              [seriesA.id, seriesA],
+              [seriesB.id, seriesB],
+            ])
+          }
+        />
+      </MemoryRouter>
+    );
+
+    expect(
+      screen.getByText('Serie: Sionista vs Estudiantes · Al mejor de 3')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Serie: Rocamora vs Olimpia · Al mejor de 3')
+    ).toBeInTheDocument();
+  });
+
+  it('renders a standalone (non-series) match with no series header, same as without seriesById', () => {
+    const single = match({ round: null, homeTeam: team('A'), visitorTeam: team('B') });
+
+    render(
+      <MemoryRouter>
+        <MatchFixtureList matches={[single]} seriesById={new Map()} />
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByText(/^Serie:/)).not.toBeInTheDocument();
   });
 });
 

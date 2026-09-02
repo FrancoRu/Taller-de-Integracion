@@ -268,7 +268,7 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
                       <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 1 }}>
                         {label}
                       </Typography>
-                      <MatchFixtureList matches={stageMatches} exportTitle={label} />
+                      <MatchFixtureList matches={stageMatches} exportTitle={label} seriesById={seriesById} />
                     </Box>
                   ))}
                 </Box>

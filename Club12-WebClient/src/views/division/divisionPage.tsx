@@ -494,6 +494,7 @@ const DivisionPage: React.FC = () => {
                           matches={stageMatches}
                           exportTitle={label}
                           buildHref={m => APP_ROUTES.panelMatch.build(m.slug ?? m.id)}
+                          seriesById={seriesById}
                         />
                       </Box>
                     ))}

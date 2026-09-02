@@ -64,7 +64,23 @@ export default function PlayoffBracket({
   );
 
   return (
-    <Box sx={{ overflowX: 'auto', py: 2 }}>
+    <Box
+      sx={{
+        overflowX: 'auto',
+        py: 2,
+        // A deep bracket (Octavos→Final) is routinely wider than the page's
+        // content column, so this always needs to scroll horizontally — but
+        // a hidden/auto-hiding scrollbar gave no hint that there was more to
+        // see, reading as the bracket just being cut off. Keep a slim
+        // scrollbar always visible instead.
+        scrollbarWidth: 'thin',
+        '&::-webkit-scrollbar': { height: 8 },
+        '&::-webkit-scrollbar-thumb': {
+          backgroundColor: 'action.disabled',
+          borderRadius: 4,
+        },
+      }}
+    >
       <Stack direction="row" spacing={5} sx={{ alignItems: 'flex-start' }}>
         {matches.length > 0 && (
           <Box>

@@ -69,13 +69,16 @@ export const PLAYOFF_BRACKET_OPTIONS: LibraryBracketOptions = {
   spaceBetweenRows: 24,
   connectorColor: darkTheme.palette.primary.main,
   connectorColorHighlight: darkTheme.palette.primary.light,
+  // Round headers ("Cuartos de final", "Semifinal", "Final") were easy to
+  // miss at 12px grey-on-transparent — bumped size/weight-equivalent color
+  // and given a tinted panel so each phase reads clearly at a glance.
   roundHeader: {
     isShown: true,
-    height: 32,
-    marginBottom: 16,
-    fontSize: 12,
-    fontColor: darkTheme.palette.text.secondary,
-    backgroundColor: 'transparent',
+    height: 40,
+    marginBottom: 20,
+    fontSize: 14,
+    fontColor: darkTheme.palette.primary.main,
+    backgroundColor: 'rgba(255, 90, 31, 0.1)',
     fontFamily: "'Oswald', sans-serif",
   },
 };

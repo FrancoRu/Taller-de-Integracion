@@ -9,6 +9,9 @@ import {
   Typography,
 } from '@mui/material';
 import { IMatchResponse } from '@/modules/match/type/match.d';
+import { GUID } from '@/modules/core/types/types';
+import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
+import { groupMatchesBySeries } from '@/modules/matchSeries/utils/groupMatchesBySeries';
 import MatchRow from '@/views/home/matches/MatchRow';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import {
@@ -60,6 +63,7 @@ export default function MatchFixtureList({
   matches,
   exportTitle,
   buildHref,
+  seriesById,
 }: {
   matches: IMatchResponse[];
   /**
@@ -73,6 +77,14 @@ export default function MatchFixtureList({
    * (default); admin callers pass a builder pointing at the panel match page.
    */
   buildHref?: (match: IMatchResponse) => string;
+  /**
+   * A division's playoff series, keyed by id — when provided, a best-of-N
+   * series' individual games are grouped under one shared header instead of
+   * appearing as unrelated rows interleaved with other pairs' games under
+   * the same stage (two series can play on overlapping dates). Omit for a
+   * regular (non-playoff) fixture, where no match ever belongs to a series.
+   */
+  seriesById?: Map<GUID, IMatchSeriesResponse>;
 }) {
   const rounds = useMemo(() => groupMatchesByRound(matches), [matches]);
   const stageTeamNames = useMemo(() => collectStageTeamNames(matches), [matches]);
@@ -171,15 +183,46 @@ export default function MatchFixtureList({
             <Collapse in={isExpanded}>
               <Paper variant="outlined">
                 <Stack divider={<Divider />}>
-                  {round.matches
+                  {(() => {
                     // A round-robin bye is derived purely from the roster diff
                     // (byeTeamNamesForRound) below — a fixture-generation slot
                     // with neither team assigned is corrupt data, not a real
                     // match, and must not render its own broken "—" vs "—" row.
-                    .filter(match => match.homeTeam || match.visitorTeam)
-                    .map(match => (
-                      <MatchRow key={match.id} match={match} buildHref={buildHref} />
-                    ))}
+                    const realMatches = round.matches.filter(
+                      match => match.homeTeam || match.visitorTeam
+                    );
+
+                    if (!seriesById) {
+                      return realMatches.map(match => (
+                        <MatchRow key={match.id} match={match} buildHref={buildHref} />
+                      ));
+                    }
+
+                    return groupMatchesBySeries(realMatches, seriesById).map(group => {
+                      if (!group.series) {
+                        const match = group.matches[0];
+                        return <MatchRow key={match.id} match={match} buildHref={buildHref} />;
+                      }
+
+                      const { series } = group;
+                      return (
+                        <Box key={series.id}>
+                          <Box sx={{ px: 2, pt: 1.5, pb: 0.5 }}>
+                            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                              Serie: {series.homeTeamName} vs {series.visitorTeamName} · Al
+                              mejor de {series.bestOf}
+                              {series.winningTeamName && ` · Ganó ${series.winningTeamName}`}
+                            </Typography>
+                          </Box>
+                          <Stack divider={<Divider />}>
+                            {group.matches.map(match => (
+                              <MatchRow key={match.id} match={match} buildHref={buildHref} />
+                            ))}
+                          </Stack>
+                        </Box>
+                      );
+                    });
+                  })()}
                   {byes.map(teamName => (
                     <Box
                       key={`bye-${teamName}`}

@@ -35,34 +35,42 @@ interface BracketMatchNodeProps {
 
 type Participant = IMatchResponse['homeTeam'];
 
-/**
- * Formats a series' finished games as a single-line, non-wrapping summary
- * (e.g. "J1 111-101 · J2 118-95"). Kept to one line — rather than an
- * expandable per-game list — because the bracket library reserves a fixed
- * height per match slot; a card that grows on interaction would overlap
- * its neighbors. The full text is also set as the `title` so a long
- * best-of-5/7 series is still fully readable on hover.
- */
-const gameSummaryLine = (series: IMatchSeriesResponse): string =>
-  series.games
-    .filter(game => game.isFinished)
-    .map(game => `J${game.gameNumber} ${game.homeScore}-${game.visitorScore}`)
-    .join(' · ');
+/** One finished game/leg, rendered as its own chip rather than run together
+ * in a dot-joined string — each individual game should read as a separate,
+ * distinct result inside the card, not a wall of text. */
+interface GameChip {
+  key: string;
+  label: string;
+}
 
 /**
- * Formats a multi-leg tie's finished legs as a single-line, non-wrapping
- * summary (e.g. "P1 41-64 · P2 57-54") — the raw score as it was recorded
- * on each leg (home/visitor may swap between legs), mirroring
- * {@link gameSummaryLine}'s one-line convention for the same fixed-height
- * card. Numbered by chronological position, not by filtered index, so a
- * still-unfinished middle leg doesn't shift later legs' numbers.
+ * A series' finished games as individual chips (e.g. "J1 111-101", "J2
+ * 118-95"), one per game. The full dot-joined text is still built for the
+ * `title` tooltip, so a long best-of-5/7 series is fully readable on hover
+ * even once its chips wrap past what's visible.
  */
-const legSummaryLine = (legs: IMatchResponse[]): string =>
+const seriesGameChips = (series: IMatchSeriesResponse): GameChip[] =>
+  series.games
+    .filter(game => game.isFinished)
+    .map(game => ({
+      key: game.id,
+      label: `J${game.gameNumber} ${game.homeScore}-${game.visitorScore}`,
+    }));
+
+/**
+ * A multi-leg tie's finished legs as individual chips (e.g. "P1 41-64", "P2
+ * 57-54") — the raw score as it was recorded on each leg (home/visitor may
+ * swap between legs). Numbered by chronological position, not by filtered
+ * index, so a still-unfinished middle leg doesn't shift later legs' numbers.
+ */
+const legGameChips = (legs: IMatchResponse[]): GameChip[] =>
   legs
     .map((leg, index) => ({ leg, index }))
     .filter(({ leg }) => leg.isFinished && leg.homeTeam && leg.visitorTeam)
-    .map(({ leg, index }) => `P${index + 1} ${leg.homeTeam!.score}-${leg.visitorTeam!.score}`)
-    .join(' · ');
+    .map(({ leg, index }) => ({
+      key: leg.id,
+      label: `P${index + 1} ${leg.homeTeam!.score}-${leg.visitorTeam!.score}`,
+    }));
 
 /**
  * The caption shown above a tie's aggregate score. "Ida y vuelta" (the
@@ -97,7 +105,7 @@ export default function BracketMatchNode({
   ];
 
   const isTie = !series && Boolean(legs && legs.length > 1);
-  const summaryLine = series ? gameSummaryLine(series) : isTie ? legSummaryLine(legs!) : '';
+  const gameChips = series ? seriesGameChips(series) : isTie ? legGameChips(legs!) : [];
 
   return (
     <Paper
@@ -157,7 +165,12 @@ export default function BracketMatchNode({
                 variant="body2"
                 color={team ? 'text.primary' : 'text.secondary'}
                 noWrap
-                sx={{ fontWeight: winner ? 700 : 500, maxWidth: 120 }}
+                title={bracketTeamLabel(team, match)}
+                // A fixed (not max-) width so every card's name column takes
+                // up exactly the same space regardless of how long the
+                // team's name is — otherwise the score ends up at a
+                // different horizontal position on every card.
+                sx={{ fontWeight: winner ? 700 : 500, width: 120 }}
               >
                 {bracketTeamLabel(team, match)}
               </Typography>
@@ -171,25 +184,37 @@ export default function BracketMatchNode({
         );
       })}
 
-      {(series || isTie) && summaryLine && (
-        <Typography
-          variant="caption"
-          title={summaryLine}
+      {gameChips.length > 0 && (
+        <Stack
+          direction="row"
           sx={{
-            color: 'text.secondary',
-            lineHeight: 1.2,
+            flexWrap: 'wrap',
+            gap: 0.5,
             // Every finished game must stay visible (a decided bo7 can have
-            // up to 7) — wrap onto 2 lines instead of truncating to one, and
-            // only clamp/ellipsize past that as a last resort. `title` still
-            // carries the full text for the rare case it doesn't fit.
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
+            // up to 7) — clip overflow past 2 rows of chips instead of
+            // growing the card, which would overlap its neighbors in the
+            // library's fixed-height bracket layout.
+            maxHeight: 40,
             overflow: 'hidden',
           }}
         >
-          {summaryLine}
-        </Typography>
+          {gameChips.map(chip => (
+            <Box
+              key={chip.key}
+              sx={{
+                px: 0.6,
+                py: 0.1,
+                borderRadius: 0.75,
+                bgcolor: 'action.hover',
+                lineHeight: 1,
+              }}
+            >
+              <Typography variant="caption" sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>
+                {chip.label}
+              </Typography>
+            </Box>
+          ))}
+        </Stack>
       )}
     </Paper>
   );

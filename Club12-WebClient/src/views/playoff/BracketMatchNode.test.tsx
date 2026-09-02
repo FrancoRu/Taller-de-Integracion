@@ -86,7 +86,7 @@ describe('BracketMatchNode', () => {
     expect(screen.getByText('Cóndores')).toBeInTheDocument();
   });
 
-  it('shows the aggregate score and a one-line per-game summary for a two-legged series, with no collapse toggle', () => {
+  it('shows the aggregate score and each game as its own separate chip for a two-legged series, with no collapse toggle', () => {
     const homeId = guid('home');
     const visitorId = guid('visitor');
     const seriesMatch: IMatchResponse = {
@@ -112,11 +112,12 @@ describe('BracketMatchNode', () => {
     expect(screen.getByText('Al mejor de 2')).toBeInTheDocument();
     expect(screen.getByText('119')).toBeInTheDocument();
     expect(screen.getByText('101')).toBeInTheDocument();
-    expect(screen.getByText('J1 60-55 · J2 59-46')).toBeInTheDocument();
+    expect(screen.getByText('J1 60-55')).toBeInTheDocument();
+    expect(screen.getByText('J2 59-46')).toBeInTheDocument();
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('shows the aggregate score and a per-leg summary for a client-inferred multi-leg tie (no MatchSeries)', () => {
+  it('shows the aggregate score and each leg as its own separate chip for a client-inferred multi-leg tie (no MatchSeries)', () => {
     const homeId = guid('home');
     const visitorId = guid('visitor');
     const tieMatch: IMatchResponse = {
@@ -154,7 +155,8 @@ describe('BracketMatchNode', () => {
     expect(screen.getByText('98')).toBeInTheDocument();
     expect(screen.getByText('118')).toBeInTheDocument();
     // Raw per-leg score as recorded on each leg (home/visitor swap between legs).
-    expect(screen.getByText('P1 41-64 · P2 54-57')).toBeInTheDocument();
+    expect(screen.getByText('P1 41-64')).toBeInTheDocument();
+    expect(screen.getByText('P2 54-57')).toBeInTheDocument();
   });
 
   it('does not show a tie caption/summary for the normal single-match case (no legs, no series)', () => {
