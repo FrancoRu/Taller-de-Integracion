@@ -6,13 +6,16 @@ import { getTheme } from '@/theme';
  * round and every card regardless of content (a plain match or a
  * best-of-N series card with its per-game breakdown). The library
  * absolutely-positions each match within this box, so the card content
- * must stay within it — see `BracketMatchNode`'s per-game chips, which wrap
- * onto up to 4 rows. Sized to comfortably fit the worst case: a fully
- * played best-of-7 (BEST_OF_OPTIONS' max), 7 chips at roughly 2 per row.
- * Anything shorter (the common case) just leaves the card's lower area
- * empty instead of being cramped.
+ * must stay within it. A round with no series (the common early rounds —
+ * Octavos, Cuartos) never has game chips at all, so a box tall enough for
+ * a full best-of-7 breakdown left most of every card empty and inflated
+ * the whole bracket's height enough to force vertical scrolling. Game
+ * chips now live in a single horizontally-scrollable row instead of
+ * wrapping onto up to 4 rows (see `BracketMatchNode`), so one row's worth
+ * of height covers a series of any length — sized to fit a caption line +
+ * two team rows + that one chip row without clipping.
  */
-export const PLAYOFF_BRACKET_BOX_HEIGHT = 180;
+export const PLAYOFF_BRACKET_BOX_HEIGHT = 128;
 
 const darkTheme = getTheme('dark');
 

@@ -37,17 +37,21 @@ type Participant = IMatchResponse['homeTeam'];
 
 /** One finished game/leg, rendered as its own chip rather than run together
  * in a dot-joined string — each individual game should read as a separate,
- * distinct result inside the card, not a wall of text. */
+ * distinct result inside the card, not a wall of text. `title` carries the
+ * full "who played who" context (team names, not just raw numbers) so the
+ * on-chip label can stay short and still be unambiguous on hover. */
 interface GameChip {
   key: string;
   label: string;
+  title: string;
 }
 
 /**
  * A series' finished games as individual chips (e.g. "J1 111-101", "J2
- * 118-95"), one per game. The full dot-joined text is still built for the
- * `title` tooltip, so a long best-of-5/7 series is fully readable on hover
- * even once its chips wrap past what's visible.
+ * 118-95"), one per game. Each chip's `title` spells out the actual
+ * matchup ("Juego 1: Sionista 111 - 101 Independiente") — the short label
+ * alone doesn't say which side is which, since home/visitor can differ
+ * from the card's own top/bottom order once a series alternates venues.
  */
 const seriesGameChips = (series: IMatchSeriesResponse): GameChip[] =>
   series.games
@@ -55,6 +59,7 @@ const seriesGameChips = (series: IMatchSeriesResponse): GameChip[] =>
     .map(game => ({
       key: game.id,
       label: `J${game.gameNumber} ${game.homeScore}-${game.visitorScore}`,
+      title: `Juego ${game.gameNumber}: ${game.homeTeamName} ${game.homeScore} - ${game.visitorScore} ${game.visitorTeamName}`,
     }));
 
 /**
@@ -70,6 +75,7 @@ const legGameChips = (legs: IMatchResponse[]): GameChip[] =>
     .map(({ leg, index }) => ({
       key: leg.id,
       label: `P${index + 1} ${leg.homeTeam!.score}-${leg.visitorTeam!.score}`,
+      title: `Partido ${index + 1}: ${leg.homeTeam!.name} ${leg.homeTeam!.score} - ${leg.visitorTeam!.score} ${leg.visitorTeam!.name}`,
     }));
 
 /**
@@ -115,8 +121,8 @@ export default function BracketMatchNode({
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        gap: 0.5,
-        p: 1,
+        gap: 0.4,
+        p: 0.75,
         m: 0,
         width: '100%',
         height: '100%',
@@ -188,29 +194,43 @@ export default function BracketMatchNode({
         <Stack
           direction="row"
           sx={{
-            flexWrap: 'wrap',
+            flexWrap: 'nowrap',
             gap: 0.5,
-            // Every finished game must stay visible (a decided bo7 can have
-            // up to 7) — the card can't grow (the library positions every
-            // slot at a fixed height, PLAYOFF_BRACKET_BOX_HEIGHT), so this
-            // budgets up to 4 wrapped rows of chips instead, which that
-            // height was sized to fit without clipping mid-chip.
-            maxHeight: 80,
-            overflow: 'hidden',
+            // The card's height is fixed (PLAYOFF_BRACKET_BOX_HEIGHT) and
+            // shared by every round, including early rounds with no series
+            // at all — so chips get exactly one row's worth of height
+            // regardless of how long the series is (up to bo7). A series
+            // longer than what fits scrolls horizontally instead of
+            // wrapping into rows that would no longer fit the box.
+            overflowX: 'auto',
+            pb: 0.25,
+            scrollbarWidth: 'thin',
+            '&::-webkit-scrollbar': { height: 4 },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: 'action.disabled',
+              borderRadius: 4,
+            },
           }}
         >
           {gameChips.map(chip => (
             <Box
               key={chip.key}
+              title={chip.title}
               sx={{
-                px: 0.6,
-                py: 0.1,
+                flexShrink: 0,
+                px: 0.75,
+                py: 0.25,
                 borderRadius: 0.75,
-                bgcolor: 'action.hover',
+                bgcolor: 'background.default',
+                border: '1px solid',
+                borderColor: 'divider',
                 lineHeight: 1,
               }}
             >
-              <Typography variant="caption" sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>
+              <Typography
+                variant="caption"
+                sx={{ color: 'text.primary', fontWeight: 600, whiteSpace: 'nowrap' }}
+              >
                 {chip.label}
               </Typography>
             </Box>

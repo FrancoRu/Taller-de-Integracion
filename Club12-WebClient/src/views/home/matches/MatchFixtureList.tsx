@@ -149,7 +149,18 @@ export default function MatchFixtureList({
         const byes = byeTeamNamesForRound(round.matches, stageTeamNames);
         const roundKey = round.round ?? -1;
         const isDefaultExpanded = round.round === defaultExpandedRound;
-        const isExpanded = toggledRounds.has(roundKey) ? !isDefaultExpanded : isDefaultExpanded;
+        // A knockout stage's single implicit group (null round) renders no
+        // header/toggle at all below (the caller already labels the stage) —
+        // so it must always stay expanded. Once every match in the stage
+        // finishes, `defaultExpandedRound` becomes `undefined`, which a null
+        // round can never match, which used to collapse it with no way left
+        // to reopen it (HU: "rompiste los partidos de playoff").
+        const isExpanded =
+          round.round == null
+            ? true
+            : toggledRounds.has(roundKey)
+              ? !isDefaultExpanded
+              : isDefaultExpanded;
 
         return (
           <Box key={round.round ?? 'knockout'}>

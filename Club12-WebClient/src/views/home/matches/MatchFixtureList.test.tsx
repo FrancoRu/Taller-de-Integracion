@@ -80,6 +80,15 @@ describe('MatchFixtureList', () => {
     expect(screen.queryByText('Fase final')).not.toBeInTheDocument();
   });
 
+  it('keeps a knockout stage (null round) expanded even once every one of its matches is finished — it has no header/toggle to reopen it with', () => {
+    renderFixture([
+      match({ round: null, homeTeam: team('A'), visitorTeam: team('B'), isFinished: true }),
+    ]);
+
+    expect(screen.getAllByText('A').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('B').length).toBeGreaterThan(0);
+  });
+
   it('shows the CSV export button only when an exportTitle is given (HU-89)', () => {
     const { rerender } = render(
       <MemoryRouter>
