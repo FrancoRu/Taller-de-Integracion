@@ -243,8 +243,8 @@ export default function AdminSeasonDetailPage() {
       <PageShell
         title="Temporada no encontrada"
         back={{
-          label: 'Volver a temporadas',
-          onClick: () => navigate(APP_ROUTES.panelSeasons),
+          label: 'Volver',
+          onClick: () => navigate(-1),
         }}
       >
         <Typography sx={{ color: 'text.secondary' }}>
@@ -274,8 +274,8 @@ export default function AdminSeasonDetailPage() {
   return (
     <PageShell
       back={{
-        label: 'Volver a temporadas',
-        onClick: () => navigate(APP_ROUTES.panelSeasons),
+        label: 'Volver',
+        onClick: () => navigate(-1),
       }}
       actions={
         <Stack direction="row" spacing={1.5}>

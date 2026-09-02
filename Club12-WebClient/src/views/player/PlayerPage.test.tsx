@@ -195,16 +195,12 @@ describe('PlayerPage — edit trigger', () => {
 });
 
 describe('PlayerPage — "Volver" navigation', () => {
-  it('goes back to the player\'s own team roster, not the global players list', async () => {
+  it('goes back via real browser history — not a hardcoded destination that drops whatever tab/list the admin actually came from', async () => {
     const user = userEvent.setup();
     renderAt('lopez-carlos');
 
-    await user.click(
-      await screen.findByRole('button', { name: /Volver al equipo/ })
-    );
+    await user.click(await screen.findByRole('button', { name: /Volver/ }));
 
-    expect(mockNavigate).toHaveBeenCalledWith(
-      '/panel/equipos/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa?tab=jugadores'
-    );
+    expect(mockNavigate).toHaveBeenCalledWith(-1);
   });
 });

@@ -53,7 +53,7 @@ const UserDetails: React.FC = () => {
     <PageShell
       title="Detalle de usuario"
       maxWidth="sm"
-      back={{ label: 'Volver', onClick: () => navigate(APP_ROUTES.panelUsers) }}
+      back={{ label: 'Volver', onClick: () => navigate(-1) }}
       actions={
         !loading && user ? (
           <>

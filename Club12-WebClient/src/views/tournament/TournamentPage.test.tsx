@@ -75,7 +75,13 @@ const setup = (status: TournamentStatus) => {
 
 const renderPage = () =>
   render(
-    <MemoryRouter initialEntries={[`/panel/torneos/${TOURNAMENT_ID}`]}>
+    <MemoryRouter
+      // A real prior history entry — "Volver" is real browser-history back
+      // (navigate(-1)) now, not a hardcoded destination, so there must be
+      // somewhere real to go back to for that to do anything.
+      initialEntries={['/panel/temporadas', `/panel/torneos/${TOURNAMENT_ID}`]}
+      initialIndex={1}
+    >
       <Routes>
         <Route
           path="/panel/torneos/:tournamentId"
@@ -137,9 +143,7 @@ describe('TournamentPage — read-only detail (QA wave 1)', () => {
     ).toBeInTheDocument();
   });
 
-  it('"Volver" navigates back to the seasons list (a tournament without a season)', async () => {
-    // Tournaments live inside a season now; with no season, "Volver" falls back
-    // to the seasons list rather than a standalone tournaments list.
+  it('"Volver" goes back via real browser history, landing on whatever page preceded this one', async () => {
     setup(TournamentStatus.Scheduled);
     renderPage();
 

@@ -183,12 +183,7 @@ const EditUser: React.FC = () => {
   };
 
   const pageTitle = isSelfProfileMode ? 'Editar perfil' : 'Editar usuario';
-  const handleBack = () =>
-    navigate(
-      isSelfProfileMode
-        ? APP_ROUTES.panelEditProfile
-        : APP_ROUTES.panelUser.build(targetUserId as string)
-    );
+  const handleBack = () => navigate(-1);
 
   if (loading) {
     return (

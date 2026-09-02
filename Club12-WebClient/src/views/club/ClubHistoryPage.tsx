@@ -95,7 +95,7 @@ const ClubHistoryPage: React.FC = () => {
     return (
       <PageShell
         title="Club no encontrado"
-        back={{ label: 'Volver', onClick: () => navigate(APP_ROUTES.panelTeams) }}
+        back={{ label: 'Volver', onClick: () => navigate(-1) }}
       >
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
           No fue posible cargar el historial del club.

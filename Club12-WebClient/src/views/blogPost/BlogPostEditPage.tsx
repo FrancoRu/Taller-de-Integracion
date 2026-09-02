@@ -106,7 +106,7 @@ const BlogPostEditPage: React.FC = () => {
   const displayedImageUrl = objectUrl ?? photoUrl;
 
   const handleCancel = useCallback(() => {
-    navigate(APP_ROUTES.panelBlog);
+    navigate(-1);
   }, [navigate]);
 
   const handleSave = useCallback(async () => {

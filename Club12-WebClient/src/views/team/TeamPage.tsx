@@ -294,7 +294,7 @@ const TeamPage: React.FC<TeamPageProps> = ({
           {!hideBackLink && (
             <Typography
               component="button"
-              onClick={() => navigate(APP_ROUTES.panelTeams)}
+              onClick={() => navigate(-1)}
               sx={{
                 mt: 2,
                 border: 0,
@@ -334,7 +334,7 @@ const TeamPage: React.FC<TeamPageProps> = ({
             <Button
               variant="contained"
               color="primary"
-              onClick={() => navigate(APP_ROUTES.panelTeams)}
+              onClick={() => navigate(-1)}
             >
               Volver
             </Button>

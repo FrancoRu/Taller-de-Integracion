@@ -113,7 +113,7 @@ const InviteUser: React.FC = () => {
     <PageShell
       title="Invitar usuario"
       maxWidth="sm"
-      back={{ label: 'Volver', onClick: () => navigate(APP_ROUTES.panelUsers) }}
+      back={{ label: 'Volver', onClick: () => navigate(-1) }}
     >
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Se crea la cuenta sin contraseña y se le envía un link de activación
@@ -172,7 +172,7 @@ const InviteUser: React.FC = () => {
           >
             <Button
               variant="outlined"
-              onClick={() => navigate(APP_ROUTES.panelUsers)}
+              onClick={() => navigate(-1)}
               disabled={submitting}
             >
               Cancelar
