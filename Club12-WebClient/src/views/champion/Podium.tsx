@@ -21,21 +21,23 @@ const PLACE_LABEL: Record<1 | 2 | 3, string> = {
   3: '3º',
 };
 
+/**
+ * Every rank's grid column position on wide screens — 2nd on the left, 1st
+ * in the middle, 3rd on the right — independent of DOM order, which stays
+ * 1st/2nd/3rd (so the champion is still announced first by assistive tech
+ * and on the mobile stacked layout, where `order` resets to plain rank).
+ * The "no 3rd place" spacer below reuses column 3 so the champion's column
+ * stays the row's true middle even with only two cards — centering the
+ * PAIR as a unit instead would leave the champion off to one side.
+ */
+const GRID_COLUMN: Record<1 | 2 | 3, number> = { 2: 1, 1: 2, 3: 3 };
+
 interface PodiumPlaceProps {
   rank: 1 | 2 | 3;
   team: IPodiumTeam | null;
-  /**
-   * Set when this is the only flex child in its row (the 2-place layout,
-   * where the champion is alone with no 2nd/3rd to flank it). The classic
-   * 2-1-3 `order` below only makes sense relative to siblings at the other
-   * ranks — left on a lone item it still applies (order is compared against
-   * every flex item's default of 0), silently sorting the "champion" after
-   * a later sibling with no order override of its own.
-   */
-  standalone?: boolean;
 }
 
-function PodiumPlace({ rank, team, standalone = false }: PodiumPlaceProps) {
+function PodiumPlace({ rank, team }: PodiumPlaceProps) {
   const accent = PLACE_ACCENT[rank];
   const isChampion = rank === 1;
   const logoSize = isChampion ? 88 : 64;
@@ -44,9 +46,7 @@ function PodiumPlace({ rank, team, standalone = false }: PodiumPlaceProps) {
     <Paper
       elevation={isChampion ? 6 : 2}
       sx={{
-        // Classic podium ordering: 2 – 1 – 3 on wide screens, 1 – 2 – 3 stacked
-        // on mobile so the champion always reads first when scrolling.
-        order: standalone ? 'unset' : { xs: rank, md: rank === 1 ? 2 : rank === 2 ? 1 : 3 },
+        order: { xs: rank, md: GRID_COLUMN[rank] },
         flex: { xs: '1 1 100%', md: '1 1 0' },
         maxWidth: { md: 240 },
         display: 'flex',
@@ -114,69 +114,23 @@ interface PodiumProps {
 }
 
 /**
- * A division's top-three podium (1º/2º/3º): the champion is largest, centered
- * and trophy-accented, with runner-up and third beside it (or below on mobile).
- * Undecided places show a muted "A definir" placeholder. Works whether the
- * podium came from a playoff bracket or straight from the final standings.
+ * A division's top-three podium (1º/2º/3º): three cards side by side — 2nd,
+ * 1st, 3rd — with the champion largest, elevated and trophy-accented, always
+ * in the middle column regardless of whether there are two or three decided
+ * places. With only two places, the 3rd column is held open by an invisible
+ * spacer instead of being omitted — omitting it would let the two remaining
+ * cards center as a PAIR, leaving the champion off to one side of the row's
+ * actual center rather than in it. Undecided places show a muted
+ * "A definir" placeholder. Works whether the podium came from a playoff
+ * bracket or straight from the final standings.
  */
 export default function Podium({ podium }: PodiumProps) {
   // A playoff only has a 3rd place when its bracket includes a third-place
-  // match. When it does not, `third` is null and we omit the slot entirely
-  // rather than showing a permanent "A definir". A standings podium always
-  // keeps the three places (its third comes straight from the table).
+  // match. When it does not, `third` is null and the slot is held open by
+  // an invisible spacer (see GRID_COLUMN) rather than showing a permanent
+  // "A definir". A standings podium always keeps the three places (its
+  // third comes straight from the table).
   const showThird = !podium.hasPlayoff || podium.third != null;
-
-  if (!showThird) {
-    // The classic 2-1-3 arrangement centers the CHAMPION by flanking it with
-    // runners-up on both sides. With only two places decided there's nothing
-    // to put on the champion's other side, so the pair as a whole reads
-    // centered on the page while the champion itself — the actual focal
-    // point — sits off to one side of it. Center the champion alone instead,
-    // with the runner-up as its own smaller card underneath (not a bare
-    // text line — a lone line looked unfinished next to the full card above
-    // it, not like a deliberate secondary place).
-    return (
-      <Box
-        component="section"
-        aria-label={`Podio de ${podium.divisionName}`}
-        sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}
-      >
-        <PodiumPlace rank={1} team={podium.first} standalone />
-        <Paper
-          variant="outlined"
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5,
-            px: 2.5,
-            py: 1.5,
-            borderRadius: 2,
-            borderTop: `3px solid ${PLACE_ACCENT[2]}`,
-          }}
-        >
-          <Typography
-            component="span"
-            variant="subtitle2"
-            sx={{ color: PLACE_ACCENT[2], fontWeight: 700 }}
-          >
-            {PLACE_LABEL[2]}
-          </Typography>
-          {podium.second ? (
-            <>
-              <TeamLogo teamName={podium.second.teamName} logoUrl={podium.second.logoUrl} size={36} />
-              <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                {podium.second.teamName}
-              </Typography>
-            </>
-          ) : (
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              A definir
-            </Typography>
-          )}
-        </Paper>
-      </Box>
-    );
-  }
 
   return (
     <Box component="section" aria-label={`Podio de ${podium.divisionName}`}>
@@ -191,7 +145,14 @@ export default function Podium({ podium }: PodiumProps) {
       >
         <PodiumPlace rank={1} team={podium.first} />
         <PodiumPlace rank={2} team={podium.second} />
-        <PodiumPlace rank={3} team={podium.third} />
+        {showThird ? (
+          <PodiumPlace rank={3} team={podium.third} />
+        ) : (
+          <Box
+            aria-hidden
+            sx={{ display: { xs: 'none', md: 'block' }, order: GRID_COLUMN[3], flex: '1 1 0', maxWidth: 240 }}
+          />
+        )}
       </Box>
     </Box>
   );

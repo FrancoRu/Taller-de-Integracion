@@ -53,23 +53,26 @@ describe('Podium', () => {
     expect(screen.queryByText('A definir')).not.toBeInTheDocument();
   });
 
-  it('renders the champion above the runner-up when there is no 3rd place — not the other way around', () => {
+  it('holds the 3rd column open with a spacer when there is no 3rd place, instead of omitting it', () => {
     const { container } = render(<Podium podium={podium({ third: null })} />);
 
+    // DOM order: champion first (screen readers announce it first), then
+    // runner-up — visual position (middle column vs left) comes from CSS
+    // `order`, which jsdom can't meaningfully resolve in a unit test; that
+    // part is verified visually against staging instead.
     const champion = screen.getByText('Los Halcones');
     const runnerUp = screen.getByText('Los Pumas');
-    // DOM order alone isn't enough proof — a leftover flex `order` style can
-    // still visually reorder same-parent siblings regardless of DOM order —
-    // so this also asserts the champion's box has no `order` overriding it
-    // past the runner-up line (see PodiumPlace's `standalone` prop).
     expect(
       champion.compareDocumentPosition(runnerUp) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
 
-    const championBox = container.querySelector('.MuiPaper-root');
-    expect(championBox).not.toBeNull();
-    expect(getComputedStyle(championBox!).order).not.toBe('2');
-    expect(getComputedStyle(championBox!).order).not.toBe('1');
+    expect(container.querySelectorAll('.MuiPaper-root')).toHaveLength(2);
+    // Both places here are decided (real teams, no "A definir" fallback
+    // circle), so the only aria-hidden element left is the 3rd-column
+    // spacer that keeps the champion's column the row's true center
+    // instead of the pair centering as a unit with the champion off to
+    // one side.
+    expect(container.querySelector('[aria-hidden="true"]')).not.toBeNull();
   });
 
   it('renders a top-three read straight from standings (no playoff)', () => {
