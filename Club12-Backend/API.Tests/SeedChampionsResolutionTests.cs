@@ -79,8 +79,6 @@ public class SeedChampionsResolutionTests : IClassFixture<CustomWebApplicationFa
             StartDate: new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc),
             StageStartDate: new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc),
             StageEndDate: new DateTime(2026, 6, 30, 0, 0, 0, DateTimeKind.Utc),
-            FinishedMatchesStart: new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc),
-            UpcomingMatchesStart: new DateTime(2026, 6, 30, 0, 0, 0, DateTimeKind.Utc),
             Divisions:
             [
                 new(zoneName, UniqueNames(8), Codes(8), Colors(8), cups),
@@ -132,8 +130,6 @@ public class SeedChampionsResolutionTests : IClassFixture<CustomWebApplicationFa
             StartDate: new DateTime(2026, 7, 5, 0, 0, 0, DateTimeKind.Utc),
             StageStartDate: new DateTime(2026, 7, 5, 0, 0, 0, DateTimeKind.Utc),
             StageEndDate: new DateTime(2026, 12, 15, 0, 0, 0, DateTimeKind.Utc),
-            FinishedMatchesStart: new DateTime(2026, 7, 5, 0, 0, 0, DateTimeKind.Utc),
-            UpcomingMatchesStart: new DateTime(2026, 9, 6, 0, 0, 0, DateTimeKind.Utc),
             Divisions:
             [
                 new($"Primera División {Guid.NewGuid()}", UniqueNames(8), Codes(8), Colors(8)),

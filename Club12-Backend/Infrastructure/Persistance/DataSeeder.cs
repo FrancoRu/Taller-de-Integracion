@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -49,7 +50,12 @@ namespace Infrastructure.Persistance;
 /// Best-of-1. Divisions carry their tournament's category (HU-48). Team
 /// crests are uploaded from a configurable folder (<c>Seed:LogosPath</c>) via
 /// the same Supabase storage path the team endpoints use; any logo failure
-/// degrades to a placeholder without ever failing the seed.
+/// degrades to a placeholder without ever failing the seed. The ficha médica
+/// backfill works the same way: <c>Seed:MedicalRecordPath</c> when configured,
+/// otherwise a generated placeholder PDF, so the seeded rosters end up
+/// habilitado on any machine instead of only on the one the default path
+/// points at (a league whose players are all un-habilitado while holding
+/// scorer rows contradicts HU-57/HU-60).
 ///
 /// Controlled by configuration: <c>Seed:Enabled</c> gates the whole path (checked
 /// by the caller). By default it runs once and skips if any team already exists;
@@ -79,6 +85,12 @@ public sealed class DataSeeder(
 #pragma warning disable S1075 // Dev-only seed default path; overridden by the Seed:MedicalRecordPath config key.
     public const string DefaultMedicalRecordPath = @"C:\Users\Franco\Downloads\ficha-medica-club12.pdf";
 #pragma warning restore S1075
+
+    /// <summary>
+    /// File name recorded for the generated fallback ficha médica (see
+    /// <see cref="BuildPlaceholderMedicalRecordPdf"/>).
+    /// </summary>
+    private const string PlaceholderMedicalRecordFileName = "ficha-medica-ejemplo.pdf";
 
     // Fixed seed keeps logo-to-team assignment reproducible across reseeds.
     private const int LogoShuffleSeed = 4212;
@@ -392,8 +404,6 @@ public sealed class DataSeeder(
             StartDate: aperturaStart,
             StageStartDate: aperturaStart,
             StageEndDate: aperturaEnd,
-            FinishedMatchesStart: aperturaStart,
-            UpcomingMatchesStart: aperturaEnd,
             Divisions: [ZoneOf("Zona Única", feminine, FemeninoCups)],
             Status: TournamentStatus.Finished,
             Category: TournamentCategory.Feminine,
@@ -411,8 +421,6 @@ public sealed class DataSeeder(
             StartDate: aperturaStart,
             StageStartDate: aperturaStart,
             StageEndDate: aperturaEnd,
-            FinishedMatchesStart: aperturaStart,
-            UpcomingMatchesStart: aperturaEnd,
             Divisions:
             [
                 ZoneOf("Zona A", [.. masculine[..10]], ZonaABCups),
@@ -453,8 +461,6 @@ public sealed class DataSeeder(
             StartDate: clausuraStart,
             StageStartDate: clausuraStart,
             StageEndDate: clausuraEnd,
-            FinishedMatchesStart: clausuraStart,
-            UpcomingMatchesStart: clausuraEnd,
             Divisions:
             [
                 ZoneOf("Zona A", [.. clausuraMasculine[..8]], null),
@@ -477,8 +483,6 @@ public sealed class DataSeeder(
             StartDate: clausuraStart,
             StageStartDate: clausuraStart,
             StageEndDate: clausuraEnd,
-            FinishedMatchesStart: clausuraStart,
-            UpcomingMatchesStart: clausuraEnd,
             Divisions: [ZoneOf("Zona Única", [.. clausuraFeminine[..6]], null)],
             Status: TournamentStatus.Ongoing,
             Category: TournamentCategory.Feminine,
@@ -585,10 +589,21 @@ public sealed class DataSeeder(
             (1, "Presentación tardía de la planilla."),
         ];
 
+        // Ongoing tournaments first, newest season first. A penalty is only
+        // worth demonstrating where the table is still live — the previous
+        // order put every deduction on the OLDEST season's zones, so the season
+        // actually on screen never showed one. Preferring an ongoing zone also
+        // avoids a second-order mismatch: a finished zone's bracket was seeded
+        // (exactly like StageService.SeedPlayoffCupsAsync does) from standings
+        // WITHOUT deductions, so a penalty there can rank the visible table
+        // differently from the cup it fed.
         List<(Division Division, List<Team> Teams)> candidates =
         [
             .. results
-                .SelectMany(r => r.Tournament.Divisions)
+                .Select((result, index) => (result, index))
+                .OrderBy(entry => entry.result.Tournament.Status == TournamentStatus.Ongoing ? 0 : 1)
+                .ThenByDescending(entry => entry.index)
+                .SelectMany(entry => entry.result.Tournament.Divisions)
                 .Where(d => !d.IsCrossDivisionCup)
                 .Select(d => (
                     Division: d,
@@ -669,27 +684,49 @@ public sealed class DataSeeder(
     /// </summary>
     private async Task SeedMedicalRecordsAsync(string? medicalRecordPath)
     {
-        string path = string.IsNullOrWhiteSpace(medicalRecordPath) ? DefaultMedicalRecordPath : medicalRecordPath;
+        bool isConfigured = !string.IsNullOrWhiteSpace(medicalRecordPath);
+        string path = isConfigured ? medicalRecordPath! : DefaultMedicalRecordPath;
 
         byte[] pdf;
+        string fileName;
         try
         {
-            if (!File.Exists(path))
+            if (File.Exists(path))
             {
+                pdf = await File.ReadAllBytesAsync(path);
+                fileName = Path.GetFileName(path);
+            }
+            else if (isConfigured)
+            {
+                // An explicitly configured path that is not there is a
+                // misconfiguration (a typo, a file that moved) — warn and skip
+                // rather than papering over it with a placeholder.
                 logger.LogWarning(
                     "Seed medical-record file '{Path}' not found — skipping medical-record seeding.", path);
                 return;
             }
-
-            pdf = await File.ReadAllBytesAsync(path);
+            else
+            {
+                // Nothing configured and the machine-specific default is not
+                // there — the normal case on any machine but the one the
+                // default points at. Falling back to a generated PDF keeps the
+                // seeded league coherent: without a REAL stored file every
+                // Approved registration reads as NOT habilitado, while the same
+                // players hold scorer/statistic rows for thousands of played
+                // matches — exactly the combination PlayerStatisticService
+                // rejects on a real match sheet (HU-57/HU-60).
+                pdf = BuildPlaceholderMedicalRecordPdf();
+                fileName = PlaceholderMedicalRecordFileName;
+                logger.LogInformation(
+                    "No Seed:MedicalRecordPath configured and '{Path}' is absent — seeding the built-in "
+                    + "placeholder ficha médica so approved registrations end up habilitado.", path);
+            }
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Could not read seed medical record from '{Path}' — skipping.", path);
             return;
         }
-
-        string fileName = Path.GetFileName(path);
 
         // Superset filter, EF-translatable (StartsWith on a constant -> LIKE 'medical-records/%').
         // The per-row IsStoredReference check below is the authoritative
@@ -746,6 +783,53 @@ public sealed class DataSeeder(
         logger.LogInformation(
             "Medical-record seed: {Uploaded} uploaded, {Failed} failed, {Total} candidates, from '{Path}'.",
             uploaded, failed, candidates.Count, path);
+    }
+
+    /// <summary>
+    /// A real, valid one-page PDF built in memory (correct xref table and
+    /// offsets, so it opens like any other file), used as the ficha médica when
+    /// no path is configured and the default file is absent. Deterministic: the
+    /// same bytes on every run.
+    /// </summary>
+    private static byte[] BuildPlaceholderMedicalRecordPdf()
+    {
+        const string content =
+            "BT /F1 16 Tf 60 760 Td (Ficha medica de ejemplo - Liga Club 12) Tj ET";
+
+        string[] bodies =
+        [
+            "<< /Type /Catalog /Pages 2 0 R >>",
+            "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] "
+                + "/Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+            $"<< /Length {content.Length} >>\nstream\n{content}\nendstream",
+        ];
+
+        StringBuilder pdf = new("%PDF-1.4\n");
+        List<int> offsets = [];
+
+        for (int i = 0; i < bodies.Length; i++)
+        {
+            // Every character written here is ASCII, so the builder's length is
+            // also the byte offset the xref table has to point at.
+            offsets.Add(pdf.Length);
+            pdf.Append(i + 1).Append(" 0 obj\n").Append(bodies[i]).Append("\nendobj\n");
+        }
+
+        int xrefOffset = pdf.Length;
+        pdf.Append("xref\n0 ").Append(bodies.Length + 1).Append("\n")
+            .Append("0000000000 65535 f \n");
+
+        foreach (int offset in offsets)
+        {
+            pdf.Append(offset.ToString("D10", CultureInfo.InvariantCulture)).Append(" 00000 n \n");
+        }
+
+        pdf.Append("trailer\n<< /Size ").Append(bodies.Length + 1).Append(" /Root 1 0 R >>\n")
+            .Append("startxref\n").Append(xrefOffset).Append("\n%%EOF\n");
+
+        return Encoding.ASCII.GetBytes(pdf.ToString());
     }
 
     /// <summary>
