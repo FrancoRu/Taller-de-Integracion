@@ -17,7 +17,8 @@ import {
 import { GUID } from '@/modules/core/types/types';
 import { downloadCsv, parseCsv } from '@/modules/core/utils/csv';
 import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
-import { usePlayer } from '@/modules/player/hook/player.hook';
+import { extractProblemDetail } from '@/modules/core/utils/problemDetails';
+import { playerService } from '@/modules/player/service/player.service';
 import { IAddPlayerRequest } from '@/modules/player/type/player.d';
 import {
   PlayerFieldsForValidation,
@@ -40,7 +41,15 @@ const CSV_HEADERS = [
 interface CsvRowResult {
   rowNumber: number;
   fields: PlayerFieldsForValidation;
+  /** Pre-submit validation failure — permanent, never retried. */
   error: string | null;
+  /** Set once this row has actually been sent to the API. */
+  imported: boolean;
+  /** The backend's exact reason this row failed to create, if it did. Shown
+   * inline per row instead of a global alert — firing one alert per failed
+   * row in a batch stacked them on top of each other with no way to read
+   * which row failed for what reason. */
+  submitError: string | null;
 }
 
 const cellsToFields = (cells: string[]): PlayerFieldsForValidation => ({
@@ -67,7 +76,11 @@ interface RosterCsvImportDialogProps {
  * validated with the exact same rules as the roster table's inline add row
  * ({@link validatePlayerFields}) before anything is sent to the API, and
  * only the rows that pass are actually submitted — the rest are shown
- * inline so the admin can fix and re-upload just those.
+ * inline so the admin can fix and re-upload just those. Rows are submitted
+ * via `playerService` directly (not the `usePlayer` context) so a per-row
+ * API failure never fires the app's global error alert — with N rows in
+ * flight that alert would fire N times and stack, hiding which row failed
+ * and why. Each row's outcome is shown in its own "Estado" cell instead.
  */
 const RosterCsvImportDialog: React.FC<RosterCsvImportDialogProps> = ({
   open,
@@ -75,7 +88,6 @@ const RosterCsvImportDialog: React.FC<RosterCsvImportDialogProps> = ({
   teamId,
   onImported,
 }) => {
-  const { addPlayer } = usePlayer();
   const [fileName, setFileName] = useState('');
   const [rows, setRows] = useState<CsvRowResult[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -125,22 +137,30 @@ const RosterCsvImportDialog: React.FC<RosterCsvImportDialogProps> = ({
           rowNumber: index + 1,
           fields,
           error: validationError ? validationError.text : null,
+          imported: false,
+          submitError: null,
         };
       })
     );
   };
 
-  const validRows = rows.filter(row => row.error === null);
   const invalidRows = rows.filter(row => row.error !== null);
+  // Rows still to (re)try: passed validation and haven't been imported yet —
+  // excludes rows already imported by a previous click, so retrying after a
+  // partial failure doesn't re-submit (and duplicate-document-conflict) the
+  // ones that already succeeded.
+  const pendingRows = rows.filter(row => row.error === null && !row.imported);
+  const importedRows = rows.filter(row => row.imported);
 
   const handleImport = async () => {
-    if (validRows.length === 0) {
+    if (pendingRows.length === 0) {
       return;
     }
 
     setSubmitting(true);
-    let importedCount = 0;
-    for (const row of validRows) {
+    const outcomes = new Map<number, { imported: boolean; submitError: string | null }>();
+
+    for (const row of pendingRows) {
       const payload: IAddPlayerRequest = {
         firstName: row.fields.firstName.trim(),
         secondName: row.fields.secondName?.trim() || undefined,
@@ -152,28 +172,43 @@ const RosterCsvImportDialog: React.FC<RosterCsvImportDialogProps> = ({
         teamId,
       };
 
-      const created = await addPlayer(payload);
-      if (created) {
-        importedCount += 1;
+      try {
+        await playerService.addPlayer(payload);
+        outcomes.set(row.rowNumber, { imported: true, submitError: null });
+      } catch (error) {
+        outcomes.set(row.rowNumber, {
+          imported: false,
+          submitError: extractProblemDetail(error) ?? 'No se pudo crear el jugador.',
+        });
       }
     }
+
+    setRows(prev =>
+      prev.map(row => {
+        const outcome = outcomes.get(row.rowNumber);
+        return outcome ? { ...row, ...outcome } : row;
+      })
+    );
     setSubmitting(false);
 
-    const failedCount = validRows.length - importedCount;
-    await notifySuccess({
-      title: 'Importación finalizada',
-      text: [
-        `${importedCount} jugador(es) importado(s) correctamente.`,
-        failedCount > 0 ? `${failedCount} fila(s) válida(s) fallaron al crearse (ver el detalle mostrado).` : null,
-        invalidRows.length > 0 ? `${invalidRows.length} fila(s) se omitieron por datos inválidos.` : null,
-      ]
-        .filter(Boolean)
-        .join(' '),
-    });
+    const importedNowCount = [...outcomes.values()].filter(o => o.imported).length;
+    const failedCount = pendingRows.length - importedNowCount;
 
-    reset();
-    onClose();
-    onImported?.();
+    if (importedNowCount > 0) {
+      onImported?.();
+    }
+
+    if (failedCount === 0) {
+      await notifySuccess({
+        title: 'Importación finalizada',
+        text: `${importedNowCount} jugador(es) importado(s) correctamente.`,
+      });
+      reset();
+      onClose();
+    }
+    // On a partial/total failure the dialog stays open: each row's exact
+    // reason is right there in the "Estado" column, and "Importar" now only
+    // re-targets the rows still pending.
   };
 
   return (
@@ -210,8 +245,9 @@ const RosterCsvImportDialog: React.FC<RosterCsvImportDialogProps> = ({
 
           {fileName && (
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {fileName} · {rows.length} fila(s), {validRows.length}{' '}
+              {fileName} · {rows.length} fila(s), {pendingRows.length + importedRows.length}{' '}
               válida(s)
+              {importedRows.length > 0 && `, ${importedRows.length} ya importada(s)`}
               {invalidRows.length > 0 && `, ${invalidRows.length} con errores`}
               .
             </Typography>
@@ -228,19 +264,28 @@ const RosterCsvImportDialog: React.FC<RosterCsvImportDialogProps> = ({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {rows.map(row => (
-                    <TableRow key={row.rowNumber}>
-                      <TableCell>{row.rowNumber}</TableCell>
-                      <TableCell>
-                        {[row.fields.firstName, row.fields.lastName]
-                          .filter(Boolean)
-                          .join(' ') || '—'}
-                      </TableCell>
-                      <TableCell sx={{ color: row.error ? 'error.main' : 'success.main' }}>
-                        {row.error ?? 'Lista para importar'}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {rows.map(row => {
+                    const status = row.error
+                      ? row.error
+                      : row.imported
+                        ? 'Importado'
+                        : (row.submitError ?? 'Lista para importar');
+                    const isOk = !row.error && !row.submitError;
+
+                    return (
+                      <TableRow key={row.rowNumber}>
+                        <TableCell>{row.rowNumber}</TableCell>
+                        <TableCell>
+                          {[row.fields.firstName, row.fields.lastName]
+                            .filter(Boolean)
+                            .join(' ') || '—'}
+                        </TableCell>
+                        <TableCell sx={{ color: isOk ? 'success.main' : 'error.main' }}>
+                          {status}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -249,8 +294,8 @@ const RosterCsvImportDialog: React.FC<RosterCsvImportDialogProps> = ({
           <FormButtons
             onCancel={handleClose}
             onConfirm={() => void handleImport()}
-            confirmLabel={`Importar (${validRows.length})`}
-            disabled={submitting || validRows.length === 0}
+            confirmLabel={`Importar (${pendingRows.length})`}
+            disabled={submitting || pendingRows.length === 0}
           />
         </Stack>
       </DialogContent>
