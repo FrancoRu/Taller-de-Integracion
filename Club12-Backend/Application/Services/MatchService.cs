@@ -26,7 +26,7 @@ using MatchType = Domain.Enums.MatchType;
 
 namespace Application.Services;
 
-public class MatchService(IUnitOfWork unitOfWork) : IMatchService
+public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : IMatchService
 {
     private readonly IMatchRepository _matchRepository = unitOfWork.MatchRepository;
     private readonly IStageRepository _stageRepository = unitOfWork.StageRepository;
@@ -129,6 +129,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
         MatchResultFinalizer.ApplyResult(match, homeScore, visitorScore);
 
         await _matchRepository.UpdateAsync(match);
+        await stageService.TryAutoSeedPlayoffPhaseAsync(match.StageId);
         return match;
     }
 
@@ -175,6 +176,7 @@ public class MatchService(IUnitOfWork unitOfWork) : IMatchService
         match.Status = MatchStatus.WalkOver;
 
         await _matchRepository.UpdateAsync(match);
+        await stageService.TryAutoSeedPlayoffPhaseAsync(match.StageId);
         return match;
     }
 

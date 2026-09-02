@@ -86,5 +86,21 @@ public interface IStageService
     /// <param name="divisionId">The division whose group stage has finished.</param>
     /// <returns>The seeded matches per destination cup (BracketName → matches).</returns>
     Task<Dictionary<string, List<Match>>> SeedPlayoffCupsAsync(Guid divisionId);
+
+    /// <summary>
+    /// Called after a match finishes: if <paramref name="finishedMatchStageId"/>
+    /// belongs to a Group stage, and that finish completed EVERY match of
+    /// EVERY group stage in the division (the whole group phase), and the
+    /// division uses position-range playoff cups (HU-45/HU-81) that are not
+    /// already (even partially) seeded, automatically seeds them via
+    /// <see cref="SeedPlayoffCupsAsync"/> — the admin no longer has to click
+    /// "Sembrar bracket" by hand once every zone game is in. A no-op for
+    /// every other case (mid-group-phase, no cups configured, or already
+    /// seeded — left for the admin's manual action). Never throws: an
+    /// auto-seed failure is logged and swallowed rather than failing the
+    /// match-finishing operation that triggered it.
+    /// </summary>
+    /// <param name="finishedMatchStageId">The stage of the match that just finished.</param>
+    Task TryAutoSeedPlayoffPhaseAsync(Guid finishedMatchStageId);
 }
 

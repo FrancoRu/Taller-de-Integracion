@@ -17,6 +17,8 @@ using Domain.Enums;
 
 using LinqKit;
 
+using Microsoft.Extensions.Logging;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,7 +31,7 @@ namespace Application.Services;
 /// Service responsible for managing tournament stages, including creation, retrieval, updating, deletion,
 /// automated stage generation, and team assignments within stages.
 /// </summary>
-public class StageService(IUnitOfWork unitOfWork) : IStageService
+public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) : IStageService
 {
     private readonly IStageRepository _stageRepository = unitOfWork.StageRepository;
     private readonly IDivisionRepository _divisionRepository = unitOfWork.DivisionRepository;
@@ -673,6 +675,66 @@ public class StageService(IUnitOfWork unitOfWork) : IStageService
         }
 
         return seededByCup;
+    }
+
+    /// <inheritdoc/>
+    public async Task TryAutoSeedPlayoffPhaseAsync(Guid finishedMatchStageId)
+    {
+        try
+        {
+            Stage? finishedStage = await _stageRepository.GetByIdAsync(finishedMatchStageId);
+            if (finishedStage is null || finishedStage.StageType != StageType.Group)
+            {
+                return;
+            }
+
+            Guid divisionId = finishedStage.DivisionId;
+
+            List<Stage> groupStages = [.. await _stageRepository.FindAsync(
+                s => s.DivisionId == divisionId && s.StageType == StageType.Group,
+                includes: [s => s.Matches])];
+
+            bool groupPhaseComplete = groupStages.Count > 0
+                && groupStages.TrueForAll(s => s.Matches.Count > 0 && s.Matches.All(m => m.IsFinished));
+
+            if (!groupPhaseComplete)
+            {
+                return;
+            }
+
+            Division? division = await _divisionRepository.GetByIdAsync(
+                divisionId, includes: [d => d.PlayoffMappings]);
+
+            if (division is null || division.PlayoffMappings.Count == 0)
+            {
+                return;
+            }
+
+            List<Stage> eliminationStages = [.. await _stageRepository.FindAsync(
+                s => s.DivisionId == divisionId && s.StageType != StageType.Group,
+                includes: [s => s.Matches])];
+
+            bool anyEliminationStageSeeded = eliminationStages
+                .Exists(s => s.Matches.Any(m => m.HomeTeamId.HasValue || m.VisitorTeamId.HasValue));
+
+            // Nothing to seed, or an admin already seeded a cup by hand — auto-seed
+            // only ever fires from a fully-unseeded state, so it never fights a
+            // partial manual seed (SeedPlayoffCupsAsync would throw for whichever
+            // cup is already done).
+            if (eliminationStages.Count == 0 || anyEliminationStageSeeded)
+            {
+                return;
+            }
+
+            await SeedPlayoffCupsAsync(divisionId);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex,
+                "Auto-seed skipped for the group phase of stage {StageId}: the playoff cups " +
+                "could not be seeded automatically. An admin can still seed them by hand.",
+                finishedMatchStageId);
+        }
     }
 
     /// <summary>

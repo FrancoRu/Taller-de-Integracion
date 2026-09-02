@@ -20,7 +20,7 @@ using System.Threading.Tasks;
 
 namespace Application.Services;
 
-public class PlayerStatisticService(IUnitOfWork unitOfWork) : IPlayerStatisticService
+public class PlayerStatisticService(IUnitOfWork unitOfWork, IStageService stageService) : IPlayerStatisticService
 {
     private readonly IPlayerStatisticRepository _playerStatisticRepository = unitOfWork.PlayerStatisticRepository;
     private readonly IMatchRepository _matchRepository = unitOfWork.MatchRepository;
@@ -184,6 +184,7 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork) : IPlayerStatisticSe
         MatchResultFinalizer.ApplyResult(match, homeScore, visitorScore);
         match.WentToOvertime = request.WentToOvertime;
         await _matchRepository.UpdateAsync(match);
+        await stageService.TryAutoSeedPlayoffPhaseAsync(match.StageId);
 
         await ReplaceTeamPointsForMatchAsync(match.Id, homeTeam.Id);
         await ReplaceTeamPointsForMatchAsync(match.Id, visitorTeam.Id);
