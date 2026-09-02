@@ -15,6 +15,7 @@ import PrintIcon from '@mui/icons-material/Print';
 import { Position } from '@/modules/division/type/division.d';
 import { sortPositions } from '@/modules/division/utils/sortPositions';
 import { downloadCsv } from '@/modules/core/utils/csv';
+import { printMediaStyles } from '@/modules/core/utils/printStyles';
 import ExportCsvButton from '@/views/core/components/ExportCsvButton';
 
 interface PrintableResultsSheetProps {
@@ -55,33 +56,6 @@ const csvFilenamePart = (divisionName?: string) =>
     .replace(/[^a-zA-Z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .toLowerCase() || 'division';
-
-/**
- * `@media print` isolation: hide every element on the page except this
- * component's `[data-print="sheet"]` subtree, and force that subtree
- * visible even though it is `display:none` on screen. This hides all app
- * chrome (nav/tabs/buttons) without needing to tag them individually.
- */
-const printMediaStyles = {
-  '@media print': {
-    'body *': { visibility: 'hidden' },
-    '[data-print="sheet"], [data-print="sheet"] *': { visibility: 'visible' },
-    '[data-print="sheet"]': {
-      display: 'block !important',
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-    },
-    '[data-print="hide"]': { display: 'none !important' },
-    thead: { display: 'table-header-group' },
-    tr: { breakInside: 'avoid' },
-    '*': {
-      printColorAdjust: 'exact',
-      WebkitPrintColorAdjust: 'exact',
-    },
-  },
-};
 
 /**
  * Native-print-only sheet for a division's standings (posiciones). Renders an

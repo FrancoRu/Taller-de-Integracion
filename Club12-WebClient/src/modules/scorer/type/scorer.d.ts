@@ -52,6 +52,14 @@ export interface IScorerByPlayerResponse extends IScorerBaseResponse {
   fullName: string;
   /** The player's jersey number (dorsal), when known — for the match kit. */
   jerseyNumber?: number | null;
+  /**
+   * The player's current team. Present on the goleadores ranking; omitted
+   * from a match's own per-team `scorers` list (redundant there — the
+   * team is already implied by which side of the match the list came from).
+   */
+  teamId?: GUID;
+  /** The player's current team's name. See {@link teamId}. */
+  teamName?: string;
 }
 
 export interface IScorerByTeamResponse extends IScorerBaseResponse {

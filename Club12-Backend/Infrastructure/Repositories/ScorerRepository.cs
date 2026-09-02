@@ -116,7 +116,25 @@ public class ScorerRepository(ApplicationDBContext context)
                 : player.LastName.ToUpper() + " " + player.FirstName + " " + player.SecondName,
             Points = scoreStatsQuery
                 .Where(s => s.PlayerId == player.Id)
-                .Sum(s => (int?) s.Value) ?? 0
+                .Sum(s => (int?) s.Value) ?? 0,
+            TeamId = player.TeamId,
+            TeamName = player.Team.Name,
+            // The dorsal is season-scoped (PlayerTeamRegistration), not a
+            // property of Player itself: when the ranking is scoped to one
+            // tournament, use that season's registration; otherwise (a
+            // season/all-time aggregate spanning several registrations) fall
+            // back to the player's most recent registration with their
+            // current team, since there is no single "the" dorsal to show.
+            JerseyNumber = filter.TournamentId.HasValue
+                ? _context.Set<PlayerTeamRegistration>()
+                    .Where(r => r.PlayerId == player.Id && r.TournamentId == filter.TournamentId.Value)
+                    .Select(r => r.JerseyNumber)
+                    .FirstOrDefault()
+                : _context.Set<PlayerTeamRegistration>()
+                    .Where(r => r.PlayerId == player.Id && r.TeamId == player.TeamId)
+                    .OrderByDescending(r => r.DateCreated)
+                    .Select(r => r.JerseyNumber)
+                    .FirstOrDefault(),
         });
 
         int totalCount = await query.CountAsync();

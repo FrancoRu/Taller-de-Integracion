@@ -21,4 +21,10 @@ public class ScorerByPlayerResponse : ScorerBaseResponse
     /// on the match scoreboard. Null when the player has no season roster number.
     /// </summary>
     public int? JerseyNumber { get; set; }
+
+    /// <summary>The player's current team.</summary>
+    public Guid TeamId { get; set; }
+
+    /// <summary>The player's current team's name.</summary>
+    public string TeamName { get; set; } = string.Empty;
 }

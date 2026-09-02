@@ -33,6 +33,14 @@ vi.mock('@/modules/matchSeries/service/matchSeries.service', () => ({
   },
 }));
 
+const getScorersByPlayerFiltered = vi.fn().mockResolvedValue({ data: { items: [] } });
+
+vi.mock('@/modules/scorer/service/scorer.service', () => ({
+  scorerService: {
+    getScorersByPlayerFiltered: (...args: unknown[]) => getScorersByPlayerFiltered(...args),
+  },
+}));
+
 const mockedUseDivision = vi.mocked(useDivision);
 const mockedUseTournament = vi.mocked(useTournament);
 const mockedUseStage = vi.mocked(useStage);
@@ -121,9 +129,9 @@ const setup = () => {
   });
 };
 
-const renderPage = () =>
+const renderPage = (tab = 'playoff') =>
   render(
-    <MemoryRouter initialEntries={[`/panel/divisiones/${DIVISION_ID}?tab=playoff`]}>
+    <MemoryRouter initialEntries={[`/panel/divisiones/${DIVISION_ID}?tab=${tab}`]}>
       <Routes>
         <Route path="/panel/divisiones/:divisionId" element={<DivisionPage />} />
       </Routes>
@@ -143,5 +151,32 @@ describe('DivisionPage — Playoff tab shows a real match list alongside the bra
       expect(screen.getByRole('heading', { name: 'Partidos de playoff' })).toBeInTheDocument()
     );
     expect(screen.getAllByText('Rival de la final').length).toBeGreaterThan(0);
+  });
+});
+
+describe('DivisionPage — Goleadores tab', () => {
+  it('renders the division scorers ranking fetched by divisionId', async () => {
+    setup();
+    getScorersByPlayerFiltered.mockResolvedValue({
+      data: {
+        items: [
+          {
+            playerId: guid('player-1'),
+            fullName: 'PEREZ Juan',
+            points: 24,
+            jerseyNumber: 7,
+            teamId: guid('team-home'),
+            teamName: 'Equipo Local',
+          },
+        ],
+      },
+    });
+
+    renderPage('goleadores');
+
+    await waitFor(() => expect(screen.getByText('PEREZ Juan')).toBeInTheDocument());
+    expect(getScorersByPlayerFiltered).toHaveBeenCalledWith(
+      expect.objectContaining({ divisionId: DIVISION_ID })
+    );
   });
 });

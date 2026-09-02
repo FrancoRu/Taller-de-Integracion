@@ -17,6 +17,7 @@ import { buildBrackets } from '@/modules/playoff/buildBracket';
 import { BracketGroup } from '@/modules/playoff/type/bracket.d';
 import { buildDivisionFixtureSections } from '@/modules/match/utils/divisionFixtureSections';
 import DivisionStandings from '@/views/division/divisionStandings';
+import DivisionScorersTable from '@/views/division/DivisionScorersTable';
 import { buildCrossCupGroupQualificationRange } from '@/modules/division/utils/qualificationRange';
 import DivisionFixture from '@/views/division/DivisionFixture';
 import TeamLogo from '@/views/core/components/TeamLogo';
@@ -45,7 +46,13 @@ const DivisionPage: React.FC = () => {
   const isAdminOrOwner =
     role === UserRolesType.Admin || role === UserRolesType.Owner;
   const [loading, setLoading] = useState(false);
-  type DivisionTab = 'detalle' | 'posiciones' | 'equipos' | 'partidos' | 'playoff';
+  type DivisionTab =
+    | 'detalle'
+    | 'posiciones'
+    | 'goleadores'
+    | 'equipos'
+    | 'partidos'
+    | 'playoff';
   const DEFAULT_TAB: DivisionTab = 'detalle';
   const TAB_QUERY_PARAM = 'tab';
   // Kept in the URL (not local state) so leaving to a match's detail and
@@ -298,6 +305,7 @@ const DivisionPage: React.FC = () => {
           <Tab label="Detalle" value="detalle" />
           <Tab label="Equipos" value="equipos" />
           <Tab label="Posiciones" value="posiciones" />
+          <Tab label="Goleadores" value="goleadores" />
           <Tab label="Partidos" value="partidos" />
           <Tab label="Playoff" value="playoff" />
         </Tabs>
@@ -422,6 +430,10 @@ const DivisionPage: React.FC = () => {
               qualificationRanges={division.qualificationRanges}
             />
           ))}
+
+        {tab === 'goleadores' && (
+          <DivisionScorersTable divisionId={division.id} divisionName={division.name} />
+        )}
 
         {tab === 'playoff' &&
           (bracketsLoading ? (

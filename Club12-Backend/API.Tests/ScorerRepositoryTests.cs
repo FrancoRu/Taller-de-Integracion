@@ -247,6 +247,37 @@ public class ScorerRepositoryTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task GetPlayerScoresAsync_IncludesTeamAndTournamentScopedJerseyNumber()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IScorerRepository scorerRepository = scope.ServiceProvider.GetRequiredService<IScorerRepository>();
+
+        Tournament tournament = await SeedTournamentAsync(db);
+        (Player player, Match match, Team team) =
+            await SeedPlayerInTournamentAsync(db, tournament, "Goleador", "Estrella");
+        await AddScorerAsync(db, player.Id, match.Id, points: 12);
+
+        db.PlayerTeamRegistrations.Add(new PlayerTeamRegistration
+        {
+            PlayerId = player.Id,
+            TeamId = team.Id,
+            TournamentId = tournament.Id,
+            JerseyNumber = 23,
+            CreatedBy = "test",
+        });
+        await db.SaveChangesAsync();
+
+        GetScorerFilteredRequest filter = new() { TournamentId = tournament.Id };
+        (IEnumerable<ScorerByPlayerResponse> items, _) = await scorerRepository.GetPlayerScoresAsync(filter);
+
+        ScorerByPlayerResponse result = Assert.Single(items);
+        Assert.Equal(team.Id, result.TeamId);
+        Assert.Equal(team.Name, result.TeamName);
+        Assert.Equal(23, result.JerseyNumber);
+    }
+
+    [Fact]
     public async Task GetPlayerScoresAsync_DivisionFilter_RestrictsToThatDivisionsScorers()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
