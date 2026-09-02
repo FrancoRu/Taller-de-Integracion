@@ -192,13 +192,19 @@ describe('PublicDivisionPanel — Partidos vs Playoff split', () => {
 
   beforeEach(() => {
     getStagesByFilters.mockResolvedValue({ data: { items: [groupStage, koStage] } });
-    getMatchByFilter.mockResolvedValue({
-      data: {
-        items: [
-          buildMatch('match-group', groupStage.id, 'Rival de grupos'),
-          buildMatch('match-final', koStage.id, 'Rival de la final'),
-        ],
-      },
+    // Regular-season and playoff matches are now fetched as two separate,
+    // type-scoped calls — the mock must respond per call the same way the
+    // real API does, or both calls return the same combined list and every
+    // match ends up duplicated in the panel's state.
+    getMatchByFilter.mockImplementation((filter: { type?: MatchType }) => {
+      if (filter.type === MatchType.Playoff) {
+        return Promise.resolve({
+          data: { items: [buildMatch('match-final', koStage.id, 'Rival de la final')] },
+        });
+      }
+      return Promise.resolve({
+        data: { items: [buildMatch('match-group', groupStage.id, 'Rival de grupos')] },
+      });
     });
   });
 

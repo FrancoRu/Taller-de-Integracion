@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Box, Button, Stack, Typography } from '@mui/material';
 import { ListSkeleton } from '@/views/core/components/skeletons';
 import { GUID } from '@/modules/core/types/types';
+import { MatchType } from '@/modules/core/enum/match/matchType';
 import { stageService } from '@/modules/stage/service/stage.service';
 import { matchService } from '@/modules/match/service/match.service';
 import { IStageResponse } from '@/modules/stage/type/stage';
@@ -74,7 +75,12 @@ export default function DivisionFixture({
             isElimination: false,
             pageSize: FETCH_PAGE_SIZE,
           }),
-          matchService.getMatchByFilter({ divisionId, pageSize: FETCH_PAGE_SIZE }),
+          // Scoped to regular-season matches, matching the stages fetch
+          // above — an unfiltered fetch shares this page size with however
+          // many playoff/series games the division also has, which can
+          // starve out regular-season fechas from the page (see the same
+          // fix in divisionPage.tsx / PublicDivisionPanel.tsx).
+          matchService.getMatchByFilter({ divisionId, type: MatchType.Regular, pageSize: FETCH_PAGE_SIZE }),
         ]);
         if (!cancelled) {
           setStages(stagesResponse.data?.items ?? []);

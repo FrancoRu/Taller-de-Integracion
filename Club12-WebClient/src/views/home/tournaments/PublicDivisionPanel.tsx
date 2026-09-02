@@ -11,6 +11,7 @@ import PublicTeamGrid from '@/views/home/tournaments/PublicTeamGrid';
 import SectionHeading from '@/views/core/components/SectionHeading';
 import SecondaryTabs from '@/views/core/components/SecondaryTabs';
 import DivisionScorersTable from '@/views/division/DivisionScorersTable';
+import { MatchType } from '@/modules/core/enum/match/matchType';
 import { stageService } from '@/modules/stage/service/stage.service';
 import { matchService } from '@/modules/match/service/match.service';
 import { matchSeriesService } from '@/modules/matchSeries/service/matchSeries.service';
@@ -94,12 +95,24 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
     const fetchStructure = async () => {
       setStructureLoading(true);
       try {
-        const [stagesResponse, matchesResponse] = await Promise.all([
+        // Regular-season and playoff matches are fetched separately, each
+        // with their own page budget — a single division-wide fetch shares
+        // FETCH_PAGE_SIZE between both, and a full round-robin's games can
+        // easily outnumber the (usually much smaller) playoff bracket,
+        // silently pushing it off the page: the bracket itself rendered
+        // fine (it loads its scores from a separate per-stage MatchSeries
+        // fetch below), but the "Partidos de playoff" list built from these
+        // matches ended up empty.
+        const [stagesResponse, regularMatchesResponse, playoffMatchesResponse] = await Promise.all([
           stageService.getStagesByFilters({ divisionId: division.id, pageSize: FETCH_PAGE_SIZE }),
-          matchService.getMatchByFilter({ divisionId: division.id, pageSize: FETCH_PAGE_SIZE }),
+          matchService.getMatchByFilter({ divisionId: division.id, type: MatchType.Regular, pageSize: FETCH_PAGE_SIZE }),
+          matchService.getMatchByFilter({ divisionId: division.id, type: MatchType.Playoff, pageSize: FETCH_PAGE_SIZE }),
         ]);
         const stagesList = stagesResponse.data?.items ?? [];
-        const matchesList = matchesResponse.data?.items ?? [];
+        const matchesList = [
+          ...(regularMatchesResponse.data?.items ?? []),
+          ...(playoffMatchesResponse.data?.items ?? []),
+        ];
 
         const eliminationStages = stagesList.filter(stage => stage.isElimination);
         const seriesStages = eliminationStages.filter(stage => stage.bestOf > 1);

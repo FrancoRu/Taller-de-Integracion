@@ -7,6 +7,7 @@ import { GUID } from '@/modules/core/types/types';
 import { useDivision } from '@/modules/division/hook/division.hook';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { useStage } from '@/modules/stage/hook/stage.hook';
+import { MatchType } from '@/modules/core/enum/match/matchType';
 import { stageService } from '@/modules/stage/service/stage.service';
 import { matchService } from '@/modules/match/service/match.service';
 import { matchSeriesService } from '@/modules/matchSeries/service/matchSeries.service';
@@ -121,8 +122,17 @@ const DivisionPage: React.FC = () => {
         isElimination: true,
         pageSize: BRACKET_FETCH_PAGE_SIZE,
       }),
+      // Scoped to playoff matches only — an unfiltered division-wide fetch
+      // shares this same page size with a full round-robin's regular-season
+      // games, which can easily outnumber the playoff matches and silently
+      // push them off the page (the elimination bracket rendered fine from
+      // its own separately-fetched MatchSeries data, but the "Partidos de
+      // playoff" match list below it — built from these matches — ended up
+      // with none: "en el panel de admin los playoff no estan los partidos
+      // ni lo de la serie").
       matchService.getMatchByFilter({
         divisionId: resolvedDivisionId,
+        type: MatchType.Playoff,
         pageSize: BRACKET_FETCH_PAGE_SIZE,
       }),
     ]);
