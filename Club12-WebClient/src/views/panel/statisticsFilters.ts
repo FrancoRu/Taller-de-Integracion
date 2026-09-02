@@ -51,3 +51,25 @@ export const resolveSeasonYear = (
   const season = (seasons ?? []).find(s => s.id === selectedSeasonId);
   return season?.year ?? '';
 };
+
+/**
+ * Resolves which tournaments the summary cards (Equipos, Partidos,
+ * Sanciones) should be scoped to:
+ * - a chosen torneo scopes to just that one (most specific);
+ * - otherwise a chosen temporada scopes to every tournament it groups;
+ * - `null` means unscoped (global counts), the original behavior.
+ * A season with zero tournaments correctly resolves to `[]` (scoped to
+ * nothing), not `null` (unscoped) — the caller must not conflate the two.
+ */
+export const resolveScopeTournamentIds = (
+  seasons: SeasonOptionSource[] | null,
+  selectedSeasonId: GUID | '',
+  selectedTournamentId: GUID | ''
+): GUID[] | null => {
+  if (selectedTournamentId) return [selectedTournamentId];
+  if (selectedSeasonId) {
+    const season = (seasons ?? []).find(s => s.id === selectedSeasonId);
+    return (season?.tournaments ?? []).map(t => t.id);
+  }
+  return null;
+};

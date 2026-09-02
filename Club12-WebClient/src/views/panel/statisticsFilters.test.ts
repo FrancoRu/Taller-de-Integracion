@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { GUID } from '@/modules/core/types/types';
 import {
   deriveTournamentOptions,
+  resolveScopeTournamentIds,
   resolveSeasonYear,
 } from '@/views/panel/statisticsFilters';
 
@@ -78,5 +79,33 @@ describe('resolveSeasonYear', () => {
   it('returns an empty string when the selected season is unknown', () => {
     const unknown = 'cccccccc-cccc-cccc-cccc-cccccccccccc' as GUID;
     expect(resolveSeasonYear(seasons, unknown)).toBe('');
+  });
+});
+
+describe('resolveScopeTournamentIds', () => {
+  it('returns null (unscoped/global) when neither filter is set', () => {
+    expect(resolveScopeTournamentIds(seasons, '', '')).toBeNull();
+  });
+
+  it('scopes to just the chosen torneo, even with a season also selected', () => {
+    expect(resolveScopeTournamentIds(seasons, seasonA, t1)).toEqual([t1]);
+  });
+
+  it('scopes to every tournament the chosen temporada groups', () => {
+    expect(resolveScopeTournamentIds(seasons, seasonA, '')).toEqual([t1, t2]);
+  });
+
+  it('resolves to an empty (scoped-to-nothing) list for a season with no tournaments', () => {
+    const empty = 'dddddddd-dddd-dddd-dddd-dddddddddddd' as GUID;
+    const seasonsWithEmpty = [
+      ...seasons,
+      { id: empty, year: 2027, tournaments: [] },
+    ];
+    expect(resolveScopeTournamentIds(seasonsWithEmpty, empty, '')).toEqual([]);
+  });
+
+  it('handles a null seasons source gracefully', () => {
+    expect(resolveScopeTournamentIds(null, seasonA, '')).toEqual([]);
+    expect(resolveScopeTournamentIds(null, '', '')).toBeNull();
   });
 });

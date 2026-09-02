@@ -31,6 +31,7 @@ import { IScorerByPlayerResponse } from '@/modules/scorer/type/scorer.d';
 import { buildScorerScopeParams } from '@/modules/scorer/utils/scorerScope';
 import {
   deriveTournamentOptions,
+  resolveScopeTournamentIds,
   resolveSeasonYear,
 } from '@/views/panel/statisticsFilters';
 
@@ -136,25 +137,36 @@ const StatisticsPage = () => {
     sanctionsRef.current = getPlayerSanctionByFilter;
   }, [getPlayerSanctionByFilter]);
 
-  // Load the global summary cards and the filter option sources (tournaments +
-  // seasons) once. These cards stay global; only the goleadores ranking is
-  // scoped by the filter below.
+  // Which tournaments the summary cards are scoped to: null (unscoped/
+  // global) with neither filter picked, otherwise the chosen torneo alone
+  // or every tournament the chosen temporada groups.
+  const scopeTournamentIds = useMemo(
+    () => resolveScopeTournamentIds(seasons, selectedSeasonId, selectedTournamentId),
+    [seasons, selectedSeasonId, selectedTournamentId]
+  );
+
+  // Loads the summary cards and the filter option sources (tournaments +
+  // seasons), scoped by `scopeTournamentIds`. Unscoped shows the club-wide
+  // totals; otherwise every card — not just goleadores — reflects only the
+  // chosen torneo/temporada.
   useEffect(() => {
     const load = async () => {
       setLoading(true);
 
-      const [tournamentsPage, teams, played, scheduled, sanctions] =
-        await Promise.all([
-          tournamentsRef.current({
-            pageSize: FILTER_OPTIONS_PAGE_SIZE,
-            pageNumber: 1,
-          }),
-          teamsRef.current({ pageSize: 1, pageNumber: 1 }),
-          matchesRef.current({ pageSize: 1, pageNumber: 1, isFinished: true }),
-          matchesRef.current({ pageSize: 1, pageNumber: 1, isFinished: false }),
-          sanctionsRef.current({ pageSize: 1, pageNumber: 1 }),
-          seasonsRef.current({}),
-        ]);
+      const [tournamentsPage] = await Promise.all([
+        tournamentsRef.current({
+          pageSize: FILTER_OPTIONS_PAGE_SIZE,
+          pageNumber: 1,
+        }),
+        seasonsRef.current({}),
+      ]);
+
+      const scopedTournaments =
+        scopeTournamentIds === null
+          ? (tournamentsPage?.items ?? [])
+          : (tournamentsPage?.items ?? []).filter(t =>
+              scopeTournamentIds.includes(t.id)
+            );
 
       const byStatus: Record<TournamentStatus, number> = {
         Scheduled: 0,
@@ -164,23 +176,80 @@ const StatisticsPage = () => {
         Finished: 0,
         Canceled: 0,
       };
-      (tournamentsPage?.items ?? []).forEach(t => {
+      scopedTournaments.forEach(t => {
         byStatus[t.status] = (byStatus[t.status] ?? 0) + 1;
       });
 
+      // Runs one global call when unscoped, or one call per scoped
+      // tournament (summing their totals) when a torneo/temporada is chosen
+      // — teamsRef/matchesRef/sanctionsRef only filter by a single
+      // tournamentId, not a season, so a season's scope is the sum across
+      // every tournament it groups.
+      const sumScoped = async (
+        fetchByTournament: (
+          tournamentId: GUID
+        ) => Promise<{ totalCount: number } | void>,
+        fetchGlobal: () => Promise<{ totalCount: number } | void>
+      ): Promise<number> => {
+        if (scopeTournamentIds === null) {
+          const result = await fetchGlobal();
+          return result?.totalCount ?? 0;
+        }
+        const results = await Promise.all(scopeTournamentIds.map(fetchByTournament));
+        return results.reduce((sum, r) => sum + (r?.totalCount ?? 0), 0);
+      };
+
+      const [teamsTotal, matchesPlayed, matchesScheduled, sanctionsTotal] =
+        await Promise.all([
+          sumScoped(
+            tournamentId =>
+              teamsRef.current({ tournamentId, pageSize: 1, pageNumber: 1 }),
+            () => teamsRef.current({ pageSize: 1, pageNumber: 1 })
+          ),
+          sumScoped(
+            tournamentId =>
+              matchesRef.current({
+                tournamentId,
+                pageSize: 1,
+                pageNumber: 1,
+                isFinished: true,
+              }),
+            () => matchesRef.current({ pageSize: 1, pageNumber: 1, isFinished: true })
+          ),
+          sumScoped(
+            tournamentId =>
+              matchesRef.current({
+                tournamentId,
+                pageSize: 1,
+                pageNumber: 1,
+                isFinished: false,
+              }),
+            () =>
+              matchesRef.current({ pageSize: 1, pageNumber: 1, isFinished: false })
+          ),
+          sumScoped(
+            tournamentId =>
+              sanctionsRef.current({ tournamentId, pageSize: 1, pageNumber: 1 }),
+            () => sanctionsRef.current({ pageSize: 1, pageNumber: 1 })
+          ),
+        ]);
+
       setSummary({
-        tournamentsTotal: tournamentsPage?.totalCount ?? 0,
+        tournamentsTotal:
+          scopeTournamentIds === null
+            ? (tournamentsPage?.totalCount ?? 0)
+            : scopedTournaments.length,
         tournamentsByStatus: byStatus,
-        teamsTotal: teams?.totalCount ?? 0,
-        matchesPlayed: played?.totalCount ?? 0,
-        matchesScheduled: scheduled?.totalCount ?? 0,
-        sanctionsTotal: sanctions?.totalCount ?? 0,
+        teamsTotal,
+        matchesPlayed,
+        matchesScheduled,
+        sanctionsTotal,
       });
       setLoading(false);
     };
 
     void load();
-  }, []);
+  }, [scopeTournamentIds]);
 
   const tournamentOptions = useMemo(
     () => deriveTournamentOptions(seasons, selectedSeasonId, tournaments),
