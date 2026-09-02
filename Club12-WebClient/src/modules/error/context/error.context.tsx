@@ -27,6 +27,19 @@ const isBadRequestResponse = (data: unknown): data is BadRequestResponse => {
 };
 
 /**
+ * 502/503/504 never come from our own API — they're the reverse proxy
+ * (Cloudflare) reporting the backend is unreachable/restarting, typically
+ * during a deploy. Its JSON error page also happens to carry a `title`
+ * field, which satisfies isBadRequestResponse and would otherwise leak its
+ * raw English text (e.g. "Bad Gateway") straight to the user instead of
+ * falling back to a Spanish message.
+ */
+const isGatewayErrorStatus = (status?: number): boolean =>
+  status === HttpStatus.BadGateway ||
+  status === HttpStatus.ServiceUnavailable ||
+  status === HttpStatus.GatewayTimeout;
+
+/**
  * ASP.NET returns two shapes of problem response: a plain ProblemDetails
  * with a `detail` string, or a ValidationProblemDetails with an `errors`
  * dictionary of field -> messages. This flattens either into one
@@ -90,11 +103,13 @@ export const ErrorProvider: React.FC<ProviderProps> = ({ children }) => {
   const setError = useCallback(
     (error: AxiosError) => {
       const data = error.response?.data;
-      const message = isBadRequestResponse(data)
-        ? extractMessage(data)
-        : error.response
-          ? ERROR_MESSAGES.GENERIC_ERROR
-          : ERROR_MESSAGES.NETWORK_ERROR;
+      const message = isGatewayErrorStatus(error.response?.status)
+        ? ERROR_MESSAGES.SERVER_UNAVAILABLE
+        : isBadRequestResponse(data)
+          ? extractMessage(data)
+          : error.response
+            ? ERROR_MESSAGES.GENERIC_ERROR
+            : ERROR_MESSAGES.NETWORK_ERROR;
       const status =
         (isBadRequestResponse(data) ? (data.statusCode ?? data.status) : undefined) ??
         error.response?.status ??

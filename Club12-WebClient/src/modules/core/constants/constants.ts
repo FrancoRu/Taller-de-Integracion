@@ -8,6 +8,8 @@ export const ERROR_MESSAGES = {
   GENERIC_ERROR: 'Ocurrió un error. Por favor, intentá nuevamente.',
   NETWORK_ERROR:
     'No se pudo conectar con el servidor. Verificá tu conexión e intentá nuevamente.',
+  SERVER_UNAVAILABLE:
+    'El servidor no está disponible en este momento. Por favor, intentá nuevamente en unos minutos.',
   LOGIN_FAILED: 'Usuario o contraseña incorrectos',
 };
 
