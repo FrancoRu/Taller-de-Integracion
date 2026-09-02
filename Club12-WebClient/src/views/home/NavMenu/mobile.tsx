@@ -49,6 +49,17 @@ const MobileNavItems: React.FC<MobileNavItemsProps> = ({ onCloseDrawer }) => {
 
       <ListItemButton
         component={Link}
+        to={`/${RoutesNavigationViews.Tournaments}`}
+        selected={location.pathname.startsWith('/torneos')}
+        onClick={() =>
+          handleNavigationAndCloseDrawer(`/${RoutesNavigationViews.Tournaments}`)
+        }
+      >
+        <ListItemText primary="Torneos" />
+      </ListItemButton>
+
+      <ListItemButton
+        component={Link}
         to={`/${RoutesNavigationViews.Champions}`}
         selected={isSelected(`/${RoutesNavigationViews.Champions}`)}
         onClick={() =>
