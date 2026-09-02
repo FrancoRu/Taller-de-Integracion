@@ -384,7 +384,10 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         minWidth: 140,
         align: 'center',
         headerAlign: 'center',
-        renderCell: params => formatDocumentNumber(params.row.documentNumber),
+        renderCell: params =>
+          params.row.documentNumber
+            ? formatDocumentNumber(params.row.documentNumber)
+            : '—',
       },
       {
         field: 'teamId',

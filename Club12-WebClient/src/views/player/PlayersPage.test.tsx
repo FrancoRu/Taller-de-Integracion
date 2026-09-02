@@ -139,6 +139,16 @@ describe('PlayersPage — "Ver" action', () => {
   });
 });
 
+describe('PlayersPage — resilient rendering', () => {
+  it('renders a row missing documentNumber as "—" instead of crashing', async () => {
+    setupHooks([{ ...PLAYER, documentNumber: undefined as unknown as string }]);
+    renderPlayersPage();
+
+    expect(await screen.findByText('LÓPEZ Carlos')).toBeInTheDocument();
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
+  });
+});
+
 describe('PlayersPage — list actions', () => {
   it('does not offer an Editar row action — editing lives inside the player detail page', async () => {
     renderPlayersPage();
