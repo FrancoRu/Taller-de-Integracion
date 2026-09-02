@@ -19,6 +19,19 @@
 > marcando cada ítem afectado como bloqueado en vez de esperar. Cada casillero
 > abajo dice `[x]` (verificado), `[BLOQUEADO 502]` (no se pudo probar por el
 > incidente), o `[ ]` (no llegó a intentarse, más allá del 502).
+>
+> **Segunda pasada (2026-09-02, misma tarde)**: tras reescribir
+> `historias-de-usuario.md` verificando las 111 historias contra el código
+> real (no contra memoria de lo que "se pidió"), varios ítems de este
+> checklist quedaron marcados `[x]` **por lectura de código, no por prueba en
+> vivo** — están explícitamente etiquetados así abajo. Algunos de esos
+> corrigen una expectativa incorrecta (ej. el ranking de Goleadores no tiene
+> desempate ni partidos jugados), y dos son brechas reales que **van a fallar
+> si alguien las prueba en vivo, no son falsos positivos a re-chequear**: las
+> series playoff Best-of-N no se generan en producción (solo un partido por
+> cruce, sin importar el `bestOf` configurado), y `AuditAction.BackupRestore`
+> nunca se loguea pese a estar declarado. Ver la Épica 24 de
+> `historias-de-usuario.md` para el detalle completo con archivos/líneas.
 
 Leyenda de tipo de check: **(L)** lista/filtros · **(C)** crear · **(E)**
 editar · **(D)** eliminar · **(V)** ver/detalle · **(N)** navegación ·
@@ -60,7 +73,7 @@ editar · **(D)** eliminar · **(V)** ver/detalle · **(N)** navegación ·
 - [ ] Configurar fase de grupos (1 o 2 vueltas). (C)
 - [ ] Configurar copas Oro/Plata (+ rangos de posición → copa). (C)
 - [ ] Configurar serie final a mejor de N (BO1/3/5/7). (C)
-- [ ] Copa cruzada opcional con playoff obligatorio. (C)
+- [ ] Copa cruzada opcional con playoff obligatorio. (C) — [x] 2026-09-02 (verificado por código) **brecha detectada**: `validateCrossCupStep` no chequea `cups.length > 0` client-side (el estado arranca en `cups: []`), así que el wizard permitiría avanzar con una copa cruzada sin ningún playoff configurado. Probar explícitamente intentar continuar sin agregar copa y ver si algo lo bloquea (cliente o servidor).
 - [ ] Paso de revisión final antes de confirmar. (V)
 - [ ] Confirmar crea TODO (torneo + divisiones + stages + copas) — falla entero o crea entero, no a medias. (C)(X)
 - [ ] Torneo creado por el wizard arranca en `Scheduled`/`OpenForRegistration`, sin equipos ni fixture todavía.
@@ -77,7 +90,7 @@ editar · **(D)** eliminar · **(V)** ver/detalle · **(N)** navegación ·
 - [ ] Quitar un equipo ya asignado de su zona. (D)
 - [ ] "Iniciar torneo": si está en `OpenForRegistration`, cierra inscripción y arranca en la misma acción; bloquea si queda algún inscripto sin zona. (C)(X)
 - [ ] Tras iniciar: el fixture se generó (partidos existen), las standings arrancan en 0-0 para TODOS los equipos asignados (no solo los que jugaron). (V)
-- [ ] "Revertir a borrador" (`Ongoing → RegistrationClosed`): funciona si 0 partidos jugados; bloqueado (409, mensaje claro) si hay al menos uno jugado. (C)(X)
+- [ ] "Revertir a borrador" (`Ongoing → RegistrationClosed`): funciona si 0 partidos jugados; bloqueado (409, mensaje claro) si hay al menos uno jugado. (C)(X) — el botón dedicado de `TournamentPage.tsx` debería andar, pero **si esta acción aparece en algún selector genérico de "próximo estado" en vez del botón dedicado, probar que esté ahí**: `tournamentStatusTransitions.ts` (el mapa de transiciones del frontend) no incluye esta reversión, solo el botón hardcodeado la conoce.
 - [ ] Editar estructura (nueva división/fase) bloqueado una vez `Ongoing`/`Finished`. (X)
 - [ ] "Volver" del torneo lleva a su temporada, no a una lista global. (N)
 
@@ -90,12 +103,12 @@ editar · **(D)** eliminar · **(V)** ver/detalle · **(N)** navegación ·
 - [ ] Tab **Posiciones**: PJ/PG/PP/GF/GC/DIF/Pts correctos; deducción de puntos (si aplica) restada ANTES de desempates, no clampeada en 0. (V)
 - [ ] Tab **Posiciones**: filas que clasifican coloreadas por copa (Oro/Plata/Bronce) + leyenda; funciona también en la copa cruzada multi-grupo. (V)
 - [ ] Tab **Posiciones**: botón Imprimir abre el diálogo de impresión del navegador con SOLO la tabla (sin chrome de la app); Exportar CSV descarga con headers correctos. (C)
-- [ ] Tab **Goleadores** (nueva): ranking jugador/dorsal/puntos/equipo, ordenado por puntos descendente; Imprimir + Exportar CSV igual que Posiciones; estado vacío cuando no hay goleadores todavía. (V)(X)
+- [x] 2026-09-02 (verificado por código, no en vivo): Tab **Goleadores** — ranking jugador/dorsal/puntos/equipo tal cual se implementó. **Corrección tras auditar `historias-de-usuario.md` contra el código**: NO tiene columna de partidos jugados ni promedio (nunca se implementaron), y el orden es un `OrderByDescending(Points)` liso — **sin ningún criterio de desempate**. No falla, pero no asumir más de lo que realmente muestra. (V)(X)
 - [ ] Tab **Partidos**: fixture agrupado por fecha, click a un partido lleva al detalle admin. (V)(N)
 - [ ] Tab **Playoff**: al completar la última fecha de fase de grupos, las copas se siembran solas (auto-seed) sin acción manual. (X)
 - [ ] Tab **Playoff**: bracket con byes correctos para N no potencia de 2 (ej. 5 equipos → 3 byes a semis, 2 juegan cuartos). (V)(X)
-- [ ] Tab **Playoff**: cada serie BO3/5/7 muestra sus partidos reales individuales (no un único partido colapsado), tanto en admin como en la vista pública. (V)
-- [ ] Tab **Playoff**: cargar resultado de un partido de serie actualiza el tally de la serie correctamente.
+- [x] 2026-09-02 (verificado por código, no en vivo) **→ ESTE ÍTEM VA A FALLAR SI SE PRUEBA EN VIVO, es una brecha real, no algo a re-verificar**: "cada serie BO3/5/7 muestra sus partidos reales individuales" — **FALSO en producción**. El auto-seed (`StageService.SeedPlayoffCupsAsync`) siembra un `Match` plano por cruce sin importar el `bestOf` configurado; nunca crea un `MatchSeries`. El frontend SÍ sabe mostrar una serie completa cuando existe, pero nada en el camino de producción la crea — solo el seed de demo (`SampleTournamentBuilder`) genera series reales. Tampoco hay ninguna acción de UI para cargar el 2º/3er partido de una serie a mano (`addMatchSeries`/`addGameToSeries` sin ningún caller en `views/`). Ver `historias-de-usuario.md` HU-82 y Épica 24 para el detalle. (V)
+- [x] 2026-09-02 (verificado por código) **→ TAMBIÉN VA A FALLAR SI SE PRUEBA**: no existe ningún avance automático del ganador de una ronda al slot de la ronda siguiente (Cuartos→Semis). `TryAutoSeedPlayoffPhaseAsync` solo cubre Fase de grupos→primera ronda de copa.
 
 ## 4. Panel — Equipos
 
@@ -172,12 +185,13 @@ editar · **(D)** eliminar · **(V)** ver/detalle · **(N)** navegación ·
 ## 11. Panel — Estadísticas / Auditoría / Administración de datos
 
 - [ ] `/panel/estadisticas`: filtro por Temporada + Torneo (el torneo se deriva de la temporada elegida) scopea el ranking; sin filtro = global. (L)(X)
-- [ ] `/panel/auditoria`: acciones administrativas sensibles quedan registradas con actor+entidad+acción+timestamp; nombres legibles (no UUIDs crudos), texto en español, celdas largas con tooltip en vez de overflow. (V)
+- [x] 2026-09-02 (verificado por código) **→ solo 4 tipos de acción se auditan, no "toda mutación sensible"**: `AuditAction` = `DataWipe`, `BackupRestore`, `TournamentStatusChange`, `PasswordReset`. De esos 4, **`BackupRestore` está declarado pero jamás se loguea** (`BackupOperationsService` no tiene `IAuditService` inyectado) — restaurar un backup no deja rastro en `/panel/auditoria` pese a que el tipo de evento existe. Los otros 3 sí resuelven nombres legibles (no UUIDs) y texto en español. (V)
 - [ ] `/panel/administracion-datos`: respaldo manual → popup explicando el proceso → spinner → bloquea navegación hasta terminar. (C)(X)
 - [ ] Restaurar desde un respaldo → genera un respaldo automático de salvaguarda ANTES de sobrescribir. (X)
-- [ ] Límite de cantidad de respaldos respetado (los más viejos se descartan). (X)
+- [x] 2026-09-02 (verificado por código): la salvaguarda pre-restore **no se borra** al terminar con éxito — queda en el catálogo, sujeta solo a la poda normal por retención en el próximo backup (`BackupOperationsService.RestoreBackupAsync`, `applyRetention: false` para esa salvaguarda). No es un bug, pero corrige la expectativa de "se elimina al finalizar".
+- [x] 2026-09-02 (verificado por código): el tope por defecto de respaldos es **7**, no 5; el intervalo programado por defecto es **diario (24h)**, no semanal. Ambos configurables vía `BackupOptions`.
 - [ ] Borrado total de datos solo accesible para el rol correcto (Admin IT). (X)
-- [ ] Ya NO existe el botón "Cargar Datos de prueba" (se sacó este mismo trabajo). (X)
+- [x] 2026-09-02: confirmado por código — el botón "Cargar Datos de prueba" ya no existe en `DataAdministrationPage.tsx`. (X)
 
 ## 12. Público — Home (`/`)
 
