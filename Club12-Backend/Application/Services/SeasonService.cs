@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Application.Services;
 
-public class SeasonService(ISeasonRepository seasonRepository) : ISeasonService
+public class SeasonService(ISeasonRepository seasonRepository, ITournamentService tournamentService) : ISeasonService
 {
     public async Task<Season> CreateSeasonAsync(Season seasonEntity)
     {
@@ -48,9 +48,34 @@ public class SeasonService(ISeasonRepository seasonRepository) : ISeasonService
         return matches.FirstOrDefault();
     }
 
+    /// <summary>
+    /// Deletes a Season and every tournament it groups. The DB-level
+    /// Season→Tournament relationship is SetNull, not Cascade (a season is a
+    /// purely additive grouping and must never silently wipe a tournament's
+    /// history), so a bare bulk delete of the Season row would only detach
+    /// its tournaments — leaving them alive but orphaned (no season, yet
+    /// still enrolling teams, still blocking those teams from being
+    /// deleted, and invisible from any season-scoped screen). Routing
+    /// through <see cref="ITournamentService.DeleteTournamentAsync"/> for
+    /// each tournament reuses its own history guard (so a season with a
+    /// started/played tournament fails loudly with the real reason, instead
+    /// of the season vanishing while an orphan tournament lingers) and its
+    /// cascaded cleanup (team-tournament registrations, etc.).
+    /// </summary>
     public async Task DeleteSeasonAsync(Guid id)
     {
-        await seasonRepository.RemoveAsync(season => season.Id == id);
+        Season? season = await seasonRepository.GetByIdAsync(id, includes: [s => s.Tournaments]);
+        if (season is null)
+        {
+            return;
+        }
+
+        foreach (Tournament tournament in season.Tournaments)
+        {
+            await tournamentService.DeleteTournamentAsync(tournament.Id);
+        }
+
+        await seasonRepository.RemoveAsync(s => s.Id == id);
     }
 
     public async Task UpdateSeasonAsync(Season seasonEntity)
