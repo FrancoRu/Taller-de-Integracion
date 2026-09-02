@@ -57,6 +57,27 @@ describe('isValidPhone', () => {
     expect(isValidPhone('(11) 1234-5678')).toBe(true);
     expect(isValidPhone('1-2-3-4-5-6-7')).toBe(false);
   });
+
+  describe('Argentine digit-count/prefix rules', () => {
+    it.each([
+      ['3435551234', '10-digit bare local number'],
+      ['93435551234', '11-digit local number with mobile marker 9'],
+      ['03435551234', '11-digit local number with the 0 trunk prefix'],
+      ['543435551234', '12-digit country code + landline'],
+      ['5493435551234', '13-digit country code + mobile marker'],
+    ])('accepts %s (%s)', phone => {
+      expect(isValidPhone(phone)).toBe(true);
+    });
+
+    it.each([
+      ['13435551234', '11 digits not starting with 9 or 0'],
+      ['549343555123', '12 digits starting with 549 (mobile marker in a 12-digit number)'],
+      ['123456789012', '12 digits not starting with 54'],
+      ['1234567890123', '13 digits not starting with 549'],
+    ])('rejects %s (%s)', phone => {
+      expect(isValidPhone(phone)).toBe(false);
+    });
+  });
 });
 
 describe('isValidDocumentNumber', () => {

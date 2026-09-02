@@ -14,9 +14,6 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** Characters allowed in a plausible phone number. */
 const PHONE_ALLOWED_CHARS_REGEX = /^[+\d\s()-]+$/;
 
-const PHONE_MIN_DIGITS = 8;
-const PHONE_MAX_DIGITS = 15;
-
 /** A player's DNI/document number: digits only, 6 to 15 of them. */
 const DOCUMENT_NUMBER_REGEX = /^\d{6,15}$/;
 
@@ -29,8 +26,14 @@ export function isValidEmail(value: string): boolean {
 }
 
 /**
- * True when `value` is a plausible phone number: only digits, spaces, `+`,
- * `-`, and parentheses, containing between 8 and 15 digits.
+ * True when `value` is a plausible Argentine phone number: only digits,
+ * spaces, `+`, `-`, and parentheses, and a digit count/prefix combination
+ * that matches how Argentine numbers are actually written:
+ * - 10 digits: a bare local number (area code + line, no prefix).
+ * - 11 digits: a mobile marked with a leading `9`, or a local number with
+ *   the domestic long-distance `0` trunk prefix (e.g. "011 4567-8901").
+ * - 12 digits: the `54` country code plus a landline (no mobile marker).
+ * - 13 digits: the `549` country code plus the mobile marker.
  */
 export function isValidPhone(value: string): boolean {
   const trimmed = value.trim();
@@ -39,8 +42,19 @@ export function isValidPhone(value: string): boolean {
     return false;
   }
 
-  const digitCount = (trimmed.match(/\d/g) ?? []).length;
-  return digitCount >= PHONE_MIN_DIGITS && digitCount <= PHONE_MAX_DIGITS;
+  const digits = trimmed.replace(/\D/g, '');
+  switch (digits.length) {
+    case 10:
+      return true;
+    case 11:
+      return digits.startsWith('9') || digits.startsWith('0');
+    case 12:
+      return digits.startsWith('54') && !digits.startsWith('549');
+    case 13:
+      return digits.startsWith('549');
+    default:
+      return false;
+  }
 }
 
 /** True when `value` is a plausible DNI/document number: 6 to 15 digits only. */

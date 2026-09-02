@@ -49,7 +49,7 @@ public class CreatePlayerRequest
     /// </summary>
     [Required(ErrorMessage = "The PhoneNumber field is required.")]
     [MaxLength(PlayerFieldLengths.PhoneNumberMaxLength, ErrorMessage = "The PhoneNumber field must not exceed 15 characters.")]
-    [RegularExpression(ValidationPatterns.PhoneNumber, ErrorMessage = ValidationPatterns.PhoneNumberError)]
+    [ArgentinePhoneNumber]
     public required string PhoneNumber { get; set; }
 
     /// <summary>
