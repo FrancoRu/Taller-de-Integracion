@@ -86,6 +86,8 @@ export const SeasonProvider: React.FC<{ children: ReactNode }> = ({
         const res: AxiosResponse<ISeasonResponse> =
           await putSeasonMutation.mutateAsync({ id, season });
 
+        // Success feedback belongs to the calling page (AdminSeasonDetailPage
+        // shows its own confirmation) — a toast here too means two modals.
         if (res) {
           if (res.status === HttpStatus.NoContent) {
             const currentSeason =
@@ -103,18 +105,12 @@ export const SeasonProvider: React.FC<{ children: ReactNode }> = ({
             setSeason(updatedSeason);
             setSeasons(prev => upsertListById(prev, updatedSeason));
             await queryClient.invalidateQueries({ queryKey: seasonKeys.all });
-            setMessage(res.status, [
-              'La temporada fue actualizada correctamente.',
-            ]);
             return updatedSeason;
           } else if (res.data) {
             setSeason(res.data);
             setSeasons(prev => upsertListById(prev, res.data));
             queryClient.setQueryData(seasonKeys.byId(id), res);
             await queryClient.invalidateQueries({ queryKey: seasonKeys.all });
-            setMessage(res.status, [
-              'La temporada fue actualizada correctamente.',
-            ]);
             return res.data;
           }
         }
@@ -122,7 +118,7 @@ export const SeasonProvider: React.FC<{ children: ReactNode }> = ({
         handleUnknownError(error);
       }
     },
-    [putSeasonMutation, queryClient, setMessage, seasons, handleUnknownError]
+    [putSeasonMutation, queryClient, seasons, handleUnknownError]
   );
 
   const getSeasonsByFiltered = useCallback(
@@ -190,14 +186,15 @@ export const SeasonProvider: React.FC<{ children: ReactNode }> = ({
         setSeasons(prev => (prev ? prev.filter(e => e.id !== id) : null));
         queryClient.removeQueries({ queryKey: seasonKeys.byId(id) });
         await queryClient.invalidateQueries({ queryKey: seasonKeys.all });
-        setMessage(HttpStatus.NoContent, ['La temporada ha sido eliminada.']);
+        // Success feedback belongs to the calling page (SeasonsPage shows its
+        // own "¡Eliminada!" confirmation) — a toast here too means two modals.
         return true;
       } catch (error: unknown) {
         handleUnknownError(error);
         return false;
       }
     },
-    [deleteSeasonMutation, queryClient, setMessage, handleUnknownError]
+    [deleteSeasonMutation, queryClient, handleUnknownError]
   );
 
   const container: ISeasonContextProps = useMemo(

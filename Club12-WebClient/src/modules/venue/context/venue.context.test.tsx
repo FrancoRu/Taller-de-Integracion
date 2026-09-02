@@ -22,6 +22,7 @@ const mockedGetAllVenues = vi.mocked(venueService.getAllVenues);
 const mockedGetVenueById = vi.mocked(venueService.getVenueById);
 const mockedPutVenueById = vi.mocked(venueService.putVenueById);
 const mockedPutVenuePhotoById = vi.mocked(venueService.putVenuePhotoById);
+const mockedDeleteVenueById = vi.mocked(venueService.deleteVenueById);
 const mockedSwalFire = vi.mocked(Swal.fire);
 
 const VENUE_ID = '44444444-4444-4444-4444-444444444444' as GUID;
@@ -79,6 +80,17 @@ describe('VenueProvider — no duplicate success toast', () => {
         name: 'Cancha Norte',
         address: 'Calle 123',
       });
+    });
+
+    expect(mockedSwalFire).not.toHaveBeenCalled();
+  });
+
+  it('does not fire its own toast after deleteVenueById succeeds', async () => {
+    mockedDeleteVenueById.mockResolvedValueOnce({ status: 204 } as never);
+
+    const { result } = renderHook(() => useVenue(), { wrapper });
+    await act(async () => {
+      await result.current.deleteVenueById(VENUE_ID);
     });
 
     expect(mockedSwalFire).not.toHaveBeenCalled();

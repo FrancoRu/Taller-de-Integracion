@@ -215,7 +215,8 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
         setVenues(prev => (prev ? prev.filter(e => e.id !== id) : null));
         queryClient.removeQueries({ queryKey: venueKeys.byId(id) });
         await queryClient.invalidateQueries({ queryKey: venueKeys.list() });
-        setMessage(HttpStatus.NoContent, ['La cancha ha sido eliminada.']);
+        // Success feedback belongs to the calling page (VenuesPage shows its own
+        // "¡Eliminada!" confirmation) — a toast here too means two modals.
         return { success: true };
       } catch (error: unknown) {
         return {
@@ -226,7 +227,7 @@ export const VenueProvider: React.FC<{ children: ReactNode }> = ({
         };
       }
     },
-    [deleteVenueMutation, queryClient, setMessage]
+    [deleteVenueMutation, queryClient]
   );
 
   const container: IVenueContextProps = useMemo(
