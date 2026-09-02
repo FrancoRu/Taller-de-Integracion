@@ -28,6 +28,22 @@ const tournamentA = '11111111-1111-1111-1111-111111111111' as GUID;
 const tournamentB = '22222222-2222-2222-2222-222222222222' as GUID;
 const seasonA = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' as GUID;
 
+/**
+ * A fresh array literal every call — matching what the real API client
+ * actually returns (a new response object per request), unlike
+ * `mockResolvedValue`'s single captured value reused across every call.
+ * The infinite-loop regression below only reproduces with this shape: a
+ * mock returning the exact same reference every time would hide it.
+ */
+const freshSeasonsResponse = () => [
+  {
+    id: seasonA,
+    name: 'Temporada A',
+    year: 2026,
+    tournaments: [{ id: tournamentA, name: 'Apertura' }],
+  },
+];
+
 const setupHooks = () => {
   const getAllTournamentsByFilter = vi.fn().mockResolvedValue({
     items: [
@@ -39,14 +55,16 @@ const setupHooks = () => {
   const getTeamsByFiltered = vi.fn().mockResolvedValue({ totalCount: 10 });
   const getMatchByFilter = vi.fn().mockResolvedValue({ totalCount: 3 });
   const getScorersByPlayerFiltered = vi.fn().mockResolvedValue({ items: [] });
-  const getSeasonsByFiltered = vi.fn().mockResolvedValue([
-    {
-      id: seasonA,
-      name: 'Temporada A',
-      year: 2026,
-      tournaments: [{ id: tournamentA, name: 'Apertura' }],
-    },
-  ]);
+  // Mirrors real React state: `seasons` only gets a new reference when
+  // getSeasonsByFiltered actually resolves (one real setSeasons call), not
+  // on every unrelated render — unlike mockResolvedValue's single reused
+  // value, this still gives a genuinely NEW array object each time, since
+  // that's what the real API client returns per request.
+  let currentSeasons = freshSeasonsResponse();
+  const getSeasonsByFiltered = vi.fn().mockImplementation(() => {
+    currentSeasons = freshSeasonsResponse();
+    return Promise.resolve(currentSeasons);
+  });
   const getPlayerSanctionByFilter = vi.fn().mockResolvedValue({ totalCount: 1 });
 
   mockedUseTournament.mockReturnValue({
@@ -65,22 +83,27 @@ const setupHooks = () => {
   mockedUseScorer.mockReturnValue({
     getScorersByPlayerFiltered,
   } as unknown as ReturnType<typeof useScorer>);
-  mockedUseSeason.mockReturnValue({
-    seasons: [
-      {
-        id: seasonA,
-        name: 'Temporada A',
-        year: 2026,
-        tournaments: [{ id: tournamentA, name: 'Apertura' }],
-      },
-    ],
-    getSeasonsByFiltered,
-  } as unknown as ReturnType<typeof useSeason>);
+  // Reads the same captured `currentSeasons` reference on every render —
+  // it only changes when getSeasonsByFiltered above reassigns it, exactly
+  // like the real SeasonProvider only re-renders consumers with a new
+  // `seasons` array when setSeasons() actually runs.
+  mockedUseSeason.mockImplementation(
+    () =>
+      ({
+        seasons: currentSeasons,
+        getSeasonsByFiltered,
+      }) as unknown as ReturnType<typeof useSeason>
+  );
   mockedUsePlayerSanction.mockReturnValue({
     getPlayerSanctionByFilter,
   } as unknown as ReturnType<typeof usePlayerSanction>);
 
-  return { getTeamsByFiltered, getMatchByFilter, getPlayerSanctionByFilter };
+  return {
+    getTeamsByFiltered,
+    getMatchByFilter,
+    getPlayerSanctionByFilter,
+    getSeasonsByFiltered,
+  };
 };
 
 describe('StatisticsPage — Torneo filter scoping', () => {
@@ -134,5 +157,43 @@ describe('StatisticsPage — Torneo filter scoping', () => {
       const card = label.closest('.MuiCard-root') as HTMLElement;
       expect(within(card).getByText('1')).toBeInTheDocument();
     });
+  });
+});
+
+describe('StatisticsPage — Temporada filter does not loop forever', () => {
+  it('fetches seasons exactly once, never as part of the scope-triggered reload', async () => {
+    // Regression test for an infinite-loop bug: scopeTournamentIds derives
+    // from `seasons` via season.tournaments.map(...) — a brand-new array
+    // every time it recomputes. The summary effect used to refetch seasons
+    // itself on every run, which (via setSeasons) handed the component a
+    // fresh `seasons` reference — making scopeTournamentIds "change" after
+    // every single load and retriggering the same effect forever, the
+    // moment a temporada/torneo filter was active (unscoped stayed stable
+    // since scopeTournamentIds is just `null` either way there). Seasons
+    // must now be fetched once, decoupled from that reload entirely — this
+    // asserts the call count directly rather than racing a real loop, which
+    // depends on React's own runaway-render guard firing within the test's
+    // timing window instead of failing deterministically.
+    const { getTeamsByFiltered, getSeasonsByFiltered } = setupHooks();
+    const user = userEvent.setup();
+    render(<StatisticsPage />);
+
+    await screen.findByText('Torneos');
+    expect(getSeasonsByFiltered).toHaveBeenCalledTimes(1);
+
+    const select = await screen.findByRole('combobox', { name: 'Temporada' });
+    await user.click(select);
+    const listbox = await screen.findByRole('listbox');
+    await user.click(within(listbox).getByText('Temporada A'));
+
+    await waitFor(() =>
+      expect(getTeamsByFiltered).toHaveBeenCalledWith({
+        tournamentId: tournamentA,
+        pageSize: 1,
+        pageNumber: 1,
+      })
+    );
+
+    expect(getSeasonsByFiltered).toHaveBeenCalledTimes(1);
   });
 });
