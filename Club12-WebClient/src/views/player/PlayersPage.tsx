@@ -160,6 +160,11 @@ interface PlayersPageProps {
   jerseyByPlayerId?: Map<GUID, number | null | undefined>;
   /** Called after a medical record is uploaded/reviewed so the roster can refresh. */
   onMedicalChange?: () => void;
+  /** Bumped by the parent (e.g. after a CSV import) to force a re-fetch of
+   * the roster list — needed because CSV import creates players outside
+   * this component and only surfaces the partial create-response shape in
+   * shared state otherwise. */
+  refreshTrigger?: number;
 }
 
 const PlayersPage: React.FC<PlayersPageProps> = ({
@@ -173,6 +178,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   medicalByPlayerId,
   jerseyByPlayerId,
   onMedicalChange,
+  refreshTrigger,
 }) => {
   const navigate = useNavigate();
   const {
@@ -272,7 +278,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
 
   useEffect(() => {
     void fetchPlayers(debouncedFilters, paginationModel);
-  }, [debouncedFilters, fetchPlayers, paginationModel]);
+  }, [debouncedFilters, fetchPlayers, paginationModel, refreshTrigger]);
 
   const loadTeamsForDropdown = useCallback(async () => {
     await getTeamsByFiltered({ pageSize: FILTER_OPTIONS_PAGE_SIZE });

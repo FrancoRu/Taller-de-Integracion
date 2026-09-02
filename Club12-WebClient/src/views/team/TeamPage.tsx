@@ -98,6 +98,14 @@ const TeamPage: React.FC<TeamPageProps> = ({
   const [statisticDialogOpen, setStatisticDialogOpen] = useState(false);
   const [sanctionDialogOpen, setSanctionDialogOpen] = useState(false);
   const [rosterImportOpen, setRosterImportOpen] = useState(false);
+  // Bumped after a CSV import so PlayersPage re-fetches the admin roster
+  // list: RosterCsvImportDialog creates players one by one and each POST
+  // response is a PublicPlayerResponse (no documentNumber/birthDate/
+  // phoneNumber/socialSecurity — those are admin-only), so the shared
+  // player-context state gets upserted with that partial shape. Without a
+  // real re-fetch of the full AdminPlayerResponse list, the grid keeps
+  // showing those fields blank even though they're correctly persisted.
+  const [rosterRefreshTrigger, setRosterRefreshTrigger] = useState(0);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [teamForm, setTeamForm] = useState<TeamFormState>(EMPTY_TEAM_FORM);
   const [editSubmitting, setEditSubmitting] = useState(false);
@@ -443,6 +451,7 @@ const TeamPage: React.FC<TeamPageProps> = ({
             medicalByPlayerId={medicalByPlayerId}
             jerseyByPlayerId={jerseyByPlayerId}
             onMedicalChange={refreshTeam}
+            refreshTrigger={rosterRefreshTrigger}
           />
         </>
       )}
@@ -542,7 +551,10 @@ const TeamPage: React.FC<TeamPageProps> = ({
           open={rosterImportOpen}
           onClose={() => setRosterImportOpen(false)}
           teamId={team.id}
-          onImported={refreshTeam}
+          onImported={() => {
+            refreshTeam();
+            setRosterRefreshTrigger(trigger => trigger + 1);
+          }}
         />
       )}
       <TeamFormDialog
