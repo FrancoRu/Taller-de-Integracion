@@ -6,7 +6,6 @@ import PrivateRoute from '@/views/core/privateRoute';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { useBackups } from '@/modules/backup/hook/backup.hook';
 import type { UseBackupsResult } from '@/modules/backup/hook/backup.hook';
-import { dataMaintenanceService } from '@/modules/dataMaintenance/service/dataMaintenance.service';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 
@@ -26,7 +25,6 @@ import Swal from 'sweetalert2';
 
 const mockedUseAuth = vi.mocked(useAuth);
 const mockedUseBackups = vi.mocked(useBackups);
-const mockedDataMaintenanceService = vi.mocked(dataMaintenanceService, true);
 const mockedSwalFire = vi.mocked(Swal.fire);
 
 const buildBackupsHookValue = (
@@ -56,7 +54,7 @@ afterEach(() => {
 });
 
 describe('DataAdministrationPage — layout', () => {
-  it('renders the title and two cards, "Base de datos" above "Test"', () => {
+  it('renders the title and the "Base de datos" card', () => {
     render(
       <MemoryRouter>
         <DataAdministrationPage />
@@ -64,19 +62,10 @@ describe('DataAdministrationPage — layout', () => {
     );
 
     expect(screen.getByText('Administración de datos')).toBeInTheDocument();
-
-    const baseDeDatos = screen.getByText('Base de datos');
-    const test = screen.getByText('Test');
-    expect(baseDeDatos).toBeInTheDocument();
-    expect(test).toBeInTheDocument();
-    expect(
-      baseDeDatos.compareDocumentPosition(test) &
-        Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
+    expect(screen.getByText('Base de datos')).toBeInTheDocument();
 
     expect(screen.getByRole('button', { name: 'Borrar los datos' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Generar respaldo' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Cargar Datos de prueba' })).toBeInTheDocument();
     expect(screen.getByTestId('backups-table-stub')).toBeInTheDocument();
   });
 
@@ -108,30 +97,6 @@ describe('DataAdministrationPage — Generar respaldo', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Generar respaldo' }));
 
     await waitFor(() => expect(createBackup).toHaveBeenCalledTimes(1));
-  });
-});
-
-describe('DataAdministrationPage — Test card seed action', () => {
-  it('seeds test data exactly as before the panel rename', async () => {
-    mockedDataMaintenanceService.seedSampleData.mockResolvedValueOnce({
-      data: { tournaments: 2, divisions: 0, teams: 4, players: 20, matches: 0, playerSanctions: 0, blogPosts: 0 },
-      status: 200,
-      statusText: 'OK',
-      headers: {},
-      config: {},
-    } as never);
-
-    render(
-      <MemoryRouter>
-        <DataAdministrationPage />
-      </MemoryRouter>
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: 'Cargar Datos de prueba' }));
-
-    await waitFor(() =>
-      expect(mockedDataMaintenanceService.seedSampleData).toHaveBeenCalledTimes(1)
-    );
   });
 });
 

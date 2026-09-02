@@ -9,12 +9,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { isAxiosError } from 'axios';
-import {
-  BackupIcon,
-  DeleteSweepIcon,
-  ScienceIcon,
-} from '@/views/core/MUI/icons/icons';
+import { BackupIcon, DeleteSweepIcon } from '@/views/core/MUI/icons/icons';
 import { dataMaintenanceService } from '@/modules/dataMaintenance/service/dataMaintenance.service';
 import { useBackups } from '@/modules/backup/hook/backup.hook';
 import BackupsTable from '@/views/panel/components/BackupsTable';
@@ -27,7 +22,6 @@ import {
 
 const DataAdministrationPage: React.FC = () => {
   const [isWiping, setIsWiping] = useState(false);
-  const [isSeeding, setIsSeeding] = useState(false);
   const [activeOperation, setActiveOperation] = useState<string | null>(null);
   const {
     backups,
@@ -85,39 +79,6 @@ const DataAdministrationPage: React.FC = () => {
     await notifySuccess({
       title: 'Base de datos vaciada',
       text: `${response.data.tournaments} torneos, ${response.data.teams} equipos y ${response.data.players} jugadores eliminados.`,
-    });
-  };
-
-  const handleSeed = async (): Promise<void> => {
-    setIsSeeding(true);
-    setActiveOperation('Cargando datos de prueba…');
-    let response: Awaited<
-      ReturnType<typeof dataMaintenanceService.seedSampleData>
-    > | null = null;
-    let caught: unknown = null;
-    try {
-      response = await dataMaintenanceService.seedSampleData();
-    } catch (error) {
-      caught = error;
-    } finally {
-      setIsSeeding(false);
-      setActiveOperation(null);
-    }
-
-    if (caught || !response) {
-      const isConflict = isAxiosError(caught) && caught.response?.status === 409;
-      await notifyError({
-        title: 'No se pudieron cargar los datos de prueba',
-        text: isConflict
-          ? 'La base ya tiene datos. Borrala primero con "Borrar DB".'
-          : 'Volvé a intentar en unos segundos.',
-      });
-      return;
-    }
-
-    await notifySuccess({
-      title: 'Datos de prueba cargados',
-      text: `${response.data.tournaments} torneos, ${response.data.teams} equipos y ${response.data.players} jugadores creados.`,
     });
   };
 
@@ -193,7 +154,7 @@ const DataAdministrationPage: React.FC = () => {
               variant="outlined"
               color="error"
               startIcon={<DeleteSweepIcon />}
-              disabled={isWiping || isSeeding}
+              disabled={isWiping}
               onClick={handleWipe}
             >
               Borrar los datos
@@ -213,22 +174,6 @@ const DataAdministrationPage: React.FC = () => {
             onDelete={handleDeleteBackup}
             onRestore={handleRestoreBackup}
           />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent>
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            Test
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<ScienceIcon />}
-            disabled={isWiping || isSeeding}
-            onClick={() => void handleSeed()}
-          >
-            Cargar Datos de prueba
-          </Button>
         </CardContent>
       </Card>
 
