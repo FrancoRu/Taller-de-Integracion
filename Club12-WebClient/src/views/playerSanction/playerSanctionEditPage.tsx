@@ -43,8 +43,16 @@ const PlayerSanctionEditPage: React.FC = () => {
     void fetchSanction();
   }, [getPlayerSanctionById, targetSanctionId]);
 
+  // The route param is a slug (the detail page's "Editar sanción" button
+  // navigates via `playerSanction.slug`), but the fetched record's own `id`
+  // is a GUID — comparing only `.id` here meant this never matched and the
+  // page always fell through to "Sanción no encontrada", even right after
+  // that same slug's own detail fetch had just succeeded.
+  const isTargetSanction =
+    playerSanction?.id === targetSanctionId || playerSanction?.slug === targetSanctionId;
+
   useEffect(() => {
-    if (!playerSanction || playerSanction.id !== targetSanctionId) {
+    if (!playerSanction || !isTargetSanction) {
       return;
     }
 
@@ -52,7 +60,7 @@ const PlayerSanctionEditPage: React.FC = () => {
       duration: String(playerSanction.duration ?? ''),
       description: playerSanction.description ?? '',
     });
-  }, [playerSanction, targetSanctionId]);
+  }, [playerSanction, isTargetSanction]);
 
   const handleClose = useCallback(() => {
     if (submitting || !targetSanctionId) {
@@ -129,7 +137,7 @@ const PlayerSanctionEditPage: React.FC = () => {
     );
   }
 
-  if (!playerSanction || playerSanction.id !== targetSanctionId) {
+  if (!playerSanction || !isTargetSanction) {
     return (
       <PageShell title="Sanción no encontrada">
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>

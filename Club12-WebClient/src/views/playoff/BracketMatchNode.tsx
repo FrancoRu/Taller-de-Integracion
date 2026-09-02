@@ -41,9 +41,7 @@ type Participant = IMatchResponse['homeTeam'];
  * to the bracket (`SeriesCard`), so cramming that same detail into the
  * bracket card too only inflated it — a plain single-game match and a
  * best-of-N series card ended up wildly different heights even though the
- * library gives every round the same fixed box. The badge is absolutely
- * positioned (adds no layout height of its own), so a series card is now
- * exactly as tall as a plain one.
+ * library gives every round the same fixed box.
  */
 const formatBadge = (series: IMatchSeriesResponse | undefined, legs: IMatchResponse[] | undefined): string | null => {
   if (series) return `BO${series.bestOf}`;
@@ -80,7 +78,6 @@ export default function BracketMatchNode({
       variant="outlined"
       onClick={onClick}
       sx={{
-        position: 'relative',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
@@ -100,24 +97,28 @@ export default function BracketMatchNode({
       }}
     >
       {badge && (
-        <Box
-          sx={{
-            position: 'absolute',
-            // Nudged half outside the card's own top-right corner (rather
-            // than flush inside it) so it reads as a tag hanging off the
-            // card instead of crowding the first row's score, which sits
-            // in that same corner.
-            top: -6,
-            right: -4,
-            px: 0.4,
-            borderRadius: 0.5,
-            bgcolor: 'background.default',
-            border: '1px solid',
-            borderColor: 'divider',
-            lineHeight: 1.4,
-          }}
-        >
-          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.6rem', fontWeight: 600 }}>
+        // A real layout row, not an absolutely-positioned sticker: the
+        // bracket library renders each card inside a nested <svg>/
+        // <foreignObject> sized to exactly this card's box, which clips
+        // overflow by default — a badge nudged outside the card's own
+        // bounds (as this used to be) had its top sliced off on every
+        // single best-of-N match. Taking real layout height instead means
+        // it can never poke outside the box it's clipped to.
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', px: 0.75 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: 'text.secondary',
+              fontSize: '0.6rem',
+              fontWeight: 600,
+              lineHeight: 1.4,
+              px: 0.4,
+              borderRadius: 0.5,
+              bgcolor: 'background.default',
+              border: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
             {badge}
           </Typography>
         </Box>
@@ -140,18 +141,19 @@ export default function BracketMatchNode({
               bgcolor: winner ? 'rgba(255, 90, 31, 0.12)' : 'transparent',
             }}
           >
-            <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0 }}>
+            <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0, flex: 1 }}>
               <TeamLogo teamName={team?.name ?? '?'} logoUrl={team?.logoUrl} size={BRACKET_TEAM_LOGO_SIZE} />
               <Typography
                 variant="body2"
                 color={team ? 'text.primary' : 'text.secondary'}
                 noWrap
                 title={bracketTeamLabel(team, match)}
-                // A fixed (not max-) width so every card's name column takes
-                // up exactly the same space regardless of how long the
-                // team's name is — otherwise the score ends up at a
-                // different horizontal position on every card.
-                sx={{ fontWeight: winner ? 700 : 500, width: 120 }}
+                // Grows to fill whatever room the card actually has (minus
+                // the crest and the score) instead of a fixed width picked
+                // for an old, narrower card size — that hardcoded width
+                // truncated most real team names ("Independiente de…") even
+                // though the card had plenty of unused space to the right.
+                sx={{ fontWeight: winner ? 700 : 500, minWidth: 0 }}
               >
                 {bracketTeamLabel(team, match)}
               </Typography>

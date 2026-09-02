@@ -200,8 +200,8 @@ const PlayerSanctionPage: React.FC = () => {
       <PageShell
         title="Sanción no encontrada"
         back={{
-          label: 'Volver al listado',
-          onClick: () => navigate(APP_ROUTES.panelSanctions),
+          label: 'Volver',
+          onClick: () => navigate(-1),
         }}
       >
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>

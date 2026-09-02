@@ -112,7 +112,7 @@ const CreateUser: React.FC = () => {
     <PageShell
       title="Registrar nuevo usuario"
       maxWidth="sm"
-      back={{ label: 'Volver', onClick: () => navigate(APP_ROUTES.panelUsers) }}
+      back={{ label: 'Volver', onClick: () => navigate(-1) }}
     >
         {errors && errors.length > 0 && (
           <Stack spacing={0.5} sx={{
@@ -192,7 +192,7 @@ const CreateUser: React.FC = () => {
           }}>
             <Button
               variant="outlined"
-              onClick={() => navigate(APP_ROUTES.panelUsers)}
+              onClick={() => navigate(-1)}
               disabled={submitting}
             >
               Cancelar

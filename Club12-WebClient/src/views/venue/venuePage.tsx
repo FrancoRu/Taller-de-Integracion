@@ -6,7 +6,6 @@ import { useVenue } from '@/modules/venue/hook/venue.hook';
 import PageShell from '@/views/core/components/PageShell';
 import LeafletMap from '@/views/core/components/LeafletMap';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
-import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import VenueFormDialog from '@/views/venue/VenueFormDialog';
 import type { VenueFormField, VenueFormState } from '@/views/venue/venues.types';
@@ -138,7 +137,7 @@ const VenuePage: React.FC = () => {
     return (
       <PageShell
         title="Cancha no encontrada"
-        back={{ label: 'Volver', onClick: () => navigate(APP_ROUTES.panelVenues) }}
+        back={{ label: 'Volver', onClick: () => navigate(-1) }}
       >
         <Typography sx={{ color: 'text.secondary' }}>
           No se pudo obtener la información de la cancha solicitada.
@@ -161,7 +160,7 @@ const VenuePage: React.FC = () => {
   return (
     <PageShell
       title={venue.name}
-      back={{ label: 'Volver', onClick: () => navigate(APP_ROUTES.panelVenues) }}
+      back={{ label: 'Volver', onClick: () => navigate(-1) }}
       actions={
         <Button variant="outlined" color="primary" onClick={openEditDialog}>
           Editar cancha

@@ -96,10 +96,10 @@ const TournamentPage: React.FC = () => {
         </Typography>
         <Button
           variant="text"
-          onClick={() => navigate(APP_ROUTES.panelSeasons)}
+          onClick={() => navigate(-1)}
           sx={{ mt: 2, px: 0 }}
         >
-          Volver a temporadas
+          Volver
         </Button>
       </PageShell>
     );
@@ -194,15 +194,11 @@ const TournamentPage: React.FC = () => {
           )}
           <Button
             variant="outlined"
-            onClick={() =>
-              navigate(
-                tournament.seasonId
-                  ? APP_ROUTES.panelSeason.build(
-                      tournament.seasonSlug ?? tournament.seasonId
-                    )
-                  : APP_ROUTES.panelSeasons
-              )
-            }
+            // Real browser-history back — the season page (or wherever else
+            // this tournament was reached from) with its own tab/sub-nav
+            // state intact, instead of always landing on that page's
+            // default tab regardless of where "here" actually was.
+            onClick={() => navigate(-1)}
           >
             Volver
           </Button>

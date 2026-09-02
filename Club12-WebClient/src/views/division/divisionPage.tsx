@@ -24,8 +24,8 @@ import DivisionFixture from '@/views/division/DivisionFixture';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import PointDeductionManager from '@/views/division/PointDeductionManager';
 import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
+import PlayoffMatchSections from '@/views/playoff/PlayoffMatchSections';
 import SeriesInProgressPanel from '@/views/playoff/SeriesInProgressPanel';
-import MatchFixtureList from '@/views/home/matches/MatchFixtureList';
 import SectionHeading from '@/views/core/components/SectionHeading';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
@@ -268,10 +268,10 @@ const DivisionPage: React.FC = () => {
         </Typography>
         <Button
           variant="text"
-          onClick={() => navigate(APP_ROUTES.panelDivisions)}
+          onClick={() => navigate(-1)}
           sx={{ mt: 2, px: 0 }}
         >
-          Volver al listado
+          Volver
         </Button>
       </PageShell>
     );
@@ -293,15 +293,11 @@ const DivisionPage: React.FC = () => {
           </Button>
           <Button
             variant="outlined"
-            onClick={() =>
-              navigate(
-                division.tournamentId
-                  ? APP_ROUTES.panelTournamentDetail.build(
-                      division.tournamentSlug ?? division.tournamentId
-                    )
-                  : APP_ROUTES.panelTournaments
-              )
-            }
+            // Real browser-history back, not a reconstructed URL — takes the
+            // admin back to exactly the page (and tab/sub-nav state) they
+            // came from, rather than always landing on the tournament
+            // page's default tab regardless of where "here" actually was.
+            onClick={() => navigate(-1)}
           >
             Volver
           </Button>
@@ -494,21 +490,11 @@ const DivisionPage: React.FC = () => {
               {playoffMatchSections.length > 0 && (
                 <Box>
                   <SectionHeading>Partidos de playoff</SectionHeading>
-                  <Stack spacing={3}>
-                    {playoffMatchSections.map(({ stage, label, matches: stageMatches }) => (
-                      <Box key={stage.id}>
-                        <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 1 }}>
-                          {label}
-                        </Typography>
-                        <MatchFixtureList
-                          matches={stageMatches}
-                          exportTitle={label}
-                          buildHref={m => APP_ROUTES.panelMatch.build(m.slug ?? m.id)}
-                          seriesById={seriesById}
-                        />
-                      </Box>
-                    ))}
-                  </Stack>
+                  <PlayoffMatchSections
+                    sections={playoffMatchSections}
+                    seriesById={seriesById}
+                    buildHref={m => APP_ROUTES.panelMatch.build(m.slug ?? m.id)}
+                  />
                 </Box>
               )}
             </Stack>

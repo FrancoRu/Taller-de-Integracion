@@ -4,7 +4,10 @@ import { MatchType } from '@/modules/core/enum/match/matchType';
 import { IMatchResponse } from '@/modules/match/type/match';
 import { ITeamMatchResponse } from '@/modules/team/type/team';
 import { IStageResponse, StageType } from '@/modules/stage/type/stage';
-import { buildDivisionFixtureSections } from '@/modules/match/utils/divisionFixtureSections';
+import {
+  buildDivisionFixtureSections,
+  groupFixtureSectionsByBracket,
+} from '@/modules/match/utils/divisionFixtureSections';
 
 const guid = (value: string) => value as GUID;
 
@@ -94,5 +97,39 @@ describe('buildDivisionFixtureSections', () => {
 
     expect(sections).toHaveLength(1);
     expect(sections[0].stage.id).toBe('played');
+  });
+});
+
+describe('groupFixtureSectionsByBracket', () => {
+  it('groups a two-cup playoff by bracket, stripping the now-redundant bracket prefix from each round label', () => {
+    const stages = [
+      stage({ id: 'oro-semi', name: 'Semifinales Copa Oro', stageType: StageType.SemiFinal, bracketName: 'Copa Oro', order: 1 }),
+      stage({ id: 'oro-final', name: 'Final Copa Oro', stageType: StageType.Final, bracketName: 'Copa Oro', order: 2 }),
+      stage({ id: 'plata-semi', name: 'Semifinales Copa Plata', stageType: StageType.SemiFinal, bracketName: 'Copa Plata', order: 3 }),
+      stage({ id: 'plata-final', name: 'Final Copa Plata', stageType: StageType.Final, bracketName: 'Copa Plata', order: 4 }),
+    ];
+    const matches = [match('oro-semi'), match('oro-final'), match('plata-semi'), match('plata-final')];
+
+    const sections = buildDivisionFixtureSections(stages, matches, 'Zona A');
+    const groups = groupFixtureSectionsByBracket(sections);
+
+    expect(groups.map(g => g.bracketName)).toEqual(['Copa Oro', 'Copa Plata']);
+    expect(groups[0].sections.map(s => s.label)).toEqual(['Semifinal', 'Final']);
+    expect(groups[1].sections.map(s => s.label)).toEqual(['Semifinal', 'Final']);
+  });
+
+  it('keeps the full "{bracket} — {round}" label for a division with a single, unnamed bracket (no group header to carry that context instead)', () => {
+    const stages = [
+      stage({ id: 'semi', name: 'Zona A - Semifinal', stageType: StageType.SemiFinal, order: 1 }),
+      stage({ id: 'final', name: 'Zona A - Final', stageType: StageType.Final, order: 2 }),
+    ];
+    const matches = [match('semi'), match('final')];
+
+    const sections = buildDivisionFixtureSections(stages, matches, 'Zona A');
+    const groups = groupFixtureSectionsByBracket(sections);
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0].bracketName).toBeNull();
+    expect(groups[0].sections.map(s => s.label)).toEqual(['Semifinal', 'Final']);
   });
 });

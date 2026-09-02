@@ -31,7 +31,6 @@ import PlayerSanctionCreatePage from '@/views/playerSanction/playerSanctionCreat
 import PlayerFormDialog from '@/views/player/PlayerFormDialog';
 import type { PlayerFormField, PlayerFormState } from '@/views/player/players.types';
 import { toDateInputValue } from '@/views/player/players.types';
-import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { STATISTIC_TYPE_LABELS } from '@/modules/playerStatistic/utils/playerStatisticDisplay';
 import {
@@ -293,8 +292,8 @@ const PlayerPage: React.FC = () => {
       <PageShell
         title="Jugador no encontrado"
         back={{
-          label: 'Volver al listado',
-          onClick: () => navigate(APP_ROUTES.panelPlayers),
+          label: 'Volver',
+          onClick: () => navigate(-1),
         }}
       >
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
@@ -308,13 +307,12 @@ const PlayerPage: React.FC = () => {
     <PageShell
       title={player.fullName}
       back={{
-        // A player always belongs to exactly one team, so "back" returns to
-        // that team's roster (where every entry point — the team's own
-        // Jugadores tab, or the global Jugadores list — leads someone who
-        // wants to keep managing this player) instead of the global list.
-        label: 'Volver al equipo',
-        onClick: () =>
-          navigate(`${APP_ROUTES.panelTeamDetail.build(player.teamId)}?tab=jugadores`),
+        // Real browser-history back — whichever tab or list the admin
+        // actually came from (a team's Jugadores tab, the global Jugadores
+        // list, a match's roster, ...), not a hardcoded guess at one of
+        // them that silently drops the others.
+        label: 'Volver',
+        onClick: () => navigate(-1),
       }}
       actions={
         <Button variant="outlined" color="primary" onClick={openEditDialog}>
