@@ -132,15 +132,28 @@ export default function Podium({ podium }: PodiumProps) {
     // to put on the champion's other side, so the pair as a whole reads
     // centered on the page while the champion itself — the actual focal
     // point — sits off to one side of it. Center the champion alone instead,
-    // with the runner-up shown as a smaller line underneath.
+    // with the runner-up as its own smaller card underneath (not a bare
+    // text line — a lone line looked unfinished next to the full card above
+    // it, not like a deliberate secondary place).
     return (
       <Box
         component="section"
         aria-label={`Podio de ${podium.divisionName}`}
-        sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}
+        sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}
       >
         <PodiumPlace rank={1} team={podium.first} standalone />
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Paper
+          variant="outlined"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            px: 2.5,
+            py: 1.5,
+            borderRadius: 2,
+            borderTop: `3px solid ${PLACE_ACCENT[2]}`,
+          }}
+        >
           <Typography
             component="span"
             variant="subtitle2"
@@ -150,8 +163,8 @@ export default function Podium({ podium }: PodiumProps) {
           </Typography>
           {podium.second ? (
             <>
-              <TeamLogo teamName={podium.second.teamName} logoUrl={podium.second.logoUrl} size={28} />
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              <TeamLogo teamName={podium.second.teamName} logoUrl={podium.second.logoUrl} size={36} />
+              <Typography variant="body1" sx={{ fontWeight: 600 }}>
                 {podium.second.teamName}
               </Typography>
             </>
@@ -160,7 +173,7 @@ export default function Podium({ podium }: PodiumProps) {
               A definir
             </Typography>
           )}
-        </Box>
+        </Paper>
       </Box>
     );
   }
