@@ -39,6 +39,7 @@ public class BackupOperationsServiceTests
         BackupOptions? options = null,
         BackupOperationLock? operationLock = null,
         IMaintenanceModeState? maintenanceModeState = null,
+        FakeAuditService? auditService = null,
         ILogger<BackupOperationsService>? logger = null)
     {
         return new BackupOperationsService(
@@ -50,6 +51,7 @@ public class BackupOperationsServiceTests
             options ?? Options(),
             operationLock ?? new BackupOperationLock(),
             maintenanceModeState ?? new MaintenanceModeState(),
+            auditService ?? new FakeAuditService(),
             logger ?? NullLogger<BackupOperationsService>.Instance);
     }
 
@@ -217,6 +219,25 @@ public class BackupOperationsServiceTests
         BackupRecord safety = Assert.Single(all, r => r.Id != target.Id);
         Assert.Equal(BackupOrigin.Job, safety.Origin);
         Assert.False(maintenanceModeState.IsActive);
+    }
+
+    /// <summary>
+    /// HU-101: a successful restore must be auditable — AuditAction.BackupRestore
+    /// existed in the enum but nothing ever logged it (a real gap found while
+    /// auditing historias-de-usuario.md against the actual code).
+    /// </summary>
+    [Fact]
+    public async Task RestoreBackupAsync_Succeeds_LogsBackupRestoreAuditEntry()
+    {
+        FakeBackupCatalog catalog = new();
+        FakeAuditService auditService = new();
+        BackupOperationsService sut = CreateSut(catalog: catalog, auditService: auditService);
+        BackupRecord target = await catalog.AddAsync(NewRecord("existing.sql", BackupOrigin.Manual, DateTime.UtcNow));
+
+        BackupOperationResult result = await sut.RestoreBackupAsync(target.Id);
+
+        Assert.Equal(BackupOperationOutcome.Completed, result.Outcome);
+        Assert.Contains(AuditAction.BackupRestore, auditService.LoggedActions);
     }
 
     [Fact]

@@ -4,10 +4,13 @@ import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatu
  * Client mirror of the backend lifecycle state machine
  * (Domain.Enums.TournamentStatusTransitions). Transitions are forward-only
  * along Scheduled -> OpenForRegistration -> RegistrationClosed -> Ongoing ->
- * Finished, with Canceled reachable from any non-terminal state. Finished and
- * Canceled are terminal. The backend is the source of truth (an invalid
- * transition is rejected with 409); this map only keeps the UI from offering
- * moves the server would reject.
+ * Finished, with Canceled reachable from any non-terminal state, PLUS one
+ * deliberate reversal: Ongoing -> RegistrationClosed ("revertir a
+ * borrador") — the backend allows undoing a tournament start as long as no
+ * match has been played yet (rejected with 409 otherwise), tearing down the
+ * generated fixture while keeping team-to-zone assignments. Finished and
+ * Canceled are terminal. The backend is the source of truth; this map only
+ * keeps the UI from offering moves the server would reject.
  */
 export const TOURNAMENT_STATUS_NEXT_STATES: Record<
   TournamentStatus,
@@ -26,6 +29,7 @@ export const TOURNAMENT_STATUS_NEXT_STATES: Record<
     TournamentStatus.Canceled,
   ],
   [TournamentStatus.Ongoing]: [
+    TournamentStatus.RegistrationClosed,
     TournamentStatus.Finished,
     TournamentStatus.Canceled,
   ],

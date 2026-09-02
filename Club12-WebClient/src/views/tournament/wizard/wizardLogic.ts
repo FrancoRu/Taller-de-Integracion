@@ -150,6 +150,12 @@ export const validateCrossCupStep = (state: WizardState): ValidationResult => {
     errors.push('Debe clasificar al menos un equipo por grupo en la copa cruzada.');
   }
 
+  // HU-47: the cross cup always has a playoff — it can never be saved as
+  // groups only.
+  if (crossCup.cups.length === 0) {
+    errors.push('La copa cruzada necesita al menos una copa de playoff.');
+  }
+
   // The cross cup's cups derive their qualifiers from its groups, so only the
   // name/uniqueness is validated here.
   errors.push(...validateCups(crossCup.cups, 'la copa cruzada', false));

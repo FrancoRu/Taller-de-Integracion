@@ -122,10 +122,27 @@ describe('validateCrossCupStep', () => {
     expect(validateCrossCupStep(state).length).toBeGreaterThan(0);
   });
 
-  it('accepts an enabled cross cup with a name (no teams are assigned in the wizard)', () => {
+  it('accepts an enabled cross cup with a name and at least one cup (no teams are assigned in the wizard)', () => {
     const state = makeValidState();
-    state.crossCup = { ...state.crossCup, enabled: true, name: 'Copa cruzada' };
+    state.crossCup = {
+      ...state.crossCup,
+      enabled: true,
+      name: 'Copa cruzada',
+      cups: [{ id: 'cup-1', name: 'Copa Club12', qualifiers: 4, bestOfByStage: {} }],
+    };
     expect(validateCrossCupStep(state)).toEqual([]);
+  });
+
+  // HU-47: the cross cup always has a playoff — it can never be saved as
+  // groups only. This was a real gap (found auditing historias-de-usuario.md
+  // against the code): the state starts with cups: [], and nothing blocked
+  // submitting it that way.
+  it('rejects a cross cup with zero cups — playoff is mandatory', () => {
+    const state = makeValidState();
+    state.crossCup = { ...state.crossCup, enabled: true, name: 'Copa cruzada', cups: [] };
+    expect(
+      validateCrossCupStep(state).some(e => e.includes('al menos una copa de playoff'))
+    ).toBe(true);
   });
 
   // HU-110: the cross cup is a multi-group competition.
@@ -156,6 +173,7 @@ describe('validateCrossCupStep', () => {
       name: 'Copa cruzada',
       groupCount: 4,
       qualifiersPerGroup: 2,
+      cups: [{ id: 'cup-1', name: 'Copa Club12', qualifiers: 8, bestOfByStage: {} }],
     };
     expect(validateCrossCupStep(state)).toEqual([]);
   });

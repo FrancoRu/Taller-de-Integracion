@@ -28,8 +28,9 @@ describe('getNextStatusOptions', () => {
     ]);
   });
 
-  it('offers Finished or Canceled from Ongoing', () => {
+  it('offers RegistrationClosed (revertir a borrador), Finished or Canceled from Ongoing', () => {
     expect(getNextStatusOptions(TournamentStatus.Ongoing)).toEqual([
+      TournamentStatus.RegistrationClosed,
       TournamentStatus.Finished,
       TournamentStatus.Canceled,
     ]);
@@ -93,13 +94,22 @@ describe('isValidStatusTransition', () => {
     ).toBe(false);
   });
 
-  it('rejects moving backward', () => {
+  it('rejects moving backward, except the deliberate Ongoing revert', () => {
     expect(
       isValidStatusTransition(
         TournamentStatus.RegistrationClosed,
         TournamentStatus.OpenForRegistration
       )
     ).toBe(false);
+  });
+
+  it('accepts reverting Ongoing back to RegistrationClosed ("revertir a borrador")', () => {
+    expect(
+      isValidStatusTransition(
+        TournamentStatus.Ongoing,
+        TournamentStatus.RegistrationClosed
+      )
+    ).toBe(true);
   });
 
   it('rejects leaving a terminal status', () => {

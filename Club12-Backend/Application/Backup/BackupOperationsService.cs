@@ -1,5 +1,6 @@
 using Application.DTOs.Backup.Response;
 using Application.Interfaces.Backup;
+using Application.Interfaces.Services;
 using Application.Utils.Constants;
 
 using Domain.Constants;
@@ -39,6 +40,7 @@ public sealed class BackupOperationsService(
     BackupOptions options,
     BackupOperationLock operationLock,
     IMaintenanceModeState maintenanceModeState,
+    IAuditService auditService,
     ILogger<BackupOperationsService> logger) : IBackupOperationsService
 {
     public async Task<BackupOperationResult> CreateBackupAsync(BackupOrigin origin, CancellationToken ct = default)
@@ -144,6 +146,17 @@ public sealed class BackupOperationsService(
                 }
 
                 await restoreService.RestoreAsync(tempFilePath, ct);
+
+                // HU-101: record the restore for traceability — non-throwing by
+                // contract (IAuditService.LogAsync), so a logging hiccup never
+                // turns a successful restore into a reported failure.
+                await auditService.LogAsync(
+                    AuditAction.BackupRestore,
+                    targetType: nameof(BackupRecord),
+                    targetId: record.Id.ToString(),
+                    targetName: record.StoragePath,
+                    detail: $"Origen: {record.Origin}",
+                    ct: ct);
 
                 return new BackupOperationResult(BackupOperationOutcome.Completed, safetyBackup.Record, null);
             }
