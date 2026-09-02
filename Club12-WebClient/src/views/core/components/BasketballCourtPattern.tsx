@@ -20,7 +20,7 @@ export default function BasketballCourtPattern({ sx }: BasketballCourtPatternPro
       // pattern (lines and key visible at a glance) instead of "slice" scaling
       // the court up to fill the container edge-to-edge, which crops it down
       // to an unrecognizable close-up of just the paint/hoop area.
-      viewBox="-8 -4 44 23"
+      viewBox="-16 -8 60 31"
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
       sx={{
