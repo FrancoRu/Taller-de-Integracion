@@ -23,7 +23,7 @@ vi.mock('@/views/playerStatistic/playerStatisticCreatePage', () => ({
 vi.mock('@/views/playerSanction/playerSanctionCreatePage', () => ({
   default: () => null,
 }));
-vi.mock('@/views/team/RosterImportDialog', () => ({ default: () => null }));
+vi.mock('@/views/team/RosterCsvImportDialog', () => ({ default: () => null }));
 vi.mock('@/views/player/PlayersPage', () => ({ default: () => null }));
 
 const mockedUseTeam = vi.mocked(useTeam);

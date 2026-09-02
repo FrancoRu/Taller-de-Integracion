@@ -28,7 +28,7 @@ import PlayersPage, {
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PlayerStatisticCreatePage from '@/views/playerStatistic/playerStatisticCreatePage';
 import PlayerSanctionCreatePage from '@/views/playerSanction/playerSanctionCreatePage';
-import RosterImportDialog from '@/views/team/RosterImportDialog';
+import RosterCsvImportDialog from '@/views/team/RosterCsvImportDialog';
 import TeamFormDialog from '@/views/team/TeamFormDialog';
 import TeamStaffManager from '@/views/team/TeamStaffManager';
 import type { TeamFormState, TeamFormField } from '@/views/team/teams.types';
@@ -431,7 +431,7 @@ const TeamPage: React.FC<TeamPageProps> = ({
               color="primary"
               onClick={() => setRosterImportOpen(true)}
             >
-              Importar plantel de una temporada anterior
+              Importar plantel desde CSV
             </Button>
           </Stack>
           <PlayersPage
@@ -538,12 +538,10 @@ const TeamPage: React.FC<TeamPageProps> = ({
         onCreated={refreshSanctions}
       />
       {team.id && (
-        <RosterImportDialog
+        <RosterCsvImportDialog
           open={rosterImportOpen}
           onClose={() => setRosterImportOpen(false)}
-          targetTeamId={team.id}
-          targetTournamentId={team.tournamentId}
-          clubId={team.clubId}
+          teamId={team.id}
           onImported={refreshTeam}
         />
       )}

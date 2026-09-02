@@ -66,3 +66,69 @@ export const downloadCsv = (
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 };
+
+export interface ParsedCsv {
+  headers: string[];
+  rows: string[][];
+}
+
+/** Splits one CSV record into cells, undoing {@link escapeCsvCell}'s
+ * double-quote escaping (a `""` inside a quoted cell is a literal `"`). */
+const parseCsvLine = (line: string): string[] => {
+  const cells: string[] = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+
+    if (inQuotes) {
+      if (char === '"') {
+        if (line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        current += char;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inQuotes = true;
+    } else if (char === CSV_DELIMITER) {
+      cells.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  cells.push(current);
+  return cells;
+};
+
+/**
+ * Parses CSV text — the counterpart to {@link buildCsv} — into a header row
+ * and data rows of raw string cells. Blank lines are skipped so a trailing
+ * newline (or one left over from editing in a spreadsheet app) doesn't turn
+ * into a spurious empty row.
+ */
+export const parseCsv = (text: string): ParsedCsv => {
+  const lines = text
+    .replace(/^\uFEFF/, '')
+    .split(/\r\n|\n/)
+    .filter(line => line.trim() !== '');
+
+  if (lines.length === 0) {
+    return { headers: [], rows: [] };
+  }
+
+  const [headerLine, ...dataLines] = lines;
+  return {
+    headers: parseCsvLine(headerLine).map(cell => cell.trim()),
+    rows: dataLines.map(parseCsvLine),
+  };
+};

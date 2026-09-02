@@ -32,10 +32,6 @@ import { GUID } from '@/modules/core/types/types';
 import {
   formatArgentinePhone,
   formatDocumentNumber,
-  isAtLeastMinimumPlayerAge,
-  isValidDocumentNumber,
-  isValidPhone,
-  VALIDATION_MESSAGES,
 } from '@/modules/core/utils/validators';
 import { TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
 import { TABLE_PAGE_SIZE_OPTIONS } from '@/modules/core/constants/pagination';
@@ -63,6 +59,7 @@ import { FILTERS_DEBOUNCE_DELAY_LONG_MS } from '@/modules/core/constants/constan
 import { MedicalRecordStatus } from '@/modules/core/enum/medicalRecord/medicalRecordStatus';
 import HabilitacionBadge from '@/views/medicalRecord/HabilitacionBadge';
 import PlayerMedicalRecordDialog from '@/views/medicalRecord/PlayerMedicalRecordDialog';
+import { validatePlayerFields } from '@/views/player/players.types';
 import type { PlayersSearchFilters } from '@/views/player/players.types';
 
 /** Per-player medical / eligibility signal keyed by player id (HU-57/HU-62). */
@@ -105,47 +102,19 @@ const rowBirthDateValue = (row: PlayerRow): string =>
 const validateDraftRow = (
   row: PlayerRow,
   resolvedTeamId: GUID | ''
-): { title: string; text: string } | null => {
-  const birthDateValue = rowBirthDateValue(row);
-
-  if (
-    !row.firstName.trim() ||
-    !row.lastName.trim() ||
-    !row.documentNumber.trim() ||
-    !birthDateValue.trim() ||
-    !row.phoneNumber.trim() ||
-    !row.socialSecurity.trim()
-  ) {
-    return {
-      title: 'Campos incompletos',
-      text: 'Nombre, apellido, documento, fecha de nacimiento, teléfono y seguro social son obligatorios. El segundo nombre es opcional.',
-    };
-  }
-
-  if (!isValidPhone(row.phoneNumber)) {
-    return { title: 'Teléfono inválido', text: `${VALIDATION_MESSAGES.phone}.` };
-  }
-
-  if (!isValidDocumentNumber(row.documentNumber)) {
-    return {
-      title: 'Documento inválido',
-      text: `${VALIDATION_MESSAGES.documentNumber}.`,
-    };
-  }
-
-  if (!isAtLeastMinimumPlayerAge(birthDateValue)) {
-    return {
-      title: 'Fecha de nacimiento inválida',
-      text: `${VALIDATION_MESSAGES.minimumPlayerAge}.`,
-    };
-  }
-
-  if (!resolvedTeamId) {
-    return { title: 'Equipo requerido', text: 'Debe seleccionar un equipo.' };
-  }
-
-  return null;
-};
+): { title: string; text: string } | null =>
+  validatePlayerFields(
+    {
+      firstName: row.firstName,
+      secondName: row.secondName,
+      lastName: row.lastName,
+      documentNumber: row.documentNumber,
+      birthDate: rowBirthDateValue(row),
+      phoneNumber: row.phoneNumber,
+      socialSecurity: row.socialSecurity,
+    },
+    resolvedTeamId
+  );
 
 /** A plain `<input type="date">` edit cell for the birthDate column. The
  * DataGrid's built-in `type: 'date'` column expects a real `Date` value and
