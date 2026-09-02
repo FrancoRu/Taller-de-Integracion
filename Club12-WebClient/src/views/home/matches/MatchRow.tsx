@@ -4,9 +4,7 @@ import { IMatchResponse } from '@/modules/match/type/match.d';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import { formatMatchScore, getMatchStatusColor, getMatchStatusLabel } from '@/modules/match/utils/matchDisplay';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
-import { formatTimeAr } from '@/modules/core/utils/formatDate';
-
-const formatTime = (value: string) => formatTimeAr(value);
+import { formatDateAr, formatTimeAr } from '@/modules/core/utils/formatDate';
 
 interface TeamSideProps {
   name: string;
@@ -83,12 +81,14 @@ export default function MatchRow({
         '&:hover': { bgcolor: 'action.hover' },
       }}
     >
-      <Typography variant="caption" sx={{
-        color: "text.secondary",
-        whiteSpace: 'nowrap'
-      }}>
-        {formatTime(match.matchDate)}
-      </Typography>
+      <Stack spacing={0} sx={{ minWidth: 0 }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>
+          {formatDateAr(match.matchDate)}
+        </Typography>
+        <Typography variant="caption" sx={{ color: 'text.secondary', whiteSpace: 'nowrap', fontWeight: 500 }}>
+          {formatTimeAr(match.matchDate)}
+        </Typography>
+      </Stack>
 
       <TeamSide name={home?.name ?? '—'} logoUrl={home?.logoUrl} align="right" />
 

@@ -55,9 +55,9 @@ describe('MatchFixtureList', () => {
 
     expect(screen.getByText('Fecha 1')).toBeInTheDocument();
     expect(screen.getByText('Fecha 2')).toBeInTheDocument();
-    // The full calendar date must not be used as a group header (HU-63).
+    // The full calendar date must not be used as a group header (HU-63) —
+    // it legitimately appears inside each match row instead (MatchRow).
     expect(screen.queryByText(/28 de abril/i)).not.toBeInTheDocument();
-    expect(screen.queryByText('28/04/2026')).not.toBeInTheDocument();
   });
 
   it('renders the team with no match that round as "Libre" (HU-65)', () => {

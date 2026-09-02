@@ -49,6 +49,17 @@ describe('MatchRow', () => {
     );
   });
 
+  it('shows both the date and the time, not just the time', () => {
+    render(
+      <MemoryRouter>
+        <MatchRow match={match} />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('28/04/2026')).toBeInTheDocument();
+    expect(screen.getByText('17:00')).toBeInTheDocument();
+  });
+
   it('links to the admin panel match page when buildHref targets it', () => {
     render(
       <MemoryRouter>
