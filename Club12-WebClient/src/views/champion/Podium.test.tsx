@@ -53,6 +53,25 @@ describe('Podium', () => {
     expect(screen.queryByText('A definir')).not.toBeInTheDocument();
   });
 
+  it('renders the champion above the runner-up when there is no 3rd place — not the other way around', () => {
+    const { container } = render(<Podium podium={podium({ third: null })} />);
+
+    const champion = screen.getByText('Los Halcones');
+    const runnerUp = screen.getByText('Los Pumas');
+    // DOM order alone isn't enough proof — a leftover flex `order` style can
+    // still visually reorder same-parent siblings regardless of DOM order —
+    // so this also asserts the champion's box has no `order` overriding it
+    // past the runner-up line (see PodiumPlace's `standalone` prop).
+    expect(
+      champion.compareDocumentPosition(runnerUp) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+
+    const championBox = container.querySelector('.MuiPaper-root');
+    expect(championBox).not.toBeNull();
+    expect(getComputedStyle(championBox!).order).not.toBe('2');
+    expect(getComputedStyle(championBox!).order).not.toBe('1');
+  });
+
   it('renders a top-three read straight from standings (no playoff)', () => {
     render(<Podium podium={podium({ hasPlayoff: false })} />);
 

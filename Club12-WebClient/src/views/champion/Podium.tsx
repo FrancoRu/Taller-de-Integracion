@@ -24,9 +24,18 @@ const PLACE_LABEL: Record<1 | 2 | 3, string> = {
 interface PodiumPlaceProps {
   rank: 1 | 2 | 3;
   team: IPodiumTeam | null;
+  /**
+   * Set when this is the only flex child in its row (the 2-place layout,
+   * where the champion is alone with no 2nd/3rd to flank it). The classic
+   * 2-1-3 `order` below only makes sense relative to siblings at the other
+   * ranks — left on a lone item it still applies (order is compared against
+   * every flex item's default of 0), silently sorting the "champion" after
+   * a later sibling with no order override of its own.
+   */
+  standalone?: boolean;
 }
 
-function PodiumPlace({ rank, team }: PodiumPlaceProps) {
+function PodiumPlace({ rank, team, standalone = false }: PodiumPlaceProps) {
   const accent = PLACE_ACCENT[rank];
   const isChampion = rank === 1;
   const logoSize = isChampion ? 88 : 64;
@@ -37,7 +46,7 @@ function PodiumPlace({ rank, team }: PodiumPlaceProps) {
       sx={{
         // Classic podium ordering: 2 – 1 – 3 on wide screens, 1 – 2 – 3 stacked
         // on mobile so the champion always reads first when scrolling.
-        order: { xs: rank, md: rank === 1 ? 2 : rank === 2 ? 1 : 3 },
+        order: standalone ? 'unset' : { xs: rank, md: rank === 1 ? 2 : rank === 2 ? 1 : 3 },
         flex: { xs: '1 1 100%', md: '1 1 0' },
         maxWidth: { md: 240 },
         display: 'flex',
@@ -130,7 +139,7 @@ export default function Podium({ podium }: PodiumProps) {
         aria-label={`Podio de ${podium.divisionName}`}
         sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}
       >
-        <PodiumPlace rank={1} team={podium.first} />
+        <PodiumPlace rank={1} team={podium.first} standalone />
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Typography
             component="span"
