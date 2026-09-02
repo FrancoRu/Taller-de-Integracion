@@ -18,7 +18,10 @@ import { matchSeriesService } from '@/modules/matchSeries/service/matchSeries.se
 import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
 import { IStageResponse } from '@/modules/stage/type/stage';
 import { IMatchResponse } from '@/modules/match/type/match.d';
-import { buildDivisionFixtureSections } from '@/modules/match/utils/divisionFixtureSections';
+import {
+  buildDivisionFixtureSections,
+  groupFixtureSectionsByBracket,
+} from '@/modules/match/utils/divisionFixtureSections';
 import { buildBrackets } from '@/modules/playoff/buildBracket';
 import { BracketGroup } from '@/modules/playoff/type/bracket.d';
 import DivisionStandings from '@/views/division/divisionStandings';
@@ -177,6 +180,12 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
     () => buildDivisionFixtureSections(eliminationStages, matches, division.name),
     [eliminationStages, matches, division.name]
   );
+  // Grouped by cup (Copa Oro, Copa Plata, …) so a multi-cup division's
+  // rounds don't all read as one flat, undifferentiated list.
+  const playoffBracketGroups = useMemo(
+    () => groupFixtureSectionsByBracket(playoffMatchSections),
+    [playoffMatchSections]
+  );
 
   return (
     <Box>
@@ -275,13 +284,28 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
             {playoffMatchSections.length > 0 && (
               <Box>
                 <SectionHeading>Partidos de playoff</SectionHeading>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                  {playoffMatchSections.map(({ stage, label, matches: stageMatches }) => (
-                    <Box key={stage.id}>
-                      <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 1 }}>
-                        {label}
-                      </Typography>
-                      <MatchFixtureList matches={stageMatches} exportTitle={label} seriesById={seriesById} />
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {playoffBracketGroups.map(group => (
+                    <Box key={group.bracketName ?? 'default'}>
+                      {group.bracketName && (
+                        <SectionHeading component="h4" accentColor="text.secondary">
+                          {group.bracketName}
+                        </SectionHeading>
+                      )}
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        {group.sections.map(({ stage, label, matches: stageMatches }) => (
+                          <Box key={stage.id}>
+                            <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 1 }}>
+                              {label}
+                            </Typography>
+                            <MatchFixtureList
+                              matches={stageMatches}
+                              exportTitle={group.bracketName ? `${group.bracketName}-${label}` : label}
+                              seriesById={seriesById}
+                            />
+                          </Box>
+                        ))}
+                      </Box>
                     </Box>
                   ))}
                 </Box>
