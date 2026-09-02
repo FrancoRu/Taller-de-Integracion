@@ -23,6 +23,7 @@ import DivisionFixture from '@/views/division/DivisionFixture';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import PointDeductionManager from '@/views/division/PointDeductionManager';
 import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
+import SeriesInProgressPanel from '@/views/playoff/SeriesInProgressPanel';
 import MatchFixtureList from '@/views/home/matches/MatchFixtureList';
 import SectionHeading from '@/views/core/components/SectionHeading';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
@@ -472,6 +473,13 @@ const DivisionPage: React.FC = () => {
                 seriesById={seriesById}
                 onMatchClick={isAdminOrOwner ? handleMatchClick : undefined}
               />
+
+              {isAdminOrOwner && division?.id && (
+                <SeriesInProgressPanel
+                  seriesById={seriesById}
+                  onGameAdded={() => void fetchBrackets(division.id)}
+                />
+              )}
 
               {playoffMatchSections.length > 0 && (
                 <Box>
