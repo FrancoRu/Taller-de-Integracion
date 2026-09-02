@@ -22,9 +22,14 @@ export interface Filtered {
  * Per-call options for a context GET method. `silent` suppresses the global
  * blocking alert on failure so a public page can render a quiet inline retry
  * state instead — mutations (save/delete) never pass it and keep their alerts.
+ * `force` skips the context's "already have it in the local list" cache hit
+ * and re-fetches from the server — needed right after a mutation that
+ * changes data nested inside the cached item (e.g. deleting a tournament
+ * from within a season), which the cache hit would otherwise mask.
  */
 export interface FetchOptions {
   silent?: boolean;
+  force?: boolean;
 }
 
 export type RequestProps = {

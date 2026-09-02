@@ -3,13 +3,15 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
   Button,
-  Card,
-  CardActionArea,
-  CardContent,
   Chip,
-  Grid,
   IconButton,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Typography,
 } from '@mui/material';
 import { useSeason } from '@/modules/season/hook/season.hook';
@@ -49,59 +51,6 @@ const parseYear = (value: string): number | null => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-function TournamentCard({
-  tournament,
-  onDelete,
-}: {
-  tournament: ISeasonTournament;
-  onDelete: (tournament: ISeasonTournament) => void;
-}) {
-  return (
-    <Card sx={{ height: '100%', position: 'relative' }}>
-      <IconButton
-        aria-label={`Eliminar ${tournament.name}`}
-        size="small"
-        onClick={e => {
-          // The card body is itself a Link (CardActionArea) — stop the click
-          // from bubbling into it and navigating away before the confirm
-          // dialog even opens.
-          e.preventDefault();
-          e.stopPropagation();
-          onDelete(tournament);
-        }}
-        sx={{
-          position: 'absolute',
-          top: 4,
-          right: 4,
-          zIndex: 1,
-          bgcolor: 'background.paper',
-          '&:hover': { bgcolor: 'error.main', color: 'error.contrastText' },
-        }}
-      >
-        <DeleteIcon fontSize="small" />
-      </IconButton>
-      <CardActionArea
-        component={Link}
-        to={APP_ROUTES.panelTournamentDetail.build(
-          tournament.slug ?? tournament.id
-        )}
-        sx={{ height: '100%' }}
-      >
-        <CardContent sx={{ width: '100%' }}>
-          <Typography variant="h6" component="h3" sx={{ lineHeight: 1.3, mb: 1, pr: 4 }}>
-            {tournament.name}
-          </Typography>
-          <Chip
-            label={TOURNAMENT_STATUS_LABEL[resolveTournamentStatus(tournament.status)]}
-            color={TOURNAMENT_STATUS_COLOR[resolveTournamentStatus(tournament.status)]}
-            size="small"
-          />
-        </CardContent>
-      </CardActionArea>
-    </Card>
-  );
-}
-
 function CategorySection({
   category,
   tournaments,
@@ -120,13 +69,55 @@ function CategorySection({
       <Box sx={{ mb: 2 }}>
         <CategoryChip category={category} size="medium" />
       </Box>
-      <Grid container spacing={3}>
-        {tournaments.map(tournament => (
-          <Grid key={tournament.id} size={{ xs: 12, sm: 6, md: 4 }}>
-            <TournamentCard tournament={tournament} onDelete={onDeleteTournament} />
-          </Grid>
-        ))}
-      </Grid>
+      <TableContainer>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Nombre</TableCell>
+              <TableCell>Estado</TableCell>
+              <TableCell align="right">Acciones</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {tournaments.map(tournament => (
+              <TableRow key={tournament.id} hover>
+                <TableCell>
+                  <Typography
+                    component={Link}
+                    to={APP_ROUTES.panelTournamentDetail.build(
+                      tournament.slug ?? tournament.id
+                    )}
+                    sx={{
+                      color: 'text.primary',
+                      textDecoration: 'none',
+                      '&:hover': { textDecoration: 'underline' },
+                    }}
+                  >
+                    {tournament.name}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    label={TOURNAMENT_STATUS_LABEL[resolveTournamentStatus(tournament.status)]}
+                    color={TOURNAMENT_STATUS_COLOR[resolveTournamentStatus(tournament.status)]}
+                    size="small"
+                  />
+                </TableCell>
+                <TableCell align="right">
+                  <IconButton
+                    aria-label={`Eliminar ${tournament.name}`}
+                    size="small"
+                    color="error"
+                    onClick={() => onDeleteTournament(tournament)}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Box>
   );
 }
@@ -155,7 +146,11 @@ export default function AdminSeasonDetailPage() {
     }
 
     setLoading(true);
-    const response = await getSeasonByIdRef.current(seasonId);
+    // Always bypasses the season context's "already in the local list" cache
+    // hit: this page re-fetches after every mutation (edit, or deleting one
+    // of the season's tournaments), and that cache would otherwise hand back
+    // the same stale `season.tournaments` array instead of the updated one.
+    const response = await getSeasonByIdRef.current(seasonId, { force: true });
     setSeason(response ?? null);
     setLoading(false);
   }, [seasonId]);

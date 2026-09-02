@@ -156,14 +156,23 @@ export const SeasonProvider: React.FC<{ children: ReactNode }> = ({
       options?: FetchOptions
     ): Promise<ISeasonResponse | void> => {
       try {
-        const existingSeason = seasons?.find(
-          e => e.id === idOrSlug || e.slug === idOrSlug
-        );
+        if (!options?.force) {
+          const existingSeason = seasons?.find(
+            e => e.id === idOrSlug || e.slug === idOrSlug
+          );
 
-        if (existingSeason) {
-          setSeason(existingSeason);
-          return existingSeason;
+          if (existingSeason) {
+            setSeason(existingSeason);
+            return existingSeason;
+          }
+        } else {
+          // Drop the cached query result too, or fetchQuery below would just
+          // hand back the same stale data the local-list check would have.
+          await queryClient.invalidateQueries({
+            queryKey: seasonKeys.byId(idOrSlug),
+          });
         }
+
         const res: AxiosResponse<ISeasonResponse> =
           await queryClient.fetchQuery({
             queryKey: seasonKeys.byId(idOrSlug),

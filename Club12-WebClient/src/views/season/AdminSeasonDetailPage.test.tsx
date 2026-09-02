@@ -85,9 +85,9 @@ describe('AdminSeasonDetailPage', () => {
     expect(screen.getByText('Femenino')).toBeInTheDocument();
     expect(screen.getByText('Apertura Masculino')).toBeInTheDocument();
     expect(screen.getByText('Apertura Femenino')).toBeInTheDocument();
-    expect(getSeasonById).toHaveBeenCalledWith('temporada-2026');
+    expect(getSeasonById).toHaveBeenCalledWith('temporada-2026', { force: true });
 
-    // Cards link to the ADMIN tournament page (by slug), not the public one.
+    // Rows link to the ADMIN tournament page (by slug), not the public one.
     const link = screen
       .getByText('Apertura Masculino')
       .closest('a') as HTMLAnchorElement;
