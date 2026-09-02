@@ -143,12 +143,12 @@ afterEach(() => {
 });
 
 describe('DivisionPage — Playoff tab shows a real match list alongside the bracket', () => {
-  it('renders "Partidos de playoff" with the elimination-stage match as a real fixture row', async () => {
+  it('renders the elimination-stage match as a real fixture row', async () => {
     setup();
     renderPage();
 
     await waitFor(() =>
-      expect(screen.getByRole('heading', { name: 'Partidos de playoff' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Partidos' })).toBeInTheDocument()
     );
     expect(screen.getAllByText('Rival de la final').length).toBeGreaterThan(0);
   });

@@ -23,8 +23,7 @@ import { buildBrackets } from '@/modules/playoff/buildBracket';
 import { BracketGroup } from '@/modules/playoff/type/bracket.d';
 import DivisionStandings from '@/views/division/divisionStandings';
 import MatchFixtureList from '@/views/home/matches/MatchFixtureList';
-import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
-import PlayoffMatchSections from '@/views/playoff/PlayoffMatchSections';
+import PlayoffCups from '@/views/playoff/PlayoffCups';
 import Podium from '@/views/champion/Podium';
 import { IPodium } from '@/modules/champion/type/champion.d';
 
@@ -270,16 +269,11 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
         (structureLoading ? (
           <ListSkeleton items={5} />
         ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <PlayoffBrackets groups={bracketGroups} seriesById={seriesById} />
-
-            {playoffMatchSections.length > 0 && (
-              <Box>
-                <SectionHeading>Partidos de playoff</SectionHeading>
-                <PlayoffMatchSections sections={playoffMatchSections} seriesById={seriesById} />
-              </Box>
-            )}
-          </Box>
+          <PlayoffCups
+            bracketGroups={bracketGroups}
+            matchSections={playoffMatchSections}
+            seriesById={seriesById}
+          />
         ))}
       </Box>
     </Box>

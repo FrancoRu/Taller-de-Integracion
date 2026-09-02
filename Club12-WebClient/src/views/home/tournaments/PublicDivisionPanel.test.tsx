@@ -230,7 +230,7 @@ describe('PublicDivisionPanel — Partidos vs Playoff split', () => {
     expect(screen.queryByRole('tab', { name: 'Llaves' })).not.toBeInTheDocument();
   });
 
-  it('shows a real "Partidos de playoff" match list alongside the bracket on the Playoff tab', async () => {
+  it('shows a real match list alongside the bracket on the Playoff tab', async () => {
     render(
       <MemoryRouter initialEntries={['/?view=playoff']}>
         <PublicDivisionPanel division={division({ name: 'Zona A' })} teams={[]} />
@@ -238,7 +238,7 @@ describe('PublicDivisionPanel — Partidos vs Playoff split', () => {
     );
 
     await waitFor(() =>
-      expect(screen.getByRole('heading', { name: 'Partidos de playoff' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Partidos' })).toBeInTheDocument()
     );
     // The playoff match (excluded from "Partidos") shows up here as a real
     // fixture row, not just inside the collapsed bracket card.
