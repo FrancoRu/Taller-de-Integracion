@@ -73,9 +73,14 @@ const match = (overrides: Partial<IMatchResponse> = {}): IMatchResponse =>
     ...overrides,
   }) as IMatchResponse;
 
-const renderPage = () =>
+const renderPage = (
+  options: { initialEntries?: string[]; initialIndex?: number } = {}
+) =>
   render(
-    <MemoryRouter initialEntries={['/match-1']}>
+    <MemoryRouter
+      initialEntries={options.initialEntries ?? ['/match-1']}
+      initialIndex={options.initialIndex}
+    >
       <Routes>
         <Route path="/:matchId" element={<PublicMatchPage />} />
         <Route path="/temporadas" element={<div>listado-temporadas</div>} />
@@ -170,9 +175,15 @@ describe('PublicMatchPage — "Volver" target', () => {
     vi.clearAllMocks();
   });
 
-  it('goes to the match\'s own tournament, not the orphaned /torneos listing', async () => {
+  it('goes back via real browser history, landing on the tournament page it actually came from', async () => {
     state.match = match({ tournamentId: guid('tournament-1') });
-    renderPage();
+    // A real prior history entry — "Volver" is real browser-history back,
+    // not a reconstructed URL that would always land on the tournament's
+    // default tab regardless of where "here" actually was.
+    renderPage({
+      initialEntries: ['/torneos/tournament-1', '/match-1'],
+      initialIndex: 1,
+    });
 
     const back = await screen.findByRole('button', { name: /Volver al torneo/ });
     await userEvent.click(back);
@@ -180,9 +191,9 @@ describe('PublicMatchPage — "Volver" target', () => {
     expect(screen.getByText('detalle-torneo')).toBeInTheDocument();
   });
 
-  it('falls back to the seasons list when the match has no tournament resolved', async () => {
+  it('labels the button "Volver a temporadas" when the match has no tournament resolved', async () => {
     state.match = match({ tournamentId: null });
-    renderPage();
+    renderPage({ initialEntries: ['/temporadas', '/match-1'], initialIndex: 1 });
 
     const back = await screen.findByRole('button', { name: /Volver a temporadas/ });
     await userEvent.click(back);

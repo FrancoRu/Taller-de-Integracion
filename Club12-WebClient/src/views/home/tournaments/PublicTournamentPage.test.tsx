@@ -40,9 +40,14 @@ const buildTournament = (): ITournamentResponse => ({
   seasonName: null,
 });
 
-const renderPage = () =>
+const renderPage = (
+  options: { initialEntries?: string[]; initialIndex?: number } = {}
+) =>
   render(
-    <MemoryRouter initialEntries={[`/torneos/${TOURNAMENT_ID}`]}>
+    <MemoryRouter
+      initialEntries={options.initialEntries ?? [`/torneos/${TOURNAMENT_ID}`]}
+      initialIndex={options.initialIndex}
+    >
       <Routes>
         <Route path="/torneos/:tournamentId" element={<PublicTournamentPage />} />
         <Route path="/temporadas" element={<div>listado-temporadas</div>} />
@@ -142,7 +147,7 @@ describe('PublicTournamentPage — loading gate', () => {
 });
 
 describe('PublicTournamentPage — "Volver" target', () => {
-  it('goes to the tournament\'s season, not the orphaned /torneos listing', async () => {
+  it('goes back via real browser history, landing on the season page it actually came from', async () => {
     const tournamentWithSeason: ITournamentResponse = {
       ...buildTournament(),
       seasonId: 'season-1' as unknown as GUID,
@@ -167,7 +172,13 @@ describe('PublicTournamentPage — "Volver" target', () => {
     } as ITournamentContextProps);
     mockDivisionsAndTeams();
 
-    renderPage();
+    // A real prior history entry — "Volver" is real browser-history back,
+    // not a reconstructed URL that would always land on the season's
+    // default tab regardless of where "here" actually was.
+    renderPage({
+      initialEntries: ['/temporadas/xxvii-temporada', `/torneos/${TOURNAMENT_ID}`],
+      initialIndex: 1,
+    });
 
     const back = await screen.findByRole('button', {
       name: /Volver a XXVII Temporada/,
@@ -177,7 +188,7 @@ describe('PublicTournamentPage — "Volver" target', () => {
     expect(screen.getByText('detalle-temporada')).toBeInTheDocument();
   });
 
-  it('falls back to the seasons list when the tournament has no season', async () => {
+  it('labels the button "Volver a temporadas" when the tournament has no season', async () => {
     mockedUseTournament.mockReturnValue({
       tournament: buildTournament(),
       tournaments: null,
@@ -195,7 +206,10 @@ describe('PublicTournamentPage — "Volver" target', () => {
     } as ITournamentContextProps);
     mockDivisionsAndTeams();
 
-    renderPage();
+    renderPage({
+      initialEntries: ['/temporadas', `/torneos/${TOURNAMENT_ID}`],
+      initialIndex: 1,
+    });
 
     const back = await screen.findByRole('button', {
       name: /Volver a temporadas/,

@@ -73,13 +73,16 @@ export default function PublicMatchPage() {
     void fetch();
   }, [matchId, getMatchById]);
 
-  // Back goes to the match's own tournament — falling back to the seasons
-  // list (not the orphaned /torneos listing) only when the match has no
-  // stage/tournament resolved yet.
+  // Real back navigation, not a reconstructed tournament URL — the reader
+  // got here from a specific zone/sub-tab/fecha, and a bare tournament link
+  // always lands on its default tab, silently dropping that state. Only
+  // falls back to a computed route when the match truly doesn't exist (the
+  // not-found branch below), since there's nothing meaningful to go back to.
   const backRoute = match?.tournamentId
     ? APP_ROUTES.publicTournament.build(match.tournamentId)
     : APP_ROUTES.publicSeasons;
   const backLabel = match?.tournamentId ? 'Volver al torneo' : 'Volver a temporadas';
+  const goBack = () => navigate(-1);
   const goToTournaments = () => navigate(backRoute);
 
   const matchup =
@@ -228,7 +231,7 @@ export default function PublicMatchPage() {
   return (
     <PageShell
       maxWidth="md"
-      back={{ label: backLabel, onClick: goToTournaments }}
+      back={{ label: backLabel, onClick: goBack }}
     >
       {/* The matchup is the page's heading; kept visually hidden because the
           design leads with the centred crest-vs-crest scoreboard instead. */}

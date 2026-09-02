@@ -106,7 +106,7 @@ const ClubHistoryPage: React.FC = () => {
 
   return (
     <PageShell
-      back={{ label: 'Volver', onClick: () => navigate(APP_ROUTES.panelTeams) }}
+      back={{ label: 'Volver', onClick: () => navigate(-1) }}
     >
         <Stack
           direction="row"
