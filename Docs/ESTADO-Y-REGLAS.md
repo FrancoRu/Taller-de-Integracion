@@ -235,26 +235,22 @@ playoff, mensajes de error en español) se sacó de esta lista — verificar
 en `git log` si hace falta el detalle de cuándo/cómo.
 
 > **Corrección (2026-09-02, auditoría de `historias-de-usuario.md`)**: "series
-> BO-N reales" NO debió estar en la lista de resuelto — ver el primer ítem de
-> la lista abajo, es en realidad la brecha abierta más importante encontrada.
+> BO-N reales" NO debió estar en la lista de resuelto — era en ese momento la
+> brecha abierta más importante encontrada.
+>
+> **Actualización (2026-09-02, misma sesión)**: ya se resolvió del todo.
+> `StageService.SeedPlayoffCupsAsync`/`SeedKnockoutStageAsync`/
+> `SeedMultiGroupCrossCupStageAsync` ahora crean un `MatchSeries` real por
+> cruce cuando `Stage.BestOf > 1`; `StageService.TryAdvanceStageWinnerAsync`
+> empuja el ganador de cada serie decidida a la ronda siguiente del mismo
+> bracket (con bye automático), llamado desde las 3 acciones de carga de
+> resultado de `MatchController`; y `SeriesInProgressPanel` (tab Playoff de
+> División, admin) agrega la acción de UI que faltaba para cargar el 2º/3er
+> partido de una serie. `AuditAction.BackupRestore` también quedó resuelto
+> (se loguea en `BackupOperationsService.RestoreBackupAsync`).
 
-Lo que sigue abierto, hasta donde se sabe a la fecha de este documento — el
-detalle completo, con archivos exactos, está en la Épica 24 de
-[`historias-de-usuario.md`](./historias-de-usuario.md):
+Lo que sigue abierto, hasta donde se sabe a la fecha de este documento:
 
-- **Series playoff Best-of-N no se generan en producción.** El modelo
-  (`MatchSeries`, `Match.SeriesId`/`GameNumber`) y la visualización existen
-  completos, pero el auto-seed de producción (`StageService.
-  SeedPlayoffCupsAsync`) nunca los usa — siembra un `Match` plano por cruce,
-  sin importar el `bestOf` configurado. Solo el seed de demo
-  (`SampleTournamentBuilder`) genera series reales. Tampoco hay ninguna
-  acción de UI para cargar el 2º/3er partido de una serie a mano
-  (`addMatchSeries`/`addGameToSeries` no los llama ninguna vista). Y no hay
-  avance automático de ganador entre rondas de bracket (Cuartos→Semis).
-  Prioridad alta: contradice directamente lo prometido por la config "mejor
-  de N" del wizard.
-- **`AuditAction.BackupRestore` nunca se loguea**, pese a estar declarado en
-  el enum — es el único de los 4 tipos de auditoría sin implementar.
 - **E2E final del ciclo completo**: crear temporada → torneo → estructura →
   inscripción → fichas → arrancar → cargar resultados → posiciones →
   playoffs → campeones, barriendo cada pantalla (público + admin, todos los

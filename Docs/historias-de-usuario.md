@@ -53,10 +53,9 @@ Aplican a TODAS las historias. Si una historia las contradice, ganan estas.
 - **R3 — Fixture se genera al iniciar el torneo, tras asignar equipos.** Sigue vigente, confirmado en
   código: `TournamentService.cs` genera el fixture únicamente dentro de la transición a `Ongoing`
   ("En curso"). Ver HU-64/HU-108.
-- **R4 — Básquet sin empates.** Sigue vigente en fase de grupos (HU-70). **Con una salvedad real en
-  playoffs** — ver la brecha de series en HU-82: la prórroga (`WentToOvertime`) es un campo
-  puramente informativo, y garantiza que no haya empate, pero el avance automático de ganador entre
-  rondas de bracket **no está implementado** (ver Épica 24).
+- **R4 — Básquet sin empates.** Sigue vigente en fase de grupos (HU-70). La prórroga
+  (`WentToOvertime`) es un campo puramente informativo que garantiza que no haya empate; el avance
+  automático de ganador entre rondas de bracket (HU-82) ya está implementado — ver Épica 24.
 
 ---
 
@@ -434,7 +433,7 @@ Las tres siguen vigentes tal cual.
 Sigue vigente en el concepto, con dos cambios: los rangos ya no son un editor manual (ver HU-45), y
 **el poblado de las copas ya no requiere un paso manual separado** — ver HU-82.
 
-### HU-82 · Bracket de playoffs con siembra, prórroga y BYE — `M` ⚠️ brecha real detectada
+### HU-82 · Bracket de playoffs con siembra, prórroga y BYE — `M` ✅
 **Como** usuario **quiero** ver el cuadro de playoffs con los cruces sembrados **para** seguir la
 definición.
 - ✅ **Auto-siembra**: al completarse la fase de grupos de una división, las copas de playoff se
@@ -442,28 +441,17 @@ definición.
   admin. No pisa una siembra ya hecha a mano.
 - ✅ **BYE**: sigue funcionando para clasificados que no son potencia de 2.
 - ✅ **Sin empates** en fase de grupos; prórroga (`WentToOvertime`) es el mecanismo, ver HU-69.
-- ⚠️ **"Serie al mejor de N" (HU-46) NO se genera de verdad en producción.** El modelo de series real
-  existe completo (`MatchSeries`, `Match.SeriesId`/`GameNumber`, `MatchSeriesService` con
-  `CreateSeriesAsync`/`AddGameToSeriesAsync`) y el frontend sabe **mostrarlas** (bracket, tab
-  Playoff de la división). Pero:
-  1. El auto-seed de producción (`StageService.SeedPlayoffCupsAsync`) escribe directamente
-     `HomeTeamId`/`VisitorTeamId` sobre un `Match` plano — nunca crea un `MatchSeries` ni fija
-     `SeriesId`. Un cruce configurado "al mejor de 3" queda sembrado como **un solo partido**, no tres.
-  2. No hay ninguna acción de UI que llame a `addMatchSeries`/`addGameToSeries` — esas funciones del
-     servicio frontend existen pero no las invoca ninguna vista. No hay forma, hoy, de que un admin
-     cargue el segundo o tercer partido de una serie desde el panel.
-  3. El generador de series reales (`BuildDecidedSeries`) solo se usa en el **seed de demo**
-     (`SampleTournamentBuilder.cs`), no en el camino de producción — por eso los torneos de ejemplo
-     sí muestran series completas y un torneo armado a mano por un admin, no.
-- ⚠️ **"El ganador de cada serie avanza automáticamente" — no encontrado en el código.** No hay
-  ninguna lógica que tome el ganador de un partido/serie de Cuartos y lo cargue en el slot
-  correspondiente de Semifinal. `TryAutoSeedPlayoffPhaseAsync` solo cubre el salto Fase de
-  grupos → primera ronda de copa, no el avance entre rondas de eliminación directa.
-- **Esta historia necesita decidirse, no solo documentarse**: si "serie real con N partidos" y
-  "avance automático entre rondas" siguen siendo el objetivo, falta trabajo de desarrollo (conectar
-  el auto-seed a `MatchSeriesService`, y agregar tanto la lógica de avance como su UI). Si el
-  criterio real terminó siendo "un solo partido decide cada cruce, salvo que el admin arme la serie
-  a mano" — no hay forma de armarla a mano tampoco todavía. Ver Épica 24.
+- ✅ **"Serie al mejor de N" (HU-46) se genera de verdad en producción (corregido 2026-09-02).**
+  `StageService.SeedPlayoffCupsAsync`/`SeedKnockoutStageAsync`/`SeedMultiGroupCrossCupStageAsync`
+  crean un `MatchSeries` real (vía `MatchSeriesService`) para cada cruce cuando `Stage.BestOf > 1` —
+  ya no siembran un `Match` plano. `SeriesInProgressPanel` (tab Playoff de la división, admin)
+  agrega la acción de UI que faltaba para cargar el 2º/3er partido de una serie
+  (`addGameToSeries`).
+- ✅ **El ganador de cada serie avanza automáticamente (corregido 2026-09-02).**
+  `StageService.TryAdvanceStageWinnerAsync` toma el ganador de cada slot recién decidido (serie o
+  partido único) y lo carga en el slot correspondiente de la ronda siguiente del mismo bracket —
+  llamado desde las 3 acciones de carga de resultado de `MatchController`, y también desde el propio
+  seeding para propagar los BYE automáticamente.
 
 ---
 
@@ -570,9 +558,8 @@ Sigue vigente: almacenamiento en UTC, presentación en `America/Argentina/Buenos
   listaba "auditoría completa" como pendiente).
 - ✅ Nombres legibles: se resuelve el nombre real del objetivo (torneo, usuario por email) en vez de
   mostrar un UUID crudo, y el detalle queda en español (`ToSpanishLabel()`).
-- ⚠️ **`AuditAction.BackupRestore` está declarado pero NUNCA se loguea.** `BackupOperationsService`
-  no tiene `IAuditService` inyectado y jamás llama `LogAsync` en su camino de restauración — el único
-  de los 4 tipos de acción que en la práctica no deja rastro. Bug a corregir, no solo nota de doc.
+- ✅ **`AuditAction.BackupRestore` se loguea (corregido 2026-09-02).** `BackupOperationsService`
+  ahora recibe `IAuditService` y llama `LogAsync` al final de `RestoreBackupAsync`.
 
 ---
 
@@ -690,25 +677,29 @@ de alta un plantel completo más rápido que fila por fila.
 Recopilado de la auditoría 2026-09-02. No son features nuevas — son casos donde el comportamiento
 documentado/esperado y el código real difieren, y alguien tiene que decidir qué lado gana.
 
-1. **Series playoff Best-of-N no se generan en producción (HU-82/HU-46).** El modelo de datos y la
-   visualización existen; el camino de auto-siembra de producción no los usa, y no hay ninguna
-   acción de UI para cargar el 2º/3er partido de una serie a mano. Solo el seed de demostración
-   genera series reales. Prioridad alta: contradice directamente lo que HU-46/HU-82 prometen.
-2. **Sin avance automático entre rondas de bracket (HU-82).** Nada mueve al ganador de Cuartos al
-   slot de Semifinal. A decidir si es responsabilidad manual del admin (y si es así, falta la UI) o
-   si se espera automático (y si es así, falta la lógica).
-3. **`AuditAction.BackupRestore` nunca se loguea (HU-101).** Único de los 4 tipos de auditoría sin
-   implementar pese a estar declarado.
-4. **Mapa de transiciones de estado del frontend desactualizado (HU-35/HU-114).**
-   `tournamentStatusTransitions.ts` no incluye `Ongoing → RegistrationClosed`.
-5. **Validación del wizard permite copa cruzada sin playoff (HU-47).** El check de
-   `cups.length > 0` no está en `validateCrossCupStep`; a confirmar si el backend lo cubre de forma
-   independiente.
+> **Resueltos (2026-09-02, misma sesión, después de la auditoría)**: los ítems 1-5 de abajo ya
+> fueron corregidos y están en `develop`.
+
+1. ~~**Series playoff Best-of-N no se generan en producción (HU-82/HU-46).**~~ Resuelto:
+   `StageService.SeedPlayoffCupsAsync`/`SeedKnockoutStageAsync`/`SeedMultiGroupCrossCupStageAsync`
+   crean un `MatchSeries` real por cruce cuando `Stage.BestOf > 1`, y `SeriesInProgressPanel` (tab
+   Playoff de División, admin) agrega la acción de UI para cargar el 2º/3er partido de una serie.
+2. ~~**Sin avance automático entre rondas de bracket (HU-82).**~~ Resuelto:
+   `StageService.TryAdvanceStageWinnerAsync` empuja el ganador de cada slot decidido (serie o
+   partido único) a la ronda siguiente del mismo bracket — llamado desde las 3 acciones de carga de
+   resultado de `MatchController` y desde el propio seeding (para propagar byes).
+3. ~~**`AuditAction.BackupRestore` nunca se loguea (HU-101).**~~ Resuelto:
+   `BackupOperationsService.RestoreBackupAsync` ahora loguea vía `IAuditService`.
+4. ~~**Mapa de transiciones de estado del frontend desactualizado (HU-35/HU-114).**~~ Resuelto:
+   `tournamentStatusTransitions.ts` incluye `Ongoing → RegistrationClosed`.
+5. ~~**Validación del wizard permite copa cruzada sin playoff (HU-47).**~~ Resuelto:
+   `validateCrossCupStep` rechaza una copa cruzada con `cups.length === 0`.
 6. **`TournamentsPage.tsx` (listado plano de torneos) quedó huérfano (HU-29).** Sigue existiendo
-   como código/ruta pero no se llega a él desde ningún link del panel.
+   como código/ruta pero no se llega a él desde ningún link del panel. Sigue abierto.
 7. **`Docs/QA-CHECKLIST-E2E.md`** tiene la corrida más reciente contra staging — a la fecha de este
    documento, el backend de staging estaba caído (502), así que gran parte del checklist quedó sin
    poder ejecutarse; revisar su estado antes de asumir que algo de esta lista "funciona en vivo".
+   Sigue abierto (task #3, "E2E final del ciclo completo").
 
 ---
 
