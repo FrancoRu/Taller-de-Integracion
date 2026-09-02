@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import BlogPostPreviewDialog from '@/views/blogPost/BlogPostPreviewDialog';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { formatDateAr } from '@/modules/core/utils/formatDate';
 import {
@@ -35,6 +36,7 @@ const BlogPostsPage: React.FC = () => {
   const { getBlogPostsByFilters, deleteBlogPostById } = useBlogPost();
   const navigate = useNavigate();
   const [posts, setPosts] = useState<BlogPostResponse[]>([]);
+  const [previewPost, setPreviewPost] = useState<BlogPostResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [rowCount, setRowCount] = useState(0);
   const [filters, setFilters] = useState<GetBlogPostsFilteredRequest>(EMPTY_FILTERS);
@@ -92,12 +94,12 @@ const BlogPostsPage: React.FC = () => {
     []
   );
 
-  const handleView = useCallback(
-    (row: BlogPostResponse) => {
-      navigate(APP_ROUTES.blogPost.build(row.slug), { state: { post: row } });
-    },
-    [navigate]
-  );
+  const handleView = useCallback((row: BlogPostResponse) => {
+    // Opens an in-panel preview instead of navigating to the public
+    // /blog/:slug page — an admin clicking "Ver" from Novedades should stay
+    // inside the panel, not get bounced out to the public site.
+    setPreviewPost(row);
+  }, []);
 
   const handleDelete = useCallback(
     async (row: BlogPostResponse) => {
@@ -224,6 +226,17 @@ const BlogPostsPage: React.FC = () => {
             rowCount={rowCount}
           />
         </Box>
+      )}
+
+      {previewPost && (
+        <BlogPostPreviewDialog
+          open
+          onClose={() => setPreviewPost(null)}
+          title={previewPost.title}
+          author={previewPost.author}
+          photoUrl={previewPost.photoUrl}
+          markdownText={previewPost.markdownText}
+        />
       )}
     </PageShell>
   );

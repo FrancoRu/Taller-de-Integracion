@@ -52,6 +52,35 @@ describe('BlogPostsPage — list actions', () => {
   });
 });
 
+describe('BlogPostsPage — "Ver" action', () => {
+  it('opens an in-panel preview instead of navigating to the public /blog page', async () => {
+    mockedUseBlogPost.mockReturnValue({
+      getBlogPostsByFilters: vi.fn().mockResolvedValue({
+        items: [buildPost()],
+        totalCount: 1,
+      }),
+      deleteBlogPostById: vi.fn(),
+    } as unknown as ReturnType<typeof useBlogPost>);
+
+    render(
+      <MemoryRouter initialEntries={['/panel/blog']}>
+        <BlogPostsPage />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Titulo');
+
+    const viewIcon = await screen.findByTestId('VisibilityIcon');
+    (viewIcon.closest('button') as HTMLButtonElement).click();
+
+    // "Ver" opens the dialog in place — the list row is still on screen
+    // behind it, proving it never navigated away to the public /blog/:slug
+    // page (the title now appears twice: the grid row plus the dialog).
+    expect(await screen.findByText('Vista previa')).toBeInTheDocument();
+    expect(screen.getAllByText('Titulo')).toHaveLength(2);
+  });
+});
+
 describe('BlogPostsPage — delete failure', () => {
   it('does not show a success dialog or refetch when deleteBlogPostById fails', async () => {
     const getBlogPostsByFilters = vi.fn().mockResolvedValue({
