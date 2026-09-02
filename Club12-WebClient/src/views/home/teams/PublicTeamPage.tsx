@@ -167,7 +167,7 @@ function ResumenBlock({
         />
       )}
       <StatTile
-        label="Record"
+        label="Récord"
         value={formatRecord(record.wins, record.losses)}
         sub={`${record.played} jugados`}
       />

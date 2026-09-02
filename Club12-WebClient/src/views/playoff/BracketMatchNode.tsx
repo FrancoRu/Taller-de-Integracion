@@ -103,15 +103,21 @@ export default function BracketMatchNode({
         <Box
           sx={{
             position: 'absolute',
-            top: 4,
-            right: 4,
-            px: 0.5,
+            // Nudged half outside the card's own top-right corner (rather
+            // than flush inside it) so it reads as a tag hanging off the
+            // card instead of crowding the first row's score, which sits
+            // in that same corner.
+            top: -6,
+            right: -4,
+            px: 0.4,
             borderRadius: 0.5,
-            bgcolor: 'action.hover',
-            lineHeight: 1.5,
+            bgcolor: 'background.default',
+            border: '1px solid',
+            borderColor: 'divider',
+            lineHeight: 1.4,
           }}
         >
-          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem', fontWeight: 600 }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.6rem', fontWeight: 600 }}>
             {badge}
           </Typography>
         </Box>
