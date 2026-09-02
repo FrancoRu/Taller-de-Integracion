@@ -30,6 +30,16 @@ public class AuditLog : EntityBase
     /// <summary>Identifier of the targeted entity, when applicable.</summary>
     public string? TargetId { get; set; }
 
+    /// <summary>
+    /// The target's human-readable name/label at the moment the action was
+    /// performed (e.g. a tournament's name, a user's email) — captured at
+    /// write time rather than resolved on read, since the target may later
+    /// be renamed or deleted while the audit trail must still read clearly.
+    /// Null for actions with no single named target (e.g. a data wipe) or
+    /// for entries written before this field existed.
+    /// </summary>
+    public string? TargetName { get; set; }
+
     /// <summary>Free-form human-readable context (e.g. "Scheduled -> Ongoing").</summary>
     public string? Detail { get; set; }
 

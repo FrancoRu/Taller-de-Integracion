@@ -89,6 +89,9 @@ public class AuditTrailTests : IClassFixture<CustomWebApplicationFactory>
             .FirstAsync();
 
         Assert.Equal(nameof(Tournament), entry.TargetType);
+        // Captured at write time so the trail still reads clearly even if the
+        // tournament is later renamed or deleted.
+        Assert.Equal(tournament.Name, entry.TargetName);
         // The user-facing audit Detail must be Spanish (not the English enum
         // names): "Programado → Inscripción abierta".
         Assert.Contains("Programado", entry.Detail);

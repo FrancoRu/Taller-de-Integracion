@@ -315,6 +315,7 @@ public class TournamentService(
             AuditAction.TournamentStatusChange,
             targetType: nameof(Tournament),
             targetId: tournamentId.ToString(),
+            targetName: tournament.Name,
             detail: $"{previousStatus.ToSpanishLabel()} → {newStatus.ToSpanishLabel()}");
     }
 

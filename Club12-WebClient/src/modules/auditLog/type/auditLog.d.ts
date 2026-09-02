@@ -34,6 +34,13 @@ export interface IAuditLogResponse {
   /** Identifier of the targeted entity, when applicable. */
   targetId?: string | null;
 
+  /**
+   * The target's human-readable name/label at the moment the action was
+   * performed. Null for actions with no single named target, or entries
+   * written before this field existed (fall back to targetId for those).
+   */
+  targetName?: string | null;
+
   /** Free-form human-readable context. */
   detail?: string | null;
 

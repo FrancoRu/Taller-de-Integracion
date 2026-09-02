@@ -26,6 +26,7 @@ public interface IAuditService
         AuditAction action,
         string? targetType = null,
         string? targetId = null,
+        string? targetName = null,
         string? detail = null,
         CancellationToken ct = default);
 

@@ -82,11 +82,16 @@ public class UserController(
         (string? role, Guid id) = User.GetCallerClaims();
         ResetPasswordResponse response = await userManagementService.ResetPasswordAsync(role, id, userId, ct);
 
-        // HU-101: record the password reset / blanqueo for traceability.
+        // HU-101: record the password reset / blanqueo for traceability. The
+        // target's email is looked up separately since ResetPasswordResponse
+        // only carries the id — worth the extra read so the audit trail shows
+        // who, not just an opaque guid.
+        UserResponse resetUser = await userManagementService.GetByIdAsync(role, id, userId, ct);
         await auditService.LogAsync(
             AuditAction.PasswordReset,
             targetType: "User",
             targetId: userId.ToString(),
+            targetName: resetUser.Email,
             ct: ct);
 
         return Ok(response);

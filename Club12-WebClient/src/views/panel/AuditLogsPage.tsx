@@ -9,6 +9,7 @@ import {
   MenuItem,
   Select,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { formatDateTimeAr } from '@/modules/core/utils/formatDate';
@@ -40,6 +41,37 @@ const ACTION_OPTIONS = Object.keys(ACTION_LABELS) as AuditAction[];
 
 const actionLabel = (action: string): string =>
   ACTION_LABELS[action as AuditAction] ?? action;
+
+/**
+ * The "Objetivo" cell text: the target's captured name/label when the entry
+ * has one, else the raw type+id (older entries, written before targetName
+ * existed, or actions with no single named target).
+ */
+const targetLabel = (row: IAuditLogResponse): string => {
+  const { targetType, targetId, targetName } = row;
+  if (!targetType && !targetId) {
+    return '—';
+  }
+  if (targetName) {
+    return targetType ? `${targetType}: ${targetName}` : targetName;
+  }
+  return [targetType, targetId].filter(Boolean).join(': ');
+};
+
+/** Truncates a DataGrid cell's text with an ellipsis, showing the full value in a tooltip on hover. */
+const TruncatedCell = ({ value }: { value: string }) => (
+  <Tooltip title={value}>
+    <Box
+      sx={{
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {value}
+    </Box>
+  </Tooltip>
+);
 
 interface AuditFilters {
   actor?: string;
@@ -156,13 +188,7 @@ const AuditLogsPage: React.FC = () => {
         minWidth: 180,
         sortable: false,
         filterable: false,
-        renderCell: params => {
-          const { targetType, targetId } = params.row;
-          if (!targetType && !targetId) {
-            return '—';
-          }
-          return [targetType, targetId].filter(Boolean).join(': ');
-        },
+        renderCell: params => <TruncatedCell value={targetLabel(params.row)} />,
       },
       {
         field: 'detail',
@@ -171,7 +197,7 @@ const AuditLogsPage: React.FC = () => {
         minWidth: 240,
         sortable: false,
         filterable: false,
-        renderCell: params => params.row.detail || '—',
+        renderCell: params => <TruncatedCell value={params.row.detail || '—'} />,
       },
     ],
     []

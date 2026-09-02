@@ -20,6 +20,7 @@ public class AuditLogEntityConfiguration : BaseEntityConfiguration<AuditLog>
         builder.Property(a => a.Actor).IsRequired().HasMaxLength(256);
         builder.Property(a => a.TargetType).HasMaxLength(128);
         builder.Property(a => a.TargetId).HasMaxLength(128);
+        builder.Property(a => a.TargetName).HasMaxLength(256);
         builder.Property(a => a.Detail).HasMaxLength(1024);
 
         builder.HasIndex(a => a.Action);

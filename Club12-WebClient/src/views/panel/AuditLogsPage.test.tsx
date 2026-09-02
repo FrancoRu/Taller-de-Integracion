@@ -72,4 +72,37 @@ describe('AuditLogsPage (HU-101)', () => {
       await screen.findByText('Programado → Inscripción abierta')
     ).toBeInTheDocument();
   });
+
+  it('shows the captured target name instead of the raw id, when present', async () => {
+    const getAuditLogs = vi.fn().mockResolvedValue({
+      items: [{ ...entries[0], targetName: 'Torneo Apertura 2026' }],
+      page: 1,
+      pageSize: 10,
+      totalCount: 1,
+    });
+    mockedUseAuditLog.mockReturnValue({ getAuditLogs });
+
+    render(<AuditLogsPage />);
+
+    expect(
+      await screen.findByText('Tournament: Torneo Apertura 2026')
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/apertura-2026/)).not.toBeInTheDocument();
+  });
+
+  it('falls back to type + raw id for entries with no captured target name', async () => {
+    const getAuditLogs = vi.fn().mockResolvedValue({
+      items: entries,
+      page: 1,
+      pageSize: 10,
+      totalCount: 1,
+    });
+    mockedUseAuditLog.mockReturnValue({ getAuditLogs });
+
+    render(<AuditLogsPage />);
+
+    expect(
+      await screen.findByText('Tournament: apertura-2026')
+    ).toBeInTheDocument();
+  });
 });

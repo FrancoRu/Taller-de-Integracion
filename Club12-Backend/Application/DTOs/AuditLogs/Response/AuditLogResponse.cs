@@ -21,6 +21,13 @@ public class AuditLogResponse : BaseEntityResponse
     /// <summary>Identifier of the targeted entity, when applicable.</summary>
     public string? TargetId { get; set; }
 
+    /// <summary>
+    /// The target's human-readable name/label at the moment the action was
+    /// performed. Null for actions with no single named target, or entries
+    /// written before this field existed.
+    /// </summary>
+    public string? TargetName { get; set; }
+
     /// <summary>Free-form human-readable context.</summary>
     public string? Detail { get; set; }
 

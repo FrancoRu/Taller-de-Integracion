@@ -23,6 +23,7 @@ public class AuditService(IAuditLogRepository auditLogRepository, ICurrentUserAc
         AuditAction action,
         string? targetType = null,
         string? targetId = null,
+        string? targetName = null,
         string? detail = null,
         CancellationToken ct = default)
     {
@@ -35,6 +36,7 @@ public class AuditService(IAuditLogRepository auditLogRepository, ICurrentUserAc
             Actor = actor,
             TargetType = targetType,
             TargetId = targetId,
+            TargetName = targetName,
             Detail = detail,
             DateCreated = DateTime.UtcNow,
             // EntityBase.CreatedBy is required; mirror the actor so the base
