@@ -5,8 +5,8 @@ using System;
 namespace Domain.Entities.Models;
 
 /// <summary>
-/// A member of a team's technical staff (cuerpo técnico — DT, Asistente,
-/// DT-Jugador), scoped to one team within one tournament/season, mirroring the
+/// A member of a team's technical staff (cuerpo técnico — DT, Asistente),
+/// scoped to one team within one tournament/season, mirroring the
 /// Team+Tournament season scoping used by <see cref="PlayerTeamRegistration"/>.
 /// Unlike a point deduction, a staff row carries no competitive history worth
 /// protecting: it is removed along with either its team or its tournament.

@@ -14,10 +14,5 @@ public enum TeamStaffRole
     /// <summary>
     /// Assistant coach (Asistente).
     /// </summary>
-    AssistantCoach,
-
-    /// <summary>
-    /// A player who also coaches the team (DT-Jugador).
-    /// </summary>
-    PlayerCoach
+    AssistantCoach
 }

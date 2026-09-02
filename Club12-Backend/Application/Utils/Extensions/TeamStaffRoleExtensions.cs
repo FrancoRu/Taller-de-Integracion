@@ -21,7 +21,6 @@ public static class TeamStaffRoleExtensions
         {
             TeamStaffRole.Coach => "DT",
             TeamStaffRole.AssistantCoach => "Asistente",
-            TeamStaffRole.PlayerCoach => "DT-Jugador",
             _ => throw new ArgumentOutOfRangeException(nameof(role), role, null),
         };
     }

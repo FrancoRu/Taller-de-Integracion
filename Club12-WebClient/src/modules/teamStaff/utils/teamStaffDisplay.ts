@@ -4,5 +4,4 @@ import { TeamStaffRole } from '@/modules/teamStaff/type/teamStaff';
 export const TEAM_STAFF_ROLE_LABEL: Record<TeamStaffRole, string> = {
   Coach: 'DT',
   AssistantCoach: 'Asistente',
-  PlayerCoach: 'DT-Jugador',
 };

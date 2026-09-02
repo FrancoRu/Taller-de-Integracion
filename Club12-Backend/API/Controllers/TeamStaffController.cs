@@ -20,8 +20,8 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Manages a team's technical staff (cuerpo técnico — DT, Asistente,
-/// DT-Jugador), scoped per team + tournament (season). Creating and deleting
+/// Manages a team's technical staff (cuerpo técnico — DT, Asistente),
+/// scoped per team + tournament (season). Creating and deleting
 /// require Admin or Owner; listing is public so a team's profile can show its
 /// staff.
 /// </summary>

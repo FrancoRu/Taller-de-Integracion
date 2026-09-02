@@ -32,7 +32,7 @@ import { TeamStaffRole } from '@/modules/teamStaff/type/teamStaff';
 import { TEAM_STAFF_ROLE_LABEL } from '@/modules/teamStaff/utils/teamStaffDisplay';
 
 /** The role options offered in the add-staff dialog, in display order. */
-const ROLE_OPTIONS: TeamStaffRole[] = ['Coach', 'AssistantCoach', 'PlayerCoach'];
+const ROLE_OPTIONS: TeamStaffRole[] = ['Coach', 'AssistantCoach'];
 
 interface TeamStaffManagerProps {
   /** The team whose technical staff is being managed. */
@@ -43,7 +43,7 @@ interface TeamStaffManagerProps {
 
 /**
  * Admin panel (AdminOrOwner) to add and remove a team's technical staff
- * (cuerpo técnico — DT, Asistente, DT-Jugador) for a tournament (season)
+ * (cuerpo técnico — DT, Asistente) for a tournament (season)
  * participation.
  */
 const TeamStaffManager: React.FC<TeamStaffManagerProps> = ({

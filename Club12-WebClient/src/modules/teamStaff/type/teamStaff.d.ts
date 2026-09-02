@@ -4,7 +4,7 @@ import { GUID } from '@/modules/core/types/types';
  * The role a technical staff member holds for a team's participation in a
  * tournament. Mirrors the backend `TeamStaffRole` enum.
  */
-export type TeamStaffRole = 'Coach' | 'AssistantCoach' | 'PlayerCoach';
+export type TeamStaffRole = 'Coach' | 'AssistantCoach';
 
 /**
  * A team's technical staff (cuerpo técnico) member, as returned by the create
@@ -28,7 +28,7 @@ export interface ITeamStaffResponse {
   /** The staff member's full name. */
   fullName: string;
 
-  /** The staff member's role (DT, Asistente, DT-Jugador). */
+  /** The staff member's role (DT, Asistente). */
   role: TeamStaffRole;
 
   /** When the staff member was registered (ISO date). */

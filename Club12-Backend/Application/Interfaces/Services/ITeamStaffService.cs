@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 namespace Application.Interfaces.Services;
 
 /// <summary>
-/// Manages a team's technical staff (cuerpo técnico — DT, Asistente,
-/// DT-Jugador), scoped per team + tournament (season-scoped, mirroring
+/// Manages a team's technical staff (cuerpo técnico — DT, Asistente),
+/// scoped per team + tournament (season-scoped, mirroring
 /// <see cref="PlayerTeamRegistration"/>).
 /// </summary>
 public interface ITeamStaffService
