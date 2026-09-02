@@ -1,17 +1,9 @@
 import { useEffect, useState } from 'react';
-import {
-  Button,
-  Card,
-  CardContent,
-  CircularProgress,
-  Dialog,
-  DialogContent,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Button, Card, CardContent, Stack, Typography } from '@mui/material';
 import { BackupIcon, DeleteSweepIcon } from '@/views/core/MUI/icons/icons';
 import { dataMaintenanceService } from '@/modules/dataMaintenance/service/dataMaintenance.service';
 import { useBackups } from '@/modules/backup/hook/backup.hook';
+import { runWithBlockingMessage } from '@/modules/core/utils/requestActivity';
 import BackupsTable from '@/views/panel/components/BackupsTable';
 import PageShell from '@/views/core/components/PageShell';
 import {
@@ -22,7 +14,6 @@ import {
 
 const DataAdministrationPage: React.FC = () => {
   const [isWiping, setIsWiping] = useState(false);
-  const [activeOperation, setActiveOperation] = useState<string | null>(null);
   const {
     backups,
     loading,
@@ -37,11 +28,11 @@ const DataAdministrationPage: React.FC = () => {
     void fetchBackups();
   }, [fetchBackups]);
 
-  // IMPORTANT: the blocking overlay (a MUI Dialog, z-index 1300) sits ABOVE the
-  // SweetAlert toasts (z-index ~1060). So the overlay MUST be closed BEFORE any
-  // notify* call — otherwise the toast renders behind the overlay backdrop, its
-  // "OK" is unclickable, the awaited promise never resolves, and the panel
-  // freezes. Every handler clears activeOperation first, then notifies.
+  // Each handler runs its work through runWithBlockingMessage: the app-wide
+  // GlobalLoadingOverlay already blocks the screen for any mutating request, so
+  // this only adds the operation-specific message. SweetAlert's toasts are
+  // lifted above that overlay (confirmDialog.liftAboveMuiModals), and the
+  // message clears before the notify* call fires anyway.
   const handleWipe = async (): Promise<void> => {
     const confirmed = await confirmDelete({
       title: '¿Borrar todos los datos de prueba?',
@@ -54,18 +45,19 @@ const DataAdministrationPage: React.FC = () => {
     }
 
     setIsWiping(true);
-    setActiveOperation('Borrando todos los datos de prueba…');
     let response: Awaited<
       ReturnType<typeof dataMaintenanceService.wipeSampleData>
     > | null = null;
     let failed = false;
     try {
-      response = await dataMaintenanceService.wipeSampleData();
+      response = await runWithBlockingMessage(
+        'Borrando todos los datos de prueba…',
+        () => dataMaintenanceService.wipeSampleData()
+      );
     } catch {
       failed = true;
     } finally {
       setIsWiping(false);
-      setActiveOperation(null);
     }
 
     if (failed || !response) {
@@ -83,13 +75,10 @@ const DataAdministrationPage: React.FC = () => {
   };
 
   const handleGenerateBackup = async (): Promise<void> => {
-    setActiveOperation('Generando el respaldo de la base de datos…');
-    let created: boolean;
-    try {
-      created = await createBackup();
-    } finally {
-      setActiveOperation(null);
-    }
+    const created = await runWithBlockingMessage(
+      'Generando el respaldo de la base de datos…',
+      () => createBackup()
+    );
 
     if (!created) {
       await notifyError({
@@ -105,13 +94,9 @@ const DataAdministrationPage: React.FC = () => {
   const handleDeleteBackup = async (backup: {
     id: string;
   }): Promise<void> => {
-    setActiveOperation('Eliminando el respaldo…');
-    let deleted: boolean;
-    try {
-      deleted = await deleteBackup(backup.id);
-    } finally {
-      setActiveOperation(null);
-    }
+    const deleted = await runWithBlockingMessage('Eliminando el respaldo…', () =>
+      deleteBackup(backup.id)
+    );
 
     if (!deleted) {
       await notifyError({ title: 'No se pudo eliminar el respaldo' });
@@ -124,15 +109,10 @@ const DataAdministrationPage: React.FC = () => {
   const handleRestoreBackup = async (backup: {
     id: string;
   }): Promise<void> => {
-    setActiveOperation(
-      'Restaurando la base de datos desde el respaldo. No cierres ni recargues esta página…'
+    const restored = await runWithBlockingMessage(
+      'Restaurando la base de datos desde el respaldo. No cierres ni recargues esta página…',
+      () => restoreBackup(backup.id)
     );
-    let restored: boolean;
-    try {
-      restored = await restoreBackup(backup.id);
-    } finally {
-      setActiveOperation(null);
-    }
 
     if (!restored) {
       await notifyError({ title: 'No se pudo restaurar el respaldo' });
@@ -176,34 +156,6 @@ const DataAdministrationPage: React.FC = () => {
           />
         </CardContent>
       </Card>
-
-      {/* Blocking overlay: while a destructive/long data operation runs, cover
-          the panel so no other action (or navigation via the controls behind
-          it) can start until it finishes. */}
-      <Dialog
-        open={Boolean(activeOperation)}
-        aria-labelledby="data-admin-operation-title"
-      >
-        <DialogContent>
-          <Stack spacing={2} sx={{ alignItems: 'center', py: 2, px: 3 }}>
-            <CircularProgress />
-            <Typography
-              id="data-admin-operation-title"
-              variant="subtitle1"
-              sx={{ textAlign: 'center' }}
-            >
-              {activeOperation}
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{ color: 'text.secondary', textAlign: 'center' }}
-            >
-              La operación puede tardar unos segundos. Esperá a que termine sin
-              cerrar esta ventana.
-            </Typography>
-          </Stack>
-        </DialogContent>
-      </Dialog>
     </PageShell>
   );
 };

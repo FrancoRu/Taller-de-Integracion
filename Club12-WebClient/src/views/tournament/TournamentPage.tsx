@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button, Chip, Grid, Stack, Tab, Tabs, Typography } from '@mui/material';
 import PageShell from '@/views/core/components/PageShell';
-import BlockingOverlay from '@/views/core/components/BlockingOverlay';
 import CategoryChip from '@/views/core/components/CategoryChip';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { GUID } from '@/modules/core/types/types';
@@ -23,6 +22,7 @@ import {
   resolveTournamentStatus,
 } from '@/modules/tournament/utils/tournamentDisplay';
 import { formatCalendarDate } from '@/modules/core/utils/formatDate';
+import { runWithBlockingMessage } from '@/modules/core/utils/requestActivity';
 
 const TournamentPage: React.FC = () => {
   const { tournamentId } = useParams<{ tournamentId: GUID }>();
@@ -125,13 +125,19 @@ const TournamentPage: React.FC = () => {
     // Block the whole screen while the revert (which tears down the fixture)
     // runs, then hard-reload so every view re-fetches the reverted state.
     setReverting(true);
-    const ok = await putTournamentById(tournament.id, {
-      name: tournament.name,
-      description: tournament.description,
-      startDate: new Date(tournament.startDate),
-      teamRegistrationDeadline: new Date(tournament.teamRegistrationDeadline),
-      status: TournamentStatus.RegistrationClosed,
-    });
+    const ok = await runWithBlockingMessage(
+      'Revirtiendo el torneo a borrador. No cierres esta página…',
+      () =>
+        putTournamentById(tournament.id, {
+          name: tournament.name,
+          description: tournament.description,
+          startDate: new Date(tournament.startDate),
+          teamRegistrationDeadline: new Date(
+            tournament.teamRegistrationDeadline
+          ),
+          status: TournamentStatus.RegistrationClosed,
+        })
+    );
 
     if (ok) {
       window.location.reload();
@@ -203,11 +209,6 @@ const TournamentPage: React.FC = () => {
         </>
       }
     >
-      <BlockingOverlay
-        open={reverting}
-        message="Revirtiendo el torneo a borrador. No cierres esta página…"
-      />
-
       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 2 }}>
         <CategoryChip category={tournament.category} />
         <Chip
