@@ -43,6 +43,7 @@ const INITIAL_TEAM_FORM: TeamFormState = {
   threeLetterCode: '',
   shirtColor: '#1E5FCC',
   shirtSecondaryColor: '',
+  shirtTertiaryColor: '',
   jerseyStyle: 'solid',
   logo: null,
   logoUrl: '',
@@ -121,6 +122,7 @@ const EnrollTeamDialog: React.FC<EnrollTeamDialogProps> = ({
         threeLetterCode,
         shirtColor: teamForm.shirtColor.trim(),
         shirtSecondaryColor: teamForm.shirtSecondaryColor.trim() || null,
+        shirtTertiaryColor: teamForm.shirtTertiaryColor.trim() || null,
         jerseyStyle: teamForm.jerseyStyle,
         logo: teamForm.logo,
       };

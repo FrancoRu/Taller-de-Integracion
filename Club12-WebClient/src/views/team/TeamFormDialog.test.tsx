@@ -9,6 +9,7 @@ const emptyForm: TeamFormState = {
   threeLetterCode: '',
   shirtColor: '',
   shirtSecondaryColor: '',
+  shirtTertiaryColor: '',
   jerseyStyle: 'solid',
   logo: null,
   logoUrl: '',

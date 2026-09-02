@@ -13,6 +13,8 @@ export interface TeamHeroProps {
   shirtColor?: string | null;
   /** Secondary shirt color for the jersey pattern/trim. */
   secondaryColor?: string | null;
+  /** Third shirt color, used only by tri-color jersey templates. */
+  tertiaryColor?: string | null;
   /** Kit template; unknown values fall back to `solid`. */
   jerseyStyle?: string | null;
   /** Optional content rendered below the identity row (tabs, meta, etc.). */
@@ -32,6 +34,7 @@ export default function TeamHero({
   logoUrl,
   shirtColor,
   secondaryColor,
+  tertiaryColor,
   jerseyStyle,
   children,
 }: TeamHeroProps) {
@@ -116,6 +119,7 @@ export default function TeamHero({
         <JerseySvg
           color={shirtColor}
           secondaryColor={secondaryColor}
+          tertiaryColor={tertiaryColor}
           style={toJerseyStyle(jerseyStyle)}
           size={72}
           title={`Camiseta de ${name}`}

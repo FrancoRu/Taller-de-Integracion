@@ -74,4 +74,51 @@ describe('JerseySvg', () => {
     expect(container.querySelector('polygon')).toBeNull();
     expect(container.querySelector('pattern')).toBeNull();
   });
+
+  it('uses the third color for the triband template when one is set', () => {
+    const { container } = render(
+      <JerseySvg
+        color="#1e5fcc"
+        secondaryColor="#ffffff"
+        tertiaryColor="#00aa55"
+        style="triband"
+      />
+    );
+    expect(container.querySelector('rect[fill="#ffffff"]')).not.toBeNull();
+    expect(container.querySelector('rect[fill="#00aa55"]')).not.toBeNull();
+  });
+
+  it('falls back to the secondary color for a tri-color template when no third color is set', () => {
+    const { container } = render(
+      <JerseySvg color="#1e5fcc" secondaryColor="#ffffff" style="triband" />
+    );
+    // Both bands fall back to secondary — two white bars, no third hue.
+    expect(container.querySelectorAll('rect[fill="#ffffff"]').length).toBe(2);
+  });
+
+  it('draws an inset border in the third color for the frame template', () => {
+    const { container } = render(
+      <JerseySvg
+        color="#1e5fcc"
+        secondaryColor="#ffffff"
+        tertiaryColor="#00aa55"
+        style="frame"
+      />
+    );
+    expect(container.querySelector('path[stroke="#00aa55"]')).not.toBeNull();
+  });
+
+  it('draws a five-point star for the star template', () => {
+    const { container } = render(
+      <JerseySvg color="#1e5fcc" secondaryColor="#ffffff" style="star" />
+    );
+    const star = container.querySelector('polygon[fill="#ffffff"]');
+    expect(star).not.toBeNull();
+    expect(star!.getAttribute('points')!.trim().split(/\s+/)).toHaveLength(10);
+  });
+
+  it('defines a checkerboard pattern for the checkerboard template', () => {
+    const { container } = render(<JerseySvg color="#1e5fcc" style="checkerboard" />);
+    expect(container.querySelectorAll('pattern rect').length).toBeGreaterThan(0);
+  });
 });

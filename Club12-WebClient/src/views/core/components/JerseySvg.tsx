@@ -34,12 +34,22 @@ const ARROW_POINTS = '110,168 224,258 338,168 338,204 224,294 110,204';
 /** Diagonal color-block corner, used by the `colorblock` template. */
 const COLORBLOCK_POINTS = '348,44 348,406 150,406';
 
+/** A centered 5-point star, used by the `star` template. */
+const STAR_POINTS =
+  '224,155 242,206 295,207 253,239 268,291 224,260 180,291 196,239 153,207 206,206';
+
 export interface JerseySvgProps {
   /** The team's primary shirt color, as a `#rrggbb` hex. */
   color?: string | null;
   /** The team's secondary color for pattern and trim, as a `#rrggbb` hex.
    *  When absent, a contrasting default is derived from the primary. */
   secondaryColor?: string | null;
+  /** The team's third color, as a `#rrggbb` hex — only used by the
+   * tri-color templates (see `JERSEY_STYLES`' `usesTertiary`) as a second
+   * accent alongside `secondaryColor`. When absent, those templates fall
+   * back to reusing the secondary color rather than inventing an
+   * unrequested third hue. */
+  tertiaryColor?: string | null;
   /** Which kit template to render. Unknown values fall back to `solid`. */
   style?: JerseyStyle | string | null;
   /** Optional dorsal to print on the chest. */
@@ -53,13 +63,16 @@ export interface JerseySvgProps {
 /**
  * Renders a team's kit as an inline, tintable SVG jersey. The primary color
  * fills the body, the secondary color draws the chosen pattern and the neck /
- * armhole trim, and an optional dorsal number is printed in a contrasting ink.
- * Purely presentational and dependency-free, so it is safe to render many at
- * once in rosters and lists.
+ * armhole trim, an optional third color adds a second accent for the
+ * tri-color templates (`triband`, `splitTri`, `frame`, `ring`), and an
+ * optional dorsal number is printed in a contrasting ink. Purely
+ * presentational and dependency-free, so it is safe to render many at once
+ * in rosters and lists.
  */
 export default function JerseySvg({
   color,
   secondaryColor,
+  tertiaryColor,
   style,
   number,
   size = 48,
@@ -70,6 +83,8 @@ export default function JerseySvg({
   const stripePatId = `${base}-stripe`;
   const dotPatId = `${base}-dot`;
   const gradId = `${base}-grad`;
+  const checkerPatId = `${base}-checker`;
+  const diamondPatId = `${base}-diamond`;
 
   const primary = resolveShirtColor(color);
   // Derive a legible secondary when none is set: white on dark kits, navy on
@@ -77,6 +92,10 @@ export default function JerseySvg({
   const secondary = secondaryColor
     ? resolveShirtColor(secondaryColor)
     : resolveShirtColor(primary.isLight ? brand.navy : '#ffffff');
+  // The tri-color templates fall back to the secondary when no third color
+  // was chosen — a team that never picked one still gets a coherent kit
+  // instead of an unrequested extra hue appearing on its own.
+  const tertiary = tertiaryColor ? resolveShirtColor(tertiaryColor) : secondary;
 
   const outline = primary.isLight ? 'rgba(11,15,23,0.35)' : 'rgba(245,245,245,0.4)';
   const label = title ?? 'Camiseta del equipo';
@@ -118,6 +137,25 @@ export default function JerseySvg({
             <stop offset="0%" stopColor={primary.fill} />
             <stop offset="100%" stopColor={secondary.fill} />
           </linearGradient>
+        )}
+        {style === 'checkerboard' && (
+          <pattern id={checkerPatId} width="44" height="44" patternUnits="userSpaceOnUse">
+            <rect width="44" height="44" fill={primary.fill} />
+            <rect width="22" height="22" fill={secondary.fill} />
+            <rect x="22" y="22" width="22" height="22" fill={secondary.fill} />
+          </pattern>
+        )}
+        {style === 'diamonds' && (
+          <pattern id={diamondPatId} width="52" height="52" patternUnits="userSpaceOnUse">
+            <rect
+              x="10"
+              y="10"
+              width="32"
+              height="32"
+              fill={secondary.fill}
+              transform="rotate(45 26 26)"
+            />
+          </pattern>
         )}
       </defs>
 
@@ -181,6 +219,77 @@ export default function JerseySvg({
         )}
 
         {style === 'arrow' && <polygon points={ARROW_POINTS} fill={secondary.fill} />}
+
+        {style === 'camo' && (
+          <>
+            <ellipse cx="150" cy="120" rx="40" ry="26" fill={secondary.fill} transform="rotate(-15 150 120)" />
+            <ellipse cx="230" cy="90" rx="34" ry="22" fill={secondary.fill} transform="rotate(20 230 90)" />
+            <ellipse cx="300" cy="160" rx="38" ry="24" fill={secondary.fill} transform="rotate(-10 300 160)" />
+            <ellipse cx="160" cy="260" rx="42" ry="28" fill={secondary.fill} transform="rotate(12 160 260)" />
+            <ellipse cx="280" cy="300" rx="36" ry="24" fill={secondary.fill} transform="rotate(-25 280 300)" />
+            <ellipse cx="220" cy="360" rx="44" ry="26" fill={secondary.fill} transform="rotate(8 220 360)" />
+          </>
+        )}
+
+        {style === 'checkerboard' && (
+          <rect x="100" y="44" width="248" height="362" fill={`url(#${checkerPatId})`} />
+        )}
+
+        {style === 'diamonds' && (
+          <rect x="100" y="44" width="248" height="362" fill={`url(#${diamondPatId})`} />
+        )}
+
+        {style === 'star' && <polygon points={STAR_POINTS} fill={secondary.fill} />}
+
+        {style === 'triband' && (
+          <>
+            <rect x="100" y="160" width="248" height="70" fill={secondary.fill} />
+            <rect x="100" y="290" width="248" height="70" fill={tertiary.fill} />
+          </>
+        )}
+
+        {style === 'shoulder' && (
+          <>
+            <rect x="100" y="44" width="70" height="50" fill={secondary.fill} />
+            <rect x="278" y="44" width="70" height="50" fill={secondary.fill} />
+          </>
+        )}
+
+        {style === 'splitTri' && (
+          <>
+            <rect x="182" y="44" width="83" height="362" fill={secondary.fill} />
+            <rect x="265" y="44" width="83" height="362" fill={tertiary.fill} />
+          </>
+        )}
+
+        {style === 'frame' && (
+          <path d={BODY_PATH} fill="none" stroke={tertiary.fill} strokeWidth="24" />
+        )}
+
+        {style === 'crossband' && (
+          <>
+            <rect
+              x="120"
+              y="205"
+              width="208"
+              height="34"
+              fill={secondary.fill}
+              transform="rotate(45 224 222)"
+            />
+            <rect
+              x="120"
+              y="205"
+              width="208"
+              height="34"
+              fill={secondary.fill}
+              transform="rotate(-45 224 222)"
+            />
+          </>
+        )}
+
+        {style === 'ring' && (
+          <circle cx="224" cy="215" r="70" fill="none" stroke={tertiary.fill} strokeWidth="14" />
+        )}
       </g>
 
       {/* Neck + hem trim traces the secondary color along the outline. */}

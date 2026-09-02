@@ -11,6 +11,8 @@ export type TeamFormState = {
   shirtColor: string;
   /** Secondary kit color; empty string means "derive automatically". */
   shirtSecondaryColor: string;
+  /** Third kit color; empty string means "unset" (only some templates use it). */
+  shirtTertiaryColor: string;
   /** Selected jersey kit template (e.g. `solid`, `stripes`). */
   jerseyStyle: string;
   /** A newly picked logo file to upload, if any. */
@@ -25,4 +27,5 @@ export type TeamFormField =
   | 'threeLetterCode'
   | 'shirtColor'
   | 'shirtSecondaryColor'
+  | 'shirtTertiaryColor'
   | 'jerseyStyle';

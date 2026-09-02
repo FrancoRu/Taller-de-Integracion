@@ -230,6 +230,12 @@ export interface IPutTeamRequest {
   shirtSecondaryColor?: string | null;
 
   /**
+   * The updated third shirt color, used only by tri-color jersey templates.
+   * @type {string | null}
+   */
+  shirtTertiaryColor?: string | null;
+
+  /**
    * The updated jersey kit template (e.g. `solid`, `stripes`).
    * @type {string | null}
    */
@@ -265,6 +271,9 @@ export interface ITeamMatchResponse {
 
   /** Secondary shirt color (#rrggbb), for the kit trim/pattern. */
   shirtSecondaryColor?: string | null;
+
+  /** Third shirt color (#rrggbb), used only by tri-color kit templates. */
+  shirtTertiaryColor?: string | null;
 
   /**
    * @property {number} score - The score achieved by the team in the match.

@@ -24,6 +24,16 @@ describe('jerseyStyles', () => {
       'yoke',
       'colorblock',
       'arrow',
+      'camo',
+      'checkerboard',
+      'diamonds',
+      'star',
+      'triband',
+      'shoulder',
+      'splitTri',
+      'frame',
+      'crossband',
+      'ring',
     ]);
     JERSEY_STYLES.forEach(s => expect(s.label.trim().length).toBeGreaterThan(0));
   });

@@ -201,6 +201,7 @@ export default function PublicMatchPage() {
                   <JerseySvg
                     color={team?.shirtColor}
                     secondaryColor={team?.shirtSecondaryColor}
+                    tertiaryColor={team?.shirtTertiaryColor}
                     style={team?.jerseyStyle}
                     number={scorer.jerseyNumber ?? undefined}
                     size={30}

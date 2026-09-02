@@ -256,6 +256,7 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
                 <JerseySvg
                   color={team?.shirtColor}
                   secondaryColor={team?.shirtSecondaryColor}
+                  tertiaryColor={team?.shirtTertiaryColor}
                   style={team?.jerseyStyle}
                   number={player.jerseyNumber ?? undefined}
                   size={28}

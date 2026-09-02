@@ -51,6 +51,7 @@ const INITIAL_TEAM_FORM: TeamFormState = {
   threeLetterCode: '',
   shirtColor: '#1E5FCC',
   shirtSecondaryColor: '',
+  shirtTertiaryColor: '',
   jerseyStyle: 'solid',
   logo: null,
   logoUrl: '',
@@ -260,6 +261,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
             <JerseySvg
               color={params.row.shirtColor}
               secondaryColor={params.row.shirtSecondaryColor}
+              tertiaryColor={params.row.shirtTertiaryColor}
               style={params.row.jerseyStyle}
               size={28}
               title={`Camiseta de ${params.row.name}`}
@@ -328,6 +330,7 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
       threeLetterCode: teamForm.threeLetterCode.trim(),
       shirtColor: teamForm.shirtColor.trim(),
       shirtSecondaryColor: teamForm.shirtSecondaryColor.trim() || null,
+      shirtTertiaryColor: teamForm.shirtTertiaryColor.trim() || null,
       jerseyStyle: teamForm.jerseyStyle,
       logo: teamForm.logo as File,
       tournamentId,

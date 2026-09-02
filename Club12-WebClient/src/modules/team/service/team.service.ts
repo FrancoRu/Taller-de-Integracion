@@ -39,6 +39,9 @@ export const teamService = {
     if (team.shirtSecondaryColor) {
       formData.append('ShirtSecondaryColor', team.shirtSecondaryColor);
     }
+    if (team.shirtTertiaryColor) {
+      formData.append('ShirtTertiaryColor', team.shirtTertiaryColor);
+    }
     if (team.jerseyStyle) {
       formData.append('JerseyStyle', team.jerseyStyle);
     }

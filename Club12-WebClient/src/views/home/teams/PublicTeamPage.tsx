@@ -514,6 +514,7 @@ export default function PublicTeamPage() {
             logoUrl={team.logoUrl}
             shirtColor={team.shirtColor}
             secondaryColor={team.shirtSecondaryColor}
+            tertiaryColor={team.shirtTertiaryColor}
             jerseyStyle={team.jerseyStyle}
           />
         </Box>
@@ -575,6 +576,7 @@ export default function PublicTeamPage() {
                       <JerseySvg
                         color={team.shirtColor}
                         secondaryColor={team.shirtSecondaryColor}
+                        tertiaryColor={team.shirtTertiaryColor}
                         style={team.jerseyStyle}
                         number={player.jerseyNumber}
                         size={28}
