@@ -231,11 +231,30 @@ teléfono/email, popup+spinner+bloqueo de navegación en backup/restore,
 camiseta SVG, escudo semitransparente, seed con datos realistas, nav
 jerárquico Temporada→Torneo→División, Ver/Editar unificado, staff de
 equipo, roster editable, importación CSV, tab Goleadores, auto-seed de
-playoff, series BO-N reales, mensajes de error en español) se sacó de esta
-lista — verificar en `git log` si hace falta el detalle de cuándo/cómo.
+playoff, mensajes de error en español) se sacó de esta lista — verificar
+en `git log` si hace falta el detalle de cuándo/cómo.
 
-Lo que sigue abierto, hasta donde se sabe a la fecha de este documento:
+> **Corrección (2026-09-02, auditoría de `historias-de-usuario.md`)**: "series
+> BO-N reales" NO debió estar en la lista de resuelto — ver el primer ítem de
+> la lista abajo, es en realidad la brecha abierta más importante encontrada.
 
+Lo que sigue abierto, hasta donde se sabe a la fecha de este documento — el
+detalle completo, con archivos exactos, está en la Épica 24 de
+[`historias-de-usuario.md`](./historias-de-usuario.md):
+
+- **Series playoff Best-of-N no se generan en producción.** El modelo
+  (`MatchSeries`, `Match.SeriesId`/`GameNumber`) y la visualización existen
+  completos, pero el auto-seed de producción (`StageService.
+  SeedPlayoffCupsAsync`) nunca los usa — siembra un `Match` plano por cruce,
+  sin importar el `bestOf` configurado. Solo el seed de demo
+  (`SampleTournamentBuilder`) genera series reales. Tampoco hay ninguna
+  acción de UI para cargar el 2º/3er partido de una serie a mano
+  (`addMatchSeries`/`addGameToSeries` no los llama ninguna vista). Y no hay
+  avance automático de ganador entre rondas de bracket (Cuartos→Semis).
+  Prioridad alta: contradice directamente lo prometido por la config "mejor
+  de N" del wizard.
+- **`AuditAction.BackupRestore` nunca se loguea**, pese a estar declarado en
+  el enum — es el único de los 4 tipos de auditoría sin implementar.
 - **E2E final del ciclo completo**: crear temporada → torneo → estructura →
   inscripción → fichas → arrancar → cargar resultados → posiciones →
   playoffs → campeones, barriendo cada pantalla (público + admin, todos los
@@ -250,11 +269,10 @@ Lo que sigue abierto, hasta donde se sabe a la fecha de este documento:
   borrado con historia, pero convendría endurecer el `OnDelete` en una
   migración futura para que la protección no dependa solo del código de
   aplicación.
-- **Consolidar documentación de deliverables formales**: `README.md`,
-  `MANUAL_USUARIO.md` y `historias-de-usuario.md` describen pantallas/rutas
-  y números de tests que quedaron desactualizados respecto al código actual
-  (ej. rutas de Fases ya no existen, el flujo de alta de plantel cambió a
-  tabla editable + CSV, "Torneos" ya no es un ítem top-level del nav). No se
-  reescribieron en esta consolidación porque son deliverables formales
-  aparte, no notas de trabajo — necesitan una pasada de actualización propia
+- **Consolidar documentación de deliverables formales**: `historias-de-usuario.md`
+  fue reescrito de punta a punta el 2026-09-02 contra el código real (ver su
+  propio changelog). `README.md` y `MANUAL_USUARIO.md` siguen pendientes de
+  la misma pasada — todavía describen pantallas/rutas que cambiaron (ej.
+  rutas de Fases ya no existen, "Torneos" ya no es un ítem top-level del
+  nav).
   contra el estado real de la app.
