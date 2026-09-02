@@ -177,7 +177,7 @@ const TeamRegisterPage: React.FC = () => {
             <Typography variant="body2" sx={{
               color: "text.secondary"
             }}>
-              No hay torneos con la inscripcion abierta
+              No hay torneos con la inscripción abierta
             </Typography>
           ) : (
             <FormControl fullWidth size="small">
