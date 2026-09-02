@@ -30,6 +30,13 @@ vi.mock('@/modules/team/hook/team.hook');
 vi.mock('@/modules/auth/hook/auth.hook');
 vi.mock('sweetalert2', () => ({ default: { fire: vi.fn() } }));
 
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual =
+    await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return { ...actual, useNavigate: () => mockNavigate };
+});
+
 // Child dialogs/cards pull in unrelated feature contexts (match, tournament,
 // division, stage) that are irrelevant to the fetch under test.
 vi.mock('@/views/playerStatistic/playerStatisticCreatePage', () => ({
@@ -183,6 +190,21 @@ describe('PlayerPage — edit trigger', () => {
       expect(mockedSendGet).toHaveBeenCalledWith(
         'players/admin/11111111-1111-1111-1111-111111111111'
       )
+    );
+  });
+});
+
+describe('PlayerPage — "Volver" navigation', () => {
+  it('goes back to the player\'s own team roster, not the global players list', async () => {
+    const user = userEvent.setup();
+    renderAt('lopez-carlos');
+
+    await user.click(
+      await screen.findByRole('button', { name: /Volver al equipo/ })
+    );
+
+    expect(mockNavigate).toHaveBeenCalledWith(
+      '/panel/equipos/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa?tab=jugadores'
     );
   });
 });

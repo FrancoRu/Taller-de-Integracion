@@ -308,8 +308,13 @@ const PlayerPage: React.FC = () => {
     <PageShell
       title={player.fullName}
       back={{
-        label: 'Volver al listado',
-        onClick: () => navigate(APP_ROUTES.panelPlayers),
+        // A player always belongs to exactly one team, so "back" returns to
+        // that team's roster (where every entry point — the team's own
+        // Jugadores tab, or the global Jugadores list — leads someone who
+        // wants to keep managing this player) instead of the global list.
+        label: 'Volver al equipo',
+        onClick: () =>
+          navigate(`${APP_ROUTES.panelTeamDetail.build(player.teamId)}?tab=jugadores`),
       }}
       actions={
         <Button variant="outlined" color="primary" onClick={openEditDialog}>
