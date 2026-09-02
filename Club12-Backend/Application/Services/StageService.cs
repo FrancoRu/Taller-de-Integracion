@@ -38,6 +38,53 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     private readonly IStageTeamMatchRepository _stageTeamMatchRepository = unitOfWork.StageTeamMatchRepository;
     private readonly ITeamRepository _teamRepository = unitOfWork.TeamRepository;
     private readonly IMatchRepository _matchRepository = unitOfWork.MatchRepository;
+    private readonly IMatchSeriesRepository _matchSeriesRepository = unitOfWork.MatchSeriesRepository;
+
+    /// <summary>
+    /// The elimination rounds a wizard-built cup can be made of, in bracket
+    /// order (see <c>qualifiersToStageTypes</c> on the frontend, which never
+    /// produces <see cref="StageType.ThirdPlace"/> — that stage type only
+    /// exists for the legacy fixed-size bracket generator). Used to find "the
+    /// next round of this same cup" without relying on <see cref="Stage.Order"/>,
+    /// which the wizard's per-cup stage creation never sets.
+    /// </summary>
+    private static readonly StageType[] EliminationProgression =
+    [
+        StageType.RoundOf16,
+        StageType.QuarterFinal,
+        StageType.SemiFinal,
+        StageType.Final,
+    ];
+
+    /// <summary>
+    /// The stage type immediately after <paramref name="current"/> in
+    /// <see cref="EliminationProgression"/>, or null when <paramref name="current"/>
+    /// is the Final, not part of the progression (Group), or unrecognized.
+    /// </summary>
+    private static StageType? NextStageType(StageType current)
+    {
+        int index = Array.IndexOf(EliminationProgression, current);
+        if (index < 0 || index == EliminationProgression.Length - 1)
+        {
+            return null;
+        }
+
+        return EliminationProgression[index + 1];
+    }
+
+    /// <summary>
+    /// This stage type's position in <see cref="EliminationProgression"/> —
+    /// lower means earlier in the bracket. Types outside the progression
+    /// (Group, ThirdPlace) sort last; callers that use this to pick "the
+    /// earliest round of a cup" already exclude Group upstream, and a
+    /// wizard-built cup never produces ThirdPlace (see
+    /// <see cref="EliminationProgression"/>'s own remarks).
+    /// </summary>
+    private static int EliminationDepth(StageType stageType)
+    {
+        int index = Array.IndexOf(EliminationProgression, stageType);
+        return index < 0 ? int.MaxValue : index;
+    }
 
     /// <summary>
     /// Retrieves a stage by its unique identifier.
@@ -570,9 +617,10 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
             throw new InvalidOperationException(ErrorMessages.Stage.SeedMissingStandings);
         }
 
-        List<Match> orderedMatches = FillStageWithSeeds(stage.Matches, orderedTeamIds);
+        List<Match> orderedMatches = await FillStageWithSeedsAsync(stage, orderedTeamIds);
 
         await _matchRepository.UpdateRangeAsync(orderedMatches);
+        await TryAdvanceStageWinnerAsync(stage.Id);
 
         return orderedMatches;
     }
@@ -602,9 +650,10 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
         List<Guid> orderedTeamIds = CrossCupGroupSeeder.ResolveSeedOrder(
             standingsPerGroup, stage.Division.QualifiersPerGroup);
 
-        List<Match> seeded = FillStageWithSeeds(stage.Matches, orderedTeamIds);
+        List<Match> seeded = await FillStageWithSeedsAsync(stage, orderedTeamIds);
 
         await _matchRepository.UpdateRangeAsync(seeded);
+        await TryAdvanceStageWinnerAsync(stage.Id);
 
         return seeded;
     }
@@ -661,17 +710,28 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
                 continue;
             }
 
+            // A cup with more than one round (e.g. Semifinal + Final) has EVERY
+            // round unseeded at this point — Stage.Order is never actually set
+            // for wizard-built stages (CreateDivisionWithStagesAsync never
+            // assigns it), so it cannot disambiguate which round is "first".
+            // Bracket depth (EliminationProgression) can: the group-stage
+            // standings always seed the EARLIEST round of the cup.
             Stage cupStage = eliminationStages
                 .Where(s => s.BracketName == destination
                     && s.Matches.Count > 0
                     && !s.Matches.Any(m => m.HomeTeamId.HasValue || m.VisitorTeamId.HasValue))
-                .OrderBy(s => s.Order)
+                .OrderBy(s => EliminationDepth(s.StageType))
                 .FirstOrDefault()
                 ?? throw new InvalidOperationException(ErrorMessages.Playoff.CupStageNotFound(destination));
 
-            List<Match> seeded = FillStageWithSeeds(cupStage.Matches, orderedTeamIds);
+            List<Match> seeded = await FillStageWithSeedsAsync(cupStage, orderedTeamIds);
             await _matchRepository.UpdateRangeAsync(seeded);
             seededByCup[destination] = seeded;
+
+            // A bye is already decided the moment it is seeded (no match needs
+            // to be played) — push it into the next round right away instead of
+            // waiting for a result-loading call that will never come for it.
+            await TryAdvanceStageWinnerAsync(cupStage.Id);
         }
 
         return seededByCup;
@@ -741,27 +801,201 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     /// Pairs an ordered (best seed first) list of team ids into a stage's
     /// already-generated, still-empty matches using the classic bracket seed
     /// order, marking bye pairs as finished walkover wins. Shared by the
-    /// single-cup and multi-cup seeding paths.
+    /// single-cup and multi-cup seeding paths. When the stage plays a real
+    /// series (<see cref="Stage.BestOf"/> &gt; 1), a real pairing (not a bye)
+    /// gets a brand-new <see cref="MatchSeries"/> and the pre-generated empty
+    /// match becomes that series' game 1 — the same treatment
+    /// <see cref="TryAdvanceStageWinnerAsync"/> gives a later round once both
+    /// its teams are known. A bye stays a single finished match regardless of
+    /// <see cref="Stage.BestOf"/>: nothing is actually played, so there is
+    /// nothing to make a series out of.
     /// </summary>
-    private static List<Match> FillStageWithSeeds(IEnumerable<Match> stageMatches, IReadOnlyList<Guid> orderedTeamIds)
+    private async Task<List<Match>> FillStageWithSeedsAsync(Stage stage, IReadOnlyList<Guid> orderedTeamIds)
     {
         List<(Guid HomeTeamId, Guid? VisitorTeamId)> pairs = PlayoffSeeder.SeedPairs(orderedTeamIds);
 
-        List<Match> orderedMatches = [.. stageMatches.OrderBy(m => m.MatchDate).ThenBy(m => m.Id)];
+        List<Match> orderedMatches = [.. stage.Matches.OrderBy(m => m.MatchDate).ThenBy(m => m.Id)];
 
         for (int i = 0; i < pairs.Count; i++)
         {
-            orderedMatches[i].HomeTeamId = pairs[i].HomeTeamId;
-            orderedMatches[i].VisitorTeamId = pairs[i].VisitorTeamId;
+            Match slot = orderedMatches[i];
+            slot.HomeTeamId = pairs[i].HomeTeamId;
+            slot.VisitorTeamId = pairs[i].VisitorTeamId;
 
             if (pairs[i].VisitorTeamId is null)
             {
-                orderedMatches[i].IsFinished = true;
-                orderedMatches[i].WinningTeamId = pairs[i].HomeTeamId;
+                slot.IsFinished = true;
+                slot.WinningTeamId = pairs[i].HomeTeamId;
+                continue;
+            }
+
+            if (stage.BestOf > 1)
+            {
+                MatchSeries series = await CreateSeriesForPairAsync(
+                    stage.Id, stage.BestOf, pairs[i].HomeTeamId, pairs[i].VisitorTeamId!.Value);
+                slot.SeriesId = series.Id;
+                slot.GameNumber = 1;
             }
         }
 
         return orderedMatches;
+    }
+
+    /// <summary>
+    /// Creates and persists a new best-of-N series between two teams at a
+    /// stage. Builds the entity directly (rather than reusing
+    /// <see cref="MatchSeriesService"/>) because this runs from the trusted
+    /// internal seeding/advancement path, where the pairing is already known
+    /// to be correct — the public create-series endpoint's
+    /// "team assigned to this stage via StageTeamMatch" guard does not apply
+    /// here: elimination-stage teams are never assigned that way (they are
+    /// seeded directly onto the match/series, matching how a BestOf=1 slot has
+    /// always worked).
+    /// </summary>
+    private async Task<MatchSeries> CreateSeriesForPairAsync(Guid stageId, int bestOf, Guid homeTeamId, Guid visitorTeamId)
+    {
+        MatchSeries series = new()
+        {
+            StageId = stageId,
+            HomeTeamId = homeTeamId,
+            VisitorTeamId = visitorTeamId,
+            BestOf = bestOf,
+            CreatedBy = AuditConstants.SystemUser,
+        };
+
+        await _matchSeriesRepository.AddAsync(series);
+        return series;
+    }
+
+    /// <inheritdoc/>
+    public async Task TryAdvanceStageWinnerAsync(Guid decidedStageId)
+    {
+        try
+        {
+            Stage? stage = await _stageRepository.GetByIdAsync(
+                decidedStageId, includes: [s => s.Matches, s => s.MatchSeries]);
+
+            if (stage is null || stage.BracketName is null)
+            {
+                return;
+            }
+
+            StageType? nextType = NextStageType(stage.StageType);
+            if (nextType is null)
+            {
+                return;
+            }
+
+            Stage? nextStage = (await _stageRepository.FindAsync(
+                s => s.DivisionId == stage.DivisionId
+                    && s.BracketName == stage.BracketName
+                    && s.StageType == nextType.Value,
+                includes: [s => s.Matches])).FirstOrDefault();
+
+            if (nextStage is null)
+            {
+                return;
+            }
+
+            // One entry per bracket slot: once a series' 2nd/3rd game gets
+            // added (AddGameToSeriesAsync), it lands in this SAME stage's
+            // Matches too — only that slot's game 1 (or its lone match, for a
+            // BestOf=1/bye slot, which never gets a GameNumber) represents the
+            // slot itself, so later games must be filtered out here.
+            List<Match> orderedMatches = [.. stage.Matches
+                .Where(m => m.GameNumber is null or 1)
+                .OrderBy(m => m.MatchDate).ThenBy(m => m.Id)];
+            List<Match> nextOrderedMatches = [.. nextStage.Matches
+                .Where(m => m.GameNumber is null or 1)
+                .OrderBy(m => m.MatchDate).ThenBy(m => m.Id)];
+
+            HashSet<Match> touched = [];
+
+            for (int slotIndex = 0; slotIndex < orderedMatches.Count; slotIndex++)
+            {
+                Guid? winnerId = ResolveSlotWinner(orderedMatches[slotIndex], stage);
+                int nextSlotIndex = slotIndex / 2;
+
+                if (winnerId is null || nextSlotIndex >= nextOrderedMatches.Count)
+                {
+                    continue;
+                }
+
+                Match target = nextOrderedMatches[nextSlotIndex];
+                bool isHomeSlot = slotIndex % 2 == 0;
+
+                if (isHomeSlot)
+                {
+                    if (target.HomeTeamId == winnerId)
+                    {
+                        continue;
+                    }
+
+                    target.HomeTeamId = winnerId;
+                }
+                else
+                {
+                    if (target.VisitorTeamId == winnerId)
+                    {
+                        continue;
+                    }
+
+                    target.VisitorTeamId = winnerId;
+                }
+
+                touched.Add(target);
+            }
+
+            if (touched.Count == 0)
+            {
+                return;
+            }
+
+            // A target slot that just got its second team AND belongs to a
+            // series-based round becomes game 1 of a new series — the exact
+            // same treatment a freshly-seeded first round gets
+            // (FillStageWithSeedsAsync).
+            if (nextStage.BestOf > 1)
+            {
+                foreach (Match target in touched)
+                {
+                    if (target.HomeTeamId.HasValue && target.VisitorTeamId.HasValue && !target.SeriesId.HasValue)
+                    {
+                        MatchSeries series = await CreateSeriesForPairAsync(
+                            nextStage.Id, nextStage.BestOf, target.HomeTeamId.Value, target.VisitorTeamId.Value);
+                        target.SeriesId = series.Id;
+                        target.GameNumber = 1;
+                    }
+                }
+            }
+
+            await _matchRepository.UpdateRangeAsync(touched);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex,
+                "Could not advance the winner(s) from stage {StageId} into the next round. " +
+                "An admin can still fill the next round in by hand.",
+                decidedStageId);
+        }
+    }
+
+    /// <summary>
+    /// The winning team of one bracket slot (a single match, or a whole
+    /// series), or null when that slot is not decided yet. A series slot
+    /// (<see cref="Match.SeriesId"/> set) is decided once its
+    /// <see cref="MatchSeries.WinningTeamId"/> is set — a plain slot
+    /// (BestOf = 1, or a bye) is decided once the match itself is finished.
+    /// </summary>
+    private static Guid? ResolveSlotWinner(Match slotFirstMatch, Stage stage)
+    {
+        if (slotFirstMatch.SeriesId.HasValue)
+        {
+            MatchSeries? series = stage.MatchSeries.FirstOrDefault(s => s.Id == slotFirstMatch.SeriesId.Value);
+            return series?.WinningTeamId;
+        }
+
+        return slotFirstMatch.IsFinished ? slotFirstMatch.WinningTeamId : null;
     }
 
     /// <summary>
