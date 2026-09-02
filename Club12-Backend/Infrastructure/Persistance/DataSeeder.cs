@@ -1,5 +1,7 @@
-using Application.Interfaces.Storage;
+﻿using Application.Interfaces.Storage;
+using Application.Utils.Helper.Slug;
 
+using Domain.Constants;
 using Domain.Entities.Models;
 using Domain.Enums;
 
@@ -12,14 +14,19 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Infrastructure.Persistance;
 
 /// <summary>
 /// Seeds the app's standard reference dataset for the Club 12 basketball
-/// league (Paraná, "liga libre"): one <see cref="Season"/> ("Temporada XXV")
-/// grouping two FINISHED tournaments —
+/// league (Paraná, "liga libre"). <c>Seed:Seasons</c> says how many
+/// consecutive <see cref="Season"/> rows to build, counting backwards from
+/// "Temporada XXV" (2026) one per calendar year; 1 (the default) keeps the
+/// original single-season dataset, higher values produce a demo-sized league
+/// whose <see cref="Club"/> rows carry real multi-season history (HU-99).
+/// Every season repeats the same two FINISHED tournaments —
 /// <list type="bullet">
 /// <item><b>Torneo Femenino</b>: a single zone of 7 teams, ida y vuelta,
 ///   feeding one Copa de Oro (all 7 teams, byes to the top seeds since 7 is
@@ -31,6 +38,10 @@ namespace Infrastructure.Persistance;
 ///   from a 23-team subset of the zone rosters) feeding one combined 12-team
 ///   playoff (byes to the top seeds).</item>
 /// </list>
+/// The most recent season additionally gets two ONGOING Clausura tournaments
+/// (masculine and feminine) whose first <c>ClausuraPlayedRounds</c> jornadas
+/// are played and whose remaining jornadas are scheduled, so the app also has
+/// a live standings table and a real "Próximos partidos" fixture to show.
 /// Every playoff bracket is built by <see cref="SampleTournamentBuilder"/>'s
 /// generic elimination-bracket seeder (RoundOf16/QuarterFinal/SemiFinal/Final
 /// as the seed count needs, byes to the best seeds when not a power of two);
@@ -71,6 +82,16 @@ public sealed class DataSeeder(
 
     // Fixed seed keeps logo-to-team assignment reproducible across reseeds.
     private const int LogoShuffleSeed = 4212;
+
+    private const int LatestSeasonNumber = 25;
+    private const int LatestSeasonYear = 2026;
+    private const int MaxSeasonCount = 12;
+    private const int MinPlayersPerTeam = 5;
+    private const int MaxPlayersPerTeam = 20;
+
+    private const int ClausuraPlayedRounds = 5;
+
+    private const int UpsetPercent = 26;
 
     // Flushes progress every N uploaded rows so an interruption loses at most
     // this many refs and the step stays resumable (medical-records-storage-eligibility, ADR #7).
@@ -167,6 +188,22 @@ public sealed class DataSeeder(
         "#1E293B", "#FFFFFF", "#1E293B", "#FFFFFF", "#FDE047", "#FFFFFF",
     ];
 
+    private sealed record ClubSpec(string Name, string Code, string Color, string Style, string Secondary);
+
+    private static ClubSpec[] Zip(
+        string[] names, string[] codes, string[] colors, string[] styles, string[] secondary) =>
+        [.. names.Select((name, i) => new ClubSpec(name, codes[i], colors[i], styles[i], secondary[i]))];
+
+    private static readonly ClubSpec[] FeminineClubs =
+        Zip(FemeninoNames, FemeninoCodes, FemeninoColors, FemeninoStyles, FemeninoSecondaryColors);
+
+    private static readonly ClubSpec[] MasculineClubs =
+    [
+        .. Zip(ZonaANames, ZonaACodes, ZonaAColors, ZonaAStyles, ZonaASecondaryColors),
+        .. Zip(ZonaBNames, ZonaBCodes, ZonaBColors, ZonaBStyles, ZonaBSecondaryColors),
+        .. Zip(ZonaCNames, ZonaCCodes, ZonaCColors, ZonaCStyles, ZonaCSecondaryColors),
+    ];
+
     // Femenino: a single Copa de Oro spans the whole standings (all 7 teams
     // qualify — there is no Copa Plata for this tournament). Masculino: each
     // zone earns its own Copa Oro (top 4) + Copa Plata (the rest of the
@@ -220,7 +257,8 @@ public sealed class DataSeeder(
     /// </summary>
     public async Task SeedAsync(
         bool reset = false, string? logosPath = null,
-        string? medicalRecordPath = null, bool forceMedicalRecords = false)
+        string? medicalRecordPath = null, bool forceMedicalRecords = false,
+        int seasonCount = 1, int playersPerTeam = SampleTournamentBuilder.DefaultPlayersPerTeam)
     {
         if (reset)
         {
@@ -243,104 +281,67 @@ public sealed class DataSeeder(
             return;
         }
 
+        seasonCount = Math.Clamp(seasonCount, 1, MaxSeasonCount);
+        playersPerTeam = Math.Clamp(playersPerTeam, MinPlayersPerTeam, MaxPlayersPerTeam);
+
         List<Venue> venues = BuildVenues();
-
-        // Both tournaments are FINISHED: group stages fully played and every
-        // playoff cup decided, so the Campeones page resolves real champions
-        // for both categories.
-        DateTime stageStart = new(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc);
-        DateTime stageEnd = new(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc);
-
-        // Torneo Femenino: a single zone, ida y vuelta (RoundRobinLegs: 2),
-        // feeding one Copa de Oro with all 7 teams (no Copa Plata).
-        SampleTournamentBuilder.TournamentDefinition femenino = new(
-            Name: "Torneo Femenino",
-            Description: "Torneo Femenino de la Liga Club 12 (Paraná), Temporada XXV. Finalizado.",
-            TeamRegistrationDeadline: stageStart.AddDays(-14),
-            StartDate: stageStart,
-            StageStartDate: stageStart,
-            StageEndDate: stageEnd,
-            FinishedMatchesStart: stageStart,
-            UpcomingMatchesStart: stageEnd,
-            Divisions:
-            [
-                new("Zona Única", FemeninoNames, FemeninoCodes, FemeninoColors, FemeninoCups,
-                    TeamStyles: FemeninoStyles, TeamSecondaryColors: FemeninoSecondaryColors),
-            ],
-            Status: TournamentStatus.Finished,
-            Category: TournamentCategory.Feminine,
-            RoundRobinLegs: 2);
-
-        // Torneo Masculino: 3 zones, each ida y vuelta (every group stage in
-        // the club plays home-and-away, confirmed by the owner), each with
-        // its own Copa Oro/Copa Plata, plus the cross-division Copa Cruzada
-        // (its own 6-zone group stage, also ida y vuelta, feeding one
-        // combined 12-team playoff).
-        SampleTournamentBuilder.TournamentDefinition masculino = new(
-            Name: "Torneo Masculino",
-            Description: "Torneo Masculino de la Liga Club 12 (Paraná), Temporada XXV. Finalizado.",
-            TeamRegistrationDeadline: stageStart.AddDays(-14),
-            StartDate: stageStart,
-            StageStartDate: stageStart,
-            StageEndDate: stageEnd,
-            FinishedMatchesStart: stageStart,
-            UpcomingMatchesStart: stageEnd,
-            Divisions:
-            [
-                new("Zona A", ZonaANames, ZonaACodes, ZonaAColors, ZonaABCups,
-                    TeamStyles: ZonaAStyles, TeamSecondaryColors: ZonaASecondaryColors),
-                new("Zona B", ZonaBNames, ZonaBCodes, ZonaBColors, ZonaABCups,
-                    TeamStyles: ZonaBStyles, TeamSecondaryColors: ZonaBSecondaryColors),
-                new("Zona C", ZonaCNames, ZonaCCodes, ZonaCColors, ZonaCCups,
-                    TeamStyles: ZonaCStyles, TeamSecondaryColors: ZonaCSecondaryColors),
-            ],
-            CrossCup: CopaCruzada,
-            Status: TournamentStatus.Finished,
-            Category: TournamentCategory.Masculine,
-            RoundRobinLegs: 2);
-
-        int playerCounter = 0;
-        // Both tournaments persist together, so their division/stage slugs
-        // must stay unique across the whole batch (each has a DB unique index):
-        // one shared registry disambiguates repeated base slugs with numeric
-        // suffixes. Team slugs are globally unique too — Femenino and
-        // Masculino use entirely distinct club names so no Team.Slug ever
-        // collides (Copa Cruzada reuses existing Masculino Team rows, not new
-        // ones, so it never introduces a new slug).
         SampleTournamentBuilder.SlugRegistry slugRegistry = new();
-        SampleTournamentBuilder.BuildResult femeninoResult =
-            SampleTournamentBuilder.Build(femenino, venues, ref playerCounter, includePlayoffs: true, slugRegistry);
-        SampleTournamentBuilder.BuildResult masculinoResult =
-            SampleTournamentBuilder.Build(masculino, venues, ref playerCounter, includePlayoffs: true, slugRegistry);
+        int playerCounter = 0;
 
-        SampleTournamentBuilder.BuildResult[] results = [femeninoResult, masculinoResult];
+        List<Season> seasons = [];
+        List<SampleTournamentBuilder.BuildResult> allResults = [];
 
-        // One season groups both tournaments so champions show under a real
-        // "Temporada XXV" instead of "Sin temporada". Each tournament keeps
-        // its own category (HU-48) — the season only groups them.
-        Season temporadaXXV = new()
+        bool autoDetect = db.ChangeTracker.AutoDetectChangesEnabled;
+        db.ChangeTracker.AutoDetectChangesEnabled = false;
+
+        for (int offset = seasonCount - 1; offset >= 0; offset--)
         {
-            CreatedBy = Domain.Constants.AuditConstants.SystemUser,
-            Name = "Temporada XXV",
-            Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug("Temporada XXV"),
-        };
-        foreach (SampleTournamentBuilder.BuildResult result in results)
-        {
-            result.Tournament.Season = temporadaXXV;
+            int number = LatestSeasonNumber - offset;
+            List<SampleTournamentBuilder.BuildResult> results = BuildSeasonTournaments(
+                number, isCurrent: offset == 0, playersPerTeam, venues, slugRegistry, ref playerCounter);
+
+            Season season = new()
+            {
+                CreatedBy = AuditConstants.SystemUser,
+                Name = SeasonName(number),
+                Slug = SlugGenerator.GenerateSlug(SeasonName(number)),
+                Year = SeasonYear(number),
+            };
+
+            foreach (SampleTournamentBuilder.BuildResult result in results)
+            {
+                result.Tournament.Season = season;
+            }
+
+            seasons.Add(season);
+            allResults.AddRange(results);
         }
 
-        List<Team> allTeams = [.. results.SelectMany(r => r.Tournament.Teams)];
+        List<Team> allTeams = [.. allResults.SelectMany(r => r.Tournament.Teams)];
+        List<Club> clubs = BuildClubs(allTeams);
+
         await UploadTeamLogosAsync(allTeams, string.IsNullOrWhiteSpace(logosPath) ? DefaultLogosPath : logosPath);
 
-        db.Seasons.Add(temporadaXXV);
-        foreach (SampleTournamentBuilder.BuildResult result in results)
+        foreach (Club club in clubs)
+        {
+            club.LogoUrl = club.Teams.Select(t => t.LogoUrl).FirstOrDefault();
+        }
+
+        db.Venues.AddRange(venues);
+        db.Clubs.AddRange(clubs);
+        db.Seasons.AddRange(seasons);
+
+        foreach (SampleTournamentBuilder.BuildResult result in allResults)
         {
             db.Tournaments.Add(result.Tournament);
             db.PlayerSanctions.AddRange(result.Sanctions);
         }
-        db.BlogPosts.AddRange(BuildBlogPosts());
-        db.TeamStaffs.AddRange(BuildTeamStaff(results));
 
+        db.BlogPosts.AddRange(BuildBlogPosts());
+        db.TeamStaffs.AddRange(BuildTeamStaff([.. allResults]));
+        db.TeamPointDeductions.AddRange(BuildPointDeductions(allResults));
+
+        db.ChangeTracker.AutoDetectChangesEnabled = autoDetect;
         await db.SaveChangesAsync();
 
         // Runs AFTER SaveChangesAsync: TeamId/PlayerId are store-generated
@@ -348,16 +349,275 @@ public sealed class DataSeeder(
         // key to build from before this point (medical-records-storage-eligibility, ADR #6).
         await SeedMedicalRecordsAsync(medicalRecordPath);
 
-        int teamCount = allTeams.Count;
-        int playerCount = allTeams.Sum(t => t.Players.Count);
-        int divisionCount = results.Sum(r => r.Tournament.Divisions.Count);
-        int sanctionCount = results.Sum(r => r.Sanctions.Count);
-
         logger.LogInformation(
-            "Sample data seeded under season '{Season}': 2 tournaments (Femenino + Masculino, both FINISHED), " +
-            "{DivisionCount} divisions (incl. Copa Cruzada), {TeamCount} teams, {PlayerCount} players, " +
-            "{SanctionCount} sanctions.",
-            temporadaXXV.Name, divisionCount, teamCount, playerCount, sanctionCount);
+            "Sample data seeded: {SeasonCount} seasons ({FirstSeason}–{LastSeason}), {TournamentCount} tournaments, " +
+            "{ClubCount} clubs, {DivisionCount} divisions, {TeamCount} teams, {PlayerCount} players, " +
+            "{MatchCount} matches, {SanctionCount} sanctions.",
+            seasons.Count,
+            seasons[0].Name,
+            seasons[^1].Name,
+            allResults.Count,
+            clubs.Count,
+            allResults.Sum(r => r.Tournament.Divisions.Count),
+            allTeams.Count,
+            allTeams.Sum(t => t.Players.Count),
+            allResults.Sum(r => r.Tournament.Divisions.Sum(d => d.Stages.Sum(s => s.Matches.Count))),
+            allResults.Sum(r => r.Sanctions.Count));
+    }
+
+    private static List<SampleTournamentBuilder.BuildResult> BuildSeasonTournaments(
+        int seasonNumber,
+        bool isCurrent,
+        int playersPerTeam,
+        List<Venue> venues,
+        SampleTournamentBuilder.SlugRegistry slugRegistry,
+        ref int playerCounter)
+    {
+        int year = SeasonYear(seasonNumber);
+        string seasonName = SeasonName(seasonNumber);
+        int seed = (seasonNumber * 7919) + 13;
+
+        ClubSpec[] feminine = Draw(FeminineClubs, seed);
+        ClubSpec[] masculine = Draw(MasculineClubs, seed + 1);
+
+        DateTime aperturaStart = new(year, 3, 1, 0, 0, 0, DateTimeKind.Utc);
+        DateTime aperturaEnd = new(year, 8, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        SampleTournamentBuilder.TournamentDefinition femenino = new(
+            Name: $"Torneo Apertura Femenino {year}",
+            Description:
+                $"Torneo Apertura Femenino de la Liga Club 12 (Paraná), {seasonName}. " +
+                "Zona única a dos ruedas y Copa de Oro para las siete clasificadas. Finalizado.",
+            TeamRegistrationDeadline: aperturaStart.AddDays(-14),
+            StartDate: aperturaStart,
+            StageStartDate: aperturaStart,
+            StageEndDate: aperturaEnd,
+            FinishedMatchesStart: aperturaStart,
+            UpcomingMatchesStart: aperturaEnd,
+            Divisions: [ZoneOf("Zona Única", feminine, FemeninoCups)],
+            Status: TournamentStatus.Finished,
+            Category: TournamentCategory.Feminine,
+            RoundRobinLegs: 2,
+            PlayersPerTeam: playersPerTeam,
+            UpsetPercent: UpsetPercent,
+            VarietySeed: seed);
+
+        SampleTournamentBuilder.TournamentDefinition masculino = new(
+            Name: $"Torneo Apertura Masculino {year}",
+            Description:
+                $"Torneo Apertura Masculino de la Liga Club 12 (Paraná), {seasonName}. " +
+                "Tres zonas a dos ruedas con Copa Oro y Copa Plata cada una, más la Copa Cruzada. Finalizado.",
+            TeamRegistrationDeadline: aperturaStart.AddDays(-14),
+            StartDate: aperturaStart,
+            StageStartDate: aperturaStart,
+            StageEndDate: aperturaEnd,
+            FinishedMatchesStart: aperturaStart,
+            UpcomingMatchesStart: aperturaEnd,
+            Divisions:
+            [
+                ZoneOf("Zona A", [.. masculine[..10]], ZonaABCups),
+                ZoneOf("Zona B", [.. masculine[10..20]], ZonaABCups),
+                ZoneOf("Zona C", [.. masculine[20..]], ZonaCCups),
+            ],
+            CrossCup: CopaCruzada,
+            Status: TournamentStatus.Finished,
+            Category: TournamentCategory.Masculine,
+            RoundRobinLegs: 2,
+            PlayersPerTeam: playersPerTeam,
+            UpsetPercent: UpsetPercent,
+            VarietySeed: seed + 2);
+
+        List<SampleTournamentBuilder.BuildResult> results =
+        [
+            SampleTournamentBuilder.Build(femenino, venues, ref playerCounter, includePlayoffs: true, slugRegistry),
+            SampleTournamentBuilder.Build(masculino, venues, ref playerCounter, includePlayoffs: true, slugRegistry),
+        ];
+
+        if (!isCurrent)
+        {
+            return results;
+        }
+
+        DateTime clausuraStart = new(year, 8, 2, 0, 0, 0, DateTimeKind.Utc);
+        DateTime clausuraEnd = new(year, 12, 20, 0, 0, 0, DateTimeKind.Utc);
+
+        ClubSpec[] clausuraMasculine = Draw(MasculineClubs, seed + 3);
+        ClubSpec[] clausuraFeminine = Draw(FeminineClubs, seed + 4);
+
+        SampleTournamentBuilder.TournamentDefinition clausuraMasculino = new(
+            Name: $"Torneo Clausura Masculino {year}",
+            Description:
+                $"Torneo Clausura Masculino de la Liga Club 12 (Paraná), {seasonName}. " +
+                $"En disputa: {ClausuraPlayedRounds} jornadas jugadas, el resto ya programadas.",
+            TeamRegistrationDeadline: clausuraStart.AddDays(-14),
+            StartDate: clausuraStart,
+            StageStartDate: clausuraStart,
+            StageEndDate: clausuraEnd,
+            FinishedMatchesStart: clausuraStart,
+            UpcomingMatchesStart: clausuraEnd,
+            Divisions:
+            [
+                ZoneOf("Zona A", [.. clausuraMasculine[..8]], null),
+                ZoneOf("Zona B", [.. clausuraMasculine[8..16]], null),
+            ],
+            Status: TournamentStatus.Ongoing,
+            Category: TournamentCategory.Masculine,
+            RoundRobinLegs: 2,
+            PlayedRoundsPerZone: ClausuraPlayedRounds,
+            PlayersPerTeam: playersPerTeam,
+            UpsetPercent: UpsetPercent,
+            VarietySeed: seed + 5);
+
+        SampleTournamentBuilder.TournamentDefinition clausuraFemenino = new(
+            Name: $"Torneo Clausura Femenino {year}",
+            Description:
+                $"Torneo Clausura Femenino de la Liga Club 12 (Paraná), {seasonName}. " +
+                $"En disputa: {ClausuraPlayedRounds} jornadas jugadas, el resto ya programadas.",
+            TeamRegistrationDeadline: clausuraStart.AddDays(-14),
+            StartDate: clausuraStart,
+            StageStartDate: clausuraStart,
+            StageEndDate: clausuraEnd,
+            FinishedMatchesStart: clausuraStart,
+            UpcomingMatchesStart: clausuraEnd,
+            Divisions: [ZoneOf("Zona Única", [.. clausuraFeminine[..6]], null)],
+            Status: TournamentStatus.Ongoing,
+            Category: TournamentCategory.Feminine,
+            RoundRobinLegs: 2,
+            PlayedRoundsPerZone: ClausuraPlayedRounds,
+            PlayersPerTeam: playersPerTeam,
+            UpsetPercent: UpsetPercent,
+            VarietySeed: seed + 6);
+
+        results.Add(SampleTournamentBuilder.Build(
+            clausuraMasculino, venues, ref playerCounter, includePlayoffs: false, slugRegistry));
+        results.Add(SampleTournamentBuilder.Build(
+            clausuraFemenino, venues, ref playerCounter, includePlayoffs: false, slugRegistry));
+
+        return results;
+    }
+
+    private static SampleTournamentBuilder.DivisionDefinition ZoneOf(
+        string name, ClubSpec[] clubs, SampleTournamentBuilder.PlayoffCupDefinition[]? cups) =>
+        new(name,
+            [.. clubs.Select(c => c.Name)],
+            [.. clubs.Select(c => c.Code)],
+            [.. clubs.Select(c => c.Color)],
+            cups,
+            TeamStyles: [.. clubs.Select(c => c.Style)],
+            TeamSecondaryColors: [.. clubs.Select(c => c.Secondary)]);
+
+    /// <summary>
+    /// The season's draw: the same club pool re-sorted deterministically for
+    /// this season. Because the builder ranks teams by their position in the
+    /// zone list, re-drawing every season is what makes each season produce a
+    /// different table, different zone composition and a different champion
+    /// instead of replaying one identical year N times.
+    /// </summary>
+    private static ClubSpec[] Draw(ClubSpec[] clubs, int seed)
+    {
+        int[] order = [.. Enumerable.Range(0, clubs.Length)];
+        Shuffle(order, new Random(seed));
+
+        return [.. order.Select(i => clubs[i])];
+    }
+
+    private static string SeasonName(int number) => $"Temporada {ToRoman(number)}";
+
+    private static int SeasonYear(int number) => LatestSeasonYear - (LatestSeasonNumber - number);
+
+    private static string ToRoman(int number)
+    {
+        (int Value, string Symbol)[] map =
+        [
+            (1000, "M"), (900, "CM"), (500, "D"), (400, "CD"), (100, "C"), (90, "XC"),
+            (50, "L"), (40, "XL"), (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I"),
+        ];
+
+        StringBuilder roman = new();
+        foreach ((int value, string symbol) in map)
+        {
+            while (number >= value)
+            {
+                roman.Append(symbol);
+                number -= value;
+            }
+        }
+
+        return roman.ToString();
+    }
+
+    private static List<Club> BuildClubs(IReadOnlyList<Team> teams)
+    {
+        Dictionary<string, Club> bySlug = [];
+        List<Club> clubs = [];
+
+        foreach (Team team in teams)
+        {
+            string slug = SlugGenerator.GenerateSlug(team.Name);
+
+            if (!bySlug.TryGetValue(slug, out Club? club))
+            {
+                club = new Club
+                {
+                    CreatedBy = AuditConstants.SystemUser,
+                    Name = team.Name,
+                    Slug = slug,
+                };
+                bySlug[slug] = club;
+                clubs.Add(club);
+            }
+
+            team.Club = club;
+            club.Teams.Add(team);
+        }
+
+        return clubs;
+    }
+
+    private static List<TeamPointDeduction> BuildPointDeductions(
+        IReadOnlyList<SampleTournamentBuilder.BuildResult> results)
+    {
+        (int Points, string Reason)[] specs =
+        [
+            (2, "Incomparecencia en la jornada 4."),
+            (1, "Inclusión de un jugador no habilitado."),
+            (3, "Incidentes de la parcialidad local."),
+            (1, "Presentación tardía de la planilla."),
+        ];
+
+        List<(Division Division, List<Team> Teams)> candidates =
+        [
+            .. results
+                .SelectMany(r => r.Tournament.Divisions)
+                .Where(d => !d.IsCrossDivisionCup)
+                .Select(d => (
+                    Division: d,
+                    Teams: d.Stages
+                        .Where(s => s.StageType == StageType.Group)
+                        .SelectMany(s => s.StageTeamMatches)
+                        .Select(stm => stm.Team)
+                        .OfType<Team>()
+                        .ToList()))
+                .Where(pair => pair.Teams.Count > 3),
+        ];
+
+        List<TeamPointDeduction> deductions = [];
+
+        for (int i = 0; i < specs.Length && i < candidates.Count; i++)
+        {
+            (Division division, List<Team> teams) = candidates[i];
+
+            deductions.Add(new TeamPointDeduction
+            {
+                CreatedBy = AuditConstants.SystemUser,
+                Division = division,
+                Team = teams[^(1 + (i % teams.Count))],
+                Points = specs[i].Points,
+                Reason = specs[i].Reason,
+            });
+        }
+
+        return deductions;
     }
 
     /// <summary>
@@ -381,8 +641,10 @@ public sealed class DataSeeder(
         await db.MatchSeries.ExecuteDeleteAsync();
         await db.Players.ExecuteDeleteAsync();
         await db.DivisionPlayoffMappings.ExecuteDeleteAsync();
+        await db.TeamPointDeductions.ExecuteDeleteAsync();
         await db.Stages.ExecuteDeleteAsync();
         await db.Teams.ExecuteDeleteAsync();
+        await db.Clubs.ExecuteDeleteAsync();
         await db.Divisions.ExecuteDeleteAsync();
         await db.Tournaments.ExecuteDeleteAsync();
         await db.Seasons.ExecuteDeleteAsync();
@@ -526,27 +788,34 @@ public sealed class DataSeeder(
         int[] order = [.. Enumerable.Range(0, files.Length)];
         Shuffle(order, new Random(LogoShuffleSeed));
 
+        List<IGrouping<string, Team>> byClub = [.. teams.GroupBy(t => t.Name)];
+
         int uploaded = 0;
-        for (int i = 0; i < teams.Count; i++)
+        for (int i = 0; i < byClub.Count; i++)
         {
             string file = files[order[i % files.Length]];
             try
             {
                 await using FileStream stream = File.OpenRead(file);
                 string url = await supabaseHelper.UploadImageAsync<Team>(stream, Path.GetFileName(file));
-                teams[i].LogoUrl = url;
-                uploaded++;
+
+                foreach (Team team in byClub[i])
+                {
+                    team.LogoUrl = url;
+                    uploaded++;
+                }
             }
             catch (Exception ex)
             {
                 logger.LogWarning(
-                    ex, "Failed to upload logo '{File}' for team '{Team}' — keeping placeholder.",
-                    file, teams[i].Name);
+                    ex, "Failed to upload logo '{File}' for club '{Club}' — keeping placeholder.",
+                    file, byClub[i].Key);
             }
         }
 
         logger.LogInformation(
-            "Uploaded {Uploaded}/{Total} real team logos from '{Path}'.", uploaded, teams.Count, logosPath);
+            "Uploaded {ClubCount} real crests from '{Path}', applied to {Uploaded}/{Total} teams.",
+            byClub.Count, logosPath, uploaded, teams.Count);
     }
 
     /// <summary>In-place Fisher-Yates shuffle with a caller-provided RNG.</summary>
@@ -628,6 +897,14 @@ public sealed class DataSeeder(
             ("Club Sionista", "25 de Mayo, Paraná", -31.7345, -60.5250),
             ("Club Atlético Talleres (Paraná)", "Av. Ramírez, Paraná", -31.7460, -60.5300),
             ("Polideportivo Municipal Paraná", "Parque Urquiza, Paraná", -31.7205, -60.5050),
+            ("Gimnasio Central Entrerriano", "Av. Ramírez 2100, Paraná", -31.7502, -60.5188),
+            ("Club Recreativo Paraná", "Sarmiento 800, Paraná", -31.7310, -60.5215),
+            ("Club Olimpia (Paraná)", "Bertozzi 1500, Paraná", -31.7415, -60.5402),
+            ("Club Bancario", "Córdoba 400, Paraná", -31.7290, -60.5285),
+            ("Gimnasio Parque Sur", "Av. Zanni, Paraná", -31.7562, -60.5121),
+            ("Club Neptunia", "Av. de las Américas, Paraná", -31.7480, -60.5480),
+            ("Estadio Ciudad de Concordia", "Av. Monseñor Rösch, Concordia", -31.3930, -58.0209),
+            ("Gimnasio Rocamora", "25 de Mayo 200, Concepción del Uruguay", -32.4835, -58.2320),
         ];
 
         List<Venue> venues = [];
@@ -653,16 +930,16 @@ public sealed class DataSeeder(
         [
             (
                 "La Temporada XXV ya tiene campeones",
-                "Se cerró la Temporada XXV de la Liga Club 12 (Paraná) en las categorías masculina y " +
+                "Se cerró el Apertura de la Liga Club 12 (Paraná) en las categorías masculina y " +
                 "femenina. Con la Copa de Oro femenina, las seis copas de las Zonas A, B y C, y la Copa " +
                 "Cruzada masculina ya definidas, conocemos a los campeones de la temporada. Mirá el podio " +
                 "completo en la sección Campeones."
             ),
             (
-                "Torneo Masculino: así quedaron las Zonas A, B y C",
-                "El Torneo Masculino de la Temporada XXV se jugó en tres zonas — A y B de 10 equipos, C de " +
-                "13 — todas contra todos a una rueda. Los primeros cuatro de cada zona avanzaron a la Copa " +
-                "Oro, el resto a la Copa Plata. Repasá las tablas finales y las llaves de playoffs."
+                "Torneo Apertura Masculino: así quedaron las Zonas A, B y C",
+                "El Torneo Apertura Masculino se jugó en tres zonas — A y B de 10 equipos, C de 13 — todas " +
+                "contra todos a ida y vuelta. Los primeros cuatro de cada zona avanzaron a la Copa Oro y " +
+                "el resto a la Copa Plata. Repasá las tablas finales y las llaves de playoffs."
             ),
             (
                 "Copa Cruzada: la copa cruzada de la temporada",
@@ -670,6 +947,40 @@ public sealed class DataSeeder(
                 "vuelta), con los dos primeros de cada grupo clasificando a una llave combinada de 12 " +
                 "equipos. Los partidos de la copa se disputan entre semana para no superponerse con las " +
                 "zonas del fin de semana."
+            ),
+            (
+                "Arrancó el Clausura: así se juega la segunda mitad del año",
+                "Con las zonas del Clausura ya en marcha — dos zonas masculinas de ocho equipos y una zona " +
+                "femenina de seis, todas ida y vuelta — la Liga Club 12 encara la segunda mitad del año. " +
+                "Las primeras jornadas ya tienen resultado y el resto del fixture está publicado, así que " +
+                "podés seguir la tabla en vivo y ver cuándo juega tu equipo."
+            ),
+            (
+                "Los clubes de la liga, temporada por temporada",
+                "Cada club de la Liga Club 12 tiene ahora su ficha propia: el historial completo de las " +
+                "temporadas que disputó, los planteles de cada año y los torneos en los que participó. " +
+                "Es la forma más rápida de ver de dónde viene cada institución más allá de la tabla de " +
+                "la temporada en curso."
+            ),
+            (
+                "Fichas médicas: qué necesitás para estar habilitado",
+                "Un jugador queda habilitado cuando su ficha médica está aprobada y el archivo cargado en " +
+                "el sistema. Desde el panel, cada delegado puede subir la ficha de sus jugadores y seguir " +
+                "el estado de la revisión. Los jugadores con ficha pendiente aparecen marcados en el " +
+                "plantel para que nadie llegue al partido con una sorpresa."
+            ),
+            (
+                "Sanciones y descuentos de puntos: cómo se aplican",
+                "El tribunal de disciplina publica las sanciones a jugadores y clubes junto con la " +
+                "cantidad de fechas de suspensión y el estado de cada apelación. Cuando la sanción es " +
+                "institucional puede incluir un descuento de puntos, que se resta directamente del total " +
+                "del equipo en la tabla de posiciones de su zona."
+            ),
+            (
+                "Goleadores: quiénes lideran la tabla de anotadores",
+                "La tabla de goleadores se arma con las planillas de cada partido, así que se actualiza " +
+                "apenas se carga un resultado. Podés filtrarla por torneo y por zona para ver quién " +
+                "lidera en cada categoría de la temporada."
             ),
         ];
 

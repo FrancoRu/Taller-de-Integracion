@@ -191,8 +191,12 @@ public static class StartupExtensions
             string? logosPath = configuration[ConfigurationKeys.Seed.LogosPath];
             string? medicalRecordPath = configuration[ConfigurationKeys.Seed.MedicalRecordPath];
             bool medicalRecords = configuration.GetValue<bool>(ConfigurationKeys.Seed.MedicalRecords);
+            int seasons = configuration.GetValue(ConfigurationKeys.Seed.Seasons, 1);
+            int playersPerTeam = configuration.GetValue(
+                ConfigurationKeys.Seed.PlayersPerTeam, SampleTournamentBuilder.DefaultPlayersPerTeam);
             DataSeeder dataSeeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
-            await dataSeeder.SeedAsync(reset, logosPath, medicalRecordPath, medicalRecords);
+            await dataSeeder.SeedAsync(
+                reset, logosPath, medicalRecordPath, medicalRecords, seasons, playersPerTeam);
         }
     }
 
