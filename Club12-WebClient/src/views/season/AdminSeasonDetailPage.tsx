@@ -8,10 +8,12 @@ import {
   CardContent,
   Chip,
   Grid,
+  IconButton,
   Stack,
   Typography,
 } from '@mui/material';
 import { useSeason } from '@/modules/season/hook/season.hook';
+import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import {
   IPutSeasonRequest,
   ISeasonResponse,
@@ -27,8 +29,13 @@ import CategoryChip from '@/views/core/components/CategoryChip';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PageShell from '@/views/core/components/PageShell';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
+import { DeleteIcon } from '@/views/core/MUI/icons/icons';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
-import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
+import {
+  confirmDelete,
+  notifySuccess,
+  notifyWarning,
+} from '@/modules/core/utils/confirmDialog';
 import SeasonFormDialog, { SeasonFormState } from '@/views/season/SeasonFormDialog';
 
 const EMPTY_SEASON_FORM: SeasonFormState = { name: '', year: '' };
@@ -42,9 +49,37 @@ const parseYear = (value: string): number | null => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-function TournamentCard({ tournament }: { tournament: ISeasonTournament }) {
+function TournamentCard({
+  tournament,
+  onDelete,
+}: {
+  tournament: ISeasonTournament;
+  onDelete: (tournament: ISeasonTournament) => void;
+}) {
   return (
-    <Card sx={{ height: '100%' }}>
+    <Card sx={{ height: '100%', position: 'relative' }}>
+      <IconButton
+        aria-label={`Eliminar ${tournament.name}`}
+        size="small"
+        onClick={e => {
+          // The card body is itself a Link (CardActionArea) — stop the click
+          // from bubbling into it and navigating away before the confirm
+          // dialog even opens.
+          e.preventDefault();
+          e.stopPropagation();
+          onDelete(tournament);
+        }}
+        sx={{
+          position: 'absolute',
+          top: 4,
+          right: 4,
+          zIndex: 1,
+          bgcolor: 'background.paper',
+          '&:hover': { bgcolor: 'error.main', color: 'error.contrastText' },
+        }}
+      >
+        <DeleteIcon fontSize="small" />
+      </IconButton>
       <CardActionArea
         component={Link}
         to={APP_ROUTES.panelTournamentDetail.build(
@@ -53,7 +88,7 @@ function TournamentCard({ tournament }: { tournament: ISeasonTournament }) {
         sx={{ height: '100%' }}
       >
         <CardContent sx={{ width: '100%' }}>
-          <Typography variant="h6" component="h3" sx={{ lineHeight: 1.3, mb: 1 }}>
+          <Typography variant="h6" component="h3" sx={{ lineHeight: 1.3, mb: 1, pr: 4 }}>
             {tournament.name}
           </Typography>
           <Chip
@@ -70,9 +105,11 @@ function TournamentCard({ tournament }: { tournament: ISeasonTournament }) {
 function CategorySection({
   category,
   tournaments,
+  onDeleteTournament,
 }: {
   category: TournamentCategory;
   tournaments: ISeasonTournament[];
+  onDeleteTournament: (tournament: ISeasonTournament) => void;
 }) {
   if (tournaments.length === 0) {
     return null;
@@ -86,7 +123,7 @@ function CategorySection({
       <Grid container spacing={3}>
         {tournaments.map(tournament => (
           <Grid key={tournament.id} size={{ xs: 12, sm: 6, md: 4 }}>
-            <TournamentCard tournament={tournament} />
+            <TournamentCard tournament={tournament} onDelete={onDeleteTournament} />
           </Grid>
         ))}
       </Grid>
@@ -98,6 +135,7 @@ export default function AdminSeasonDetailPage() {
   const { seasonId } = useParams<{ seasonId: string }>();
   const navigate = useNavigate();
   const { getSeasonById, putSeasonById } = useSeason();
+  const { deleteTournamentById } = useTournament();
 
   const [loading, setLoading] = useState(true);
   const [season, setSeason] = useState<ISeasonResponse | null>(null);
@@ -172,6 +210,28 @@ export default function AdminSeasonDetailPage() {
     await notifySuccess({
       title: 'Temporada actualizada',
       text: 'La temporada se actualizó correctamente.',
+    });
+  };
+
+  const handleDeleteTournament = async (tournament: ISeasonTournament) => {
+    const confirmed = await confirmDelete({
+      title: `¿Eliminar "${tournament.name}"?`,
+      text: '¡Usted no podrá revertir este cambio!',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    const deleted = await deleteTournamentById(tournament.id);
+    if (!deleted) {
+      return;
+    }
+
+    await fetchSeason();
+    await notifySuccess({
+      title: '¡Eliminado!',
+      text: 'El torneo ha sido eliminado.',
     });
   };
 
@@ -250,10 +310,12 @@ export default function AdminSeasonDetailPage() {
           <CategorySection
             category={TournamentCategory.Masculine}
             tournaments={masculineTournaments}
+            onDeleteTournament={tournament => void handleDeleteTournament(tournament)}
           />
           <CategorySection
             category={TournamentCategory.Feminine}
             tournaments={feminineTournaments}
+            onDeleteTournament={tournament => void handleDeleteTournament(tournament)}
           />
         </>
       )}

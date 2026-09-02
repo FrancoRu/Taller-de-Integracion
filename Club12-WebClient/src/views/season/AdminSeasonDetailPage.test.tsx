@@ -1,9 +1,11 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import Swal from 'sweetalert2';
 import AdminSeasonDetailPage from '@/views/season/AdminSeasonDetailPage';
 import { useSeason } from '@/modules/season/hook/season.hook';
+import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import type { ISeasonResponse } from '@/modules/season/type/season';
 import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
@@ -11,6 +13,7 @@ import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatu
 import type { GUID } from '@/modules/core/types/types';
 
 vi.mock('@/modules/season/hook/season.hook');
+vi.mock('@/modules/tournament/hook/tournament.hook');
 vi.mock('sweetalert2', () => ({ default: { fire: vi.fn() } }));
 
 const mockNavigate = vi.fn();
@@ -20,6 +23,8 @@ vi.mock('react-router-dom', async importOriginal => {
 });
 
 const mockedUseSeason = vi.mocked(useSeason);
+const mockedUseTournament = vi.mocked(useTournament);
+const mockedSwalFire = vi.mocked(Swal.fire);
 
 const SEASON_ID = '55555555-5555-5555-5555-555555555555' as GUID;
 
@@ -61,6 +66,12 @@ const renderAt = (path: string) =>
   );
 
 describe('AdminSeasonDetailPage', () => {
+  beforeEach(() => {
+    mockedUseTournament.mockReturnValue({
+      deleteTournamentById: vi.fn(),
+    } as unknown as ReturnType<typeof useTournament>);
+  });
+
   it('renders the season name and groups tournaments by category', async () => {
     const getSeasonById = vi.fn().mockResolvedValue(buildSeason());
     mockedUseSeason.mockReturnValue({
@@ -176,5 +187,71 @@ describe('AdminSeasonDetailPage', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     );
     await waitFor(() => expect(getSeasonById).toHaveBeenCalledTimes(1));
+  });
+
+  it('deletes a tournament from its card and refreshes the season', async () => {
+    const getSeasonById = vi.fn().mockResolvedValue(buildSeason());
+    const deleteTournamentById = vi.fn().mockResolvedValue(true);
+    mockedUseSeason.mockReturnValue({
+      getSeasonById,
+    } as unknown as ReturnType<typeof useSeason>);
+    mockedUseTournament.mockReturnValue({
+      deleteTournamentById,
+    } as unknown as ReturnType<typeof useTournament>);
+    mockedSwalFire.mockResolvedValue({
+      isConfirmed: true,
+      isDenied: false,
+      isDismissed: false,
+    } as Awaited<ReturnType<typeof Swal.fire>>);
+
+    const user = userEvent.setup();
+    renderAt('/panel/temporadas/temporada-2026');
+
+    await screen.findByText('Apertura Masculino');
+    getSeasonById.mockClear();
+
+    await user.click(
+      screen.getByRole('button', { name: 'Eliminar Apertura Masculino' })
+    );
+
+    await waitFor(() =>
+      expect(deleteTournamentById).toHaveBeenCalledWith(
+        '11111111-1111-1111-1111-111111111111'
+      )
+    );
+    // Still on the season page (not navigated away via the card's own link,
+    // which the delete button sits inside of) — this route only renders the
+    // season's own content, so it'd be gone otherwise.
+    expect(screen.getByText('Temporada 2026')).toBeInTheDocument();
+    await waitFor(() => expect(getSeasonById).toHaveBeenCalledTimes(1));
+  });
+
+  it('does not refresh or notify success when the delete fails', async () => {
+    const getSeasonById = vi.fn().mockResolvedValue(buildSeason());
+    const deleteTournamentById = vi.fn().mockResolvedValue(false);
+    mockedUseSeason.mockReturnValue({
+      getSeasonById,
+    } as unknown as ReturnType<typeof useSeason>);
+    mockedUseTournament.mockReturnValue({
+      deleteTournamentById,
+    } as unknown as ReturnType<typeof useTournament>);
+    mockedSwalFire.mockResolvedValue({
+      isConfirmed: true,
+      isDenied: false,
+      isDismissed: false,
+    } as Awaited<ReturnType<typeof Swal.fire>>);
+
+    const user = userEvent.setup();
+    renderAt('/panel/temporadas/temporada-2026');
+
+    await screen.findByText('Apertura Masculino');
+    getSeasonById.mockClear();
+
+    await user.click(
+      screen.getByRole('button', { name: 'Eliminar Apertura Masculino' })
+    );
+
+    await waitFor(() => expect(deleteTournamentById).toHaveBeenCalledTimes(1));
+    expect(getSeasonById).not.toHaveBeenCalled();
   });
 });
