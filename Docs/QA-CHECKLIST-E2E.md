@@ -26,12 +26,13 @@
 > checklist quedaron marcados `[x]` **por lectura de código, no por prueba en
 > vivo** — están explícitamente etiquetados así abajo. Algunos de esos
 > corrigen una expectativa incorrecta (ej. el ranking de Goleadores no tiene
-> desempate ni partidos jugados), y dos son brechas reales que **van a fallar
-> si alguien las prueba en vivo, no son falsos positivos a re-chequear**: las
-> series playoff Best-of-N no se generan en producción (solo un partido por
-> cruce, sin importar el `bestOf` configurado), y `AuditAction.BackupRestore`
-> nunca se loguea pese a estar declarado. Ver la Épica 24 de
-> `historias-de-usuario.md` para el detalle completo con archivos/líneas.
+> desempate ni partidos jugados). En esa pasada había además dos brechas
+> reales marcadas como "van a fallar si se prueban en vivo" (series playoff
+> Best-of-N no generadas en producción, y `AuditAction.BackupRestore` sin
+> loguear) — **ambas se corrigieron el mismo 2026-09-02**, más tarde en la
+> misma sesión; los ítems abajo que las mencionan ya están actualizados.
+> Ver la Épica 24 de `historias-de-usuario.md` para el detalle completo con
+> archivos/líneas.
 
 Leyenda de tipo de check: **(L)** lista/filtros · **(C)** crear · **(E)**
 editar · **(D)** eliminar · **(V)** ver/detalle · **(N)** navegación ·
@@ -107,8 +108,8 @@ editar · **(D)** eliminar · **(V)** ver/detalle · **(N)** navegación ·
 - [ ] Tab **Partidos**: fixture agrupado por fecha, click a un partido lleva al detalle admin. (V)(N)
 - [ ] Tab **Playoff**: al completar la última fecha de fase de grupos, las copas se siembran solas (auto-seed) sin acción manual. (X)
 - [ ] Tab **Playoff**: bracket con byes correctos para N no potencia de 2 (ej. 5 equipos → 3 byes a semis, 2 juegan cuartos). (V)(X)
-- [x] 2026-09-02 (verificado por código, no en vivo) **→ ESTE ÍTEM VA A FALLAR SI SE PRUEBA EN VIVO, es una brecha real, no algo a re-verificar**: "cada serie BO3/5/7 muestra sus partidos reales individuales" — **FALSO en producción**. El auto-seed (`StageService.SeedPlayoffCupsAsync`) siembra un `Match` plano por cruce sin importar el `bestOf` configurado; nunca crea un `MatchSeries`. El frontend SÍ sabe mostrar una serie completa cuando existe, pero nada en el camino de producción la crea — solo el seed de demo (`SampleTournamentBuilder`) genera series reales. Tampoco hay ninguna acción de UI para cargar el 2º/3er partido de una serie a mano (`addMatchSeries`/`addGameToSeries` sin ningún caller en `views/`). Ver `historias-de-usuario.md` HU-82 y Épica 24 para el detalle. (V)
-- [x] 2026-09-02 (verificado por código) **→ TAMBIÉN VA A FALLAR SI SE PRUEBA**: no existe ningún avance automático del ganador de una ronda al slot de la ronda siguiente (Cuartos→Semis). `TryAutoSeedPlayoffPhaseAsync` solo cubre Fase de grupos→primera ronda de copa.
+- [x] 2026-09-02 (corregido, no re-probado en vivo aún): "cada serie BO3/5/7 muestra sus partidos reales individuales" — **ya es cierto en producción**. `StageService.SeedPlayoffCupsAsync`/`SeedKnockoutStageAsync`/`SeedMultiGroupCrossCupStageAsync` crean un `MatchSeries` real por cruce cuando `bestOf > 1`. `SeriesInProgressPanel` (tab Playoff, admin) agrega la acción de UI para cargar el 2º/3er partido (`addGameToSeries`), que antes no existía en ninguna vista. Ver `historias-de-usuario.md` HU-82 y Épica 24. (V)
+- [x] 2026-09-02 (corregido, no re-probado en vivo aún): el ganador de una ronda SÍ avanza automáticamente al slot de la ronda siguiente (Cuartos→Semis) vía `StageService.TryAdvanceStageWinnerAsync`, llamado desde las 3 acciones de carga de resultado de `MatchController`.
 
 ## 4. Panel — Equipos
 
@@ -185,7 +186,7 @@ editar · **(D)** eliminar · **(V)** ver/detalle · **(N)** navegación ·
 ## 11. Panel — Estadísticas / Auditoría / Administración de datos
 
 - [ ] `/panel/estadisticas`: filtro por Temporada + Torneo (el torneo se deriva de la temporada elegida) scopea el ranking; sin filtro = global. (L)(X)
-- [x] 2026-09-02 (verificado por código) **→ solo 4 tipos de acción se auditan, no "toda mutación sensible"**: `AuditAction` = `DataWipe`, `BackupRestore`, `TournamentStatusChange`, `PasswordReset`. De esos 4, **`BackupRestore` está declarado pero jamás se loguea** (`BackupOperationsService` no tiene `IAuditService` inyectado) — restaurar un backup no deja rastro en `/panel/auditoria` pese a que el tipo de evento existe. Los otros 3 sí resuelven nombres legibles (no UUIDs) y texto en español. (V)
+- [x] 2026-09-02 (corregido, no re-probado en vivo aún) **→ solo 4 tipos de acción se auditan, no "toda mutación sensible"**: `AuditAction` = `DataWipe`, `BackupRestore`, `TournamentStatusChange`, `PasswordReset`. `BackupRestore` ahora también se loguea (`BackupOperationsService` recibe `IAuditService` y llama `LogAsync` al final de `RestoreBackupAsync`) — restaurar un backup deja rastro en `/panel/auditoria` igual que los otros 3, que ya resolvían nombres legibles (no UUIDs) y texto en español. (V)
 - [ ] `/panel/administracion-datos`: respaldo manual → popup explicando el proceso → spinner → bloquea navegación hasta terminar. (C)(X)
 - [ ] Restaurar desde un respaldo → genera un respaldo automático de salvaguarda ANTES de sobrescribir. (X)
 - [x] 2026-09-02 (verificado por código): la salvaguarda pre-restore **no se borra** al terminar con éxito — queda en el catálogo, sujeta solo a la poda normal por retención en el próximo backup (`BackupOperationsService.RestoreBackupAsync`, `applyRetention: false` para esa salvaguarda). No es un bug, pero corrige la expectativa de "se elimina al finalizar".

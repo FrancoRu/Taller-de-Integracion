@@ -31,6 +31,7 @@ namespace API.Controllers;
 /// <param name="stageTeamMatchService">The stage-team match service.</param>
 /// <param name="matchSeriesService">The playoff series service.</param>
 /// <param name="playerStatisticService">The player-statistic service.</param>
+/// <param name="stageService">The stage service (bracket-round advancement).</param>
 /// <param name="mapper">The AutoMapper instance.</param>
 [Route("api/matches/")]
 [ApiController]
@@ -40,6 +41,7 @@ public class MatchController(
     IStageTeamMatchService stageTeamMatchService,
     IMatchSeriesService matchSeriesService,
     IPlayerStatisticService playerStatisticService,
+    IStageService stageService,
     IMapper mapper) : ControllerBase
 {
     /// <summary>
@@ -288,6 +290,12 @@ public class MatchController(
             await matchSeriesService.RecalculateSeriesWinnerAsync(updatedMatch.SeriesId.Value);
         }
 
+        // Push a newly-decided bracket slot's winner into the next round of
+        // its cup — a no-op for group-stage matches, a mid-series game that
+        // did not decide the series, or the Final. Runs after the series
+        // recalculation above so it sees the up-to-date decision.
+        await stageService.TryAdvanceStageWinnerAsync(updatedMatch.StageId);
+
         DetailedMatchResponse detailedMatch = mapper.Map<DetailedMatchResponse>(updatedMatch);
         return Ok(detailedMatch);
     }
@@ -321,6 +329,12 @@ public class MatchController(
             await matchSeriesService.RecalculateSeriesWinnerAsync(updatedMatch.SeriesId.Value);
         }
 
+        // Push a newly-decided bracket slot's winner into the next round of
+        // its cup — a no-op for group-stage matches, a mid-series game that
+        // did not decide the series, or the Final. Runs after the series
+        // recalculation above so it sees the up-to-date decision.
+        await stageService.TryAdvanceStageWinnerAsync(updatedMatch.StageId);
+
         DetailedMatchResponse detailedMatch = mapper.Map<DetailedMatchResponse>(updatedMatch);
         return Ok(detailedMatch);
     }
@@ -349,6 +363,12 @@ public class MatchController(
         {
             await matchSeriesService.RecalculateSeriesWinnerAsync(updatedMatch.SeriesId.Value);
         }
+
+        // Push a newly-decided bracket slot's winner into the next round of
+        // its cup — a no-op for group-stage matches, a mid-series game that
+        // did not decide the series, or the Final. Runs after the series
+        // recalculation above so it sees the up-to-date decision.
+        await stageService.TryAdvanceStageWinnerAsync(updatedMatch.StageId);
 
         DetailedMatchResponse detailedMatch = mapper.Map<DetailedMatchResponse>(updatedMatch);
         return Ok(detailedMatch);

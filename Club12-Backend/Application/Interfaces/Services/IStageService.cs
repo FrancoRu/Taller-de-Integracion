@@ -102,5 +102,23 @@ public interface IStageService
     /// </summary>
     /// <param name="finishedMatchStageId">The stage of the match that just finished.</param>
     Task TryAutoSeedPlayoffPhaseAsync(Guid finishedMatchStageId);
+
+    /// <summary>
+    /// Called after a match (or a best-of-N series it belongs to) is decided:
+    /// pushes each newly-decided bracket slot's winner into its immediate next
+    /// round within the same cup (same Division + BracketName), matching the
+    /// slot up using the classic bracket adjacency (slot 2i and 2i+1 of this
+    /// stage feed slot i of the next stage, as Home and Visitor respectively —
+    /// the same convention <see cref="SeedPlayoffCupsAsync"/> establishes for
+    /// the first round). If the next stage's own <c>BestOf</c> is greater than
+    /// 1 and BOTH its Home and Visitor are now known, converts that slot into
+    /// game 1 of a new <c>MatchSeries</c> — the same treatment a freshly-seeded
+    /// series gets. A no-op for the Final (nothing further to advance to), for
+    /// a Group stage, or when nothing new was decided. Never throws: a failure
+    /// is logged and swallowed rather than failing the result-loading
+    /// operation that triggered it.
+    /// </summary>
+    /// <param name="decidedStageId">The stage whose slot(s) just got decided.</param>
+    Task TryAdvanceStageWinnerAsync(Guid decidedStageId);
 }
 

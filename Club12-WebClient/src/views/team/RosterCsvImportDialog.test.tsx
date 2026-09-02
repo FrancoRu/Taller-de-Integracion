@@ -1,18 +1,19 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { AxiosError } from 'axios';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import RosterCsvImportDialog from '@/views/team/RosterCsvImportDialog';
-import { usePlayer } from '@/modules/player/hook/player.hook';
-import type { IPlayerContextProps, IPlayerResponse } from '@/modules/player/type/player.d';
+import { playerService } from '@/modules/player/service/player.service';
+import type { IPlayerResponse } from '@/modules/player/type/player.d';
 import type { GUID } from '@/modules/core/types/types';
 
-vi.mock('@/modules/player/hook/player.hook');
+vi.mock('@/modules/player/service/player.service');
 vi.mock('@/modules/core/utils/confirmDialog', () => ({
   notifyError: vi.fn(),
   notifySuccess: vi.fn(),
   notifyWarning: vi.fn(),
 }));
 
-const mockedUsePlayer = vi.mocked(usePlayer);
+const mockedAddPlayer = vi.mocked(playerService.addPlayer);
 
 const TEAM_ID = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' as GUID;
 
@@ -31,12 +32,13 @@ const uploadCsv = (content: string, filename = 'plantel.csv') => {
   fireEvent.change(input, { target: { files: [file] } });
 };
 
-const setupHooks = (addPlayer = vi.fn().mockResolvedValue({} as IPlayerResponse)) => {
-  mockedUsePlayer.mockReturnValue({
-    addPlayer,
-  } as unknown as IPlayerContextProps);
-  return addPlayer;
-};
+const okResponse = { data: {} as IPlayerResponse } as never;
+
+const conflictError = (detail: string) =>
+  new AxiosError('Request failed', undefined, undefined, undefined, {
+    status: 409,
+    data: { detail },
+  } as never);
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -44,14 +46,7 @@ afterEach(() => {
 
 describe('RosterCsvImportDialog', () => {
   it('parses a CSV file and shows valid/invalid row counts', async () => {
-    setupHooks();
-    render(
-      <RosterCsvImportDialog
-        open
-        onClose={vi.fn()}
-        teamId={TEAM_ID}
-      />
-    );
+    render(<RosterCsvImportDialog open onClose={vi.fn()} teamId={TEAM_ID} />);
 
     uploadCsv(CSV_CONTENT);
 
@@ -64,7 +59,7 @@ describe('RosterCsvImportDialog', () => {
   });
 
   it('imports only the valid rows and reports completion', async () => {
-    const addPlayer = setupHooks();
+    mockedAddPlayer.mockResolvedValue(okResponse);
     const onImported = vi.fn();
     const onClose = vi.fn();
 
@@ -82,8 +77,8 @@ describe('RosterCsvImportDialog', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Importar (2)' }));
 
-    await waitFor(() => expect(addPlayer).toHaveBeenCalledTimes(2));
-    expect(addPlayer).toHaveBeenCalledWith(
+    await waitFor(() => expect(mockedAddPlayer).toHaveBeenCalledTimes(2));
+    expect(mockedAddPlayer).toHaveBeenCalledWith(
       expect.objectContaining({
         firstName: 'Ana',
         lastName: 'Gómez',
@@ -93,7 +88,7 @@ describe('RosterCsvImportDialog', () => {
         teamId: TEAM_ID,
       })
     );
-    expect(addPlayer).toHaveBeenCalledWith(
+    expect(mockedAddPlayer).toHaveBeenCalledWith(
       expect.objectContaining({
         firstName: 'Beto',
         secondName: 'Luis',
@@ -108,14 +103,7 @@ describe('RosterCsvImportDialog', () => {
   });
 
   it('disables Importar when there are no valid rows', async () => {
-    setupHooks();
-    render(
-      <RosterCsvImportDialog
-        open
-        onClose={vi.fn()}
-        teamId={TEAM_ID}
-      />
-    );
+    render(<RosterCsvImportDialog open onClose={vi.fn()} teamId={TEAM_ID} />);
 
     uploadCsv(
       [
@@ -126,5 +114,58 @@ describe('RosterCsvImportDialog', () => {
 
     const importButton = await screen.findByRole('button', { name: 'Importar (0)' });
     expect(importButton).toBeDisabled();
+  });
+
+  it('shows each row\'s own failure reason instead of a global alert, and keeps the dialog open', async () => {
+    mockedAddPlayer
+      .mockResolvedValueOnce(okResponse)
+      .mockRejectedValueOnce(conflictError('Ya existe un jugador con ese documento.'));
+    const onImported = vi.fn();
+    const onClose = vi.fn();
+
+    render(
+      <RosterCsvImportDialog
+        open
+        onClose={onClose}
+        teamId={TEAM_ID}
+        onImported={onImported}
+      />
+    );
+
+    uploadCsv(CSV_CONTENT);
+    await screen.findByRole('button', { name: 'Importar (2)' });
+    fireEvent.click(screen.getByRole('button', { name: 'Importar (2)' }));
+
+    expect(
+      await screen.findByText('Ya existe un jugador con ese documento.')
+    ).toBeInTheDocument();
+    expect(await screen.findByText('Importado')).toBeInTheDocument();
+
+    // The dialog stays open so the failure is readable, but the roster still
+    // refreshes since one row DID get created.
+    expect(onClose).not.toHaveBeenCalled();
+    expect(onImported).toHaveBeenCalled();
+  });
+
+  it('retrying after a partial failure only re-submits the still-pending row', async () => {
+    mockedAddPlayer
+      .mockResolvedValueOnce(okResponse)
+      .mockRejectedValueOnce(conflictError('Ya existe un jugador con ese documento.'))
+      .mockResolvedValueOnce(okResponse);
+
+    render(<RosterCsvImportDialog open onClose={vi.fn()} teamId={TEAM_ID} />);
+
+    uploadCsv(CSV_CONTENT);
+    await screen.findByRole('button', { name: 'Importar (2)' });
+    fireEvent.click(screen.getByRole('button', { name: 'Importar (2)' }));
+
+    await screen.findByRole('button', { name: 'Importar (1)' });
+    fireEvent.click(screen.getByRole('button', { name: 'Importar (1)' }));
+
+    await waitFor(() => expect(mockedAddPlayer).toHaveBeenCalledTimes(3));
+    // The 3rd call must be for Beto again, not Ana (already imported).
+    expect(mockedAddPlayer).toHaveBeenLastCalledWith(
+      expect.objectContaining({ firstName: 'Beto' })
+    );
   });
 });
