@@ -17,23 +17,28 @@ using System.Threading.Tasks;
 namespace Infrastructure.Persistance;
 
 /// <summary>
-/// Seeds a rich, realistic sample of the Club 12 basketball league (Paraná,
-/// "liga libre"): one <see cref="Season"/> ("Temporada 2026") grouping four
-/// tournaments that mirror a real Argentine calendar —
+/// Seeds the app's standard reference dataset for the Club 12 basketball
+/// league (Paraná, "liga libre"): one <see cref="Season"/> ("Temporada XXV")
+/// grouping two FINISHED tournaments —
 /// <list type="bullet">
-/// <item>a FINISHED Apertura (masculine: Primera División + Reserva; feminine:
-///   Damas A), each with a cross-division cup ("Copa Club 12"), fully-played
-///   group stages and decided playoffs so the Campeones page resolves real
-///   champions for both categories; and</item>
-/// <item>an ONGOING Clausura (masculine + feminine) played as a mid-season
-///   double round-robin — the first jornadas finished with scores, the rest
-///   still upcoming — so the standings and "Próximos"/"Últimos" fixture have
-///   live data.</item>
+/// <item><b>Torneo Femenino</b>: a single zone of 7 teams, ida y vuelta,
+///   feeding one Copa de Oro (all 7 teams, byes to the top seeds since 7 is
+///   not a power of two); and</item>
+/// <item><b>Torneo Masculino</b>: 3 zones (Zona A/B, 10 teams each; Zona C, 13
+///   teams), each single round-robin, each with its own Copa Oro (top 4) and
+///   Copa Plata (the rest) brackets — plus a 4th, parallel competition, Copa
+///   Cruzada: 6 group-stage zones (5 of 4 teams + 1 of 3, ida y vuelta, drawn
+///   from a 23-team subset of the zone rosters) feeding one combined 12-team
+///   playoff (byes to the top seeds).</item>
 /// </list>
-/// Divisions carry their tournament's category (HU-48). Team crests are uploaded
-/// from a configurable folder (<c>Seed:LogosPath</c>) via the same Supabase
-/// storage path the team endpoints use; any logo failure degrades to a
-/// placeholder without ever failing the seed.
+/// Every playoff bracket is built by <see cref="SampleTournamentBuilder"/>'s
+/// generic elimination-bracket seeder (RoundOf16/QuarterFinal/SemiFinal/Final
+/// as the seed count needs, byes to the best seeds when not a power of two);
+/// every cup's SemiFinal and Final rounds are Best-of-3, every earlier round
+/// Best-of-1. Divisions carry their tournament's category (HU-48). Team
+/// crests are uploaded from a configurable folder (<c>Seed:LogosPath</c>) via
+/// the same Supabase storage path the team endpoints use; any logo failure
+/// degrades to a placeholder without ever failing the seed.
 ///
 /// Controlled by configuration: <c>Seed:Enabled</c> gates the whole path (checked
 /// by the caller). By default it runs once and skips if any team already exists;
@@ -71,105 +76,138 @@ public sealed class DataSeeder(
     // this many refs and the step stays resumable (medical-records-storage-eligibility, ADR #7).
     private const int MedicalRecordSaveBatchSize = 50;
 
-    // --- Masculine tournament — Primera División (8 real Paraná/Entre Ríos clubs).
-    private static readonly string[] PrimeraNames =
+    // --- Torneo Femenino — Zona Única (7 real Paraná/Entre Ríos clubs).
+    private static readonly string[] FemeninoNames =
+    [
+        "Patronato", "Peñarol de Paraná", "Bancario", "Sportivo Urquiza",
+        "Belgrano de Paraná", "Deportivo Libertad", "Juventud Unida de Gualeguaychú",
+    ];
+    private static readonly string[] FemeninoCodes =
+        ["PAT", "PEN", "BAN", "SUR", "BEP", "LIB", "JUG"];
+    private static readonly string[] FemeninoColors =
+        ["#0F766E", "#BE123C", "#15803D", "#7E22CE", "#1D4ED8", "#A16207", "#C2410C"];
+    private static readonly string[] FemeninoStyles =
+        ["hoops", "stripes", "chevron", "diagonal", "halves", "sash", "circles"];
+    private static readonly string[] FemeninoSecondaryColors =
+        ["#FFFFFF", "#FDE047", "#FFFFFF", "#1E293B", "#FFFFFF", "#1E293B", "#FFFFFF"];
+
+    // --- Torneo Masculino — Zona A (10 real Paraná/Entre Ríos clubs).
+    private static readonly string[] ZonaANames =
     [
         "Echagüe", "Estudiantes de Paraná", "Paraná Rowing Club", "Sionista",
         "Recreativo", "Quique", "Olimpia", "Talleres de Paraná",
+        "Central Entrerriano", "Parque Sur",
     ];
-    private static readonly string[] PrimeraCodes =
-        ["ECH", "EDP", "ROW", "SIO", "REC", "QUI", "OLI", "TDP"];
-    private static readonly string[] PrimeraColors =
-        ["#1E3A8A", "#DC2626", "#16A34A", "#EA580C", "#0891B2", "#7C3AED", "#CA8A04", "#0D9488"];
-    private static readonly string[] PrimeraStyles =
-        ["stripes", "hoops", "diagonal", "chevron", "sash", "sides", "halves", "circles"];
-    private static readonly string[] PrimeraSecondaryColors =
-        ["#FFFFFF", "#FFFFFF", "#FFFFFF", "#1E293B", "#FFFFFF", "#FDE047", "#1E293B", "#FFFFFF"];
-
-    // --- Masculine tournament — Reserva (8 more Entre Ríos clubs).
-    private static readonly string[] ReservaNames =
+    private static readonly string[] ZonaACodes =
+        ["ECH", "EDP", "ROW", "SIO", "REC", "QUI", "OLI", "TDP", "CEN", "PSU"];
+    private static readonly string[] ZonaAColors =
     [
-        "Central Entrerriano", "Parque Sur", "Regatas Uruguay", "Estudiantes de Concordia",
-        "Social y Deportivo Colón", "Neptunia", "Independiente de Victoria", "Ciudad de Paraná",
+        "#1E3A8A", "#DC2626", "#16A34A", "#EA580C", "#0891B2",
+        "#7C3AED", "#CA8A04", "#0D9488", "#4338CA", "#B91C1C",
     ];
-    private static readonly string[] ReservaCodes =
-        ["CEN", "PSU", "REG", "EDC", "SDC", "NEP", "IDV", "CDP"];
-    private static readonly string[] ReservaColors =
-        ["#4338CA", "#B91C1C", "#4D7C0F", "#9333EA", "#0284C7", "#65A30D", "#C026D3", "#B45309"];
-    private static readonly string[] ReservaStyles =
-        ["gradient", "vneck", "solid", "halves", "sides", "circles", "stripes", "hoops"];
-    private static readonly string[] ReservaSecondaryColors =
-        ["#FDE047", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#1E293B", "#FFFFFF", "#FDE047"];
-
-    // --- Feminine tournament — Damas A (8 distinct clubs; distinct names keep
-    // the globally-unique Team.Slug index happy).
-    private static readonly string[] DamasNames =
+    private static readonly string[] ZonaAStyles =
     [
-        "Patronato", "Peñarol de Paraná", "Bancario", "Sportivo Urquiza",
-        "Belgrano de Paraná", "Deportivo Libertad", "Juventud Unida de Gualeguaychú", "San Benito",
+        "stripes", "hoops", "diagonal", "chevron", "sash",
+        "sides", "halves", "circles", "gradient", "vneck",
     ];
-    private static readonly string[] DamasCodes =
-        ["PAT", "PEN", "BAN", "SUR", "BEP", "LIB", "JUG", "SBE"];
-    private static readonly string[] DamasColors =
-        ["#0F766E", "#BE123C", "#15803D", "#7E22CE", "#1D4ED8", "#A16207", "#C2410C", "#0369A1"];
-    private static readonly string[] DamasStyles =
-        ["hoops", "stripes", "chevron", "diagonal", "halves", "sash", "circles", "solid"];
-    private static readonly string[] DamasSecondaryColors =
-        ["#FFFFFF", "#FDE047", "#FFFFFF", "#1E293B", "#FFFFFF", "#1E293B", "#FFFFFF", "#FDE047"];
-
-    // --- Clausura (ONGOING) masculine — Primera División (8 more distinct clubs,
-    // so no Team.Slug collides with the finished Apertura's teams).
-    private static readonly string[] ClausuraPrimeraNames =
+    private static readonly string[] ZonaASecondaryColors =
     [
+        "#FFFFFF", "#FFFFFF", "#FFFFFF", "#1E293B", "#FFFFFF",
+        "#FDE047", "#1E293B", "#FFFFFF", "#FDE047", "#FFFFFF",
+    ];
+
+    // --- Torneo Masculino — Zona B (10 real Paraná/Entre Ríos clubs).
+    private static readonly string[] ZonaBNames =
+    [
+        "Regatas Uruguay", "Estudiantes de Concordia", "Social y Deportivo Colón", "Neptunia",
+        "Independiente de Victoria", "Ciudad de Paraná",
         "Rocamora", "Gimnasia y Esgrima de CdelU", "Unión de Crespo", "Sarmiento de La Paz",
+    ];
+    private static readonly string[] ZonaBCodes =
+        ["REG", "EDC", "SDC", "NEP", "IDV", "CDP", "ROC", "GEU", "UCR", "SLP"];
+    private static readonly string[] ZonaBColors =
+    [
+        "#4D7C0F", "#9333EA", "#0284C7", "#65A30D", "#C026D3",
+        "#B45309", "#1D4ED8", "#B91C1C", "#15803D", "#C2410C",
+    ];
+    private static readonly string[] ZonaBStyles =
+    [
+        "solid", "halves", "sides", "circles", "stripes",
+        "hoops", "stripes", "hoops", "diagonal", "chevron",
+    ];
+    private static readonly string[] ZonaBSecondaryColors =
+    [
+        "#FFFFFF", "#FFFFFF", "#FFFFFF", "#1E293B", "#FFFFFF",
+        "#FDE047", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#1E293B",
+    ];
+
+    // --- Torneo Masculino — Zona C (13 real/plausible Paraná/Entre Ríos clubs).
+    private static readonly string[] ZonaCNames =
+    [
         "Atlético Gualeguay", "Capuchinos", "Ministerio de Villa Elisa", "Litoral de Colón",
+        "Sportivo Diamante", "Atlético Federación", "Defensores de Bovril", "Unión de Nogoyá",
+        "Ferrocarril Concepción", "Deportivo Chajarí", "Sarmiento de Villaguay",
+        "Atlético María Grande", "Unión de Viale",
     ];
-    private static readonly string[] ClausuraPrimeraCodes =
-        ["ROC", "GEU", "UCR", "SLP", "AGY", "CAP", "MVE", "LDC"];
-    private static readonly string[] ClausuraPrimeraColors =
-        ["#1D4ED8", "#B91C1C", "#15803D", "#C2410C", "#0E7490", "#6D28D9", "#A16207", "#0F766E"];
-    private static readonly string[] ClausuraPrimeraStyles =
-        ["stripes", "hoops", "diagonal", "chevron", "sash", "sides", "halves", "circles"];
-    private static readonly string[] ClausuraPrimeraSecondaryColors =
-        ["#FFFFFF", "#FFFFFF", "#FFFFFF", "#1E293B", "#FFFFFF", "#FDE047", "#1E293B", "#FFFFFF"];
-
-    // --- Clausura (ONGOING) feminine — Damas A (8 more distinct clubs).
-    private static readonly string[] ClausuraDamasNames =
+    private static readonly string[] ZonaCCodes =
+        ["AGY", "CAP", "MVE", "LDC", "SPD", "ATF", "DBO", "UNO", "FCC", "DCH", "SVI", "AMG", "UVI"];
+    private static readonly string[] ZonaCColors =
     [
-        "Deportivo Nogoyá", "Círculo Médico", "Villaguay Central", "Atlético Diamante",
-        "Ferro de Concordia", "Unión de Feliciano", "Deportivo Chajarí", "Racing de Bovril",
+        "#0E7490", "#6D28D9", "#A16207", "#0F766E", "#0EA5E9", "#DB2777", "#65A30D",
+        "#EA580C", "#7C2D12", "#4C1D95", "#0F172A", "#B45309", "#166534",
     ];
-    private static readonly string[] ClausuraDamasCodes =
-        ["NOG", "CME", "VIC", "ADI", "FCO", "UFE", "CHA", "BOV"];
-    private static readonly string[] ClausuraDamasColors =
-        ["#0369A1", "#BE123C", "#166534", "#9A3412", "#155E75", "#5B21B6", "#854D0E", "#115E59"];
-    private static readonly string[] ClausuraDamasStyles =
-        ["hoops", "stripes", "chevron", "diagonal", "halves", "sash", "circles", "solid"];
-    private static readonly string[] ClausuraDamasSecondaryColors =
-        ["#FFFFFF", "#FDE047", "#FFFFFF", "#1E293B", "#FFFFFF", "#1E293B", "#FFFFFF", "#FDE047"];
-
-    // Position-range playoff cups every FINISHED regular division earns from its
-    // final group standings (HU-45): 1-4 -> Copa Oro, 5-8 -> Copa Plata. Seeded
-    // via SeedCupPlayoffs, so each registers a DivisionPlayoffMapping the
-    // standings colouring reads to tint the qualifying positions. Single-game
-    // brackets (BestOf = 1) keep the seed simple; the division champion is the
-    // top cup's (Copa Oro) Final winner.
-    private static readonly SampleTournamentBuilder.PlayoffCupDefinition[] MainCups =
+    private static readonly string[] ZonaCStyles =
     [
-        new("Copa Oro", FromPosition: 1, ToPosition: 4, BestOf: 1),
-        new("Copa Plata", FromPosition: 5, ToPosition: 8, BestOf: 1),
+        "sash", "sides", "halves", "circles", "stripes", "hoops", "diagonal",
+        "chevron", "sash", "sides", "halves", "circles", "solid",
+    ];
+    private static readonly string[] ZonaCSecondaryColors =
+    [
+        "#FFFFFF", "#FDE047", "#1E293B", "#FFFFFF", "#FFFFFF", "#FDE047", "#FFFFFF",
+        "#1E293B", "#FFFFFF", "#1E293B", "#FFFFFF", "#FDE047", "#FFFFFF",
     ];
 
-    // Cross-division cup shared shape: 4 internal groups, top 1 per group pooled
-    // into the bracket. With 16 masculine teams that is 4 per group; with 8
-    // feminine teams, 2 per group — both yield a full 4-seed bracket.
-    private static readonly SampleTournamentBuilder.CrossCupDefinition CopaClub12 =
-        new("Copa Club 12", GroupCount: 4, QualifiersPerGroup: 1);
+    // Femenino: a single Copa de Oro spans the whole standings (all 7 teams
+    // qualify — there is no Copa Plata for this tournament). Masculino: each
+    // zone earns its own Copa Oro (top 4) + Copa Plata (the rest of the
+    // standings; positions past ToPosition are out of both cups) from its
+    // final group standings (HU-45), via SeedCupPlayoffs/SeedEliminationBracket
+    // — each registers a DivisionPlayoffMapping the standings colouring reads
+    // to tint the qualifying positions, and byes pad brackets that aren't a
+    // power of two (e.g. Zona C's 9-team Copa Plata) to the best seeds. BestOf
+    // 3 applies to every cup's SemiFinal + Final only; any earlier round
+    // always plays Bo1.
+    private static readonly SampleTournamentBuilder.PlayoffCupDefinition[] FemeninoCups =
+    [
+        new("Copa de Oro", FromPosition: 1, ToPosition: 7, BestOf: 3),
+    ];
+    private static readonly SampleTournamentBuilder.PlayoffCupDefinition[] ZonaABCups =
+    [
+        new("Copa Oro", FromPosition: 1, ToPosition: 4, BestOf: 3),
+        new("Copa Plata", FromPosition: 5, ToPosition: 8, BestOf: 3),
+    ];
+    private static readonly SampleTournamentBuilder.PlayoffCupDefinition[] ZonaCCups =
+    [
+        new("Copa Oro", FromPosition: 1, ToPosition: 4, BestOf: 3),
+        new("Copa Plata", FromPosition: 5, ToPosition: 13, BestOf: 3),
+    ];
 
-    // The ongoing Clausura is mid-season: this many leading jornadas of each
-    // zone are already played (finished with scores); the rest are seeded as
-    // upcoming (unplayed) games so the in-progress fixture has "Próximos" data.
-    private const int ClausuraPlayedRounds = 8;
+    // Copa Cruzada: a 4th masculine competition, structurally its own
+    // division (parallel to, not nested inside, Zonas A/B/C) built via the
+    // tournament's CrossCup wiring restricted to a 23-team pool (TeamPoolSize)
+    // — the first 23 of the 33 Zona A/B/C teams in build order (Zona A + Zona
+    // B in full, Zona C's first 3), reusing real rosters instead of inventing
+    // a disjoint set of teams, mirroring how real leagues have overlapping
+    // club rosters across parallel competitions. 23 teams / 6 groups splits
+    // into 5 zones of 4 + 1 of 3; the top 2 of each (12 teams, byes to the
+    // best seeds since 12 isn't a power of two) feed the combined playoff.
+    private static readonly SampleTournamentBuilder.CrossCupDefinition CopaCruzada = new(
+        "Copa Cruzada",
+        GroupCount: 6,
+        QualifiersPerGroup: 2,
+        RoundRobinLegs: 2,
+        FinalsBestOf: 3,
+        TeamPoolSize: 23);
 
     /// <summary>
     /// Seeds the sample league. <paramref name="reset"/> (from <c>Seed:Reset</c>)
@@ -207,132 +245,96 @@ public sealed class DataSeeder(
 
         List<Venue> venues = BuildVenues();
 
-        // Apertura (first half of 2026): FINISHED — group stages fully played,
-        // playoffs and the cross cup decided, tournament status Finished so the
-        // Campeones page resolves real champions for it.
-        DateTime aperturaStageStart = new(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc);
-        SampleTournamentBuilder.TournamentDefinition aperturaMasculine = new(
-            Name: "Torneo Apertura 2026",
-            Description: "Torneo Apertura masculino de la Liga Club 12 (Paraná), temporada 2026. Finalizado.",
-            TeamRegistrationDeadline: new DateTime(2026, 2, 15, 0, 0, 0, DateTimeKind.Utc),
-            StartDate: aperturaStageStart,
-            StageStartDate: aperturaStageStart,
-            StageEndDate: new DateTime(2026, 6, 30, 0, 0, 0, DateTimeKind.Utc),
-            FinishedMatchesStart: aperturaStageStart,
-            UpcomingMatchesStart: new DateTime(2026, 6, 30, 0, 0, 0, DateTimeKind.Utc),
+        // Both tournaments are FINISHED: group stages fully played and every
+        // playoff cup decided, so the Campeones page resolves real champions
+        // for both categories.
+        DateTime stageStart = new(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc);
+        DateTime stageEnd = new(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        // Torneo Femenino: a single zone, ida y vuelta (RoundRobinLegs: 2),
+        // feeding one Copa de Oro with all 7 teams (no Copa Plata).
+        SampleTournamentBuilder.TournamentDefinition femenino = new(
+            Name: "Torneo Femenino",
+            Description: "Torneo Femenino de la Liga Club 12 (Paraná), Temporada XXV. Finalizado.",
+            TeamRegistrationDeadline: stageStart.AddDays(-14),
+            StartDate: stageStart,
+            StageStartDate: stageStart,
+            StageEndDate: stageEnd,
+            FinishedMatchesStart: stageStart,
+            UpcomingMatchesStart: stageEnd,
             Divisions:
             [
-                new("Primera División", PrimeraNames, PrimeraCodes, PrimeraColors, MainCups,
-                    TeamStyles: PrimeraStyles, TeamSecondaryColors: PrimeraSecondaryColors),
-                new("Reserva", ReservaNames, ReservaCodes, ReservaColors, MainCups,
-                    TeamStyles: ReservaStyles, TeamSecondaryColors: ReservaSecondaryColors),
+                new("Zona Única", FemeninoNames, FemeninoCodes, FemeninoColors, FemeninoCups,
+                    TeamStyles: FemeninoStyles, TeamSecondaryColors: FemeninoSecondaryColors),
             ],
-            CrossCup: CopaClub12,
             Status: TournamentStatus.Finished,
-            Category: TournamentCategory.Masculine);
-
-        SampleTournamentBuilder.TournamentDefinition aperturaFeminine = new(
-            Name: "Torneo Apertura Femenino 2026",
-            Description: "Torneo Apertura femenino de la Liga Club 12 (Paraná), temporada 2026. Finalizado.",
-            TeamRegistrationDeadline: new DateTime(2026, 2, 15, 0, 0, 0, DateTimeKind.Utc),
-            StartDate: aperturaStageStart,
-            StageStartDate: aperturaStageStart,
-            StageEndDate: new DateTime(2026, 6, 30, 0, 0, 0, DateTimeKind.Utc),
-            FinishedMatchesStart: aperturaStageStart,
-            UpcomingMatchesStart: new DateTime(2026, 6, 30, 0, 0, 0, DateTimeKind.Utc),
-            Divisions:
-            [
-                new("Damas A", DamasNames, DamasCodes, DamasColors, MainCups,
-                    TeamStyles: DamasStyles, TeamSecondaryColors: DamasSecondaryColors),
-            ],
-            CrossCup: CopaClub12,
-            Status: TournamentStatus.Finished,
-            Category: TournamentCategory.Feminine);
-
-        // Clausura (second half of 2026): ONGOING and mid-season — a double
-        // round-robin (ida y vuelta) whose first ClausuraPlayedRounds jornadas
-        // are played and the rest still upcoming, so the live standings AND the
-        // "Próximos"/"Últimos" fixture both have data. No playoffs yet.
-        DateTime clausuraStageStart = new(2026, 7, 5, 0, 0, 0, DateTimeKind.Utc);
-        SampleTournamentBuilder.TournamentDefinition clausuraMasculine = new(
-            Name: "Torneo Clausura 2026",
-            Description: "Torneo Clausura masculino de la Liga Club 12 (Paraná), temporada 2026. En curso.",
-            TeamRegistrationDeadline: new DateTime(2026, 6, 20, 0, 0, 0, DateTimeKind.Utc),
-            StartDate: clausuraStageStart,
-            StageStartDate: clausuraStageStart,
-            StageEndDate: new DateTime(2026, 12, 15, 0, 0, 0, DateTimeKind.Utc),
-            FinishedMatchesStart: clausuraStageStart,
-            UpcomingMatchesStart: new DateTime(2026, 9, 6, 0, 0, 0, DateTimeKind.Utc),
-            Divisions:
-            [
-                new("Primera División", ClausuraPrimeraNames, ClausuraPrimeraCodes, ClausuraPrimeraColors,
-                    TeamStyles: ClausuraPrimeraStyles, TeamSecondaryColors: ClausuraPrimeraSecondaryColors),
-            ],
-            Status: TournamentStatus.Ongoing,
-            Category: TournamentCategory.Masculine,
-            RoundRobinLegs: 2,
-            PlayedRoundsPerZone: ClausuraPlayedRounds);
-
-        SampleTournamentBuilder.TournamentDefinition clausuraFeminine = new(
-            Name: "Torneo Clausura Femenino 2026",
-            Description: "Torneo Clausura femenino de la Liga Club 12 (Paraná), temporada 2026. En curso.",
-            TeamRegistrationDeadline: new DateTime(2026, 6, 20, 0, 0, 0, DateTimeKind.Utc),
-            StartDate: clausuraStageStart,
-            StageStartDate: clausuraStageStart,
-            StageEndDate: new DateTime(2026, 12, 15, 0, 0, 0, DateTimeKind.Utc),
-            FinishedMatchesStart: clausuraStageStart,
-            UpcomingMatchesStart: new DateTime(2026, 9, 6, 0, 0, 0, DateTimeKind.Utc),
-            Divisions:
-            [
-                new("Damas A", ClausuraDamasNames, ClausuraDamasCodes, ClausuraDamasColors,
-                    TeamStyles: ClausuraDamasStyles, TeamSecondaryColors: ClausuraDamasSecondaryColors),
-            ],
-            Status: TournamentStatus.Ongoing,
             Category: TournamentCategory.Feminine,
-            RoundRobinLegs: 2,
-            PlayedRoundsPerZone: ClausuraPlayedRounds);
+            RoundRobinLegs: 2);
+
+        // Torneo Masculino: 3 zones, each single round-robin (the owner's spec
+        // said "ida y vuelta" explicitly for Femenino and Copa Cruzada but not
+        // for these zones — ASSUMPTION: single round-robin here to keep match
+        // counts sane; Zona C alone is already 78 matches single vs 156
+        // double round-robin), each with its own Copa Oro/Copa Plata, plus the
+        // cross-division Copa Cruzada (its own 6-zone group stage, ida y
+        // vuelta, feeding one combined 12-team playoff).
+        SampleTournamentBuilder.TournamentDefinition masculino = new(
+            Name: "Torneo Masculino",
+            Description: "Torneo Masculino de la Liga Club 12 (Paraná), Temporada XXV. Finalizado.",
+            TeamRegistrationDeadline: stageStart.AddDays(-14),
+            StartDate: stageStart,
+            StageStartDate: stageStart,
+            StageEndDate: stageEnd,
+            FinishedMatchesStart: stageStart,
+            UpcomingMatchesStart: stageEnd,
+            Divisions:
+            [
+                new("Zona A", ZonaANames, ZonaACodes, ZonaAColors, ZonaABCups,
+                    TeamStyles: ZonaAStyles, TeamSecondaryColors: ZonaASecondaryColors),
+                new("Zona B", ZonaBNames, ZonaBCodes, ZonaBColors, ZonaABCups,
+                    TeamStyles: ZonaBStyles, TeamSecondaryColors: ZonaBSecondaryColors),
+                new("Zona C", ZonaCNames, ZonaCCodes, ZonaCColors, ZonaCCups,
+                    TeamStyles: ZonaCStyles, TeamSecondaryColors: ZonaCSecondaryColors),
+            ],
+            CrossCup: CopaCruzada,
+            Status: TournamentStatus.Finished,
+            Category: TournamentCategory.Masculine,
+            RoundRobinLegs: 1);
 
         int playerCounter = 0;
-        // All four tournaments persist together, so their division/stage slugs
+        // Both tournaments persist together, so their division/stage slugs
         // must stay unique across the whole batch (each has a DB unique index):
         // one shared registry disambiguates repeated base slugs with numeric
-        // suffixes. Team slugs are globally unique too — every tournament uses a
-        // distinct set of club names so no Team.Slug ever collides.
+        // suffixes. Team slugs are globally unique too — Femenino and
+        // Masculino use entirely distinct club names so no Team.Slug ever
+        // collides (Copa Cruzada reuses existing Masculino Team rows, not new
+        // ones, so it never introduces a new slug).
         SampleTournamentBuilder.SlugRegistry slugRegistry = new();
-        // The Apertura runs are built with playoffs and the cup so they crown
-        // champions; the Clausura runs stay group-only because they are still
-        // in progress.
-        SampleTournamentBuilder.BuildResult aperturaMascResult =
-            SampleTournamentBuilder.Build(aperturaMasculine, venues, ref playerCounter, includePlayoffs: true, slugRegistry);
-        SampleTournamentBuilder.BuildResult aperturaFemResult =
-            SampleTournamentBuilder.Build(aperturaFeminine, venues, ref playerCounter, includePlayoffs: true, slugRegistry);
-        SampleTournamentBuilder.BuildResult clausuraMascResult =
-            SampleTournamentBuilder.Build(clausuraMasculine, venues, ref playerCounter, includePlayoffs: false, slugRegistry);
-        SampleTournamentBuilder.BuildResult clausuraFemResult =
-            SampleTournamentBuilder.Build(clausuraFeminine, venues, ref playerCounter, includePlayoffs: false, slugRegistry);
+        SampleTournamentBuilder.BuildResult femeninoResult =
+            SampleTournamentBuilder.Build(femenino, venues, ref playerCounter, includePlayoffs: true, slugRegistry);
+        SampleTournamentBuilder.BuildResult masculinoResult =
+            SampleTournamentBuilder.Build(masculino, venues, ref playerCounter, includePlayoffs: true, slugRegistry);
 
-        SampleTournamentBuilder.BuildResult[] results =
-            [aperturaMascResult, aperturaFemResult, clausuraMascResult, clausuraFemResult];
+        SampleTournamentBuilder.BuildResult[] results = [femeninoResult, masculinoResult];
 
-        // One season groups every 2026 tournament so champions show under a real
-        // "Temporada 2026" instead of "Sin temporada". Each tournament keeps its
-        // own category (HU-48) — the season only groups them.
-        Season season2026 = new()
+        // One season groups both tournaments so champions show under a real
+        // "Temporada XXV" instead of "Sin temporada". Each tournament keeps
+        // its own category (HU-48) — the season only groups them.
+        Season temporadaXXV = new()
         {
             CreatedBy = Domain.Constants.AuditConstants.SystemUser,
-            Name = "Temporada 2026",
-            Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug("Temporada 2026"),
-            Year = 2026,
+            Name = "Temporada XXV",
+            Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug("Temporada XXV"),
         };
         foreach (SampleTournamentBuilder.BuildResult result in results)
         {
-            result.Tournament.Season = season2026;
+            result.Tournament.Season = temporadaXXV;
         }
 
         List<Team> allTeams = [.. results.SelectMany(r => r.Tournament.Teams)];
         await UploadTeamLogosAsync(allTeams, string.IsNullOrWhiteSpace(logosPath) ? DefaultLogosPath : logosPath);
 
-        db.Seasons.Add(season2026);
+        db.Seasons.Add(temporadaXXV);
         foreach (SampleTournamentBuilder.BuildResult result in results)
         {
             db.Tournaments.Add(result.Tournament);
@@ -354,10 +356,10 @@ public sealed class DataSeeder(
         int sanctionCount = results.Sum(r => r.Sanctions.Count);
 
         logger.LogInformation(
-            "Sample data seeded under season '{Season}': 4 tournaments (Apertura FINISHED + Clausura ONGOING, " +
-            "masculine + feminine), {DivisionCount} divisions (incl. cross-division cups), {TeamCount} teams, " +
-            "{PlayerCount} players, {SanctionCount} sanctions.",
-            season2026.Name, divisionCount, teamCount, playerCount, sanctionCount);
+            "Sample data seeded under season '{Season}': 2 tournaments (Femenino + Masculino, both FINISHED), " +
+            "{DivisionCount} divisions (incl. Copa Cruzada), {TeamCount} teams, {PlayerCount} players, " +
+            "{SanctionCount} sanctions.",
+            temporadaXXV.Name, divisionCount, teamCount, playerCount, sanctionCount);
     }
 
     /// <summary>
@@ -652,22 +654,24 @@ public sealed class DataSeeder(
         (string Title, string Body)[] posts =
         [
             (
-                "El Apertura 2026 ya tiene campeones",
-                "Se cerró el Torneo Apertura 2026 de la Liga Club 12 (Paraná) en las categorías masculina " +
-                "y femenina. Con los playoffs y la Copa Club 12 definidos, ya conocemos a los campeones de " +
-                "la primera mitad de la temporada. Mirá el podio completo en la sección Campeones."
+                "La Temporada XXV ya tiene campeones",
+                "Se cerró la Temporada XXV de la Liga Club 12 (Paraná) en las categorías masculina y " +
+                "femenina. Con la Copa de Oro femenina, las seis copas de las Zonas A, B y C, y la Copa " +
+                "Cruzada masculina ya definidas, conocemos a los campeones de la temporada. Mirá el podio " +
+                "completo en la sección Campeones."
             ),
             (
-                "Arrancó el Clausura 2026: en marcha la segunda mitad",
-                "El Torneo Clausura 2026 ya está en curso, con el masculino y el femenino jugando su fase " +
-                "regular a dos ruedas (ida y vuelta). Repasá los resultados de las últimas fechas y el " +
-                "calendario de los próximos partidos en la sección de partidos."
+                "Torneo Masculino: así quedaron las Zonas A, B y C",
+                "El Torneo Masculino de la Temporada XXV se jugó en tres zonas — A y B de 10 equipos, C de " +
+                "13 — todas contra todos a una rueda. Los primeros cuatro de cada zona avanzaron a la Copa " +
+                "Oro, el resto a la Copa Plata. Repasá las tablas finales y las llaves de playoffs."
             ),
             (
-                "Copa Club 12: la copa cruzada de la temporada",
-                "La Copa Club 12 cruza a los equipos de todas las divisiones en una misma llave. Los " +
-                "partidos de la copa se disputan entre semana para no superponerse con las zonas del fin " +
-                "de semana."
+                "Copa Cruzada: la copa cruzada de la temporada",
+                "La Copa Cruzada masculina reunió a equipos de las tres zonas en seis grupos (ida y " +
+                "vuelta), con los dos primeros de cada grupo clasificando a una llave combinada de 12 " +
+                "equipos. Los partidos de la copa se disputan entre semana para no superponerse con las " +
+                "zonas del fin de semana."
             ),
         ];
 

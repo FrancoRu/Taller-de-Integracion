@@ -19,8 +19,8 @@ namespace Infrastructure.Persistance;
 /// players, group stages with proper round-robin jornadas and decisive scores,
 /// scorers/statistics, position-range playoff cups, an optional
 /// cross-division cup, and sanctions) from a declarative definition. Shared by
-/// the startup DataSeeder (one call, no playoffs) and DataMaintenanceService
-/// (the full coherent sample) so the construction logic exists once.
+/// the startup DataSeeder and DataMaintenanceService (the admin-triggered
+/// sample reseed) so the construction logic exists once.
 ///
 /// Coherence guarantees:
 /// - Every group stage is a real circle-method round-robin: every team plays
@@ -65,9 +65,14 @@ public static class SampleTournamentBuilder
     /// <summary>
     /// A named playoff cup fed by a contiguous range of a division's final
     /// group-standings positions (HU-45), e.g. "Copa Oro" for positions 1-4.
-    /// Produces a <see cref="DivisionPlayoffMapping"/> row plus a SemiFinal +
-    /// Final bracket whose <see cref="Stage.BracketName"/> equals
-    /// <paramref name="BracketName"/>.
+    /// Produces a <see cref="DivisionPlayoffMapping"/> row plus a full
+    /// single-elimination bracket (as many rounds as the seed count needs —
+    /// RoundOf16/QuarterFinal/SemiFinal/Final, byes to the best seeds when not
+    /// a power of two, via <see cref="SeedEliminationBracket"/>) whose stages
+    /// carry <see cref="Stage.BracketName"/> = <paramref name="BracketName"/>.
+    /// <paramref name="BestOf"/> applies to the SemiFinal AND Final rounds
+    /// only — any earlier round (needed once a cup has more than 4 real
+    /// seeds) always plays Bo1.
     /// </summary>
     public sealed record PlayoffCupDefinition(
         string BracketName,
@@ -77,15 +82,37 @@ public static class SampleTournamentBuilder
 
     /// <summary>
     /// The cross-division cup ("Copa Cruzada"): an extra division with
-    /// <see cref="Division.IsCrossDivisionCup"/> = true whose teams are ALL the
-    /// tournament's teams, split into <paramref name="GroupCount"/> internal
-    /// groups. The top <paramref name="QualifiersPerGroup"/> of each group are
-    /// pooled into one bracket (HU-110).
+    /// <see cref="Division.IsCrossDivisionCup"/> = true whose teams are drawn
+    /// from the tournament's teams, split into <paramref name="GroupCount"/>
+    /// internal groups. The top <paramref name="QualifiersPerGroup"/> of each
+    /// group are pooled into one bracket (HU-110).
     /// </summary>
+    /// <param name="DivisionName">The cup's division name, e.g. "Copa Cruzada".</param>
+    /// <param name="GroupCount">How many internal group stages to split the team pool into.</param>
+    /// <param name="QualifiersPerGroup">How many top teams from each group pool into the bracket.</param>
+    /// <param name="RoundRobinLegs">
+    /// How many times each pair plays within an internal group (1 = single
+    /// round-robin, 2 = double/ida y vuelta). Defaults to 1.
+    /// </param>
+    /// <param name="FinalsBestOf">
+    /// BestOf applied to the pooled bracket's SemiFinal and Final rounds only
+    /// (earlier rounds, needed once more than 4 teams are pooled, always play
+    /// Bo1). Defaults to 1.
+    /// </param>
+    /// <param name="TeamPoolSize">
+    /// When set, only the first <paramref name="TeamPoolSize"/> of the
+    /// tournament's teams (in build order) feed the cup, instead of every
+    /// team — e.g. a masculine tournament reusing a subset of its zone teams
+    /// for a separate cross-division cup. Null (the default) uses every team,
+    /// unchanged from the original behavior.
+    /// </param>
     public sealed record CrossCupDefinition(
         string DivisionName,
         int GroupCount,
-        int QualifiersPerGroup);
+        int QualifiersPerGroup,
+        int RoundRobinLegs = 1,
+        int FinalsBestOf = 1,
+        int? TeamPoolSize = null);
 
     public sealed record DivisionDefinition(
         string DivisionName,
@@ -164,8 +191,9 @@ public static class SampleTournamentBuilder
     /// <paramref name="includePlayoffs"/> opts each division into its playoff
     /// bracket(s) built from the group stage's final standings, and — when the
     /// definition declares a <see cref="TournamentDefinition.CrossCup"/> — into
-    /// the cross-division cup. When false (the startup DataSeeder's default)
-    /// each division gets only its group stage.
+    /// the cross-division cup. When false, each division gets only its group
+    /// stage (used for an in-progress/ONGOING tournament that has no decided
+    /// playoffs yet).
     /// </summary>
     public static BuildResult Build(
         TournamentDefinition definition,
@@ -255,8 +283,11 @@ public static class SampleTournamentBuilder
 
         if (includePlayoffs && definition.CrossCup is not null)
         {
+            List<Team> crossCupTeams = definition.CrossCup.TeamPoolSize is int poolSize
+                ? [.. allTeams.Take(poolSize)]
+                : allTeams;
             SeedCrossDivisionCup(
-                tournament, definition.CrossCup, allTeams, venues, definition.StageStartDate, slugRegistry);
+                tournament, definition.CrossCup, crossCupTeams, venues, definition.StageStartDate, slugRegistry);
         }
 
         List<PlayerSanction> sanctions = SeedSanctions(regularGroupStages);
@@ -591,9 +622,10 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
-    /// Builds one SemiFinal + Final bracket per named position-range cup
-    /// (e.g. Copa Oro for positions 1-4, Copa Plata for 5-8), each seeded from
-    /// the REAL final group standings restricted to the cup's position range,
+    /// Builds one full elimination bracket per named position-range cup (e.g.
+    /// Copa Oro for positions 1-4, Copa Plata for 5-8 or a wider range that
+    /// needs byes), each seeded from the REAL final group standings restricted
+    /// to the cup's position range via <see cref="SeedEliminationBracket"/>,
     /// and registers the matching <see cref="DivisionPlayoffMapping"/> on the
     /// division. Each cup's stages carry <see cref="Stage.BracketName"/> and
     /// their names embed the cup so they stay unique within the division.
@@ -630,96 +662,165 @@ public static class SampleTournamentBuilder
                 .Take(cup.ToPosition - cup.FromPosition + 1)
                 .Select(p => p.TeamId)];
 
-            if (seedIds.Count < 2)
-            {
-                continue;
-            }
-
-            List<Team> cupTeams = [.. seedIds.Select(id => teamsById[id])];
-            List<(Guid HomeTeamId, Guid? VisitorTeamId)> semiPairs = PlayoffSeeder.SeedPairs(seedIds);
-
-            Stage semiStage = new()
-            {
-                CreatedBy = CreatedBy,
-                Name = $"{StageTemplate.SemiFinal.Name} {cup.BracketName}",
-                Slug = slugRegistry.ForStage($"{StageTemplate.SemiFinal.Name} {cup.BracketName} {division.Name}"),
-                StageType = StageType.SemiFinal,
-                IsActive = true,
-                IsElimination = true,
-                BracketName = cup.BracketName,
-                BestOf = cup.BestOf,
-                StartDate = groupStage.EndDate.AddDays(StageTemplate.StandardGapDays),
-                EndDate = groupStage.EndDate.AddDays(StageTemplate.StandardGapDays + StageTemplate.DurationDays),
-                DivisionId = Guid.Empty,
-                Division = division,
-                Matches = [],
-                Order = order++,
-            };
-            division.Stages.Add(semiStage);
-            AddStageTeamMatches(semiStage, cupTeams);
-
-            List<Team> winners = [];
-            for (int i = 0; i < semiPairs.Count; i++)
-            {
-                (Guid homeId, Guid? visitorId) = semiPairs[i];
-                Team home = teamsById[homeId];
-
-                if (visitorId is null)
-                {
-                    // BYE: the top seed advances automatically (no match).
-                    winners.Add(home);
-                    continue;
-                }
-
-                Team visitor = teamsById[visitorId.Value];
-                Match match = BuildFinishedMatch(
-                    semiStage, home, visitor, 79 + (i * 3), 66 + (i * 2), MatchType.Playoff,
-                    venues, semiStage.StartDate.AddDays(i), i, round: null);
-                semiStage.Matches.Add(match);
-                winners.Add(match.WinningTeam!);
-            }
-
-            if (winners.Count < 2)
-            {
-                continue;
-            }
-
-            Stage finalStage = new()
-            {
-                CreatedBy = CreatedBy,
-                Name = $"{StageTemplate.Final.Name} {cup.BracketName}",
-                Slug = slugRegistry.ForStage($"{StageTemplate.Final.Name} {cup.BracketName} {division.Name}"),
-                StageType = StageType.Final,
-                IsActive = true,
-                IsElimination = true,
-                BracketName = cup.BracketName,
-                BestOf = cup.BestOf,
-                StartDate = semiStage.EndDate.AddDays(StageTemplate.StandardGapDays),
-                EndDate = semiStage.EndDate.AddDays(StageTemplate.StandardGapDays + StageTemplate.DurationDays),
-                DivisionId = Guid.Empty,
-                Division = division,
-                Matches = [],
-                Order = order++,
-            };
-            division.Stages.Add(finalStage);
-            AddStageTeamMatches(finalStage, winners);
-
-            Match finalMatch = BuildFinishedMatch(
-                finalStage, winners[0], winners[1], 84, 71, MatchType.Playoff,
-                venues, finalStage.StartDate, 0, round: null);
-            finalStage.Matches.Add(finalMatch);
+            SeedEliminationBracket(
+                division, groupStage.EndDate.AddDays(StageTemplate.StandardGapDays),
+                seedIds, teamsById, venues, cup.BracketName, cup.BestOf, slugRegistry, ref order);
         }
     }
 
     /// <summary>
+    /// Builds a full single-elimination bracket for <paramref name="seedIds"/>
+    /// (ordered best seed first — a cup's position range, or a cross-cup's
+    /// pooled qualifiers), adding every round's <see cref="Stage"/> to
+    /// <paramref name="division"/>. Round 1 is seeded via
+    /// <see cref="PlayoffSeeder.SeedPairs"/> (byes to the best seeds when the
+    /// pool is not a power of two); every later round pairs consecutive
+    /// winners in bracket-slot order — always bye-free, since padding only
+    /// ever applies to round 1. Stage naming/type follows the bracket size:
+    /// RoundOf16 (up to 16 seeds) -&gt; QuarterFinal (8) -&gt; SemiFinal (4)
+    /// -&gt; Final (2) — only the rounds a pool of this size actually needs
+    /// are built. Each pairing (at every round) is settled by one decisive
+    /// match — <paramref name="finalsBestOf"/> is recorded on the SemiFinal
+    /// and Final stages' <see cref="Stage.BestOf"/> for the UI's "Best of N"
+    /// badge, matching how every other seeded bracket in this builder
+    /// represents series length; it does not generate extra Match rows.
+    /// No-ops when fewer than two teams are seeded.
+    /// </summary>
+    private static void SeedEliminationBracket(
+        Division division,
+        DateTime anchorDate,
+        List<Guid> seedIds,
+        Dictionary<Guid, Team> teamsById,
+        List<Venue> venues,
+        string? bracketName,
+        int finalsBestOf,
+        SlugRegistry slugRegistry,
+        ref int order)
+    {
+        if (seedIds.Count < 2)
+        {
+            return;
+        }
+
+        int bracketSize = PlayoffSeeder.NextPowerOfTwo(seedIds.Count);
+        List<(StageType Type, Template Template)> rounds = RoundsForBracket(bracketSize);
+        List<(Guid HomeTeamId, Guid? VisitorTeamId)> firstRoundPairs = PlayoffSeeder.SeedPairs(seedIds);
+
+        DateTime roundStart = anchorDate;
+        List<Team>? advancing = null;
+
+        for (int roundIndex = 0; roundIndex < rounds.Count; roundIndex++)
+        {
+            (StageType stageType, Template template) = rounds[roundIndex];
+            bool isFinalsRound = roundIndex >= rounds.Count - 2;
+            int stageBestOf = isFinalsRound ? finalsBestOf : 1;
+            string stageName = bracketName is null ? template.Name : $"{template.Name} {bracketName}";
+
+            Stage stage = new()
+            {
+                CreatedBy = CreatedBy,
+                Name = stageName,
+                Slug = slugRegistry.ForStage($"{stageName} {division.Name}"),
+                StageType = stageType,
+                IsActive = true,
+                IsElimination = true,
+                BracketName = bracketName,
+                BestOf = stageBestOf,
+                StartDate = roundStart,
+                EndDate = roundStart.AddDays(StageTemplate.DurationDays),
+                DivisionId = Guid.Empty,
+                Division = division,
+                Matches = [],
+                Order = order++,
+            };
+            division.Stages.Add(stage);
+
+            List<Team> roundEntrants = roundIndex == 0
+                ? [.. seedIds.Select(id => teamsById[id])]
+                : advancing!;
+            AddStageTeamMatches(stage, roundEntrants);
+
+            List<Team> winners = [];
+
+            if (roundIndex == 0)
+            {
+                for (int i = 0; i < firstRoundPairs.Count; i++)
+                {
+                    (Guid homeId, Guid? visitorId) = firstRoundPairs[i];
+                    Team home = teamsById[homeId];
+
+                    if (visitorId is null)
+                    {
+                        // BYE: the top seed advances automatically (no match).
+                        winners.Add(home);
+                        continue;
+                    }
+
+                    Team visitor = teamsById[visitorId.Value];
+                    Match match = BuildFinishedMatch(
+                        stage, home, visitor, 79 + (i * 3), 66 + (i * 2), MatchType.Playoff,
+                        venues, roundStart.AddDays(i), i, round: null);
+                    stage.Matches.Add(match);
+                    winners.Add(match.WinningTeam!);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < roundEntrants.Count; i += 2)
+                {
+                    int pairIndex = i / 2;
+                    Team home = roundEntrants[i];
+                    Team visitor = roundEntrants[i + 1];
+                    Match match = BuildFinishedMatch(
+                        stage, home, visitor, 84 + i, 71 + i, MatchType.Playoff,
+                        venues, roundStart.AddDays(pairIndex), pairIndex, round: null);
+                    stage.Matches.Add(match);
+                    winners.Add(match.WinningTeam!);
+                }
+            }
+
+            advancing = winners;
+            roundStart = stage.EndDate.AddDays(StageTemplate.StandardGapDays);
+        }
+    }
+
+    /// <summary>
+    /// The rounds a single-elimination bracket of <paramref name="bracketSize"/>
+    /// seeds needs, in play order (first round first, Final last). Supports up
+    /// to a 16-seed bracket — the largest this builder's tournaments need.
+    /// </summary>
+    private static List<(StageType Type, Template Template)> RoundsForBracket(int bracketSize)
+    {
+        List<(StageType, Template)> rounds = [];
+
+        for (int remaining = bracketSize; remaining >= 2; remaining /= 2)
+        {
+            rounds.Add(remaining switch
+            {
+                2 => (StageType.Final, StageTemplate.Final),
+                4 => (StageType.SemiFinal, StageTemplate.SemiFinal),
+                8 => (StageType.QuarterFinal, StageTemplate.QuarterFinal),
+                16 => (StageType.RoundOf16, StageTemplate.RoundOf16),
+                _ => throw new NotSupportedException(
+                    $"Elimination brackets larger than 16 seeds are not supported (requested {bracketSize})."),
+            });
+        }
+
+        return rounds;
+    }
+
+    /// <summary>
     /// Builds the cross-division cup (HU-110): one division with
-    /// <see cref="Division.IsCrossDivisionCup"/> = true whose teams are ALL the
-    /// tournament's teams, split into <paramref name="crossCup"/>.GroupCount
-    /// finished round-robin groups ("Grupo 1".."Grupo N", jornadas on
-    /// Wednesdays). The top <c>QualifiersPerGroup</c> of every group are pooled
-    /// via <see cref="CrossCupGroupSeeder"/> into a single SemiFinal + Final
-    /// bracket. Each team gets a StageTeamMatch in its cup group IN ADDITION to
-    /// its regular zone — cross cups are exempt from one-team-one-zone.
+    /// <see cref="Division.IsCrossDivisionCup"/> = true whose teams are
+    /// <paramref name="allTeams"/> (the tournament's teams, or a subset via
+    /// <see cref="CrossCupDefinition.TeamPoolSize"/>), split into
+    /// <paramref name="crossCup"/>.GroupCount finished round-robin groups
+    /// ("Grupo 1".."Grupo N", jornadas on Wednesdays). The top
+    /// <c>QualifiersPerGroup</c> of every group are pooled via
+    /// <see cref="CrossCupGroupSeeder"/> into one bracket, built by
+    /// <see cref="SeedEliminationBracket"/> (as many rounds as the pool needs).
+    /// Each team gets a StageTeamMatch in its cup group IN ADDITION to its
+    /// regular zone — cross cups are exempt from one-team-one-zone.
     /// </summary>
     private static void SeedCrossDivisionCup(
         Tournament tournament,
@@ -764,18 +865,18 @@ public static class SampleTournamentBuilder
                 StageType = StageType.Group,
                 IsActive = true,
                 StartDate = anchorDate,
-                EndDate = anchorDate.AddDays(7 * groupTeams.Count),
+                EndDate = anchorDate.AddDays(7 * groupTeams.Count * crossCup.RoundRobinLegs),
                 DivisionId = Guid.Empty,
                 Division = cupDivision,
                 Matches = [],
                 Order = g,
-                RoundRobinLegs = 1,
+                RoundRobinLegs = crossCup.RoundRobinLegs,
             };
             cupDivision.Stages.Add(groupStage);
             AddStageTeamMatches(groupStage, groupTeams);
 
             SeedRoundRobinMatches(
-                groupStage, groupTeams, venues, anchorDate, isCrossDivisionCup: true);
+                groupStage, groupTeams, venues, anchorDate, isCrossDivisionCup: true, legs: crossCup.RoundRobinLegs);
 
             groupStandings.Add(PositionCalculator.CalculatePositions(groupStage.Matches));
         }
@@ -786,76 +887,12 @@ public static class SampleTournamentBuilder
             return;
         }
 
-        List<Team> pooledTeams = [.. seedOrder.Select(id => teamsById[id])];
-        List<(Guid HomeTeamId, Guid? VisitorTeamId)> semiPairs = PlayoffSeeder.SeedPairs(seedOrder);
+        DateTime bracketStart = anchorDate.AddDays(7 * (perGroup + 1) * crossCup.RoundRobinLegs);
+        int order = groupCount;
 
-        DateTime bracketStart = anchorDate.AddDays(7 * (perGroup + 1));
-
-        Stage semiStage = new()
-        {
-            CreatedBy = CreatedBy,
-            Name = StageTemplate.SemiFinal.Name,
-            Slug = slugRegistry.ForStage($"{StageTemplate.SemiFinal.Name} {cupDivision.Name}"),
-            StageType = StageType.SemiFinal,
-            IsActive = true,
-            IsElimination = true,
-            StartDate = bracketStart,
-            EndDate = bracketStart.AddDays(StageTemplate.DurationDays),
-            DivisionId = Guid.Empty,
-            Division = cupDivision,
-            Matches = [],
-            Order = groupCount,
-        };
-        cupDivision.Stages.Add(semiStage);
-        AddStageTeamMatches(semiStage, pooledTeams);
-
-        List<Team> winners = [];
-        for (int i = 0; i < semiPairs.Count; i++)
-        {
-            (Guid homeId, Guid? visitorId) = semiPairs[i];
-            Team home = teamsById[homeId];
-
-            if (visitorId is null)
-            {
-                winners.Add(home);
-                continue;
-            }
-
-            Team visitor = teamsById[visitorId.Value];
-            Match match = BuildFinishedMatch(
-                semiStage, home, visitor, 80 + (i * 3), 67 + (i * 2), MatchType.Playoff,
-                venues, semiStage.StartDate.AddDays(i), i, round: null);
-            semiStage.Matches.Add(match);
-            winners.Add(match.WinningTeam!);
-        }
-
-        if (winners.Count < 2)
-        {
-            return;
-        }
-
-        Stage finalStage = new()
-        {
-            CreatedBy = CreatedBy,
-            Name = StageTemplate.Final.Name,
-            Slug = slugRegistry.ForStage($"{StageTemplate.Final.Name} {cupDivision.Name}"),
-            StageType = StageType.Final,
-            IsActive = true,
-            IsElimination = true,
-            StartDate = semiStage.EndDate.AddDays(StageTemplate.StandardGapDays),
-            EndDate = semiStage.EndDate.AddDays(StageTemplate.StandardGapDays + StageTemplate.DurationDays),
-            DivisionId = Guid.Empty,
-            Division = cupDivision,
-            Matches = [],
-            Order = groupCount + 1,
-        };
-        cupDivision.Stages.Add(finalStage);
-        AddStageTeamMatches(finalStage, winners);
-
-        Match finalMatch = BuildFinishedMatch(
-            finalStage, winners[0], winners[1], 86, 73, MatchType.Playoff,
-            venues, finalStage.StartDate, 0, round: null);
-        finalStage.Matches.Add(finalMatch);
+        SeedEliminationBracket(
+            cupDivision, bracketStart, seedOrder, teamsById, venues,
+            bracketName: null, crossCup.FinalsBestOf, slugRegistry, ref order);
     }
 
     private static void AddStageTeamMatches(Stage stage, List<Team> teams)

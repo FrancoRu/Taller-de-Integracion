@@ -11,6 +11,11 @@ public static class StageTemplate
     public static readonly Template Group = new("Fase de Grupos", "Fase de grupos todos contra todos.");
 
     /// <summary>
+    /// Template for the round-of-16 stage, an elimination round with 16 teams.
+    /// </summary>
+    public static readonly Template RoundOf16 = new("Octavos de Final", "Etapa eliminatoria con 16 equipos.");
+
+    /// <summary>
     /// Template for the quarter-final stage, an elimination round with 8 teams.
     /// </summary>
     public static readonly Template QuarterFinal = new("Cuartos de Final", "Etapa eliminatoria con 8 equipos.");
