@@ -134,9 +134,9 @@ cd Club12-WebClient && pnpm run test
 
 ## Estado del proyecto
 
-- **Backend**: build sin errores ni advertencias (`dotnet build`), 121 tests automatizados en verde.
-- **Frontend**: sin errores de lint, 73 tests automatizados en verde. Tema visual "modern sport" (paleta navy + naranja, tipografía Oswald/Roboto, tablas estilo marcador deportivo).
-- **Versión**: 1.0.0 en ambos proyectos.
+- **Backend**: build sin errores ni advertencias (`dotnet build`), 808 tests automatizados en verde (al 2026-09-02; correr `dotnet test Club12-Backend/Solution/Club12.sln` para el número actual).
+- **Frontend**: sin errores de lint, 645 tests automatizados en verde (al 2026-09-02; correr `npx vitest run` para el número actual).
+- Reglas de negocio, cobertura funcional detallada y contexto operativo (gotchas de desarrollo): ver [Docs/ESTADO-Y-REGLAS.md](./Docs/ESTADO-Y-REGLAS.md).
 
 ## ¿Se cubren todos los requisitos?
 
