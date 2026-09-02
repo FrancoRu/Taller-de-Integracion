@@ -1,17 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import {
-  Box,
-  Tab,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@mui/material';
-import { TableSkeleton, ListSkeleton } from '@/views/core/components/skeletons';
+import { Box, Tab, Typography } from '@mui/material';
+import { ListSkeleton } from '@/views/core/components/skeletons';
 import { GUID } from '@/modules/core/types/types';
 import { TAB_CONTENT_MIN_HEIGHT } from '@/modules/core/constants/constants';
 import { IDivisionResponse } from '@/modules/division/type/division';
@@ -20,8 +10,7 @@ import { ITeamResponse } from '@/modules/team/type/team.d';
 import PublicTeamGrid from '@/views/home/tournaments/PublicTeamGrid';
 import SectionHeading from '@/views/core/components/SectionHeading';
 import SecondaryTabs from '@/views/core/components/SecondaryTabs';
-import { IScorerByPlayerResponse } from '@/modules/scorer/type/scorer.d';
-import { scorerService } from '@/modules/scorer/service/scorer.service';
+import DivisionScorersTable from '@/views/division/DivisionScorersTable';
 import { stageService } from '@/modules/stage/service/stage.service';
 import { matchService } from '@/modules/match/service/match.service';
 import { matchSeriesService } from '@/modules/matchSeries/service/matchSeries.service';
@@ -91,43 +80,12 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
     [division]
   );
 
-  const [topScores, setTopScores] = useState<IScorerByPlayerResponse[]>([]);
-  const [topScoresLoading, setTopScoresLoading] = useState(false);
-  const [topScoresLoaded, setTopScoresLoaded] = useState(false);
-
   const [stages, setStages] = useState<IStageResponse[]>([]);
   const [matches, setMatches] = useState<IMatchResponse[]>([]);
   const [seriesById, setSeriesById] = useState<Map<GUID, IMatchSeriesResponse>>(new Map());
   const [bracketGroups, setBracketGroups] = useState<BracketGroup[]>([]);
   const [structureLoading, setStructureLoading] = useState(false);
   const [structureLoaded, setStructureLoaded] = useState(false);
-
-  useEffect(() => {
-    if (subTab !== 'goleadores' || topScoresLoaded) return;
-    let cancelled = false;
-
-    const fetchTopScores = async () => {
-      setTopScoresLoading(true);
-      try {
-        const response = await scorerService.getScorersByPlayerFiltered({
-          divisionId: division.id,
-          pageSize: FETCH_PAGE_SIZE,
-          pageNumber: 1,
-        });
-        if (!cancelled) setTopScores(response.data?.items ?? []);
-      } finally {
-        if (!cancelled) {
-          setTopScoresLoading(false);
-          setTopScoresLoaded(true);
-        }
-      }
-    };
-
-    void fetchTopScores();
-    return () => {
-      cancelled = true;
-    };
-  }, [subTab, topScoresLoaded, division.id]);
 
   useEffect(() => {
     if ((subTab !== 'partidos' && subTab !== 'playoff') || structureLoaded) return;
@@ -272,35 +230,9 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
           />
         ))}
 
-      {subTab === 'goleadores' &&
-        (topScoresLoading ? (
-          <TableSkeleton rows={6} columns={3} />
-        ) : topScores.length === 0 ? (
-          <Typography sx={{ color: 'text.secondary' }}>
-            No hay goleadores registrados para esta división.
-          </Typography>
-        ) : (
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell>Jugador</TableCell>
-                  <TableCell align="center">Puntos</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {topScores.map((row, index) => (
-                  <TableRow key={row.playerId} hover>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{row.fullName}</TableCell>
-                    <TableCell align="center">{row.points}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        ))}
+      {subTab === 'goleadores' && (
+        <DivisionScorersTable divisionId={division.id} divisionName={division.name} />
+      )}
 
       {subTab === 'partidos' &&
         (structureLoading ? (
