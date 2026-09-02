@@ -5,6 +5,7 @@ import TeamLogo from '@/views/core/components/TeamLogo';
 import { formatMatchScore, getMatchStatusColor, getMatchStatusLabel } from '@/modules/match/utils/matchDisplay';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { formatDateAr, formatTimeAr } from '@/modules/core/utils/formatDate';
+import { AccessTimeIcon, StadiumIcon } from '@/views/core/MUI/icons/icons';
 
 interface TeamSideProps {
   name: string;
@@ -34,13 +35,23 @@ function TeamSide({ name, logoUrl, align }: TeamSideProps) {
         alignItems: "center",
         flex: 1,
         minWidth: 0,
-        // The crest always precedes the name (reading order), regardless of
-        // which side of the row this team is on — only the packing changes,
-        // so each side still hugs its edge of the row.
         justifyContent: align === 'left' ? 'flex-start' : 'flex-end'
       }}>
-      {logo}
-      {label}
+      {/* The crest always sits closest to the score in the middle — for the
+          right-aligned (home) side that means the name reads first and the
+          crest second, so both sides flank the score symmetrically instead
+          of the crest always leading in DOM order regardless of side. */}
+      {align === 'right' ? (
+        <>
+          {label}
+          {logo}
+        </>
+      ) : (
+        <>
+          {logo}
+          {label}
+        </>
+      )}
     </Stack>
   );
 }
@@ -85,9 +96,12 @@ export default function MatchRow({
         <Typography variant="caption" sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>
           {formatDateAr(match.matchDate)}
         </Typography>
-        <Typography variant="caption" sx={{ color: 'text.secondary', whiteSpace: 'nowrap', fontWeight: 500 }}>
-          {formatTimeAr(match.matchDate)}
-        </Typography>
+        <Stack direction="row" spacing={0.4} sx={{ alignItems: 'center' }}>
+          <AccessTimeIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+          <Typography variant="caption" sx={{ color: 'text.secondary', whiteSpace: 'nowrap', fontWeight: 500 }}>
+            {formatTimeAr(match.matchDate)}
+          </Typography>
+        </Stack>
       </Stack>
 
       <TeamSide name={home?.name ?? '—'} logoUrl={home?.logoUrl} align="right" />
@@ -129,13 +143,16 @@ export default function MatchRow({
           variant="outlined"
         />
         {match.venue && (
-          <Typography
-            variant="caption"
-            noWrap
-            sx={{ color: 'text.secondary', display: { xs: 'none', sm: 'block' } }}
+          <Stack
+            direction="row"
+            spacing={0.4}
+            sx={{ alignItems: 'center', display: { xs: 'none', sm: 'flex' } }}
           >
-            {match.venue.name}
-          </Typography>
+            <StadiumIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+            <Typography variant="caption" noWrap sx={{ color: 'text.secondary' }}>
+              {match.venue.name}
+            </Typography>
+          </Stack>
         )}
       </Stack>
     </Box>

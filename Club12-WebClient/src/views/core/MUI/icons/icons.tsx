@@ -52,6 +52,7 @@ import RestoreIcon from '@mui/icons-material/Restore';
 import StorageIcon from '@mui/icons-material/Storage';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 export {
   DeleteIcon,
@@ -108,4 +109,5 @@ export {
   StorageIcon,
   DeleteSweepIcon,
   InfoOutlinedIcon,
+  AccessTimeIcon,
 };
