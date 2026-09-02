@@ -30,19 +30,32 @@ export const STAGE_TYPE_LABELS: Record<StageType, string> = {
  * so the rounds ALWAYS match the qualifier count (you can never configure
  * "4 qualify" with only a final). Non-powers-of-two are padded with byes by
  * the backend seeder, so the depth here is `ceil(log2(qualifiers))` rounds:
- * 2 → Final; 3-4 → Semifinal+Final; 5-8 → Cuartos+Semifinal+Final;
- * 9-16 → Octavos+Cuartos+Semifinal+Final.
+ * 2 → Final; 3-4 → Semifinal+3erPuesto+Final; 5-8 → Cuartos+Semifinal+
+ * 3erPuesto+Final; 9-16 → Octavos+Cuartos+Semifinal+3erPuesto+Final.
+ *
+ * The third-place decider is a SIDE slot (the two semifinal losers), not
+ * part of the main advancement line — it only ever appears once a
+ * Semifinal round exists (a cup with just a Final has no semifinal losers
+ * to seed it from).
  */
 export const qualifiersToStageTypes = (qualifiers: number): StageType[] => {
   if (qualifiers <= 2) return [StageType.Final];
-  if (qualifiers <= 4) return [StageType.SemiFinal, StageType.Final];
+  if (qualifiers <= 4) {
+    return [StageType.SemiFinal, StageType.ThirdPlace, StageType.Final];
+  }
   if (qualifiers <= 8) {
-    return [StageType.QuarterFinal, StageType.SemiFinal, StageType.Final];
+    return [
+      StageType.QuarterFinal,
+      StageType.SemiFinal,
+      StageType.ThirdPlace,
+      StageType.Final,
+    ];
   }
   return [
     StageType.RoundOf16,
     StageType.QuarterFinal,
     StageType.SemiFinal,
+    StageType.ThirdPlace,
     StageType.Final,
   ];
 };
@@ -73,9 +86,16 @@ export interface CupConfig {
   bestOfByStage: Partial<Record<StageType, number>>;
 }
 
-/** The best-of a cup's derived phase uses, defaulting to {@link DEFAULT_BEST_OF}. */
+/**
+ * The best-of a cup's derived phase uses, defaulting to
+ * {@link DEFAULT_BEST_OF} — except the third-place decider, which defaults
+ * to a single game (the near-universal real-world convention for a
+ * consolation match), while still letting the admin bump it up like any
+ * other phase.
+ */
 export const getStageBestOf = (cup: CupConfig, stageType: StageType): number =>
-  cup.bestOfByStage[stageType] ?? DEFAULT_BEST_OF;
+  cup.bestOfByStage[stageType] ??
+  (stageType === StageType.ThirdPlace ? 1 : DEFAULT_BEST_OF);
 
 /**
  * The standings positions that qualify to the cup at `index`, given the cups'

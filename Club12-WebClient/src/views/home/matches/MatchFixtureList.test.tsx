@@ -72,6 +72,14 @@ describe('MatchFixtureList', () => {
     expect(screen.getAllByText('Libre')).toHaveLength(2);
   });
 
+  it('shows no generic "Fase final" header for a knockout stage (null round) — the caller already labels the stage', () => {
+    renderFixture([
+      match({ round: null, homeTeam: team('A'), visitorTeam: team('B') }),
+    ]);
+
+    expect(screen.queryByText('Fase final')).not.toBeInTheDocument();
+  });
+
   it('shows the CSV export button only when an exportTitle is given (HU-89)', () => {
     const { rerender } = render(
       <MemoryRouter>

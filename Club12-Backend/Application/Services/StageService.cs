@@ -880,23 +880,6 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
                 return;
             }
 
-            StageType? nextType = NextStageType(stage.StageType);
-            if (nextType is null)
-            {
-                return;
-            }
-
-            Stage? nextStage = (await _stageRepository.FindAsync(
-                s => s.DivisionId == stage.DivisionId
-                    && s.BracketName == stage.BracketName
-                    && s.StageType == nextType.Value,
-                includes: [s => s.Matches])).FirstOrDefault();
-
-            if (nextStage is null)
-            {
-                return;
-            }
-
             // One entry per bracket slot: once a series' 2nd/3rd game gets
             // added (AddGameToSeriesAsync), it lands in this SAME stage's
             // Matches too — only that slot's game 1 (or its lone match, for a
@@ -905,79 +888,195 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
             List<Match> orderedMatches = [.. stage.Matches
                 .Where(m => m.GameNumber is null or 1)
                 .OrderBy(m => m.MatchDate).ThenBy(m => m.Id)];
-            List<Match> nextOrderedMatches = [.. nextStage.Matches
-                .Where(m => m.GameNumber is null or 1)
-                .OrderBy(m => m.MatchDate).ThenBy(m => m.Id)];
 
-            HashSet<Match> touched = [];
+            await AdvanceWinnersToNextRoundAsync(stage, orderedMatches);
 
-            for (int slotIndex = 0; slotIndex < orderedMatches.Count; slotIndex++)
+            // The third-place decider is a side slot, not part of the main
+            // advancement line (EliminationProgression skips it) — it is
+            // populated separately, from the semifinal's LOSERS, once both
+            // semifinal slots are decided.
+            if (stage.StageType == StageType.SemiFinal)
             {
-                Guid? winnerId = ResolveSlotWinner(orderedMatches[slotIndex], stage);
-                int nextSlotIndex = slotIndex / 2;
-
-                if (winnerId is null || nextSlotIndex >= nextOrderedMatches.Count)
-                {
-                    continue;
-                }
-
-                Match target = nextOrderedMatches[nextSlotIndex];
-                bool isHomeSlot = slotIndex % 2 == 0;
-
-                if (isHomeSlot)
-                {
-                    if (target.HomeTeamId == winnerId)
-                    {
-                        continue;
-                    }
-
-                    target.HomeTeamId = winnerId;
-                }
-                else
-                {
-                    if (target.VisitorTeamId == winnerId)
-                    {
-                        continue;
-                    }
-
-                    target.VisitorTeamId = winnerId;
-                }
-
-                touched.Add(target);
+                await AdvanceLosersToThirdPlaceAsync(stage, orderedMatches);
             }
-
-            if (touched.Count == 0)
-            {
-                return;
-            }
-
-            // A target slot that just got its second team AND belongs to a
-            // series-based round becomes game 1 of a new series — the exact
-            // same treatment a freshly-seeded first round gets
-            // (FillStageWithSeedsAsync).
-            if (nextStage.BestOf > 1)
-            {
-                foreach (Match target in touched)
-                {
-                    if (target.HomeTeamId.HasValue && target.VisitorTeamId.HasValue && !target.SeriesId.HasValue)
-                    {
-                        MatchSeries series = await CreateSeriesForPairAsync(
-                            nextStage.Id, nextStage.BestOf, target.HomeTeamId.Value, target.VisitorTeamId.Value);
-                        target.SeriesId = series.Id;
-                        target.GameNumber = 1;
-                    }
-                }
-            }
-
-            await _matchRepository.UpdateRangeAsync(touched);
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex,
-                "Could not advance the winner(s) from stage {StageId} into the next round. " +
+                "Could not advance the winner(s)/loser(s) from stage {StageId}. " +
                 "An admin can still fill the next round in by hand.",
                 decidedStageId);
         }
+    }
+
+    private async Task AdvanceWinnersToNextRoundAsync(Stage stage, List<Match> orderedMatches)
+    {
+        StageType? nextType = NextStageType(stage.StageType);
+        if (nextType is null)
+        {
+            return;
+        }
+
+        Stage? nextStage = (await _stageRepository.FindAsync(
+            s => s.DivisionId == stage.DivisionId
+                && s.BracketName == stage.BracketName
+                && s.StageType == nextType.Value,
+            includes: [s => s.Matches])).FirstOrDefault();
+
+        if (nextStage is null)
+        {
+            return;
+        }
+
+        List<Match> nextOrderedMatches = [.. nextStage.Matches
+            .Where(m => m.GameNumber is null or 1)
+            .OrderBy(m => m.MatchDate).ThenBy(m => m.Id)];
+
+        HashSet<Match> touched = [];
+
+        for (int slotIndex = 0; slotIndex < orderedMatches.Count; slotIndex++)
+        {
+            Guid? winnerId = ResolveSlotWinner(orderedMatches[slotIndex], stage);
+            int nextSlotIndex = slotIndex / 2;
+
+            if (winnerId is null || nextSlotIndex >= nextOrderedMatches.Count)
+            {
+                continue;
+            }
+
+            Match target = nextOrderedMatches[nextSlotIndex];
+            bool isHomeSlot = slotIndex % 2 == 0;
+
+            if (isHomeSlot)
+            {
+                if (target.HomeTeamId == winnerId)
+                {
+                    continue;
+                }
+
+                target.HomeTeamId = winnerId;
+            }
+            else
+            {
+                if (target.VisitorTeamId == winnerId)
+                {
+                    continue;
+                }
+
+                target.VisitorTeamId = winnerId;
+            }
+
+            touched.Add(target);
+        }
+
+        if (touched.Count == 0)
+        {
+            return;
+        }
+
+        // A target slot that just got its second team AND belongs to a
+        // series-based round becomes game 1 of a new series — the exact
+        // same treatment a freshly-seeded first round gets
+        // (FillStageWithSeedsAsync).
+        if (nextStage.BestOf > 1)
+        {
+            foreach (Match target in touched)
+            {
+                if (target.HomeTeamId.HasValue && target.VisitorTeamId.HasValue && !target.SeriesId.HasValue)
+                {
+                    MatchSeries series = await CreateSeriesForPairAsync(
+                        nextStage.Id, nextStage.BestOf, target.HomeTeamId.Value, target.VisitorTeamId.Value);
+                    target.SeriesId = series.Id;
+                    target.GameNumber = 1;
+                }
+            }
+        }
+
+        await _matchRepository.UpdateRangeAsync(touched);
+    }
+
+    /// <summary>
+    /// Once a semifinal slot is decided, pushes its LOSER into the division's
+    /// third-place decider (same BracketName) — the same slot convention
+    /// <see cref="AdvanceWinnersToNextRoundAsync"/> uses for winners: the
+    /// first semifinal slot's loser becomes Home, the second's becomes
+    /// Visitor. A no-op when the cup was configured with no third-place stage
+    /// (<see cref="StageType.ThirdPlace"/> is optional, added via
+    /// <c>qualifiersToStageTypes</c> only when the admin opts in).
+    /// </summary>
+    private async Task AdvanceLosersToThirdPlaceAsync(Stage semiFinalStage, List<Match> orderedMatches)
+    {
+        Stage? thirdPlaceStage = (await _stageRepository.FindAsync(
+            s => s.DivisionId == semiFinalStage.DivisionId
+                && s.BracketName == semiFinalStage.BracketName
+                && s.StageType == StageType.ThirdPlace,
+            includes: [s => s.Matches])).FirstOrDefault();
+
+        if (thirdPlaceStage is null)
+        {
+            return;
+        }
+
+        Match? target = thirdPlaceStage.Matches
+            .Where(m => m.GameNumber is null or 1)
+            .OrderBy(m => m.MatchDate).ThenBy(m => m.Id)
+            .FirstOrDefault();
+
+        if (target is null)
+        {
+            return;
+        }
+
+        bool touched = false;
+
+        for (int slotIndex = 0; slotIndex < orderedMatches.Count && slotIndex < 2; slotIndex++)
+        {
+            Guid? loserId = ResolveSlotLoser(orderedMatches[slotIndex], semiFinalStage);
+            if (loserId is null)
+            {
+                continue;
+            }
+
+            bool isHomeSlot = slotIndex % 2 == 0;
+
+            if (isHomeSlot)
+            {
+                if (target.HomeTeamId == loserId)
+                {
+                    continue;
+                }
+
+                target.HomeTeamId = loserId;
+            }
+            else
+            {
+                if (target.VisitorTeamId == loserId)
+                {
+                    continue;
+                }
+
+                target.VisitorTeamId = loserId;
+            }
+
+            touched = true;
+        }
+
+        if (!touched)
+        {
+            return;
+        }
+
+        if (thirdPlaceStage.BestOf > 1
+            && target.HomeTeamId.HasValue && target.VisitorTeamId.HasValue
+            && !target.SeriesId.HasValue)
+        {
+            MatchSeries series = await CreateSeriesForPairAsync(
+                thirdPlaceStage.Id, thirdPlaceStage.BestOf, target.HomeTeamId.Value, target.VisitorTeamId.Value);
+            target.SeriesId = series.Id;
+            target.GameNumber = 1;
+        }
+
+        await _matchRepository.UpdateRangeAsync([target]);
     }
 
     /// <summary>
@@ -996,6 +1095,23 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
         }
 
         return slotFirstMatch.IsFinished ? slotFirstMatch.WinningTeamId : null;
+    }
+
+    /// <summary>
+    /// The losing team of one decided bracket slot — the counterpart to
+    /// <see cref="ResolveSlotWinner"/>, used to seed the third-place decider
+    /// from semifinal losers. Null for a slot that is not decided yet, or a
+    /// bye (only one side was ever assigned, so there is no real loser).
+    /// </summary>
+    private static Guid? ResolveSlotLoser(Match slotFirstMatch, Stage stage)
+    {
+        Guid? winnerId = ResolveSlotWinner(slotFirstMatch, stage);
+        if (winnerId is null || slotFirstMatch.HomeTeamId is null || slotFirstMatch.VisitorTeamId is null)
+        {
+            return null;
+        }
+
+        return winnerId == slotFirstMatch.HomeTeamId ? slotFirstMatch.VisitorTeamId : slotFirstMatch.HomeTeamId;
     }
 
     /// <summary>

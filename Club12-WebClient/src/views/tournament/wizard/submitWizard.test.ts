@@ -178,21 +178,28 @@ describe('submitWizard', () => {
     });
   });
 
-  it('HU-112: derives the cup rounds from the qualifier count (4 -> Semis + Final)', async () => {
+  it('HU-112: derives the cup rounds from the qualifier count (4 -> Semis + 3rd place + Final)', async () => {
     const services = makeServices();
     await submitWizard(makeState(), services);
 
     const cupStages = payloadOf(services).divisions[0].stages.filter(
       s => s.isElimination
     );
-    // qualifiers=4 derives exactly Semifinal + Final, both using the cup's bestOf (3).
-    expect(cupStages).toHaveLength(2);
+    // qualifiers=4 derives Semifinal + ThirdPlace + Final. The main-line
+    // rounds use the cup's configured bestOf (3); the third-place decider
+    // defaults to a single game regardless (real-world convention).
+    expect(cupStages).toHaveLength(3);
     expect(cupStages[0]).toMatchObject({
       stageType: StageType.SemiFinal,
       bracketName: 'Copa de Oro',
       bestOf: 3,
     });
     expect(cupStages[1]).toMatchObject({
+      stageType: StageType.ThirdPlace,
+      bracketName: 'Copa de Oro',
+      bestOf: 1,
+    });
+    expect(cupStages[2]).toMatchObject({
       stageType: StageType.Final,
       bracketName: 'Copa de Oro',
       bestOf: 3,

@@ -177,6 +177,146 @@ public class PlayoffSeriesAdvancementTests : IClassFixture<CustomWebApplicationF
     }
 
     [Fact]
+    public async Task DecidingBothSemiFinals_PushesBothLosersIntoTheThirdPlaceMatch()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
+        IMatchService matchService = scope.ServiceProvider.GetRequiredService<IMatchService>();
+
+        Tournament tournament = await SeedTournamentAsync(db);
+        Division division = await SeedDivisionAsync(db, tournament);
+        List<Team> teams = await SeedTeamsAsync(db, tournament, 4);
+        Stage groupStage = await SeedStageAsync(db, division, tournament, StageType.Group, bracketName: null, bestOf: 1);
+        await SeedRoundRobinResultsAsync(db, groupStage, teams);
+
+        await SeedMappingAsync(db, division, 1, 4, "Copa Única");
+        Stage semiFinalStage = await SeedStageAsync(db, division, tournament, StageType.SemiFinal, bracketName: "Copa Única", bestOf: 1);
+        await SeedEmptyMatchAsync(db, semiFinalStage);
+        await SeedEmptyMatchAsync(db, semiFinalStage);
+        Stage finalStage = await SeedStageAsync(db, division, tournament, StageType.Final, bracketName: "Copa Única", bestOf: 1);
+        await SeedEmptyMatchAsync(db, finalStage);
+        Stage thirdPlaceStage = await SeedStageAsync(db, division, tournament, StageType.ThirdPlace, bracketName: "Copa Única", bestOf: 1);
+        await SeedEmptyMatchAsync(db, thirdPlaceStage);
+
+        await stageService.SeedPlayoffCupsAsync(division.Id);
+
+        List<Match> semiFinalMatches = await db.Matches
+            .Where(m => m.StageId == semiFinalStage.Id)
+            .OrderBy(m => m.MatchDate)
+            .ToListAsync();
+        // Home always wins here, so slot 0's visitor and slot 1's visitor are
+        // the two losers expected to land in the third-place match.
+        Guid expectedThirdPlaceHome = semiFinalMatches[0].VisitorTeamId!.Value;
+        Guid expectedThirdPlaceVisitor = semiFinalMatches[1].VisitorTeamId!.Value;
+
+        foreach (Match match in semiFinalMatches)
+        {
+            await matchService.LoadMatchResultAsync(match.Id, 90, 80);
+            await stageService.TryAdvanceStageWinnerAsync(semiFinalStage.Id);
+        }
+
+        Match thirdPlaceMatch = await db.Matches.SingleAsync(m => m.StageId == thirdPlaceStage.Id);
+        Assert.Equal(expectedThirdPlaceHome, thirdPlaceMatch.HomeTeamId);
+        Assert.Equal(expectedThirdPlaceVisitor, thirdPlaceMatch.VisitorTeamId);
+        Assert.False(thirdPlaceMatch.SeriesId.HasValue, "a BestOf=1 third place decider stays a plain match");
+
+        // The winners still went to the final as usual — third place is an
+        // additive side effect, not a replacement for the main advancement.
+        Match finalMatch = await db.Matches.SingleAsync(m => m.StageId == finalStage.Id);
+        Assert.True(finalMatch.HomeTeamId.HasValue);
+        Assert.True(finalMatch.VisitorTeamId.HasValue);
+        Assert.False(finalMatch.HomeTeamId == expectedThirdPlaceHome || finalMatch.HomeTeamId == expectedThirdPlaceVisitor);
+        Assert.False(finalMatch.VisitorTeamId == expectedThirdPlaceHome || finalMatch.VisitorTeamId == expectedThirdPlaceVisitor);
+    }
+
+    [Fact]
+    public async Task ThirdPlaceStage_WithBestOfGreaterThanOne_BecomesARealSeriesOnceBothLosersArrive()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
+        IMatchService matchService = scope.ServiceProvider.GetRequiredService<IMatchService>();
+
+        Tournament tournament = await SeedTournamentAsync(db);
+        Division division = await SeedDivisionAsync(db, tournament);
+        List<Team> teams = await SeedTeamsAsync(db, tournament, 4);
+        Stage groupStage = await SeedStageAsync(db, division, tournament, StageType.Group, bracketName: null, bestOf: 1);
+        await SeedRoundRobinResultsAsync(db, groupStage, teams);
+
+        await SeedMappingAsync(db, division, 1, 4, "Copa Única");
+        Stage semiFinalStage = await SeedStageAsync(db, division, tournament, StageType.SemiFinal, bracketName: "Copa Única", bestOf: 1);
+        await SeedEmptyMatchAsync(db, semiFinalStage);
+        await SeedEmptyMatchAsync(db, semiFinalStage);
+        Stage finalStage = await SeedStageAsync(db, division, tournament, StageType.Final, bracketName: "Copa Única", bestOf: 1);
+        await SeedEmptyMatchAsync(db, finalStage);
+        Stage thirdPlaceStage = await SeedStageAsync(db, division, tournament, StageType.ThirdPlace, bracketName: "Copa Única", bestOf: 3);
+        await SeedEmptyMatchAsync(db, thirdPlaceStage);
+
+        await stageService.SeedPlayoffCupsAsync(division.Id);
+
+        List<Match> semiFinalMatches = await db.Matches
+            .Where(m => m.StageId == semiFinalStage.Id)
+            .OrderBy(m => m.MatchDate)
+            .ToListAsync();
+
+        foreach (Match match in semiFinalMatches)
+        {
+            await matchService.LoadMatchResultAsync(match.Id, 90, 80);
+            await stageService.TryAdvanceStageWinnerAsync(semiFinalStage.Id);
+        }
+
+        Match thirdPlaceMatch = await db.Matches.SingleAsync(m => m.StageId == thirdPlaceStage.Id);
+        Assert.True(thirdPlaceMatch.SeriesId.HasValue, "a BestOf>1 third place decider should become game 1 of a real series");
+        Assert.Equal(1, thirdPlaceMatch.GameNumber);
+
+        MatchSeries thirdPlaceSeries = await db.MatchSeries.SingleAsync(s => s.Id == thirdPlaceMatch.SeriesId!.Value);
+        Assert.Equal(3, thirdPlaceSeries.BestOf);
+        Assert.Equal(thirdPlaceMatch.HomeTeamId, thirdPlaceSeries.HomeTeamId);
+        Assert.Equal(thirdPlaceMatch.VisitorTeamId, thirdPlaceSeries.VisitorTeamId);
+    }
+
+    [Fact]
+    public async Task NoThirdPlaceStageConfigured_AdvancingSemiFinalWinners_IsANoOp_NeverThrows()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
+        IMatchService matchService = scope.ServiceProvider.GetRequiredService<IMatchService>();
+
+        Tournament tournament = await SeedTournamentAsync(db);
+        Division division = await SeedDivisionAsync(db, tournament);
+        List<Team> teams = await SeedTeamsAsync(db, tournament, 4);
+        Stage groupStage = await SeedStageAsync(db, division, tournament, StageType.Group, bracketName: null, bestOf: 1);
+        await SeedRoundRobinResultsAsync(db, groupStage, teams);
+
+        await SeedMappingAsync(db, division, 1, 4, "Copa Única");
+        Stage semiFinalStage = await SeedStageAsync(db, division, tournament, StageType.SemiFinal, bracketName: "Copa Única", bestOf: 1);
+        await SeedEmptyMatchAsync(db, semiFinalStage);
+        await SeedEmptyMatchAsync(db, semiFinalStage);
+        Stage finalStage = await SeedStageAsync(db, division, tournament, StageType.Final, bracketName: "Copa Única", bestOf: 1);
+        await SeedEmptyMatchAsync(db, finalStage);
+        // No ThirdPlace stage seeded for this cup — the admin opted out.
+
+        await stageService.SeedPlayoffCupsAsync(division.Id);
+
+        List<Match> semiFinalMatches = await db.Matches
+            .Where(m => m.StageId == semiFinalStage.Id)
+            .OrderBy(m => m.MatchDate)
+            .ToListAsync();
+
+        foreach (Match match in semiFinalMatches)
+        {
+            await matchService.LoadMatchResultAsync(match.Id, 90, 80);
+            await stageService.TryAdvanceStageWinnerAsync(semiFinalStage.Id);
+        }
+
+        Match finalMatch = await db.Matches.SingleAsync(m => m.StageId == finalStage.Id);
+        Assert.True(finalMatch.HomeTeamId.HasValue);
+        Assert.True(finalMatch.VisitorTeamId.HasValue);
+    }
+
+    [Fact]
     public async Task BestOfOneElimination_StillAdvancesTheWinnerDirectly_NoSeriesInvolved()
     {
         using IServiceScope scope = _factory.Services.CreateScope();

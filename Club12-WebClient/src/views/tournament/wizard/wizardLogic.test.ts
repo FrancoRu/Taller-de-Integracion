@@ -215,7 +215,7 @@ describe('buildWizardTree', () => {
       nodes.some(
         n =>
           n.label ===
-          'Copa de Oro — 4 clasifican (Semifinal al mejor de 3 → Final al mejor de 3)'
+          'Copa de Oro — 4 clasifican (Semifinal al mejor de 3 → Tercer Puesto a partido único → Final al mejor de 3)'
       )
     ).toBe(true);
   });

@@ -143,7 +143,14 @@ export default function MatchFixtureList({
 
         return (
           <Box key={round.round ?? 'knockout'}>
-            {isCurrent ? (
+            {round.round == null ? null : isCurrent ? (
+              // A knockout stage (null round) has exactly one group, always
+              // shown expanded with no header of its own — the caller
+              // already labels it (e.g. "Semifinal", "Final" above this
+              // list), and the fallback "Fase final" text used to render
+              // here for every single knockout round regardless of which
+              // one it actually was, reading as the same phase repeating
+              // over and over down the page.
               <Typography
                 variant="overline"
                 sx={{ color: 'text.secondary', display: 'block', mb: 1 }}
