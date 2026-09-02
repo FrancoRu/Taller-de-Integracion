@@ -198,7 +198,7 @@ const TournamentEditPage: React.FC = () => {
   };
 
   const handleCancel = () => {
-    navigate(APP_ROUTES.panelTournamentDetail.build(tournamentId));
+    navigate(-1);
   };
 
   const handleSave = async () => {

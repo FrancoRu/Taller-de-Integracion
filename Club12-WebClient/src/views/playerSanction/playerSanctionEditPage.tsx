@@ -63,12 +63,12 @@ const PlayerSanctionEditPage: React.FC = () => {
   }, [playerSanction, isTargetSanction]);
 
   const handleClose = useCallback(() => {
-    if (submitting || !targetSanctionId) {
+    if (submitting) {
       return;
     }
 
-    navigate(APP_ROUTES.panelSanction.build(targetSanctionId));
-  }, [navigate, submitting, targetSanctionId]);
+    navigate(-1);
+  }, [navigate, submitting]);
 
   const handleSave = useCallback(async () => {
     if (!targetSanctionId) {
