@@ -117,6 +117,45 @@ export default function Podium({ podium }: PodiumProps) {
   // keeps the three places (its third comes straight from the table).
   const showThird = !podium.hasPlayoff || podium.third != null;
 
+  if (!showThird) {
+    // The classic 2-1-3 arrangement centers the CHAMPION by flanking it with
+    // runners-up on both sides. With only two places decided there's nothing
+    // to put on the champion's other side, so the pair as a whole reads
+    // centered on the page while the champion itself — the actual focal
+    // point — sits off to one side of it. Center the champion alone instead,
+    // with the runner-up shown as a smaller line underneath.
+    return (
+      <Box
+        component="section"
+        aria-label={`Podio de ${podium.divisionName}`}
+        sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}
+      >
+        <PodiumPlace rank={1} team={podium.first} />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography
+            component="span"
+            variant="subtitle2"
+            sx={{ color: PLACE_ACCENT[2], fontWeight: 700 }}
+          >
+            {PLACE_LABEL[2]}
+          </Typography>
+          {podium.second ? (
+            <>
+              <TeamLogo teamName={podium.second.teamName} logoUrl={podium.second.logoUrl} size={28} />
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {podium.second.teamName}
+              </Typography>
+            </>
+          ) : (
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              A definir
+            </Typography>
+          )}
+        </Box>
+      </Box>
+    );
+  }
+
   return (
     <Box component="section" aria-label={`Podio de ${podium.divisionName}`}>
       <Box
@@ -130,7 +169,7 @@ export default function Podium({ podium }: PodiumProps) {
       >
         <PodiumPlace rank={1} team={podium.first} />
         <PodiumPlace rank={2} team={podium.second} />
-        {showThird && <PodiumPlace rank={3} team={podium.third} />}
+        <PodiumPlace rank={3} team={podium.third} />
       </Box>
     </Box>
   );

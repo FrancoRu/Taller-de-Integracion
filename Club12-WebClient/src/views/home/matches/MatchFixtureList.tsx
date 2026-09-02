@@ -13,6 +13,7 @@ import { GUID } from '@/modules/core/types/types';
 import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
 import { groupMatchesBySeries } from '@/modules/matchSeries/utils/groupMatchesBySeries';
 import MatchRow from '@/views/home/matches/MatchRow';
+import SeriesCard from '@/views/home/matches/SeriesCard';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import {
   BYE_TEAM_LABEL,
@@ -229,19 +230,8 @@ export default function MatchFixtureList({
 
                       const { series } = group;
                       return (
-                        <Box key={series.id}>
-                          <Box sx={{ px: 2, pt: 1.5, pb: 0.5 }}>
-                            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
-                              Serie: {series.homeTeamName} vs {series.visitorTeamName} · Al
-                              mejor de {series.bestOf}
-                              {series.winningTeamName && ` · Ganó ${series.winningTeamName}`}
-                            </Typography>
-                          </Box>
-                          <Stack divider={<Divider />}>
-                            {group.matches.map(match => (
-                              <MatchRow key={match.id} match={match} buildHref={buildHref} />
-                            ))}
-                          </Stack>
+                        <Box key={series.id} sx={{ p: 1.5 }}>
+                          <SeriesCard series={series} matches={group.matches} buildHref={buildHref} />
                         </Box>
                       );
                     });

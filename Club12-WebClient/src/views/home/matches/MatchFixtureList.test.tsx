@@ -218,9 +218,9 @@ describe('MatchFixtureList — playoff series grouping', () => {
       </MemoryRouter>
     );
 
-    expect(
-      screen.getByText('Serie: Sionista vs Estudiantes · Al mejor de 3 · Ganó Sionista')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Sionista vs Estudiantes')).toBeInTheDocument();
+    expect(screen.getByText('Al mejor de 3 · 2 juegos')).toBeInTheDocument();
+    expect(screen.getByText('Ganador')).toBeInTheDocument();
   });
 
   it('keeps two different series under the same stage in separate groups, even interleaved by date', () => {
@@ -272,12 +272,10 @@ describe('MatchFixtureList — playoff series grouping', () => {
       </MemoryRouter>
     );
 
-    expect(
-      screen.getByText('Serie: Sionista vs Estudiantes · Al mejor de 3')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('Serie: Rocamora vs Olimpia · Al mejor de 3')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Sionista vs Estudiantes')).toBeInTheDocument();
+    expect(screen.getByText('Al mejor de 3 · 2 juegos')).toBeInTheDocument();
+    expect(screen.getByText('Rocamora vs Olimpia')).toBeInTheDocument();
+    expect(screen.getByText('Al mejor de 3 · 1 juego')).toBeInTheDocument();
   });
 
   it('renders a standalone (non-series) match with no series header, same as without seriesById', () => {
@@ -289,7 +287,7 @@ describe('MatchFixtureList — playoff series grouping', () => {
       </MemoryRouter>
     );
 
-    expect(screen.queryByText(/^Serie:/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Serie')).not.toBeInTheDocument();
   });
 });
 
