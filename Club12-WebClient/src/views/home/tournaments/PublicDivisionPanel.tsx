@@ -194,6 +194,19 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
     [groupStages, matches, division.name]
   );
 
+  // The Playoff tab's counterpart to `matchSections`: a real, fecha-grouped
+  // match list for the elimination stages, shown alongside the bracket
+  // visual so a visitor can see every individual game of a best-of-N
+  // series, not just the collapsed bracket card.
+  const eliminationStages = useMemo(
+    () => stages.filter(stage => stage.isElimination),
+    [stages]
+  );
+  const playoffMatchSections = useMemo(
+    () => buildDivisionFixtureSections(eliminationStages, matches, division.name),
+    [eliminationStages, matches, division.name]
+  );
+
   return (
     <Box>
       {podium?.first && (
@@ -311,7 +324,25 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
         (structureLoading ? (
           <ListSkeleton items={5} />
         ) : (
-          <PlayoffBrackets groups={bracketGroups} seriesById={seriesById} />
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <PlayoffBrackets groups={bracketGroups} seriesById={seriesById} />
+
+            {playoffMatchSections.length > 0 && (
+              <Box>
+                <SectionHeading>Partidos de playoff</SectionHeading>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  {playoffMatchSections.map(({ stage, label, matches: stageMatches }) => (
+                    <Box key={stage.id}>
+                      <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 1 }}>
+                        {label}
+                      </Typography>
+                      <MatchFixtureList matches={stageMatches} exportTitle={label} />
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            )}
+          </Box>
         ))}
       </Box>
     </Box>

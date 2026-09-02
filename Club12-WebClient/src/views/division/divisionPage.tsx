@@ -11,14 +11,19 @@ import { stageService } from '@/modules/stage/service/stage.service';
 import { matchService } from '@/modules/match/service/match.service';
 import { matchSeriesService } from '@/modules/matchSeries/service/matchSeries.service';
 import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
+import { IStageResponse } from '@/modules/stage/type/stage';
+import { IMatchResponse } from '@/modules/match/type/match.d';
 import { buildBrackets } from '@/modules/playoff/buildBracket';
 import { BracketGroup } from '@/modules/playoff/type/bracket.d';
+import { buildDivisionFixtureSections } from '@/modules/match/utils/divisionFixtureSections';
 import DivisionStandings from '@/views/division/divisionStandings';
 import { buildCrossCupGroupQualificationRange } from '@/modules/division/utils/qualificationRange';
 import DivisionFixture from '@/views/division/DivisionFixture';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import PointDeductionManager from '@/views/division/PointDeductionManager';
 import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
+import MatchFixtureList from '@/views/home/matches/MatchFixtureList';
+import SectionHeading from '@/views/core/components/SectionHeading';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
@@ -61,6 +66,12 @@ const DivisionPage: React.FC = () => {
   const [bracketGroups, setBracketGroups] = useState<BracketGroup[]>([]);
   const [seriesById, setSeriesById] = useState<Map<GUID, IMatchSeriesResponse>>(new Map());
   const [bracketsLoading, setBracketsLoading] = useState(false);
+  // Elimination-stage matches, kept alongside the bracket visual so the
+  // Playoff tab can also show a real match list (like "Partidos", but
+  // scoped to playoff stages) — a stage's individual games, not the
+  // collapsed bracket card.
+  const [playoffStages, setPlayoffStages] = useState<IStageResponse[]>([]);
+  const [playoffMatches, setPlayoffMatches] = useState<IMatchResponse[]>([]);
 
   const targetDivisionId = useMemo(
     () => divisionId ?? division?.id,
@@ -134,6 +145,8 @@ const DivisionPage: React.FC = () => {
 
     setBracketGroups(buildBrackets(stages, matches, seriesByStageId));
     setSeriesById(nextSeriesById);
+    setPlayoffStages(stages);
+    setPlayoffMatches(matches);
     setBracketsLoading(false);
   }, []);
 
@@ -196,6 +209,16 @@ const DivisionPage: React.FC = () => {
   const crossCupGroupQualificationRange = useMemo(
     () => (division ? buildCrossCupGroupQualificationRange(division) : undefined),
     [division]
+  );
+
+  // A real, playoff-scoped match list — the same fecha-grouped rows the
+  // "Partidos" tab shows, but for the elimination stages instead of the
+  // regular-season ones — shown alongside the bracket visual so an admin
+  // can see every individual game of a best-of-N series, not just the
+  // collapsed bracket card.
+  const playoffMatchSections = useMemo(
+    () => buildDivisionFixtureSections(playoffStages, playoffMatches, division?.name ?? ''),
+    [playoffStages, playoffMatches, division?.name]
   );
 
   if (!targetDivisionId) {
@@ -437,6 +460,26 @@ const DivisionPage: React.FC = () => {
                 seriesById={seriesById}
                 onMatchClick={isAdminOrOwner ? handleMatchClick : undefined}
               />
+
+              {playoffMatchSections.length > 0 && (
+                <Box>
+                  <SectionHeading>Partidos de playoff</SectionHeading>
+                  <Stack spacing={3}>
+                    {playoffMatchSections.map(({ stage, label, matches: stageMatches }) => (
+                      <Box key={stage.id}>
+                        <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 1 }}>
+                          {label}
+                        </Typography>
+                        <MatchFixtureList
+                          matches={stageMatches}
+                          exportTitle={label}
+                          buildHref={m => APP_ROUTES.panelMatch.build(m.slug ?? m.id)}
+                        />
+                      </Box>
+                    ))}
+                  </Stack>
+                </Box>
+              )}
             </Stack>
           ))}
     </PageShell>

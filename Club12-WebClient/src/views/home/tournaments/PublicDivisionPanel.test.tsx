@@ -223,4 +223,19 @@ describe('PublicDivisionPanel — Partidos vs Playoff split', () => {
     expect(screen.getByRole('tab', { name: 'Playoff' })).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Llaves' })).not.toBeInTheDocument();
   });
+
+  it('shows a real "Partidos de playoff" match list alongside the bracket on the Playoff tab', async () => {
+    render(
+      <MemoryRouter initialEntries={['/?view=playoff']}>
+        <PublicDivisionPanel division={division({ name: 'Zona A' })} teams={[]} />
+      </MemoryRouter>
+    );
+
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Partidos de playoff' })).toBeInTheDocument()
+    );
+    // The playoff match (excluded from "Partidos") shows up here as a real
+    // fixture row, not just inside the collapsed bracket card.
+    expect(screen.getAllByText('Rival de la final').length).toBeGreaterThan(0);
+  });
 });
