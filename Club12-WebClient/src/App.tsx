@@ -59,7 +59,6 @@ import PrivateRoute from './views/core/privateRoute';
 import ScrollToTop from './views/core/components/ScrollToTop';
 import GlobalLoadingOverlay from './views/core/components/GlobalLoadingOverlay';
 import TeamsPage from './views/team/TeamsPage';
-import TeamRegisterPage from './views/team/TeamRegisterPage';
 import ClubHistoryPage from './views/club/ClubHistoryPage';
 import PlayerSanctionsPage from './views/playerSanction/PlayerSanctionsPage';
 import PlayerSanctionPage from './views/playerSanction/PlayerSanctionPage';
@@ -116,11 +115,6 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
     path: APP_ROUTES.panelClub.pattern,
     allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <ClubHistoryPage />,
-  },
-  {
-    path: APP_ROUTES.panelTeamRegister,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
-    element: <TeamRegisterPage />,
   },
   {
     path: APP_ROUTES.panelSanctions,

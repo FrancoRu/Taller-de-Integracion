@@ -62,7 +62,6 @@ const setup = (status: TournamentStatus) => {
     getTournamentById: vi.fn().mockResolvedValue(buildTournament(status)),
     putTournamentById: vi.fn(),
     deleteTournamentById: vi.fn(),
-    registerTeamsByTournamentId: vi.fn(),
     enrollTeam: vi.fn(),
     unenrollTeam: vi.fn(),
     getCompletability: vi.fn(),

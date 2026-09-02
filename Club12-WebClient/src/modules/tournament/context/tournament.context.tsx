@@ -237,28 +237,6 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
     [setTournament, setTournaments, setError]
   );
 
-  const registerTeamsByTournamentId = useCallback(
-    async (id: GUID, teamsId: GUID[]): Promise<boolean | void> => {
-      try {
-        const res: AxiosResponse<boolean> =
-          await tournamentService.registerTeamsByTournamentId(id, teamsId);
-
-        // Success feedback belongs to the calling page (TeamRegisterPage shows
-        // its own confirmation) — a toast here too means two modals.
-        return (
-          res.status === HttpStatus.Ok || res.status === HttpStatus.NoContent
-        );
-      } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          setError(error);
-        } else {
-          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
-        }
-      }
-    },
-    [setError]
-  );
-
   const enrollTeam = useCallback(
     async (id: GUID, request: IEnrollTeamRequest): Promise<boolean | void> => {
       try {
@@ -342,7 +320,6 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       getTournamentById,
       putTournamentById,
       deleteTournamentById,
-      registerTeamsByTournamentId,
       enrollTeam,
       unenrollTeam,
       getCompletability,
@@ -357,7 +334,6 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       getTournamentById,
       putTournamentById,
       deleteTournamentById,
-      registerTeamsByTournamentId,
       enrollTeam,
       unenrollTeam,
       getCompletability,

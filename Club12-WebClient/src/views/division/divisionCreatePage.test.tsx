@@ -55,7 +55,6 @@ describe('DivisionCreatePage — tournament picker only offers open-registration
       getTournamentById: vi.fn(),
       putTournamentById: vi.fn(),
       deleteTournamentById: vi.fn(),
-      registerTeamsByTournamentId: vi.fn(),
       enrollTeam: vi.fn(),
       unenrollTeam: vi.fn(),
       getCompletability: vi.fn(),

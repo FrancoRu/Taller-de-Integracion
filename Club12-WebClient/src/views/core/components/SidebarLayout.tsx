@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  AppRegistrationIcon,
   ArticleIcon,
   BadgeIcon,
   BarChartIcon,
@@ -59,7 +58,6 @@ const TAB_ICONS: Record<string, React.ReactNode> = {
   Administracion: <ManageAccountsSharpIcon />,
   AdministracionDeEquipos: <GroupsIcon />,
   Equipos: <ShieldIcon />,
-  Registro: <AppRegistrationIcon />,
   Torneos: <EmojiEventsIcon />,
   Temporadas: <CalendarMonthIcon />,
   Usuarios: <PeopleIcon />,
@@ -124,11 +122,6 @@ const TEAM_CHILDREN: NavTab[] = [
     label: 'Equipos',
     path: APP_ROUTES.panelTeams,
     icon: TAB_ICONS['Equipos'],
-  },
-  {
-    label: 'Inscripción de equipos',
-    path: APP_ROUTES.panelTeamRegister,
-    icon: TAB_ICONS['Registro'],
   },
   {
     label: 'Jugadores',

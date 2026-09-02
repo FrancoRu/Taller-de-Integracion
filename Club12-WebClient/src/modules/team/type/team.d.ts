@@ -193,6 +193,13 @@ export interface ITeamResponse {
   tournamentId: GUID | null;
 
   /**
+   * The name of the team's current tournament (`tournamentId`), e.g. "Torneo
+   * Apertura Masculino 2025" — disambiguates same-named teams from different
+   * seasons in an "existing team" picker. Null when `tournamentId` is null.
+   */
+  tournamentName: string | null;
+
+  /**
    * The stable cross-season club this team belongs to (HU-99), when linked.
    * Absent/undefined until the team is associated with a club.
    * @type {GUID | null}
