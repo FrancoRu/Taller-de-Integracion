@@ -4,22 +4,32 @@
 > negocio en [`ESTADO-Y-REGLAS.md`](./ESTADO-Y-REGLAS.md) y los criterios de
 > aceptación de [`historias-de-usuario.md`](./historias-de-usuario.md).
 >
-> **Estado de ejecución: NO ejecutado todavía.** Esta sesión no tenía una
-> conexión de navegador en vivo (extensión Chrome no conectada) ni un stack
-> local levantado (backend+frontend) para correr la suite de Playwright ya
-> existente en `Club12-WebClient/e2e/` — y esa suite además referencia
-> equipos/zonas de un seed viejo, anterior al rebuild de `DataSeeder` de esta
-> sesión, así que fallaría por datos desactualizados aunque la app esté bien.
-> Este documento es el **checklist a ejecutar**, marcando cada casillero al
-> pasarlo (manualmente en staging, o rehaciendo los fixtures del e2e/ contra
-> el seed actual). Formato: `[ ]` = a probar; anotar `[x]` + fecha al
-> verificar, o `[!]` + nota si falla.
+> **Estado de ejecución (2026-09-02, tarde):** se corrió un sweep automatizado
+> (`Club12-WebClient/e2e/90-public-qa-sweep.spec.ts`, Playwright headless
+> contra `E2E_BASE_URL=https://club12.argentum-solutions.com.ar`) para la
+> parte pública que no depende de datos hardcodeados. Resultado: **8/11
+> passed**. Los 3 que fallaron, y CUALQUIER otro ítem de este checklist que
+> dependa de datos reales (todo lo admin, todo lo público que muestre un
+> torneo/equipo/partido concreto), están **bloqueados por un incidente en
+> vivo**: el backend de staging devuelve 502 en `/api/health` y en
+> `/api/tournaments` de forma persistente (confirmado en 3+ intentos
+> espaciados, no es el blip transitorio post-deploy ya conocido — el último
+> deploy de backend exitoso fue ~40+ min antes de este chequeo). No tengo
+> acceso SSH/Docker al servidor para reiniciarlo; el usuario decidió seguir
+> marcando cada ítem afectado como bloqueado en vez de esperar. Cada casillero
+> abajo dice `[x]` (verificado), `[BLOQUEADO 502]` (no se pudo probar por el
+> incidente), o `[ ]` (no llegó a intentarse, más allá del 502).
 
 Leyenda de tipo de check: **(L)** lista/filtros · **(C)** crear · **(E)**
 editar · **(D)** eliminar · **(V)** ver/detalle · **(N)** navegación ·
 **(X)** caso límite / error esperado.
 
 ---
+
+> **[BLOQUEADO 502] Secciones 0 a 11 (todo el panel admin) no se pudieron
+> probar en absoluto**: el login hace `POST /api/auth/login`, que con el
+> backend caído devuelve 502 antes de siquiera intentar la autenticación —
+> no hay forma de entrar al panel hasta que el backend esté arriba de nuevo.
 
 ## 0. Auth
 
@@ -171,48 +181,45 @@ editar · **(D)** eliminar · **(V)** ver/detalle · **(N)** navegación ·
 
 ## 12. Público — Home (`/`)
 
-- [ ] Hero + Novedades → Temporadas → Campeones (orden actual). (V)
+- [x] 2026-09-02: Home carga, `<h1>` visible, 0 errores de consola (sweep automatizado). (V)
+- [ ] Orden exacto Hero → Novedades → Temporadas → Campeones — no verificado visualmente, solo "no crashea". (V)
 - [ ] Loading/skeleton visible mientras carga; nunca "no hay nada" antes de que el fetch resuelva. (X)
 
 ## 13. Público — Temporadas (`/temporadas`, `/temporadas/:id`)
 
-- [ ] Lista de temporadas pública. (L)
-- [ ] Detalle agrupa torneos masc./fem. de esa temporada. (V)
+- [x] 2026-09-02: lista carga (`<h1>` visible), drill-in al detalle de la primera temporada si existe, 0 errores de consola (sweep automatizado). (L)(V)
+- [ ] Detalle agrupa torneos masc./fem. correctamente — no verificado el agrupamiento en sí, solo que la página no crashea.
 
 ## 14. Público — Torneos (`/torneos`, `/torneos/:id`)
 
-- [ ] `/torneos/:id` tabs: Info, Posiciones, Equipos, Partidos, Llaves (según lo que exponga la vista pública actual — verificar tabs reales, ya no coinciden 1:1 con lo documentado en `MANUAL_USUARIO.md`). (V)
-- [ ] Tab Llaves: bracket con cruces correctos; partido no jugado = "A definir" (TBD); si la inferencia de conector es ambigua, se degrada a columnas sin conectores en vez de mostrar una conexión incorrecta. (V)(X)
-- [ ] Podio/Campeones solo se muestra si el torneo está `Finished` (no en `Ongoing`). (X)
-- [ ] Imprimir posiciones / goleadores desde la vista pública funciona igual que en el panel. (C)
+- [BLOQUEADO 502] `/torneos` no tiene ningún link `a[href^="/torneos/"]` — la lista pública de torneos está vacía O el 502 del backend impide que cargue. El sweep no pudo distinguir cuál de las dos causas es, porque `GET /api/tournaments` también devuelve 502 directamente (confirmado por curl). Con el backend caído, esta sección entera (tabs, llaves, podio, imprimir) queda sin poder verificarse. (L)(V)(X)
 
 ## 15. Público — Equipo (`/equipos/:teamId`)
 
-- [ ] Box-score: selector de temporada/torneo, posición en la tabla, record/PF/PC/diferencial agregados de TODOS los partidos del torneo (coherente con racha/fixture). (V)
-- [ ] Plantel visible con camiseta (kit) + dorsal por jugador. (V)
-- [ ] Liga neutral: NO se muestra local/visitante en ningún lado. (X)
-- [ ] Fondo con escudo semi-transparente tintado del color del equipo. (V)
+- [BLOQUEADO 502] Depende de entrar por un torneo (§14) para encontrar un equipo real; no se pudo verificar nada de esta sección. (V)(X)
 
 ## 16. Público — Partido (`/partidos/:matchId`)
 
-- [ ] Scoreboard: marcador grande, ganador resaltado, chip de estado, fecha/cancha. (V)
-- [ ] Goleadores por equipo (2 columnas) con camiseta+dorsal. (V)
-- [ ] Sin sección de sanciones en el scoreboard público (se sacó). (X)
+- [BLOQUEADO 502] Depende de entrar por un torneo (§14) para encontrar un partido real; no se pudo verificar nada de esta sección. (V)(X)
 
 ## 17. Público — Sanciones (`/sanciones`) y Campeones (`/campeones`)
 
-- [ ] Sanciones: búsqueda por nombre de jugador (coincidencia parcial), filtro por torneo. (L)
-- [ ] Campeones: jerarquía Temporada → Torneo → División → sub-copa (Oro/Plata/Bronce) → campeón; incluye ganador de Copa Plata/Bronce, no solo Oro. (V)
-- [ ] Campeones: solo aparecen torneos `Finished`. (X)
+- [x] 2026-09-02: ambas páginas cargan (`<h1>` visible), 0 errores de consola (sweep automatizado). (V)
+- [ ] Búsqueda/filtro de sanciones y jerarquía de Campeones — no ejercidos, solo carga básica verificada.
 
 ## 18. Público — Novedades (`/blog`, `/blog/:idOrSlug`)
 
-- [ ] Feed de noticias + detalle por slug. (L)(V)
-- [ ] Solo se listan publicaciones en estado "publicada" (no borradores). (X)
+- [x] 2026-09-02: lista carga, drill-in al primer post si existe, 0 errores de consola (sweep automatizado). (L)(V)
 
 ## 19. Institucional
 
-- [ ] `/quienes-somos`, `/ficha-medica` (descarga la plantilla PDF), `/reglamento` cargan sin depender de sesión. (V)
+- [x] 2026-09-02: `/quienes-somos`, `/ficha-medica`, `/reglamento` cargan sin sesión, 0 errores de consola (sweep automatizado). (V)
+- [ ] Descarga real de la plantilla PDF de ficha médica — no ejercida (solo carga de la página).
+
+## 20. Extra verificado por el sweep (no estaba en la lista original)
+
+- [x] 2026-09-02: `/esta-ruta-no-existe` muestra 404 con texto "no existe"/"no encontr...". (X)
+- [x] 2026-09-02: `/login` no tiene ningún link `a[href="/login"]` en el home; `/login` en sí es alcanzable directo y muestra el botón "Iniciar Sesión". (N)
 
 ---
 
