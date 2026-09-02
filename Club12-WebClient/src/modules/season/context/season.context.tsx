@@ -183,7 +183,7 @@ export const SeasonProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const deleteSeasonById = useCallback(
-    async (id: GUID): Promise<void> => {
+    async (id: GUID): Promise<boolean> => {
       try {
         await deleteSeasonMutation.mutateAsync(id);
         setSeason(null);
@@ -191,8 +191,10 @@ export const SeasonProvider: React.FC<{ children: ReactNode }> = ({
         queryClient.removeQueries({ queryKey: seasonKeys.byId(id) });
         await queryClient.invalidateQueries({ queryKey: seasonKeys.all });
         setMessage(HttpStatus.NoContent, ['La temporada ha sido eliminada.']);
+        return true;
       } catch (error: unknown) {
         handleUnknownError(error);
+        return false;
       }
     },
     [deleteSeasonMutation, queryClient, setMessage, handleUnknownError]

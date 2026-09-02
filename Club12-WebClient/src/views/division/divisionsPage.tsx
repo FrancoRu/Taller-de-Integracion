@@ -168,7 +168,11 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
         return;
       }
 
-      await deleteDivisionsById(row.id);
+      const deleted = await deleteDivisionsById(row.id);
+      if (!deleted) {
+        return;
+      }
+
       await notifySuccess({
         title: '¡Eliminada!',
         text: 'La división ha sido eliminada.',

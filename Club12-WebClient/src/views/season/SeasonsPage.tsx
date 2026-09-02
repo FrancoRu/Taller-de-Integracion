@@ -129,7 +129,10 @@ const SeasonsPage: React.FC<SeasonsPageProps> = ({
         return;
       }
 
-      await deleteSeasonById(row.id);
+      const deleted = await deleteSeasonById(row.id);
+      if (!deleted) {
+        return;
+      }
 
       await notifySuccess({
         title: '¡Eliminada!',

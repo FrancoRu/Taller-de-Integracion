@@ -59,9 +59,11 @@ export interface IDivisionContextProps {
   /**
    * Deletes a division by its ID.
    * @param id The ID of the division to delete.
-   * @returns A promise that resolves when the division is successfully deleted.
+   * @returns A promise resolving to `true` if the division was deleted,
+   * `false` if the request failed (the global error is already reported
+   * either way).
    */
-  deleteDivisionsById(id: GUID): Promise<void>;
+  deleteDivisionsById(id: GUID): Promise<boolean>;
 }
 
 /**

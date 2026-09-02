@@ -95,9 +95,11 @@ export interface ITournamentContextProps {
   /**
    * Deletes a tournament by its ID.
    * @param id The ID of the tournament to delete.
-   * @returns A promise that resolves when the tournament is successfully deleted.
+   * @returns A promise resolving to `true` if the tournament was deleted,
+   * `false` if the request failed (the global error is already reported
+   * either way).
    */
-  deleteTournamentById(id: GUID): Promise<void>;
+  deleteTournamentById(id: GUID): Promise<boolean>;
 
   /**
    * Registers one or more teams in a specific tournament.

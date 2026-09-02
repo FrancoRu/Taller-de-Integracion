@@ -168,7 +168,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const deleteTeamById = useCallback(
-    async (id: GUID): Promise<void> => {
+    async (id: GUID): Promise<boolean> => {
       try {
         await deleteTeamMutation.mutateAsync(id);
         setTeams(prev => prev?.filter(e => e.id !== id) ?? null);
@@ -177,8 +177,10 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
         }
         queryClient.removeQueries({ queryKey: teamKeys.byId(id) });
         await queryClient.invalidateQueries({ queryKey: teamKeys.list() });
+        return true;
       } catch (error: unknown) {
         handleUnknownError(error);
+        return false;
       }
     },
     [deleteTeamMutation, queryClient, team, handleUnknownError]

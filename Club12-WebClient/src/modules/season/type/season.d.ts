@@ -124,7 +124,8 @@ export interface ISeasonContextProps {
   /**
    * Deletes a season by its unique ID.
    * @param id The ID of the season to delete.
-   * @returns A promise that resolves when the season is successfully deleted.
+   * @returns A promise resolving to `true` if the season was deleted, `false`
+   * if the request failed (the global error is already reported either way).
    */
-  deleteSeasonById(id: GUID): Promise<void>;
+  deleteSeasonById(id: GUID): Promise<boolean>;
 }

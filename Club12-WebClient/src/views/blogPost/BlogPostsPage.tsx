@@ -110,7 +110,11 @@ const BlogPostsPage: React.FC = () => {
         return;
       }
 
-      await deleteBlogPostById(row.id);
+      const deleted = await deleteBlogPostById(row.id);
+      if (!deleted) {
+        return;
+      }
+
       await notifySuccess({ title: '¡Eliminada!', text: 'La publicación ha sido eliminada.' });
       await fetchPosts(filters, paginationModel);
     },

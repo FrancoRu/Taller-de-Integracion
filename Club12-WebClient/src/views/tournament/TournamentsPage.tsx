@@ -107,7 +107,11 @@ const TournamentsPage: React.FC = () => {
         return;
       }
 
-      await deleteTournamentById(row.id);
+      const deleted = await deleteTournamentById(row.id);
+      if (!deleted) {
+        return;
+      }
+
       await fetchTournaments(filters, paginationModel);
       await notifySuccess({
         title: '¡Eliminado!',

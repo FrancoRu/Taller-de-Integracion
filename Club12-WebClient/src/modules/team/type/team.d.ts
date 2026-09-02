@@ -63,9 +63,10 @@ export interface ITeamContextProps {
   /**
    * Deletes a team by its ID.
    * @param id The ID of the team to delete.
-   * @returns A promise that resolves when the team is successfully deleted.
+   * @returns A promise resolving to `true` if the team was deleted, `false`
+   * if the request failed (the global error is already reported either way).
    */
-  deleteTeamById(id: GUID): Promise<void>;
+  deleteTeamById(id: GUID): Promise<boolean>;
 }
 
 /**

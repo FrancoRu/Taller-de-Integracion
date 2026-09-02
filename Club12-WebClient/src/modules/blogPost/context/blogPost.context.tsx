@@ -164,13 +164,15 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const deleteBlogPostById = useCallback(
-    async (id: GUID): Promise<void> => {
+    async (id: GUID): Promise<boolean> => {
       try {
         await deleteBlogPostMutation.mutateAsync(id);
         queryClient.removeQueries({ queryKey: blogPostKeys.byId(id) });
         await queryClient.invalidateQueries({ queryKey: blogPostKeys.list() });
+        return true;
       } catch (error: unknown) {
         handleUnknownError(error);
+        return false;
       }
     },
     [deleteBlogPostMutation, queryClient, handleUnknownError]

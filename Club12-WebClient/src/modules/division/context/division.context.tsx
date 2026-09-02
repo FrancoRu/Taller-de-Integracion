@@ -198,7 +198,7 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const deleteDivisionsById = useCallback(
-    async (id: GUID): Promise<void> => {
+    async (id: GUID): Promise<boolean> => {
       try {
         await deleteDivisionMutation.mutateAsync(id);
         setDivision(null);
@@ -206,8 +206,10 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
         queryClient.removeQueries({ queryKey: divisionKeys.byId(id) });
         await queryClient.invalidateQueries({ queryKey: divisionKeys.list() });
         setMessage(HttpStatus.NoContent, ['La división ha sido eliminada.']);
+        return true;
       } catch (error: unknown) {
         handleUnknownError(error);
+        return false;
       }
     },
     [deleteDivisionMutation, queryClient, setMessage, handleUnknownError]

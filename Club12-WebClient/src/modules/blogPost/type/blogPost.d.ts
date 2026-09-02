@@ -60,9 +60,11 @@ export interface IBlogPostContextProps {
   /**
    * Deletes a blog post by its ID.
    * @param id The ID of the blog post to delete.
-   * @returns A promise that resolves when the blog post is successfully deleted.
+   * @returns A promise resolving to `true` if the blog post was deleted,
+   * `false` if the request failed (the global error is already reported
+   * either way).
    */
-  deleteBlogPostById(id: GUID): Promise<void>;
+  deleteBlogPostById(id: GUID): Promise<boolean>;
 }
 
 /**

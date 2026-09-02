@@ -56,7 +56,7 @@ const setupHook = (teams: ITeamResponse[] = [buildTeam()]) => {
   putTeamById = vi.fn<ITeamContextProps['putTeamById']>();
   putTeamById.mockResolvedValue(true);
   deleteTeamById = vi.fn<ITeamContextProps['deleteTeamById']>();
-  deleteTeamById.mockResolvedValue(undefined);
+  deleteTeamById.mockResolvedValue(true);
 
   const contextValue: ITeamContextProps = {
     team: null,
@@ -381,5 +381,25 @@ describe('TeamsPage — delete confirmation', () => {
     expect(mockedSwalFire).toHaveBeenCalledWith(
       expect.objectContaining({ title: '¡Eliminado!' })
     );
+  });
+
+  it('does not show a success dialog or refetch when deleteTeamById fails', async () => {
+    const team = buildTeam();
+    setupHook([team]);
+    deleteTeamById.mockResolvedValue(false);
+
+    renderTeamsPage();
+
+    await waitFor(() => expect(getTeamsByFiltered).toHaveBeenCalledTimes(1));
+    getTeamsByFiltered.mockClear();
+
+    const deleteIcon = await screen.findByTestId('DeleteIcon');
+    fireEvent.click(deleteIcon.closest('button') as HTMLButtonElement);
+
+    await waitFor(() => expect(deleteTeamById).toHaveBeenCalledWith(team.id));
+    expect(mockedSwalFire).not.toHaveBeenCalledWith(
+      expect.objectContaining({ title: '¡Eliminado!' })
+    );
+    expect(getTeamsByFiltered).not.toHaveBeenCalled();
   });
 });

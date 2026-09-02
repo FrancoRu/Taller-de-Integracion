@@ -183,7 +183,11 @@ const TeamsPage: React.FC<TeamsScreenProps> = ({
         return;
       }
 
-      await deleteTeamById(row.id);
+      const deleted = await deleteTeamById(row.id);
+      if (!deleted) {
+        return;
+      }
+
       await fetchTeams(debouncedFilters, paginationModel);
       await notifySuccess({
         title: '¡Eliminado!',

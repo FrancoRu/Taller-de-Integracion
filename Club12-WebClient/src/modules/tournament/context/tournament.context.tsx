@@ -223,17 +223,19 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
   );
 
   const deleteTournamentById = useCallback(
-    async (id: GUID): Promise<void> => {
+    async (id: GUID): Promise<boolean> => {
       try {
         await tournamentService.deleteTournamentById(id);
         setTournament(null);
         setTournaments(prev => (prev ? prev.filter(e => e.id !== id) : null));
+        return true;
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
           setError(error);
         } else {
           setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
         }
+        return false;
       }
     },
     [setTournament, setTournaments, setError]
