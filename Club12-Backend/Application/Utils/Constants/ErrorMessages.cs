@@ -212,6 +212,16 @@ public static class ErrorMessages
         /// </summary>
         public const string HasHistoryCannotDelete =
             "No se puede eliminar: el jugador tiene estadísticas o sanciones registradas.";
+
+        /// <summary>
+        /// User-facing (Spanish) message returned when a player is created or
+        /// updated with a DocumentNumber another player already has
+        /// (IX_Players_DocumentNumber is a unique index).
+        /// </summary>
+        public static string DuplicateDocumentNumber(string documentNumber)
+        {
+            return $"Ya existe un jugador registrado con el documento {documentNumber}.";
+        }
     }
 
     public static class Venue

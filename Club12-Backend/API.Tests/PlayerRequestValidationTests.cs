@@ -141,6 +141,42 @@ public class PlayerRequestValidationTests : IClassFixture<CustomWebApplicationFa
             response.StatusCode == HttpStatusCode.Created,
             $"Expected 201, got {response.StatusCode}: {body}");
     }
+
+    /// <summary>
+    /// Found live while E2E-testing the tournament wizard: submitting a
+    /// DocumentNumber that already belongs to another player hit the DB's
+    /// unique index (IX_Players_DocumentNumber) with no pre-check in
+    /// PlayerService.CreatePlayerAsync, so it bubbled up as an unhandled
+    /// DbUpdateException — a raw 500 instead of a friendly conflict, and the
+    /// frontend had no error-shaped response to show a toast for. Must be a
+    /// clean 409 with a Spanish message, exactly like every other duplicate
+    /// guard in this codebase (team code, division slug, etc).
+    /// </summary>
+    [Fact]
+    public async Task CreatePlayer_DuplicateDocumentNumber_ReturnsConflictNotServerError()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        Guid teamId = await SeedTeamAsync(db);
+
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Admin);
+
+        string documentNumber = $"30{Random.Shared.Next(100000, 999999)}";
+
+        HttpResponseMessage first = await client.PostAsJsonAsync(
+            "api/players",
+            ValidPayload(teamId, new { documentNumber }));
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+
+        HttpResponseMessage second = await client.PostAsJsonAsync(
+            "api/players",
+            ValidPayload(teamId, new { documentNumber }));
+
+        string body = await second.Content.ReadAsStringAsync();
+        Assert.True(
+            second.StatusCode == HttpStatusCode.Conflict,
+            $"Expected 409, got {second.StatusCode}: {body}");
+    }
 }
 
 file static class ObjectMergeExtensions

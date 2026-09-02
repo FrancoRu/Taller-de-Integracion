@@ -34,6 +34,8 @@ public class PlayerService(
 
     public async Task<Player> CreatePlayerAsync(Player playerEntity, Guid tournamentId)
     {
+        await EnsureDocumentNumberIsUniqueAsync(playerEntity.DocumentNumber, excludingPlayerId: null);
+
         playerEntity.Slug = await SlugGenerator.GenerateUniqueSlugAsync(
             playerEntity.SlugSource,
             candidate => _playerRepository.ExistsAsync(player => player.Slug == candidate));
@@ -42,6 +44,25 @@ public class PlayerService(
         await EnsureRegistrationAsync(playerEntity, tournamentId);
 
         return playerEntity;
+    }
+
+    /// <summary>
+    /// Guards the DB's IX_Players_DocumentNumber unique index with a friendly
+    /// 409 instead of letting a collision surface as an unhandled
+    /// DbUpdateException (raw 500). <paramref name="excludingPlayerId"/> lets
+    /// an update keep its own current DocumentNumber.
+    /// </summary>
+    private async Task EnsureDocumentNumberIsUniqueAsync(string documentNumber, Guid? excludingPlayerId)
+    {
+        bool taken = await _playerRepository.ExistsAsync(player =>
+            player.DocumentNumber == documentNumber
+            && (excludingPlayerId == null || player.Id != excludingPlayerId));
+
+        if (taken)
+        {
+            throw new InvalidOperationException(
+                ErrorMessages.Player.DuplicateDocumentNumber(documentNumber));
+        }
     }
 
     public async Task<Player?> GetPlayerByIdAsync(Guid playerId)
@@ -162,6 +183,7 @@ public class PlayerService(
         // a team the player was never actually validly registered to for
         // this season — a silent inconsistency between the "current team"
         // pointer and the season-scoped source of truth.
+        await EnsureDocumentNumberIsUniqueAsync(playerEntity.DocumentNumber, excludingPlayerId: playerEntity.Id);
         await ValidateRegistrationMoveAsync(playerEntity, tournamentId);
         await _playerRepository.UpdateAsync(playerEntity);
         await EnsureRegistrationAsync(playerEntity, tournamentId);
