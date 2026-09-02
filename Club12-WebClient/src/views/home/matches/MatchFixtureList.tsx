@@ -53,11 +53,13 @@ const nearestRoundKey = (
  * its own date/time inside its row. With an odd roster the team free that
  * matchday is shown as "Libre" (HU-65).
  *
- * Every fecha but the current/nearest one is collapsible (collapsed by
- * default) — a long group-stage fixture stayed fully expanded otherwise. The
- * current fecha (the first whose latest match is today or later, else the
- * last one) always stays open and has no toggle, so the thing you actually
- * came to look at is never hidden behind a click.
+ * Every fecha is collapsible, including the current one — it just starts
+ * expanded (via `defaultExpandedRound`) so the thing you actually came to
+ * look at isn't hidden behind a click, while still letting it be folded away
+ * like any other. Once every match in the stage is finished (the whole
+ * tournament/stage concluded), nothing defaults open anymore — there's no
+ * "current" fecha left to spotlight, so it reads the same as any other
+ * finished stage's fixture: all collapsed until the reader picks one.
  */
 export default function MatchFixtureList({
   matches,
@@ -89,6 +91,11 @@ export default function MatchFixtureList({
   const rounds = useMemo(() => groupMatchesByRound(matches), [matches]);
   const stageTeamNames = useMemo(() => collectStageTeamNames(matches), [matches]);
   const currentRound = useMemo(() => nearestRoundKey(rounds), [rounds]);
+  // Once every match is finished there's no "upcoming" fecha to spotlight —
+  // nearestRoundKey would otherwise just fall back to the last one and force
+  // it open, which read as a leftover, not a highlight.
+  const allMatchesFinished = matches.length > 0 && matches.every(match => match.isFinished);
+  const defaultExpandedRound = allMatchesFinished ? undefined : currentRound;
 
   // A bye team is still a real team with its own escudo — it just isn't
   // playing this round. Look its logo up from any match it played elsewhere
@@ -102,13 +109,16 @@ export default function MatchFixtureList({
     return logos;
   }, [matches]);
 
-  // Every collapsible (non-current) round starts collapsed; toggling adds/
-  // removes it from this set. Keyed by round number, with `null` (knockout
-  // matches with no jornada) normalized to a sentinel since Set can't
-  // distinguish two `null`s from different renders by reference anyway.
-  const [expandedRounds, setExpandedRounds] = useState<Set<number>>(new Set());
+  // Tracks rounds whose expanded state has been manually flipped away from
+  // its computed default (open only for `defaultExpandedRound`, closed for
+  // every other) — one Set covers both directions: opening a
+  // default-collapsed round, or collapsing the default-expanded one. Keyed
+  // by round number, with `null` (knockout matches with no jornada)
+  // normalized to a sentinel since Set can't distinguish two `null`s from
+  // different renders by reference anyway.
+  const [toggledRounds, setToggledRounds] = useState<Set<number>>(new Set());
   const toggleRound = (round: number) => {
-    setExpandedRounds(prev => {
+    setToggledRounds(prev => {
       const next = new Set(prev);
       if (next.has(round)) {
         next.delete(round);
@@ -138,26 +148,21 @@ export default function MatchFixtureList({
       {rounds.map(round => {
         const byes = byeTeamNamesForRound(round.matches, stageTeamNames);
         const roundKey = round.round ?? -1;
-        const isCurrent = round.round === currentRound;
-        const isExpanded = isCurrent || expandedRounds.has(roundKey);
+        const isDefaultExpanded = round.round === defaultExpandedRound;
+        const isExpanded = toggledRounds.has(roundKey) ? !isDefaultExpanded : isDefaultExpanded;
 
         return (
           <Box key={round.round ?? 'knockout'}>
-            {round.round == null ? null : isCurrent ? (
+            {round.round == null ? null : (
               // A knockout stage (null round) has exactly one group, always
               // shown expanded with no header of its own — the caller
               // already labels it (e.g. "Semifinal", "Final" above this
               // list), and the fallback "Fase final" text used to render
               // here for every single knockout round regardless of which
               // one it actually was, reading as the same phase repeating
-              // over and over down the page.
-              <Typography
-                variant="overline"
-                sx={{ color: 'text.secondary', display: 'block', mb: 1 }}
-              >
-                {formatRoundLabel(round.round)}
-              </Typography>
-            ) : (
+              // over and over down the page. Every numbered fecha gets the
+              // same collapsible header — including the "current" one, which
+              // only differs in starting expanded (see `defaultExpandedRound`).
               <Box
                 component="button"
                 type="button"

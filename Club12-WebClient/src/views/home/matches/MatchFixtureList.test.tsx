@@ -103,8 +103,8 @@ describe('MatchFixtureList', () => {
   });
 });
 
-describe('MatchFixtureList — collapsible fechas (all but the current one)', () => {
-  it('collapses a past fecha by default but keeps the current/nearest one always expanded, with no toggle', async () => {
+describe('MatchFixtureList — collapsible fechas (every one, including the current one)', () => {
+  it('collapses a past fecha by default, and starts the current/nearest one expanded — but both are toggleable', async () => {
     const user = userEvent.setup();
     renderFixture([
       match({
@@ -121,11 +121,14 @@ describe('MatchFixtureList — collapsible fechas (all but the current one)', ()
       }),
     ]);
 
-    // Fecha 2 is the nearest to "now" (its match is in the future) — always
-    // expanded, no toggle button for it.
-    const fecha2Row = screen.getByText('Fecha 2').closest('div');
-    expect(fecha2Row?.querySelector('button')).toBeNull();
+    // Fecha 2 is the nearest to "now" (its match is in the future) — starts
+    // expanded, but still has a toggle, unlike the old "no toggle" behavior.
+    const fecha2Toggle = screen.getByRole('button', { name: /Fecha 2/i });
+    expect(fecha2Toggle).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getAllByText('C').length).toBeGreaterThan(0);
+
+    await user.click(fecha2Toggle);
+    expect(fecha2Toggle).toHaveAttribute('aria-expanded', 'false');
 
     // Fecha 1 is in the past — collapsed by default, with a toggle.
     const fecha1Toggle = screen.getByRole('button', { name: /Fecha 1/i });
@@ -133,6 +136,34 @@ describe('MatchFixtureList — collapsible fechas (all but the current one)', ()
 
     await user.click(fecha1Toggle);
     expect(fecha1Toggle).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('starts every fecha collapsed once the whole fixture is finished — no "current" one left to spotlight', () => {
+    renderFixture([
+      match({
+        round: 1,
+        matchDate: '2020-01-01T20:00:00Z',
+        homeTeam: team('A'),
+        visitorTeam: team('B'),
+        isFinished: true,
+      }),
+      match({
+        round: 2,
+        matchDate: '2020-02-01T20:00:00Z',
+        homeTeam: team('C'),
+        visitorTeam: team('D'),
+        isFinished: true,
+      }),
+    ]);
+
+    expect(screen.getByRole('button', { name: /Fecha 1/i })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+    expect(screen.getByRole('button', { name: /Fecha 2/i })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
   });
 });
 
