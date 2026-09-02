@@ -64,17 +64,6 @@ const DesktopNavItems: React.FC<DesktopNavItemsProps> = ({
 
       <ListItemButton
         component={Link}
-        to={`/${RoutesNavigationViews.Tournaments}`}
-        selected={location.pathname.startsWith('/torneos')}
-        onClick={() =>
-          handleNavigationAndCloseMenu(`/${RoutesNavigationViews.Tournaments}`)
-        }
-      >
-        <ListItemText primary="Torneos" />
-      </ListItemButton>
-
-      <ListItemButton
-        component={Link}
         to={`/${RoutesNavigationViews.Champions}`}
         selected={isSelected(`/${RoutesNavigationViews.Champions}`)}
         onClick={() =>

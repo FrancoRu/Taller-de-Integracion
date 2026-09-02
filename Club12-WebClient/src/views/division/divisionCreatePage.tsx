@@ -77,14 +77,11 @@ const DivisionCreatePage: React.FC = () => {
     Boolean(resolvedTournament) &&
     resolvedTournament?.status !== TournamentStatus.OpenForRegistration;
 
+  // Real browser-history back — takes the admin back to exactly the page
+  // (and tab/sub-nav state) they came from, whatever that was.
   const handleCancel = useCallback(() => {
-    if (queryTournamentId) {
-      navigate(APP_ROUTES.panelTournamentDetail.build(queryTournamentId));
-      return;
-    }
-
-    navigate(APP_ROUTES.panelDivisions);
-  }, [navigate, queryTournamentId]);
+    navigate(-1);
+  }, [navigate]);
 
   const handleCreate = useCallback(async () => {
     if (!zone.name.trim()) {

@@ -12,7 +12,6 @@ import PublicTeamPage from './views/home/teams/PublicTeamPage';
 import PublicSanctionsPage from './views/home/sanctions/PublicSanctionsPage';
 import PublicChampionsPage from './views/home/champions/PublicChampionsPage';
 import PublicMatchPage from './views/home/matches/PublicMatchPage';
-import PublicTournamentsPage from './views/home/tournaments/PublicTournamentsPage';
 import PublicTournamentPage from './views/home/tournaments/PublicTournamentPage';
 import PublicSeasonsPage from './views/home/seasons/PublicSeasonsPage';
 import PublicSeasonPage from './views/home/seasons/PublicSeasonPage';
@@ -35,10 +34,8 @@ import PlayerPage from './views/player/PlayerPage';
 import TeamPage from './views/team/TeamPage';
 import TournamentPage from './views/tournament/TournamentPage';
 import TournamentEditPage from './views/tournament/TournamentEditPage';
-import TournamentsPage from './views/tournament/TournamentsPage';
 import TournamentWizardPage from './views/tournament/wizard/TournamentWizardPage';
 import DivisionPage from './views/division/divisionPage';
-import DivisionsPage from './views/division/divisionsPage';
 import DivisionCreatePage from './views/division/divisionCreatePage';
 import DivisionEditPage from './views/division/divisionEditPage';
 import MatchPage from './views/match/matchPage';
@@ -161,19 +158,9 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
     element: <AdminSeasonDetailPage />,
   },
   {
-    path: APP_ROUTES.panelTournaments,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
-    element: <TournamentsPage />,
-  },
-  {
     path: APP_ROUTES.panelTournamentWizard,
     allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <TournamentWizardPage />,
-  },
-  {
-    path: APP_ROUTES.panelDivisions,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
-    element: <DivisionsPage wrapInCard />,
   },
   {
     path: APP_ROUTES.panelDivisionCreate,
@@ -284,7 +271,9 @@ const PUBLIC_ROUTES: PublicRouteConfig[] = [
   { path: APP_ROUTES.publicMatch.pattern, element: <PublicMatchPage /> },
   { path: APP_ROUTES.publicSeasons, element: <PublicSeasonsPage /> },
   { path: APP_ROUTES.publicSeason.pattern, element: <PublicSeasonPage /> },
-  { path: APP_ROUTES.publicTournaments, element: <PublicTournamentsPage /> },
+  // No `/torneos` flat listing route: it was never linked from any nav
+  // (dead/unreachable, HU orphan-route audit) — every tournament is reached
+  // via Temporadas -> season -> tournament instead.
   {
     path: APP_ROUTES.publicTournament.pattern,
     element: <PublicTournamentPage />,

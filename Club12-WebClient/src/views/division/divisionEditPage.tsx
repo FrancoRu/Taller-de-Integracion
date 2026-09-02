@@ -68,16 +68,11 @@ const DivisionEditPage: React.FC = () => {
     });
   }, [division, targetDivisionId]);
 
+  // Real browser-history back — takes the admin back to exactly the page
+  // (and tab/sub-nav state) they came from, whatever that was.
   const handleCancel = useCallback(() => {
-    if (!division) {
-      navigate(APP_ROUTES.panelDivisions);
-      return;
-    }
-
-    // Prefer the slug so the detail URL never exposes a UUID (the edit route
-    // itself stays id-based).
-    navigate(APP_ROUTES.panelDivision.build(division.slug));
-  }, [navigate, division]);
+    navigate(-1);
+  }, [navigate]);
 
   const handleSave = useCallback(async () => {
     if (!division) {

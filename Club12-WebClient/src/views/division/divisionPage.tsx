@@ -268,10 +268,10 @@ const DivisionPage: React.FC = () => {
         </Typography>
         <Button
           variant="text"
-          onClick={() => navigate(APP_ROUTES.panelDivisions)}
+          onClick={() => navigate(-1)}
           sx={{ mt: 2, px: 0 }}
         >
-          Volver al listado
+          Volver
         </Button>
       </PageShell>
     );
@@ -293,15 +293,11 @@ const DivisionPage: React.FC = () => {
           </Button>
           <Button
             variant="outlined"
-            onClick={() =>
-              navigate(
-                division.tournamentId
-                  ? APP_ROUTES.panelTournamentDetail.build(
-                      division.tournamentSlug ?? division.tournamentId
-                    )
-                  : APP_ROUTES.panelTournaments
-              )
-            }
+            // Real browser-history back, not a reconstructed URL — takes the
+            // admin back to exactly the page (and tab/sub-nav state) they
+            // came from, rather than always landing on the tournament
+            // page's default tab regardless of where "here" actually was.
+            onClick={() => navigate(-1)}
           >
             Volver
           </Button>

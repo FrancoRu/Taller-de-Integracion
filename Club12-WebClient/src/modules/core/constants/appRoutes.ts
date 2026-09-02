@@ -31,7 +31,6 @@ export const APP_ROUTES = {
     pattern: '/temporadas/:seasonId',
     build: (seasonId: string) => `/temporadas/${seasonId}`,
   },
-  publicTournaments: '/torneos',
   publicTournament: {
     pattern: '/torneos/:tournamentId',
     build: (tournamentId: string) => `/torneos/${tournamentId}`,
@@ -86,9 +85,7 @@ export const APP_ROUTES = {
     pattern: '/panel/temporadas/:seasonId',
     build: (seasonId: string) => `/panel/temporadas/${seasonId}`,
   },
-  panelTournaments: '/panel/torneos',
   panelTournamentWizard: '/panel/torneos/asistente',
-  panelDivisions: '/panel/divisiones',
   panelDivisionCreate: '/panel/divisiones/crear',
   panelDivisionEdit: {
     pattern: '/panel/divisiones/:divisionId/editar',

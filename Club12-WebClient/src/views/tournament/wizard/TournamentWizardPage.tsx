@@ -61,8 +61,10 @@ export default function TournamentWizardPage() {
     [state]
   );
 
+  // Real browser-history back — takes the admin back to exactly the page
+  // (and tab/sub-nav state) they started the wizard from.
   const handleCancel = useCallback(() => {
-    navigate(APP_ROUTES.panelTournaments);
+    navigate(-1);
   }, [navigate]);
 
   const handleNext = useCallback(async () => {
@@ -102,14 +104,13 @@ export default function TournamentWizardPage() {
         text: 'El torneo y su estructura se crearon correctamente. La inscripción quedó abierta: ya podés inscribir equipos.',
       });
 
-      // Prefer the created tournament's slug for the detail route, falling back
-      // to its id, and to the list when neither is available.
+      // Prefer the created tournament's slug for the detail route, falling
+      // back to its id — a created tournament always has at least one, so
+      // this is only ever missing in an impossible/defensive case.
       const detailKey = result.slug ?? result.tournamentId;
-      navigate(
-        detailKey
-          ? APP_ROUTES.panelTournamentDetail.build(detailKey)
-          : APP_ROUTES.panelTournaments
-      );
+      if (detailKey) {
+        navigate(APP_ROUTES.panelTournamentDetail.build(detailKey));
+      }
     } finally {
       setSubmitting(false);
     }
