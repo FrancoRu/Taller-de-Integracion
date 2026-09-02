@@ -1,6 +1,5 @@
 import React, { Component, ErrorInfo } from 'react';
 import { Box, Typography, Button } from '@mui/material';
-import { Link } from 'react-router-dom';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -60,12 +59,14 @@ class ErrorBoundary extends Component<
             <i>{this.state.error?.message || 'Error desconocido.'}</i>
           </Typography>
           <Box sx={{ marginTop: 4 }}>
-            <Button
-              component={Link}
-              to="/"
-              variant="contained"
-              color="primary"
-            >
+            {/* A plain anchor, not react-router's <Link>: this boundary sits
+                ABOVE <BrowserRouter> in the provider tree (it must catch
+                errors thrown by the router itself), so a <Link> here would
+                render with no router context and crash. A full page load
+                back to "/" is also the safer recovery from an unknown
+                render error anyway — it guarantees fresh app state instead
+                of a client-side route change that keeps the broken tree. */}
+            <Button href="/" variant="contained" color="primary">
               Volver al inicio
             </Button>
           </Box>
