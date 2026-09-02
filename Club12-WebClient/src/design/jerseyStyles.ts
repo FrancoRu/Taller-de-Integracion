@@ -17,7 +17,11 @@ export type JerseyStyle =
   | 'halves'
   | 'circles'
   | 'gradient'
-  | 'vneck';
+  | 'vneck'
+  | 'pinstripe'
+  | 'yoke'
+  | 'colorblock'
+  | 'arrow';
 
 export interface JerseyStyleOption {
   value: JerseyStyle;
@@ -37,6 +41,10 @@ export const JERSEY_STYLES: JerseyStyleOption[] = [
   { value: 'circles', label: 'Lunares' },
   { value: 'gradient', label: 'Degradé' },
   { value: 'vneck', label: 'Cuello en V' },
+  { value: 'pinstripe', label: 'Rayas finas' },
+  { value: 'yoke', label: 'Canesú' },
+  { value: 'colorblock', label: 'Bloque diagonal' },
+  { value: 'arrow', label: 'Flecha' },
 ];
 
 export const DEFAULT_JERSEY_STYLE: JerseyStyle = 'solid';

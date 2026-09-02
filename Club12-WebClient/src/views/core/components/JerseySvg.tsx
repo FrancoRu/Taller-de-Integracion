@@ -25,6 +25,15 @@ const SASH_POINTS = '96,236 214,86 352,250 236,398';
 /** Chevron (downward "V") band top edges, used by the `chevron` template. */
 const CHEVRON_YS = [150, 232, 314];
 
+/** Thin vertical pinstripe x-positions, used by the `pinstripe` template. */
+const PINSTRIPE_XS = [112, 136, 160, 184, 208, 232, 256, 280, 304, 328];
+
+/** Single large chest "V" accent, used by the `arrow` template. */
+const ARROW_POINTS = '110,168 224,258 338,168 338,204 224,294 110,204';
+
+/** Diagonal color-block corner, used by the `colorblock` template. */
+const COLORBLOCK_POINTS = '348,44 348,406 150,406';
+
 export interface JerseySvgProps {
   /** The team's primary shirt color, as a `#rrggbb` hex. */
   color?: string | null;
@@ -157,6 +166,21 @@ export default function JerseySvg({
         {style === 'sash' && <polygon points={SASH_POINTS} fill={secondary.fill} />}
 
         {style === 'vneck' && <path d={VNECK_PATH} fill={secondary.fill} />}
+
+        {style === 'pinstripe' &&
+          PINSTRIPE_XS.map(x => (
+            <rect key={x} x={x} y="44" width="4" height="362" fill={secondary.fill} />
+          ))}
+
+        {style === 'yoke' && (
+          <rect x="100" y="44" width="248" height="68" fill={secondary.fill} />
+        )}
+
+        {style === 'colorblock' && (
+          <polygon points={COLORBLOCK_POINTS} fill={secondary.fill} />
+        )}
+
+        {style === 'arrow' && <polygon points={ARROW_POINTS} fill={secondary.fill} />}
       </g>
 
       {/* Neck + hem trim traces the secondary color along the outline. */}

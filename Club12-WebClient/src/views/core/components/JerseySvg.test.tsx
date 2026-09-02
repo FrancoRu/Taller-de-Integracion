@@ -38,6 +38,37 @@ describe('JerseySvg', () => {
     expect(container.querySelector('pattern circle')).not.toBeNull();
   });
 
+  it('draws thin pinstripe bars for the pinstripe template', () => {
+    const { container } = render(
+      <JerseySvg color="#1e5fcc" secondaryColor="#ffffff" style="pinstripe" />
+    );
+    const bars = container.querySelectorAll('rect[fill="#ffffff"][width="4"]');
+    expect(bars.length).toBeGreaterThan(5);
+  });
+
+  it('draws a top yoke panel for the yoke template', () => {
+    const { container } = render(
+      <JerseySvg color="#1e5fcc" secondaryColor="#ffffff" style="yoke" />
+    );
+    expect(
+      container.querySelector('rect[fill="#ffffff"][height="68"]')
+    ).not.toBeNull();
+  });
+
+  it('draws a diagonal color-block polygon for the colorblock template', () => {
+    const { container } = render(
+      <JerseySvg color="#1e5fcc" secondaryColor="#ffffff" style="colorblock" />
+    );
+    expect(container.querySelector('polygon[fill="#ffffff"]')).not.toBeNull();
+  });
+
+  it('draws a single chest accent for the arrow template', () => {
+    const { container } = render(
+      <JerseySvg color="#1e5fcc" secondaryColor="#ffffff" style="arrow" />
+    );
+    expect(container.querySelectorAll('polygon[fill="#ffffff"]').length).toBe(1);
+  });
+
   it('falls back to a solid body for an unknown style (no pattern shapes)', () => {
     const { container } = render(<JerseySvg color="#1e5fcc" style="bogus" />);
     expect(container.querySelector('polygon')).toBeNull();

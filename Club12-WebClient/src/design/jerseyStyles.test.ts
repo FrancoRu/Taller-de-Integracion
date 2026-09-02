@@ -20,6 +20,10 @@ describe('jerseyStyles', () => {
       'circles',
       'gradient',
       'vneck',
+      'pinstripe',
+      'yoke',
+      'colorblock',
+      'arrow',
     ]);
     JERSEY_STYLES.forEach(s => expect(s.label.trim().length).toBeGreaterThan(0));
   });
