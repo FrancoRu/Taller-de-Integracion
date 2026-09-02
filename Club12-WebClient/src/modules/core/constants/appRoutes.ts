@@ -124,5 +124,5 @@ export const APP_ROUTES = {
   panelEditProfile: '/panel/configuracion/editar-perfil',
   panelStatistics: '/panel/estadisticas',
   panelAuditLogs: '/panel/auditoria',
-  panelDataAdministration: '/panel/test',
+  panelDataAdministration: '/panel/administracion-datos',
 } as const;
