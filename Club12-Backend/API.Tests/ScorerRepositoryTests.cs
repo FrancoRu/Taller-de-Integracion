@@ -275,6 +275,8 @@ public class ScorerRepositoryTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal(team.Id, result.TeamId);
         Assert.Equal(team.Name, result.TeamName);
         Assert.Equal(23, result.JerseyNumber);
+        Assert.Equal(team.LogoUrl, result.TeamLogoUrl);
+        Assert.Equal(team.ShirtColor, result.TeamShirtColor);
     }
 
     [Fact]

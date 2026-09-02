@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   GlobalStyles,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -20,8 +21,18 @@ import { printMediaStyles } from '@/modules/core/utils/printStyles';
 import ExportCsvButton from '@/views/core/components/ExportCsvButton';
 import { TableSkeleton } from '@/views/core/components/skeletons';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
+import TeamLogo from '@/views/core/components/TeamLogo';
+import JerseySvg from '@/views/core/components/JerseySvg';
+import { brand } from '@/design/tokens';
 
 const CSV_HEADERS = ['#', 'Jugador', 'Dorsal', 'Puntos', 'Equipo'];
+
+/** Subtle medal accents for the top three ranks — the same as the podium's. */
+const RANK_ACCENT: Record<number, string> = {
+  1: brand.gold,
+  2: '#C7CDD6',
+  3: '#CD8E5A',
+};
 
 const csvRows = (rows: IScorerByPlayerResponse[]) =>
   rows.map((row, index) => [
@@ -152,25 +163,68 @@ export default function DivisionScorersTable({
                 <TableRow>
                   <TableCell>#</TableCell>
                   <TableCell>Jugador</TableCell>
-                  <TableCell align="center">Dorsal</TableCell>
+                  <TableCell align="center">Camiseta</TableCell>
                   <TableCell align="center">Puntos</TableCell>
                   <TableCell>Equipo</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {scorers.map((row, index) => (
-                  <TableRow key={row.playerId} hover>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{row.fullName}</TableCell>
-                    <TableCell align="center">{row.jerseyNumber ?? '—'}</TableCell>
-                    <TableCell align="center">
-                      <Box component="span" sx={{ fontWeight: 700 }}>
-                        {row.points}
-                      </Box>
-                    </TableCell>
-                    <TableCell>{row.teamName ?? '—'}</TableCell>
-                  </TableRow>
-                ))}
+                {scorers.map((row, index) => {
+                  const rank = index + 1;
+                  const accent = RANK_ACCENT[rank];
+
+                  return (
+                    <TableRow key={row.playerId} hover>
+                      <TableCell>
+                        <Box
+                          component="span"
+                          sx={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 24,
+                            height: 24,
+                            borderRadius: '50%',
+                            fontWeight: accent ? 700 : 500,
+                            color: accent ?? 'text.secondary',
+                            border: accent ? `1.5px solid ${accent}` : 'none',
+                          }}
+                        >
+                          {rank}
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 500 }}>{row.fullName}</TableCell>
+                      <TableCell align="center">
+                        {/* The jersey already prints the dorsal on the chest —
+                            no separate number column needed alongside it. */}
+                        <Box sx={{ display: 'inline-flex' }}>
+                          <JerseySvg
+                            color={row.teamShirtColor}
+                            secondaryColor={row.teamShirtSecondaryColor}
+                            tertiaryColor={row.teamShirtTertiaryColor}
+                            style={row.teamJerseyStyle}
+                            number={row.jerseyNumber}
+                            size={30}
+                            title={`Camiseta de ${row.teamName ?? 'el equipo'}${row.jerseyNumber != null ? `, dorsal ${row.jerseyNumber}` : ''}`}
+                          />
+                        </Box>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Box component="span" sx={{ fontWeight: 700 }}>
+                          {row.points}
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
+                          <TeamLogo teamName={row.teamName ?? '?'} logoUrl={row.teamLogoUrl} size={24} />
+                          <Typography variant="body2" noWrap sx={{ minWidth: 0 }}>
+                            {row.teamName ?? '—'}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </TableContainer>

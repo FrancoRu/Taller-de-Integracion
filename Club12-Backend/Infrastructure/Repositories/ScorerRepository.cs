@@ -119,6 +119,11 @@ public class ScorerRepository(ApplicationDBContext context)
                 .Sum(s => (int?) s.Value) ?? 0,
             TeamId = player.TeamId,
             TeamName = player.Team.Name,
+            TeamLogoUrl = player.Team.LogoUrl,
+            TeamShirtColor = player.Team.ShirtColor,
+            TeamJerseyStyle = player.Team.JerseyStyle,
+            TeamShirtSecondaryColor = player.Team.ShirtSecondaryColor,
+            TeamShirtTertiaryColor = player.Team.ShirtTertiaryColor,
             // The dorsal is season-scoped (PlayerTeamRegistration), not a
             // property of Player itself: when the ranking is scoped to one
             // tournament, use that season's registration; otherwise (a

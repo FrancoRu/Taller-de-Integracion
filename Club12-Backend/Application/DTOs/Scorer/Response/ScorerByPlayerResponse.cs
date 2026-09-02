@@ -27,4 +27,19 @@ public class ScorerByPlayerResponse : ScorerBaseResponse
 
     /// <summary>The player's current team's name.</summary>
     public string TeamName { get; set; } = string.Empty;
+
+    /// <summary>The player's current team's crest, for the ranking row.</summary>
+    public string TeamLogoUrl { get; set; } = string.Empty;
+
+    /// <summary>The player's current team's primary shirt color — for rendering the kit alongside the dorsal.</summary>
+    public string TeamShirtColor { get; set; } = string.Empty;
+
+    /// <summary>The player's current team's kit pattern. See <c>Team.JerseyStyle</c>.</summary>
+    public string TeamJerseyStyle { get; set; } = "solid";
+
+    /// <summary>The player's current team's secondary shirt color, when set.</summary>
+    public string? TeamShirtSecondaryColor { get; set; }
+
+    /// <summary>The player's current team's tertiary shirt color, when set.</summary>
+    public string? TeamShirtTertiaryColor { get; set; }
 }

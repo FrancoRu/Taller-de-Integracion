@@ -60,6 +60,13 @@ export interface IScorerByPlayerResponse extends IScorerBaseResponse {
   teamId?: GUID;
   /** The player's current team's name. See {@link teamId}. */
   teamName?: string;
+  /** The player's current team's crest, for the ranking row. */
+  teamLogoUrl?: string;
+  /** The player's current team's kit — for rendering the jersey alongside the dorsal. */
+  teamShirtColor?: string;
+  teamJerseyStyle?: string;
+  teamShirtSecondaryColor?: string | null;
+  teamShirtTertiaryColor?: string | null;
 }
 
 export interface IScorerByTeamResponse extends IScorerBaseResponse {
