@@ -223,6 +223,9 @@ export interface IMatchResponse {
    */
   isFinished: boolean;
 
+  /** Whether the match was decided in overtime (basketball rule). */
+  wentToOvertime?: boolean;
+
   /**
    * @property {GUID | null} winningTeamId - The unique identifier (GUID) of the team that won the match, or null if the match is not finished or was a draw.
    */
@@ -406,6 +409,9 @@ export interface IPutMatchResultFromSheetsRequest {
    * @type {PlayerScoreEntry[]}
    */
   visitorScores: PlayerScoreEntry[];
+
+  /** Whether the match was decided in overtime (basketball rule). */
+  wentToOvertime: boolean;
 }
 
 /**

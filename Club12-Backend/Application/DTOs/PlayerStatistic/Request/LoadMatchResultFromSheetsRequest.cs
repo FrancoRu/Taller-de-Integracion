@@ -33,4 +33,10 @@ public class LoadMatchResultFromSheetsRequest
     /// </summary>
     [Required]
     public required List<PlayerScoreEntry> VisitorScores { get; set; } = [];
+
+    /// <summary>
+    /// Whether the match was decided in overtime (basketball rule). Purely
+    /// informational; defaults to false.
+    /// </summary>
+    public bool WentToOvertime { get; set; }
 }

@@ -60,6 +60,9 @@ public class DetailedMatchResponse : BaseEntityResponse
     /// </summary>
     public string? Status { get; set; }
 
+    /// <summary>Whether the match was decided in overtime.</summary>
+    public bool WentToOvertime { get; set; }
+
     /// <summary>
     /// The name of the winning team, if available.
     /// </summary>

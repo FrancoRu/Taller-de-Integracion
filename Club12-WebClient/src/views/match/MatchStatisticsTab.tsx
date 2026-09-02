@@ -4,6 +4,8 @@ import {
   Button,
   Card,
   CardContent,
+  Checkbox,
+  FormControlLabel,
   Stack,
   TextField,
   Typography,
@@ -86,6 +88,7 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
   const [submitting, setSubmitting] = useState(false);
   const [homeForm, setHomeForm] = useState<Record<string, string>>({});
   const [visitorForm, setVisitorForm] = useState<Record<string, string>>({});
+  const [wentToOvertime, setWentToOvertime] = useState(false);
 
   const getStatisticsRef = useRef(getPlayerStatisticsByFilter);
   useEffect(() => {
@@ -110,6 +113,7 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
     const pointsByPlayer = buildPointsMap(items);
     setHomeForm(buildFormFromPoints(homePlayers, pointsByPlayer));
     setVisitorForm(buildFormFromPoints(visitorPlayers, pointsByPlayer));
+    setWentToOvertime(match.wentToOvertime ?? false);
     setLoading(false);
     // homePlayers/visitorPlayers are derived from `match` on every render;
     // re-running this whenever the match's own id changes is enough and
@@ -147,6 +151,7 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
         playerId: player.id,
         points: Number(visitorForm[player.id]) || 0,
       })),
+      wentToOvertime,
     });
     setSubmitting(false);
 
@@ -168,6 +173,7 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
     visitorPlayers,
     homeForm,
     visitorForm,
+    wentToOvertime,
     loadStatistics,
   ]);
 
@@ -343,8 +349,23 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         spacing={2}
-        sx={{ justifyContent: 'flex-end', alignItems: { sm: 'center' } }}
+        sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' } }}
       >
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={wentToOvertime}
+              onChange={e => setWentToOvertime(e.target.checked)}
+            />
+          }
+          label="Se jugó tiempo extra"
+        />
+
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={2}
+          sx={{ alignItems: { sm: 'center' } }}
+        >
         {isTie && (
           <Typography variant="body2" color="error">
             No se permiten empates: el partido debe tener un ganador.
@@ -363,6 +384,7 @@ export default function MatchStatisticsTab({ match }: MatchStatisticsTabProps) {
         >
           Guardar resultado
         </Button>
+        </Stack>
       </Stack>
     </Stack>
   );

@@ -76,6 +76,14 @@ public class Match : EntityBase
     public required bool IsFinished { get; set; }
 
     /// <summary>
+    /// Whether the match was decided in overtime (basketball rule: a tied
+    /// game plays extra time rather than ending in a draw). Purely
+    /// informational — it does not affect scoring or standings, which are
+    /// already derived from <see cref="HomeScore"/>/<see cref="VisitorScore"/>.
+    /// </summary>
+    public bool WentToOvertime { get; set; }
+
+    /// <summary>
     /// The match's result lifecycle state (HU-69): Scheduled (no result yet),
     /// Played (decisive result loaded), Suspended, or WalkOver. Kept alongside
     /// <see cref="IsFinished"/> for backward compatibility: a match is finished

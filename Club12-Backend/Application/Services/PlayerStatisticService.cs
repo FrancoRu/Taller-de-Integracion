@@ -182,6 +182,7 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork) : IPlayerStatisticSe
         // Validated above and the tie-check below both throw before this line
         // touches the database — nothing is written on a rejected sheet.
         MatchResultFinalizer.ApplyResult(match, homeScore, visitorScore);
+        match.WentToOvertime = request.WentToOvertime;
         await _matchRepository.UpdateAsync(match);
 
         await ReplaceTeamPointsForMatchAsync(match.Id, homeTeam.Id);

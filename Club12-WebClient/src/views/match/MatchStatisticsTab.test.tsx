@@ -149,7 +149,36 @@ describe('MatchStatisticsTab — result derived from both teams\' sheets', () =>
       expect(loadMatchResultFromSheets).toHaveBeenCalledWith('aaaa-aaaa-aaaa-aaaa-aaaa', {
         homeScores: [{ playerId: HOME_PLAYER_ID, points: 55 }],
         visitorScores: [{ playerId: VISITOR_PLAYER_ID, points: 40 }],
+        wentToOvertime: false,
       })
+    );
+  });
+
+  it('includes wentToOvertime: true when the overtime checkbox is checked', async () => {
+    render(
+      <MemoryRouter>
+        <MatchStatisticsTab match={buildMatch()} />
+      </MemoryRouter>
+    );
+
+    const homeInput = await screen.findByLabelText('Puntos de Juan Perez');
+    const visitorInput = await screen.findByLabelText('Puntos de Ana Gomez');
+    fireEvent.change(homeInput, { target: { value: '55' } });
+    fireEvent.change(visitorInput, { target: { value: '40' } });
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Se jugó tiempo extra' }));
+
+    const saveButton = await screen.findByRole('button', {
+      name: 'Guardar resultado',
+    });
+    await waitFor(() => expect(saveButton).toBeEnabled());
+    fireEvent.click(saveButton);
+
+    await waitFor(() =>
+      expect(loadMatchResultFromSheets).toHaveBeenCalledWith(
+        'aaaa-aaaa-aaaa-aaaa-aaaa',
+        expect.objectContaining({ wentToOvertime: true })
+      )
     );
   });
 

@@ -321,6 +321,7 @@ public class MatchResultAndSheetTests : IClassFixture<CustomWebApplicationFactor
                 new PlayerScoreEntry { PlayerId = homeB.Id, Points = 35 },
             ],
             VisitorScores = [new PlayerScoreEntry { PlayerId = visitorA.Id, Points = 80 }],
+            WentToOvertime = true,
         });
 
         Assert.NotNull(updated);
@@ -329,10 +330,12 @@ public class MatchResultAndSheetTests : IClassFixture<CustomWebApplicationFactor
         Assert.True(updated.IsFinished);
         Assert.Equal(MatchStatus.Played, updated.Status);
         Assert.Equal(seeded.HomeTeam.Id, updated.WinningTeamId);
+        Assert.True(updated.WentToOvertime);
 
         Match reloaded = await ReloadMatchAsync(db, seeded.Match.Id);
         Assert.Equal(90, reloaded.HomeScore);
         Assert.Equal(80, reloaded.VisitorScore);
+        Assert.True(reloaded.WentToOvertime);
 
         (IEnumerable<ScorerByPlayerResponse> items, _) =
             await scorerRepository.GetPlayerScoresAsync(new GetScorerFilteredRequest { MatchId = seeded.Match.Id });
