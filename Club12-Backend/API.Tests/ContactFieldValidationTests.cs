@@ -61,6 +61,8 @@ public class ContactFieldValidationTests
     [InlineData("abc12345")]        // letters not allowed
     [InlineData("123")]             // too few digits
     [InlineData("12345678901234567")] // too many digits
+    [InlineData("+541123456789")]   // +54 country code not accepted — local-only app
+    [InlineData("01123456789")]     // 0 long-distance prefix not accepted
     public void RegisterUserRequest_InvalidPhone_IsRejected(string phone)
     {
         RegisterUserRequest request = new()
@@ -76,8 +78,7 @@ public class ContactFieldValidationTests
 
     [Theory]
     [InlineData(null)]                  // optional — absent is fine
-    [InlineData("+541123456789")]
-    [InlineData("(011) 4567-8901")]
+    [InlineData("11 2345-6789")]
     [InlineData("1123456789")]
     public void RegisterUserRequest_ValidContactData_IsAccepted(string? phone)
     {
@@ -96,6 +97,7 @@ public class ContactFieldValidationTests
     [Theory]
     [InlineData("bad-phone")]
     [InlineData("12")]
+    [InlineData("+541123456789")]
     public void CreatePlayerRequest_InvalidPhone_IsRejected(string phone)
     {
         CreatePlayerRequest request = NewPlayer(phone);
@@ -105,7 +107,7 @@ public class ContactFieldValidationTests
 
     [Theory]
     [InlineData("1123456789")]
-    [InlineData("+541123456789")]
+    [InlineData("343 555-1234")]
     public void CreatePlayerRequest_ValidPhone_IsAccepted(string phone)
     {
         CreatePlayerRequest request = NewPlayer(phone);
@@ -135,10 +137,8 @@ public class ContactFieldValidationTests
     }
 
     [Theory]
-    [InlineData("93435551234")] // 11 digits, mobile marker 9
-    [InlineData("03435551234")] // 11 digits, 0 trunk prefix
-    [InlineData("543435551234")] // 12 digits, country code + landline
-    [InlineData("5493435551234")] // 13 digits, country code + mobile marker
+    [InlineData("3435551234")] // 10-digit national number
+    [InlineData("343 555-1234")]
     public void UpdateUserRequest_ArgentinePhoneShapes_AreAccepted(string phone)
     {
         UpdateUserRequest request = new() { Phone = phone };
@@ -147,10 +147,10 @@ public class ContactFieldValidationTests
     }
 
     [Theory]
-    [InlineData("13435551234")] // 11 digits not starting with 9 or 0
-    [InlineData("549343555123")] // 12 digits starting with 549
-    [InlineData("123456789012")] // 12 digits not starting with 54
-    [InlineData("1234567890123")] // 13 digits not starting with 549
+    [InlineData("93435551234")] // 11 digits — the 9 mobile marker is not accepted
+    [InlineData("03435551234")] // 11 digits — the 0 trunk prefix is not accepted
+    [InlineData("543435551234")] // 12 digits — the 54 country code is not accepted
+    [InlineData("5493435551234")] // 13 digits — +54 9 is not accepted
     public void UpdateUserRequest_ImplausibleArgentinePhoneShapes_AreRejected(string phone)
     {
         UpdateUserRequest request = new() { Phone = phone };

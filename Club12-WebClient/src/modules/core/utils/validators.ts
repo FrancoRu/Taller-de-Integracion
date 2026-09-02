@@ -27,13 +27,11 @@ export function isValidEmail(value: string): boolean {
 
 /**
  * True when `value` is a plausible Argentine phone number: only digits,
- * spaces, `+`, `-`, and parentheses, and a digit count/prefix combination
- * that matches how Argentine numbers are actually written:
- * - 10 digits: a bare local number (area code + line, no prefix).
- * - 11 digits: a mobile marked with a leading `9`, or a local number with
- *   the domestic long-distance `0` trunk prefix (e.g. "011 4567-8901").
- * - 12 digits: the `54` country code plus a landline (no mobile marker).
- * - 13 digits: the `549` country code plus the mobile marker.
+ * spaces, `+`, `-`, and parentheses, and exactly 10 digits — the national
+ * format (area code + local number) used for calls placed from inside the
+ * country, with no leading `0` trunk prefix, no `15`, no `+54` country code
+ * and no `9` mobile marker (those only apply to international dialing,
+ * which this app — a local league — never needs).
  */
 export function isValidPhone(value: string): boolean {
   const trimmed = value.trim();
@@ -43,18 +41,7 @@ export function isValidPhone(value: string): boolean {
   }
 
   const digits = trimmed.replace(/\D/g, '');
-  switch (digits.length) {
-    case 10:
-      return true;
-    case 11:
-      return digits.startsWith('9') || digits.startsWith('0');
-    case 12:
-      return digits.startsWith('54') && !digits.startsWith('549');
-    case 13:
-      return digits.startsWith('549');
-    default:
-      return false;
-  }
+  return digits.length === 10;
 }
 
 /** True when `value` is a plausible DNI/document number: 6 to 15 digits only. */
@@ -92,32 +79,25 @@ export function isAtLeastMinimumPlayerAge(birthDate: string): boolean {
 }
 
 /**
- * Formats a phone number as an Argentine mobile number for display, e.g.
- * "3435551234" → "+54 9 343 555-1234". Accepts the number with or without
- * the "+54"/"9" prefixes already present (idempotent either way). Only a
- * 10-digit local number (area code + line, the shape every phone in this
+ * Formats a phone number for display in the Argentine national shape, e.g.
+ * "3435551234" → "343 555-1234" — no "+54" country code and no "9" mobile
+ * marker, since this app is only ever dialed from inside the country. Only
+ * a 10-digit local number (area code + line, the shape every phone in this
  * app is stored as) can be confidently split into area/exchange/line
  * without an area-code length table, so anything else is returned
  * unchanged rather than mangled.
  */
 export function formatArgentinePhone(value: string): string {
   const digits = value.replace(/\D/g, '');
-  let local = digits;
-  if (local.startsWith('54')) {
-    local = local.slice(2);
-  }
-  if (local.startsWith('9')) {
-    local = local.slice(1);
-  }
 
-  if (local.length !== 10) {
+  if (digits.length !== 10) {
     return value;
   }
 
-  const area = local.slice(0, 3);
-  const exchange = local.slice(3, 6);
-  const line = local.slice(6);
-  return `+54 9 ${area} ${exchange}-${line}`;
+  const area = digits.slice(0, 3);
+  const exchange = digits.slice(3, 6);
+  const line = digits.slice(6);
+  return `${area} ${exchange}-${line}`;
 }
 
 /**

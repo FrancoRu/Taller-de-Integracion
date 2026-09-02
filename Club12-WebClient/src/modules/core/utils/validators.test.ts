@@ -32,51 +32,30 @@ describe('isValidEmail', () => {
 });
 
 describe('isValidPhone', () => {
-  it.each([
-    '1123456789',
-    '+54 11 2345-6789',
-    '(011) 4567-8901',
-    '11 2345 6789',
-    '+54-9-11-2345-6789',
-  ])('accepts a plausible phone: %s', phone => {
-    expect(isValidPhone(phone)).toBe(true);
-  });
+  it.each(['1123456789', '11 2345-6789', '(11) 2345 6789', '3431234567'])(
+    'accepts a 10-digit national number: %s',
+    phone => {
+      expect(isValidPhone(phone)).toBe(true);
+    }
+  );
 
   it.each([
-    '',
-    '123', // too few digits
-    '1234567', // 7 digits, below minimum
-    '1234567890123456', // 16 digits, above maximum
-    'abc12345678', // letters not allowed
-    '11 2345 6789 ext.4', // letters not allowed
-  ])('rejects an invalid phone: %s', phone => {
+    ['', 'empty'],
+    ['123', 'too few digits'],
+    ['1234567', '7 digits, below the 10-digit national length'],
+    ['01123456789', '11 digits — the 0 long-distance prefix is not accepted'],
+    ['91123456789', '11 digits — the 9 mobile marker is not accepted'],
+    ['+54 11 2345-6789', '12 digits — the +54 country code is not accepted'],
+    ['+54 9 11 2345-6789', '13 digits — +54 9 is not accepted'],
+    ['abc1234567', 'letters not allowed'],
+    ['11 2345 6789 ext.4', 'letters not allowed'],
+  ])('rejects an invalid phone: %s (%s)', phone => {
     expect(isValidPhone(phone)).toBe(false);
   });
 
-  it('counts only digits toward the 8-15 range, ignoring separators', () => {
+  it('counts only digits, ignoring separators', () => {
     expect(isValidPhone('(11) 1234-5678')).toBe(true);
     expect(isValidPhone('1-2-3-4-5-6-7')).toBe(false);
-  });
-
-  describe('Argentine digit-count/prefix rules', () => {
-    it.each([
-      ['3435551234', '10-digit bare local number'],
-      ['93435551234', '11-digit local number with mobile marker 9'],
-      ['03435551234', '11-digit local number with the 0 trunk prefix'],
-      ['543435551234', '12-digit country code + landline'],
-      ['5493435551234', '13-digit country code + mobile marker'],
-    ])('accepts %s (%s)', phone => {
-      expect(isValidPhone(phone)).toBe(true);
-    });
-
-    it.each([
-      ['13435551234', '11 digits not starting with 9 or 0'],
-      ['549343555123', '12 digits starting with 549 (mobile marker in a 12-digit number)'],
-      ['123456789012', '12 digits not starting with 54'],
-      ['1234567890123', '13 digits not starting with 549'],
-    ])('rejects %s (%s)', phone => {
-      expect(isValidPhone(phone)).toBe(false);
-    });
   });
 });
 
@@ -100,19 +79,13 @@ describe('isValidDocumentNumber', () => {
 });
 
 describe('formatArgentinePhone', () => {
-  it('formats a bare 10-digit local number', () => {
-    expect(formatArgentinePhone('3435551234')).toBe('+54 9 343 555-1234');
+  it('formats a bare 10-digit local number in the national shape', () => {
+    expect(formatArgentinePhone('3435551234')).toBe('343 555-1234');
   });
 
-  it('is idempotent when the country code and mobile marker are already present', () => {
-    expect(formatArgentinePhone('+54 9 343 555-1234')).toBe(
-      '+54 9 343 555-1234'
-    );
-    expect(formatArgentinePhone('5493435551234')).toBe('+54 9 343 555-1234');
-  });
-
-  it('handles the country code without the mobile marker', () => {
-    expect(formatArgentinePhone('543435551234')).toBe('+54 9 343 555-1234');
+  it('strips separators from an already-formatted number', () => {
+    expect(formatArgentinePhone('343 555-1234')).toBe('343 555-1234');
+    expect(formatArgentinePhone('(343) 555-1234')).toBe('343 555-1234');
   });
 
   it('returns a number of unexpected length unchanged', () => {

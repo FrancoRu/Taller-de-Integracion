@@ -8,13 +8,11 @@ namespace Application.Utils.Constants.Validation;
 /// Validates that a string is a plausible Argentine phone number, mirroring
 /// <c>isValidPhone</c> in <c>src/modules/core/utils/validators.ts</c>: only
 /// digits, spaces, <c>+</c>, <c>-</c> and parentheses are allowed, and the
-/// digit count/prefix combination must match how Argentine numbers are
-/// actually written:
-/// - 10 digits: a bare local number (area code + line, no prefix).
-/// - 11 digits: a mobile marked with a leading <c>9</c>, or a local number
-///   with the domestic long-distance <c>0</c> trunk prefix.
-/// - 12 digits: the <c>54</c> country code plus a landline (no mobile marker).
-/// - 13 digits: the <c>549</c> country code plus the mobile marker.
+/// digits must total exactly 10 — the national format (area code + local
+/// number) used for calls placed from inside the country, with no leading
+/// <c>0</c> trunk prefix, no <c>15</c>, no <c>+54</c> country code and no
+/// <c>9</c> mobile marker (those only apply to international dialing, which
+/// this app — a local league — never needs).
 /// A null or empty value passes (pair with <c>[Required]</c> when the field
 /// itself is mandatory).
 /// </summary>
@@ -30,18 +28,9 @@ public sealed class ArgentinePhoneNumberAttribute : ValidationAttribute
 
         string trimmed = phone.Trim();
         bool hasOnlyAllowedChars = trimmed.All(c => char.IsDigit(c) || c is '+' or ' ' or '(' or ')' or '-');
-        string digits = new(trimmed.Where(char.IsDigit).ToArray());
+        int digitCount = trimmed.Count(char.IsDigit);
 
-        bool isValid = hasOnlyAllowedChars && digits.Length switch
-        {
-            10 => true,
-            11 => digits.StartsWith('9') || digits.StartsWith('0'),
-            12 => digits.StartsWith("54") && !digits.StartsWith("549"),
-            13 => digits.StartsWith("549"),
-            _ => false,
-        };
-
-        return isValid
+        return hasOnlyAllowedChars && digitCount == 10
             ? ValidationResult.Success
             : new ValidationResult(
                 ErrorMessage ?? ValidationPatterns.PhoneNumberError,
