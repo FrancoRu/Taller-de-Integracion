@@ -182,7 +182,7 @@ export interface WizardTreeNode {
  * the cup's own count but the cross cup passes its pooled group total.
  */
 const describeCup = (cup: CupConfig, qualifiers = cup.qualifiers): string => {
-  const phases = qualifiersToStageTypes(qualifiers)
+  const phases = qualifiersToStageTypes(qualifiers, cup.hasThirdPlace)
     .map(stageType => {
       const bestOf = getStageBestOf(cup, stageType);
       const serie = bestOf === 1 ? 'a partido único' : `al mejor de ${bestOf}`;

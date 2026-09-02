@@ -20,8 +20,8 @@ public class Team : EntityBase
 
     /// <summary>
     /// The jersey kit pattern applied over the primary <see cref="ShirtColor"/>.
-    /// One of: solid, stripes, hoops, diagonal, chevron, sash, sides, halves,
-    /// circles, gradient, vneck. Defaults to "solid".
+    /// See <c>JERSEY_STYLES</c> (frontend) for the full, current list.
+    /// Defaults to "solid".
     /// </summary>
     public string JerseyStyle { get; set; } = "solid";
 
@@ -30,6 +30,14 @@ public class Team : EntityBase
     /// pattern/trim. Null when the kit is a plain solid with no accent.
     /// </summary>
     public string? ShirtSecondaryColor { get; set; }
+
+    /// <summary>
+    /// Optional third <c>#rrggbb</c> hex color, used only by the tri-color
+    /// kit templates (see <c>JERSEY_STYLES</c>) as a second accent alongside
+    /// <see cref="ShirtSecondaryColor"/>. Null when the selected template
+    /// does not use a third color, or none was picked.
+    /// </summary>
+    public string? ShirtTertiaryColor { get; set; }
 
     public Tournament? Tournament { get; set; }
     public Guid? TournamentId { get; set; }

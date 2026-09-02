@@ -30,6 +30,7 @@ const makeState = (): WizardState => {
           name: 'Copa de Oro',
           qualifiers: 4,
           bestOfByStage: {},
+          hasThirdPlace: true,
         },
       ],
       pointsForWin: 3,
@@ -151,8 +152,8 @@ describe('submitWizard', () => {
     const services = makeServices();
     const state = makeState();
     state.zones[0].cups = [
-      { id: 'cup-oro', name: 'Copa de Oro', qualifiers: 4, bestOfByStage: {} },
-      { id: 'cup-plata', name: 'Copa de Plata', qualifiers: 4, bestOfByStage: {} },
+      { id: 'cup-oro', name: 'Copa de Oro', qualifiers: 4, bestOfByStage: {}, hasThirdPlace: true },
+      { id: 'cup-plata', name: 'Copa de Plata', qualifiers: 4, bestOfByStage: {}, hasThirdPlace: true },
     ];
 
     await submitWizard(state, services);
@@ -204,6 +205,23 @@ describe('submitWizard', () => {
       bracketName: 'Copa de Oro',
       bestOf: 3,
     });
+  });
+
+  it('HU-112: a cup with hasThirdPlace=false derives Semis + Final only, no third-place stage', async () => {
+    const state = makeState();
+    state.zones[0].cups[0].hasThirdPlace = false;
+
+    const services = makeServices();
+    await submitWizard(state, services);
+
+    const cupStages = payloadOf(services).divisions[0].stages.filter(
+      s => s.isElimination
+    );
+    expect(cupStages).toHaveLength(2);
+    expect(cupStages.map(s => s.stageType)).toEqual([
+      StageType.SemiFinal,
+      StageType.Final,
+    ]);
   });
 
   it('reports an error and does not report success when the create fails', async () => {

@@ -1,4 +1,14 @@
-import { Box, Button, IconButton, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Checkbox,
+  FormControlLabel,
+  IconButton,
+  MenuItem,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { AddIcon, DeleteIcon } from '@/views/core/MUI/icons/icons';
 import { StageType } from '@/modules/stage/type/stage';
 import {
@@ -61,7 +71,11 @@ export default function CupsEditor({
     <Stack spacing={2}>
       {cups.map((cup, index) => {
         const effectiveQualifiers = hideQualifiers ? derivedQualifiers ?? cup.qualifiers : cup.qualifiers;
-        const phases = qualifiersToStageTypes(effectiveQualifiers);
+        // A third-place decider needs semifinal losers to seed it from — a
+        // 2-qualifier cup (Final only) has none, so the toggle is meaningless
+        // (and hidden) below that.
+        const hasSemiFinal = effectiveQualifiers > 2;
+        const phases = qualifiersToStageTypes(effectiveQualifiers, cup.hasThirdPlace);
         const range = cupPositionRange(cups, index);
 
         return (
@@ -94,6 +108,23 @@ export default function CupsEditor({
                   {cup.name.trim() ? positionsHint(range.from, range.to) : 'Poné un nombre para asignar los puestos'}
                 </Typography>
               </Stack>
+            )}
+
+            {hasSemiFinal && (
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    size="small"
+                    checked={cup.hasThirdPlace}
+                    onChange={e => updateCup(cup.id, { hasThirdPlace: e.target.checked })}
+                  />
+                }
+                label={
+                  <Typography variant="body2">
+                    Jugar partido por el tercer puesto (perdedores de semifinal)
+                  </Typography>
+                }
+              />
             )}
 
             <Typography variant="caption" sx={{ color: 'text.secondary', mt: 1, mb: 0.5, display: 'block' }}>

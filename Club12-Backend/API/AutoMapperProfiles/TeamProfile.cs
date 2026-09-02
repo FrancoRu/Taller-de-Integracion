@@ -30,6 +30,7 @@ public class TeamProfile : Profile
         _ = CreateMap<UpdateTeamRequest, Team>()
             .ForMember(dest => dest.ThreeLetterCode, opt => opt.MapFrom(src => src.ThreeLetterCode != null ? src.ThreeLetterCode.ToUpper() : null))
             .ForMember(dest => dest.JerseyStyle, opt => opt.Condition(src => src.JerseyStyle != null))
-            .ForMember(dest => dest.ShirtSecondaryColor, opt => opt.Condition(src => src.ShirtSecondaryColor != null));
+            .ForMember(dest => dest.ShirtSecondaryColor, opt => opt.Condition(src => src.ShirtSecondaryColor != null))
+            .ForMember(dest => dest.ShirtTertiaryColor, opt => opt.Condition(src => src.ShirtTertiaryColor != null));
     }
 }

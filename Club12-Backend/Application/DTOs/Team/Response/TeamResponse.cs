@@ -32,9 +32,8 @@ public class TeamResponse : BaseEntityResponse
     public required string ShirtColor { get; set; }
 
     /// <summary>
-    /// The jersey kit pattern applied over the primary shirt color
-    /// (solid, stripes, hoops, diagonal, chevron, sash, sides, halves,
-    /// circles, gradient, vneck).
+    /// The jersey kit pattern applied over the primary shirt color. See
+    /// JERSEY_STYLES (frontend) for the full, current list.
     /// </summary>
     public string JerseyStyle { get; set; } = "solid";
 
@@ -43,6 +42,12 @@ public class TeamResponse : BaseEntityResponse
     /// Null when the kit has no accent color.
     /// </summary>
     public string? ShirtSecondaryColor { get; set; }
+
+    /// <summary>
+    /// Optional third #rrggbb hex color, used only by the tri-color kit
+    /// templates. Null when the selected template does not use one.
+    /// </summary>
+    public string? ShirtTertiaryColor { get; set; }
 
     /// <summary>
     /// The URL of the team's logo.

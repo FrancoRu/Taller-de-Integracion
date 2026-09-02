@@ -35,4 +35,11 @@ public class UpdateTeamRequest
     /// </summary>
     [MaxLength(9)]
     public string? ShirtSecondaryColor { get; set; }
+
+    /// <summary>
+    /// Optional third #rrggbb hex color, used only by the tri-color kit
+    /// templates as a second accent alongside <see cref="ShirtSecondaryColor"/>.
+    /// </summary>
+    [MaxLength(9)]
+    public string? ShirtTertiaryColor { get; set; }
 }

@@ -35,6 +35,9 @@ public class TeamDetailedMatchResponse
     /// <summary>Secondary shirt color (#rrggbb), for the kit trim/pattern.</summary>
     public string? ShirtSecondaryColor { get; set; }
 
+    /// <summary>Third shirt color (#rrggbb), used only by tri-color kit templates.</summary>
+    public string? ShirtTertiaryColor { get; set; }
+
     /// <summary>
     /// The score of the team.
     /// </summary>

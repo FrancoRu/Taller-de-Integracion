@@ -108,7 +108,7 @@ const buildCupStages = (
     const qualifiers = qualifiersOverride ?? cup.qualifiers;
     let roundStartDate = startDate;
 
-    for (const stageType of qualifiersToStageTypes(qualifiers)) {
+    for (const stageType of qualifiersToStageTypes(qualifiers, cup.hasThirdPlace)) {
       const roundEndDate = addDays(roundStartDate, ROUND_DURATION_DAYS);
 
       stages.push({

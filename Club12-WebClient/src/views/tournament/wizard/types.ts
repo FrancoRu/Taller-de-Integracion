@@ -30,24 +30,31 @@ export const STAGE_TYPE_LABELS: Record<StageType, string> = {
  * so the rounds ALWAYS match the qualifier count (you can never configure
  * "4 qualify" with only a final). Non-powers-of-two are padded with byes by
  * the backend seeder, so the depth here is `ceil(log2(qualifiers))` rounds:
- * 2 → Final; 3-4 → Semifinal+3erPuesto+Final; 5-8 → Cuartos+Semifinal+
- * 3erPuesto+Final; 9-16 → Octavos+Cuartos+Semifinal+3erPuesto+Final.
+ * 2 → Final; 3-4 → Semifinal[+3erPuesto]+Final; 5-8 → Cuartos+Semifinal
+ * [+3erPuesto]+Final; 9-16 → Octavos+Cuartos+Semifinal[+3erPuesto]+Final.
  *
  * The third-place decider is a SIDE slot (the two semifinal losers), not
- * part of the main advancement line — it only ever appears once a
- * Semifinal round exists (a cup with just a Final has no semifinal losers
- * to seed it from).
+ * part of the main advancement line, and it is OPTIONAL — a cup may or may
+ * not play one (`includeThirdPlace`, mirrored from {@link CupConfig.hasThirdPlace}).
+ * It only ever appears once a Semifinal round exists in the first place (a
+ * cup with just a Final has no semifinal losers to seed it from).
  */
-export const qualifiersToStageTypes = (qualifiers: number): StageType[] => {
+export const qualifiersToStageTypes = (
+  qualifiers: number,
+  includeThirdPlace = true
+): StageType[] => {
   if (qualifiers <= 2) return [StageType.Final];
+
+  const thirdPlace = includeThirdPlace ? [StageType.ThirdPlace] : [];
+
   if (qualifiers <= 4) {
-    return [StageType.SemiFinal, StageType.ThirdPlace, StageType.Final];
+    return [StageType.SemiFinal, ...thirdPlace, StageType.Final];
   }
   if (qualifiers <= 8) {
     return [
       StageType.QuarterFinal,
       StageType.SemiFinal,
-      StageType.ThirdPlace,
+      ...thirdPlace,
       StageType.Final,
     ];
   }
@@ -55,7 +62,7 @@ export const qualifiersToStageTypes = (qualifiers: number): StageType[] => {
     StageType.RoundOf16,
     StageType.QuarterFinal,
     StageType.SemiFinal,
-    StageType.ThirdPlace,
+    ...thirdPlace,
     StageType.Final,
   ];
 };
@@ -84,6 +91,13 @@ export interface CupConfig {
    * best-of-5.
    */
   bestOfByStage: Partial<Record<StageType, number>>;
+  /**
+   * Whether this cup plays a third-place decider between the two semifinal
+   * losers. A real configuration choice, not automatic — only meaningful
+   * once the cup's qualifier count actually produces a Semifinal round (3+
+   * qualifiers); ignored otherwise. See {@link qualifiersToStageTypes}.
+   */
+  hasThirdPlace: boolean;
 }
 
 /**
@@ -195,9 +209,11 @@ export const createEmptyCup = (): CupConfig => ({
   id: nextLocalId(),
   name: '',
   // Default: top 4 qualify (semis + final). Each derived phase defaults to
-  // best-of-3 (DEFAULT_BEST_OF) — the club's typical cup.
+  // best-of-3 (DEFAULT_BEST_OF) — the club's typical cup. Third place
+  // defaults on (the common case); the admin can turn it off per cup.
   qualifiers: 4,
   bestOfByStage: {},
+  hasThirdPlace: true,
 });
 
 export const createEmptyZone = (): ZoneConfig => ({

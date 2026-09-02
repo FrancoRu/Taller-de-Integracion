@@ -97,14 +97,14 @@ describe('validateZonesStep', () => {
 
   it('rejects a cup with no name', () => {
     const state = makeValidState();
-    const cup: CupConfig = { id: 'cup-1', name: '', qualifiers: 4, bestOfByStage: {} };
+    const cup: CupConfig = { id: 'cup-1', name: '', qualifiers: 4, bestOfByStage: {}, hasThirdPlace: true };
     state.zones[0].cups.push(cup);
     expect(validateZonesStep(state).some(e => e.includes('necesita un nombre'))).toBe(true);
   });
 
   it('HU-112: rejects a cup with fewer than 2 qualifiers', () => {
     const state = makeValidState();
-    const cup: CupConfig = { id: 'cup-1', name: 'Copa de Oro', qualifiers: 1, bestOfByStage: {} };
+    const cup: CupConfig = { id: 'cup-1', name: 'Copa de Oro', qualifiers: 1, bestOfByStage: {}, hasThirdPlace: true };
     state.zones[0].cups.push(cup);
     expect(validateZonesStep(state).some(e => e.includes('clasificados'))).toBe(true);
   });
@@ -128,7 +128,7 @@ describe('validateCrossCupStep', () => {
       ...state.crossCup,
       enabled: true,
       name: 'Copa cruzada',
-      cups: [{ id: 'cup-1', name: 'Copa Club12', qualifiers: 4, bestOfByStage: {} }],
+      cups: [{ id: 'cup-1', name: 'Copa Club12', qualifiers: 4, bestOfByStage: {}, hasThirdPlace: true }],
     };
     expect(validateCrossCupStep(state)).toEqual([]);
   });
@@ -173,7 +173,7 @@ describe('validateCrossCupStep', () => {
       name: 'Copa cruzada',
       groupCount: 4,
       qualifiersPerGroup: 2,
-      cups: [{ id: 'cup-1', name: 'Copa Club12', qualifiers: 8, bestOfByStage: {} }],
+      cups: [{ id: 'cup-1', name: 'Copa Club12', qualifiers: 8, bestOfByStage: {}, hasThirdPlace: true }],
     };
     expect(validateCrossCupStep(state)).toEqual([]);
   });
@@ -208,6 +208,7 @@ describe('buildWizardTree', () => {
       name: 'Copa de Oro',
       qualifiers: 4,
       bestOfByStage: {},
+      hasThirdPlace: true,
     });
 
     const nodes = buildWizardTree(state);

@@ -99,6 +99,13 @@ export interface IAddTeamRequest {
   shirtSecondaryColor?: string | null;
 
   /**
+   * The third shirt color, used only by tri-color jersey templates as a
+   * second accent alongside {@link shirtSecondaryColor}.
+   * @type {string | null}
+   */
+  shirtTertiaryColor?: string | null;
+
+  /**
    * The selected jersey kit template (e.g. `solid`, `stripes`).
    * @type {string | null}
    */
@@ -157,6 +164,13 @@ export interface ITeamResponse {
    * @type {string | null}
    */
   shirtSecondaryColor?: string | null;
+
+  /**
+   * The third shirt color, used only by tri-color jersey templates as a
+   * second accent alongside {@link shirtSecondaryColor}.
+   * @type {string | null}
+   */
+  shirtTertiaryColor?: string | null;
 
   /**
    * The selected jersey kit template (e.g. `solid`, `stripes`).

@@ -191,10 +191,11 @@ export default function BracketMatchNode({
             flexWrap: 'wrap',
             gap: 0.5,
             // Every finished game must stay visible (a decided bo7 can have
-            // up to 7) — clip overflow past 2 rows of chips instead of
-            // growing the card, which would overlap its neighbors in the
-            // library's fixed-height bracket layout.
-            maxHeight: 40,
+            // up to 7) — the card can't grow (the library positions every
+            // slot at a fixed height, PLAYOFF_BRACKET_BOX_HEIGHT), so this
+            // budgets up to 4 wrapped rows of chips instead, which that
+            // height was sized to fit without clipping mid-chip.
+            maxHeight: 80,
             overflow: 'hidden',
           }}
         >
