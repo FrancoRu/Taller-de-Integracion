@@ -75,5 +75,22 @@ public static class ConfigurationKeys
         /// flag (medical-records-storage-eligibility, Part 3, ADR #8).
         /// </summary>
         public const string MedicalRecords = "Seed:MedicalRecords";
+
+        /// <summary>
+        /// How many consecutive seasons of history the startup DataSeeder
+        /// builds, counting backwards from the most recent one. 1 (the
+        /// default) keeps the single-season dataset; higher values produce a
+        /// demo-sized league with real multi-season club history. Clamped to a
+        /// safe range by the seeder.
+        /// </summary>
+        public const string Seasons = "Seed:Seasons";
+
+        /// <summary>
+        /// Roster size for every seeded team. Defaults to
+        /// <see cref="Infrastructure.Persistance.SampleTournamentBuilder.DefaultPlayersPerTeam"/>;
+        /// a realistic basketball roster is 12. Clamped to a safe range by the
+        /// seeder.
+        /// </summary>
+        public const string PlayersPerTeam = "Seed:PlayersPerTeam";
     }
 }

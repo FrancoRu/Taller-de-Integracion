@@ -1,4 +1,4 @@
-using Domain.Entities.Models;
+﻿using Domain.Entities.Models;
 
 using Infrastructure.Persistance;
 
@@ -39,7 +39,7 @@ public class SampleTournamentBuilderSlugTests
         ];
 
         SampleTournamentBuilder.TournamentDefinition definition = new(
-            Name: "Apertura Prueba",
+            Name: "Torneo Apertura 2026",
             Description: "Torneo de prueba con playoffs y copa cruzada.",
             TeamRegistrationDeadline: new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
             StartDate: new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc),
@@ -122,9 +122,9 @@ public class SampleTournamentBuilderSlugTests
         int playerCounter = 0;
         SampleTournamentBuilder.SlugRegistry slugRegistry = new();
         SampleTournamentBuilder.BuildResult first =
-            SampleTournamentBuilder.Build(Make("Torneo Uno"), venues, ref playerCounter, includePlayoffs: false, slugRegistry);
+            SampleTournamentBuilder.Build(Make("Torneo Apertura 2026"), venues, ref playerCounter, includePlayoffs: false, slugRegistry);
         SampleTournamentBuilder.BuildResult second =
-            SampleTournamentBuilder.Build(Make("Torneo Dos"), venues, ref playerCounter, includePlayoffs: false, slugRegistry);
+            SampleTournamentBuilder.Build(Make("Torneo Clausura 2026"), venues, ref playerCounter, includePlayoffs: false, slugRegistry);
 
         List<string> allStageSlugs =
         [
@@ -180,7 +180,13 @@ public class SampleTournamentBuilderSlugTests
         SampleTournamentBuilder.SlugRegistry slugRegistry = new();
 
         List<string> allPlayerSlugs = [];
-        foreach (string name in new[] { "Torneo Uno", "Torneo Dos", "Torneo Tres", "Torneo Cuatro" })
+        string[] tournamentNames =
+        [
+            "Torneo Apertura 2022", "Torneo Clausura 2022", "Torneo Apertura 2023", "Torneo Clausura 2023",
+            "Torneo Apertura 2024", "Torneo Clausura 2024", "Torneo Apertura 2025", "Torneo Clausura 2025",
+            "Torneo Apertura 2026", "Torneo Clausura 2026",
+        ];
+        foreach (string name in tournamentNames)
         {
             SampleTournamentBuilder.BuildResult result = SampleTournamentBuilder.Build(
                 Make(name), venues, ref playerCounter, includePlayoffs: false, slugRegistry);

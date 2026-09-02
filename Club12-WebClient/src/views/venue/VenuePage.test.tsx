@@ -95,7 +95,7 @@ describe('VenuePage — edit trigger', () => {
     ).toHaveValue('Calle 123');
   });
 
-  it('saves via putVenueById, closes the dialog and refreshes the venue', async () => {
+  it('saves via putVenueById, closes the dialog and shows the updated venue', async () => {
     const getVenueById = vi.fn().mockResolvedValue(buildVenue());
     const putVenueById = vi.fn().mockResolvedValue(buildVenue({ name: 'Cancha Norte' }));
     const putVenuePhotoById = vi.fn().mockResolvedValue(undefined);
@@ -115,7 +115,6 @@ describe('VenuePage — edit trigger', () => {
     await user.clear(nameInput);
     await user.type(nameInput, 'Cancha Norte');
 
-    getVenueById.mockClear();
     await user.click(within(dialog).getByRole('button', { name: /guardar/i }));
 
     await waitFor(() => expect(putVenueById).toHaveBeenCalledTimes(1));
@@ -126,7 +125,41 @@ describe('VenuePage — edit trigger', () => {
     await waitFor(() =>
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     );
-    await waitFor(() => expect(getVenueById).toHaveBeenCalledTimes(1));
+    // The refreshed venue comes straight from putVenueById's return value —
+    // no second getVenueById round-trip — and the page reflects it right away.
+    expect(await screen.findByRole('heading', { name: 'Cancha Norte' })).toBeInTheDocument();
+    expect(getVenueById).toHaveBeenCalledTimes(1);
     expect(putVenuePhotoById).not.toHaveBeenCalled();
+  });
+
+  it('shows the new photo after a photo upload without a page reload', async () => {
+    const getVenueById = vi.fn().mockResolvedValue(buildVenue());
+    const putVenueById = vi.fn().mockResolvedValue(buildVenue());
+    const putVenuePhotoById = vi
+      .fn()
+      .mockResolvedValue(buildVenue({ photoUrl: 'https://cdn.test/venue/new.jpg' }));
+    mockedUseVenue.mockReturnValue({
+      getVenueById,
+      putVenueById,
+      putVenuePhotoById,
+    } as unknown as ReturnType<typeof useVenue>);
+
+    const user = userEvent.setup();
+    renderAt('/panel/canchas/cancha-central');
+
+    await user.click(await screen.findByRole('button', { name: 'Editar cancha' }));
+
+    const dialog = screen.getByRole('dialog');
+    const fileInput = dialog.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(fileInput, new File(['x'], 'court.jpg', { type: 'image/jpeg' }));
+
+    await user.click(within(dialog).getByRole('button', { name: /guardar/i }));
+
+    await waitFor(() => expect(putVenuePhotoById).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    );
+    const image = await screen.findByRole('img', { name: /Cancha Central/ });
+    expect(image).toHaveAttribute('src', 'https://cdn.test/venue/new.jpg');
   });
 });

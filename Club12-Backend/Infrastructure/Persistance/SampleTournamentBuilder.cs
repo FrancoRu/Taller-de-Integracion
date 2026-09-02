@@ -1,4 +1,4 @@
-using Application.Utils.Constants.Stage;
+﻿using Application.Utils.Constants.Stage;
 using Application.Utils.Helper.Playoff;
 using Application.Utils.Helper.RoundRobin;
 using Application.Utils.Helper.Series;
@@ -48,6 +48,8 @@ public static class SampleTournamentBuilder
     // registration correctly reads as NOT habilitado (Part 2's file-backed
     // rule) until the seed's backfill step gives it a real file.
     private const string SampleMedicalRecordFileName = "ficha-medica.pdf";
+
+    public const int DefaultPlayersPerTeam = 8;
     private static readonly DateTime SampleMedicalRecordReviewedAt =
         new(2026, 8, 1, 12, 0, 0, DateTimeKind.Utc);
 
@@ -55,12 +57,14 @@ public static class SampleTournamentBuilder
     [
         "Juan", "Carlos", "Martín", "Diego", "Facundo", "Lucas", "Nicolás", "Matías",
         "Franco", "Ezequiel", "Agustín", "Bruno", "Iván", "Santiago", "Tomás", "Gonzalo",
+        "Joaquín", "Valentín", "Emiliano", "Thiago",
     ];
 
     private static readonly string[] LastNames =
     [
         "González", "Rodríguez", "Fernández", "López", "Díaz", "Pérez", "Sánchez", "Romero",
         "Álvarez", "Torres", "Ruiz", "Ramírez", "Flores", "Acosta", "Benítez", "Medina",
+        "Cabrera", "Sosa", "Vera", "Ledesma", "Quiroga",
     ];
 
     /// <summary>
@@ -138,7 +142,10 @@ public static class SampleTournamentBuilder
         TournamentStatus Status = TournamentStatus.Ongoing,
         TournamentCategory Category = TournamentCategory.Masculine,
         int RoundRobinLegs = 1,
-        int? PlayedRoundsPerZone = null);
+        int? PlayedRoundsPerZone = null,
+        int PlayersPerTeam = DefaultPlayersPerTeam,
+        int UpsetPercent = 0,
+        int VarietySeed = 0);
 
     public sealed record BuildResult(Tournament Tournament, List<PlayerSanction> Sanctions);
 
@@ -161,12 +168,18 @@ public static class SampleTournamentBuilder
         private readonly HashSet<string> _divisionSlugs = [];
         private readonly HashSet<string> _stageSlugs = [];
         private readonly HashSet<string> _playerSlugs = [];
+        private readonly HashSet<string> _teamSlugs = [];
+        private readonly HashSet<string> _tournamentSlugs = [];
 
         public string ForDivision(string source) => Register(source, _divisionSlugs);
 
         public string ForStage(string source) => Register(source, _stageSlugs);
 
         public string ForPlayer(string source) => Register(source, _playerSlugs);
+
+        public string ForTeam(string source) => Register(source, _teamSlugs);
+
+        public string ForTournament(string source) => Register(source, _tournamentSlugs);
 
         private static string Register(string source, HashSet<string> used)
         {
@@ -209,7 +222,7 @@ public static class SampleTournamentBuilder
         {
             CreatedBy = CreatedBy,
             Name = definition.Name,
-            Slug = SlugGenerator.GenerateSlug(definition.Name),
+            Slug = slugRegistry.ForTournament(definition.Name),
             Description = definition.Description,
             TeamRegistrationDeadline = definition.TeamRegistrationDeadline,
             StartDate = definition.StartDate,
@@ -236,6 +249,7 @@ public static class SampleTournamentBuilder
                 divisionDef.TeamStyles,
                 divisionDef.TeamSecondaryColors,
                 slugRegistry,
+                definition.PlayersPerTeam,
                 ref playerCounter);
 
             division.Category = definition.Category;
@@ -267,7 +281,8 @@ public static class SampleTournamentBuilder
 
             SeedRoundRobinMatches(
                 stage, teams, venues, definition.StageStartDate, isCrossDivisionCup: false,
-                legs: definition.RoundRobinLegs, playedRounds: definition.PlayedRoundsPerZone);
+                legs: definition.RoundRobinLegs, playedRounds: definition.PlayedRoundsPerZone,
+                upsetPercent: definition.UpsetPercent, varietySeed: definition.VarietySeed);
 
             if (includePlayoffs)
             {
@@ -288,7 +303,8 @@ public static class SampleTournamentBuilder
                 ? [.. allTeams.Take(poolSize)]
                 : allTeams;
             SeedCrossDivisionCup(
-                tournament, definition.CrossCup, crossCupTeams, venues, definition.StageStartDate, slugRegistry);
+                tournament, definition.CrossCup, crossCupTeams, venues, definition.StageStartDate, slugRegistry,
+                definition.UpsetPercent, definition.VarietySeed);
         }
 
         List<PlayerSanction> sanctions = SeedSanctions(regularGroupStages);
@@ -305,6 +321,7 @@ public static class SampleTournamentBuilder
         string[]? teamStyles,
         string[]? teamSecondaryColors,
         SlugRegistry slugRegistry,
+        int playersPerTeam,
         ref int playerCounter)
     {
         Division division = new()
@@ -325,7 +342,7 @@ public static class SampleTournamentBuilder
                 Id = Guid.NewGuid(),
                 CreatedBy = CreatedBy,
                 Name = teamNames[i],
-                Slug = SlugGenerator.GenerateSlug(teamNames[i]),
+                Slug = slugRegistry.ForTeam(teamNames[i]),
                 ThreeLetterCode = teamCodes[i],
                 LogoUrl = $"https://placehold.co/128x128?text={teamCodes[i]}",
                 ShirtColor = teamColors[i],
@@ -347,12 +364,12 @@ public static class SampleTournamentBuilder
                 Tournament = tournament,
             });
 
-            for (int p = 0; p < 8; p++)
+            for (int p = 0; p < playersPerTeam; p++)
             {
                 playerCounter++;
 
                 string firstName = FirstNames[playerCounter % FirstNames.Length];
-                string lastName = LastNames[(playerCounter * 3) % LastNames.Length];
+                string lastName = LastNames[playerCounter % LastNames.Length];
                 string documentNumber = (30000000 + playerCounter).ToString();
 
                 Player player = new()
@@ -380,7 +397,7 @@ public static class SampleTournamentBuilder
                 // fills MedicalRecordFileUrl with a REAL uploaded object after
                 // Build() runs, so between Build() and that step an Approved row
                 // correctly reads as NOT habilitado under Part 2's file-backed rule.
-                bool isHabilitado = p < 7;
+                bool isHabilitado = p < playersPerTeam - 1;
 
                 team.PlayerTeamRegistrations.Add(new PlayerTeamRegistration
                 {
@@ -427,6 +444,15 @@ public static class SampleTournamentBuilder
     /// as an UPCOMING (unplayed) match on a future date, so an in-progress
     /// tournament shows both a live standings table and a "Próximos" fixture.
     /// Null (the default) leaves every jornada finished.
+    ///
+    /// <paramref name="upsetPercent"/> opts into realistic tables: with 0 (the
+    /// default) the stronger team wins every single game, so the final
+    /// standings are a perfect staircase of the seeding order. Above 0 it is
+    /// the base chance that a game goes the other way, damped by how far apart
+    /// the two teams are seeded — so favourites still finish on top, but every
+    /// team drops and steals games and no record is a clean N-0. The draw is a
+    /// deterministic hash of the fixture plus <paramref name="varietySeed"/>,
+    /// so a given seed always replays the same season.
     /// </summary>
     private static void SeedRoundRobinMatches(
         Stage stage,
@@ -435,7 +461,9 @@ public static class SampleTournamentBuilder
         DateTime anchorDate,
         bool isCrossDivisionCup,
         int legs = 1,
-        int? playedRounds = null)
+        int? playedRounds = null,
+        int upsetPercent = 0,
+        int varietySeed = 0)
     {
         int n = teams.Count;
         if (n < 2)
@@ -486,9 +514,17 @@ public static class SampleTournamentBuilder
                     }
                     else
                     {
-                        bool homeIsStronger = homeIdx < visitorIdx;
-                        int margin = 4 + ((homeIdx + visitorIdx + matchIndex) % 9);
-                        int winnerScore = 68 + ((matchIndex * 5) % 22);
+                        bool isUpset = IsUpset(
+                            upsetPercent, varietySeed, stage.Order, round, homeIdx, visitorIdx);
+                        bool homeIsStronger = isUpset ? homeIdx > visitorIdx : homeIdx < visitorIdx;
+
+                        int marginFloor = isUpset ? 1 : 2;
+                        int margin = upsetPercent > 0
+                            ? marginFloor + ((homeIdx + visitorIdx + matchIndex + varietySeed) % 13)
+                            : 4 + ((homeIdx + visitorIdx + matchIndex) % 9);
+                        int winnerScore = upsetPercent > 0
+                            ? 63 + (((matchIndex * 7) + round + varietySeed) % 29)
+                            : 68 + ((matchIndex * 5) % 22);
                         int loserScore = winnerScore - margin;
                         int homeScore = homeIsStronger ? winnerScore : loserScore;
                         int visitorScore = homeIsStronger ? loserScore : winnerScore;
@@ -943,7 +979,9 @@ public static class SampleTournamentBuilder
         List<Team> allTeams,
         List<Venue> venues,
         DateTime anchorDate,
-        SlugRegistry slugRegistry)
+        SlugRegistry slugRegistry,
+        int upsetPercent,
+        int varietySeed)
     {
         Division cupDivision = new()
         {
@@ -991,7 +1029,8 @@ public static class SampleTournamentBuilder
             AddStageTeamMatches(groupStage, groupTeams);
 
             SeedRoundRobinMatches(
-                groupStage, groupTeams, venues, anchorDate, isCrossDivisionCup: true, legs: crossCup.RoundRobinLegs);
+                groupStage, groupTeams, venues, anchorDate, isCrossDivisionCup: true, legs: crossCup.RoundRobinLegs,
+                playedRounds: null, upsetPercent: upsetPercent, varietySeed: varietySeed + g);
 
             groupStandings.Add(PositionCalculator.CalculatePositions(groupStage.Matches));
         }
@@ -1008,6 +1047,38 @@ public static class SampleTournamentBuilder
         SeedEliminationBracket(
             cupDivision, bracketStart, seedOrder, teamsById, venues,
             bracketName: null, crossCup.FinalsBestOf, slugRegistry, ref order);
+    }
+
+    /// <summary>
+    /// Deterministic "does this fixture go against the seeding?" draw. The base
+    /// <paramref name="upsetPercent"/> is damped by the seeding gap, so
+    /// neighbours in the table trade wins often while a bottom side beating the
+    /// leader stays rare — the shape a real standings table has. 0 disables
+    /// upsets entirely (the stronger team always wins), which is the historical
+    /// behaviour every caller that does not opt in keeps.
+    /// </summary>
+    private static bool IsUpset(
+        int upsetPercent, int varietySeed, int stageOrder, int round, int homeIdx, int visitorIdx)
+    {
+        if (upsetPercent <= 0)
+        {
+            return false;
+        }
+
+        int gap = Math.Abs(homeIdx - visitorIdx);
+        int chance = Math.Max(6, upsetPercent - (gap * 2));
+
+        int hash = 17;
+        hash = (hash * 31) + varietySeed;
+        hash = (hash * 31) + stageOrder;
+        hash = (hash * 31) + round;
+        hash = (hash * 31) + Math.Min(homeIdx, visitorIdx);
+        hash = (hash * 31) + Math.Max(homeIdx, visitorIdx);
+        hash ^= hash >> 13;
+        hash *= 0x5BD1E995;
+        hash ^= hash >> 15;
+
+        return ((hash & 0x7FFFFFFF) % 100) < chance;
     }
 
     private static void AddStageTeamMatches(Stage stage, List<Team> teams)
