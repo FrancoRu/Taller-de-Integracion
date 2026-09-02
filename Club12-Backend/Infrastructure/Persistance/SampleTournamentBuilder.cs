@@ -1,6 +1,7 @@
 using Application.Utils.Constants.Stage;
 using Application.Utils.Helper.Playoff;
 using Application.Utils.Helper.RoundRobin;
+using Application.Utils.Helper.Series;
 using Application.Utils.Helper.Slug;
 using Application.Utils.Helper.Standings;
 
@@ -679,12 +680,17 @@ public static class SampleTournamentBuilder
     /// ever applies to round 1. Stage naming/type follows the bracket size:
     /// RoundOf16 (up to 16 seeds) -&gt; QuarterFinal (8) -&gt; SemiFinal (4)
     /// -&gt; Final (2) — only the rounds a pool of this size actually needs
-    /// are built. Each pairing (at every round) is settled by one decisive
-    /// match — <paramref name="finalsBestOf"/> is recorded on the SemiFinal
-    /// and Final stages' <see cref="Stage.BestOf"/> for the UI's "Best of N"
-    /// badge, matching how every other seeded bracket in this builder
-    /// represents series length; it does not generate extra Match rows.
-    /// No-ops when fewer than two teams are seeded.
+    /// are built. <paramref name="finalsBestOf"/> is recorded on the
+    /// SemiFinal and Final stages' <see cref="Stage.BestOf"/>; every OTHER
+    /// round always plays Bo1 (a single decisive match, no
+    /// <see cref="MatchSeries"/>). When <paramref name="finalsBestOf"/> is
+    /// greater than 1, each SemiFinal/Final pairing is settled by a REAL
+    /// <see cref="MatchSeries"/> built by <see cref="BuildDecidedSeries"/> —
+    /// as many finished games as it actually takes for one team to reach the
+    /// majority (<see cref="SeriesDecisionCalculator"/>), varying between the
+    /// series' minimum-to-clinch and its full BestOf across pairings so a
+    /// season's worth of series doesn't all end identically. No-ops when
+    /// fewer than two teams are seeded.
     /// </summary>
     private static void SeedEliminationBracket(
         Division division,
@@ -757,11 +763,22 @@ public static class SampleTournamentBuilder
                     }
 
                     Team visitor = teamsById[visitorId.Value];
-                    Match match = BuildFinishedMatch(
-                        stage, home, visitor, 79 + (i * 3), 66 + (i * 2), MatchType.Playoff,
-                        venues, roundStart.AddDays(i), i, round: null);
-                    stage.Matches.Add(match);
-                    winners.Add(match.WinningTeam!);
+
+                    if (stageBestOf > 1)
+                    {
+                        Team seriesWinner = BuildDecidedSeries(
+                            stage, home, visitor, stageBestOf, venues, roundStart.AddDays(i),
+                            seriesSeed: (stage.Order * 97) + (i * 13));
+                        winners.Add(seriesWinner);
+                    }
+                    else
+                    {
+                        Match match = BuildFinishedMatch(
+                            stage, home, visitor, 79 + (i * 3), 66 + (i * 2), MatchType.Playoff,
+                            venues, roundStart.AddDays(i), i, round: null);
+                        stage.Matches.Add(match);
+                        winners.Add(match.WinningTeam!);
+                    }
                 }
             }
             else
@@ -771,17 +788,115 @@ public static class SampleTournamentBuilder
                     int pairIndex = i / 2;
                     Team home = roundEntrants[i];
                     Team visitor = roundEntrants[i + 1];
-                    Match match = BuildFinishedMatch(
-                        stage, home, visitor, 84 + i, 71 + i, MatchType.Playoff,
-                        venues, roundStart.AddDays(pairIndex), pairIndex, round: null);
-                    stage.Matches.Add(match);
-                    winners.Add(match.WinningTeam!);
+
+                    if (stageBestOf > 1)
+                    {
+                        Team seriesWinner = BuildDecidedSeries(
+                            stage, home, visitor, stageBestOf, venues, roundStart.AddDays(pairIndex),
+                            seriesSeed: (stage.Order * 97) + (pairIndex * 13) + 5);
+                        winners.Add(seriesWinner);
+                    }
+                    else
+                    {
+                        Match match = BuildFinishedMatch(
+                            stage, home, visitor, 84 + i, 71 + i, MatchType.Playoff,
+                            venues, roundStart.AddDays(pairIndex), pairIndex, round: null);
+                        stage.Matches.Add(match);
+                        winners.Add(match.WinningTeam!);
+                    }
                 }
             }
 
             advancing = winners;
             roundStart = stage.EndDate.AddDays(StageTemplate.StandardGapDays);
         }
+    }
+
+    /// <summary>
+    /// Builds a REAL best-of-N <see cref="MatchSeries"/> between
+    /// <paramref name="home"/> and <paramref name="visitor"/> and adds it (and
+    /// every game it plays) to <paramref name="stage"/>, so both the admin
+    /// panel and the public site can see the actual per-game series instead of
+    /// one collapsed result. Generates just enough finished games for one team
+    /// to reach the majority of <paramref name="bestOf"/>
+    /// (<see cref="SeriesDecisionCalculator.DetermineWinner"/> is the single
+    /// source of truth for when the series is decided — the same threshold
+    /// <c>Application.Services.MatchSeriesService</c> uses for a live admin's
+    /// "agregar partido" action) and stops there — no games are generated past
+    /// the decisive one, matching how a live series behaves once
+    /// <c>AddGameToSeriesAsync</c> would start throwing.
+    ///
+    /// The "home" team (this builder's convention for the designated winner —
+    /// every other decisive result it seeds has home win too) always wins the
+    /// series, but how many games the visitor takes off it before losing
+    /// varies deterministically per pairing: <paramref name="seriesSeed"/> —
+    /// built from stable indices (stage order, pairing position), never a
+    /// randomly-generated id — selects 0..(gamesToWin-1) "away" wins the same
+    /// way <see cref="AddScoring"/> spreads points without System.Random, so a
+    /// reseed is reproducible while a batch of series still mixes sweeps and
+    /// full-distance series instead of ending identically.
+    /// </summary>
+    private static Team BuildDecidedSeries(
+        Stage stage,
+        Team home,
+        Team visitor,
+        int bestOf,
+        List<Venue> venues,
+        DateTime anchorDate,
+        int seriesSeed)
+    {
+        MatchSeries series = new()
+        {
+            StageId = Guid.Empty,
+            Stage = stage,
+            // Unlike Stage.Id (EF-generated at save time, hence the
+            // Guid.Empty placeholder above), Team.Id is already assigned
+            // when teams are built (BuildDivisionWithTeams), so the real id
+            // is set here directly — matching BuildFinishedMatch's HomeTeamId
+            // convention. SeriesDecisionCalculator.DetermineWinner runs
+            // in-memory below, before any EF save/fixup, and compares game
+            // winners against these ids, so they must be the real values now.
+            HomeTeamId = home.Id,
+            HomeTeam = home,
+            VisitorTeamId = visitor.Id,
+            VisitorTeam = visitor,
+            BestOf = bestOf,
+            CreatedBy = CreatedBy,
+        };
+        stage.MatchSeries.Add(series);
+
+        int gamesToWin = (bestOf / 2) + 1;
+        int visitorWins = gamesToWin <= 1 ? 0 : Math.Abs(seriesSeed) % gamesToWin;
+        int totalGames = gamesToWin + visitorWins;
+
+        for (int gameNumber = 1; gameNumber <= totalGames; gameNumber++)
+        {
+            // The visitor takes the first `visitorWins` games of the series
+            // (a "comeback" shape); the home team wins every game after that,
+            // clinching on the last generated game.
+            bool homeWinsThisGame = gameNumber > visitorWins;
+            int margin = 4 + ((gameNumber + seriesSeed) % 9);
+            int winnerScore = 68 + ((gameNumber * 5) % 22);
+            int loserScore = winnerScore - margin;
+            int homeScore = homeWinsThisGame ? winnerScore : loserScore;
+            int visitorScore = homeWinsThisGame ? loserScore : winnerScore;
+
+            Match game = BuildFinishedMatch(
+                stage, home, visitor, homeScore, visitorScore, MatchType.Playoff,
+                venues, anchorDate.AddDays(gameNumber - 1), seriesSeed + gameNumber, round: null);
+            game.Series = series;
+            game.GameNumber = gameNumber;
+
+            stage.Matches.Add(game);
+            series.Matches.Add(game);
+        }
+
+        Guid? winningTeamId = SeriesDecisionCalculator.DetermineWinner(series);
+        Team winnerTeam = winningTeamId == visitor.Id ? visitor : home;
+        series.WinningTeamId = winningTeamId;
+        series.WinningTeam = winnerTeam;
+
+        return winnerTeam;
     }
 
     /// <summary>

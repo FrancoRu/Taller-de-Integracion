@@ -268,6 +268,7 @@ public class DataMaintenanceServiceTests : IClassFixture<CustomWebApplicationFac
         List<Stage> finalStages = await db.Stages
             .Where(s => s.StageType == StageType.Final)
             .Include(s => s.Matches)
+            .Include(s => s.MatchSeries).ThenInclude(ms => ms.Matches)
             .ToListAsync();
 
         // 2 cups x 2 main divisions + 1 cross cup + 2 historical divisions = 7 finals.
@@ -275,9 +276,29 @@ public class DataMaintenanceServiceTests : IClassFixture<CustomWebApplicationFac
 
         foreach (Stage finalStage in finalStages)
         {
-            Match finalMatch = Assert.Single(finalStage.Matches);
-            Assert.True(finalMatch.IsFinished);
-            Assert.NotNull(finalMatch.WinningTeamId);
+            if (finalStage.BestOf > 1)
+            {
+                // A BestOf > 1 final is a REAL MatchSeries (Copa Oro/Copa
+                // Plata for both main divisions), decided with between the
+                // minimum-to-clinch and BestOf finished games — not one
+                // collapsed match.
+                MatchSeries series = Assert.Single(finalStage.MatchSeries);
+                Assert.NotNull(series.WinningTeamId);
+                Assert.Equal(
+                    series.WinningTeamId,
+                    Application.Utils.Helper.Series.SeriesDecisionCalculator.DetermineWinner(series));
+
+                int gamesToWin = (series.BestOf / 2) + 1;
+                Assert.InRange(series.Matches.Count, gamesToWin, series.BestOf);
+                Assert.All(series.Matches, m => Assert.True(m.IsFinished));
+                Assert.Equal(series.Matches.Count, finalStage.Matches.Count);
+            }
+            else
+            {
+                Match finalMatch = Assert.Single(finalStage.Matches);
+                Assert.True(finalMatch.IsFinished);
+                Assert.NotNull(finalMatch.WinningTeamId);
+            }
         }
     }
 
@@ -416,6 +437,7 @@ public class DataMaintenanceServiceTests : IClassFixture<CustomWebApplicationFac
         Division primera = await db.Divisions
             .Include(d => d.Stages).ThenInclude(s => s.Matches).ThenInclude(m => m.HomeTeam)
             .Include(d => d.Stages).ThenInclude(s => s.Matches).ThenInclude(m => m.VisitorTeam)
+            .Include(d => d.Stages).ThenInclude(s => s.MatchSeries)
             .SingleAsync(d => d.Name == "Primera División");
         Stage primeraGroup = primera.Stages.Single(s => s.StageType == StageType.Group);
 
@@ -428,12 +450,16 @@ public class DataMaintenanceServiceTests : IClassFixture<CustomWebApplicationFac
         }
 
         // Copa Oro's semifinal teams are exactly the top 4 of those standings.
+        // The SemiFinal is BestOf=3, so it's a real MatchSeries per pairing
+        // (one row per pairing) rather than Matches (which now holds every
+        // individual game — 2 or 3 per pairing — so team ids repeat there).
         List<Guid> top4 = [.. standings.Take(4).Select(p => p.TeamId)];
         Stage oroSemi = primera.Stages.Single(s => s.BracketName == "Copa Oro" && s.StageType == StageType.SemiFinal);
+        Assert.Equal(2, oroSemi.MatchSeries.Count);
         List<Guid> oroSemiTeams =
         [
-            .. oroSemi.Matches.Select(m => m.HomeTeamId!.Value),
-            .. oroSemi.Matches.Select(m => m.VisitorTeamId!.Value),
+            .. oroSemi.MatchSeries.Select(s => s.HomeTeamId),
+            .. oroSemi.MatchSeries.Select(s => s.VisitorTeamId),
         ];
         Assert.Equal([.. top4.OrderBy(x => x)], [.. oroSemiTeams.OrderBy(x => x)]);
 
