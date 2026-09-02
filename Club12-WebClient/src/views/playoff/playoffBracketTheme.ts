@@ -3,19 +3,20 @@ import { getTheme } from '@/theme';
 
 /**
  * Fixed height (px) of every match slot in the bracket, shared by every
- * round and every card regardless of content (a plain match or a
- * best-of-N series card with its per-game breakdown). The library
- * absolutely-positions each match within this box, so the card content
- * must stay within it. A round with no series (the common early rounds —
- * Octavos, Cuartos) never has game chips at all, so a box tall enough for
- * a full best-of-7 breakdown left most of every card empty and inflated
- * the whole bracket's height enough to force vertical scrolling. Game
- * chips now live in a single horizontally-scrollable row instead of
- * wrapping onto up to 4 rows (see `BracketMatchNode`), so one row's worth
- * of height covers a series of any length — sized to fit a caption line +
- * two team rows + that one chip row without clipping.
+ * round. The library absolutely-positions each match within this box, so
+ * every card — a plain single game or a best-of-N series — is exactly the
+ * same two-team-row shape (see `BracketMatchNode`'s `formatBadge`, an
+ * absolutely-positioned corner badge that adds no layout height). That's
+ * what actually let this shrink to fit two rows + padding: the previous
+ * per-game chip breakdown needed real flow height, was only relevant to
+ * series rounds, and forced every OTHER round's box just as tall for
+ * nothing — the deepest early rounds (Octavos, Cuartos) have the most
+ * matches, so that wasted height dominated the whole bracket's size and
+ * kept it from fitting the viewport vertically. The per-game detail still
+ * exists in full, just in `SeriesCard`'s "Partidos de playoff" list next
+ * to the bracket instead of crammed into this card too.
  */
-export const PLAYOFF_BRACKET_BOX_HEIGHT = 128;
+export const PLAYOFF_BRACKET_BOX_HEIGHT = 80;
 
 const darkTheme = getTheme('dark');
 
@@ -70,8 +71,8 @@ export const PLAYOFF_BRACKET_THEME: LibraryBracketTheme = {
  */
 export const PLAYOFF_BRACKET_OPTIONS: LibraryBracketOptions = {
   boxHeight: PLAYOFF_BRACKET_BOX_HEIGHT,
-  spaceBetweenColumns: 48,
-  spaceBetweenRows: 24,
+  spaceBetweenColumns: 40,
+  spaceBetweenRows: 16,
   connectorColor: darkTheme.palette.primary.main,
   connectorColorHighlight: darkTheme.palette.primary.light,
   // Round headers ("Cuartos de final", "Semifinal", "Final") were easy to

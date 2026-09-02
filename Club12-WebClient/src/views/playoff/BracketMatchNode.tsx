@@ -11,18 +11,17 @@ interface BracketMatchNodeProps {
   match: IMatchResponse;
   /**
    * When this node represents a best-of-N series (BestOf > 1), the full
-   * series data — enables showing the per-game breakdown below the
-   * aggregate score.
+   * series data — used only for the small "BOn" corner badge (see
+   * `formatBadge`); the per-game breakdown lives in `SeriesCard` instead.
    */
   series?: IMatchSeriesResponse;
   /**
    * When this node aggregates more than one raw `Match` row between the
    * same two teams (e.g. a historical home-and-away tie with no
    * `MatchSeries` behind it — see `buildBracket.ts`'s tie grouping), the
-   * individual legs in chronological order — enables showing a per-leg
-   * breakdown below the aggregate score. Mutually exclusive with
-   * `series` in practice: a node is either an admin-defined series or a
-   * client-inferred tie, never both.
+   * individual legs in chronological order — used only for the corner
+   * badge. Mutually exclusive with `series` in practice: a node is either
+   * an admin-defined series or a client-inferred tie, never both.
    */
   legs?: IMatchResponse[];
   /**
@@ -35,57 +34,22 @@ interface BracketMatchNodeProps {
 
 type Participant = IMatchResponse['homeTeam'];
 
-/** One finished game/leg, rendered as its own chip rather than run together
- * in a dot-joined string — each individual game should read as a separate,
- * distinct result inside the card, not a wall of text. `title` carries the
- * full "who played who" context (team names, not just raw numbers) so the
- * on-chip label can stay short and still be unambiguous on hover. */
-interface GameChip {
-  key: string;
-  label: string;
-  title: string;
-}
-
 /**
- * A series' finished games as individual chips (e.g. "J1 111-101", "J2
- * 118-95"), one per game. Each chip's `title` spells out the actual
- * matchup ("Juego 1: Sionista 111 - 101 Independiente") — the short label
- * alone doesn't say which side is which, since home/visitor can differ
- * from the card's own top/bottom order once a series alternates venues.
+ * A short corner badge naming the format (e.g. "BO3", "IV" for ida y
+ * vuelta) — NOT a per-game breakdown. Every individual game/leg's score is
+ * already shown in full, per game, in the "Partidos de playoff" list next
+ * to the bracket (`SeriesCard`), so cramming that same detail into the
+ * bracket card too only inflated it — a plain single-game match and a
+ * best-of-N series card ended up wildly different heights even though the
+ * library gives every round the same fixed box. The badge is absolutely
+ * positioned (adds no layout height of its own), so a series card is now
+ * exactly as tall as a plain one.
  */
-const seriesGameChips = (series: IMatchSeriesResponse): GameChip[] =>
-  series.games
-    .filter(game => game.isFinished)
-    .map(game => ({
-      key: game.id,
-      label: `J${game.gameNumber} ${game.homeScore}-${game.visitorScore}`,
-      title: `Juego ${game.gameNumber}: ${game.homeTeamName} ${game.homeScore} - ${game.visitorScore} ${game.visitorTeamName}`,
-    }));
-
-/**
- * A multi-leg tie's finished legs as individual chips (e.g. "P1 41-64", "P2
- * 57-54") — the raw score as it was recorded on each leg (home/visitor may
- * swap between legs). Numbered by chronological position, not by filtered
- * index, so a still-unfinished middle leg doesn't shift later legs' numbers.
- */
-const legGameChips = (legs: IMatchResponse[]): GameChip[] =>
-  legs
-    .map((leg, index) => ({ leg, index }))
-    .filter(({ leg }) => leg.isFinished && leg.homeTeam && leg.visitorTeam)
-    .map(({ leg, index }) => ({
-      key: leg.id,
-      label: `P${index + 1} ${leg.homeTeam!.score}-${leg.visitorTeam!.score}`,
-      title: `Partido ${index + 1}: ${leg.homeTeam!.name} ${leg.homeTeam!.score} - ${leg.visitorTeam!.score} ${leg.visitorTeam!.name}`,
-    }));
-
-/**
- * The caption shown above a tie's aggregate score. "Ida y vuelta" (the
- * conventional Spanish term for a two-legged home-and-away tie) for the
- * common two-leg case; a generic leg count otherwise, since grouping
- * doesn't assume exactly two legs.
- */
-const tieCaption = (legCount: number): string =>
-  legCount === 2 ? 'Ida y vuelta' : `${legCount} partidos`;
+const formatBadge = (series: IMatchSeriesResponse | undefined, legs: IMatchResponse[] | undefined): string | null => {
+  if (series) return `BO${series.bestOf}`;
+  if (legs && legs.length > 1) return legs.length === 2 ? 'IV' : `${legs.length}P`;
+  return null;
+};
 
 /**
  * A single bracket slot: home team on top, visitor team below, each with
@@ -96,8 +60,7 @@ const tieCaption = (legCount: number): string =>
  * assigned (a seeding walkover). When `series` is provided (an
  * admin-defined best-of-N series) or `legs` is provided (a client-inferred
  * multi-leg tie — see `buildBracket.ts`), the score shown is the aggregate
- * tally and a compact one-line summary of each individual game/leg is
- * shown underneath.
+ * tally, with a small format badge in the corner — see `formatBadge`.
  */
 export default function BracketMatchNode({
   match,
@@ -110,14 +73,14 @@ export default function BracketMatchNode({
     { key: 'visitor', team: match.visitorTeam },
   ];
 
-  const isTie = !series && Boolean(legs && legs.length > 1);
-  const gameChips = series ? seriesGameChips(series) : isTie ? legGameChips(legs!) : [];
+  const badge = formatBadge(series, legs);
 
   return (
     <Paper
       variant="outlined"
       onClick={onClick}
       sx={{
+        position: 'relative',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
@@ -136,16 +99,22 @@ export default function BracketMatchNode({
         }),
       }}
     >
-      {series && (
-        <Typography variant="caption" sx={{ color: 'text.secondary', lineHeight: 1.2 }}>
-          Al mejor de {series.bestOf}
-        </Typography>
-      )}
-
-      {isTie && (
-        <Typography variant="caption" sx={{ color: 'text.secondary', lineHeight: 1.2 }}>
-          {tieCaption(legs!.length)}
-        </Typography>
+      {badge && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 4,
+            right: 4,
+            px: 0.5,
+            borderRadius: 0.5,
+            bgcolor: 'action.hover',
+            lineHeight: 1.5,
+          }}
+        >
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem', fontWeight: 600 }}>
+            {badge}
+          </Typography>
+        </Box>
       )}
 
       {sides.map(({ key, team }) => {
@@ -189,54 +158,6 @@ export default function BracketMatchNode({
           </Box>
         );
       })}
-
-      {gameChips.length > 0 && (
-        <Stack
-          direction="row"
-          sx={{
-            flexWrap: 'nowrap',
-            gap: 0.5,
-            // The card's height is fixed (PLAYOFF_BRACKET_BOX_HEIGHT) and
-            // shared by every round, including early rounds with no series
-            // at all — so chips get exactly one row's worth of height
-            // regardless of how long the series is (up to bo7). A series
-            // longer than what fits scrolls horizontally instead of
-            // wrapping into rows that would no longer fit the box.
-            overflowX: 'auto',
-            pb: 0.25,
-            scrollbarWidth: 'thin',
-            '&::-webkit-scrollbar': { height: 4 },
-            '&::-webkit-scrollbar-thumb': {
-              backgroundColor: 'action.disabled',
-              borderRadius: 4,
-            },
-          }}
-        >
-          {gameChips.map(chip => (
-            <Box
-              key={chip.key}
-              title={chip.title}
-              sx={{
-                flexShrink: 0,
-                px: 0.75,
-                py: 0.25,
-                borderRadius: 0.75,
-                bgcolor: 'background.default',
-                border: '1px solid',
-                borderColor: 'divider',
-                lineHeight: 1,
-              }}
-            >
-              <Typography
-                variant="caption"
-                sx={{ color: 'text.primary', fontWeight: 600, whiteSpace: 'nowrap' }}
-              >
-                {chip.label}
-              </Typography>
-            </Box>
-          ))}
-        </Stack>
-      )}
     </Paper>
   );
 }
