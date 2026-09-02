@@ -530,14 +530,12 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   );
 
   const columns: GridColDef<PlayerRow>[] = useMemo(() => {
-    const teamColumn: GridColDef<PlayerRow> = teamId
-      ? {
-          field: 'teamId',
-          headerName: 'Equipo',
-          flex: 1,
-          minWidth: 160,
-          renderCell: params => teamNameById.get(params.row.teamId) ?? '—',
-        }
+    // Omitted entirely (not just read-only) when scoped to one team's own
+    // roster page — every row would show the exact same value, which is
+    // noise, not information. Only the global players list (no `teamId`)
+    // needs it, to say WHICH team each row belongs to.
+    const teamColumn: GridColDef<PlayerRow> | null = teamId
+      ? null
       : {
           field: 'teamId',
           headerName: 'Equipo',
@@ -607,7 +605,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
             : date.toLocaleDateString('es-AR');
         },
       },
-      teamColumn,
+      ...(teamColumn ? [teamColumn] : []),
       {
         field: 'phoneNumber',
         headerName: 'Teléfono',
