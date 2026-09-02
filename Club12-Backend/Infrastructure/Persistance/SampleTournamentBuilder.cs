@@ -75,6 +75,17 @@ public static class SampleTournamentBuilder
         "Joaquín", "Valentín", "Emiliano", "Thiago",
     ];
 
+    // Player.SocialSecurity is the "Obra social" field the player form shows: the
+    // NAME of a health-insurance provider, free text. Real Argentine ones, with
+    // the Entre Ríos provincial IOSPER first since the league is from Paraná.
+    // Eleven of them against 20 first names and 21 surnames (all co-prime), so a
+    // roster does not end up with one obra social per first name.
+    private static readonly string[] HealthInsuranceProviders =
+    [
+        "IOSPER", "OSDE", "Swiss Medical", "Sancor Salud", "Galeno", "Medifé",
+        "OSECAC", "Avalian", "Federada Salud", "Prevención Salud", "Jerárquicos Salud",
+    ];
+
     private static readonly string[] LastNames =
     [
         "González", "Rodríguez", "Fernández", "López", "Díaz", "Pérez", "Sánchez", "Romero",
@@ -409,7 +420,8 @@ public static class SampleTournamentBuilder
                     BirthDate = new DateTime(2026, 8, 18, 0, 0, 0, DateTimeKind.Utc)
                         .AddYears(-(18 + (playerCounter % 20)))
                         .AddDays(playerCounter % 27),
-                    SocialSecurity = $"20-{documentNumber}-3",
+                    SocialSecurity =
+                        HealthInsuranceProviders[playerCounter % HealthInsuranceProviders.Length],
                     Team = team,
                 };
 
