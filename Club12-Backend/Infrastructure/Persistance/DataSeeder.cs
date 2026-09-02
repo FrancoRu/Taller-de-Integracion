@@ -271,13 +271,11 @@ public sealed class DataSeeder(
             Category: TournamentCategory.Feminine,
             RoundRobinLegs: 2);
 
-        // Torneo Masculino: 3 zones, each single round-robin (the owner's spec
-        // said "ida y vuelta" explicitly for Femenino and Copa Cruzada but not
-        // for these zones — ASSUMPTION: single round-robin here to keep match
-        // counts sane; Zona C alone is already 78 matches single vs 156
-        // double round-robin), each with its own Copa Oro/Copa Plata, plus the
-        // cross-division Copa Cruzada (its own 6-zone group stage, ida y
-        // vuelta, feeding one combined 12-team playoff).
+        // Torneo Masculino: 3 zones, each ida y vuelta (every group stage in
+        // the club plays home-and-away, confirmed by the owner), each with
+        // its own Copa Oro/Copa Plata, plus the cross-division Copa Cruzada
+        // (its own 6-zone group stage, also ida y vuelta, feeding one
+        // combined 12-team playoff).
         SampleTournamentBuilder.TournamentDefinition masculino = new(
             Name: "Torneo Masculino",
             Description: "Torneo Masculino de la Liga Club 12 (Paraná), Temporada XXV. Finalizado.",
@@ -299,7 +297,7 @@ public sealed class DataSeeder(
             CrossCup: CopaCruzada,
             Status: TournamentStatus.Finished,
             Category: TournamentCategory.Masculine,
-            RoundRobinLegs: 1);
+            RoundRobinLegs: 2);
 
         int playerCounter = 0;
         // Both tournaments persist together, so their division/stage slugs
