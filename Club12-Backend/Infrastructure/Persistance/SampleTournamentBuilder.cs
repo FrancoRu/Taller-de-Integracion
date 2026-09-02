@@ -11,7 +11,9 @@ using Domain.Enums;
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Text;
 
 namespace Infrastructure.Persistance;
 
@@ -24,9 +26,12 @@ namespace Infrastructure.Persistance;
 /// sample reseed) so the construction logic exists once.
 ///
 /// Coherence guarantees:
-/// - Every group stage is a real circle-method round-robin: every team plays
-///   exactly once per jornada, <see cref="Match.Round"/> is the 1-based
-///   jornada, and <see cref="Match.MatchDate"/> comes from
+/// - Every group stage is a COMPLETE circle-method round-robin: every pair meets
+///   exactly once per leg, every team plays the same number of games, and a team
+///   plays at most once per jornada (with an odd roster exactly one team is idle
+///   — "libre" — each jornada). <see cref="Match.Round"/> is the 1-based
+///   jornada, <see cref="Stage.EndDate"/> is pushed out to the last jornada the
+///   fixture actually needs, and <see cref="Match.MatchDate"/> comes from
 ///   <see cref="RoundCalendar.DateForRound(DateTime, int, bool)"/> (regular
 ///   zones on Sundays, cross-division cups on Wednesdays — HU-111, so a team's
 ///   zone and cup jornadas never collide).
@@ -36,20 +41,30 @@ namespace Infrastructure.Persistance;
 /// - The cross-division cup pools its group winners via
 ///   <see cref="CrossCupGroupSeeder"/>. Its teams keep their regular zone AND
 ///   join a cup group (cross cups are exempt from one-team-one-zone).
+/// - Only players a real match sheet would accept are seeded as scorers: their
+///   registration is Approved and they are not serving a sanction
+///   (HU-57/HU-60/HU-61, the rule PlayerStatisticService enforces). A suspended
+///   player's points in the games he must miss are handed to a team-mate, so a
+///   team's scorers still add up to its recorded score.
 /// </summary>
 public static class SampleTournamentBuilder
 {
     private const string CreatedBy = AuditConstants.SystemUser;
 
-    // No fake file reference is assigned to Approved seeded registrations
-    // (medical-records-storage-eligibility, Part 3): DataSeeder.SeedMedicalRecordsAsync
-    // fills MedicalRecordFileUrl/MedicalRecordFileName with a REAL uploaded
-    // object after Build() runs. Leaving it null here means an Approved
-    // registration correctly reads as NOT habilitado (Part 2's file-backed
-    // rule) until the seed's backfill step gives it a real file.
-    private const string SampleMedicalRecordFileName = "ficha-medica.pdf";
+    // Neither a fake file reference NOR a file NAME is assigned to Approved
+    // seeded registrations (medical-records-storage-eligibility, Part 3):
+    // DataSeeder.SeedMedicalRecordsAsync fills MedicalRecordFileUrl AND
+    // MedicalRecordFileName together with a REAL uploaded object after Build()
+    // runs. Leaving both null here means an Approved registration correctly
+    // reads as NOT habilitado (Part 2's file-backed rule) until the seed's
+    // backfill step gives it a real file, and never shows a file name that
+    // resolves to nothing.
 
     public const int DefaultPlayersPerTeam = 8;
+
+    // Offset mixed into each division's variety seed so two same-sized zones of
+    // one tournament don't replay the same season (see Build).
+    private const int DivisionVarietySalt = 7717;
     private static readonly DateTime SampleMedicalRecordReviewedAt =
         new(2026, 8, 1, 12, 0, 0, DateTimeKind.Utc);
 
@@ -58,6 +73,17 @@ public static class SampleTournamentBuilder
         "Juan", "Carlos", "Martín", "Diego", "Facundo", "Lucas", "Nicolás", "Matías",
         "Franco", "Ezequiel", "Agustín", "Bruno", "Iván", "Santiago", "Tomás", "Gonzalo",
         "Joaquín", "Valentín", "Emiliano", "Thiago",
+    ];
+
+    // Player.SocialSecurity is the "Obra social" field the player form shows: the
+    // NAME of a health-insurance provider, free text. Real Argentine ones, with
+    // the Entre Ríos provincial IOSPER first since the league is from Paraná.
+    // Eleven of them against 20 first names and 21 surnames (all co-prime), so a
+    // roster does not end up with one obra social per first name.
+    private static readonly string[] HealthInsuranceProviders =
+    [
+        "IOSPER", "OSDE", "Swiss Medical", "Sancor Salud", "Galeno", "Medifé",
+        "OSECAC", "Avalian", "Federada Salud", "Prevención Salud", "Jerárquicos Salud",
     ];
 
     private static readonly string[] LastNames =
@@ -135,8 +161,6 @@ public static class SampleTournamentBuilder
         DateTime StartDate,
         DateTime StageStartDate,
         DateTime StageEndDate,
-        DateTime FinishedMatchesStart,
-        DateTime UpcomingMatchesStart,
         DivisionDefinition[] Divisions,
         CrossCupDefinition? CrossCup = null,
         TournamentStatus Status = TournamentStatus.Ongoing,
@@ -238,8 +262,17 @@ public static class SampleTournamentBuilder
         List<Team> allTeams = [];
         List<Stage> regularGroupStages = [];
 
-        foreach (DivisionDefinition divisionDef in definition.Divisions)
+        for (int divisionIndex = 0; divisionIndex < definition.Divisions.Length; divisionIndex++)
         {
+            DivisionDefinition divisionDef = definition.Divisions[divisionIndex];
+
+            // Every result this zone produces (upset draws, margins, scores) is a
+            // pure function of the seed, so two same-sized zones of one
+            // tournament shared a seed and played out identically — Zona A and
+            // Zona B ended with the very same scorelines and the very same final
+            // table, team names aside. Salting per division separates them.
+            int divisionVarietySeed = definition.VarietySeed + (divisionIndex * DivisionVarietySalt);
+
             (Division division, List<Team> teams) = BuildDivisionWithTeams(
                 tournament,
                 divisionDef.DivisionName,
@@ -282,7 +315,7 @@ public static class SampleTournamentBuilder
             SeedRoundRobinMatches(
                 stage, teams, venues, definition.StageStartDate, isCrossDivisionCup: false,
                 legs: definition.RoundRobinLegs, playedRounds: definition.PlayedRoundsPerZone,
-                upsetPercent: definition.UpsetPercent, varietySeed: definition.VarietySeed);
+                upsetPercent: definition.UpsetPercent, varietySeed: divisionVarietySeed);
 
             if (includePlayoffs)
             {
@@ -307,7 +340,7 @@ public static class SampleTournamentBuilder
                 definition.UpsetPercent, definition.VarietySeed);
         }
 
-        List<PlayerSanction> sanctions = SeedSanctions(regularGroupStages);
+        List<PlayerSanction> sanctions = SeedSanctions(regularGroupStages, tournament);
 
         return new BuildResult(tournament, sanctions);
     }
@@ -337,6 +370,10 @@ public static class SampleTournamentBuilder
 
         for (int i = 0; i < teamNames.Length; i++)
         {
+            string jerseyStyle = teamStyles is not null && i < teamStyles.Length ? teamStyles[i] : "solid";
+            string? secondaryColor =
+                teamSecondaryColors is not null && i < teamSecondaryColors.Length ? teamSecondaryColors[i] : null;
+
             Team team = new()
             {
                 Id = Guid.NewGuid(),
@@ -344,10 +381,10 @@ public static class SampleTournamentBuilder
                 Name = teamNames[i],
                 Slug = slugRegistry.ForTeam(teamNames[i]),
                 ThreeLetterCode = teamCodes[i],
-                LogoUrl = $"https://placehold.co/128x128?text={teamCodes[i]}",
+                LogoUrl = BuildCrestDataUri(teamCodes[i], teamColors[i], secondaryColor, jerseyStyle),
                 ShirtColor = teamColors[i],
-                JerseyStyle = teamStyles is not null && i < teamStyles.Length ? teamStyles[i] : "solid",
-                ShirtSecondaryColor = teamSecondaryColors is not null && i < teamSecondaryColors.Length ? teamSecondaryColors[i] : null,
+                JerseyStyle = jerseyStyle,
+                ShirtSecondaryColor = secondaryColor,
                 Tournament = tournament,
                 Players = [],
             };
@@ -383,7 +420,8 @@ public static class SampleTournamentBuilder
                     BirthDate = new DateTime(2026, 8, 18, 0, 0, 0, DateTimeKind.Utc)
                         .AddYears(-(18 + (playerCounter % 20)))
                         .AddDays(playerCounter % 27),
-                    SocialSecurity = $"20-{documentNumber}-3",
+                    SocialSecurity =
+                        HealthInsuranceProviders[playerCounter % HealthInsuranceProviders.Length],
                     Team = team,
                 };
 
@@ -413,7 +451,7 @@ public static class SampleTournamentBuilder
                         ? MedicalRecordStatus.Approved
                         : MedicalRecordStatus.Pending,
                     MedicalRecordFileUrl = null,
-                    MedicalRecordFileName = isHabilitado ? SampleMedicalRecordFileName : null,
+                    MedicalRecordFileName = null,
                     MedicalRecordReviewedAt = isHabilitado ? SampleMedicalRecordReviewedAt : null,
                 });
             }
@@ -425,10 +463,109 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
+    /// The team's crest, generated from its own kit: a round badge in the club's
+    /// shirt colour carrying its three-letter code, with a band in the secondary
+    /// colour following the shirt's <paramref name="jerseyStyle"/>. Returned as a
+    /// self-contained <c>data:</c> SVG URI, so a seeded league has distinct,
+    /// offline crests without a logos folder, an upload, or a call to an external
+    /// placeholder service. <c>DataSeeder.UploadTeamLogosAsync</c> still replaces
+    /// it with a real PNG when <c>Seed:LogosPath</c> holds one.
+    /// </summary>
+    private static string BuildCrestDataUri(
+        string code, string primaryColor, string? secondaryColor, string jerseyStyle)
+    {
+        string secondary = string.IsNullOrWhiteSpace(secondaryColor) ? "#FFFFFF" : secondaryColor;
+        string ink = ContrastInk(primaryColor);
+
+        // Each band is drawn across the whole square and clipped to the badge, so
+        // a style only has to describe its own shape.
+        string band = jerseyStyle switch
+        {
+            "stripes" => $"<path d='M34 0h20v128H34zM74 0h20v128H74z' fill='{secondary}'/>",
+            "hoops" => $"<path d='M0 34h128v20H0zM0 74h128v20H0z' fill='{secondary}'/>",
+            "diagonal" => $"<path d='M0 128L128 0v34L34 128z' fill='{secondary}'/>",
+            "sash" => $"<path d='M0 96L96 0h26L0 122z' fill='{secondary}'/>",
+            "halves" => $"<path d='M64 0h64v128H64z' fill='{secondary}'/>",
+            "sides" => $"<path d='M0 0h26v128H0zM102 0h26v128h-26z' fill='{secondary}'/>",
+            "chevron" => $"<path d='M64 34l44 44v26L64 60 20 104V78z' fill='{secondary}'/>",
+            "circles" => $"<circle cx='64' cy='64' r='40' fill='none' stroke='{secondary}' stroke-width='12'/>",
+            "vneck" => $"<path d='M20 0h88L64 52z' fill='{secondary}'/>",
+            "gradient" => "<rect width='128' height='128' fill='url(#g)'/>",
+            _ => string.Empty,
+        };
+
+        string gradient = jerseyStyle == "gradient"
+            ? "<linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>"
+                + $"<stop offset='0' stop-color='{primaryColor}'/><stop offset='1' stop-color='{secondary}'/>"
+                + "</linearGradient>"
+            : string.Empty;
+
+        string svg =
+            "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128' width='128' height='128'>"
+            + $"<defs>{gradient}<clipPath id='c'><circle cx='64' cy='64' r='58'/></clipPath></defs>"
+            + $"<g clip-path='url(#c)'><rect width='128' height='128' fill='{primaryColor}'/>{band}</g>"
+            + $"<circle cx='64' cy='64' r='58' fill='none' stroke='{ink}' stroke-width='4' stroke-opacity='0.55'/>"
+            + "<text x='64' y='80' text-anchor='middle' font-family='Helvetica,Arial,sans-serif' "
+            + $"font-size='38' font-weight='700' fill='{ink}'>{code}</text>"
+            + "</svg>";
+
+        return "data:image/svg+xml;base64," + Convert.ToBase64String(Encoding.UTF8.GetBytes(svg));
+    }
+
+    /// <summary>Near-black ink, the alternative to white for a crest's code.</summary>
+    private const string DarkInk = "#0F172A";
+
+    /// <summary>
+    /// Whichever of white and <see cref="DarkInk"/> reads better on
+    /// <paramref name="backgroundColor"/> (an "#RRGGBB" shirt colour), by actual
+    /// WCAG contrast ratio rather than a hand-picked luminance threshold — the
+    /// mid greens and cyans in the club palette sit right where a threshold
+    /// guesses wrong and would leave a code at ~1.8:1 on its own shirt colour.
+    /// </summary>
+    private static string ContrastInk(string backgroundColor)
+    {
+        double? luminance = RelativeLuminance(backgroundColor);
+        if (luminance is not double background)
+        {
+            return "#FFFFFF";
+        }
+
+        double onDark = (background + 0.05) / ((RelativeLuminance(DarkInk) ?? 0) + 0.05);
+        double onWhite = 1.05 / (background + 0.05);
+
+        return onDark >= onWhite ? DarkInk : "#FFFFFF";
+    }
+
+    /// <summary>
+    /// WCAG relative luminance of an "#RRGGBB" colour (channels linearised out
+    /// of sRGB first), or null when the string is not one.
+    /// </summary>
+    private static double? RelativeLuminance(string color)
+    {
+        if (color.Length != 7
+            || color[0] != '#'
+            || !int.TryParse(color.AsSpan(1), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int rgb))
+        {
+            return null;
+        }
+
+        double red = Linearise(((rgb >> 16) & 0xFF) / 255.0);
+        double green = Linearise(((rgb >> 8) & 0xFF) / 255.0);
+        double blue = Linearise((rgb & 0xFF) / 255.0);
+
+        return (0.2126 * red) + (0.7152 * green) + (0.0722 * blue);
+
+        static double Linearise(double channel) =>
+            channel <= 0.03928 ? channel / 12.92 : Math.Pow((channel + 0.055) / 1.055, 2.4);
+    }
+
+    /// <summary>
     /// Builds a real circle-method single round-robin for
-    /// <paramref name="teams"/>: for N teams there are N-1 jornadas of N/2
-    /// matches each, every team plays exactly once per jornada, and no pair
-    /// meets twice. Every match is finished with a decisive (never-tied) score
+    /// <paramref name="teams"/>: for an even N there are N-1 jornadas of N/2
+    /// matches each and every team plays once per jornada; for an odd N there
+    /// are N jornadas and exactly one team is idle ("libre") per jornada. Either
+    /// way every pair meets exactly once per leg and every team plays the same
+    /// number of games. Every match is finished with a decisive (never-tied) score
     /// in which the stronger team (earlier in <paramref name="teams"/>) wins,
     /// so <see cref="PositionCalculator"/> yields a full, sensible table.
     /// <see cref="Match.Round"/> is the 1-based jornada and
@@ -471,16 +608,28 @@ public static class SampleTournamentBuilder
             return;
         }
 
-        int roundsPerLeg = n - 1;
+        // An odd roster is padded with a bye slot so the circle method still
+        // produces a COMPLETE round-robin: N odd teams need N jornadas per leg
+        // with exactly one team idle ("libre") each jornada — the same shape
+        // RoundRobinScheduler builds for the real fixture generator. Running
+        // n-1 jornadas on an odd roster instead dropped pairings entirely,
+        // replayed others twice per leg, and left the team pinned to slot 0
+        // with one extra game (and, with PointsForLoss > 0, free table points).
+        const int ByeSlot = -1;
+        int slotCount = n % 2 == 0 ? n : n + 1;
+        int roundsPerLeg = slotCount - 1;
         int matchIndex = 0;
+        DateTime lastMatchDate = stage.StartDate;
 
         for (int leg = 0; leg < legs; leg++)
         {
-            // Circle method: index 0 stays fixed, indices 1..n-1 rotate one slot
-            // each round. `slots` holds the ORIGINAL team indices in seeding
-            // order, so a smaller index means a stronger team. It resets at the
-            // start of each leg so the return leg replays the same pairings.
-            int[] slots = [.. Enumerable.Range(0, n)];
+            // Circle method: index 0 stays fixed, the remaining slots rotate one
+            // position each round. `slots` holds the ORIGINAL team indices in
+            // seeding order, so a smaller index means a stronger team. It resets
+            // at the start of each leg so the return leg replays the same pairings.
+            int[] slots = slotCount == n
+                ? [.. Enumerable.Range(0, n)]
+                : [.. Enumerable.Range(0, n), ByeSlot];
 
             for (int r = 0; r < roundsPerLeg; r++)
             {
@@ -489,14 +638,25 @@ public static class SampleTournamentBuilder
                 DateTime roundDate = RoundCalendar.DateForRound(anchorDate, round, isCrossDivisionCup);
                 bool isUpcoming = playedRounds is int played && round > played;
 
-                for (int i = 0; i < n / 2; i++)
+                for (int i = 0; i < slotCount / 2; i++)
                 {
                     int first = slots[i];
-                    int second = slots[n - 1 - i];
+                    int second = slots[slotCount - 1 - i];
 
-                    // Alternate home/away by round so no team is always home; on
-                    // the return leg invert it so the rematch swaps venue.
-                    bool homeIsFirst = round % 2 == 1;
+                    // The team drawn against the padding sits this jornada out.
+                    if (first == ByeSlot || second == ByeSlot)
+                    {
+                        continue;
+                    }
+
+                    // Alternate home/away by the jornada WITHIN the leg, then
+                    // invert it on the return leg so the rematch swaps venue.
+                    // A pairing that meets in round r of the first leg meets
+                    // again in round r of the second, so deriving this from the
+                    // GLOBAL jornada number cancelled the leg inversion whenever
+                    // roundsPerLeg was odd (every even-sized zone) and both legs
+                    // ended up being played at the same team's home.
+                    bool homeIsFirst = r % 2 == 0;
                     if (leg % 2 == 1)
                     {
                         homeIsFirst = !homeIsFirst;
@@ -534,11 +694,25 @@ public static class SampleTournamentBuilder
                             venues, roundDate, matchIndex, round));
                     }
 
+                    if (roundDate > lastMatchDate)
+                    {
+                        lastMatchDate = roundDate;
+                    }
+
                     matchIndex++;
                 }
 
                 Rotate(slots);
             }
+        }
+
+        // A stage can never end before its own last jornada. With many teams and
+        // two legs the fixture runs past the caller's nominal end date, and the
+        // playoff brackets anchor on Stage.EndDate — so a short end date dated
+        // cup games BEFORE the zone's final jornadas were even played.
+        if (lastMatchDate > stage.EndDate)
+        {
+            stage.EndDate = lastMatchDate;
         }
     }
 
@@ -793,7 +967,13 @@ public static class SampleTournamentBuilder
 
                     if (visitorId is null)
                     {
-                        // BYE: the top seed advances automatically (no match).
+                        // BYE: the top seed advances automatically. It still gets
+                        // a match row with no visitor and no score, exactly the
+                        // shape StageService.FillStageWithSeedsAsync writes for a
+                        // bye — otherwise the stage held more StageTeamMatch rows
+                        // than its matches had slots, and re-seeding it from the
+                        // admin panel threw SeedTeamCountOutOfRange.
+                        stage.Matches.Add(BuildByeMatch(stage, home, venues, roundStart.AddDays(i)));
                         winners.Add(home);
                         continue;
                     }
@@ -999,7 +1179,6 @@ public static class SampleTournamentBuilder
         tournament.Divisions.Add(cupDivision);
 
         int groupCount = crossCup.GroupCount;
-        int perGroup = allTeams.Count / groupCount;
 
         List<List<Position>> groupStandings = [];
         Dictionary<Guid, Team> teamsById = allTeams.ToDictionary(t => t.Id);
@@ -1041,7 +1220,11 @@ public static class SampleTournamentBuilder
             return;
         }
 
-        DateTime bracketStart = anchorDate.AddDays(7 * (perGroup + 1) * crossCup.RoundRobinLegs);
+        // The bracket starts after the LAST group jornada actually scheduled
+        // (SeedRoundRobinMatches pushes a group stage's EndDate out to its own
+        // last match), not after an estimate built from the average group size —
+        // which could date a knockout game before the groups had finished.
+        DateTime bracketStart = cupDivision.Stages.Max(s => s.EndDate).AddDays(StageTemplate.StandardGapDays);
         int order = groupCount;
 
         SeedEliminationBracket(
@@ -1081,6 +1264,23 @@ public static class SampleTournamentBuilder
         return ((hash & 0x7FFFFFFF) % 100) < chance;
     }
 
+    /// <summary>
+    /// The gym a team plays its home games at. Picked by a stable hash of the
+    /// team name so a club always hosts at the same venue, instead of the match
+    /// index picking an unrelated gym on the other side of the province for
+    /// every game.
+    /// </summary>
+    private static Venue VenueForHome(Team home, List<Venue> venues)
+    {
+        int hash = 17;
+        foreach (char character in home.Name)
+        {
+            hash = (hash * 31) + character;
+        }
+
+        return venues[(hash & 0x7FFFFFFF) % venues.Count];
+    }
+
     private static void AddStageTeamMatches(Stage stage, List<Team> teams)
     {
         foreach (Team team in teams)
@@ -1115,7 +1315,7 @@ public static class SampleTournamentBuilder
         int venueIndex,
         int? round)
     {
-        Venue venue = venues[venueIndex % venues.Count];
+        Venue venue = VenueForHome(home, venues);
         Team winner = homeScore > visitorScore ? home : visitor;
 
         Match match = new()
@@ -1148,6 +1348,38 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
+    /// Builds the match row that represents a first-round BYE: the seed that
+    /// advances is the home team, there is no visitor and no score, and the
+    /// match is already finished with that team as the winner — the same
+    /// representation <c>StageService.FillStageWithSeedsAsync</c> writes when it
+    /// seeds a bracket that is not a power of two. <see cref="PositionCalculator"/>
+    /// ignores it (it has no visitor), so it never reaches a standings table.
+    /// </summary>
+    private static Match BuildByeMatch(Stage stage, Team home, List<Venue> venues, DateTime matchDate) =>
+        new()
+        {
+            CreatedBy = CreatedBy,
+            MatchDate = matchDate,
+            Round = null,
+            Type = MatchType.Playoff,
+            Slug = SlugGenerator.GenerateSlug($"{home.Name}-bye-{stage.StageType}-{Guid.NewGuid()}"),
+            HomeTeam = home,
+            HomeTeamId = home.Id,
+            VisitorTeam = null,
+            VisitorTeamId = null,
+            HomeScore = null,
+            VisitorScore = null,
+            IsFinished = true,
+            Status = MatchStatus.Played,
+            WinningTeam = home,
+            WinningTeamId = home.Id,
+            Stage = stage,
+            Venue = VenueForHome(home, venues),
+            PlayerStatistics = [],
+            Scorers = [],
+        };
+
+    /// <summary>
     /// Builds one UPCOMING (unplayed) regular match: teams and a future
     /// <see cref="Match.MatchDate"/>/<see cref="Match.Round"/> are set, but there
     /// is no score, no winner and no scorers, and
@@ -1165,7 +1397,7 @@ public static class SampleTournamentBuilder
         int venueIndex,
         int? round)
     {
-        Venue venue = venues[venueIndex % venues.Count];
+        Venue venue = VenueForHome(home, venues);
 
         return new Match
         {
@@ -1192,13 +1424,94 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
+    /// The players of <paramref name="team"/> a seeded match sheet may list:
+    /// their season registration is Approved and they are not serving a
+    /// sanction. This is the same eligibility rule
+    /// <c>PlayerStatisticService.ValidateEligibilityAsync</c> enforces on every
+    /// real match sheet (HU-57/HU-60/HU-61) — the seed used to cycle through the
+    /// whole roster and hand points to the deliberately Pending player too.
+    /// Falls back to the full roster only if a team somehow has no registration
+    /// at all, so a match is never left without scorers.
+    /// </summary>
+    private static List<Player> EligibleScorers(Team team)
+    {
+        List<Player> eligible =
+        [.. team.PlayerTeamRegistrations
+            .Where(registration => registration.MedicalRecordStatus == MedicalRecordStatus.Approved)
+            .Select(registration => registration.Player)
+            .OfType<Player>()
+            .Where(player => !player.IsSanctioned)];
+
+        return eligible.Count > 0 ? eligible : [.. team.Players];
+    }
+
+    /// <summary>
+    /// Keeps a suspended player off the match sheets he is not allowed to
+    /// appear on: his scoring rows in the games he must miss are handed to a
+    /// team-mate who is not already scoring in that game, so the team's points
+    /// still add up to the recorded result. The window is the next
+    /// <paramref name="duration"/> games his team plays after the ruling; while
+    /// the sanction is still ACTIVE (<see cref="Player.IsSanctioned"/> says he
+    /// is serving it right now) it runs to the end of the tournament.
+    /// </summary>
+    private static void ApplySuspension(
+        List<Match> playedMatches, Player player, Team team, Match sanctionMatch, int duration, bool active)
+    {
+        List<Match> afterTheRuling =
+        [.. playedMatches.Where(match =>
+            (match.HomeTeam == team || match.VisitorTeam == team)
+            && match.MatchDate > sanctionMatch.MatchDate)];
+
+        foreach (Match match in active ? afterTheRuling : afterTheRuling.Take(duration))
+        {
+            ReassignScoring(match, player, team);
+        }
+    }
+
+    /// <summary>
+    /// Moves every scoring row <paramref name="player"/> holds in
+    /// <paramref name="match"/> onto an eligible team-mate who is not already
+    /// scoring in it, so the points still sum to the team's recorded score. A
+    /// no-op when the player did not score in that game.
+    /// </summary>
+    private static void ReassignScoring(Match match, Player player, Team team)
+    {
+        List<Scorer> scorers = [.. match.Scorers.Where(scorer => scorer.Player == player)];
+        if (scorers.Count == 0)
+        {
+            return;
+        }
+
+        HashSet<Player> alreadyScoring = [.. match.Scorers.Select(scorer => scorer.Player).OfType<Player>()];
+        Player? substitute = EligibleScorers(team)
+            .FirstOrDefault(candidate => candidate != player && !alreadyScoring.Contains(candidate));
+
+        if (substitute is null)
+        {
+            return;
+        }
+
+        foreach (Scorer scorer in scorers)
+        {
+            scorer.Player = substitute;
+        }
+
+        foreach (PlayerStatistic statistic in match.PlayerStatistics.Where(s => s.Player == player))
+        {
+            statistic.Player = substitute;
+        }
+    }
+
+    /// <summary>
     /// Adds a scorer plus Points/Assists PlayerStatistic rows for one team in a
     /// match (HU-72: the goleadores ranking reads PlayerStatistic). Skips a
     /// zero-score team so no phantom scorer is created.
     /// </summary>
     private static void AddScoring(Match match, Team team, int score, int scorerSeed)
     {
-        if (score <= 0 || team.Players.Count == 0)
+        List<Player> eligible = EligibleScorers(team);
+
+        if (score <= 0 || eligible.Count == 0)
         {
             return;
         }
@@ -1207,7 +1520,7 @@ public static class SampleTournamentBuilder
         // RNG) so the goleadores read realistically instead of one player scoring
         // the whole game. Weights taper off; the lead scorer takes the remainder.
         int[] weights = [5, 4, 3, 2, 1];
-        int scorerCount = Math.Min(weights.Length, team.Players.Count);
+        int scorerCount = Math.Min(weights.Length, eligible.Count);
         int weightTotal = 0;
         for (int i = 0; i < scorerCount; i++)
         {
@@ -1230,7 +1543,7 @@ public static class SampleTournamentBuilder
                 continue;
             }
 
-            Player player = team.Players.ElementAt((scorerSeed + i) % team.Players.Count);
+            Player player = eligible[Math.Abs(scorerSeed + i) % eligible.Count];
             AddPlayerScoring(match, player, shares[i]);
         }
     }
@@ -1275,18 +1588,32 @@ public static class SampleTournamentBuilder
     /// institutional Team sanction. All descriptions are Spanish, basketball
     /// terms (technical/unsportsmanlike/disqualifying fouls, not soccer cards).
     /// </summary>
-    private static List<PlayerSanction> SeedSanctions(List<Stage> groupStages)
+    private static List<PlayerSanction> SeedSanctions(List<Stage> groupStages, Tournament tournament)
     {
         List<PlayerSanction> sanctions = [];
 
         // Only finished matches carry a real result/winner, so sanctions are
         // tied to those (an in-progress tournament's group stage also holds
         // still-to-play upcoming matches, which must never seed a sanction).
-        List<Match> matches = [.. groupStages.SelectMany(s => s.Matches).Where(m => m.IsFinished)];
+        // Ordered by date because whether a sanction reads as already served or
+        // as still being served depends on where in the calendar it sits.
+        List<Match> matches = [.. groupStages
+            .SelectMany(s => s.Matches)
+            .Where(m => m.IsFinished && m.VisitorTeam is not null)
+            .OrderBy(m => m.MatchDate)];
         if (matches.Count == 0)
         {
             return sanctions;
         }
+
+        // Every played game of the tournament, playoffs included: a suspension
+        // handed out in the last jornadas of a zone also rules the player out of
+        // his team's cup games.
+        List<Match> playedMatches = [.. tournament.Divisions
+            .SelectMany(d => d.Stages)
+            .SelectMany(s => s.Matches)
+            .Where(m => m.IsFinished && m.VisitorTeam is not null)
+            .OrderBy(m => m.MatchDate)];
 
         // (description, duration, subjectType, appealStatus, active) tuples.
         (string Description, int Duration, SanctionSubjectType Subject, SanctionAppealStatus Appeal, bool Active)[] specs =
@@ -1303,14 +1630,22 @@ public static class SampleTournamentBuilder
         {
             (string description, int duration, SanctionSubjectType subject, SanctionAppealStatus appeal, bool active) = specs[i];
 
-            Match match = matches[(i * 5) % matches.Count];
+            // A sanction is issued ON the game it came from — never before it.
+            // What separates a served sanction from one still being served is
+            // WHICH game: a served one is drawn from the opening third of the
+            // calendar (its fechas have long elapsed), an active one from the
+            // closing third, where the player is still sitting it out.
+            int window = Math.Max(1, matches.Count / 3);
+            Match match = active
+                ? matches[matches.Count - 1 - ((i * 3) % window)]
+                : matches[(i * 3) % window];
             Team losingTeam = match.WinningTeam == match.HomeTeam ? match.VisitorTeam! : match.HomeTeam!;
 
             PlayerSanction sanction = new()
             {
                 CreatedBy = CreatedBy,
                 Duration = duration,
-                IssuedDate = active ? match.MatchDate : match.MatchDate.AddDays(-30),
+                IssuedDate = match.MatchDate,
                 Description = description,
                 SubjectType = subject,
                 Match = match,
@@ -1330,8 +1665,12 @@ public static class SampleTournamentBuilder
                 player.IsSanctioned = active;
                 sanction.Player = player;
                 sanction.PlayerId = Guid.Empty;
+
+                ApplySuspension(playedMatches, player, losingTeam, match, duration, active);
             }
 
+            // An appeal can only be filed after the ruling, and resolved after
+            // it is filed — both used to be back-dated before the match.
             if (appeal == SanctionAppealStatus.Pending)
             {
                 sanction.AppealReason = "El jugador sostiene que la falta no existió.";
@@ -1340,9 +1679,9 @@ public static class SampleTournamentBuilder
             else if (appeal == SanctionAppealStatus.Rejected)
             {
                 sanction.AppealReason = "Se solicitó revisión de la jugada.";
-                sanction.AppealDate = match.MatchDate.AddDays(-28);
+                sanction.AppealDate = match.MatchDate.AddDays(2);
                 sanction.AppealResolution = "El tribunal ratificó la sanción.";
-                sanction.AppealResolvedDate = match.MatchDate.AddDays(-25);
+                sanction.AppealResolvedDate = match.MatchDate.AddDays(5);
             }
 
             sanctions.Add(sanction);

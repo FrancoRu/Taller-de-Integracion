@@ -1,4 +1,5 @@
 ﻿using Application.Utils.Constants.Validation;
+using Application.Utils.Extensions;
 
 using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.Venue.Request;
@@ -25,7 +26,7 @@ public class UpdateVenueRequest
     /// <summary>
     /// The new URL of the venue's photo.
     /// </summary>
-    [Url]
+    [ImageReference]
     public string? PhotoUrl { get; set; }
 
     /// <summary>

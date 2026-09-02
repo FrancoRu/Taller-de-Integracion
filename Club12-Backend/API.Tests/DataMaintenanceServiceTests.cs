@@ -113,8 +113,6 @@ public class DataMaintenanceServiceTests : IClassFixture<CustomWebApplicationFac
             StartDate: new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc),
             StageStartDate: new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc),
             StageEndDate: new DateTime(2026, 4, 1, 0, 0, 0, DateTimeKind.Utc),
-            FinishedMatchesStart: new DateTime(2026, 2, 8, 0, 0, 0, DateTimeKind.Utc),
-            UpcomingMatchesStart: new DateTime(2026, 3, 8, 0, 0, 0, DateTimeKind.Utc),
             Divisions:
             [
                 new(
@@ -530,8 +528,6 @@ public class DataMaintenanceServiceTests : IClassFixture<CustomWebApplicationFac
             StartDate: new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc),
             StageStartDate: new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc),
             StageEndDate: new DateTime(2026, 4, 1, 0, 0, 0, DateTimeKind.Utc),
-            FinishedMatchesStart: new DateTime(2026, 2, 8, 0, 0, 0, DateTimeKind.Utc),
-            UpcomingMatchesStart: new DateTime(2026, 3, 8, 0, 0, 0, DateTimeKind.Utc),
             Divisions:
             [
                 new(

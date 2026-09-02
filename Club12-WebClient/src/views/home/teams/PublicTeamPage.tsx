@@ -458,7 +458,11 @@ export default function PublicTeamPage() {
     description: team?.name
       ? `Plantel, fixture, estadísticas y títulos de ${team.name} en la liga Club 12.`
       : undefined,
-    image: team?.logoUrl ?? DEFAULT_PAGE_METADATA.image,
+    // og:image has to be a URL a crawler can fetch, so a locally-rendered
+    // crest (a "data:" SVG) falls back to the site image instead.
+    image: team?.logoUrl?.startsWith('http')
+      ? team.logoUrl
+      : DEFAULT_PAGE_METADATA.image,
   });
 
   if (loading) {

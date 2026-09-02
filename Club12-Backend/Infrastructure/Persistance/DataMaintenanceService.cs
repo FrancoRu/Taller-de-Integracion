@@ -162,8 +162,6 @@ public sealed class DataMaintenanceService(
             StartDate: new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc),
             StageStartDate: new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc),
             StageEndDate: new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
-            FinishedMatchesStart: new DateTime(2026, 6, 8, 0, 0, 0, DateTimeKind.Utc),
-            UpcomingMatchesStart: new DateTime(2026, 9, 7, 0, 0, 0, DateTimeKind.Utc),
             Divisions:
             [
                 new("Primera División", PrimeraNames, PrimeraCodes, PrimeraColors, MainCups,
@@ -180,8 +178,6 @@ public sealed class DataMaintenanceService(
             StartDate: new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc),
             StageStartDate: new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc),
             StageEndDate: new DateTime(2027, 1, 15, 0, 0, 0, DateTimeKind.Utc),
-            FinishedMatchesStart: new DateTime(2026, 10, 8, 0, 0, 0, DateTimeKind.Utc),
-            UpcomingMatchesStart: new DateTime(2026, 12, 14, 0, 0, 0, DateTimeKind.Utc),
             Divisions:
             [
                 new("Primera", ClausuraPrimeraNames, ClausuraPrimeraCodes, ClausuraPrimeraColors),
@@ -271,6 +267,7 @@ public sealed class DataMaintenanceService(
                 Name = name,
                 Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug(name),
                 Address = address,
+                PhotoUrl = SampleArtwork.VenuePhotoDataUri(name),
                 Latitude = latitude,
                 Longitude = longitude,
             });
@@ -334,6 +331,7 @@ public sealed class DataMaintenanceService(
                 Author = "Redacción Club12",
                 Title = title,
                 Slug = Application.Utils.Helper.Slug.SlugGenerator.GenerateSlug(title),
+                PhotoUrl = SampleArtwork.BlogCoverDataUri(title),
                 MarkdownText = body,
                 Views = 0,
                 IsPublished = published,

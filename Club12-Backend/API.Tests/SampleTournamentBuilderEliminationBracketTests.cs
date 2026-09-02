@@ -43,8 +43,6 @@ public class SampleTournamentBuilderEliminationBracketTests
             StartDate: new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc),
             StageStartDate: new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc),
             StageEndDate: new DateTime(2026, 4, 1, 0, 0, 0, DateTimeKind.Utc),
-            FinishedMatchesStart: new DateTime(2026, 2, 8, 0, 0, 0, DateTimeKind.Utc),
-            UpcomingMatchesStart: new DateTime(2026, 3, 8, 0, 0, 0, DateTimeKind.Utc),
             Divisions:
             [
                 new("Zona Única", names, codes, colors, cups),
@@ -77,9 +75,23 @@ public class SampleTournamentBuilderEliminationBracketTests
         Stage semiFinal = cupStages.Single(s => s.StageType == StageType.SemiFinal);
         Stage final = cupStages.Single(s => s.StageType == StageType.Final);
 
-        // 9 real seeds padded to 16 = 7 byes + 1 real match in round 1.
+        // 9 real seeds padded to 16 = 7 byes + 1 real match in round 1. Every
+        // one of the 8 pairings gets a match row: a bye is a finished match with
+        // no visitor and no score whose home team is the winner — the same shape
+        // StageService.FillStageWithSeedsAsync writes — so the stage always has
+        // slots for the teams assigned to it.
         Assert.Equal(9, roundOf16.StageTeamMatches.Count);
-        Assert.Single(roundOf16.Matches);
+        Assert.Equal(8, roundOf16.Matches.Count);
+
+        List<Match> roundOf16Byes = [.. roundOf16.Matches.Where(m => m.VisitorTeamId is null)];
+        Assert.Equal(7, roundOf16Byes.Count);
+        Assert.All(roundOf16Byes, m =>
+        {
+            Assert.True(m.IsFinished);
+            Assert.Null(m.HomeScore);
+            Assert.Null(m.VisitorScore);
+            Assert.Equal(m.HomeTeamId, m.WinningTeamId);
+        });
 
         // Every later round is bye-free: the 8 round-1 winners (7 byes plus
         // the one real match's winner) actually play on, halving each round

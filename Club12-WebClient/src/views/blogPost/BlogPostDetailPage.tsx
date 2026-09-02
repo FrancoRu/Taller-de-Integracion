@@ -114,7 +114,9 @@ const BlogPostDetailPage: React.FC = () => {
   usePageMetadata({
     title: post?.title,
     description: post ? buildDescription(post.markdownText) : undefined,
-    image: post?.photoUrl,
+    // A crawler has to be able to fetch og:image, so a locally-rendered cover
+    // (a "data:" SVG) is left out and the index.html default stands.
+    image: post?.photoUrl?.startsWith('http') ? post.photoUrl : undefined,
     type: 'article',
   });
 
