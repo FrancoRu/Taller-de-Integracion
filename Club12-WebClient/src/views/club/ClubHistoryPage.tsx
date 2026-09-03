@@ -24,6 +24,8 @@ interface ClubSeasonRow {
   threeLetterCode: string;
   teamSlug: string;
   tournamentName: string;
+  /** ISO start date of the season; '' for a team with no registered season. */
+  startDate: string;
 }
 
 /**
@@ -50,15 +52,25 @@ const ClubHistoryPage: React.FC = () => {
     void fetchHistory();
   }, [getClubHistory, idOrSlug]);
 
+  // Canonicalise the URL to the club slug. The team page's "Ver historial del
+  // club" button navigates here with the club GUID (all it carries), so once
+  // the real slug is known, replace the history entry with the slug URL.
+  useEffect(() => {
+    if (club && idOrSlug && club.slug && idOrSlug !== club.slug) {
+      navigate(APP_ROUTES.panelClub.build(club.slug), { replace: true });
+    }
+  }, [club, idOrSlug, navigate]);
+
   // One row per (team, season) pair, so the table reads as the club's
   // season-by-season trajectory. A team with no registered season still
-  // shows a single row with a placeholder.
+  // shows a single row with a placeholder. Rows across every team are then
+  // sorted newest-season-first; placeholder rows (no start date) sort last.
   const rows = useMemo<ClubSeasonRow[]>(() => {
     if (!club) {
       return [];
     }
 
-    return club.teams.flatMap(team => {
+    const unsorted = club.teams.flatMap(team => {
       if (team.seasons.length === 0) {
         return [
           {
@@ -68,6 +80,7 @@ const ClubHistoryPage: React.FC = () => {
             threeLetterCode: team.threeLetterCode,
             teamSlug: team.slug,
             tournamentName: '—',
+            startDate: '',
           },
         ];
       }
@@ -79,8 +92,11 @@ const ClubHistoryPage: React.FC = () => {
         threeLetterCode: team.threeLetterCode,
         teamSlug: team.slug,
         tournamentName: season.tournamentName ?? '—',
+        startDate: season.startDate ?? '',
       }));
     });
+
+    return unsorted.sort((a, b) => b.startDate.localeCompare(a.startDate));
   }, [club]);
 
   if (loading) {

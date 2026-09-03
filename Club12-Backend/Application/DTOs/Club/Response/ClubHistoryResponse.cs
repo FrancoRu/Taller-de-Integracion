@@ -42,4 +42,12 @@ public class ClubSeasonResponse
 {
     public required Guid TournamentId { get; set; }
     public string? TournamentName { get; set; }
+
+    /// <summary>
+    /// The tournament's start date. Only a sort key for the history table
+    /// (newest season first); not displayed. Defaults to
+    /// <see cref="DateTime.MinValue"/> when the tournament cannot be resolved,
+    /// so such rows sort last.
+    /// </summary>
+    public DateTime StartDate { get; set; }
 }
