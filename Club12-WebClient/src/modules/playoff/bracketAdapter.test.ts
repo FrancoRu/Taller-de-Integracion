@@ -265,6 +265,47 @@ describe('toLibraryMatches', () => {
     expect(sf?.hideBottomConnector).toBe(false);
   });
 
+  it('hides both connectors when BOTH siblings feeding a match were decided byes', () => {
+    // Deep enough into a bracket, a pairing can have both sides decided by
+    // a walkover (two teams that each drew a bye into the same slot) — the
+    // child match itself is real (they play each other for real), but
+    // NEITHER of its two sources has a rendered card, so both incoming
+    // connectors would dangle without this.
+    const byeA = makeMatch({
+      id: guid('m-bye-a'),
+      stageId: guid('ro16'),
+      isFinished: true,
+      homeTeam: makeTeam({ id: guid('team-a'), name: 'A' }),
+      visitorTeam: null,
+      winningTeamId: guid('team-a'),
+      winningTeamName: 'A',
+    });
+    const byeB = makeMatch({
+      id: guid('m-bye-b'),
+      stageId: guid('ro16'),
+      isFinished: true,
+      homeTeam: makeTeam({ id: guid('team-b'), name: 'B' }),
+      visitorTeam: null,
+      winningTeamId: guid('team-b'),
+      winningTeamName: 'B',
+    });
+    const qfMatch = makeMatch({ id: guid('m-qf'), stageId: guid('qf') });
+
+    const model: BracketModel = {
+      rounds: [
+        { stageId: guid('ro16'), stageType: StageType.RoundOf16, matches: [byeA, byeB] },
+        { stageId: guid('qf'), stageType: StageType.QuarterFinal, matches: [qfMatch] },
+      ],
+      edges: [],
+    };
+
+    const matches = toLibraryMatches(model);
+    const qf = matches.find(m => m.id === qfMatch.id);
+
+    expect(qf?.hideTopConnector).toBe(true);
+    expect(qf?.hideBottomConnector).toBe(true);
+  });
+
   it('leaves both connectors visible when neither sibling is a bye', () => {
     const matchA = makeMatch({
       id: guid('m-a'),

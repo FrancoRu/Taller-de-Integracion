@@ -178,7 +178,11 @@ export function toLibraryMatches(model: BracketModel): PlayoffLibraryMatch[] {
       const [topSibling, bottomSibling] = siblings;
       const topIsBye = isBracketBye(topSibling);
       const bottomIsBye = isBracketBye(bottomSibling);
-      if (topIsBye === bottomIsBye) return;
+      // Deep enough into a bracket, a pairing can have BOTH sides decided
+      // by a bye (e.g. two teams that each drew a walkover into the same
+      // slot) — every octavos-round bye still needs its own dangling
+      // connector hidden, not just the mixed bye/real case.
+      if (!topIsBye && !bottomIsBye) return;
       hideConnectorByChildId.set(childId, { top: topIsBye, bottom: bottomIsBye });
     });
 
