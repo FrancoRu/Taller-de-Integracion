@@ -3,6 +3,50 @@ import { IMatchResponse } from '@/modules/match/type/match.d';
 import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
 
 /**
+ * Wraps a standalone (best-of-1) playoff match in the same
+ * `IMatchSeriesResponse` shape a real best-of-N series carries, so a
+ * fixture list can render every playoff round through one `SeriesCard`
+ * component instead of a bo1 round looking like a different, plainer UI
+ * (a bare `MatchRow`) next to every BOx round's rich series card. Returns
+ * `null` for a slot still missing a side (a TBD match awaiting a previous
+ * round's winner) — there's no real matchup yet to present as a series.
+ */
+export const singleMatchAsSeries = (match: IMatchResponse): IMatchSeriesResponse | null => {
+  if (!match.homeTeam || !match.visitorTeam) return null;
+
+  return {
+    id: match.id,
+    // stageId is never read for display (SeriesCard doesn't use it) — the
+    // fallback only exists to satisfy the type when a match's own stageId
+    // is somehow null.
+    stageId: match.stageId ?? match.id,
+    homeTeamId: match.homeTeam.id,
+    homeTeamName: match.homeTeam.name,
+    visitorTeamId: match.visitorTeam.id,
+    visitorTeamName: match.visitorTeam.name,
+    bestOf: 1,
+    winningTeamId: match.winningTeamId,
+    winningTeamName: match.winningTeamName,
+    games: [
+      {
+        id: match.id,
+        matchDate: match.matchDate,
+        homeTeamName: match.homeTeam.name,
+        visitorTeamName: match.visitorTeam.name,
+        homeScore: match.homeTeam.score,
+        visitorScore: match.visitorTeam.score,
+        winningTeamName: match.winningTeamName,
+        isFinished: match.isFinished,
+        matchType: match.matchType,
+        status: match.status,
+        round: match.round,
+        gameNumber: 1,
+      },
+    ],
+  };
+};
+
+/**
  * A match is a walkover (bye) when it was seeded with only one side present
  * and is already finished — the other side never had an opponent, as
  * opposed to a not-yet-seeded slot still waiting on a previous round's

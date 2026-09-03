@@ -296,8 +296,33 @@ describe('MatchFixtureList — playoff series grouping', () => {
     expect(screen.getByText('Al mejor de 3 · 1 juego')).toBeInTheDocument();
   });
 
-  it('renders a standalone (non-series) match with no series header, same as without seriesById', () => {
+  it('renders a plain MatchRow for a standalone match when seriesById is omitted entirely (non-playoff fixture)', () => {
     const single = match({ round: null, homeTeam: team('A'), visitorTeam: team('B') });
+
+    render(
+      <MemoryRouter>
+        <MatchFixtureList matches={[single]} />
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByText('Serie')).not.toBeInTheDocument();
+  });
+
+  it('renders a bo1 playoff round (no backing MatchSeries) as a SeriesCard too, not a bare MatchRow', () => {
+    // Regression: a best-of-N round already gets the rich SeriesCard
+    // treatment (progress bar, winner banner, "Juego N" breakdown) — a bo1
+    // round has no real MatchSeries behind it (the backend never creates
+    // one for a single decisive game), so it used to fall back to a plain
+    // MatchRow and look like a different kind of round entirely next to
+    // every boX round in the same "Partidos" list.
+    const single = match({
+      round: null,
+      homeTeam: team('A'),
+      visitorTeam: team('B'),
+      isFinished: true,
+      winningTeamId: guid('team-A'),
+      winningTeamName: 'A',
+    });
 
     render(
       <MemoryRouter>
@@ -305,7 +330,8 @@ describe('MatchFixtureList — playoff series grouping', () => {
       </MemoryRouter>
     );
 
-    expect(screen.queryByText('Serie')).not.toBeInTheDocument();
+    expect(screen.getByText('Serie')).toBeInTheDocument();
+    expect(screen.getByText('Al mejor de 1 · 1 juego')).toBeInTheDocument();
   });
 });
 
