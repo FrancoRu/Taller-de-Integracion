@@ -22,15 +22,14 @@ import {
   ScoreEmphasis,
   sortScorersByPoints,
 } from '@/modules/match/utils/matchDisplay';
-import { formatLongDateTimeAr } from '@/modules/core/utils/formatDate';
+import { formatLongDateAr, formatTimeAr } from '@/modules/core/utils/formatDate';
 import { ITeamMatchResponse } from '@/modules/team/type/team';
 import { font } from '@/design/tokens';
 import {
   DEFAULT_PAGE_METADATA,
   usePageMetadata,
 } from '@/modules/core/utils/pageMetadata';
-
-const formatMatchDateTime = (value: string) => formatLongDateTimeAr(value);
+import { AccessTimeIcon, CalendarMonthIcon, StadiumIcon } from '@/views/core/MUI/icons/icons';
 
 /** Both crests read at the same size — the league plays on neutral venues, so
  *  no side is presented as home/away. */
@@ -239,22 +238,38 @@ export default function PublicMatchPage() {
         {homeTeam?.name ?? '—'} vs {visitorTeam?.name ?? '—'}
       </Typography>
 
+      {/* Date, time and venue always read the same way regardless of match
+          status (previously the date/time swapped between a bold h6 and a
+          plain caption depending on isFinished, so a scheduled match's
+          header looked like a different component from a played one) — one
+          consistent metadata row, icon-led like the rest of the app
+          (MatchRow, MatchFixtureList's bye row). */}
       <Stack sx={{ alignItems: 'center', mb: { xs: 3, md: 4 } }} spacing={1}>
         <MatchStatusChip status={match.status} isFinished={isFinished} />
-        <Typography
-          variant={isFinished ? 'body2' : 'h6'}
-          component="p"
-          sx={{
-            color: isFinished ? 'text.secondary' : 'text.primary',
-            fontWeight: isFinished ? 400 : 600,
-            textAlign: 'center',
-          }}
+        <Stack
+          direction="row"
+          spacing={1.5}
+          sx={{ alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', rowGap: 0.5 }}
         >
-          {formatMatchDateTime(match.matchDate)}
-        </Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center' }}>
-          {venue?.name ?? 'Cancha a confirmar'}
-        </Typography>
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+            <CalendarMonthIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+              {formatLongDateAr(match.matchDate)}
+            </Typography>
+          </Stack>
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+            <AccessTimeIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+              {formatTimeAr(match.matchDate)}
+            </Typography>
+          </Stack>
+        </Stack>
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+          <StadiumIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            {venue?.name ?? 'Cancha a confirmar'}
+          </Typography>
+        </Stack>
       </Stack>
 
       {/* Scoreboard: teams flank a big centred score on desktop and stack above
@@ -310,21 +325,25 @@ export default function PublicMatchPage() {
         {renderTeam(visitorTeam, emphasis.visitor)}
       </Stack>
 
-      <Divider sx={{ mb: 3 }} />
+      {isFinished && (
+        <>
+          <Divider sx={{ mb: 3 }} />
 
-      <Box component="section">
-        <SectionHeading>Goleadores del partido</SectionHeading>
-        <Box
-          sx={{
-            display: 'grid',
-            gap: 2,
-            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
-          }}
-        >
-          {renderScorers(homeTeam)}
-          {renderScorers(visitorTeam)}
-        </Box>
-      </Box>
+          <Box component="section">
+            <SectionHeading>Goleadores del partido</SectionHeading>
+            <Box
+              sx={{
+                display: 'grid',
+                gap: 2,
+                gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+              }}
+            >
+              {renderScorers(homeTeam)}
+              {renderScorers(visitorTeam)}
+            </Box>
+          </Box>
+        </>
+      )}
     </PageShell>
   );
 }

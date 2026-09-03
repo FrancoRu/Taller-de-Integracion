@@ -18,4 +18,18 @@ describe('MatchStatusChip', () => {
     render(<MatchStatusChip status={null} isFinished />);
     expect(screen.getByText('Jugado')).toBeInTheDocument();
   });
+
+  it('renders a distinct icon per status, not just the label text', () => {
+    const { container: scheduled } = render(<MatchStatusChip status={MatchStatus.Scheduled} />);
+    const { container: played } = render(<MatchStatusChip status={MatchStatus.Played} />);
+    const { container: suspended } = render(<MatchStatusChip status={MatchStatus.Suspended} />);
+
+    const iconTestId = (container: HTMLElement) =>
+      container.querySelector('svg')?.getAttribute('data-testid');
+
+    expect(iconTestId(scheduled)).toBe('ScheduleIcon');
+    expect(iconTestId(played)).toBe('CheckCircleIcon');
+    expect(iconTestId(suspended)).toBe('PauseCircleIcon');
+    expect(iconTestId(scheduled)).not.toBe(iconTestId(played));
+  });
 });

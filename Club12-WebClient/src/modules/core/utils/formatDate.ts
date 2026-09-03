@@ -67,6 +67,17 @@ export function formatTimeAr(value?: Date | string | null): string {
 }
 
 /**
+ * Formats a UTC value as a long Spanish Argentina-time date, with no
+ * time-of-day, e.g. "lunes, 16 de agosto de 2026". Returns "—" for
+ * empty/invalid input.
+ */
+export function formatLongDateAr(value?: Date | string | null): string {
+  if (!value) return '—';
+  const parsed = toArDayjs(value);
+  return parsed.isValid() ? parsed.locale('es').format('dddd, D [de] MMMM [de] YYYY') : '—';
+}
+
+/**
  * Formats a UTC value as a long Spanish Argentina-time date and time, e.g.
  * "lunes, 16 de agosto de 2026 • 14:30". Returns "—" for empty/invalid input.
  */

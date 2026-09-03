@@ -53,6 +53,9 @@ import StorageIcon from '@mui/icons-material/Storage';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ScheduleIcon from '@mui/icons-material/Schedule';
+import PauseCircleIcon from '@mui/icons-material/PauseCircle';
 
 export {
   DeleteIcon,
@@ -110,4 +113,7 @@ export {
   DeleteSweepIcon,
   InfoOutlinedIcon,
   AccessTimeIcon,
+  CheckCircleIcon,
+  ScheduleIcon,
+  PauseCircleIcon,
 };

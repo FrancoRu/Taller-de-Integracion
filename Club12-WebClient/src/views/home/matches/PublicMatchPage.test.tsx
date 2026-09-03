@@ -114,6 +114,21 @@ describe('PublicMatchPage scoreboard', () => {
     expect(screen.getByText('Gimnasio Central')).toBeInTheDocument();
   });
 
+  it('shows the date, time and venue as separate icon-led pieces, not one combined string', async () => {
+    // Regression: date/time used to render as one Typography whose
+    // variant/weight/color flipped depending on isFinished, so a scheduled
+    // match's header looked like a different component from a played
+    // one's. Both now render through the same markup regardless of status.
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText('Jugado')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(/miércoles, 1 de enero de 2025/i)).toBeInTheDocument();
+    expect(screen.getByText('17:00')).toBeInTheDocument();
+  });
+
   it('lists each team\'s scorers with points and an empty state when there are none', async () => {
     renderPage();
 
@@ -143,6 +158,11 @@ describe('PublicMatchPage scoreboard', () => {
     });
 
     expect(screen.getByText('Programado')).toBeInTheDocument();
+    // Regression: a not-yet-played match has no scorers to show — the
+    // section used to render regardless of status, showing an empty
+    // "Sin goleadores cargados." card for a match that hasn't happened yet.
+    expect(screen.queryByText('Goleadores del partido')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sin goleadores cargados.')).not.toBeInTheDocument();
   });
 
   it('sorts scorers by points descending', async () => {
