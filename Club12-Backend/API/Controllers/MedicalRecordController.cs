@@ -9,8 +9,6 @@ using Application.Utils.Constants;
 using Domain.Constants;
 using Domain.Enums;
 
-using Infrastructure.Persistance;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -29,42 +27,13 @@ namespace API.Controllers;
 /// </summary>
 /// <param name="medicalRecordService">The medical-record service.</param>
 /// <param name="medicalRecordStorage">The medical-record file storage boundary.</param>
-/// <param name="medicalRecordSeedBackfiller">
-/// The one-off admin backfill used only by <see cref="BackfillMedicalRecords"/>
-/// — kept out of <c>DataMaintenanceService</c>'s constructor on purpose, since
-/// that class is resolved through the shared DI container by ~20 tests that
-/// have no override for the live-Supabase-constructor testability gap this
-/// dependency drags in (see <see cref="MedicalRecordSeedBackfiller"/>).
-/// </param>
 [Route("api/medical-records/")]
 [ApiController]
 [Authorize(Roles = Roles.AdminOrOwner)]
 public class MedicalRecordController(
     IMedicalRecordService medicalRecordService,
-    IMedicalRecordStorage medicalRecordStorage,
-    MedicalRecordSeedBackfiller medicalRecordSeedBackfiller) : ControllerBase
+    IMedicalRecordStorage medicalRecordStorage) : ControllerBase
 {
-    /// <summary>
-    /// One-off admin action: runs the same idempotent, resumable
-    /// medical-record backfill the startup seeder runs
-    /// (medical-records-storage-eligibility, Part 3) against whatever data is
-    /// already in the database right now, without requiring a reseed or a
-    /// restart. Safe to call repeatedly — a registration that already has a
-    /// real stored file is skipped.
-    /// </summary>
-    [HttpPost("backfill")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> BackfillMedicalRecords()
-    {
-        // approveNonApproved: true — this live dataset was seeded before the
-        // Approved-by-default seed logic existed, so every registration is
-        // still Pending; the normal (seed self-heal) candidate set would find
-        // nothing to fix here.
-        await medicalRecordSeedBackfiller.BackfillMedicalRecordsAsync(medicalRecordPath: null, approveNonApproved: true);
-        return NoContent();
-    }
-
     /// <summary>
     /// Uploads a player's medical-record file (PDF) for a specific team and
     /// tournament (HU-55). Stores the file in the dedicated medical-records

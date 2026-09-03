@@ -75,7 +75,7 @@ public class MedicalRecordDownloadTests
         });
         FakeStorage storage = new(new Dictionary<string, byte[]> { [fileUrl] = pdf });
 
-        MedicalRecordController controller = new(service, storage, null!);
+        MedicalRecordController controller = new(service, storage);
 
         IActionResult result = await controller.DownloadMedicalRecord(playerId, teamId, tournamentId);
 
@@ -102,7 +102,7 @@ public class MedicalRecordDownloadTests
         });
         FakeStorage storage = new([]);
 
-        MedicalRecordController controller = new(service, storage, null!);
+        MedicalRecordController controller = new(service, storage);
         ConfigureProblemDetailsFactory(controller);
 
         IActionResult result = await controller.DownloadMedicalRecord(
