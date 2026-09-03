@@ -73,6 +73,12 @@ const PlayerMedicalRecordDialog: React.FC<PlayerMedicalRecordDialogProps> = ({
   // Once the ficha is Approved (habilitado) it is frozen: the stored file can
   // only be viewed/downloaded, never replaced (HU-57).
   const isApproved = effectiveStatus === MedicalRecordStatus.Approved;
+  // Approved alone doesn't mean habilitado — a legacy/unresolvable file
+  // reference reads as Approved but never actually habilitated the player
+  // (PlayerTeamRegistration.IsHabilitado). Only a truly habilitado record is
+  // frozen; the Approved-but-not-habilitado shape still needs a way out
+  // (re-upload), or it would be stuck forever with no admin recourse.
+  const isFrozen = isApproved && effectiveHabilitado;
   const hasStoredFile = Boolean(record?.fileUrl ?? record?.fileName);
   // Approving requires a real (non-legacy) stored file reference — the
   // backend rejects an approve with no file (medical-records-storage-eligibility
@@ -258,14 +264,14 @@ const PlayerMedicalRecordDialog: React.FC<PlayerMedicalRecordDialogProps> = ({
               </Typography>
             )}
 
-          {isApproved && (
+          {isFrozen && (
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               La ficha ya está aprobada y el jugador quedó habilitado. Solo puede
               consultarse o descargarse.
             </Typography>
           )}
 
-          {!isApproved && (
+          {!isFrozen && (
             <>
               <Divider />
 
@@ -306,7 +312,7 @@ const PlayerMedicalRecordDialog: React.FC<PlayerMedicalRecordDialogProps> = ({
             </>
           )}
 
-          {!isApproved && (
+          {!isFrozen && (
             <>
               <Divider />
 
