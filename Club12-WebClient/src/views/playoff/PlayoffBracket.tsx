@@ -6,6 +6,7 @@ import { BracketModel } from '@/modules/playoff/type/bracket.d';
 import { GUID } from '@/modules/core/types/types';
 import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
 import { toLibraryMatches, libraryRoundLabels } from '@/modules/playoff/bracketAdapter';
+import { isBracketBye } from '@/modules/playoff/matchStatus';
 import { resolveClickTargetMatchId } from '@/modules/playoff/bracketMatchNavigation';
 import BracketMatchNode from '@/views/playoff/BracketMatchNode';
 import BracketMatchLibraryAdapter from '@/views/playoff/BracketMatchLibraryAdapter';
@@ -119,7 +120,7 @@ export default function PlayoffBracket({
               Tercer puesto
             </Typography>
             <Stack spacing={2}>
-              {model.thirdPlace.matches.map(match => {
+              {model.thirdPlace.matches.filter(match => !isBracketBye(match)).map(match => {
                 const series = seriesById?.get(match.id);
                 const legs = model.thirdPlace?.legsByMatchId?.get(match.id);
                 const targetId = onMatchClick

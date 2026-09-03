@@ -22,6 +22,7 @@ import {
   formatRoundLabel,
   groupMatchesByRound,
 } from '@/modules/match/utils/matchGrouping';
+import { isBracketBye } from '@/modules/playoff/matchStatus';
 import {
   FIXTURE_CSV_HEADERS,
   buildFixtureCsvRows,
@@ -217,8 +218,12 @@ export default function MatchFixtureList({
                     // (byeTeamNamesForRound) below — a fixture-generation slot
                     // with neither team assigned is corrupt data, not a real
                     // match, and must not render its own broken "—" vs "—" row.
+                    // A playoff walkover (isBracketBye) already advances its
+                    // lone team with no real opponent ever assigned — showing
+                    // it as its own "0-0 vs —" row adds a match that never
+                    // happened, so it's excluded here too.
                     const realMatches = round.matches.filter(
-                      match => match.homeTeam || match.visitorTeam
+                      match => (match.homeTeam || match.visitorTeam) && !isBracketBye(match)
                     );
 
                     if (!seriesById) {

@@ -143,16 +143,24 @@ export function toLibraryMatches(model: BracketModel): PlayoffLibraryMatch[] {
     const nextRound = rounds[roundIndex + 1];
     const roundLabel = translateStageType(round.stageType).toUpperCase();
 
-    return round.matches.map((match, matchIndex) => ({
-      id: match.id,
-      nextMatchId: resolveNextMatchId(matchIndex, edgeTargetsBySource.get(match.id), nextRound),
-      tournamentRoundText: roundLabel,
-      startTime: match.matchDate,
-      state: matchState(match),
-      participants: [toParticipant(match, 'home'), toParticipant(match, 'visitor')],
-      raw: match,
-      legs: round.legsByMatchId?.get(match.id),
-    }));
+    return round.matches
+      .map((match, matchIndex) => ({
+        id: match.id,
+        nextMatchId: resolveNextMatchId(matchIndex, edgeTargetsBySource.get(match.id), nextRound),
+        tournamentRoundText: roundLabel,
+        startTime: match.matchDate,
+        state: matchState(match),
+        participants: [toParticipant(match, 'home'), toParticipant(match, 'visitor')],
+        raw: match,
+        legs: round.legsByMatchId?.get(match.id),
+      }))
+      // A walkover (bye) is already decided at seeding time with no real
+      // opponent — showing it as its own bracket card just for a lone team
+      // name and a "BYE" label adds a node that carries no information the
+      // next round's card doesn't already show. `matchIndex` above is still
+      // computed from the UNFILTERED array so sibling matches' fallback
+      // next-round pairing (see resolveNextMatchId) doesn't shift.
+      .filter(libraryMatch => !isBracketBye(libraryMatch.raw));
   });
 }
 
