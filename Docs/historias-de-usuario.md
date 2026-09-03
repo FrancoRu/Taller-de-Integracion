@@ -10,6 +10,13 @@
 > varios comentarios — renumerar rompería esa trazabilidad); las historias nuevas se agregan al final
 > con números nuevos.
 >
+> **Actualización 2026-09-03**: se agregaron HU-118/HU-119 (umbral de 4 jugadores habilitados por
+> equipo para cargar un resultado normal / para iniciar el torneo) y HU-86b (top 10 en el ranking
+> público de goleadores), se corrigieron HU-62/HU-73/HU-78/HU-82/HU-109 con lo que cambió en esa
+> sesión, y se marcaron dos ítems más de la Épica 24 como resueltos (`MatchId` required, roster
+> mostrando "No habilitado" para todos). Mismo criterio que la reescritura de abajo: verificado
+> contra código real, no contra memoria de lo pedido.
+>
 > Convenciones: `[BUG]` corrige algo existente · `[NUEVA]` propuesta alineada · `[F2]` Fase 2.
 > Prioridad (MoSCoW): **M** Must · **S** Should · **C** Could.
 > `✅` = verificada vigente tal cual · `🔄` = vigente pero cambió su implementación (ver nota) ·
@@ -366,9 +373,46 @@ realmente almacenado**, no alcanza con el estado `Approved` sin referencia de ar
 ### HU-59 · Ficha médica nueva por temporada — `S` ✅
 ### HU-60 · Solo son elegibles los jugadores habilitados — `M` ✅
 ### HU-61 · Un jugador sancionado no es convocable — `M` ✅
-### HU-62 · Aviso de jugador no habilitado al armar la fecha — `C` ✅
+### HU-62 · Aviso de jugador no habilitado al armar la fecha — `C` 🔄
+**El aviso ahora lista a TODOS los jugadores no elegibles de una planilla, no solo el primero
+encontrado — y por nombre real, nunca por UUID crudo.** Corregido: antes,
+`PlayerStatisticService` tiraba una excepción apenas encontraba el PRIMER jugador sancionado o no
+habilitado, con el ID del jugador crudo en el mensaje (`El jugador {guid} no está habilitado...`) —
+esto obligaba al admin a corregir la planilla de a un jugador por vez, y el mensaje era ilegible.
+Ahora (`PlayerStatisticService.FindRosterEligibilityIssuesAsync`) junta TODAS las violaciones de
+ambos equipos antes de tirar un único error agrupado por equipo, con el nombre real de cada
+jugador (`ErrorMessages.MatchSheet.PlayersNotEligible`).
 
-Las seis siguen vigentes tal cual.
+Las seis siguen vigentes en el fondo; ver también HU-73 y HU-109 (nuevas reglas relacionadas
+agregadas en esta pasada).
+
+### HU-118 · [NUEVO] Umbral mínimo de habilitados por equipo (walkover automático) — `M`
+**Como** owner/admin **quiero** que el sistema bloquee la carga de un resultado normal si un equipo
+no tiene suficientes jugadores habilitados **para** forzar que ese partido se cargue como walkover
+en vez de como un resultado jugado.
+- Un equipo necesita **al menos 4 jugadores habilitados** de su plantel de esa temporada para que se
+  le pueda cargar un resultado normal (`PlayerStatisticService.EnsureTeamMeetsHabilitadoMinimumAsync`,
+  usa `TournamentCompletabilityValidator.MinPlayersPerTeam`, que bajó de 5 a 4 y ahora cuenta
+  jugadores **habilitados**, no simplemente registrados en el plantel).
+- Se chequea ANTES de mirar qué jugadores puntuaron en la planilla — un equipo por debajo del
+  umbral falla esta regla aunque la planilla venga vacía.
+- Si un equipo no llega al mínimo, `PUT /api/matches/{id}/result-from-sheets` y
+  `PUT /api/matches/{id}/result-from-team-sheet` rechazan con 409 y un mensaje que indica cuántos
+  habilitados tiene y que debe cargarse como walkover (`ErrorMessages.MatchSheet.TeamRequiresWalkOver`);
+  el walkover en sí sigue siendo una acción manual del admin ("Marcar W.O.", HU-73), no automática —
+  el sistema bloquea el camino incorrecto, no ejecuta el correcto por su cuenta.
+
+### HU-119 · [NUEVO] Torneo no puede iniciar si algún equipo no llega al mínimo de habilitados — `M`
+**Como** owner/admin **quiero** que el sistema me impida iniciar un torneo si algún equipo inscripto
+no tiene suficientes jugadores habilitados **para** no arrancar una temporada que va a terminar en
+walkovers por incumplimiento de plantel.
+- Extiende la guarda de completitud existente (HU-109): la regla `TeamTooFewPlayers` de
+  `TournamentCompletabilityValidator` ahora cuenta jugadores **habilitados** (ficha médica
+  Aprobada + archivo real almacenado) en vez de simplemente registrados, y el mínimo bajó de 5 a 4
+  — alineado con el umbral de walkover de HU-118.
+- Un equipo con 5 jugadores registrados pero ninguno habilitado ya NO pasa esta guarda (antes sí,
+  porque solo contaba registros); el torneo se queda bloqueado en `RegistrationClosed` hasta que se
+  corrija.
 
 ---
 
@@ -397,14 +441,20 @@ botón.
 
 ### HU-69 · Cargar el resultado del partido — `M` 🔄
 Sigue vigente, con un campo nuevo: checkbox **"Se jugó tiempo extra"** (`Match.WentToOvertime`) — es
-puramente informativo, no cambia el cálculo del marcador ni la regla de sin-empates (HU-70).
+puramente informativo, no cambia el cálculo del marcador ni la regla de sin-empates (HU-70). **Además**,
+la carga ahora está bloqueada si algún equipo no llega al mínimo de jugadores habilitados — ver
+HU-118 (nueva).
 
 ### HU-70 · Sin empates: todo partido cargado tiene ganador — `M` ✅
 ### HU-71 · Cargar goleadores del partido — `M` ✅
 ### HU-72 · Persistir anotadores y conectarlos al ranking — `M` ✅
-### HU-73 · Walkover / ausencia (W.O.) — `S` ✅
 
-Las cuatro siguen vigentes tal cual.
+### HU-73 · Walkover / ausencia (W.O.) — `S` 🔄
+Sigue vigente tal cual como acción MANUAL del admin ("Marcar W.O.", elige el equipo presente,
+`MatchService.LoadWalkOverAsync`). **Precisión agregada en esta pasada**: el sistema no dispara un
+walkover solo — lo que hace es bloquear la carga de un resultado NORMAL cuando un equipo no llega al
+mínimo de 4 habilitados (HU-118), dejando el walkover manual como el único camino disponible para
+cerrar ese partido. No hay detección automática de "equipo ausente" más allá de esa guarda.
 
 ---
 
@@ -423,11 +473,18 @@ distingue el tipo de sujeto.
 
 ## Épica 15 — Clasificación y playoffs
 
-### HU-78 · Tabla de posiciones por zona/división — `M` ✅
+### HU-78 · Tabla de posiciones por zona/división — `M` 🔄
+Sigue vigente, con un agregado sin HU previa: en una división **sin fase de playoff**, el 1er puesto
+de la tabla pública se corona (ícono + fila destacada) **en vivo**, apenas es el líder actual — no
+espera a que termine la temporada (`crownFirstPlace` en `PublicDivisionPanel.tsx`/
+`divisionStandings.tsx`). Corregido en esta sesión tras una corrección del owner: la primera versión
+solo coronaba una vez decidido el podio; el criterio correcto es que el color siga a la posición
+actual, igual que el resto del tinte por rango de clasificación.
+
 ### HU-79 · Sistema de puntaje configurable — `S` ✅
 ### HU-80 · Desempate de la tabla (fase de grupos) — `M` ✅
 
-Las tres siguen vigentes tal cual.
+Las dos siguen vigentes tal cual.
 
 ### HU-81 · Definir los clasificados a playoffs desde la tabla — `M` 🔄
 Sigue vigente en el concepto, con dos cambios: los rangos ya no son un editor manual (ver HU-45), y
@@ -452,6 +509,10 @@ definición.
   partido único) y lo carga en el slot correspondiente de la ronda siguiente del mismo bracket —
   llamado desde las 3 acciones de carga de resultado de `MatchController`, y también desde el propio
   seeding para propagar los BYE automáticamente.
+- ✅ **Partido por el tercer puesto, opcional por copa.** `StageType.ThirdPlace` es un tipo de etapa
+  propio; cuando la copa lo incluye, los dos perdedores de semifinal avanzan automáticamente a ese
+  partido (`StageService.AdvanceLosersToThirdPlaceAsync`). No tenía HU propia en ninguna versión
+  anterior de este documento.
 
 ---
 
@@ -484,6 +545,13 @@ ubicación.**
 ### HU-88 · Historial de un jugador entre temporadas — `C` ✅
 
 Ambas siguen vigentes tal cual.
+
+### HU-86b · [NUEVO] Top 10 en el ranking de goleadores público — `S`
+**Como** visitante **quiero** ver un ranking de goleadores corto en la página pública del torneo
+**para** no tener que scrollear una lista larga en una vista que es solo un vistazo rápido.
+- La tabla de goleadores de la página pública de una división limita a los primeros 10
+  (`PUBLIC_TOP_SCORERS_LIMIT` en `PublicDivisionPanel.tsx`, prop `limit` de `DivisionScorersTable`).
+- El panel admin (HU-86) NO tiene este límite — sigue mostrando el ranking completo, paginado.
 
 ### HU-89 · Exportar posiciones / estadísticas — `C` 🔄
 **Solo CSV — no hay exportación a PDF.** El botón "Imprimir" abre el diálogo de impresión nativo del
@@ -588,9 +656,12 @@ opción "copiar plantel de temporada anterior" (HU-53) vive acá.
 Sigue vigente tal cual, con una precisión de UI: el paso de asignación tiene su propio tab
 **"Asignación"** en `TournamentPage.tsx` (ver HU-30).
 
-### HU-109 · Guardas de completitud — `M` ✅
-Sigue vigente: `TournamentCompletabilityValidator` implementa las 5 reglas descriptas, con su propia
-suite de tests.
+### HU-109 · Guardas de completitud — `M` 🔄
+Sigue vigente: `TournamentCompletabilityValidator` implementa las 6 reglas (zona con muy pocos
+equipos, equipo sin asignar, equipo en más de una zona, rango de playoff más allá de los equipos
+asignados, grupo de copa cruzada con muy pocos equipos, y equipo con muy pocos jugadores), con su
+propia suite de tests. **La última regla cambió en esta pasada — ver HU-119 (nueva)**: ya no cuenta
+jugadores simplemente registrados sino habilitados, y el mínimo bajó de 5 a 4.
 
 ### HU-110 · Copa cruzada con múltiples grupos de tamaño variable — `M` 🔄
 **El "gap actual" que anotaba la versión anterior ya está cerrado.**
@@ -678,7 +749,8 @@ Recopilado de la auditoría 2026-09-02. No son features nuevas — son casos don
 documentado/esperado y el código real difieren, y alguien tiene que decidir qué lado gana.
 
 > **Resueltos (2026-09-02, misma sesión, después de la auditoría)**: los ítems 1-5 de abajo ya
-> fueron corregidos y están en `develop`.
+> fueron corregidos y están en `develop`. **Resueltos (2026-09-03, sesión de reglas de
+> habilitación)**: los ítems 8-9.
 
 1. ~~**Series playoff Best-of-N no se generan en producción (HU-82/HU-46).**~~ Resuelto:
    `StageService.SeedPlayoffCupsAsync`/`SeedKnockoutStageAsync`/`SeedMultiGroupCrossCupStageAsync`
@@ -696,25 +768,52 @@ documentado/esperado y el código real difieren, y alguien tiene que decidir qu�
    `validateCrossCupStep` rechaza una copa cruzada con `cups.length === 0`.
 6. **`TournamentsPage.tsx` (listado plano de torneos) quedó huérfano (HU-29).** Sigue existiendo
    como código/ruta pero no se llega a él desde ningún link del panel. Sigue abierto.
-7. **`Docs/QA-CHECKLIST-E2E.md`** tiene la corrida más reciente contra staging — a la fecha de este
-   documento, el backend de staging estaba caído (502), así que gran parte del checklist quedó sin
-   poder ejecutarse; revisar su estado antes de asumir que algo de esta lista "funciona en vivo".
-   Sigue abierto (task #3, "E2E final del ciclo completo").
+7. ~~`Docs/QA-CHECKLIST-E2E.md`~~ — el checklist se retiró del repo (ya cumplió su función; el E2E
+   contra staging que documentaba se completó en la sesión del 2026-09-03, ver ítems 8-10). Si se
+   necesita un nuevo barrido E2E, generar uno nuevo desde cero contra las rutas reales, no reflotar
+   el archivo viejo.
+8. ~~**`LoadMatchResultFromSheetsRequest.MatchId` marcado `required` rechazaba toda carga de
+   resultado (HU-69).**~~ Resuelto (2026-09-03): el DTO nunca recibe `matchId` del cliente (viene de
+   la ruta), pero `required` hacía que `System.Text.Json` rechazara el body entero antes de que el
+   controller pudiera asignarlo desde la ruta — ningún resultado se pudo cargar por este endpoint
+   hasta el fix.
+9. ~~**El roster de un partido mostraba "No habilitado" para todos, incluso jugadores realmente
+   habilitados (HU-62).**~~ Resuelto (2026-09-03): `CreateMap<Player, PublicPlayerResponse>()` no
+   tenía mapeo para `MedicalRecordStatus`/`IsHabilitado`/`JerseyNumber` (viven en
+   `PlayerTeamRegistration`, no en `Player`), y el include de EF tampoco cargaba esa navegación para
+   el roster (sí para los goleadores). El dato real en base siempre fue correcto — solo lo que
+   mostraba la respuesta del partido estaba mal. Corregido con un paso `AfterMap` en
+   `MatchProfile.cs` + el include faltante en `MatchRepository.GetDetailByIdOrSlugAsync`.
+10. **Datos de seed sembrados antes de la feature de ficha médica quedaron con TODOS los jugadores
+    en `Pending` (HU-57/HU-118/HU-119).** El backfill normal de `DataSeeder` (que sube un archivo real
+    para registros ya `Approved`) no alcanza a estos: nunca llegaron a `Approved` en primer lugar. Se
+    corrigió el dato en vivo de staging con una acción puntual (endpoint temporal, ya retirado del
+    código) — pero si se vuelve a sembrar una base desde un backup viejo o una migración anterior a
+    esta feature, el mismo síntoma puede repetirse. No hay una guarda automática contra esto todavía.
 
 ---
 
 ## Resumen
 
-- **Test counts**: la cifra "551 backend / 339 frontend" de la versión anterior está desactualizada.
-  Verificado en esta sesión: **808 tests backend, 645 tests frontend**, ambos en verde. Correr
+- **Test counts**: verificado 2026-09-03: **824 tests backend, 725 tests frontend**, ambos en verde
+  (la cifra "808/645" de la pasada anterior ya está vieja). Correr
   `dotnet test Club12-Backend/Solution/Club12.sln` y `npx vitest run` (desde `Club12-WebClient`)
   para el número vigente en cualquier momento — no confiar en un número congelado en este documento.
 - **Historias obsoletas/reemplazadas**: HU-29 (listado plano de torneos, huérfano), HU-41/HU-42
   (superadas por HU-106/107/108, sin cambios respecto a la nota original), HU-64 (disparador de
   fixture mal descripto), HU-97 (eliminada a propósito).
-- **Historias con brecha real detectada (no solo desactualización de texto)**: HU-82 (series BO-N y
-  avance de bracket), HU-101 (auditoría de restore), HU-35 (mapa de transiciones stale), HU-47
-  (validación de copa cruzada) — ver Épica 24 para el detalle accionable de cada una.
-- **Cambio estructural más grande no capturado en absoluto por la versión anterior**: la entidad
-  Temporada (Season) por encima de Torneo (D7/HU-113), que reordenó la navegación completa del panel
-  admin y el punto de entrada del wizard.
+- **Brechas ya resueltas (ver Épica 24, ítems tachados)**: HU-82 (series BO-N y avance de bracket),
+  HU-101 (auditoría de restore), HU-35 (mapa de transiciones stale), HU-47 (validación de copa
+  cruzada), HU-69 (`MatchId` required bloqueaba toda carga de resultado), HU-62 (roster mostraba "No
+  habilitado" para todos).
+- **Brechas abiertas hoy**: HU-29 (listado huérfano, ítem 6) y el riesgo de datos de seed
+  pre-ficha-médica quedando en `Pending` si se restaura una base vieja (ítem 10) — ninguna de las
+  dos bloquea el uso normal de la app hoy.
+- **Cambio funcional más grande de esta pasada (2026-09-03)**: las tres reglas de habilitación
+  alrededor de la carga de resultados — HU-118 (umbral de 4 habilitados para cargar un resultado
+  normal) y HU-119 (mismo umbral para poder iniciar el torneo) — más la corrección del mensaje de
+  error de HU-62 (lista agrupada por equipo, con nombres reales) y el bug de visualización del
+  roster (ítem 9 de Épica 24).
+- **Cambio estructural más grande de la pasada anterior**: la entidad Temporada (Season) por encima
+  de Torneo (D7/HU-113), que reordenó la navegación completa del panel admin y el punto de entrada
+  del wizard.
