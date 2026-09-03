@@ -416,6 +416,47 @@ public class MatchResultAndSheetTests : IClassFixture<CustomWebApplicationFactor
         Assert.Contains("no está habilitado", ex.Message);
     }
 
+    [Fact]
+    public async Task LoadMatchResultFromSheetsAsync_SeveralIneligiblePlayersAcrossBothTeams_ListsEveryOneByName()
+    {
+        // Regression: rejecting on the FIRST ineligible player found (and
+        // naming it by raw player id) forced the admin to fix and resubmit
+        // the sheet once per offender. The error must instead name every
+        // ineligible/sanctioned player, by their real name, grouped by team.
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IPlayerStatisticService statisticService = scope.ServiceProvider.GetRequiredService<IPlayerStatisticService>();
+
+        Seeded seeded = await SeedMatchAsync(db, StageType.Group);
+        Player homeSanctioned = await SeedRosterPlayerAsync(
+            db, seeded.HomeTeam, seeded.TournamentId, "Banned", isSanctioned: true);
+        Player homeNotHabilitado = await SeedRosterPlayerAsync(
+            db, seeded.HomeTeam, seeded.TournamentId, "Pending", medicalStatus: MedicalRecordStatus.Pending);
+        Player visitorSanctioned = await SeedRosterPlayerAsync(
+            db, seeded.VisitorTeam, seeded.TournamentId, "Suspended", isSanctioned: true);
+
+        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => statisticService.LoadMatchResultFromSheetsAsync(new LoadMatchResultFromSheetsRequest
+            {
+                HomeScores =
+                [
+                    new PlayerScoreEntry { PlayerId = homeSanctioned.Id, Points = 10 },
+                    new PlayerScoreEntry { PlayerId = homeNotHabilitado.Id, Points = 5 },
+                ],
+                VisitorScores = [new PlayerScoreEntry { PlayerId = visitorSanctioned.Id, Points = 8 }],
+                MatchId = seeded.Match.Id,
+            }));
+
+        Assert.Contains(homeSanctioned.FullName, ex.Message);
+        Assert.Contains(homeNotHabilitado.FullName, ex.Message);
+        Assert.Contains(visitorSanctioned.FullName, ex.Message);
+        Assert.Contains(seeded.HomeTeam.Name, ex.Message);
+        Assert.Contains(seeded.VisitorTeam.Name, ex.Message);
+        Assert.DoesNotContain(homeSanctioned.Id.ToString(), ex.Message);
+        Assert.DoesNotContain(homeNotHabilitado.Id.ToString(), ex.Message);
+        Assert.DoesNotContain(visitorSanctioned.Id.ToString(), ex.Message);
+    }
+
     // ---------- HU-73 (owner's rule): <4 habilitados forces a walkover ----------
 
     [Fact]

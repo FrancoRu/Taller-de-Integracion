@@ -123,7 +123,13 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork, IStageService stageS
             ?? throw new InvalidOperationException(ErrorMessages.MatchSheet.TeamNotInMatch(request.TeamId));
 
         await EnsureTeamMeetsHabilitadoMinimumAsync(teamEntity);
-        await ValidateRosterEligibilityAsync(request.Scores, request.TeamId, teamEntity);
+
+        List<string> issues = await FindRosterEligibilityIssuesAsync(request.Scores, request.TeamId, teamEntity);
+        if (issues.Count > 0)
+        {
+            throw new InvalidOperationException(
+                ErrorMessages.MatchSheet.PlayersNotEligible([(teamEntity.Name, issues)]));
+        }
 
         await ReplaceTeamPointsForMatchAsync(request.MatchId, request.TeamId);
 
@@ -178,8 +184,16 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork, IStageService stageS
         await EnsureTeamMeetsHabilitadoMinimumAsync(homeTeam);
         await EnsureTeamMeetsHabilitadoMinimumAsync(visitorTeam);
 
-        await ValidateRosterEligibilityAsync(request.HomeScores, homeTeam.Id, homeTeam);
-        await ValidateRosterEligibilityAsync(request.VisitorScores, visitorTeam.Id, visitorTeam);
+        List<string> homeIssues = await FindRosterEligibilityIssuesAsync(request.HomeScores, homeTeam.Id, homeTeam);
+        List<string> visitorIssues = await FindRosterEligibilityIssuesAsync(request.VisitorScores, visitorTeam.Id, visitorTeam);
+        if (homeIssues.Count > 0 || visitorIssues.Count > 0)
+        {
+            List<(string TeamName, List<string> Issues)> issuesByTeam = [];
+            if (homeIssues.Count > 0) issuesByTeam.Add((homeTeam.Name, homeIssues));
+            if (visitorIssues.Count > 0) issuesByTeam.Add((visitorTeam.Name, visitorIssues));
+
+            throw new InvalidOperationException(ErrorMessages.MatchSheet.PlayersNotEligible(issuesByTeam));
+        }
 
         int homeScore = request.HomeScores.Sum(entry => entry.Points);
         int visitorScore = request.VisitorScores.Sum(entry => entry.Points);
@@ -247,21 +261,34 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork, IStageService stageS
     }
 
     /// <summary>
-    /// Ensures every listed player is registered to the team for the match's
+    /// Checks every listed player is registered to the team for the match's
     /// season (HU-98) and is eligible — an approved registration and no active
-    /// sanction (HU-60/HU-61).
+    /// sanction (HU-60/HU-61) — and returns one readable reason per violation
+    /// instead of throwing on the first one found, so a caller can report
+    /// every offending player across both teams in a single error.
     /// </summary>
-    private async Task ValidateRosterEligibilityAsync(List<PlayerScoreEntry> scores, Guid teamId, Team teamEntity)
+    private async Task<List<string>> FindRosterEligibilityIssuesAsync(
+        List<PlayerScoreEntry> scores, Guid teamId, Team teamEntity)
     {
+        List<string> issues = [];
+
         List<Guid> playerIds = [.. scores.Select(entry => entry.PlayerId).Distinct()];
         if (playerIds.Count == 0)
         {
-            return;
+            return issues;
         }
+
+        Dictionary<Guid, Player> playersById = (await _playerRepository.FindAsync(player => playerIds.Contains(player.Id)))
+            .ToDictionary(player => player.Id);
 
         if (teamEntity.TournamentId is null)
         {
-            throw new InvalidOperationException(ErrorMessages.MatchSheet.PlayerNotOnRoster(playerIds[0]));
+            foreach (Guid playerId in playerIds)
+            {
+                issues.Add(ErrorMessages.MatchSheet.PlayerNotOnRosterReason(PlayerLabel(playersById, playerId)));
+            }
+
+            return issues;
         }
 
         Guid tournamentId = teamEntity.TournamentId.Value;
@@ -272,14 +299,14 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork, IStageService stageS
                 && playerIds.Contains(registration.PlayerId)))
             .ToDictionary(registration => registration.PlayerId);
 
-        Dictionary<Guid, Player> playersById = (await _playerRepository.FindAsync(player => playerIds.Contains(player.Id)))
-            .ToDictionary(player => player.Id);
-
         foreach (Guid playerId in playerIds)
         {
+            string label = PlayerLabel(playersById, playerId);
+
             if (!registrationsByPlayer.TryGetValue(playerId, out PlayerTeamRegistration? registration))
             {
-                throw new InvalidOperationException(ErrorMessages.MatchSheet.PlayerNotOnRoster(playerId));
+                issues.Add(ErrorMessages.MatchSheet.PlayerNotOnRosterReason(label));
+                continue;
             }
 
             // Eligible only when NOT sanctioned (HU-61) AND habilitado for this
@@ -291,10 +318,21 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork, IStageService stageS
             bool sanctioned = !playersById.TryGetValue(playerId, out Player? player) || player.IsSanctioned;
             if (sanctioned || !registration.IsHabilitado)
             {
-                throw new InvalidOperationException(ErrorMessages.MatchSheet.PlayerNotEligible(playerId));
+                issues.Add(ErrorMessages.MatchSheet.PlayerNotEligibleReason(label));
             }
         }
+
+        return issues;
     }
+
+    /// <summary>
+    /// A human-readable label for a player in an error message — the same
+    /// "APELLIDO Nombre" the admin sees on the sheet — falling back to the id
+    /// only for the (should-never-happen) case of a score entry naming a
+    /// player that doesn't exist at all.
+    /// </summary>
+    private static string PlayerLabel(Dictionary<Guid, Player> playersById, Guid playerId) =>
+        playersById.TryGetValue(playerId, out Player? player) ? player.FullName : playerId.ToString();
 
     /// <summary>
     /// Removes the team's existing Points statistics for a match so a corrected
