@@ -13,6 +13,7 @@ import 'react-quill-new/dist/quill.snow.css';
 import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
 import { CreateBlogPostRequest } from '@/modules/blogPost/type/blogPost';
 import { notifySuccess } from '@/modules/core/utils/confirmDialog';
+import FormButtons from '@/views/core/components/FormButtons';
 import PageShell from '@/views/core/components/PageShell';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import BlogPostImageField from '@/views/blogPost/BlogPostImageField';
@@ -77,8 +78,11 @@ const AddBlogPostForm: React.FC = () => {
     setFormData(prev => ({ ...prev, photoFile: file }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCancel = () => {
+    navigate(APP_ROUTES.panelBlog);
+  };
+
+  const handleSubmit = async () => {
     setSubmitting(true);
     const result = await addBlogPost(formData);
     setSubmitting(false);
@@ -94,8 +98,12 @@ const AddBlogPostForm: React.FC = () => {
   };
 
   return (
-    <PageShell title="Nueva publicación" maxWidth="sm">
-        <form onSubmit={handleSubmit}>
+    <PageShell
+      title="Nueva publicación"
+      maxWidth="sm"
+      back={{ label: 'Volver', onClick: handleCancel }}
+    >
+        <Stack spacing={0}>
           <TextField
             label="Autor"
             name="author"
@@ -144,24 +152,24 @@ const AddBlogPostForm: React.FC = () => {
                 : 'Borrador (no visible al público)'
             }
           />
-          <Stack direction="row" spacing={2} sx={{ mt: 3, justifyContent: 'space-between' }}>
-            <Button type="button" variant="outlined" onClick={() => setPreviewOpen(true)}>
+          <Stack direction="row" sx={{ mt: 3, justifyContent: 'space-between' }}>
+            <Button variant="outlined" onClick={() => setPreviewOpen(true)}>
               Vista previa
             </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
+            <FormButtons
+              onCancel={handleCancel}
+              onConfirm={() => void handleSubmit()}
+              confirmLabel={
+                submitting
+                  ? 'Guardando...'
+                  : formData.isPublished
+                    ? 'Publicar'
+                    : 'Guardar borrador'
+              }
               disabled={submitting}
-            >
-              {submitting
-                ? 'Guardando...'
-                : formData.isPublished
-                  ? 'Publicar'
-                  : 'Guardar borrador'}
-            </Button>
+            />
           </Stack>
-        </form>
+        </Stack>
 
       <BlogPostPreviewDialog
         open={previewOpen}
