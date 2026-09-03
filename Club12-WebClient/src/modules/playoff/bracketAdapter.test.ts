@@ -232,6 +232,69 @@ describe('toLibraryMatches', () => {
     expect(matches.map(m => m.id)).toEqual([byeMatch.id, realMatch.id]);
   });
 
+  it('flags the child match to hide its connector on the side a decided bye sibling occupied', () => {
+    const byeMatch = makeMatch({
+      id: guid('m-bye'),
+      stageId: guid('qf'),
+      isFinished: true,
+      homeTeam: makeTeam({ id: guid('team-a'), name: 'A' }),
+      visitorTeam: null,
+      winningTeamId: guid('team-a'),
+      winningTeamName: 'A',
+    });
+    const realMatch = makeMatch({
+      id: guid('m-real'),
+      stageId: guid('qf'),
+      homeTeam: makeTeam({ id: guid('team-b'), name: 'B' }),
+      visitorTeam: makeTeam({ id: guid('team-c'), name: 'C' }),
+    });
+    const sfMatch = makeMatch({ id: guid('m-sf'), stageId: guid('sf') });
+
+    const model: BracketModel = {
+      rounds: [
+        { stageId: guid('qf'), stageType: StageType.QuarterFinal, matches: [byeMatch, realMatch] },
+        { stageId: guid('sf'), stageType: StageType.SemiFinal, matches: [sfMatch] },
+      ],
+      edges: [],
+    };
+
+    const matches = toLibraryMatches(model);
+    const sf = matches.find(m => m.id === sfMatch.id);
+
+    expect(sf?.hideTopConnector).toBe(true);
+    expect(sf?.hideBottomConnector).toBe(false);
+  });
+
+  it('leaves both connectors visible when neither sibling is a bye', () => {
+    const matchA = makeMatch({
+      id: guid('m-a'),
+      stageId: guid('qf'),
+      homeTeam: makeTeam({ id: guid('team-a'), name: 'A' }),
+      visitorTeam: makeTeam({ id: guid('team-b'), name: 'B' }),
+    });
+    const matchB = makeMatch({
+      id: guid('m-b'),
+      stageId: guid('qf'),
+      homeTeam: makeTeam({ id: guid('team-c'), name: 'C' }),
+      visitorTeam: makeTeam({ id: guid('team-d'), name: 'D' }),
+    });
+    const sfMatch = makeMatch({ id: guid('m-sf'), stageId: guid('sf') });
+
+    const model: BracketModel = {
+      rounds: [
+        { stageId: guid('qf'), stageType: StageType.QuarterFinal, matches: [matchA, matchB] },
+        { stageId: guid('sf'), stageType: StageType.SemiFinal, matches: [sfMatch] },
+      ],
+      edges: [],
+    };
+
+    const matches = toLibraryMatches(model);
+    const sf = matches.find(m => m.id === sfMatch.id);
+
+    expect(sf?.hideTopConnector).toBe(false);
+    expect(sf?.hideBottomConnector).toBe(false);
+  });
+
   it('carries the raw match and per-side participant ids for a TBD slot', () => {
     const finalMatch = makeMatch({
       id: guid('m-final'),

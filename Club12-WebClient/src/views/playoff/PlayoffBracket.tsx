@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useLayoutEffect, useMemo, useRef } from 'react';
 import { Box, Stack, Typography } from '@mui/material';
 import { SingleEliminationBracket } from '@g-loot/react-tournament-brackets';
 import type { LibraryMatchComponentProps } from '@/modules/playoff/type/gLootBracketTypes.d';
@@ -43,6 +43,43 @@ export default function PlayoffBracket({
 }: PlayoffBracketProps) {
   const matches = useMemo(() => toLibraryMatches(model), [model]);
   const roundLabels = useMemo(() => libraryRoundLabels(model), [model]);
+  const bracketRef = useRef<HTMLDivElement>(null);
+
+  // The library draws every match's incoming top/bottom connector purely
+  // from row position — it has no idea one side's card is hidden because
+  // that source was a decided bye, so it draws a line hanging in empty
+  // space with nothing at its far end. `toLibraryMatches` already flags
+  // which matches have a bye on which side; this patches the actual
+  // rendered <path> elements after the library paints, since there's no
+  // prop to suppress an individual connector. Each match's own inner <svg>
+  // (from the library's match-wrapper) sits two <g> levels inside the
+  // outer per-cell <g> that its connector <path>s are direct siblings of
+  // (see connectors.js / connector.js) — a real structural relationship
+  // in the library's current output, not a guessed coordinate.
+  useLayoutEffect(() => {
+    const container = bracketRef.current;
+    if (!container) return;
+
+    for (const match of matches) {
+      if (!match.hideTopConnector && !match.hideBottomConnector) continue;
+
+      const card = container.querySelector(`[data-match-id="${match.id}"]`);
+      const outerCell = card?.closest('svg')?.parentElement?.parentElement;
+      if (!outerCell || outerCell.tagName.toLowerCase() !== 'g') continue;
+
+      // Rendered in a fixed [top, bottom] order (see connector.js) when
+      // present — always both, for any non-first-column match.
+      const connectorPaths = outerCell.querySelectorAll<SVGPathElement>(
+        ':scope > path[id^="connector-"]'
+      );
+      if (match.hideTopConnector && connectorPaths[0]) {
+        connectorPaths[0].style.display = 'none';
+      }
+      if (match.hideBottomConnector && connectorPaths[1]) {
+        connectorPaths[1].style.display = 'none';
+      }
+    }
+  }, [matches]);
 
   const hasThirdPlace = Boolean(model.thirdPlace && model.thirdPlace.matches.length > 0);
   const isEmpty = matches.length === 0 && !hasThirdPlace;
@@ -84,7 +121,7 @@ export default function PlayoffBracket({
     >
       <Stack direction="row" spacing={5} sx={{ alignItems: 'flex-start' }}>
         {matches.length > 0 && (
-          <Box>
+          <Box ref={bracketRef}>
             <SingleEliminationBracket
               matches={matches}
               matchComponent={matchComponent}

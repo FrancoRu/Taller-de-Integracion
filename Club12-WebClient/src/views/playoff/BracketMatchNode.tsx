@@ -96,6 +96,11 @@ export default function BracketMatchNode({
     <Paper
       variant="outlined"
       onClick={onClick}
+      // Pure query hook, no visual effect — lets PlayoffBracket find this
+      // card's rendered position in the DOM after mount, to hide a
+      // dangling connector line coming from a bye sibling with no card of
+      // its own (see PlayoffBracket's hideDanglingByeConnectors effect).
+      data-match-id={match.id}
       sx={{
         display: 'flex',
         flexDirection: 'column',
