@@ -164,7 +164,7 @@ export interface ICompletabilityIssue {
   /** Number of teams assigned to the offending zone/group, when applicable. */
   assignedTeams?: number;
 
-  /** The offending team's registered player count, for TeamTooFewPlayers. */
+  /** The offending team's habilitado player count, for TeamTooFewPlayers. */
   playerCount?: number;
 }
 
