@@ -53,10 +53,10 @@ export default function ZoneEditor({ zone, onChange, onRemove }: ZoneEditorProps
       </Stack>
 
       <Stack
-        direction="row"
+        direction={{ xs: 'column', sm: 'row' }}
         spacing={2}
         sx={{
-          alignItems: 'center',
+          alignItems: { xs: 'flex-start', sm: 'center' },
           mb: 2,
         }}>
         <FormControlLabel
@@ -75,7 +75,7 @@ export default function ZoneEditor({ zone, onChange, onRemove }: ZoneEditorProps
             label="Veces que se enfrenta cada par"
             value={zone.roundRobinLegs}
             onChange={e => onChange({ roundRobinLegs: Number(e.target.value) })}
-            sx={{ minWidth: 220 }}
+            sx={{ minWidth: { xs: '100%', sm: 220 } }}
           >
             {ROUND_ROBIN_LEGS_OPTIONS.map(option => (
               <MenuItem key={option} value={option}>
@@ -88,10 +88,10 @@ export default function ZoneEditor({ zone, onChange, onRemove }: ZoneEditorProps
 
       {/* Per-division scoring (HU-79): defaults 2/1, no draw points. */}
       <Stack
-        direction="row"
+        direction={{ xs: 'column', sm: 'row' }}
         spacing={2}
         sx={{
-          alignItems: 'center',
+          alignItems: { xs: 'stretch', sm: 'center' },
           mb: 2,
         }}>
         <TextField
@@ -101,7 +101,7 @@ export default function ZoneEditor({ zone, onChange, onRemove }: ZoneEditorProps
           value={zone.pointsForWin}
           onChange={e => onChange({ pointsForWin: Number(e.target.value) })}
           slotProps={{ htmlInput: { min: 0 } }}
-          sx={{ width: 180 }}
+          sx={{ width: { xs: '100%', sm: 180 } }}
         />
         <TextField
           type="number"
@@ -110,7 +110,7 @@ export default function ZoneEditor({ zone, onChange, onRemove }: ZoneEditorProps
           value={zone.pointsForLoss}
           onChange={e => onChange({ pointsForLoss: Number(e.target.value) })}
           slotProps={{ htmlInput: { min: 0 } }}
-          sx={{ width: 180 }}
+          sx={{ width: { xs: '100%', sm: 180 } }}
         />
       </Stack>
 
