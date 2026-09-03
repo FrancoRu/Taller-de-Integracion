@@ -1,5 +1,6 @@
 import { GUID } from '@/modules/core/types/types';
 import { IMatchResponse } from '@/modules/match/type/match.d';
+import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
 
 /**
  * A match is a walkover (bye) when it was seeded with only one side present
@@ -96,3 +97,40 @@ export const aggregateTieWinner = (
 
   return winningTeam ? { winningTeamId: winningTeam.id, winningTeamName: winningTeam.name } : null;
 };
+
+/**
+ * One team's score in each finished game of a best-of-N series, in game
+ * order — so a bracket card can show "Juego 1, Juego 2, …" results at a
+ * glance instead of only the aggregate. Games carry team NAMES rather than
+ * ids (see `ISeriesGameResponse`), and a series can swap which side is
+ * "home" from game to game, so each game is matched by name rather than by
+ * home/visitor slot. An unplayed game is skipped, not padded with a
+ * placeholder.
+ */
+export const seriesGameScores = (
+  series: IMatchSeriesResponse,
+  teamName: string
+): number[] =>
+  [...series.games]
+    .filter(game => game.isFinished)
+    .sort((a, b) => a.gameNumber - b.gameNumber)
+    .map(game => {
+      if (game.homeTeamName === teamName) return game.homeScore ?? 0;
+      if (game.visitorTeamName === teamName) return game.visitorScore ?? 0;
+      return 0;
+    });
+
+/**
+ * One team's score in each finished leg of a multi-leg tie (no `MatchSeries`
+ * behind it), in chronological order — the `legs` array's own order, same
+ * as {@link aggregateLegScores}. Legs are already keyed by team id, unlike
+ * series games, since legs carry the full `IMatchResponse` team objects.
+ */
+export const legGameScores = (legs: IMatchResponse[], teamId: GUID): number[] =>
+  legs
+    .filter(leg => leg.isFinished)
+    .map(leg => {
+      if (leg.homeTeam?.id === teamId) return leg.homeTeam.score;
+      if (leg.visitorTeam?.id === teamId) return leg.visitorTeam.score;
+      return 0;
+    });

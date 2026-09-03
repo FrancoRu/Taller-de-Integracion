@@ -86,7 +86,7 @@ describe('BracketMatchNode', () => {
     expect(screen.getByText('Cóndores')).toBeInTheDocument();
   });
 
-  it('shows the aggregate score and a "BOn" format badge for a best-of-N series — no per-game breakdown (that lives in SeriesCard now)', () => {
+  it('shows a "BOn" format badge and each side\'s per-game scores for a best-of-N series, not just the aggregate', () => {
     const homeId = guid('home');
     const visitorId = guid('visitor');
     const seriesMatch: IMatchResponse = {
@@ -110,13 +110,45 @@ describe('BracketMatchNode', () => {
     render(<BracketMatchNode match={seriesMatch} series={series} />);
 
     expect(screen.getByText('BO2')).toBeInTheDocument();
-    expect(screen.getByText('119')).toBeInTheDocument();
-    expect(screen.getByText('101')).toBeInTheDocument();
-    expect(screen.queryByText(/^J1/)).not.toBeInTheDocument();
+    // Per-game scores for each side, game 1 then game 2 — not the 119/101 aggregate.
+    expect(screen.getByText('60')).toBeInTheDocument();
+    expect(screen.getByText('59')).toBeInTheDocument();
+    expect(screen.getByText('55')).toBeInTheDocument();
+    expect(screen.getByText('46')).toBeInTheDocument();
+    expect(screen.queryByText('119')).not.toBeInTheDocument();
+    expect(screen.queryByText('101')).not.toBeInTheDocument();
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('shows the aggregate score and an "IV" (ida y vuelta) badge for a client-inferred two-leg tie (no MatchSeries)', () => {
+  it('only shows finished games, skipping an in-progress series\' not-yet-played game', () => {
+    const homeId = guid('home');
+    const visitorId = guid('visitor');
+    const seriesMatch: IMatchResponse = {
+      ...baseMatch,
+      homeTeam: { id: homeId, name: 'Black Mamba', logoUrl: '', score: 1, players: [], scorers: [] },
+      visitorTeam: { id: visitorId, name: 'NTI', logoUrl: '', score: 0, players: [], scorers: [] },
+      isFinished: false,
+      winningTeamId: null,
+      winningTeamName: null,
+    };
+    const series = makeSeries({
+      id: seriesMatch.id,
+      stageId: baseMatch.stageId!,
+      bestOf: 3,
+      games: [
+        makeGame({ id: guid('g1'), gameNumber: 1, isFinished: true, homeScore: 60, visitorScore: 55, winningTeamName: 'Black Mamba' }),
+        makeGame({ id: guid('g2'), gameNumber: 2, isFinished: false }),
+      ],
+    });
+
+    render(<BracketMatchNode match={seriesMatch} series={series} />);
+
+    expect(screen.getByText('60')).toBeInTheDocument();
+    expect(screen.getByText('55')).toBeInTheDocument();
+    expect(screen.queryAllByText('0')).toHaveLength(0);
+  });
+
+  it('shows an "IV" (ida y vuelta) badge and each side\'s per-leg scores for a client-inferred two-leg tie (no MatchSeries)', () => {
     const homeId = guid('home');
     const visitorId = guid('visitor');
     const tieMatch: IMatchResponse = {
@@ -151,8 +183,13 @@ describe('BracketMatchNode', () => {
     render(<BracketMatchNode match={tieMatch} legs={legs} />);
 
     expect(screen.getByText('IV')).toBeInTheDocument();
-    expect(screen.getByText('98')).toBeInTheDocument();
-    expect(screen.getByText('118')).toBeInTheDocument();
+    // 2K's per-leg scores (41 at home, then 57 away) and NN's (64 away, then 54 at home).
+    expect(screen.getByText('41')).toBeInTheDocument();
+    expect(screen.getByText('57')).toBeInTheDocument();
+    expect(screen.getByText('64')).toBeInTheDocument();
+    expect(screen.getByText('54')).toBeInTheDocument();
+    expect(screen.queryByText('98')).not.toBeInTheDocument();
+    expect(screen.queryByText('118')).not.toBeInTheDocument();
   });
 
   it('shows no format badge for the normal single-match case (no legs, no series)', () => {

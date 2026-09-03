@@ -115,9 +115,18 @@ describe('PlayoffBracket', () => {
     expect(screen.getByText('Halcones')).toBeInTheDocument();
     expect(screen.getByText('Cóndores')).toBeInTheDocument();
 
-    // Aggregate score, not the individual leg score.
-    expect(screen.getByText('119')).toBeInTheDocument();
-    expect(screen.getByText('101')).toBeInTheDocument();
+    // The series-backed pairing (Black Mamba/NTI) shows each side's
+    // per-game scores, not the 119/101 aggregate; the plain match
+    // (Halcones/Cóndores, no series in seriesById) still shows its one
+    // final score as before.
+    expect(screen.getByText('60')).toBeInTheDocument();
+    expect(screen.getByText('59')).toBeInTheDocument();
+    expect(screen.getByText('55')).toBeInTheDocument();
+    expect(screen.getByText('46')).toBeInTheDocument();
+    expect(screen.queryByText('119')).not.toBeInTheDocument();
+    expect(screen.queryByText('101')).not.toBeInTheDocument();
+    expect(screen.getByText('90')).toBeInTheDocument();
+    expect(screen.getByText('80')).toBeInTheDocument();
 
     // The Final's TBD slots are still present (SF winners not the whole model yet).
     expect(screen.getAllByText('A definir')).toHaveLength(2);
