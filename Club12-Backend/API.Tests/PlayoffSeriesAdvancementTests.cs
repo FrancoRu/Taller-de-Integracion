@@ -316,6 +316,89 @@ public class PlayoffSeriesAdvancementTests : IClassFixture<CustomWebApplicationF
         Assert.True(finalMatch.VisitorTeamId.HasValue);
     }
 
+    /// <summary>
+    /// End-to-end proof that the REAL seeding path (SeedPlayoffCupsAsync's
+    /// PlayoffSeeder.SeedPairs, plus TryAdvanceStageWinnerAsync's slotIndex/2
+    /// round-to-round pairing) reproduces the classic bracket property: with
+    /// every favorite winning, seed 1 and seed 2 — never adjacent, kept apart
+    /// by the seed order itself — meet in the final. This is the guarantee a
+    /// live tournament actually gets when a group phase ends; any bracket
+    /// that looks "unreseeded" round to round is not this code path.
+    /// </summary>
+    [Fact]
+    public async Task SeedPlayoffCupsAsync_EightTeams_AllFavoritesWin_Seed1MeetsSeed2InTheFinal()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
+        IMatchService matchService = scope.ServiceProvider.GetRequiredService<IMatchService>();
+
+        Tournament tournament = await SeedTournamentAsync(db);
+        Division division = await SeedDivisionAsync(db, tournament);
+        // teams[0] beats every other team in the round-robin below, so
+        // standings order is teams[0] (seed 1) .. teams[7] (seed 8).
+        List<Team> teams = await SeedTeamsAsync(db, tournament, 8);
+        Stage groupStage = await SeedStageAsync(db, division, tournament, StageType.Group, bracketName: null, bestOf: 1);
+        await SeedRoundRobinResultsAsync(db, groupStage, teams);
+
+        await SeedMappingAsync(db, division, 1, 8, "Copa Única");
+        Stage quarterFinalStage = await SeedStageAsync(db, division, tournament, StageType.QuarterFinal, bracketName: "Copa Única", bestOf: 1);
+        for (int i = 0; i < 4; i++)
+        {
+            await SeedEmptyMatchAsync(db, quarterFinalStage);
+        }
+        Stage semiFinalStage = await SeedStageAsync(db, division, tournament, StageType.SemiFinal, bracketName: "Copa Única", bestOf: 1);
+        await SeedEmptyMatchAsync(db, semiFinalStage);
+        await SeedEmptyMatchAsync(db, semiFinalStage);
+        Stage finalStage = await SeedStageAsync(db, division, tournament, StageType.Final, bracketName: "Copa Única", bestOf: 1);
+        await SeedEmptyMatchAsync(db, finalStage);
+
+        await stageService.SeedPlayoffCupsAsync(division.Id);
+
+        List<Match> quarterFinalMatches = await db.Matches
+            .Where(m => m.StageId == quarterFinalStage.Id)
+            .OrderBy(m => m.MatchDate)
+            .ToListAsync();
+
+        // The classic seed order for 8: 1v8, 4v5, 2v7, 3v6 — PlayoffSeeder
+        // always makes the better seed HomeTeamId for a real pairing.
+        Assert.Equal(
+            [teams[0].Id, teams[3].Id, teams[1].Id, teams[2].Id],
+            quarterFinalMatches.Select(m => m.HomeTeamId));
+        Assert.Equal(
+            [teams[7].Id, teams[4].Id, teams[6].Id, teams[5].Id],
+            quarterFinalMatches.Select(m => m.VisitorTeamId));
+
+        foreach (Match match in quarterFinalMatches)
+        {
+            // The favorite (home, the better seed) always wins.
+            await matchService.LoadMatchResultAsync(match.Id, 90, 80);
+            await stageService.TryAdvanceStageWinnerAsync(quarterFinalStage.Id);
+        }
+
+        List<Match> semiFinalMatches = await db.Matches
+            .Where(m => m.StageId == semiFinalStage.Id)
+            .OrderBy(m => m.MatchDate)
+            .ToListAsync();
+
+        // QF winners (all favorites): teams[0], teams[3], teams[1], teams[2]
+        // — slot0 = winners[0] vs winners[1] = seed1 vs seed4; slot1 =
+        // winners[2] vs winners[3] = seed2 vs seed3.
+        Assert.Equal([teams[0].Id, teams[1].Id], semiFinalMatches.Select(m => m.HomeTeamId));
+        Assert.Equal([teams[3].Id, teams[2].Id], semiFinalMatches.Select(m => m.VisitorTeamId));
+
+        foreach (Match match in semiFinalMatches)
+        {
+            await matchService.LoadMatchResultAsync(match.Id, 90, 80);
+            await stageService.TryAdvanceStageWinnerAsync(semiFinalStage.Id);
+        }
+
+        Match finalMatch = await db.Matches.SingleAsync(m => m.StageId == finalStage.Id);
+
+        Assert.Equal(teams[0].Id, finalMatch.HomeTeamId);
+        Assert.Equal(teams[1].Id, finalMatch.VisitorTeamId);
+    }
+
     [Fact]
     public async Task BestOfOneElimination_StillAdvancesTheWinnerDirectly_NoSeriesInvolved()
     {
