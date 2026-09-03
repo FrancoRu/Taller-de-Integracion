@@ -65,7 +65,17 @@ public sealed class MedicalRecordSeedBackfiller(
     /// upload failure warns and continues — this step can never fail the
     /// seed.
     /// </summary>
-    public async Task BackfillMedicalRecordsAsync(string? medicalRecordPath)
+    /// <param name="medicalRecordPath">See <see cref="DefaultMedicalRecordPath"/>.</param>
+    /// <param name="approveNonApproved">
+    /// TEMPORARY, for the one-off live-data fix only (see
+    /// <c>MedicalRecordController.BackfillMedicalRecords</c>): when true, also
+    /// widens the candidate set to Pending/Rejected registrations and marks
+    /// each Approved once it has a real file, instead of only touching rows
+    /// the seeder already marked Approved. A dataset seeded before the
+    /// Approved-by-default seed logic existed has every registration stuck
+    /// Pending, so the normal (false) candidate set finds nothing to fix.
+    /// </param>
+    public async Task BackfillMedicalRecordsAsync(string? medicalRecordPath, bool approveNonApproved = false)
     {
         bool isConfigured = !string.IsNullOrWhiteSpace(medicalRecordPath);
         string path = isConfigured ? medicalRecordPath! : DefaultMedicalRecordPath;
@@ -116,7 +126,7 @@ public sealed class MedicalRecordSeedBackfiller(
         // skip-vs-upload decision — the same predicate the read sites and the
         // approve-time write guard use, so the three can never drift.
         List<PlayerTeamRegistration> candidates = await db.PlayerTeamRegistrations
-            .Where(r => r.MedicalRecordStatus == MedicalRecordStatus.Approved
+            .Where(r => (r.MedicalRecordStatus == MedicalRecordStatus.Approved || approveNonApproved)
                 && (r.MedicalRecordFileUrl == null
                     || r.MedicalRecordFileUrl == ""
                     || r.MedicalRecordFileUrl.StartsWith(PlayerTeamRegistration.LegacyReferencePrefix)))
@@ -140,6 +150,12 @@ public sealed class MedicalRecordSeedBackfiller(
 
                 registration.MedicalRecordFileUrl = objectPath;
                 registration.MedicalRecordFileName = fileName;
+                if (approveNonApproved && registration.MedicalRecordStatus != MedicalRecordStatus.Approved)
+                {
+                    registration.MedicalRecordStatus = MedicalRecordStatus.Approved;
+                    registration.MedicalRecordReviewReason = null;
+                    registration.MedicalRecordReviewedAt = DateTime.UtcNow;
+                }
                 uploaded++;
                 pending++;
             }

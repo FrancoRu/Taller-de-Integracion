@@ -57,7 +57,11 @@ public class MedicalRecordController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> BackfillMedicalRecords()
     {
-        await medicalRecordSeedBackfiller.BackfillMedicalRecordsAsync(medicalRecordPath: null);
+        // approveNonApproved: true — this live dataset was seeded before the
+        // Approved-by-default seed logic existed, so every registration is
+        // still Pending; the normal (seed self-heal) candidate set would find
+        // nothing to fix here.
+        await medicalRecordSeedBackfiller.BackfillMedicalRecordsAsync(medicalRecordPath: null, approveNonApproved: true);
         return NoContent();
     }
 
