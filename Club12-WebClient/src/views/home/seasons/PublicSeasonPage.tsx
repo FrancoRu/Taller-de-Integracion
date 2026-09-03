@@ -6,6 +6,7 @@ import {
   CardActionArea,
   CardContent,
   Grid,
+  Skeleton,
   Typography,
 } from '@mui/material';
 import { useSeason } from '@/modules/season/hook/season.hook';
@@ -21,7 +22,6 @@ import { categoryColor } from '@/design/categoryColor';
 import PageShell from '@/views/core/components/PageShell';
 import SectionHeading from '@/views/core/components/SectionHeading';
 import LoadErrorState from '@/views/core/components/LoadErrorState';
-import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import {
   DEFAULT_PAGE_METADATA,
@@ -43,6 +43,34 @@ function TournamentCard({ tournament }: { tournament: ISeasonTournament }) {
         </CardContent>
       </CardActionArea>
     </Card>
+  );
+}
+
+/**
+ * Matches this page's actual loaded shape (a title, then one card grid per
+ * category) instead of the generic paragraphs-plus-one-block DetailSkeleton
+ * — that shape didn't match this page's real content at all (a title over
+ * two short category sections, each just a heading and a couple of small
+ * tournament cards), so the layout visibly grew/shrank once real data
+ * replaced it (CLS).
+ */
+function SeasonPageSkeleton() {
+  return (
+    <Box role="status" aria-label="Cargando" aria-busy="true">
+      <Skeleton variant="text" width="40%" height={48} sx={{ mb: 3 }} />
+      {[0, 1].map(section => (
+        <Box key={section} sx={{ mb: 4 }}>
+          <Skeleton variant="text" width="25%" height={32} sx={{ mb: 2 }} />
+          <Grid container spacing={3}>
+            {[0, 1].map(card => (
+              <Grid key={card} size={{ xs: 12, sm: 6, md: 4 }}>
+                <Skeleton variant="rectangular" height={110} sx={{ borderRadius: 1 }} />
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      ))}
+    </Box>
   );
 }
 
@@ -122,7 +150,7 @@ export default function PublicSeasonPage() {
   if (loading) {
     return (
       <PageShell title="Temporada">
-        <DetailSkeleton />
+        <SeasonPageSkeleton />
       </PageShell>
     );
   }
