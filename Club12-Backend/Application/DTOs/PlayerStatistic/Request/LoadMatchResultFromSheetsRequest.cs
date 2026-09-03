@@ -16,10 +16,14 @@ namespace Application.DTOs.PlayerStatistic.Request;
 public class LoadMatchResultFromSheetsRequest
 {
     /// <summary>
-    /// The match being finished.
+    /// The match being finished. Never sent by the client — MatchController
+    /// assigns this from the route's {id} segment after binding, since the
+    /// route is the single source of truth for which match this is. Marking
+    /// it `required` made System.Text.Json reject the whole request at
+    /// deserialization time whenever the (correct, matchId-less) client body
+    /// arrived, before that assignment ever ran.
     /// </summary>
-    [Required]
-    public required Guid MatchId { get; set; }
+    public Guid MatchId { get; set; }
 
     /// <summary>
     /// The home team's per-player points. A player may score 0; not every
