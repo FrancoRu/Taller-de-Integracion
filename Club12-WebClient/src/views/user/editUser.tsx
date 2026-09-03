@@ -158,7 +158,13 @@ const EditUser: React.FC = () => {
     const payload: UpdateUserRequest = {
       username: form.username?.trim() || undefined,
       email: form.email?.trim() || undefined,
-      phone: form.phone?.trim() || undefined,
+      // Unlike username/email (required — an empty submit here means "leave
+      // it alone", not "blank it out"), phone is optional and clearable: the
+      // backend already treats an empty string as "clear it" (`request.Phone
+      // is not null`, IdentityUserManagementService) — sending `undefined`
+      // for an emptied field instead just meant the value silently never
+      // updated, with no error, no matter how many times you cleared and saved.
+      phone: form.phone?.trim() ?? '',
       role: roleChanged ? form.role : undefined,
     };
 
