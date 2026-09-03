@@ -11,6 +11,7 @@ const ErrorPageLayout: React.FC<ErrorPageLayoutProps> = ({
   children,
 }) => (
   <Box
+    component="main"
     sx={{
       display: 'flex',
       flexDirection: 'column',
