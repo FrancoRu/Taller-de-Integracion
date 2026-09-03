@@ -446,6 +446,15 @@ const SidebarLayout: React.FC<{ children: React.ReactNode }> = ({
         component="main"
         sx={{
           flexGrow: 1,
+          // A flex item's default `min-width: auto` sizes it to fit its
+          // content (e.g. a DataGrid's minimum column widths) rather than
+          // shrinking to the space `flexGrow` actually offers — on mobile,
+          // with no drawer taking up room, that stretched the whole page
+          // (filter bar, header, everything) out to the content's width
+          // instead of the 375px viewport, no matter how deeply nested an
+          // `overflow-x: auto` wrapper (e.g. TableScrollBox) was around the
+          // wide content itself.
+          minWidth: 0,
           p: { xs: 2, sm: 3 },
           width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
           backgroundColor: 'background.default',
