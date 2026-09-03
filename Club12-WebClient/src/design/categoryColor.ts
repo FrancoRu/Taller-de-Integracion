@@ -1,5 +1,5 @@
 import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
-import { luminance } from './colorName';
+import { LIGHT_INK_LUMINANCE_THRESHOLD, luminance } from './colorName';
 import { category } from './tokens';
 
 /**
@@ -20,5 +20,8 @@ export const categoryColor = (cat: TournamentCategory): CategoryColor => {
   const fill =
     cat === TournamentCategory.Feminine ? category.feminine : category.masculine;
   // Mirror resolveShirtColor's threshold/ink so contrast stays consistent.
-  return { fill, ink: luminance(fill) > 0.55 ? '#0b0f17' : '#f5f5f5' };
+  return {
+    fill,
+    ink: luminance(fill) > LIGHT_INK_LUMINANCE_THRESHOLD ? '#0b0f17' : '#f5f5f5',
+  };
 };
