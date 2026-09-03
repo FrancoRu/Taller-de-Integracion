@@ -34,6 +34,7 @@ import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PageShell from '@/views/core/components/PageShell';
 import FilterBar from '@/views/core/components/FilterBar';
+import TableScrollBox from '@/views/core/components/TableScrollBox';
 import { DeleteIcon, SearchIcon, VisibilityIcon } from '@/views/core/MUI/icons/icons';
 import PlayerSanctionCreatePage from '@/views/playerSanction/playerSanctionCreatePage';
 import PlayerSanctionDeletePage from '@/views/playerSanction/playerSanctionDeletePage';
@@ -576,7 +577,7 @@ const PlayerSanctionsPage: React.FC = () => {
         </Stack>
       </FilterBar>
 
-      <Box sx={{ width: '100%' }}>
+      <TableScrollBox>
         <DataGrid
             rows={rows}
             columns={columns}
@@ -592,7 +593,7 @@ const PlayerSanctionsPage: React.FC = () => {
             paginationMode="server"
             rowCount={rowCount}
           />
-        </Box>
+        </TableScrollBox>
 
         <PlayerSanctionCreatePage
           open={isCreateModalOpen}

@@ -1,7 +1,7 @@
-import { Box } from '@mui/material';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import type { ITeamResponse } from '@/modules/team/type/team.d';
 import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
+import TableScrollBox from '@/views/core/components/TableScrollBox';
 
 interface TeamsTableProps {
   rows: ITeamResponse[];
@@ -24,7 +24,7 @@ const TeamsTable: React.FC<TeamsTableProps> = ({
   pageSizeOptions,
   rowCount,
 }) => (
-  <Box sx={{ width: '100%' }}>
+  <TableScrollBox>
     <DataGrid
       rows={rows}
       columns={columns}
@@ -40,7 +40,7 @@ const TeamsTable: React.FC<TeamsTableProps> = ({
       paginationMode="server"
       rowCount={rowCount}
     />
-  </Box>
+  </TableScrollBox>
 );
 
 export default TeamsTable;

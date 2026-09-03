@@ -39,6 +39,7 @@ import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { usePlayer } from '@/modules/player/hook/player.hook';
 import FormButtons from '@/views/core/components/FormButtons';
 import FieldInfoTooltip from '@/views/core/components/FieldInfoTooltip';
+import TableScrollBox from '@/views/core/components/TableScrollBox';
 import { IAddPlayerRequest, IPlayerResponse } from '@/modules/player/type/player.d';
 import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import TableRowActions, { TableRowAction } from '@/views/core/components/TableRowActions';
@@ -847,7 +848,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         />
       </FilterBar>
 
-      <Box sx={{ width: '100%' }}>
+      <TableScrollBox>
         <DataGrid
           rows={rows}
           columns={columns}
@@ -869,7 +870,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
           paginationMode="server"
           rowCount={rowCount}
         />
-      </Box>
+      </TableScrollBox>
 
       <Dialog
         open={Boolean(dorsalPlayer)}
