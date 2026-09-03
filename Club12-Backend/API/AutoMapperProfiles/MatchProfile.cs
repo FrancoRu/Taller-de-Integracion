@@ -1,5 +1,6 @@
 using Application.DTOs.Match.Request;
 using Application.DTOs.Match.Response;
+using Application.DTOs.Player.Response;
 using Application.DTOs.Scorer.Response;
 
 using AutoMapper;
@@ -42,19 +43,23 @@ public class MatchProfile : Profile
             // to be loaded with Scorers.Player (see IMatchRepository).
             .AfterMap((src, dest) =>
             {
+                Guid? tournamentId = src.Stage?.Division?.TournamentId;
+
                 if (dest.HomeTeam is not null)
                 {
                     dest.HomeTeam.Score = src.HomeScore ?? 0;
                     dest.HomeTeam.Scorers = ScorersForTeam(src, src.HomeTeamId);
+                    PopulateRosterEligibility(dest.HomeTeam.Players, src.HomeTeam?.Players, tournamentId);
                 }
 
                 if (dest.VisitorTeam is not null)
                 {
                     dest.VisitorTeam.Score = src.VisitorScore ?? 0;
                     dest.VisitorTeam.Scorers = ScorersForTeam(src, src.VisitorTeamId);
+                    PopulateRosterEligibility(dest.VisitorTeam.Players, src.VisitorTeam?.Players, tournamentId);
                 }
 
-                dest.TournamentId = src.Stage?.Division?.TournamentId;
+                dest.TournamentId = tournamentId;
             });
 
         _ = CreateMap<Match, MinimalMatchResponse>()
@@ -111,5 +116,47 @@ public class MatchProfile : Profile
             : player.PlayerTeamRegistrations.FirstOrDefault(reg => reg.TournamentId == tournamentId.Value);
 
         return (registration ?? player.PlayerTeamRegistrations.First()).JerseyNumber;
+    }
+
+    /// <summary>
+    /// Fills in each roster player's season-scoped medical-record status,
+    /// habilitado flag, and jersey number from the matching
+    /// <see cref="PlayerTeamRegistration"/> for the match's tournament — a
+    /// plain <c>Player -&gt; PublicPlayerResponse</c> AutoMapper map can't
+    /// resolve these on its own (they live on the registration, not the
+    /// player, and a player can be registered to several teams/seasons), so
+    /// without this every roster entry silently defaulted to not-habilitado
+    /// (HU-57/HU-62), even for players who genuinely are.
+    /// </summary>
+    private static void PopulateRosterEligibility(
+        List<PublicPlayerResponse> destPlayers, ICollection<Player>? srcPlayers, Guid? tournamentId)
+    {
+        if (tournamentId is null || srcPlayers is null || srcPlayers.Count == 0)
+        {
+            return;
+        }
+
+        Dictionary<Guid, Player> srcById = srcPlayers.ToDictionary(player => player.Id);
+
+        foreach (PublicPlayerResponse destPlayer in destPlayers)
+        {
+            if (!srcById.TryGetValue(destPlayer.Id, out Player? srcPlayer)
+                || srcPlayer.PlayerTeamRegistrations is null)
+            {
+                continue;
+            }
+
+            PlayerTeamRegistration? registration = srcPlayer.PlayerTeamRegistrations
+                .FirstOrDefault(reg => reg.TournamentId == tournamentId.Value);
+
+            if (registration is null)
+            {
+                continue;
+            }
+
+            destPlayer.MedicalRecordStatus = registration.MedicalRecordStatus;
+            destPlayer.IsHabilitado = registration.IsHabilitado;
+            destPlayer.JerseyNumber = registration.JerseyNumber;
+        }
     }
 }
