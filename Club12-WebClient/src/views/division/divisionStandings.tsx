@@ -20,6 +20,8 @@ import {
 } from '@/modules/division/utils/qualificationRange';
 import PrintableResultsSheet from '@/views/division/PrintableResultsSheet';
 import TeamLogo from '@/views/core/components/TeamLogo';
+import { EmojiEventsIcon } from '@/views/core/MUI/icons/icons';
+import { brand } from '@/design/tokens';
 
 interface DivisionStandingsProps {
   positions?: Position[];
@@ -37,6 +39,13 @@ interface DivisionStandingsProps {
    * doesn't get one redundant print sheet per group.
    */
   showPrintSheet?: boolean;
+  /**
+   * True when this division crowns its champion straight off this table —
+   * no playoff bracket decides it. 1st place then gets the same gold
+   * champion treatment a playoff final's winner gets elsewhere (Podium),
+   * instead of reading like just another ranked row.
+   */
+  crownFirstPlace?: boolean;
 }
 
 const DivisionStandings: React.FC<DivisionStandingsProps> = ({
@@ -44,6 +53,7 @@ const DivisionStandings: React.FC<DivisionStandingsProps> = ({
   divisionName,
   qualificationRanges,
   showPrintSheet = true,
+  crownFirstPlace = false,
 }) => {
   const rows = useMemo(() => sortPositions(positions ?? []), [positions]);
   // The legend lists only the ranges actually present, in top-down cup order.
@@ -103,6 +113,8 @@ const DivisionStandings: React.FC<DivisionStandingsProps> = ({
             {rows.map((row, index) => {
               const range = findQualificationRange(qualificationRanges, index + 1);
               const tierColor = range ? cupTierColor(range.order) : undefined;
+              const isChampion = crownFirstPlace && index === 0;
+              const accentColor = isChampion ? brand.gold : tierColor;
               return (
               <TableRow
                 key={row.teamId}
@@ -110,14 +122,15 @@ const DivisionStandings: React.FC<DivisionStandingsProps> = ({
                 // Subtle qualification highlight (HU-45): a colored left border
                 // plus a faint tint of the same cup-tier color, readable on the
                 // dark theme. The row's title names the cup so the meaning does
-                // not rely on color alone.
-                title={range ? `Clasifica a ${range.cupName}` : undefined}
+                // not rely on color alone. A champion row (no playoff — this
+                // table alone decides the title) gets the same gold treatment.
+                title={isChampion ? 'Campeón' : range ? `Clasifica a ${range.cupName}` : undefined}
                 sx={
-                  tierColor
+                  accentColor
                     ? {
-                        backgroundColor: alpha(tierColor, 0.12),
+                        backgroundColor: alpha(accentColor, 0.12),
                         '& > td:first-of-type': {
-                          borderLeft: `4px solid ${tierColor}`,
+                          borderLeft: `4px solid ${accentColor}`,
                         },
                       }
                     : undefined
@@ -125,11 +138,19 @@ const DivisionStandings: React.FC<DivisionStandingsProps> = ({
               >
                 <TableCell align="center">{index + 1}</TableCell>
                 <TableCell>
-                  <Stack direction="row" spacing={1.5} sx={{
+                  <Stack direction="row" spacing={1} sx={{
                     alignItems: "center"
                   }}>
+                    {isChampion && (
+                      <EmojiEventsIcon sx={{ fontSize: 18, color: brand.gold, flexShrink: 0 }} />
+                    )}
                     <TeamLogo teamName={row.teamName} logoUrl={row.logoUrl} size={24} />
-                    <Box component="span">{row.teamName}</Box>
+                    <Box
+                      component="span"
+                      sx={isChampion ? { fontWeight: 700, color: brand.gold } : undefined}
+                    >
+                      {row.teamName}
+                    </Box>
                   </Stack>
                 </TableCell>
                 <TableCell align="center">{row.matchesPlayed}</TableCell>
