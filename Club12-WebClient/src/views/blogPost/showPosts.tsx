@@ -119,18 +119,17 @@ const ShowPosts: React.FC = () => {
 
   return (
     <div>
-      <Grid container spacing={3} sx={{
-        justifyContent: "center"
-      }}>
+      <Grid container spacing={3}>
         {posts.map(post => (
             <Grid
               key={post.id}
               size={{
                 xs: 12,
                 sm: 6,
-                md: 4
+                md: 4,
+                lg: 3
               }}>
-              <Card sx={{ maxWidth: 345, height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <Card sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 {post.photoUrl ? (
                   <CardMedia
                     component="img"
