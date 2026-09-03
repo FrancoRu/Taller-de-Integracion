@@ -15,7 +15,7 @@ export interface PageShellProps {
   actions?: ReactNode;
   /** Optional back affordance rendered above the title. */
   back?: PageShellBack;
-  /** MUI Container width. `false` opts out of a max width. Defaults to `lg`. */
+  /** MUI Container width. `false` opts out of a max width. Defaults to `false` (full width). */
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | false;
   /** Wrapper element for the Container. Defaults to `div` (never `main`, since
    *  the layouts already render the page's single `<main>`). */
@@ -38,7 +38,7 @@ export default function PageShell({
   title,
   actions,
   back,
-  maxWidth = 'lg',
+  maxWidth = false,
   component = 'div',
   children,
 }: PageShellProps) {
