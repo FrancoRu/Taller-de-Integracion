@@ -158,7 +158,7 @@ const ShowPosts: React.FC = () => {
                   </Box>
                 )}
                 <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  <Typography variant="h6" sx={{ mb: 1 }}>{post.title}</Typography>
+                  <Typography variant="h6" component="h2" sx={{ mb: 1 }}>{post.title}</Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
                     {stripHtmlToExcerpt(post.markdownText, BLOG_EXCERPT_LENGTH)}
                   </Typography>

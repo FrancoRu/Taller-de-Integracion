@@ -83,6 +83,7 @@ function PodiumPlace({ rank, team }: PodiumPlaceProps) {
           <TeamLogo teamName={team.teamName} logoUrl={team.logoUrl} size={logoSize} />
           <Typography
             variant={isChampion ? 'subtitle1' : 'body2'}
+            component="p"
             sx={{ fontWeight: isChampion ? 700 : 500, lineHeight: 1.2 }}
           >
             {team.teamName}

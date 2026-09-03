@@ -118,13 +118,26 @@ export default function TournamentWizardPage() {
 
   return (
     <PageShell title="Asistente de creación de torneo">
-      <Stepper activeStep={activeStep} sx={{ mb: 3 }}>
+      <Box
+        sx={{
+          overflowX: 'auto',
+          mb: 3,
+          scrollbarWidth: 'thin',
+          '&::-webkit-scrollbar': { height: 8 },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: 'action.disabled',
+            borderRadius: 4,
+          },
+        }}
+      >
+        <Stepper activeStep={activeStep} sx={{ minWidth: 480 }}>
           {STEP_LABELS.map(label => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
             </Step>
           ))}
         </Stepper>
+      </Box>
 
         <Box sx={{ minHeight: 240, mb: 3 }}>
           {activeStep === 0 && (

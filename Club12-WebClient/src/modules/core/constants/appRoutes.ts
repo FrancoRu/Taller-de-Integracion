@@ -64,7 +64,6 @@ export const APP_ROUTES = {
     pattern: '/panel/clubes/:idOrSlug',
     build: (idOrSlug: string) => `/panel/clubes/${idOrSlug}`,
   },
-  panelTeamRegister: '/panel/registro-equipos',
   panelSanctions: '/panel/sanciones',
   panelSanction: {
     pattern: '/panel/sanciones/:playerSanctionId',

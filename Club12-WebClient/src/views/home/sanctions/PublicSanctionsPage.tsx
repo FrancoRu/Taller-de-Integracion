@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { formatDateAr } from '@/modules/core/utils/formatDate';
 import {
-  Box,
   Chip,
   InputAdornment,
   MenuItem,
@@ -11,6 +10,7 @@ import {
 } from '@mui/material';
 import PageShell from '@/views/core/components/PageShell';
 import FilterBar from '@/views/core/components/FilterBar';
+import TableScrollBox from '@/views/core/components/TableScrollBox';
 import LoadErrorState from '@/views/core/components/LoadErrorState';
 import { GUID } from '@/modules/core/types/types';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
@@ -270,7 +270,7 @@ export default function PublicSanctionsPage() {
         />
       </FilterBar>
 
-      <Box sx={{ width: '100%' }}>
+      <TableScrollBox>
         {error ? (
           <LoadErrorState
             message="No pudimos cargar las sanciones."
@@ -303,7 +303,7 @@ export default function PublicSanctionsPage() {
             )}
           />
         )}
-      </Box>
+      </TableScrollBox>
     </PageShell>
   );
 }

@@ -23,14 +23,14 @@ import { buildBrackets } from '@/modules/playoff/buildBracket';
 import { BracketGroup } from '@/modules/playoff/type/bracket.d';
 import DivisionStandings from '@/views/division/divisionStandings';
 import MatchFixtureList from '@/views/home/matches/MatchFixtureList';
-import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
-import PlayoffMatchSections from '@/views/playoff/PlayoffMatchSections';
+import PlayoffCups from '@/views/playoff/PlayoffCups';
 import Podium from '@/views/champion/Podium';
 import { IPodium } from '@/modules/champion/type/champion.d';
 
 const FETCH_PAGE_SIZE = 100;
 const DEFAULT_SUB_TAB: DivisionSubTab = 'posiciones';
 const VIEW_QUERY_PARAM = 'view';
+const PUBLIC_TOP_SCORERS_LIMIT = 10;
 
 type DivisionSubTab = 'equipos' | 'posiciones' | 'goleadores' | 'partidos' | 'playoff';
 
@@ -83,14 +83,54 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
   );
 
   const [stages, setStages] = useState<IStageResponse[]>([]);
+  const [stagesLoaded, setStagesLoaded] = useState(false);
   const [matches, setMatches] = useState<IMatchResponse[]>([]);
   const [seriesById, setSeriesById] = useState<Map<GUID, IMatchSeriesResponse>>(new Map());
   const [bracketGroups, setBracketGroups] = useState<BracketGroup[]>([]);
   const [structureLoading, setStructureLoading] = useState(false);
   const [structureLoaded, setStructureLoaded] = useState(false);
 
+  // Fetched eagerly (not gated behind a sub-tab visit, unlike the matches
+  // below) purely to answer one question up front: does this division have
+  // an elimination stage at all? The "Playoff" tab, and the standings
+  // table's champion row, both need that before the reader ever clicks
+  // anything — a lazy fetch would mean showing (then yanking) the tab, or
+  // never being able to crown a no-playoff division's winner from the
+  // default "Posiciones" tab.
   useEffect(() => {
-    if ((subTab !== 'partidos' && subTab !== 'playoff') || structureLoaded) return;
+    let cancelled = false;
+    setStagesLoaded(false);
+
+    stageService
+      .getStagesByFilters({ divisionId: division.id, pageSize: FETCH_PAGE_SIZE })
+      .then(response => {
+        if (cancelled) return;
+        setStages(response.data?.items ?? []);
+        setStagesLoaded(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [division.id]);
+
+  const hasPlayoff = useMemo(() => stages.some(stage => stage.isElimination), [stages]);
+
+  // Once stages are known, an in-flight 'playoff' sub-tab for a division
+  // that turns out to have none falls back to the default tab instead of
+  // rendering the "no elimination stages" empty state behind a tab that no
+  // longer exists in the bar above it.
+  useEffect(() => {
+    if (stagesLoaded && !hasPlayoff && subTab === 'playoff') setSubTab(DEFAULT_SUB_TAB);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stagesLoaded, hasPlayoff, subTab]);
+
+  useEffect(() => {
+    // Waits for the eager stages fetch above too — otherwise a reader who
+    // clicks "Partidos"/"Playoff" before it resolves would build the
+    // bracket from an empty `stages`, and `structureLoaded` would then
+    // block ever retrying once stages actually arrive.
+    if ((subTab !== 'partidos' && subTab !== 'playoff') || structureLoaded || !stagesLoaded) return;
     let cancelled = false;
 
     const fetchStructure = async () => {
@@ -104,18 +144,16 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
         // fine (it loads its scores from a separate per-stage MatchSeries
         // fetch below), but the "Partidos de playoff" list built from these
         // matches ended up empty.
-        const [stagesResponse, regularMatchesResponse, playoffMatchesResponse] = await Promise.all([
-          stageService.getStagesByFilters({ divisionId: division.id, pageSize: FETCH_PAGE_SIZE }),
+        const [regularMatchesResponse, playoffMatchesResponse] = await Promise.all([
           matchService.getMatchByFilter({ divisionId: division.id, type: MatchType.Regular, pageSize: FETCH_PAGE_SIZE }),
           matchService.getMatchByFilter({ divisionId: division.id, type: MatchType.Playoff, pageSize: FETCH_PAGE_SIZE }),
         ]);
-        const stagesList = stagesResponse.data?.items ?? [];
         const matchesList = [
           ...(regularMatchesResponse.data?.items ?? []),
           ...(playoffMatchesResponse.data?.items ?? []),
         ];
 
-        const eliminationStages = stagesList.filter(stage => stage.isElimination);
+        const eliminationStages = stages.filter(stage => stage.isElimination);
         const seriesStages = eliminationStages.filter(stage => stage.bestOf > 1);
         const seriesByStageId = new Map<GUID, IMatchSeriesResponse[]>();
         const nextSeriesById = new Map<GUID, IMatchSeriesResponse>();
@@ -134,7 +172,6 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
         }
 
         if (!cancelled) {
-          setStages(stagesList);
           setMatches(matchesList);
           setSeriesById(nextSeriesById);
           setBracketGroups(buildBrackets(eliminationStages, matchesList, seriesByStageId));
@@ -151,7 +188,7 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
     return () => {
       cancelled = true;
     };
-  }, [subTab, structureLoaded, division.id]);
+  }, [subTab, structureLoaded, stagesLoaded, division.id, stages]);
 
   // Elimination-stage matches live in the Playoff tab's bracket, not here —
   // otherwise a division with playoffs shows the same games twice. `stages`
@@ -204,7 +241,11 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
         <Tab label="Posiciones" value="posiciones" />
         <Tab label="Goleadores" value="goleadores" />
         <Tab label="Partidos" value="partidos" />
-        <Tab label="Playoff" value="playoff" />
+        {/* Hidden until stages are confirmed loaded — a division with no
+            elimination stage at all (decided by standings alone) never
+            gets this tab, instead of showing one whose only content is
+            "No hay fases de eliminación disponibles". */}
+        {stagesLoaded && hasPlayoff && <Tab label="Playoff" value="playoff" />}
       </SecondaryTabs>
 
       <Box sx={{ minHeight: TAB_CONTENT_MIN_HEIGHT }}>
@@ -241,11 +282,24 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
             positions={division.positions}
             divisionName={division.name}
             qualificationRanges={division.qualificationRanges}
+            // Tracks the CURRENT leader live, same as the qualification-range
+            // tinting below it does — not gated on the season being over. A
+            // division with no elimination stage is decided by this table
+            // alone, so 1st place is the one position that matters in this
+            // format the whole way through, not just once it's final.
+            crownFirstPlace={stagesLoaded && !hasPlayoff}
           />
         ))}
 
       {subTab === 'goleadores' && (
-        <DivisionScorersTable divisionId={division.id} divisionName={division.name} />
+        // Public "Goleadores" reads as a highlights list, not a full
+        // division export — capped to the top 10; the admin panel's own
+        // DivisionScorersTable (divisionPage.tsx) keeps the complete ranking.
+        <DivisionScorersTable
+          divisionId={division.id}
+          divisionName={division.name}
+          limit={PUBLIC_TOP_SCORERS_LIMIT}
+        />
       )}
 
       {subTab === 'partidos' &&
@@ -270,16 +324,11 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
         (structureLoading ? (
           <ListSkeleton items={5} />
         ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <PlayoffBrackets groups={bracketGroups} seriesById={seriesById} />
-
-            {playoffMatchSections.length > 0 && (
-              <Box>
-                <SectionHeading>Partidos de playoff</SectionHeading>
-                <PlayoffMatchSections sections={playoffMatchSections} seriesById={seriesById} />
-              </Box>
-            )}
-          </Box>
+          <PlayoffCups
+            bracketGroups={bracketGroups}
+            matchSections={playoffMatchSections}
+            seriesById={seriesById}
+          />
         ))}
       </Box>
     </Box>

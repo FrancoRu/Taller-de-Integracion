@@ -360,14 +360,38 @@ public static class ErrorMessages
             return $"El equipo {teamId} no jugó este partido, así que no se pueden cargar sus puntos acá.";
         }
 
-        public static string PlayerNotOnRoster(System.Guid playerId)
+        public static string PlayerNotOnRosterReason(string playerLabel)
         {
-            return $"El jugador {playerId} no está en el plantel del equipo para esta temporada, así que no se pueden cargar sus puntos.";
+            return $"{playerLabel} (no está en el plantel del equipo para esta temporada)";
         }
 
-        public static string PlayerNotEligible(System.Guid playerId)
+        public static string PlayerNotEligibleReason(string playerLabel)
         {
-            return $"El jugador {playerId} no está habilitado (le falta la inscripción aprobada o tiene una sanción activa).";
+            return $"{playerLabel} (no está habilitado: le falta la inscripción aprobada o tiene una sanción activa)";
+        }
+
+        /// <summary>
+        /// One combined error naming every ineligible/off-roster player across
+        /// both teams' sheets, grouped by team — never a raw player id, and
+        /// never just the first offender, so the admin sees the whole picture
+        /// in one pass instead of fixing the sheet one rejection at a time.
+        /// </summary>
+        public static string PlayersNotEligible(
+            System.Collections.Generic.IEnumerable<(string TeamName, System.Collections.Generic.List<string> Reasons)> issuesByTeam)
+        {
+            System.Collections.Generic.List<string> groups = [];
+            foreach ((string teamName, System.Collections.Generic.List<string> reasons) in issuesByTeam)
+            {
+                groups.Add($"{teamName}: {string.Join(", ", reasons)}.");
+            }
+
+            return $"No se puede cargar el resultado porque hay jugadores no elegibles. {string.Join(" ", groups)}";
+        }
+
+        public static string TeamRequiresWalkOver(string teamName, int habilitadoCount)
+        {
+            return $"{teamName} tiene {habilitadoCount} jugador(es) habilitado(s) (mínimo 4), así que este partido no se puede " +
+                "cargar con un resultado normal. Cargalo como walkover.";
         }
     }
 

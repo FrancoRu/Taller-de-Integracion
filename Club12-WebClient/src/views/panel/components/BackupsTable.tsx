@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { Box } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { confirmAction, confirmDelete } from '@/modules/core/utils/confirmDialog';
 import {
@@ -11,6 +10,7 @@ import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
 import { TableRowAction } from '@/views/core/components/TableRowActions';
 import { DeleteIcon, RestoreIcon } from '@/views/core/MUI/icons/icons';
 import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
+import TableScrollBox from '@/views/core/components/TableScrollBox';
 
 interface BackupsTableProps {
   backups: IBackupRecordResponse[];
@@ -109,7 +109,7 @@ const BackupsTable: React.FC<BackupsTableProps> = ({
   );
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <TableScrollBox>
       <DataGrid
         rows={backups}
         columns={columns}
@@ -120,7 +120,7 @@ const BackupsTable: React.FC<BackupsTableProps> = ({
         disableColumnMenu
         localeText={dataGridLocaleText('Todavía no hay respaldos generados.')}
       />
-    </Box>
+    </TableScrollBox>
   );
 };
 

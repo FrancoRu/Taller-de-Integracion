@@ -19,6 +19,7 @@ public class TeamProfile : Profile
     {
         _ = CreateMap<Team, TeamResponse>()
             .ForMember(dest => dest.ClubId, opt => opt.MapFrom(src => src.ClubId))
+            .ForMember(dest => dest.TournamentName, opt => opt.MapFrom(src => src.Tournament != null ? src.Tournament.Name : null))
             .ReverseMap();
 
         _ = CreateMap<Team, TeamDetailedMatchResponse>()

@@ -16,6 +16,7 @@ import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PageShell from '@/views/core/components/PageShell';
 import FilterBar from '@/views/core/components/FilterBar';
+import TableScrollBox from '@/views/core/components/TableScrollBox';
 import { DeleteIcon, SearchIcon, VisibilityIcon } from '@/views/core/MUI/icons/icons';
 import VenueFormDialog from '@/views/venue/VenueFormDialog';
 import type {
@@ -318,7 +319,7 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
         />
       </FilterBar>
 
-      <Box sx={{ width: '100%' }}>
+      <TableScrollBox>
         <DataGrid
           rows={filteredRows}
           columns={columns}
@@ -333,7 +334,7 @@ const VenuesPage: React.FC<VenuesPageProps> = ({
             pagination: { paginationModel: { pageSize: TABLE_ROWS_PER_PAGE } },
           }}
         />
-      </Box>
+      </TableScrollBox>
 
       <VenueFormDialog
         withPhoto

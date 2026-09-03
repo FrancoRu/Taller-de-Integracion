@@ -3,7 +3,6 @@ import BlogPostPreviewDialog from '@/views/blogPost/BlogPostPreviewDialog';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { formatDateAr } from '@/modules/core/utils/formatDate';
 import {
-  Box,
   Chip,
   InputAdornment,
   TextField,
@@ -20,6 +19,7 @@ import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PageShell from '@/views/core/components/PageShell';
 import FilterBar from '@/views/core/components/FilterBar';
+import TableScrollBox from '@/views/core/components/TableScrollBox';
 import { TableSkeleton } from '@/views/core/components/skeletons';
 import { DeleteIcon, SearchIcon, VisibilityIcon } from '@/views/core/MUI/icons/icons';
 import {
@@ -211,7 +211,7 @@ const BlogPostsPage: React.FC = () => {
       {loading ? (
         <TableSkeleton columns={6} />
       ) : (
-        <Box sx={{ width: '100%' }}>
+        <TableScrollBox>
           <DataGrid
             rows={rows}
             columns={columns}
@@ -225,7 +225,7 @@ const BlogPostsPage: React.FC = () => {
             paginationMode="server"
             rowCount={rowCount}
           />
-        </Box>
+        </TableScrollBox>
       )}
 
       {previewPost && (

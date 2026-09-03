@@ -23,7 +23,6 @@ import { IPodium } from '@/modules/champion/type/champion.d';
 import { GUID } from '@/modules/core/types/types';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
 import PublicDivisionPanel from '@/views/home/tournaments/PublicDivisionPanel';
-import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { PUBLIC_LISTING_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { TAB_CONTENT_MIN_HEIGHT } from '@/modules/core/constants/constants';
 import {
@@ -266,15 +265,15 @@ export default function PublicTournamentPage() {
     );
   }
 
-  // "Volver" goes back to the tournament's season (the actual place a visitor
-  // came from — Torneos is no longer a top-level nav destination), falling
-  // back to the seasons list only when the tournament has no season yet.
-  const backRoute = tournament?.seasonId
-    ? APP_ROUTES.publicSeason.build(tournament.seasonSlug ?? tournament.seasonId)
-    : APP_ROUTES.publicSeasons;
+  // Real back navigation, not a reconstructed season URL — a season page can
+  // itself have its own active tab/sub-tab, and a bare /temporadas/:id link
+  // always lands on its default one, silently dropping that state. The label
+  // still names the season a visitor would expect (Torneos is no longer a
+  // top-level nav destination), it just doesn't drive the actual navigation.
   const backLabel = tournament?.seasonName
     ? `Volver a ${tournament.seasonName}`
     : 'Volver a temporadas';
+  const goBack = () => navigate(-1);
 
   if (error && !tournament) {
     return (
@@ -282,7 +281,7 @@ export default function PublicTournamentPage() {
         maxWidth="md"
         back={{
           label: backLabel,
-          onClick: () => navigate(backRoute),
+          onClick: goBack,
         }}
       >
         <LoadErrorState
@@ -302,7 +301,7 @@ export default function PublicTournamentPage() {
         <Typography sx={{ color: 'text.secondary', mb: 3 }}>
           El torneo que buscás no existe o ya no está disponible.
         </Typography>
-        <Button onClick={() => navigate(backRoute)}>{backLabel}</Button>
+        <Button onClick={goBack}>{backLabel}</Button>
       </PageShell>
     );
   }
@@ -313,7 +312,7 @@ export default function PublicTournamentPage() {
     <PageShell
       back={{
         label: backLabel,
-        onClick: () => navigate(backRoute),
+        onClick: goBack,
       }}
     >
       <Typography

@@ -22,6 +22,7 @@ import {
   formatRoundLabel,
   groupMatchesByRound,
 } from '@/modules/match/utils/matchGrouping';
+import { isBracketBye, singleMatchAsSeries } from '@/modules/playoff/matchStatus';
 import {
   FIXTURE_CSV_HEADERS,
   buildFixtureCsvRows,
@@ -217,8 +218,12 @@ export default function MatchFixtureList({
                     // (byeTeamNamesForRound) below — a fixture-generation slot
                     // with neither team assigned is corrupt data, not a real
                     // match, and must not render its own broken "—" vs "—" row.
+                    // A playoff walkover (isBracketBye) already advances its
+                    // lone team with no real opponent ever assigned — showing
+                    // it as its own "0-0 vs —" row adds a match that never
+                    // happened, so it's excluded here too.
                     const realMatches = round.matches.filter(
-                      match => match.homeTeam || match.visitorTeam
+                      match => (match.homeTeam || match.visitorTeam) && !isBracketBye(match)
                     );
 
                     if (!seriesById) {
@@ -228,12 +233,17 @@ export default function MatchFixtureList({
                     }
 
                     return groupMatchesBySeries(realMatches, seriesById).map(group => {
-                      if (!group.series) {
-                        const match = group.matches[0];
+                      const match = group.matches[0];
+                      // A bo1 playoff round has no real MatchSeries behind
+                      // it (there's only ever one game, so the backend
+                      // never creates one) — wrapped here so it still
+                      // renders as a SeriesCard instead of standing out as
+                      // a bare MatchRow next to every boX round.
+                      const series = group.series ?? singleMatchAsSeries(match);
+                      if (!series) {
                         return <MatchRow key={match.id} match={match} buildHref={buildHref} />;
                       }
 
-                      const { series } = group;
                       return (
                         <Box key={series.id} sx={{ p: 1.5 }}>
                           <SeriesCard series={series} matches={group.matches} buildHref={buildHref} />

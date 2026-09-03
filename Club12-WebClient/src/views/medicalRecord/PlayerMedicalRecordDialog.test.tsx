@@ -317,4 +317,49 @@ describe('PlayerMedicalRecordDialog', () => {
       'ficha.pdf'
     );
   });
+
+  it('keeps re-upload available and never claims the player is habilitado when Approved carries a legacy reference', async () => {
+    // Regression test: an Approved record with a legacy/unresolvable file
+    // reference never actually habilitated the player
+    // (PlayerTeamRegistration.IsHabilitado) — treating it as frozen the same
+    // way a genuinely-habilitado Approved record is left it permanently
+    // stuck with no way to re-upload a real file.
+    mockedGet.mockResolvedValue({
+      data: {
+        playerId,
+        teamId,
+        tournamentId,
+        status: MedicalRecordStatus.Approved,
+        isHabilitado: false,
+        fileUrl: 'medical-records/some/object/path.pdf',
+        fileName: 'ficha.pdf',
+      },
+    } as Awaited<ReturnType<typeof medicalRecordService.getMedicalRecord>>);
+
+    render(
+      <PlayerMedicalRecordDialog
+        open
+        onClose={vi.fn()}
+        playerId={playerId}
+        teamId={teamId}
+        tournamentId={tournamentId}
+        playerName="Juan Pérez"
+        status={MedicalRecordStatus.Approved}
+        isHabilitado={false}
+      />
+    );
+
+    const dialog = screen.getByRole('dialog');
+
+    await waitFor(() =>
+      expect(within(dialog).getByText('No habilitado')).toBeInTheDocument()
+    );
+
+    expect(
+      within(dialog).queryByText(/el jugador quedó habilitado/i)
+    ).not.toBeInTheDocument();
+    expect(
+      within(dialog).getByRole('button', { name: /subir ficha/i })
+    ).toBeInTheDocument();
+  });
 });

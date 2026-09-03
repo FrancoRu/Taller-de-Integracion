@@ -1,5 +1,6 @@
 using Application.Interfaces.Storage;
 
+using Domain.Constants;
 using Domain.Entities.Models;
 using Domain.Enums;
 
@@ -15,17 +16,12 @@ using System.Threading;
 namespace API.Tests;
 
 /// <summary>
-/// Covers Part 3 of medical-records-storage-eligibility: the gated, idempotent,
-/// failure-tolerant <c>DataSeeder.SeedMedicalRecordsAsync</c> backfill step.
-/// Exercised through the public <c>Seed:MedicalRecords=true</c> standalone
-/// backfill entry point (<c>SeedAsync(reset: false, ..., forceMedicalRecords:
-/// true)</c> against a DB that already has a team) — this is the same
-/// bypass-the-skip-guard path a real "already seeded" environment takes
-/// (ADR #8), and it reaches the private step without reflection. Constructed
-/// with a <see langword="null!"/> <c>SupabaseHelper</c> because the step under
-/// test never touches it (only <see cref="IMedicalRecordStorage"/>) — the
-/// same documented pattern as <c>SupabaseDependentControllerNotFoundTests</c>
-/// for this project's live-Supabase-constructor testability gap.
+/// Covers Part 3 of medical-records-storage-eligibility: the idempotent,
+/// failure-tolerant <see cref="MedicalRecordSeedBackfiller.BackfillMedicalRecordsAsync"/>
+/// step, shared by both seed paths (the startup <c>DataSeeder</c> and the
+/// admin-triggered <c>DataMaintenanceService</c>). Constructed directly
+/// (no DI, no <c>SupabaseHelper</c> at all) since this step never touches
+/// team logos — only <see cref="IMedicalRecordStorage"/>.
 /// </summary>
 public class MedicalRecordSeedTests : IClassFixture<CustomWebApplicationFactory>
 {
@@ -130,6 +126,53 @@ public class MedicalRecordSeedTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task SeedMedicalRecords_SeederCreatedPendingRegistration_IsApprovedAndUploaded()
+    {
+        // Épica 24, ítem 10: a database seeded before the Approved-by-default
+        // seed logic existed (or restored from an old backup) has every
+        // registration stuck Pending. Only a SEEDER-created row (CreatedBy ==
+        // AuditConstants.SystemUser) self-heals — never a real admin's.
+        using TempPdfFile pdf = new();
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        PlayerTeamRegistration registration = await SeedRegistrationAsync(
+            db, MedicalRecordStatus.Pending, createdBy: AuditConstants.SystemUser);
+        FakeMedicalRecordStorage storage = new();
+
+        await RunSeedMedicalRecordsAsync(db, storage, pdf.Path);
+
+        Assert.Contains((registration.TeamId, registration.PlayerId), storage.StoredCalls);
+        PlayerTeamRegistration? reloaded = await db.PlayerTeamRegistrations
+            .AsNoTracking().SingleAsync(r => r.Id == registration.Id);
+        Assert.Equal(MedicalRecordStatus.Approved, reloaded!.MedicalRecordStatus);
+        Assert.NotNull(reloaded.MedicalRecordFileUrl);
+        Assert.NotNull(reloaded.MedicalRecordReviewedAt);
+    }
+
+    [Fact]
+    public async Task SeedMedicalRecords_RealAdminPendingRegistration_IsUntouched()
+    {
+        // The exact opposite: a Pending row created by a real admin action
+        // (not the seeder) must never be silently auto-approved.
+        using TempPdfFile pdf = new();
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        PlayerTeamRegistration registration = await SeedRegistrationAsync(
+            db, MedicalRecordStatus.Pending, createdBy: "admin@club12.com");
+        FakeMedicalRecordStorage storage = new();
+
+        await RunSeedMedicalRecordsAsync(db, storage, pdf.Path);
+
+        Assert.DoesNotContain((registration.TeamId, registration.PlayerId), storage.StoredCalls);
+        PlayerTeamRegistration? reloaded = await db.PlayerTeamRegistrations
+            .AsNoTracking().SingleAsync(r => r.Id == registration.Id);
+        Assert.Equal(MedicalRecordStatus.Pending, reloaded!.MedicalRecordStatus);
+        Assert.Null(reloaded.MedicalRecordFileUrl);
+    }
+
+    [Fact]
     public async Task SeedMedicalRecords_MissingPdfPath_WarnsAndSkips_ZeroUploads()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
@@ -149,33 +192,20 @@ public class MedicalRecordSeedTests : IClassFixture<CustomWebApplicationFactory>
 
     // ---------- helpers ----------
 
-    private static async Task RunSeedMedicalRecordsAsync(
+    private static Task RunSeedMedicalRecordsAsync(
         ApplicationDBContext db, IMedicalRecordStorage storage, string medicalRecordPath)
     {
-        // A team must already exist for the standalone-backfill bypass branch
-        // (Seed:MedicalRecords=true) to short-circuit into SeedMedicalRecordsAsync
-        // instead of running the full sample reseed (ADR #8).
-        if (!await db.Teams.AnyAsync())
-        {
-            db.Teams.Add(new Team
-            {
-                Name = $"Seed-marker-{Guid.NewGuid()}",
-                Slug = $"seed-marker-{Guid.NewGuid()}",
-                ThreeLetterCode = "SDM",
-                LogoUrl = "https://example.test/logo.png",
-                ShirtColor = "Black",
-                Players = [],
-                CreatedBy = "test",
-            });
-            await db.SaveChangesAsync();
-        }
-
-        DataSeeder seeder = new(db, NullLogger<DataSeeder>.Instance, null!, storage);
-        await seeder.SeedAsync(reset: false, medicalRecordPath: medicalRecordPath, forceMedicalRecords: true);
+        MedicalRecordSeedBackfiller backfiller = new(
+            db, NullLogger<MedicalRecordSeedBackfiller>.Instance, storage);
+        return backfiller.BackfillMedicalRecordsAsync(medicalRecordPath);
     }
 
-    private static async Task<PlayerTeamRegistration> SeedApprovedRegistrationAsync(
-        ApplicationDBContext db, string? fileUrl)
+    private static Task<PlayerTeamRegistration> SeedApprovedRegistrationAsync(
+        ApplicationDBContext db, string? fileUrl) =>
+        SeedRegistrationAsync(db, MedicalRecordStatus.Approved, createdBy: "test", fileUrl);
+
+    private static async Task<PlayerTeamRegistration> SeedRegistrationAsync(
+        ApplicationDBContext db, MedicalRecordStatus status, string createdBy, string? fileUrl = null)
     {
         Tournament tournament = new()
         {
@@ -226,9 +256,9 @@ public class MedicalRecordSeedTests : IClassFixture<CustomWebApplicationFactory>
             PlayerId = player.Id,
             TeamId = team.Id,
             TournamentId = tournament.Id,
-            MedicalRecordStatus = MedicalRecordStatus.Approved,
+            MedicalRecordStatus = status,
             MedicalRecordFileUrl = fileUrl,
-            CreatedBy = "test",
+            CreatedBy = createdBy,
         };
         db.PlayerTeamRegistrations.Add(registration);
         await db.SaveChangesAsync();

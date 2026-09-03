@@ -94,7 +94,11 @@ export default function CupsEditor({
             </Stack>
 
             {!hideQualifiers && (
-              <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 0.5 }}>
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={2}
+                sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, mb: 0.5 }}
+              >
                 <TextField
                   type="number"
                   size="small"
@@ -102,7 +106,7 @@ export default function CupsEditor({
                   value={cup.qualifiers}
                   onChange={e => updateCup(cup.id, { qualifiers: Number(e.target.value) })}
                   slotProps={{ htmlInput: { min: MIN_CUP_QUALIFIERS, max: MAX_CUP_QUALIFIERS } }}
-                  sx={{ width: 180 }}
+                  sx={{ width: { xs: '100%', sm: 180 } }}
                 />
                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                   {cup.name.trim() ? positionsHint(range.from, range.to) : 'Poné un nombre para asignar los puestos'}
@@ -132,8 +136,13 @@ export default function CupsEditor({
             </Typography>
             <Stack spacing={1}>
               {phases.map(stageType => (
-                <Stack key={stageType} direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-                  <Typography variant="body2" sx={{ minWidth: 140 }}>
+                <Stack
+                  key={stageType}
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={{ xs: 0.5, sm: 2 }}
+                  sx={{ alignItems: { xs: 'flex-start', sm: 'center' } }}
+                >
+                  <Typography variant="body2" sx={{ minWidth: { sm: 140 } }}>
                     {STAGE_TYPE_LABELS[stageType]}
                   </Typography>
                   <TextField
@@ -142,7 +151,7 @@ export default function CupsEditor({
                     label="Formato"
                     value={getStageBestOf(cup, stageType)}
                     onChange={e => setStageBestOf(cup, stageType, Number(e.target.value))}
-                    sx={{ minWidth: 170 }}
+                    sx={{ minWidth: { xs: '100%', sm: 170 } }}
                   >
                     {BEST_OF_OPTIONS.map(option => (
                       <MenuItem key={option} value={option}>

@@ -23,10 +23,8 @@ import { buildCrossCupGroupQualificationRange } from '@/modules/division/utils/q
 import DivisionFixture from '@/views/division/DivisionFixture';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import PointDeductionManager from '@/views/division/PointDeductionManager';
-import PlayoffBrackets from '@/views/playoff/PlayoffBrackets';
-import PlayoffMatchSections from '@/views/playoff/PlayoffMatchSections';
+import PlayoffCups from '@/views/playoff/PlayoffCups';
 import SeriesInProgressPanel from '@/views/playoff/SeriesInProgressPanel';
-import SectionHeading from '@/views/core/components/SectionHeading';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
@@ -474,9 +472,11 @@ const DivisionPage: React.FC = () => {
                     })}
                 </Stack>
               )}
-              <PlayoffBrackets
-                groups={bracketGroups}
+              <PlayoffCups
+                bracketGroups={bracketGroups}
+                matchSections={playoffMatchSections}
                 seriesById={seriesById}
+                buildHref={m => APP_ROUTES.panelMatch.build(m.slug ?? m.id)}
                 onMatchClick={isAdminOrOwner ? handleMatchClick : undefined}
               />
 
@@ -485,17 +485,6 @@ const DivisionPage: React.FC = () => {
                   seriesById={seriesById}
                   onGameAdded={() => void fetchBrackets(division.id)}
                 />
-              )}
-
-              {playoffMatchSections.length > 0 && (
-                <Box>
-                  <SectionHeading>Partidos de playoff</SectionHeading>
-                  <PlayoffMatchSections
-                    sections={playoffMatchSections}
-                    seriesById={seriesById}
-                    buildHref={m => APP_ROUTES.panelMatch.build(m.slug ?? m.id)}
-                  />
-                </Box>
               )}
             </Stack>
           ))}

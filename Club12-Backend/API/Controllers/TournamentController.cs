@@ -254,31 +254,6 @@ public class TournamentController(
     }
 
     /// <summary>
-    /// Registers teams to a tournament.
-    /// </summary>
-    /// <param name="id">Tournament identifier (GUID).</param>
-    /// <param name="registerTeamsRequest">Request containing team IDs to register.</param>
-    /// <returns>
-    /// Returns 200 (OK) if teams registered successfully.
-    /// Returns 400 (Bad Request) if tournament not found.
-    /// Returns 403 (Forbidden) if unauthorized.
-    /// </returns>
-    [HttpPost("register-teams/{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> RegisterTeam(Guid id, RegisterTeamsInTournamentRequest registerTeamsRequest)
-    {
-        Tournament? tournament = await tournamentService.GetTournamentByIdAsync(id);
-        if (tournament is null)
-        {
-            return this.NotFoundProblem(nameof(Tournament), id);
-        }
-        await teamService.RegisterTeamsToTournamentAsync(tournament, registerTeamsRequest.TeamIds);
-        return Ok();
-    }
-
-    /// <summary>
     /// HU-107: enrolls a single team into the tournament's registration phase.
     /// Two modes — create a brand-new team (<c>NewTeamName</c>) or enroll an
     /// existing club from another season (<c>ExistingTeamId</c>), optionally

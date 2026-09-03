@@ -8,6 +8,7 @@ export default function Forbidden() {
     <ErrorPageLayout code={HttpStatus.Forbidden}>
       <Typography
         variant="h5"
+        component="h2"
         sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}
       >
         Acceso denegado

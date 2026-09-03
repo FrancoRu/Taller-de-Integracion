@@ -110,6 +110,7 @@ export default function TeamHero({
           {code && (
             <Typography
               variant="subtitle1"
+              component="p"
               sx={{ color: 'rgba(255, 255, 255, 0.85)', letterSpacing: '0.08em' }}
             >
               {code}

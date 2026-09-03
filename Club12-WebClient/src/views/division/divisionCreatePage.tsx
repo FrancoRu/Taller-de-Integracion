@@ -199,7 +199,8 @@ const DivisionCreatePage: React.FC = () => {
             onCancel={handleCancel}
             onConfirm={() => void handleCreate()}
             confirmLabel="Crear"
-            disabled={submitting || isStructureFrozen}
+            disabled={submitting}
+            confirmDisabled={isStructureFrozen}
           />
         </Stack>
       </Stack>

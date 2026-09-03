@@ -87,18 +87,18 @@ public class NotFoundContractTests : IClassFixture<CustomWebApplicationFactory>
 
     /// <summary>
     /// Covers the spec's "nested action referencing a nonexistent parent id" case (the spec's
-    /// own example is "adding a sanction to a nonexistent player"): registering teams to a
+    /// own example is "adding a sanction to a nonexistent player"): enrolling a team into a
     /// nonexistent tournament must return 404 + ProblemDetails via a real HTTP round trip.
     /// </summary>
     [Fact]
-    public async Task RegisterTeam_MissingTournament_Returns404ProblemDetails()
+    public async Task EnrollTeam_MissingTournament_Returns404ProblemDetails()
     {
         HttpClient client = _factory.CreateAuthenticatedClient(Roles.Owner);
         Guid missingTournamentId = Guid.NewGuid();
-        RegisterTeamsInTournamentRequest request = new() { TeamIds = [Guid.NewGuid()] };
+        EnrollTeamRequest request = new() { NewTeamName = "Nonexistent Tournament Team" };
 
         HttpResponseMessage response = await client.PostAsJsonAsync(
-            $"api/tournaments/register-teams/{missingTournamentId}", request);
+            $"api/tournaments/{missingTournamentId}/enroll-team", request);
 
         await AssertNotFoundProblemDetailsAsync(response);
     }

@@ -55,6 +55,12 @@ const filenamePart = (divisionName?: string) =>
 interface DivisionScorersTableProps {
   divisionId: GUID;
   divisionName?: string;
+  /**
+   * Caps how many ranked scorers are fetched/shown (e.g. the public
+   * tournament page's top 10) instead of the full division. Omit for the
+   * complete ranking — the admin panel's own use of this table.
+   */
+  limit?: number;
 }
 
 /**
@@ -67,6 +73,7 @@ interface DivisionScorersTableProps {
 export default function DivisionScorersTable({
   divisionId,
   divisionName,
+  limit,
 }: DivisionScorersTableProps) {
   const [scorers, setScorers] = useState<IScorerByPlayerResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,7 +89,7 @@ export default function DivisionScorersTable({
       setLoading(true);
       const response = await scorerService.getScorersByPlayerFiltered({
         divisionId: divisionIdRef.current,
-        pageSize: FILTER_OPTIONS_PAGE_SIZE,
+        pageSize: limit ?? FILTER_OPTIONS_PAGE_SIZE,
         pageNumber: 1,
       });
       if (!cancelled) {
@@ -95,7 +102,7 @@ export default function DivisionScorersTable({
     return () => {
       cancelled = true;
     };
-  }, [divisionId]);
+  }, [divisionId, limit]);
 
   // Same single-instance-at-a-time print guard PrintableResultsSheet uses:
   // the sheet only becomes visible to `window.print()` once "Imprimir" is

@@ -108,23 +108,6 @@ export const tournamentService = {
     await sendDelete(`${routes.tournaments}/${id}`),
 
   /**
-   * Registers one or more teams in a specific tournament.
-   *
-   * @async
-   * @function registerTeams
-   * @param {string} id - The unique identifier (GUID) of the tournament where teams will be registered.
-   * @param {string[]} teamsId - An array of team identifiers (GUIDs) to be registered in the tournament.
-   * @returns {Promise<AxiosResponse<boolean>>} A promise resolving to an Axios response indicating whether the registration was successful.
-   */
-  registerTeamsByTournamentId: async (
-    id: GUID,
-    teamsId: GUID[]
-  ): Promise<AxiosResponse<boolean>> =>
-    await sendPost(`${routes.tournaments}/register-teams/${id}`, {
-      teamIds: teamsId,
-    }),
-
-  /**
    * Enrolls a single team into a tournament during its registration phase
    * (HU-107). Sends the enrollment contract to
    * `POST /api/tournaments/{id}/enroll-team`.

@@ -8,8 +8,9 @@ describe('categoryColor', () => {
     const { fill, ink } = categoryColor(TournamentCategory.Masculine);
 
     expect(fill).toBe(category.masculine);
-    // The orange is dark enough that the off-white ink reads on it.
-    expect(ink).toBe('#f5f5f5');
+    // Regression: white text on this orange is only ~2.86:1 (fails WCAG AA's
+    // 4.5:1) — dark ink is the one that actually reads on it, ~6.3:1.
+    expect(ink).toBe('#0b0f17');
   });
 
   it('tints the feminine category with the brand purple', () => {

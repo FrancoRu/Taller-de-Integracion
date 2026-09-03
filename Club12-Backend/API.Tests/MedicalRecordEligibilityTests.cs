@@ -7,6 +7,7 @@ using Domain.Enums;
 
 using Infrastructure.Persistance;
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 using MatchType = Domain.Enums.MatchType;
@@ -112,6 +113,43 @@ public class MedicalRecordEligibilityTests : IClassFixture<CustomWebApplicationF
         Assert.Equal(MedicalRecordStatus.Approved, record!.Status);
         Assert.Equal(originalRef, record.FileUrl);
         Assert.Equal("ficha.pdf", record.FileName);
+    }
+
+    // ---------- Part 2 gap: an Approved-but-never-habilitado (legacy
+    // reference) row must not be stuck forever ----------
+
+    [Fact]
+    public async Task RecordUpload_AfterApprovalWithLegacyReference_IsAllowed()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IMedicalRecordService medicalRecordService = scope.ServiceProvider.GetRequiredService<IMedicalRecordService>();
+
+        Fixture fx = await SeedRegistrationAsync(db);
+
+        // Approved directly on the seeded row (bypassing the write guard,
+        // same shape as historical pre-relocation data) with a legacy
+        // reference — this never actually habilitated the player.
+        PlayerTeamRegistration registration = await db.PlayerTeamRegistrations.SingleAsync(r =>
+            r.PlayerId == fx.PlayerId && r.TeamId == fx.TeamId && r.TournamentId == fx.TournamentId);
+        registration.MedicalRecordStatus = MedicalRecordStatus.Approved;
+        registration.MedicalRecordFileUrl = "medical-records/legacy/object.pdf";
+        await db.SaveChangesAsync();
+
+        string newRef = $"{fx.TeamId}/{fx.PlayerId}/{Guid.NewGuid()}.pdf";
+        MedicalRecordResponse record = await medicalRecordService.RecordUploadAsync(
+            fx.PlayerId, fx.TeamId, fx.TournamentId, newRef, "ficha-nueva.pdf", "owner@club12");
+
+        Assert.Equal(MedicalRecordStatus.Pending, record.Status);
+        Assert.Equal(newRef, record.FileUrl);
+        Assert.False(record.IsHabilitado);
+
+        // ...and can now be properly approved against the real stored file.
+        MedicalRecordResponse approved = await medicalRecordService.ReviewAsync(
+            fx.PlayerId, fx.TeamId, fx.TournamentId, approve: true, reason: null, actor: "owner@club12");
+
+        Assert.Equal(MedicalRecordStatus.Approved, approved.Status);
+        Assert.True(approved.IsHabilitado);
     }
 
     // ---------- HU-58: approve -> habilitado ----------
@@ -348,6 +386,8 @@ public class MedicalRecordEligibilityTests : IClassFixture<CustomWebApplicationF
             CreatedBy = "test",
         });
         await db.SaveChangesAsync();
+        await SeedHabilitadoFillersAsync(db, teamB, tournamentB.Id);
+        await SeedHabilitadoFillersAsync(db, matchB.VisitorTeam!, tournamentB.Id);
 
         // Season B eligibility is independent: the player is NOT eligible there.
         InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
@@ -409,7 +449,34 @@ public class MedicalRecordEligibilityTests : IClassFixture<CustomWebApplicationF
 
         Match match = await SeedFinishedMatchRowAsync(db, team, stage, homeScore);
 
+        // Baseline habilitado padding (owner's walkover-threshold rule,
+        // HU-73): these tests target the SINGLE player under test's own
+        // eligibility, so both teams need >= 4 habilitado players of their
+        // own to avoid tripping the team-wide walkover gate instead.
+        await SeedHabilitadoFillersAsync(db, team, tournament.Id);
+        await SeedHabilitadoFillersAsync(db, match.VisitorTeam!, tournament.Id);
+
         return new Fixture(player.Id, team.Id, tournament.Id, match.Id);
+    }
+
+    private static async Task SeedHabilitadoFillersAsync(
+        ApplicationDBContext db, Team team, Guid tournamentId, int count = 4)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            Player filler = await SeedPlayerAsync(db, team);
+            db.PlayerTeamRegistrations.Add(new PlayerTeamRegistration
+            {
+                PlayerId = filler.Id,
+                TeamId = team.Id,
+                TournamentId = tournamentId,
+                MedicalRecordStatus = MedicalRecordStatus.Approved,
+                MedicalRecordFileUrl = $"{team.Id}/{filler.Id}/{Guid.NewGuid()}.pdf",
+                CreatedBy = "test",
+            });
+        }
+
+        await db.SaveChangesAsync();
     }
 
     private static async Task<Match> SeedFinishedMatchRowAsync(

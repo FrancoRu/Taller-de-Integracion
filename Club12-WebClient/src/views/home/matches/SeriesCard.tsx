@@ -64,7 +64,7 @@ export default function SeriesCard({ series, matches, buildHref }: SeriesCardPro
             >
               Serie
             </Typography>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.3 }}>
+            <Typography variant="subtitle1" component="p" sx={{ fontWeight: 700, lineHeight: 1.3 }}>
               {series.homeTeamName} vs {series.visitorTeamName}
             </Typography>
             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -120,6 +120,7 @@ export default function SeriesCard({ series, matches, buildHref }: SeriesCardPro
         <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mt: 1.5 }}>
           <Typography
             variant="h6"
+            component="span"
             sx={{ fontWeight: 700, minWidth: 20, textAlign: 'center', color: homeWins > visitorWins ? barColor : 'text.primary' }}
           >
             {homeWins}
@@ -152,6 +153,7 @@ export default function SeriesCard({ series, matches, buildHref }: SeriesCardPro
           </Box>
           <Typography
             variant="h6"
+            component="span"
             sx={{ fontWeight: 700, minWidth: 20, textAlign: 'center', color: visitorWins > homeWins ? barColor : 'text.primary' }}
           >
             {visitorWins}

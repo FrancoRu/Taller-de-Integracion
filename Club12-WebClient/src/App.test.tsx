@@ -34,32 +34,35 @@ const renderAt = (path: string) =>
   );
 
 describe('App public layout chrome', () => {
-  it('HU-02: renders /login without header or footer', () => {
+  it('HU-02: renders /login without header or footer', async () => {
     renderAt('/login');
 
-    expect(screen.getByText('Administrador')).toBeInTheDocument();
+    // Route-level pages are React.lazy-loaded (see App.tsx), so the chunk
+    // resolves asynchronously behind a Suspense fallback — a synchronous
+    // getByText would race that and fail before the real content mounts.
+    expect(await screen.findByText('Administrador')).toBeInTheDocument();
     expect(document.querySelector('header')).toBeNull();
     expect(document.querySelector('footer')).toBeNull();
   });
 
-  it('HU-04: renders the 404 page without header or footer', () => {
+  it('HU-04: renders the 404 page without header or footer', async () => {
     renderAt('/una-ruta-que-no-existe');
 
     expect(
-      screen.getByText(/no existe o fue movida/i)
+      await screen.findByText(/no existe o fue movida/i)
     ).toBeInTheDocument();
     expect(document.querySelector('header')).toBeNull();
     expect(document.querySelector('footer')).toBeNull();
   });
 
-  it('keeps header and footer on a normal public route', () => {
+  it('keeps header and footer on a normal public route', async () => {
     renderAt('/quienes-somos');
 
+    expect(await screen.findByRole('contentinfo')).toBeInTheDocument();
     expect(document.querySelector('header')).not.toBeNull();
-    expect(document.querySelector('footer')).not.toBeNull();
   });
 
-  it('lets an authenticated admin open a public page instead of 404', () => {
+  it('lets an authenticated admin open a public page instead of 404', async () => {
     // Regression: public slug routes (tournament/blog/team/match) used to be
     // omitted entirely for authenticated users, so any public URL 404'd from
     // the panel catch-all without ever hitting the API. They must resolve for
@@ -69,8 +72,8 @@ describe('App public layout chrome', () => {
 
     renderAt('/quienes-somos');
 
+    expect(await screen.findByRole('contentinfo')).toBeInTheDocument();
     expect(screen.queryByText(/no existe o fue movida/i)).toBeNull();
     expect(document.querySelector('header')).not.toBeNull();
-    expect(document.querySelector('footer')).not.toBeNull();
   });
 });

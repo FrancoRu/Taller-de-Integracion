@@ -206,7 +206,7 @@ const EnrollTeamDialog: React.FC<EnrollTeamDialogProps> = ({
               >
                 {availableTeams.map(team => (
                   <MenuItem key={team.id} value={team.id}>
-                    {team.name}
+                    {team.tournamentName ? `${team.name} — ${team.tournamentName}` : team.name}
                   </MenuItem>
                 ))}
               </TextField>

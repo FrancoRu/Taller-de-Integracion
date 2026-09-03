@@ -52,6 +52,7 @@ const buildTeam = (id: string, name: string): ITeamResponse => ({
   logoUrl: '',
   players: [],
   tournamentId: TOURNAMENT_ID,
+  tournamentName: null,
 });
 
 const buildDivision = (
@@ -215,7 +216,6 @@ const setup = (options: {
     getTournamentById: vi.fn(),
     putTournamentById,
     deleteTournamentById: vi.fn(),
-    registerTeamsByTournamentId: vi.fn(),
     enrollTeam: vi.fn(),
     unenrollTeam: vi.fn(),
     getCompletability,

@@ -52,12 +52,10 @@ namespace Infrastructure.Persistance;
 /// the same Supabase storage path the team endpoints use; any logo failure
 /// degrades to a placeholder without ever failing the seed. The ficha médica
 /// backfill works the same way: <c>Seed:MedicalRecordPath</c> when configured,
-/// otherwise the generic ficha médica embedded in the assembly (see
-/// <see cref="EmbeddedMedicalRecordResourceName"/>), so the seeded rosters
-/// end up habilitado on any machine — including a deployed server — instead
-/// of only on the one a hardcoded local path happens to point at (a league
-/// whose players are all un-habilitado while holding scorer rows contradicts
-/// HU-57/HU-60).
+/// otherwise a generated placeholder PDF, so the seeded rosters end up
+/// habilitado on any machine instead of only on the one the default path
+/// points at (a league whose players are all un-habilitado while holding
+/// scorer rows contradicts HU-57/HU-60).
 ///
 /// Controlled by configuration: <c>Seed:Enabled</c> gates the whole path (checked
 /// by the caller). By default it runs once and skips if any team already exists;
@@ -69,7 +67,7 @@ public sealed class DataSeeder(
     ApplicationDBContext db,
     ILogger<DataSeeder> logger,
     SupabaseHelper supabaseHelper,
-    IMedicalRecordStorage medicalRecordStorage)
+    MedicalRecordSeedBackfiller medicalRecordSeedBackfiller)
 {
     /// <summary>
     /// Default folder team crest PNGs are read from when <c>Seed:LogosPath</c>
@@ -78,24 +76,6 @@ public sealed class DataSeeder(
 #pragma warning disable S1075 // Dev-only seed default path; overridden by the Seed:LogosPath config key.
     public const string DefaultLogosPath = @"D:\Escudos\Logos de Argentina\clubs\normal";
 #pragma warning restore S1075
-
-    /// <summary>
-    /// Embedded resource name of the generic ficha médica shipped inside the
-    /// assembly (see <c>Persistance/Seeding/Assets/ficha-medica-generica.pdf</c>,
-    /// wired via <c>Infrastructure.csproj</c>'s <c>EmbeddedResource</c> glob).
-    /// Used when <c>Seed:MedicalRecordPath</c> is not configured, so the
-    /// backfill works on any machine — including a deployed server — instead
-    /// of only the one a hardcoded local path happens to point at.
-    /// </summary>
-    private const string EmbeddedMedicalRecordResourceName =
-        "Infrastructure.Persistance.Seeding.Assets.ficha-medica-generica.pdf";
-
-    /// <summary>
-    /// File name recorded for the seeded ficha médica, whether it came from
-    /// the embedded resource or the last-resort generated placeholder (see
-    /// <see cref="BuildPlaceholderMedicalRecordPdf"/>).
-    /// </summary>
-    private const string PlaceholderMedicalRecordFileName = "ficha-medica-generica.pdf";
 
     // Fixed seed keeps logo-to-team assignment reproducible across reseeds.
     private const int LogoShuffleSeed = 4212;
@@ -109,10 +89,6 @@ public sealed class DataSeeder(
     private const int ClausuraPlayedRounds = 5;
 
     private const int UpsetPercent = 26;
-
-    // Flushes progress every N uploaded rows so an interruption loses at most
-    // this many refs and the step stays resumable (medical-records-storage-eligibility, ADR #7).
-    private const int MedicalRecordSaveBatchSize = 50;
 
     // --- Torneo Femenino — Zona Única (7 real Paraná/Entre Ríos clubs).
     private static readonly string[] FemeninoNames =
@@ -274,7 +250,7 @@ public sealed class DataSeeder(
     /// </summary>
     public async Task SeedAsync(
         bool reset = false, string? logosPath = null,
-        string? medicalRecordPath = null, bool forceMedicalRecords = false,
+        string? medicalRecordPath = null,
         int seasonCount = 1, int playersPerTeam = SampleTournamentBuilder.DefaultPlayersPerTeam)
     {
         if (reset)
@@ -283,18 +259,14 @@ public sealed class DataSeeder(
         }
         else if (await db.Teams.AnyAsync())
         {
-            // Standalone backfill (Seed:MedicalRecords=true): bypass the
-            // skip-if-teams-exist guard so the medical-records step alone can
-            // run against an already-seeded database, without a full reset
-            // (medical-records-storage-eligibility, Part 3, ADR #8).
-            if (forceMedicalRecords)
-            {
-                logger.LogInformation("Sample data already present — running the medical-records backfill only.");
-                await SeedMedicalRecordsAsync(medicalRecordPath);
-                return;
-            }
-
-            logger.LogInformation("Sample data already present — skipping data seeding.");
+            // The medical-records backfill (medical-records-storage-eligibility,
+            // Part 3) always runs here: it is idempotent and a no-op once every
+            // Approved registration already has a real stored file (ADR #8), so
+            // a database seeded before this feature existed self-heals into
+            // habilitado players on the very next startup, with no config flag
+            // to remember to flip.
+            logger.LogInformation("Sample data already present — running the medical-records backfill and skipping the rest.");
+            await medicalRecordSeedBackfiller.BackfillMedicalRecordsAsync(medicalRecordPath);
             return;
         }
 
@@ -364,7 +336,7 @@ public sealed class DataSeeder(
         // Runs AFTER SaveChangesAsync: TeamId/PlayerId are store-generated
         // (EntityBase.Id defaults to Guid.Empty), so there is no real object
         // key to build from before this point (medical-records-storage-eligibility, ADR #6).
-        await SeedMedicalRecordsAsync(medicalRecordPath);
+        await medicalRecordSeedBackfiller.BackfillMedicalRecordsAsync(medicalRecordPath);
 
         logger.LogInformation(
             "Sample data seeded: {SeasonCount} seasons ({FirstSeason}–{LastSeason}), {TournamentCount} tournaments, " +
@@ -672,200 +644,6 @@ public sealed class DataSeeder(
         await db.BlogPosts.ExecuteDeleteAsync();
 
         logger.LogInformation("Seed reset: existing sample domain data deleted before reseeding.");
-    }
-
-    /// <summary>
-    /// Uploads a real medical PDF (<paramref name="medicalRecordPath"/>, or
-    /// the embedded generic ficha médica when unset — see
-    /// <see cref="EmbeddedMedicalRecordResourceName"/>) for every
-    /// <c>Approved</c> registration whose file reference is null or a legacy
-    /// <see cref="PlayerTeamRegistration.LegacyReferencePrefix"/> ref, so it
-    /// stops reading as not-habilitado under Part 2's file-backed rule
-    /// (medical-records-storage-eligibility, Part 3). Idempotent (a
-    /// new-scheme ref is skipped), resumable (flushed every
-    /// <see cref="MedicalRecordSaveBatchSize"/> rows), and failure-tolerant: a
-    /// missing/unreadable configured PDF warns and skips the whole step, and a
-    /// per-row upload failure warns and continues — this step can never fail
-    /// the seed, exactly like <see cref="UploadTeamLogosAsync"/>.
-    /// </summary>
-    private async Task SeedMedicalRecordsAsync(string? medicalRecordPath)
-    {
-        bool isConfigured = !string.IsNullOrWhiteSpace(medicalRecordPath);
-
-        byte[] pdf;
-        string fileName;
-        if (isConfigured)
-        {
-            try
-            {
-                if (!File.Exists(medicalRecordPath))
-                {
-                    // An explicitly configured path that is not there is a
-                    // misconfiguration (a typo, a file that moved) — warn and
-                    // skip rather than papering over it with the generic one.
-                    logger.LogWarning(
-                        "Seed medical-record file '{Path}' not found — skipping medical-record seeding.",
-                        medicalRecordPath);
-                    return;
-                }
-
-                pdf = await File.ReadAllBytesAsync(medicalRecordPath!);
-                fileName = Path.GetFileName(medicalRecordPath);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Could not read seed medical record from '{Path}' — skipping.", medicalRecordPath);
-                return;
-            }
-        }
-        else
-        {
-            // Nothing configured — the normal case, including on a deployed
-            // server. Falling back to the generic ficha médica embedded in
-            // the assembly keeps the seeded league coherent: without a REAL
-            // stored file every Approved registration reads as NOT
-            // habilitado, while the same players hold scorer/statistic rows
-            // for thousands of played matches — exactly the combination
-            // PlayerStatisticService rejects on a real match sheet
-            // (HU-57/HU-60).
-            pdf = LoadEmbeddedMedicalRecordPdf();
-            fileName = PlaceholderMedicalRecordFileName;
-            logger.LogInformation(
-                "No Seed:MedicalRecordPath configured — seeding the built-in generic ficha médica so "
-                + "approved registrations end up habilitado.");
-        }
-
-        // Superset filter, EF-translatable (StartsWith on a constant -> LIKE 'medical-records/%').
-        // The per-row IsStoredReference check below is the authoritative
-        // skip-vs-upload decision — the same predicate the read sites and the
-        // approve-time write guard use, so the three can never drift.
-        List<PlayerTeamRegistration> candidates = await db.PlayerTeamRegistrations
-            .Where(r => r.MedicalRecordStatus == MedicalRecordStatus.Approved
-                && (r.MedicalRecordFileUrl == null
-                    || r.MedicalRecordFileUrl == ""
-                    || r.MedicalRecordFileUrl.StartsWith(PlayerTeamRegistration.LegacyReferencePrefix)))
-            .ToListAsync();
-
-        int uploaded = 0;
-        int failed = 0;
-        int pending = 0;
-        foreach (PlayerTeamRegistration registration in candidates)
-        {
-            if (PlayerTeamRegistration.IsStoredReference(registration.MedicalRecordFileUrl))
-            {
-                continue;
-            }
-
-            try
-            {
-                using MemoryStream content = new(pdf, writable: false);
-                string objectPath = await medicalRecordStorage.StoreAsync(
-                    registration.TeamId, registration.PlayerId, fileName, content);
-
-                registration.MedicalRecordFileUrl = objectPath;
-                registration.MedicalRecordFileName = fileName;
-                uploaded++;
-                pending++;
-            }
-            catch (Exception ex)
-            {
-                failed++;
-                logger.LogWarning(ex,
-                    "Failed to upload the seed medical record for player {PlayerId} / team {TeamId} — leaving it without a file.",
-                    registration.PlayerId, registration.TeamId);
-            }
-
-            if (pending >= MedicalRecordSaveBatchSize)
-            {
-                await db.SaveChangesAsync();
-                pending = 0;
-            }
-        }
-
-        if (pending > 0)
-        {
-            await db.SaveChangesAsync();
-        }
-
-        logger.LogInformation(
-            "Medical-record seed: {Uploaded} uploaded, {Failed} failed, {Total} candidates, from '{Path}'.",
-            uploaded, failed, candidates.Count, medicalRecordPath);
-    }
-
-    /// <summary>
-    /// Reads the generic ficha médica embedded in the assembly (see
-    /// <see cref="EmbeddedMedicalRecordResourceName"/>). This is the normal
-    /// no-config fallback; <see cref="BuildPlaceholderMedicalRecordPdf"/> only
-    /// backstops the (should-never-happen) case where the resource fails to
-    /// load, so the seed still never fails on this step.
-    /// </summary>
-    private static byte[] LoadEmbeddedMedicalRecordPdf()
-    {
-        try
-        {
-            using Stream? stream = typeof(DataSeeder).Assembly
-                .GetManifestResourceStream(EmbeddedMedicalRecordResourceName);
-
-            if (stream is null)
-            {
-                return BuildPlaceholderMedicalRecordPdf();
-            }
-
-            using MemoryStream buffer = new();
-            stream.CopyTo(buffer);
-            return buffer.ToArray();
-        }
-        catch
-        {
-            return BuildPlaceholderMedicalRecordPdf();
-        }
-    }
-
-    /// <summary>
-    /// A real, valid one-page PDF built in memory (correct xref table and
-    /// offsets, so it opens like any other file). Last-resort fallback for
-    /// <see cref="LoadEmbeddedMedicalRecordPdf"/>. Deterministic: the same
-    /// bytes on every run.
-    /// </summary>
-    private static byte[] BuildPlaceholderMedicalRecordPdf()
-    {
-        const string content =
-            "BT /F1 16 Tf 60 760 Td (Ficha medica de ejemplo - Liga Club 12) Tj ET";
-
-        string[] bodies =
-        [
-            "<< /Type /Catalog /Pages 2 0 R >>",
-            "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] "
-                + "/Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
-            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-            $"<< /Length {content.Length} >>\nstream\n{content}\nendstream",
-        ];
-
-        StringBuilder pdf = new("%PDF-1.4\n");
-        List<int> offsets = [];
-
-        for (int i = 0; i < bodies.Length; i++)
-        {
-            // Every character written here is ASCII, so the builder's length is
-            // also the byte offset the xref table has to point at.
-            offsets.Add(pdf.Length);
-            pdf.Append(i + 1).Append(" 0 obj\n").Append(bodies[i]).Append("\nendobj\n");
-        }
-
-        int xrefOffset = pdf.Length;
-        pdf.Append("xref\n0 ").Append(bodies.Length + 1).Append("\n")
-            .Append("0000000000 65535 f \n");
-
-        foreach (int offset in offsets)
-        {
-            pdf.Append(offset.ToString("D10", CultureInfo.InvariantCulture)).Append(" 00000 n \n");
-        }
-
-        pdf.Append("trailer\n<< /Size ").Append(bodies.Length + 1).Append(" /Root 1 0 R >>\n")
-            .Append("startxref\n").Append(xrefOffset).Append("\n%%EOF\n");
-
-        return Encoding.ASCII.GetBytes(pdf.ToString());
     }
 
     /// <summary>

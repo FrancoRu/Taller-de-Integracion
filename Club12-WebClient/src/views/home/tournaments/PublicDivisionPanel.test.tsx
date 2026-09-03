@@ -219,18 +219,21 @@ describe('PublicDivisionPanel — Partidos vs Playoff split', () => {
     expect(screen.queryByText('Rival de la final')).not.toBeInTheDocument();
   });
 
-  it('renames the bracket tab to "Playoff"', () => {
+  it('renames the bracket tab to "Playoff"', async () => {
     render(
       <MemoryRouter>
         <PublicDivisionPanel division={division({ name: 'Zona A' })} teams={[]} />
       </MemoryRouter>
     );
 
-    expect(screen.getByRole('tab', { name: 'Playoff' })).toBeInTheDocument();
+    // The tab is now gated behind the eager stages fetch (see the "no
+    // playoff" describe block below), so it only appears once that
+    // resolves and confirms an elimination stage actually exists.
+    await waitFor(() => expect(screen.getByRole('tab', { name: 'Playoff' })).toBeInTheDocument());
     expect(screen.queryByRole('tab', { name: 'Llaves' })).not.toBeInTheDocument();
   });
 
-  it('shows a real "Partidos de playoff" match list alongside the bracket on the Playoff tab', async () => {
+  it('shows a real match list alongside the bracket on the Playoff tab', async () => {
     render(
       <MemoryRouter initialEntries={['/?view=playoff']}>
         <PublicDivisionPanel division={division({ name: 'Zona A' })} teams={[]} />
@@ -238,10 +241,121 @@ describe('PublicDivisionPanel — Partidos vs Playoff split', () => {
     );
 
     await waitFor(() =>
-      expect(screen.getByRole('heading', { name: 'Partidos de playoff' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Partidos' })).toBeInTheDocument()
     );
     // The playoff match (excluded from "Partidos") shows up here as a real
     // fixture row, not just inside the collapsed bracket card.
     expect(screen.getAllByText('Rival de la final').length).toBeGreaterThan(0);
+  });
+});
+
+describe('PublicDivisionPanel — division with no playoff phase', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // No elimination stage at all — a "liga sola" division decided by
+    // standings alone, the whole point of this describe block.
+    getStagesByFilters.mockResolvedValue({
+      data: {
+        items: [
+          {
+            id: guid('stage-group'),
+            name: 'Zona A - Fase de Grupos',
+            slug: 'zona-a-fase-de-grupos',
+            stageType: StageType.Group,
+            isActive: true,
+            isElimination: false,
+            startDate: '2026-01-01T00:00:00Z',
+            endDate: '2026-02-01T00:00:00Z',
+            divisionId: guid('division-1'),
+            order: 0,
+            bestOf: 1,
+            roundRobinLegs: 1,
+          } satisfies IStageResponse,
+        ],
+      },
+    });
+  });
+
+  it('never shows the Playoff tab once stages are confirmed to have no elimination stage', async () => {
+    render(
+      <MemoryRouter>
+        <PublicDivisionPanel division={division({ name: 'Zona A' })} teams={[]} />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(getStagesByFilters).toHaveBeenCalled());
+    expect(screen.queryByRole('tab', { name: 'Playoff' })).not.toBeInTheDocument();
+  });
+
+  it('crowns 1st place live, even mid-season — a no-playoff division reads its title straight off this table the whole way through, not just once it is decided', async () => {
+    render(
+      <MemoryRouter>
+        <PublicDivisionPanel
+          division={division({
+            name: 'Zona A',
+            isCrossDivisionCup: false,
+            isFinished: false,
+            positions: [position('team-a', 'Equipo A'), position('team-b', 'Equipo B')],
+          })}
+          teams={[]}
+        />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(screen.getByTitle('Campeón')).toBeInTheDocument());
+  });
+
+  it('does not crown 1st place once stages confirm the division actually has an elimination stage', async () => {
+    getStagesByFilters.mockResolvedValue({
+      data: {
+        items: [
+          {
+            id: guid('stage-group'),
+            name: 'Zona A - Fase de Grupos',
+            slug: 'zona-a-fase-de-grupos',
+            stageType: StageType.Group,
+            isActive: true,
+            isElimination: false,
+            startDate: '2026-01-01T00:00:00Z',
+            endDate: '2026-02-01T00:00:00Z',
+            divisionId: guid('division-1'),
+            order: 0,
+            bestOf: 1,
+            roundRobinLegs: 1,
+          } satisfies IStageResponse,
+          {
+            id: guid('stage-final'),
+            name: 'Zona A - Final',
+            slug: 'zona-a-final',
+            stageType: StageType.Final,
+            isActive: true,
+            isElimination: true,
+            startDate: '2026-02-01T00:00:00Z',
+            endDate: '2026-02-08T00:00:00Z',
+            divisionId: guid('division-1'),
+            order: 1,
+            bestOf: 1,
+            roundRobinLegs: 1,
+          } satisfies IStageResponse,
+        ],
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <PublicDivisionPanel
+          division={division({
+            name: 'Zona A',
+            isCrossDivisionCup: false,
+            isFinished: false,
+            positions: [position('team-a', 'Equipo A'), position('team-b', 'Equipo B')],
+          })}
+          teams={[]}
+        />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(getStagesByFilters).toHaveBeenCalled());
+    expect(screen.queryByTitle('Campeón')).not.toBeInTheDocument();
   });
 });

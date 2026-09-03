@@ -31,6 +31,16 @@ export interface PlayoffLibraryMatch extends LibraryMatch {
    * common case of one match per bracket slot.
    */
   legs?: IMatchResponse[];
+  /**
+   * True when this match's incoming top/bottom connector (drawn by the
+   * library purely from row position, independent of whether a card is
+   * actually rendered there — see `BracketMatchLibraryAdapter`) comes from
+   * a sibling that was a decided bye. That sibling's card is hidden, so
+   * the library would otherwise draw a line hanging from empty space with
+   * nothing at its far end — see `PlayoffBracket`'s render-time patch.
+   */
+  hideTopConnector?: boolean;
+  hideBottomConnector?: boolean;
 }
 
 const toParticipant = (match: IMatchResponse, side: 'home' | 'visitor'): LibraryParticipant => {
@@ -139,21 +149,71 @@ export function toLibraryMatches(model: BracketModel): PlayoffLibraryMatch[] {
   const rounds = effectiveRounds(model);
   const edgeTargetsBySource = new Map(model.edges.map(edge => [edge.fromMatchId, edge.toMatchId]));
 
-  return rounds.flatMap((round, roundIndex) => {
+  // Populated one round ahead of when it's read: while walking round N we
+  // already know each match's resolved nextMatchId, so a sibling pair (two
+  // round-N matches converging on the same round-N+1 match) can be checked
+  // for a bye right there — the library's own column-building (generateColumn
+  // in single-elim-bracket.js) preserves each pair's original array order
+  // (its match.name-based sort is a no-op tie since no name is set here, and
+  // a stable sort with an all-zero comparator keeps insertion order), so
+  // "first sibling in this round's array" reliably means "the library's
+  // previousTopMatch", same as `resolveNextMatchId`'s own index/2 fallback
+  // already assumes.
+  const hideConnectorByChildId = new Map<GUID, { top: boolean; bottom: boolean }>();
+
+  const byRound = rounds.map((round, roundIndex) => {
     const nextRound = rounds[roundIndex + 1];
     const roundLabel = translateStageType(round.stageType).toUpperCase();
 
-    return round.matches.map((match, matchIndex) => ({
-      id: match.id,
-      nextMatchId: resolveNextMatchId(matchIndex, edgeTargetsBySource.get(match.id), nextRound),
-      tournamentRoundText: roundLabel,
-      startTime: match.matchDate,
-      state: matchState(match),
-      participants: [toParticipant(match, 'home'), toParticipant(match, 'visitor')],
-      raw: match,
-      legs: round.legsByMatchId?.get(match.id),
-    }));
+    const siblingsByChildId = new Map<GUID, IMatchResponse[]>();
+    round.matches.forEach((match, matchIndex) => {
+      const childId = resolveNextMatchId(matchIndex, edgeTargetsBySource.get(match.id), nextRound);
+      if (!childId) return;
+      const siblings = siblingsByChildId.get(childId) ?? [];
+      siblings.push(match);
+      siblingsByChildId.set(childId, siblings);
+    });
+    siblingsByChildId.forEach((siblings, childId) => {
+      if (siblings.length !== 2) return;
+      const [topSibling, bottomSibling] = siblings;
+      const topIsBye = isBracketBye(topSibling);
+      const bottomIsBye = isBracketBye(bottomSibling);
+      // Deep enough into a bracket, a pairing can have BOTH sides decided
+      // by a bye (e.g. two teams that each drew a walkover into the same
+      // slot) — every octavos-round bye still needs its own dangling
+      // connector hidden, not just the mixed bye/real case.
+      if (!topIsBye && !bottomIsBye) return;
+      hideConnectorByChildId.set(childId, { top: topIsBye, bottom: bottomIsBye });
+    });
+
+    // Every match stays in the array, bye or not: the library computes each
+    // box's Y position — and every connector line — purely from
+    // (rowIndex, columnIndex) assuming round N always has exactly twice
+    // round N+1's match count (see calculate-match-position.js /
+    // connectors.js). Dropping bye entries here shifts the surviving
+    // matches' indices and desyncs that geometry from the actual bracket
+    // shape — cards land at the wrong row, connectors point at the wrong
+    // pair. A bye's card is hidden at render time instead (see
+    // BracketMatchLibraryAdapter), which keeps every index — and therefore
+    // every position — exactly where the library expects it.
+    return round.matches.map((match, matchIndex) => {
+      const hide = hideConnectorByChildId.get(match.id);
+      return {
+        id: match.id,
+        nextMatchId: resolveNextMatchId(matchIndex, edgeTargetsBySource.get(match.id), nextRound),
+        tournamentRoundText: roundLabel,
+        startTime: match.matchDate,
+        state: matchState(match),
+        participants: [toParticipant(match, 'home'), toParticipant(match, 'visitor')],
+        raw: match,
+        legs: round.legsByMatchId?.get(match.id),
+        hideTopConnector: hide?.top ?? false,
+        hideBottomConnector: hide?.bottom ?? false,
+      };
+    });
   });
+
+  return byRound.flat();
 }
 
 /** Round header labels in column order, for the library's `roundTextGenerator`. */

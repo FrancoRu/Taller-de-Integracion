@@ -51,6 +51,22 @@ export const luminance = (hex: string): number => {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 };
 
+/**
+ * The fill luminance at which our two ink colors (#0b0f17 dark, #f5f5f5
+ * light) give EQUAL contrast against it — below this, dark ink actually
+ * contrasts better even though the fill isn't "dark" in the everyday sense.
+ * Solving (fill+0.05)/(inkDark+0.05) = (inkLight+0.05)/(fill+0.05) for our
+ * actual ink luminances (~0.0047 and ~0.913) gives ≈0.1796.
+ *
+ * The previous threshold (0.55) was picked without this math and left a
+ * wide "medium" band — anything from ~0.18 to 0.55 luminance — defaulting to
+ * light ink even where dark ink was the better (sometimes WCAG-AA-passing)
+ * choice. The brand orange (#FF5A1F, luminance ≈0.29) was exactly such a
+ * case: white text on it is only 2.86:1 (fails the 4.5:1 AA minimum), while
+ * dark ink on it is ≈6.3:1.
+ */
+export const LIGHT_INK_LUMINANCE_THRESHOLD = 0.18;
+
 export interface ResolvedColor {
   /** The resolved #rrggbb fill. */
   fill: string;
@@ -67,6 +83,6 @@ export interface ResolvedColor {
 export const resolveShirtColor = (value?: string | null): ResolvedColor => {
   const raw = (value ?? '').trim().toLowerCase();
   const fill = HEX_RE.test(raw) ? expandHex(raw) : brand.navyLight;
-  const isLight = luminance(fill) > 0.55;
+  const isLight = luminance(fill) > LIGHT_INK_LUMINANCE_THRESHOLD;
   return { fill, ink: isLight ? '#0b0f17' : '#f5f5f5', isLight };
 };

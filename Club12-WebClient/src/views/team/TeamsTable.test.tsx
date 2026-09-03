@@ -65,6 +65,7 @@ const rows: ITeamResponse[] = [
     logoUrl: '',
     players: [],
     tournamentId: null,
+    tournamentName: null,
   },
 ];
 
@@ -120,6 +121,7 @@ describe('TeamsTable', () => {
       logoUrl: '',
       players: [],
       tournamentId: null,
+      tournamentName: null,
     }));
 
     render(

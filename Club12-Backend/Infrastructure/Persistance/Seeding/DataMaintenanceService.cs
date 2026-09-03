@@ -221,6 +221,18 @@ public sealed class DataMaintenanceService(
 
         await db.SaveChangesAsync(ct);
 
+        // NOTE: unlike DataSeeder.SeedAsync, this admin-triggered reset does
+        // NOT run the medical-records backfill (medical-records-storage-eligibility,
+        // Part 3) — SampleTournamentBuilder seeds most registrations Approved
+        // but WITHOUT a real stored file, so every one of them reads as
+        // not-habilitado until reviewed for real. Deliberately left out: doing
+        // so would make DataMaintenanceService depend on IMedicalRecordStorage
+        // (-> the live-Supabase-constructor testability gap also documented on
+        // MedicalRecordSeedBackfiller), which this class's ~20 DI-resolved
+        // tests across DataMaintenanceServiceTests/AuditTrailTests/
+        // DataMaintenanceAuthorizationTests have no override for. This endpoint
+        // is unused by the UI today (the "Cargar Datos de prueba" trigger was
+        // removed) — kept only for future admin tooling per that commit.
         int teamCount = result1.Tournament.Teams.Count + result2.Tournament.Teams.Count;
         int playerCount = result1.Tournament.Teams.Sum(t => t.Players.Count)
             + result2.Tournament.Teams.Sum(t => t.Players.Count);

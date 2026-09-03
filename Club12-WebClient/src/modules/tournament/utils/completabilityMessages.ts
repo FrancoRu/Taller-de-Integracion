@@ -25,7 +25,7 @@ export const completabilityIssueMessage = (
     case 'CrossCupGroupTooFewTeams':
       return `Un grupo de la copa cruzada tiene ${issue.assignedTeams} equipos (mínimo 2).`;
     case 'TeamTooFewPlayers':
-      return `${issue.teamName} tiene ${issue.playerCount} jugador(es) (mínimo 5).`;
+      return `${issue.teamName} tiene ${issue.playerCount} jugador(es) habilitado(s) (mínimo 4).`;
     default:
       return 'Hay un problema de configuración que impide iniciar el torneo.';
   }

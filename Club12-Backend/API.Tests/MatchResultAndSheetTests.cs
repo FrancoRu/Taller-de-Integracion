@@ -417,6 +417,80 @@ public class MatchResultAndSheetTests : IClassFixture<CustomWebApplicationFactor
     }
 
     [Fact]
+    public async Task LoadMatchResultFromSheetsAsync_SeveralIneligiblePlayersAcrossBothTeams_ListsEveryOneByName()
+    {
+        // Regression: rejecting on the FIRST ineligible player found (and
+        // naming it by raw player id) forced the admin to fix and resubmit
+        // the sheet once per offender. The error must instead name every
+        // ineligible/sanctioned player, by their real name, grouped by team.
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IPlayerStatisticService statisticService = scope.ServiceProvider.GetRequiredService<IPlayerStatisticService>();
+
+        Seeded seeded = await SeedMatchAsync(db, StageType.Group);
+        Player homeSanctioned = await SeedRosterPlayerAsync(
+            db, seeded.HomeTeam, seeded.TournamentId, "Banned", isSanctioned: true);
+        Player homeNotHabilitado = await SeedRosterPlayerAsync(
+            db, seeded.HomeTeam, seeded.TournamentId, "Pending", medicalStatus: MedicalRecordStatus.Pending);
+        Player visitorSanctioned = await SeedRosterPlayerAsync(
+            db, seeded.VisitorTeam, seeded.TournamentId, "Suspended", isSanctioned: true);
+
+        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => statisticService.LoadMatchResultFromSheetsAsync(new LoadMatchResultFromSheetsRequest
+            {
+                HomeScores =
+                [
+                    new PlayerScoreEntry { PlayerId = homeSanctioned.Id, Points = 10 },
+                    new PlayerScoreEntry { PlayerId = homeNotHabilitado.Id, Points = 5 },
+                ],
+                VisitorScores = [new PlayerScoreEntry { PlayerId = visitorSanctioned.Id, Points = 8 }],
+                MatchId = seeded.Match.Id,
+            }));
+
+        Assert.Contains(homeSanctioned.FullName, ex.Message);
+        Assert.Contains(homeNotHabilitado.FullName, ex.Message);
+        Assert.Contains(visitorSanctioned.FullName, ex.Message);
+        Assert.Contains(seeded.HomeTeam.Name, ex.Message);
+        Assert.Contains(seeded.VisitorTeam.Name, ex.Message);
+        Assert.DoesNotContain(homeSanctioned.Id.ToString(), ex.Message);
+        Assert.DoesNotContain(homeNotHabilitado.Id.ToString(), ex.Message);
+        Assert.DoesNotContain(visitorSanctioned.Id.ToString(), ex.Message);
+    }
+
+    // ---------- HU-73 (owner's rule): <4 habilitados forces a walkover ----------
+
+    [Fact]
+    public async Task LoadMatchResultFromSheetsAsync_TeamWithFewerThanFourHabilitados_RequiresWalkOver()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IPlayerStatisticService statisticService = scope.ServiceProvider.GetRequiredService<IPlayerStatisticService>();
+
+        // Only 3 habilitado players on the home roster (2 fillers + the
+        // scoring player below) — every one of them individually eligible,
+        // but the TEAM still can't legally play.
+        Seeded seeded = await SeedMatchAsync(db, StageType.Group, fillerHabilitadoPerTeam: 2);
+        Player homePlayer = await SeedRosterPlayerAsync(db, seeded.HomeTeam, seeded.TournamentId, "Alpha");
+        Player visitorPlayer = await SeedRosterPlayerAsync(db, seeded.VisitorTeam, seeded.TournamentId, "Bravo");
+
+        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => statisticService.LoadMatchResultFromSheetsAsync(new LoadMatchResultFromSheetsRequest
+            {
+                MatchId = seeded.Match.Id,
+                HomeScores = [new PlayerScoreEntry { PlayerId = homePlayer.Id, Points = 10 }],
+                VisitorScores = [new PlayerScoreEntry { PlayerId = visitorPlayer.Id, Points = 8 }],
+            }));
+
+        Assert.Contains("mínimo 4", ex.Message);
+        Assert.Contains("walkover", ex.Message);
+
+        // Nothing persisted — the match stays scheduled, unfinished.
+        Match reloaded = await ReloadMatchAsync(db, seeded.Match.Id);
+        Assert.False(reloaded.IsFinished);
+        Assert.Equal(MatchStatus.Scheduled, reloaded.Status);
+    }
+
+    [Fact]
     public async Task LoadMatchResultFromSheetsAsync_NonExistentMatch_ReturnsNull()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
@@ -472,7 +546,8 @@ public class MatchResultAndSheetTests : IClassFixture<CustomWebApplicationFactor
 
     private sealed record Seeded(Tournament Tournament, Guid TournamentId, Guid DivisionId, Team HomeTeam, Team VisitorTeam, Match Match);
 
-    private static async Task<Seeded> SeedMatchAsync(ApplicationDBContext db, StageType stageType)
+    private static async Task<Seeded> SeedMatchAsync(
+        ApplicationDBContext db, StageType stageType, int fillerHabilitadoPerTeam = 4)
     {
         Tournament tournament = await SeedTournamentAsync(db);
         Team home = await SeedTeamAsync(db, tournament.Id);
@@ -498,6 +573,18 @@ public class MatchResultAndSheetTests : IClassFixture<CustomWebApplicationFactor
 
         db.Matches.Add(match);
         await db.SaveChangesAsync();
+
+        // Baseline habilitado padding (owner's walkover-threshold rule, HU-73):
+        // every team here needs >= 4 habilitado players to even load a normal
+        // result, independent of whichever specific player(s) each test seeds
+        // to exercise a DIFFERENT rule (roster membership, sanctions, medical
+        // approval). None of these fillers are ever listed in a score sheet.
+        // A caller testing the threshold itself can lower this below 4.
+        for (int i = 0; i < fillerHabilitadoPerTeam; i++)
+        {
+            await SeedRosterPlayerAsync(db, home, tournament.Id, $"Filler{i}");
+            await SeedRosterPlayerAsync(db, visitor, tournament.Id, $"Filler{i}");
+        }
 
         return new Seeded(tournament, tournament.Id, division.Id, home, visitor, match);
     }

@@ -41,6 +41,7 @@ const buildTeam = (overrides: Partial<ITeamResponse> = {}): ITeamResponse => ({
   logoUrl: '',
   players: [],
   tournamentId: null,
+  tournamentName: null,
   ...overrides,
 });
 

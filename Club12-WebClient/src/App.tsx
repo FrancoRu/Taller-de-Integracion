@@ -5,69 +5,78 @@ import '@fontsource/roboto/700.css';
 import '@fontsource/oswald/500.css';
 import '@fontsource/oswald/600.css';
 import '@fontsource/oswald/700.css';
-import { ReactElement } from 'react';
+import { lazy, ReactElement, Suspense } from 'react';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
-import Home from './views/home/home';
-import PublicTeamPage from './views/home/teams/PublicTeamPage';
-import PublicSanctionsPage from './views/home/sanctions/PublicSanctionsPage';
-import PublicChampionsPage from './views/home/champions/PublicChampionsPage';
-import PublicMatchPage from './views/home/matches/PublicMatchPage';
-import PublicTournamentPage from './views/home/tournaments/PublicTournamentPage';
-import PublicSeasonsPage from './views/home/seasons/PublicSeasonsPage';
-import PublicSeasonPage from './views/home/seasons/PublicSeasonPage';
-import BlogPostDetailPage from './views/blogPost/BlogPostDetailPage';
-import BlogListPage from './views/blogPost/BlogListPage';
-import AddBlogPostForm from './views/blogPost/addBlogPostForm';
-import BlogPostsPage from './views/blogPost/BlogPostsPage';
-import BlogPostEditPage from './views/blogPost/BlogPostEditPage';
-import Login from './views/auth/login';
 import routes from './modules/core/constants/routes';
 import { APP_ROUTES } from './modules/core/constants/appRoutes';
-import HowWeAre from './views/home/howWeAre/howWeAre';
 import { useAuth } from './modules/auth/hook/auth.hook';
-import MedicalRecord from './views/home/information/medicalRecord';
-import Regulation from './views/home/information/regulation';
 import SidebarLayout from './views/core/components/SidebarLayout';
 import PublicLayout from './views/core/components/PublicLayout';
-import PlayersPage from './views/player/PlayersPage';
-import PlayerPage from './views/player/PlayerPage';
-import TeamPage from './views/team/TeamPage';
-import TournamentPage from './views/tournament/TournamentPage';
-import TournamentEditPage from './views/tournament/TournamentEditPage';
-import TournamentWizardPage from './views/tournament/wizard/TournamentWizardPage';
-import DivisionPage from './views/division/divisionPage';
-import DivisionCreatePage from './views/division/divisionCreatePage';
-import DivisionEditPage from './views/division/divisionEditPage';
-import MatchPage from './views/match/matchPage';
-import UsersPage from './views/panel/UsersPage';
-import UserDetails from './views/user/userDetails';
-import CreateUser from './views/user/createUser';
-import InviteUser from './views/user/inviteUser';
-import EditUser from './views/user/editUser';
-import ChangePasswordPage from './views/panel/ChangePasswordPage';
-import StatisticsPage from './views/panel/StatisticsPage';
-import AuditLogsPage from './views/panel/AuditLogsPage';
-import DataAdministrationPage from './views/panel/DataAdministrationPage';
 import { UserRolesType } from './modules/core/enum/user/userRolesType';
 import InvalidToken from './views/core/errors/invalidToken';
 import Forbidden from './views/core/errors/forbidden';
 import NotFound from './views/core/errors/NotFound';
-import PasswordReset from './views/auth/passwordReset';
-import ForgotPassword from './views/auth/forgotPassword';
-import ActivateAccount from './views/auth/activateAccount';
 import PrivateRoute from './views/core/privateRoute';
 import ScrollToTop from './views/core/components/ScrollToTop';
 import GlobalLoadingOverlay from './views/core/components/GlobalLoadingOverlay';
-import TeamsPage from './views/team/TeamsPage';
-import TeamRegisterPage from './views/team/TeamRegisterPage';
-import ClubHistoryPage from './views/club/ClubHistoryPage';
-import PlayerSanctionsPage from './views/playerSanction/PlayerSanctionsPage';
-import PlayerSanctionPage from './views/playerSanction/PlayerSanctionPage';
-import PlayerSanctionEditPage from './views/playerSanction/playerSanctionEditPage';
-import VenuesPage from './views/venue/VenuesPage';
-import VenuePage from './views/venue/venuePage';
-import SeasonsPage from './views/season/SeasonsPage';
-import AdminSeasonDetailPage from './views/season/AdminSeasonDetailPage';
+import BlockingOverlay from './views/core/components/BlockingOverlay';
+
+// Every route-level page is loaded on demand instead of shipped in the one
+// main bundle every visitor downloads on first paint — the whole admin
+// panel (Jugadores, Sanciones, the tournament wizard, …) was landing in a
+// public visitor's browser just to render the home page. `NotFound`,
+// `Forbidden` and `InvalidToken` stay eager: `App()` can return them
+// directly from an early check below, outside the <Suspense> boundary the
+// <Routes> tree sits in, and they're tiny enough that splitting them buys
+// nothing.
+const Home = lazy(() => import('./views/home/home'));
+const PublicTeamPage = lazy(() => import('./views/home/teams/PublicTeamPage'));
+const PublicSanctionsPage = lazy(() => import('./views/home/sanctions/PublicSanctionsPage'));
+const PublicChampionsPage = lazy(() => import('./views/home/champions/PublicChampionsPage'));
+const PublicMatchPage = lazy(() => import('./views/home/matches/PublicMatchPage'));
+const PublicTournamentPage = lazy(() => import('./views/home/tournaments/PublicTournamentPage'));
+const PublicSeasonsPage = lazy(() => import('./views/home/seasons/PublicSeasonsPage'));
+const PublicSeasonPage = lazy(() => import('./views/home/seasons/PublicSeasonPage'));
+const BlogPostDetailPage = lazy(() => import('./views/blogPost/BlogPostDetailPage'));
+const BlogListPage = lazy(() => import('./views/blogPost/BlogListPage'));
+const AddBlogPostForm = lazy(() => import('./views/blogPost/addBlogPostForm'));
+const BlogPostsPage = lazy(() => import('./views/blogPost/BlogPostsPage'));
+const BlogPostEditPage = lazy(() => import('./views/blogPost/BlogPostEditPage'));
+const Login = lazy(() => import('./views/auth/login'));
+const HowWeAre = lazy(() => import('./views/home/howWeAre/howWeAre'));
+const MedicalRecord = lazy(() => import('./views/home/information/medicalRecord'));
+const Regulation = lazy(() => import('./views/home/information/regulation'));
+const PlayersPage = lazy(() => import('./views/player/PlayersPage'));
+const PlayerPage = lazy(() => import('./views/player/PlayerPage'));
+const TeamPage = lazy(() => import('./views/team/TeamPage'));
+const TournamentPage = lazy(() => import('./views/tournament/TournamentPage'));
+const TournamentEditPage = lazy(() => import('./views/tournament/TournamentEditPage'));
+const TournamentWizardPage = lazy(() => import('./views/tournament/wizard/TournamentWizardPage'));
+const DivisionPage = lazy(() => import('./views/division/divisionPage'));
+const DivisionCreatePage = lazy(() => import('./views/division/divisionCreatePage'));
+const DivisionEditPage = lazy(() => import('./views/division/divisionEditPage'));
+const MatchPage = lazy(() => import('./views/match/matchPage'));
+const UsersPage = lazy(() => import('./views/panel/UsersPage'));
+const UserDetails = lazy(() => import('./views/user/userDetails'));
+const CreateUser = lazy(() => import('./views/user/createUser'));
+const InviteUser = lazy(() => import('./views/user/inviteUser'));
+const EditUser = lazy(() => import('./views/user/editUser'));
+const ChangePasswordPage = lazy(() => import('./views/panel/ChangePasswordPage'));
+const StatisticsPage = lazy(() => import('./views/panel/StatisticsPage'));
+const AuditLogsPage = lazy(() => import('./views/panel/AuditLogsPage'));
+const DataAdministrationPage = lazy(() => import('./views/panel/DataAdministrationPage'));
+const PasswordReset = lazy(() => import('./views/auth/passwordReset'));
+const ForgotPassword = lazy(() => import('./views/auth/forgotPassword'));
+const ActivateAccount = lazy(() => import('./views/auth/activateAccount'));
+const TeamsPage = lazy(() => import('./views/team/TeamsPage'));
+const ClubHistoryPage = lazy(() => import('./views/club/ClubHistoryPage'));
+const PlayerSanctionsPage = lazy(() => import('./views/playerSanction/PlayerSanctionsPage'));
+const PlayerSanctionPage = lazy(() => import('./views/playerSanction/PlayerSanctionPage'));
+const PlayerSanctionEditPage = lazy(() => import('./views/playerSanction/playerSanctionEditPage'));
+const VenuesPage = lazy(() => import('./views/venue/VenuesPage'));
+const VenuePage = lazy(() => import('./views/venue/venuePage'));
+const SeasonsPage = lazy(() => import('./views/season/SeasonsPage'));
+const AdminSeasonDetailPage = lazy(() => import('./views/season/AdminSeasonDetailPage'));
 
 const FIRST_TAB_BY_ROLE: Partial<Record<UserRolesType, string>> = {
   [UserRolesType.Owner]: APP_ROUTES.panelSeasons,
@@ -116,11 +125,6 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
     path: APP_ROUTES.panelClub.pattern,
     allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
     element: <ClubHistoryPage />,
-  },
-  {
-    path: APP_ROUTES.panelTeamRegister,
-    allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
-    element: <TeamRegisterPage />,
   },
   {
     path: APP_ROUTES.panelSanctions,
@@ -305,6 +309,7 @@ function App() {
     <>
       <ScrollToTop />
       <GlobalLoadingOverlay />
+      <Suspense fallback={<BlockingOverlay open />}>
       <Routes>
       <Route element={<PublicLayout />}>
         {PUBLIC_ROUTES.map(({ path, element }) => (
@@ -349,6 +354,7 @@ function App() {
 
       <Route path="*" element={<NotFound />} />
       </Routes>
+      </Suspense>
     </>
   );
 }

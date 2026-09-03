@@ -17,6 +17,7 @@ import { TableSkeleton } from '@/views/core/components/skeletons';
 import { championService } from '@/modules/champion/service/champion.service';
 import { IChampionHistory } from '@/modules/champion/type/champion.d';
 import { groupChampions } from '@/modules/champion/utils/groupChampions';
+import { cupTierColor } from '@/modules/division/utils/qualificationRange';
 import { categoryColor } from '@/design/categoryColor';
 import { hexToRgba } from '@/design/colorName';
 import { brand, font } from '@/design/tokens';
@@ -28,11 +29,17 @@ import {
 
 /**
  * A single champion card: division/cup label, its tournament, and the crowned
- * team (crest + name) linking to the team's public page. Gold is the signature
- * accent — a trophy mark and a top border — because every card here is a title.
+ * team (crest + name) linking to the team's public page. The banner/ring
+ * accent uses `cupTierColor` — the same gold/silver/bronze/accent scale the
+ * standings page already uses to mark a cup's tier (HU-45) — keyed by this
+ * entry's position among its division's cups (`tierOrder`, 0-based: Copa Oro
+ * is 0, Copa Plata 1, …). A division with only one cup is always tier 0
+ * (gold). Every card here is still a real title, so the tier only changes
+ * the accent color/weight, never whether it reads as a championship.
  */
-function ChampionCard({ entry }: { entry: IChampionHistory }) {
+function ChampionCard({ entry, tierOrder }: { entry: IChampionHistory; tierOrder: number }) {
   const { championTeam } = entry;
+  const tierColor = cupTierColor(tierOrder);
 
   return (
     <Card
@@ -42,16 +49,16 @@ function ChampionCard({ entry }: { entry: IChampionHistory }) {
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        borderColor: hexToRgba(brand.gold, 0.35),
+        borderColor: hexToRgba(tierColor, 0.35),
         transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
         '&:hover': {
           transform: 'translateY(-2px)',
-          borderColor: brand.gold,
-          boxShadow: `0 10px 28px -14px ${hexToRgba(brand.gold, 0.7)}`,
+          borderColor: tierColor,
+          boxShadow: `0 10px 28px -14px ${hexToRgba(tierColor, 0.7)}`,
         },
       }}
     >
-      {/* Gold "CAMPEÓN" banner — every card here is a title. */}
+      {/* Tier-colored "CAMPEÓN" banner — every card here is a title. */}
       <Box
         sx={{
           display: 'flex',
@@ -59,7 +66,7 @@ function ChampionCard({ entry }: { entry: IChampionHistory }) {
           justifyContent: 'center',
           gap: 0.75,
           py: 0.75,
-          background: `linear-gradient(90deg, ${brand.gold}, ${brand.goldLight}, ${brand.gold})`,
+          bgcolor: tierColor,
           color: brand.orangeInk,
         }}
       >
@@ -84,7 +91,7 @@ function ChampionCard({ entry }: { entry: IChampionHistory }) {
           pb: 2.5,
         }}
       >
-        {/* Crowned crest: a gold ring over a soft gold glow. */}
+        {/* Crowned crest: a tier-colored ring over a soft glow of the same color. */}
         <Box sx={{ position: 'relative', display: 'inline-flex', mb: 0.5 }}>
           <Box
             aria-hidden
@@ -92,7 +99,7 @@ function ChampionCard({ entry }: { entry: IChampionHistory }) {
               position: 'absolute',
               inset: -10,
               borderRadius: '50%',
-              background: `radial-gradient(circle, ${hexToRgba(brand.gold, 0.28)} 0%, transparent 70%)`,
+              background: `radial-gradient(circle, ${hexToRgba(tierColor, 0.28)} 0%, transparent 70%)`,
             }}
           />
           <Box
@@ -100,7 +107,7 @@ function ChampionCard({ entry }: { entry: IChampionHistory }) {
               position: 'relative',
               borderRadius: '50%',
               p: '3px',
-              border: `2px solid ${brand.gold}`,
+              border: `2px solid ${tierColor}`,
             }}
           >
             <TeamLogo
@@ -118,10 +125,10 @@ function ChampionCard({ entry }: { entry: IChampionHistory }) {
           sx={{
             color: 'text.primary',
             transition: 'color 0.15s',
-            '&:hover': { color: brand.goldLight },
+            '&:hover': { color: tierColor },
             '&:focus-visible': {
               outline: '2px solid',
-              outlineColor: brand.gold,
+              outlineColor: tierColor,
               outlineOffset: 3,
               borderRadius: 1,
             },
@@ -153,7 +160,7 @@ function ChampionCard({ entry }: { entry: IChampionHistory }) {
               fontSize: '0.78rem',
               letterSpacing: '0.04em',
               textTransform: 'uppercase',
-              color: brand.gold,
+              color: tierColor,
             }}
           >
             {entry.cupName}
@@ -267,12 +274,12 @@ export default function PublicChampionsPage() {
                           </Typography>
 
                           <Grid container spacing={2}>
-                            {entries.map(entry => (
+                            {entries.map((entry, tierOrder) => (
                               <Grid
                                 key={`${entry.tournamentId}-${entry.divisionName}-${entry.cupName ?? 'unica'}`}
                                 size={{ xs: 12, sm: 6, md: 4 }}
                               >
-                                <ChampionCard entry={entry} />
+                                <ChampionCard entry={entry} tierOrder={tierOrder} />
                               </Grid>
                             ))}
                           </Grid>

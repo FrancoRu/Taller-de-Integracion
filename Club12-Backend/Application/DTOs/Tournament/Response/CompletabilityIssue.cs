@@ -67,7 +67,8 @@ public class CompletabilityIssue
     public int? AssignedTeams { get; set; }
 
     /// <summary>
-    /// The offending team's registered player count, for TeamTooFewPlayers.
+    /// The offending team's HABILITADO player count (not its raw roster
+    /// size), for TeamTooFewPlayers.
     /// </summary>
     public int? PlayerCount { get; set; }
 }

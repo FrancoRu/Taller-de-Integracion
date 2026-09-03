@@ -1,7 +1,12 @@
 import { Box, Paper, Stack, Typography } from '@mui/material';
 import { IMatchResponse } from '@/modules/match/type/match.d';
 import { IMatchSeriesResponse } from '@/modules/matchSeries/type/matchSeries.d';
-import { bracketTeamLabel, isBracketMatchWinner } from '@/modules/playoff/matchStatus';
+import {
+  bracketTeamLabel,
+  isBracketMatchWinner,
+  legGameScores,
+  seriesGameScores,
+} from '@/modules/playoff/matchStatus';
 import TeamLogo from '@/views/core/components/TeamLogo';
 
 /** Pixel size of each side's `TeamLogo`, kept small so the card fits the bracket's fixed row height. */
@@ -36,12 +41,11 @@ type Participant = IMatchResponse['homeTeam'];
 
 /**
  * A short corner badge naming the format (e.g. "BO3", "IV" for ida y
- * vuelta) — NOT a per-game breakdown. Every individual game/leg's score is
- * already shown in full, per game, in the "Partidos de playoff" list next
- * to the bracket (`SeriesCard`), so cramming that same detail into the
- * bracket card too only inflated it — a plain single-game match and a
- * best-of-N series card ended up wildly different heights even though the
- * library gives every round the same fixed box.
+ * vuelta). The per-game scores themselves render as columns next to each
+ * side's name (see `gameScoresForTeam`) — the badge is just the extra
+ * context of how many games the format allows, since the column count
+ * alone doesn't say whether a 2-0 series is already over (best-of-2) or
+ * still has a decider left (best-of-3).
  */
 const formatBadge = (series: IMatchSeriesResponse | undefined, legs: IMatchResponse[] | undefined): string | null => {
   if (series) return `BO${series.bestOf}`;
@@ -57,8 +61,11 @@ const formatBadge = (series: IMatchSeriesResponse | undefined, legs: IMatchRespo
  * as "BYE" once the match is already decided with only one side ever
  * assigned (a seeding walkover). When `series` is provided (an
  * admin-defined best-of-N series) or `legs` is provided (a client-inferred
- * multi-leg tie — see `buildBracket.ts`), the score shown is the aggregate
- * tally, with a small format badge in the corner — see `formatBadge`.
+ * multi-leg tie — see `buildBracket.ts`), each side shows one score per
+ * finished game/leg side by side (see `gameScoresForTeam`) instead of a
+ * single aggregate, with a small format badge in the corner — see
+ * `formatBadge`. A plain single match (no series, no legs) still shows just
+ * the one final score, same as always.
  */
 export default function BracketMatchNode({
   match,
@@ -73,10 +80,27 @@ export default function BracketMatchNode({
 
   const badge = formatBadge(series, legs);
 
+  /**
+   * One score per finished game/leg for `team`, in order — `null` when
+   * there's no series/legs behind this match (a plain single game), so the
+   * caller falls back to the one final `team.score` instead.
+   */
+  const gameScoresForTeam = (team: Participant): number[] | null => {
+    if (!team) return null;
+    if (series) return seriesGameScores(series, team.name);
+    if (legs && legs.length > 1) return legGameScores(legs, team.id);
+    return null;
+  };
+
   return (
     <Paper
       variant="outlined"
       onClick={onClick}
+      // Pure query hook, no visual effect — lets PlayoffBracket find this
+      // card's rendered position in the DOM after mount, to hide a
+      // dangling connector line coming from a bye sibling with no card of
+      // its own (see PlayoffBracket's hideDanglingByeConnectors effect).
+      data-match-id={match.id}
       sx={{
         display: 'flex',
         flexDirection: 'column',
@@ -126,6 +150,7 @@ export default function BracketMatchNode({
 
       {sides.map(({ key, team }) => {
         const winner = isBracketMatchWinner(match, team?.id);
+        const gameScores = gameScoresForTeam(team);
 
         return (
           <Box
@@ -158,10 +183,28 @@ export default function BracketMatchNode({
                 {bracketTeamLabel(team, match)}
               </Typography>
             </Stack>
-            {match.isFinished && team && (
-              <Typography variant="body2" sx={{ fontWeight: winner ? 700 : 500 }}>
-                {team.score}
-              </Typography>
+            {gameScores && gameScores.length > 0 ? (
+              <Stack direction="row" spacing={0.5} sx={{ flexShrink: 0 }}>
+                {gameScores.map((score, index) => (
+                  <Typography
+                    // A per-game score column has no id of its own; order IS
+                    // its identity (game 1 is always first), so the array
+                    // index is a stable, correct React key here.
+                    key={index}
+                    variant="body2"
+                    sx={{ fontWeight: winner ? 700 : 500, minWidth: 16, textAlign: 'right' }}
+                  >
+                    {score}
+                  </Typography>
+                ))}
+              </Stack>
+            ) : (
+              match.isFinished &&
+              team && (
+                <Typography variant="body2" sx={{ fontWeight: winner ? 700 : 500 }}>
+                  {team.score}
+                </Typography>
+              )
             )}
           </Box>
         );

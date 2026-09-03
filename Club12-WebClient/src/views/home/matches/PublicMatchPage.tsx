@@ -22,15 +22,14 @@ import {
   ScoreEmphasis,
   sortScorersByPoints,
 } from '@/modules/match/utils/matchDisplay';
-import { formatLongDateTimeAr } from '@/modules/core/utils/formatDate';
+import { formatLongDateAr, formatTimeAr } from '@/modules/core/utils/formatDate';
 import { ITeamMatchResponse } from '@/modules/team/type/team';
 import { font } from '@/design/tokens';
 import {
   DEFAULT_PAGE_METADATA,
   usePageMetadata,
 } from '@/modules/core/utils/pageMetadata';
-
-const formatMatchDateTime = (value: string) => formatLongDateTimeAr(value);
+import { AccessTimeIcon, CalendarMonthIcon, StadiumIcon } from '@/views/core/MUI/icons/icons';
 
 /** Both crests read at the same size — the league plays on neutral venues, so
  *  no side is presented as home/away. */
@@ -39,8 +38,13 @@ const CREST_SIZE = 88;
 /** Accessible visually-hidden style (screen-reader-only). */
 const visuallyHidden = {
   position: 'absolute',
-  width: 1,
-  height: 1,
+  // MUI's sx sizing system treats a bare 0-1 number for width/height as a
+  // PERCENTAGE (`1` -> `100%`), not a px value — so this was rendering the
+  // "hidden" h1 at the full container width all along, 100% wide and just
+  // clipped, which still pushed the page's scrollWidth past the viewport
+  // on mobile. String values opt out of that conversion.
+  width: '1px',
+  height: '1px',
   padding: 0,
   margin: -1,
   overflow: 'hidden',
@@ -73,13 +77,16 @@ export default function PublicMatchPage() {
     void fetch();
   }, [matchId, getMatchById]);
 
-  // Back goes to the match's own tournament — falling back to the seasons
-  // list (not the orphaned /torneos listing) only when the match has no
-  // stage/tournament resolved yet.
+  // Real back navigation, not a reconstructed tournament URL — the reader
+  // got here from a specific zone/sub-tab/fecha, and a bare tournament link
+  // always lands on its default tab, silently dropping that state. Only
+  // falls back to a computed route when the match truly doesn't exist (the
+  // not-found branch below), since there's nothing meaningful to go back to.
   const backRoute = match?.tournamentId
     ? APP_ROUTES.publicTournament.build(match.tournamentId)
     : APP_ROUTES.publicSeasons;
   const backLabel = match?.tournamentId ? 'Volver al torneo' : 'Volver a temporadas';
+  const goBack = () => navigate(-1);
   const goToTournaments = () => navigate(backRoute);
 
   const matchup =
@@ -178,6 +185,7 @@ export default function PublicMatchPage() {
         <CardContent>
           <Typography
             variant="subtitle1"
+            component="h3"
             sx={{ fontWeight: 700, minWidth: 0, mb: 1.5 }}
             noWrap
           >
@@ -228,7 +236,7 @@ export default function PublicMatchPage() {
   return (
     <PageShell
       maxWidth="md"
-      back={{ label: backLabel, onClick: goToTournaments }}
+      back={{ label: backLabel, onClick: goBack }}
     >
       {/* The matchup is the page's heading; kept visually hidden because the
           design leads with the centred crest-vs-crest scoreboard instead. */}
@@ -236,22 +244,38 @@ export default function PublicMatchPage() {
         {homeTeam?.name ?? '—'} vs {visitorTeam?.name ?? '—'}
       </Typography>
 
+      {/* Date, time and venue always read the same way regardless of match
+          status (previously the date/time swapped between a bold h6 and a
+          plain caption depending on isFinished, so a scheduled match's
+          header looked like a different component from a played one) — one
+          consistent metadata row, icon-led like the rest of the app
+          (MatchRow, MatchFixtureList's bye row). */}
       <Stack sx={{ alignItems: 'center', mb: { xs: 3, md: 4 } }} spacing={1}>
         <MatchStatusChip status={match.status} isFinished={isFinished} />
-        <Typography
-          variant={isFinished ? 'body2' : 'h6'}
-          component="p"
-          sx={{
-            color: isFinished ? 'text.secondary' : 'text.primary',
-            fontWeight: isFinished ? 400 : 600,
-            textAlign: 'center',
-          }}
+        <Stack
+          direction="row"
+          spacing={1.5}
+          sx={{ alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', rowGap: 0.5 }}
         >
-          {formatMatchDateTime(match.matchDate)}
-        </Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center' }}>
-          {venue?.name ?? 'Cancha a confirmar'}
-        </Typography>
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+            <CalendarMonthIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+              {formatLongDateAr(match.matchDate)}
+            </Typography>
+          </Stack>
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+            <AccessTimeIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+              {formatTimeAr(match.matchDate)}
+            </Typography>
+          </Stack>
+        </Stack>
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+          <StadiumIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            {venue?.name ?? 'Cancha a confirmar'}
+          </Typography>
+        </Stack>
       </Stack>
 
       {/* Scoreboard: teams flank a big centred score on desktop and stack above
@@ -307,21 +331,25 @@ export default function PublicMatchPage() {
         {renderTeam(visitorTeam, emphasis.visitor)}
       </Stack>
 
-      <Divider sx={{ mb: 3 }} />
+      {isFinished && (
+        <>
+          <Divider sx={{ mb: 3 }} />
 
-      <Box component="section">
-        <SectionHeading>Goleadores del partido</SectionHeading>
-        <Box
-          sx={{
-            display: 'grid',
-            gap: 2,
-            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
-          }}
-        >
-          {renderScorers(homeTeam)}
-          {renderScorers(visitorTeam)}
-        </Box>
-      </Box>
+          <Box component="section">
+            <SectionHeading>Goleadores del partido</SectionHeading>
+            <Box
+              sx={{
+                display: 'grid',
+                gap: 2,
+                gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+              }}
+            >
+              {renderScorers(homeTeam)}
+              {renderScorers(visitorTeam)}
+            </Box>
+          </Box>
+        </>
+      )}
     </PageShell>
   );
 }

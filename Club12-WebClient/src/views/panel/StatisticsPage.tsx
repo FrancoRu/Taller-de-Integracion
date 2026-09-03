@@ -145,21 +145,30 @@ const StatisticsPage = () => {
     [seasons, selectedSeasonId, selectedTournamentId]
   );
 
-  // Loads the summary cards and the filter option sources (tournaments +
-  // seasons), scoped by `scopeTournamentIds`. Unscoped shows the club-wide
-  // totals; otherwise every card — not just goleadores — reflects only the
-  // chosen torneo/temporada.
+  // Seasons rarely change and only feed the "Temporada" filter's own
+  // options — fetched once on mount, never as part of the scope-triggered
+  // reload below. Refetching them there used to call setSeasons() with a
+  // fresh array reference on every run; since scopeTournamentIds derives
+  // from `seasons` (season.tournaments.map(...) is a brand-new array every
+  // time), that fresh reference made the summary effect's own dependency
+  // look "changed" on every single load, retriggering itself forever the
+  // moment a temporada/torneo filter was selected.
+  useEffect(() => {
+    void seasonsRef.current({});
+  }, []);
+
+  // Loads the summary cards and the tournament filter options, scoped by
+  // `scopeTournamentIds`. Unscoped shows the club-wide totals; otherwise
+  // every card — not just goleadores — reflects only the chosen
+  // torneo/temporada. Deliberately does NOT touch seasons state (see above).
   useEffect(() => {
     const load = async () => {
       setLoading(true);
 
-      const [tournamentsPage] = await Promise.all([
-        tournamentsRef.current({
-          pageSize: FILTER_OPTIONS_PAGE_SIZE,
-          pageNumber: 1,
-        }),
-        seasonsRef.current({}),
-      ]);
+      const tournamentsPage = await tournamentsRef.current({
+        pageSize: FILTER_OPTIONS_PAGE_SIZE,
+        pageNumber: 1,
+      });
 
       const scopedTournaments =
         scopeTournamentIds === null

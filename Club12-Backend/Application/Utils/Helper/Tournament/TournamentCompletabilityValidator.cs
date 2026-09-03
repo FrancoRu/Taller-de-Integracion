@@ -41,12 +41,14 @@ public static class TournamentCompletabilityValidator
     public const int MinTeamsPerZone = 2;
 
     /// <summary>
-    /// Minimum number of players an enrolled team must have registered on its
-    /// season roster (<see cref="PlayerTeamRegistration"/>) for the tournament
-    /// to be completable — five is a basketball team's on-court minimum, so
-    /// fewer players means the team could never field a lineup.
+    /// Minimum number of HABILITADO players (<see cref="PlayerTeamRegistration.IsHabilitado"/>)
+    /// an enrolled team must have for the tournament to be completable — four
+    /// is basketball's minimum to avoid a walkover, so a team that can't reach
+    /// it before the season even starts could never legally field a lineup.
+    /// A merely-registered but not-yet-approved player does not count — see
+    /// the caller's <c>habilitadoPlayerCountsByTeam</c> build.
     /// </summary>
-    public const int MinPlayersPerTeam = 5;
+    public const int MinPlayersPerTeam = 4;
 
     /// <summary>
     /// Evaluates every completability rule against the loaded tournament graph
@@ -62,11 +64,12 @@ public static class TournamentCompletabilityValidator
     /// its Team loaded so team names can be reported.
     /// </param>
     /// <param name="playerCountsByTeam">
-    /// Each enrolled team's registered player count for this tournament
-    /// (<see cref="PlayerTeamRegistration"/>), used by the TeamTooFewPlayers
-    /// rule. Omitted (null) skips that rule entirely — callers that don't have
-    /// this data loaded (e.g. tests focused on the zone/team rules) are
-    /// unaffected.
+    /// Each enrolled team's HABILITADO player count for this tournament (see
+    /// <see cref="PlayerTeamRegistration.IsHabilitado"/>) — NOT its raw
+    /// registered-roster size, since a registered-but-not-yet-approved player
+    /// could never legally play anyway. Used by the TeamTooFewPlayers rule.
+    /// Omitted (null) skips that rule entirely — callers that don't have this
+    /// data loaded (e.g. tests focused on the zone/team rules) are unaffected.
     /// </param>
     public static IReadOnlyList<CompletabilityIssue> Validate(
         Domain.Entities.Models.Tournament tournament,
@@ -186,8 +189,9 @@ public static class TournamentCompletabilityValidator
         }
 
         // Rule 6 — TeamTooFewPlayers: every enrolled team needs >= MinPlayersPerTeam
-        // registered players — basketball's on-court minimum — to ever field a
-        // lineup. Skipped when the caller didn't load player-count data.
+        // HABILITADO players — basketball's minimum to avoid a walkover — to
+        // ever field a legal lineup. Skipped when the caller didn't load
+        // player-count data.
         if (playerCountsByTeam is not null)
         {
             foreach (Guid teamId in enrolledTeamIds.OrderBy(id => ResolveTeamName(teamNames, id)))

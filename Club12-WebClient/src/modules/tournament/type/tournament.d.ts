@@ -102,20 +102,6 @@ export interface ITournamentContextProps {
   deleteTournamentById(id: GUID): Promise<boolean>;
 
   /**
-   * Registers one or more teams in a specific tournament.
-   *
-   * @async
-   * @function registerTeams
-   * @param {string} id - The unique identifier (GUID) of the tournament where teams will be registered.
-   * @param {string[]} teamsId - An array of team identifiers (GUIDs) to be registered in the tournament.
-   * @returns {Promise<AxiosResponse<boolean>>} A promise resolving to an Axios response indicating whether the registration was successful.
-   */
-  registerTeamsByTournamentId(
-    id: GUID,
-    teamsId: GUID[]
-  ): Promise<boolean | void>;
-
-  /**
    * Enrolls a single team into a tournament during its registration phase
    * (HU-107). Either an existing team is enrolled (existingTeamId) or a brand
    * new team is created and enrolled in one step (newTeamName) — exactly one of
@@ -178,7 +164,7 @@ export interface ICompletabilityIssue {
   /** Number of teams assigned to the offending zone/group, when applicable. */
   assignedTeams?: number;
 
-  /** The offending team's registered player count, for TeamTooFewPlayers. */
+  /** The offending team's habilitado player count, for TeamTooFewPlayers. */
   playerCount?: number;
 }
 

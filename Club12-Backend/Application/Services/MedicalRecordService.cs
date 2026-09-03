@@ -29,10 +29,16 @@ public class MedicalRecordService(IUnitOfWork unitOfWork) : IMedicalRecordServic
     {
         PlayerTeamRegistration registration = await GetRegistrationAsync(playerId, teamId, tournamentId);
 
-        // HU-57: once the ficha is Approved the player is habilitado and the
-        // record is frozen — it can only be viewed/downloaded, never replaced
-        // by a new upload.
-        if (registration.MedicalRecordStatus == MedicalRecordStatus.Approved)
+        // HU-57: once the ficha is Approved AGAINST A REAL STORED FILE, the
+        // player is habilitado and the record is frozen — it can only be
+        // viewed/downloaded, never replaced by a new upload. An Approved row
+        // with a legacy/unresolvable reference (pre-existing data from before
+        // the private-bucket relocation) never actually habilitated the
+        // player (see PlayerTeamRegistration.IsHabilitado) and would
+        // otherwise be stuck forever with no path to fix it — so re-upload
+        // stays allowed for that shape.
+        if (registration.MedicalRecordStatus == MedicalRecordStatus.Approved
+            && PlayerTeamRegistration.IsStoredReference(registration.MedicalRecordFileUrl))
         {
             throw new InvalidOperationException(ErrorMessages.MedicalRecord.AlreadyApproved);
         }

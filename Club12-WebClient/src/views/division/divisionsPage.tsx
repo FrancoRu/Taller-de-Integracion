@@ -10,6 +10,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import PageShell from '@/views/core/components/PageShell';
 import FilterBar from '@/views/core/components/FilterBar';
+import TableScrollBox from '@/views/core/components/TableScrollBox';
 import {
   confirmDelete,
   notifySuccess,
@@ -296,7 +297,7 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
   );
 
   const grid = (
-    <Box sx={{ width: '100%' }}>
+    <TableScrollBox>
       <DataGrid
         rows={rows}
         columns={columns}
@@ -312,7 +313,7 @@ const DivisionsPage: React.FC<DivisionsPageProps> = ({
         paginationMode="server"
         rowCount={rowCount}
       />
-    </Box>
+    </TableScrollBox>
   );
 
   if (wrapInCard) {

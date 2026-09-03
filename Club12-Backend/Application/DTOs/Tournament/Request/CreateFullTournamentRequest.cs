@@ -15,8 +15,8 @@ namespace Application.DTOs.Tournament.Request;
 /// </summary>
 public class CreateFullTournamentRequest
 {
-    [Required(ErrorMessage = "Description is required.")]
-    public required string Description { get; set; }
+    /// <summary>Optional — neither the create wizard nor the edit form require it.</summary>
+    public string Description { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Name is required.")]
     public required string Name { get; set; }

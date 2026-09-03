@@ -257,7 +257,7 @@ public class TeamService(
 
         List<Team> filteredTeams = [.. await _teamRepository.FindAsync(
             expression,
-            includes: [team => team.StageTeamMatches],
+            includes: [team => team.StageTeamMatches, team => team.Tournament!],
             filter: filter,
             asSplitQuery: true)];
 

@@ -41,6 +41,7 @@ import {
   notifyWarning,
 } from '@/modules/core/utils/confirmDialog';
 import PageShell from '@/views/core/components/PageShell';
+import FieldInfoTooltip from '@/views/core/components/FieldInfoTooltip';
 import {
   CardGridSkeleton,
   DetailSkeleton,
@@ -588,6 +589,13 @@ const MatchPage: React.FC = () => {
               value={editVenueId}
               onChange={e => setEditVenueId(e.target.value as GUID | '')}
               fullWidth
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <FieldInfoTooltip title="No se puede programar otro partido en la misma cancha con menos de 2 horas de diferencia." />
+                  ),
+                },
+              }}
             >
               <MenuItem value="">
                 <em>Sin cancha</em>
@@ -598,10 +606,6 @@ const MatchPage: React.FC = () => {
                 </MenuItem>
               ))}
             </TextField>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              No se puede programar otro partido en la misma cancha con menos de
-              2 horas de diferencia.
-            </Typography>
           </Stack>
           <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', mt: 2 }}>
             <Button

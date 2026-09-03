@@ -37,6 +37,7 @@ const buildTeam = (overrides: Partial<ITeamResponse> = {}): ITeamResponse => ({
   logoUrl: '',
   players: [],
   tournamentId: null,
+  tournamentName: null,
   ...overrides,
 });
 
@@ -88,7 +89,6 @@ const setup = (options: {
     getTournamentById: vi.fn(),
     putTournamentById: vi.fn(),
     deleteTournamentById: vi.fn(),
-    registerTeamsByTournamentId: vi.fn(),
     enrollTeam,
     unenrollTeam,
     getCompletability: vi.fn(),
@@ -226,6 +226,35 @@ describe('TournamentEnrolledTeams — enroll existing team', () => {
 
     expect(screen.getByRole('option', { name: 'Boca' })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'River' })).not.toBeInTheDocument();
+  });
+
+  it('disambiguates same-named teams from different seasons in the existing-team picker', async () => {
+    const echagueLastSeason = buildTeam({
+      name: 'Echagüe',
+      slug: 'echague-1',
+      tournamentId: 'tournament-old' as unknown as GUID,
+      tournamentName: 'Torneo Apertura Masculino 2025',
+    });
+    const echagueOlder = buildTeam({
+      name: 'Echagüe',
+      slug: 'echague-2',
+      tournamentId: 'tournament-older' as unknown as GUID,
+      tournamentName: 'Torneo Clausura Masculino 2024',
+    });
+    setup({ enrolled: [], all: [echagueLastSeason, echagueOlder] });
+    const user = userEvent.setup();
+
+    renderComponent();
+    const dialog = await openDialog(user);
+    await user.click(within(dialog).getByRole('radio', { name: /equipo existente/i }));
+    await user.click(within(dialog).getByRole('combobox'));
+
+    expect(
+      screen.getByRole('option', { name: 'Echagüe — Torneo Apertura Masculino 2025' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: 'Echagüe — Torneo Clausura Masculino 2024' })
+    ).toBeInTheDocument();
   });
 
   it('enrolls an existing team copying the roster from its previous season', async () => {

@@ -10,10 +10,9 @@ namespace Application.DTOs.Tournament.Request;
 public class CreateTournamentRequest
 {
     /// <summary>
-    /// The description of the tournament.
+    /// The description of the tournament. Optional.
     /// </summary>
-    [Required(ErrorMessage = "Description is required.")]
-    public required string Description { get; set; }
+    public string Description { get; set; } = string.Empty;
 
     /// <summary>
     /// The name of the tournament.

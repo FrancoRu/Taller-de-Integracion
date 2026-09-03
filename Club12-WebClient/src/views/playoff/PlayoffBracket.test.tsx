@@ -115,9 +115,18 @@ describe('PlayoffBracket', () => {
     expect(screen.getByText('Halcones')).toBeInTheDocument();
     expect(screen.getByText('Cóndores')).toBeInTheDocument();
 
-    // Aggregate score, not the individual leg score.
-    expect(screen.getByText('119')).toBeInTheDocument();
-    expect(screen.getByText('101')).toBeInTheDocument();
+    // The series-backed pairing (Black Mamba/NTI) shows each side's
+    // per-game scores, not the 119/101 aggregate; the plain match
+    // (Halcones/Cóndores, no series in seriesById) still shows its one
+    // final score as before.
+    expect(screen.getByText('60')).toBeInTheDocument();
+    expect(screen.getByText('59')).toBeInTheDocument();
+    expect(screen.getByText('55')).toBeInTheDocument();
+    expect(screen.getByText('46')).toBeInTheDocument();
+    expect(screen.queryByText('119')).not.toBeInTheDocument();
+    expect(screen.queryByText('101')).not.toBeInTheDocument();
+    expect(screen.getByText('90')).toBeInTheDocument();
+    expect(screen.getByText('80')).toBeInTheDocument();
 
     // The Final's TBD slots are still present (SF winners not the whole model yet).
     expect(screen.getAllByText('A definir')).toHaveLength(2);
@@ -254,5 +263,75 @@ describe('PlayoffBracket', () => {
     await userEvent.click(screen.getAllByText('A definir')[0]);
 
     expect(onMatchClick).not.toHaveBeenCalled();
+  });
+
+  it('hides the dangling connector into a decided bye sibling instead of drawing a line to nowhere', () => {
+    // Regression: the library draws every match's top/bottom connector
+    // purely from row position, independent of whether that row actually
+    // has a rendered card — hiding a bye's card (BracketMatchLibraryAdapter)
+    // without also suppressing its connector left a line hanging in empty
+    // space with nothing at its far end.
+    const qfStage = guid('qf');
+    const sfStage = guid('sf');
+
+    const byeMatch: IMatchResponse = {
+      id: guid('m-bye'),
+      matchDate: '2026-01-01T18:00:00Z',
+      matchType: 'Playoff' as IMatchResponse['matchType'],
+      slug: '',
+      homeTeam: { id: guid('team-a'), name: 'Equipo A', logoUrl: '', score: 0, players: [], scorers: [] },
+      visitorTeam: null,
+      isFinished: true,
+      winningTeamId: guid('team-a'),
+      winningTeamName: 'Equipo A',
+      venue: null,
+      stageId: qfStage,
+    };
+    const realMatch: IMatchResponse = {
+      id: guid('m-real'),
+      matchDate: '2026-01-01T18:00:00Z',
+      matchType: 'Playoff' as IMatchResponse['matchType'],
+      slug: '',
+      homeTeam: { id: guid('team-b'), name: 'Equipo B', logoUrl: '', score: 80, players: [], scorers: [] },
+      visitorTeam: { id: guid('team-c'), name: 'Equipo C', logoUrl: '', score: 70, players: [], scorers: [] },
+      isFinished: true,
+      winningTeamId: guid('team-b'),
+      winningTeamName: 'Equipo B',
+      venue: null,
+      stageId: qfStage,
+    };
+    const sfMatch: IMatchResponse = {
+      id: guid('m-sf'),
+      matchDate: '2026-01-08T18:00:00Z',
+      matchType: 'Playoff' as IMatchResponse['matchType'],
+      slug: '',
+      homeTeam: null,
+      visitorTeam: null,
+      isFinished: false,
+      winningTeamId: null,
+      winningTeamName: null,
+      venue: null,
+      stageId: sfStage,
+    };
+
+    const model: BracketModel = {
+      rounds: [
+        { stageId: qfStage, stageType: StageType.QuarterFinal, matches: [byeMatch, realMatch] },
+        { stageId: sfStage, stageType: StageType.SemiFinal, matches: [sfMatch] },
+      ],
+      edges: [],
+    };
+
+    const { container } = render(<PlayoffBracket model={model} />);
+
+    const childCard = container.querySelector(`[data-match-id="${sfMatch.id}"]`);
+    const outerCell = childCard?.closest('svg')?.parentElement?.parentElement;
+    const connectorPaths = outerCell?.querySelectorAll<SVGPathElement>('path[id^="connector-"]');
+
+    expect(connectorPaths).toHaveLength(2);
+    // byeMatch is the first sibling (top source) — its connector is hidden;
+    // realMatch is the second (bottom source) — its connector stays visible.
+    expect(connectorPaths?.[0].style.display).toBe('none');
+    expect(connectorPaths?.[1].style.display).not.toBe('none');
   });
 });

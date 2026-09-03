@@ -23,6 +23,7 @@ import {
 import { SearchIcon } from '@/views/core/MUI/icons/icons';
 import PageShell from '@/views/core/components/PageShell';
 import FilterBar from '@/views/core/components/FilterBar';
+import TableScrollBox from '@/views/core/components/TableScrollBox';
 import {
   TABLE_PAGE_SIZE_OPTIONS,
   TABLE_ROWS_PER_PAGE,
@@ -252,7 +253,7 @@ const AuditLogsPage: React.FC = () => {
         </FormControl>
       </FilterBar>
 
-      <Box sx={{ width: '100%' }}>
+      <TableScrollBox>
         <DataGrid
           rows={rows}
           columns={columns}
@@ -268,7 +269,7 @@ const AuditLogsPage: React.FC = () => {
           paginationMode="server"
           rowCount={rowCount}
         />
-      </Box>
+      </TableScrollBox>
     </PageShell>
   );
 };

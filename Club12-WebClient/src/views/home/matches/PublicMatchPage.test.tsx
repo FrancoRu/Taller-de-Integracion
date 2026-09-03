@@ -73,9 +73,14 @@ const match = (overrides: Partial<IMatchResponse> = {}): IMatchResponse =>
     ...overrides,
   }) as IMatchResponse;
 
-const renderPage = () =>
+const renderPage = (
+  options: { initialEntries?: string[]; initialIndex?: number } = {}
+) =>
   render(
-    <MemoryRouter initialEntries={['/match-1']}>
+    <MemoryRouter
+      initialEntries={options.initialEntries ?? ['/match-1']}
+      initialIndex={options.initialIndex}
+    >
       <Routes>
         <Route path="/:matchId" element={<PublicMatchPage />} />
         <Route path="/temporadas" element={<div>listado-temporadas</div>} />
@@ -109,6 +114,21 @@ describe('PublicMatchPage scoreboard', () => {
     expect(screen.getByText('Gimnasio Central')).toBeInTheDocument();
   });
 
+  it('shows the date, time and venue as separate icon-led pieces, not one combined string', async () => {
+    // Regression: date/time used to render as one Typography whose
+    // variant/weight/color flipped depending on isFinished, so a scheduled
+    // match's header looked like a different component from a played
+    // one's. Both now render through the same markup regardless of status.
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText('Jugado')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(/miércoles, 1 de enero de 2025/i)).toBeInTheDocument();
+    expect(screen.getByText('17:00')).toBeInTheDocument();
+  });
+
   it('lists each team\'s scorers with points and an empty state when there are none', async () => {
     renderPage();
 
@@ -138,6 +158,11 @@ describe('PublicMatchPage scoreboard', () => {
     });
 
     expect(screen.getByText('Programado')).toBeInTheDocument();
+    // Regression: a not-yet-played match has no scorers to show — the
+    // section used to render regardless of status, showing an empty
+    // "Sin goleadores cargados." card for a match that hasn't happened yet.
+    expect(screen.queryByText('Goleadores del partido')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sin goleadores cargados.')).not.toBeInTheDocument();
   });
 
   it('sorts scorers by points descending', async () => {
@@ -170,9 +195,15 @@ describe('PublicMatchPage — "Volver" target', () => {
     vi.clearAllMocks();
   });
 
-  it('goes to the match\'s own tournament, not the orphaned /torneos listing', async () => {
+  it('goes back via real browser history, landing on the tournament page it actually came from', async () => {
     state.match = match({ tournamentId: guid('tournament-1') });
-    renderPage();
+    // A real prior history entry — "Volver" is real browser-history back,
+    // not a reconstructed URL that would always land on the tournament's
+    // default tab regardless of where "here" actually was.
+    renderPage({
+      initialEntries: ['/torneos/tournament-1', '/match-1'],
+      initialIndex: 1,
+    });
 
     const back = await screen.findByRole('button', { name: /Volver al torneo/ });
     await userEvent.click(back);
@@ -180,9 +211,9 @@ describe('PublicMatchPage — "Volver" target', () => {
     expect(screen.getByText('detalle-torneo')).toBeInTheDocument();
   });
 
-  it('falls back to the seasons list when the match has no tournament resolved', async () => {
+  it('labels the button "Volver a temporadas" when the match has no tournament resolved', async () => {
     state.match = match({ tournamentId: null });
-    renderPage();
+    renderPage({ initialEntries: ['/temporadas', '/match-1'], initialIndex: 1 });
 
     const back = await screen.findByRole('button', { name: /Volver a temporadas/ });
     await userEvent.click(back);

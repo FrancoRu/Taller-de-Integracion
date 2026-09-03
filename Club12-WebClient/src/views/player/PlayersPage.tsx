@@ -38,6 +38,8 @@ import { TABLE_PAGE_SIZE_OPTIONS } from '@/modules/core/constants/pagination';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { usePlayer } from '@/modules/player/hook/player.hook';
 import FormButtons from '@/views/core/components/FormButtons';
+import FieldInfoTooltip from '@/views/core/components/FieldInfoTooltip';
+import TableScrollBox from '@/views/core/components/TableScrollBox';
 import { IAddPlayerRequest, IPlayerResponse } from '@/modules/player/type/player.d';
 import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import TableRowActions, { TableRowAction } from '@/views/core/components/TableRowActions';
@@ -530,14 +532,12 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
   );
 
   const columns: GridColDef<PlayerRow>[] = useMemo(() => {
-    const teamColumn: GridColDef<PlayerRow> = teamId
-      ? {
-          field: 'teamId',
-          headerName: 'Equipo',
-          flex: 1,
-          minWidth: 160,
-          renderCell: params => teamNameById.get(params.row.teamId) ?? '—',
-        }
+    // Omitted entirely (not just read-only) when scoped to one team's own
+    // roster page — every row would show the exact same value, which is
+    // noise, not information. Only the global players list (no `teamId`)
+    // needs it, to say WHICH team each row belongs to.
+    const teamColumn: GridColDef<PlayerRow> | null = teamId
+      ? null
       : {
           field: 'teamId',
           headerName: 'Equipo',
@@ -607,7 +607,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
             : date.toLocaleDateString('es-AR');
         },
       },
-      teamColumn,
+      ...(teamColumn ? [teamColumn] : []),
       {
         field: 'phoneNumber',
         headerName: 'Teléfono',
@@ -848,7 +848,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
         />
       </FilterBar>
 
-      <Box sx={{ width: '100%' }}>
+      <TableScrollBox>
         <DataGrid
           rows={rows}
           columns={columns}
@@ -870,7 +870,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
           paginationMode="server"
           rowCount={rowCount}
         />
-      </Box>
+      </TableScrollBox>
 
       <Dialog
         open={Boolean(dorsalPlayer)}
@@ -892,8 +892,14 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               value={dorsalValue}
               onChange={e => setDorsalValue(e.target.value)}
               fullWidth
-              helperText="Único por equipo y temporada. Dejar vacío para quitarlo."
-              slotProps={{ htmlInput: { min: 0, max: 99, step: 1 } }}
+              slotProps={{
+                htmlInput: { min: 0, max: 99, step: 1 },
+                input: {
+                  endAdornment: (
+                    <FieldInfoTooltip title="Único por equipo y temporada. Dejar vacío para quitarlo." />
+                  ),
+                },
+              }}
             />
           </Stack>
         </DialogContent>

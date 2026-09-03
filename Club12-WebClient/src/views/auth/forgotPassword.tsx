@@ -66,6 +66,7 @@ export default function ForgotPassword() {
 
   return (
     <Box
+      component="main"
       sx={{
         display: 'flex',
         justifyContent: 'center',

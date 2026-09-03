@@ -15,16 +15,19 @@ Liga Club12 reemplaza la gestión manual del torneo (antes llevada en planillas)
 
 | Módulo | Qué permite |
 |---|---|
-| **Torneos y divisiones** | Crear torneos, dividirlos en divisiones y generar automáticamente las etapas (grupos, cuartos, semifinal, tercer puesto, final) según la cantidad de equipos inscriptos (8/16/32/64). |
-| **Equipos y jugadores** | Alta/baja/modificación con filtros de búsqueda, registro de equipos a un torneo, validación de DNI único por jugador. |
-| **Partidos** | Generación automática de partidos de fase de grupos (round-robin) y de eliminación directa, carga de resultados, tabla de posiciones. |
-| **Llaves (bracket)** | Visualización pública de la fase eliminatoria (cuartos, semifinal, tercer puesto, final) como un árbol de llaves, con conectores entre rondas inferidos a partir del equipo ganador; si la inferencia es ambigua (partido sin jugar, datos incompletos), se degrada a una vista en columnas sin conectores en vez de mostrar una conexión incorrecta. |
-| **Estadísticas y goleadores** | Registro de estadísticas por jugador y tabla de goleadores por torneo/equipo. |
-| **Impresión** | Vista imprimible de la tabla de posiciones y de goleadores por división (impresión nativa del navegador, sin dependencias adicionales), pensada para que los organizadores repartan o publiquen resultados en papel. |
-| **Sanciones** | Registro de sanciones a jugadores con un flujo de apelación completo (pendiente → aceptada/rechazada). |
+| **Temporadas, torneos y divisiones** | Una temporada agrupa uno o más torneos; cada torneo se divide en divisiones. Generación automática de la fase de grupos y, al cerrarse, de las llaves de eliminación directa para la cantidad de equipos que clasificaron — potencia de 2 o no (bye a los mejores sembrados cuando no lo es). Un torneo puede definir más de una copa por división (ej. Copa Oro / Copa Plata), sembrada por rango de posiciones de la fase de grupos. El pase a "En curso" está bloqueado si alguna zona tiene menos de 2 equipos o algún equipo no llega al mínimo de jugadores habilitados. |
+| **Equipos y jugadores** | Alta/baja/modificación con filtros de búsqueda, registro de equipos a un torneo, validación de DNI único por jugador, cuerpo técnico por equipo/temporada, descuentos de puntos (sanciones administrativas a la tabla). |
+| **Fichas médicas / habilitación** | Carga y revisión (aprobar/rechazar) de la ficha médica de cada jugador por equipo y temporada. Solo un registro Aprobado con un archivo realmente almacenado habilita a un jugador; la habilitación no se hereda entre temporadas. |
+| **Partidos** | Generación automática de partidos de fase de grupos (round-robin) y de eliminación directa, carga de resultados por planilla (el resultado final se deriva de la suma de puntos por jugador, no se tipea aparte), tabla de posiciones. Un resultado normal exige que los jugadores cargados estén habilitados y sin sanción activa, y que cada equipo tenga al menos 4 jugadores habilitados — por debajo de ese mínimo el partido se carga como walkover. |
+| **Llaves (bracket)** | Visualización pública de la fase eliminatoria como un árbol de llaves — por copa, si el torneo tiene varias — con conectores entre rondas inferidos a partir del equipo ganador; si la inferencia es ambigua (partido sin jugar, datos incompletos, o un cruce ya decidido por bye), se oculta ese conector o se degrada a una vista en columnas en vez de mostrar una conexión incorrecta. |
+| **Campeones** | Historial público de campeones por división/copa de los torneos ya finalizados. |
+| **Estadísticas y goleadores** | Registro de estadísticas por jugador (como parte de la planilla del partido) y tabla de goleadores por torneo/equipo (top 10 en la vista pública). |
+| **Impresión** | Vista imprimible de la tabla de posiciones por división (impresión nativa del navegador, sin dependencias adicionales), pensada para que los organizadores repartan o publiquen resultados en papel. |
+| **Sanciones** | Registro de sanciones a jugadores con un flujo de apelación completo (pendiente → aceptada/rechazada); una sanción activa bloquea al jugador de sumar puntos en un partido. |
 | **Usuarios** | Registro, login (JWT), recuperación de contraseña, activación/desactivación de cuentas, roles (RBAC). |
-| **Blog** | Publicación de novedades/crónicas de partidos, visibles públicamente. |
-| **Copias de seguridad** | Respaldo automático programado de la base de datos, activo en producción. |
+| **Blog** | Publicación de novedades/crónicas de partidos (con borrador previo a publicar), visibles públicamente. |
+| **Sistema** | Panel de estadísticas de uso, registro de auditoría de acciones administrativas, y herramientas de administración/mantenimiento de datos. |
+| **Copias de seguridad** | Respaldo automático programado de la base de datos, activo en producción; administrable manualmente desde el panel. |
 
 ## Cómo lo hace (arquitectura)
 
@@ -69,7 +72,7 @@ src/
 └── views/{dominio}/        páginas y componentes visuales de ese dominio
 ```
 
-Cada uno de los 13 dominios (equipos, jugadores, partidos, torneos, divisiones, sanciones, estadísticas, goleadores, etapas, canchas, usuarios, autenticación, blog) repite este mismo patrón, lo que hace que el código sea predecible: para entender cualquier funcionalidad alcanza con mirar su carpeta.
+Cada uno de los ~24 dominios (equipos, jugadores, partidos, series de playoff, torneos, temporadas, divisiones, etapas, sanciones, fichas médicas, estadísticas, goleadores, canchas, clubes, campeones, cuerpo técnico, descuento de puntos, backups, administración de datos, registro de auditoría, usuarios, autenticación, blog) repite este mismo patrón, lo que hace que el código sea predecible: para entender cualquier funcionalidad alcanza con mirar su carpeta.
 
 **Stack**: React 19, TypeScript, Vite, Material UI (MUI), TanStack Query (cacheo y sincronización de datos del servidor), React Router, Axios.
 
@@ -134,8 +137,8 @@ cd Club12-WebClient && pnpm run test
 
 ## Estado del proyecto
 
-- **Backend**: build sin errores ni advertencias (`dotnet build`), 808 tests automatizados en verde (al 2026-09-02; correr `dotnet test Club12-Backend/Solution/Club12.sln` para el número actual).
-- **Frontend**: sin errores de lint, 645 tests automatizados en verde (al 2026-09-02; correr `npx vitest run` para el número actual).
+- **Backend**: build sin errores ni advertencias (`dotnet build`), 826 tests automatizados en verde (al 2026-09-03; correr `dotnet test Club12-Backend/Solution/Club12.sln` para el número actual).
+- **Frontend**: sin errores de lint, 725 tests automatizados en verde (al 2026-09-03; correr `npx vitest run` para el número actual).
 - Reglas de negocio, cobertura funcional detallada y contexto operativo (gotchas de desarrollo): ver [Docs/ESTADO-Y-REGLAS.md](./Docs/ESTADO-Y-REGLAS.md).
 
 ## ¿Se cubren todos los requisitos?

@@ -139,6 +139,25 @@ describe('PlayersPage — "Ver" action', () => {
   });
 });
 
+describe('PlayersPage — "Equipo" column', () => {
+  it('shows it in the global list, where a row could belong to any team', async () => {
+    renderPlayersPage();
+
+    expect(await screen.findByRole('columnheader', { name: 'Equipo' })).toBeInTheDocument();
+  });
+
+  it('omits it inside a team roster, where every row is already the same team', async () => {
+    render(
+      <MemoryRouter>
+        <PlayersPage teamId={PLAYER.teamId} />
+      </MemoryRouter>
+    );
+
+    await screen.findByText(PLAYER.firstName);
+    expect(screen.queryByRole('columnheader', { name: 'Equipo' })).not.toBeInTheDocument();
+  });
+});
+
 describe('PlayersPage — resilient rendering', () => {
   it('renders a row missing documentNumber as "—" instead of crashing', async () => {
     setupHooks([{ ...PLAYER, documentNumber: undefined as unknown as string }]);
@@ -251,7 +270,7 @@ describe('PlayersPage — "Nuevo Jugador" adds an inline editable row (tabla edi
     } as unknown as IPlayerContextProps);
 
     // Rendered with a fixed teamId (a team's roster context), so the "Equipo"
-    // column isn't itself editable and the draft row's team is implied —
+    // column isn't shown at all and the draft row's team is implied —
     // matching how this component is actually used from a team's roster tab.
     const { container } = render(
       <MemoryRouter>

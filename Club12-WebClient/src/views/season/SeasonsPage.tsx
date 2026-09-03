@@ -12,6 +12,7 @@ import { TableRowAction } from '@/views/core/components/TableRowActions';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
 import PageShell from '@/views/core/components/PageShell';
 import FilterBar from '@/views/core/components/FilterBar';
+import TableScrollBox from '@/views/core/components/TableScrollBox';
 import { DeleteIcon, SearchIcon, VisibilityIcon } from '@/views/core/MUI/icons/icons';
 import SeasonFormDialog, { SeasonFormState } from '@/views/season/SeasonFormDialog';
 import { FILTERS_DEBOUNCE_DELAY_MS } from '@/modules/core/constants/constants';
@@ -273,7 +274,7 @@ const SeasonsPage: React.FC<SeasonsPageProps> = ({
         />
       </FilterBar>
 
-      <Box sx={{ width: '100%' }}>
+      <TableScrollBox>
         <DataGrid
           rows={filteredRows}
           columns={columns}
@@ -288,7 +289,7 @@ const SeasonsPage: React.FC<SeasonsPageProps> = ({
             pagination: { paginationModel: { pageSize: TABLE_ROWS_PER_PAGE } },
           }}
         />
-      </Box>
+      </TableScrollBox>
 
       <SeasonFormDialog
         open={isCreateModalOpen}

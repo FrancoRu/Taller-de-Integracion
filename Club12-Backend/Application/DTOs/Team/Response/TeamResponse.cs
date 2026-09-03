@@ -57,6 +57,14 @@ public class TeamResponse : BaseEntityResponse
     public Guid? TournamentId { get; set; }
 
     /// <summary>
+    /// The name of the team's current tournament (<see cref="TournamentId"/>),
+    /// e.g. "Torneo Apertura Masculino 2025" — disambiguates same-named teams
+    /// from different seasons in an "existing team" picker. Null when
+    /// <see cref="TournamentId"/> is null.
+    /// </summary>
+    public string? TournamentName { get; set; }
+
+    /// <summary>
     /// The club this team belongs to, letting the frontend link a team to its
     /// club. Null when the team is not associated with a club.
     /// </summary>
