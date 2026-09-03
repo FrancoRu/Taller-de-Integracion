@@ -318,9 +318,61 @@ const StatisticsPage = () => {
     setSelectedTournamentId('');
   };
 
-  if (loading || !summary) {
+  const filterBar = (
+    <FilterBar
+      ariaLabel="Filtros de estadísticas"
+      onClear={isScoped ? handleClearFilters : undefined}
+    >
+      <TextField
+        select
+        label="Temporada"
+        size="small"
+        value={selectedSeasonId}
+        onChange={handleSeasonChange}
+        sx={{ minWidth: 200 }}
+        slotProps={{
+          select: { displayEmpty: true },
+          inputLabel: { shrink: true },
+        }}
+      >
+        <MenuItem value="">Todas</MenuItem>
+        {(seasons ?? []).map(season => (
+          <MenuItem key={season.id} value={season.id}>
+            {season.name}
+          </MenuItem>
+        ))}
+      </TextField>
+
+      <TextField
+        select
+        label="Torneo"
+        size="small"
+        value={selectedTournamentId}
+        onChange={handleTournamentChange}
+        sx={{ minWidth: 220 }}
+        slotProps={{
+          select: { displayEmpty: true },
+          inputLabel: { shrink: true },
+        }}
+      >
+        <MenuItem value="">Todos</MenuItem>
+        {tournamentOptions.map(option => (
+          <MenuItem key={option.id} value={option.id}>
+            {option.name}
+          </MenuItem>
+        ))}
+      </TextField>
+    </FilterBar>
+  );
+
+  // Only the very first load (no summary yet) blanks the content to a
+  // skeleton. A later scope change keeps the last numbers on screen and
+  // shows a progress bar, so the filter bar and the open dropdown never
+  // unmount mid-interaction.
+  if (!summary) {
     return (
       <PageShell title="Estadísticas">
+        {filterBar}
         <CardGridSkeleton count={4} />
       </PageShell>
     );
@@ -333,42 +385,9 @@ const StatisticsPage = () => {
 
   return (
     <PageShell title="Estadísticas">
-      <FilterBar
-        ariaLabel="Filtros de estadísticas"
-        onClear={isScoped ? handleClearFilters : undefined}
-      >
-        <TextField
-          select
-          label="Temporada"
-          size="small"
-          value={selectedSeasonId}
-          onChange={handleSeasonChange}
-          sx={{ minWidth: 200 }}
-        >
-          <MenuItem value="">Todas</MenuItem>
-          {(seasons ?? []).map(season => (
-            <MenuItem key={season.id} value={season.id}>
-              {season.name}
-            </MenuItem>
-          ))}
-        </TextField>
+      {filterBar}
 
-        <TextField
-          select
-          label="Torneo"
-          size="small"
-          value={selectedTournamentId}
-          onChange={handleTournamentChange}
-          sx={{ minWidth: 220 }}
-        >
-          <MenuItem value="">Todos</MenuItem>
-          {tournamentOptions.map(option => (
-            <MenuItem key={option.id} value={option.id}>
-              {option.name}
-            </MenuItem>
-          ))}
-        </TextField>
-      </FilterBar>
+      {loading && <LinearProgress sx={{ mb: 1 }} />}
 
       <Grid container spacing={2} sx={{
         mb: 1

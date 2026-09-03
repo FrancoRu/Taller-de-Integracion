@@ -106,6 +106,54 @@ const setupHooks = () => {
   };
 };
 
+describe('StatisticsPage — filter bar UX', () => {
+  it('shows the default option in both scope selects', async () => {
+    setupHooks();
+    render(<StatisticsPage />);
+
+    await screen.findByText('Torneos');
+
+    expect(
+      screen.getByRole('combobox', { name: 'Temporada' })
+    ).toHaveTextContent('Todas');
+    expect(screen.getByRole('combobox', { name: 'Torneo' })).toHaveTextContent(
+      'Todos'
+    );
+  });
+
+  it('keeps the filter bar mounted while a refilter is loading', async () => {
+    const { getTeamsByFiltered } = setupHooks();
+    const user = userEvent.setup();
+    render(<StatisticsPage />);
+
+    await screen.findByText('Torneos');
+
+    // The summary refetch triggered by the tournament pick never resolves.
+    let releaseRefilter: () => void = () => {};
+    getTeamsByFiltered.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          releaseRefilter = () => resolve({ totalCount: 5 });
+        })
+    );
+
+    const select = screen.getByRole('combobox', { name: 'Torneo' });
+    await user.click(select);
+    const listbox = await screen.findByRole('listbox');
+    await user.click(within(listbox).getByText('Apertura'));
+
+    // Only the stats content reloads — the filter bar stays put.
+    expect(
+      screen.getByRole('combobox', { name: 'Temporada' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('combobox', { name: 'Torneo' })
+    ).toBeInTheDocument();
+
+    releaseRefilter();
+  });
+});
+
 describe('StatisticsPage — Torneo filter scoping', () => {
   it('fetches unscoped (global) counts when no torneo/temporada is selected', async () => {
     const { getTeamsByFiltered } = setupHooks();
