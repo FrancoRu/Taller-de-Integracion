@@ -85,8 +85,18 @@ public class SeasonService(ISeasonRepository seasonRepository, ITournamentServic
 
     public async Task<IEnumerable<Season>> GetAllSeasonsAsync()
     {
-        return await seasonRepository.FindAsync(
+        IEnumerable<Season> seasons = await seasonRepository.FindAsync(
             season => true,
             includes: [season => season.Tournaments]);
+
+        // Newest season first for /panel/temporadas and the public list, which
+        // both render this array as-is. Ordered in memory: the list is small
+        // and unpaginated, and passing a PaginatedFilterRequest to FindAsync
+        // (the only other SortBy hook) would also truncate it to the default
+        // page size. Null years sort last; Name is the deterministic tiebreak.
+        return seasons
+            .OrderByDescending(season => season.Year.HasValue)
+            .ThenByDescending(season => season.Year)
+            .ThenBy(season => season.Name, StringComparer.OrdinalIgnoreCase);
     }
 }
