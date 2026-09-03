@@ -131,7 +131,7 @@ const BlogPostDetailPage: React.FC = () => {
   if (!post) {
     return (
       <ErrorPageLayout code={404}>
-        <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography variant="h5" component="h2" sx={{ fontWeight: 600, mb: 1 }}>
           Publicación no encontrada
         </Typography>
         <Typography variant="body1" sx={{ maxWidth: 380 }}>
