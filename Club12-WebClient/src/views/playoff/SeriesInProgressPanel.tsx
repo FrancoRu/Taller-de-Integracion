@@ -157,7 +157,8 @@ export default function SeriesInProgressPanel({
             onCancel={handleClose}
             onConfirm={() => void handleConfirm()}
             confirmLabel="Agregar"
-            disabled={submitting || !matchDate}
+            disabled={submitting}
+            confirmDisabled={!matchDate}
           />
         </DialogActions>
       </Dialog>

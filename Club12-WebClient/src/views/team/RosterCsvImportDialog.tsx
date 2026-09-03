@@ -295,7 +295,8 @@ const RosterCsvImportDialog: React.FC<RosterCsvImportDialogProps> = ({
             onCancel={handleClose}
             onConfirm={() => void handleImport()}
             confirmLabel={`Importar (${pendingRows.length})`}
-            disabled={submitting || pendingRows.length === 0}
+            disabled={submitting}
+            confirmDisabled={pendingRows.length === 0}
           />
         </Stack>
       </DialogContent>

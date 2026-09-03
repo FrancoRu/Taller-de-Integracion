@@ -31,9 +31,9 @@ const buildTournament = (
   seasonName: null,
 });
 
-const renderPage = () =>
+const renderPage = (initialEntry = '/panel/divisiones/crear') =>
   render(
-    <MemoryRouter initialEntries={['/panel/divisiones/crear']}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route path="/panel/divisiones/crear" element={<DivisionCreatePage />} />
       </Routes>
@@ -72,5 +72,41 @@ describe('DivisionCreatePage — tournament picker only offers open-registration
     expect(
       within(listbox).queryByText('Clausura (en curso)')
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('DivisionCreatePage — frozen tournament never traps the admin', () => {
+  it('disables only "Crear", never "Cancelar", when the tournament no longer accepts new divisions', async () => {
+    // Regression test: FormButtons used to take one shared `disabled` flag
+    // for both buttons. This page fed it `submitting || isStructureFrozen`,
+    // so a tournament that already closed registration (Ongoing, Finished,
+    // ...) disabled "Cancelar" too — a permanently blocked form with no way
+    // to leave the page short of the browser's own back button.
+    const frozenTournament = buildTournament(
+      't-ongoing',
+      'Clausura (en curso)',
+      TournamentStatus.Ongoing
+    );
+    mockedUseTournament.mockReturnValue({
+      tournament: null,
+      tournaments: [],
+      addTournament: vi.fn(),
+      createFullTournament: vi.fn(),
+      addFullDivision: vi.fn(),
+      getAllTournamentsByFilter: vi.fn(),
+      getTournamentById: vi.fn().mockResolvedValue(frozenTournament),
+      putTournamentById: vi.fn(),
+      deleteTournamentById: vi.fn(),
+      enrollTeam: vi.fn(),
+      unenrollTeam: vi.fn(),
+      getCompletability: vi.fn(),
+    } as ITournamentContextProps);
+
+    renderPage('/panel/divisiones/crear?tournamentId=t-ongoing');
+
+    await screen.findByText(/ya no está en inscripción abierta/);
+
+    expect(screen.getByRole('button', { name: 'Crear' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Cancelar' })).toBeEnabled();
   });
 });

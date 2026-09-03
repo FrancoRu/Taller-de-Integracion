@@ -63,7 +63,8 @@ const PlayerFormDialog: React.FC<PlayerFormDialogProps> = ({
           onCancel={onClose}
           onConfirm={onConfirm}
           confirmLabel={confirmLabel}
-          disabled={submitting || Boolean(confirmDisabled)}
+          disabled={submitting}
+          confirmDisabled={Boolean(confirmDisabled)}
         />
       </DialogActions>
     </Dialog>
