@@ -321,9 +321,16 @@ export default function JerseySvg({
           fill={primary.ink}
           // A contrasting halo (the opposite of the ink) drawn behind the
           // glyphs keeps the dorsal legible even where it crosses a pattern
-          // in the secondary color (stripes, sash, halves, ...).
+          // in the secondary color (stripes, sash, halves, ...). Every
+          // caller that passes `number` renders this at 28-30px (roster and
+          // scorer lists) — the viewBox is 248 units wide, so that's an
+          // ~8x downscale. At the old strokeWidth (6) the halo shrank to a
+          // sub-pixel fraction of a px and stopped doing anything, which is
+          // exactly why the number read poorly on so many jerseys — it was
+          // riding on raw ink-vs-fill contrast alone. Wide enough here to
+          // stay a solid ~2px ring at those real render sizes.
           stroke={primary.isLight ? '#f5f5f5' : '#0b0f17'}
-          strokeWidth="6"
+          strokeWidth="16"
           strokeLinejoin="round"
           paintOrder="stroke"
         >
