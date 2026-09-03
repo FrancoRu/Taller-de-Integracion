@@ -196,6 +196,42 @@ describe('toLibraryMatches', () => {
     expect(match.legs).toBeUndefined();
   });
 
+  it('keeps a decided bye in the returned array so sibling row/column positions stay correct', () => {
+    // Regression: @g-loot/react-tournament-brackets computes every match's
+    // Y position, and every connector line, purely from its row/column
+    // INDEX — it assumes round N always has exactly twice round N+1's match
+    // count (calculate-match-position.js). Dropping a bye out of the array
+    // here shifts every later sibling's index and desyncs the whole
+    // column's geometry from the actual bracket shape (cards land at the
+    // wrong row, connectors point at the wrong pair) — a bye must stay in
+    // the array; it's hidden at render time instead (BracketMatchLibraryAdapter).
+    const byeMatch = makeMatch({
+      id: guid('m-bye'),
+      stageId: guid('qf'),
+      isFinished: true,
+      homeTeam: makeTeam({ id: guid('team-a'), name: 'A' }),
+      visitorTeam: null,
+      winningTeamId: guid('team-a'),
+      winningTeamName: 'A',
+    });
+    const realMatch = makeMatch({
+      id: guid('m-real'),
+      stageId: guid('qf'),
+      homeTeam: makeTeam({ id: guid('team-b'), name: 'B' }),
+      visitorTeam: makeTeam({ id: guid('team-c'), name: 'C' }),
+    });
+
+    const model: BracketModel = {
+      rounds: [{ stageId: guid('qf'), stageType: StageType.QuarterFinal, matches: [byeMatch, realMatch] }],
+      edges: [],
+    };
+
+    const matches = toLibraryMatches(model);
+
+    expect(matches).toHaveLength(2);
+    expect(matches.map(m => m.id)).toEqual([byeMatch.id, realMatch.id]);
+  });
+
   it('carries the raw match and per-side participant ids for a TBD slot', () => {
     const finalMatch = makeMatch({
       id: guid('m-final'),

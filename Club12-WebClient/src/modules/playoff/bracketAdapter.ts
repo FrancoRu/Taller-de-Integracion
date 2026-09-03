@@ -143,24 +143,26 @@ export function toLibraryMatches(model: BracketModel): PlayoffLibraryMatch[] {
     const nextRound = rounds[roundIndex + 1];
     const roundLabel = translateStageType(round.stageType).toUpperCase();
 
-    return round.matches
-      .map((match, matchIndex) => ({
-        id: match.id,
-        nextMatchId: resolveNextMatchId(matchIndex, edgeTargetsBySource.get(match.id), nextRound),
-        tournamentRoundText: roundLabel,
-        startTime: match.matchDate,
-        state: matchState(match),
-        participants: [toParticipant(match, 'home'), toParticipant(match, 'visitor')],
-        raw: match,
-        legs: round.legsByMatchId?.get(match.id),
-      }))
-      // A walkover (bye) is already decided at seeding time with no real
-      // opponent — showing it as its own bracket card just for a lone team
-      // name and a "BYE" label adds a node that carries no information the
-      // next round's card doesn't already show. `matchIndex` above is still
-      // computed from the UNFILTERED array so sibling matches' fallback
-      // next-round pairing (see resolveNextMatchId) doesn't shift.
-      .filter(libraryMatch => !isBracketBye(libraryMatch.raw));
+    // Every match stays in the array, bye or not: the library computes each
+    // box's Y position — and every connector line — purely from
+    // (rowIndex, columnIndex) assuming round N always has exactly twice
+    // round N+1's match count (see calculate-match-position.js /
+    // connectors.js). Dropping bye entries here shifts the surviving
+    // matches' indices and desyncs that geometry from the actual bracket
+    // shape — cards land at the wrong row, connectors point at the wrong
+    // pair. A bye's card is hidden at render time instead (see
+    // BracketMatchLibraryAdapter), which keeps every index — and therefore
+    // every position — exactly where the library expects it.
+    return round.matches.map((match, matchIndex) => ({
+      id: match.id,
+      nextMatchId: resolveNextMatchId(matchIndex, edgeTargetsBySource.get(match.id), nextRound),
+      tournamentRoundText: roundLabel,
+      startTime: match.matchDate,
+      state: matchState(match),
+      participants: [toParticipant(match, 'home'), toParticipant(match, 'visitor')],
+      raw: match,
+      legs: round.legsByMatchId?.get(match.id),
+    }));
   });
 }
 
