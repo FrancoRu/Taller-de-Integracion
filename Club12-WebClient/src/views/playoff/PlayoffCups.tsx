@@ -87,7 +87,7 @@ export default function PlayoffCups({
               spacing={2}
               sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
             >
-              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+              <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 700 }}>
                 Partidos
               </Typography>
               <ExportCsvButton
@@ -103,7 +103,7 @@ export default function PlayoffCups({
             <Stack spacing={3}>
               {sections.map(({ stage, label, matches: stageMatches }) => (
                 <Box key={stage.id}>
-                  <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 1 }}>
+                  <Typography variant="subtitle2" component="h4" sx={{ color: 'text.secondary', mb: 1 }}>
                     {label}
                   </Typography>
                   <MatchFixtureList matches={stageMatches} seriesById={seriesById} buildHref={buildHref} />
@@ -127,7 +127,7 @@ export default function PlayoffCups({
       <Box>
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 2.5 }}>
           <EmojiEventsIcon sx={{ color: 'primary.main', fontSize: 24 }} />
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          <Typography variant="h6" component="h2" sx={{ fontWeight: 700 }}>
             {topCup.bracketName}
           </Typography>
         </Stack>
@@ -148,7 +148,7 @@ export default function PlayoffCups({
             }}
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+              <Typography variant="subtitle1" component="h2" sx={{ color: 'text.secondary', fontWeight: 600 }}>
                 {group.bracketName}
               </Typography>
             </AccordionSummary>

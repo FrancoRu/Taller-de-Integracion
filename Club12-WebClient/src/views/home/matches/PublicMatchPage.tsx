@@ -185,6 +185,7 @@ export default function PublicMatchPage() {
         <CardContent>
           <Typography
             variant="subtitle1"
+            component="h3"
             sx={{ fontWeight: 700, minWidth: 0, mb: 1.5 }}
             noWrap
           >

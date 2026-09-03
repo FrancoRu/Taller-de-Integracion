@@ -5,7 +5,7 @@ interface SectionHeadingProps {
   children: ReactNode;
   /** Optional trailing content (e.g. a count chip or an action button). */
   action?: ReactNode;
-  /** Semantic element for the heading text. Defaults to `h3`. */
+  /** Semantic element for the heading text. Defaults to `h2`. */
   component?: ElementType;
   /** Optional tint for the accent bar (e.g. a category hue). Defaults to `primary.main`. */
   accentColor?: string;
@@ -17,11 +17,15 @@ interface SectionHeadingProps {
  * tab panels a consistent, scannable subheading instead of a bare line of
  * text. The accent ties the hierarchy to the brand without shouting, and can be
  * tinted (via `accentColor`) to carry a section-specific hue such as a category.
+ *
+ * Defaults to `h2` — literally "one level below h1". Pass `component="h3"`
+ * (or deeper) only when this section is genuinely nested inside another
+ * heading, not directly under the page's own h1.
  */
 export default function SectionHeading({
   children,
   action,
-  component = 'h3',
+  component = 'h2',
   accentColor,
 }: SectionHeadingProps) {
   return (

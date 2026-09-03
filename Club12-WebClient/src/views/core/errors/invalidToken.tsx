@@ -8,6 +8,7 @@ export default function InvalidToken() {
     <ErrorPageLayout code={HttpStatus.Unauthorized}>
       <Typography
         variant="h5"
+        component="h2"
         sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}
       >
         Sesión expirada o inválida

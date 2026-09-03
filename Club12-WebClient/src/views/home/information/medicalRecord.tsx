@@ -63,7 +63,8 @@ export default function MedicalRecord() {
             <Box key={step.label}>
               <Typography
                 variant="h4"
-                sx={{ fontWeight: 700, color: 'primary.main', mb: 0.5 }}
+                component="span"
+                sx={{ display: 'block', fontWeight: 700, color: 'primary.main', mb: 0.5 }}
               >
                 {index + 1}
               </Typography>

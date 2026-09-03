@@ -8,6 +8,7 @@ export default function NotFound() {
     <ErrorPageLayout code={HttpStatus.NotFound}>
       <Typography
         variant="h5"
+        component="h2"
         sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}
       >
         Página no encontrada

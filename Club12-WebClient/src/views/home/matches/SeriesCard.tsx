@@ -64,7 +64,7 @@ export default function SeriesCard({ series, matches, buildHref }: SeriesCardPro
             >
               Serie
             </Typography>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.3 }}>
+            <Typography variant="subtitle1" component="p" sx={{ fontWeight: 700, lineHeight: 1.3 }}>
               {series.homeTeamName} vs {series.visitorTeamName}
             </Typography>
             <Typography variant="caption" sx={{ color: 'text.secondary' }}>

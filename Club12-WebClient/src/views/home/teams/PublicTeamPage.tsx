@@ -116,7 +116,7 @@ function SeasonSelector({
         </FormControl>
       ) : (
         active && (
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          <Typography variant="subtitle1" component="p" sx={{ fontWeight: 600 }}>
             {participationLabel(active)}
           </Typography>
         )

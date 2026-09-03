@@ -32,6 +32,7 @@ const Regulation: React.FC = () => {
         </Typography>
         <Typography
           variant="subtitle1"
+          component="p"
           align="center"
           color="text.secondary"
           sx={{ mb: 4 }}
