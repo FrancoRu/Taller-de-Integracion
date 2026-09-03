@@ -54,7 +54,7 @@ describe('PlayerSanctionEditPage', () => {
 
     renderPage();
 
-    expect(await screen.findByLabelText(/Duración/i)).toBeInTheDocument();
+    expect(await screen.findByRole('spinbutton', { name: /Duración/i })).toBeInTheDocument();
     expect(screen.queryByText('Sanción no encontrada')).not.toBeInTheDocument();
   });
 });

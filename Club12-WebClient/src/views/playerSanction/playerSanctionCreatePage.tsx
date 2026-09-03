@@ -28,6 +28,7 @@ import {
   SanctionSubjectType,
 } from '@/modules/playerSanction/type/playerSanction.d';
 import FormButtons from '@/views/core/components/FormButtons';
+import FieldInfoTooltip from '@/views/core/components/FieldInfoTooltip';
 import SanctionSubjectFields from '@/views/playerSanction/SanctionSubjectFields';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 
@@ -473,7 +474,12 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
                 required
                 fullWidth
                 slotProps={{
-                  htmlInput: { min: 1 }
+                  htmlInput: { min: 1 },
+                  input: {
+                    endAdornment: (
+                      <FieldInfoTooltip title="La duración se expresa en cantidad de fechas (jornadas)." />
+                    ),
+                  },
                 }}
               />
             </Grid>
@@ -512,12 +518,6 @@ const PlayerSanctionCreatePage: React.FC<IPlayerSanctionCreatePageProps> = ({
               />
             </Grid>
           </Grid>
-
-          <Typography variant="body2" sx={{
-            color: "text.secondary"
-          }}>
-            La duración se expresa en cantidad de fechas (jornadas).
-          </Typography>
 
           <Stack direction="row" spacing={1} sx={{
             justifyContent: "flex-end"

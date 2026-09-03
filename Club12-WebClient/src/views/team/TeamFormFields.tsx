@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Button, Stack, TextField, Typography, FormLabel } from '@mui/material';
+import FieldInfoTooltip from '@/views/core/components/FieldInfoTooltip';
 import JerseySvg from '@/views/core/components/JerseySvg';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import { isHexColor } from '@/design/colorName';
@@ -268,10 +269,15 @@ export default function TeamFormFields({
                 onChange={value => onFieldChange('shirtSecondaryColor', value)}
               />
               <Box sx={{ flex: 1 }}>
-                <Typography variant="body2">Color secundario</Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  {hasSecondary ? secondaryValue.toUpperCase() : 'Automático'}
-                </Typography>
+                <Stack direction="row" spacing={0} sx={{ alignItems: 'center' }}>
+                  <Typography variant="body2">Color secundario</Typography>
+                  {!hasSecondary && <FieldInfoTooltip title="Se genera automáticamente si lo dejás vacío." />}
+                </Stack>
+                {hasSecondary && (
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    {secondaryValue.toUpperCase()}
+                  </Typography>
+                )}
               </Box>
               {hasSecondary && (
                 <Button
@@ -290,12 +296,15 @@ export default function TeamFormFields({
                 onChange={value => onFieldChange('shirtTertiaryColor', value)}
               />
               <Box sx={{ flex: 1 }}>
-                <Typography variant="body2">Color terciario</Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  {hasTertiary
-                    ? tertiaryValue.toUpperCase()
-                    : 'Solo lo usan algunos modelos'}
-                </Typography>
+                <Stack direction="row" spacing={0} sx={{ alignItems: 'center' }}>
+                  <Typography variant="body2">Color terciario</Typography>
+                  {!hasTertiary && <FieldInfoTooltip title="Solo lo usan algunos modelos." />}
+                </Stack>
+                {hasTertiary && (
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    {tertiaryValue.toUpperCase()}
+                  </Typography>
+                )}
               </Box>
               {hasTertiary && (
                 <Button

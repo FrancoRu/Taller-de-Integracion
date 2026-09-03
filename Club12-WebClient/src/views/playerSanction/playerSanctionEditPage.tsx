@@ -6,6 +6,7 @@ import { GUID } from '@/modules/core/types/types';
 import { usePlayerSanction } from '@/modules/playerSanction/hook/playerSanction.hook';
 import { IPlayerSanctionEditFormState } from '@/modules/playerSanction/type/playerSanction.d';
 import FormButtons from '@/views/core/components/FormButtons';
+import FieldInfoTooltip from '@/views/core/components/FieldInfoTooltip';
 import PageShell from '@/views/core/components/PageShell';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
@@ -168,9 +169,13 @@ const PlayerSanctionEditPage: React.FC = () => {
                 }
                 required
                 fullWidth
-                helperText="La duración se expresa en fechas (jornadas)."
                 slotProps={{
-                  htmlInput: { min: 1 }
+                  htmlInput: { min: 1 },
+                  input: {
+                    endAdornment: (
+                      <FieldInfoTooltip title="La duración se expresa en fechas (jornadas)." />
+                    ),
+                  },
                 }}
               />
             </Grid>

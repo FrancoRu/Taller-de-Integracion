@@ -3,10 +3,12 @@ import { Box, Button, FormLabel, Stack, TextField, Typography } from '@mui/mater
 import { geocodeAddress } from '@/modules/core/utils/geocoding';
 import { FILTERS_DEBOUNCE_DELAY_LONG_MS } from '@/modules/core/constants/constants';
 import LeafletMap from '@/views/core/components/LeafletMap';
+import FieldInfoTooltip from '@/views/core/components/FieldInfoTooltip';
 import type { VenueFormField, VenueFormState } from '@/views/venue/venues.types';
 
-const COORDINATES_HELPER_TEXT =
+const COORDINATES_INFO_TEXT =
   'Se completan solas al escribir la dirección; podés ajustar el pin en el mapa o las coordenadas a mano.';
+const MAP_INFO_TEXT = 'Hacé click en el mapa o arrastrá el pin para ajustar la ubicación exacta.';
 
 /** Paraná, Entre Ríos — the league's home city, used as a sensible default
  * map center for a brand-new venue with no address/coordinates yet. */
@@ -172,7 +174,10 @@ export default function VenueFormFields({
       />
 
       <Box>
-        <FormLabel sx={{ display: 'block', mb: 1 }}>Ubicación en el mapa</FormLabel>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+          <FormLabel>Ubicación en el mapa</FormLabel>
+          <FieldInfoTooltip title={MAP_INFO_TEXT} />
+        </Box>
         <LeafletMap
           latitude={mapLatitude}
           longitude={mapLongitude}
@@ -180,9 +185,6 @@ export default function VenueFormFields({
           height={280}
           onLocationChange={handlePinMoved}
         />
-        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-          Hacé click en el mapa o arrastrá el pin para ajustar la ubicación exacta.
-        </Typography>
       </Box>
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
@@ -192,7 +194,9 @@ export default function VenueFormFields({
           value={form.latitude}
           onChange={e => onFieldChange('latitude', e.target.value)}
           fullWidth
-          helperText={COORDINATES_HELPER_TEXT}
+          slotProps={{
+            input: { endAdornment: <FieldInfoTooltip title={COORDINATES_INFO_TEXT} /> },
+          }}
         />
         <TextField
           label="Longitud"

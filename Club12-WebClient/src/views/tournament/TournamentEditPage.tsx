@@ -8,6 +8,7 @@ import { useSeason } from '@/modules/season/hook/season.hook';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
 import PageShell from '@/views/core/components/PageShell';
+import FieldInfoTooltip from '@/views/core/components/FieldInfoTooltip';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { IPutTournamentRequest } from '@/modules/tournament/type/tournament';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
@@ -331,7 +332,13 @@ const TournamentEditPage: React.FC = () => {
               label="Temporada"
               value={form.seasonId}
               onChange={handleFormChange}
-              helperText="Agrupá el torneo dentro de una temporada. Podés dejarlo vacío."
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <FieldInfoTooltip title="Agrupá el torneo dentro de una temporada. Podés dejarlo vacío." />
+                  ),
+                },
+              }}
             >
               <MenuItem value="">
                 <em>Sin temporada</em>

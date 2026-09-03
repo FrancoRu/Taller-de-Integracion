@@ -38,6 +38,7 @@ import { TABLE_PAGE_SIZE_OPTIONS } from '@/modules/core/constants/pagination';
 import { FILTER_OPTIONS_PAGE_SIZE } from '@/modules/core/constants/pagination';
 import { usePlayer } from '@/modules/player/hook/player.hook';
 import FormButtons from '@/views/core/components/FormButtons';
+import FieldInfoTooltip from '@/views/core/components/FieldInfoTooltip';
 import { IAddPlayerRequest, IPlayerResponse } from '@/modules/player/type/player.d';
 import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import TableRowActions, { TableRowAction } from '@/views/core/components/TableRowActions';
@@ -890,8 +891,14 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
               value={dorsalValue}
               onChange={e => setDorsalValue(e.target.value)}
               fullWidth
-              helperText="Único por equipo y temporada. Dejar vacío para quitarlo."
-              slotProps={{ htmlInput: { min: 0, max: 99, step: 1 } }}
+              slotProps={{
+                htmlInput: { min: 0, max: 99, step: 1 },
+                input: {
+                  endAdornment: (
+                    <FieldInfoTooltip title="Único por equipo y temporada. Dejar vacío para quitarlo." />
+                  ),
+                },
+              }}
             />
           </Stack>
         </DialogContent>

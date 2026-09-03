@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import { CrossCupConfig, ROUND_ROBIN_LEGS_OPTIONS } from '../types';
 import CupsEditor from './CupsEditor';
+import FieldInfoTooltip from '@/views/core/components/FieldInfoTooltip';
 
 interface CopaCruzadaStepProps {
   value: CrossCupConfig;
@@ -26,23 +27,18 @@ interface CopaCruzadaStepProps {
 export default function CopaCruzadaStep({ value, onChange }: CopaCruzadaStepProps) {
   return (
     <Stack spacing={2}>
-      <FormControlLabel
-        control={
-          <Switch
-            checked={value.enabled}
-            onChange={e => onChange({ ...value, enabled: e.target.checked })}
-          />
-        }
-        label="Incluir una copa cruzada entre zonas"
-      />
-
-      {!value.enabled && (
-        <Typography variant="body2" sx={{
-          color: "text.secondary"
-        }}>
-          Opcional — podés dejarla desactivada y el torneo se arma solo con las zonas del paso anterior.
-        </Typography>
-      )}
+      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={value.enabled}
+              onChange={e => onChange({ ...value, enabled: e.target.checked })}
+            />
+          }
+          label="Incluir una copa cruzada entre zonas"
+        />
+        <FieldInfoTooltip title="Opcional — podés dejarla desactivada y el torneo se arma solo con las zonas del paso anterior." />
+      </Box>
 
       {value.enabled && (
         <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>
