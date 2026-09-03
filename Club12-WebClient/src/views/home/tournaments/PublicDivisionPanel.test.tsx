@@ -10,7 +10,6 @@ import {
 import { IStageResponse, StageType } from '@/modules/stage/type/stage';
 import { IMatchResponse } from '@/modules/match/type/match.d';
 import { MatchType } from '@/modules/core/enum/match/matchType';
-import { IPodium } from '@/modules/champion/type/champion.d';
 import PublicDivisionPanel from '@/views/home/tournaments/PublicDivisionPanel';
 
 const getStagesByFilters = vi.fn().mockResolvedValue({ data: { items: [] } });
@@ -288,27 +287,17 @@ describe('PublicDivisionPanel — division with no playoff phase', () => {
     expect(screen.queryByRole('tab', { name: 'Playoff' })).not.toBeInTheDocument();
   });
 
-  it('crowns 1st place as champion on the standings table once a no-playoff podium is decided', async () => {
-    const podium: IPodium = {
-      divisionId: guid('division-1'),
-      divisionName: 'Zona A',
-      hasPlayoff: false,
-      first: { teamId: guid('team-a'), teamName: 'Equipo A', logoUrl: null },
-      second: { teamId: guid('team-b'), teamName: 'Equipo B', logoUrl: null },
-      third: null,
-    };
-
+  it('crowns 1st place live, even mid-season — a no-playoff division reads its title straight off this table the whole way through, not just once it is decided', async () => {
     render(
       <MemoryRouter>
         <PublicDivisionPanel
           division={division({
             name: 'Zona A',
             isCrossDivisionCup: false,
-            isFinished: true,
+            isFinished: false,
             positions: [position('team-a', 'Equipo A'), position('team-b', 'Equipo B')],
           })}
           teams={[]}
-          podium={podium}
         />
       </MemoryRouter>
     );
@@ -316,15 +305,41 @@ describe('PublicDivisionPanel — division with no playoff phase', () => {
     await waitFor(() => expect(screen.getByTitle('Campeón')).toBeInTheDocument());
   });
 
-  it('does not crown 1st place when the podium came from a playoff bracket', () => {
-    const podium: IPodium = {
-      divisionId: guid('division-1'),
-      divisionName: 'Zona A',
-      hasPlayoff: true,
-      first: { teamId: guid('team-a'), teamName: 'Equipo A', logoUrl: null },
-      second: { teamId: guid('team-b'), teamName: 'Equipo B', logoUrl: null },
-      third: null,
-    };
+  it('does not crown 1st place once stages confirm the division actually has an elimination stage', async () => {
+    getStagesByFilters.mockResolvedValue({
+      data: {
+        items: [
+          {
+            id: guid('stage-group'),
+            name: 'Zona A - Fase de Grupos',
+            slug: 'zona-a-fase-de-grupos',
+            stageType: StageType.Group,
+            isActive: true,
+            isElimination: false,
+            startDate: '2026-01-01T00:00:00Z',
+            endDate: '2026-02-01T00:00:00Z',
+            divisionId: guid('division-1'),
+            order: 0,
+            bestOf: 1,
+            roundRobinLegs: 1,
+          } satisfies IStageResponse,
+          {
+            id: guid('stage-final'),
+            name: 'Zona A - Final',
+            slug: 'zona-a-final',
+            stageType: StageType.Final,
+            isActive: true,
+            isElimination: true,
+            startDate: '2026-02-01T00:00:00Z',
+            endDate: '2026-02-08T00:00:00Z',
+            divisionId: guid('division-1'),
+            order: 1,
+            bestOf: 1,
+            roundRobinLegs: 1,
+          } satisfies IStageResponse,
+        ],
+      },
+    });
 
     render(
       <MemoryRouter>
@@ -332,15 +347,15 @@ describe('PublicDivisionPanel — division with no playoff phase', () => {
           division={division({
             name: 'Zona A',
             isCrossDivisionCup: false,
-            isFinished: true,
+            isFinished: false,
             positions: [position('team-a', 'Equipo A'), position('team-b', 'Equipo B')],
           })}
           teams={[]}
-          podium={podium}
         />
       </MemoryRouter>
     );
 
+    await waitFor(() => expect(getStagesByFilters).toHaveBeenCalled());
     expect(screen.queryByTitle('Campeón')).not.toBeInTheDocument();
   });
 });

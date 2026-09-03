@@ -30,6 +30,7 @@ import { IPodium } from '@/modules/champion/type/champion.d';
 const FETCH_PAGE_SIZE = 100;
 const DEFAULT_SUB_TAB: DivisionSubTab = 'posiciones';
 const VIEW_QUERY_PARAM = 'view';
+const PUBLIC_TOP_SCORERS_LIMIT = 10;
 
 type DivisionSubTab = 'equipos' | 'posiciones' | 'goleadores' | 'partidos' | 'playoff';
 
@@ -281,18 +282,24 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
             positions={division.positions}
             divisionName={division.name}
             qualificationRanges={division.qualificationRanges}
-            // `podium` is only non-null once a champion is actually decided
-            // (see its prop doc above), and `hasPlayoff` tells apart a
-            // podium crowned by a bracket from one read straight off these
-            // standings — exactly the case where 1st place here IS the
-            // champion and deserves the same treatment a playoff final's
-            // winner would get.
-            crownFirstPlace={Boolean(podium && !podium.hasPlayoff)}
+            // Tracks the CURRENT leader live, same as the qualification-range
+            // tinting below it does — not gated on the season being over. A
+            // division with no elimination stage is decided by this table
+            // alone, so 1st place is the one position that matters in this
+            // format the whole way through, not just once it's final.
+            crownFirstPlace={stagesLoaded && !hasPlayoff}
           />
         ))}
 
       {subTab === 'goleadores' && (
-        <DivisionScorersTable divisionId={division.id} divisionName={division.name} />
+        // Public "Goleadores" reads as a highlights list, not a full
+        // division export — capped to the top 10; the admin panel's own
+        // DivisionScorersTable (divisionPage.tsx) keeps the complete ranking.
+        <DivisionScorersTable
+          divisionId={division.id}
+          divisionName={division.name}
+          limit={PUBLIC_TOP_SCORERS_LIMIT}
+        />
       )}
 
       {subTab === 'partidos' &&
