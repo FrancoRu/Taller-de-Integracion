@@ -750,7 +750,7 @@ documentado/esperado y el código real difieren, y alguien tiene que decidir qu�
 
 > **Resueltos (2026-09-02, misma sesión, después de la auditoría)**: los ítems 1-5 de abajo ya
 > fueron corregidos y están en `develop`. **Resueltos (2026-09-03, sesión de reglas de
-> habilitación)**: los ítems 8-9.
+> habilitación)**: los ítems 8-10. Épica 24 completa — no quedan ítems abiertos.
 
 1. ~~**Series playoff Best-of-N no se generan en producción (HU-82/HU-46).**~~ Resuelto:
    `StageService.SeedPlayoffCupsAsync`/`SeedKnockoutStageAsync`/`SeedMultiGroupCrossCupStageAsync`
@@ -766,8 +766,12 @@ documentado/esperado y el código real difieren, y alguien tiene que decidir qu�
    `tournamentStatusTransitions.ts` incluye `Ongoing → RegistrationClosed`.
 5. ~~**Validación del wizard permite copa cruzada sin playoff (HU-47).**~~ Resuelto:
    `validateCrossCupStep` rechaza una copa cruzada con `cups.length === 0`.
-6. **`TournamentsPage.tsx` (listado plano de torneos) quedó huérfano (HU-29).** Sigue existiendo
-   como código/ruta pero no se llega a él desde ningún link del panel. Sigue abierto.
+6. ~~**`TournamentsPage.tsx` (listado plano de torneos) quedó huérfano (HU-29).**~~ Resuelto
+   (2026-09-02, commit `7eb4dd0`): se eliminaron las tres rutas huérfanas (`/torneos`,
+   `/panel/torneos`, `/panel/divisiones` sin scope) — cada "Volver"/cancelar ahora usa
+   `navigate(-1)` en vez de apuntar a una de estas rutas muertas. Esta nota había quedado
+   desactualizada en la pasada del 2026-09-03: el archivo ya no existe en el repo, solo el texto no
+   se había corregido.
 7. ~~`Docs/QA-CHECKLIST-E2E.md`~~ — el checklist se retiró del repo (ya cumplió su función; el E2E
    contra staging que documentaba se completó en la sesión del 2026-09-03, ver ítems 8-10). Si se
    necesita un nuevo barrido E2E, generar uno nuevo desde cero contra las rutas reales, no reflotar
@@ -784,31 +788,32 @@ documentado/esperado y el código real difieren, y alguien tiene que decidir qu�
    el roster (sí para los goleadores). El dato real en base siempre fue correcto — solo lo que
    mostraba la respuesta del partido estaba mal. Corregido con un paso `AfterMap` en
    `MatchProfile.cs` + el include faltante en `MatchRepository.GetDetailByIdOrSlugAsync`.
-10. **Datos de seed sembrados antes de la feature de ficha médica quedaron con TODOS los jugadores
-    en `Pending` (HU-57/HU-118/HU-119).** El backfill normal de `DataSeeder` (que sube un archivo real
-    para registros ya `Approved`) no alcanza a estos: nunca llegaron a `Approved` en primer lugar. Se
-    corrigió el dato en vivo de staging con una acción puntual (endpoint temporal, ya retirado del
-    código) — pero si se vuelve a sembrar una base desde un backup viejo o una migración anterior a
-    esta feature, el mismo síntoma puede repetirse. No hay una guarda automática contra esto todavía.
+10. ~~**Datos de seed sembrados antes de la feature de ficha médica quedaron con TODOS los jugadores
+    en `Pending` (HU-57/HU-118/HU-119).**~~ Resuelto (2026-09-03):
+    `MedicalRecordSeedBackfiller.BackfillMedicalRecordsAsync` ahora también toma como candidatos los
+    registros `Pending`/`Rejected` cuyo `CreatedBy == AuditConstants.SystemUser` — un valor que solo
+    escribe el seeder, nunca una acción real de admin — y los aprueba junto con subirles el archivo.
+    Un registro creado por un admin real, sin importar su estado, nunca entra en este camino. Esto
+    hace que el self-heal automático de `DataSeeder.SeedAsync` (que ya corre solo con que
+    `Seed:Enabled=true`, sin flags extra) cubra tanto una base nunca migrada a la feature de ficha
+    médica como una restaurada desde un backup viejo — no hace falta una acción puntual como la que
+    se usó para arreglar el dato en vivo esta sesión.
 
 ---
 
 ## Resumen
 
-- **Test counts**: verificado 2026-09-03: **824 tests backend, 725 tests frontend**, ambos en verde
-  (la cifra "808/645" de la pasada anterior ya está vieja). Correr
+- **Test counts**: verificado 2026-09-03: **826 tests backend, 725 tests frontend**, ambos en verde
+  (la cifra "808/645" de dos pasadas atrás ya está vieja). Correr
   `dotnet test Club12-Backend/Solution/Club12.sln` y `npx vitest run` (desde `Club12-WebClient`)
   para el número vigente en cualquier momento — no confiar en un número congelado en este documento.
-- **Historias obsoletas/reemplazadas**: HU-29 (listado plano de torneos, huérfano), HU-41/HU-42
-  (superadas por HU-106/107/108, sin cambios respecto a la nota original), HU-64 (disparador de
-  fixture mal descripto), HU-97 (eliminada a propósito).
-- **Brechas ya resueltas (ver Épica 24, ítems tachados)**: HU-82 (series BO-N y avance de bracket),
-  HU-101 (auditoría de restore), HU-35 (mapa de transiciones stale), HU-47 (validación de copa
-  cruzada), HU-69 (`MatchId` required bloqueaba toda carga de resultado), HU-62 (roster mostraba "No
-  habilitado" para todos).
-- **Brechas abiertas hoy**: HU-29 (listado huérfano, ítem 6) y el riesgo de datos de seed
-  pre-ficha-médica quedando en `Pending` si se restaura una base vieja (ítem 10) — ninguna de las
-  dos bloquea el uso normal de la app hoy.
+- **Historias obsoletas/reemplazadas**: HU-29 (listado plano de torneos, eliminado — ver Épica 24
+  ítem 6), HU-41/HU-42 (superadas por HU-106/107/108, sin cambios respecto a la nota original),
+  HU-64 (disparador de fixture mal descripto), HU-97 (eliminada a propósito).
+- **Épica 24 (deuda técnica) completa**: los 10 ítems están resueltos, ninguno queda abierto. Los
+  últimos tres en cerrarse (2026-09-03): HU-69 (`MatchId` required bloqueaba toda carga de
+  resultado), HU-62 (roster mostraba "No habilitado" para todos por un mapeo faltante), y el
+  self-heal de datos de seed viejos (ítem 10, guarda por `CreatedBy == SystemUser`).
 - **Cambio funcional más grande de esta pasada (2026-09-03)**: las tres reglas de habilitación
   alrededor de la carga de resultados — HU-118 (umbral de 4 habilitados para cargar un resultado
   normal) y HU-119 (mismo umbral para poder iniciar el torneo) — más la corrección del mensaje de

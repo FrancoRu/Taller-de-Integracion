@@ -1,5 +1,6 @@
 using Application.Interfaces.Storage;
 
+using Domain.Constants;
 using Domain.Entities.Models;
 using Domain.Enums;
 
@@ -27,6 +28,15 @@ namespace Infrastructure.Persistance;
 /// out from <see cref="DataSeeder"/> so a caller that only needs this step
 /// doesn't have to satisfy <c>SupabaseHelper</c>'s live-Supabase constructor
 /// requirement, which this step never touches.
+///
+/// Also approves any seeder-created registration still stuck
+/// <c>Pending</c>/<c>Rejected</c> (identified by
+/// <c>CreatedBy == AuditConstants.SystemUser</c> — never a real admin's
+/// registration) once it gets a real file. This is what makes a database
+/// seeded before the Approved-by-default seed logic existed (or restored
+/// from a backup/migration that predates it) self-heal on the next startup
+/// instead of leaving every seeded player stuck not-habilitado forever
+/// (Épica 24, ítem 10 of historias-de-usuario.md).
 /// </summary>
 public sealed class MedicalRecordSeedBackfiller(
     ApplicationDBContext db,
@@ -115,8 +125,13 @@ public sealed class MedicalRecordSeedBackfiller(
         // The per-row IsStoredReference check below is the authoritative
         // skip-vs-upload decision — the same predicate the read sites and the
         // approve-time write guard use, so the three can never drift.
+        // The CreatedBy == SystemUser branch is what lets a seeder-created
+        // Pending/Rejected row self-heal too (Épica 24, ítem 10) — safe
+        // because that value is never written by a real admin action, only
+        // by the seeder itself.
         List<PlayerTeamRegistration> candidates = await db.PlayerTeamRegistrations
-            .Where(r => r.MedicalRecordStatus == MedicalRecordStatus.Approved
+            .Where(r => (r.MedicalRecordStatus == MedicalRecordStatus.Approved
+                    || r.CreatedBy == AuditConstants.SystemUser)
                 && (r.MedicalRecordFileUrl == null
                     || r.MedicalRecordFileUrl == ""
                     || r.MedicalRecordFileUrl.StartsWith(PlayerTeamRegistration.LegacyReferencePrefix)))
@@ -140,6 +155,12 @@ public sealed class MedicalRecordSeedBackfiller(
 
                 registration.MedicalRecordFileUrl = objectPath;
                 registration.MedicalRecordFileName = fileName;
+                if (registration.MedicalRecordStatus != MedicalRecordStatus.Approved)
+                {
+                    registration.MedicalRecordStatus = MedicalRecordStatus.Approved;
+                    registration.MedicalRecordReviewReason = null;
+                    registration.MedicalRecordReviewedAt = DateTime.UtcNow;
+                }
                 uploaded++;
                 pending++;
             }

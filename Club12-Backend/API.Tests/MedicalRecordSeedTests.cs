@@ -1,5 +1,6 @@
 using Application.Interfaces.Storage;
 
+using Domain.Constants;
 using Domain.Entities.Models;
 using Domain.Enums;
 
@@ -125,6 +126,53 @@ public class MedicalRecordSeedTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task SeedMedicalRecords_SeederCreatedPendingRegistration_IsApprovedAndUploaded()
+    {
+        // Épica 24, ítem 10: a database seeded before the Approved-by-default
+        // seed logic existed (or restored from an old backup) has every
+        // registration stuck Pending. Only a SEEDER-created row (CreatedBy ==
+        // AuditConstants.SystemUser) self-heals — never a real admin's.
+        using TempPdfFile pdf = new();
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        PlayerTeamRegistration registration = await SeedRegistrationAsync(
+            db, MedicalRecordStatus.Pending, createdBy: AuditConstants.SystemUser);
+        FakeMedicalRecordStorage storage = new();
+
+        await RunSeedMedicalRecordsAsync(db, storage, pdf.Path);
+
+        Assert.Contains((registration.TeamId, registration.PlayerId), storage.StoredCalls);
+        PlayerTeamRegistration? reloaded = await db.PlayerTeamRegistrations
+            .AsNoTracking().SingleAsync(r => r.Id == registration.Id);
+        Assert.Equal(MedicalRecordStatus.Approved, reloaded!.MedicalRecordStatus);
+        Assert.NotNull(reloaded.MedicalRecordFileUrl);
+        Assert.NotNull(reloaded.MedicalRecordReviewedAt);
+    }
+
+    [Fact]
+    public async Task SeedMedicalRecords_RealAdminPendingRegistration_IsUntouched()
+    {
+        // The exact opposite: a Pending row created by a real admin action
+        // (not the seeder) must never be silently auto-approved.
+        using TempPdfFile pdf = new();
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        PlayerTeamRegistration registration = await SeedRegistrationAsync(
+            db, MedicalRecordStatus.Pending, createdBy: "admin@club12.com");
+        FakeMedicalRecordStorage storage = new();
+
+        await RunSeedMedicalRecordsAsync(db, storage, pdf.Path);
+
+        Assert.DoesNotContain((registration.TeamId, registration.PlayerId), storage.StoredCalls);
+        PlayerTeamRegistration? reloaded = await db.PlayerTeamRegistrations
+            .AsNoTracking().SingleAsync(r => r.Id == registration.Id);
+        Assert.Equal(MedicalRecordStatus.Pending, reloaded!.MedicalRecordStatus);
+        Assert.Null(reloaded.MedicalRecordFileUrl);
+    }
+
+    [Fact]
     public async Task SeedMedicalRecords_MissingPdfPath_WarnsAndSkips_ZeroUploads()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
@@ -152,8 +200,12 @@ public class MedicalRecordSeedTests : IClassFixture<CustomWebApplicationFactory>
         return backfiller.BackfillMedicalRecordsAsync(medicalRecordPath);
     }
 
-    private static async Task<PlayerTeamRegistration> SeedApprovedRegistrationAsync(
-        ApplicationDBContext db, string? fileUrl)
+    private static Task<PlayerTeamRegistration> SeedApprovedRegistrationAsync(
+        ApplicationDBContext db, string? fileUrl) =>
+        SeedRegistrationAsync(db, MedicalRecordStatus.Approved, createdBy: "test", fileUrl);
+
+    private static async Task<PlayerTeamRegistration> SeedRegistrationAsync(
+        ApplicationDBContext db, MedicalRecordStatus status, string createdBy, string? fileUrl = null)
     {
         Tournament tournament = new()
         {
@@ -204,9 +256,9 @@ public class MedicalRecordSeedTests : IClassFixture<CustomWebApplicationFactory>
             PlayerId = player.Id,
             TeamId = team.Id,
             TournamentId = tournament.Id,
-            MedicalRecordStatus = MedicalRecordStatus.Approved,
+            MedicalRecordStatus = status,
             MedicalRecordFileUrl = fileUrl,
-            CreatedBy = "test",
+            CreatedBy = createdBy,
         };
         db.PlayerTeamRegistrations.Add(registration);
         await db.SaveChangesAsync();

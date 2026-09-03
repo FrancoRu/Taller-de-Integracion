@@ -137,7 +137,7 @@ cd Club12-WebClient && pnpm run test
 
 ## Estado del proyecto
 
-- **Backend**: build sin errores ni advertencias (`dotnet build`), 824 tests automatizados en verde (al 2026-09-03; correr `dotnet test Club12-Backend/Solution/Club12.sln` para el número actual).
+- **Backend**: build sin errores ni advertencias (`dotnet build`), 826 tests automatizados en verde (al 2026-09-03; correr `dotnet test Club12-Backend/Solution/Club12.sln` para el número actual).
 - **Frontend**: sin errores de lint, 725 tests automatizados en verde (al 2026-09-03; correr `npx vitest run` para el número actual).
 - Reglas de negocio, cobertura funcional detallada y contexto operativo (gotchas de desarrollo): ver [Docs/ESTADO-Y-REGLAS.md](./Docs/ESTADO-Y-REGLAS.md).
 
