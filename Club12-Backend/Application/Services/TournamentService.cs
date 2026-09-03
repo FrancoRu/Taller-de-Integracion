@@ -448,8 +448,13 @@ public class TournamentService(
                 registration => registration.TournamentId == tournamentId,
                 includes: [registration => registration.Team!])];
 
-        Dictionary<Guid, int> playerCountsByTeam = (await unitOfWork.PlayerTeamRegistrationRepository.FindAsync(
+        // Only HABILITADO players count toward the minimum (HU-109 + owner's
+        // "no se puede arrancar torneos sin al menos 4 habilitados" rule) — a
+        // registration that is merely on the roster but Pending/Rejected, or
+        // Approved with no real stored file, could never legally play.
+        Dictionary<Guid, int> habilitadoPlayerCountsByTeam = (await unitOfWork.PlayerTeamRegistrationRepository.FindAsync(
                 registration => registration.TournamentId == tournamentId))
+            .Where(registration => registration.IsHabilitado)
             .GroupBy(registration => registration.TeamId)
             .ToDictionary(group => group.Key, group => group.Count());
 
@@ -465,7 +470,7 @@ public class TournamentService(
             CreatedBy = AuditConstants.SystemUser,
         };
 
-        return TournamentCompletabilityValidator.Validate(graph, registrations, playerCountsByTeam);
+        return TournamentCompletabilityValidator.Validate(graph, registrations, habilitadoPlayerCountsByTeam);
     }
 
     /// <summary>
@@ -487,7 +492,7 @@ public class TournamentService(
             CompletabilityIssueCodes.CrossCupGroupTooFewTeams =>
                 $"cross-cup '{issue.DivisionName}' group has {issue.AssignedTeams} team(s), needs at least {TournamentCompletabilityValidator.MinTeamsPerZone}",
             CompletabilityIssueCodes.TeamTooFewPlayers =>
-                $"team '{issue.TeamName}' has {issue.PlayerCount} player(s), needs at least {TournamentCompletabilityValidator.MinPlayersPerTeam}",
+                $"team '{issue.TeamName}' has {issue.PlayerCount} habilitado player(s), needs at least {TournamentCompletabilityValidator.MinPlayersPerTeam}",
             _ => issue.Code,
         }));
     }

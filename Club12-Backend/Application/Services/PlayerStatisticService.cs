@@ -5,6 +5,7 @@ using Application.Interfaces.Services;
 using Application.Utils.Constants;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.MatchResult;
+using Application.Utils.Helper.Tournament;
 
 using Domain.Constants;
 using Domain.Entities.Models;
@@ -121,6 +122,7 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork, IStageService stageS
         Team teamEntity = (teamIsHome ? match.HomeTeam : match.VisitorTeam)
             ?? throw new InvalidOperationException(ErrorMessages.MatchSheet.TeamNotInMatch(request.TeamId));
 
+        await EnsureTeamMeetsHabilitadoMinimumAsync(teamEntity);
         await ValidateRosterEligibilityAsync(request.Scores, request.TeamId, teamEntity);
 
         await ReplaceTeamPointsForMatchAsync(request.MatchId, request.TeamId);
@@ -173,6 +175,9 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork, IStageService stageS
         Team visitorTeam = match.VisitorTeam
             ?? throw new InvalidOperationException(ErrorMessages.MatchSheet.MatchMissingTeams(request.MatchId));
 
+        await EnsureTeamMeetsHabilitadoMinimumAsync(homeTeam);
+        await EnsureTeamMeetsHabilitadoMinimumAsync(visitorTeam);
+
         await ValidateRosterEligibilityAsync(request.HomeScores, homeTeam.Id, homeTeam);
         await ValidateRosterEligibilityAsync(request.VisitorScores, visitorTeam.Id, visitorTeam);
 
@@ -211,6 +216,35 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork, IStageService stageS
             Type = StatisticType.Points,
             CreatedBy = teamEntity.UpdatedBy ?? teamEntity.CreatedBy ?? AuditConstants.SystemUser,
         })];
+
+    /// <summary>
+    /// Enforces the walkover threshold: a team fielding fewer than
+    /// <see cref="TournamentCompletabilityValidator.MinPlayersPerTeam"/>
+    /// HABILITADO players for this season can never legally field a lineup,
+    /// so its match can't be recorded as a normal result — it must be loaded
+    /// as a walkover instead (<see cref="IMatchService.LoadWalkOverAsync"/>).
+    /// Checked independently of which players the sheet actually lists — a
+    /// team already below the threshold fails this even with an empty sheet.
+    /// </summary>
+    private async Task EnsureTeamMeetsHabilitadoMinimumAsync(Team teamEntity)
+    {
+        if (teamEntity.TournamentId is null)
+        {
+            return;
+        }
+
+        Guid tournamentId = teamEntity.TournamentId.Value;
+
+        int habilitadoCount = (await _playerTeamRegistrationRepository.FindAsync(
+                registration => registration.TeamId == teamEntity.Id && registration.TournamentId == tournamentId))
+            .Count(registration => registration.IsHabilitado);
+
+        if (habilitadoCount < TournamentCompletabilityValidator.MinPlayersPerTeam)
+        {
+            throw new InvalidOperationException(
+                ErrorMessages.MatchSheet.TeamRequiresWalkOver(teamEntity.Name, habilitadoCount));
+        }
+    }
 
     /// <summary>
     /// Ensures every listed player is registered to the team for the match's

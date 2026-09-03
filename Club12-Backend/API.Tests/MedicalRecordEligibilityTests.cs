@@ -386,6 +386,8 @@ public class MedicalRecordEligibilityTests : IClassFixture<CustomWebApplicationF
             CreatedBy = "test",
         });
         await db.SaveChangesAsync();
+        await SeedHabilitadoFillersAsync(db, teamB, tournamentB.Id);
+        await SeedHabilitadoFillersAsync(db, matchB.VisitorTeam!, tournamentB.Id);
 
         // Season B eligibility is independent: the player is NOT eligible there.
         InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
@@ -447,7 +449,34 @@ public class MedicalRecordEligibilityTests : IClassFixture<CustomWebApplicationF
 
         Match match = await SeedFinishedMatchRowAsync(db, team, stage, homeScore);
 
+        // Baseline habilitado padding (owner's walkover-threshold rule,
+        // HU-73): these tests target the SINGLE player under test's own
+        // eligibility, so both teams need >= 4 habilitado players of their
+        // own to avoid tripping the team-wide walkover gate instead.
+        await SeedHabilitadoFillersAsync(db, team, tournament.Id);
+        await SeedHabilitadoFillersAsync(db, match.VisitorTeam!, tournament.Id);
+
         return new Fixture(player.Id, team.Id, tournament.Id, match.Id);
+    }
+
+    private static async Task SeedHabilitadoFillersAsync(
+        ApplicationDBContext db, Team team, Guid tournamentId, int count = 4)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            Player filler = await SeedPlayerAsync(db, team);
+            db.PlayerTeamRegistrations.Add(new PlayerTeamRegistration
+            {
+                PlayerId = filler.Id,
+                TeamId = team.Id,
+                TournamentId = tournamentId,
+                MedicalRecordStatus = MedicalRecordStatus.Approved,
+                MedicalRecordFileUrl = $"{team.Id}/{filler.Id}/{Guid.NewGuid()}.pdf",
+                CreatedBy = "test",
+            });
+        }
+
+        await db.SaveChangesAsync();
     }
 
     private static async Task<Match> SeedFinishedMatchRowAsync(

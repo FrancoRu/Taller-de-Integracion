@@ -68,15 +68,6 @@ public static class ConfigurationKeys
         public const string MedicalRecordPath = "Seed:MedicalRecordPath";
 
         /// <summary>
-        /// Bypasses the skip-if-teams-exist guard so the medical-records
-        /// backfill step can run as a standalone targeted backfill against an
-        /// already-seeded database, without a full <see cref="Reset"/> wipe.
-        /// The step also runs during a normal reset seed regardless of this
-        /// flag (medical-records-storage-eligibility, Part 3, ADR #8).
-        /// </summary>
-        public const string MedicalRecords = "Seed:MedicalRecords";
-
-        /// <summary>
         /// How many consecutive seasons of history the startup DataSeeder
         /// builds, counting backwards from the most recent one. 1 (the
         /// default) keeps the single-season dataset; higher values produce a

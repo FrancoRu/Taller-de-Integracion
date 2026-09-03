@@ -369,6 +369,12 @@ public static class ErrorMessages
         {
             return $"El jugador {playerId} no está habilitado (le falta la inscripción aprobada o tiene una sanción activa).";
         }
+
+        public static string TeamRequiresWalkOver(string teamName, int habilitadoCount)
+        {
+            return $"{teamName} tiene {habilitadoCount} jugador(es) habilitado(s) (mínimo 4), así que este partido no se puede " +
+                "cargar con un resultado normal. Cargalo como walkover.";
+        }
     }
 
     public static class MedicalRecord

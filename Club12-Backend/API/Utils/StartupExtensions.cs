@@ -78,6 +78,7 @@ public static class StartupExtensions
         }
         services.AddDbContext<ApplicationDBContext>(options => options.UseNpgsql(connectionString, ConfigureNpgsql));
         services.AddScoped<IClub12DBContext, ApplicationDBContext>();
+        services.AddScoped<MedicalRecordSeedBackfiller>();
         services.AddScoped<DataSeeder>();
         services.AddScoped<IDataMaintenanceService, DataMaintenanceService>();
 
@@ -190,13 +191,11 @@ public static class StartupExtensions
             bool reset = configuration.GetValue<bool>(ConfigurationKeys.Seed.Reset);
             string? logosPath = configuration[ConfigurationKeys.Seed.LogosPath];
             string? medicalRecordPath = configuration[ConfigurationKeys.Seed.MedicalRecordPath];
-            bool medicalRecords = configuration.GetValue<bool>(ConfigurationKeys.Seed.MedicalRecords);
             int seasons = configuration.GetValue(ConfigurationKeys.Seed.Seasons, 1);
             int playersPerTeam = configuration.GetValue(
                 ConfigurationKeys.Seed.PlayersPerTeam, SampleTournamentBuilder.DefaultPlayersPerTeam);
             DataSeeder dataSeeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
-            await dataSeeder.SeedAsync(
-                reset, logosPath, medicalRecordPath, medicalRecords, seasons, playersPerTeam);
+            await dataSeeder.SeedAsync(reset, logosPath, medicalRecordPath, seasons, playersPerTeam);
         }
     }
 

@@ -148,7 +148,38 @@ public class TournamentCompletabilityGuardTests : IClassFixture<CustomWebApplica
 
         Team shortTeam = await SeedTeamAsync(db, tournament.Id);
         await AssignAndEnrollAsync(db, tournament, group, shortTeam);
-        await SeedPlayersAsync(db, shortTeam, tournament, count: 4);
+        await SeedPlayersAsync(db, shortTeam, tournament, count: 3);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => tournamentService.ChangeStatusAsync(tournament.Id, TournamentStatus.Ongoing));
+
+        Tournament reloaded = await db.Tournaments.AsNoTracking().SingleAsync(t => t.Id == tournament.Id);
+        Assert.Equal(TournamentStatus.RegistrationClosed, reloaded.Status);
+        Assert.Equal(0, await db.Matches.CountAsync(m => m.StageId == group.Id));
+    }
+
+    [Fact]
+    public async Task ChangeStatusIntoOngoing_TeamRegisteredButNotHabilitado_IsBlockedAndKeepsStatus()
+    {
+        // Regression for the completability guard counting raw roster size
+        // instead of HABILITADO players: a team can have plenty of registered
+        // players and still be blocked from starting if none of them have an
+        // approved medical record with a real stored file.
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        ITournamentService tournamentService = scope.ServiceProvider.GetRequiredService<ITournamentService>();
+
+        Tournament tournament = await SeedTournamentAsync(db, TournamentStatus.RegistrationClosed);
+        Division zone = await SeedDivisionAsync(db, tournament, crossCup: false);
+        Stage group = await SeedGroupStageAsync(db, zone);
+
+        Team fullTeam = await SeedTeamAsync(db, tournament.Id);
+        await AssignAndEnrollAsync(db, tournament, group, fullTeam);
+        await SeedPlayersAsync(db, fullTeam, tournament, count: 5);
+
+        Team notHabilitadoTeam = await SeedTeamAsync(db, tournament.Id);
+        await AssignAndEnrollAsync(db, tournament, group, notHabilitadoTeam);
+        await SeedPlayersAsync(db, notHabilitadoTeam, tournament, count: 8, habilitado: false);
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => tournamentService.ChangeStatusAsync(tournament.Id, TournamentStatus.Ongoing));
@@ -383,7 +414,16 @@ public class TournamentCompletabilityGuardTests : IClassFixture<CustomWebApplica
         await db.SaveChangesAsync();
     }
 
-    private static async Task SeedPlayersAsync(ApplicationDBContext db, Team team, Tournament tournament, int count)
+    /// <summary>
+    /// Seeds HABILITADO registrations by default (Approved medical record with
+    /// a real stored file reference) — the completability guard now counts
+    /// only habilitado players, so tests exercising the "healthy" completable
+    /// path need registrations that actually count. Pass
+    /// <paramref name="habilitado"/>: false to seed merely-registered players
+    /// that do NOT count, for the rule's own regression coverage.
+    /// </summary>
+    private static async Task SeedPlayersAsync(
+        ApplicationDBContext db, Team team, Tournament tournament, int count, bool habilitado = true)
     {
         for (int i = 0; i < count; i++)
         {
@@ -407,6 +447,8 @@ public class TournamentCompletabilityGuardTests : IClassFixture<CustomWebApplica
                 PlayerId = player.Id,
                 TeamId = team.Id,
                 TournamentId = tournament.Id,
+                MedicalRecordStatus = habilitado ? MedicalRecordStatus.Approved : MedicalRecordStatus.Pending,
+                MedicalRecordFileUrl = habilitado ? $"medical-records-storage/{Guid.NewGuid()}.pdf" : null,
                 CreatedBy = "test",
             });
         }

@@ -141,7 +141,7 @@ public class TournamentCompletabilityValidatorTests
     }
 
     [Fact]
-    public void Validate_TeamWithFewerThanFivePlayers_FiresTeamTooFewPlayers()
+    public void Validate_TeamWithFewerThanFourHabilitadoPlayers_FiresTeamTooFewPlayers()
     {
         Tournament tournament = NewTournament();
         Team t1 = MakeTeam("Alpha");
@@ -151,11 +151,11 @@ public class TournamentCompletabilityValidatorTests
         IReadOnlyList<CompletabilityIssue> issues = CompletabilityValidator.Validate(
             tournament,
             [Reg(tournament, t1), Reg(tournament, t2)],
-            playerCountsByTeam: new Dictionary<Guid, int> { [t1.Id] = 5, [t2.Id] = 4 });
+            playerCountsByTeam: new Dictionary<Guid, int> { [t1.Id] = 4, [t2.Id] = 3 });
 
         CompletabilityIssue issue = Assert.Single(issues, i => i.Code == CompletabilityIssueCodes.TeamTooFewPlayers);
         Assert.Equal("Bravo", issue.TeamName);
-        Assert.Equal(4, issue.PlayerCount);
+        Assert.Equal(3, issue.PlayerCount);
     }
 
     [Fact]
