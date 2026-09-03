@@ -38,8 +38,13 @@ const CREST_SIZE = 88;
 /** Accessible visually-hidden style (screen-reader-only). */
 const visuallyHidden = {
   position: 'absolute',
-  width: 1,
-  height: 1,
+  // MUI's sx sizing system treats a bare 0-1 number for width/height as a
+  // PERCENTAGE (`1` -> `100%`), not a px value — so this was rendering the
+  // "hidden" h1 at the full container width all along, 100% wide and just
+  // clipped, which still pushed the page's scrollWidth past the viewport
+  // on mobile. String values opt out of that conversion.
+  width: '1px',
+  height: '1px',
   padding: 0,
   margin: -1,
   overflow: 'hidden',
