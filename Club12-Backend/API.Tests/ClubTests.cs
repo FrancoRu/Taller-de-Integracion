@@ -128,6 +128,42 @@ public class ClubTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     /// <summary>
+    /// Club history returns each team's seasons ordered by the tournament's
+    /// start date, most recent first, and every season entry carries that
+    /// start date so the history page can sort a flattened row list.
+    /// </summary>
+    [Fact]
+    public async Task GetClubHistory_OrdersSeasonsByStartDateDescending()
+    {
+        using IServiceScope seedScope = _factory.Services.CreateScope();
+        ApplicationDBContext seedDb = seedScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        DateTime older = new(2025, 3, 1, 0, 0, 0, DateTimeKind.Utc);
+        DateTime newer = new(2027, 3, 1, 0, 0, 0, DateTimeKind.Utc);
+        Tournament seasonOlder = await SeedTournamentAsync(seedDb, "Ordering Older", older);
+        Tournament seasonNewer = await SeedTournamentAsync(seedDb, "Ordering Newer", newer);
+
+        Team team = await SeedTeamAsync(
+            seedDb, name: $"Sorting FC {Guid.NewGuid()}", tournamentId: seasonOlder.Id);
+        // Registered in the OLDER tournament first, then the newer one — so
+        // insertion order is the opposite of the expected result.
+        await SeedTournamentRegistrationAsync(seedDb, team, seasonOlder);
+        await SeedTournamentRegistrationAsync(seedDb, team, seasonNewer);
+
+        await BackfillAsync();
+
+        Team linked = await ReadTeamAsync(team.Id);
+        ClubHistoryResponse? history = await GetHistoryAsync(linked.ClubId!.Value.ToString());
+
+        Assert.NotNull(history);
+        ClubTeamSeasonResponse entry = history!.Teams.Single(t => t.TeamId == team.Id);
+
+        Assert.Equal([newer, older], entry.Seasons.Select(season => season.StartDate));
+        Assert.Equal(newer, entry.Seasons.Single(s => s.TournamentId == seasonNewer.Id).StartDate);
+        Assert.Equal(older, entry.Seasons.Single(s => s.TournamentId == seasonOlder.Id).StartDate);
+    }
+
+    /// <summary>
     /// A newly created team is linked to a club immediately — the roster
     /// import feature (HU-53) must have a club history to search from day
     /// one, not only after someone remembers to run the bulk backfill.
@@ -226,17 +262,18 @@ public class ClubTests : IClassFixture<CustomWebApplicationFactory>
         return team;
     }
 
-    private static async Task<Tournament> SeedTournamentAsync(ApplicationDBContext db, string name)
+    private static async Task<Tournament> SeedTournamentAsync(
+        ApplicationDBContext db, string name, DateTime? startDate = null)
     {
-        DateTime startDate = DateTime.UtcNow.Date.AddDays(30);
+        DateTime start = startDate ?? DateTime.UtcNow.Date.AddDays(30);
 
         Tournament tournament = new()
         {
             Description = $"{name} description",
             Name = $"{name}-{Guid.NewGuid()}",
             Slug = $"{name.ToLowerInvariant().Replace(' ', '-')}-{Guid.NewGuid()}",
-            TeamRegistrationDeadline = startDate.AddDays(-1),
-            StartDate = startDate,
+            TeamRegistrationDeadline = start.AddDays(-1),
+            StartDate = start,
             Status = TournamentStatus.OpenForRegistration,
             Divisions = [],
             Teams = [],

@@ -158,10 +158,10 @@ public class ClubService(IUnitOfWork unitOfWork) : IClubService
 
         List<Guid> tournamentIds = [.. registrations.Select(registration => registration.TournamentId).Distinct()];
 
-        Dictionary<Guid, string> tournamentNames = tournamentIds.Count == 0
+        Dictionary<Guid, Tournament> tournamentsById = tournamentIds.Count == 0
             ? []
             : (await _tournamentRepository.FindAsync(tournament => tournamentIds.Contains(tournament.Id)))
-                .ToDictionary(tournament => tournament.Id, tournament => tournament.Name);
+                .ToDictionary(tournament => tournament.Id);
 
         ILookup<Guid, TeamTournamentRegistration> registrationsByTeam = registrations.ToLookup(r => r.TeamId);
 
@@ -178,11 +178,20 @@ public class ClubService(IUnitOfWork unitOfWork) : IClubService
                 Slug = team.Slug,
                 ThreeLetterCode = team.ThreeLetterCode,
                 Seasons = [.. registrationsByTeam[team.Id]
-                    .Select(registration => new ClubSeasonResponse
+                    .Select(registration =>
                     {
-                        TournamentId = registration.TournamentId,
-                        TournamentName = tournamentNames.GetValueOrDefault(registration.TournamentId),
-                    })],
+                        tournamentsById.TryGetValue(registration.TournamentId, out Tournament? tournament);
+                        return new ClubSeasonResponse
+                        {
+                            TournamentId = registration.TournamentId,
+                            TournamentName = tournament?.Name,
+                            StartDate = tournament?.StartDate ?? DateTime.MinValue,
+                        };
+                    })
+                    // Newest season first; the history page flattens these
+                    // across all teams and re-sorts, but ordering here keeps
+                    // any single-team consumer correct too.
+                    .OrderByDescending(season => season.StartDate)],
             })],
         };
     }

@@ -9,6 +9,12 @@ export interface IClubSeasonResponse {
   tournamentId: GUID;
   /** The tournament (season) display name, when available. */
   tournamentName: string | null;
+  /**
+   * The tournament's start date (ISO string). Sort key only — the history
+   * table shows the tournament name, and rows are ordered newest-first by
+   * this value.
+   */
+  startDate: string;
 }
 
 /**

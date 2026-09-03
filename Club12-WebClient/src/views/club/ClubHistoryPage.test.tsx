@@ -1,5 +1,10 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import {
+  MemoryRouter,
+  Route,
+  Routes,
+  useLocation,
+} from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Mock } from 'vitest';
 import ClubHistoryPage from '@/views/club/ClubHistoryPage';
@@ -14,8 +19,10 @@ vi.mock('@/modules/club/hook/club.hook');
 
 const mockedUseClub = vi.mocked(useClub);
 
+const CLUB_ID = '11111111-1111-1111-1111-111111111111' as GUID;
+
 const CLUB: IClubHistoryResponse = {
-  id: '11111111-1111-1111-1111-111111111111' as GUID,
+  id: CLUB_ID,
   name: 'Colón',
   slug: 'colon',
   logoUrl: null,
@@ -29,6 +36,7 @@ const CLUB: IClubHistoryResponse = {
         {
           tournamentId: 'c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1' as GUID,
           tournamentName: 'Apertura 2026',
+          startDate: '2026-03-01T00:00:00Z',
         },
       ],
     },
@@ -41,10 +49,16 @@ const CLUB: IClubHistoryResponse = {
         {
           tournamentId: 'c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2' as GUID,
           tournamentName: 'Apertura 2027',
+          startDate: '2027-03-01T00:00:00Z',
         },
       ],
     },
   ],
+};
+
+const LocationProbe = () => {
+  const location = useLocation();
+  return <div data-testid="location">{location.pathname}</div>;
 };
 
 let getClubHistory: Mock<IClubContextProps['getClubHistory']>;
@@ -60,11 +74,19 @@ const setupHook = (club: IClubHistoryResponse | null = CLUB) => {
   } satisfies IClubContextProps);
 };
 
-const renderPage = () =>
+const renderPage = (entry = '/panel/clubes/colon') =>
   render(
-    <MemoryRouter initialEntries={['/panel/clubes/colon']}>
+    <MemoryRouter initialEntries={[entry]}>
       <Routes>
-        <Route path="/panel/clubes/:idOrSlug" element={<ClubHistoryPage />} />
+        <Route
+          path="/panel/clubes/:idOrSlug"
+          element={
+            <>
+              <LocationProbe />
+              <ClubHistoryPage />
+            </>
+          }
+        />
       </Routes>
     </MemoryRouter>
   );
@@ -99,6 +121,35 @@ describe('ClubHistoryPage', () => {
     expect(screen.getByText('Apertura 2026')).toBeInTheDocument();
     expect(screen.getByText('Colón 2027')).toBeInTheDocument();
     expect(screen.getByText('Apertura 2027')).toBeInTheDocument();
+  });
+
+  it('orders the rows by season start date, newest first', async () => {
+    renderPage();
+
+    const rowGroups = await screen.findAllByRole('rowgroup');
+    const bodyRows = within(rowGroups[1]).getAllByRole('row');
+
+    expect(within(bodyRows[0]).getByText('Apertura 2027')).toBeInTheDocument();
+    expect(within(bodyRows[1]).getByText('Apertura 2026')).toBeInTheDocument();
+  });
+
+  it('replaces a GUID URL with the club slug once loaded', async () => {
+    renderPage(`/panel/clubes/${CLUB_ID}`);
+
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent(
+        '/panel/clubes/colon'
+      )
+    );
+  });
+
+  it('leaves the URL untouched when it already is the slug', async () => {
+    renderPage('/panel/clubes/colon');
+
+    await screen.findByRole('heading', { name: 'Colón' });
+    expect(screen.getByTestId('location')).toHaveTextContent(
+      '/panel/clubes/colon'
+    );
   });
 
   it('shows a not-found card when no club is loaded', async () => {
