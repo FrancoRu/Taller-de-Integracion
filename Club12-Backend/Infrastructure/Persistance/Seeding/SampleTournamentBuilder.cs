@@ -75,6 +75,15 @@ public static class SampleTournamentBuilder
         "Joaquín", "Valentín", "Emiliano", "Thiago",
     ];
 
+    // Used instead of FirstNames when the team's tournament Category is
+    // Feminine (HU-48), so feminine divisions don't end up with male rosters.
+    private static readonly string[] FeminineFirstNames =
+    [
+        "María", "Ana", "Lucía", "Sofía", "Camila", "Valentina", "Julieta", "Florencia",
+        "Agustina", "Micaela", "Rocío", "Antonella", "Belén", "Candela", "Milagros", "Paula",
+        "Martina", "Victoria", "Carla", "Daniela",
+    ];
+
     // Player.SocialSecurity is the "Obra social" field the player form shows: the
     // NAME of a health-insurance provider, free text. Real Argentine ones, with
     // the Entre Ríos provincial IOSPER first since the league is from Paraná.
@@ -368,6 +377,10 @@ public static class SampleTournamentBuilder
 
         List<Team> teams = [];
 
+        // Feminine divisions draw first names from the feminine pool (HU-48's
+        // Category), so their rosters don't read as male.
+        string[] firstNames = tournament.Category == TournamentCategory.Feminine ? FeminineFirstNames : FirstNames;
+
         for (int i = 0; i < teamNames.Length; i++)
         {
             string jerseyStyle = teamStyles is not null && i < teamStyles.Length ? teamStyles[i] : "solid";
@@ -405,7 +418,7 @@ public static class SampleTournamentBuilder
             {
                 playerCounter++;
 
-                string firstName = FirstNames[playerCounter % FirstNames.Length];
+                string firstName = firstNames[playerCounter % firstNames.Length];
                 string lastName = LastNames[playerCounter % LastNames.Length];
                 string documentNumber = (30000000 + playerCounter).ToString();
 
@@ -670,7 +683,7 @@ public static class SampleTournamentBuilder
                     if (isUpcoming)
                     {
                         stage.Matches.Add(BuildUpcomingMatch(
-                            stage, home, visitor, MatchType.Regular, venues, roundDate, matchIndex, round));
+                            stage, home, visitor, Domain.Enums.MatchType.Regular, venues, roundDate, matchIndex, round));
                     }
                     else
                     {
@@ -690,7 +703,7 @@ public static class SampleTournamentBuilder
                         int visitorScore = homeIsStronger ? loserScore : winnerScore;
 
                         stage.Matches.Add(BuildFinishedMatch(
-                            stage, home, visitor, homeScore, visitorScore, MatchType.Regular,
+                            stage, home, visitor, homeScore, visitorScore, Domain.Enums.MatchType.Regular,
                             venues, roundDate, matchIndex, round));
                     }
 
@@ -777,7 +790,7 @@ public static class SampleTournamentBuilder
             int visitorScore = 65 + (i * 3);
 
             Match match = BuildFinishedMatch(
-                semiFinalStage, home, visitor, homeScore, visitorScore, MatchType.Playoff,
+                semiFinalStage, home, visitor, homeScore, visitorScore, Domain.Enums.MatchType.Playoff,
                 venues, semiFinalStage.StartDate.AddDays(i * 2), i, round: null);
             semiFinalStage.Matches.Add(match);
 
@@ -804,7 +817,7 @@ public static class SampleTournamentBuilder
         AddStageTeamMatches(thirdPlaceStage, semiFinalLosers);
 
         Match thirdPlaceMatch = BuildFinishedMatch(
-            thirdPlaceStage, semiFinalLosers[0], semiFinalLosers[1], 74, 61, MatchType.Playoff,
+            thirdPlaceStage, semiFinalLosers[0], semiFinalLosers[1], 74, 61, Domain.Enums.MatchType.Playoff,
             venues, thirdPlaceStage.StartDate, 0, round: null);
         thirdPlaceStage.Matches.Add(thirdPlaceMatch);
 
@@ -827,7 +840,7 @@ public static class SampleTournamentBuilder
         AddStageTeamMatches(finalStage, semiFinalWinners);
 
         Match finalMatch = BuildFinishedMatch(
-            finalStage, semiFinalWinners[0], semiFinalWinners[1], 82, 70, MatchType.Playoff,
+            finalStage, semiFinalWinners[0], semiFinalWinners[1], 82, 70, Domain.Enums.MatchType.Playoff,
             venues, finalStage.StartDate, 0, round: null);
         finalStage.Matches.Add(finalMatch);
     }
@@ -990,7 +1003,7 @@ public static class SampleTournamentBuilder
                     else
                     {
                         Match match = BuildFinishedMatch(
-                            stage, home, visitor, 79 + (i * 3), 66 + (i * 2), MatchType.Playoff,
+                            stage, home, visitor, 79 + (i * 3), 66 + (i * 2), Domain.Enums.MatchType.Playoff,
                             venues, roundStart.AddDays(i), i, round: null);
                         stage.Matches.Add(match);
                         winners.Add(match.WinningTeam!);
@@ -1015,7 +1028,7 @@ public static class SampleTournamentBuilder
                     else
                     {
                         Match match = BuildFinishedMatch(
-                            stage, home, visitor, 84 + i, 71 + i, MatchType.Playoff,
+                            stage, home, visitor, 84 + i, 71 + i, Domain.Enums.MatchType.Playoff,
                             venues, roundStart.AddDays(pairIndex), pairIndex, round: null);
                         stage.Matches.Add(match);
                         winners.Add(match.WinningTeam!);
@@ -1098,7 +1111,7 @@ public static class SampleTournamentBuilder
             int visitorScore = homeWinsThisGame ? loserScore : winnerScore;
 
             Match game = BuildFinishedMatch(
-                stage, home, visitor, homeScore, visitorScore, MatchType.Playoff,
+                stage, home, visitor, homeScore, visitorScore, Domain.Enums.MatchType.Playoff,
                 venues, anchorDate.AddDays(gameNumber - 1), seriesSeed + gameNumber, round: null);
             game.Series = series;
             game.GameNumber = gameNumber;
@@ -1309,7 +1322,7 @@ public static class SampleTournamentBuilder
         Team visitor,
         int homeScore,
         int visitorScore,
-        MatchType type,
+        Domain.Enums.MatchType type,
         List<Venue> venues,
         DateTime matchDate,
         int venueIndex,
@@ -1361,7 +1374,7 @@ public static class SampleTournamentBuilder
             CreatedBy = CreatedBy,
             MatchDate = matchDate,
             Round = null,
-            Type = MatchType.Playoff,
+            Type = Domain.Enums.MatchType.Playoff,
             Slug = SlugGenerator.GenerateSlug($"{home.Name}-bye-{stage.StageType}-{Guid.NewGuid()}"),
             HomeTeam = home,
             HomeTeamId = home.Id,

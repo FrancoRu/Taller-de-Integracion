@@ -490,6 +490,9 @@ appsettings.Tomi.json
 # Exception: static assets served by the web client MUST be versioned so they
 # ship with the production build (HU-21: medical-record download 404 in prod).
 !Club12-WebClient/public/documents/*.pdf
+# Exception: the seeder's embedded generic ficha médica MUST be versioned so
+# it ships with the server build (Infrastructure.csproj EmbeddedResource).
+!Club12-Backend/Infrastructure/Persistance/Seeding/Assets/*.pdf
 
 # Claude Code git worktrees (local scratch checkouts, never repo content)
 .claude/worktrees/
