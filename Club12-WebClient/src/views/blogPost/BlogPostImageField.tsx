@@ -1,7 +1,12 @@
 import { Box, Button, Typography } from '@mui/material';
 import SportsBasketballIcon from '@mui/icons-material/SportsBasketball';
+import { notifyWarning } from '@/modules/core/utils/confirmDialog';
 
 const IMAGE_PREVIEW_HEIGHT = 200;
+
+// nginx on the server rejects oversized request bodies (413), so we reject
+// the file client-side before it ever reaches that limit.
+const MAX_IMAGE_SIZE_BYTES = 1024 * 1024;
 
 interface BlogPostImageFieldProps {
   /** Resolved image to display: an object URL for a newly picked file, or the post's saved photoUrl. */
@@ -67,10 +72,18 @@ const BlogPostImageField: React.FC<BlogPostImageFieldProps> = ({
         accept="image/*"
         onChange={event => {
           const selectedFile = event.target.files?.[0];
-          if (selectedFile) {
-            onFileSelect(selectedFile);
-          }
           event.target.value = '';
+          if (!selectedFile) {
+            return;
+          }
+          if (selectedFile.size > MAX_IMAGE_SIZE_BYTES) {
+            void notifyWarning({
+              title: 'Imagen demasiado pesada',
+              text: 'La imagen no puede superar 1 MB. Elegí una imagen más liviana.',
+            });
+            return;
+          }
+          onFileSelect(selectedFile);
         }}
       />
     </Button>

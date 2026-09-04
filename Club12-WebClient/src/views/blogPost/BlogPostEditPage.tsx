@@ -204,6 +204,7 @@ const BlogPostEditPage: React.FC = () => {
           />
 
           <FormControlLabel
+            sx={{ ml: 0 }}
             control={
               <Switch
                 checked={form.isPublished ?? true}

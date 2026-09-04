@@ -100,7 +100,6 @@ const AddBlogPostForm: React.FC = () => {
   return (
     <PageShell
       title="Nueva publicación"
-      maxWidth="sm"
       back={{ label: 'Volver', onClick: handleCancel }}
     >
         <Stack spacing={0}>
@@ -138,6 +137,7 @@ const AddBlogPostForm: React.FC = () => {
             style={{ height: '200px', marginBottom: '20px' }}
           />
           <FormControlLabel
+            sx={{ ml: 0 }}
             control={
               <Switch
                 checked={formData.isPublished ?? true}

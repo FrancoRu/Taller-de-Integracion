@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import BlogPostImageField from '@/views/blogPost/BlogPostImageField';
+import * as confirmDialog from '@/modules/core/utils/confirmDialog';
 
 describe('BlogPostImageField', () => {
   it('shows the placeholder icon and "Seleccionar imagen" when there is no image yet', () => {
@@ -40,5 +41,25 @@ describe('BlogPostImageField', () => {
     fireEvent.change(input, { target: { files: [file] } });
 
     expect(onFileSelect).toHaveBeenCalledWith(file);
+  });
+
+  it('rejects a file over 1MB and warns instead of calling onFileSelect', () => {
+    const notifyWarningSpy = vi
+      .spyOn(confirmDialog, 'notifyWarning')
+      .mockResolvedValue(undefined);
+    const onFileSelect = vi.fn();
+    render(<BlogPostImageField hasImage={false} onFileSelect={onFileSelect} />);
+
+    const oversizedFile = new File(
+      [new Uint8Array(1024 * 1024 + 1)],
+      'foto-grande.png',
+      { type: 'image/png' }
+    );
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+
+    fireEvent.change(input, { target: { files: [oversizedFile] } });
+
+    expect(onFileSelect).not.toHaveBeenCalled();
+    expect(notifyWarningSpy).toHaveBeenCalled();
   });
 });
