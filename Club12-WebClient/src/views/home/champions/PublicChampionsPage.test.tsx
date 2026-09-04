@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GUID } from '@/modules/core/types/types';
@@ -27,6 +28,7 @@ const entry = (overrides: Partial<IChampionHistory> = {}): IChampionHistory => (
   tournamentId: guid('tournament-1'),
   tournamentName: 'Apertura 2025',
   seasonName: 'Temporada 2025',
+  seasonYear: 2025,
   category: TournamentCategory.Masculine,
   divisionName: 'Zona A',
   cupName: null,
@@ -77,6 +79,39 @@ describe('PublicChampionsPage', () => {
     expect(
       screen.getByRole('link', { name: /Los Halcones/i })
     ).toHaveAttribute('href', '/equipos/team-1');
+  });
+
+  it('opens only the newest season and keeps older seasons collapsed', async () => {
+    const user = userEvent.setup();
+    getChampionsHistory.mockResolvedValue({
+      data: [
+        entry({
+          tournamentId: guid('t-2026'),
+          tournamentName: 'Apertura 2026',
+          seasonName: 'Temporada 2026',
+          seasonYear: 2026,
+        }),
+        entry({
+          tournamentId: guid('t-2025'),
+          tournamentName: 'Apertura 2025',
+          seasonName: 'Temporada 2025',
+          seasonYear: 2025,
+        }),
+      ],
+    });
+
+    renderPage();
+
+    const newest = await screen.findByRole('button', { name: /Temporada 2026/ });
+    const older = screen.getByRole('button', { name: /Temporada 2025/ });
+
+    expect(newest).toHaveAttribute('aria-expanded', 'true');
+    expect(older).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByText('Apertura 2026')).toBeVisible();
+
+    await user.click(older);
+    expect(older).toHaveAttribute('aria-expanded', 'true');
+    expect(await screen.findByText('Apertura 2025')).toBeVisible();
   });
 
   it('shows the empty state when there are no champions yet', async () => {

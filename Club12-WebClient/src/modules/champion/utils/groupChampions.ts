@@ -20,6 +20,8 @@ export interface ChampionTournamentGroup {
 /** A season bucket holding its tournaments. */
 export interface ChampionSeasonGroup {
   seasonName: string;
+  /** Calendar year of the season; null for "Sin temporada" or a year-less season. */
+  seasonYear: number | null;
   tournaments: ChampionTournamentGroup[];
 }
 
@@ -28,12 +30,15 @@ const NO_SEASON_LABEL = 'Sin temporada';
 
 /**
  * Shapes the flat champion history into the public page's hierarchy:
- * Season → Tournament → Division → per-cup champion entries. Order follows the
- * backend's ordering (first appearance fixes position at each level), so the
- * within-division entries keep the backend's tier order (Copa Oro before Copa
- * Plata). Entries with a null/empty season fall into a single "Sin temporada"
- * bucket. A tournament already implies its category, so category is carried on
- * the tournament rather than used as a grouping level.
+ * Season → Tournament → Division → per-cup champion entries. Seasons are
+ * ordered by year, newest first; a year-less season (including the single
+ * "Sin temporada" bucket for entries with a null/empty season) sorts last,
+ * with `seasonName` descending as the deterministic tiebreak. Within a season
+ * the tournament, division and per-cup order follows the backend's
+ * first-appearance order, so the within-division entries keep the backend's
+ * tier order (Copa Oro before Copa Plata). A tournament already implies its
+ * category, so category is carried on the tournament rather than used as a
+ * grouping level.
  */
 export const groupChampions = (
   history: IChampionHistory[]
@@ -46,7 +51,11 @@ export const groupChampions = (
 
     let season = bySeason.get(seasonKey);
     if (!season) {
-      season = { seasonName: seasonKey, tournaments: [] };
+      season = {
+        seasonName: seasonKey,
+        seasonYear: entry.seasonName ? entry.seasonYear : null,
+        tournaments: [],
+      };
       bySeason.set(seasonKey, season);
       seasonOrder.push(seasonKey);
     }
@@ -75,5 +84,16 @@ export const groupChampions = (
     division.entries.push(entry);
   });
 
-  return seasonOrder.map(seasonName => bySeason.get(seasonName)!);
+  return seasonOrder
+    .map(seasonName => bySeason.get(seasonName)!)
+    .sort((a, b) => {
+      // Year desc; a null year always sorts after a real one.
+      if (a.seasonYear !== b.seasonYear) {
+        if (a.seasonYear === null) return 1;
+        if (b.seasonYear === null) return -1;
+        return b.seasonYear - a.seasonYear;
+      }
+      // Same year (or both null): name desc, for a deterministic order.
+      return b.seasonName.localeCompare(a.seasonName);
+    });
 };

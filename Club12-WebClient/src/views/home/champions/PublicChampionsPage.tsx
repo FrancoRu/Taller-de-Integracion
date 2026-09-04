@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Card,
   CardContent,
@@ -9,10 +12,9 @@ import {
   Typography,
 } from '@mui/material';
 import PageShell from '@/views/core/components/PageShell';
-import SectionHeading from '@/views/core/components/SectionHeading';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import CategoryChip from '@/views/core/components/CategoryChip';
-import { EmojiEventsIcon } from '@/views/core/MUI/icons/icons';
+import { EmojiEventsIcon, ExpandMoreIcon } from '@/views/core/MUI/icons/icons';
 import { TableSkeleton } from '@/views/core/components/skeletons';
 import { championService } from '@/modules/champion/service/champion.service';
 import { IChampionHistory } from '@/modules/champion/type/champion.d';
@@ -226,14 +228,50 @@ export default function PublicChampionsPage() {
           Todavía no hay campeones — se coronan al finalizar los torneos.
         </Typography>
       ) : (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-          {seasons.map(({ seasonName, tournaments }) => (
-            <Box component="section" key={seasonName}>
-              <SectionHeading component="h2" accentColor={brand.gold}>
-                {seasonName}
-              </SectionHeading>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {seasons.map(({ seasonName, tournaments }, seasonIndex) => (
+            <Accordion
+              key={seasonName}
+              component="section"
+              variant="outlined"
+              disableGutters
+              // Only the most recent season starts open; older ones collapse
+              // so the page is not one long scroll.
+              defaultExpanded={seasonIndex === 0}
+              // The summary button is wrapped in an <h2> so the season name
+              // is a real heading for assistive tech.
+              slotProps={{ heading: { component: 'h2' } }}
+              sx={{
+                borderRadius: 2,
+                '&:before': { display: 'none' },
+                '&.Mui-expanded': { margin: 0 },
+              }}
+            >
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}>
+                  <Box
+                    aria-hidden
+                    sx={{
+                      width: 4,
+                      height: 20,
+                      borderRadius: 999,
+                      bgcolor: brand.gold,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Typography
+                    variant="h6"
+                    component="span"
+                    noWrap
+                    sx={{ fontWeight: 700, letterSpacing: '0.01em' }}
+                  >
+                    {seasonName}
+                  </Typography>
+                </Box>
+              </AccordionSummary>
 
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <AccordionDetails>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {tournaments.map(({ tournamentId, tournamentName, category, divisions }) => (
                   <Box component="section" key={tournamentId}>
                     <Box
@@ -288,8 +326,9 @@ export default function PublicChampionsPage() {
                     </Box>
                   </Box>
                 ))}
-              </Box>
-            </Box>
+                </Box>
+              </AccordionDetails>
+            </Accordion>
           ))}
         </Box>
       )}
