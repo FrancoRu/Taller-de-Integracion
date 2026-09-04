@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  Box,
   TextField,
   Button,
   FormControlLabel,
@@ -11,6 +12,7 @@ import {
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
+import { BLOG_TITLE_MAX_LENGTH } from '@/modules/blogPost/constants/blogPost';
 import { CreateBlogPostRequest } from '@/modules/blogPost/type/blogPost';
 import { notifySuccess } from '@/modules/core/utils/confirmDialog';
 import FormButtons from '@/views/core/components/FormButtons';
@@ -120,6 +122,8 @@ const AddBlogPostForm: React.FC = () => {
             fullWidth
             required
             margin="normal"
+            slotProps={{ htmlInput: { maxLength: BLOG_TITLE_MAX_LENGTH } }}
+            helperText={`${formData.title.length}/${BLOG_TITLE_MAX_LENGTH}`}
           />
           <BlogPostImageField
             previewUrl={photoObjectUrl}
@@ -129,13 +133,14 @@ const AddBlogPostForm: React.FC = () => {
           <Typography variant="subtitle1" component="p" sx={{ mt: 2, mb: 1 }}>
             Contenido
           </Typography>
-          <ReactQuill
-            theme="snow"
-            value={formData.markdownText}
-            onChange={handleQuillChange}
-            modules={quillModules}
-            style={{ height: '200px', marginBottom: '20px' }}
-          />
+          <Box sx={{ mb: 3, '& .ql-editor': { minHeight: 200 } }}>
+            <ReactQuill
+              theme="snow"
+              value={formData.markdownText}
+              onChange={handleQuillChange}
+              modules={quillModules}
+            />
+          </Box>
           <FormControlLabel
             sx={{ ml: 0 }}
             control={

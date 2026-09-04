@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
+  Box,
   Button,
   FormControlLabel,
   Stack,
@@ -12,6 +13,7 @@ import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { GUID } from '@/modules/core/types/types';
 import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
+import { BLOG_TITLE_MAX_LENGTH } from '@/modules/blogPost/constants/blogPost';
 import { UpdateBlogPostRequest } from '@/modules/blogPost/type/blogPost';
 import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import FormButtons from '@/views/core/components/FormButtons';
@@ -186,6 +188,8 @@ const BlogPostEditPage: React.FC = () => {
             onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
             required
             fullWidth
+            slotProps={{ htmlInput: { maxLength: BLOG_TITLE_MAX_LENGTH } }}
+            helperText={`${(form.title ?? '').length}/${BLOG_TITLE_MAX_LENGTH}`}
           />
 
           <BlogPostImageField
@@ -195,13 +199,14 @@ const BlogPostEditPage: React.FC = () => {
           />
 
           <Typography variant="subtitle1">Contenido</Typography>
-          <ReactQuill
-            theme="snow"
-            value={form.markdownText ?? ''}
-            onChange={content => setForm(prev => ({ ...prev, markdownText: content }))}
-            modules={quillModules}
-            style={{ height: 200, marginBottom: 40 }}
-          />
+          <Box sx={{ mb: 3, '& .ql-editor': { minHeight: 200 } }}>
+            <ReactQuill
+              theme="snow"
+              value={form.markdownText ?? ''}
+              onChange={(content: string) => setForm(prev => ({ ...prev, markdownText: content }))}
+              modules={quillModules}
+            />
+          </Box>
 
           <FormControlLabel
             sx={{ ml: 0 }}
