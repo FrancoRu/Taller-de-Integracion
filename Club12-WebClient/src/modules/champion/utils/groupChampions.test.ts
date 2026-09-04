@@ -10,6 +10,7 @@ const entry = (overrides: Partial<IChampionHistory> = {}): IChampionHistory => (
   tournamentId: guid('tournament-1'),
   tournamentName: 'Apertura 2025',
   seasonName: 'Temporada 2025',
+  seasonYear: 2025,
   category: TournamentCategory.Masculine,
   divisionName: 'Zona A',
   cupName: null,
@@ -26,24 +27,37 @@ describe('groupChampions', () => {
     expect(groupChampions([])).toEqual([]);
   });
 
-  it('preserves the first-seen order of seasons', () => {
+  it('orders seasons by year, newest first', () => {
     const result = groupChampions([
-      entry({ seasonName: 'Temporada 2024' }),
-      entry({ seasonName: 'Temporada 2025' }),
-      // A later 2024 entry must not move 2024 after 2025.
-      entry({ seasonName: 'Temporada 2024' }),
+      entry({ seasonName: 'Temporada 2025', seasonYear: 2025 }),
+      entry({ seasonName: 'Temporada 2026', seasonYear: 2026 }),
+      entry({ seasonName: 'Temporada 2024', seasonYear: 2024 }),
     ]);
 
     expect(result.map(season => season.seasonName)).toEqual([
-      'Temporada 2024',
+      'Temporada 2026',
       'Temporada 2025',
+      'Temporada 2024',
+    ]);
+    expect(result.map(season => season.seasonYear)).toEqual([2026, 2025, 2024]);
+  });
+
+  it('sorts null-year seasons (including "Sin temporada") last', () => {
+    const result = groupChampions([
+      entry({ seasonName: null, seasonYear: null }),
+      entry({ seasonName: 'Temporada 2025', seasonYear: 2025 }),
+    ]);
+
+    expect(result.map(season => season.seasonName)).toEqual([
+      'Temporada 2025',
+      'Sin temporada',
     ]);
   });
 
   it('buckets null or empty seasons under "Sin temporada"', () => {
     const result = groupChampions([
-      entry({ seasonName: null }),
-      entry({ seasonName: '' }),
+      entry({ seasonName: null, seasonYear: null }),
+      entry({ seasonName: '', seasonYear: null }),
     ]);
 
     expect(result).toHaveLength(1);

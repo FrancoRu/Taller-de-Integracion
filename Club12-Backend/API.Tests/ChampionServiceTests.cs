@@ -313,8 +313,37 @@ public class ChampionServiceTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal("Copa Oro", divisionChampions[0].CupName);
     }
 
+    [Fact]
+    public async Task GetChampionsHistoryAsync_CarriesSeasonYear()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IChampionService championService = scope.ServiceProvider.GetRequiredService<IChampionService>();
+
+        Season season = await SeedSeasonAsync(db, year: 2026);
+        Tournament inSeason = await SeedTournamentAsync(db, TournamentStatus.Finished, seasonId: season.Id);
+        Division seasonDivision = await SeedDivisionAsync(db, inSeason);
+        List<Team> seasonTeams = await SeedTeamsAsync(db, inSeason, 2);
+        Stage seasonFinal = await SeedStageAsync(db, seasonDivision, inSeason, StageType.Final, bracketName: null);
+        await SeedFinishedMatchAsync(db, seasonFinal, seasonTeams[0], seasonTeams[1], 88, 70);
+
+        // A finished tournament with no season at all.
+        Tournament noSeason = await SeedTournamentAsync(db, TournamentStatus.Finished);
+        Division noSeasonDivision = await SeedDivisionAsync(db, noSeason);
+        List<Team> noSeasonTeams = await SeedTeamsAsync(db, noSeason, 2);
+        Stage noSeasonFinal = await SeedStageAsync(db, noSeasonDivision, noSeason, StageType.Final, bracketName: null);
+        await SeedFinishedMatchAsync(db, noSeasonFinal, noSeasonTeams[0], noSeasonTeams[1], 90, 80);
+
+        List<ChampionHistoryResponse> history = await championService.GetChampionsHistoryAsync(seasonId: null);
+
+        Assert.Equal(2026, history.Single(entry => entry.TournamentId == inSeason.Id).SeasonYear);
+        Assert.Null(history.Single(entry => entry.TournamentId == noSeason.Id).SeasonYear);
+    }
+
     private static async Task<Tournament> SeedTournamentAsync(
-        ApplicationDBContext db, TournamentStatus status = TournamentStatus.OpenForRegistration)
+        ApplicationDBContext db,
+        TournamentStatus status = TournamentStatus.OpenForRegistration,
+        Guid? seasonId = null)
     {
         DateTime startDate = DateTime.UtcNow.Date.AddDays(30);
         Tournament tournament = new()
@@ -325,6 +354,7 @@ public class ChampionServiceTests : IClassFixture<CustomWebApplicationFactory>
             TeamRegistrationDeadline = startDate.AddDays(-1),
             StartDate = startDate,
             Status = status,
+            SeasonId = seasonId,
             Divisions = [],
             Teams = [],
             CreatedBy = "test",
@@ -332,6 +362,20 @@ public class ChampionServiceTests : IClassFixture<CustomWebApplicationFactory>
         db.Tournaments.Add(tournament);
         await db.SaveChangesAsync();
         return tournament;
+    }
+
+    private static async Task<Season> SeedSeasonAsync(ApplicationDBContext db, int? year)
+    {
+        Season season = new()
+        {
+            Name = $"Temporada {year?.ToString() ?? Guid.NewGuid().ToString("N")[..6]}",
+            Slug = $"temporada-{Guid.NewGuid()}",
+            Year = year,
+            CreatedBy = "test",
+        };
+        db.Seasons.Add(season);
+        await db.SaveChangesAsync();
+        return season;
     }
 
     private static async Task<Division> SeedDivisionAsync(ApplicationDBContext db, Tournament tournament)
