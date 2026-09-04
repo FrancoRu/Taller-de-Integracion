@@ -35,6 +35,11 @@ export interface IChampionHistory {
   tournamentId: GUID;
   tournamentName: string;
   seasonName: string | null;
+  /**
+   * The calendar year of the season, or null when there is no season or it
+   * has no year. The public page sorts seasons by this value, newest first.
+   */
+  seasonYear: number | null;
   category: TournamentCategory;
   divisionName: string;
   /**

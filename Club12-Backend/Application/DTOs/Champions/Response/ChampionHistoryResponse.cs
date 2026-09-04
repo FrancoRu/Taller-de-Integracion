@@ -23,6 +23,13 @@ public class ChampionHistoryResponse
     public string? SeasonName { get; set; }
 
     /// <summary>
+    /// The calendar year of the season the tournament belongs to, or null when
+    /// there is no season or the season has no year set. The public page sorts
+    /// seasons by this value, newest first.
+    /// </summary>
+    public int? SeasonYear { get; set; }
+
+    /// <summary>
     /// The competitive category (gender) of the division, e.g. "Masculine" or
     /// "Feminine".
     /// </summary>

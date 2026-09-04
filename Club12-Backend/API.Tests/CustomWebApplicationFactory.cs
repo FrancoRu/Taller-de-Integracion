@@ -52,6 +52,12 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("Smtp__Username", "test");
         Environment.SetEnvironmentVariable("Smtp__Password", "test");
         Environment.SetEnvironmentVariable("Smtp__UseSsl", "false");
+        // appsettings.json ships with Seed:Enabled=true, which makes the host's
+        // ExecuteMigrationsAndSeedAsync run the full sample seed — that path
+        // constructs SupabaseHelper, whose Supabase client ctor throws on the
+        // null ProjectUrl the test host has no config for, so the host never
+        // builds. Tests seed their own data; keep the sample seed off.
+        Environment.SetEnvironmentVariable("Seed__Enabled", "false");
 
         _appConnection = new SqliteConnection("DataSource=:memory:");
         _appConnection.Open();

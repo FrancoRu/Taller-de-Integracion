@@ -98,6 +98,7 @@ public class ChampionService(
                         TournamentId = tournament.Id,
                         TournamentName = tournament.Name,
                         SeasonName = tournament.Season?.Name,
+                        SeasonYear = tournament.Season?.Year,
                         Category = division.Category.ToString(),
                         DivisionName = division.Name,
                         CupName = cupName,
