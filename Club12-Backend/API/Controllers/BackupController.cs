@@ -22,9 +22,7 @@ namespace API.Controllers;
 [Route("api/backups")]
 [ApiController]
 [Authorize(Roles = Roles.AdminOrOwner)]
-#pragma warning disable S6960
-public class BackupController(IBackupCatalog catalog, IBackupOperationsService operations) : ControllerBase
-#pragma warning restore S6960
+public class BackupController(IBackupOperationsService operations) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IReadOnlyList<BackupRecordResponse>))]
@@ -32,7 +30,7 @@ public class BackupController(IBackupCatalog catalog, IBackupOperationsService o
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IReadOnlyList<BackupRecordResponse>>> GetAll(CancellationToken ct)
     {
-        IReadOnlyList<BackupRecord> records = await catalog.ListNewestFirstAsync(ct);
+        IReadOnlyList<BackupRecord> records = await operations.ListNewestFirstAsync(ct);
         IReadOnlyList<BackupRecordResponse> response = records.Select(BackupRecordResponse.FromEntity).ToList();
         return Ok(response);
     }

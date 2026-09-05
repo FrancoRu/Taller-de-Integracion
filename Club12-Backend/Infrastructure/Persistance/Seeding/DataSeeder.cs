@@ -29,13 +29,6 @@ public sealed class DataSeeder(
     SupabaseHelper supabaseHelper,
     MedicalRecordSeedBackfiller medicalRecordSeedBackfiller)
 {
-    /// <summary>
-    /// Default folder team crest PNGs are read from when Seed:LogosPath is not configured.
-    /// </summary>
-#pragma warning disable S1075 // Dev-only seed default path; overridden by the Seed:LogosPath config key.
-    public const string DefaultLogosPath = @"D:\Escudos\Logos de Argentina\clubs\normal";
-#pragma warning restore S1075
-
     // Fixed seed keeps logo-to-team assignment reproducible across reseeds.
     private const int LogoShuffleSeed = 4212;
 
@@ -236,7 +229,7 @@ public sealed class DataSeeder(
         List<Team> allTeams = [.. allResults.SelectMany(r => r.Tournament.Teams)];
         List<Club> clubs = BuildClubs(allTeams);
 
-        await UploadTeamLogosAsync(allTeams, string.IsNullOrWhiteSpace(logosPath) ? DefaultLogosPath : logosPath);
+        await UploadTeamLogosAsync(allTeams, logosPath);
 
         foreach (Club club in clubs)
         {
@@ -559,8 +552,14 @@ public sealed class DataSeeder(
     /// <summary>
     /// Uploads a real PNG crest per team from logosPath, replacing each team's generated SVG crest.
     /// </summary>
-    private async Task UploadTeamLogosAsync(IReadOnlyList<Team> teams, string logosPath)
+    private async Task UploadTeamLogosAsync(IReadOnlyList<Team> teams, string? logosPath)
     {
+        if (string.IsNullOrWhiteSpace(logosPath))
+        {
+            logger.LogInformation("Seed:LogosPath not configured — keeping the generated team crests.");
+            return;
+        }
+
         string[] files;
         try
         {

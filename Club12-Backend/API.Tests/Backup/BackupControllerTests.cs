@@ -16,31 +16,34 @@ namespace API.Tests.Backup;
 /// <summary>
 /// Pure unit tests for BackupController's outcome-to-status-code
 /// mapping (design.md's "Controllers return an explicit outcome, not
-/// exception-mapped status codes" decision) — GET/POST/DELETE against fake
-/// IBackupCatalog/IBackupOperationsService, no HTTP pipeline
+/// exception-mapped status codes" decision) — GET/POST/DELETE against a fake
+/// IBackupOperationsService, no HTTP pipeline
 /// involved. Non-Admin/anonymous 401/403 gating (which only takes effect via
 /// [Authorize] in the real MVC pipeline) is covered separately by
 /// BackupAuthorizationTests.
 /// </summary>
 public class BackupControllerTests
 {
-    private static BackupController CreateSut(IBackupCatalog? catalog = null, IBackupOperationsService? operations = null)
+    private static BackupController CreateSut(IBackupOperationsService? operations = null)
     {
-        return new BackupController(catalog ?? new FakeBackupCatalog(), operations ?? new FakeBackupOperationsService());
+        return new BackupController(operations ?? new FakeBackupOperationsService());
     }
 
     [Fact]
     public async Task GetAll_ReturnsOkWithCatalogRecords()
     {
-        FakeBackupCatalog catalog = new();
-        await catalog.AddAsync(new BackupRecord
+        BackupRecord record = new()
         {
             CreatedBy = AuditConstants.SystemUser,
             StoragePath = "a.sql",
             SizeBytes = 10,
             Origin = BackupOrigin.Manual,
-        });
-        BackupController sut = CreateSut(catalog: catalog);
+        };
+        FakeBackupOperationsService operations = new()
+        {
+            NextListResult = [record],
+        };
+        BackupController sut = CreateSut(operations: operations);
 
         ActionResult<IReadOnlyList<BackupRecordResponse>> result = await sut.GetAll(CancellationToken.None);
 

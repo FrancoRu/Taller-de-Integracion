@@ -33,6 +33,9 @@ public sealed class BackupOperationsService(
     IAuditService auditService,
     ILogger<BackupOperationsService> logger) : IBackupOperationsService
 {
+    public Task<IReadOnlyList<BackupRecord>> ListNewestFirstAsync(CancellationToken ct = default) =>
+        catalog.ListNewestFirstAsync(ct);
+
     public async Task<BackupOperationResult> CreateBackupAsync(BackupOrigin origin, CancellationToken ct = default)
     {
         if (!await operationLock.WaitAsync(TimeSpan.Zero, ct))
@@ -220,15 +223,12 @@ public sealed class BackupOperationsService(
         }
 
         Dictionary<string, BackupRecord> byStoragePath = all.ToDictionary(r => r.StoragePath, StringComparer.Ordinal);
+        IEnumerable<BackupRecord> recordsToDelete = toDelete
+            .Select(stale => byStoragePath.GetValueOrDefault(stale.Name))
+            .OfType<BackupRecord>();
 
-#pragma warning disable S3267
-        foreach (BackupFile stale in toDelete)
+        foreach (BackupRecord record in recordsToDelete)
         {
-            if (!byStoragePath.TryGetValue(stale.Name, out BackupRecord? record))
-            {
-                continue;
-            }
-
             try
             {
                 await storage.DeleteAsync(record.StoragePath, ct);
@@ -240,6 +240,5 @@ public sealed class BackupOperationsService(
 
             await catalog.RemoveAsync(record.Id, ct);
         }
-#pragma warning restore S3267
     }
 }

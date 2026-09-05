@@ -80,15 +80,9 @@ public sealed class PgDumpBackupService(
                 $"Details: {result.StdErr}");
         }
 
-        int strippedCount = 0;
-        string filteredDump = EventTriggerStatementPattern.Replace(result.StdOut, _ =>
-        {
-            strippedCount++;
-            return string.Empty;
-        });
+        int strippedCount = EventTriggerStatementPattern.Matches(result.StdOut).Count;
+        string filteredDump = EventTriggerStatementPattern.Replace(result.StdOut, string.Empty);
 
-        // False positive: Regex.Replace runs the MatchEvaluator synchronously per match before returning, so strippedCount is fully updated here even though Sonar's dataflow analysis doesn't model that.
-#pragma warning disable S2583
         if (strippedCount > 0)
         {
             logger.LogInformation(
@@ -97,7 +91,6 @@ public sealed class PgDumpBackupService(
                 "DROP/CREATE on restore.",
                 strippedCount);
         }
-#pragma warning restore S2583
 
         return new MemoryStream(Encoding.UTF8.GetBytes(filteredDump));
     }

@@ -1,6 +1,8 @@
+using Domain.Entities.Models;
 using Domain.Enums;
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,6 +13,8 @@ namespace Application.Interfaces.Backup;
 /// </summary>
 public interface IBackupOperationsService
 {
+    Task<IReadOnlyList<BackupRecord>> ListNewestFirstAsync(CancellationToken ct = default);
+
     Task<BackupOperationResult> CreateBackupAsync(BackupOrigin origin, CancellationToken ct = default);
 
     Task<BackupOperationResult> DeleteBackupAsync(Guid id, CancellationToken ct = default);

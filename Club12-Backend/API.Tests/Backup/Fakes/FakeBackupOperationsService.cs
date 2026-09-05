@@ -1,6 +1,7 @@
 using Application.DTOs.Backup.Response;
 using Application.Interfaces.Backup;
 
+using Domain.Entities.Models;
 using Domain.Enums;
 
 namespace API.Tests.Backup.Fakes;
@@ -40,6 +41,13 @@ public sealed class FakeBackupOperationsService : IBackupOperationsService
         new(BackupOperationOutcome.Completed, new BackupRecordResponse(Guid.NewGuid(), DateTime.UtcNow, 0, "Job", "safety.sql"), null);
 
     public Guid? LastRestoreId { get; private set; }
+
+    public IReadOnlyList<BackupRecord> NextListResult { get; set; } = [];
+
+    public Task<IReadOnlyList<BackupRecord>> ListNewestFirstAsync(CancellationToken ct = default)
+    {
+        return Task.FromResult(NextListResult);
+    }
 
     public async Task<BackupOperationResult> CreateBackupAsync(BackupOrigin origin, CancellationToken ct = default)
     {

@@ -2,10 +2,7 @@
 using Application.DTOs.Match.Request;
 using Application.DTOs.Scorer.Request;
 using Application.DTOs.Scorer.Response;
-using Application.Interfaces.Mappers;
 using Application.Interfaces.Services;
-
-using Domain.Entities.Models;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,9 +17,7 @@ namespace API.Controllers;
 [ApiController]
 [Route("api/[controller]/")]
 [AllowAnonymous]
-#pragma warning disable S6960
-public class ScorerController(IScorerService scorerService, IMatchService matchService, IScorerMapper mapper) : ControllerBase
-#pragma warning restore S6960
+public class ScorerController(IScorerService scorerService) : ControllerBase
 {
     /// <summary>
     /// Ranks teams by goals scored across the filtered matches, the Goleadores-by-team view.
@@ -32,9 +27,7 @@ public class ScorerController(IScorerService scorerService, IMatchService matchS
     [HttpGet("by-team")]
     public async Task<ActionResult> GetFilteredScorerByTeam([FromQuery] GetMatchesFilteredRequest filter)
     {
-        PaginatedResponse<Match> matches = await matchService.GetAllMatchesAsync(filter);
-
-        PaginatedResponse<ScorerByTeamResponse> response = mapper.FromPaginatedMatchToPaginatedScorerByTeamResponse(matches);
+        PaginatedResponse<ScorerByTeamResponse> response = await scorerService.GetAllScorersByTeamAsync(filter);
 
         return Ok(response);
     }

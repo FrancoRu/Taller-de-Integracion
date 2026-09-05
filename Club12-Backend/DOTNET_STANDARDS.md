@@ -231,7 +231,14 @@ No fix needed here — this rule documents that the pattern is intentional and c
 
 **Added 2026-09-05.** Every `catch (Exception ...)` block in the backend (22 total, audited individually) either logs the exception with `ILogger`/Serilog and a clear, specific message before continuing, or translates it into a domain-specific exception (`InvalidOperationException` with an `ErrorMessages.*` message) that `GlobalExceptionHandler` maps to an HTTP status. None discard the exception silently. Keep doing this — a caught exception with no logging and no rethrow is a bug report waiting to happen.
 
-The handful of `#pragma warning disable` directives outside of EF migrations (`S3267`, `S2583`, `S1075`, `S6960`) were also audited: each suppresses a specific, identified SonarAnalyzer false positive or an accepted dev-only default, not a real issue. Keep suppressions this narrow and this documented — never a blanket disable for a whole file or a whole rule category.
+**No `#pragma warning disable` outside of EF migrations.** The five that existed (`S3267`, `S2583` ×1, `S1075`, `S6960` ×2) were all removed by fixing the underlying issue instead of suppressing it:
+
+- **S3267** (`BackupOperationsService.ApplyRetentionAsync`) — the loop mixed a lookup-and-skip step with its async delete/remove side effects. Moved the lookup into a `.Select(...).OfType<BackupRecord>()` pipeline ahead of the loop, leaving the `foreach` for the side effects alone. The analyzer no longer flags it, and the code reads better.
+- **S2583** (`PgDumpBackupService`) — a closure-captured counter (`strippedCount++` inside a `Regex.Replace` `MatchEvaluator`) confused Sonar's dataflow analysis into thinking the count could never be nonzero. Replaced with `Pattern.Matches(input).Count` computed before the replace — same result, no closure, no false positive, and arguably clearer code.
+- **S1075** (`DataSeeder.DefaultLogosPath`) — a hardcoded `D:\...` path was a personal-machine default masquerading as a real fallback. Removed the constant entirely; the seeder now just logs "not configured" and keeps the generated crests when `Seed:LogosPath` isn't set, which the graceful-degradation path already handled anyway.
+- **S6960** ×2 (`BackupController`, `ScorerController`) — "controller has multiple responsibilities," triggered because each controller's actions used disjoint subsets of its injected dependencies. Fixed by consolidating: `BackupController` now depends only on `IBackupOperationsService` (which already wrapped `IBackupCatalog` internally, so it gained a `ListNewestFirstAsync` passthrough); `ScorerController` now depends only on `IScorerService` (which gained a `GetAllScorersByTeamAsync` method that internally calls `IMatchService`/`IScorerMapper`, moving that orchestration out of the controller and into the service layer where it belongs).
+
+If a future warning genuinely can't be fixed without making the code worse, that's a conversation to have explicitly — not a silent suppression.
 
 ---
 
