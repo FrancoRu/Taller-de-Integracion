@@ -339,8 +339,20 @@ public static class StartupExtensions
                 Version = configuration[ConfigurationKeys.Swagger.Version],
             });
 
-            string xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-            context.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+            // GenerateDocumentationFile is set on all 4 projects (Domain/Application/Infrastructure/API),
+            // and their .xml files land next to API's own output via project references — but only API's
+            // own file was ever wired in here, so DTO/enum summaries defined outside the API project never
+            // reached Swagger's schema view even though they exist and are copied to bin.
+            string[] xmlDocAssemblyNames = ["API", "Application", "Domain", "Infrastructure"];
+            foreach (string assemblyName in xmlDocAssemblyNames)
+            {
+                string xmlPath = Path.Combine(AppContext.BaseDirectory, $"{assemblyName}.xml");
+                if (File.Exists(xmlPath))
+                {
+                    context.IncludeXmlComments(xmlPath);
+                }
+            }
+
             context.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
 
             context.AddSecurityDefinition(bearerScheme, new OpenApiSecurityScheme
