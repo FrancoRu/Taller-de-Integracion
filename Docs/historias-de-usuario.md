@@ -17,6 +17,13 @@
 > mostrando "No habilitado" para todos). Mismo criterio que la reescritura de abajo: verificado
 > contra código real, no contra memoria de lo pedido.
 >
+> **Actualización 2026-09-05**: auditoría del checkbox "Fase de grupos" del asistente de torneo, a
+> pedido del owner. Se agregaron HU-120 a HU-125 (fin de la Épica 22): hoy "Fase de grupos" es un
+> booleano de UN solo grupo por división (no permite dividirla en sub-grupos Zona A/B/C con reparto
+> balanceado y umbral mínimo de equipos, como sí necesita un organizador real), y existe un segundo
+> mecanismo legado (`CreateAutomatedStagesAsync`) contradictorio con el modelo actual del wizard. Ver
+> el bloque "Auditoría 2026-09-05" antes de la Épica 23 para el detalle verificado contra código.
+>
 > Convenciones: `[BUG]` corrige algo existente · `[NUEVA]` propuesta alineada · `[F2]` Fase 2.
 > Prioridad (MoSCoW): **M** Must · **S** Should · **C** Could.
 > `✅` = verificada vigente tal cual · `🔄` = vigente pero cambió su implementación (ver nota) ·
@@ -686,6 +693,189 @@ configurar cada ronda a mano.
 
 ---
 
+## Auditoría 2026-09-05 — "Fase de grupos" no permite sub-dividir una división en zonas
+
+Pedido del owner: revisar si el checkbox "Fase de grupos" del asistente arma correctamente una
+1ª fase de grupos (con 1, 2 o 3 vueltas) + una 2ª fase de playoff opcional, y si permite repartir
+una división grande en sub-grupos (Zona A, B, C...) con reparto balanceado y umbral mínimo de
+equipos por zona. Verificado contra código real (`Club12-WebClient/src/views/tournament/wizard/`,
+`Club12-Backend/Application/Services/StageService.cs`, `TournamentDivisionAssignment.tsx`).
+
+**Hallazgo central: colisión de vocabulario.** En este código, lo que el wizard llama "zona"
+(`ZoneConfig`) es sinónimo de "división" — cada `ZoneConfig` se convierte en UNA división completa
+(ej. "Primera División"), no en un sub-grupo dentro de ella. El switch "Fase de grupos"
+(`ZoneEditor.hasGroupStage`) es un booleano de UN SOLO grupo: prende/apaga un único `Stage` tipo
+`Group` para toda la división, con 1 a 3 vueltas (`roundRobinLegs`) — eso YA funciona bien y coincide
+con el pedido de "1era fase, puede jugarse 1/2/3 veces". Lo que NO existe hoy, en ningún lado, es
+dividir esa fase de grupos en sub-grupos paralelos (Zona A / Zona B / Zona C) dentro de una misma
+división — que es exactamente lo que describe el pedido para divisiones grandes.
+
+`StageService.CreateStageAsync` lo bloquea explícitamente: un segundo `Stage` tipo `Group` en la
+misma división tira `ErrorMessages.Stage.GroupStageAlreadyExistsInDivision`, salvo que la división
+sea `IsCrossDivisionCup` (la Copa Cruzada, HU-110) — la única competencia que hoy puede tener varios
+grupos ("Grupo 1"..."Grupo N") bajo una misma división. Es decir: la capacidad de fondo YA EXISTE en
+el modelo de datos (un `Stage` es simplemente un grupo con nombre y equipos asignados), pero está
+reservada por regla de negocio a un caso especial (copa cruzada entre divisiones) en vez de estar
+disponible para el uso normal que describe el pedido (sub-dividir UNA división grande).
+
+### HU-120 · [NUEVO] Dividir una división en sub-grupos (Zona A/B/C) dentro de su fase de grupos — `M`
+**Como** owner/admin **quiero** que, al activar "Fase de grupos" para una división, pueda elegir en
+cuántos sub-grupos se reparten sus equipos **para** organizar divisiones grandes en pools manejables
+antes de un cruce de playoffs, en vez de un único todos-contra-todos gigante.
+- La solución más consistente con el código existente es generalizar la capacidad que hoy solo tiene
+  la Copa Cruzada (`Division.IsCrossDivisionCup`, varios `Stage` tipo `Group` bajo una división) a
+  CUALQUIER división — hoy el chequeo de "un solo Group stage" en `StageService.CreateStageAsync`
+  solo se salta para `IsCrossDivisionCup`.
+- La pantalla de asignación de equipos (`TournamentDivisionAssignment.tsx`) YA itera sobre una lista
+  de `groups` (plural) por división y arma una tarjeta de asignación por CADA `Group` stage
+  encontrado — el hueco real está en el wizard (`ZoneEditor` no permite crear más de un `Group` stage
+  por división) y en el backend (`CreateStageAsync` lo prohíbe fuera de la copa cruzada), no en la
+  pantalla de asignación, que ya está preparada para esto.
+- Conviene nombrar el nuevo nivel explícitamente "sub-grupo" o "pool" en el modelo (no reusar "zona",
+  que ya significa "división" en este código) para no perpetuar la ambigüedad que originó esta
+  auditoría.
+
+### HU-121 · [NUEVO] La cantidad de sub-grupos la define el organizador; el tamaño se reparte balanceado — `M`
+**Como** owner/admin **quiero** elegir CUÁNTOS sub-grupos quiero (no un tamaño fijo por grupo) y que
+el sistema reparta los equipos lo más parejo posible **para** no terminar con grupos desbalanceados
+(ej. "2 grupos de 5 y uno de 6" cuando "4 grupos de 4" sería mejor) ni tener que armarlo a mano.
+- Manda la cantidad de GRUPOS elegida, no un tamaño fijo — a diferencia del mecanismo legado
+  `StageService.CreateAutomatedStagesAsync` (ver HU-124), que fuerza siempre grupos de exactamente
+  `MaxTeams.GROUP = 4` equipos.
+- Reparto balanceado: con `G` grupos elegidos y `T` equipos inscriptos, cada grupo debe tener
+  `floor(T/G)` o `ceil(T/G)` equipos — nunca una diferencia de 2 o más entre el grupo más chico y el
+  más grande. El ejemplo del pedido (16 equipos, 3 grupos elegidos) da 5+5+6; conviene mostrar ese
+  reparto resultante en la UI antes de confirmar, para que el organizador pueda ajustar la cantidad
+  de grupos si no le convence (ej. pasar a 4 grupos de 4).
+- Umbral mínimo: un sub-grupo necesita **al menos 4 equipos** para que el todos-contra-todos tenga
+  sentido competitivo (mismo criterio de "mínimo viable" que ya usan HU-118/119 para jugadores
+  habilitados por equipo). Si `T / G < 4`, el sistema debe rechazar esa cantidad de grupos con un
+  mensaje claro, en vez de permitir "grupos de 1, 2 o 3 equipos" como señala el pedido.
+- Se valida en dos momentos: (a) en el wizard, como advertencia no bloqueante (todavía no hay equipos
+  inscriptos, solo una estimación); (b) de forma definitiva en la guarda de completitud (extensión de
+  HU-109/`TournamentCompletabilityValidator`) al cerrar inscripción/iniciar el torneo, cuando la
+  cantidad real de inscriptos ya se conoce.
+- **Aclaración del owner (2026-09-05)**: la cantidad de grupos elegida al armar la estructura es un
+  punto de partida, no una decisión final — el organizador necesita poder editar tanto la cantidad de
+  grupos como la distribución de equipos entre ellos después, siempre que sea antes de que arranque el
+  torneo. Esto es exactamente el alcance de HU-122 (reasignación manual) + HU-123 (cambiar cantidad de
+  grupos) — las tres historias (121/122/123) se implementan juntas, no HU-121 sola con las otras dos
+  como "nice to have" separado.
+
+### HU-122 · [NUEVO] Asignar equipos a sub-grupos: automático por defecto, manual siempre disponible — `S`
+**Como** owner/admin **quiero** que el sistema reparta los equipos inscriptos entre los sub-grupos
+automáticamente, pero pudiendo mover equipos a mano **para** ajustar por criterios que el sistema no
+conoce (cercanía geográfica, nivel competitivo, evitar que dos clásicos rivales queden en la misma
+zona, etc.).
+- Extiende `TournamentDivisionAssignment.tsx`: hoy ya soporta asignar equipos a un `Stage` puntual vía
+  `TeamPickerDialog` — el gap es que hoy solo hay un stage/grupo por división para elegir. Con
+  sub-grupos habilitados, el mismo flujo de asignación manual sirve sin cambios grandes; falta un
+  botón "repartir automático" que aplique el balance de HU-121 de un clic, dejando la edición manual
+  como ajuste posterior, no como único camino.
+- Auto-reparto sugerido: aleatorio balanceado por defecto (no hay ranking/seed histórico confiable
+  entre equipos de una liga amateur) — decisión de producto a confirmar, no una dificultad técnica.
+
+### HU-123 · [NUEVO] Editar la cantidad de sub-grupos de una división antes de que arranque el torneo — `S`
+**Como** owner/admin **quiero** poder cambiar la cantidad de sub-grupos de una división después de
+creada la estructura pero antes de iniciar el torneo **para** ajustar el armado a la cantidad real de
+equipos que se terminaron inscribiendo, que casi nunca coincide con la estimación inicial del wizard.
+- Hoy no existe ninguna acción de "cambiar cantidad de grupos" — la única forma de tocar la estructura
+  ya creada es `StageService.UpdateStageAsync` (editar un stage existente) o borrar/crear stages
+  sueltos a mano, lo que no re-balancea equipos ni los reasigna.
+- Debe quedar disponible mientras la división sea editable, es decir, mientras el torneo no esté
+  `Ongoing`/`Finished` — mismo criterio que ya usan las guardas estructurales agregadas en la
+  auditoría de "torneo en curso" de esta sesión (commit `0218a43`,
+  `EnsureDivisionStructureEditableAsync`). Cambiar la cantidad de grupos con equipos ya asignados debe
+  re-disparar el reparto balanceado (HU-121/122), no dejar equipos huérfanos sin grupo.
+
+### HU-124 · [DEUDA TÉCNICA] Dos mecanismos distintos y contradictorios para armar la fase de grupos — `M`
+**Como** desarrollador **quiero** una sola fuente de verdad para "cómo se arma la estructura de
+grupos de una división" **para** no tener dos caminos que puedan dejar el torneo en un estado
+inconsistente según cuál se use.
+- `StageService.CreateAutomatedStagesAsync` (expuesto en `POST /api/stages/generate/{id}`,
+  `StageController.GenerateStagesAndMatches`) es un mecanismo completamente distinto y más rígido que
+  el del wizard actual: exige EXACTAMENTE 8/16/32/64 equipos inscriptos (`IsValidTournamentSize`),
+  arma siempre grupos de 4 equipos parejos (`MaxTeams.GROUP`, sin elegir cantidad de grupos) y agrega
+  un bracket fijo (Cuartos si corresponde + Semis + Tercer puesto + Final) sin copas configurables ni
+  "cuántos clasifican" por copa, a diferencia del sistema de HU-112.
+- **No tiene ningún llamador en la UI actual**: `generateStages` (lado frontend,
+  `stage.service.ts`/`stage.context.tsx`) no está conectado a ningún botón de pantalla real — el
+  endpoint está vivo y expuesto por API pero huérfano de interfaz. Un admin que lo invoque directo
+  (Swagger, un futuro botón mal conectado) obtendría una estructura rígida e incompatible con el
+  modelo de copas flexible que usa el resto de la app, sin ningún aviso.
+- Riesgo concreto al implementar HU-120/121: si se reusa el nombre "grupos" sin desambiguar, es fácil
+  que un desarrollador nuevo termine llamando por error al mecanismo viejo (`CreateAutomatedStagesAsync`)
+  en vez del nuevo, porque el nombre y el endpoint ya existen y "suenan" a lo que se pide.
+- Recomendación: decidir explícitamente si se elimina (deuda muerta) o se le retira la exclusividad de
+  "grupos fijos de 4" para reusar la lógica de reparto balanceado de HU-121 — no dejarlo como está,
+  vivo y sin dueño.
+
+### HU-125 · [NUEVO] El reparto en sub-grupos rompe el cálculo actual de posiciones→copa (HU-112) — `M`
+**Como** owner/admin **quiero** que, con sub-grupos, las copas de playoff clasifiquen por posición
+DENTRO de cada sub-grupo (ej. "1° y 2° de cada zona") en vez de por una tabla combinada **para** que
+el cruce a playoffs tenga sentido cuando hay más de una zona.
+- El sistema de copas actual (`cupPositionRange`, HU-112) asume UNA sola tabla de posiciones por
+  división (1 `Group` stage → 1 tabla de standings). Con sub-grupos, cada uno tiene su propia tabla —
+  clasificar "posiciones #1 a #4" deja de tener sentido sin aclarar de qué zona.
+- La Copa Cruzada (HU-110) ya resuelve un problema equivalente (pool del top N de cada grupo hacia un
+  bracket combinado, `groupCount * qualifiersPerGroup`) — la solución más consistente es reusar ese
+  mismo patrón para sub-grupos dentro de una división normal, en vez de inventar un tercer esquema.
+- Nota de diseño (no bloqueante): en el pool combinado hacia el bracket, suele convenir evitar que dos
+  equipos de la MISMA zona se enfrenten en la primera ronda de playoffs cuando es posible (práctica
+  estándar en torneos de grupos + llave) — a confirmar si vale la pena para una liga amateur o si un
+  sorteo simple alcanza.
+
+## Auditoría 2026-09-05 (continuación) — flujos completos con datos reales, pensando como organizador
+
+Segunda ronda de E2E pedida por el owner: en vez de solo cargar pantallas, completar flujos reales de
+punta a punta (crear → editar → eliminar, con guardado real) en Canchas, Jugadores, Novedades,
+Sanciones+apelación y Usuarios. Se encontraron y arreglaron 5 bugs reales (ver commits del
+2026-09-05: fix del crash al ver un jugador recién creado, fechas de nacimiento con un día de error en
+toda la lista de Jugadores, falta el botón Editar en Novedades, aceptar una apelación no tenía efecto
+real, y error crudo en inglés al crear un usuario con espacios en el nombre) — quedaron registrados en
+la Épica 24 como resueltos. Además, pensando específicamente como organizador de torneo (no solo
+QA de pantallas), se verificaron dos puntos más contra el código real:
+
+### HU-126 · [NUEVO] La fecha límite de inscripción es puramente informativa — no bloquea ni se puede corregir — `M`
+**Como** owner/admin **quiero** que la fecha límite de inscripción sea real (bloquee inscripciones
+pasada esa fecha) o, si no lo es, poder corregirla libremente **para** no quedar con un dato
+inconsistente que no puedo arreglar.
+- Verificado en `TeamService.cs` (líneas 360/430/501): inscribir un equipo está controlado
+  ÚNICAMENTE por `Tournament.Status == OpenForRegistration` — la fecha `TeamRegistrationDeadline`
+  nunca se compara contra la fecha actual en ningún lado del backend. Es decir, un equipo puede
+  inscribirse aunque la "fecha límite" mostrada ya haya pasado, mientras el admin no haya cerrado la
+  inscripción a mano; y a la inversa, cerrar la inscripción antes de esa fecha corta todo aunque el
+  plazo mostrado diga que falta tiempo. El campo es puramente decorativo.
+- El problema real: `TournamentEditPage.tsx` SÍ trata esa fecha como si fuera autoritativa —
+  `canEditRegistrationDeadline = !registrationClosed && status === OpenForRegistration`, donde
+  `registrationClosed` se calcula comparando la fecha contra "ahora". Una vez que la fecha pasa, el
+  campo se bloquea para editar, sin importar que el torneo siga técnicamente abierto a inscripciones
+  y que ese valor nunca haya bloqueado nada. Un organizador que decide extender la inscripción una
+  semana más (algo muy común en la práctica) queda con una fecha límite vieja y visiblemente
+  incorrecta en pantalla, sin ninguna forma de corregirla.
+- Arreglo sugerido: o (a) hacer que la fecha realmente bloquee la inscripción de equipos en el
+  backend (coherente con lo que el campo dice ser), o (b) si se mantiene como solo informativa,
+  dejarla editable mientras el torneo siga en `OpenForRegistration`, sin importar si la fecha ya pasó
+  — la opción (a) es la más honesta con el organizador, que espera que "fecha límite" signifique algo.
+
+### HU-127 · [NUEVO] Reprogramar un partido suspendido no valida choques de cancha ni de equipo — `M`
+**Como** owner/admin **quiero** que reprogramar un partido suspendido a una nueva fecha valide que no
+choque con otro partido en la misma cancha, o con otro partido del mismo equipo (incluida su copa
+cruzada si juega una) **para** no terminar armando sin querer dos partidos imposibles de jugar a la
+vez.
+- Verificado en `MatchService.SuspendMatchAsync`: cuando se pasa `newMatchDate`, el método hace
+  `match.MatchDate = newMatchDate.Value` y guarda, sin ningún chequeo de conflicto — a diferencia de
+  la generación automática del fixture original, que sí respeta separación de horarios por cancha
+  (regla de las 2 horas mencionada en sesiones previas). Reprogramar a mano puede crear silenciosamente
+  dos partidos en la misma cancha a la misma hora, o el mismo equipo jugando dos partidos el mismo día
+  (su zona regular y, si corresponde, la copa cruzada — HU-110, que exime al equipo de la regla de
+  "una sola zona" pero no dice nada sobre choques de calendario entre ambas competencias).
+- No es necesariamente un bloqueo duro: alcanza con una advertencia clara antes de confirmar
+  ("Esta cancha ya tiene un partido a esa hora" / "Este equipo ya juega otro partido ese día") que el
+  admin pueda decidir ignorar conscientemente — pero hoy no hay ningún aviso, ni siquiera informativo.
+
+---
+
 ## Épica 23 — Temporada, sanciones ampliadas y funcionalidades nuevas sin historia previa
 
 Historias nuevas para funcionalidad que existe en el código pero no tenía HU en ninguna versión
@@ -750,7 +940,9 @@ documentado/esperado y el código real difieren, y alguien tiene que decidir qu�
 
 > **Resueltos (2026-09-02, misma sesión, después de la auditoría)**: los ítems 1-5 de abajo ya
 > fueron corregidos y están en `develop`. **Resueltos (2026-09-03, sesión de reglas de
-> habilitación)**: los ítems 8-10. Épica 24 completa — no quedan ítems abiertos.
+> habilitación)**: los ítems 8-10. **Resueltos (2026-09-05, ronda de E2E con flujos completos y
+> datos reales)**: los ítems 11-15. HU-126/HU-127 (arriba, fin de la Épica 22) quedaron abiertas de
+> esa misma ronda — no son deuda técnica sino comportamiento a decidir con el owner.
 
 1. ~~**Series playoff Best-of-N no se generan en producción (HU-82/HU-46).**~~ Resuelto:
    `StageService.SeedPlayoffCupsAsync`/`SeedKnockoutStageAsync`/`SeedMultiGroupCrossCupStageAsync`
@@ -798,6 +990,27 @@ documentado/esperado y el código real difieren, y alguien tiene que decidir qu�
     `Seed:Enabled=true`, sin flags extra) cubra tanto una base nunca migrada a la feature de ficha
     médica como una restaurada desde un backup viejo — no hace falta una acción puntual como la que
     se usó para arreglar el dato en vivo esta sesión.
+11. ~~**Ver un jugador recién creado desde el panel rompía toda la página (crash).**~~ Resuelto
+    (2026-09-05): `POST /api/players` (admin-only) devolvía `PublicPlayerResponse` (forma pública,
+    sin `documentNumber`/`birthDate`/`phoneNumber`/`socialSecurity`) pero el contexto de React seguía
+    ese objeto incompleto como el jugador "actual"; al navegar al detalle antes de que la carga real
+    terminara, el render usaba esos campos faltantes y tiraba. Corregido devolviendo
+    `AdminPlayerResponse` (mismo shape que ya usa `GetPlayerByIdCompleteDataAsync`) desde el create.
+12. ~~**Fecha de nacimiento mostrada con un día de menos en toda la lista de Jugadores.**~~ Resuelto
+    (2026-09-05): la columna usaba `new Date(value).toLocaleDateString()`, que corre la fecha a
+    horario local (Argentina, UTC-3) para un campo que es solo-fecha (mediodía UTC), restando un día.
+    Corregido reusando `formatCalendarDate`, el helper ya establecido en el proyecto para este caso
+    exacto (usado en la ficha de jugador, pero no en el listado).
+13. ~~**Novedades: no había forma de editar una publicación ya creada.**~~ Resuelto (2026-09-05):
+    `BlogPostEditPage` y su ruta (`/panel/blog/:blogPostId/editar`) ya estaban completos y andando,
+    pero la lista solo ofrecía "Ver" (una previsualización) y "Eliminar" — nada enlazaba a la edición.
+14. ~~**Aceptar la apelación de una sanción no tenía ningún efecto real.**~~ Resuelto (2026-09-05):
+    `FechasRemaining`/`IsActive` se calculaban solo a partir de `Duration` y fechas jugadas, sin mirar
+    `AppealStatus` en ningún lado — el jugador/equipo seguía suspendido igual, apelación aceptada o no.
+15. ~~**Crear un usuario con espacios en el nombre mostraba un error crudo en inglés.**~~ Resuelto
+    (2026-09-05): no había validación de formato de nombre de usuario en el frontend, así que el
+    valor viajaba tal cual al backend, que rechazaba con el texto nativo de ASP.NET Identity
+    ("Username '...' is invalid, can only contain letters or digits.") sin traducir.
 
 ---
 
