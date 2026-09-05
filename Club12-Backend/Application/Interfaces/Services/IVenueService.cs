@@ -18,9 +18,7 @@ public interface IVenueService
     Task<Venue?> GetVenueByIdAsync(Guid venueId);
 
     /// <summary>
-    /// Retrieves a Venue by its id or its slug asynchronously. The value is
-    /// treated as an id when it parses as a GUID, otherwise it is looked up as
-    /// a slug.
+    /// Retrieves a Venue by its id or its slug asynchronously, treating the value as an id when it parses as a GUID and otherwise looking it up as a slug.
     /// </summary>
     /// <param name="idOrSlug">The venue's GUID id or its slug.</param>
     /// <returns>The matching venue, or null if not found.</returns>
@@ -29,8 +27,7 @@ public interface IVenueService
     Task UpdateVenueAsync(Venue venueEntity);
 
     /// <summary>
-    /// Deletes a venue. Blocked while any match still references it, so a
-    /// match is never left without a venue.
+    /// Deletes a venue, blocked while any match still references it, so a match is never left without a venue.
     /// </summary>
     /// <param name="id">The unique identifier of the venue to delete.</param>
     /// <exception cref="InvalidOperationException">

@@ -13,9 +13,7 @@ public interface IStageService
     Task<Stage?> GetStageByIdAsync(Guid stageId);
 
     /// <summary>
-    /// Retrieves a stage by its id or its slug asynchronously. The value is
-    /// treated as an id when it parses as a GUID, otherwise it is looked up as
-    /// a slug.
+    /// Retrieves a stage by its id or its slug asynchronously, treating the value as an id when it parses as a GUID and otherwise looking it up as a slug.
     /// </summary>
     /// <param name="idOrSlug">The stage's GUID id or its slug.</param>
     /// <returns>The matching stage, or null if not found.</returns>
@@ -29,9 +27,7 @@ public interface IStageService
     Task<PaginatedResponse<Stage>> GetAllStagesAsync(GetStagesFilteredRequest filter);
 
     /// <summary>
-    /// Deletes a stage. A division's stages may only be added or removed
-    /// while its tournament has not started yet — once the fixture is
-    /// generated, removing a phase would corrupt the bracket/fixture.
+    /// Deletes a stage, blocked once its tournament has started.
     /// </summary>
     /// <param name="id">The unique identifier of the stage to delete.</param>
     /// <exception cref="InvalidOperationException">
@@ -40,26 +36,23 @@ public interface IStageService
     Task DeleteStageAsync(Guid id);
 
     /// <summary>
-    /// Updates a stage. Blocked once its tournament has started, since
-    /// editing a stage's type/dates after the fixture is generated could
-    /// desync it from the matches already built off it.
+    /// Updates a stage, blocked once its tournament has started.
     /// </summary>
     /// <param name="stageEntity">Stage entity with updated data.</param>
     /// <exception cref="InvalidOperationException">
-    /// Thrown (mapped to 409) when the tournament has already started or was canceled.
+    /// Thrown, mapped to 409, when the tournament has already started or was canceled.
     /// </exception>
     Task UpdateStageAsync(Stage stageEntity);
 
     /// <summary>
-    /// Creates a stage. Blocked once its tournament has started (same guard
-    /// as <see cref="UpdateStageAsync"/>).
+    /// Creates a stage, blocked once its tournament has started.
     /// </summary>
     /// <param name="stageEntity">Stage entity to create.</param>
     /// <returns>The created Stage entity.</returns>
     /// <exception cref="InvalidOperationException">
     /// Thrown when a stage with the same name already exists in the division,
     /// or when a non-cross-division-cup division already has a Group stage
-    /// and <paramref name="stageEntity"/> is also a Group stage.
+    /// and stageEntity is also a Group stage.
     /// </exception>
     Task<Stage> CreateStageAsync(Stage stageEntity);
 
@@ -75,61 +68,29 @@ public interface IStageService
     Task UnassignTeamsFromStageAsync(Stage stage, List<Guid> teamIds);
 
     /// <summary>
-    /// Seeds the first-round matches of an elimination stage using the
-    /// division's group-stage standings and the classic bracket seed order
-    /// (1 vs 8, 4 vs 5, 2 vs 7, 3 vs 6 for 8 teams), so the top seeds only
-    /// meet in the final. Requires the stage's matches to already exist
-    /// (via CreateAutomatedMatchesAsync) and be unseeded, and every team
-    /// assigned to the stage to already have a finished-group-stage
-    /// position — a power-of-two number of ranked teams is required.
+    /// Seeds the first-round matches of an elimination stage using the division's group-stage standings and the classic bracket seed order, so the top seeds only meet in the final.
     /// </summary>
     /// <param name="stageId">The elimination stage to seed.</param>
     /// <returns>The stage's matches, now seeded with home/visitor teams.</returns>
     Task<List<Match>> SeedKnockoutStageAsync(Guid stageId);
 
     /// <summary>
-    /// Seeds every playoff cup of a division from its final group-stage
-    /// standings using the division's position-range mapping (HU-45/HU-81).
-    /// Each mapped destination is populated from the standings positions its
-    /// range covers and seeded into the first-round elimination stage whose
-    /// BracketName matches that destination.
+    /// Seeds every playoff cup of a division from its final group-stage standings using the division's position-range mapping.
     /// </summary>
     /// <param name="divisionId">The division whose group stage has finished.</param>
-    /// <returns>The seeded matches per destination cup (BracketName → matches).</returns>
+    /// <returns>The seeded matches per destination cup, keyed by BracketName.</returns>
     Task<Dictionary<string, List<Match>>> SeedPlayoffCupsAsync(Guid divisionId);
 
     /// <summary>
-    /// Called after a match finishes: if <paramref name="finishedMatchStageId"/>
-    /// belongs to a Group stage, and that finish completed EVERY match of
-    /// EVERY group stage in the division (the whole group phase), and the
-    /// division uses position-range playoff cups (HU-45/HU-81) that are not
-    /// already (even partially) seeded, automatically seeds them via
-    /// <see cref="SeedPlayoffCupsAsync"/> — the admin no longer has to click
-    /// "Sembrar bracket" by hand once every zone game is in. A no-op for
-    /// every other case (mid-group-phase, no cups configured, or already
-    /// seeded — left for the admin's manual action). Never throws: an
-    /// auto-seed failure is logged and swallowed rather than failing the
-    /// match-finishing operation that triggered it.
+    /// Automatically seeds a division's playoff cups after a match finishes, once every match of every group stage in the division is complete.
     /// </summary>
     /// <param name="finishedMatchStageId">The stage of the match that just finished.</param>
     Task TryAutoSeedPlayoffPhaseAsync(Guid finishedMatchStageId);
 
     /// <summary>
-    /// Called after a match (or a best-of-N series it belongs to) is decided:
-    /// pushes each newly-decided bracket slot's winner into its immediate next
-    /// round within the same cup (same Division + BracketName), matching the
-    /// slot up using the classic bracket adjacency (slot 2i and 2i+1 of this
-    /// stage feed slot i of the next stage, as Home and Visitor respectively —
-    /// the same convention <see cref="SeedPlayoffCupsAsync"/> establishes for
-    /// the first round). If the next stage's own <c>BestOf</c> is greater than
-    /// 1 and BOTH its Home and Visitor are now known, converts that slot into
-    /// game 1 of a new <c>MatchSeries</c> — the same treatment a freshly-seeded
-    /// series gets. A no-op for the Final (nothing further to advance to), for
-    /// a Group stage, or when nothing new was decided. Never throws: a failure
-    /// is logged and swallowed rather than failing the result-loading
-    /// operation that triggered it.
+    /// Pushes each newly-decided bracket slot's winner into its immediate next round within the same cup after a match or series is decided.
     /// </summary>
-    /// <param name="decidedStageId">The stage whose slot(s) just got decided.</param>
+    /// <param name="decidedStageId">The stage whose slots just got decided.</param>
     Task TryAdvanceStageWinnerAsync(Guid decidedStageId);
 }
 

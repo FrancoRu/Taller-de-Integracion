@@ -12,14 +12,8 @@ using System.Threading.Tasks;
 namespace Infrastructure.Repositories;
 
 /// <summary>
-/// Implements the IUnitOfWork interface, providing a centralized access point for all repository instances
-/// and managing transactional operations within the application's data layer.
+/// Implements IUnitOfWork, providing a centralized access point for all repository instances and managing transactional operations within the application's data layer.
 /// </summary>
-/// <remarks>
-/// This class uses constructor injection to receive all repository dependencies and the DbContext instance.
-/// It exposes each repository via a public property, enabling coordinated data operations across multiple entities.
-/// The SaveChangesAsync method commits all changes to the database in a single transaction.
-/// </remarks>
 public class UnitOfWork(
     ApplicationDBContext context,
     IPlayerRepository playerRepository,
@@ -45,7 +39,7 @@ public class UnitOfWork(
     public IBlogPostRepository BlogPostRepository { get; } = blogPostRepository;
 
     /// <summary>
-    /// Gets the repository for club entities (stable cross-season identity, HU-99).
+    /// Gets the repository for club entities, whose identity stays stable across seasons.
     /// </summary>
     public IClubRepository ClubRepository { get; } = clubRepository;
 

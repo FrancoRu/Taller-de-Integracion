@@ -11,8 +11,7 @@ using System.Threading.Tasks;
 namespace Application.Services;
 
 /// <summary>
-/// Service managing a team's technical staff (cuerpo técnico) for a given
-/// tournament/season.
+/// Service managing a team's technical staff for a given tournament and season.
 /// </summary>
 public class TeamStaffService(
     ITeamStaffRepository staffRepository) : ITeamStaffService

@@ -12,7 +12,9 @@ public sealed class PasswordResetConfirmRequest
     [Required, EmailAddress]
     public string Email { get; set; } = string.Empty;
 
-    /// <summary>Token received via email (URL-decoded by the framework automatically).</summary>
+    /// <summary>
+    /// Token received via email, URL-decoded automatically by the framework.
+    /// </summary>
     [Required]
     public string Token { get; set; } = string.Empty;
 

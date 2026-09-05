@@ -22,8 +22,7 @@ using System.Threading.Tasks;
 namespace Infrastructure.Identity;
 
 /// <summary>
-/// Identity-backed implementation of IUserManagementService.
-/// All access-control rules are enforced here, keeping controllers thin.
+/// Identity-backed implementation of IUserManagementService that enforces all access-control rules, keeping controllers thin.
 /// </summary>
 public sealed class IdentityUserManagementService(
     UserManager<ApplicationUser> userManager,
@@ -172,10 +171,7 @@ public sealed class IdentityUserManagementService(
     }
 
     /// <summary>
-    /// Generates a standard Identity password reset token, later verified by
-    /// ConfirmPasswordResetAsync, and flags the account so that
-    /// MustChangePasswordMiddleware blocks all endpoints until the user
-    /// completes the reset. Requires admin/owner privileges.
+    /// Generates a password reset token and flags the account so MustChangePasswordMiddleware blocks access until the reset completes.
     /// </summary>
     public async Task<ResetPasswordResponse> ResetPasswordAsync(
         string callerRole, Guid callerId, Guid userId, CancellationToken ct = default)
@@ -252,10 +248,7 @@ public sealed class IdentityUserManagementService(
     }
 
     /// <summary>
-    /// Write access currently follows the exact same rule as read access
-    /// (Admin, the target's owner, or the target themselves). Kept as its
-    /// own named method so a future divergence between the two policies
-    /// doesn't require renaming call sites.
+    /// Write access currently follows the exact same rule as read access, kept as its own method for a future divergence.
     /// </summary>
     private static void EnforceWriteAccess(ApplicationUser target, string callerRole, Guid callerId)
     {
@@ -283,11 +276,7 @@ public sealed class IdentityUserManagementService(
     }
 
     /// <summary>
-    /// Which roles each caller role may assign to another user. OWNER is the
-    /// super-admin role and, like ADMIN, may assign any role — the two are
-    /// deliberately kept as separate dictionary entries (rather than one
-    /// shared "top-privilege" set) so a future divergence between them
-    /// doesn't require restructuring this policy.
+    /// Which roles each caller role may assign to another user, kept as separate dictionary entries per role for a future divergence.
     /// </summary>
     private static readonly Dictionary<string, HashSet<string>> _roleChangePolicy =
         new(StringComparer.OrdinalIgnoreCase)
@@ -303,10 +292,7 @@ public sealed class IdentityUserManagementService(
         };
 
     /// <summary>
-    /// Replaces the target user's role with <paramref name="newRole"/> so they
-    /// end up in exactly one role (never accumulating multiple). Validates the
-    /// role value itself, then delegates to EnforceRoleChangeAccess for the
-    /// privilege-escalation and ownership checks before touching Identity.
+    /// Replaces the target user's role with newRole so they end up in exactly one role, never accumulating multiple.
     /// </summary>
     private async Task ChangeRoleAsync(
         ApplicationUser user, UserRoleType newRole, string callerRole, Guid callerId)
@@ -329,11 +315,7 @@ public sealed class IdentityUserManagementService(
     }
 
     /// <summary>
-    /// A user may never change their own role — even an ADMIN or OWNER —
-    /// since that is the one path that could otherwise let someone grant
-    /// themselves a more privileged role. Beyond that: both ADMIN and OWNER
-    /// may change any user's role, to any role <see cref="_roleChangePolicy"/>
-    /// allows their caller role to assign.
+    /// A user may never change their own role, since that is the one path that could let someone grant themselves more privilege.
     /// </summary>
     private static void EnforceRoleChangeAccess(
         ApplicationUser target, string callerRole, Guid callerId, string targetRoleName)

@@ -15,10 +15,7 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Read-only scorer ranking aggregations. Always public. Both actions
-/// serve the same "Goleadores" feature (ranking by team vs. by player) and
-/// are kept together rather than split across controllers, even though
-/// they pull from different services.
+/// Read-only scorer ranking aggregations, always public: goals by team and by player.
 /// </summary>
 [ApiController]
 [Route("api/[controller]/")]
@@ -28,7 +25,7 @@ public class ScorerController(IScorerService scorerService, IMatchService matchS
 #pragma warning restore S6960
 {
     /// <summary>
-    /// Ranks teams by goals scored across the filtered matches ("Goleadores" by team).
+    /// Ranks teams by goals scored across the filtered matches, the Goleadores-by-team view.
     /// </summary>
     /// <param name="filter">The match filtering and pagination parameters.</param>
     /// <returns>A paginated team scorer ranking.</returns>
@@ -43,7 +40,7 @@ public class ScorerController(IScorerService scorerService, IMatchService matchS
     }
 
     /// <summary>
-    /// Ranks individual players by goals scored ("Goleadores" by player).
+    /// Ranks individual players by goals scored, the Goleadores-by-player view.
     /// </summary>
     /// <param name="filter">The scorer filtering and pagination parameters.</param>
     /// <returns>A paginated player scorer ranking.</returns>

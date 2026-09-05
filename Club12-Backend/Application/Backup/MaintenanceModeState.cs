@@ -5,14 +5,7 @@ using System;
 namespace Application.Backup;
 
 /// <summary>
-/// In-memory IMaintenanceModeState singleton — pure process state
-/// with no OS/network I/O, same category as
-/// KeepLastNRetentionPolicy (design.md: "Maintenance state lives in
-/// Application/Backup, not Infrastructure"). Not thread-synchronized beyond
-/// field assignment ordering: Enter/Exit are only ever invoked while the
-/// caller already holds BackupOperationLock, so there is no
-/// concurrent-writer race in practice; reads (e.g. by the middleware) are
-/// always safe since every field is written together.
+/// In-memory IMaintenanceModeState singleton, pure process state with no OS or network I/O.
 /// </summary>
 public sealed class MaintenanceModeState : IMaintenanceModeState
 {

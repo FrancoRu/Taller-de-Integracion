@@ -15,8 +15,7 @@ public class PaginatedFilterRequest : IPaginationRequest, IOrderRequest
     private int _pageSize = PaginationDefaults.DefaultPageSize;
 
     /// <summary>
-    /// The page size for pagination. Defaults to 100; values outside 1–100 are
-    /// silently clamped to that range rather than rejected.
+    /// The page size for pagination; values outside 1-100 are silently clamped rather than rejected.
     /// </summary>
     public int PageSize
     {

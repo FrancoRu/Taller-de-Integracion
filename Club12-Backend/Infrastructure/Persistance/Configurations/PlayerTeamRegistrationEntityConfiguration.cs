@@ -6,9 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Infrastructure.Persistance.Configurations;
 
 /// <summary>
-/// A player may have at most one registration per tournament (season) —
-/// enforced by the unique index on PlayerId+TournamentId — so a player can
-/// never be on two teams in the same season.
+/// A player may have at most one registration per tournament season, enforced by a unique index on PlayerId and TournamentId, so a player can never be on two teams in one season.
 /// </summary>
 public class PlayerTeamRegistrationEntityConfiguration : BaseEntityConfiguration<PlayerTeamRegistration>
 {

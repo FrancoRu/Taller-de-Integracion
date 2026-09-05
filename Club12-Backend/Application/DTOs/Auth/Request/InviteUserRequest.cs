@@ -5,10 +5,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.Auth.Request;
 
 /// <summary>
-/// HU-09: request to create a user by email only. No password is set at
-/// creation time — the system emails a magic activation link the user
-/// consumes (see <see cref="ActivateAccountRequest"/>) to set their own
-/// password.
+/// Request to create a user by email only; the system emails a magic activation link to set the password.
 /// </summary>
 public sealed class InviteUserRequest
 {

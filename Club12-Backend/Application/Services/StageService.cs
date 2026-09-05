@@ -28,14 +28,7 @@ using System.Threading.Tasks;
 namespace Application.Services;
 
 /// <summary>
-/// Manages a division's stages and their elimination bracket. Structural
-/// edits (create/update/delete a stage, assign/unassign teams) are blocked
-/// once the parent tournament's fixture is generated or it was canceled (see
-/// <see cref="EnsureDivisionStructureEditableAsync"/>); seeding, auto-seeding
-/// once a group phase finishes, and advancing winners/losers between rounds
-/// (including third-place and best-of-N series creation) all read the
-/// bracket purely from <see cref="Stage.BracketName"/> and elimination depth,
-/// since <see cref="Stage.Order"/> is never set on wizard-built stages.
+/// Manages a division's stages and their elimination bracket.
 /// </summary>
 public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) : IStageService
 {
@@ -47,12 +40,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     private readonly IMatchSeriesRepository _matchSeriesRepository = unitOfWork.MatchSeriesRepository;
 
     /// <summary>
-    /// The elimination rounds a wizard-built cup can be made of, in bracket
-    /// order (see <c>qualifiersToStageTypes</c> on the frontend, which never
-    /// produces <see cref="StageType.ThirdPlace"/> — that stage type only
-    /// exists for the legacy fixed-size bracket generator). Used to find "the
-    /// next round of this same cup" without relying on <see cref="Stage.Order"/>,
-    /// which the wizard's per-cup stage creation never sets.
+    /// The elimination rounds a wizard-built cup can be made of, in bracket order.
     /// </summary>
     private static readonly StageType[] EliminationProgression =
     [
@@ -63,9 +51,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     ];
 
     /// <summary>
-    /// The stage type immediately after <paramref name="current"/> in
-    /// <see cref="EliminationProgression"/>, or null when <paramref name="current"/>
-    /// is the Final, not part of the progression (Group), or unrecognized.
+    /// The stage type immediately after current in EliminationProgression, or null when there is none.
     /// </summary>
     private static StageType? NextStageType(StageType current)
     {
@@ -79,12 +65,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     }
 
     /// <summary>
-    /// This stage type's position in <see cref="EliminationProgression"/> —
-    /// lower means earlier in the bracket. Types outside the progression
-    /// (Group, ThirdPlace) sort last; callers that use this to pick "the
-    /// earliest round of a cup" already exclude Group upstream, and a
-    /// wizard-built cup never produces ThirdPlace (see
-    /// <see cref="EliminationProgression"/>'s own remarks).
+    /// This stage type's position in EliminationProgression, lower meaning earlier in the bracket.
     /// </summary>
     private static int EliminationDepth(StageType stageType)
     {
@@ -103,8 +84,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     }
 
     /// <summary>
-    /// Retrieves a stage by its id or its slug. The value is treated as an id
-    /// when it parses as a GUID, otherwise it is looked up as a slug.
+    /// Retrieves a stage by id or slug, auto-detecting which one was passed via GUID parsing.
     /// </summary>
     /// <param name="idOrSlug">The stage's GUID id or its slug.</param>
     /// <returns>The matching stage, or null if not found.</returns>
@@ -155,8 +135,8 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     /// </summary>
     /// <param name="id">The unique identifier of the stage to delete.</param>
     /// <exception cref="InvalidOperationException">
-    /// Thrown when the stage's tournament has already started (its fixture is
-    /// generated); removing a phase then would corrupt the bracket/fixture.
+    /// Thrown when the stage's tournament has already started and its fixture is generated;
+    /// removing a phase then would corrupt the bracket or fixture.
     /// </exception>
     public async Task DeleteStageAsync(Guid id)
     {
@@ -171,26 +151,11 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     }
 
     /// <summary>
-    /// Guards manual phase (stage) structure edits against the state of the
-    /// division's tournament. A division's stages may only be added or removed
-    /// while the tournament has not started yet — i.e. before its fixture is
-    /// generated. The fixture is generated when the tournament transitions to
-    /// <see cref="TournamentStatus.Ongoing"/> (see TournamentService.ChangeStatusAsync);
-    /// once that has happened (<see cref="TournamentStatus.Ongoing"/> or
-    /// <see cref="TournamentStatus.Finished"/>) the matches already reference the
-    /// existing set of stages, so adding or removing a stage would corrupt the
-    /// bracket. A <see cref="TournamentStatus.Canceled"/> tournament is frozen
-    /// for the same reason regardless of how far it got — nothing about a dead
-    /// tournament's structure should still be editable. Editing stays allowed
-    /// while the tournament is <see cref="TournamentStatus.Scheduled"/>,
-    /// <see cref="TournamentStatus.OpenForRegistration"/>, or
-    /// <see cref="TournamentStatus.RegistrationClosed"/> (structure still
-    /// editable). A division whose tournament cannot be resolved is left for the
-    /// normal not-found handling downstream.
+    /// Guards manual stage structure edits against the state of the division's tournament.
     /// </summary>
     /// <param name="divisionId">The division whose tournament is checked.</param>
     /// <exception cref="InvalidOperationException">
-    /// Thrown (mapped to 409) when the tournament has already started or was canceled.
+    /// Thrown as a 409 when the tournament has already started or was canceled.
     /// </exception>
     private async Task EnsureDivisionStructureEditableAsync(Guid divisionId)
     {
@@ -216,9 +181,8 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     /// </summary>
     /// <param name="stageEntity">The stage entity to update.</param>
     /// <exception cref="InvalidOperationException">
-    /// Thrown (mapped to 409) when the tournament has already started —
-    /// editing a stage's type/dates once the fixture is generated could
-    /// desync it from the matches already built off it.
+    /// Thrown as a 409 when the tournament has already started — editing a stage's type or dates
+    /// once the fixture is generated could desync it from the matches already built off it.
     /// </exception>
     public async Task UpdateStageAsync(Stage stageEntity)
     {
@@ -234,13 +198,10 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     /// <returns>The created stage entity.</returns>
     /// <exception cref="InvalidOperationException">
     /// Thrown if a stage with the same name already exists in the division, or if a
-    /// non-cross-division-cup division already has a Group stage and
-    /// <paramref name="stageEntity"/> is also a Group stage (a regular division's
-    /// round-robin phase is a single stage — see <see cref="AssignTeamsToStageAsync"/>'s
-    /// comment on why a Group stage can hold an entire zone's teams — so a second one
-    /// would be an orphaned, ambiguous fixture). A cross-division cup
-    /// (<see cref="Division.IsCrossDivisionCup"/>) is exempt: it may hold several Group
-    /// stages whose top teams are pooled to seed one bracket (HU-110).
+    /// non-cross-division-cup division already has a Group stage and stageEntity is also a Group
+    /// stage. A regular division's round-robin phase is a single stage, so a second one would be an
+    /// orphaned, ambiguous fixture. A cross-division cup is exempt: it may hold several Group stages
+    /// whose top teams are pooled to seed one bracket.
     /// </exception>
     public async Task<Stage> CreateStageAsync(Stage stageEntity)
     {
@@ -259,7 +220,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
             bool hasGroupStage = await _stageRepository.ExistsAsync(
                 s => s.DivisionId == stageEntity.DivisionId && s.StageType == StageType.Group);
 
-            // HU-110: a multi-group cross-division cup ("Copa Club12") is
+            // A multi-group cross-division cup, "Copa Club12", is
             // seeded by pooling the top teams of SEVERAL internal group
             // stages, so it may legitimately hold more than one Group stage.
             // Every regular division keeps the original one-Group-per-division
@@ -395,12 +356,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     }
 
     /// <summary>
-    /// Assigns a unique slug to every stage in a freshly built batch (e.g. a
-    /// division's full set of automated stages) before it is persisted.
-    /// Uniqueness is checked against both already-persisted stages and the
-    /// slugs already assigned earlier in this same batch, since none of the
-    /// batch's stages exist in the repository yet when this runs. Mirrors
-    /// MatchService.AssignMatchSlugsAsync.
+    /// Assigns a unique slug to every stage in a freshly built batch before it is persisted.
     /// </summary>
     private async Task AssignStageSlugsAsync(List<Stage> stages)
     {
@@ -424,10 +380,9 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     /// <param name="teamIds">Optional list of team IDs to assign.</param>
     /// <param name="auto">If true, assigns teams automatically based on available slots.</param>
     /// <exception cref="InvalidOperationException">
-    /// Thrown if the stage already has the maximum number of teams, if too
-    /// many teams are assigned, or (mapped to 409) if the tournament has
-    /// already started — adding a team to a zone after the fixture is
-    /// generated would leave it without any matches of its own.
+    /// Thrown if the stage already has the maximum number of teams, if too many teams are assigned,
+    /// or as a 409 if the tournament has already started — adding a team to a zone after the
+    /// fixture is generated would leave it without any matches of its own.
     /// </exception>
     public async Task AssignTeamsToStageAsync(Stage stage, List<Guid>? teamIds = null, bool auto = false)
     {
@@ -515,11 +470,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     }
 
     /// <summary>
-    /// Throws if any of the given teams is already assigned to a stage in a
-    /// different, non-cross-division-cup division of the same tournament as
-    /// <paramref name="stage"/>'s division. Skips the check entirely when
-    /// <paramref name="stage"/>'s own division is itself a cross-division
-    /// cup, since that division is expected to share teams with every zone.
+    /// Throws if any given team is already assigned to a stage in a different division of the same tournament.
     /// </summary>
     private async Task EnsureNoCrossDivisionConflictAsync(Stage stage, IEnumerable<Guid> teamIds)
     {
@@ -538,8 +489,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     }
 
     /// <summary>
-    /// Returns the subset of teamIds already assigned to a stage in a
-    /// different, non-cross-division-cup division of the same tournament.
+    /// Returns the subset of teamIds already assigned to a stage in a different division of the same tournament.
     /// </summary>
     private async Task<List<Guid>> FindTeamsInAnotherDivisionAsync(Stage stage, IEnumerable<Guid> teamIds)
     {
@@ -564,9 +514,9 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     /// <param name="stage">The stage to unassign teams from.</param>
     /// <param name="teamIds">List of team IDs to unassign.</param>
     /// <exception cref="InvalidOperationException">
-    /// Thrown (mapped to 409) when the tournament has already started —
-    /// removing a team from a zone after the fixture is generated would leave
-    /// its already-scheduled matches pointing at a team no longer in that zone.
+    /// Thrown as a 409 when the tournament has already started — removing a team from a zone after
+    /// the fixture is generated would leave its already-scheduled matches pointing at a team no
+    /// longer in that zone.
     /// </exception>
     public async Task UnassignTeamsFromStageAsync(Stage stage, List<Guid> teamIds)
     {
@@ -583,10 +533,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     }
 
     /// <summary>
-    /// Seeds an elimination stage's already-generated, still-empty matches
-    /// using the division's group-stage standings, pairing seeds in the
-    /// classic bracket order (1v8, 4v5, 2v7, 3v6) so the top two seeds can
-    /// only meet in the final.
+    /// Seeds an elimination stage's empty matches from group-stage standings in classic bracket order.
     /// </summary>
     public async Task<List<Match>> SeedKnockoutStageAsync(Guid stageId)
     {
@@ -604,7 +551,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
             throw new InvalidOperationException(ErrorMessages.Stage.AlreadySeeded);
         }
 
-        // HU-110: a cross-division cup with more than one internal group is
+        // A cross-division cup with more than one internal group is
         // seeded by pooling the top QualifiersPerGroup teams of every group
         // and ordering them by group-stage strength, rather than from the
         // teams pre-assigned to this stage. A cross cup with a single group,
@@ -655,14 +602,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     }
 
     /// <summary>
-    /// Seeds a multi-group cross-division cup's first elimination stage
-    /// (HU-110). Each internal <see cref="StageType.Group"/> stage's standings
-    /// are computed independently; the top
-    /// <see cref="Division.QualifiersPerGroup"/> teams of every group are
-    /// pooled and ordered by group-stage strength
-    /// (see <see cref="CrossCupGroupSeeder"/>), then paired into the bracket
-    /// with the shared classic-seed/BYE placement. The pool must hold at least
-    /// two qualifiers.
+    /// Seeds a multi-group cross-division cup's first elimination stage.
     /// </summary>
     private async Task<List<Match>> SeedMultiGroupCrossCupStageAsync(Stage stage, List<Stage> groupStages)
     {
@@ -688,17 +628,10 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     }
 
     /// <summary>
-    /// Seeds every playoff cup of a division from its final group-stage
-    /// standings using the division's position-range mapping (HU-45/HU-81).
-    /// Each mapped destination (e.g. "Copa Oro", "Copa Plata") is populated
-    /// from the standings positions its range covers and seeded into the
-    /// first-round elimination stage whose <see cref="Stage.BracketName"/>
-    /// matches that destination, reusing the same classic bracket seeding as
-    /// the single-cup path. Single-cup tournaments keep using
-    /// <see cref="SeedKnockoutStageAsync"/> unchanged.
+    /// Seeds every playoff cup of a division from its final group-stage standings.
     /// </summary>
     /// <param name="divisionId">The division whose group stage has finished.</param>
-    /// <returns>The seeded matches per destination cup (BracketName → matches).</returns>
+    /// <returns>The seeded matches per destination cup, keyed by BracketName.</returns>
     public async Task<Dictionary<string, List<Match>>> SeedPlayoffCupsAsync(Guid divisionId)
     {
         Division division = await _divisionRepository.GetByIdAsync(
@@ -827,17 +760,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     }
 
     /// <summary>
-    /// Pairs an ordered (best seed first) list of team ids into a stage's
-    /// already-generated, still-empty matches using the classic bracket seed
-    /// order, marking bye pairs as finished walkover wins. Shared by the
-    /// single-cup and multi-cup seeding paths. When the stage plays a real
-    /// series (<see cref="Stage.BestOf"/> &gt; 1), a real pairing (not a bye)
-    /// gets a brand-new <see cref="MatchSeries"/> and the pre-generated empty
-    /// match becomes that series' game 1 — the same treatment
-    /// <see cref="TryAdvanceStageWinnerAsync"/> gives a later round once both
-    /// its teams are known. A bye stays a single finished match regardless of
-    /// <see cref="Stage.BestOf"/>: nothing is actually played, so there is
-    /// nothing to make a series out of.
+    /// Pairs an ordered, best-seed-first list of team ids into a stage's empty matches in classic bracket seed order.
     /// </summary>
     private async Task<List<Match>> FillStageWithSeedsAsync(Stage stage, IReadOnlyList<Guid> orderedTeamIds)
     {
@@ -871,15 +794,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     }
 
     /// <summary>
-    /// Creates and persists a new best-of-N series between two teams at a
-    /// stage. Builds the entity directly (rather than reusing
-    /// <see cref="MatchSeriesService"/>) because this runs from the trusted
-    /// internal seeding/advancement path, where the pairing is already known
-    /// to be correct — the public create-series endpoint's
-    /// "team assigned to this stage via StageTeamMatch" guard does not apply
-    /// here: elimination-stage teams are never assigned that way (they are
-    /// seeded directly onto the match/series, matching how a BestOf=1 slot has
-    /// always worked).
+    /// Creates and persists a new best-of-N series between two teams at a stage.
     /// </summary>
     private async Task<MatchSeries> CreateSeriesForPairAsync(Guid stageId, int bestOf, Guid homeTeamId, Guid visitorTeamId)
     {
@@ -1025,13 +940,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     }
 
     /// <summary>
-    /// Once a semifinal slot is decided, pushes its LOSER into the division's
-    /// third-place decider (same BracketName) — the same slot convention
-    /// <see cref="AdvanceWinnersToNextRoundAsync"/> uses for winners: the
-    /// first semifinal slot's loser becomes Home, the second's becomes
-    /// Visitor. A no-op when the cup was configured with no third-place stage
-    /// (<see cref="StageType.ThirdPlace"/> is optional, added via
-    /// <c>qualifiersToStageTypes</c> only when the admin opts in).
+    /// Once a semifinal slot is decided, pushes its loser into the division's third-place decider.
     /// </summary>
     private async Task AdvanceLosersToThirdPlaceAsync(Stage semiFinalStage, List<Match> orderedMatches)
     {
@@ -1109,11 +1018,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     }
 
     /// <summary>
-    /// The winning team of one bracket slot (a single match, or a whole
-    /// series), or null when that slot is not decided yet. A series slot
-    /// (<see cref="Match.SeriesId"/> set) is decided once its
-    /// <see cref="MatchSeries.WinningTeamId"/> is set — a plain slot
-    /// (BestOf = 1, or a bye) is decided once the match itself is finished.
+    /// The winning team of one bracket slot, a single match or a whole series, or null if undecided.
     /// </summary>
     private static Guid? ResolveSlotWinner(Match slotFirstMatch, Stage stage)
     {
@@ -1127,10 +1032,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     }
 
     /// <summary>
-    /// The losing team of one decided bracket slot — the counterpart to
-    /// <see cref="ResolveSlotWinner"/>, used to seed the third-place decider
-    /// from semifinal losers. Null for a slot that is not decided yet, or a
-    /// bye (only one side was ever assigned, so there is no real loser).
+    /// The losing team of one decided bracket slot, the counterpart to ResolveSlotWinner.
     /// </summary>
     private static Guid? ResolveSlotLoser(Match slotFirstMatch, Stage stage)
     {

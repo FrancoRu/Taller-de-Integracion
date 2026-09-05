@@ -23,20 +23,17 @@ public class TeamResponse : BaseEntityResponse
     public required string ShirtColor { get; set; }
 
     /// <summary>
-    /// The jersey kit pattern applied over the primary shirt color. See
-    /// JERSEY_STYLES (frontend) for the full, current list.
+    /// The jersey kit pattern applied over the primary shirt color; see the frontend's JERSEY_STYLES list.
     /// </summary>
     public string JerseyStyle { get; set; } = "solid";
 
     /// <summary>
-    /// Optional secondary #rrggbb hex color used for the jersey pattern/trim.
-    /// Null when the kit has no accent color.
+    /// Optional secondary #rrggbb hex color used for the jersey pattern or trim; null means no accent color.
     /// </summary>
     public string? ShirtSecondaryColor { get; set; }
 
     /// <summary>
-    /// Optional third #rrggbb hex color, used only by the tri-color kit
-    /// templates. Null when the selected template does not use one.
+    /// Optional third #rrggbb hex color, used only by tri-color kit templates; null when unused.
     /// </summary>
     public string? ShirtTertiaryColor { get; set; }
 
@@ -45,16 +42,12 @@ public class TeamResponse : BaseEntityResponse
     public Guid? TournamentId { get; set; }
 
     /// <summary>
-    /// The name of the team's current tournament (<see cref="TournamentId"/>),
-    /// e.g. "Torneo Apertura Masculino 2025" — disambiguates same-named teams
-    /// from different seasons in an "existing team" picker. Null when
-    /// <see cref="TournamentId"/> is null.
+    /// The team's current tournament name, disambiguating same-named teams across seasons; null when TournamentId is null.
     /// </summary>
     public string? TournamentName { get; set; }
 
     /// <summary>
-    /// The club this team belongs to, letting the frontend link a team to its
-    /// club. Null when the team is not associated with a club.
+    /// The club this team belongs to, letting the frontend link to it; null when not associated with a club.
     /// </summary>
     public Guid? ClubId { get; set; }
 

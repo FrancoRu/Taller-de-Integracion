@@ -22,7 +22,7 @@ public class GetStagesFilteredRequest : PaginatedFilterRequest
     public bool? IsElimination { get; set; }
 
     /// <summary>
-    /// Optional filter by stage name (supports partial matching).
+    /// Optional filter by stage name, supporting partial matching.
     /// </summary>
     public string? Name { get; set; }
 

@@ -1,9 +1,7 @@
 namespace Application.DTOs.DataMaintenance.Response;
 
 /// <summary>
-/// Row counts removed by DataMaintenanceService.WipeSampleDataAsync, for
-/// the admin UI's success summary. Identity (users, roles) is never
-/// touched by the wipe, so it has no counters here.
+/// Row counts removed by the sample-data wipe, for the admin UI's success summary.
 /// </summary>
 public sealed record DataWipeResult(
     int Tournaments,

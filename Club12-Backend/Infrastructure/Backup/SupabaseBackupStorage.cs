@@ -11,23 +11,7 @@ using System.Threading.Tasks;
 namespace Infrastructure.Backup;
 
 /// <summary>
-/// IBackupStorage implementation that reuses the existing
-/// Supabase client/credentials (via ISupabaseRawStorage,
-/// implemented by SupabaseHelper) instead of provisioning a
-/// second Supabase client. Confines every backup object to the dedicated
-/// backups/ prefix in the configured bucket. Backup names are
-/// expected to be server-generated (timestamp + guid, see
-/// DatabaseBackupHostedService), but every name is still validated to
-/// resolve strictly inside the backups/ prefix before any raw call
-/// runs — mirroring LocalDirectoryBackupStorage's traversal guard for
-/// this port's other adapter.
-///
-/// Raw-storage failures (network error, auth error, or any other exception
-/// surfaced by the Supabase client) are wrapped into
-/// BackupExecutionException — the same failure type
-/// PgDumpBackupService throws and that
-/// DatabaseBackupHostedService already catches, logs, and recovers
-/// from without crashing the host.
+/// IBackupStorage implementation that reuses the existing Supabase client and credentials through ISupabaseRawStorage instead of provisioning a second Supabase client.
 /// </summary>
 public sealed class SupabaseBackupStorage(ISupabaseRawStorage rawStorage) : IBackupStorage
 {
@@ -96,11 +80,7 @@ public sealed class SupabaseBackupStorage(ISupabaseRawStorage rawStorage) : IBac
     }
 
     /// <summary>
-    /// Resolves <paramref name="name"/> against the backups/ prefix
-    /// and throws ArgumentException unless it is a simple,
-    /// non-rooted, non-traversing relative name — never forwarded to
-    /// rawStorage when invalid, so no raw call is attempted for
-    /// a rejected name.
+    /// Resolves name against the backups/ prefix and throws ArgumentException unless it is a simple, non-rooted, non-traversing relative name.
     /// </summary>
     private static string ToObjectPath(string name)
     {

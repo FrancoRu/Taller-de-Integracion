@@ -17,48 +17,35 @@ public class CreateDivisionRequest
     public required Guid TournamentId { get; set; }
 
     /// <summary>
-    /// Marks this division as a cross-division cup (e.g. "Copa Club12")
-    /// that intentionally draws teams from every other division in the
-    /// tournament, rather than being a team's single competitive tier.
-    /// Defaults to false.
+    /// Marks this division as a cross-division cup that intentionally draws teams from every division.
     /// </summary>
     public bool IsCrossDivisionCup { get; set; } = false;
 
     /// <summary>
-    /// Points awarded for a win in this division's standings (HU-79).
-    /// Defaults to 2.
+    /// Points awarded for a win in this division's standings; defaults to 2.
     /// </summary>
     [Range(0, int.MaxValue, ErrorMessage = "PointsForWin cannot be negative.")]
     public int PointsForWin { get; set; } = 2;
 
     /// <summary>
-    /// Points awarded for a loss in this division's standings (HU-79).
-    /// Defaults to 1.
+    /// Points awarded for a loss in this division's standings; defaults to 1.
     /// </summary>
     [Range(0, int.MaxValue, ErrorMessage = "PointsForLoss cannot be negative.")]
     public int PointsForLoss { get; set; } = 1;
 
     /// <summary>
-    /// How many teams qualify to the bracket from EACH internal group of a
-    /// multi-group cross-division cup (HU-110). Only meaningful when
-    /// <see cref="IsCrossDivisionCup"/> is true and the division holds more
-    /// than one Group stage; harmless default 1 everywhere else.
+    /// How many teams qualify from each internal group of a multi-group cross-division cup; defaults to 1.
     /// </summary>
     [Range(1, int.MaxValue, ErrorMessage = "QualifiersPerGroup must be at least 1.")]
     public int QualifiersPerGroup { get; set; } = 1;
 
     /// <summary>
-    /// Competitive category (gender) of the division (HU-48). Must match the
-    /// parent tournament's category — a single tournament cannot mix feminine
-    /// and masculine divisions, so a mismatch is rejected. Defaults to
-    /// <see cref="TournamentCategory.Masculine"/> when omitted.
+    /// Competitive category of the division, which must match the parent tournament's category.
     /// </summary>
     public TournamentCategory Category { get; set; } = TournamentCategory.Masculine;
 
     /// <summary>
-    /// Optional position-range → playoff-destination mapping (HU-45) the
-    /// wizard sends so the system can seed multiple cups (HU-81). Ranges must
-    /// not overlap.
+    /// Optional position-range to playoff-destination mapping the wizard sends to seed multiple cups.
     /// </summary>
     public List<PlayoffMappingRequest>? PlayoffMappings { get; set; }
 }

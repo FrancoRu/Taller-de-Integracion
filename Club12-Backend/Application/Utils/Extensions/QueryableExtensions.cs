@@ -11,16 +11,13 @@ namespace Application.Utils.Extensions;
 public static class QueryableExtensions
 {
     /// <summary>
-    /// Builds a combined-AND filter expression by reflecting over <typeparamref name="T"/>'s
-    /// properties that also exist on <typeparamref name="TEntity"/>: string properties become
-    /// case-insensitive <c>Contains</c>, everything else becomes equality. Pagination/order
-    /// properties are skipped automatically.
+    /// Builds a combined-AND filter expression by reflecting over T's properties that also exist on TEntity.
     /// </summary>
     /// <param name="filter">The filter DTO whose non-empty, non-skipped properties become predicates.</param>
     /// <param name="ignoredProperties">
     /// Names of filter properties whose auto-generated predicate must be
-    /// suppressed, letting the caller special-case them (e.g. resolving a
-    /// filter through a join instead of the entity's own FK-equality). Purely
+    /// suppressed, letting the caller special-case them by resolving a
+    /// filter through a join instead of the entity's own FK-equality. Purely
     /// additive: callers that pass nothing get the original behavior.
     /// </param>
     /// <exception cref="InvalidOperationException">Thrown when the 'Contains' method is not found.</exception>
@@ -98,11 +95,7 @@ public static class QueryableExtensions
     }
 
     /// <summary>
-    /// Combines two entity predicates with a logical AND, rebinding the second
-    /// predicate's parameter onto the first so the result is a single lambda
-    /// EF Core can translate to SQL (unlike Expression.Invoke). Used to append
-    /// extra server-side filters (e.g. published-only blog posts, HU-16) to a
-    /// dynamically built filter expression.
+    /// Combines two entity predicates with a logical AND, rebinding the second predicate's parameter onto the first so the result is a single lambda EF Core can translate to SQL.
     /// </summary>
     public static Expression<Func<TEntity, bool>> AndAlso<TEntity>(
         this Expression<Func<TEntity, bool>> left,

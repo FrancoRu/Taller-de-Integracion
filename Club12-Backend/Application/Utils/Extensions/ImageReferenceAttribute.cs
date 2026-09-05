@@ -4,14 +4,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Application.Utils.Extensions;
 
 /// <summary>
-/// Validates a property that carries an image reference: either an absolute
-/// http(s) URL (an uploaded file in the storage bucket) or a self-contained
-/// <c>data:image/...</c> URI.
-///
-/// Exists because <see cref="UrlAttribute"/> accepts only http, https and ftp,
-/// so a row whose picture is a generated inline SVG — every seeded venue —
-/// could be read back and displayed but never saved again: re-submitting the
-/// edit form unchanged failed validation with 400.
+/// Validates a property that carries an image reference: either an absolute http or https URL or a self-contained data:image URI.
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
 public sealed class ImageReferenceAttribute : ValidationAttribute

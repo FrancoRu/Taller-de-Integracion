@@ -9,9 +9,7 @@ using System.Security.Claims;
 namespace API.Utils.Helpers;
 
 /// <summary>
-/// Resolves the current caller's identity from the HTTP context for the audit
-/// trail (HU-101). Falls back to <see cref="AuditConstants.SystemUser"/> when
-/// there is no authenticated request (background jobs, seeding, tests).
+/// Resolves the current caller's identity from the HTTP context for the audit trail, falling back to AuditConstants.SystemUser when there is no authenticated request.
 /// </summary>
 public sealed class HttpCurrentUserAccessor(IHttpContextAccessor httpContextAccessor) : ICurrentUserAccessor
 {

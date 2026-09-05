@@ -13,11 +13,7 @@ using System.Threading.Tasks;
 namespace Infrastructure.Persistance;
 
 /// <summary>
-/// IBackupCatalog implementation backed directly by
-/// ApplicationDBContext.BackupRecords. Kept as a thin, single-entity
-/// wrapper (not routed through GenericRepository/UnitOfWork) to match the
-/// lightweight port style already established for the rest of the Backup
-/// feature (IBackupStorage, IDatabaseBackupService).
+/// IBackupCatalog implementation backed directly by ApplicationDBContext.BackupRecords, kept as a thin single-entity wrapper instead of routing through GenericRepository or UnitOfWork to match the lightweight port style established for the rest of the Backup feature.
 /// </summary>
 public sealed class EfBackupCatalog(ApplicationDBContext context) : IBackupCatalog
 {

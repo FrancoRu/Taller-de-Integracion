@@ -21,10 +21,7 @@ using System.Threading.Tasks;
 namespace Application.Services;
 
 /// <summary>
-/// Manages players and keeps each one's current team pointer (<see cref="Player.TeamId"/>)
-/// in sync with their season-scoped <see cref="PlayerTeamRegistration"/> — the
-/// two must never disagree, since statistics, scorer records, and sanctions
-/// are all attributed via the player's current team.
+/// Manages players and keeps Player.TeamId in sync with their season-scoped PlayerTeamRegistration.
 /// </summary>
 public class PlayerService(
     IUnitOfWork unitOfWork,
@@ -53,10 +50,7 @@ public class PlayerService(
     }
 
     /// <summary>
-    /// Guards the DB's IX_Players_DocumentNumber unique index with a friendly
-    /// 409 instead of letting a collision surface as an unhandled
-    /// DbUpdateException (raw 500). <paramref name="excludingPlayerId"/> lets
-    /// an update keep its own current DocumentNumber.
+    /// Guards the DB's IX_Players_DocumentNumber unique index with a friendly 409 instead of a raw 500.
     /// </summary>
     private async Task EnsureDocumentNumberIsUniqueAsync(string documentNumber, Guid? excludingPlayerId)
     {
@@ -77,8 +71,7 @@ public class PlayerService(
     }
 
     /// <summary>
-    /// Retrieves a player by its id or its slug. The value is treated as an id
-    /// when it parses as a GUID, otherwise it is looked up as a slug.
+    /// Retrieves a player by id or slug, auto-detecting which one was passed via GUID parsing.
     /// </summary>
     /// <param name="idOrSlug">The player's GUID id or its slug.</param>
     /// <returns>The matching player, or null if not found.</returns>
@@ -120,14 +113,14 @@ public class PlayerService(
             registration => registration.PlayerId == playerId && registration.TournamentId == tournamentId);
         PlayerTeamRegistration? registration = existing.FirstOrDefault();
 
-        // HU-54: a player cannot be registered to two teams in the same tournament.
+        // A player cannot be registered to two teams in the same tournament.
         if (registration is not null && registration.TeamId != teamId)
         {
             throw new InvalidOperationException(
                 ErrorMessages.Roster.PlayerAlreadyInAnotherTeam(playerId, tournamentId));
         }
 
-        // HU-54: dorsal must be unique within the same team + tournament
+        // Dorsal must be unique within the same team + tournament
         // (ignoring this same player's own current registration).
         if (jerseyNumber is not null)
         {
@@ -146,7 +139,7 @@ public class PlayerService(
 
         if (registration is null)
         {
-            // HU-54: enforce the configurable roster-size cap when adding a
+            // Enforce the configurable roster-size cap when adding a
             // brand-new member (re-registering an existing member does not grow
             // the roster, so it skips this check).
             int currentRosterSize = await _registrationRepository.CountAsync(
@@ -196,16 +189,7 @@ public class PlayerService(
     }
 
     /// <summary>
-    /// Mirrors RegisterPlayerToTeamAsync's roster-size cap for a mid-season
-    /// team change via UpdatePlayerAsync, so moving a player can't silently
-    /// push the destination team past the configured limit the way a
-    /// brand-new registration would be blocked from doing. Also blocks the
-    /// move entirely once the player already has statistics, scorer records
-    /// or sanctions for this season: those are attributed via the player's
-    /// CURRENT team pointer (see MatchProfile.ScorersForTeam and
-    /// TeamService.DeleteTeamAsync's own hasPlayersWithHistory check), so
-    /// moving the player would silently re-attribute their past results to
-    /// the new team instead of just risking a future inconsistency.
+    /// Mirrors RegisterPlayerToTeamAsync's roster-size cap for a mid-season team change.
     /// </summary>
     private async Task ValidateRegistrationMoveAsync(Player playerEntity, Guid tournamentId)
     {
@@ -255,11 +239,7 @@ public class PlayerService(
     }
 
     /// <summary>
-    /// Ensures the player has exactly one PlayerTeamRegistration for
-    /// <paramref name="tournamentId"/>, pointing at the player's current
-    /// TeamId. Creates one if none exists for that season yet; moves the
-    /// existing one to the new team if the player's team changed within the
-    /// same season; no-ops otherwise.
+    /// Ensures the player has exactly one PlayerTeamRegistration for tournamentId pointing at their current TeamId.
     /// </summary>
     private async Task EnsureRegistrationAsync(Player playerEntity, Guid tournamentId)
     {

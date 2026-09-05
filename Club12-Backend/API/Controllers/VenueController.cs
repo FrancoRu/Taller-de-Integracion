@@ -23,8 +23,7 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Controller for managing Venues. Reads are public; writes require Owner
-/// or Admin.
+/// Manages Venues. Reads are public; writes require Owner or Admin.
 /// </summary>
 /// <param name="venueService">The Venue service.</param>
 /// <param name="supabaseHelper">The Supabase helper for storage operations.</param>
@@ -40,8 +39,8 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
     /// </summary>
     /// <param name="venueRequest">The venue creation request.</param>
     /// <returns>The created Venue response.
-    /// <para>Returns 201 (Created) with the Venue response if the creation was successful.</para>
-    /// <para>Returns 403 (Forbidden) if the user is not authorized.</para>
+    /// <para>Returns 201 Created with the Venue response if the creation was successful.</para>
+    /// <para>Returns 403 Forbidden if the user is not authorized.</para>
     /// </returns>
     [HttpPost()]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(VenueResponse))]
@@ -66,10 +65,10 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
     /// <summary>
     /// Retrieves a venue by its id or its public slug asynchronously.
     /// </summary>
-    /// <param name="idOrSlug">The id (GUID) or slug of the venue to retrieve.</param>
+    /// <param name="idOrSlug">The venue's GUID id or slug to retrieve.</param>
     /// <returns>The Venue with the specified id or slug.
-    /// <para>Returns 200 (OK) with the Venue response if it was found.</para>
-    /// <para>Returns 404 (Not Found) if the Venue with the provided id or slug was not found.</para>
+    /// <para>Returns 200 OK with the Venue response if it was found.</para>
+    /// <para>Returns 404 Not Found if the Venue with the provided id or slug was not found.</para>
     /// </returns>
     [AllowAnonymous]
     [HttpGet("{idOrSlug}")]
@@ -94,9 +93,9 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
     /// <param name="id">The id of the venue to update.</param>
     /// <param name="venueRequest">The venue update request.</param>
     /// <returns>
-    /// Returns 200 (OK) if the update was successful.
-    /// Returns 404 (Not Found) if the Venue with the provided id was not found.
-    /// Returns 403 (Forbidden) if the user is not authorized.
+    /// Returns 200 OK if the update was successful.
+    /// Returns 404 Not Found if the Venue with the provided id was not found.
+    /// Returns 403 Forbidden if the user is not authorized.
     /// </returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -123,7 +122,7 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
     /// </summary>
     /// <param name="id">The id of the venue to update the photo.</param>
     /// <param name="photoRequest">The update venue photo request.</param>
-    /// <returns>Returns 200 (OK) if the photo was successfully updated.</returns>
+    /// <returns>Returns 200 OK if the photo was successfully updated.</returns>
     [HttpPut("{id:guid}/photo")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -154,10 +153,10 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
     /// </summary>
     /// <param name="id">The id of the Venue to delete.</param>
     /// <returns>
-    /// Returns 204 (No Content) if the Venue was successfully deleted.
-    /// Returns 404 (Not Found) if the Venue with the provided id was not found.
-    /// Returns 409 (Conflict) if the Venue is still referenced by one or more matches.
-    /// Returns 403 (Forbidden) if the user is not authorized.
+    /// Returns 204 No Content if the Venue was successfully deleted.
+    /// Returns 404 Not Found if the Venue with the provided id was not found.
+    /// Returns 409 Conflict if the Venue is still referenced by one or more matches.
+    /// Returns 403 Forbidden if the user is not authorized.
     /// </returns>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

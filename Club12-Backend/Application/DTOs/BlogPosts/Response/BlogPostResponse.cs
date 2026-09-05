@@ -27,7 +27,7 @@ public class BlogPostResponse : BaseEntityResponse
     public required DateTime CreatedAt { get; set; }
 
     /// <summary>
-    /// Whether the post is published (visible publicly) or a draft (HU-16).
+    /// Whether the post is published and visible publicly, or is a draft.
     /// </summary>
     public bool IsPublished { get; set; }
 }

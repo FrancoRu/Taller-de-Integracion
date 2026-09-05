@@ -13,32 +13,21 @@ using System.Threading.Tasks;
 namespace Application.Services;
 
 /// <summary>
-/// Applies medical-record / eligibility operations to a player's season
-/// registration (HU-55/57/58). Deliberately holds no storage dependency: the
-/// file upload itself is performed by the caller (controller) against the
-/// storage boundary and only the resulting reference is handed here, so this
-/// service — and all the eligibility rules — can be unit-tested without a live
-/// Supabase bucket.
+/// Applies medical-record and eligibility operations to a player's season registration.
 /// </summary>
 public class MedicalRecordService(IUnitOfWork unitOfWork) : IMedicalRecordService
 {
     private readonly IPlayerTeamRegistrationRepository _registrationRepository = unitOfWork.PlayerTeamRegistrationRepository;
 
     /// <summary>
-    /// Records a new ficha médica upload and resets it to <see
-    /// cref="MedicalRecordStatus.Pending"/> — an upload never self-habilitates,
-    /// it always requires a fresh review (HU-57). Blocked once the ficha is
-    /// already <see cref="MedicalRecordStatus.Approved"/> against a real
-    /// stored file, since that record is frozen; an Approved row pointing at
-    /// a legacy/unresolvable reference never actually habilitated the player
-    /// and stays re-uploadable so it isn't stuck with no path to fix it.
+    /// Records a new ficha médica upload and resets it to MedicalRecordStatus.Pending for review.
     /// </summary>
     public async Task<MedicalRecordResponse> RecordUploadAsync(
         Guid playerId, Guid teamId, Guid tournamentId, string fileReference, string fileName, string actor)
     {
         PlayerTeamRegistration registration = await GetRegistrationAsync(playerId, teamId, tournamentId);
 
-        // HU-57: once the ficha is Approved AGAINST A REAL STORED FILE, the
+        // Once the ficha is Approved AGAINST A REAL STORED FILE, the
         // player is habilitado and the record is frozen — it can only be
         // viewed/downloaded, never replaced by a new upload. An Approved row
         // with a legacy/unresolvable reference (pre-existing data from before
@@ -54,8 +43,8 @@ public class MedicalRecordService(IUnitOfWork unitOfWork) : IMedicalRecordServic
 
         registration.MedicalRecordFileUrl = fileReference;
         registration.MedicalRecordFileName = fileName;
-        // Uploading a (new) file always requires a fresh review — it never
-        // habilitates on its own (HU-57).
+        // Uploading a new file always requires a fresh review — it never
+        // habilitates on its own.
         registration.MedicalRecordStatus = MedicalRecordStatus.Pending;
         registration.MedicalRecordReviewReason = null;
         registration.MedicalRecordReviewedAt = null;
@@ -67,10 +56,7 @@ public class MedicalRecordService(IUnitOfWork unitOfWork) : IMedicalRecordServic
     }
 
     /// <summary>
-    /// Approves or rejects a ficha médica. Approving is blocked unless the
-    /// ficha points at an actually-stored file — legacy references under the
-    /// old public-bucket prefix no longer resolve and don't count as stored.
-    /// Rejecting has no such requirement.
+    /// Approves or rejects a ficha médica, blocking approval unless the ficha points at a stored file.
     /// </summary>
     public async Task<MedicalRecordResponse> ReviewAsync(
         Guid playerId, Guid teamId, Guid tournamentId, bool approve, string? reason, string actor)

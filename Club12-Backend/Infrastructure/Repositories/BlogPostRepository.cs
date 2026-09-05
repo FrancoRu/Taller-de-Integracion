@@ -7,8 +7,7 @@ using Infrastructure.Persistance;
 namespace Infrastructure.Repositories;
 
 /// <summary>
-/// Represents the repository implementation for BlogPost entities.
-/// Inherits generic CRUD operations from GenericRepository{BlogPost} and implements IBlogPostRepository.
+/// Repository implementation for BlogPost entities, inheriting generic CRUD and implementing IBlogPostRepository.
 /// </summary>
 /// <param name="context">The application's database context used for data access operations.</param>
 public class BlogPostRepository(ApplicationDBContext context)

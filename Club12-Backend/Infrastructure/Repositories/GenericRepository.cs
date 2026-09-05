@@ -22,11 +22,6 @@ namespace Infrastructure.Repositories;
 /// <typeparam name="TEntity">
 /// The entity type managed by the repository. Must inherit from EntityBase.
 /// </typeparam>
-/// <remarks>
-/// This repository uses Entity Framework Core to interact with the database and supports asynchronous operations.
-/// It implements IGenericRepository{TEntity} and provides methods for adding, updating, removing,
-/// and querying entities, including support for eager loading and pagination.
-/// </remarks>
 public class GenericRepository<TEntity>(ApplicationDBContext context)
     : IGenericRepository<TEntity> where TEntity : EntityBase
 {

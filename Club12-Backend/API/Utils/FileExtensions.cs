@@ -25,7 +25,7 @@ public static class FileExtensions
     ];
 
     /// <summary>
-    /// Checks if the provided file is a valid image (JPEG, PNG, or WEBP).
+    /// Checks if the provided file is a valid JPEG, PNG, or WEBP image.
     /// </summary>
     /// <param name="file">The uploaded file to check.</param>
     /// <returns>True if the file is a valid image, otherwise false.</returns>
@@ -45,8 +45,7 @@ public static class FileExtensions
     private const string PdfContentType = "application/pdf";
 
     /// <summary>
-    /// Checks if the provided file is a valid PDF (by extension and, when
-    /// present, content type). Used to gate medical-record uploads (HU-55/HU-56).
+    /// Checks whether the uploaded file is a valid PDF by extension and, when present, content type. Used to gate medical-record uploads.
     /// </summary>
     /// <param name="file">The uploaded file to check.</param>
     /// <returns>True if the file is a non-empty PDF, otherwise false.</returns>
@@ -66,7 +65,7 @@ public static class FileExtensions
     }
 
     /// <summary>
-    /// Checks if the provided file is a valid Excel file (XLSX or XLS).
+    /// Checks if the provided file is a valid XLSX or XLS Excel file.
     /// </summary>
     /// <param name="file">The uploaded file to check.</param>
     /// <returns>True if the file is a valid Excel file, otherwise false.</returns>

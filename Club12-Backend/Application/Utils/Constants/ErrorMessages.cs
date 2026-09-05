@@ -1,13 +1,7 @@
 namespace Application.Utils.Constants;
 
 /// <summary>
-/// Centralized user-facing and exception message text, so a message never
-/// needs to be typed twice and a wording change happens in one place.
-/// User-facing categories (the ones an admin can actually see surfaced as a
-/// toast/alert in the panel) are in Spanish. A handful of internal/ops-level
-/// categories that only ever reach logs — <see cref="Configuration"/>,
-/// <see cref="Storage"/>, <see cref="Query"/>, <see cref="Serialization"/> —
-/// are left in English on purpose: nobody using the app ever sees them.
+/// Centralized user-facing and exception message text, so a message never needs to be typed twice and a wording change happens in one place.
 /// </summary>
 public static class ErrorMessages
 {
@@ -70,7 +64,9 @@ public static class ErrorMessages
 
     public static class Tournament
     {
-        /// <summary>Blocks reverting an Ongoing tournament that already has results.</summary>
+        /// <summary>
+        /// Blocks reverting an Ongoing tournament that already has results.
+        /// </summary>
         public const string CannotRevertWithPlayedMatches =
             "No se puede revertir a borrador: el torneo ya tiene partidos jugados. " +
             "Sólo se puede revertir un torneo en curso sin resultados cargados.";
@@ -117,10 +113,7 @@ public static class ErrorMessages
         }
 
         /// <summary>
-        /// User-facing (Spanish) message returned when a tournament that has
-        /// already started (Ongoing/Finished) or has played matches is deleted:
-        /// removing it would cascade away its divisions, stages, matches and
-        /// results, erasing competitive history, so the deletion is blocked.
+        /// User-facing Spanish message blocking deletion of a tournament that already started or has played matches, to avoid erasing competitive history.
         /// </summary>
         public const string HasHistoryCannotDelete =
             "No se puede eliminar el torneo: tiene partidos jugados o ya arrancó.";
@@ -129,21 +122,13 @@ public static class ErrorMessages
     public static class Division
     {
         /// <summary>
-        /// User-facing (Spanish) message returned when a division that already
-        /// has played matches (and therefore standings) or point deductions is
-        /// deleted: removing it would cascade away that competitive history, so
-        /// the deletion is blocked. A division with no such history is deletable
-        /// (its empty stages and playoff mappings cascade cleanly).
+        /// User-facing Spanish message blocking deletion of a division that already has played matches or point deductions, to avoid cascading away that competitive history.
         /// </summary>
         public const string HasHistoryCannotDelete =
             "No se puede eliminar la división: tiene partidos jugados o deducciones de puntos registradas.";
 
         /// <summary>
-        /// User-facing (Spanish) message returned when a division is deleted
-        /// while its tournament's fixture is already generated (status
-        /// Ongoing/Finished): deleting it would cascade away its stages and
-        /// scheduled matches even if none of them have been played yet, so it
-        /// is blocked (mapped to 409 by the global handler).
+        /// User-facing Spanish message blocking deletion of a division whose tournament fixture is already generated.
         /// </summary>
         public const string StructureLockedTournamentStarted =
             "No se puede eliminar la división: el torneo ya arrancó o fue cancelado.";
@@ -157,23 +142,13 @@ public static class ErrorMessages
         }
 
         /// <summary>
-        /// User-facing (Spanish) message returned when a team that carries
-        /// competitive history — match participations, sanctions, point
-        /// deductions or tournament registrations — is deleted: the team's
-        /// identity persists across seasons and removing it would orphan or
-        /// cascade away that history, so the deletion is blocked.
+        /// User-facing Spanish message blocking deletion of a team that carries competitive history including match participations, sanctions, deductions or registrations.
         /// </summary>
         public const string HasHistoryCannotDelete =
             "No se puede eliminar el equipo: tiene historial de partidos, sanciones, deducciones o inscripciones a torneos.";
 
         /// <summary>
-        /// User-facing (Spanish) message returned when a team's identity
-        /// (<see cref="Domain.Entities.Models.Team.Name"/> or
-        /// <see cref="Domain.Entities.Models.Team.ThreeLetterCode"/>) is edited
-        /// while the team is participating in a tournament that is Ongoing (en
-        /// curso): its identity is frozen for the duration so fixtures, standings
-        /// and match sheets stay consistent. Other fields (colors, jersey style,
-        /// logo) remain editable. Mapped to 409 by the global handler.
+        /// User-facing Spanish message blocking edits to Team.Name or Team.ThreeLetterCode while the team plays in an Ongoing tournament.
         /// </summary>
         public const string IdentityFrozenWhileOngoing =
             "No se puede cambiar el nombre ni la sigla del equipo mientras participa en un torneo en curso. " +
@@ -216,28 +191,19 @@ public static class ErrorMessages
     public static class Player
     {
         /// <summary>
-        /// User-facing (Spanish) message returned when a player who has match
-        /// statistics, scorer records or sanctions is deleted: removing them
-        /// would orphan historical records, so the deletion is blocked.
+        /// User-facing Spanish message blocking deletion of a player who has match statistics, scorer records or sanctions, to avoid orphaning historical records.
         /// </summary>
         public const string HasHistoryCannotDelete =
             "No se puede eliminar: el jugador tiene estadísticas o sanciones registradas.";
 
         /// <summary>
-        /// User-facing (Spanish) message returned when a player who already has
-        /// match statistics, scorer records or sanctions for a season is moved
-        /// to a different team within that same season: goleadores and other
-        /// team-attributed views resolve a player's team from their CURRENT
-        /// roster registration, not a point-in-time snapshot, so moving them
-        /// would silently re-attribute their past results to the new team.
+        /// User-facing Spanish message blocking a mid-season team move for a player who already has match statistics, scorer records or sanctions that season.
         /// </summary>
         public const string CannotMoveTeamWithHistory =
             "No se puede cambiar de equipo a un jugador que ya tiene estadísticas o sanciones registradas en esta temporada.";
 
         /// <summary>
-        /// User-facing (Spanish) message returned when a player is created or
-        /// updated with a DocumentNumber another player already has
-        /// (IX_Players_DocumentNumber is a unique index).
+        /// User-facing Spanish message returned when a player is created or updated with a DocumentNumber another player already has.
         /// </summary>
         public static string DuplicateDocumentNumber(string documentNumber)
         {
@@ -248,9 +214,7 @@ public static class ErrorMessages
     public static class Venue
     {
         /// <summary>
-        /// User-facing (Spanish) message returned when a venue (cancha) that is
-        /// referenced by one or more matches is deleted: removing it would leave
-        /// those matches without their venue, so the deletion is blocked.
+        /// User-facing Spanish message blocking deletion of a venue that is referenced by one or more matches.
         /// </summary>
         public const string ReferencedByMatches =
             "No se puede eliminar: la cancha tiene partidos asociados.";
@@ -268,11 +232,7 @@ public static class ErrorMessages
         public const string GroupStageAlreadyExistsInDivision = "Esta división ya tiene una fase de grupos. Una división solo puede tener una fase de grupos.";
 
         /// <summary>
-        /// User-facing (Spanish) message returned when a stage (fase) is added
-        /// to or removed from a division whose tournament has already started —
-        /// i.e. its fixture is generated (status Ongoing/Finished). Editing the
-        /// phase structure at that point would corrupt the bracket/fixture, so
-        /// it is blocked (mapped to 409 by the global handler).
+        /// User-facing Spanish message blocking adding or removing a stage once the division's tournament has already started.
         /// </summary>
         public const string StructureLockedTournamentStarted =
             "No se pueden agregar o quitar fases: el torneo ya arrancó o fue cancelado.";
@@ -392,10 +352,7 @@ public static class ErrorMessages
         }
 
         /// <summary>
-        /// One combined error naming every ineligible/off-roster player across
-        /// both teams' sheets, grouped by team — never a raw player id, and
-        /// never just the first offender, so the admin sees the whole picture
-        /// in one pass instead of fixing the sheet one rejection at a time.
+        /// One combined error naming every ineligible or off-roster player across both teams' sheets, grouped by team.
         /// </summary>
         public static string PlayersNotEligible(
             System.Collections.Generic.IEnumerable<(string TeamName, System.Collections.Generic.List<string> Reasons)> issuesByTeam)
@@ -421,20 +378,13 @@ public static class ErrorMessages
         public const string InvalidPdfFile = "El archivo de la ficha médica debe ser un PDF válido.";
 
         /// <summary>
-        /// User-facing (Spanish) message returned when a new ficha upload is
-        /// attempted on a registration whose medical record is already Approved:
-        /// once habilitado the ficha can only be viewed/downloaded, never
-        /// replaced (HU-57).
+        /// User-facing Spanish message returned when a new ficha upload is attempted on a registration whose medical record is already Approved.
         /// </summary>
         public const string AlreadyApproved =
             "La ficha médica ya está aprobada; no se puede subir una nueva. Solo puede consultarse o descargarse.";
 
         /// <summary>
-        /// User-facing (Spanish) message returned when an approve is attempted
-        /// against a registration with no real stored file (null/whitespace, or
-        /// a legacy <see cref="Domain.Entities.Models.PlayerTeamRegistration.LegacyReferencePrefix"/>
-        /// reference that no longer resolves): "Approved ⟺ file present" must
-        /// hold going forward (medical-records-storage-eligibility).
+        /// User-facing Spanish message returned when an approve is attempted against a registration with no real stored file.
         /// </summary>
         public const string NoStoredFile =
             "No se puede aprobar la ficha médica: no hay un archivo cargado. Subí la ficha antes de aprobarla.";

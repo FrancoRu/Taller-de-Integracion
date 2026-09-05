@@ -13,7 +13,7 @@ public class UpdateTeamLogoRequest
     public required Guid TeamId { get; init; }
 
     /// <summary>
-    /// The logo image file to upload (must be JPEG or PNG).
+    /// The logo image file to upload, which must be JPEG or PNG.
     /// </summary>
     [Required(ErrorMessage = "The Logo image is required.")]
     [DataType(DataType.Upload)]

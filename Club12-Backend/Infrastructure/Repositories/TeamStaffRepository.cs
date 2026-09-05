@@ -7,8 +7,7 @@ using Infrastructure.Persistance;
 namespace Infrastructure.Repositories;
 
 /// <summary>
-/// Repository implementation for <see cref="TeamStaff"/> entities.
-/// Inherits generic CRUD from GenericRepository{TeamStaff}.
+/// Repository implementation for TeamStaff entities, inheriting generic CRUD from GenericRepository.
 /// </summary>
 public class TeamStaffRepository(ApplicationDBContext context)
     : GenericRepository<TeamStaff>(context), ITeamStaffRepository

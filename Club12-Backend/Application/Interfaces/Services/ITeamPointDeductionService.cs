@@ -7,9 +7,7 @@ using System.Threading.Tasks;
 namespace Application.Interfaces.Services;
 
 /// <summary>
-/// Manages disciplinary point deductions (deducción de puntos) applied to
-/// teams within a division. The deductions are subtracted from the affected
-/// teams' totals when the division standings are computed.
+/// Manages disciplinary point deductions, deducción de puntos, applied to teams within a division.
 /// </summary>
 public interface ITeamPointDeductionService
 {
@@ -21,8 +19,7 @@ public interface ITeamPointDeductionService
     Task<TeamPointDeduction> CreateAsync(TeamPointDeduction deduction);
 
     /// <summary>
-    /// Returns every point deduction for a division, newest first, with each
-    /// deduction's team loaded so the caller can show the team's name.
+    /// Returns every point deduction for a division, newest first, with each deduction's team loaded so the caller can show the team's name.
     /// </summary>
     /// <param name="divisionId">The division whose deductions to list.</param>
     Task<List<TeamPointDeduction>> GetByDivisionIdAsync(Guid divisionId);

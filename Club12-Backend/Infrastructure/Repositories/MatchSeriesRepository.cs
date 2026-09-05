@@ -7,8 +7,7 @@ using Infrastructure.Persistance;
 namespace Infrastructure.Repositories;
 
 /// <summary>
-/// Repository implementation for managing MatchSeries entities.
-/// Inherits generic CRUD operations from GenericRepository{MatchSeries} and implements IMatchSeriesRepository interface.
+/// Repository implementation for managing MatchSeries entities, inheriting generic CRUD and implementing IMatchSeriesRepository.
 /// </summary>
 /// <param name="context">The application's database context used for data access.</param>
 public class MatchSeriesRepository(ApplicationDBContext context)

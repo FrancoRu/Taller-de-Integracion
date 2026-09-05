@@ -18,9 +18,7 @@ namespace Application.Utils.Mappers;
 public partial class ScorerMapper : IScorerMapper
 {
     /// <summary>
-    /// Collapses one row per scoring event into a single row per player,
-    /// summing their points across the paginated page and keeping the first
-    /// non-empty full name found for that player.
+    /// Collapses one row per scoring event into a single row per player, summing their points across the paginated page.
     /// </summary>
     public PaginatedResponse<ScorerByPlayerResponse> FromPaginatedScorerToPaginatedScorerByPlayerResponse(PaginatedResponse<Scorer> paginatedScorers)
     {
@@ -46,9 +44,7 @@ public partial class ScorerMapper : IScorerMapper
     }
 
     /// <summary>
-    /// Computes each team's league points across the given matches using
-    /// <see cref="ScoreConstants"/> (win/draw/loss), skipping matches that
-    /// aren't finished yet or don't have both teams assigned.
+    /// Computes each team's league points across the given matches using ScoreConstants for win, draw and loss, skipping matches that aren't finished yet or don't have both teams assigned.
     /// </summary>
     public PaginatedResponse<ScorerByTeamResponse> FromPaginatedMatchToPaginatedScorerByTeamResponse(PaginatedResponse<Match> paginatedMatches)
     {

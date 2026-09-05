@@ -29,16 +29,12 @@ public class PositionResponse
     public required int PointsDifference { get; set; }
 
     /// <summary>
-    /// The total points accumulated by the team, calculated based on wins and losses (2 points per win, 1 point per loss).
-    /// Any disciplinary deduction (see <see cref="PointDeduction"/>) has
-    /// already been subtracted from this value.
+    /// The total points accumulated by the team, with any disciplinary deduction already subtracted.
     /// </summary>
     public required int Points { get; set; }
 
     /// <summary>
-    /// The disciplinary point deduction applied to this team, when any. Null
-    /// when the team has no deduction. Lets the standings show a "-N (motivo)"
-    /// note; the subtraction is already reflected in <see cref="Points"/>.
+    /// The disciplinary point deduction applied to this team, or null when there is none.
     /// </summary>
     public AppliedPointDeductionResponse? PointDeduction { get; set; }
 }

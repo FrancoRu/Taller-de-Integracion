@@ -24,12 +24,7 @@ using System.Threading.Tasks;
 namespace Application.Services;
 
 /// <summary>
-/// Coordinates team lifecycle rules that don't belong to a single CRUD verb: a
-/// team's name/three-letter code is frozen while its current tournament is
-/// Ongoing, deletion is blocked whenever match/sanction/point-deduction/
-/// registration history would otherwise cascade away silently, and a team's
-/// roster (Players) is always scoped to one season rather than the raw,
-/// permanent Player.TeamId FK.
+/// Coordinates team lifecycle rules that don't belong to a single CRUD verb.
 /// </summary>
 public class TeamService(
     IUnitOfWork unitOfWork,
@@ -55,9 +50,7 @@ public class TeamService(
     private readonly ITeamPointDeductionRepository _pointDeductionRepository = pointDeductionRepository;
 
     /// <summary>
-    /// Creates a team, generating a unique slug from its name, and eagerly
-    /// links it into its club's history (see inline note) rather than waiting
-    /// on a backfill.
+    /// Creates a team, generating a unique slug from its name, and eagerly links it into its club's history.
     /// </summary>
     /// <param name="teamEntity">The team entity to create.</param>
     /// <returns>The created team entity.</returns>
@@ -69,7 +62,7 @@ public class TeamService(
 
         await _teamRepository.AddAsync(teamEntity);
 
-        // So "Importar plantel de una temporada anterior" (HU-53/HU-99) has a
+        // So "Importar plantel de una temporada anterior" has a
         // club history to search from day one, instead of only working after
         // someone remembers to run the bulk backfill.
         await _clubService.EnsureTeamLinkedToClubAsync(teamEntity);
@@ -78,8 +71,7 @@ public class TeamService(
     }
 
     /// <summary>
-    /// Retrieves a team by its unique identifier, with its roster (Players)
-    /// scoped to one season.
+    /// Retrieves a team by its unique identifier, with its Players roster scoped to one season.
     /// </summary>
     /// <param name="teamId">The unique identifier of the team.</param>
     /// <param name="tournamentId">
@@ -101,9 +93,7 @@ public class TeamService(
     }
 
     /// <summary>
-    /// Retrieves a team by its id or its slug, with its roster (Players)
-    /// scoped to one season. The value is treated as an id when it parses as
-    /// a GUID, otherwise it is looked up as a slug.
+    /// Retrieves a team by id or slug with its Players roster scoped to one season.
     /// </summary>
     /// <param name="idOrSlug">The team's GUID id or its slug.</param>
     /// <param name="tournamentId">
@@ -131,21 +121,13 @@ public class TeamService(
     }
 
     /// <summary>
-    /// Deletes a team, guarding its competitive history. A team's identity
-    /// persists across seasons (HU-99), so deletion is rare and blocked whenever
-    /// the team carries history that removing it would orphan or silently
-    /// cascade away: any match participation (home/visitor/winner — those FKs are
-    /// NoAction and would raise an opaque database error), any sanction or point
-    /// deduction (Restrict FKs), or any tournament registration. Mirrors the
-    /// player delete guard. A team with none of these (e.g. a freshly created or
-    /// fully unenrolled club) is still deletable — its empty roster and any
-    /// season registrations cascade cleanly.
+    /// Deletes a team, blocking the delete whenever it carries history that would otherwise be orphaned.
     /// </summary>
     /// <param name="id">The unique identifier of the team to delete.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     /// <exception cref="InvalidOperationException">
-    /// Thrown (mapped to 409) when the team has match history, sanctions, point
-    /// deductions or tournament registrations.
+    /// Thrown as a 409 when the team has match history, sanctions, point deductions, or tournament
+    /// registrations.
     /// </exception>
     public async Task DeleteTeamAsync(Guid id)
     {
@@ -218,8 +200,7 @@ public class TeamService(
     }
 
     /// <summary>
-    /// Retrieves a paginated list of teams based on the provided filter criteria.
-    /// Supports filtering by stage and tournament, and includes related players and stage team matches.
+    /// Retrieves a paginated list of teams filtered by stage and tournament, with players and stage team matches.
     /// </summary>
     /// <param name="filter">The filter criteria for retrieving teams.</param>
     /// <returns>A paginated response containing the filtered teams.</returns>
@@ -269,20 +250,13 @@ public class TeamService(
     }
 
     /// <summary>
-    /// Populates each team's Players collection with the roster registered
-    /// for one season, so a Team returned from this service never shows
-    /// players from a season it no longer belongs to (the bug this replaces:
-    /// Team.Players used to be the raw, permanent Player.TeamId FK
-    /// collection, which kept showing a prior season's roster after the team
-    /// was reassigned to a new tournament). Fetches every registration for
-    /// the given teams in one batched query — avoids N+1 — then filters and
-    /// groups in memory per team.
+    /// Populates each team's Players collection with the roster registered for one season.
     /// </summary>
     /// <param name="teams">The teams to attach a roster to, mutated in place.</param>
     /// <param name="tournamentIdOverride">
-    /// When set, every team's roster is scoped to this season instead of its
-    /// own current TournamentId (used when the caller already filtered teams
-    /// by a specific tournament, or explicitly asked to view a past season).
+    /// When set, every team's roster is scoped to this season instead of its own current
+    /// TournamentId, used when the caller already filtered teams by a specific tournament, or
+    /// explicitly asked to view a past season.
     /// </param>
     private async Task AttachSeasonRostersAsync(List<Team> teams, Guid? tournamentIdOverride)
     {
@@ -311,12 +285,12 @@ public class TeamService(
                     {
                         // Surface the season-scoped eligibility onto the roster
                         // player (transient, not persisted) so responses expose
-                        // habilitado/not-habilitado per player (HU-57/HU-62).
+                        // habilitado/not-habilitado per player.
                         r.Player!.MedicalRecordStatus = r.MedicalRecordStatus;
                         // File-backed habilitación (medical-records-storage-eligibility):
                         // a bool only, never the storage path — see Player.HasMedicalRecordFile.
                         r.Player!.HasMedicalRecordFile = PlayerTeamRegistration.IsStoredReference(r.MedicalRecordFileUrl);
-                        // Surface the season-scoped dorsal (HU-54) onto the
+                        // Surface the season-scoped dorsal onto the
                         // roster player (transient, not persisted).
                         r.Player!.JerseyNumber = r.JerseyNumber;
                         return r.Player!;
@@ -325,30 +299,14 @@ public class TeamService(
     }
 
     /// <summary>
-    /// Reconciles a tournament's team roster by UPSERTING
-    /// <see cref="TeamTournamentRegistration"/> rows scoped to
-    /// <paramref name="tournament"/> ONLY — the join table is the source of
-    /// truth for season-scoped participation, so a team's registrations in
-    /// other tournaments are never touched and history is never erased
-    /// (mirrors <see cref="PlayerService"/>'s EnsureRegistrationAsync upsert).
-    /// - Teams in <paramref name="teamIds"/> get or keep a registration to
-    ///   this tournament (existing rows are left as-is; the unique
-    ///   (TeamId, TournamentId) index guarantees no duplicates).
-    /// - Teams currently registered to THIS tournament but absent from
-    ///   <paramref name="teamIds"/> have only THIS tournament's registration
-    ///   removed; their rows for other tournaments survive.
-    /// - An empty <paramref name="teamIds"/> clears only this tournament's
-    ///   members, leaving every team's other-tournament history intact.
-    /// <see cref="Team.TournamentId"/> is kept in sync as a denormalized
-    /// "current-season" pointer for backward compatibility, but it is not the
-    /// source of truth.
+    /// Reconciles a tournament's team roster by upserting TeamTournamentRegistration rows for this tournament only.
     /// </summary>
     /// <param name="tournament">The tournament entity to register teams to.</param>
     /// <param name="teamIds">A list of team IDs to be registered in the tournament.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task RegisterTeamsToTournamentAsync(Tournament tournament, List<Guid> teamIds)
     {
-        // Structural guard (HU-31): team registrations may only be added or
+        // Structural guard: team registrations may only be added or
         // removed while the tournament is OpenForRegistration. Once
         // registration closes the roster is frozen.
         if (tournament.Status != TournamentStatus.OpenForRegistration)
@@ -419,8 +377,8 @@ public class TeamService(
         string? newTeamName,
         Guid? copyRosterFromTournamentId)
     {
-        // Fail fast with the same rejection RegisterTeamsToTournamentAsync uses
-        // (HU-31, mapped to 409) before doing any work.
+        // Fail fast with the same rejection RegisterTeamsToTournamentAsync uses,
+        // mapped to 409, before doing any work.
         if (tournament.Status != TournamentStatus.OpenForRegistration)
         {
             throw new InvalidOperationException(
@@ -545,10 +503,7 @@ public class TeamService(
     }
 
     /// <summary>
-    /// Builds a minimal brand-new team from just a name (HU-107 new-team path):
-    /// the slug is generated by <see cref="CreateTeamAsync"/>, a placeholder
-    /// three-letter code is derived from the name, and the logo/shirt are left
-    /// empty for the admin to fill in later. The roster starts empty.
+    /// Builds a minimal brand-new team from just a name, for the new-team enrollment path.
     /// </summary>
     private static Team BuildNewTeam(string name)
     {

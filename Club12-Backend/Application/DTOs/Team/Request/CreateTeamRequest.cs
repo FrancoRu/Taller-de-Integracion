@@ -21,27 +21,25 @@ public class CreateTeamRequest
     public required string ShirtColor { get; set; }
 
     /// <summary>
-    /// The jersey kit pattern applied over the primary shirt color. Defaults
-    /// to "solid" when not supplied.
+    /// The jersey kit pattern applied over the primary shirt color; defaults to "solid" when not supplied.
     /// </summary>
     [MaxLength(20)]
     public string JerseyStyle { get; set; } = "solid";
 
     /// <summary>
-    /// Optional secondary #rrggbb hex color used for the jersey pattern/trim.
+    /// Optional secondary #rrggbb hex color used for the jersey pattern or trim.
     /// </summary>
     [MaxLength(9)]
     public string? ShirtSecondaryColor { get; set; }
 
     /// <summary>
-    /// Optional third #rrggbb hex color, used only by the tri-color kit
-    /// templates as a second accent alongside <see cref="ShirtSecondaryColor"/>.
+    /// Optional third #rrggbb hex color, used only by tri-color kit templates as a second accent.
     /// </summary>
     [MaxLength(9)]
     public string? ShirtTertiaryColor { get; set; }
 
     /// <summary>
-    /// The logo image file to upload (must be JPEG or PNG).
+    /// The logo image file to upload, which must be JPEG or PNG.
     /// </summary>
     [Required(ErrorMessage = "The Logo image is required.")]
     [DataType(DataType.Upload)]

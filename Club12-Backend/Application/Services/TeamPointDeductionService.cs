@@ -11,8 +11,7 @@ using System.Threading.Tasks;
 namespace Application.Services;
 
 /// <summary>
-/// Service managing disciplinary point deductions (deducción de puntos) for
-/// teams within a division.
+/// Service managing disciplinary point deductions for teams within a division.
 /// </summary>
 public class TeamPointDeductionService(
     ITeamPointDeductionRepository deductionRepository) : ITeamPointDeductionService

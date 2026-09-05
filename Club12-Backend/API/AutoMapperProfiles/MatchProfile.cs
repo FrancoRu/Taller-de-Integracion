@@ -67,9 +67,7 @@ public class MatchProfile : Profile
     }
 
     /// <summary>
-    /// Builds the per-player scorer ranking for one team from a match's scorers,
-    /// attributing a scorer to the team via <see cref="Player.TeamId"/> and
-    /// summing points per player, highest first.
+    /// Builds the per-player scorer ranking for one team, attributing each scorer via Player.TeamId and summing points per player, highest first.
     /// </summary>
     private static List<ScorerByPlayerResponse> ScorersForTeam(Match match, Guid? teamId)
     {
@@ -94,9 +92,7 @@ public class MatchProfile : Profile
     }
 
     /// <summary>
-    /// The player's jersey number (dorsal) for the match's tournament, taken from
-    /// the matching roster registration (Player.JerseyNumber itself is transient).
-    /// Falls back to any registration's number when the tournament can't be resolved.
+    /// Resolves the player's jersey number from the matching roster registration for the tournament, since Player.JerseyNumber itself is transient.
     /// </summary>
     private static int? JerseyNumberFor(Player player, Guid? tournamentId)
     {
@@ -113,14 +109,7 @@ public class MatchProfile : Profile
     }
 
     /// <summary>
-    /// Fills in each roster player's season-scoped medical-record status,
-    /// habilitado flag, and jersey number from the matching
-    /// <see cref="PlayerTeamRegistration"/> for the match's tournament — a
-    /// plain <c>Player -&gt; PublicPlayerResponse</c> AutoMapper map can't
-    /// resolve these on its own (they live on the registration, not the
-    /// player, and a player can be registered to several teams/seasons), so
-    /// without this every roster entry silently defaulted to not-habilitado
-    /// (HU-57/HU-62), even for players who genuinely are.
+    /// Fills each roster player's season-scoped medical record status, habilitado flag, and jersey number from the matching PlayerTeamRegistration, since the plain Player to PublicPlayerResponse map cannot resolve them on its own.
     /// </summary>
     private static void PopulateRosterEligibility(
         List<PublicPlayerResponse> destPlayers, ICollection<Player>? srcPlayers, Guid? tournamentId)

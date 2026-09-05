@@ -1,9 +1,7 @@
 namespace Application.Utils.Constants.Validation;
 
 /// <summary>
-/// Field length limits shared across the account/user request DTOs
-/// (RegisterUserRequest, UpdateUserRequest, ChangePasswordRequest,
-/// PasswordResetConfirmRequest), so they stay in sync.
+/// Field length limits shared across the account and user request DTOs, so they stay in sync.
 /// </summary>
 public static class UserFieldLengths
 {

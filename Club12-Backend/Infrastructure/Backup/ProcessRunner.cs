@@ -9,16 +9,7 @@ using System.Threading.Tasks;
 namespace Infrastructure.Backup;
 
 /// <summary>
-/// IProcessRunner adapter backed by Process.
-/// Arguments are passed via ProcessStartInfo.ArgumentList —
-/// never a concatenated shell command string — so no argument is
-/// interpretable as shell syntax by the child process
-/// (UseShellExecute = false, no shell is ever invoked). A
-/// missing/unresolvable executable surfaces as Win32Exception
-/// from the runtime when starting the process; this is caught and converted
-/// into a failed ProcessResult (sentinel exit code -1) instead
-/// of propagating, so callers always get a result to log/handle rather than
-/// an unhandled exception.
+/// IProcessRunner adapter backed by Process that passes arguments via ArgumentList instead of a concatenated shell command string.
 /// </summary>
 public sealed class ProcessRunner : IProcessRunner
 {

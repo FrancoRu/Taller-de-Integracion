@@ -1,8 +1,7 @@
 namespace Application.DTOs.DataMaintenance.Response;
 
 /// <summary>
-/// Row counts created by DataMaintenanceService.SeedSampleDataAsync, for
-/// the admin UI's success summary.
+/// Row counts created by the sample-data seed, for the admin UI's success summary.
 /// </summary>
 public sealed record DataSeedResult(
     int Tournaments,

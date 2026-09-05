@@ -6,8 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Infrastructure.Persistance.Configurations;
 
 /// <summary>
-/// Base EF Core configuration shared by every entity: primary key, audit
-/// timestamp columns, and an index on DateCreated.
+/// Base EF Core configuration shared by every entity, mapping the primary key, audit timestamps, and a DateCreated index.
 /// </summary>
 public abstract class BaseEntityConfiguration<TEntity> : IEntityTypeConfiguration<TEntity>
     where TEntity : EntityBase

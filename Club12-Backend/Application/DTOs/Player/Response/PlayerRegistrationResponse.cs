@@ -3,7 +3,7 @@ using System;
 namespace Application.DTOs.Player.Response;
 
 /// <summary>
-/// The outcome of registering a player onto a team's roster for a season (HU-54).
+/// The outcome of registering a player onto a team's roster for a season.
 /// </summary>
 public class PlayerRegistrationResponse
 {

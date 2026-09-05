@@ -13,8 +13,7 @@ using System.Threading.Tasks;
 namespace Infrastructure.Repositories;
 
 /// <summary>
-/// Repository implementation for managing Match entities.
-/// Inherits generic CRUD operations from GenericRepository{Match} and implements IMatchRepository interface.
+/// Repository implementation for managing Match entities, inheriting generic CRUD and implementing IMatchRepository.
 /// </summary>
 /// <param name="context">The application's database context used for data access.</param>
 public class MatchRepository(ApplicationDBContext context)

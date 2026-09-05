@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Application.Interfaces.Services;
 
 /// <summary>
-/// Represents a service for managing Seasons ("Temporadas").
+/// Represents a service for managing Seasons, Temporadas.
 /// </summary>
 public interface ISeasonService
 {
@@ -26,9 +26,7 @@ public interface ISeasonService
     Task<Season?> GetSeasonByIdAsync(Guid seasonId);
 
     /// <summary>
-    /// Retrieves a Season by its id or its slug asynchronously. The value is
-    /// treated as an id when it parses as a GUID, otherwise it is looked up as
-    /// a slug.
+    /// Retrieves a Season by its id or its slug asynchronously, treating the value as an id when it parses as a GUID and otherwise looking it up as a slug.
     /// </summary>
     /// <param name="idOrSlug">The season's GUID id or its slug.</param>
     /// <returns>The matching season, or null if not found.</returns>
@@ -37,16 +35,11 @@ public interface ISeasonService
     Task UpdateSeasonAsync(Season seasonEntity);
 
     /// <summary>
-    /// Deletes a season AND every tournament it groups, routing each
-    /// tournament through <see cref="ITournamentService.DeleteTournamentAsync"/>
-    /// rather than a bare row delete — the DB-level Season→Tournament
-    /// relationship is SetNull, not Cascade, so a raw delete would only
-    /// detach tournaments and leave them orphaned. A no-op when the id does
-    /// not match a season.
+    /// Deletes a season and every tournament it groups, routing each tournament through ITournamentService.DeleteTournamentAsync rather than a bare row delete.
     /// </summary>
     /// <param name="id">The id of the Season to delete.</param>
     /// <exception cref="InvalidOperationException">
-    /// Propagated from <see cref="ITournamentService.DeleteTournamentAsync"/>
+    /// Propagated from ITournamentService.DeleteTournamentAsync
     /// when any grouped tournament has started or has played history and
     /// cannot be deleted.
     /// </exception>

@@ -19,9 +19,7 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Controller for managing best-of-N playoff series between two teams at a
-/// single bracket round. Reads are public; writes require Owner or
-/// Admin.
+/// Manages best-of-N playoff series between two teams; reads are public but writes require Owner or Admin.
 /// </summary>
 /// <param name="matchSeriesService">Service for series business logic and persistence operations.</param>
 /// <param name="mapper">AutoMapper instance for mapping between entities and DTOs.</param>

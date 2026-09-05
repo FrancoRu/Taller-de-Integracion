@@ -28,10 +28,7 @@ public class StageTeamMatchService(IStageTeamMatchRepository stageTeamMatchRepos
     }
 
     /// <summary>
-    /// True only when every id in <paramref name="TeamIds"/> has a matching
-    /// assignment row for the stage. Relies on the caller passing distinct
-    /// ids — a duplicate would inflate the expected count past the number of
-    /// assignable rows and make a genuinely-incomplete assignment read as complete.
+    /// True only when every id in TeamIds has a matching assignment row for the stage.
     /// </summary>
     public async Task<bool> AllTeamsAssignedToStage(Guid stageId, List<Guid> TeamIds)
     {

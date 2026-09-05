@@ -19,19 +19,18 @@ public class CreateVenueRequest
     public required string Address { get; set; }
 
     /// <summary>
-    /// Optional photo of the venue (JPEG or PNG). A venue does not require a
-    /// photo, so this may be omitted.
+    /// Optional photo of the venue, which must be JPEG or PNG; may be omitted.
     /// </summary>
     [DataType(DataType.Upload)]
     public IFormFile? ImageFile { get; init; }
 
     /// <summary>
-    /// Optional geographic latitude of the venue (e.g. pasted from Google Maps).
+    /// Optional geographic latitude of the venue.
     /// </summary>
     public double? Latitude { get; set; }
 
     /// <summary>
-    /// Optional geographic longitude of the venue (e.g. pasted from Google Maps).
+    /// Optional geographic longitude of the venue.
     /// </summary>
     public double? Longitude { get; set; }
 }

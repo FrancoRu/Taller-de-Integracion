@@ -11,9 +11,7 @@ namespace Application.Utils.Helper.Series;
 public static class SeriesDecisionCalculator
 {
     /// <summary>
-    /// Returns the winning team's id once one team has won more than half
-    /// of the series' BestOf games, based on the finished games recorded so
-    /// far. Returns null while the series is still undecided.
+    /// Returns the winning team's id once one team has won more than half of the series' BestOf games, based on finished games recorded so far.
     /// </summary>
     public static Guid? DetermineWinner(MatchSeries series)
     {

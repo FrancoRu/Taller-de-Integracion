@@ -13,8 +13,7 @@ using System.Threading.Tasks;
 namespace Application.Services;
 
 /// <summary>
-/// Manages venues (canchas). Deletion is blocked while any match still
-/// references the venue, so a match is never left without one.
+/// Manages venues, blocking deletion while any match still references the venue.
 /// </summary>
 public class VenueService(IVenueRepository venueRepository, IMatchRepository matchRepository) : IVenueService
 {
@@ -34,8 +33,7 @@ public class VenueService(IVenueRepository venueRepository, IMatchRepository mat
     }
 
     /// <summary>
-    /// Retrieves a venue by its id or its slug. The value is treated as an id
-    /// when it parses as a GUID, otherwise it is looked up as a slug.
+    /// Retrieves a venue by id or slug, auto-detecting which one was passed via GUID parsing.
     /// </summary>
     /// <param name="idOrSlug">The venue's GUID id or its slug.</param>
     /// <returns>The matching venue, or null if not found.</returns>
@@ -55,7 +53,7 @@ public class VenueService(IVenueRepository venueRepository, IMatchRepository mat
     /// </summary>
     /// <param name="id">The unique identifier of the venue to delete.</param>
     /// <exception cref="InvalidOperationException">
-    /// Thrown (mapped to 409) when the venue is referenced by one or more matches.
+    /// Thrown as a 409 when the venue is referenced by one or more matches.
     /// </exception>
     public async Task DeleteVenueAsync(Guid id)
     {

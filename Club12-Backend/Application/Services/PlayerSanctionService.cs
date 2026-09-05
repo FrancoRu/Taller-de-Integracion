@@ -19,11 +19,7 @@ using System.Threading.Tasks;
 namespace Application.Services;
 
 /// <summary>
-/// Manages sanctions issued to a player, team, or staff member (see
-/// <see cref="SanctionSubjectType"/>). A sanction's remaining time is tracked
-/// in FECHAS (match rounds actually played by the subject's team), never in
-/// calendar days, and an accepted appeal lifts it immediately without erasing
-/// its original duration from history (see <see cref="GetFechasRemainingAsync"/>).
+/// Manages sanctions issued to a player, team, or staff member, identified by SanctionSubjectType.
 /// </summary>
 public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionService
 {
@@ -33,10 +29,7 @@ public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionServ
     private readonly ITeamRepository _teamRepository = unitOfWork.TeamRepository;
 
     /// <summary>
-    /// Creates a sanction and assigns it a unique slug derived from its
-    /// subject's resolved name and issue date (see
-    /// <see cref="ResolveSubjectNameAsync"/>), so a player, team, or staff
-    /// sanction all get a readable slug regardless of subject type.
+    /// Creates a sanction and assigns it a unique slug derived from its subject's resolved name and issue date.
     /// </summary>
     public async Task<PlayerSanction> CreatePlayerSanctionAsync(PlayerSanction playerSanctionEntity)
     {
@@ -51,8 +44,7 @@ public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionServ
     }
 
     /// <summary>
-    /// Resolves the human-readable name of a sanction's subject (player, team
-    /// or staff, HU-77) so the slug reads sensibly regardless of subject type.
+    /// Resolves the human-readable name of a sanction's subject, for a sensible slug.
     /// </summary>
     private async Task<string> ResolveSubjectNameAsync(PlayerSanction sanction)
     {
@@ -81,23 +73,11 @@ public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionServ
     }
 
     /// <summary>
-    /// Computes how many FECHAS (jornadas) of the sanction are still to be
-    /// served (HU-75). A sanction of N fechas is served as the subject's team
-    /// plays the rounds after the one the sanction was issued in: for each
-    /// finished match of that team in the same stage with a higher round
-    /// number, one fecha is consumed. The result is clamped to zero and is
-    /// expressed in fechas, never in calendar days.
-    ///
-    /// An accepted appeal lifts the sanction immediately (zero fechas
-    /// remaining) regardless of rounds served — the original <see
-    /// cref="PlayerSanction.Duration"/> is left untouched so the sanction's
-    /// history ("was a 3-fecha sanction, appeal accepted") stays intact; only
-    /// the effective remaining count is overridden. A rejected or pending
-    /// appeal does not change the computation.
+    /// Computes how many fechas of the sanction are still to be served.
     /// </summary>
     /// <returns>
-    /// The number of fechas remaining, or null when it cannot be computed by
-    /// rounds (a staff sanction, an unknown team, or a match with no round).
+    /// The number of fechas remaining, or null when it cannot be computed by rounds: a staff
+    /// sanction, an unknown team, or a match with no round.
     /// </returns>
     public async Task<int?> GetFechasRemainingAsync(PlayerSanction sanction)
     {
@@ -132,9 +112,7 @@ public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionServ
     }
 
     /// <summary>
-    /// Determines whether a player currently has any ACTIVE sanction, i.e. a
-    /// sanction with one or more fechas still to be served (HU-76). Used to
-    /// keep eligibility consistent with the fechas-based rule.
+    /// Determines whether a player currently has any active sanction with fechas still to be served.
     /// </summary>
     public async Task<bool> HasActiveSanctionAsync(Guid playerId)
     {
@@ -161,9 +139,7 @@ public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionServ
     }
 
     /// <summary>
-    /// Resolves the team whose rounds a sanction is served against: the
-    /// sanctioned player's team, the sanctioned team itself, or none for a
-    /// staff sanction.
+    /// Resolves the team whose rounds a sanction is served against, or none for a staff sanction.
     /// </summary>
     private async Task<Guid?> ResolveSubjectTeamIdAsync(PlayerSanction sanction)
     {
@@ -225,9 +201,7 @@ public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionServ
     }
 
     /// <summary>
-    /// Retrieves a player sanction by its id or its slug. The value is
-    /// treated as an id when it parses as a GUID, otherwise it is looked up
-    /// as a slug.
+    /// Retrieves a player sanction by id or slug, auto-detecting which one was passed via GUID parsing.
     /// </summary>
     /// <param name="idOrSlug">The sanction's GUID id or its slug.</param>
     /// <returns>The matching player sanction, or null if not found.</returns>
@@ -262,11 +236,7 @@ public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionServ
     }
 
     /// <summary>
-    /// Retrieves a filtered, paginated list of sanctions. Free-text search
-    /// matches either the sanction description or the sanctioned player's
-    /// name; a team filter matches both a player-subject sanction on a
-    /// roster member and a team-subject sanction targeting the team directly
-    /// (HU-77).
+    /// Retrieves a filtered, paginated list of sanctions with free-text and team matching.
     /// </summary>
     public async Task<PaginatedResponse<PlayerSanction>> GetPlayerSanctionsAsync(GetPlayerSanctionsFilteredRequest filter)
     {
@@ -315,7 +285,7 @@ public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionServ
         if (filter.TeamId.HasValue)
         {
             // Matches both a player sanction whose player belongs to the team
-            // and a team-subject sanction targeting the team directly (HU-77).
+            // and a team-subject sanction targeting the team directly.
             expression = expression.And(playerSanction =>
                 (playerSanction.Player != null && playerSanction.Player.TeamId == filter.TeamId.Value)
                 || playerSanction.TeamId == filter.TeamId.Value);

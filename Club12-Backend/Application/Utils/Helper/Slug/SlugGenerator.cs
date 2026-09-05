@@ -12,10 +12,7 @@ namespace Application.Utils.Helper.Slug;
 public static partial class SlugGenerator
 {
     /// <summary>
-    /// Converts <paramref name="text"/> into a lowercase, kebab-case slug: Spanish
-    /// accents are transliterated to their base letter, every run of characters
-    /// that is not a lowercase letter or digit becomes a single hyphen, and
-    /// leading/trailing hyphens are trimmed.
+    /// Converts text into a lowercase, kebab-case slug.
     /// </summary>
     /// <param name="text">The display name to convert.</param>
     /// <returns>The generated slug. Never null, may be empty for input with no alphanumeric characters.</returns>
@@ -39,13 +36,11 @@ public static partial class SlugGenerator
     }
 
     /// <summary>
-    /// Generates a slug from <paramref name="text"/> and, when it collides with an
-    /// existing slug, appends a numeric suffix (-2, -3, ...) until
-    /// <paramref name="slugExists"/> reports no collision.
+    /// Generates a slug from text and, when it collides with an existing slug, appends a numeric suffix until slugExists reports no collision.
     /// </summary>
     /// <param name="text">The display name to convert.</param>
     /// <param name="slugExists">Predicate that checks whether a candidate slug is already taken.</param>
-    /// <returns>A unique slug derived from <paramref name="text"/>.</returns>
+    /// <returns>A unique slug derived from text.</returns>
     public static async Task<string> GenerateUniqueSlugAsync(string text, Func<string, Task<bool>> slugExists)
     {
         string baseSlug = GenerateSlug(text);

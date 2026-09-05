@@ -15,15 +15,12 @@ using System.Threading.Tasks;
 namespace Infrastructure.Storage;
 
 /// <summary>
-/// Provides helper methods to interact with Supabase storage,
-/// including file upload and public URL generation.
+/// Provides helper methods to interact with Supabase storage, including file upload and public URL generation.
 /// </summary>
 public class SupabaseHelper : ISupabaseRawStorage
 {
     /// <summary>
-    /// Cache-Control max-age, in seconds, applied to uploaded images (1 year —
-    /// uploaded files are content-addressed by a fresh GUID name, so they
-    /// never need to be invalidated).
+    /// Cache-Control max-age, in seconds, applied to uploaded images, set to one year because uploaded files are content-addressed by a fresh GUID name and never need to be invalidated.
     /// </summary>
     private const string ImageCacheControlMaxAgeSeconds = "31536000";
 
@@ -98,12 +95,7 @@ public class SupabaseHelper : ISupabaseRawStorage
     }
 
     /// <summary>
-    /// Uploads raw content to an arbitrary object path in the bucket. Unlike
-    /// UploadImageAsync{T}, this is not image-shaped: no
-    /// per-type folder convention, no cache-control header, no public-URL
-    /// return — the caller supplies the exact destination path. Additive:
-    /// UploadImageAsync{T}'s behavior and call sites are
-    /// untouched.
+    /// Uploads raw content to an arbitrary object path in the bucket, without the per-type folder, cache-control header, or public URL that UploadImageAsync applies.
     /// </summary>
     /// <param name="objectPath">The exact destination path within the bucket.</param>
     /// <param name="content">The content stream to upload.</param>
@@ -124,9 +116,7 @@ public class SupabaseHelper : ISupabaseRawStorage
     }
 
     /// <summary>
-    /// Lists raw objects under <paramref name="prefix"/> in the bucket.
-    /// Additive: does not affect UploadImageAsync{T} or
-    /// DeleteImageAsync{T}.
+    /// Lists raw objects that share a given prefix within the bucket.
     /// </summary>
     /// <param name="prefix">The bucket-relative path prefix to list.</param>
     /// <param name="bucket">Target bucket; null uses the configured SupaBase:BucketName.</param>
@@ -152,9 +142,7 @@ public class SupabaseHelper : ISupabaseRawStorage
     }
 
     /// <summary>
-    /// Removes the raw object at <paramref name="objectPath"/> in the bucket.
-    /// Additive: existing DeleteImageAsync{T} behavior and call
-    /// sites are untouched.
+    /// Removes the raw object at the given path within the bucket.
     /// </summary>
     /// <param name="objectPath">The exact object path within the bucket.</param>
     /// <param name="bucket">Target bucket; null uses the configured SupaBase:BucketName.</param>
@@ -172,9 +160,7 @@ public class SupabaseHelper : ISupabaseRawStorage
     }
 
     /// <summary>
-    /// Downloads the raw content of the object at <paramref name="objectPath"/>
-    /// in the bucket. Additive: does not affect UploadImageAsync{T}
-    /// or DeleteImageAsync{T}.
+    /// Downloads the raw content of the object at the given path within the bucket.
     /// </summary>
     /// <param name="objectPath">The exact object path within the bucket.</param>
     /// <param name="bucket">Target bucket; null uses the configured SupaBase:BucketName.</param>
@@ -192,8 +178,7 @@ public class SupabaseHelper : ISupabaseRawStorage
     }
 
     /// <summary>
-    /// Reads all bytes from a given Stream using the Stream.Read method in chunks,
-    /// and returns the entire content as a byte array.
+    /// Reads all bytes from a given stream using the Stream.Read method in chunks and returns the entire content as a byte array.
     /// </summary>
     /// <param name="stream">The input stream to read from.</param>
     /// <returns>A byte array containing all data read from the stream.</returns>
@@ -210,8 +195,7 @@ public class SupabaseHelper : ISupabaseRawStorage
     }
 
     /// <summary>
-    /// Generates a new unique file name by replacing the original name with a GUID,
-    /// preserving the original file extension.
+    /// Generates a new unique file name by replacing the original name with a GUID while preserving the original file extension.
     /// </summary>
     /// <param name="fileName">The original file name including extension.</param>
     /// <returns>A new file name string consisting of a GUID and the original extension.</returns>

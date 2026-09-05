@@ -86,20 +86,8 @@ public static class StartupExtensions
     }
 
     /// <summary>
-    /// Shared Npgsql options for every DbContext, so both stay in sync.
-    /// A bounded command timeout turns a pathological query into a fast failure
-    /// instead of a hung request.
+    /// Shared Npgsql options for every DbContext so both stay in sync, with a bounded command timeout that turns a pathological query into a fast failure instead of a hung request.
     /// </summary>
-    /// <remarks>
-    /// Deliberately NOT calling <c>EnableRetryOnFailure</c>: it swaps in
-    /// <c>NpgsqlRetryingExecutionStrategy</c>, which rejects any user-initiated
-    /// transaction (<c>Database.BeginTransactionAsync</c>) unless the whole unit
-    /// runs inside <c>CreateExecutionStrategy().ExecuteAsync(...)</c>.
-    /// <see cref="Infrastructure.Repositories.UnitOfWork"/> does that correctly,
-    /// but <c>DataMaintenanceService</c> opens a raw transaction and would throw.
-    /// The database is now a local container (sub-ms, no transient network
-    /// faults), so retry buys almost nothing here anyway.
-    /// </remarks>
     private static void ConfigureNpgsql(NpgsqlDbContextOptionsBuilder npgsql)
     {
         npgsql.CommandTimeout(30);
@@ -124,12 +112,7 @@ public static class StartupExtensions
     }
 
     /// <summary>
-    /// Registers the two container-probe health checks: "self" (tagged
-    /// "live") always reports Healthy with no dependency check, and "db"
-    /// (tagged "ready") probes ApplicationDBContext connectivity via
-    /// AddDbContextCheck, so a misconfigured/unreachable
-    /// ConnectionStrings__DbConnection surfaces as not-ready instead of
-    /// silently healthy.
+    /// Registers the self health check tagged live, which always reports Healthy, and the db health check tagged ready, which probes ApplicationDBContext connectivity so a misconfigured or unreachable connection string surfaces as not-ready instead of silently healthy.
     /// </summary>
     public static IServiceCollection AddHealthChecksConfig(this IServiceCollection services)
     {
@@ -140,10 +123,7 @@ public static class StartupExtensions
     }
 
     /// <summary>
-    /// Maps the two container-probe endpoints: `/health` (liveness — only
-    /// the "live"-tagged self check) and `/health/ready` (readiness — only
-    /// the "ready"-tagged DB check). Both are anonymous: no fallback
-    /// authorization policy exists, so this call is defensive.
+    /// Maps /health as the liveness endpoint using only the live-tagged self check, and /health/ready as the readiness endpoint using only the ready-tagged database check; both are anonymous since no fallback authorization policy exists.
     /// </summary>
     public static WebApplication MapHealthCheckEndpoints(this WebApplication app)
     {
@@ -161,8 +141,7 @@ public static class StartupExtensions
     }
 
     /// <summary>
-    /// Runs EF migrations for both ApplicationDBContext and IdentityAppDbContext,
-    /// then seeds the initial admin user.
+    /// Runs EF migrations for both ApplicationDBContext and IdentityAppDbContext, then seeds the initial admin user.
     /// </summary>
     public static async Task ExecuteMigrationsAndSeedAsync(this WebApplication app)
     {
@@ -200,8 +179,7 @@ public static class StartupExtensions
     }
 
     /// <summary>
-    /// Logs the startup banner once the app is fully configured and about to
-    /// start listening for requests.
+    /// Logs the startup banner once the app is fully configured and about to start listening for requests.
     /// </summary>
     public static void LogStartupBanner(this WebApplication app)
     {
@@ -402,8 +380,7 @@ public static class StartupExtensions
     }
 
     /// <summary>
-    /// Registers Identity DbContext, ASP.NET Core Identity services, IAuthenticationService,
-    /// IUserManagementService, and IdentitySeeder.
+    /// Registers Identity DbContext, ASP.NET Core Identity services, IAuthenticationService, IUserManagementService, and IdentitySeeder.
     /// </summary>
     public static IServiceCollection AddIdentityConfig(
         this IServiceCollection services, IConfiguration configuration)
@@ -499,8 +476,7 @@ public static class StartupExtensions
         }
     }
     /// <summary>
-    /// Registers FluentEmail with Mailgun and binds IEmailService
-    /// to FluentEmailHelper.
+    /// Registers FluentEmail with Mailgun and binds IEmailService to FluentEmailHelper.
     /// </summary>
     public static IServiceCollection AddEmailConfig(
        this IServiceCollection services, IConfiguration configuration)
@@ -535,36 +511,8 @@ public static class StartupExtensions
     }
 
     /// <summary>
-    /// Registers the database backup feature: binds the
-    /// Backup config section into a BackupOptions
-    /// singleton and registers its ports/adapters. Most of this is
-    /// singleton (pg_dump adapter, psql restore adapter, retention
-    /// policy, storage adapter, the process-wide
-    /// BackupOperationLock and IMaintenanceModeState, and
-    /// DatabaseBackupHostedService itself) — the exceptions are
-    /// IBackupCatalog (EF-backed, needs the scoped
-    /// ApplicationDBContext) and IBackupOperationsService (depends
-    /// on the catalog), both registered scoped so the manual endpoint
-    /// (BackupController) and the scheduled job (resolving from a
-    /// DI scope per tick) each get their own catalog/DbContext instance
-    /// while still serializing through the one shared
-    /// BackupOperationLock singleton.
-    /// The IBackupStorage implementation is selected by
-    /// BackupOptions.StorageTarget: Supabase registers
-    /// SupabaseBackupStorage (reusing the existing
-    /// SupabaseHelper singleton as its raw-storage boundary);
-    /// anything else (including the default, Local) registers
-    /// LocalDirectoryBackupStorage.
+    /// Registers the database backup feature by binding the Backup config section into a BackupOptions singleton and registering its ports and adapters.
     /// </summary>
-    /// <remarks>
-    /// Deliberately NOT registered via RegisterScoped's
-    /// reflection scan: these live outside the
-    /// Application.Interfaces.Services namespace on purpose, because
-    /// that scanner auto-binds everything it finds as <b>Scoped</b> — a
-    /// lifetime mismatch for the singleton services registered here (and,
-    /// for IBackupCatalog/IBackupOperationsService, explicit scoped
-    /// registration is clearer than relying on naming-convention reflection).
-    /// </remarks>
     public static IServiceCollection AddBackupConfig(this IServiceCollection services, IConfiguration configuration)
     {
         BackupOptions options = configuration.GetSection(ConfigurationKeys.Backup.Section).Get<BackupOptions>() ?? new BackupOptions();

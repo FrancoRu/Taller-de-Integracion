@@ -10,16 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace API.Controllers;
 
 /// <summary>
-/// Admin-only maintenance-window status and manual escape hatch
-/// (database-restore#Maintenance-Mode-Window). GET reports the current
-/// IMaintenanceModeState; DELETE force-clears a stuck window — e.g.
-/// the process stayed alive but a restore's finally block never ran
-/// (design.md's "Stuck maintenance window" rollout note; this path is
-/// intentionally allow-listed by MaintenanceModeMiddleware so it
-/// stays reachable even while maintenance is active, while
-/// [Authorize(Roles = Admin)] here still fully applies —
-/// threat-matrix "Escape-hatch abuse"). Mirrors
-/// DataMaintenanceController's shape.
+/// Reports maintenance-mode status and lets an admin force-clear a stuck maintenance window.
 /// </summary>
 [Route("api/maintenance")]
 [ApiController]

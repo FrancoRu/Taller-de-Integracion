@@ -5,8 +5,7 @@ using System;
 namespace Infrastructure.Identity;
 
 /// <summary>
-/// Identity user for authentication (separate from domain entities).
-/// Roles are managed exclusively via IdentityRole{TKey}.
+/// Identity user for authentication, kept separate from domain entities.
 /// </summary>
 public class ApplicationUser : IdentityUser<Guid>
 {
@@ -21,8 +20,7 @@ public class ApplicationUser : IdentityUser<Guid>
     public DateTime? RefreshTokenExpiryTime { get; set; }
 
     /// <summary>
-    /// The Id of the OWNER who registered this account, when it was created
-    /// by an owner rather than directly by an admin. Null otherwise.
+    /// The Id of the OWNER who registered this account, when it was created by an owner rather than an admin.
     /// </summary>
     public Guid? CreatedByOwnerId { get; set; }
 

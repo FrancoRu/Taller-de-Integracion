@@ -9,8 +9,7 @@ using System.Threading.Tasks;
 namespace Application.Interfaces.Services;
 
 /// <summary>
-/// Service for managing best-of-N playoff series between two teams at a
-/// single bracket round.
+/// Service for managing best-of-N playoff series between two teams at a single bracket round.
 /// </summary>
 public interface IMatchSeriesService
 {
@@ -29,11 +28,9 @@ public interface IMatchSeriesService
     Task<PaginatedResponse<MatchSeries>> GetAllSeriesAsync(GetMatchSeriesFilteredRequest filter);
 
     /// <summary>
-    /// Creates a new best-of-N series between two teams at a stage. The
-    /// stage's BestOf value is copied onto the series so a later change to
-    /// the stage's format never retroactively alters this series.
+    /// Creates a new best-of-N series between two teams at a stage, copying the stage's BestOf value onto the series.
     /// </summary>
-    /// <param name="stageId">The stage (round) the series belongs to.</param>
+    /// <param name="stageId">The stage, round, the series belongs to.</param>
     /// <param name="homeTeamId">The home team.</param>
     /// <param name="visitorTeamId">The visitor team.</param>
     /// <returns>The created series entity.</returns>
@@ -50,7 +47,7 @@ public interface IMatchSeriesService
     /// <param name="seriesId">The series to add a game to.</param>
     /// <param name="matchDate">The date of the game.</param>
     /// <param name="venueId">Optional venue for the game.</param>
-    /// <returns>The created game (Match) entity.</returns>
+    /// <returns>The created game, a Match entity.</returns>
     /// <exception cref="InvalidOperationException">
     /// Thrown when the series does not exist, is already decided, or
     /// already has BestOf games scheduled.
@@ -58,9 +55,7 @@ public interface IMatchSeriesService
     Task<Match> AddGameToSeriesAsync(Guid seriesId, DateTime matchDate, Guid? venueId);
 
     /// <summary>
-    /// Recomputes and persists the series' winner based on its finished
-    /// games. Called after a game's score is recorded. A no-op if the
-    /// series does not exist or is not yet decided by the new result.
+    /// Recomputes and persists the series' winner based on its finished games.
     /// </summary>
     /// <param name="seriesId">The series to recompute.</param>
     Task RecalculateSeriesWinnerAsync(Guid seriesId);

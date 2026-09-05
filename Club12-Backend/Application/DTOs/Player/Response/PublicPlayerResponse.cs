@@ -26,23 +26,17 @@ public class PublicPlayerResponse : BaseEntityResponse
     public required Guid TeamId { get; set; }
 
     /// <summary>
-    /// The player's medical-record status for the season roster this response
-    /// belongs to (HU-57). Null when the roster was not loaded for a specific
-    /// season.
+    /// The player's medical-record status for this season roster; null when not loaded for a specific season.
     /// </summary>
     public MedicalRecordStatus? MedicalRecordStatus { get; set; }
 
     /// <summary>
-    /// Whether the player is habilitado (medical record Approved) for this
-    /// season roster (HU-57), so the frontend can flag not-habilitado players
-    /// (HU-62).
+    /// Whether the player's medical record is Approved for this season roster, letting the frontend flag it.
     /// </summary>
     public bool IsHabilitado { get; set; }
 
     /// <summary>
-    /// The player's jersey number (dorsal) for this season roster (HU-54).
-    /// Null when the roster was not loaded for a specific season or no number
-    /// is assigned.
+    /// The player's jersey number for this season roster; null when not loaded or not assigned.
     /// </summary>
     public int? JerseyNumber { get; set; }
 }

@@ -5,8 +5,7 @@ using System;
 namespace Infrastructure.Persistance.Converters;
 
 /// <summary>
-/// Ensures DateTime values are always read from the database as UTC.
-/// Writes the value as Unspecified to satisfy 'timestamp without time zone'.
+/// Converts DateTime values to Unspecified for storage and back to UTC on read, to satisfy the timestamp without time zone column type.
 /// </summary>
 public class UtcDateTimeConverter()
     : ValueConverter<DateTime, DateTime>(

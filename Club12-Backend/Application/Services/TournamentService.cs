@@ -24,14 +24,7 @@ using System.Threading.Tasks;
 namespace Application.Services;
 
 /// <summary>
-/// Owns the tournament lifecycle: structural creation (divisions/stages, only
-/// while OpenForRegistration), status transitions guarded by
-/// <see cref="TournamentStatusTransitions"/>, and the cascades a status change
-/// triggers — fixture generation on the move to Ongoing (once, guarded by the
-/// HU-109 completability check), fixture teardown on reverting to
-/// RegistrationClosed, and cancellation of any still-pending match when the
-/// tournament is Canceled or force-closed as Finished. Deletion is blocked
-/// once the tournament has real history (started, or has a played match).
+/// Owns the tournament lifecycle: structural creation, status transitions, and their cascades.
 /// </summary>
 public class TournamentService(
     ITournamentRepository tournamentRepository,
@@ -55,10 +48,10 @@ public class TournamentService(
     public async Task<Tournament> CreateFullTournamentAsync(CreateFullTournamentRequest request)
     {
         // Created OpenForRegistration: divisions/stages can only be built while
-        // the tournament is in that status (HU-31 structural-edit guard), and
+        // the tournament is in that status, per the structural-edit guard, and
         // structural creation is part of creation. Teams register, registration
-        // closes, and the fixture is generated later when the tournament starts
-        // (the canonical transition to Ongoing, HU-108).
+        // closes, and the fixture is generated later when the tournament starts,
+        // the canonical transition to Ongoing.
         Tournament tournament = new()
         {
             Name = request.Name,
@@ -92,8 +85,8 @@ public class TournamentService(
     {
         Division division = null!;
 
-        // Same guard the granular create already enforces (HU-31, via
-        // DivisionService.CreateDivisionAsync): only while OpenForRegistration.
+        // Same guard the granular create already enforces, via
+        // DivisionService.CreateDivisionAsync: only while OpenForRegistration.
         // Wrapped in its own transaction so a division added to an EXISTING
         // tournament gets the exact same all-or-nothing guarantee a
         // wizard-created one gets — never a bare division with no stages/cups
@@ -107,13 +100,7 @@ public class TournamentService(
     }
 
     /// <summary>
-    /// Builds and persists one division (and its stages) from a
-    /// <see cref="CreateFullDivisionRequest"/>, shared by
-    /// <see cref="CreateFullTournamentAsync"/> (looped, one call per division)
-    /// and <see cref="AddFullDivisionAsync"/> (a single division added later to
-    /// an already-existing tournament) — the same structure guarantee either
-    /// way, instead of the granular per-division endpoint that creates a bare
-    /// division with no stages.
+    /// Builds and persists one division and its stages from a CreateFullDivisionRequest.
     /// </summary>
     private async Task<Division> CreateDivisionWithStagesAsync(
         Tournament tournament, CreateFullDivisionRequest divisionRequest)
@@ -179,8 +166,7 @@ public class TournamentService(
     }
 
     /// <summary>
-    /// Retrieves a tournament by its id or its slug. The value is treated as
-    /// an id when it parses as a GUID, otherwise it is looked up as a slug.
+    /// Retrieves a tournament by id or slug, auto-detecting which one was passed via GUID parsing.
     /// </summary>
     /// <param name="idOrSlug">The tournament's GUID id or its slug.</param>
     /// <returns>The matching tournament, or null if not found.</returns>
@@ -199,22 +185,11 @@ public class TournamentService(
     }
 
     /// <summary>
-    /// Deletes a tournament, guarding its competitive history. A tournament OWNS
-    /// its divisions, stages, matches and registrations (every one of those FKs
-    /// cascades at the database level), so a raw delete would silently erase all
-    /// of that. The deletion is therefore BLOCKED once the tournament has real
-    /// history — it has already started (Ongoing/Finished) or has any played
-    /// (finished) match. A tournament with no such history is still deletable:
-    /// its divisions/stages cascade cleanly, and the denormalized
-    /// <see cref="Team.TournamentId"/> "current-season" pointer of any enrolled
-    /// team is cleared first (that FK is NoAction, so leaving it set would raise
-    /// an opaque database error instead of a clean delete). The team identities
-    /// themselves persist across seasons and are never removed here.
+    /// Deletes a tournament, blocking the delete once it has real history.
     /// </summary>
     /// <param name="id">The id of the tournament to delete.</param>
     /// <exception cref="InvalidOperationException">
-    /// Thrown (mapped to 409) when the tournament has already started or has
-    /// played matches.
+    /// Thrown as a 409 when the tournament has already started or has played matches.
     /// </exception>
     public async Task DeleteTournamentAsync(Guid id)
     {
@@ -265,20 +240,14 @@ public class TournamentService(
     }
 
     /// <summary>
-    /// Drives the tournament status state machine. A no-op when the status is
-    /// unchanged; otherwise validates the transition, then applies whichever
-    /// cascade it implies — generating the fixture exactly once on the move to
-    /// Ongoing (after the HU-109 completability guard), tearing the fixture
-    /// back down on Ongoing → RegistrationClosed, or canceling every
-    /// still-pending match on a move to Canceled/Finished — before committing
-    /// the new status and recording it in the audit log (HU-101).
+    /// Drives the tournament status state machine, applying whichever cascade the new status implies.
     /// </summary>
     /// <param name="tournamentId">The tournament to transition.</param>
     /// <param name="newStatus">The status to transition to.</param>
     /// <exception cref="KeyNotFoundException">Thrown when the tournament does not exist.</exception>
     /// <exception cref="InvalidOperationException">
-    /// Thrown (mapped to 409) when the transition is invalid, or when moving
-    /// to Ongoing while the tournament fails the completability check.
+    /// Thrown as a 409 when the transition is invalid, or when moving to Ongoing while the
+    /// tournament fails the completability check.
     /// </exception>
     public async Task ChangeStatusAsync(Guid tournamentId, TournamentStatus newStatus)
     {
@@ -297,7 +266,7 @@ public class TournamentService(
                 ErrorMessages.Tournament.InvalidStatusTransition(tournament.Status, newStatus));
         }
 
-        // HU-108: starting the tournament is the canonical fixture trigger.
+        // Starting the tournament is the canonical fixture trigger.
         // After registration closes teams are assigned to divisions; only when
         // the tournament moves to Ongoing do we generate the matches for every
         // division's stages exactly once (see GenerateFixtureAsync for the
@@ -307,7 +276,7 @@ public class TournamentService(
         // Ongoing with a half-built fixture.
         if (newStatus == TournamentStatus.Ongoing)
         {
-            // HU-109: a tournament that cannot be completed must never be
+            // A tournament that cannot be completed must never be
             // started. Run the completability guard on the loaded graph BEFORE
             // generating any fixture; a violation aborts the transition (mapped
             // to 409 by the global handler) so no half-built fixture is left and
@@ -354,7 +323,7 @@ public class TournamentService(
         tournament.Status = newStatus;
         await tournamentRepository.UpdateAsync(tournament);
 
-        // HU-101: record the sensitive status change for traceability.
+        // Record the sensitive status change for traceability.
         await auditService.LogAsync(
             AuditAction.TournamentStatusChange,
             targetType: nameof(Tournament),
@@ -364,11 +333,7 @@ public class TournamentService(
     }
 
     /// <summary>
-    /// Generates the automated fixture (matches) for every stage of every
-    /// division in the tournament, reusing the same
-    /// <see cref="IMatchService.CreateAutomatedMatchesAsync"/> path the manual
-    /// generation endpoint uses. Idempotent: a stage that already has matches
-    /// is skipped, so re-running never double-generates.
+    /// Generates the automated fixture for every stage of every division in the tournament.
     /// </summary>
     private async Task GenerateFixtureAsync(Tournament tournament)
     {
@@ -399,10 +364,7 @@ public class TournamentService(
     }
 
     /// <summary>
-    /// Deletes every generated match (and best-of-N series) of every stage of
-    /// every division of the tournament, so a reverted tournament goes back to a
-    /// clean, fixture-less RegistrationClosed state. Team assignments
-    /// (StageTeamMatch) are intentionally left untouched.
+    /// Deletes every generated match and best-of-N series across the tournament, back to a fixture-less state.
     /// </summary>
     private async Task TeardownFixtureAsync(Tournament tournament)
     {
@@ -440,15 +402,7 @@ public class TournamentService(
     }
 
     /// <summary>
-    /// Marks every not-yet-finished match of a tournament (across every
-    /// division/stage) as <see cref="MatchStatus.Canceled"/>, called when the
-    /// tournament moves to <see cref="TournamentStatus.Canceled"/> or is
-    /// force-closed to <see cref="TournamentStatus.Finished"/> with matches
-    /// still pending. Leaves <see cref="Match.IsFinished"/> false — a canceled
-    /// match never happened, it is not a recorded result — and never touches an
-    /// already-finished match, so real history is preserved either way. A no-op
-    /// when there is nothing pending (e.g. the tournament never generated a
-    /// fixture, or every match was already played).
+    /// Marks every not-yet-finished match of a tournament as MatchStatus.Canceled.
     /// </summary>
     private async Task CancelPendingMatchesAsync(Guid tournamentId)
     {
@@ -483,13 +437,7 @@ public class TournamentService(
     }
 
     /// <summary>
-    /// Loads the graph the completability validator needs (divisions with their
-    /// stages, each stage's team assignments, and playoff mappings) plus the
-    /// tournament's enrolled-team registrations, then runs the single
-    /// source-of-truth validator (HU-109). The graph is loaded piecewise (the
-    /// generic repository cannot express nested includes) into a throwaway
-    /// tournament so the validator receives a fully-loaded aggregate without the
-    /// status-mutation load being marked modified.
+    /// Loads the graph the completability validator needs and runs it against a throwaway tournament.
     /// </summary>
     private async Task<IReadOnlyList<CompletabilityIssue>> EvaluateCompletabilityAsync(Guid tournamentId)
     {
@@ -523,8 +471,8 @@ public class TournamentService(
                 registration => registration.TournamentId == tournamentId,
                 includes: [registration => registration.Team!])];
 
-        // Only HABILITADO players count toward the minimum (HU-109 + owner's
-        // "no se puede arrancar torneos sin al menos 4 habilitados" rule) — a
+        // Only HABILITADO players count toward the minimum, per the owner's
+        // "no se puede arrancar torneos sin al menos 4 habilitados" rule — a
         // registration that is merely on the roster but Pending/Rejected, or
         // Approved with no real stored file, could never legally play.
         Dictionary<Guid, int> habilitadoPlayerCountsByTeam = (await unitOfWork.PlayerTeamRegistrationRepository.FindAsync(
@@ -549,8 +497,7 @@ public class TournamentService(
     }
 
     /// <summary>
-    /// Renders the structured completability issues into a compact, English
-    /// summary used in the InvalidOperationException that blocks the start.
+    /// Renders the structured completability issues into a compact summary for the blocking exception.
     /// </summary>
     private static string SummarizeIssues(IReadOnlyList<CompletabilityIssue> issues)
     {

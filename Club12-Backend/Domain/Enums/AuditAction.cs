@@ -1,21 +1,27 @@
 namespace Domain.Enums;
 
 /// <summary>
-/// The sensitive, auditable actions tracked for traceability (HU-101).
-/// Persisted as the enum name (string) so the audit trail stays readable and
-/// stable even if the numeric order changes.
+/// The sensitive, auditable actions tracked for traceability, persisted as the enum name so the trail survives numeric reordering.
 /// </summary>
 public enum AuditAction
 {
-    /// <summary>Full tournament-domain data wipe (DataMaintenanceService).</summary>
+    /// <summary>
+    /// Full tournament-domain data wipe, triggered by DataMaintenanceService.
+    /// </summary>
     DataWipe,
 
-    /// <summary>Database restore from a backup (BackupRestoreService).</summary>
+    /// <summary>
+    /// Database restore from a backup, triggered by BackupRestoreService.
+    /// </summary>
     BackupRestore,
 
-    /// <summary>A tournament lifecycle status change (TournamentService).</summary>
+    /// <summary>
+    /// A tournament lifecycle status change, triggered by TournamentService.
+    /// </summary>
     TournamentStatusChange,
 
-    /// <summary>An admin-triggered password reset / blanqueo (user management).</summary>
+    /// <summary>
+    /// An admin-triggered password reset, from user management.
+    /// </summary>
     PasswordReset,
 }

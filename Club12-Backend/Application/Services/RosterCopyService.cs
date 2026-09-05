@@ -13,10 +13,7 @@ using System.Threading.Tasks;
 namespace Application.Services;
 
 /// <summary>
-/// Copies a roster from a previous season into a new season (HU-53). Only
-/// season-scoped <see cref="PlayerTeamRegistration"/> rows are created; the
-/// Player rows themselves (the person) are reused untouched, medical records
-/// start fresh (HU-59), and sanctions are never carried over.
+/// Copies a roster from a previous season into a new season.
 /// </summary>
 public class RosterCopyService(IUnitOfWork unitOfWork) : IRosterCopyService
 {
@@ -38,7 +35,7 @@ public class RosterCopyService(IUnitOfWork unitOfWork) : IRosterCopyService
         // A player may hold at most one registration per tournament (unique
         // PlayerId+TournamentId index). Any source player already registered to
         // the target season is skipped, which is what makes the copy idempotent
-        // and prevents an HU-54 two-teams-in-one-season violation.
+        // and prevents a two-teams-in-one-season violation.
         HashSet<Guid> alreadyInTargetSeason = [.. (await _registrationRepository.FindAsync(
                 registration => registration.TournamentId == targetTournamentId))
             .Select(registration => registration.PlayerId)];
@@ -53,7 +50,7 @@ public class RosterCopyService(IUnitOfWork unitOfWork) : IRosterCopyService
                 TournamentId = targetTournamentId,
                 // JerseyNumber, MedicalRecordStatus (defaults Pending) and all
                 // medical fields are intentionally NOT copied — each season
-                // starts with a fresh, un-habilitado registration (HU-59).
+                // starts with a fresh, un-habilitado registration.
                 DateCreated = DateTime.UtcNow,
                 CreatedBy = AuditConstants.SystemUser,
             })];

@@ -63,11 +63,7 @@ public class GlobalExceptionHandler : IExceptionHandler
     }
 
     /// <summary>
-    /// Maps known exceptions to appropriate HTTP status codes and response titles. The
-    /// third value controls whether the exception's own message is safe to return to the
-    /// client: true for exceptions whose message describes invalid input or a known
-    /// business-state conflict, false for exceptions that may carry internal details
-    /// (connection strings, stack state, unclassified failures) that must not leak.
+    /// Maps known exceptions to HTTP status codes and response titles, and decides whether the exception's own message is safe to expose to the client.
     /// </summary>
     /// <param name="exception">The exception to map.</param>
     /// <returns>

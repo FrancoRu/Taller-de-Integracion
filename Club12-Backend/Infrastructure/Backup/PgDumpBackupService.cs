@@ -18,15 +18,7 @@ using System.Threading.Tasks;
 namespace Infrastructure.Backup;
 
 /// <summary>
-/// IDatabaseBackupService implementation that shells out to
-/// pg_dump via IProcessRunner. Connection details are
-/// read from ConnectionStrings:DbConnection (the same Npgsql
-/// connection string already used by EF Core) and passed to pg_dump
-/// as a discrete argument vector (host/port/user/database flags) — never
-/// concatenated into a shell command string. The password is passed via the
-/// PGPASSWORD environment variable convention rather than as a
-/// command-line argument, so it never appears in the process argument list
-/// (which would otherwise be visible via process listings).
+/// IDatabaseBackupService implementation that shells out to pg_dump via IProcessRunner, passing connection details as a discrete argument vector instead of a shell command string.
 /// </summary>
 public sealed class PgDumpBackupService(
     IProcessRunner processRunner,
@@ -34,15 +26,7 @@ public sealed class PgDumpBackupService(
     ILogger<PgDumpBackupService> logger) : IDatabaseBackupService
 {
     /// <summary>
-    /// Matches a single CREATE/DROP/ALTER/COMMENT ON EVENT TRIGGER statement
-    /// (event triggers are database-wide, not schema-scoped, so pg_dump
-    /// captures them regardless of any schema filter). On a Supabase-managed
-    /// database these are always platform-internal objects (PostgREST's
-    /// schema-cache-reload hooks, pgsodium's mask-update hook, etc.) owned by
-    /// a role the app's connection never is — restoring them via --clean's
-    /// DROP EVENT TRIGGER fails with "must be owner of event trigger". The
-    /// app defines no event triggers of its own, so every match here is safe
-    /// to drop from the dump entirely.
+    /// Matches a CREATE, DROP, ALTER, or COMMENT ON EVENT TRIGGER statement so it can be stripped from the dump before restore.
     /// </summary>
     private static readonly Regex EventTriggerStatementPattern = new(
         @"^\s*(CREATE|DROP|ALTER|COMMENT\s+ON)\s+EVENT\s+TRIGGER\b.*?;\s*$",

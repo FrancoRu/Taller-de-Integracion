@@ -13,18 +13,7 @@ using System.Threading.Tasks;
 namespace Infrastructure.Backup;
 
 /// <summary>
-/// IDatabaseRestoreService implementation that shells out to
-/// psql via IProcessRunner (design.md's "Keep plain-SQL dumps;
-/// restore with psql, not pg_restore" decision — pg_dump captures plain SQL,
-/// which only psql -f can replay; pg_restore only accepts
-/// binary custom/tar archives). Connection details are read from the same
-/// ConnectionStrings:DbConnection Npgsql connection string
-/// PgDumpBackupService uses, and passed to psql as a discrete
-/// argument vector — never concatenated into a shell command string, so a
-/// dump file path is never reinterpreted as extra flags or shell syntax. The
-/// password is passed via the PGPASSWORD environment variable
-/// convention rather than as a command-line argument, so it never appears in
-/// the process argument list.
+/// IDatabaseRestoreService implementation that shells out to psql via IProcessRunner because pg_dump produces plain SQL, which only psql can replay.
 /// </summary>
 public sealed class PsqlDatabaseRestoreService(
     IProcessRunner processRunner,

@@ -19,17 +19,7 @@ using System.Threading.Tasks;
 namespace Application.Backup;
 
 /// <summary>
-/// The one shared write path for backup operations (spec
-/// backup-catalog#Single-Shared-Write-Path). Both the manual endpoint
-/// (BackupController) and the scheduled job
-/// (DatabaseBackupHostedService, via a DI scope) call this scoped
-/// service, which serializes every call through the singleton
-/// BackupOperationLock. A dump/store failure is logged and returns
-/// Failed without ever writing a catalog record (spec
-/// backup-catalog#Failed-Backups-Are-Not-Catalogued). Retention pruning
-/// reads the catalog (not IBackupStorage.ListAsync()), so it
-/// naturally spans the combined Manual+Job pool with no per-origin cap
-/// (scheduled-database-backups#Keep-Last-N-Retention-Pruning).
+/// The one shared write path for backup operations.
 /// </summary>
 public sealed class BackupOperationsService(
     IBackupCatalog catalog,
@@ -101,17 +91,7 @@ public sealed class BackupOperationsService(
     }
 
     /// <summary>
-    /// database-restore#Automatic-Pre-Restore-Safety-Backup +
-    /// database-restore#Maintenance-Mode-Window +
-    /// database-restore#Restore-Failure-Is-Logged-and-Isolated: enters
-    /// maintenance mode, takes an automatic safety backup of the current
-    /// state (Origin = Job, applyRetention: false — kept even past
-    /// RetentionCount) via CreateBackupCoreAsync (reusing the lock
-    /// already held by this call, not re-acquiring it), copies the selected
-    /// backup into a local temp file, and restores it. Maintenance mode is
-    /// always exited and the temp file always deleted in a finally
-    /// block, on both success and failure, so a failed restore never leaves
-    /// the app stuck or crashes the host.
+    /// Enters maintenance mode, takes an automatic safety backup, restores the selected one, then exits.
     /// </summary>
     public async Task<BackupOperationResult> RestoreBackupAsync(Guid id, CancellationToken ct = default)
     {
@@ -147,8 +127,8 @@ public sealed class BackupOperationsService(
 
                 await restoreService.RestoreAsync(tempFilePath, ct);
 
-                // HU-101: record the restore for traceability — non-throwing by
-                // contract (IAuditService.LogAsync), so a logging hiccup never
+                // Record the restore for traceability — non-throwing by
+                // contract via IAuditService.LogAsync, so a logging hiccup never
                 // turns a successful restore into a reported failure.
                 await auditService.LogAsync(
                     AuditAction.BackupRestore,
@@ -182,10 +162,7 @@ public sealed class BackupOperationsService(
     }
 
     /// <summary>
-    /// Assumes the lock is already held by the caller — this lets a future
-    /// restore take its pre-restore safety backup
-    /// (applyRetention: false) without self-deadlocking on the
-    /// same lock.
+    /// Assumes the lock is already held by the caller, so a restore's safety backup avoids self-deadlock.
     /// </summary>
     private async Task<BackupOperationResult> CreateBackupCoreAsync(BackupOrigin origin, bool applyRetention, CancellationToken ct)
     {

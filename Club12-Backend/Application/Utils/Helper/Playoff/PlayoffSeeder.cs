@@ -7,19 +7,12 @@ using System.Linq;
 namespace Application.Utils.Helper.Playoff;
 
 /// <summary>
-/// Pairs a ranked list of teams (e.g. group-stage standings) into
-/// first-round playoff matchups using the standard bracket seeding order
-/// (1v8, 4v5, 2v7, 3v6 for 8 teams) — the placement that keeps the top two
-/// seeds apart until the final, not naive adjacent pairing.
+/// Pairs a ranked list of teams into first-round playoff matchups using the standard bracket seeding order.
 /// </summary>
 public static class PlayoffSeeder
 {
     /// <summary>
-    /// Builds the first-round pairs for a ranked list of teams (best seed
-    /// first). When the count is not a power of two, the bracket is padded
-    /// to the next power of two with byes; byes always go to the best
-    /// seeds (a null <c>VisitorTeamId</c> means that pair's
-    /// <c>HomeTeamId</c> has a bye and advances automatically).
+    /// Builds the first-round pairs for a ranked list of teams, best seed first.
     /// </summary>
     public static List<(Guid HomeTeamId, Guid? VisitorTeamId)> SeedPairs(IReadOnlyList<Guid> orderedTeamIds)
     {
@@ -51,10 +44,7 @@ public static class PlayoffSeeder
     }
 
     /// <summary>
-    /// Smallest power of two greater than or equal to <paramref name="value"/>
-    /// (the bracket size a seed pool of that many teams pads up to). Shared
-    /// with the bracket's automated match-count sizing so both use the same
-    /// padding rule.
+    /// Smallest power of two greater than or equal to value, the bracket size a seed pool of that many teams pads up to.
     /// </summary>
     public static int NextPowerOfTwo(int value)
     {
@@ -67,10 +57,7 @@ public static class PlayoffSeeder
     }
 
     /// <summary>
-    /// Recursively builds the classic bracket seed-position order (e.g.
-    /// [1,8,4,5,2,7,3,6] for 8), so pairing consecutive slots and letting
-    /// winners advance in slot order naturally produces seed 1 vs seed 2
-    /// in the final.
+    /// Recursively builds the classic bracket seed-position order.
     /// </summary>
     private static List<int> BuildSeedOrder(int size)
     {

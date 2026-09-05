@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Infrastructure.Persistance.Configurations;
 
 /// <summary>
-/// EF Core mapping for the sensitive-action audit trail (HU-101).
+/// EF Core mapping for the sensitive-action audit trail.
 /// </summary>
 public class AuditLogEntityConfiguration : BaseEntityConfiguration<AuditLog>
 {

@@ -17,7 +17,7 @@ public static class EntityConstants
     public const string DateTime2 = "datetime2";
 
     /// <summary>
-    /// SQL Server decimal(18,4) column type.
+    /// SQL Server decimal column type with precision 18 and scale 4.
     /// </summary>
     public const string Decimal18x4 = "decimal(18,4)";
 
@@ -35,9 +35,7 @@ public static class EntityConstants
         public const string PlayerSanction = "PlayerSanctions";
 
         /// <summary>
-        /// Plural form ("PlayersStatistics") matches the value already baked
-        /// into existing migrations; it intentionally does not follow the
-        /// singular naming used by the other table constants.
+        /// Uses the plural form PlayersStatistics to match the value already baked into existing migrations, unlike the singular naming used by the other table constants.
         /// </summary>
         public const string PlayerStatistic = "PlayersStatistics";
 

@@ -6,10 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Infrastructure.Persistance.Configurations;
 
 /// <summary>
-/// EF configuration for <see cref="TeamPointDeduction"/> (deducción de puntos).
-/// Deleting a division cascades its deductions away; the team FK is Restrict,
-/// mirroring the PlayerSanction/Team relationship, so a team that still carries
-/// deductions is not silently removed.
+/// Deleting a division cascades its point deductions away, but the team foreign key is Restrict, so a team that still carries deductions is not silently removed.
 /// </summary>
 public class TeamPointDeductionEntityConfiguration : BaseEntityConfiguration<TeamPointDeduction>
 {

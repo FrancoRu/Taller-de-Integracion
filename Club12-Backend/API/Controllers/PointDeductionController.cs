@@ -20,9 +20,7 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Manages disciplinary point deductions (deducción de puntos) applied to
-/// teams within a division. Creating and deleting require Admin or Owner;
-/// listing is public so the standings/UI can show the applied penalties.
+/// Manages disciplinary point deductions applied to teams within a division; creating and deleting require Admin or Owner while listing is public.
 /// </summary>
 /// <param name="deductionService">The point-deduction service.</param>
 /// <param name="divisionService">The division service, used to validate the division.</param>
@@ -41,10 +39,10 @@ public class PointDeductionController(
     /// Applies a point deduction to a team in a division.
     /// </summary>
     /// <param name="divisionId">The division whose standings the penalty affects.</param>
-    /// <param name="request">The deduction (team, points, reason).</param>
+    /// <param name="request">The deduction, including team, points, and reason.</param>
     /// <returns>
-    /// 201 (Created) with the deduction; 404 (Not Found) when the division or
-    /// team does not exist; 403 (Forbidden) for non-staff callers.
+    /// 201 Created with the deduction; 404 Not Found when the division or
+    /// team does not exist; 403 Forbidden for non-staff callers.
     /// </returns>
     [HttpPost("divisions/{divisionId:guid}/point-deductions")]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(PointDeductionResponse))]
@@ -75,11 +73,10 @@ public class PointDeductionController(
     }
 
     /// <summary>
-    /// Lists every point deduction applied in a division. Public so the
-    /// standings can show each penalty.
+    /// Lists every point deduction applied in a division, public so standings can show each penalty.
     /// </summary>
     /// <param name="divisionId">The division whose deductions to list.</param>
-    /// <returns>200 (OK) with the deductions (newest first).</returns>
+    /// <returns>200 OK with the deductions, newest first.</returns>
     [AllowAnonymous]
     [HttpGet("divisions/{divisionId:guid}/point-deductions")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<PointDeductionResponse>))]
@@ -93,7 +90,7 @@ public class PointDeductionController(
     /// Removes a point deduction by its id.
     /// </summary>
     /// <param name="id">The id of the deduction to remove.</param>
-    /// <returns>204 (No Content); 403 (Forbidden) for non-staff callers.</returns>
+    /// <returns>204 No Content; 403 Forbidden for non-staff callers.</returns>
     [HttpDelete("point-deductions/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

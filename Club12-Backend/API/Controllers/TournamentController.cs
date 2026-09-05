@@ -24,10 +24,7 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Controller responsible for managing tournament-related operations.
-/// Provides endpoints for creating, retrieving, updating, deleting, and filtering tournaments,
-/// as well as registering teams to tournaments. Reads are public; writes require Owner or
-/// Admin.
+/// Manages tournaments: create, retrieve, update, delete, filter, and register teams. Reads are public; writes require Owner or Admin.
 /// </summary>
 [Route("api/tournaments/")]
 [ApiController]
@@ -43,9 +40,9 @@ public class TournamentController(
     /// </summary>
     /// <param name="tournamentRequest">Tournament creation data.</param>
     /// <returns>
-    /// Returns 201 (Created) with the created tournament details.
-    /// Returns 400 (Bad Request) if the request is invalid.
-    /// Returns 403 (Forbidden) if the user is not authorized.
+    /// Returns 201 Created with the created tournament details.
+    /// Returns 400 Bad Request if the request is invalid.
+    /// Returns 403 Forbidden if the user is not authorized.
     /// </returns>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TournamentResponse))]
@@ -61,18 +58,14 @@ public class TournamentController(
     }
 
     /// <summary>
-    /// HU-38: creates a whole tournament (base fields + divisions with their
-    /// cups, points, playoff mappings and stages) in a single atomic
-    /// transaction. A failure at any step persists nothing — no partial
-    /// tournament is left behind. The granular endpoints stay available for
-    /// incremental edits.
+    /// Creates a whole tournament, including its divisions' cups, points, playoff mappings, and stages, in one atomic transaction.
     /// </summary>
     /// <param name="request">The full tournament-wizard payload.</param>
     /// <returns>
-    /// Returns 201 (Created) with the created tournament (including its divisions).
-    /// Returns 400 (Bad Request) if the payload is invalid or a rule (e.g. a
-    /// division category mismatch) aborts the atomic create.
-    /// Returns 403 (Forbidden) if the user is not authorized.
+    /// Returns 201 Created with the created tournament, including its divisions.
+    /// Returns 400 Bad Request if the payload is invalid or a rule, for
+    /// example a division category mismatch, aborts the atomic create.
+    /// Returns 403 Forbidden if the user is not authorized.
     /// </returns>
     [HttpPost("full")]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TournamentResponse))]
@@ -87,17 +80,14 @@ public class TournamentController(
     }
 
     /// <summary>
-    /// HU-31/HU-112: adds one division (group stage + cups + playoff mappings)
-    /// to an already-existing tournament in a single atomic transaction — the
-    /// same structure guarantee a wizard-created division gets. Only allowed
-    /// while the tournament is OpenForRegistration.
+    /// Adds one division, with its group stage, cups, and playoff mappings, to an existing tournament in one atomic transaction, only while OpenForRegistration.
     /// </summary>
     /// <param name="tournamentId">The parent tournament's id.</param>
-    /// <param name="request">The division's structure (zone or cross-cup).</param>
+    /// <param name="request">The division's structure, zone or cross-cup.</param>
     /// <returns>
-    /// Returns 201 (Created) with the created division.
-    /// Returns 404 (Not Found) if the tournament does not exist.
-    /// Returns 409 (Conflict) if the tournament is not OpenForRegistration or
+    /// Returns 201 Created with the created division.
+    /// Returns 404 Not Found if the tournament does not exist.
+    /// Returns 409 Conflict if the tournament is not OpenForRegistration or
     /// the division's category does not match the tournament's.
     /// </returns>
     [HttpPost("{tournamentId:guid}/divisions/full")]
@@ -122,10 +112,10 @@ public class TournamentController(
     /// <summary>
     /// Retrieves a tournament by its unique identifier or its public slug.
     /// </summary>
-    /// <param name="idOrSlug">Tournament identifier (GUID) or slug.</param>
+    /// <param name="idOrSlug">Tournament's GUID identifier or slug.</param>
     /// <returns>
-    /// Returns 200 (OK) with tournament details if found.
-    /// Returns 404 (Not Found) if not found.
+    /// Returns 200 OK with tournament details if found.
+    /// Returns 404 Not Found if not found.
     /// </returns>
     [AllowAnonymous]
     [HttpGet("{idOrSlug}")]
@@ -145,16 +135,12 @@ public class TournamentController(
     }
 
     /// <summary>
-    /// Retrieves the podium of every division of a tournament: for each division
-    /// its champion (1st), runner-up (2nd) and third place, decided by the top
-    /// cup's Final when the division has a playoff, or by the group standings
-    /// otherwise. Every division is included; places that are not yet decided are
-    /// null.
+    /// Retrieves each division's podium: champion, runner-up, and third place, decided by playoff or group standings, with undecided places left null.
     /// </summary>
-    /// <param name="idOrSlug">Tournament identifier (GUID) or slug.</param>
+    /// <param name="idOrSlug">Tournament's GUID identifier or slug.</param>
     /// <returns>
-    /// Returns 200 (OK) with one podium per division.
-    /// Returns 404 (Not Found) if the tournament does not exist.
+    /// Returns 200 OK with one podium per division.
+    /// Returns 404 Not Found if the tournament does not exist.
     /// </returns>
     [AllowAnonymous]
     [HttpGet("{idOrSlug}/champions")]
@@ -174,17 +160,14 @@ public class TournamentController(
     }
 
     /// <summary>
-    /// Updates a tournament's descriptive fields by its identifier. If the request
-    /// includes a <c>Status</c> different from the tournament's current one, that
-    /// change is routed through a forward-only status state machine instead of being
-    /// written directly — sending back the current status is a harmless no-op.
+    /// Updates a tournament's descriptive fields; a Status change is routed through a forward-only state machine instead of being written directly.
     /// </summary>
-    /// <param name="id">Tournament identifier (GUID).</param>
+    /// <param name="id">Tournament's GUID identifier.</param>
     /// <param name="tournamentRequest">Tournament update data.</param>
     /// <returns>
-    /// Returns 200 (OK) if updated successfully.
-    /// Returns 404 (Not Found) if the tournament does not exist.
-    /// Returns 403 (Forbidden) if unauthorized.
+    /// Returns 200 OK if updated successfully.
+    /// Returns 404 Not Found if the tournament does not exist.
+    /// Returns 403 Forbidden if unauthorized.
     /// </returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TournamentResponse))]
@@ -220,11 +203,11 @@ public class TournamentController(
     /// <summary>
     /// Deletes a tournament by its identifier.
     /// </summary>
-    /// <param name="id">Tournament identifier (GUID).</param>
+    /// <param name="id">Tournament's GUID identifier.</param>
     /// <returns>
-    /// Returns 200 (OK) if deleted successfully.
-    /// Returns 400 (Bad Request) if not found.
-    /// Returns 403 (Forbidden) if unauthorized.
+    /// Returns 200 OK if deleted successfully.
+    /// Returns 400 Bad Request if not found.
+    /// Returns 403 Forbidden if unauthorized.
     /// </returns>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -241,8 +224,8 @@ public class TournamentController(
     /// </summary>
     /// <param name="filterRequest">Filtering and pagination parameters.</param>
     /// <returns>
-    /// Returns 200 (OK) with paginated tournament results.
-    /// Returns 400 (Bad Request) if parameters are invalid.
+    /// Returns 200 OK with paginated tournament results.
+    /// Returns 400 Bad Request if parameters are invalid.
     /// </returns>
     [AllowAnonymous]
     [HttpGet]
@@ -257,20 +240,16 @@ public class TournamentController(
     }
 
     /// <summary>
-    /// HU-107: enrolls a single team into the tournament's registration phase.
-    /// Two modes — create a brand-new team (<c>NewTeamName</c>) or enroll an
-    /// existing club from another season (<c>ExistingTeamId</c>), optionally
-    /// copying that team's roster from a past season as an editable base
-    /// (<c>CopyRosterFromTournamentId</c>). Everything runs in one transaction.
+    /// Enrolls a team into the tournament's registration phase, either as a new team or an existing club with an optional roster copy, in one transaction.
     /// </summary>
-    /// <param name="tournamentId">Tournament identifier (GUID).</param>
+    /// <param name="tournamentId">Tournament's GUID identifier.</param>
     /// <param name="request">The enroll payload.</param>
     /// <returns>
-    /// Returns 201 (Created) with the enrolled team, its roster scoped to this tournament.
-    /// Returns 400 (Bad Request) when the payload shape is invalid (not exactly one of
-    /// ExistingTeamId/NewTeamName, or CopyRosterFromTournamentId without ExistingTeamId).
-    /// Returns 404 (Not Found) when the tournament or an existing team does not exist.
-    /// Returns 409 (Conflict) when the tournament is not OpenForRegistration or the team
+    /// Returns 201 Created with the enrolled team, its roster scoped to this tournament.
+    /// Returns 400 Bad Request when the payload shape is invalid: not exactly one of
+    /// ExistingTeamId or NewTeamName, or CopyRosterFromTournamentId without ExistingTeamId.
+    /// Returns 404 Not Found when the tournament or an existing team does not exist.
+    /// Returns 409 Conflict when the tournament is not OpenForRegistration or the team
     /// is already enrolled.
     /// </returns>
     [HttpPost("{tournamentId:guid}/enroll-team")]
@@ -312,15 +291,13 @@ public class TournamentController(
     }
 
     /// <summary>
-    /// HU-109: reports whether the tournament can be completed once started, and
-    /// the blocking issues when it cannot. The frontend localizes each issue
-    /// from its <c>Code</c> — the backend text stays English/neutral.
+    /// Reports whether the tournament can be completed once started and the blocking issues when it cannot.
     /// </summary>
-    /// <param name="tournamentId">Tournament identifier (GUID).</param>
+    /// <param name="tournamentId">Tournament's GUID identifier.</param>
     /// <returns>
-    /// Returns 200 (OK) with the completability report (CanStart + Issues).
-    /// Returns 404 (Not Found) when the tournament does not exist.
-    /// Returns 403 (Forbidden) if unauthorized.
+    /// Returns 200 OK with the completability report, CanStart plus Issues.
+    /// Returns 404 Not Found when the tournament does not exist.
+    /// Returns 403 Forbidden if unauthorized.
     /// </returns>
     [HttpGet("{tournamentId:guid}/completability")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TournamentCompletabilityResponse))]
@@ -333,19 +310,15 @@ public class TournamentController(
     }
 
     /// <summary>
-    /// HU-107 (gap): removes a team from the tournament during its
-    /// registration/pre-start window. Allowed only while the tournament is
-    /// OpenForRegistration or RegistrationClosed. Removes only this tournament's
-    /// footprint for the team (season registration, this season's roster
-    /// registrations, and stage assignments); other seasons are untouched.
+    /// Removes a team from the tournament during its registration or pre-start window, clearing only this tournament's footprint for the team.
     /// </summary>
-    /// <param name="tournamentId">Tournament identifier (GUID).</param>
-    /// <param name="teamId">Team identifier (GUID).</param>
+    /// <param name="tournamentId">Tournament's GUID identifier.</param>
+    /// <param name="teamId">Team's GUID identifier.</param>
     /// <returns>
-    /// Returns 204 (No Content) when the team is removed.
-    /// Returns 404 (Not Found) when the tournament does not exist or the team is not enrolled.
-    /// Returns 409 (Conflict) when the tournament has already started (not in a removable phase).
-    /// Returns 403 (Forbidden) if unauthorized.
+    /// Returns 204 No Content when the team is removed.
+    /// Returns 404 Not Found when the tournament does not exist or the team is not enrolled.
+    /// Returns 409 Conflict when the tournament has already started and is not in a removable phase.
+    /// Returns 403 Forbidden if unauthorized.
     /// </returns>
     [HttpDelete("{tournamentId:guid}/teams/{teamId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

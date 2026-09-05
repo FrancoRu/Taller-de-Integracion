@@ -13,8 +13,6 @@ namespace Infrastructure.Identity;
 
 /// <summary>
 /// Seeds the initial admin user into the Identity database at startup.
-/// Credentials are read from configuration (AdminUser:Email / AdminUser:Password).
-/// Runs only once — skips silently if the user already exists.
 /// </summary>
 public sealed class IdentitySeeder(
     UserManager<ApplicationUser> userManager,

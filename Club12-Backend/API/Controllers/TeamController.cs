@@ -24,8 +24,7 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Controller for managing teams. Reads are public; writes require
-/// Owner or Admin.
+/// Manages teams. Reads are public; writes require Owner or Admin.
 /// </summary>
 /// <param name="teamService">The team service for handling team-related operations.</param>
 /// <param name="supabaseHelper">The Supabase helper for storage operations.</param>
@@ -71,9 +70,9 @@ public class TeamController(
     /// <param name="id">The id of the team to update.</param>
     /// <param name="teamRequest">The team request excluding logo update.</param>
     /// <returns>
-    /// Returns 204 (No Content) if the update was successful.
-    /// Returns 404 (Not Found) if the team with the provided id was not found.
-    /// Returns 403 (Forbidden) if the user is not authorized.
+    /// Returns 204 No Content if the update was successful.
+    /// Returns 404 Not Found if the team with the provided id was not found.
+    /// Returns 403 Forbidden if the user is not authorized.
     /// </returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -107,7 +106,7 @@ public class TeamController(
     /// </summary>
     /// <param name="id">The id of the team to update the logo.</param>
     /// <param name="logoRequest">The update team logo request.</param>
-    /// <returns>Returns 200 (OK) if the logo was successfully updated.</returns>
+    /// <returns>Returns 200 OK if the logo was successfully updated.</returns>
     [HttpPut("{id:guid}/logo")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -133,18 +132,17 @@ public class TeamController(
     }
 
     /// <summary>
-    /// Retrieves a team by its id or its public slug. The embedded player
-    /// roster is scoped to one season.
+    /// Retrieves a team by its id or slug; the embedded roster is scoped to one season.
     /// </summary>
-    /// <param name="idOrSlug">The id (GUID) or slug of the team to retrieve.</param>
+    /// <param name="idOrSlug">The team's GUID id or slug to retrieve.</param>
     /// <param name="tournamentId">
     /// Optional: the season whose roster to embed. Defaults to the team's
-    /// own current tournament (i.e. today's roster) when omitted — pass this
+    /// own current tournament, meaning today's roster, when omitted — pass this
     /// to look up the roster the team had during a past season instead.
     /// </param>
     /// <returns>The team with the specified id or slug.
-    /// <para>Returns 200 (OK) with the team response if it was found.</para>
-    /// <para>Returns 404 (Not Found) if the team with the provided id or slug was not found.</para>
+    /// <para>Returns 200 OK with the team response if it was found.</para>
+    /// <para>Returns 404 Not Found if the team with the provided id or slug was not found.</para>
     /// </returns>
     [AllowAnonymous]
     [HttpGet("{idOrSlug}")]
@@ -164,20 +162,19 @@ public class TeamController(
     }
 
     /// <summary>
-    /// Retrieves the team's current group-stage standing row for a tournament,
-    /// powering the public team-profile summary card.
+    /// Retrieves the team's current group-stage standing row for a tournament, powering the profile summary card.
     /// </summary>
-    /// <param name="idOrSlug">The id (GUID) or slug of the team.</param>
+    /// <param name="idOrSlug">The team's GUID id or slug.</param>
     /// <param name="tournamentId">
     /// Optional: the tournament to summarize. Defaults to the team's own current
     /// tournament when omitted.
     /// </param>
     /// <returns>
-    /// <para>Returns 200 (OK) with the standing row when the team is in a
+    /// <para>Returns 200 OK with the standing row when the team is in a
     /// group-stage table for the tournament.</para>
-    /// <para>Returns 200 (OK) with a null body when the team is in no group-stage
-    /// standing (e.g. playoff-only, unassigned, or no finished matches yet).</para>
-    /// <para>Returns 404 (Not Found) when the team does not exist.</para>
+    /// <para>Returns 200 OK with a null body when the team is in no group-stage
+    /// standing: playoff-only, unassigned, or with no finished matches yet.</para>
+    /// <para>Returns 404 Not Found when the team does not exist.</para>
     /// </returns>
     [AllowAnonymous]
     [HttpGet("{idOrSlug}/summary")]
@@ -197,17 +194,16 @@ public class TeamController(
     }
 
     /// <summary>
-    /// Retrieves the team's matches in a tournament (home or visitor), oriented
-    /// from the team's perspective and ordered by date ascending.
+    /// Retrieves the team's home or visitor matches in a tournament, oriented from the team's perspective and ordered by date ascending.
     /// </summary>
-    /// <param name="idOrSlug">The id (GUID) or slug of the team.</param>
+    /// <param name="idOrSlug">The team's GUID id or slug.</param>
     /// <param name="tournamentId">
     /// Optional: the tournament to list matches for. Defaults to the team's own
     /// current tournament when omitted.
     /// </param>
     /// <returns>
-    /// <para>Returns 200 (OK) with the team's matches (empty when there are none).</para>
-    /// <para>Returns 404 (Not Found) when the team does not exist.</para>
+    /// <para>Returns 200 OK with the team's matches, empty when there are none.</para>
+    /// <para>Returns 404 Not Found when the team does not exist.</para>
     /// </returns>
     [AllowAnonymous]
     [HttpGet("{idOrSlug}/matches")]
@@ -227,13 +223,12 @@ public class TeamController(
     }
 
     /// <summary>
-    /// Retrieves every tournament the team has participated in, newest first,
-    /// with season info — the public team-profile trajectory list.
+    /// Retrieves every tournament the team has participated in, newest first, with season info.
     /// </summary>
-    /// <param name="idOrSlug">The id (GUID) or slug of the team.</param>
+    /// <param name="idOrSlug">The team's GUID id or slug.</param>
     /// <returns>
-    /// <para>Returns 200 (OK) with the team's participations (empty when none).</para>
-    /// <para>Returns 404 (Not Found) when the team does not exist.</para>
+    /// <para>Returns 200 OK with the team's participations, empty when none.</para>
+    /// <para>Returns 404 Not Found when the team does not exist.</para>
     /// </returns>
     [AllowAnonymous]
     [HttpGet("{idOrSlug}/participations")]
@@ -257,9 +252,9 @@ public class TeamController(
     /// </summary>
     /// <param name="id">The id of the team to delete.</param>
     /// <returns>
-    /// Returns 204 (No Content) if the team was successfully deleted.
-    /// Returns 404 (Not Found) if the team with the provided id was not found.
-    /// Returns 403 (Forbidden) if the user is not authorized.
+    /// Returns 204 No Content if the team was successfully deleted.
+    /// Returns 404 Not Found if the team with the provided id was not found.
+    /// Returns 403 Forbidden if the user is not authorized.
     /// </returns>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

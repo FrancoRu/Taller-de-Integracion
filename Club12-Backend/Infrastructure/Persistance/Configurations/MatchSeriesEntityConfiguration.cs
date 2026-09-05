@@ -6,8 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Infrastructure.Persistance.Configurations;
 
 /// <summary>
-/// MatchSeries has multiple foreign keys to Team (home, visitor, winner),
-/// each configured explicitly below to avoid EF Core relationship ambiguity.
+/// MatchSeries has multiple foreign keys to Team, each configured explicitly to avoid EF Core relationship ambiguity.
 /// </summary>
 public class MatchSeriesEntityConfiguration : BaseEntityConfiguration<MatchSeries>
 {

@@ -6,8 +6,7 @@ using System.Collections.Generic;
 namespace Application.DTOs.MatchSeries.Response;
 
 /// <summary>
-/// Represents a best-of-N playoff series between two teams at one bracket
-/// round, including its individual games.
+/// A best-of-N playoff series between two teams at one bracket round, including its individual games.
 /// </summary>
 public class MatchSeriesResponse : BaseEntityResponse
 {
@@ -22,13 +21,12 @@ public class MatchSeriesResponse : BaseEntityResponse
     public required string VisitorTeamName { get; set; }
 
     /// <summary>
-    /// Number of games in this series (1, 3, 5, or 7).
+    /// Number of games in this series, one of 1, 3, 5, or 7.
     /// </summary>
     public required int BestOf { get; set; }
 
     /// <summary>
-    /// The id of the winning team, set once one team has won the majority
-    /// of the series' games.
+    /// The id of the winning team, set once one team has won the majority of the series' games.
     /// </summary>
     public Guid? WinningTeamId { get; set; }
 

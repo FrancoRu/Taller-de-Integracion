@@ -8,9 +8,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.Tournament.Request;
 
 /// <summary>
-/// HU-38: one stage within a <see cref="CreateFullDivisionRequest"/>. The
-/// DivisionId is implied by nesting. Mirrors the granular CreateStageRequest
-/// minus the DivisionId.
+/// One stage within a CreateFullDivisionRequest, mirroring CreateStageRequest minus the DivisionId.
 /// </summary>
 public class CreateFullStageRequest
 {
@@ -22,10 +20,14 @@ public class CreateFullStageRequest
     [AllowedValues(StageType.Group, StageType.RoundOf16, StageType.QuarterFinal, StageType.SemiFinal, StageType.ThirdPlace, StageType.Final)]
     public required StageType StageType { get; set; } = StageType.Group;
 
-    /// <summary>Defaults to true when null.</summary>
+    /// <summary>
+    /// Defaults to true when null.
+    /// </summary>
     public bool? IsActive { get; set; }
 
-    /// <summary>Defaults to (StageType != Group) when null.</summary>
+    /// <summary>
+    /// Defaults to true for non-Group stage types when null.
+    /// </summary>
     public bool? IsElimination { get; set; }
 
     [Required(ErrorMessage = "Start date field is required.")]
@@ -34,7 +36,9 @@ public class CreateFullStageRequest
     [Required(ErrorMessage = "End date field is required.")]
     public required DateTime EndDate { get; set; }
 
-    /// <summary>Groups parallel elimination brackets under a cup name (e.g. "Copa de Oro").</summary>
+    /// <summary>
+    /// Groups parallel elimination brackets under a cup name.
+    /// </summary>
     public string? BracketName { get; set; }
 
     [AllowedValues(1, 3, 5, 7)]

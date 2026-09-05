@@ -12,11 +12,7 @@ using System.Threading.Tasks;
 namespace Application.Services;
 
 /// <summary>
-/// Manages seasons, the grouping above tournaments. Deleting a season routes
-/// through <see cref="ITournamentService.DeleteTournamentAsync"/> for each
-/// tournament it holds rather than a bare row delete, since the DB-level
-/// Season→Tournament relationship is SetNull and a bulk delete would leave
-/// orphaned tournaments behind (see <see cref="DeleteSeasonAsync"/>).
+/// Manages seasons, the grouping above tournaments, deleting each one through its own tournaments.
 /// </summary>
 public class SeasonService(ISeasonRepository seasonRepository, ITournamentService tournamentService) : ISeasonService
 {
@@ -36,8 +32,7 @@ public class SeasonService(ISeasonRepository seasonRepository, ITournamentServic
     }
 
     /// <summary>
-    /// Retrieves a season by its id or its slug. The value is treated as an id
-    /// when it parses as a GUID, otherwise it is looked up as a slug.
+    /// Retrieves a season by id or slug, auto-detecting which one was passed via GUID parsing.
     /// </summary>
     /// <param name="idOrSlug">The season's GUID id or its slug.</param>
     /// <returns>The matching season, or null if not found.</returns>
@@ -56,18 +51,7 @@ public class SeasonService(ISeasonRepository seasonRepository, ITournamentServic
     }
 
     /// <summary>
-    /// Deletes a Season and every tournament it groups. The DB-level
-    /// Season→Tournament relationship is SetNull, not Cascade (a season is a
-    /// purely additive grouping and must never silently wipe a tournament's
-    /// history), so a bare bulk delete of the Season row would only detach
-    /// its tournaments — leaving them alive but orphaned (no season, yet
-    /// still enrolling teams, still blocking those teams from being
-    /// deleted, and invisible from any season-scoped screen). Routing
-    /// through <see cref="ITournamentService.DeleteTournamentAsync"/> for
-    /// each tournament reuses its own history guard (so a season with a
-    /// started/played tournament fails loudly with the real reason, instead
-    /// of the season vanishing while an orphan tournament lingers) and its
-    /// cascaded cleanup (team-tournament registrations, etc.).
+    /// Deletes a season and every tournament it groups, one by one through the tournament service.
     /// </summary>
     public async Task DeleteSeasonAsync(Guid id)
     {

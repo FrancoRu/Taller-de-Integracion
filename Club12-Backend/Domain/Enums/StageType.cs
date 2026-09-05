@@ -8,7 +8,7 @@ public enum StageType
     Group,
 
     /// <summary>
-    /// Round of 16 stage (also known as "Octavos de final").
+    /// Round of 16 stage.
     /// </summary>
     RoundOf16,
 

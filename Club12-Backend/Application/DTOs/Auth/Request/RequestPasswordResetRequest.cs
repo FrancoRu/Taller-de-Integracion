@@ -3,9 +3,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.Auth.Request;
 
 /// <summary>
-/// HU-10: self-service request to receive a password-reset magic link by
-/// email. Anonymous endpoint — the response never reveals whether the email
-/// belongs to a real account (no user enumeration).
+/// Self-service request to receive a password-reset magic link by email.
 /// </summary>
 public sealed class RequestPasswordResetRequest
 {

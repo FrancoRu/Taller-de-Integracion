@@ -16,16 +16,7 @@ using System.Threading.Tasks;
 namespace Infrastructure.Repositories;
 
 /// <summary>
-/// Historical-statistics aggregations (HU-87 / HU-88). Every read groups a
-/// person's rows across seasons by their stable PlayerId: because
-/// Player.DocumentNumber is uniquely indexed, one real person is exactly one
-/// Player row reused across seasons (season scoping lives in
-/// PlayerTeamRegistration, not in duplicate Player rows), so a PlayerId already
-/// IS the cross-season person. A "season" is the calendar year of the
-/// tournament's StartDate (HU-85). Point aggregates come from PlayerStatistic
-/// rows of Type Points — the same table the match-sheet load path writes
-/// (HU-71) — scoped to a tournament through Match → Stage → Division →
-/// TournamentId, the same chain the goleadores ranking uses.
+/// Historical-statistics aggregations that group each person's rows across seasons by their stable PlayerId, since a person is one Player row reused across seasons rather than duplicated per season.
 /// </summary>
 public class StatisticsRepository(ApplicationDBContext context) : IStatisticsRepository
 {
@@ -166,9 +157,7 @@ public class StatisticsRepository(ApplicationDBContext context) : IStatisticsRep
     }
 
     /// <summary>
-    /// Resolves each tournament id to its season (StartDate year) in one query.
-    /// The year is computed in memory (StartDate is fetched) so the season
-    /// definition is provider-independent.
+    /// Resolves each tournament id to its season, the year of its StartDate, in one query computed in memory so the season definition stays provider-independent.
     /// </summary>
     private async Task<Dictionary<Guid, int>> BuildSeasonByTournamentAsync(IEnumerable<Guid> tournamentIds)
     {

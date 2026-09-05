@@ -7,8 +7,7 @@ using Infrastructure.Persistance;
 namespace Infrastructure.Repositories;
 
 /// <summary>
-/// Repository implementation for <see cref="TeamPointDeduction"/> entities.
-/// Inherits generic CRUD from GenericRepository{TeamPointDeduction}.
+/// Repository implementation for TeamPointDeduction entities, inheriting generic CRUD from GenericRepository.
 /// </summary>
 public class TeamPointDeductionRepository(ApplicationDBContext context)
     : GenericRepository<TeamPointDeduction>(context), ITeamPointDeductionRepository

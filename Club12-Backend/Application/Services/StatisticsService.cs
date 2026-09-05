@@ -8,11 +8,7 @@ using System.Threading.Tasks;
 namespace Application.Services;
 
 /// <summary>
-/// Thin application service over <see cref="IStatisticsRepository"/> for the
-/// historical-statistics reads (HU-87 / HU-88). The aggregation lives in the
-/// repository (an EF query against PlayerStatistic / PlayerTeamRegistration /
-/// PlayerSanction), mirroring how <see cref="ScorerService"/> delegates the
-/// goleadores ranking to <see cref="IScorerRepository"/>.
+/// Thin application service over IStatisticsRepository for the historical-statistics reads.
 /// </summary>
 public class StatisticsService(IStatisticsRepository statisticsRepository) : IStatisticsService
 {

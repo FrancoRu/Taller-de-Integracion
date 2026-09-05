@@ -6,8 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Infrastructure.Persistance.Configurations;
 
 /// <summary>
-/// Scorer is a service-layer read-model with no DataAnnotations, so there is
-/// nothing to migrate beyond the mappings configured here.
+/// Scorer is a service-layer read-model with no DataAnnotations, so there is nothing to migrate beyond the mappings configured here.
 /// </summary>
 public class ScorerEntityConfiguration : BaseEntityConfiguration<Scorer>
 {

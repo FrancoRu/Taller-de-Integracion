@@ -17,23 +17,13 @@ using System.Threading.Tasks;
 namespace Infrastructure.Repositories;
 
 /// <summary>
-/// Repository implementation for the "goleadores" (top scorers) ranking.
-/// Inherits generic CRUD for <see cref="Scorer"/> from GenericRepository{Scorer},
-/// but the ranking itself is built from PlayerStatistic rows, not the Scorer table
-/// (see <see cref="GetPlayerScoresAsync"/>).
+/// Repository implementation for the top-scorers "goleadores" ranking, built from PlayerStatistic rows instead of the Scorer table.
 /// </summary>
 public class ScorerRepository(ApplicationDBContext context)
     : GenericRepository<Scorer>(context), IScorerRepository
 {
     /// <summary>
-    /// Builds the top-scorers ranking by summing each player's Points-type
-    /// <see cref="PlayerStatistic"/> rows (HU-72) rather than reading the Scorer
-    /// table, so it always reflects what the per-match loading path (HU-71)
-    /// actually wrote. When <paramref name="filter"/> narrows to a
-    /// tournament/division/stage/match, both the candidate players and the
-    /// summed points are scoped accordingly; when neither TournamentId nor
-    /// Season is set, points aggregate across every season for that player
-    /// (an all-time ranking) since Player rows are reused across seasons.
+    /// Builds the top-scorers ranking by summing each player's Points-type PlayerStatistic rows instead of reading the Scorer table, keeping it in sync with the per-match loading path.
     /// </summary>
     public async Task<(IEnumerable<ScorerByPlayerResponse> Items, int TotalCount)> GetPlayerScoresAsync(GetScorerFilteredRequest filter)
     {

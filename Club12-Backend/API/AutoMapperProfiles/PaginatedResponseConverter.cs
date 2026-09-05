@@ -7,8 +7,7 @@ using System.Collections.Generic;
 namespace API.AutoMapperProfiles;
 
 /// <summary>
-/// Converts a paginated response's items from the source entity type to
-/// the destination DTO type while preserving its paging metadata.
+/// Converts a paginated response's items from the source entity type to the destination DTO type while preserving its paging metadata.
 /// </summary>
 /// <typeparam name="TSource">The source item type.</typeparam>
 /// <typeparam name="TDestination">The destination item type.</typeparam>

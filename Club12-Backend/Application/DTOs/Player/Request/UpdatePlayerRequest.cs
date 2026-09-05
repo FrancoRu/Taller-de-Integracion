@@ -33,7 +33,9 @@ public class UpdatePlayerRequest
     [ArgentinePhoneNumber]
     public string? PhoneNumber { get; set; }
 
-    /// <summary>The player's health insurance provider or social work plan.</summary>
+    /// <summary>
+    /// The player's health insurance provider or social work plan.
+    /// </summary>
     [MaxLength(PlayerFieldLengths.SocialSecurityMaxLength, ErrorMessage = "The SocialSecurity field must not exceed 100 characters.")]
     public string? SocialSecurity { get; set; }
 

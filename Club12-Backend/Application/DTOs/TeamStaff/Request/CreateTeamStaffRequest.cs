@@ -6,10 +6,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.TeamStaff.Request;
 
 /// <summary>
-/// Request to add a member to a team's technical staff (cuerpo técnico). The
-/// team is taken from the route; the tournament (season) scopes the
-/// membership, mirroring the Team+Tournament scoping used by
-/// PlayerTeamRegistration.
+/// Request to add a member to a team's technical staff; the team is taken from the route.
 /// </summary>
 public class CreateTeamStaffRequest
 {
@@ -20,7 +17,7 @@ public class CreateTeamStaffRequest
     public required TeamStaffRole Role { get; set; }
 
     /// <summary>
-    /// The tournament (season) this staff membership belongs to.
+    /// The tournament this staff membership belongs to.
     /// </summary>
     [Required(ErrorMessage = "The TournamentId field is required.")]
     public required Guid TournamentId { get; set; }

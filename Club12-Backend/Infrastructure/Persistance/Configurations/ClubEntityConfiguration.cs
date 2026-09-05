@@ -6,12 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Infrastructure.Persistance.Configurations;
 
 /// <summary>
-/// Maps the stable cross-season <see cref="Club"/> identity (HU-99). The
-/// Club→Team relationship is deliberately optional and non-cascading: a Team's
-/// <see cref="Team.ClubId"/> may be null (unlinked teams keep working), and
-/// deleting a Club only nulls its teams' ClubId (SetNull) rather than deleting
-/// the season Team rows — so the club layer is purely additive and can never
-/// destroy per-season history.
+/// Maps the Club to Team relationship as optional and non-cascading, so deleting a Club only nulls its teams' ClubId instead of removing them.
 /// </summary>
 public class ClubEntityConfiguration : BaseEntityConfiguration<Club>
 {

@@ -8,11 +8,8 @@ using System.Threading.Tasks;
 namespace Application.Interfaces.Services;
 
 /// <summary>
-/// Token generator service (JWT + refresh token).
+/// Token generator service for JWT and refresh tokens.
 /// </summary>
-/// <remarks>
-/// This service is framework-agnostic (no Identity types). It only needs a set of claims.
-/// </remarks>
 public interface IAuthService
 {
     Task<TokenResponse> GenerateJwtTokenAsync(IEnumerable<Claim> claims, CancellationToken ct = default);

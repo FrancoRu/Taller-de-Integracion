@@ -13,8 +13,6 @@ namespace Application.Interfaces.Repositories;
 
 /// <summary>
 /// Generic repository interface for common CRUD operations on entities.
-/// Provides methods for retrieving, adding, updating, and removing entities,
-/// as well as querying and checking existence or count of entities.
 /// </summary>
 /// <typeparam name="TEntity">The entity type, which must inherit from EntityBase.</typeparam>
 public interface IGenericRepository<TEntity> where TEntity : EntityBase
@@ -32,13 +30,10 @@ public interface IGenericRepository<TEntity> where TEntity : EntityBase
     /// <summary>
     /// Returns a queryable collection of entities for advanced querying scenarios.
     /// </summary>
-    /// <remarks>
-    /// This method exposes the underlying IQueryable{TEntity} for LINQ operations.
-    /// </remarks>
     IQueryable<TEntity> GetQueryable();
 
     /// <summary>
-    /// Gets all entities of type <typeparamref name="TEntity"/>.
+    /// Gets all entities of type TEntity.
     /// </summary>
     /// <returns>
     /// A task representing the asynchronous operation. The task result contains a collection of all entities.
@@ -85,20 +80,13 @@ public interface IGenericRepository<TEntity> where TEntity : EntityBase
     Task<IEnumerable<TEntity>> AddRangeAsync(IEnumerable<TEntity> entities);
 
     /// <summary>
-    /// Marks a single entity for deletion. Unlike the other write methods on this
-    /// interface, this does not call SaveChanges — the removal only persists once
-    /// something else (e.g. <see cref="IUnitOfWork.SaveChangesAsync"/>) saves the
-    /// context.
+    /// Marks a single entity for deletion without calling SaveChanges.
     /// </summary>
     /// <param name="entity">The entity to remove.</param>
     void Remove(TEntity entity);
 
     /// <summary>
-    /// Deletes all entities matching <paramref name="expression"/> directly via
-    /// EF Core's <c>ExecuteDeleteAsync</c> — a single DB-side statement that bypasses
-    /// the change tracker entirely. Any already-tracked instances of the deleted rows
-    /// are not marked as deleted or detached, so re-reading them from the context can
-    /// return stale data.
+    /// Deletes all entities matching expression directly via EF Core's ExecuteDeleteAsync, a single DB-side statement that bypasses the change tracker entirely.
     /// </summary>
     /// <param name="expression">The filter expression to match entities for removal.</param>
     /// <returns>
@@ -109,7 +97,7 @@ public interface IGenericRepository<TEntity> where TEntity : EntityBase
     /// <summary>
     /// Counts the number of entities matching the given predicate, or all if predicate is null.
     /// </summary>
-    /// <param name="predicate">The filter expression (optional).</param>
+    /// <param name="predicate">The filter expression, optional.</param>
     /// <returns>
     /// A task representing the asynchronous operation. The task result contains the count of matching entities.
     /// </returns>

@@ -1,9 +1,7 @@
 namespace Application.Interfaces.Backup;
 
 /// <summary>
-/// Non-secret backup configuration bound from the Backup configuration
-/// section. Secrets (DB connection, storage credentials) are read separately
-/// from ConnectionStrings/SupaBase, never stored here.
+/// Non-secret backup configuration bound from the Backup configuration section.
 /// </summary>
 public sealed class BackupOptions
 {

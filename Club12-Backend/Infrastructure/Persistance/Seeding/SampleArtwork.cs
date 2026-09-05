@@ -4,22 +4,12 @@ using System.Text;
 namespace Infrastructure.Persistance;
 
 /// <summary>
-/// Generates the sample dataset's artwork as self-contained <c>data:</c> SVG
-/// URIs — a venue's court plan and a blog post's cover banner — so a seeded
-/// database has real images without a media folder, an upload, or a call to an
-/// external placeholder service, and looks the same on every machine. Shared by
-/// <see cref="DataSeeder"/> and <see cref="DataMaintenanceService"/>, which both
-/// build their own venues and posts.
-///
-/// Every picture is a pure function of the row's own name, so a reseed produces
-/// the exact same bytes and two different venues never get the same court.
+/// Generates the sample dataset's artwork as self-contained SVG data URIs.
 /// </summary>
 internal static class SampleArtwork
 {
     /// <summary>
-    /// Widest a generated data URI may get: <c>BlogPost.PhotoUrl</c> is capped
-    /// at 2048 characters by its EF configuration, so a cover that does not fit
-    /// would be truncated by the database rather than rejected loudly.
+    /// Widest a generated data URI may get, matching the 2048 character cap on BlogPost.PhotoUrl in its EF configuration.
     /// </summary>
     public const int MaxDataUriLength = 2048;
 
@@ -37,9 +27,7 @@ internal static class SampleArtwork
     ];
 
     /// <summary>
-    /// A stylised plan of the venue's court: hardwood floor, sidelines, centre
-    /// circle, both painted keys and their arcs. Deterministic per
-    /// <paramref name="venueName"/>.
+    /// A stylised plan of the venue's court, with hardwood floor, sidelines, centre circle, and both painted keys.
     /// </summary>
     public static string VenuePhotoDataUri(string venueName)
     {
@@ -70,11 +58,7 @@ internal static class SampleArtwork
     }
 
     /// <summary>
-    /// A cover banner (1200x630, the usual social-card ratio) for a post: a
-    /// gradient chosen from <paramref name="postSlug"/> with a ball outline and
-    /// the league's name. Carries no title text — the headline is rendered by
-    /// the page, and baking it in would push the data URI past
-    /// <see cref="MaxDataUriLength"/> for the longer ones.
+    /// A 1200 by 630 social-card cover banner for a post, with a gradient chosen from postSlug, a ball outline, and the league's name.
     /// </summary>
     public static string BlogCoverDataUri(string postSlug)
     {
@@ -98,18 +82,13 @@ internal static class SampleArtwork
     }
 
     /// <summary>
-    /// Base64 <c>data:</c> URI for an SVG document. Base64 (rather than a
-    /// percent-encoded body) keeps the result free of quotes, parentheses and
-    /// whitespace, so it is safe both in an <c>&lt;img src&gt;</c> and inside an
-    /// unquoted CSS <c>url(...)</c>.
+    /// Base64 data URI for an SVG document.
     /// </summary>
     private static string ToDataUri(string svg) =>
         "data:image/svg+xml;base64," + Convert.ToBase64String(Encoding.UTF8.GetBytes(svg));
 
     /// <summary>
-    /// Small, stable, non-negative string hash. Deliberately hand-rolled:
-    /// <see cref="string.GetHashCode()"/> is randomised per process, which would
-    /// hand the same venue a different court on every run.
+    /// Small, stable, non-negative hash of a string.
     /// </summary>
     private static int StableHash(string value)
     {

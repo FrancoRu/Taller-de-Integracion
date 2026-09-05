@@ -1,29 +1,32 @@
 namespace Domain.Enums;
 
 /// <summary>
-/// The group-stage tiebreaker criteria (HU-80), in the exact priority order
-/// the club's rulebook applies them. A team's placement is resolved by the
-/// first criterion at which it separates from the team ranked immediately
-/// above it, and that criterion can be surfaced in the standings UI.
+/// The group-stage tiebreaker criteria, in the exact priority order the club's rulebook applies them.
 /// </summary>
 public enum TiebreakerCriterion
 {
-    /// <summary>Table points (PTS): points awarded for wins/losses.</summary>
+    /// <summary>
+    /// Table points awarded for wins and losses.
+    /// </summary>
     Points,
 
-    /// <summary>Games won (PG) across the whole zone.</summary>
+    /// <summary>
+    /// Games won across the whole zone.
+    /// </summary>
     GamesWon,
 
-    /// <summary>Points difference (DG): points for minus against, whole zone.</summary>
+    /// <summary>
+    /// Points for minus points against, across the whole zone.
+    /// </summary>
     PointsDifference,
 
-    /// <summary>Head-to-head result among the tied teams (mini-table).</summary>
+    /// <summary>
+    /// Head-to-head result among the tied teams.
+    /// </summary>
     HeadToHead,
 
     /// <summary>
-    /// Points difference considering only the games played among the tied
-    /// teams. Only meaningful when the tied teams played each other more
-    /// than once.
+    /// Points difference considering only the games played among the tied teams.
     /// </summary>
     HeadToHeadPointsDifference,
 }

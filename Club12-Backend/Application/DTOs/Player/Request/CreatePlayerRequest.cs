@@ -37,7 +37,9 @@ public class CreatePlayerRequest
     [ArgentinePhoneNumber]
     public required string PhoneNumber { get; set; }
 
-    /// <summary>The player's health insurance provider or social work plan.</summary>
+    /// <summary>
+    /// The player's health insurance provider or social work plan.
+    /// </summary>
     [Required(ErrorMessage = "The SocialSecurity field is required.")]
     [MaxLength(PlayerFieldLengths.SocialSecurityMaxLength, ErrorMessage = "The SocialSecurity field must not exceed 100 characters.")]
     public required string SocialSecurity { get; set; }

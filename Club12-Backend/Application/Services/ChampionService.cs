@@ -14,13 +14,7 @@ using System.Threading.Tasks;
 namespace Application.Services;
 
 /// <summary>
-/// Computes the champion and podium of each competition (a zone division or the
-/// cross-division cup) and the champions history over finished tournaments.
-/// A division with an elimination bracket is crowned by its top cup's Final;
-/// a group-only division is crowned by its standings leader. Standings reuse
-/// <see cref="IDivisionService.GetPositionsByDivisionIdAsync"/> and bracket
-/// resolution reuses <see cref="ChampionResolver"/>, so no ranking or bracket
-/// logic is reinvented here.
+/// Computes the champion and podium of each competition and the champions history over finished tournaments.
 /// </summary>
 public class ChampionService(
     IDivisionRepository divisionRepository,
@@ -30,7 +24,7 @@ public class ChampionService(
     IDivisionService divisionService) : IChampionService
 {
     /// <summary>
-    /// Computes a division's podium (see <see cref="IChampionService.GetDivisionPodiumAsync"/>).
+    /// Computes a division's podium; see IChampionService.GetDivisionPodiumAsync.
     /// </summary>
     public async Task<PodiumResponse?> GetDivisionPodiumAsync(Guid divisionId)
     {
@@ -47,8 +41,7 @@ public class ChampionService(
     }
 
     /// <summary>
-    /// Computes the podium of every division of a tournament
-    /// (see <see cref="IChampionService.GetTournamentChampionsAsync"/>).
+    /// Computes the podium of every division of a tournament; see IChampionService.GetTournamentChampionsAsync.
     /// </summary>
     public async Task<List<PodiumResponse>> GetTournamentChampionsAsync(Guid tournamentId)
     {
@@ -67,8 +60,7 @@ public class ChampionService(
     }
 
     /// <summary>
-    /// Returns the champion of every division of every finished tournament
-    /// (see <see cref="IChampionService.GetChampionsHistoryAsync"/>).
+    /// Returns the champion of every division of every finished tournament; see IChampionService.GetChampionsHistoryAsync.
     /// </summary>
     public async Task<List<ChampionHistoryResponse>> GetChampionsHistoryAsync(Guid? seasonId)
     {
@@ -112,10 +104,7 @@ public class ChampionService(
     }
 
     /// <summary>
-    /// Resolves the champion of every sub-cup of a division (Copa Oro, Copa
-    /// Plata, …), or the standings leader for a group-only division. Each entry's
-    /// CupName is null when the division crowns a single champion. Undecided cups
-    /// are omitted.
+    /// Resolves the champion of every sub-cup of a division, or the standings leader for a group-only division.
     /// </summary>
     private async Task<List<(string? CupName, PodiumTeamResponse Champion)>> GetDivisionChampionsAsync(Guid divisionId)
     {
@@ -150,9 +139,7 @@ public class ChampionService(
     }
 
     /// <summary>
-    /// Builds one division's podium from an already-loaded division (with its
-    /// stages and playoff mappings). Divisions with any elimination stage are
-    /// resolved through the bracket; the rest through the standings.
+    /// Builds one division's podium, routing to the bracket resolver or the standings resolver.
     /// </summary>
     private async Task<PodiumResponse> BuildDivisionPodiumAsync(Division division)
     {
@@ -167,9 +154,7 @@ public class ChampionService(
     }
 
     /// <summary>
-    /// Resolves a playoff division's podium from its top cup's Final and
-    /// third-place match, loading only the elimination stages' matches and
-    /// series.
+    /// Resolves a playoff division's podium from its top cup's Final and third-place match.
     /// </summary>
     private async Task<PodiumResponse> BuildPlayoffPodiumAsync(Division division, List<Stage> eliminationStages)
     {
@@ -205,8 +190,7 @@ public class ChampionService(
     }
 
     /// <summary>
-    /// Resolves a group-only division's podium from the top three of its group
-    /// standings, reusing the shared position calculator.
+    /// Resolves a group-only division's podium from the top three of its group standings.
     /// </summary>
     private async Task<PodiumResponse> BuildStandingsPodiumAsync(Division division)
     {
@@ -224,8 +208,7 @@ public class ChampionService(
     }
 
     /// <summary>
-    /// Loads the matches and best-of-N series of a set of elimination stages,
-    /// with their team navigations, so the bracket resolver can read outcomes.
+    /// Loads the matches and best-of-N series of a set of elimination stages with their team navigations.
     /// </summary>
     private async Task<(List<Match> Matches, List<MatchSeries> Series)> LoadEliminationDataAsync(
         List<Stage> eliminationStages)

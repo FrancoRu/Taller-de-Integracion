@@ -23,8 +23,7 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Controller for managing divisions. Reads are public; writes require
-/// Owner or Admin.
+/// Manages divisions; reads are public while writes require Owner or Admin.
 /// </summary>
 /// <param name="divisionService">The division service.</param>
 /// <param name="mapper">The AutoMapper instance.</param>
@@ -42,8 +41,8 @@ public class DivisionController(
     /// </summary>
     /// <param name="divisionRequest">The division request.</param>
     /// <returns>The created division response.
-    /// <para>Returns 201 (Created) with the division response if the creation was successful.</para>
-    /// <para>Returns 403 (Forbidden) if the user is not authenticated.</para>
+    /// <para>Returns 201 Created with the division response if the creation was successful.</para>
+    /// <para>Returns 403 Forbidden if the user is not authenticated.</para>
     /// </returns>
     [HttpPost()]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(DetailedDivisionResponse))]
@@ -60,10 +59,10 @@ public class DivisionController(
     /// <summary>
     /// Retrieves a division by its id or its public slug.
     /// </summary>
-    /// <param name="idOrSlug">The id (GUID) or slug of the division to retrieve.</param>
+    /// <param name="idOrSlug">The GUID id or slug of the division to retrieve.</param>
     /// <returns>The division with the specified id or slug.
-    /// <para>Returns 200 (Ok) with the division response if it was found.</para>
-    /// <para>Returns 404 (Not Found) if the division with the provided id or slug was not found.</para>
+    /// <para>Returns 200 Ok with the division response if it was found.</para>
+    /// <para>Returns 404 Not Found if the division with the provided id or slug was not found.</para>
     /// </returns>
     [AllowAnonymous]
     [HttpGet("{idOrSlug}/detail")]
@@ -89,9 +88,9 @@ public class DivisionController(
     /// </summary>
     /// <param name="id">The id of the division to delete.</param>
     /// <returns>
-    /// Returns 200 (Ok) if the division was successfully deleted.
-    /// Returns 400 (Bad Request) if the division with the provided id was not found.
-    /// Returns 403 (Forbidden) if the user is not authenticated.
+    /// Returns 200 Ok if the division was successfully deleted.
+    /// Returns 400 Bad Request if the division with the provided id was not found.
+    /// Returns 403 Forbidden if the user is not authenticated.
     /// </returns>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -110,13 +109,13 @@ public class DivisionController(
     /// </summary>
     /// <param name="id">The id of the division to update.</param>
     /// <param name="divisionRequest">
-    /// The updated division information. If <see cref="UpdateDivisionRequest.TournamentId"/>
-    /// is set, the division (and everything under it) is moved to that tournament.
+    /// The updated division information. If TournamentId is set, the
+    /// division, and everything under it, is moved to that tournament.
     /// </param>
     /// <returns>
-    /// Returns 200 (Ok) with the updated division response if the update was successful.
-    /// Returns 404 (Not Found) if the division, or the target tournament when reassigning, was not found.
-    /// Returns 403 (Forbidden) if the user is not authenticated.
+    /// Returns 200 Ok with the updated division response if the update was successful.
+    /// Returns 404 Not Found if the division, or the target tournament when reassigning, was not found.
+    /// Returns 403 Forbidden if the user is not authenticated.
     /// </returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DivisionResponse))]
@@ -177,12 +176,7 @@ public class DivisionController(
     }
 
     /// <summary>
-    /// Fills a division response's standings from its Group stages. Sets
-    /// <see cref="DivisionResponse.GroupStandings"/> to one table per Group
-    /// stage (a multi-group cross-division cup has several, HU-110) and
-    /// <see cref="DivisionResponse.Positions"/> to the pooled union across all
-    /// groups, so the team counter reflects every group's teams. A regular
-    /// zone yields a single group whose table equals Positions — unchanged.
+    /// Fills a division response's standings from its Group stages, setting GroupStandings to one table per group and Positions to the pooled union across all groups so the team counter reflects every group's teams.
     /// </summary>
     private async Task PopulateStandingsAsync(DivisionResponse divisionResponse)
     {

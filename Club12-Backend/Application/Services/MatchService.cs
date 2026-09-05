@@ -27,12 +27,7 @@ using MatchType = Domain.Enums.MatchType;
 namespace Application.Services;
 
 /// <summary>
-/// Manages individual matches: CRUD, result/walkover/suspension transitions,
-/// and automated fixture generation per stage type. A stage's automated
-/// fixture can only be built once (<see cref="CreateAutomatedMatchesAsync"/>
-/// throws if it already has matches); loading a result or walkover always
-/// re-triggers <see cref="IStageService.TryAutoSeedPlayoffPhaseAsync"/> so a
-/// bracket's next round seeds itself the moment its inputs are decided.
+/// Manages individual matches: CRUD, result and walkover and suspension transitions, and automated fixture generation.
 /// </summary>
 public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : IMatchService
 {
@@ -60,9 +55,7 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
     }
 
     /// <summary>
-    /// Retrieves a match by its id or its slug, including its home/visitor
-    /// teams. The value is treated as an id when it parses as a GUID,
-    /// otherwise it is looked up as a slug.
+    /// Retrieves a match by id or slug with its home and visitor teams, auto-detecting which one was passed.
     /// </summary>
     /// <param name="idOrSlug">The match's GUID id or its slug.</param>
     /// <returns>The match entity if found; otherwise, null.</returns>
@@ -93,9 +86,7 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
     }
 
     /// <summary>
-    /// Two matches at the same venue must be at least 2 hours apart. Returns
-    /// true if any OTHER match is scheduled strictly within that ±2h window
-    /// of <paramref name="matchDate"/>; exactly 2 hours apart is allowed.
+    /// True if another match is scheduled strictly within a 2-hour window of matchDate at the same venue.
     /// </summary>
     public async Task<bool> HasVenueScheduleConflictAsync(Guid venueId, DateTime matchDate, Guid excludeMatchId)
     {
@@ -115,11 +106,7 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
     }
 
     /// <summary>
-    /// Loads a decisive final result for a match (HU-69/HU-70). Basketball has
-    /// no draws, so an equal score is rejected with a stage-appropriate message
-    /// (group stage vs. playoff overtime) instead of silently picking a winner.
-    /// On success the match becomes <see cref="MatchStatus.Played"/>, IsFinished
-    /// is set, and the winning team is derived from the higher score.
+    /// Loads a decisive final result for a match, rejecting a tied score.
     /// </summary>
     /// <param name="matchId">The id of the match to load.</param>
     /// <param name="homeScore">The home team's final score.</param>
@@ -144,15 +131,10 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
     }
 
     /// <summary>
-    /// Marks a match as a walkover (HU-73): the present team is awarded the
-    /// regulation default result (<see cref="MatchDefaults.WalkOverWinnerScore"/>-0,
-    /// or a caller-provided winner score) and the absent team gets zero. The
-    /// match becomes <see cref="MatchStatus.WalkOver"/> so it stays
-    /// distinguishable from a normally played result while still counting in
-    /// standings and statistics like any finished, decisive match.
+    /// Marks a match as a walkover, awarding the present team the win and the absent team zero.
     /// </summary>
     /// <param name="matchId">The id of the match.</param>
-    /// <param name="presentTeamId">The team that showed up (the winner by walkover).</param>
+    /// <param name="presentTeamId">The team that showed up, the winner by walkover.</param>
     /// <param name="presentTeamScore">Optional override for the present team's awarded score; defaults to the regulation value.</param>
     /// <returns>The updated match, or null if no match with that id exists.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the present team is not part of the match.</exception>
@@ -191,11 +173,7 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
     }
 
     /// <summary>
-    /// Reprograms/suspends a match (HU-68). The match becomes
-    /// <see cref="MatchStatus.Suspended"/> and, when a new date is supplied,
-    /// moves to it. Its <see cref="Match.Round"/> is deliberately left
-    /// untouched (HU-67): suspending or rescheduling never changes the matchday
-    /// a game belongs to, nor does it affect any other match in the fixture.
+    /// Reprograms or suspends a match, moving it to a new date without touching its Round.
     /// </summary>
     /// <param name="matchId">The id of the match to suspend/reprogram.</param>
     /// <param name="newMatchDate">Optional new calendar date; when null the existing date is kept.</param>
@@ -227,9 +205,9 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
             match => match.StageId == stageId,
             includes: [match => match.HomeTeam!, match => match.VisitorTeam!, match => match.Venue!]);
 
-        // Round is the canonical grouping (HU-63): order by matchday, then by
+        // Round is the canonical grouping: order by matchday, then by
         // date within the round for a stable "Partido 1, Partido 2, …" order.
-        // Matches without a round (e.g. knockout) sort after the numbered ones.
+        // Matches without a round sort after the numbered ones.
         return [.. matches
             .OrderBy(match => match.Round ?? int.MaxValue)
             .ThenBy(match => match.MatchDate)];
@@ -277,10 +255,7 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
     }
 
     /// <summary>
-    /// Builds a stage's fixture from its type (group round-robin, or empty
-    /// bracket slots for a knockout/final stage). Blocked once the stage
-    /// already has matches — a fixture is generated exactly once per stage,
-    /// never regenerated on top of an existing one.
+    /// Builds a stage's fixture from its type, blocked once the stage already has matches.
     /// </summary>
     public async Task<List<Match>> CreateAutomatedMatchesAsync(Guid stageId)
     {
@@ -309,12 +284,11 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
     }
 
     /// <summary>
-    /// Resolves a team's name for slug composition, without requiring the
-    /// caller to have loaded the Team navigation property.
+    /// Resolves a team's name for slug composition without requiring the caller to have loaded Team.
     /// </summary>
     /// <param name="teamId">The team's id, or null when no team is assigned.</param>
-    /// <returns>The team's name, or <see cref="MatchSlugSourceBuilder.UnassignedTeamPlaceholder"/>
-    /// when <paramref name="teamId"/> is null or does not resolve to a team.</returns>
+    /// <returns>The team's name, or MatchSlugSourceBuilder.UnassignedTeamPlaceholder
+    /// when teamId is null or does not resolve to a team.</returns>
     private async Task<string> ResolveTeamNameAsync(Guid? teamId)
     {
         if (!teamId.HasValue)
@@ -327,16 +301,7 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
     }
 
     /// <summary>
-    /// Assigns a unique slug to every match in a freshly built batch (e.g. a
-    /// stage's full fixture) before it is persisted. Team names are
-    /// prefetched once for the whole batch to avoid N+1 queries, and so is
-    /// slug uniqueness: every match's base slug is pure/synchronous, so the
-    /// whole batch's candidates are checked against already-persisted
-    /// matches in ONE query up front, instead of one EXISTS round trip per
-    /// match. A real collision (rare — slugs are team names plus a
-    /// timestamp) still falls back to a live per-candidate check via
-    /// GenerateUniqueSlugAsync's normal -2/-3 retry loop, since the
-    /// suffixed candidates aren't covered by the prefetch.
+    /// Assigns a unique slug to every match in a freshly built batch before it is persisted.
     /// </summary>
     private async Task AssignMatchSlugsAsync(List<Match> matches)
     {
@@ -400,10 +365,7 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
     }
 
     /// <summary>
-    /// Builds an unpersisted match for a stage's automated fixture. Slug is
-    /// a placeholder here — every match built this way is later persisted
-    /// only via CreateAutomatedMatchesAsync, which overwrites it with a real
-    /// one in AssignMatchSlugsAsync before the batch is saved.
+    /// Builds an unpersisted match for a stage's automated fixture with a placeholder slug.
     /// </summary>
     private static Match BuildMatch(Stage stage, DateTime matchDate, MatchType matchType = MatchType.Playoff)
     {
@@ -449,16 +411,7 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
     }
 
     /// <summary>
-    /// Resolves the concrete team identities to pair for a group stage that
-    /// has NOT had teams explicitly assigned via StageTeamMatch yet (see
-    /// <see cref="BuildGroupStageMatchesAsync"/>, which only calls this as a
-    /// fallback). Guesses the roster from the tournament's full team list,
-    /// but only when the division has a single group stage — otherwise
-    /// there is no way to know which specific teams belong to this one.
-    /// Returns an empty list when that guess doesn't unambiguously yield
-    /// exactly <paramref name="expectedTeamCount"/> teams — the matches are
-    /// still created, just left unseeded, exactly like before this pairing
-    /// logic existed.
+    /// Resolves team identities to pair for a group stage with no explicit StageTeamMatch assignments yet.
     /// </summary>
     private async Task<List<Guid>> ResolveGroupTeamIdsAsync(Stage stage, int expectedTeamCount)
     {
@@ -478,19 +431,7 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
     }
 
     /// <summary>
-    /// A stage that already has teams explicitly assigned via StageTeamMatch
-    /// (the tournament wizard's flow: register every team to the tournament,
-    /// then assign each zone's own subset to its own group stage) always
-    /// uses exactly those teams — never the tournament-wide/single-group
-    /// guess in <see cref="ResolveGroupTeamCountAsync"/>/<see
-    /// cref="ResolveGroupTeamIdsAsync"/>, which assumes the whole
-    /// tournament is one division. Without this short-circuit, a
-    /// multi-division tournament (any real one with more than one
-    /// zone/group) would silently pair every zone's matches from the
-    /// tournament's ENTIRE team list instead of that zone's own assigned
-    /// teams, because "registered teams ÷ groups in this division" (=
-    /// "registered teams ÷ 1") always equals the tournament-wide total, not
-    /// this stage's actual roster.
+    /// A stage with explicit StageTeamMatch assignments always uses exactly those teams for pairing.
     /// </summary>
     private async Task<List<Match>> BuildGroupStageMatchesAsync(Stage stage)
     {
@@ -508,21 +449,7 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
     }
 
     /// <summary>
-    /// Creates the group stage's matches from a round-robin fixture organised
-    /// by matchday (jornada, HU-63/HU-65). The number of rounds is derived from
-    /// the team count and <see cref="Stage.RoundRobinLegs"/>; every match is
-    /// tagged with its 1-based <see cref="Match.Round"/> and given a default,
-    /// division-aware weekly date for that round (HU-65/HU-111): regular zones
-    /// on Sundays, a cross-division cup shifted to a different weekday so its
-    /// jornadas never collide with the zones a shared team also plays in. Round
-    /// numbers — not the calendar date — are the canonical fixture grouping.
-    /// <para>
-    /// When <paramref name="teamIds"/> unambiguously matches
-    /// <paramref name="totalTeams"/>, each match is seeded with a home/visitor
-    /// pair; otherwise the matches are created unseeded (teams left null) for
-    /// the admin to assign manually, but still keep their round structure so a
-    /// later assignment slots them into the right matchday.
-    /// </para>
+    /// Creates the group stage's matches from a round-robin fixture organised by matchday.
     /// </summary>
     private static Task<List<Match>> CreateGroupStageMatchesAsync(Stage stage, int totalTeams, List<Guid> teamIds)
     {
@@ -541,7 +468,7 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
         List<(Guid HomeTeamId, Guid VisitorTeamId, int Round)> fixture =
             RoundRobinScheduler.GenerateRounds(rosterForSchedule, stage.RoundRobinLegs);
 
-        // HU-111: lay the jornadas out weekly, division-aware. Regular zones
+        // Lay the jornadas out weekly, division-aware. Regular zones
         // keep the Sunday baseline; a cross-division-cup stage is shifted to a
         // different weekday so a team playing both its zone and the cup never
         // has two jornadas on the same day. Coordinated here (not at the
@@ -584,17 +511,6 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
 
     /// <summary>
     /// Number of empty first-round matches to create for a bracket stage.
-    /// <para>
-    /// A multi-group cross-division cup (HU-110) is sized from its pooled
-    /// qualifiers instead of the fixed per-stage-type count: with
-    /// <c>totalQualifiers = Σ min(QualifiersPerGroup, groupSize)</c> across
-    /// every internal group, the first round needs
-    /// <c>NextPowerOfTwo(totalQualifiers) / 2</c> matches so
-    /// <see cref="Application.Utils.Helper.Playoff.PlayoffSeeder.SeedPairs"/>
-    /// (which pads the seed pool up to the next power of two with byes) has an
-    /// empty match for every pair. A cross cup with a single group, and every
-    /// regular division, keeps the original fixed count for its stage type.
-    /// </para>
     /// </summary>
     private async Task<int> ResolveKnockoutFirstRoundMatchCountAsync(Stage stage)
     {

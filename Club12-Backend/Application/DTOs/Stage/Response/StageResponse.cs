@@ -41,21 +41,17 @@ public class StageResponse : BaseEntityResponse
     public int Order { get; set; }
 
     /// <summary>
-    /// Optional label grouping this stage with other parallel elimination
-    /// brackets in the same division (e.g. "Copa de Oro", "Copa de Plata").
-    /// Null means the stage belongs to the division's single/default bracket.
+    /// Optional label grouping this stage with parallel elimination brackets; null uses the default bracket.
     /// </summary>
     public string? BracketName { get; set; }
 
     /// <summary>
-    /// Number of games in a series between two teams at this round: 1, 3,
-    /// 5, or 7. 1 means a single match decides the round.
+    /// Number of games in a series between two teams at this round, one of 1, 3, 5, or 7.
     /// </summary>
     public int BestOf { get; set; }
 
     /// <summary>
-    /// How many times each pair of teams plays within this group stage
-    /// (1 = single round-robin, 2 = double, ...).
+    /// How many times each pair of teams plays within this group stage.
     /// </summary>
     public int RoundRobinLegs { get; set; }
 }

@@ -20,9 +20,7 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Controller for managing Seasons ("Temporadas"), the top-level grouping that
-/// gathers several tournaments of the same period. Reads are public; writes
-/// require Owner or Admin.
+/// Manages Seasons, the top-level grouping of a period's tournaments. Reads are public; writes require Owner or Admin.
 /// </summary>
 /// <param name="seasonService">The Season service.</param>
 /// <param name="mapper">The AutoMapper instance.</param>
@@ -36,8 +34,8 @@ public class SeasonController(ISeasonService seasonService, IMapper mapper) : Co
     /// </summary>
     /// <param name="seasonRequest">The season creation request.</param>
     /// <returns>The created Season response.
-    /// <para>Returns 201 (Created) with the Season response if the creation was successful.</para>
-    /// <para>Returns 403 (Forbidden) if the user is not authorized.</para>
+    /// <para>Returns 201 Created with the Season response if the creation was successful.</para>
+    /// <para>Returns 403 Forbidden if the user is not authorized.</para>
     /// </returns>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(SeasonResponse))]
@@ -53,10 +51,10 @@ public class SeasonController(ISeasonService seasonService, IMapper mapper) : Co
     /// <summary>
     /// Retrieves a season by its id or its public slug asynchronously.
     /// </summary>
-    /// <param name="idOrSlug">The id (GUID) or slug of the season to retrieve.</param>
+    /// <param name="idOrSlug">The season's GUID id or slug to retrieve.</param>
     /// <returns>The Season with the specified id or slug.
-    /// <para>Returns 200 (OK) with the Season response if it was found.</para>
-    /// <para>Returns 404 (Not Found) if the Season with the provided id or slug was not found.</para>
+    /// <para>Returns 200 OK with the Season response if it was found.</para>
+    /// <para>Returns 404 Not Found if the Season with the provided id or slug was not found.</para>
     /// </returns>
     [AllowAnonymous]
     [HttpGet("{idOrSlug}")]
@@ -81,9 +79,9 @@ public class SeasonController(ISeasonService seasonService, IMapper mapper) : Co
     /// <param name="id">The id of the season to update.</param>
     /// <param name="seasonRequest">The season update request.</param>
     /// <returns>
-    /// Returns 204 (No Content) if the update was successful.
-    /// Returns 404 (Not Found) if the Season with the provided id was not found.
-    /// Returns 403 (Forbidden) if the user is not authorized.
+    /// Returns 204 No Content if the update was successful.
+    /// Returns 404 Not Found if the Season with the provided id was not found.
+    /// Returns 403 Forbidden if the user is not authorized.
     /// </returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -110,9 +108,9 @@ public class SeasonController(ISeasonService seasonService, IMapper mapper) : Co
     /// </summary>
     /// <param name="id">The id of the Season to delete.</param>
     /// <returns>
-    /// Returns 204 (No Content) if the Season was successfully deleted.
-    /// Returns 404 (Not Found) if the Season with the provided id was not found.
-    /// Returns 403 (Forbidden) if the user is not authorized.
+    /// Returns 204 No Content if the Season was successfully deleted.
+    /// Returns 404 Not Found if the Season with the provided id was not found.
+    /// Returns 403 Forbidden if the user is not authorized.
     /// </returns>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

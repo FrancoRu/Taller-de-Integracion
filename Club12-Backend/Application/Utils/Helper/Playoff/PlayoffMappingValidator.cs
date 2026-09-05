@@ -9,17 +9,12 @@ using System.Linq;
 namespace Application.Utils.Helper.Playoff;
 
 /// <summary>
-/// Validates a division's position-range → playoff-destination mappings
-/// (HU-45): every range must be well-formed (1-based, from ≤ to, non-empty
-/// destination) and no two ranges within the same division may overlap, so
-/// each standings position resolves to at most one cup.
+/// Validates a division's position-range to playoff-destination mappings.
 /// </summary>
 public static class PlayoffMappingValidator
 {
     /// <summary>
-    /// Throws <see cref="InvalidOperationException"/> if any range is
-    /// malformed or if two ranges overlap. An empty set is valid (the
-    /// division simply has no playoff mapping yet).
+    /// Throws InvalidOperationException if any range is malformed or if two ranges overlap.
     /// </summary>
     public static void Validate(IEnumerable<DivisionPlayoffMapping> mappings)
     {

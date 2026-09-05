@@ -6,24 +6,16 @@ using System.Threading.Tasks;
 namespace Application.Interfaces.Storage;
 
 /// <summary>
-/// Storage boundary for player medical-record files (PDF, HU-55/HU-56).
-/// Confines every file to a dedicated medical-records area, separate from
-/// database backups (which use their own <c>backups/</c> area). Implemented in
-/// Infrastructure over the shared Supabase client so the upload flow can be
-/// wired independently of, and unit-tested without, a live Supabase bucket.
+/// Storage boundary for player medical-record files, PDF.
 /// </summary>
 public interface IMedicalRecordStorage
 {
     /// <summary>
-    /// Stores a medical-record file for a player's team registration and
-    /// returns the storage reference (object path) to persist on the
-    /// registration. The object key is <c>{teamId}/{playerId}/{guid}{ext}</c>
-    /// — a team belongs to exactly one tournament, so this stays unique
-    /// without a separate season segment (HU-55/HU-59).
+    /// Stores a medical-record file for a player's team registration and returns the storage reference to persist on the registration.
     /// </summary>
     /// <param name="teamId">The team the registration belongs to.</param>
     /// <param name="playerId">The player the record belongs to.</param>
-    /// <param name="fileName">The original file name (its extension is preserved).</param>
+    /// <param name="fileName">The original file name, its extension is preserved.</param>
     /// <param name="content">The file content stream.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The stored object path used as the persisted file reference.</returns>
@@ -31,12 +23,9 @@ public interface IMedicalRecordStorage
 
     /// <summary>
     /// Downloads the raw bytes of a previously stored medical-record object.
-    /// The medical-records area is private, so the file can only be served back
-    /// through the API (there is no public URL); the download endpoint streams
-    /// these bytes to the authorized caller (HU-55/HU-56).
     /// </summary>
     /// <param name="objectPath">
-    /// The stored object path returned by <see cref="StoreAsync"/> and persisted
+    /// The stored object path returned by StoreAsync and persisted
     /// on the season registration as its file reference.
     /// </param>
     /// <param name="ct">Cancellation token.</param>

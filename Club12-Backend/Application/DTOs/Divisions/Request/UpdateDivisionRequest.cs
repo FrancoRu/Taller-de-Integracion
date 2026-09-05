@@ -13,10 +13,7 @@ public class UpdateDivisionRequest
     public required bool IsFinished { get; set; }
 
     /// <summary>
-    /// Optional. When provided, moves the division — and everything under
-    /// it (stages, matches, team assignments) — to the tournament with this
-    /// id, since none of that data carries its own tournament reference.
-    /// Leave null to keep the division on its current tournament.
+    /// When provided, moves the division and everything under it to this tournament; null keeps it in place.
     /// </summary>
     public Guid? TournamentId { get; set; }
 }

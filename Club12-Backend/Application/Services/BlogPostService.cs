@@ -16,10 +16,7 @@ using System.Threading.Tasks;
 namespace Application.Services;
 
 /// <summary>
-/// Manages blog posts. Draft visibility is opt-in (HU-16): both lookup by
-/// id/slug and the paginated listing only resolve unpublished drafts when
-/// the caller explicitly passes <c>includeUnpublished: true</c>, so a public
-/// endpoint can never leak a draft — not even by guessing its id or slug.
+/// Manages blog posts and keeps draft visibility opt-in so a public endpoint can never leak a draft.
 /// </summary>
 public class BlogPostService(IBlogPostRepository blogpostRepository) : IBlogPostService
 {
@@ -48,13 +45,12 @@ public class BlogPostService(IBlogPostRepository blogpostRepository) : IBlogPost
     }
 
     /// <summary>
-    /// Retrieves a blog post by its id or its slug. The value is treated as
-    /// an id when it parses as a GUID, otherwise it is looked up as a slug.
+    /// Retrieves a blog post by id or slug, auto-detecting which one was passed via GUID parsing.
     /// </summary>
     /// <param name="idOrSlug">The blog post's GUID id or its slug.</param>
     /// <param name="includeUnpublished">
-    /// When false (the default), a draft is treated as not found so it never
-    /// leaks through public endpoints; when true, drafts are also resolved.
+    /// Defaults to false, which treats a draft as not found so it never leaks through public
+    /// endpoints; true also resolves drafts.
     /// </param>
     /// <returns>The blog post entity if found; otherwise, null.</returns>
     public async Task<BlogPost?> GetBlogPostByIdOrSlugAsync(string idOrSlug, bool includeUnpublished = false)
@@ -63,7 +59,7 @@ public class BlogPostService(IBlogPostRepository blogpostRepository) : IBlogPost
             ? await GetBlogPostByIdAsync(blogPostId)
             : (await blogpostRepository.FindAsync(candidate => candidate.Slug == idOrSlug)).FirstOrDefault();
 
-        // Public callers must not resolve drafts (HU-16): a draft is treated
+        // Public callers must not resolve drafts: a draft is treated
         // as not found so it never leaks through the public detail endpoint.
         if (post is not null && !includeUnpublished && !post.IsPublished)
         {
@@ -77,7 +73,7 @@ public class BlogPostService(IBlogPostRepository blogpostRepository) : IBlogPost
     {
         Expression<Func<BlogPost, bool>> expression = QueryableExtensions.ConstructFilterExpression<BlogPost, GetBlogPostsFilteredRequest>(filter);
 
-        // Public listing only ever exposes published posts (HU-16); Admin/Owner
+        // Public listing only ever exposes published posts; Admin/Owner
         // callers pass includeUnpublished: true to also see drafts.
         if (!includeUnpublished)
         {

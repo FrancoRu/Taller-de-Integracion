@@ -22,8 +22,7 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Controller for managing Player Sanctions. Reads are public; writes
-/// require Owner or Admin.
+/// Manages player sanctions; reads are public but writes require Owner or Admin.
 /// </summary>
 /// <param name="playerSanctionService">The Player Sanction service.</param>
 /// <param name="mapper">The AutoMapper instance.</param>
@@ -33,8 +32,7 @@ namespace API.Controllers;
 public class PlayerSanctionController(IPlayerSanctionService playerSanctionService, IMapper mapper) : ControllerBase
 {
     /// <summary>
-    /// Creates a sanction against a player, team, or staff member. The response is
-    /// enriched with the subject's display name and its fechas-based remaining/active status.
+    /// Creates a sanction against a player, team, or staff member, enriched with the subject's display name and fechas-based status.
     /// </summary>
     /// <param name="playerSanctionRequest">The player sanction request DTO.</param>
     /// <returns>The created player sanction response.</returns>
@@ -54,7 +52,7 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
     /// <summary>
     /// Retrieves a player sanction by its id or its slug.
     /// </summary>
-    /// <param name="idOrSlug">Player sanction identifier (GUID) or slug.</param>
+    /// <param name="idOrSlug">Player sanction identifier as a GUID or slug.</param>
     /// <returns>The player sanction response DTO.</returns>
     [AllowAnonymous]
     [HttpGet("{idOrSlug}")]
@@ -106,12 +104,11 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
         return Ok(response);
     }
     /// <summary>
-    /// Updates a player sanction's fields, re-enriching the response with the subject's
-    /// display name and current fechas-based status.
+    /// Updates a player sanction's fields and re-enriches the response with the subject's display name and fechas-based status.
     /// </summary>
     /// <param name="id">The id of the sanction to update.</param>
     /// <param name="updateRequest">The request with updated sanction data.</param>
-    /// <returns>Returns 200 (OK) with the updated sanction, or 404 (Not Found) if no sanction matches the id.</returns>
+    /// <returns>Returns 200 OK with the updated sanction, or 404 Not Found if no sanction matches the id.</returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerSanctionResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -134,7 +131,7 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
     /// </summary>
     /// <param name="id">The id of the sanction being appealed.</param>
     /// <param name="appealRequest">The appeal reason.</param>
-    /// <returns>The updated sanction response. Returns 400 (Bad Request) if an appeal is already pending for this sanction.</returns>
+    /// <returns>The updated sanction response. Returns 400 Bad Request if an appeal is already pending for this sanction.</returns>
     [HttpPut("{id:guid}/appeal")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerSanctionResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -165,13 +162,11 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
     }
 
     /// <summary>
-    /// Resolves a sanction's pending appeal as accepted or rejected. Accepting lifts the
-    /// sanction immediately — the returned response's FechasRemaining drops to 0 and
-    /// IsActive becomes false — without deleting the sanction record.
+    /// Resolves a sanction's pending appeal as accepted or rejected, where accepting lifts the sanction immediately without deleting the sanction record.
     /// </summary>
     /// <param name="id">The id of the sanction whose appeal is resolved.</param>
-    /// <param name="resolveRequest">The decision (accepted/rejected) and resolution notes.</param>
-    /// <returns>The updated sanction response. Returns 400 (Bad Request) if the sanction has no pending appeal to resolve.</returns>
+    /// <param name="resolveRequest">The accepted or rejected decision and resolution notes.</param>
+    /// <returns>The updated sanction response. Returns 400 Bad Request if the sanction has no pending appeal to resolve.</returns>
     [HttpPut("{id:guid}/appeal/resolve")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PlayerSanctionResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -205,7 +200,7 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
     /// Deletes a player sanction by its id.
     /// </summary>
     /// <param name="id">The id of the player sanction to delete.</param>
-    /// <returns>Returns 204 (No Content) on success.</returns>
+    /// <returns>Returns 204 No Content on success.</returns>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -216,9 +211,7 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
     }
 
     /// <summary>
-    /// Maps a sanction to its response and enriches it with the fechas-based
-    /// status (HU-75/HU-76): how many fechas are left to serve and whether the
-    /// sanction is still active. Labelled in fechas, never in calendar days.
+    /// Maps a sanction to its response and enriches it with the fechas-based remaining/active status, labelled in fechas rather than calendar days.
     /// </summary>
     private async Task<PlayerSanctionResponse> ToResponseAsync(PlayerSanction sanction)
     {

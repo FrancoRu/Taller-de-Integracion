@@ -8,17 +8,13 @@ using System.Text.Json.Serialization;
 namespace API.Utils.Converters;
 
 /// <summary>
-/// A custom JSON converter for DateTime. Accepts a wide range of common input
-/// formats when reading (see <see cref="_formats"/>), but always writes using a
-/// single canonical format ("yyyy-MM-ddTHH:mm:ss.fffZ") so output is consistent
-/// regardless of which format the value was originally read from.
+/// A custom JSON converter for DateTime that accepts many common input formats when reading but always writes a single canonical format.
 /// </summary>
 public class DateOnlyJsonConverter : JsonConverter<DateTime>
 {
 
     /// <summary>
-    /// The formats accepted when parsing a date from JSON, tried in order. Only
-    /// used for reading — <see cref="Write"/> always emits a single canonical format.
+    /// The formats accepted when parsing a date from JSON, tried in order; only used for reading, since Write always emits a single canonical format.
     /// </summary>
     private static readonly string[] _formats =
     [
@@ -40,11 +36,10 @@ public class DateOnlyJsonConverter : JsonConverter<DateTime>
     ];
 
     /// <summary>
-    /// Reads and converts the JSON string to a DateTime, trying each of the
-    /// accepted <see cref="_formats"/> in order until one matches.
+    /// Reads and converts the JSON string to a DateTime, trying each of the accepted formats in order until one matches.
     /// </summary>
     /// <param name="reader">The Utf8JsonReader to read from.</param>
-    /// <param name="typeToConvert">The type to convert (expected to be DateTime).</param>
+    /// <param name="typeToConvert">The type to convert, expected to be DateTime.</param>
     /// <param name="options">The JsonSerializerOptions used during deserialization.</param>
     /// <returns>A DateTime parsed from the JSON string.</returns>
     public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -62,9 +57,7 @@ public class DateOnlyJsonConverter : JsonConverter<DateTime>
     }
 
     /// <summary>
-    /// Writes a DateTime value as a JSON string using the canonical
-    /// "yyyy-MM-ddTHH:mm:ss.fffZ" format, regardless of which accepted format
-    /// it was originally read from.
+    /// Writes a DateTime value as a JSON string using the canonical yyyy-MM-ddTHH:mm:ss.fffZ format, regardless of which accepted format it was originally read from.
     /// </summary>
     /// <param name="writer">The Utf8JsonWriter to write to.</param>
     /// <param name="value">The DateTime value to serialize.</param>

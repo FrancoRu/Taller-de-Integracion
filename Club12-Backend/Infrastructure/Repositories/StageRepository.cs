@@ -7,9 +7,7 @@ using Infrastructure.Persistance;
 namespace Infrastructure.Repositories;
 
 /// <summary>
-/// Repository implementation for managing Stage entities.
-/// Inherits generic CRUD operations from GenericRepository{Stage} and implements IStageRepository.
-/// Utilizes ApplicationDBContext for data access.
+/// Repository implementation for managing Stage entities, inheriting generic CRUD from GenericRepository and implementing IStageRepository.
 /// </summary>
 public class StageRepository(ApplicationDBContext context)
     : GenericRepository<Stage>(context), IStageRepository

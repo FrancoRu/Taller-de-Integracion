@@ -97,11 +97,7 @@ static LogEventLevel GetRequestLoggingLevel(HttpContext httpContext, double elap
 }
 
 /// <summary>
-/// Visibility-only shim: WebApplicationFactory&lt;Program&gt; (used by integration
-/// tests) requires the top-level Program class to be a public partial type.
-/// This adds no runtime behavior and does not alter any code path. The
-/// constructor is protected rather than the implicit public one so the
-/// type isn't mistaken for one meant to be instantiated directly.
+/// Visibility-only shim making Program a public partial type since WebApplicationFactory needs it for integration tests.
 /// </summary>
 public partial class Program
 {

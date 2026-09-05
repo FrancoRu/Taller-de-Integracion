@@ -21,12 +21,12 @@ public class UpdateVenueRequest
     public string? PhotoUrl { get; set; }
 
     /// <summary>
-    /// Optional geographic latitude of the venue (e.g. pasted from Google Maps).
+    /// Optional geographic latitude of the venue.
     /// </summary>
     public double? Latitude { get; set; }
 
     /// <summary>
-    /// Optional geographic longitude of the venue (e.g. pasted from Google Maps).
+    /// Optional geographic longitude of the venue.
     /// </summary>
     public double? Longitude { get; set; }
 }

@@ -7,10 +7,7 @@ using System.Threading.Tasks;
 namespace API.Utils.Middlewares;
 
 /// <summary>
-/// Middleware that logs one compact, structured line per HTTP request: method,
-/// path (including query string), status code, elapsed time, and correlation
-/// id. Never logs the request body, since routes like login/register would
-/// otherwise write plaintext credentials to the log stream.
+/// Logs one compact, structured line per HTTP request: method, path, status code, elapsed time, and correlation id.
 /// </summary>
 public class RequestLoggingMiddleware(RequestDelegate next, ILogger<RequestLoggingMiddleware> logger)
 {
@@ -19,12 +16,7 @@ public class RequestLoggingMiddleware(RequestDelegate next, ILogger<RequestLoggi
     private const string HttpMethodOptions = "OPTIONS";
 
     /// <summary>
-    /// Times the request, invokes the rest of the pipeline, and logs the
-    /// outcome at a level matched to the response status code. CORS
-    /// preflight (OPTIONS) requests carry no application information — every
-    /// browser call doubles as one — so they log at Debug instead of
-    /// Information, keeping them out of the console by default without
-    /// losing them if someone lowers the minimum level to look.
+    /// Times the request, invokes the pipeline, and logs the outcome at a level matched to the response status code.
     /// </summary>
     /// <param name="context">The current HTTP context.</param>
     /// <returns>A task representing the asynchronous operation.</returns>

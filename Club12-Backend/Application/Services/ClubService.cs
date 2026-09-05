@@ -14,10 +14,7 @@ using System.Threading.Tasks;
 namespace Application.Services;
 
 /// <summary>
-/// Service for the stable cross-season club identity (HU-99). The club layer is
-/// purely additive: it never mutates a team's season-scoped state, only sets the
-/// optional <see cref="Team.ClubId"/> link and reads history back through the
-/// existing <see cref="TeamTournamentRegistration"/> join.
+/// Manages the stable cross-season club identity.
 /// </summary>
 public class ClubService(IUnitOfWork unitOfWork) : IClubService
 {
@@ -120,9 +117,7 @@ public class ClubService(IUnitOfWork unitOfWork) : IClubService
     }
 
     /// <summary>
-    /// The stable identity key shared by <see cref="BackfillClubsAsync"/> and
-    /// <see cref="EnsureTeamLinkedToClubAsync"/>: same-named teams generate the
-    /// same slug and therefore collapse onto a single club.
+    /// The stable identity key shared by BackfillClubsAsync and EnsureTeamLinkedToClubAsync.
     /// </summary>
     private static string ClubSlugForTeam(Team team)
     {
@@ -135,11 +130,7 @@ public class ClubService(IUnitOfWork unitOfWork) : IClubService
     }
 
     /// <summary>
-    /// Resolves a club by id or slug and assembles its cross-season team
-    /// history. Registrations and their tournaments are batch-loaded (one
-    /// query each across every team, not per-team) to avoid N+1, and each
-    /// team's seasons are ordered newest-first for a single-team consumer,
-    /// even though the history page re-sorts the flattened result itself.
+    /// Resolves a club by id or slug and assembles its cross-season team history.
     /// </summary>
     public async Task<ClubHistoryResponse?> GetClubHistoryAsync(string idOrSlug)
     {

@@ -6,11 +6,7 @@ namespace API.Utils.Helpers;
 public static class AuthHelper
 {
     /// <summary>
-    /// Extracts the caller's role and id from the Role and NameIdentifier claims
-    /// of an authenticated <see cref="ClaimsPrincipal"/>. Assumes both claims are
-    /// present: an unauthenticated or malformed principal makes
-    /// <see cref="Guid.Parse(string)"/> throw <see cref="FormatException"/> rather
-    /// than returning a default value.
+    /// Extracts the caller's role and id from the Role and NameIdentifier claims, letting Guid.Parse throw a FormatException on an unauthenticated or malformed principal rather than returning a default value.
     /// </summary>
     public static (string role, Guid id) GetCallerClaims(this ClaimsPrincipal principal)
     {

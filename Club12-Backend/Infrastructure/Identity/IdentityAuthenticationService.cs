@@ -345,11 +345,7 @@ public sealed class IdentityAuthenticationService(
     }
 
     /// <summary>
-    /// Builds an email link that carries an Identity token in the shared
-    /// "?email=&amp;token=" shape. Activation links (HU-09) prefer the
-    /// configured <see cref="ConfigurationKeys.Frontend.ActivationUrl"/> and
-    /// fall back to the password-reset page URL when it is not set; reset links
-    /// (HU-10) always use <see cref="ConfigurationKeys.Frontend.PasswordResetUrl"/>.
+    /// Builds an email link that carries an Identity token, using ActivationUrl for activation links and PasswordResetUrl otherwise.
     /// </summary>
     private string BuildTokenLink(string email, string token, bool activation)
     {

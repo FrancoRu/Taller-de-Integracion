@@ -17,16 +17,24 @@ public class TeamDetailedMatchResponse
 
     public required string LogoUrl { get; set; }
 
-    /// <summary>Primary shirt color (#rrggbb), for rendering the kit.</summary>
+    /// <summary>
+    /// Primary shirt color as #rrggbb, for rendering the kit.
+    /// </summary>
     public string? ShirtColor { get; set; }
 
-    /// <summary>Jersey kit pattern (e.g. "solid", "stripes").</summary>
+    /// <summary>
+    /// Jersey kit pattern.
+    /// </summary>
     public string? JerseyStyle { get; set; }
 
-    /// <summary>Secondary shirt color (#rrggbb), for the kit trim/pattern.</summary>
+    /// <summary>
+    /// Secondary shirt color as #rrggbb, for the kit trim or pattern.
+    /// </summary>
     public string? ShirtSecondaryColor { get; set; }
 
-    /// <summary>Third shirt color (#rrggbb), used only by tri-color kit templates.</summary>
+    /// <summary>
+    /// Third shirt color as #rrggbb, used only by tri-color kit templates.
+    /// </summary>
     public string? ShirtTertiaryColor { get; set; }
 
     public int Score { get; set; }

@@ -3,20 +3,12 @@ using System;
 namespace Application.Utils.Helper.Slug;
 
 /// <summary>
-/// Composes the display string a Match's slug is generated from —
-/// "{homeTeamName} vs {visitorTeamName} {date:yyyy-MM-dd}" — fed through
-/// <see cref="SlugGenerator.GenerateUniqueSlugAsync"/>. Shared between
-/// MatchService (manual and bulk/automated match creation) and
-/// MatchSeriesService (series game creation), so both retire their own copy
-/// of this format and the unassigned-team placeholder.
+/// Composes the display string a Match's slug is generated from, fed through SlugGenerator.GenerateUniqueSlugAsync.
 /// </summary>
 public static class MatchSlugSourceBuilder
 {
     /// <summary>
-    /// Placeholder team name used when a match's home or visitor team is not
-    /// yet assigned (e.g. an unseeded group match, or an empty knockout
-    /// slot). Collisions between multiple such matches are resolved by
-    /// SlugGenerator's -2/-3 suffixing, same as a real repeated pairing.
+    /// Placeholder team name used when a match's home or visitor team is not yet assigned.
     /// </summary>
     public const string UnassignedTeamPlaceholder = "TBD";
 

@@ -10,17 +10,12 @@ using System.Threading.Tasks;
 namespace Application.Interfaces.Services;
 
 /// <summary>
-/// Records and reads the sensitive-action audit trail (HU-101). The actor is
-/// resolved automatically from <see cref="ICurrentUserAccessor"/>, so callers
-/// only describe the action and its target.
+/// Records and reads the sensitive-action audit trail.
 /// </summary>
 public interface IAuditService
 {
     /// <summary>
-    /// Writes an audit entry for <paramref name="action"/>. Non-throwing by
-    /// contract at the call site: auditing must never be the reason a
-    /// sensitive operation fails, so callers invoke it after the action has
-    /// succeeded.
+    /// Writes an audit entry for action without ever throwing at the call site.
     /// </summary>
     Task LogAsync(
         AuditAction action,

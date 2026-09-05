@@ -12,16 +12,11 @@ namespace Infrastructure.Identity;
 
 /// <summary>
 /// Provides a design-time instance of IdentityAppDbContext for EF Core CLI tools.
-/// Loads all appsettings*.json files found in the API project directory,
-/// so developer-specific files (e.g. appsettings.Franco.json) are picked up automatically.
 /// </summary>
 public sealed class IdentityAppDbContextFactory : IDesignTimeDbContextFactory<IdentityAppDbContext>
 {
     /// <summary>
-    /// Builds configuration the same way WebApplication.CreateBuilder does at
-    /// runtime: base appsettings.json first, then the environment-specific
-    /// file, then every other appsettings.*.json found, with later files
-    /// overriding earlier ones (last writer wins).
+    /// Builds configuration the same way WebApplication.CreateBuilder does at runtime, with later appsettings files overriding earlier ones.
     /// </summary>
     public IdentityAppDbContext CreateDbContext(string[] args)
     {

@@ -12,9 +12,7 @@ namespace Application.Interfaces.Services;
 public interface IPlayerSanctionService
 {
     /// <summary>
-    /// Creates a sanction and assigns it a unique slug derived from its
-    /// subject's resolved name and issue date, so a player, team, or staff
-    /// sanction all get a readable slug regardless of subject type.
+    /// Creates a sanction and assigns it a unique slug derived from its subject's resolved name and issue date, so a player, team, or staff sanction all get a readable slug regardless of subject type.
     /// </summary>
     /// <param name="playerSanctionEntity">The player sanction entity to create.</param>
     /// <returns>The created player sanction.</returns>
@@ -23,9 +21,7 @@ public interface IPlayerSanctionService
     Task<PlayerSanction?> GetPlayerSanctionByIdAsync(Guid playerSanctionId);
 
     /// <summary>
-    /// Retrieves a player sanction by its id or its slug. The value is
-    /// treated as an id when it parses as a GUID, otherwise it is looked up
-    /// as a slug.
+    /// Retrieves a player sanction by its id or its slug, treating the value as an id when it parses as a GUID and otherwise looking it up as a slug.
     /// </summary>
     /// <param name="idOrSlug">The sanction's GUID id or its slug.</param>
     /// <returns>The matching player sanction, or null if not found.</returns>
@@ -37,26 +33,20 @@ public interface IPlayerSanctionService
 
     /// <summary>
     /// Retrieves expired player sanctions as of a specific date asynchronously.
-    /// Day-based technical cleanup backstop (HU-75/R1); NOT the source of truth
-    /// for "fechas remaining".
     /// </summary>
     /// <param name="date">The date to check for expired sanctions.</param>
     /// <returns>A collection of expired player sanctions.</returns>
     Task<IEnumerable<PlayerSanction>> GetExpiredSanctionsAsync(DateTime date);
 
     /// <summary>
-    /// Computes how many FECHAS (jornadas) of a sanction are still to be served
-    /// (HU-75), based on the subject team's finished rounds since the sanction
-    /// was issued. Returns null when it cannot be computed by rounds.
+    /// Computes how many FECHAS, jornadas, of a sanction are still to be served, based on the subject team's finished rounds since the sanction was issued.
     /// </summary>
     /// <param name="sanction">The sanction to evaluate.</param>
     /// <returns>The fechas remaining, or null when not computable by rounds.</returns>
     Task<int?> GetFechasRemainingAsync(PlayerSanction sanction);
 
     /// <summary>
-    /// Determines whether a player has any active sanction — one with fechas
-    /// still to be served (HU-76) — so eligibility stays consistent with the
-    /// fechas-based rule.
+    /// Determines whether a player has any active sanction, one with fechas still to be served, so eligibility stays consistent with the fechas-based rule.
     /// </summary>
     /// <param name="playerId">The player to check.</param>
     /// <returns>True when the player has at least one active sanction.</returns>
@@ -70,12 +60,7 @@ public interface IPlayerSanctionService
     Task<PaginatedResponse<PlayerSanction>> GetPlayerSanctionsAsync(GetPlayerSanctionsFilteredRequest filter);
 
     /// <summary>
-    /// Resolves the human-readable subject of a sanction (HU-77) into the three
-    /// mutually-exclusive display fields the response exposes, so the sanctions
-    /// list shows WHO was sanctioned regardless of subject type and independent
-    /// of which navigations happen to be loaded on the entity:
-    /// the player's full name for a player sanction, the team's name for a team
-    /// sanction, or the staff member's name for a staff sanction.
+    /// Resolves the human-readable subject of a sanction into the three mutually-exclusive display fields the response exposes.
     /// </summary>
     /// <param name="sanction">The sanction whose subject to resolve.</param>
     /// <returns>

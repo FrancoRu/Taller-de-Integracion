@@ -18,25 +18,7 @@ using System.Threading.Tasks;
 namespace Infrastructure.Persistance;
 
 /// <summary>
-/// Backfills a real, stored medical-record file for every seeded
-/// <c>Approved</c> registration that doesn't have one yet
-/// (medical-records-storage-eligibility, Part 3) — used by both
-/// <see cref="DataSeeder"/> (the startup, config-driven seed) and
-/// <see cref="DataMaintenanceService"/> (the admin-triggered
-/// <c>/api/data-maintenance/seed</c> reset), so neither seed path can leave a
-/// league of Approved-but-fileless (therefore not-habilitado) players. Split
-/// out from <see cref="DataSeeder"/> so a caller that only needs this step
-/// doesn't have to satisfy <c>SupabaseHelper</c>'s live-Supabase constructor
-/// requirement, which this step never touches.
-///
-/// Also approves any seeder-created registration still stuck
-/// <c>Pending</c>/<c>Rejected</c> (identified by
-/// <c>CreatedBy == AuditConstants.SystemUser</c> — never a real admin's
-/// registration) once it gets a real file. This is what makes a database
-/// seeded before the Approved-by-default seed logic existed (or restored
-/// from a backup/migration that predates it) self-heal on the next startup
-/// instead of leaving every seeded player stuck not-habilitado forever
-/// (Épica 24, ítem 10 of historias-de-usuario.md).
+/// Backfills a real, stored medical record file for every seeded Approved registration that lacks one.
 /// </summary>
 public sealed class MedicalRecordSeedBackfiller(
     ApplicationDBContext db,
@@ -44,20 +26,13 @@ public sealed class MedicalRecordSeedBackfiller(
     IMedicalRecordStorage medicalRecordStorage)
 {
     /// <summary>
-    /// Embedded resource name of the generic ficha médica shipped inside the
-    /// assembly (see <c>Persistance/Seeding/Assets/ficha-medica-generica.pdf</c>,
-    /// wired via <c>Infrastructure.csproj</c>'s <c>EmbeddedResource</c> glob).
-    /// Used when <c>Seed:MedicalRecordPath</c> is not configured, so the
-    /// backfill works on any machine — including a deployed server — instead
-    /// of only the one a hardcoded local path happens to point at.
+    /// Embedded resource name of the generic ficha medica shipped inside the assembly.
     /// </summary>
     private const string EmbeddedMedicalRecordResourceName =
         "Infrastructure.Persistance.Seeding.Assets.ficha-medica-generica.pdf";
 
     /// <summary>
-    /// File name recorded for the seeded ficha médica, whether it came from
-    /// the embedded resource or the last-resort generated placeholder (see
-    /// <see cref="BuildPlaceholderMedicalRecordPdf"/>).
+    /// File name recorded for the seeded ficha medica, whether it came from the embedded resource or the last-resort generated placeholder.
     /// </summary>
     private const string PlaceholderMedicalRecordFileName = "ficha-medica-generica.pdf";
 
@@ -66,18 +41,7 @@ public sealed class MedicalRecordSeedBackfiller(
     private const int MedicalRecordSaveBatchSize = 50;
 
     /// <summary>
-    /// Uploads a real medical PDF (<paramref name="medicalRecordPath"/>, or
-    /// the embedded generic ficha médica when unset — see
-    /// <see cref="EmbeddedMedicalRecordResourceName"/>) for every
-    /// <c>Approved</c> registration whose file reference is null or a legacy
-    /// <see cref="PlayerTeamRegistration.LegacyReferencePrefix"/> ref, so it
-    /// stops reading as not-habilitado under Part 2's file-backed rule
-    /// (medical-records-storage-eligibility, Part 3). Idempotent (a
-    /// new-scheme ref is skipped), resumable (flushed every
-    /// <see cref="MedicalRecordSaveBatchSize"/> rows), and failure-tolerant: a
-    /// missing/unreadable configured PDF warns and skips the whole step, and a
-    /// per-row upload failure warns and continues — this step can never fail
-    /// the seed.
+    /// Uploads a real medical PDF for every Approved registration whose file reference is missing or legacy.
     /// </summary>
     public async Task BackfillMedicalRecordsAsync(string? medicalRecordPath)
     {
@@ -195,11 +159,7 @@ public sealed class MedicalRecordSeedBackfiller(
     }
 
     /// <summary>
-    /// Reads the generic ficha médica embedded in the assembly (see
-    /// <see cref="EmbeddedMedicalRecordResourceName"/>). This is the normal
-    /// no-config fallback; <see cref="BuildPlaceholderMedicalRecordPdf"/> only
-    /// backstops the (should-never-happen) case where the resource fails to
-    /// load, so the seed still never fails on this step.
+    /// Reads the generic ficha medica embedded in the assembly, named by EmbeddedMedicalRecordResourceName.
     /// </summary>
     private static byte[] LoadEmbeddedMedicalRecordPdf()
     {
@@ -224,10 +184,7 @@ public sealed class MedicalRecordSeedBackfiller(
     }
 
     /// <summary>
-    /// A real, valid one-page PDF built in memory (correct xref table and
-    /// offsets, so it opens like any other file). Last-resort fallback for
-    /// <see cref="LoadEmbeddedMedicalRecordPdf"/>. Deterministic: the same
-    /// bytes on every run.
+    /// A real, valid one-page PDF built in memory, with a correct cross-reference table and offsets.
     /// </summary>
     private static byte[] BuildPlaceholderMedicalRecordPdf()
     {

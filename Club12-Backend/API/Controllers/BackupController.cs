@@ -17,18 +17,7 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Admin-only management of database backups: list the catalog, trigger a
-/// manual backup, and delete a backup. Create/Delete go through the shared
-/// IBackupOperationsService write path (the same one the scheduled
-/// job uses); GET reads directly from IBackupCatalog, the source of
-/// truth for the listing (not IBackupStorage.ListAsync()).
-/// Mirrors DataMaintenanceController's shape: [ApiController],
-/// [Authorize(Roles = Roles.Admin)], a CancellationToken
-/// parameter, and Ok(result) on success. Outcomes are mapped
-/// explicitly to status codes rather than relying on exception-mapped
-/// status codes (design.md's "Controllers return an explicit outcome"
-/// decision), which keeps this controller's own logic pure and easy to
-/// unit test.
+/// Admin-only management of database backups: lists the catalog, triggers a manual backup, deletes a backup, and restores from one, with outcomes mapped explicitly to status codes.
 /// </summary>
 [Route("api/backups")]
 [ApiController]
@@ -49,8 +38,7 @@ public class BackupController(IBackupCatalog catalog, IBackupOperationsService o
     }
 
     /// <summary>
-    /// Triggers a manual backup. Returns 409 if a backup or restore is
-    /// already in progress (busy); 500 if the backup itself fails.
+    /// Triggers a manual backup, returning 409 if a backup or restore is already in progress and 500 if the backup itself fails.
     /// </summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BackupRecordResponse))]
@@ -71,8 +59,7 @@ public class BackupController(IBackupCatalog catalog, IBackupOperationsService o
     }
 
     /// <summary>
-    /// Deletes a catalogued backup. Returns 404 if no backup matches the id,
-    /// 409 if a backup or restore is currently in progress (busy).
+    /// Deletes a catalogued backup, returning 404 if no backup matches the id and 409 if a backup or restore is currently in progress.
     /// </summary>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -95,13 +82,7 @@ public class BackupController(IBackupCatalog catalog, IBackupOperationsService o
     }
 
     /// <summary>
-    /// Restores the database from a catalogued backup, executing directly
-    /// against the live database. The only input is the route id — there is
-    /// no upload endpoint, so a restore can only ever target an existing
-    /// catalogued backup. On success the response carries the record of the
-    /// automatic safety backup taken just before the restore, not the
-    /// restored backup itself. Returns 404 if no backup matches the id, 409
-    /// if a backup or restore is already in progress (busy).
+    /// Restores the database from a catalogued backup, returning on success the automatic safety backup record taken just before the restore, not the restored backup itself; returns 404 if no backup matches the id and 409 if a backup or restore is already in progress.
     /// </summary>
     [HttpPost("{id:guid}/restore")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BackupRecordResponse))]

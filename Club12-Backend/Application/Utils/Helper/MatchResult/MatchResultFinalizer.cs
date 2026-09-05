@@ -8,24 +8,14 @@ using System;
 namespace Application.Utils.Helper.MatchResult;
 
 /// <summary>
-/// Single source of truth for turning a home/visitor score pair into a
-/// finished match (HU-69/HU-70): basketball has no draws, so a tied score is
-/// rejected with a stage-appropriate message instead of silently picking a
-/// winner. Shared by every way a result can be loaded — typed directly
-/// (<see cref="Application.Services.MatchService.LoadMatchResultAsync"/>) or
-/// derived from both teams' player scoring sheets (HU-71/HU-72) — so they can
-/// never disagree on how a winner is determined.
+/// Single source of truth for turning a home/visitor score pair into a finished match.
 /// </summary>
 public static class MatchResultFinalizer
 {
     /// <summary>
-    /// Applies a decisive final result to <paramref name="match"/>: sets its
-    /// score, derives and sets the winning team from whichever score is
-    /// higher, and marks it <see cref="Domain.Entities.Models.Match.IsFinished"/>
-    /// / <see cref="MatchStatus.Played"/>. Mutates the entity in place; the
-    /// caller is responsible for persisting it.
+    /// Applies a decisive final result to match, deriving the winning team from whichever score is higher.
     /// </summary>
-    /// <param name="match">The match to finalize. Its Stage, HomeTeam and HomeTeamId (and their visitor counterparts) must be loaded.</param>
+    /// <param name="match">The match to finalize. Its Stage, HomeTeam, HomeTeamId and their visitor counterparts must be loaded.</param>
     /// <param name="homeScore">The home team's final score.</param>
     /// <param name="visitorScore">The visitor team's final score.</param>
     /// <exception cref="InvalidOperationException">Thrown when the score is tied.</exception>

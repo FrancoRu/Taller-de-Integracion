@@ -3,8 +3,7 @@ using Domain.Entities.Models;
 namespace Application.Interfaces.Repositories;
 
 /// <summary>
-/// Repository interface for managing <see cref="TeamStaff"/> entities (a
-/// team's technical staff — cuerpo técnico — for a given tournament/season).
+/// Repository interface for managing TeamStaff entities, a team's technical staff for a given tournament and season.
 /// </summary>
 public interface ITeamStaffRepository : IGenericRepository<TeamStaff>
 {

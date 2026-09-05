@@ -10,10 +10,7 @@ public class Division : EntityBase
     public required string Name { get; set; }
 
     /// <summary>
-    /// The unique, URL-friendly identifier used in public division links.
-    /// Generated once from the name at creation time and never changed
-    /// afterward, so shared links keep working even if the division is
-    /// renamed.
+    /// The unique, URL-friendly identifier used in public division links, generated once from the name and never changed afterward.
     /// </summary>
     public required string Slug { get; set; }
 
@@ -24,56 +21,34 @@ public class Division : EntityBase
     public Guid TournamentId { get; set; }
 
     /// <summary>
-    /// Competitive category (gender) of the division (HU-48). Must match the
-    /// parent <see cref="Tournament"/>'s <see cref="Tournament.Category"/>: a
-    /// single tournament can never mix feminine and masculine divisions. The
-    /// invariant is enforced when a division is created or updated. Defaults to
-    /// <see cref="TournamentCategory.Masculine"/>.
+    /// Competitive gender category of the division, which must match the parent Tournament's Category.
     /// </summary>
     public TournamentCategory Category { get; set; } = TournamentCategory.Masculine;
 
     public virtual required ICollection<Stage> Stages { get; set; }
 
     /// <summary>
-    /// Marks a division that intentionally draws teams from across every
-    /// other division in the tournament (e.g. "Copa Club12"), rather than
-    /// a team's single competitive tier. Team-assignment consistency
-    /// checks exempt cross-division-cup divisions from the "one team, one
-    /// division" rule so the same team can belong to its zone AND the cup.
+    /// Marks a division that intentionally draws teams from across every other division in the tournament, rather than a team's single competitive tier.
     /// </summary>
     public bool IsCrossDivisionCup { get; set; } = false;
 
     /// <summary>
-    /// Points awarded for a win when building this division's standings
-    /// (HU-79). Configurable per division so the scoring rule sits in the
-    /// same aggregate that owns the standings and the playoff mapping.
-    /// Defaults to 2 (FIBA-style: 2 for a win, 1 for a loss).
+    /// Points awarded for a win when building this division's standings, configurable per division. Defaults to 2.
     /// </summary>
     public int PointsForWin { get; set; } = 2;
 
     /// <summary>
-    /// Points awarded for a loss when building this division's standings
-    /// (HU-79). Basketball has no draws, so every finished match awards
-    /// <see cref="PointsForWin"/> to one team and this to the other.
-    /// Defaults to 1.
+    /// Points awarded for a loss when building this division's standings. Defaults to 1.
     /// </summary>
     public int PointsForLoss { get; set; } = 1;
 
     /// <summary>
-    /// How many teams qualify to the bracket from EACH internal group of a
-    /// multi-group cross-division cup (HU-110). Only meaningful when
-    /// <see cref="IsCrossDivisionCup"/> is true and the division holds more
-    /// than one <see cref="Domain.Enums.StageType.Group"/> stage: the bracket
-    /// is then seeded from the top <c>QualifiersPerGroup</c> teams of every
-    /// group, pooled and ordered by group-stage strength. Defaults to 1, which
-    /// leaves every existing division's seeding unchanged.
+    /// How many teams qualify to the bracket from each internal group of a multi-group cross-division cup. Defaults to 1.
     /// </summary>
     public int QualifiersPerGroup { get; set; } = 1;
 
     /// <summary>
-    /// Maps this division's final standings position ranges to playoff
-    /// destinations (HU-45), e.g. 1-4 → "Copa Oro", 5-8 → "Copa Plata".
-    /// Positions not covered by any range do not qualify for a playoff.
+    /// Maps this division's final standings position ranges to playoff destinations.
     /// </summary>
     public virtual ICollection<DivisionPlayoffMapping> PlayoffMappings { get; set; } = [];
 }

@@ -4,9 +4,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.MatchSeries.Request;
 
 /// <summary>
-/// Represents the payload for scheduling the next game of an existing
-/// series. GameNumber and team assignment are derived server-side from
-/// the series; only game-specific details are provided here.
+/// Payload for scheduling the next game of an existing series; GameNumber and teams are derived server-side.
 /// </summary>
 public class AddGameToSeriesRequest
 {

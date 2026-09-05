@@ -12,9 +12,7 @@ public class MinimalMatchResponse : BaseEntityResponse
     public required DateTime MatchDate { get; set; }
 
     /// <summary>
-    /// The matchday (jornada) this match belongs to, 1-based (HU-63/HU-65).
-    /// Canonical fixture grouping key; null for matches with no round-robin
-    /// matchday (e.g. knockout stages).
+    /// The 1-based matchday this match belongs to; null for stages with no round-robin matchday.
     /// </summary>
     public int? Round { get; set; }
 
@@ -31,13 +29,12 @@ public class MinimalMatchResponse : BaseEntityResponse
     public required bool IsFinished { get; set; }
 
     /// <summary>
-    /// The result lifecycle state (HU-69): Scheduled, Played, Suspended, or
-    /// WalkOver.
+    /// The result lifecycle state: Scheduled, Played, Suspended, or WalkOver.
     /// </summary>
     public string? Status { get; set; }
 
     /// <summary>
-    /// The type of the match (e.g., regular or playoff).
+    /// The type of the match, regular or playoff.
     /// </summary>
     public required string MatchType { get; set; }
 }

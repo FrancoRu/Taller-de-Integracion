@@ -4,8 +4,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.PointDeductions.Request;
 
 /// <summary>
-/// Request to apply a disciplinary point deduction (deducción de puntos) to a
-/// team within a division. The division is taken from the route.
+/// Request to apply a disciplinary point deduction to a team within a division taken from the route.
 /// </summary>
 public class CreatePointDeductionRequest
 {
@@ -19,7 +18,7 @@ public class CreatePointDeductionRequest
     public required int Points { get; set; }
 
     /// <summary>
-    /// The disciplinary reason (motivo) for the deduction.
+    /// The disciplinary reason for the deduction.
     /// </summary>
     [Required(ErrorMessage = "The Reason field is required.")]
     [MaxLength(300, ErrorMessage = "Reason cannot exceed 300 characters.")]

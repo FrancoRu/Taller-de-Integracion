@@ -1,18 +1,17 @@
 namespace Domain.Enums;
 
 /// <summary>
-/// The role a member of a team's technical staff (cuerpo técnico) holds for a
-/// given season.
+/// The role a member of a team's technical staff holds for a given season.
 /// </summary>
 public enum TeamStaffRole
 {
     /// <summary>
-    /// Head coach (Director Técnico / DT).
+    /// Head coach.
     /// </summary>
     Coach,
 
     /// <summary>
-    /// Assistant coach (Asistente).
+    /// Assistant coach.
     /// </summary>
     AssistantCoach
 }

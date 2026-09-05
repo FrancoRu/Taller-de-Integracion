@@ -13,7 +13,7 @@ public class UpdateVenuePhotoRequest
     public required Guid VenueId { get; init; }
 
     /// <summary>
-    /// The photo image file to upload (must be JPEG or PNG).
+    /// The photo image file to upload, which must be JPEG or PNG.
     /// </summary>
     [Required(ErrorMessage = "The image file is required.")]
     [DataType(DataType.Upload)]

@@ -7,19 +7,17 @@ using System.Reflection;
 namespace Infrastructure.Email;
 
 /// <summary>
-/// Loads HTML email templates from embedded resources and replaces named tokens
-/// in the form {{TokenName}}.
+/// Loads HTML email templates from embedded resources and replaces named tokens with their corresponding values.
 /// </summary>
 internal static class EmailTemplateLoader
 {
     private static readonly Assembly _assembly = typeof(EmailTemplateLoader).Assembly;
 
     /// <summary>
-    /// Reads the template file and replaces every key in <paramref name="tokens"/>
-    /// with its corresponding value.
+    /// Reads the template file and replaces every key in tokens with its corresponding value.
     /// </summary>
     /// <param name="templateName">
-    /// File name without extension, e.g. "PasswordResetTemplate".
+    /// File name without extension.
     /// The file must be at Utils/Helper/Email/Templates/{templateName}.html
     /// and marked as EmbeddedResource.
     /// </param>

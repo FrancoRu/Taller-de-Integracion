@@ -15,11 +15,7 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Read-only historical player statistics (HU-87 / HU-88). Always public, like
-/// the goleadores ranking. The three ranking scopes of HU-85 (per tournament,
-/// per season, all-time) are served by the goleadores endpoint
-/// (api/Scorer/by-player) via its TournamentId / Season query parameters; these
-/// endpoints add the per-player card and cross-season history that link to it.
+/// Read-only historical player statistics; always public.
 /// </summary>
 [ApiController]
 [Route("api/statistics/")]
@@ -27,8 +23,7 @@ namespace API.Controllers;
 public class StatisticsController(IStatisticsService statisticsService) : ControllerBase
 {
     /// <summary>
-    /// HU-87: a player's statistic card — total and average points and games
-    /// played, per season and overall.
+    /// A player's statistic card: total and average points and games played, per season and overall.
     /// </summary>
     /// <param name="playerId">The player's id.</param>
     [HttpGet("players/{playerId:guid}/card")]
@@ -47,8 +42,7 @@ public class StatisticsController(IStatisticsService statisticsService) : Contro
     }
 
     /// <summary>
-    /// HU-88: a player's trajectory across seasons — for each season, the team
-    /// they were on, their stats, and their sanctions.
+    /// A player's trajectory across seasons: team, stats, and sanctions for each season.
     /// </summary>
     /// <param name="playerId">The player's id.</param>
     [HttpGet("players/{playerId:guid}/history")]

@@ -18,34 +18,7 @@ using System.Text;
 namespace Infrastructure.Persistance;
 
 /// <summary>
-/// Builds one fully-populated, coherent sample Tournament (divisions, teams,
-/// players, group stages with proper round-robin jornadas and decisive scores,
-/// scorers/statistics, position-range playoff cups, an optional
-/// cross-division cup, and sanctions) from a declarative definition. Shared by
-/// the startup DataSeeder and DataMaintenanceService (the admin-triggered
-/// sample reseed) so the construction logic exists once.
-///
-/// Coherence guarantees:
-/// - Every group stage is a COMPLETE circle-method round-robin: every pair meets
-///   exactly once per leg, every team plays the same number of games, and a team
-///   plays at most once per jornada (with an odd roster exactly one team is idle
-///   — "libre" — each jornada). <see cref="Match.Round"/> is the 1-based
-///   jornada, <see cref="Stage.EndDate"/> is pushed out to the last jornada the
-///   fixture actually needs, and <see cref="Match.MatchDate"/> comes from
-///   <see cref="RoundCalendar.DateForRound(DateTime, int, bool)"/> (regular
-///   zones on Sundays, cross-division cups on Wednesdays — HU-111, so a team's
-///   zone and cup jornadas never collide).
-/// - Playoff cups (e.g. Copa Oro 1-4, Copa Plata 5-8) are seeded from the
-///   REAL final group standings via <see cref="PositionCalculator"/> and
-///   <see cref="PlayoffSeeder"/>.
-/// - The cross-division cup pools its group winners via
-///   <see cref="CrossCupGroupSeeder"/>. Its teams keep their regular zone AND
-///   join a cup group (cross cups are exempt from one-team-one-zone).
-/// - Only players a real match sheet would accept are seeded as scorers: their
-///   registration is Approved and they are not serving a sanction
-///   (HU-57/HU-60/HU-61, the rule PlayerStatisticService enforces). A suspended
-///   player's points in the games he must miss are handed to a team-mate, so a
-///   team's scorers still add up to its recorded score.
+/// Builds one fully-populated, coherent sample Tournament from a declarative definition.
 /// </summary>
 public static class SampleTournamentBuilder
 {
@@ -103,16 +76,7 @@ public static class SampleTournamentBuilder
     ];
 
     /// <summary>
-    /// A named playoff cup fed by a contiguous range of a division's final
-    /// group-standings positions (HU-45), e.g. "Copa Oro" for positions 1-4.
-    /// Produces a <see cref="DivisionPlayoffMapping"/> row plus a full
-    /// single-elimination bracket (as many rounds as the seed count needs —
-    /// RoundOf16/QuarterFinal/SemiFinal/Final, byes to the best seeds when not
-    /// a power of two, via <see cref="SeedEliminationBracket"/>) whose stages
-    /// carry <see cref="Stage.BracketName"/> = <paramref name="BracketName"/>.
-    /// <paramref name="BestOf"/> applies to the SemiFinal AND Final rounds
-    /// only — any earlier round (needed once a cup has more than 4 real
-    /// seeds) always plays Bo1.
+    /// A named playoff cup fed by a contiguous range of a division's final group-standings positions.
     /// </summary>
     public sealed record PlayoffCupDefinition(
         string BracketName,
@@ -121,30 +85,26 @@ public static class SampleTournamentBuilder
         int BestOf);
 
     /// <summary>
-    /// The cross-division cup ("Copa Cruzada"): an extra division with
-    /// <see cref="Division.IsCrossDivisionCup"/> = true whose teams are drawn
-    /// from the tournament's teams, split into <paramref name="GroupCount"/>
-    /// internal groups. The top <paramref name="QualifiersPerGroup"/> of each
-    /// group are pooled into one bracket (HU-110).
+    /// The cross-division cup is an extra division whose teams are drawn from the tournament's teams and split into internal groups.
     /// </summary>
-    /// <param name="DivisionName">The cup's division name, e.g. "Copa Cruzada".</param>
+    /// <param name="DivisionName">The cup's division name.</param>
     /// <param name="GroupCount">How many internal group stages to split the team pool into.</param>
     /// <param name="QualifiersPerGroup">How many top teams from each group pool into the bracket.</param>
     /// <param name="RoundRobinLegs">
-    /// How many times each pair plays within an internal group (1 = single
-    /// round-robin, 2 = double/ida y vuelta). Defaults to 1.
+    /// How many times each pair plays within an internal group. A value of 1
+    /// plays a single round-robin and 2 plays a double round-robin, also
+    /// called ida y vuelta. Defaults to 1.
     /// </param>
     /// <param name="FinalsBestOf">
-    /// BestOf applied to the pooled bracket's SemiFinal and Final rounds only
-    /// (earlier rounds, needed once more than 4 teams are pooled, always play
-    /// Bo1). Defaults to 1.
+    /// BestOf applied to the pooled bracket's SemiFinal and Final rounds
+    /// only. Earlier rounds, needed once more than 4 teams are pooled,
+    /// always play Bo1. Defaults to 1.
     /// </param>
     /// <param name="TeamPoolSize">
-    /// When set, only the first <paramref name="TeamPoolSize"/> of the
-    /// tournament's teams (in build order) feed the cup, instead of every
-    /// team — e.g. a masculine tournament reusing a subset of its zone teams
-    /// for a separate cross-division cup. Null (the default) uses every team,
-    /// unchanged from the original behavior.
+    /// When set, only the first TeamPoolSize of the
+    /// tournament's teams, in build order, feed the cup, instead of every
+    /// team. Null, the default, uses every team, unchanged from the
+    /// original behavior.
     /// </param>
     public sealed record CrossCupDefinition(
         string DivisionName,
@@ -183,18 +143,7 @@ public static class SampleTournamentBuilder
     public sealed record BuildResult(Tournament Tournament, List<PlayerSanction> Sanctions);
 
     /// <summary>
-    /// Hands out clean, collision-free kebab-case slugs for the divisions and
-    /// stages built in one seeding run. Because the whole object graph is built
-    /// in memory before it is saved, there is no repository to ask "does this
-    /// slug already exist?"; instead every issued slug is remembered per table
-    /// so a repeated base slug gets the same numeric suffix (-2, -3, ...) that
-    /// <see cref="SlugGenerator.GenerateUniqueSlugAsync"/> would apply against a
-    /// real database. Division and Stage slugs are tracked separately because
-    /// each has its own unique index. Share ONE instance across every
-    /// <see cref="Build"/> call that is persisted together (e.g. the two sample
-    /// tournaments the DataMaintenanceService saves in a single transaction) so
-    /// slugs stay unique across the whole batch, never colliding on the DB's
-    /// unique index — and never falling back to a GUID.
+    /// Hands out clean, collision-free kebab-case slugs for the divisions and stages built in one seeding run.
     /// </summary>
     public sealed class SlugRegistry
     {
@@ -231,16 +180,7 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
-    /// Builds one Tournament with every division in <paramref name="definition"/>.
-    /// <paramref name="playerCounter"/> is threaded through (and must keep
-    /// incrementing) across multiple calls so player names/document numbers
-    /// never collide between tournaments built in the same seeding run.
-    /// <paramref name="includePlayoffs"/> opts each division into its playoff
-    /// bracket(s) built from the group stage's final standings, and — when the
-    /// definition declares a <see cref="TournamentDefinition.CrossCup"/> — into
-    /// the cross-division cup. When false, each division gets only its group
-    /// stage (used for an in-progress/ONGOING tournament that has no decided
-    /// playoffs yet).
+    /// Builds one Tournament with every division in definition.
     /// </summary>
     public static BuildResult Build(
         TournamentDefinition definition,
@@ -476,13 +416,7 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
-    /// The team's crest, generated from its own kit: a round badge in the club's
-    /// shirt colour carrying its three-letter code, with a band in the secondary
-    /// colour following the shirt's <paramref name="jerseyStyle"/>. Returned as a
-    /// self-contained <c>data:</c> SVG URI, so a seeded league has distinct,
-    /// offline crests without a logos folder, an upload, or a call to an external
-    /// placeholder service. <c>DataSeeder.UploadTeamLogosAsync</c> still replaces
-    /// it with a real PNG when <c>Seed:LogosPath</c> holds one.
+    /// The team's crest, generated from its own kit, is a round badge in the club's shirt colour carrying its three-letter code.
     /// </summary>
     private static string BuildCrestDataUri(
         string code, string primaryColor, string? secondaryColor, string jerseyStyle)
@@ -525,15 +459,13 @@ public static class SampleTournamentBuilder
         return "data:image/svg+xml;base64," + Convert.ToBase64String(Encoding.UTF8.GetBytes(svg));
     }
 
-    /// <summary>Near-black ink, the alternative to white for a crest's code.</summary>
+    /// <summary>
+    /// Near-black ink, the alternative to white for a crest's code.
+    /// </summary>
     private const string DarkInk = "#0F172A";
 
     /// <summary>
-    /// Whichever of white and <see cref="DarkInk"/> reads better on
-    /// <paramref name="backgroundColor"/> (an "#RRGGBB" shirt colour), by actual
-    /// WCAG contrast ratio rather than a hand-picked luminance threshold — the
-    /// mid greens and cyans in the club palette sit right where a threshold
-    /// guesses wrong and would leave a code at ~1.8:1 on its own shirt colour.
+    /// Whichever of white and DarkInk reads better on backgroundColor, by actual WCAG contrast ratio rather than a hand-picked luminance threshold.
     /// </summary>
     private static string ContrastInk(string backgroundColor)
     {
@@ -550,8 +482,7 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
-    /// WCAG relative luminance of an "#RRGGBB" colour (channels linearised out
-    /// of sRGB first), or null when the string is not one.
+    /// WCAG relative luminance of an #RRGGBB colour, or null when the string is not a valid one.
     /// </summary>
     private static double? RelativeLuminance(string color)
     {
@@ -573,36 +504,7 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
-    /// Builds a real circle-method single round-robin for
-    /// <paramref name="teams"/>: for an even N there are N-1 jornadas of N/2
-    /// matches each and every team plays once per jornada; for an odd N there
-    /// are N jornadas and exactly one team is idle ("libre") per jornada. Either
-    /// way every pair meets exactly once per leg and every team plays the same
-    /// number of games. Every match is finished with a decisive (never-tied) score
-    /// in which the stronger team (earlier in <paramref name="teams"/>) wins,
-    /// so <see cref="PositionCalculator"/> yields a full, sensible table.
-    /// <see cref="Match.Round"/> is the 1-based jornada and
-    /// <see cref="Match.MatchDate"/> is the calendar date for that jornada
-    /// (Sundays for zones, Wednesdays for cross-division cups — HU-111).
-    ///
-    /// <paramref name="legs"/> repeats the whole schedule (2 = a home-and-away
-    /// double round-robin, "ida y vuelta"): each extra leg replays the same
-    /// pairings with home/away inverted and its jornadas numbered after the
-    /// previous leg's, so a mid-season tournament can have many jornadas.
-    /// <paramref name="playedRounds"/>, when set, is the number of leading
-    /// jornadas that are FINISHED (with scores); every later jornada is seeded
-    /// as an UPCOMING (unplayed) match on a future date, so an in-progress
-    /// tournament shows both a live standings table and a "Próximos" fixture.
-    /// Null (the default) leaves every jornada finished.
-    ///
-    /// <paramref name="upsetPercent"/> opts into realistic tables: with 0 (the
-    /// default) the stronger team wins every single game, so the final
-    /// standings are a perfect staircase of the seeding order. Above 0 it is
-    /// the base chance that a game goes the other way, damped by how far apart
-    /// the two teams are seeded — so favourites still finish on top, but every
-    /// team drops and steals games and no record is a clean N-0. The draw is a
-    /// deterministic hash of the fixture plus <paramref name="varietySeed"/>,
-    /// so a given seed always replays the same season.
+    /// Builds a real circle-method single round-robin for teams, so every pair meets exactly once per leg.
     /// </summary>
     private static void SeedRoundRobinMatches(
         Stage stage,
@@ -729,7 +631,9 @@ public static class SampleTournamentBuilder
         }
     }
 
-    /// <summary>Rotates slots 1..n-1 by one position (index 0 fixed).</summary>
+    /// <summary>
+    /// Rotates slots 1..n-1 by one position, keeping index 0 fixed.
+    /// </summary>
     private static void Rotate(int[] slots)
     {
         int n = slots.Length;
@@ -747,10 +651,7 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
-    /// Builds SemiFinal -> ThirdPlace -> Final stages for one division, seeded
-    /// from the (fully finished) group stage's standings. Used for the smaller
-    /// historical tournaments that have no position-range cups. With 4 teams
-    /// the bracket is SemiFinal(2) -> ThirdPlace(1) + Final(1).
+    /// Builds SemiFinal, ThirdPlace, and Final stages for one division, seeded from the group stage's final standings.
     /// </summary>
     private static void SeedPlayoffStages(Division division, Stage groupStage, List<Team> teams, List<Venue> venues, SlugRegistry slugRegistry)
     {
@@ -846,13 +747,7 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
-    /// Builds one full elimination bracket per named position-range cup (e.g.
-    /// Copa Oro for positions 1-4, Copa Plata for 5-8 or a wider range that
-    /// needs byes), each seeded from the REAL final group standings restricted
-    /// to the cup's position range via <see cref="SeedEliminationBracket"/>,
-    /// and registers the matching <see cref="DivisionPlayoffMapping"/> on the
-    /// division. Each cup's stages carry <see cref="Stage.BracketName"/> and
-    /// their names embed the cup so they stay unique within the division.
+    /// Builds one full elimination bracket per named position-range cup, each seeded from the final group standings restricted to the cup's position range.
     /// </summary>
     private static void SeedCupPlayoffs(
         Division division,
@@ -893,27 +788,7 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
-    /// Builds a full single-elimination bracket for <paramref name="seedIds"/>
-    /// (ordered best seed first — a cup's position range, or a cross-cup's
-    /// pooled qualifiers), adding every round's <see cref="Stage"/> to
-    /// <paramref name="division"/>. Round 1 is seeded via
-    /// <see cref="PlayoffSeeder.SeedPairs"/> (byes to the best seeds when the
-    /// pool is not a power of two); every later round pairs consecutive
-    /// winners in bracket-slot order — always bye-free, since padding only
-    /// ever applies to round 1. Stage naming/type follows the bracket size:
-    /// RoundOf16 (up to 16 seeds) -&gt; QuarterFinal (8) -&gt; SemiFinal (4)
-    /// -&gt; Final (2) — only the rounds a pool of this size actually needs
-    /// are built. <paramref name="finalsBestOf"/> is recorded on the
-    /// SemiFinal and Final stages' <see cref="Stage.BestOf"/>; every OTHER
-    /// round always plays Bo1 (a single decisive match, no
-    /// <see cref="MatchSeries"/>). When <paramref name="finalsBestOf"/> is
-    /// greater than 1, each SemiFinal/Final pairing is settled by a REAL
-    /// <see cref="MatchSeries"/> built by <see cref="BuildDecidedSeries"/> —
-    /// as many finished games as it actually takes for one team to reach the
-    /// majority (<see cref="SeriesDecisionCalculator"/>), varying between the
-    /// series' minimum-to-clinch and its full BestOf across pairings so a
-    /// season's worth of series doesn't all end identically. No-ops when
-    /// fewer than two teams are seeded.
+    /// Builds a full single-elimination bracket for seedIds, adding every round's Stage to division.
     /// </summary>
     private static void SeedEliminationBracket(
         Division division,
@@ -1042,28 +917,7 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
-    /// Builds a REAL best-of-N <see cref="MatchSeries"/> between
-    /// <paramref name="home"/> and <paramref name="visitor"/> and adds it (and
-    /// every game it plays) to <paramref name="stage"/>, so both the admin
-    /// panel and the public site can see the actual per-game series instead of
-    /// one collapsed result. Generates just enough finished games for one team
-    /// to reach the majority of <paramref name="bestOf"/>
-    /// (<see cref="SeriesDecisionCalculator.DetermineWinner"/> is the single
-    /// source of truth for when the series is decided — the same threshold
-    /// <c>Application.Services.MatchSeriesService</c> uses for a live admin's
-    /// "agregar partido" action) and stops there — no games are generated past
-    /// the decisive one, matching how a live series behaves once
-    /// <c>AddGameToSeriesAsync</c> would start throwing.
-    ///
-    /// The "home" team (this builder's convention for the designated winner —
-    /// every other decisive result it seeds has home win too) always wins the
-    /// series, but how many games the visitor takes off it before losing
-    /// varies deterministically per pairing: <paramref name="seriesSeed"/> —
-    /// built from stable indices (stage order, pairing position), never a
-    /// randomly-generated id — selects 0..(gamesToWin-1) "away" wins the same
-    /// way <see cref="AddScoring"/> spreads points without System.Random, so a
-    /// reseed is reproducible while a batch of series still mixes sweeps and
-    /// full-distance series instead of ending identically.
+    /// Builds a real best-of-N MatchSeries between home and visitor and adds it, along with every game it plays, to stage.
     /// </summary>
     private static Team BuildDecidedSeries(
         Stage stage,
@@ -1129,9 +983,7 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
-    /// The rounds a single-elimination bracket of <paramref name="bracketSize"/>
-    /// seeds needs, in play order (first round first, Final last). Supports up
-    /// to a 16-seed bracket — the largest this builder's tournaments need.
+    /// The rounds a single-elimination bracket of bracketSize seeds needs, in play order with the first round first and Final last.
     /// </summary>
     private static List<(StageType Type, Template Template)> RoundsForBracket(int bracketSize)
     {
@@ -1154,17 +1006,7 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
-    /// Builds the cross-division cup (HU-110): one division with
-    /// <see cref="Division.IsCrossDivisionCup"/> = true whose teams are
-    /// <paramref name="allTeams"/> (the tournament's teams, or a subset via
-    /// <see cref="CrossCupDefinition.TeamPoolSize"/>), split into
-    /// <paramref name="crossCup"/>.GroupCount finished round-robin groups
-    /// ("Grupo 1".."Grupo N", jornadas on Wednesdays). The top
-    /// <c>QualifiersPerGroup</c> of every group are pooled via
-    /// <see cref="CrossCupGroupSeeder"/> into one bracket, built by
-    /// <see cref="SeedEliminationBracket"/> (as many rounds as the pool needs).
-    /// Each team gets a StageTeamMatch in its cup group IN ADDITION to its
-    /// regular zone — cross cups are exempt from one-team-one-zone.
+    /// Builds the cross-division cup, one division whose teams are drawn from allTeams and split into internal round-robin groups.
     /// </summary>
     private static void SeedCrossDivisionCup(
         Tournament tournament,
@@ -1246,12 +1088,7 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
-    /// Deterministic "does this fixture go against the seeding?" draw. The base
-    /// <paramref name="upsetPercent"/> is damped by the seeding gap, so
-    /// neighbours in the table trade wins often while a bottom side beating the
-    /// leader stays rare — the shape a real standings table has. 0 disables
-    /// upsets entirely (the stronger team always wins), which is the historical
-    /// behaviour every caller that does not opt in keeps.
+    /// Deterministic draw for whether this fixture goes against the seeding, with the base upsetPercent damped by the seeding gap.
     /// </summary>
     private static bool IsUpset(
         int upsetPercent, int varietySeed, int stageOrder, int round, int homeIdx, int visitorIdx)
@@ -1278,10 +1115,7 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
-    /// The gym a team plays its home games at. Picked by a stable hash of the
-    /// team name so a club always hosts at the same venue, instead of the match
-    /// index picking an unrelated gym on the other side of the province for
-    /// every game.
+    /// The gym a team plays its home games at, picked by a stable hash of the team name so a club always hosts at the same venue.
     /// </summary>
     private static Venue VenueForHome(Team home, List<Venue> venues)
     {
@@ -1310,11 +1144,7 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
-    /// Builds one finished, decisive (never-tied) Match with a scorer/statistic
-    /// for both teams (mirroring the goleadores ranking source, HU-72). Sets
-    /// <see cref="Match.Round"/> (the jornada) for round-robin games and leaves
-    /// it null for knockout games. <see cref="Match.Status"/> is set to
-    /// <see cref="MatchStatus.Played"/> so the result lifecycle is coherent.
+    /// Builds one finished, decisive, never-tied Match with a scorer and statistic for both teams.
     /// </summary>
     private static Match BuildFinishedMatch(
         Stage stage,
@@ -1361,12 +1191,7 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
-    /// Builds the match row that represents a first-round BYE: the seed that
-    /// advances is the home team, there is no visitor and no score, and the
-    /// match is already finished with that team as the winner — the same
-    /// representation <c>StageService.FillStageWithSeedsAsync</c> writes when it
-    /// seeds a bracket that is not a power of two. <see cref="PositionCalculator"/>
-    /// ignores it (it has no visitor), so it never reaches a standings table.
+    /// Builds the match row that represents a first-round BYE, where the home team advances with no visitor and no score.
     /// </summary>
     private static Match BuildByeMatch(Stage stage, Team home, List<Venue> venues, DateTime matchDate) =>
         new()
@@ -1393,12 +1218,7 @@ public static class SampleTournamentBuilder
         };
 
     /// <summary>
-    /// Builds one UPCOMING (unplayed) regular match: teams and a future
-    /// <see cref="Match.MatchDate"/>/<see cref="Match.Round"/> are set, but there
-    /// is no score, no winner and no scorers, and
-    /// <see cref="Match.Status"/> stays <see cref="MatchStatus.Scheduled"/> with
-    /// <see cref="Match.IsFinished"/> = false. Used to fill the still-to-play
-    /// jornadas of an in-progress tournament so its "Próximos" fixture has data.
+    /// Builds one UPCOMING, unplayed regular match with teams and a future date set but no score, winner, or scorers.
     /// </summary>
     private static Match BuildUpcomingMatch(
         Stage stage,
@@ -1436,14 +1256,7 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
-    /// The players of <paramref name="team"/> a seeded match sheet may list:
-    /// their season registration is Approved and they are not serving a
-    /// sanction. This is the same eligibility rule
-    /// <c>PlayerStatisticService.ValidateEligibilityAsync</c> enforces on every
-    /// real match sheet (HU-57/HU-60/HU-61) — the seed used to cycle through the
-    /// whole roster and hand points to the deliberately Pending player too.
-    /// Falls back to the full roster only if a team somehow has no registration
-    /// at all, so a match is never left without scorers.
+    /// The players of team that a seeded match sheet may list, meaning their season registration is Approved and they are not serving a sanction.
     /// </summary>
     private static List<Player> EligibleScorers(Team team)
     {
@@ -1458,13 +1271,7 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
-    /// Keeps a suspended player off the match sheets he is not allowed to
-    /// appear on: his scoring rows in the games he must miss are handed to a
-    /// team-mate who is not already scoring in that game, so the team's points
-    /// still add up to the recorded result. The window is the next
-    /// <paramref name="duration"/> games his team plays after the ruling; while
-    /// the sanction is still ACTIVE (<see cref="Player.IsSanctioned"/> says he
-    /// is serving it right now) it runs to the end of the tournament.
+    /// Hands a suspended player's scoring rows in the games he must miss to a team-mate who is not already scoring in that game.
     /// </summary>
     private static void ApplySuspension(
         List<Match> playedMatches, Player player, Team team, Match sanctionMatch, int duration, bool active)
@@ -1481,10 +1288,7 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
-    /// Moves every scoring row <paramref name="player"/> holds in
-    /// <paramref name="match"/> onto an eligible team-mate who is not already
-    /// scoring in it, so the points still sum to the team's recorded score. A
-    /// no-op when the player did not score in that game.
+    /// Moves every scoring row player holds in match onto an eligible team-mate who is not already scoring in it.
     /// </summary>
     private static void ReassignScoring(Match match, Player player, Team team)
     {
@@ -1515,9 +1319,7 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
-    /// Adds a scorer plus Points/Assists PlayerStatistic rows for one team in a
-    /// match (HU-72: the goleadores ranking reads PlayerStatistic). Skips a
-    /// zero-score team so no phantom scorer is created.
+    /// Adds a scorer plus Points and Assists PlayerStatistic rows for one team in a match.
     /// </summary>
     private static void AddScoring(Match match, Team team, int score, int scorerSeed)
     {
@@ -1594,11 +1396,7 @@ public static class SampleTournamentBuilder
     }
 
     /// <summary>
-    /// Seeds a coherent, varied set of basketball sanctions tied to real
-    /// finished group matches/players (HU-75/HU-77): a mix of active
-    /// (IsSanctioned) and served sanctions, one under appeal, and one
-    /// institutional Team sanction. All descriptions are Spanish, basketball
-    /// terms (technical/unsportsmanlike/disqualifying fouls, not soccer cards).
+    /// Seeds a coherent, varied set of basketball sanctions tied to real finished group matches and players.
     /// </summary>
     private static List<PlayerSanction> SeedSanctions(List<Stage> groupStages, Tournament tournament)
     {

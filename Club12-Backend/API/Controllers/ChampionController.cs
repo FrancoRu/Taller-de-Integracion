@@ -16,8 +16,7 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Controller exposing the club's champions history across finished
-/// tournaments. Reads are public.
+/// Exposes the club's champions history across finished tournaments; reads are public.
 /// </summary>
 /// <param name="championService">The champion service.</param>
 [Route("api/champions")]
@@ -26,13 +25,11 @@ namespace API.Controllers;
 public class ChampionController(IChampionService championService) : ControllerBase
 {
     /// <summary>
-    /// Lists the champion (1st place) of every division of every FINISHED
-    /// tournament, optionally scoped to a single season. Divisions without a
-    /// decided champion are omitted.
+    /// Lists each division's first-place champion across every finished tournament, optionally scoped to one season, omitting divisions without a decided champion.
     /// </summary>
-    /// <param name="seasonId">Optional season filter (GUID); when omitted, spans all seasons.</param>
+    /// <param name="seasonId">Optional season filter as a GUID; when omitted, spans all seasons.</param>
     /// <returns>
-    /// Returns 200 (OK) with the champions history.
+    /// Returns 200 OK with the champions history.
     /// </returns>
     [AllowAnonymous]
     [HttpGet]

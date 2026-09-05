@@ -7,20 +7,12 @@ using System.Linq;
 namespace Application.Utils.Helper.Playoff;
 
 /// <summary>
-/// Resolves which teams qualify for each playoff cup from the final
-/// group-stage standings and the per-division position-range mappings
-/// (HU-45/HU-81). A cup can draw teams from several divisions; within a cup
-/// they are seeded by their finishing position in their own division (a
-/// division winner outranks a division runner-up), so a single division maps
-/// straight to its standings order.
+/// Resolves which teams qualify for each playoff cup from the final group-stage standings and the per-division position-range mappings.
 /// </summary>
 public static class PlayoffQualificationResolver
 {
     /// <summary>
-    /// One division's contribution to the playoffs: its final standings
-    /// (best team first) and its position-range → destination mappings.
-    /// <see cref="DivisionOrder"/> breaks ties between equally-placed teams
-    /// from different divisions when they land in the same cup (lower first).
+    /// One division's contribution to the playoffs: its final standings, best team first, and its position-range to destination mappings.
     /// </summary>
     public sealed class DivisionStandings
     {
@@ -30,10 +22,7 @@ public static class PlayoffQualificationResolver
     }
 
     /// <summary>
-    /// Returns, per destination cup, the ordered list of qualifying team ids
-    /// (best seed first) gathered across every contributing division. A team
-    /// qualifies when its 1-based finishing position falls inside one of its
-    /// division's ranges; the range's destination is the cup it joins.
+    /// Returns, per destination cup, the ordered list of qualifying team ids gathered across every contributing division, best seed first.
     /// </summary>
     public static Dictionary<string, List<Guid>> Resolve(IEnumerable<DivisionStandings> divisions)
     {

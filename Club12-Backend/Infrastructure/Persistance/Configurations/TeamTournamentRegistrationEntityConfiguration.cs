@@ -6,9 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Infrastructure.Persistance.Configurations;
 
 /// <summary>
-/// A team may be registered to the same tournament only once — enforced by
-/// the unique index on TeamId+TournamentId — but MAY hold independent
-/// registrations across multiple different tournaments/seasons at once.
+/// A team may be registered to the same tournament only once, enforced by a unique index on TeamId and TournamentId, but may hold independent registrations across multiple tournaments at once.
 /// </summary>
 public class TeamTournamentRegistrationEntityConfiguration : BaseEntityConfiguration<TeamTournamentRegistration>
 {

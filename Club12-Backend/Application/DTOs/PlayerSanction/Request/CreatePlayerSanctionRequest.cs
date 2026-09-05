@@ -14,7 +14,7 @@ namespace Application.DTOs.PlayerSanction.Request;
 public class CreatePlayerSanctionRequest : IValidatableObject
 {
     /// <summary>
-    /// The duration in fixtures (fechas / jornadas) of the sanction.
+    /// The duration in fixtures, or fechas, of the sanction.
     /// </summary>
     [Required(ErrorMessage = "The Duration field is required.")]
     public required int Duration { get; set; }
@@ -27,27 +27,22 @@ public class CreatePlayerSanctionRequest : IValidatableObject
     public required string Description { get; set; }
 
     /// <summary>
-    /// The kind of subject the sanction targets (HU-77). Defaults to
-    /// <see cref="SanctionSubjectType.Player"/> so existing clients that only
-    /// send a PlayerId keep working unchanged.
+    /// The kind of subject the sanction targets; defaults to Player so existing clients keep working.
     /// </summary>
     public SanctionSubjectType SubjectType { get; set; } = SanctionSubjectType.Player;
 
     /// <summary>
-    /// The unique identifier of the player who has a sanction. Required when
-    /// <see cref="SubjectType"/> is <see cref="SanctionSubjectType.Player"/>.
+    /// The sanctioned player's identifier; required when SubjectType is Player.
     /// </summary>
     public Guid? PlayerId { get; set; }
 
     /// <summary>
-    /// The unique identifier of the sanctioned team. Required when
-    /// <see cref="SubjectType"/> is <see cref="SanctionSubjectType.Team"/>.
+    /// The sanctioned team's identifier; required when SubjectType is Team.
     /// </summary>
     public Guid? TeamId { get; set; }
 
     /// <summary>
-    /// The sanctioned staff member's name. Required when
-    /// <see cref="SubjectType"/> is <see cref="SanctionSubjectType.Staff"/>.
+    /// The sanctioned staff member's name; required when SubjectType is Staff.
     /// </summary>
     [MaxLength(SanctionFieldLengths.DescriptionMaxLength)]
     public string? StaffName { get; set; }

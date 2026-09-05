@@ -1,8 +1,7 @@
 namespace API.Utils;
 
 /// <summary>
-/// Maps file-extension enums to the actual dotted extension string
-/// (e.g. <see cref="ImageFileExtension.Jpg"/> to ".jpg").
+/// Maps file-extension enums to the actual dotted extension string, so ImageFileExtension.Jpg maps to ".jpg".
 /// </summary>
 public static class FileExtensionMappings
 {

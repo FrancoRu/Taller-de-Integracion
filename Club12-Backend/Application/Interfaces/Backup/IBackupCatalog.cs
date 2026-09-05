@@ -8,9 +8,7 @@ using System.Threading.Tasks;
 namespace Application.Interfaces.Backup;
 
 /// <summary>
-/// Durable, queryable per-backup record store — the source of truth for the
-/// admin backup listing (not IBackupStorage.ListAsync, which only reflects
-/// whatever files currently exist in blob/directory storage).
+/// Durable, queryable per-backup record store that is the source of truth for the admin backup listing.
 /// </summary>
 public interface IBackupCatalog
 {

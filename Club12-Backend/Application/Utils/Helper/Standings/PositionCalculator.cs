@@ -8,12 +8,7 @@ using System.Linq;
 namespace Application.Utils.Helper.Standings;
 
 /// <summary>
-/// Computes division standings from a set of matches. Basketball has no
-/// draws: every finished, fully-seeded match has exactly one winner, so a
-/// team either wins or loses — never a tie. The points awarded for a win and
-/// a loss are configurable per division (HU-79, defaulting to 2/1), and ties
-/// on table points are broken with the club's fixed group-stage tiebreaker
-/// order (HU-80).
+/// Computes division standings from a set of matches.
 /// </summary>
 public static class PositionCalculator
 {
@@ -21,19 +16,16 @@ public static class PositionCalculator
     public const int DefaultPointsForLoss = 1;
 
     /// <summary>
-    /// Builds one Position per team that appears in at least one finished,
-    /// fully-seeded match, ordered by the HU-80 group-stage tiebreaker chain.
-    /// Unfinished matches and matches missing a home or visitor team (not yet
-    /// seeded) are ignored.
+    /// Builds one Position per team that appears in at least one finished, fully-seeded match, ordered by the group-stage tiebreaker chain.
     /// </summary>
     /// <param name="matches">The zone's matches.</param>
-    /// <param name="pointsForWin">Table points for a win (HU-79). Defaults to 2.</param>
-    /// <param name="pointsForLoss">Table points for a loss (HU-79). Defaults to 1.</param>
+    /// <param name="pointsForWin">Table points for a win. Defaults to 2.</param>
+    /// <param name="pointsForLoss">Table points for a loss. Defaults to 1.</param>
     /// <param name="deductions">
     /// Disciplinary point deductions to subtract from the affected teams'
     /// totals before ranking. Each team's deductions are summed and subtracted
-    /// from its <see cref="Position.Points"/>; the amount and reason are
-    /// surfaced on <see cref="Position.PointDeduction"/>. The subtraction is
+    /// from its Position.Points; the amount and reason are
+    /// surfaced on Position.PointDeduction. The subtraction is
     /// raw and is never clamped — a heavy penalty may legitimately drop a
     /// team's total below zero and below other teams. Null/empty leaves every
     /// total untouched.
@@ -41,8 +33,8 @@ public static class PositionCalculator
     /// <param name="rosterTeams">
     /// Optional teams assigned to the zone. When provided, each is seeded into
     /// the table at 0-0 so every assigned team shows from the start, before any
-    /// match is played. Null keeps the legacy behavior (only teams with a
-    /// finished match appear).
+    /// match is played. Null keeps the legacy behavior, only teams with a
+    /// finished match appear.
     /// </param>
     public static List<Position> CalculatePositions(
         IEnumerable<Match> matches,
@@ -88,14 +80,7 @@ public static class PositionCalculator
     }
 
     /// <summary>
-    /// Subtracts each team's accumulated disciplinary deductions from its
-    /// standings total (deducción de puntos). Deductions are summed per team,
-    /// their reasons combined, and the result is recorded on
-    /// <see cref="Position.PointDeduction"/>. Only teams that appear in the
-    /// standings (i.e. have played at least one finished match) are affected.
-    /// The subtraction is intentionally NOT clamped at zero: a penalty may sink
-    /// a team below zero, mirroring real disciplinary rulings, and the value is
-    /// displayed as-is.
+    /// Subtracts each team's accumulated disciplinary deductions from its standings total.
     /// </summary>
     public static void ApplyDeductions(
         IEnumerable<Position> positions,
@@ -140,12 +125,7 @@ public static class PositionCalculator
     }
 
     /// <summary>
-    /// Orders the positions applying the HU-80 chain stepwise: teams are
-    /// first sorted by PTS, then PG, then whole-zone DG. Any remaining group
-    /// of teams still tied on all three is broken by the head-to-head
-    /// mini-table built only from the games among that tied group, and — only
-    /// when those teams played each other more than once — by the points
-    /// difference within those same games.
+    /// Orders the positions applying the tiebreaker chain stepwise: teams are first sorted by PTS, then PG, then whole-zone DG.
     /// </summary>
     private static List<Position> OrderWithTiebreakers(
         IEnumerable<Position> positions,
@@ -194,10 +174,7 @@ public static class PositionCalculator
     }
 
     /// <summary>
-    /// Breaks a set of teams tied on PTS/PG/DG using the head-to-head
-    /// mini-table (points earned only in games among the tied set) and then,
-    /// when the tied set played each other more than once, the points
-    /// difference within those games.
+    /// Breaks a set of teams tied on PTS/PG/DG using the head-to-head mini-table, points earned only in games among the tied set.
     /// </summary>
     private static List<Position> BreakTie(
         List<Position> tiedGroup,
@@ -237,10 +214,7 @@ public static class PositionCalculator
     }
 
     /// <summary>
-    /// Records, for each team, the criterion that separated it from the team
-    /// ranked immediately above it, so the standings UI can show why each tie
-    /// was broken (HU-80). The top team and any team not sharing table points
-    /// with the one above it carry no reason.
+    /// Records, for each team, the criterion that separated it from the team ranked immediately above it, so the standings UI can show why each tie was broken.
     /// </summary>
     private static void AssignResolvedBy(List<Position> ordered)
     {
@@ -272,9 +246,7 @@ public static class PositionCalculator
     }
 
     /// <summary>
-    /// Returns the team's <see cref="Position"/>, creating a zeroed one on first
-    /// touch. Used both to seed the assigned roster (0-0) and lazily when a
-    /// finished match introduces a team.
+    /// Returns the team's Position, creating a zeroed one on first touch.
     /// </summary>
     private static Position EnsurePosition(
         Dictionary<Guid, Position> positionsByTeamId,

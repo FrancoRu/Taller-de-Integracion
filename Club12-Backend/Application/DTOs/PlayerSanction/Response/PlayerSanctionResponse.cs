@@ -11,22 +11,17 @@ namespace Application.DTOs.PlayerSanction.Response;
 public class PlayerSanctionResponse : BaseEntityResponse
 {
     /// <summary>
-    /// The duration in fixtures (fechas / jornadas) of the sanction.
+    /// The duration in fixtures, or fechas, of the sanction.
     /// </summary>
     public required int Duration { get; set; }
 
     /// <summary>
-    /// The number of FECHAS (jornadas) still to be served, computed from the
-    /// team's finished rounds since the sanction was issued (HU-75). Zero means
-    /// the sanction has been fully served. Null when it cannot be computed
-    /// (e.g. the originating match has no round). This is expressed in fechas,
-    /// never in calendar days.
+    /// The number of fechas still to be served; zero means fully served, null means it cannot be computed.
     /// </summary>
     public int? FechasRemaining { get; set; }
 
     /// <summary>
-    /// Whether the sanction is still active (HU-76): true while there are
-    /// fechas remaining to be served. A fully-served sanction is inactive.
+    /// Whether the sanction is still active, meaning fechas remain to be served.
     /// </summary>
     public bool IsActive { get; set; }
 
@@ -40,13 +35,12 @@ public class PlayerSanctionResponse : BaseEntityResponse
     public required string Slug { get; set; }
 
     /// <summary>
-    /// The kind of subject the sanction targets (HU-77): Player, Team or Staff.
+    /// The kind of subject the sanction targets: Player, Team, or Staff.
     /// </summary>
     public SanctionSubjectType SubjectType { get; set; }
 
     /// <summary>
-    /// The unique identifier of the player who has the sanction. Null for
-    /// team or staff sanctions.
+    /// The sanctioned player's identifier; null for team or staff sanctions.
     /// </summary>
     public Guid? PlayerId { get; set; }
 
@@ -56,8 +50,7 @@ public class PlayerSanctionResponse : BaseEntityResponse
     public string? PlayerFullName { get; set; }
 
     /// <summary>
-    /// The unique identifier of the sanctioned team. Null unless this is a
-    /// team sanction.
+    /// The sanctioned team's identifier; null unless this is a team sanction.
     /// </summary>
     public Guid? TeamId { get; set; }
 

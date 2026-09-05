@@ -24,14 +24,13 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Controller for managing Matches. Reads are public; writes require
-/// Owner or Admin.
+/// Manages matches; reads are public but writes require Owner or Admin.
 /// </summary>
 /// <param name="matchService">The Match service.</param>
 /// <param name="stageTeamMatchService">The stage-team match service.</param>
 /// <param name="matchSeriesService">The playoff series service.</param>
 /// <param name="playerStatisticService">The player-statistic service.</param>
-/// <param name="stageService">The stage service (bracket-round advancement).</param>
+/// <param name="stageService">The stage service, used for bracket-round advancement.</param>
 /// <param name="mapper">The AutoMapper instance.</param>
 [Route("api/matches/")]
 [ApiController]
@@ -65,10 +64,6 @@ public class MatchController(
     /// <summary>
     /// Generates automated matches for a given stage.
     /// </summary>
-    /// <remarks>
-    /// This endpoint creates a set of matches automatically based on the provided stage identifier.
-    /// The generated matches are mapped to detailed match response DTOs and returned to the client.
-    /// </remarks>
     /// <param name="id">The unique identifier of the stage for which matches will be generated.</param>
     /// <returns>
     /// Returns a list of DetailedMatchResponse objects representing the generated matches.
@@ -106,7 +101,7 @@ public class MatchController(
     /// <summary>
     /// Retrieves a match by its id or its public slug.
     /// </summary>
-    /// <param name="idOrSlug">Match identifier (GUID) or slug.</param>
+    /// <param name="idOrSlug">Match identifier as a GUID or slug.</param>
     /// <returns>The match response DTO.</returns>
     [AllowAnonymous]
     [HttpGet("{idOrSlug}")]
@@ -126,14 +121,11 @@ public class MatchController(
     }
 
     /// <summary>
-    /// Updates a match's scheduled date and/or venue. Rejects the change if the match
-    /// already started or finished, if its teams aren't assigned to the stage, or if the
-    /// new date/venue combination conflicts with another match (a court cannot host two
-    /// matches less than 2 hours apart).
+    /// Updates a match's scheduled date or venue, rejecting the change if the match already started or finished, its teams aren't assigned to the stage, or the new slot conflicts with another match.
     /// </summary>
     /// <param name="id">The id of the match to update.</param>
     /// <param name="updateRequest">The request containing the new match date and/or venue.</param>
-    /// <returns>Returns 200 (OK) with the updated match, 400 (Bad Request) if the change is rejected, or 404 (Not Found) if no match matches the id.</returns>
+    /// <returns>Returns 200 OK with the updated match, 400 Bad Request if the change is rejected, or 404 Not Found if no match matches the id.</returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedMatchResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -188,9 +180,7 @@ public class MatchController(
     }
 
     /// <summary>
-    /// Retrieves a stage's matches grouped by matchday (jornada, HU-63) so the
-    /// fixture can be rendered as "Fecha 1 / Partido 1..2, Fecha 2 / …". The
-    /// grouping key is the round, not the calendar date.
+    /// Retrieves a stage's matches grouped by matchday, using the round as the grouping key rather than the calendar date.
     /// </summary>
     /// <param name="stageId">The id of the stage whose fixture is requested.</param>
     /// <returns>The matches grouped and ordered by round.</returns>
@@ -214,9 +204,7 @@ public class MatchController(
     }
 
     /// <summary>
-    /// Reprograms/suspends a match (HU-68): marks it suspended and optionally
-    /// moves it to a new date, without changing its round (HU-67) or the rest
-    /// of the fixture.
+    /// Reprograms or suspends a match, marking it suspended and optionally moving it to a new date without changing its round or the rest of the fixture.
     /// </summary>
     /// <param name="id">The id of the match to suspend/reprogram.</param>
     /// <param name="suspendRequest">The request with an optional new date.</param>
@@ -241,7 +229,7 @@ public class MatchController(
     /// Deletes a match by its id.
     /// </summary>
     /// <param name="id">The id of the match to delete.</param>
-    /// <returns>Returns 204 (No Content) on success.</returns>
+    /// <returns>Returns 204 No Content on success.</returns>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -271,13 +259,11 @@ public class MatchController(
     }
 
     /// <summary>
-    /// Records a match's final score. If the match belongs to a playoff series this may
-    /// decide the series; if it decides a bracket slot, the winner is automatically
-    /// advanced into the next round.
+    /// Records a match's final score, which may decide a playoff series and auto-advance a bracket winner into the next round.
     /// </summary>
     /// <param name="id">The id of the match to update.</param>
     /// <param name="scoreRequest">The request with updated scores.</param>
-    /// <returns>Returns 200 (OK) with the updated match, or 404 (Not Found) if no match matches the id.</returns>
+    /// <returns>Returns 200 OK with the updated match, or 404 Not Found if no match matches the id.</returns>
     [HttpPut("{id:guid}/score")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedMatchResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -306,12 +292,7 @@ public class MatchController(
     }
 
     /// <summary>
-    /// Finishes a match by loading both teams' scoring sheets in one
-    /// coherent operation (HU-72): the final score is DERIVED as the sum of
-    /// each team's listed player points, instead of being typed in separately
-    /// and checked against a sheet afterward (the older <c>match-sheet</c>
-    /// flow, still available for corrections one team at a time). Like the score
-    /// endpoint, this may decide a playoff series and auto-advance a bracket winner.
+    /// Finishes a match by loading both teams' scoring sheets in one operation, deriving the final score as the sum of each team's listed player points instead of accepting a typed score directly.
     /// </summary>
     /// <param name="id">The id of the match to finish.</param>
     /// <param name="request">Both teams' per-player points.</param>
@@ -346,9 +327,7 @@ public class MatchController(
     }
 
     /// <summary>
-    /// Marks a match as a walkover (HU-73), awarding the regulation default
-    /// result to the present team. Like the score endpoint, this may decide a
-    /// playoff series and auto-advance a bracket winner.
+    /// Marks a match as a walkover, awarding the regulation default result to the present team.
     /// </summary>
     /// <param name="id">The id of the match to mark as a walkover.</param>
     /// <param name="walkOverRequest">The request identifying the present team.</param>

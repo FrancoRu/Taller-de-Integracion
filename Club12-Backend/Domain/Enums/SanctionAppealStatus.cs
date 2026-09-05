@@ -13,12 +13,12 @@ public enum SanctionAppealStatus
     Pending,
 
     /// <summary>
-    /// The appeal was accepted (the sanction is overturned).
+    /// The appeal was accepted and the sanction is overturned.
     /// </summary>
     Accepted,
 
     /// <summary>
-    /// The appeal was rejected (the sanction stands).
+    /// The appeal was rejected and the sanction stands.
     /// </summary>
     Rejected
 }

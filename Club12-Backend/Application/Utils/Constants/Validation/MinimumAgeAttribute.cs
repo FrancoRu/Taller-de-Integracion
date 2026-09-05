@@ -4,12 +4,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Application.Utils.Constants.Validation;
 
 /// <summary>
-/// Validates that a <see cref="DateTime"/> (or <see cref="Nullable{T}"/> of it)
-/// birth date is at least <c>minimumYears</c> years in the past, i.e. the
-/// person is at least that many years old today. A null value passes (pair
-/// with <c>[Required]</c> when the field itself is mandatory) so this
-/// attribute works unchanged on the optional <c>BirthDate</c> in an update
-/// request.
+/// Validates that a DateTime birth date is at least minimumYears years in the past, meaning the person is at least that many years old today.
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
 public sealed class MinimumAgeAttribute(int minimumYears) : ValidationAttribute

@@ -8,20 +8,18 @@ using System.Linq;
 namespace Application.Utils.Helper.Champions;
 
 /// <summary>
-/// Pure logic that resolves a division's podium from its elimination bracket,
-/// with no data access. It decides which bracket is the division's TOP cup
-/// (the one seeded from position #1, e.g. "Copa de Oro"), then reads that
-/// bracket's Final and third-place outcomes. Best-of-N rounds are decided by
-/// the <see cref="MatchSeries"/> winner; single-game rounds by the match's
-/// <see cref="Match.WinningTeamId"/>. Nothing is guessed: an undecided final
-/// yields a null champion.
+/// Pure logic that resolves a division's podium from its elimination bracket, with no data access.
 /// </summary>
 public static class ChampionResolver
 {
-    /// <summary>A team occupying a podium place.</summary>
+    /// <summary>
+    /// A team occupying a podium place.
+    /// </summary>
     public sealed record TeamRef(Guid TeamId, string TeamName, string LogoUrl);
 
-    /// <summary>The three podium places; any place may be null when undecided.</summary>
+    /// <summary>
+    /// The three podium places; any place may be null when undecided.
+    /// </summary>
     public sealed class Podium
     {
         public TeamRef? First { get; init; }
@@ -29,14 +27,7 @@ public static class ChampionResolver
         public TeamRef? Third { get; init; }
 
         /// <summary>
-        /// True when <see cref="Third"/> is null only because the top cup never
-        /// had a real bracket round to draw a third place from (no RoundOf16/
-        /// QuarterFinal/SemiFinal — just a Final bolted onto group standings to
-        /// crown 1st/2nd, e.g. a top-2 "Copa de Oro" decider). The caller should
-        /// then fall back to standings position 3 as the implicit bronze. A real
-        /// bracket (a SemiFinal exists) that simply opted out of a third-place
-        /// match is a deliberate, valid two-team podium — this stays false there,
-        /// so the caller must NOT substitute a standings-based third for it.
+        /// True when Third is null only because the top cup never had a real bracket round to draw a third place from.
         /// </summary>
         public bool ImplicitThirdFromStandings { get; init; }
     }
@@ -49,25 +40,15 @@ public static class ChampionResolver
     ];
 
     /// <summary>
-    /// The champion of a single sub-cup (playoff bracket) of a division.
-    /// <see cref="CupName"/> is the bracket's name (e.g. "Copa Oro"); it is null
-    /// only for a single unnamed bracket. <see cref="SeedOrder"/> orders the cups
-    /// by tier — the top cup (seeded from standings position #1) comes first.
+    /// The champion of a single sub-cup, a playoff bracket, of a division.
     /// </summary>
     public sealed record CupChampion(string? CupName, int SeedOrder, TeamRef Champion);
 
     /// <summary>
-    /// Resolves the podium of a division that has a playoff. The top cup is the
-    /// bracket seeded from standings position #1: when the division maps several
-    /// cups (HU-45/HU-81) it is the destination of the mapping with the lowest
-    /// <see cref="DivisionPlayoffMapping.FromPosition"/>; when there is a single
-    /// bracket (the default cup or a cross-division cup) that one bracket is the
-    /// top cup. 1st = the top cup's Final winner, 2nd = the Final loser, 3rd =
-    /// the winner of that cup's <see cref="StageType.ThirdPlace"/> stage when one
-    /// exists.
+    /// Resolves the podium of a division that has a playoff.
     /// </summary>
     /// <param name="eliminationStages">Every non-group stage of the division.</param>
-    /// <param name="mappings">The division's position-range → cup mappings (may be empty).</param>
+    /// <param name="mappings">The division's position-range to cup mappings, which may be empty.</param>
     /// <param name="eliminationMatches">The finished/seeded matches of the elimination stages, with their team navigations loaded.</param>
     /// <param name="series">The division's best-of-N series, with their team navigations loaded.</param>
     public static Podium ResolvePlayoffPodium(
@@ -113,13 +94,7 @@ public static class ChampionResolver
     }
 
     /// <summary>
-    /// Resolves the champion of EVERY sub-cup (playoff bracket) of a division,
-    /// not just the top one. Each distinct <see cref="Stage.BracketName"/> is a
-    /// cup; its champion is the winner of that cup's <see cref="StageType.Final"/>.
-    /// Cups whose Final is undecided are omitted. Results are ordered by tier: the
-    /// cup seeded from the lowest standings position (via <paramref name="mappings"/>)
-    /// comes first, then the rest by name. When the division has a single bracket
-    /// its <see cref="CupChampion.CupName"/> is null (no sub-tier distinction).
+    /// Resolves the champion of every sub-cup, a playoff bracket, of a division, not just the top one.
     /// </summary>
     public static IReadOnlyList<CupChampion> ResolveCupChampions(
         IReadOnlyList<Stage> eliminationStages,
@@ -175,12 +150,7 @@ public static class ChampionResolver
     }
 
     /// <summary>
-    /// Picks the division's top cup name. A single-bracket division (default cup
-    /// or cross-division cup) has one distinct <see cref="Stage.BracketName"/>
-    /// (often null) which is returned as-is. When several named cups coexist, the
-    /// top cup is the one that receives seed #1 — the destination of the mapping
-    /// with the lowest FromPosition — falling back to the first bracket name in
-    /// ordinal order if the mappings do not name a known bracket.
+    /// Picks the division's top cup name.
     /// </summary>
     private static string? ResolveTopBracketName(
         IReadOnlyList<Stage> eliminationStages,
@@ -211,13 +181,7 @@ public static class ChampionResolver
     }
 
     /// <summary>
-    /// Reads a single elimination stage's decided outcome as a (winner, loser)
-    /// pair. A best-of-N stage is decided by its <see cref="MatchSeries"/>: if a
-    /// series exists for the stage it is authoritative, so an undecided series
-    /// yields no outcome even when its individual games are finished. A
-    /// single-game stage is decided by the finished match's winner (the latest
-    /// by date, defensively, though a Final holds a single pairing). Returns null
-    /// when nothing is decided yet.
+    /// Reads a single elimination stage's decided outcome as a winner and loser pair.
     /// </summary>
     private static (Guid Winner, Guid Loser)? ResolveStageOutcome(
         Stage stage,

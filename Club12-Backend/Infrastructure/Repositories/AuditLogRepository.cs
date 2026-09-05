@@ -7,8 +7,7 @@ using Infrastructure.Persistance;
 namespace Infrastructure.Repositories;
 
 /// <summary>
-/// Repository implementation for <see cref="AuditLog"/> entries (HU-101).
-/// Inherits generic CRUD from GenericRepository{AuditLog}.
+/// Repository implementation for AuditLog entries, inheriting generic CRUD from GenericRepository.
 /// </summary>
 /// <param name="context">The application's database context.</param>
 public class AuditLogRepository(ApplicationDBContext context)

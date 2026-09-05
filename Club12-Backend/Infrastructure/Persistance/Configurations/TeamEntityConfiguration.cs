@@ -6,8 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Infrastructure.Persistance.Configurations;
 
 /// <summary>
-/// TournamentId is an optional FK since a Team may exist without a tournament.
-/// Deleting a Team cascades to its Players.
+/// TournamentId is an optional foreign key, since a Team may exist without a tournament.
 /// </summary>
 public class TeamEntityConfiguration : BaseEntityConfiguration<Team>
 {

@@ -21,16 +21,8 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Controller for managing Stage entities, providing endpoints for creation, retrieval, update, deletion,
-/// automated generation of stages and matches, and team assignment operations. Reads are public; writes
-/// require Owner or Admin.
+/// Manages Stage entities: creation, retrieval, update, deletion, automated generation, and team assignment. Reads are public; writes require Owner or Admin.
 /// </summary>
-/// <remarks>
-/// This controller exposes RESTful endpoints for handling Stage-related operations in the tournament system.
-/// It supports creating new stages, generating stages and matches for a division, retrieving stages by ID or with filters,
-/// updating and deleting stages, and assigning or unassigning teams to stages.
-/// The controller leverages dependency injection for services and AutoMapper for DTO mapping.
-/// </remarks>
 /// <param name="stageService">Service for Stage business logic and persistence operations.</param>
 /// <param name="matchService">Service for Match business logic and automated match generation.</param>
 /// <param name="mapper">AutoMapper instance for mapping between entities and DTOs.</param>
@@ -59,10 +51,6 @@ public class StageController(IStageService stageService, IMatchService matchServ
     /// <summary>
     /// Generates all stages and matches for the specified division and returns the resulting stage information.
     /// </summary>
-    /// <remarks>
-    /// Use this endpoint to automatically create the full set of stages and matches for a division.
-    /// This operation is typically used after a division has been set up and is ready for scheduling.
-    /// </remarks>
     /// <param name="id">The unique identifier of the division for which stages and matches are to be generated.</param>
     /// <returns>An HTTP 200 OK response containing a list of stage details if the operation succeeds.</returns>
     [HttpPost("generate/{id:guid}")]
@@ -82,7 +70,7 @@ public class StageController(IStageService stageService, IMatchService matchServ
     /// <summary>
     /// Retrieves a Stage by its id or its public slug.
     /// </summary>
-    /// <param name="idOrSlug">The id (GUID) or slug of the Stage.</param>
+    /// <param name="idOrSlug">The Stage's GUID id or slug.</param>
     /// <returns>The Stage entity.</returns>
     [AllowAnonymous]
     [HttpGet("{idOrSlug}")]
@@ -162,10 +150,6 @@ public class StageController(IStageService stageService, IMatchService matchServ
     /// <summary>
     /// Assigns one or more teams to a specific stage.
     /// </summary>
-    /// <remarks>
-    /// This endpoint allows assigning teams to a stage, either manually or automatically.
-    /// The assignment is based on the provided team IDs and the 'Auto' flag in the request.
-    /// </remarks>
     /// <param name="id">The unique identifier of the stage to which teams will be assigned.</param>
     /// <param name="request">The assignment request containing team IDs and assignment mode.</param>
     /// <returns>
@@ -209,10 +193,7 @@ public class StageController(IStageService stageService, IMatchService matchServ
     }
 
     /// <summary>
-    /// Seeds an elimination stage's already-generated matches from the
-    /// division's group-stage standings, using the classic bracket seed
-    /// order (1v8, 4v5, 2v7, 3v6) so the top two seeds only meet in the
-    /// final.
+    /// Seeds an elimination stage's matches from the group-stage standings using the classic 1v8, 4v5, 2v7, 3v6 bracket seed order.
     /// </summary>
     /// <param name="id">The elimination stage to seed.</param>
     /// <returns>

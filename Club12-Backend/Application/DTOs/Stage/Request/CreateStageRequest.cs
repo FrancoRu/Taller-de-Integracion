@@ -14,7 +14,7 @@ namespace Application.DTOs.Stage.Request;
 public class CreateStageRequest
 {
     /// <summary>
-    /// The name of the stage (e.g., "Group A", "Quarterfinals").
+    /// The name of the stage.
     /// </summary>
     [Required(ErrorMessage = "Stage name field is required.")]
     public required string Name { get; set; }
@@ -25,14 +25,12 @@ public class CreateStageRequest
     public required StageType StageType { get; set; } = StageType.Group;
 
     /// <summary>
-    /// Indicates whether the stage is currently active.
-    /// If null, the default should be true.
+    /// Whether the stage is currently active; null defaults to true.
     /// </summary>
     public bool? IsActive { get; set; }
 
     /// <summary>
-    /// Indicates whether this is an elimination stage.
-    /// If null, the default should be false.
+    /// Whether this is an elimination stage; null defaults to false.
     /// </summary>
     public bool? IsElimination { get; set; }
 
@@ -55,23 +53,18 @@ public class CreateStageRequest
     public required Guid DivisionId { get; set; }
 
     /// <summary>
-    /// Optional label grouping this stage with other parallel elimination
-    /// brackets in the same division (e.g. "Copa de Oro", "Copa de Plata").
-    /// Null means the stage belongs to the division's single/default bracket.
+    /// Optional label grouping this stage with parallel elimination brackets; null uses the default bracket.
     /// </summary>
     public string? BracketName { get; set; }
 
     /// <summary>
-    /// Number of games in a series between two teams at this round: 1, 3,
-    /// 5, or 7. Defaults to 1 (a single match decides the round).
+    /// Number of games in a series between two teams at this round, one of 1, 3, 5, or 7; defaults to 1.
     /// </summary>
     [AllowedValues(1, 3, 5, 7)]
     public int BestOf { get; set; } = 1;
 
     /// <summary>
-    /// How many times each pair of teams plays within this group stage
-    /// (1 = single round-robin, 2 = double, ...). Only meaningful for a
-    /// Group stage.
+    /// How many times each pair of teams plays within this group stage; only meaningful for a Group stage.
     /// </summary>
     [Range(RoundRobinFormat.MIN_LEGS, RoundRobinFormat.MAX_LEGS)]
     public int RoundRobinLegs { get; set; } = RoundRobinFormat.MIN_LEGS;

@@ -22,10 +22,7 @@ using System.Threading.Tasks;
 namespace Application.Services;
 
 /// <summary>
-/// Records player statistics, most notably match scoring sheets: a team's
-/// final score is always derived as the sum of the per-player points loaded
-/// here, never entered independently (see <see cref="LoadTeamMatchSheetAsync"/>
-/// and <see cref="LoadMatchResultFromSheetsAsync"/>).
+/// Records player statistics, most notably match scoring sheets that derive a team's final score.
 /// </summary>
 public class PlayerStatisticService(IUnitOfWork unitOfWork, IStageService stageService) : IPlayerStatisticService
 {
@@ -84,13 +81,7 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork, IStageService stageS
     }
 
     /// <summary>
-    /// Loads a whole team's scoring sheet for a match in one coherent operation
-    /// (HU-71). Validates that the match has a final score, that the team played
-    /// in it, that every listed player is on the team's roster for that season
-    /// and eligible (no active sanction), and that the players' points add up to
-    /// the team's final score. Only if every check passes are the team's Points
-    /// statistics for that match replaced with the new set (so corrections
-    /// recalculate the ranking). Any failure throws and persists nothing.
+    /// Loads a whole team's scoring sheet for a match in one coherent operation.
     /// </summary>
     /// <param name="request">The match, team, and per-player points.</param>
     /// <returns>The persisted Points statistics for the team in this match.</returns>
@@ -157,17 +148,10 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork, IStageService stageS
     }
 
     /// <summary>
-    /// Finishes a match by loading BOTH teams' scoring sheets in one coherent
-    /// operation (HU-72): the final score is DERIVED as the sum of each
-    /// team's listed player points — not typed in separately and checked
-    /// against a sheet afterward, the way <see cref="LoadTeamMatchSheetAsync"/>
-    /// requires. Validates every listed player is on their team's roster and
-    /// eligible, then finalizes the match (rejecting a tie, HU-70) and
-    /// replaces both teams' Points statistics with the new sheets. Any
-    /// failure throws before anything is persisted.
+    /// Finishes a match by loading both teams' scoring sheets in one coherent operation.
     /// </summary>
     /// <param name="request">The match and both teams' per-player points.</param>
-    /// <returns>The finalized match (score, winner, IsFinished all set), or null if no match with that id exists.</returns>
+    /// <returns>The finalized match with score, winner, and IsFinished all set, or null if no match with that id exists.</returns>
     /// <exception cref="InvalidOperationException">
     /// Thrown when a player is ineligible/off the roster or the resulting
     /// score is tied.
@@ -238,13 +222,7 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork, IStageService stageS
         })];
 
     /// <summary>
-    /// Enforces the walkover threshold: a team fielding fewer than
-    /// <see cref="TournamentCompletabilityValidator.MinPlayersPerTeam"/>
-    /// HABILITADO players for this season can never legally field a lineup,
-    /// so its match can't be recorded as a normal result — it must be loaded
-    /// as a walkover instead (<see cref="IMatchService.LoadWalkOverAsync"/>).
-    /// Checked independently of which players the sheet actually lists — a
-    /// team already below the threshold fails this even with an empty sheet.
+    /// Enforces the walkover threshold: a team below MinPlayersPerTeam habilitado players must not record a normal result.
     /// </summary>
     private async Task EnsureTeamMeetsHabilitadoMinimumAsync(Team teamEntity)
     {
@@ -267,11 +245,7 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork, IStageService stageS
     }
 
     /// <summary>
-    /// Checks every listed player is registered to the team for the match's
-    /// season (HU-98) and is eligible — an approved registration and no active
-    /// sanction (HU-60/HU-61) — and returns one readable reason per violation
-    /// instead of throwing on the first one found, so a caller can report
-    /// every offending player across both teams in a single error.
+    /// Checks every listed player is registered and eligible, returning one reason per violation.
     /// </summary>
     private async Task<List<string>> FindRosterEligibilityIssuesAsync(
         List<PlayerScoreEntry> scores, Guid teamId, Team teamEntity)
@@ -315,12 +289,12 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork, IStageService stageS
                 continue;
             }
 
-            // Eligible only when NOT sanctioned (HU-61) AND habilitado for this
-            // team+tournament (HU-57/HU-60): the medical record must be Approved
+            // Eligible only when NOT sanctioned AND habilitado for this
+            // team+tournament: the medical record must be Approved
             // AND carry a real stored file (medical-records-storage-eligibility)
             // — Approved alone is not enough. A Pending or Rejected registration
             // — including a brand-new season's, which never inherits a prior
-            // approval (HU-59) — is not habilitado either.
+            // approval — is not habilitado either.
             bool sanctioned = !playersById.TryGetValue(playerId, out Player? player) || player.IsSanctioned;
             if (sanctioned || !registration.IsHabilitado)
             {
@@ -332,17 +306,13 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork, IStageService stageS
     }
 
     /// <summary>
-    /// A human-readable label for a player in an error message — the same
-    /// "APELLIDO Nombre" the admin sees on the sheet — falling back to the id
-    /// only for the (should-never-happen) case of a score entry naming a
-    /// player that doesn't exist at all.
+    /// A human-readable label for a player in an error message, falling back to the id if no player is found.
     /// </summary>
     private static string PlayerLabel(Dictionary<Guid, Player> playersById, Guid playerId) =>
         playersById.TryGetValue(playerId, out Player? player) ? player.FullName : playerId.ToString();
 
     /// <summary>
-    /// Removes the team's existing Points statistics for a match so a corrected
-    /// sheet fully replaces the previous one (HU-71 editability).
+    /// Removes the team's existing Points statistics for a match so a corrected sheet fully replaces the previous one.
     /// </summary>
     private async Task ReplaceTeamPointsForMatchAsync(Guid matchId, Guid teamId)
     {

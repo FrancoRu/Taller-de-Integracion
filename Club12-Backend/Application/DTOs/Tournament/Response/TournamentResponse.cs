@@ -24,8 +24,7 @@ public class TournamentResponse : BaseEntityResponse
     public required IEnumerable<MinimalDivisionResponse> Divisions { get; set; }
 
     /// <summary>
-    /// The deadline for team registrations.
-    /// Must be earlier than the tournament start date.
+    /// The deadline for team registrations; must be earlier than the tournament start date.
     /// </summary>
     public required DateTime TeamRegistrationDeadline { get; set; }
 
@@ -34,27 +33,22 @@ public class TournamentResponse : BaseEntityResponse
     public TournamentStatus Status { get; set; }
 
     /// <summary>
-    /// Competitive category (gender) of the tournament (HU-48). The feminine
-    /// competition is played as its own separate tournament.
+    /// Competitive category of the tournament; the feminine competition is played as its own tournament.
     /// </summary>
     public TournamentCategory Category { get; set; }
 
     /// <summary>
-    /// Id of the season ("Temporada") this tournament belongs to, or null when
-    /// it is not grouped under any season.
+    /// Id of the season this tournament belongs to, or null when not grouped under any season.
     /// </summary>
     public Guid? SeasonId { get; set; }
 
     /// <summary>
-    /// Name of the season this tournament belongs to, when the season is
-    /// loaded; null otherwise.
+    /// Name of the season this tournament belongs to, when loaded; null otherwise.
     /// </summary>
     public string? SeasonName { get; set; }
 
     /// <summary>
-    /// Slug of the season this tournament belongs to, when the season is
-    /// loaded; null otherwise. Lets callers build a clean `/temporadas/{slug}`
-    /// link back to the season instead of falling back to its GUID.
+    /// Slug of the season this tournament belongs to, when loaded, for building a clean season link.
     /// </summary>
     public string? SeasonSlug { get; set; }
 }

@@ -3,44 +3,38 @@ using Domain.Enums;
 namespace Domain.Entities.Models;
 
 /// <summary>
-/// An immutable audit-trail entry recording a sensitive action (HU-101):
-/// who did it, what was done, on which target, when, and an optional detail.
-/// The two shared owner/admin accounts make this trail the only way to tell
-/// the operators apart, so entries are written for data wipes, backup
-/// restores, tournament status changes and password resets/blanqueos.
+/// An immutable audit-trail entry recording a sensitive action, since the shared owner and admin accounts are otherwise indistinguishable.
 /// </summary>
 public class AuditLog : EntityBase
 {
-    /// <summary>The sensitive action that was performed.</summary>
+    /// <summary>
+    /// The sensitive action that was performed.
+    /// </summary>
     public required AuditAction Action { get; set; }
 
     /// <summary>
-    /// Who performed the action — the authenticated caller's email, or
-    /// <see cref="Domain.Constants.AuditConstants.SystemUser"/> when triggered
-    /// by an automated/background process with no HTTP identity.
+    /// Who performed the action — the authenticated caller's email, or AuditConstants.SystemUser for an automated process with no HTTP identity.
     /// </summary>
     public required string Actor { get; set; }
 
     /// <summary>
-    /// The kind of entity the action targeted (e.g. "Tournament", "User"),
-    /// or null for actions that are not tied to a single entity (e.g. a wipe).
+    /// The kind of entity the action targeted, or null when the action is not tied to a single entity.
     /// </summary>
     public string? TargetType { get; set; }
 
-    /// <summary>Identifier of the targeted entity, when applicable.</summary>
+    /// <summary>
+    /// Identifier of the targeted entity, when applicable.
+    /// </summary>
     public string? TargetId { get; set; }
 
     /// <summary>
-    /// The target's human-readable name/label at the moment the action was
-    /// performed (e.g. a tournament's name, a user's email) — captured at
-    /// write time rather than resolved on read, since the target may later
-    /// be renamed or deleted while the audit trail must still read clearly.
-    /// Null for actions with no single named target (e.g. a data wipe) or
-    /// for entries written before this field existed.
+    /// The target's human-readable name captured at write time, since the target may later be renamed or deleted.
     /// </summary>
     public string? TargetName { get; set; }
 
-    /// <summary>Free-form human-readable context (e.g. "Scheduled -> Ongoing").</summary>
+    /// <summary>
+    /// Free-form human-readable context describing the action in detail.
+    /// </summary>
     public string? Detail { get; set; }
 
     // Timestamp is EntityBase.DateCreated (UTC).

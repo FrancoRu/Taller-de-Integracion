@@ -19,12 +19,7 @@ public sealed class UpdateUserRequest
     public string? Phone { get; set; }
 
     /// <summary>
-    /// Optional. When provided, changes the target user's role, replacing
-    /// whatever role they currently have (a user always ends up in exactly
-    /// one role). Leave null to update profile fields without touching the
-    /// role. Only ADMIN and OWNER may set this, and the exact roles each
-    /// may assign — plus the guard against changing your own role — are
-    /// enforced server-side in the identity user-management service.
+    /// When provided, replaces the target user's role; null updates profile fields without touching it.
     /// </summary>
     public UserRoleType? Role { get; set; }
 }

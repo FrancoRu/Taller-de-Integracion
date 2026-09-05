@@ -1,8 +1,7 @@
 namespace Application.Utils.Constants.Pagination;
 
 /// <summary>
-/// Default and boundary values applied to paginated list requests when the
-/// caller does not specify a page size, or supplies an out-of-range one.
+/// Default and boundary values applied to paginated list requests when the caller does not specify a page size, or supplies an out-of-range one.
 /// </summary>
 public static class PaginationDefaults
 {

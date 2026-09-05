@@ -25,16 +25,12 @@ public interface IPlayerStatisticService
     Task<PaginatedResponse<PlayerStatistic>> GetPlayerStatisticsAsync(GetPlayerStatisticsFilteredRequest filter);
 
     /// <summary>
-    /// Loads a whole team's coherent scoring sheet for a match (HU-71): the
-    /// listed players' points must add up to the team's final score and every
-    /// player must be on the roster and eligible, or nothing is saved.
+    /// Loads a whole team's coherent scoring sheet for a match.
     /// </summary>
     Task<List<PlayerStatistic>> LoadTeamMatchSheetAsync(LoadMatchSheetRequest request);
 
     /// <summary>
-    /// Finishes a match by loading both teams' scoring sheets in one
-    /// operation (HU-72): the final score is derived as the sum of each
-    /// team's listed player points, rather than typed in separately.
+    /// Finishes a match by loading both teams' scoring sheets in one operation.
     /// </summary>
     /// <returns>The finalized match, or null if no match with that id exists.</returns>
     Task<Match?> LoadMatchResultFromSheetsAsync(LoadMatchResultFromSheetsRequest request);

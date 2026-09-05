@@ -10,9 +10,7 @@ using System.Threading.Tasks;
 namespace Infrastructure.Email;
 
 /// <summary>
-/// Transactional email sender backed by FluentEmail + SendGrid.
-/// HTML bodies are loaded from embedded resource templates in
-/// Utils/Helper/Email/Templates/.
+/// Transactional email sender backed by FluentEmail and SendGrid.
 /// </summary>
 public sealed class FluentEmailHelper(IFluentEmailFactory emailFactory) : IEmailService
 {

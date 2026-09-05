@@ -5,9 +5,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.User.Request;
 
 /// <summary>
-/// Request to change a user's password.
-/// CurrentPassword is required when the caller is changing their own password.
-/// Admins/Owners changing another user's password may omit it.
+/// Request to change a user's password; self-service changes require CurrentPassword.
 /// </summary>
 public sealed class ChangePasswordRequest
 {

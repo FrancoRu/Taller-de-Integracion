@@ -6,8 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Infrastructure.Persistance;
 
 /// <summary>
-/// Defines the database context interface for the Club12 application.
-/// Provides access to the various DbSets representing entities in the system.
+/// Defines the database context interface for the Club12 application, providing access to the DbSets representing its entities.
 /// </summary>
 public interface IClub12DBContext
 {
@@ -24,16 +23,14 @@ public interface IClub12DBContext
     DbSet<Match> Matches { get; }
 
     /// <summary>
-    /// Best-of-N playoff series; each series groups the individual <see cref="Match"/>
-    /// rows played between the same two teams.
+    /// Best-of-N playoff series where each series groups the individual Match rows played between the same two teams.
     /// </summary>
     DbSet<MatchSeries> MatchSeries { get; }
 
     DbSet<PlayerStatistic> PlayersStatistics { get; }
 
     /// <summary>
-    /// A sanction's subject may be a player, a team, or a staff member (see
-    /// <see cref="PlayerSanction.SubjectType"/>), despite the entity's name.
+    /// A sanction's subject may be a player, a team, or a staff member as defined by PlayerSanction.SubjectType, despite the entity's name.
     /// </summary>
     DbSet<PlayerSanction> PlayerSanctions { get; }
 
@@ -42,7 +39,7 @@ public interface IClub12DBContext
     DbSet<BlogPost> BlogPosts { get; }
 
     /// <summary>
-    /// Seasons ("Temporadas") group tournaments.
+    /// Seasons, called Temporadas, group tournaments.
     /// </summary>
     DbSet<Season> Seasons { get; }
 

@@ -20,8 +20,7 @@ using MatchType = Domain.Enums.MatchType;
 namespace Application.Services;
 
 /// <summary>
-/// Service responsible for managing best-of-N playoff series between two
-/// teams at a single bracket round.
+/// Service responsible for managing best-of-N playoff series between two teams at a single bracket round.
 /// </summary>
 public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
 {
@@ -56,10 +55,7 @@ public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
     }
 
     /// <summary>
-    /// Opens a best-of-N series between two teams already assigned to the
-    /// stage. At most one series may exist per team pair per stage — the
-    /// uniqueness check is order-independent, so a series can't be opened
-    /// twice just by swapping which team is home.
+    /// Opens a best-of-N series between two teams already assigned to the stage, at most one per pair.
     /// </summary>
     public async Task<MatchSeries> CreateSeriesAsync(Guid stageId, Guid homeTeamId, Guid visitorTeamId)
     {
@@ -98,9 +94,7 @@ public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
     }
 
     /// <summary>
-    /// Adds the next game to a series. Blocked once the series already has a
-    /// winner or has reached its <see cref="MatchSeries.BestOf"/> game count
-    /// — a decided or full series never grows another game.
+    /// Adds the next game to a series, blocked once it already has a winner or has reached its BestOf count.
     /// </summary>
     public async Task<Match> AddGameToSeriesAsync(Guid seriesId, DateTime matchDate, Guid? venueId)
     {
@@ -144,10 +138,7 @@ public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
     }
 
     /// <summary>
-    /// Re-evaluates a series' winner from its games via
-    /// <see cref="SeriesDecisionCalculator"/>. A no-op once the series
-    /// already has a <see cref="MatchSeries.WinningTeamId"/> — a decided
-    /// series is never re-decided, even if a game result changes afterwards.
+    /// Re-evaluates a series' winner from its games, a no-op once it already has a WinningTeamId.
     /// </summary>
     public async Task RecalculateSeriesWinnerAsync(Guid seriesId)
     {

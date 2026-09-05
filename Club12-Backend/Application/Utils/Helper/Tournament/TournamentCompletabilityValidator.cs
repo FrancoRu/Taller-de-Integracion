@@ -10,66 +10,38 @@ using System.Linq;
 namespace Application.Utils.Helper.Tournament;
 
 /// <summary>
-/// Single source of truth for whether a tournament can be COMPLETED once it is
-/// started (HU-109). After registration closes, teams are assigned to divisions
-/// and the tournament is started (transition to Ongoing, which generates the
-/// fixture). This validator makes it impossible to start a tournament in a
-/// state that could never be completed, by inspecting a fully-loaded tournament
-/// graph and its enrolled-team registrations and returning one structured issue
-/// per violation.
-///
-/// Domain vocabulary:
-/// <list type="bullet">
-/// <item>A "zone" is a regular <see cref="Division"/>
-/// (<see cref="Division.IsCrossDivisionCup"/> false) with a
-/// <see cref="StageType.Group"/> stage; teams are assigned to it through
-/// <see cref="StageTeamMatch"/> rows.</item>
-/// <item>The cross-division cup is a <see cref="Division"/> flagged
-/// <see cref="Division.IsCrossDivisionCup"/> — a parallel competition that a
-/// team plays IN ADDITION to its zone, so being in the cup never counts as the
-/// team's zone.</item>
-/// <item>Enrolled teams are the tournament's
-/// <see cref="TeamTournamentRegistration"/> rows.</item>
-/// </list>
+/// Single source of truth for whether a tournament can be completed once it is started.
 /// </summary>
 public static class TournamentCompletabilityValidator
 {
     /// <summary>
-    /// Minimum number of teams a zone (and each cross-cup group) must have
-    /// assigned for the competition it feeds to be playable/completable.
+    /// Minimum number of teams a zone, and each cross-cup group, must have assigned for the competition it feeds to be playable or completable.
     /// </summary>
     public const int MinTeamsPerZone = 2;
 
     /// <summary>
-    /// Minimum number of HABILITADO players (<see cref="PlayerTeamRegistration.IsHabilitado"/>)
-    /// an enrolled team must have for the tournament to be completable — four
-    /// is basketball's minimum to avoid a walkover, so a team that can't reach
-    /// it before the season even starts could never legally field a lineup.
-    /// A merely-registered but not-yet-approved player does not count — see
-    /// the caller's <c>habilitadoPlayerCountsByTeam</c> build.
+    /// Minimum number of HABILITADO players an enrolled team must have for the tournament to be completable.
     /// </summary>
     public const int MinPlayersPerTeam = 4;
 
     /// <summary>
-    /// Evaluates every completability rule against the loaded tournament graph
-    /// and returns one issue per violation. An empty result means the
-    /// tournament is completable and may be started.
+    /// Evaluates every completability rule against the loaded tournament graph and returns one issue per violation.
     /// </summary>
     /// <param name="tournament">
-    /// The tournament with its Divisions loaded, each division's Stages (and
-    /// each stage's StageTeamMatches) and PlayoffMappings loaded.
+    /// The tournament with its Divisions loaded, each division's Stages, and
+    /// each stage's StageTeamMatches and PlayoffMappings loaded.
     /// </param>
     /// <param name="enrolledRegistrations">
-    /// The tournament's team registrations (enrolled teams), each ideally with
+    /// The tournament's team registrations, the enrolled teams, each ideally with
     /// its Team loaded so team names can be reported.
     /// </param>
     /// <param name="playerCountsByTeam">
-    /// Each enrolled team's HABILITADO player count for this tournament (see
-    /// <see cref="PlayerTeamRegistration.IsHabilitado"/>) — NOT its raw
+    /// Each enrolled team's HABILITADO player count for this tournament, per
+    /// PlayerTeamRegistration.IsHabilitado — NOT its raw
     /// registered-roster size, since a registered-but-not-yet-approved player
     /// could never legally play anyway. Used by the TeamTooFewPlayers rule.
-    /// Omitted (null) skips that rule entirely — callers that don't have this
-    /// data loaded (e.g. tests focused on the zone/team rules) are unaffected.
+    /// Omitted, null, skips that rule entirely — callers that don't have this
+    /// data loaded are unaffected.
     /// </param>
     public static IReadOnlyList<CompletabilityIssue> Validate(
         Domain.Entities.Models.Tournament tournament,
@@ -213,8 +185,7 @@ public static class TournamentCompletabilityValidator
     }
 
     /// <summary>
-    /// Distinct ids of the teams assigned to a division's Group stage(s) via
-    /// <see cref="StageTeamMatch"/> rows.
+    /// Distinct ids of the teams assigned to a division's Group stages via StageTeamMatch rows.
     /// </summary>
     private static HashSet<Guid> GroupStageTeamIds(Division division)
     {
@@ -225,9 +196,7 @@ public static class TournamentCompletabilityValidator
     }
 
     /// <summary>
-    /// Builds a team-id → team-name lookup from every source that carries a
-    /// Team navigation (the enrolled registrations and the stage assignments),
-    /// so an issue can report a readable team name whichever rule fired.
+    /// Builds a team-id to team-name lookup from every source that carries a Team navigation, so an issue can report a readable team name whichever rule fired.
     /// </summary>
     private static Dictionary<Guid, string> BuildTeamNames(
         Domain.Entities.Models.Tournament tournament,
@@ -253,8 +222,7 @@ public static class TournamentCompletabilityValidator
     }
 
     /// <summary>
-    /// Resolves a team's display name, falling back to its id when no Team
-    /// navigation was loaded for it.
+    /// Resolves a team's display name, falling back to its id when no Team navigation was loaded for it.
     /// </summary>
     private static string ResolveTeamName(Dictionary<Guid, string> teamNames, Guid teamId)
     {

@@ -5,10 +5,7 @@ using System;
 namespace Application.Utils.Extensions;
 
 /// <summary>
-/// Presentation helpers for <see cref="TeamStaffRole"/>. The enum itself stays
-/// in English (a stable code identifier persisted by name), but any
-/// human-readable text shown to users must be Spanish, so this maps each role
-/// to its Spanish label.
+/// Presentation helpers for TeamStaffRole, mapping each role to its Spanish label for user-facing text.
 /// </summary>
 public static class TeamStaffRoleExtensions
 {

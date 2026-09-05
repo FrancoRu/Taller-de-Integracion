@@ -7,18 +7,12 @@ using System;
 namespace Application.Utils.Helper.TeamProfile;
 
 /// <summary>
-/// Pure projection of a <see cref="Match"/> into a
-/// <see cref="TeamMatchResponse"/> oriented from one team's perspective:
-/// scores, opponent, home/away flag and the win/loss result are all resolved
-/// relative to <c>teamId</c> rather than to the raw home/visitor sides. Kept
-/// side-effect free so it can be unit-tested without a database.
+/// Pure projection of a Match into a TeamMatchResponse oriented from one team's perspective.
 /// </summary>
 public static class TeamMatchMapper
 {
     /// <summary>
-    /// Projects <paramref name="match"/> from the point of view of the team
-    /// identified by <paramref name="teamId"/>. The team is assumed to be one
-    /// of the match's two sides (the caller filters matches to this team).
+    /// Projects match from the point of view of the team identified by teamId.
     /// </summary>
     /// <param name="match">The match to project. Its HomeTeam/VisitorTeam/Venue
     /// navigations should be loaded for names and logos to be populated.</param>

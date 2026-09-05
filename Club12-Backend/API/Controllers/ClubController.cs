@@ -15,9 +15,7 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Controller for the stable cross-season club identity (HU-99). Reading a
-/// club's history is public; the idempotent backfill is a staff maintenance
-/// action.
+/// Manages the stable cross-season club identity; reading a club's history is public while the idempotent backfill is a staff maintenance action.
 /// </summary>
 /// <param name="clubService">The club service.</param>
 [Route("api/clubs/")]
@@ -26,13 +24,12 @@ namespace API.Controllers;
 public class ClubController(IClubService clubService) : ControllerBase
 {
     /// <summary>
-    /// Retrieves a club and its trajectory across seasons: the per-season teams
-    /// that belong to it and the tournaments each was registered in.
+    /// Retrieves a club and its trajectory across seasons, including the per-season teams that belong to it and the tournaments each was registered in.
     /// </summary>
     /// <param name="idOrSlug">The club's GUID id or its slug.</param>
     /// <returns>
-    /// <para>Returns 200 (OK) with the club history when found.</para>
-    /// <para>Returns 404 (Not Found) when no club matches.</para>
+    /// <para>Returns 200 OK with the club history when found.</para>
+    /// <para>Returns 404 Not Found when no club matches.</para>
     /// </returns>
     [AllowAnonymous]
     [HttpGet("{idOrSlug}")]
@@ -51,10 +48,9 @@ public class ClubController(IClubService clubService) : ControllerBase
     }
 
     /// <summary>
-    /// Idempotently links every unlinked team to a stable club (creating clubs
-    /// as needed). Safe to re-run; a second call reports zeros.
+    /// Idempotently links every unlinked team to a stable club, creating clubs as needed; safe to re-run since a second call reports zeros.
     /// </summary>
-    /// <returns>Returns 200 (OK) with how many clubs were created and teams linked.</returns>
+    /// <returns>Returns 200 OK with how many clubs were created and teams linked.</returns>
     [HttpPost("backfill")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ClubBackfillResult))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

@@ -3,9 +3,6 @@
 /// <summary>
 /// Response for magic-link request flow.
 /// </summary>
-/// <remarks>
-/// In production you should typically NOT return the link; send it via email.
-/// </remarks>
 public sealed class MagicLinkResponse(string message, string? magicLink = null)
 {
     public string Message { get; init; } = message;

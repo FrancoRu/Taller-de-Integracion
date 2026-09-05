@@ -18,8 +18,7 @@ public class CreateTournamentRequest
     public required string Name { get; set; }
 
     /// <summary>
-    /// The deadline for team registrations.
-    /// Must be earlier than the tournament start date.
+    /// The deadline for team registrations; must be earlier than the tournament start date.
     /// </summary>
     [Required(ErrorMessage = "Team registration deadline is required.")]
     public required DateTime TeamRegistrationDeadline { get; set; }
@@ -28,18 +27,12 @@ public class CreateTournamentRequest
     public required DateTime StartDate { get; set; }
 
     /// <summary>
-    /// Competitive category (gender) of the tournament (HU-48). The feminine
-    /// competition is a separate tournament and cannot share a tournament with
-    /// masculine divisions. Defaults to
-    /// <see cref="TournamentCategory.Masculine"/> when omitted.
+    /// Competitive category of the tournament; feminine and masculine competitions are separate tournaments.
     /// </summary>
     public TournamentCategory Category { get; set; } = TournamentCategory.Masculine;
 
     /// <summary>
-    /// Optional id of the season ("Temporada") this tournament belongs to. When
-    /// supplied the tournament is grouped under that season; omitting it leaves
-    /// the tournament ungrouped. Purely additive — it never affects
-    /// <see cref="Category"/> (HU-48).
+    /// Optional id of the season this tournament belongs to; omitting it leaves the tournament ungrouped.
     /// </summary>
     public Guid? SeasonId { get; set; }
 }

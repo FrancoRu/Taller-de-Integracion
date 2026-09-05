@@ -19,19 +19,14 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Authentication and account-lifecycle endpoints: login, magic links, guest
-/// sessions, and password reset are anonymous; registering or inviting a
-/// user requires Admin or Owner. There is no class-level [Authorize] — each
-/// action below declares its own access policy.
+/// Authentication and account-lifecycle endpoints; login, magic links, guest sessions, and password reset are anonymous, while registering or inviting a user requires Admin or Owner.
 /// </summary>
 [ApiController]
 [Route("api/auth")]
 public class AuthController(IAuthenticationService authenticationService) : ControllerBase
 {
     /// <summary>
-    /// Creates a fully-activated account with a password set by the caller.
-    /// Requires Admin or Owner — unlike its name suggests, this is not a
-    /// public self-registration endpoint (use /invite or /magic-link for that).
+    /// Creates a fully activated account with a caller-set password; requires Admin or Owner rather than being a public self-registration endpoint.
     /// </summary>
     [Authorize(Roles = Roles.AdminOrOwner)]
     [HttpPost("register")]
@@ -55,8 +50,7 @@ public class AuthController(IAuthenticationService authenticationService) : Cont
     }
 
     /// <summary>
-    /// HU-09: creates a user by email only (no password) and emails a magic
-    /// activation link. Requires Admin or Owner.
+    /// Creates a user by email only, with no password, and emails a magic activation link; requires Admin or Owner.
     /// </summary>
     [Authorize(Roles = Roles.AdminOrOwner)]
     [HttpPost("invite")]
@@ -80,8 +74,7 @@ public class AuthController(IAuthenticationService authenticationService) : Cont
     }
 
     /// <summary>
-    /// HU-09: consumes the activation token from the invitation email, sets the
-    /// user's first password, and returns a ready-to-use JWT.
+    /// Consumes the activation token from the invitation email, sets the user's first password, and returns a ready-to-use JWT.
     /// </summary>
     [AllowAnonymous]
     [HttpPost("activate")]
@@ -95,9 +88,7 @@ public class AuthController(IAuthenticationService authenticationService) : Cont
     }
 
     /// <summary>
-    /// HU-10: self-service. Emails a password-reset magic link for the given
-    /// email. Always returns 200 so it never reveals whether the email has an
-    /// account. The link is consumed by POST password-reset/confirm.
+    /// Emails a password-reset magic link for the given email and always returns 200 so it never reveals whether the email has an account.
     /// </summary>
     [AllowAnonymous]
     [HttpPost("password-reset/request")]
@@ -157,8 +148,7 @@ public class AuthController(IAuthenticationService authenticationService) : Cont
     }
 
     /// <summary>
-    /// Verifies the password-reset token from the email link, sets the new password,
-    /// and returns a ready-to-use JWT. The user is automatically logged in after reset.
+    /// Verifies the password-reset token from the email link, sets the new password, and returns a ready-to-use JWT, logging the user in automatically.
     /// </summary>
     [AllowAnonymous]
     [HttpPost("password-reset/confirm")]

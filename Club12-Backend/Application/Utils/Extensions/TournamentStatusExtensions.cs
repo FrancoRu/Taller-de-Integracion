@@ -5,10 +5,7 @@ using System;
 namespace Application.Utils.Extensions;
 
 /// <summary>
-/// Presentation helpers for <see cref="TournamentStatus"/>. The enum itself
-/// stays in English (a stable code identifier persisted by name), but any
-/// human-readable text shown to users — e.g. the audit-trail Detail column —
-/// must be Spanish, so this maps each status to its Spanish label.
+/// Presentation helpers for TournamentStatus, mapping each status to its Spanish label for user-facing text.
 /// </summary>
 public static class TournamentStatusExtensions
 {

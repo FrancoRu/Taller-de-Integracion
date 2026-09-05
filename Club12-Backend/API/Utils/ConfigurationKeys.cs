@@ -1,9 +1,7 @@
 namespace API.Utils;
 
 /// <summary>
-/// Centralized configuration key paths read at startup, so a typo in a key
-/// name is caught by the compiler instead of silently returning null or a
-/// default value at runtime.
+/// Centralized configuration key paths read at startup, so a typo in a key name is caught by the compiler instead of silently returning null or a default value at runtime.
 /// </summary>
 public static class ConfigurationKeys
 {
@@ -46,41 +44,27 @@ public static class ConfigurationKeys
         public const string Enabled = "Seed:Enabled";
 
         /// <summary>
-        /// When true, the startup DataSeeder deletes existing sample domain data
-        /// (FK-safe) before seeding, forcing a clean reseed. Dev-only: the whole
-        /// seed path is already gated by <see cref="Enabled"/>. Defaults to false.
+        /// When true, the startup DataSeeder deletes existing sample domain data before seeding, forcing a clean, FK-safe reseed; defaults to false.
         /// </summary>
         public const string Reset = "Seed:Reset";
 
         /// <summary>
-        /// Filesystem folder the startup DataSeeder reads team crest PNGs from
-        /// and uploads as real team logos. Absent/missing folder falls back to
-        /// placeholder logos without failing the seed.
+        /// Filesystem folder the startup DataSeeder reads team crest PNGs from to upload as real team logos, falling back to placeholders when absent.
         /// </summary>
         public const string LogosPath = "Seed:LogosPath";
 
         /// <summary>
-        /// Filesystem path to the medical PDF the startup DataSeeder uploads
-        /// for every should-be-habilitado seeded registration
-        /// (medical-records-storage-eligibility, Part 3). Absent/missing file
-        /// warns and skips the whole backfill step without failing the seed.
+        /// Filesystem path to the medical PDF the startup DataSeeder uploads for every should-be-habilitado seeded registration, skipping the backfill step without failing the seed when absent.
         /// </summary>
         public const string MedicalRecordPath = "Seed:MedicalRecordPath";
 
         /// <summary>
-        /// How many consecutive seasons of history the startup DataSeeder
-        /// builds, counting backwards from the most recent one. 1 (the
-        /// default) keeps the single-season dataset; higher values produce a
-        /// demo-sized league with real multi-season club history. Clamped to a
-        /// safe range by the seeder.
+        /// How many consecutive seasons of history the startup DataSeeder builds, counting backwards from the most recent one and clamped to a safe range by the seeder.
         /// </summary>
         public const string Seasons = "Seed:Seasons";
 
         /// <summary>
-        /// Roster size for every seeded team. Defaults to
-        /// <see cref="Infrastructure.Persistance.SampleTournamentBuilder.DefaultPlayersPerTeam"/>;
-        /// a realistic basketball roster is 12. Clamped to a safe range by the
-        /// seeder.
+        /// Roster size for every seeded team, defaulting to SampleTournamentBuilder.DefaultPlayersPerTeam and clamped to a safe range by the seeder.
         /// </summary>
         public const string PlayersPerTeam = "Seed:PlayersPerTeam";
     }

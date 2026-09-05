@@ -21,47 +21,7 @@ using System.Threading.Tasks;
 namespace Infrastructure.Persistance;
 
 /// <summary>
-/// Seeds the app's standard reference dataset for the Club 12 basketball
-/// league (Paraná, "liga libre"). <c>Seed:Seasons</c> says how many
-/// consecutive <see cref="Season"/> rows to build, counting backwards from
-/// "Temporada XXV" (2026) one per calendar year; 1 (the default) keeps the
-/// original single-season dataset, higher values produce a demo-sized league
-/// whose <see cref="Club"/> rows carry real multi-season history (HU-99).
-/// Every season repeats the same two FINISHED tournaments —
-/// <list type="bullet">
-/// <item><b>Torneo Femenino</b>: a single zone of 7 teams, ida y vuelta,
-///   feeding one Copa de Oro (all 7 teams, byes to the top seeds since 7 is
-///   not a power of two); and</item>
-/// <item><b>Torneo Masculino</b>: 3 zones (Zona A/B, 10 teams each; Zona C, 13
-///   teams), each ida y vuelta, each with its own Copa Oro (top 4) and
-///   Copa Plata (the rest) brackets — plus a 4th, parallel competition, Copa
-///   Cruzada: 6 group-stage zones (5 of 4 teams + 1 of 3, ida y vuelta, drawn
-///   from a 23-team subset of the zone rosters) feeding one combined 12-team
-///   playoff (byes to the top seeds).</item>
-/// </list>
-/// The most recent season additionally gets two ONGOING Clausura tournaments
-/// (masculine and feminine) whose first <c>ClausuraPlayedRounds</c> jornadas
-/// are played and whose remaining jornadas are scheduled, so the app also has
-/// a live standings table and a real "Próximos partidos" fixture to show.
-/// Every playoff bracket is built by <see cref="SampleTournamentBuilder"/>'s
-/// generic elimination-bracket seeder (RoundOf16/QuarterFinal/SemiFinal/Final
-/// as the seed count needs, byes to the best seeds when not a power of two);
-/// every cup's SemiFinal and Final rounds are Best-of-3, every earlier round
-/// Best-of-1. Divisions carry their tournament's category (HU-48). Team
-/// crests are uploaded from a configurable folder (<c>Seed:LogosPath</c>) via
-/// the same Supabase storage path the team endpoints use; any logo failure
-/// degrades to a placeholder without ever failing the seed. The ficha médica
-/// backfill works the same way: <c>Seed:MedicalRecordPath</c> when configured,
-/// otherwise a generated placeholder PDF, so the seeded rosters end up
-/// habilitado on any machine instead of only on the one the default path
-/// points at (a league whose players are all un-habilitado while holding
-/// scorer rows contradicts HU-57/HU-60).
-///
-/// Controlled by configuration: <c>Seed:Enabled</c> gates the whole path (checked
-/// by the caller). By default it runs once and skips if any team already exists;
-/// with <c>Seed:Reset</c> = true it first deletes the existing sample domain data
-/// (FK-safe) so the orchestrator can force a clean reseed. Reset is dev-only —
-/// it can only run because the surrounding <c>Seed:Enabled</c> gate is on.
+/// Seeds the standard sample dataset for the Club 12 basketball league used in local development and demos.
 /// </summary>
 public sealed class DataSeeder(
     ApplicationDBContext db,
@@ -70,8 +30,7 @@ public sealed class DataSeeder(
     MedicalRecordSeedBackfiller medicalRecordSeedBackfiller)
 {
     /// <summary>
-    /// Default folder team crest PNGs are read from when <c>Seed:LogosPath</c>
-    /// is not configured. Missing folder falls back to placeholder logos.
+    /// Default folder team crest PNGs are read from when Seed:LogosPath is not configured.
     /// </summary>
 #pragma warning disable S1075 // Dev-only seed default path; overridden by the Seed:LogosPath config key.
     public const string DefaultLogosPath = @"D:\Escudos\Logos de Argentina\clubs\normal";
@@ -240,13 +199,7 @@ public sealed class DataSeeder(
         TeamPoolSize: 23);
 
     /// <summary>
-    /// Seeds the sample league. <paramref name="reset"/> (from <c>Seed:Reset</c>)
-    /// first wipes existing sample domain data FK-safely so a clean reseed can be
-    /// forced; otherwise the seeder skips when any team already exists.
-    /// <paramref name="logosPath"/> (from <c>Seed:LogosPath</c>) is the folder
-    /// real team crests are read from; null/empty falls back to
-    /// <see cref="DefaultLogosPath"/>, and a missing folder degrades to
-    /// placeholder logos.
+    /// Seeds the sample league, skipping the work when any team already exists.
     /// </summary>
     public async Task SeedAsync(
         bool reset = false, string? logosPath = null,
@@ -488,11 +441,7 @@ public sealed class DataSeeder(
             TeamSecondaryColors: [.. clubs.Select(c => c.Secondary)]);
 
     /// <summary>
-    /// The season's draw: the same club pool re-sorted deterministically for
-    /// this season. Because the builder ranks teams by their position in the
-    /// zone list, re-drawing every season is what makes each season produce a
-    /// different table, different zone composition and a different champion
-    /// instead of replaying one identical year N times.
+    /// Re-sorts the club pool deterministically to produce one season's draw.
     /// </summary>
     private static ClubSpec[] Draw(ClubSpec[] clubs, int seed)
     {
@@ -613,11 +562,7 @@ public sealed class DataSeeder(
     }
 
     /// <summary>
-    /// Deletes existing sample domain data in FK-safe order (leaf rows first) so
-    /// a reseed starts from a clean slate. Uses provider-agnostic EF
-    /// <c>ExecuteDeleteAsync</c> so it works against both Npgsql and the SQLite
-    /// test harness. Dev-only: only reachable because the surrounding
-    /// <c>Seed:Enabled</c> gate is on.
+    /// Deletes existing sample domain data in FK-safe order so a reseed starts from a clean slate.
     /// </summary>
     private async Task ResetSeededDataAsync()
     {
@@ -647,13 +592,7 @@ public sealed class DataSeeder(
     }
 
     /// <summary>
-    /// Uploads a real PNG crest per team from <paramref name="logosPath"/> using
-    /// the same Supabase image path the team endpoints use, replacing each team's
-    /// generated SVG crest (<c>SampleTournamentBuilder.BuildCrestDataUri</c>).
-    /// Best-effort: a missing folder, no PNGs, or any per-file failure logs a
-    /// warning and leaves the generated crest in place — logos never fail the seed. Assignment is deterministic (fixed-seed
-    /// shuffle) and distinct while the folder holds at least as many files as
-    /// teams.
+    /// Uploads a real PNG crest per team from logosPath, replacing each team's generated SVG crest.
     /// </summary>
     private async Task UploadTeamLogosAsync(IReadOnlyList<Team> teams, string logosPath)
     {
@@ -716,7 +655,9 @@ public sealed class DataSeeder(
             byClub.Count, logosPath, uploaded, teams.Count);
     }
 
-    /// <summary>In-place Fisher-Yates shuffle with a caller-provided RNG.</summary>
+    /// <summary>
+    /// In-place Fisher-Yates shuffle with a caller-provided RNG.
+    /// </summary>
     private static void Shuffle(int[] values, Random random)
     {
         for (int i = values.Length - 1; i > 0; i--)
@@ -739,11 +680,7 @@ public sealed class DataSeeder(
         ["Coronel", "Duarte", "Aguirre", "Medina", "Bordón", "Cabrera", "Zabala", "Leguizamón"];
 
     /// <summary>
-    /// Builds a DT + Asistente for every seeded team, scoped to the tournament
-    /// it was built for. Uses the Team/Tournament navigations (rather than
-    /// their ids) because these entities have not been saved yet at this
-    /// point, so EF resolves the TeamId/TournamentId FKs via relationship
-    /// fixup once the batch is persisted.
+    /// Builds a DT and Asistente staff pair for every seeded team, scoped to the tournament it was built for.
     /// </summary>
     private static List<TeamStaff> BuildTeamStaff(SampleTournamentBuilder.BuildResult[] results)
     {

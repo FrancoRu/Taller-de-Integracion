@@ -3,7 +3,7 @@ using System;
 namespace Application.DTOs.Divisions.Response;
 
 /// <summary>
-/// One position-range → playoff-destination entry of a division (HU-45).
+/// One position-range to playoff-destination entry of a division.
 /// </summary>
 public class PlayoffMappingResponse
 {

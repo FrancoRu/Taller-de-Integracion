@@ -5,31 +5,20 @@ using System.Linq;
 namespace Application.Utils.Helper.RoundRobin;
 
 /// <summary>
-/// Generates a round-robin fixture (every team plays every other team once
-/// per leg) using the standard circle method. The schedule is organised into
-/// rounds (jornadas, HU-63/HU-65): within a single round every team plays at
-/// most once, and with an odd number of teams exactly one team is idle
-/// ("libre") each round. A fresh random draw is produced every time by
-/// shuffling the seat assignment before applying the circle method, while the
-/// round structure itself stays intact so it can be used as the canonical
-/// matchday grouping.
+/// Generates a round-robin fixture using the standard circle method.
 /// </summary>
 public static class RoundRobinScheduler
 {
     /// <summary>
-    /// A placeholder used internally to give an odd team count an even
-    /// slot count during pairing; never appears in the returned fixture.
+    /// A placeholder used internally to give an odd team count an even slot count during pairing; never appears in the returned fixture.
     /// </summary>
     private static readonly Guid Bye = Guid.Empty;
 
     /// <summary>
-    /// Builds the fixture for a group of teams, tagging every pairing with its
-    /// 1-based round (jornada) number. Rounds are numbered consecutively across
-    /// legs: with R rounds per leg, leg 0 owns rounds 1..R, leg 1 owns rounds
-    /// R+1..2R, and so on.
+    /// Builds the fixture for a group of teams, tagging every pairing with its 1-based round, jornada, number.
     /// </summary>
-    /// <param name="teamIds">The teams to schedule. An odd count is handled with a bye (one team sits out each round).</param>
-    /// <param name="legs">How many times each pair plays (1 = single round-robin, 2 = double, ...).</param>
+    /// <param name="teamIds">The teams to schedule. An odd count is handled with a bye, one team sits out each round.</param>
+    /// <param name="legs">How many times each pair plays: 1 for single round-robin, 2 for double, and so on.</param>
     /// <param name="random">Optional source of randomness, for deterministic tests.</param>
     /// <returns>
     /// One entry per match, each carrying the home/visitor teams and the round
@@ -90,10 +79,7 @@ public static class RoundRobinScheduler
     }
 
     /// <summary>
-    /// Builds the fixture as a flat list of pairings, discarding the round
-    /// number. Retained for callers that only need the set of matchups; new
-    /// code that needs the matchday grouping should use
-    /// <see cref="GenerateRounds"/>.
+    /// Builds the fixture as a flat list of pairings, discarding the round number.
     /// </summary>
     public static List<(Guid HomeTeamId, Guid VisitorTeamId)> GenerateFixture(
         IReadOnlyList<Guid> teamIds, int legs, Random? random = null)
@@ -103,8 +89,7 @@ public static class RoundRobinScheduler
     }
 
     /// <summary>
-    /// One round of the circle method: the first slot stays fixed, every
-    /// other slot rotates one position clockwise.
+    /// One round of the circle method: the first slot stays fixed, every other slot rotates one position clockwise.
     /// </summary>
     private static void RotateInPlace(List<Guid> slots)
     {

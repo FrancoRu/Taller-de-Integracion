@@ -1,11 +1,7 @@
 namespace Application.Interfaces.Backup;
 
 /// <summary>
-/// Named <see cref="BackupOptions.StorageTarget"/> values. Any value other
-/// than <see cref="Supabase"/> (case-insensitively) resolves to the local
-/// storage backend — including an unset or unrecognized configuration
-/// value — so a typo in configuration fails safe rather than crashing the
-/// host at startup.
+/// Named BackupOptions.StorageTarget values, where any value other than Supabase resolves to the local storage backend so a configuration typo fails safe.
 /// </summary>
 public static class BackupStorageTargets
 {

@@ -17,8 +17,7 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Read-only access to the sensitive-action audit trail (HU-101). Restricted
-/// to Admin/Owner: the trail exists to hold those shared accounts accountable.
+/// Read-only access to the sensitive-action audit trail, restricted to Admin or Owner so those shared accounts stay accountable.
 /// </summary>
 [Route("api/audit-logs")]
 [ApiController]
@@ -26,8 +25,7 @@ namespace API.Controllers;
 public class AuditLogController(IAuditService auditService, IMapper mapper) : ControllerBase
 {
     /// <summary>
-    /// Lists audit entries (newest first) with pagination and optional
-    /// actor/action filters.
+    /// Lists audit entries newest first, with pagination and optional actor or action filters.
     /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<AuditLogResponse>))]

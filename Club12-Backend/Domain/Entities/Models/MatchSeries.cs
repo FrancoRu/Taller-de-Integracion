@@ -4,9 +4,7 @@ using System.Collections.Generic;
 namespace Domain.Entities.Models;
 
 /// <summary>
-/// A best-of-N playoff series between two teams at one bracket round.
-/// Groups the individual Match games that make up the series and tracks
-/// the winner once one team has won the majority of BestOf games.
+/// A best-of-N playoff series between two teams at one bracket round, grouping the individual Match games that make it up.
 /// </summary>
 public class MatchSeries : EntityBase
 {
@@ -20,9 +18,7 @@ public class MatchSeries : EntityBase
     public Team? VisitorTeam { get; set; }
 
     /// <summary>
-    /// Number of games in this series (1, 3, 5, or 7), copied from the
-    /// stage at creation time so a later change to Stage.BestOf never
-    /// retroactively changes an in-progress or decided series.
+    /// Number of games in this series, copied from the stage at creation time so a later change to Stage.BestOf never retroactively changes it.
     /// </summary>
     public required int BestOf { get; set; }
 

@@ -9,13 +9,7 @@ namespace Application.DTOs.PlayerSanction.Request;
 public class GetPlayerSanctionsFilteredRequest : PaginatedFilterRequest
 {
     /// <summary>
-    /// Defaults the list to newest-issued-first. The admin and public
-    /// sanctions pages call <c>GET /api/player-sanctions/find</c> without a
-    /// sort parameter and never wire server-side column sorting, so this is
-    /// the effective order of the table. Overrides the base
-    /// <see cref="PaginatedFilterRequest"/> default of
-    /// <c>DateCreated</c> ascending; an explicit <c>orderBy</c>/<c>order</c>
-    /// in the query string still wins.
+    /// Overrides the base PaginatedFilterRequest default to sort newest-issued-first.
     /// </summary>
     public GetPlayerSanctionsFilteredRequest()
     {

@@ -12,14 +12,7 @@ using System.Threading.Tasks;
 namespace Infrastructure.Backup;
 
 /// <summary>
-/// IBackupStorage implementation backed by a local/mounted
-/// directory — the config-selected fallback for environments without
-/// Supabase storage configured (or the default until the Supabase adapter
-/// ships in a later work unit). Backup names are expected to be
-/// server-generated (timestamp + guid, see
-/// DatabaseBackupHostedService), but every name is still validated to
-/// resolve strictly inside the configured directory before any file
-/// operation runs, defending against path traversal regardless of caller.
+/// IBackupStorage implementation backed by a local or mounted directory, used as the fallback storage adapter when Supabase storage is not configured.
 /// </summary>
 public sealed class LocalDirectoryBackupStorage : IBackupStorage
 {
@@ -75,10 +68,7 @@ public sealed class LocalDirectoryBackupStorage : IBackupStorage
     }
 
     /// <summary>
-    /// Resolves <paramref name="name"/> against the configured directory and
-    /// throws ArgumentException unless the resolved path stays
-    /// strictly inside it (defends against ../ traversal and rooted
-    /// absolute paths escaping the configured backup directory).
+    /// Resolves name against the configured directory and throws ArgumentException unless the resolved path stays strictly inside it.
     /// </summary>
     private string ResolveSafePath(string name)
     {

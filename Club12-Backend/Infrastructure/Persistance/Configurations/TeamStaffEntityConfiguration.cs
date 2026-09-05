@@ -6,10 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Infrastructure.Persistance.Configurations;
 
 /// <summary>
-/// EF configuration for <see cref="TeamStaff"/> (cuerpo técnico). Unlike
-/// TeamPointDeduction — whose Team FK is Restrict to protect competitive
-/// history — a staff row carries no independent value once its team or
-/// tournament is gone, so both FKs cascade.
+/// A team staff row carries no independent value once its team or tournament is gone, so both foreign keys cascade.
 /// </summary>
 public class TeamStaffEntityConfiguration : BaseEntityConfiguration<TeamStaff>
 {

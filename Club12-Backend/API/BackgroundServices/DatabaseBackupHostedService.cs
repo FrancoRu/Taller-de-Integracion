@@ -13,36 +13,7 @@ using System.Threading.Tasks;
 namespace API.BackgroundServices;
 
 /// <summary>
-/// Drives the scheduled database backup: a PeriodicTimer loop that,
-/// once per elapsed interval, resolves the scoped
-/// IBackupOperationsService and calls
-/// CreateBackupAsync(BackupOrigin.Job) — the same shared write
-/// path the manual Admin endpoint uses (spec
-/// scheduled-database-backups#Scheduled-Runs-Share-the-Catalog-Write-Path-With-Manual-Runs).
-///
-/// No-ops entirely when BackupOptions.Enabled is false
-/// (spec: "Backup Enabled Gate") — this is checked here, independent of
-/// whatever gates Program.cs applies before registering this as an
-/// IHostedService, so the gate is honored even if the service
-/// is constructed/started directly.
-///
-/// A tick is fired-and-forgotten from the timer loop (rather than awaited
-/// inline) so a slow/blocked attempt never delays the loop's own timing.
-/// There is no longer a local single-flight flag: the shared
-/// BackupOperationLock inside IBackupOperationsService is the one
-/// guard for both scheduled and manual attempts (design.md's "the
-/// semaphore subsumes it" decision) — an overlapping tick, or a manual
-/// request racing a scheduled attempt, is told Busy by the
-/// use case and simply logged here, never started twice. A failed
-/// attempt (Failed outcome, or any unexpected exception from
-/// resolving/calling the scoped service) is logged and never propagates —
-/// it must not crash the host or stop later scheduled attempts (spec:
-/// "Backup Failure Isolation").
-///
-/// A DI scope is created per tick (via IServiceScopeFactory) because
-/// IBackupOperationsService is scoped (it depends on the scoped
-/// IBackupCatalog/ApplicationDBContext), while this hosted service
-/// itself is a singleton.
+/// Drives the scheduled database backup by ticking a PeriodicTimer and calling the same shared IBackupOperationsService write path the manual admin endpoint uses, no-oping entirely when BackupOptions.Enabled is false.
 /// </summary>
 public sealed class DatabaseBackupHostedService(
     IServiceScopeFactory scopeFactory,
@@ -50,21 +21,14 @@ public sealed class DatabaseBackupHostedService(
     ILogger<DatabaseBackupHostedService> logger) : BackgroundService
 {
     /// <summary>
-    /// Test-only hook: overrides the interval that would otherwise be
-    /// derived from BackupOptions.IntervalHours, letting tests
-    /// use a short, deterministic interval instead of sleeping for real
-    /// hours-scale durations. Always null in production wiring (the
-    /// codebase has no InternalsVisibleTo convention, so this is
-    /// public rather than internal — it is not exercised by any production
-    /// code path).
+    /// Test-only hook that overrides the interval otherwise derived from BackupOptions.IntervalHours, letting tests use a short, deterministic interval instead of sleeping for real hours-scale durations.
     /// </summary>
     public TimeSpan? IntervalOverride { get; init; }
 
     private Task? _inFlightRun;
 
     /// <summary>
-    /// Ticks on a PeriodicTimer for the lifetime of the host. Cancellation via
-    /// stoppingToken during host shutdown is the expected exit path, not an error.
+    /// Ticks on a PeriodicTimer for the lifetime of the host; cancellation via stoppingToken during host shutdown is the expected exit path, not an error.
     /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

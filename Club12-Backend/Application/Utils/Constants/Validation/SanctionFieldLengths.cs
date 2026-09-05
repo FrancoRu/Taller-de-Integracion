@@ -1,13 +1,12 @@
 namespace Application.Utils.Constants.Validation;
 
 /// <summary>
-/// Field length limits shared across the player sanction request DTOs
-/// (Create/Update/Appeal/Resolve), so they stay in sync.
+/// Field length limits shared across the player sanction request DTOs, so they stay in sync.
 /// </summary>
 public static class SanctionFieldLengths
 {
     /// <summary>
-    /// Max length of the short sanction description (Create/UpdatePlayerSanctionRequest).
+    /// Max length of the short sanction description on Create and Update requests.
     /// </summary>
     public const int DescriptionMaxLength = 255;
 

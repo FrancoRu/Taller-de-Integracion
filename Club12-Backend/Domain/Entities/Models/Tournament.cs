@@ -12,15 +12,12 @@ public class Tournament : EntityBase
     public required string Name { get; set; }
 
     /// <summary>
-    /// The unique, URL-friendly identifier used in public tournament links.
-    /// Generated once from the name at creation time and never changed afterward,
-    /// so shared links keep working even if the tournament is renamed.
+    /// The unique, URL-friendly identifier used in public tournament links, generated once from the name and never changed afterward.
     /// </summary>
     public required string Slug { get; set; }
 
     /// <summary>
-    /// The deadline for team registrations.
-    /// Must be earlier than the tournament start date.
+    /// The deadline for team registrations, which must be earlier than the tournament start date.
     /// </summary>
     public required DateTime TeamRegistrationDeadline { get; set; }
 
@@ -29,25 +26,17 @@ public class Tournament : EntityBase
     public TournamentStatus Status { get; set; } = TournamentStatus.Scheduled;
 
     /// <summary>
-    /// Competitive category (gender) of the tournament (HU-48). By club rule
-    /// the feminine competition is a separate tournament, so every division in
-    /// this tournament must share this category — it is the source of truth for
-    /// the "no mixing feminine and masculine" invariant. Defaults to
-    /// <see cref="TournamentCategory.Masculine"/>.
+    /// Competitive gender category of the tournament, the source of truth for the no-mixing invariant across its divisions.
     /// </summary>
     public TournamentCategory Category { get; set; } = TournamentCategory.Masculine;
 
     /// <summary>
-    /// The id of the season this tournament belongs to (optional). A tournament
-    /// may be grouped under a <see cref="Season"/> ("Temporada") alongside other
-    /// tournaments of the same period; belonging to a season is purely additive
-    /// and never affects the tournament's own <see cref="Category"/> (HU-48).
+    /// The optional id of the season this tournament belongs to, purely additive and never affecting the tournament's own Category.
     /// </summary>
     public Guid? SeasonId { get; set; }
 
     /// <summary>
-    /// The season this tournament belongs to, or null when it is not grouped
-    /// under any season.
+    /// The season this tournament belongs to, or null when it is not grouped under any season.
     /// </summary>
     public virtual Season? Season { get; set; }
 

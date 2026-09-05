@@ -1,8 +1,7 @@
 namespace Application.Utils.Constants.Validation;
 
 /// <summary>
-/// Field length limits shared by CreatePlayerRequest and
-/// UpdatePlayerRequest, so the two stay in sync.
+/// Field length limits shared by CreatePlayerRequest and UpdatePlayerRequest, so the two stay in sync.
 /// </summary>
 public static class PlayerFieldLengths
 {

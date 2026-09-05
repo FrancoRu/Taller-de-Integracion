@@ -14,7 +14,7 @@ public class CreatePlayerStatisticRequest
     public int Value { get; set; }
 
     /// <summary>
-    /// The type of statistic (Points or Assists). Defaults to Points.
+    /// The type of statistic, Points or Assists, defaulting to Points.
     /// </summary>
     public StatisticType Type { get; set; } = StatisticType.Points;
 

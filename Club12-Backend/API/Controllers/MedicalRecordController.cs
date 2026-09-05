@@ -20,10 +20,7 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Manages player medical records and the resulting per-season eligibility
-/// (HU-55/56/57/58/59/62). A medical record is scoped to a player + team +
-/// tournament (the season registration), never to the player globally, so the
-/// same player in another team/tournament keeps a separate record.
+/// Manages player medical records and per-season eligibility, scoped to a player, team, and tournament rather than to the player globally.
 /// </summary>
 /// <param name="medicalRecordService">The medical-record service.</param>
 /// <param name="medicalRecordStorage">The medical-record file storage boundary.</param>
@@ -35,14 +32,10 @@ public class MedicalRecordController(
     IMedicalRecordStorage medicalRecordStorage) : ControllerBase
 {
     /// <summary>
-    /// Uploads a player's medical-record file (PDF) for a specific team and
-    /// tournament (HU-55). Stores the file in the dedicated medical-records
-    /// area (HU-56) and records its reference on the season registration. The
-    /// player is NOT habilitado yet — the record starts Pending and still has
-    /// to be approved (HU-57/HU-58).
+    /// Uploads a player's medical-record PDF for a team and tournament, starting the record in Pending status until it is approved.
     /// </summary>
     /// <param name="request">The player, team, tournament, and PDF file.</param>
-    /// <returns>The resulting medical-record state (status Pending).</returns>
+    /// <returns>The resulting medical-record state, with status Pending.</returns>
     [HttpPost()]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(MedicalRecordResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -79,9 +72,7 @@ public class MedicalRecordController(
     }
 
     /// <summary>
-    /// Approves or rejects a player's medical record for a team and tournament
-    /// (HU-58). Approve → habilitado (HU-57); reject → not-habilitado with the
-    /// optional reason.
+    /// Approves or rejects a player's medical record for a team and tournament, where approval grants eligibility and rejection can include an optional reason.
     /// </summary>
     /// <param name="request">The player, team, tournament, decision, and reason.</param>
     /// <returns>The resulting medical-record state.</returns>
@@ -99,13 +90,11 @@ public class MedicalRecordController(
     }
 
     /// <summary>
-    /// Returns the current medical-record / eligibility state of a player's
-    /// season registration (HU-62), so the frontend can show a habilitado /
-    /// not-habilitado badge.
+    /// Returns the current medical-record and eligibility state of a player's season registration.
     /// </summary>
     /// <param name="playerId">The player.</param>
     /// <param name="teamId">The team the player is registered to.</param>
-    /// <param name="tournamentId">The tournament (season).</param>
+    /// <param name="tournamentId">The tournament, i.e. the season.</param>
     /// <returns>The medical-record state, or 404 when none exists.</returns>
     [HttpGet()]
     [Authorize(Roles = Roles.AdminOrOwner)]
@@ -122,14 +111,11 @@ public class MedicalRecordController(
     }
 
     /// <summary>
-    /// Downloads the PDF file of a player's uploaded medical record for a team
-    /// and tournament (HU-55/HU-56). The medical-records storage area is
-    /// private, so the file is streamed back through the API rather than via a
-    /// public URL.
+    /// Downloads a player's medical-record PDF by streaming it through the API rather than via a public URL, since the storage area is private.
     /// </summary>
     /// <param name="playerId">The player.</param>
     /// <param name="teamId">The team the player is registered to.</param>
-    /// <param name="tournamentId">The tournament (season).</param>
+    /// <param name="tournamentId">The tournament, i.e. the season.</param>
     /// <returns>The stored PDF, or 404 when no record/file exists.</returns>
     [HttpGet("download")]
     [Authorize(Roles = Roles.AdminOrOwner)]

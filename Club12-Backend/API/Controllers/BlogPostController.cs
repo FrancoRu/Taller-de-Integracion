@@ -24,9 +24,7 @@ namespace API.Controllers;
 
 
 /// <summary>
-/// Controller for managing blog posts. Reads are public; writes require
-/// Admin or Owner (individual actions below opt back out with
-/// [AllowAnonymous] where the whole club should be able to read).
+/// Manages blog posts; reads are public while writes require Admin or Owner, with individual actions opting back out via AllowAnonymous where the whole club should be able to read.
 /// </summary>
 /// <param name="blogPostService">The blog post service.</param>
 /// <param name="supabaseHelper">The Supabase helper for storage operations.</param>
@@ -41,9 +39,7 @@ public class BlogPostController(
     ) : ControllerBase
 {
     /// <summary>
-    /// Creates a blog post from multipart form data. If a photo file is
-    /// included, it's validated as an image and uploaded to storage before
-    /// the post is persisted.
+    /// Creates a blog post from multipart form data, validating and uploading an included photo file to storage before the post is persisted.
     /// </summary>
     /// <param name="blogPostRequest">The blog post creation request object containing the post details.</param>
     /// <returns>The created blog post response with details of the new blog post.</returns>
@@ -73,14 +69,11 @@ public class BlogPostController(
     }
 
     /// <summary>
-    /// Updates a blog post, resolved by id or by its slug — the same lookup
-    /// the GET endpoint uses, so an admin can save a post the same way it
-    /// was opened. Unpublished drafts are resolvable here too, so a draft
-    /// can be edited before it's published.
+    /// Updates a blog post resolved by id or by its slug, the same lookup the GET endpoint uses, including unpublished drafts so a draft can be edited before it's published.
     /// </summary>
-    /// <param name="idOrSlug">The id (GUID) or slug of the blog post to update.</param>
+    /// <param name="idOrSlug">The GUID id or slug of the blog post to update.</param>
     /// <param name="blogPostRequest">The blog post request with updated content.</param>
-    /// <returns>Returns 200 (OK) with the updated blog post response if the update was successful, or 400 (Bad Request) if the blog post was not found.</returns>
+    /// <returns>Returns 200 OK with the updated blog post response if the update was successful, or 400 Bad Request if the blog post was not found.</returns>
     [HttpPut("{idOrSlug}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BlogPostResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -104,12 +97,11 @@ public class BlogPostController(
     }
 
     /// <summary>
-    /// Replaces a blog post's photo. The new file is validated as an image
-    /// and uploaded to storage before the post's PhotoUrl is updated.
+    /// Replaces a blog post's photo, validating the new file as an image and uploading it to storage before updating the post's PhotoUrl.
     /// </summary>
-    /// <param name="idOrSlug">The id (GUID) or slug of the blog post to update the photo.</param>
+    /// <param name="idOrSlug">The GUID id or slug of the blog post to update the photo.</param>
     /// <param name="photoRequest">The update blog post photo request.</param>
-    /// <returns>Returns 200 (OK) if the photo was successfully updated.</returns>
+    /// <returns>Returns 200 OK if the photo was successfully updated.</returns>
     [HttpPut("{idOrSlug}/photo")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -135,12 +127,9 @@ public class BlogPostController(
     }
 
     /// <summary>
-    /// Retrieves a blog post by id or slug. Admin/Owner can also resolve
-    /// unpublished drafts (others get 404 for those). A public, non-draft
-    /// read increments the post's view counter; an Admin/Owner preview does
-    /// not.
+    /// Retrieves a blog post by id or slug; Admin or Owner can also resolve unpublished drafts, and a public non-draft read increments the view counter while an Admin/Owner preview does not.
     /// </summary>
-    /// <param name="idOrSlug">Blog post identifier (GUID) or slug.</param>
+    /// <param name="idOrSlug">Blog post identifier as a GUID, or slug.</param>
     /// <returns>The blog post with the specified id or slug.</returns>
     [AllowAnonymous]
     [HttpGet("{idOrSlug}")]
@@ -176,7 +165,7 @@ public class BlogPostController(
     /// Deletes a blog post by its id.
     /// </summary>
     /// <param name="id">The id of the blog post to delete.</param>
-    /// <returns>Returns 204 (No Content) if the blog post was successfully deleted, or 400 (Bad Request) if not found.</returns>
+    /// <returns>Returns 204 No Content if the blog post was successfully deleted, or 400 Bad Request if not found.</returns>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -187,8 +176,7 @@ public class BlogPostController(
     }
 
     /// <summary>
-    /// Retrieves filtered, paginated blog posts. Public/anonymous callers
-    /// only see published posts; Admin/Owner also see drafts.
+    /// Retrieves filtered, paginated blog posts; public and anonymous callers only see published posts while Admin or Owner also see drafts.
     /// </summary>
     /// <param name="filterRequest">The filtering and pagination parameters.</param>
     /// <returns>A paginated response containing the filtered blog posts.</returns>

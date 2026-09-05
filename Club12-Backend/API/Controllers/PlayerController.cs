@@ -21,8 +21,7 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Controller for managing Players. Public reads return minimal data;
-/// full player details and every write require staff roles.
+/// Manages players; public reads return minimal data, while full details and every write require staff roles.
 /// </summary>
 /// <param name="playerService">The Player service.</param>
 /// <param name="teamService">The Team service.</param>
@@ -36,14 +35,13 @@ public class PlayerController(
     ) : ControllerBase
 {
     /// <summary>
-    /// Creates a player under the specified team. Returns the full admin-facing player
-    /// response (not the trimmed public shape returned by the public endpoints).
+    /// Creates a player under the specified team, returning the full admin-facing player response rather than the trimmed public shape.
     /// </summary>
     /// <param name="playerRequest">The player request.</param>
     /// <returns>The created Player response.
-    /// <para>Returns 201 (Created) with the Player response if the creation was successful.</para>
-    /// <para>Returns 400 (Bad Request) if the team was not found or is not linked to a tournament.</para>
-    /// <para>Returns 403 (Forbidden) if the user lacks the Admin or Owner role.</para>
+    /// <para>Returns 201 Created with the Player response if the creation was successful.</para>
+    /// <para>Returns 400 Bad Request if the team was not found or is not linked to a tournament.</para>
+    /// <para>Returns 403 Forbidden if the user lacks the Admin or Owner role.</para>
     /// </returns>
     [Authorize(Roles = Roles.AdminOrOwner)]
     [HttpPost()]
@@ -72,16 +70,14 @@ public class PlayerController(
     }
 
     /// <summary>
-    /// Registers a player onto a team's roster for a tournament season,
-    /// optionally assigning a dorsal, enforcing the HU-54 roster invariants
-    /// (no two teams in one tournament, roster-size cap, unique dorsal).
+    /// Registers a player onto a team's roster for a season, enforcing one-team-per-tournament, the roster-size cap, and unique dorsal numbers.
     /// </summary>
     /// <param name="playerId">The player to register.</param>
     /// <param name="request">The team, tournament and optional dorsal.</param>
     /// <returns>
-    /// <para>Returns 200 (OK) with the registration outcome.</para>
-    /// <para>Returns 409 (Conflict) if a roster invariant is violated.</para>
-    /// <para>Returns 403 (Forbidden) if the user is not authorized.</para>
+    /// <para>Returns 200 OK with the registration outcome.</para>
+    /// <para>Returns 409 Conflict if a roster invariant is violated.</para>
+    /// <para>Returns 403 Forbidden if the user is not authorized.</para>
     /// </returns>
     [Authorize(Roles = Roles.AdminOrOwner)]
     [HttpPost("{playerId:guid}/registration")]
@@ -100,10 +96,10 @@ public class PlayerController(
     /// <summary>
     /// Retrieves a player by its id or its public slug.
     /// </summary>
-    /// <param name="idOrSlug">The id (GUID) or slug of the player to retrieve.</param>
+    /// <param name="idOrSlug">The GUID id or slug of the player to retrieve.</param>
     /// <returns>The Player with the specified id or slug.
-    /// <para>Returns 200 (OK) with the Player response if it was found.</para>
-    /// <para>Returns 404 (Not Found) if the Player with the provided id or slug was not found.</para>
+    /// <para>Returns 200 OK with the Player response if it was found.</para>
+    /// <para>Returns 404 Not Found if the Player with the provided id or slug was not found.</para>
     /// </returns>
     [AllowAnonymous]
     [HttpGet("{idOrSlug}", Name = "GetPlayerById")]
@@ -125,10 +121,10 @@ public class PlayerController(
     /// <summary>
     /// Retrieves a player by its id or its slug, with complete data for the admin view.
     /// </summary>
-    /// <param name="idOrSlug">The id (GUID) or exact slug of the player to retrieve.</param>
+    /// <param name="idOrSlug">The GUID id or exact slug of the player to retrieve.</param>
     /// <returns>The player's complete admin data.
-    /// <para>Returns 200 (OK) with the <see cref="AdminPlayerResponse"/> if the player was found.</para>
-    /// <para>Returns 404 (Not Found) if no player matches the provided id or slug.</para>
+    /// <para>Returns 200 OK with the player's admin data if the player was found.</para>
+    /// <para>Returns 404 Not Found if no player matches the provided id or slug.</para>
     /// </returns>
     [Authorize(Roles = Roles.AdminOrOwner)]
     [HttpGet("admin/{idOrSlug}")]
@@ -153,10 +149,10 @@ public class PlayerController(
     /// <param name="id">The id of the player to update.</param>
     /// <param name="playerRequest">The player request.</param>
     /// <returns>
-    /// Returns 200 (OK) with the updated player if the update was successful.
-    /// Returns 400 (Bad Request) if the player's team was not found or is not linked to a tournament.
-    /// Returns 404 (Not Found) if no player matches the provided id.
-    /// Returns 403 (Forbidden) if the user lacks the Admin or Owner role.
+    /// Returns 200 OK with the updated player if the update was successful.
+    /// Returns 400 Bad Request if the player's team was not found or is not linked to a tournament.
+    /// Returns 404 Not Found if no player matches the provided id.
+    /// Returns 403 Forbidden if the user lacks the Admin or Owner role.
     /// </returns>
     [Authorize(Roles = Roles.AdminOrOwner)]
     [HttpPut("{id:guid}")]
@@ -196,8 +192,8 @@ public class PlayerController(
     /// </summary>
     /// <param name="id">The id of the Player to delete.</param>
     /// <returns>
-    /// Returns 204 (No Content) if the Player was successfully deleted.
-    /// Returns 403 (Forbidden) if the user lacks the Admin or Owner role.
+    /// Returns 204 No Content if the Player was successfully deleted.
+    /// Returns 403 Forbidden if the user lacks the Admin or Owner role.
     /// </returns>
     [Authorize(Roles = Roles.AdminOrOwner)]
     [HttpDelete("{id:guid}")]
@@ -230,14 +226,13 @@ public class PlayerController(
     }
 
     /// <summary>
-    /// Retrieves filtered players with pagination and detailed information for admins.
-    /// This endpoint is for private use only and requires admin access.
+    /// Retrieves filtered players with pagination and detailed information, for admin use only.
     /// </summary>
     /// <param name="filterRequest">The filtering and pagination parameters.</param>
     /// <returns>A paginated response containing the filtered players.</returns>
     /// <response code="200">Returns a paginated list of filtered players</response>
     /// <response code="400">Returns 400 if there is an invalid filter parameter or the filter results in no data</response>
-    /// <response code="403">Returns 403 if the user does not have the required permissions (admin)</response>
+    /// <response code="403">Returns 403 if the user does not have the required admin permissions</response>
     [Authorize(Roles = Roles.AdminOrOwner)]
     [HttpGet("")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<AdminPlayerResponse>))]

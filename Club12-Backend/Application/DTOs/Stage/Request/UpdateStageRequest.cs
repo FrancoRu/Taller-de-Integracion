@@ -10,27 +10,23 @@ public class UpdateStageRequest
     public string? Description { get; set; }
 
     /// <summary>
-    /// Indicates whether the stage is currently active.
-    /// If null, the default should be true.
+    /// Whether the stage is currently active; null defaults to true.
     /// </summary>
     public bool? IsActive { get; set; }
 
     /// <summary>
-    /// Optional label grouping this stage with other parallel elimination
-    /// brackets in the same division. Null clears the bracket grouping.
+    /// Optional label grouping this stage with parallel elimination brackets; null clears the grouping.
     /// </summary>
     public string? BracketName { get; set; }
 
     /// <summary>
-    /// Number of games in a series between two teams at this round: 1, 3,
-    /// 5, or 7. Null leaves the existing value unchanged.
+    /// Number of games in a series between two teams at this round, one of 1, 3, 5, or 7; null leaves it unchanged.
     /// </summary>
     [System.ComponentModel.DataAnnotations.AllowedValues(1, 3, 5, 7)]
     public int? BestOf { get; set; }
 
     /// <summary>
-    /// How many times each pair of teams plays within this group stage.
-    /// Null leaves the existing value unchanged.
+    /// How many times each pair of teams plays within this group stage; null leaves it unchanged.
     /// </summary>
     [System.ComponentModel.DataAnnotations.Range(RoundRobinFormat.MIN_LEGS, RoundRobinFormat.MAX_LEGS)]
     public int? RoundRobinLegs { get; set; }

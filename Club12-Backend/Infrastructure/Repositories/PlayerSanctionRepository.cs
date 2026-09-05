@@ -7,9 +7,7 @@ using Infrastructure.Persistance;
 namespace Infrastructure.Repositories;
 
 /// <summary>
-/// Repository implementation for managing PlayerSanction entities.
-/// Inherits generic CRUD operations from GenericRepository{PlayerSanction} and implements IPlayerSanctionRepository.
-/// Utilizes ApplicationDBContext for data access.
+/// Repository implementation for managing PlayerSanction entities, inheriting generic CRUD and implementing IPlayerSanctionRepository.
 /// </summary>
 public class PlayerSanctionRepository(ApplicationDBContext context)
     : GenericRepository<PlayerSanction>(context), IPlayerSanctionRepository

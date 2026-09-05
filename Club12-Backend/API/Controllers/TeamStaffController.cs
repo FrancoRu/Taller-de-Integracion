@@ -20,10 +20,7 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Manages a team's technical staff (cuerpo técnico — DT, Asistente),
-/// scoped per team + tournament (season). Creating and deleting
-/// require Admin or Owner; listing is public so a team's profile can show its
-/// staff.
+/// Manages a team's technical staff, scoped per team and tournament; creating and deleting require Admin or Owner, listing is public.
 /// </summary>
 /// <param name="staffService">The team-staff service.</param>
 /// <param name="teamService">The team service, used to validate the team.</param>
@@ -42,10 +39,10 @@ public class TeamStaffController(
     /// Adds a member to a team's technical staff for a given tournament.
     /// </summary>
     /// <param name="teamId">The team the staff member belongs to.</param>
-    /// <param name="request">The staff member (full name, role, tournament).</param>
+    /// <param name="request">The staff member's full name, role, and tournament.</param>
     /// <returns>
-    /// 201 (Created) with the staff member; 404 (Not Found) when the team or
-    /// tournament does not exist; 403 (Forbidden) for non-staff callers.
+    /// Returns 201 Created with the staff member; 404 Not Found when the team or
+    /// tournament does not exist; 403 Forbidden for non-staff callers.
     /// </returns>
     [HttpPost("teams/{teamId:guid}/staff")]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TeamStaffResponse))]
@@ -76,12 +73,11 @@ public class TeamStaffController(
     }
 
     /// <summary>
-    /// Lists a team's technical staff for a given tournament. Public so a
-    /// team's profile can show its staff.
+    /// Lists a team's technical staff for a given tournament; public so a team's profile can show its staff.
     /// </summary>
     /// <param name="teamId">The team whose staff to list.</param>
-    /// <param name="tournamentId">The tournament (season) to scope the staff to.</param>
-    /// <returns>200 (OK) with the staff (in the order they were added).</returns>
+    /// <param name="tournamentId">The tournament season to scope the staff to.</param>
+    /// <returns>Returns 200 OK with the staff in the order they were added.</returns>
     [AllowAnonymous]
     [HttpGet("teams/{teamId:guid}/staff")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<TeamStaffResponse>))]
@@ -97,7 +93,7 @@ public class TeamStaffController(
     /// Removes a staff member by their id.
     /// </summary>
     /// <param name="id">The id of the staff member to remove.</param>
-    /// <returns>204 (No Content); 403 (Forbidden) for non-staff callers.</returns>
+    /// <returns>Returns 204 No Content; 403 Forbidden for non-staff callers.</returns>
     [HttpDelete("staff/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

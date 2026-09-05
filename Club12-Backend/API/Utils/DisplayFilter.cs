@@ -16,12 +16,10 @@ namespace API.Utils;
 public class DisplayEnumSchemaFilter : ISchemaFilter
 {
     /// <summary>
-    /// Replaces an enum's raw member names in the generated schema with each
-    /// value's <see cref="DisplayAttribute.Name"/> (falling back to the member
-    /// name when absent), so Swagger shows the same friendly text as the UI.
+    /// Replaces an enum's raw member names in the generated schema with each value's DisplayAttribute.Name, falling back to the member name when absent, so Swagger shows the same friendly text as the UI.
     /// </summary>
-    /// <param name="schema">The OpenAPI schema being generated for <paramref name="context"/>'s type.</param>
-    /// <param name="context">The schema generation context; used to check <see cref="SchemaFilterContext.Type"/> for enum-ness.</param>
+    /// <param name="schema">The OpenAPI schema being generated for context's type.</param>
+    /// <param name="context">The schema generation context; used to check Type for enum-ness.</param>
     public void Apply(OpenApiSchema schema, SchemaFilterContext context)
     {
         if (context.Type.IsEnum)

@@ -9,9 +9,7 @@ using System;
 namespace Infrastructure.Identity;
 
 /// <summary>
-/// EF Core context for ASP.NET Core Identity tables.
-/// Inherits IdentityDbContext{TUser,TRole,TKey} so EF generates
-/// AspNetUsers, AspNetRoles, AspNetUserRoles, etc.
+/// EF Core context for ASP.NET Core Identity tables, generating AspNetUsers, AspNetRoles, and related tables.
 /// </summary>
 public class IdentityAppDbContext(DbContextOptions<IdentityAppDbContext> options)
     : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)

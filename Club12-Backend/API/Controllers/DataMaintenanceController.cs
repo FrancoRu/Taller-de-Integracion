@@ -13,10 +13,7 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Admin-only tools for resetting tournament-domain data to a clean,
-/// realistic sample state. See
-/// docs/superpowers/specs/2026-08-18-admin-test-data-tools-design.md.
-/// Identity (users, roles) is never touched by either endpoint.
+/// Admin-only tools for resetting tournament-domain data to a clean, realistic sample state, never touching identity.
 /// </summary>
 [Route("api/data-maintenance")]
 [ApiController]
@@ -37,8 +34,7 @@ public class DataMaintenanceController(IDataMaintenanceService dataMaintenanceSe
     }
 
     /// <summary>
-    /// Seeds 2 complete sample tournaments. Returns 409 if the database
-    /// already has tournament data — wipe first.
+    /// Seeds 2 complete sample tournaments, returning 409 if the database already has tournament data since it must be wiped first.
     /// </summary>
     [HttpPost("seed")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DataSeedResult))]

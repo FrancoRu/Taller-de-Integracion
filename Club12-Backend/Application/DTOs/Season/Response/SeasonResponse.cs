@@ -5,13 +5,12 @@ using System.Collections.Generic;
 namespace Application.DTOs.Season.Response;
 
 /// <summary>
-/// Response model for returning season ("Temporada") details, including the
-/// lightweight list of tournaments grouped under it.
+/// Season details, including the lightweight list of tournaments grouped under it.
 /// </summary>
 public class SeasonResponse : BaseEntityResponse
 {
     /// <summary>
-    /// The display name of the season, e.g. "Temporada XXVII".
+    /// The display name of the season.
     /// </summary>
     public required string Name { get; set; }
 
@@ -21,7 +20,7 @@ public class SeasonResponse : BaseEntityResponse
     public required string Slug { get; set; }
 
     /// <summary>
-    /// The calendar year the season is played in (optional).
+    /// The calendar year the season is played in; optional.
     /// </summary>
     public int? Year { get; set; }
 

@@ -15,7 +15,7 @@ public class PlayerStatisticResponse : BaseEntityResponse
     public int Value { get; set; }
 
     /// <summary>
-    /// The type of statistic (Points or Assists).
+    /// The type of statistic, Points or Assists.
     /// </summary>
     public StatisticType Type { get; set; }
 

@@ -3,15 +3,12 @@ using System;
 namespace Application.DTOs.Match.Request;
 
 /// <summary>
-/// Represents a request to reprogram/suspend a match (HU-68). The match is
-/// marked suspended and, when a new date is provided, moved to it — never
-/// changing its round (HU-67).
+/// Request to suspend a match and optionally reschedule it, never changing its round.
 /// </summary>
 public class SuspendMatchRequest
 {
     /// <summary>
-    /// Optional new calendar date/time for the match. When null, the match is
-    /// suspended in place without rescheduling.
+    /// Optional new date and time for the match; null suspends it in place without rescheduling.
     /// </summary>
     public DateTime? MatchDate { get; set; }
 }

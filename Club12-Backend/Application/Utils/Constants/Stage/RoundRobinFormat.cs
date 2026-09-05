@@ -1,8 +1,7 @@
 namespace Application.Utils.Constants.Stage;
 
 /// <summary>
-/// Bounds for how many times each pair of teams plays within a single
-/// group stage (RoundRobinLegs).
+/// Bounds for how many times each pair of teams plays within a single group stage, RoundRobinLegs.
 /// </summary>
 public static class RoundRobinFormat
 {
@@ -12,7 +11,7 @@ public static class RoundRobinFormat
     public const int MIN_LEGS = 1;
 
     /// <summary>
-    /// Upper bound to keep fixture size sane (triple round-robin).
+    /// Upper bound to keep fixture size sane, a triple round-robin.
     /// </summary>
     public const int MAX_LEGS = 3;
 }

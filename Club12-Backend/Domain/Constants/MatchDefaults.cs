@@ -6,14 +6,12 @@ namespace Domain.Constants;
 public static class MatchDefaults
 {
     /// <summary>
-    /// Default score awarded to the present team on a walkover (HU-73). FIBA
-    /// scores a walkover 20-0; the loading endpoint may override the winner's
-    /// score, but the absent team always gets zero.
+    /// Default score awarded to the present team on a walkover.
     /// </summary>
     public const int WalkOverWinnerScore = 20;
 
     /// <summary>
-    /// Score assigned to the absent team on a walkover (HU-73).
+    /// Score assigned to the absent team on a walkover.
     /// </summary>
     public const int WalkOverLoserScore = 0;
 }

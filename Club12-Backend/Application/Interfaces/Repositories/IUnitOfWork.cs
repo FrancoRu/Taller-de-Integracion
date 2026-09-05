@@ -26,13 +26,7 @@ public interface IUnitOfWork
     Task<int> SaveChangesAsync();
 
     /// <summary>
-    /// Runs <paramref name="operation"/> inside a single database transaction
-    /// (HU-38). Every repository shares this unit of work's DbContext, so any
-    /// nested SaveChanges the operation triggers participates in — and only
-    /// commits with — this transaction. If the operation throws, the whole
-    /// transaction is rolled back, leaving no partial writes. Wrapped in the
-    /// context's execution strategy so it stays compatible with retrying
-    /// providers.
+    /// Runs operation inside a single database transaction, rolling back entirely with no partial writes if the operation throws.
     /// </summary>
     Task ExecuteInTransactionAsync(Func<Task> operation);
 }

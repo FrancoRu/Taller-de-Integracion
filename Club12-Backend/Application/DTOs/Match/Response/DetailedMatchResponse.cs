@@ -14,15 +14,12 @@ public class DetailedMatchResponse : BaseEntityResponse
     public required DateTime MatchDate { get; set; }
 
     /// <summary>
-    /// The matchday (jornada) this match belongs to, 1-based (HU-63/HU-65).
-    /// This is the canonical grouping key for the fixture ("Fecha 1", "Fecha
-    /// 2", …); the frontend should group by this rather than by MatchDate. Null
-    /// for matches with no round-robin matchday (e.g. knockout stages).
+    /// The 1-based matchday this match belongs to; null for stages with no round-robin matchday.
     /// </summary>
     public int? Round { get; set; }
 
     /// <summary>
-    /// The type of the match (e.g., regular or playoff).
+    /// The type of the match, regular or playoff.
     /// </summary>
     public required string MatchType { get; set; }
 
@@ -40,8 +37,7 @@ public class DetailedMatchResponse : BaseEntityResponse
     public required bool IsFinished { get; set; }
 
     /// <summary>
-    /// The result lifecycle state (HU-69): Scheduled, Played, Suspended, or
-    /// WalkOver. Lets the UI distinguish a walkover from a normal result.
+    /// The result lifecycle state: Scheduled, Played, Suspended, or WalkOver.
     /// </summary>
     public string? Status { get; set; }
 
@@ -54,9 +50,7 @@ public class DetailedMatchResponse : BaseEntityResponse
     public Guid? StageId { get; set; }
 
     /// <summary>
-    /// The Id of the tournament this match belongs to (via Stage.Division),
-    /// so the public match page can navigate back to its tournament instead
-    /// of a generic listing.
+    /// The id of the tournament this match belongs to, letting the public page link back to it directly.
     /// </summary>
     public Guid? TournamentId { get; set; }
 }
