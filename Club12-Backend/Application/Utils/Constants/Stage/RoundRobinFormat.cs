@@ -8,10 +8,10 @@ public static class RoundRobinFormat
     /// <summary>
     /// Single round-robin: every pair plays once.
     /// </summary>
-    public const int MIN_LEGS = 1;
+    public const int MinLegs = 1;
 
     /// <summary>
     /// Upper bound to keep fixture size sane, a triple round-robin.
     /// </summary>
-    public const int MAX_LEGS = 3;
+    public const int MaxLegs = 3;
 }

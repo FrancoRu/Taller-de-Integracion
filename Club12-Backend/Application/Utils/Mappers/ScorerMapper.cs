@@ -95,20 +95,20 @@ public partial class ScorerMapper : IScorerMapper
 
             if (isDraw)
             {
-                homeEntry.Points += ScoreConstants.POINTS_FOR_DRAW;
-                visitorEntry.Points += ScoreConstants.POINTS_FOR_DRAW;
+                homeEntry.Points += ScoreConstants.PointsForDraw;
+                visitorEntry.Points += ScoreConstants.PointsForDraw;
                 continue;
             }
 
             if (homeWon)
             {
-                homeEntry.Points += ScoreConstants.POINTS_FOR_WIN;
-                visitorEntry.Points += ScoreConstants.POINTS_FOR_LOSS;
+                homeEntry.Points += ScoreConstants.PointsForWin;
+                visitorEntry.Points += ScoreConstants.PointsForLoss;
             }
             else
             {
-                homeEntry.Points += ScoreConstants.POINTS_FOR_LOSS;
-                visitorEntry.Points += ScoreConstants.POINTS_FOR_WIN;
+                homeEntry.Points += ScoreConstants.PointsForLoss;
+                visitorEntry.Points += ScoreConstants.PointsForWin;
             }
         }
 

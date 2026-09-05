@@ -66,6 +66,6 @@ public class CreateStageRequest
     /// <summary>
     /// How many times each pair of teams plays within this group stage; only meaningful for a Group stage.
     /// </summary>
-    [Range(RoundRobinFormat.MIN_LEGS, RoundRobinFormat.MAX_LEGS)]
-    public int RoundRobinLegs { get; set; } = RoundRobinFormat.MIN_LEGS;
+    [Range(RoundRobinFormat.MinLegs, RoundRobinFormat.MaxLegs)]
+    public int RoundRobinLegs { get; set; } = RoundRobinFormat.MinLegs;
 }

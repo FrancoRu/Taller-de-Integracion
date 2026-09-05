@@ -13,11 +13,11 @@ public static class StageHelper
     {
         return stageType switch
         {
-            StageType.Group => MaxTeams.GROUP,
-            StageType.QuarterFinal => MaxTeams.QUARTER_FINAL,
-            StageType.SemiFinal => MaxTeams.SEMI_FINAL,
-            StageType.ThirdPlace => MaxTeams.THIRD_PLACE,
-            StageType.Final => MaxTeams.FINAL,
+            StageType.Group => MaxTeams.Group,
+            StageType.QuarterFinal => MaxTeams.QuarterFinal,
+            StageType.SemiFinal => MaxTeams.SemiFinal,
+            StageType.ThirdPlace => MaxTeams.ThirdPlace,
+            StageType.Final => MaxTeams.Final,
             _ => throw new ArgumentException(ErrorMessages.Stage.InvalidStageType)
         };
     }

@@ -166,6 +166,86 @@ public class CreatePlayerAddressRequest { /* ... */ }
 
 ---
 
+## Rule NAME-001 — `public const` fields are PascalCase, no exceptions
+
+**Added 2026-09-05.** Verified by sampling every constants class in the backend: PascalCase is the dominant, near-universal convention. Five files were the exception (`MaxTeams`, `TournamentBracketSize`, `ScoreConstants`, `KnockoutMatchCount`, `RoundRobinFormat` all used SCREAMING_SNAKE_CASE) and have been renamed to match — `GROUP` → `Group`, `EIGHT` → `Eight`, `POINTS_FOR_WIN` → `PointsForWin`, and so on, values unchanged, every call site updated.
+
+```csharp
+// ❌ VIOLATION
+public const int GROUP_STAGE_CAP = 32;
+
+// ✅ CORRECT
+public const int GroupStageCap = 32;
+```
+
+Everything else sampled — interface `I` prefixes, `_camelCase` private fields, `Async`-suffixed async methods, file-scoped namespaces, primary constructors — was already 100% consistent; those conventions are codified in `.editorconfig`, not repeated here.
+
+---
+
+## Rule ASYNC-001 — No sync-over-async blocking (`.Wait()`, `.Result`, `.GetAwaiter().GetResult()`)
+
+**Added 2026-09-05.** The backend was already almost entirely clean of this anti-pattern — a repo-wide search found exactly one instance: `SupabaseHelper`'s constructor called `_client.InitializeAsync().Wait()`, forced by the fact that C# constructors cannot be `async`. Fixed with a `Lazy<Task>` field, initialized in the constructor without blocking and awaited at the top of every public method that touches `_client`, so initialization stays lazy, thread-safe, and non-blocking instead of running synchronously inside the constructor.
+
+```csharp
+// ❌ VIOLATION — blocks a thread synchronously waiting on async work
+public SupabaseHelper(IConfiguration configuration)
+{
+    _client = new Client(baseUrl, serviceRole, options);
+    _client.InitializeAsync().Wait();
+}
+
+// ✅ CORRECT — lazy, thread-safe, never blocks
+private readonly Lazy<Task> _initialization;
+
+public SupabaseHelper(IConfiguration configuration)
+{
+    _client = new Client(baseUrl, serviceRole, options);
+    _initialization = new Lazy<Task>(_client.InitializeAsync);
+}
+
+public async Task UploadRawAsync(string objectPath, Stream content, string? bucket = null)
+{
+    await _initialization.Value;
+    // ...
+}
+```
+
+**`ConfigureAwait(false)` is correctly NOT used** in this codebase, and that's not a gap to fill in — it's the right call for an ASP.NET Core app. `ConfigureAwait(false)` exists to avoid deadlocks from resuming on a captured `SynchronizationContext`; ASP.NET Core has no such context, so the call is a no-op that only adds noise. Do not add it.
+
+---
+
+## Rule NULL-001 — Nullable reference types are enabled and used correctly; the null-forgiving operator is a legitimate, audited pattern here
+
+**Added 2026-09-05.** `<Nullable>enable</Nullable>` is set on all four projects — verified, not assumed. A sample of the 123 null-forgiving (`!`) operators across the backend confirms they fall into a small number of legitimate, consistent patterns, not lazy suppression of real nullability warnings:
+
+- EF Core `Include` selector lambdas on nullable navigation properties (`includes: [m => m.HomeTeam!, m => m.VisitorTeam!]`) — the most common case by far. `Include()`'s lambda signature needs a non-null-typed property selector even though the navigation property itself is nullable in the model; this is the standard, unavoidable EF Core idiom for this situation.
+- Values guaranteed non-null by an invariant the type system can't see (e.g. `match.HomeScore!.Value` on a match already filtered to `IsFinished`).
+- Deferred-assignment locals (`Division division = null!;` followed by an awaited closure that assigns it before the method returns) — C#'s definite-assignment analysis can't see through the lambda/await boundary, but the assignment is guaranteed to run first.
+- Framework APIs that return `object?`/`string?` where the actual contract guarantees non-null for valid input (`MethodInfo.Invoke(...)!`, `configuration[key]!` for a required config key).
+
+No fix needed here — this rule documents that the pattern is intentional and consistent, so a future reviewer doesn't mistake it for carelessness or try to "clean it up" into something less correct.
+
+---
+
+## Rule ERROR-001 — Exceptions are always logged or translated, never silently swallowed
+
+**Added 2026-09-05.** Every `catch (Exception ...)` block in the backend (22 total, audited individually) either logs the exception with `ILogger`/Serilog and a clear, specific message before continuing, or translates it into a domain-specific exception (`InvalidOperationException` with an `ErrorMessages.*` message) that `GlobalExceptionHandler` maps to an HTTP status. None discard the exception silently. Keep doing this — a caught exception with no logging and no rethrow is a bug report waiting to happen.
+
+The handful of `#pragma warning disable` directives outside of EF migrations (`S3267`, `S2583`, `S1075`, `S6960`) were also audited: each suppresses a specific, identified SonarAnalyzer false positive or an accepted dev-only default, not a real issue. Keep suppressions this narrow and this documented — never a blanket disable for a whole file or a whole rule category.
+
+---
+
+## Rule TEST-001 — Test naming and structure (already established, documented here)
+
+**Added 2026-09-05.** No changes needed — this documents the convention already in consistent use across all 851 tests, so it doesn't drift as the suite grows:
+
+- Test method names follow `MethodUnderTest_Scenario` or `MethodUnderTest_ExpectedResult` (one or more `_`-separated segments after the method name) — not a fixed 3-part template, but always method-first, always descriptive of the scenario or the expected outcome.
+- No `Thread.Sleep` anywhere in the suite (verified) — timing-dependent tests are a flakiness risk this codebase has avoided.
+- No mocking library (no NSubstitute/Moq/FakeItEasy) — tests run against a real EF Core Sqlite provider and `Microsoft.AspNetCore.Mvc.Testing`'s `WebApplicationFactory`, favoring integration-style coverage over isolated unit tests with mocked dependencies. This is a deliberate, consistent choice; don't introduce a mocking library for new tests without a specific reason the existing approach can't cover.
+- No shared mutable static state between test classes (verified) — each test builds its own data, avoiding cross-test contamination under xUnit's default parallel-by-class execution.
+
+---
+
 ## What this document does not cover (yet)
 
-Naming conventions, code style, nullable reference types, async/await conventions, error handling/logging, file/project organization, and testing standards are out of scope for this pass. If a future pass wants to define those, it should be grounded in this project's actual tooling the same way this document is — not adapted from an unrelated codebase's rulebook.
+Code style beyond what's already in `.editorconfig`, and file/project organization beyond FILE-001, are out of scope for this pass.

@@ -5,7 +5,7 @@
 /// </summary>
 public static class ScoreConstants
 {
-    public const int POINTS_FOR_WIN = 2;
-    public const int POINTS_FOR_LOSS = 1;
-    public const int POINTS_FOR_DRAW = 1;
+    public const int PointsForWin = 2;
+    public const int PointsForLoss = 1;
+    public const int PointsForDraw = 1;
 }

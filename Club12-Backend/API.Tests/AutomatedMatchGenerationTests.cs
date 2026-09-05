@@ -29,8 +29,8 @@ public class AutomatedMatchGenerationTests : IClassFixture<CustomWebApplicationF
 
     public static readonly TheoryData<StageType, int> KnockoutStageCases = new()
     {
-        { StageType.QuarterFinal, KnockoutMatchCount.QUARTER_FINAL },
-        { StageType.SemiFinal, KnockoutMatchCount.SEMI_FINAL },
+        { StageType.QuarterFinal, KnockoutMatchCount.QuarterFinal },
+        { StageType.SemiFinal, KnockoutMatchCount.SemiFinal },
         { StageType.Final, 1 },
         { StageType.ThirdPlace, 1 },
     };
@@ -56,8 +56,8 @@ public class AutomatedMatchGenerationTests : IClassFixture<CustomWebApplicationF
     [Fact]
     public void KnockoutMatchCount_MatchesPriorLiterals()
     {
-        Assert.Equal(4, KnockoutMatchCount.QUARTER_FINAL);
-        Assert.Equal(2, KnockoutMatchCount.SEMI_FINAL);
+        Assert.Equal(4, KnockoutMatchCount.QuarterFinal);
+        Assert.Equal(2, KnockoutMatchCount.SemiFinal);
     }
 
     private static async Task<Stage> SeedStageAsync(ApplicationDBContext db, StageType stageType)

@@ -44,6 +44,6 @@ public class CreateFullStageRequest
     [AllowedValues(1, 3, 5, 7)]
     public int BestOf { get; set; } = 1;
 
-    [Range(RoundRobinFormat.MIN_LEGS, RoundRobinFormat.MAX_LEGS)]
-    public int RoundRobinLegs { get; set; } = RoundRobinFormat.MIN_LEGS;
+    [Range(RoundRobinFormat.MinLegs, RoundRobinFormat.MaxLegs)]
+    public int RoundRobinLegs { get; set; } = RoundRobinFormat.MinLegs;
 }

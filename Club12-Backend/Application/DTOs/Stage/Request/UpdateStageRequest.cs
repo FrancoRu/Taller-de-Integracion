@@ -28,6 +28,6 @@ public class UpdateStageRequest
     /// <summary>
     /// How many times each pair of teams plays within this group stage; null leaves it unchanged.
     /// </summary>
-    [System.ComponentModel.DataAnnotations.Range(RoundRobinFormat.MIN_LEGS, RoundRobinFormat.MAX_LEGS)]
+    [System.ComponentModel.DataAnnotations.Range(RoundRobinFormat.MinLegs, RoundRobinFormat.MaxLegs)]
     public int? RoundRobinLegs { get; set; }
 }

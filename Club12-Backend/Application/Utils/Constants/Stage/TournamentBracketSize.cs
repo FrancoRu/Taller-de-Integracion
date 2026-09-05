@@ -5,8 +5,8 @@ namespace Application.Utils.Constants.Stage;
 /// </summary>
 public static class TournamentBracketSize
 {
-    public const int EIGHT = 8;
-    public const int SIXTEEN = 16;
-    public const int THIRTY_TWO = 32;
-    public const int SIXTY_FOUR = 64;
+    public const int Eight = 8;
+    public const int Sixteen = 16;
+    public const int ThirtyTwo = 32;
+    public const int SixtyFour = 64;
 }

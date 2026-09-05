@@ -102,7 +102,7 @@ public class CrossCupMultiGroupBracketGenerationTests : IClassFixture<CustomWebA
 
         // 6 pooled qualifiers -> next power of two (8) / 2 = 4, not SemiFinal's fixed 2.
         Assert.Equal(4, generated.Count);
-        Assert.NotEqual(KnockoutMatchCount.SEMI_FINAL, generated.Count);
+        Assert.NotEqual(KnockoutMatchCount.SemiFinal, generated.Count);
 
         List<Match> seeded = await stageService.SeedKnockoutStageAsync(bracket.Id);
         List<Match> ordered = [.. seeded.OrderBy(m => m.MatchDate).ThenBy(m => m.Id)];
@@ -152,7 +152,7 @@ public class CrossCupMultiGroupBracketGenerationTests : IClassFixture<CustomWebA
 
         List<Match> generated = await matchService.CreateAutomatedMatchesAsync(bracket.Id);
 
-        Assert.Equal(KnockoutMatchCount.SEMI_FINAL, generated.Count);
+        Assert.Equal(KnockoutMatchCount.SemiFinal, generated.Count);
     }
 
     /// <summary>
@@ -176,7 +176,7 @@ public class CrossCupMultiGroupBracketGenerationTests : IClassFixture<CustomWebA
 
         List<Match> generated = await matchService.CreateAutomatedMatchesAsync(bracket.Id);
 
-        Assert.Equal(KnockoutMatchCount.SEMI_FINAL, generated.Count);
+        Assert.Equal(KnockoutMatchCount.SemiFinal, generated.Count);
     }
 
     private static async Task<Tournament> SeedTournamentAsync(ApplicationDBContext db)

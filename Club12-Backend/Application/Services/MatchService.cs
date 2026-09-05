@@ -518,8 +518,8 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
 
         return stage.StageType switch
         {
-            StageType.QuarterFinal => KnockoutMatchCount.QUARTER_FINAL,
-            StageType.SemiFinal => KnockoutMatchCount.SEMI_FINAL,
+            StageType.QuarterFinal => KnockoutMatchCount.QuarterFinal,
+            StageType.SemiFinal => KnockoutMatchCount.SemiFinal,
             _ => throw new InvalidOperationException(ErrorMessages.Match.InvalidKnockoutStageType)
         };
     }

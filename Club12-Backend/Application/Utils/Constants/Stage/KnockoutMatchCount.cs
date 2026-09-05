@@ -5,7 +5,7 @@ namespace Application.Utils.Constants.Stage;
 /// </summary>
 public static class KnockoutMatchCount
 {
-    public const int QUARTER_FINAL = 4;
+    public const int QuarterFinal = 4;
 
-    public const int SEMI_FINAL = 2;
+    public const int SemiFinal = 2;
 }

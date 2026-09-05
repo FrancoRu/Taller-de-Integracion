@@ -291,20 +291,20 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
             throw new InvalidOperationException(
                 ErrorMessages.Stage.InvalidTournamentSize(
                     registeredTeams,
-                    $"{TournamentBracketSize.EIGHT}, {TournamentBracketSize.SIXTEEN}, {TournamentBracketSize.THIRTY_TWO}, or {TournamentBracketSize.SIXTY_FOUR}"));
+                    $"{TournamentBracketSize.Eight}, {TournamentBracketSize.Sixteen}, {TournamentBracketSize.ThirtyTwo}, or {TournamentBracketSize.SixtyFour}"));
         }
 
-        if (registeredTeams % MaxTeams.GROUP != 0)
+        if (registeredTeams % MaxTeams.Group != 0)
         {
             throw new InvalidOperationException(
-                ErrorMessages.Stage.TeamsNotDivisibleForGroups(registeredTeams, MaxTeams.GROUP));
+                ErrorMessages.Stage.TeamsNotDivisibleForGroups(registeredTeams, MaxTeams.Group));
         }
 
         List<Stage> stages = [];
 
         DateTime startDate = division.Tournament.StartDate;
 
-        int totalGroups = registeredTeams / MaxTeams.GROUP;
+        int totalGroups = registeredTeams / MaxTeams.Group;
 
         int order = 0;
 
@@ -321,7 +321,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
 
         startDate = stages[0].EndDate.AddDays(StageTemplate.StandardGapDays);
 
-        if (registeredTeams >= TournamentBracketSize.SIXTEEN)
+        if (registeredTeams >= TournamentBracketSize.Sixteen)
         {
             Stage quarterFinalStage = BuildStage(StageType.QuarterFinal, StageTemplate.QuarterFinal, startDate, division);
             stages.Add(quarterFinalStage);
@@ -386,9 +386,9 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
 
         IEnumerable<StageTeamMatch> existingMatches = await _stageTeamMatchRepository.FindAsync(stageTeamMatch => stageTeamMatch.StageId == stage.Id);
 
-        // MaxTeams.GROUP is only the auto-bracket-generator's fixed group size, not a general cap on how many teams a Group-type stage may hold, since a manually built Group stage represents a whole zone's round-robin phase and can need far more, so it is capped at the same ceiling the tournament itself enforces instead of the auto-generator's per-group size.
+        // MaxTeams.Group is only the auto-bracket-generator's fixed group size, not a general cap on how many teams a Group-type stage may hold, since a manually built Group stage represents a whole zone's round-robin phase and can need far more, so it is capped at the same ceiling the tournament itself enforces instead of the auto-generator's per-group size.
         int maxTeams = stage.StageType == StageType.Group
-            ? MaxTeams.GROUP_STAGE_CAP
+            ? MaxTeams.GroupStageCap
             : StageHelper.GetMaxTeamsForStage(stage.StageType);
         int availableSlots = maxTeams - existingMatches.Count();
 
@@ -1016,9 +1016,9 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     /// <returns>True if valid tournament size, false otherwise.</returns>
     private static bool IsValidTournamentSize(int teamCount)
     {
-        return teamCount is TournamentBracketSize.EIGHT
-            or TournamentBracketSize.SIXTEEN
-            or TournamentBracketSize.THIRTY_TWO
-            or TournamentBracketSize.SIXTY_FOUR;
+        return teamCount is TournamentBracketSize.Eight
+            or TournamentBracketSize.Sixteen
+            or TournamentBracketSize.ThirtyTwo
+            or TournamentBracketSize.SixtyFour;
     }
 }
