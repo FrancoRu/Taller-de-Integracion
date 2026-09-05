@@ -1,0 +1,70 @@
+# Club12 Backend — .editorconfig
+#
+# Codifies conventions the codebase already follows consistently (verified 2026-09-05
+# by sampling across Domain/Application/Infrastructure/API), not aspirational new rules.
+# One exception was found and deliberately left out below: const-field casing is mixed
+# in practice (PascalCase almost everywhere, but Application/Utils/Constants/Stage/MaxTeams.cs
+# uses SCREAMING_SNAKE_CASE) — picking a side wasn't part of this task, so no naming rule
+# is enforced for constants here.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.cs]
+charset = utf-8-bom
+
+# Allman braces (opening brace on its own line) — the only style seen in this codebase.
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+
+# File-scoped namespaces are used everywhere.
+csharp_style_namespace_declarations = file_scoped:warning
+
+# Explicit types are used almost everywhere (`var` appears once in the whole backend) —
+# this is a deliberate house style, not an oversight.
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = false:suggestion
+csharp_style_var_elsewhere = false:suggestion
+
+# Plain alphabetical using order — System is not special-cased to the top.
+dotnet_sort_system_directives_first = false
+dotnet_separate_import_directive_groups = false
+
+# Primary constructors are the established pattern for services/repositories with DI.
+csharp_style_prefer_primary_constructors = true:suggestion
+
+[*.{json,yml,yaml}]
+indent_size = 2
+
+[*.{csproj,props,targets}]
+indent_size = 2
+
+# Naming: interfaces and private fields — both 100% consistent across the sampled codebase.
+dotnet_naming_rule.interface_should_be_prefixed_with_i.severity = warning
+dotnet_naming_rule.interface_should_be_prefixed_with_i.symbols = interface_type
+dotnet_naming_rule.interface_should_be_prefixed_with_i.style = prefix_i
+
+dotnet_naming_symbols.interface_type.applicable_kinds = interface
+dotnet_naming_symbols.interface_type.applicable_accessibilities = *
+
+dotnet_naming_style.prefix_i.required_prefix = I
+dotnet_naming_style.prefix_i.capitalization = pascal_case
+
+dotnet_naming_rule.private_field_should_be_camel_case_with_underscore.severity = warning
+dotnet_naming_rule.private_field_should_be_camel_case_with_underscore.symbols = private_field
+dotnet_naming_rule.private_field_should_be_camel_case_with_underscore.style = underscore_camel_case
+
+dotnet_naming_symbols.private_field.applicable_kinds = field
+dotnet_naming_symbols.private_field.applicable_accessibilities = private
+
+dotnet_naming_style.underscore_camel_case.required_prefix = _
+dotnet_naming_style.underscore_camel_case.capitalization = camel_case
