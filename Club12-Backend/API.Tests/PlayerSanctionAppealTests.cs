@@ -1,4 +1,5 @@
 using Application.DTOs.PlayerSanction.Request;
+using Application.DTOs.PlayerSanction.Response;
 
 using Domain.Entities.Models;
 using Domain.Enums;
@@ -10,6 +11,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 using MatchType = Domain.Enums.MatchType;
 
@@ -27,6 +30,13 @@ namespace API.Tests;
 public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly CustomWebApplicationFactory _factory;
+
+    // Mirrors the API's JSON settings (enums serialized as strings) so the
+    // typed response can be read back.
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() },
+    };
 
     public PlayerSanctionAppealTests(CustomWebApplicationFactory factory)
     {
@@ -112,6 +122,29 @@ public class PlayerSanctionAppealTests : IClassFixture<CustomWebApplicationFacto
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(SanctionAppealStatus.Accepted, await ReadAppealStatusAsync(sanctionId));
+    }
+
+    [Fact]
+    public async Task ResolvePlayerSanctionAppeal_Accept_LiftsTheSanctionImmediately()
+    {
+        // Regression: accepting an appeal used to only record AppealStatus —
+        // FechasRemaining/IsActive were derived purely from Duration and rounds
+        // served, with no reference to AppealStatus at all, so an accepted
+        // appeal had zero practical effect: the subject stayed sanctioned for
+        // the full original duration regardless of the decision.
+        Guid sanctionId = await SeedSanctionIdAsync(SanctionAppealStatus.Pending);
+
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Owner);
+        ResolveAppealRequest request = new() { Accepted = true, Resolution = "Appeal accepted" };
+
+        HttpResponseMessage response = await client.PutAsJsonAsync(
+            $"api/player-sanctions/{sanctionId}/appeal/resolve", request);
+
+        PlayerSanctionResponse? body = await response.Content.ReadFromJsonAsync<PlayerSanctionResponse>(JsonOptions);
+
+        Assert.NotNull(body);
+        Assert.Equal(0, body.FechasRemaining);
+        Assert.False(body.IsActive);
     }
 
     [Fact]

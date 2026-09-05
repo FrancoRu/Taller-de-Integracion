@@ -74,6 +74,13 @@ public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionServ
     /// finished match of that team in the same stage with a higher round
     /// number, one fecha is consumed. The result is clamped to zero and is
     /// expressed in fechas, never in calendar days.
+    ///
+    /// An accepted appeal lifts the sanction immediately (zero fechas
+    /// remaining) regardless of rounds served — the original <see
+    /// cref="PlayerSanction.Duration"/> is left untouched so the sanction's
+    /// history ("was a 3-fecha sanction, appeal accepted") stays intact; only
+    /// the effective remaining count is overridden. A rejected or pending
+    /// appeal does not change the computation.
     /// </summary>
     /// <returns>
     /// The number of fechas remaining, or null when it cannot be computed by
@@ -81,6 +88,11 @@ public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionServ
     /// </returns>
     public async Task<int?> GetFechasRemainingAsync(PlayerSanction sanction)
     {
+        if (sanction.AppealStatus == SanctionAppealStatus.Accepted)
+        {
+            return 0;
+        }
+
         Guid? teamId = await ResolveSubjectTeamIdAsync(sanction);
         if (!teamId.HasValue)
         {
