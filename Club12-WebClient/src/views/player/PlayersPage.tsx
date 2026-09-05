@@ -63,6 +63,7 @@ import HabilitacionBadge from '@/views/medicalRecord/HabilitacionBadge';
 import PlayerMedicalRecordDialog from '@/views/medicalRecord/PlayerMedicalRecordDialog';
 import { validatePlayerFields } from '@/views/player/players.types';
 import type { PlayersSearchFilters } from '@/views/player/players.types';
+import { formatCalendarDate } from '@/modules/core/utils/formatDate';
 
 /** Per-player medical / eligibility signal keyed by player id (HU-57/HU-62). */
 export interface PlayerMedicalInfo {
@@ -598,13 +599,7 @@ const PlayersPage: React.FC<PlayersPageProps> = ({
           const value = params.row.isNew
             ? rowBirthDateValue(params.row)
             : params.row.birthDate;
-          if (!value) {
-            return '—';
-          }
-          const date = new Date(value);
-          return Number.isNaN(date.getTime())
-            ? '—'
-            : date.toLocaleDateString('es-AR');
+          return value ? formatCalendarDate(value) : '—';
         },
       },
       ...(teamColumn ? [teamColumn] : []),
