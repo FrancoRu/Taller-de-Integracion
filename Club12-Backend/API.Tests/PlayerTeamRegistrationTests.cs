@@ -262,6 +262,98 @@ public class PlayerTeamRegistrationTests : IClassFixture<CustomWebApplicationFac
         Assert.Equal(originalTeam.Id, registration.TeamId);
     }
 
+    [Fact]
+    public async Task UpdatePlayerAsync_TeamChangedForPlayerWithScorerHistory_ThrowsAndKeepsOriginalTeam()
+    {
+        // Regression: a player who already scored points for their current
+        // team could still be moved to a different team mid-season — since
+        // MatchProfile.ScorersForTeam (and every other team-attributed
+        // read path) resolves a scorer's team from Player.TeamId, the
+        // CURRENT pointer rather than a point-in-time snapshot, the move
+        // would silently re-attribute those past points to the new team.
+        using IServiceScope seedScope = _factory.Services.CreateScope();
+        ApplicationDBContext seedDb = seedScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        Tournament apertura = await SeedTournamentAsync(seedDb, "Apertura");
+        Team originalTeam = await SeedTeamAsync(seedDb, apertura.Id);
+        Team newTeam = await SeedTeamAsync(seedDb, apertura.Id);
+        Player mover = await SeedPlayerAsync(seedDb, originalTeam);
+        await SeedRegistrationAsync(seedDb, mover, originalTeam, apertura);
+
+        Division division = new()
+        {
+            Slug = $"division-{Guid.NewGuid()}",
+            Name = $"Division-{Guid.NewGuid()}",
+            Tournament = apertura,
+            TournamentId = apertura.Id,
+            Stages = [],
+            CreatedBy = "test",
+        };
+        seedDb.Divisions.Add(division);
+        await seedDb.SaveChangesAsync();
+
+        Stage stage = new()
+        {
+            Slug = $"stage-{Guid.NewGuid()}",
+            Name = $"Group-{Guid.NewGuid()}",
+            StageType = Domain.Enums.StageType.Group,
+            IsActive = true,
+            StartDate = apertura.StartDate,
+            EndDate = apertura.StartDate.AddDays(7),
+            DivisionId = division.Id,
+            Division = division,
+            Matches = [],
+            CreatedBy = "test",
+        };
+        seedDb.Stages.Add(stage);
+        await seedDb.SaveChangesAsync();
+
+        Match match = new()
+        {
+            Slug = $"match-{Guid.NewGuid()}",
+            Type = Domain.Enums.MatchType.Regular,
+            IsFinished = true,
+            HomeTeamId = originalTeam.Id,
+            StageId = stage.Id,
+            MatchDate = apertura.StartDate,
+            CreatedBy = "test",
+        };
+        seedDb.Matches.Add(match);
+        await seedDb.SaveChangesAsync();
+
+        seedDb.Set<Scorer>().Add(new Scorer
+        {
+            PlayerId = mover.Id,
+            MatchId = match.Id,
+            Points = 15,
+            CreatedBy = "test",
+        });
+        await seedDb.SaveChangesAsync();
+
+        using (IServiceScope actScope = _factory.Services.CreateScope())
+        {
+            IPlayerService playerService = actScope.ServiceProvider.GetRequiredService<IPlayerService>();
+            ApplicationDBContext actDb = actScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+            Player tracked = await actDb.Players.SingleAsync(p => p.Id == mover.Id);
+            tracked.TeamId = newTeam.Id;
+
+            InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => playerService.UpdatePlayerAsync(tracked, apertura.Id));
+            Assert.Contains("no se puede cambiar de equipo", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        using IServiceScope verifyScope = _factory.Services.CreateScope();
+        ApplicationDBContext verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        Player reloadedPlayer = await verifyDb.Players.AsNoTracking().SingleAsync(p => p.Id == mover.Id);
+        Assert.Equal(originalTeam.Id, reloadedPlayer.TeamId);
+
+        PlayerTeamRegistration registration = await verifyDb.PlayerTeamRegistrations
+            .AsNoTracking().SingleAsync(r => r.PlayerId == mover.Id);
+        Assert.Equal(originalTeam.Id, registration.TeamId);
+    }
+
     /// <summary>
     /// Replicates, as an EF/LINQ query, the exact backfill join performed by
     /// the 20260817082125_AddPlayerTeamRegistrationTable migration's raw SQL

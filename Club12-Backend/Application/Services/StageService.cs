@@ -207,8 +207,15 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     /// Updates an existing stage entity.
     /// </summary>
     /// <param name="stageEntity">The stage entity to update.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown (mapped to 409) when the tournament has already started —
+    /// editing a stage's type/dates once the fixture is generated could
+    /// desync it from the matches already built off it.
+    /// </exception>
     public async Task UpdateStageAsync(Stage stageEntity)
     {
+        await EnsureDivisionStructureEditableAsync(stageEntity.DivisionId);
+
         await _stageRepository.UpdateAsync(stageEntity);
     }
 
@@ -408,9 +415,16 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     /// <param name="stage">The stage to assign teams to.</param>
     /// <param name="teamIds">Optional list of team IDs to assign.</param>
     /// <param name="auto">If true, assigns teams automatically based on available slots.</param>
-    /// <exception cref="InvalidOperationException">Thrown if the stage already has the maximum number of teams or if too many teams are assigned.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if the stage already has the maximum number of teams, if too
+    /// many teams are assigned, or (mapped to 409) if the tournament has
+    /// already started — adding a team to a zone after the fixture is
+    /// generated would leave it without any matches of its own.
+    /// </exception>
     public async Task AssignTeamsToStageAsync(Stage stage, List<Guid>? teamIds = null, bool auto = false)
     {
+        await EnsureDivisionStructureEditableAsync(stage.DivisionId);
+
         IEnumerable<StageTeamMatch> existingMatches = await _stageTeamMatchRepository.FindAsync(stageTeamMatch => stageTeamMatch.StageId == stage.Id);
 
         // MaxTeams.GROUP (4) is the auto-bracket-generator's fixed group
@@ -541,12 +555,19 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     /// </summary>
     /// <param name="stage">The stage to unassign teams from.</param>
     /// <param name="teamIds">List of team IDs to unassign.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown (mapped to 409) when the tournament has already started —
+    /// removing a team from a zone after the fixture is generated would leave
+    /// its already-scheduled matches pointing at a team no longer in that zone.
+    /// </exception>
     public async Task UnassignTeamsFromStageAsync(Stage stage, List<Guid> teamIds)
     {
         if (teamIds == null || teamIds.Count == 0)
         {
             return;
         }
+
+        await EnsureDivisionStructureEditableAsync(stage.DivisionId);
 
         await _stageTeamMatchRepository.RemoveAsync(stm =>
             stm.StageId == stage.Id && teamIds.Contains(stm.TeamId)

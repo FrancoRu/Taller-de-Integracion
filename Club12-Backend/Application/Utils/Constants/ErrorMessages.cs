@@ -137,6 +137,16 @@ public static class ErrorMessages
         /// </summary>
         public const string HasHistoryCannotDelete =
             "No se puede eliminar la división: tiene partidos jugados o deducciones de puntos registradas.";
+
+        /// <summary>
+        /// User-facing (Spanish) message returned when a division is deleted
+        /// while its tournament's fixture is already generated (status
+        /// Ongoing/Finished): deleting it would cascade away its stages and
+        /// scheduled matches even if none of them have been played yet, so it
+        /// is blocked (mapped to 409 by the global handler).
+        /// </summary>
+        public const string StructureLockedTournamentStarted =
+            "No se puede eliminar la división: el torneo ya arrancó.";
     }
 
     public static class Team
@@ -212,6 +222,17 @@ public static class ErrorMessages
         /// </summary>
         public const string HasHistoryCannotDelete =
             "No se puede eliminar: el jugador tiene estadísticas o sanciones registradas.";
+
+        /// <summary>
+        /// User-facing (Spanish) message returned when a player who already has
+        /// match statistics, scorer records or sanctions for a season is moved
+        /// to a different team within that same season: goleadores and other
+        /// team-attributed views resolve a player's team from their CURRENT
+        /// roster registration, not a point-in-time snapshot, so moving them
+        /// would silently re-attribute their past results to the new team.
+        /// </summary>
+        public const string CannotMoveTeamWithHistory =
+            "No se puede cambiar de equipo a un jugador que ya tiene estadísticas o sanciones registradas en esta temporada.";
 
         /// <summary>
         /// User-facing (Spanish) message returned when a player is created or

@@ -380,6 +380,126 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal(1, await db.Stages.CountAsync(s => s.DivisionId == divisionId));
     }
 
+    /// <summary>
+    /// Editing a stage's own fields (dates, type, ...) once the tournament has
+    /// started is likewise blocked — a prior gap let this through even though
+    /// creating/deleting a stage was already guarded.
+    /// </summary>
+    [Fact]
+    public async Task UpdateStageAsync_TournamentStarted_ThrowsAndKeepsOriginalDates()
+    {
+        Guid stageId;
+        DateTime originalEndDate;
+
+        using (IServiceScope seedScope = _factory.Services.CreateScope())
+        {
+            ApplicationDBContext seedDb = seedScope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+            Tournament tournament = await SeedTournamentAsync(seedDb, TournamentStatus.Ongoing);
+            Division division = await SeedDivisionAsync(seedDb, tournament, withStages: true);
+            Stage seededStage = await seedDb.Stages.FirstAsync(s => s.DivisionId == division.Id);
+            stageId = seededStage.Id;
+            originalEndDate = seededStage.EndDate;
+        }
+
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
+
+        Stage toUpdate = await db.Stages.FirstAsync(s => s.Id == stageId);
+        toUpdate.EndDate = toUpdate.EndDate.AddDays(30);
+
+        InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => stageService.UpdateStageAsync(toUpdate));
+
+        Assert.Equal(ErrorMessages.Stage.StructureLockedTournamentStarted, exception.Message);
+
+        Stage reloaded = await db.Stages.AsNoTracking().FirstAsync(s => s.Id == stageId);
+        Assert.Equal(originalEndDate, reloaded.EndDate);
+    }
+
+    /// <summary>
+    /// Assigning a new team to a zone once the tournament has started is
+    /// blocked — it would sit in the zone's standings without ever getting a
+    /// fixture, since matches are only generated once, at tournament start.
+    /// </summary>
+    [Fact]
+    public async Task AssignTeamsToStageAsync_TournamentStarted_Throws()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
+
+        Tournament tournament = await SeedTournamentAsync(db, TournamentStatus.Ongoing);
+        Division division = await SeedDivisionAsync(db, tournament);
+        Stage stage = new()
+        {
+            Slug = $"stage-{Guid.NewGuid()}",
+            Name = $"Group-{Guid.NewGuid()}",
+            StageType = StageType.Group,
+            IsActive = true,
+            StartDate = tournament.StartDate,
+            EndDate = tournament.StartDate.AddDays(StageTemplate.DurationDays),
+            DivisionId = division.Id,
+            Division = division,
+            Matches = [],
+            CreatedBy = "test",
+        };
+        db.Stages.Add(stage);
+        await db.SaveChangesAsync();
+        List<Team> teams = await SeedTeamsAsync(db, tournament, 1);
+
+        InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => stageService.AssignTeamsToStageAsync(stage, [teams[0].Id]));
+
+        Assert.Equal(ErrorMessages.Stage.StructureLockedTournamentStarted, exception.Message);
+        Assert.Equal(0, await db.StageTeamMatches.CountAsync(stm => stm.StageId == stage.Id));
+    }
+
+    /// <summary>
+    /// Removing a team from a zone once the tournament has started is
+    /// blocked — its already-generated matches would keep referencing a team
+    /// no longer assigned to that zone's standings.
+    /// </summary>
+    [Fact]
+    public async Task UnassignTeamsFromStageAsync_TournamentStarted_Throws()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
+
+        Tournament tournament = await SeedTournamentAsync(db, TournamentStatus.Ongoing);
+        Division division = await SeedDivisionAsync(db, tournament);
+        Stage stage = new()
+        {
+            Slug = $"stage-{Guid.NewGuid()}",
+            Name = $"Group-{Guid.NewGuid()}",
+            StageType = StageType.Group,
+            IsActive = true,
+            StartDate = tournament.StartDate,
+            EndDate = tournament.StartDate.AddDays(StageTemplate.DurationDays),
+            DivisionId = division.Id,
+            Division = division,
+            Matches = [],
+            CreatedBy = "test",
+        };
+        db.Stages.Add(stage);
+        await db.SaveChangesAsync();
+        List<Team> teams = await SeedTeamsAsync(db, tournament, 1);
+        db.StageTeamMatches.Add(new StageTeamMatch
+        {
+            StageId = stage.Id,
+            TeamId = teams[0].Id,
+            CreatedBy = "test",
+        });
+        await db.SaveChangesAsync();
+
+        InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => stageService.UnassignTeamsFromStageAsync(stage, [teams[0].Id]));
+
+        Assert.Equal(ErrorMessages.Stage.StructureLockedTournamentStarted, exception.Message);
+        Assert.Equal(1, await db.StageTeamMatches.CountAsync(stm => stm.StageId == stage.Id));
+    }
+
     [Fact]
     public async Task AssignTeamsToStageAsync_ExactSlotMatch_AssignsAllTeams()
     {

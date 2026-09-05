@@ -305,9 +305,32 @@ public class TeamTournamentDivisionDeleteIntegrityTests : IClassFixture<CustomWe
         Assert.False(await db.Stages.AnyAsync(s => s.Id == stage.Id));
     }
 
+    [Fact]
+    public async Task DeleteDivision_TournamentOngoing_IsBlockedEvenWithoutPlayedMatches()
+    {
+        // Regression: a division with zero played matches and zero point
+        // deductions used to be deletable at ANY tournament status — including
+        // Ongoing, where Stages/Matches are cascade-deleted at the DB level,
+        // silently wiping a live, scheduled-but-unplayed fixture.
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IDivisionService divisionService = scope.ServiceProvider.GetRequiredService<IDivisionService>();
+
+        (_, Stage stage, _) = await SeedTeamAndStageAsync(db, TournamentStatus.Ongoing);
+        await SeedMatchAsync(db, stage, homeTeamId: null, isFinished: false);
+
+        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => divisionService.DeleteDivisionAsync(stage.DivisionId));
+
+        Assert.Contains("el torneo ya arrancó", ex.Message);
+        Assert.True(await db.Divisions.AnyAsync(d => d.Id == stage.DivisionId));
+        Assert.True(await db.Stages.AnyAsync(s => s.Id == stage.Id));
+    }
+
     // ---------- seeding ----------
 
-    private static async Task<(Team Team, Stage Stage, Guid TournamentId)> SeedTeamAndStageAsync(ApplicationDBContext db)
+    private static async Task<(Team Team, Stage Stage, Guid TournamentId)> SeedTeamAndStageAsync(
+        ApplicationDBContext db, TournamentStatus status = TournamentStatus.OpenForRegistration)
     {
         DateTime startDate = DateTime.UtcNow.Date.AddDays(30);
 
@@ -318,7 +341,7 @@ public class TeamTournamentDivisionDeleteIntegrityTests : IClassFixture<CustomWe
             Slug = $"tournament-{Guid.NewGuid()}",
             TeamRegistrationDeadline = startDate.AddDays(-1),
             StartDate = startDate,
-            Status = TournamentStatus.OpenForRegistration,
+            Status = status,
             Divisions = [],
             Teams = [],
             CreatedBy = "test",

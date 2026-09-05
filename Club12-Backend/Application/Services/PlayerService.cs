@@ -193,7 +193,13 @@ public class PlayerService(
     /// Mirrors RegisterPlayerToTeamAsync's roster-size cap for a mid-season
     /// team change via UpdatePlayerAsync, so moving a player can't silently
     /// push the destination team past the configured limit the way a
-    /// brand-new registration would be blocked from doing.
+    /// brand-new registration would be blocked from doing. Also blocks the
+    /// move entirely once the player already has statistics, scorer records
+    /// or sanctions for this season: those are attributed via the player's
+    /// CURRENT team pointer (see MatchProfile.ScorersForTeam and
+    /// TeamService.DeleteTeamAsync's own hasPlayersWithHistory check), so
+    /// moving the player would silently re-attribute their past results to
+    /// the new team instead of just risking a future inconsistency.
     /// </summary>
     private async Task ValidateRegistrationMoveAsync(Player playerEntity, Guid tournamentId)
     {
@@ -203,6 +209,15 @@ public class PlayerService(
         if (registration is null || registration.TeamId == playerEntity.TeamId)
         {
             return;
+        }
+
+        bool hasStatistics = await _statisticRepository.ExistsAsync(statistic => statistic.PlayerId == playerEntity.Id);
+        bool hasScorers = await _scorerRepository.ExistsAsync(scorer => scorer.PlayerId == playerEntity.Id);
+        bool hasSanctions = await _sanctionRepository.ExistsAsync(sanction => sanction.PlayerId == playerEntity.Id);
+
+        if (hasStatistics || hasScorers || hasSanctions)
+        {
+            throw new InvalidOperationException(ErrorMessages.Player.CannotMoveTeamWithHistory);
         }
 
         int destinationRosterSize = await _registrationRepository.CountAsync(

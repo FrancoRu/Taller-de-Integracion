@@ -62,17 +62,32 @@ public class DivisionService(
     /// point deductions, every one of which cascades at the database level, so a
     /// raw delete would silently erase that history. The deletion is therefore
     /// BLOCKED when the division already has any played (finished) match — and
-    /// thus standings — or any point deduction. A division with no such history
-    /// (e.g. structure built but no fixture played yet) stays deletable: its
-    /// empty stages and playoff mappings cascade cleanly.
+    /// thus standings — or any point deduction, AND once its tournament's
+    /// fixture is generated (status Ongoing/Finished) even if nothing in this
+    /// particular division has been played yet — the same window
+    /// <see cref="StageService"/> uses for a stage's own structural edits, so a
+    /// live tournament's scheduled-but-unplayed matches can never be cascaded
+    /// away out from under it. A division with no such history, in a
+    /// tournament that has not started yet, stays deletable: its empty stages
+    /// and playoff mappings cascade cleanly.
     /// </summary>
     /// <param name="id">The unique identifier of the division to delete.</param>
     /// <exception cref="InvalidOperationException">
     /// Thrown (mapped to 409) when the division has played matches or point
-    /// deductions.
+    /// deductions, or its tournament has already started.
     /// </exception>
     public async Task DeleteDivisionAsync(Guid id)
     {
+        Division? division = await divisionRepository.GetByIdAsync(id, includes: [d => d.Tournament]);
+
+        bool fixtureGenerated = division?.Tournament?.Status
+            is TournamentStatus.Ongoing or TournamentStatus.Finished;
+
+        if (fixtureGenerated)
+        {
+            throw new InvalidOperationException(ErrorMessages.Division.StructureLockedTournamentStarted);
+        }
+
         bool hasPlayedMatches = await matchRepository.ExistsAsync(
             match => match.IsFinished && match.Stage.DivisionId == id);
         bool hasPointDeductions = await pointDeductionRepository.ExistsAsync(
