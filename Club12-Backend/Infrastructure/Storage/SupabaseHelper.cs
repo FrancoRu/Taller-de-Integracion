@@ -26,6 +26,7 @@ public class SupabaseHelper : ISupabaseRawStorage
 
     private readonly Client _client;
     private readonly string _bucketName;
+    private readonly Lazy<Task> _initialization;
 
     public SupabaseHelper(IConfiguration configuration)
     {
@@ -41,7 +42,7 @@ public class SupabaseHelper : ISupabaseRawStorage
         };
 
         _client = new Client(baseUrl, serviceRole, options);
-        _client.InitializeAsync().Wait();
+        _initialization = new Lazy<Task>(_client.InitializeAsync);
     }
 
     /// <summary>
@@ -53,6 +54,7 @@ public class SupabaseHelper : ISupabaseRawStorage
     /// <exception cref="InvalidOperationException">Thrown when the upload fails.</exception>
     public async Task<string> UploadImageAsync<T>(Stream fileStream, string fileName)
     {
+        await _initialization.Value;
         try
         {
             string newFileName = GenerateNameFile(fileName);
@@ -84,6 +86,7 @@ public class SupabaseHelper : ISupabaseRawStorage
     /// </exception>
     public async Task DeleteImageAsync<T>(string fileName)
     {
+        await _initialization.Value;
         try
         {
             await _client.Storage.From(_bucketName).Remove($"{typeof(T).Name}/{fileName}");
@@ -103,6 +106,7 @@ public class SupabaseHelper : ISupabaseRawStorage
     /// <exception cref="InvalidOperationException">Thrown when the upload fails.</exception>
     public async Task UploadRawAsync(string objectPath, Stream content, string? bucket = null)
     {
+        await _initialization.Value;
         try
         {
             await _client.Storage
@@ -123,6 +127,7 @@ public class SupabaseHelper : ISupabaseRawStorage
     /// <exception cref="InvalidOperationException">Thrown when listing fails.</exception>
     public async Task<IReadOnlyList<SupabaseStorageEntry>> ListRawAsync(string prefix, string? bucket = null)
     {
+        await _initialization.Value;
         try
         {
             List<Supabase.Storage.FileObject> files = await _client.Storage.From(bucket ?? _bucketName).List(prefix)
@@ -149,6 +154,7 @@ public class SupabaseHelper : ISupabaseRawStorage
     /// <exception cref="InvalidOperationException">Thrown when the removal fails.</exception>
     public async Task RemoveRawAsync(string objectPath, string? bucket = null)
     {
+        await _initialization.Value;
         try
         {
             await _client.Storage.From(bucket ?? _bucketName).Remove(objectPath);
@@ -167,6 +173,7 @@ public class SupabaseHelper : ISupabaseRawStorage
     /// <exception cref="InvalidOperationException">Thrown when the download fails.</exception>
     public async Task<byte[]> DownloadRawAsync(string objectPath, string? bucket = null)
     {
+        await _initialization.Value;
         try
         {
             return await _client.Storage.From(bucket ?? _bucketName).Download(objectPath, (EventHandler<float>?)null);
