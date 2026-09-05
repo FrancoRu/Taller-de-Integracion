@@ -46,10 +46,10 @@ public class PlayerController(
     /// </returns>
     [Authorize(Roles = Roles.AdminOrOwner)]
     [HttpPost()]
-    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(PublicPlayerResponse))]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(AdminPlayerResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<PublicPlayerResponse>> CreatePlayerAsync(CreatePlayerRequest playerRequest)
+    public async Task<ActionResult<AdminPlayerResponse>> CreatePlayerAsync(CreatePlayerRequest playerRequest)
     {
         Guid teamId = playerRequest.TeamId;
         Team? existingTeam = await teamService.GetTeamByIdAsync(teamId);
@@ -66,7 +66,7 @@ public class PlayerController(
 
         Player mappedPlayer = mapper.Map<Player>(playerRequest);
         Player createdPlayer = await playerService.CreatePlayerAsync(mappedPlayer, existingTeam.TournamentId.Value);
-        PublicPlayerResponse playerResponse = mapper.Map<PublicPlayerResponse>(createdPlayer);
+        AdminPlayerResponse playerResponse = mapper.Map<AdminPlayerResponse>(createdPlayer);
         return CreatedAtRoute("GetPlayerById", new { idOrSlug = createdPlayer.Id }, playerResponse);
     }
 
