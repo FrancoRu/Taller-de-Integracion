@@ -306,6 +306,18 @@ public class TournamentService(
             await TeardownFixtureAsync(tournament);
         }
 
+        // Canceling a tournament, or force-closing it as Finished while matches
+        // are still pending, must not leave "still to be played" fixtures
+        // dangling forever under a dead tournament — every stage/division edit
+        // guard already freezes the STRUCTURE once the tournament reaches one of
+        // these statuses (EnsureDivisionStructureEditableAsync), so the leftover
+        // matches need their own terminal state too. Already-finished matches
+        // (real recorded results) are never touched.
+        if (newStatus is TournamentStatus.Canceled or TournamentStatus.Finished)
+        {
+            await CancelPendingMatchesAsync(tournamentId);
+        }
+
         TournamentStatus previousStatus = tournament.Status;
         tournament.Status = newStatus;
         await tournamentRepository.UpdateAsync(tournament);
@@ -393,6 +405,37 @@ public class TournamentService(
         // Matches first (they may reference a series), then the series.
         await unitOfWork.MatchRepository.RemoveAsync(match => stageIds.Contains(match.StageId));
         await unitOfWork.MatchSeriesRepository.RemoveAsync(series => stageIds.Contains(series.StageId));
+    }
+
+    /// <summary>
+    /// Marks every not-yet-finished match of a tournament (across every
+    /// division/stage) as <see cref="MatchStatus.Canceled"/>, called when the
+    /// tournament moves to <see cref="TournamentStatus.Canceled"/> or is
+    /// force-closed to <see cref="TournamentStatus.Finished"/> with matches
+    /// still pending. Leaves <see cref="Match.IsFinished"/> false — a canceled
+    /// match never happened, it is not a recorded result — and never touches an
+    /// already-finished match, so real history is preserved either way. A no-op
+    /// when there is nothing pending (e.g. the tournament never generated a
+    /// fixture, or every match was already played).
+    /// </summary>
+    private async Task CancelPendingMatchesAsync(Guid tournamentId)
+    {
+        List<Match> pendingMatches = [.. await unitOfWork.MatchRepository.FindAsync(
+            match => !match.IsFinished
+                && match.Status != MatchStatus.Canceled
+                && match.Stage.Division.TournamentId == tournamentId)];
+
+        if (pendingMatches.Count == 0)
+        {
+            return;
+        }
+
+        foreach (Match match in pendingMatches)
+        {
+            match.Status = MatchStatus.Canceled;
+        }
+
+        await unitOfWork.MatchRepository.UpdateRangeAsync(pendingMatches);
     }
 
     /// <inheritdoc/>

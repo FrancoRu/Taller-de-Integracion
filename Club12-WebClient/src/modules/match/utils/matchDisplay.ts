@@ -31,13 +31,14 @@ export const formatMatchScore = (homeScore: number, visitorScore: number): strin
     : `${homeScore} – ${visitorScore}`;
 
 /** MUI Chip color for each match status. */
-type MatchStatusColor = 'default' | 'success' | 'warning' | 'info';
+type MatchStatusColor = 'default' | 'success' | 'warning' | 'info' | 'error';
 
 const MATCH_STATUS_LABELS: Record<MatchStatus, string> = {
   [MatchStatus.Scheduled]: 'Programado',
   [MatchStatus.Played]: 'Jugado',
   [MatchStatus.Suspended]: 'Suspendido',
   [MatchStatus.WalkOver]: 'W.O.',
+  [MatchStatus.Canceled]: 'Cancelado',
 };
 
 const MATCH_STATUS_COLORS: Record<MatchStatus, MatchStatusColor> = {
@@ -45,6 +46,7 @@ const MATCH_STATUS_COLORS: Record<MatchStatus, MatchStatusColor> = {
   [MatchStatus.Played]: 'success',
   [MatchStatus.Suspended]: 'warning',
   [MatchStatus.WalkOver]: 'info',
+  [MatchStatus.Canceled]: 'error',
 };
 
 /**

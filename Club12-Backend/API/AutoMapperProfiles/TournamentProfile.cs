@@ -38,8 +38,16 @@ public class TournamentProfile : Profile
         // gender category is fixed at creation ("femenino as a separate
         // tournament, by design"). Flipping it later would silently mix it
         // with the divisions already created under the original category.
+        //
+        // StartDate is fixed at creation too: the frontend edit form never
+        // exposes it (always disabled), but that alone is not a real guard — a
+        // direct API call could still slip a different date through. It drives
+        // when the tournament is understood to have happened (season grouping,
+        // champions history, calendar), so it must never move after the fact,
+        // regardless of the tournament's status.
         _ = CreateMap<UpdateTournamentRequest, Tournament>()
             .ForMember(dest => dest.Status, opt => opt.Ignore())
-            .ForMember(dest => dest.Category, opt => opt.Ignore());
+            .ForMember(dest => dest.Category, opt => opt.Ignore())
+            .ForMember(dest => dest.StartDate, opt => opt.Ignore());
     }
 }

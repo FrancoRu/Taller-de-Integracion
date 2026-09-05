@@ -327,6 +327,29 @@ public class TeamTournamentDivisionDeleteIntegrityTests : IClassFixture<CustomWe
         Assert.True(await db.Stages.AnyAsync(s => s.Id == stage.Id));
     }
 
+    [Fact]
+    public async Task DeleteDivision_TournamentCanceled_IsBlockedEvenWithoutPlayedMatches()
+    {
+        // Regression: a Canceled tournament's divisions used to remain fully
+        // deletable (only Ongoing/Finished locked the structure), so a
+        // scheduled-but-unplayed fixture under a canceled tournament could
+        // still be cascade-wiped even though the tournament's structure must
+        // stay frozen once it is dead.
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IDivisionService divisionService = scope.ServiceProvider.GetRequiredService<IDivisionService>();
+
+        (_, Stage stage, _) = await SeedTeamAndStageAsync(db, TournamentStatus.Canceled);
+        await SeedMatchAsync(db, stage, homeTeamId: null, isFinished: false);
+
+        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => divisionService.DeleteDivisionAsync(stage.DivisionId));
+
+        Assert.Contains("fue cancelado", ex.Message);
+        Assert.True(await db.Divisions.AnyAsync(d => d.Id == stage.DivisionId));
+        Assert.True(await db.Stages.AnyAsync(s => s.Id == stage.Id));
+    }
+
     // ---------- seeding ----------
 
     private static async Task<(Team Team, Stage Stage, Guid TournamentId)> SeedTeamAndStageAsync(

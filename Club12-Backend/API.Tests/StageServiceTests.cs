@@ -276,14 +276,17 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
 
     /// <summary>
     /// A phase (stage) cannot be added to a division once its tournament has
-    /// started (fixture generated): both Ongoing and Finished lock the phase
-    /// structure, since the matches already reference the existing stage set
-    /// and a new stage would corrupt the bracket.
+    /// started (fixture generated) or was canceled: Ongoing, Finished and
+    /// Canceled all lock the phase structure — Ongoing/Finished because the
+    /// matches already reference the existing stage set and a new stage would
+    /// corrupt the bracket, Canceled because a dead tournament's structure must
+    /// stay frozen regardless of how far it got.
     /// </summary>
     [Theory]
     [InlineData(TournamentStatus.Ongoing)]
     [InlineData(TournamentStatus.Finished)]
-    public async Task CreateStageAsync_TournamentStarted_ThrowsAndCreatesNoStage(TournamentStatus status)
+    [InlineData(TournamentStatus.Canceled)]
+    public async Task CreateStageAsync_TournamentStartedOrCanceled_ThrowsAndCreatesNoStage(TournamentStatus status)
     {
         using IServiceScope scope = _factory.Services.CreateScope();
         ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();

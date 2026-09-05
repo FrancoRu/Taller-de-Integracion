@@ -56,6 +56,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import PauseCircleIcon from '@mui/icons-material/PauseCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 export {
   DeleteIcon,
@@ -116,4 +117,5 @@ export {
   CheckCircleIcon,
   ScheduleIcon,
   PauseCircleIcon,
+  CancelIcon,
 };

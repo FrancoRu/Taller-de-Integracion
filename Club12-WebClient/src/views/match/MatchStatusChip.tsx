@@ -7,6 +7,7 @@ import {
   resolveMatchStatus,
 } from '@/modules/match/utils/matchDisplay';
 import {
+  CancelIcon,
   CheckCircleIcon,
   EventBusyIcon,
   PauseCircleIcon,
@@ -29,6 +30,7 @@ const STATUS_ICON: Record<MatchStatus, ReactElement> = {
   [MatchStatus.Played]: <CheckCircleIcon />,
   [MatchStatus.Suspended]: <PauseCircleIcon />,
   [MatchStatus.WalkOver]: <EventBusyIcon />,
+  [MatchStatus.Canceled]: <CancelIcon />,
 };
 
 /**

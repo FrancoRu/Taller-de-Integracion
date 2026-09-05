@@ -173,8 +173,10 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     /// once that has happened (<see cref="TournamentStatus.Ongoing"/> or
     /// <see cref="TournamentStatus.Finished"/>) the matches already reference the
     /// existing set of stages, so adding or removing a stage would corrupt the
-    /// bracket. Editing stays allowed while the tournament is
-    /// <see cref="TournamentStatus.Scheduled"/>,
+    /// bracket. A <see cref="TournamentStatus.Canceled"/> tournament is frozen
+    /// for the same reason regardless of how far it got — nothing about a dead
+    /// tournament's structure should still be editable. Editing stays allowed
+    /// while the tournament is <see cref="TournamentStatus.Scheduled"/>,
     /// <see cref="TournamentStatus.OpenForRegistration"/>, or
     /// <see cref="TournamentStatus.RegistrationClosed"/> (structure still
     /// editable). A division whose tournament cannot be resolved is left for the
@@ -182,7 +184,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     /// </summary>
     /// <param name="divisionId">The division whose tournament is checked.</param>
     /// <exception cref="InvalidOperationException">
-    /// Thrown (mapped to 409) when the tournament has already started.
+    /// Thrown (mapped to 409) when the tournament has already started or was canceled.
     /// </exception>
     private async Task EnsureDivisionStructureEditableAsync(Guid divisionId)
     {
@@ -194,10 +196,10 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
             return;
         }
 
-        bool fixtureGenerated = division.Tournament.Status
-            is TournamentStatus.Ongoing or TournamentStatus.Finished;
+        bool structureLocked = division.Tournament.Status
+            is TournamentStatus.Ongoing or TournamentStatus.Finished or TournamentStatus.Canceled;
 
-        if (fixtureGenerated)
+        if (structureLocked)
         {
             throw new InvalidOperationException(ErrorMessages.Stage.StructureLockedTournamentStarted);
         }

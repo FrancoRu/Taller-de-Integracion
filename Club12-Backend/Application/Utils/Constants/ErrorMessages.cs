@@ -146,7 +146,7 @@ public static class ErrorMessages
         /// is blocked (mapped to 409 by the global handler).
         /// </summary>
         public const string StructureLockedTournamentStarted =
-            "No se puede eliminar la división: el torneo ya arrancó.";
+            "No se puede eliminar la división: el torneo ya arrancó o fue cancelado.";
     }
 
     public static class Team
@@ -275,7 +275,7 @@ public static class ErrorMessages
         /// it is blocked (mapped to 409 by the global handler).
         /// </summary>
         public const string StructureLockedTournamentStarted =
-            "No se pueden agregar o quitar fases: el torneo ya arrancó.";
+            "No se pueden agregar o quitar fases: el torneo ya arrancó o fue cancelado.";
 
         public static string NotFoundById(System.Guid id)
         {

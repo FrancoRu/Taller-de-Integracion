@@ -28,5 +28,14 @@ public enum MatchStatus
     /// the present team (HU-73). Distinguishable from a normal <see cref="Played"/>
     /// result so the UI can flag it.
     /// </summary>
-    WalkOver
+    WalkOver,
+
+    /// <summary>
+    /// The match will never be played: its tournament was moved to
+    /// <see cref="Domain.Enums.TournamentStatus.Canceled"/> or force-closed to
+    /// <see cref="Domain.Enums.TournamentStatus.Finished"/> while the match was
+    /// still pending. Distinct from <see cref="Suspended"/> (a real match
+    /// postponed for later) — a canceled match is permanently dead.
+    /// </summary>
+    Canceled
 }

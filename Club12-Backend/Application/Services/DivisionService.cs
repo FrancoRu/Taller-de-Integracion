@@ -63,27 +63,27 @@ public class DivisionService(
     /// raw delete would silently erase that history. The deletion is therefore
     /// BLOCKED when the division already has any played (finished) match — and
     /// thus standings — or any point deduction, AND once its tournament's
-    /// fixture is generated (status Ongoing/Finished) even if nothing in this
-    /// particular division has been played yet — the same window
-    /// <see cref="StageService"/> uses for a stage's own structural edits, so a
-    /// live tournament's scheduled-but-unplayed matches can never be cascaded
-    /// away out from under it. A division with no such history, in a
-    /// tournament that has not started yet, stays deletable: its empty stages
-    /// and playoff mappings cascade cleanly.
+    /// fixture is generated (status Ongoing/Finished) or the tournament was
+    /// Canceled, even if nothing in this particular division has been played
+    /// yet — the same window <see cref="StageService"/> uses for a stage's own
+    /// structural edits, so a live or dead tournament's scheduled-but-unplayed
+    /// matches can never be cascaded away out from under it. A division with no
+    /// such history, in a tournament that has not started or been canceled,
+    /// stays deletable: its empty stages and playoff mappings cascade cleanly.
     /// </summary>
     /// <param name="id">The unique identifier of the division to delete.</param>
     /// <exception cref="InvalidOperationException">
     /// Thrown (mapped to 409) when the division has played matches or point
-    /// deductions, or its tournament has already started.
+    /// deductions, or its tournament has already started or was canceled.
     /// </exception>
     public async Task DeleteDivisionAsync(Guid id)
     {
         Division? division = await divisionRepository.GetByIdAsync(id, includes: [d => d.Tournament]);
 
-        bool fixtureGenerated = division?.Tournament?.Status
-            is TournamentStatus.Ongoing or TournamentStatus.Finished;
+        bool structureLocked = division?.Tournament?.Status
+            is TournamentStatus.Ongoing or TournamentStatus.Finished or TournamentStatus.Canceled;
 
-        if (fixtureGenerated)
+        if (structureLocked)
         {
             throw new InvalidOperationException(ErrorMessages.Division.StructureLockedTournamentStarted);
         }

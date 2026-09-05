@@ -25,4 +25,10 @@ export enum MatchStatus {
    * regulation default result. Distinguishable from a normal `Played`.
    */
   WalkOver = 'WalkOver',
+
+  /**
+   * The match will never be played: its tournament was canceled, or
+   * force-closed as finished while the match was still pending.
+   */
+  Canceled = 'Canceled',
 }
