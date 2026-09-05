@@ -9,9 +9,6 @@ namespace Application.DTOs.PointDeductions.Request;
 /// </summary>
 public class CreatePointDeductionRequest
 {
-    /// <summary>
-    /// The team to penalise.
-    /// </summary>
     [Required(ErrorMessage = "The TeamId field is required.")]
     public required Guid TeamId { get; set; }
 

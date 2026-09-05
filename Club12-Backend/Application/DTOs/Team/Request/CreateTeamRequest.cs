@@ -10,22 +10,13 @@ namespace Application.DTOs.Team.Request;
 /// </summary>
 public class CreateTeamRequest
 {
-    /// <summary>
-    /// The name of the team.
-    /// </summary>
     [Required(ErrorMessage = "The Name field is required.")]
     public required string Name { get; init; }
 
-    /// <summary>
-    /// The three-letter code of the team.
-    /// </summary>
     [Required(ErrorMessage = "The Three-letter code field is required.")]
     [MaxLength(3)]
     public required string ThreeLetterCode { get; init; }
 
-    /// <summary>
-    /// The color of the team's shirt.
-    /// </summary>
     [Required(ErrorMessage = "The ShirtColor field is required")]
     public required string ShirtColor { get; set; }
 

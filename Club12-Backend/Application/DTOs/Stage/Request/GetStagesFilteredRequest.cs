@@ -11,26 +11,14 @@ namespace Application.DTOs.Stage.Request;
 /// </summary>
 public class GetStagesFilteredRequest : PaginatedFilterRequest
 {
-    /// <summary>
-    /// Optional filter by Division unique identifier.
-    /// </summary>
     public Guid? DivisionId { get; set; }
 
     public Guid? TournamentId { get; set; }
 
-    /// <summary>
-    /// Optional filter by stage type.
-    /// </summary>
     public StageType? StageType { get; set; }
 
-    /// <summary>
-    /// Optional filter by active status.
-    /// </summary>
     public bool? IsActive { get; set; }
 
-    /// <summary>
-    /// Optional filter to specify if the stage is elimination or not.
-    /// </summary>
     public bool? IsElimination { get; set; }
 
     /// <summary>

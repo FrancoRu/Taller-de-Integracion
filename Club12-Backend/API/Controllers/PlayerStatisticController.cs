@@ -33,7 +33,8 @@ public class PlayerStatisticController(IPlayerStatisticService playerStatisticSe
 {
 
     /// <summary>
-    /// Creates a new player statistic.
+    /// Records a single player-statistic entry directly, with no roster/eligibility or
+    /// score-total validation (unlike the <c>match-sheet</c> endpoint below).
     /// </summary>
     /// <param name="playerStatisticRequest">The player statistic request DTO.</param>
     /// <returns>The created player statistic response.</returns>
@@ -117,11 +118,11 @@ public class PlayerStatisticController(IPlayerStatisticService playerStatisticSe
     }
 
     /// <summary>
-    /// Updates a player statistic asynchronously.
+    /// Updates a player statistic by its id.
     /// </summary>
     /// <param name="id">The id of the statistic to update.</param>
     /// <param name="updateRequest">The request with updated statistics.</param>
-    /// <returns>Returns the result of the update operation.</returns>
+    /// <returns>Returns 204 (No Content) on success, or 404 (Not Found) if no statistic matches the id.</returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -144,7 +145,7 @@ public class PlayerStatisticController(IPlayerStatisticService playerStatisticSe
     /// Deletes a player statistic by its id.
     /// </summary>
     /// <param name="id">The id of the player statistic to delete.</param>
-    /// <returns>Returns the result of the delete operation.</returns>
+    /// <returns>Returns 204 (No Content) on success.</returns>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

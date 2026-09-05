@@ -7,14 +7,8 @@ using Domain.Entities.Models;
 
 namespace API.AutoMapperProfiles;
 
-/// <summary>
-/// AutoMapper profile for stage mappings.
-/// </summary>
 public class StageProfile : Profile
 {
-    /// <summary>
-    /// Initializes mapping configuration for stage entities.
-    /// </summary>
     public StageProfile()
     {
         _ = CreateMap<CreateStageRequest, Stage>();

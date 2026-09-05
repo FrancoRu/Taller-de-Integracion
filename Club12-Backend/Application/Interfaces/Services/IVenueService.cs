@@ -6,23 +6,15 @@ using System.Threading.Tasks;
 
 namespace Application.Interfaces.Services;
 
-/// <summary>
-/// Represents a service for managing Venues.
-/// </summary>
 public interface IVenueService
 {
     /// <summary>
-    /// Creates a new Venue asynchronously.
+    /// Creates a venue and generates its unique slug from the name.
     /// </summary>
     /// <param name="venueEntity">The Venue entity to create.</param>
     /// <returns>The created Venue.</returns>
     Task<Venue> CreateVenueAsync(Venue venueEntity);
 
-    /// <summary>
-    /// Retrieves a Venue by its id asynchronously.
-    /// </summary>
-    /// <param name="venueId">The id of the Venue to retrieve.</param>
-    /// <returns>The Venue with the specified id, or null if not found.</returns>
     Task<Venue?> GetVenueByIdAsync(Guid venueId);
 
     /// <summary>
@@ -34,18 +26,17 @@ public interface IVenueService
     /// <returns>The matching venue, or null if not found.</returns>
     Task<Venue?> GetVenueByIdOrSlugAsync(string idOrSlug);
 
-    /// <summary>
-    /// Updates a Venue asynchronously.
-    /// </summary>
-    /// <param name="venueEntity">The Venue to update.</param>
-    /// <returns>A boolean indicating whether the update was successful.</returns>
     Task UpdateVenueAsync(Venue venueEntity);
 
+    /// <summary>
+    /// Deletes a venue. Blocked while any match still references it, so a
+    /// match is never left without a venue.
+    /// </summary>
+    /// <param name="id">The unique identifier of the venue to delete.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the venue is referenced by one or more matches.
+    /// </exception>
     Task DeleteVenueAsync(Guid id);
 
-    /// <summary>
-    /// Retrieves all venues asynchronously.
-    /// </summary>
-    /// <returns>A paginated response containing the venues.</returns>
     Task<IEnumerable<Venue>> GetAllVenuesAsync();
 }

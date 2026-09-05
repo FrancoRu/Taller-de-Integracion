@@ -7,9 +7,6 @@ namespace Application.DTOs.Venue.Response;
 public class VenueResponse : BaseEntityResponse
 {
 
-    /// <summary>
-    /// The name of the venue.
-    /// </summary>
     public required string Name { get; set; }
 
     /// <summary>
@@ -17,14 +14,8 @@ public class VenueResponse : BaseEntityResponse
     /// </summary>
     public required string Slug { get; set; }
 
-    /// <summary>
-    /// The address of the venue.
-    /// </summary>
     public required string Address { get; set; }
 
-    /// <summary>
-    /// The URL of the venue's photo.
-    /// </summary>
     public string? PhotoUrl { get; set; }
 
     /// <summary>

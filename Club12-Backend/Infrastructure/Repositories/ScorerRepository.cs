@@ -16,9 +16,25 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Repositories;
 
+/// <summary>
+/// Repository implementation for the "goleadores" (top scorers) ranking.
+/// Inherits generic CRUD for <see cref="Scorer"/> from GenericRepository{Scorer},
+/// but the ranking itself is built from PlayerStatistic rows, not the Scorer table
+/// (see <see cref="GetPlayerScoresAsync"/>).
+/// </summary>
 public class ScorerRepository(ApplicationDBContext context)
     : GenericRepository<Scorer>(context), IScorerRepository
 {
+    /// <summary>
+    /// Builds the top-scorers ranking by summing each player's Points-type
+    /// <see cref="PlayerStatistic"/> rows (HU-72) rather than reading the Scorer
+    /// table, so it always reflects what the per-match loading path (HU-71)
+    /// actually wrote. When <paramref name="filter"/> narrows to a
+    /// tournament/division/stage/match, both the candidate players and the
+    /// summed points are scoped accordingly; when neither TournamentId nor
+    /// Season is set, points aggregate across every season for that player
+    /// (an all-time ranking) since Player rows are reused across seasons.
+    /// </summary>
     public async Task<(IEnumerable<ScorerByPlayerResponse> Items, int TotalCount)> GetPlayerScoresAsync(GetScorerFilteredRequest filter)
     {
         IQueryable<Player> playersQuery = _context.Set<Player>();

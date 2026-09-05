@@ -174,13 +174,16 @@ public class TournamentController(
     }
 
     /// <summary>
-    /// Updates an existing tournament by its identifier.
+    /// Updates a tournament's descriptive fields by its identifier. If the request
+    /// includes a <c>Status</c> different from the tournament's current one, that
+    /// change is routed through a forward-only status state machine instead of being
+    /// written directly — sending back the current status is a harmless no-op.
     /// </summary>
     /// <param name="id">Tournament identifier (GUID).</param>
     /// <param name="tournamentRequest">Tournament update data.</param>
     /// <returns>
     /// Returns 200 (OK) if updated successfully.
-    /// Returns 400 (Bad Request) if not found.
+    /// Returns 404 (Not Found) if the tournament does not exist.
     /// Returns 403 (Forbidden) if unauthorized.
     /// </returns>
     [HttpPut("{id:guid}")]

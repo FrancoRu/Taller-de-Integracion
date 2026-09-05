@@ -7,14 +7,8 @@ using Domain.Entities.Models;
 
 namespace API.AutoMapperProfiles;
 
-/// <summary>
-/// AutoMapper profile for blog post mappings.
-/// </summary>
 public class BlogPostProfile : Profile
 {
-    /// <summary>
-    /// Initializes mapping configuration for blog post entities.
-    /// </summary>
     public BlogPostProfile()
     {
         _ = CreateMap<CreateBlogPostRequest, BlogPost>();

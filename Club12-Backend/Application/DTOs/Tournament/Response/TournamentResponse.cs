@@ -12,14 +12,8 @@ namespace Application.DTOs.Tournament.Response;
 /// </summary>
 public class TournamentResponse : BaseEntityResponse
 {
-    /// <summary>
-    /// The description of the tournament.
-    /// </summary>
     public required string Description { get; set; }
 
-    /// <summary>
-    /// The name of the tournament.
-    /// </summary>
     public required string Name { get; set; }
 
     /// <summary>
@@ -27,9 +21,6 @@ public class TournamentResponse : BaseEntityResponse
     /// </summary>
     public required string Slug { get; set; }
 
-    /// <summary>
-    /// The divisions associated with the tournament.
-    /// </summary>
     public required IEnumerable<MinimalDivisionResponse> Divisions { get; set; }
 
     /// <summary>
@@ -38,14 +29,8 @@ public class TournamentResponse : BaseEntityResponse
     /// </summary>
     public required DateTime TeamRegistrationDeadline { get; set; }
 
-    /// <summary>
-    /// The start date of the tournament.
-    /// </summary>
     public required DateTime StartDate { get; set; }
 
-    /// <summary>
-    /// Current lifecycle status of the tournament.
-    /// </summary>
     public TournamentStatus Status { get; set; }
 
     /// <summary>

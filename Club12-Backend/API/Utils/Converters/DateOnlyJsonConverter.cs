@@ -8,14 +8,17 @@ using System.Text.Json.Serialization;
 namespace API.Utils.Converters;
 
 /// <summary>
-/// A custom JSON converter for DateTime that serializes and deserializes dates
-/// in the format "dd/MM/yyyy".
+/// A custom JSON converter for DateTime. Accepts a wide range of common input
+/// formats when reading (see <see cref="_formats"/>), but always writes using a
+/// single canonical format ("yyyy-MM-ddTHH:mm:ss.fffZ") so output is consistent
+/// regardless of which format the value was originally read from.
 /// </summary>
 public class DateOnlyJsonConverter : JsonConverter<DateTime>
 {
 
     /// <summary>
-    /// The date format used for serialization and deserialization ("dd/MM/yyyy").
+    /// The formats accepted when parsing a date from JSON, tried in order. Only
+    /// used for reading — <see cref="Write"/> always emits a single canonical format.
     /// </summary>
     private static readonly string[] _formats =
     [
@@ -37,7 +40,8 @@ public class DateOnlyJsonConverter : JsonConverter<DateTime>
     ];
 
     /// <summary>
-    /// Reads and converts the JSON string to a DateTime using the "dd/MM/yyyy" format.
+    /// Reads and converts the JSON string to a DateTime, trying each of the
+    /// accepted <see cref="_formats"/> in order until one matches.
     /// </summary>
     /// <param name="reader">The Utf8JsonReader to read from.</param>
     /// <param name="typeToConvert">The type to convert (expected to be DateTime).</param>
@@ -58,7 +62,9 @@ public class DateOnlyJsonConverter : JsonConverter<DateTime>
     }
 
     /// <summary>
-    /// Writes a DateTime value as a JSON string using the "dd/MM/yyyy" format.
+    /// Writes a DateTime value as a JSON string using the canonical
+    /// "yyyy-MM-ddTHH:mm:ss.fffZ" format, regardless of which accepted format
+    /// it was originally read from.
     /// </summary>
     /// <param name="writer">The Utf8JsonWriter to write to.</param>
     /// <param name="value">The DateTime value to serialize.</param>

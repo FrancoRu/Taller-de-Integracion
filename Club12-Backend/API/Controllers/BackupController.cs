@@ -48,6 +48,10 @@ public class BackupController(IBackupCatalog catalog, IBackupOperationsService o
         return Ok(response);
     }
 
+    /// <summary>
+    /// Triggers a manual backup. Returns 409 if a backup or restore is
+    /// already in progress (busy); 500 if the backup itself fails.
+    /// </summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BackupRecordResponse))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -66,6 +70,10 @@ public class BackupController(IBackupCatalog catalog, IBackupOperationsService o
         };
     }
 
+    /// <summary>
+    /// Deletes a catalogued backup. Returns 404 if no backup matches the id,
+    /// 409 if a backup or restore is currently in progress (busy).
+    /// </summary>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -87,14 +95,13 @@ public class BackupController(IBackupCatalog catalog, IBackupOperationsService o
     }
 
     /// <summary>
-    /// database-restore#Restore-Executes-Directly-Against-the-Live-Database.
-    /// The only input is the route Guid — no request body is bound
-    /// (threat-matrix "Restore of foreign/uploaded dumps": there is no
-    /// upload endpoint, so a restore can only ever target an existing
-    /// catalogued backup by id). Confirmation naming the target's
-    /// Fecha before this call is a frontend concern (Phase 5), not
-    /// enforced server-side. On success the response carries the automatic
-    /// pre-restore safety backup's record (design.md's HTTP contract).
+    /// Restores the database from a catalogued backup, executing directly
+    /// against the live database. The only input is the route id — there is
+    /// no upload endpoint, so a restore can only ever target an existing
+    /// catalogued backup. On success the response carries the record of the
+    /// automatic safety backup taken just before the restore, not the
+    /// restored backup itself. Returns 404 if no backup matches the id, 409
+    /// if a backup or restore is already in progress (busy).
     /// </summary>
     [HttpPost("{id:guid}/restore")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BackupRecordResponse))]

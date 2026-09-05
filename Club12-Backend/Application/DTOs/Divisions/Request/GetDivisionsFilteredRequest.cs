@@ -8,14 +8,8 @@ namespace Application.DTOs.Divisions.Request;
 /// </summary>
 public class GetDivisionsFilteredRequest : PaginatedFilterRequest
 {
-    /// <summary>
-    /// The name of the division to filter by.
-    /// </summary>
     public string? Name { get; set; }
 
-    /// <summary>
-    /// Indicates whether to filter divisions by their finished status.
-    /// </summary>
     public bool? IsFinished { get; set; }
 
     public Guid? TournamentId { get; set; }

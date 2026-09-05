@@ -6,13 +6,7 @@ namespace Application.DTOs.Divisions.Response;
 /// </summary>
 public class MinimalDivisionResponse : BaseEntityResponse
 {
-    /// <summary>
-    /// The name of the division.
-    /// </summary>
     public required string Name { get; set; }
 
-    /// <summary>
-    /// If the division is finished.
-    /// </summary>
     public required bool IsFinished { get; set; }
 }

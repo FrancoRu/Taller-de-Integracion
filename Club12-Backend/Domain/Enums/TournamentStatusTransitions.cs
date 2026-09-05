@@ -4,13 +4,14 @@ using System.Linq;
 namespace Domain.Enums;
 
 /// <summary>
-/// Encodes the tournament lifecycle state machine. Transitions are
-/// forward-only along the linear happy path
-/// Scheduled -> OpenForRegistration -> RegistrationClosed -> Ongoing ->
-/// Finished, with <see cref="TournamentStatus.Canceled"/> reachable from any
-/// non-terminal state. <see cref="TournamentStatus.Finished"/> and
-/// <see cref="TournamentStatus.Canceled"/> are terminal: no transition leaves
-/// them. There is no way back to an earlier state.
+/// Encodes the tournament lifecycle state machine. The happy path is linear
+/// — Scheduled -> OpenForRegistration -> RegistrationClosed -> Ongoing ->
+/// Finished — with <see cref="TournamentStatus.Canceled"/> reachable from any
+/// non-terminal state. The one exception to "forward-only" is
+/// Ongoing -> RegistrationClosed (see the inline comment below), a deliberate
+/// "revertir a borrador" escape hatch. <see cref="TournamentStatus.Finished"/>
+/// and <see cref="TournamentStatus.Canceled"/> are terminal: no transition
+/// leaves them.
 /// </summary>
 public static class TournamentStatusTransitions
 {

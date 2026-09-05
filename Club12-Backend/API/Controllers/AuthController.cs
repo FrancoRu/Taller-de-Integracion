@@ -18,10 +18,21 @@ using System.Threading.Tasks;
 
 namespace API.Controllers;
 
+/// <summary>
+/// Authentication and account-lifecycle endpoints: login, magic links, guest
+/// sessions, and password reset are anonymous; registering or inviting a
+/// user requires Admin or Owner. There is no class-level [Authorize] — each
+/// action below declares its own access policy.
+/// </summary>
 [ApiController]
 [Route("api/auth")]
 public class AuthController(IAuthenticationService authenticationService) : ControllerBase
 {
+    /// <summary>
+    /// Creates a fully-activated account with a password set by the caller.
+    /// Requires Admin or Owner — unlike its name suggests, this is not a
+    /// public self-registration endpoint (use /invite or /magic-link for that).
+    /// </summary>
     [Authorize(Roles = Roles.AdminOrOwner)]
     [HttpPost("register")]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(RegisterUserResponse))]

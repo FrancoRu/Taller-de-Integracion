@@ -36,13 +36,14 @@ public class PlayerController(
     ) : ControllerBase
 {
     /// <summary>
-    /// Creates a new player.
+    /// Creates a player under the specified team. Returns the full admin-facing player
+    /// response (not the trimmed public shape returned by the public endpoints).
     /// </summary>
     /// <param name="playerRequest">The player request.</param>
     /// <returns>The created Player response.
     /// <para>Returns 201 (Created) with the Player response if the creation was successful.</para>
-    /// <para>Returns 400 (Bad Request) if the Team with the provided id was not found.</para>
-    /// <para>Returns 403 (Forbidden) if the user is not authenticated.</para>
+    /// <para>Returns 400 (Bad Request) if the team was not found or is not linked to a tournament.</para>
+    /// <para>Returns 403 (Forbidden) if the user lacks the Admin or Owner role.</para>
     /// </returns>
     [Authorize(Roles = Roles.AdminOrOwner)]
     [HttpPost()]
@@ -152,9 +153,10 @@ public class PlayerController(
     /// <param name="id">The id of the player to update.</param>
     /// <param name="playerRequest">The player request.</param>
     /// <returns>
-    /// Returns 200 (OK) with the updated Player response if the update was successful.
-    /// Returns 400 (Bad Request) if the Player with the provided id was not found.
-    /// Returns 403 (Forbidden) if the user is not authenticated.
+    /// Returns 200 (OK) with the updated player if the update was successful.
+    /// Returns 400 (Bad Request) if the player's team was not found or is not linked to a tournament.
+    /// Returns 404 (Not Found) if no player matches the provided id.
+    /// Returns 403 (Forbidden) if the user lacks the Admin or Owner role.
     /// </returns>
     [Authorize(Roles = Roles.AdminOrOwner)]
     [HttpPut("{id:guid}")]
@@ -194,9 +196,8 @@ public class PlayerController(
     /// </summary>
     /// <param name="id">The id of the Player to delete.</param>
     /// <returns>
-    /// Returns 200 (OK) if the Player was successfully deleted.
-    /// Returns 400 (Bad Request) if the Player with the provided id was not found.
-    /// Returns 403 (Forbidden) if the user is not authenticated.
+    /// Returns 204 (No Content) if the Player was successfully deleted.
+    /// Returns 403 (Forbidden) if the user lacks the Admin or Owner role.
     /// </returns>
     [Authorize(Roles = Roles.AdminOrOwner)]
     [HttpDelete("{id:guid}")]
@@ -232,8 +233,8 @@ public class PlayerController(
     /// Retrieves filtered players with pagination and detailed information for admins.
     /// This endpoint is for private use only and requires admin access.
     /// </summary>
-    /// <param name="filterRequest"> The filtering and pagination parameters. This includes optional query parameters like:    /// </param>
-    /// <returns> A paginated response containing the filtered players. </returns>
+    /// <param name="filterRequest">The filtering and pagination parameters.</param>
+    /// <returns>A paginated response containing the filtered players.</returns>
     /// <response code="200">Returns a paginated list of filtered players</response>
     /// <response code="400">Returns 400 if there is an invalid filter parameter or the filter results in no data</response>
     /// <response code="403">Returns 403 if the user does not have the required permissions (admin)</response>

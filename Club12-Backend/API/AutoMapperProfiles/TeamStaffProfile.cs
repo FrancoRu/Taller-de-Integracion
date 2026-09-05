@@ -7,14 +7,8 @@ using Domain.Entities.Models;
 
 namespace API.AutoMapperProfiles;
 
-/// <summary>
-/// AutoMapper profile for a team's technical staff (cuerpo técnico).
-/// </summary>
 public class TeamStaffProfile : Profile
 {
-    /// <summary>
-    /// Initializes mapping configuration for team-staff entities.
-    /// </summary>
     public TeamStaffProfile()
     {
         _ = CreateMap<CreateTeamStaffRequest, TeamStaff>();

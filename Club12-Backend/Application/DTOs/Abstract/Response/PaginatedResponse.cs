@@ -3,9 +3,9 @@
 namespace Application.DTOs.Abstract.Response;
 
 /// <summary>
-/// 
+/// A page of results together with the metadata needed to fetch adjacent pages.
 /// </summary>
-/// <typeparam name="T"></typeparam>
+/// <typeparam name="T">The type of item contained in the page.</typeparam>
 public class PaginatedResponse<T>
 {
     /// <summary>

@@ -10,13 +10,12 @@ using System.Threading.Tasks;
 
 namespace Application.Interfaces.Services;
 
-/// <summary>
-/// Represents a service for managing Tournaments.
-/// </summary>
 public interface ITournamentService
 {
     /// <summary>
-    /// Creates a new Tournament asynchronously.
+    /// Creates a tournament and generates its unique slug from the name. Bare
+    /// structural creation only — use <see cref="CreateFullTournamentAsync"/>
+    /// to also create its divisions/stages in one transaction.
     /// </summary>
     /// <param name="tournamentEntity">The Tournament entity to create.</param>
     /// <returns>The created Tournament.</returns>
@@ -51,11 +50,6 @@ public interface ITournamentService
     /// <returns>The created Division.</returns>
     Task<Division> AddFullDivisionAsync(Tournament tournament, CreateFullDivisionRequest divisionRequest);
 
-    /// <summary>
-    /// Retrieves a Tournament by its id asynchronously.
-    /// </summary>
-    /// <param name="tournamentId">The id of the Tournament to retrieve.</param>
-    /// <returns>The Tournament with the specified id, or null if not found.</returns>
     Task<Tournament?> GetTournamentByIdAsync(Guid tournamentId);
 
     /// <summary>
@@ -67,11 +61,10 @@ public interface ITournamentService
     Task<Tournament?> GetTournamentByIdOrSlugAsync(string idOrSlug);
 
     /// <summary>
-    /// Updates a Tournament asynchronously. Does NOT change the lifecycle
-    /// status — use <see cref="ChangeStatusAsync"/> for that.
+    /// Updates a Tournament. Does NOT change the lifecycle status — use
+    /// <see cref="ChangeStatusAsync"/> for that.
     /// </summary>
     /// <param name="tournamentEntity">The Tournament to update.</param>
-    /// <returns>A Tournament entity indicating whether the update was successful.</returns>
     Task UpdateTournamentAsync(Tournament tournamentEntity);
 
     /// <summary>
@@ -102,10 +95,18 @@ public interface ITournamentService
     Task<TournamentCompletabilityResponse> GetCompletabilityAsync(Guid tournamentId);
 
     /// <summary>
-    /// Deletes a Tournament asynchronously.
+    /// Deletes a tournament. Blocked once it has started (Ongoing/Finished)
+    /// or has any finished match, so competitive history is never silently
+    /// destroyed. Clears the denormalized current-tournament pointer on any
+    /// team still pointing at it before the cascade delete removes this
+    /// tournament's registrations, divisions, stages and matches — the teams
+    /// themselves are never deleted. A no-op when the id does not match a
+    /// tournament.
     /// </summary>
     /// <param name="id">The id of the Tournament to delete.</param>
-    /// <returns>A boolean indicating whether the deletion was successful.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the tournament has already started or has any finished match.
+    /// </exception>
     Task DeleteTournamentAsync(Guid id);
 
     /// <summary>

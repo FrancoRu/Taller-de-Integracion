@@ -13,16 +13,10 @@ namespace Application.DTOs.TeamStaff.Request;
 /// </summary>
 public class CreateTeamStaffRequest
 {
-    /// <summary>
-    /// The staff member's full name.
-    /// </summary>
     [Required(ErrorMessage = "The FullName field is required.")]
     [MaxLength(150, ErrorMessage = "FullName cannot exceed 150 characters.")]
     public required string FullName { get; set; }
 
-    /// <summary>
-    /// The role this person holds on the team's technical staff.
-    /// </summary>
     public required TeamStaffRole Role { get; set; }
 
     /// <summary>

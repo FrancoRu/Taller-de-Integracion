@@ -10,14 +10,8 @@ namespace Application.DTOs.MatchSeries.Request;
 /// </summary>
 public class AddGameToSeriesRequest
 {
-    /// <summary>
-    /// The date of this game.
-    /// </summary>
     [Required(ErrorMessage = "Match date field is required.")]
     public required DateTime MatchDate { get; set; }
 
-    /// <summary>
-    /// Optional venue for this game.
-    /// </summary>
     public Guid? VenueId { get; set; }
 }

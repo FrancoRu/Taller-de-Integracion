@@ -10,14 +10,8 @@ namespace Application.DTOs.PlayerStatistic.Request;
 /// </summary>
 public class GetPlayerStatisticsFilteredRequest : PaginatedFilterRequest
 {
-    /// <summary>
-    /// The unique identifier of the match to filter statistics by.
-    /// </summary>
     public Guid? MatchId { get; set; }
 
-    /// <summary>
-    /// The unique identifier of the player to filter statistics by.
-    /// </summary>
     public Guid? PlayerId { get; set; }
 
     /// <summary>

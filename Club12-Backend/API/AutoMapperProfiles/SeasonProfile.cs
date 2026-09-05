@@ -7,14 +7,8 @@ using Domain.Entities.Models;
 
 namespace API.AutoMapperProfiles;
 
-/// <summary>
-/// AutoMapper profile for season ("Temporada") mappings.
-/// </summary>
 public class SeasonProfile : Profile
 {
-    /// <summary>
-    /// Initializes mapping configuration for season entities.
-    /// </summary>
     public SeasonProfile()
     {
         _ = CreateMap<Season, SeasonResponse>();

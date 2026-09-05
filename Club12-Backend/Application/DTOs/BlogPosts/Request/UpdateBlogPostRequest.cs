@@ -6,19 +6,13 @@
 /// </summary>
 public class UpdateBlogPostRequest
 {
-    /// <summary>
-    /// The updated title of the blog post.
-    /// </summary>
+    /// <summary>Null leaves the current title unchanged.</summary>
     public string? Title { get; set; }
 
-    /// <summary>
-    /// The updated content of the blog post in Markdown format.
-    /// </summary>
+    /// <summary>Null leaves the current Markdown content unchanged.</summary>
     public string? MarkdownText { get; set; }
 
-    /// <summary>
-    /// The updated author of the blog post.
-    /// </summary>
+    /// <summary>Null leaves the current author unchanged.</summary>
     public string? Author { get; set; }
 
     /// <summary>

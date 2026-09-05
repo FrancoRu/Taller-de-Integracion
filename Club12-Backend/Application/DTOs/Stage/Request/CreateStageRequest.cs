@@ -19,15 +19,8 @@ public class CreateStageRequest
     [Required(ErrorMessage = "Stage name field is required.")]
     public required string Name { get; set; }
 
-    /// <summary>
-    /// Optional description providing additional details about the stage.
-    /// </summary>
     public string? Description { get; set; }
 
-    /// <summary>
-    /// The type of the stage, such as "Group", "Elimination", etc.
-    /// Should match an enum value on the service side.
-    /// </summary>
     [AllowedValues(StageType.Group, StageType.RoundOf16, StageType.QuarterFinal, StageType.SemiFinal, StageType.ThirdPlace, StageType.Final)]
     public required StageType StageType { get; set; } = StageType.Group;
 

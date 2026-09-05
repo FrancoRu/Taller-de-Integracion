@@ -8,6 +8,14 @@ using System.Threading.Tasks;
 
 namespace API.Utils.Middlewares;
 
+/// <summary>
+/// Enforces the must-change-password flow: once
+/// <see cref="CustomClaimTypes.MustChangePassword"/> is set on the caller's
+/// token, every request except the user-update and logout endpoints is
+/// rejected with 403 until the password is changed. Registered after
+/// UseAuthentication()/UseAuthorization() so the claim has already been
+/// resolved (mirrors MaintenanceModeMiddleware's placement pattern).
+/// </summary>
 public class MustChangePasswordMiddleware(RequestDelegate next)
 {
     private static readonly string[] AllowedPaths =

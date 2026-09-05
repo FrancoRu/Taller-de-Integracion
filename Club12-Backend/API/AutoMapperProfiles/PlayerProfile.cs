@@ -7,14 +7,8 @@ using Domain.Entities.Models;
 
 namespace API.AutoMapperProfiles;
 
-/// <summary>
-/// AutoMapper profile for player mappings.
-/// </summary>
 public class PlayerProfile : Profile
 {
-    /// <summary>
-    /// Initializes mapping configuration for player entities.
-    /// </summary>
     public PlayerProfile()
     {
         _ = CreateMap<Player, PublicPlayerResponse>()

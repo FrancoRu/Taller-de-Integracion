@@ -71,9 +71,9 @@ public class TeamController(
     /// <param name="id">The id of the team to update.</param>
     /// <param name="teamRequest">The team request excluding logo update.</param>
     /// <returns>
-    /// Returns 200 (OK) with the updated team response if the update was successful.
-    /// Returns 400 (Bad Request) if the team with the provided id was not found.
-    /// Returns 403 (Forbidden) if the user is not authenticated.
+    /// Returns 204 (No Content) if the update was successful.
+    /// Returns 404 (Not Found) if the team with the provided id was not found.
+    /// Returns 403 (Forbidden) if the user is not authorized.
     /// </returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -257,9 +257,9 @@ public class TeamController(
     /// </summary>
     /// <param name="id">The id of the team to delete.</param>
     /// <returns>
-    /// Returns 200 (OK) if the team was successfully deleted.
-    /// Returns 400 (Bad Request) if the team with the provided id was not found.
-    /// Returns 403 (Forbidden) if the user is not authenticated.
+    /// Returns 204 (No Content) if the team was successfully deleted.
+    /// Returns 404 (Not Found) if the team with the provided id was not found.
+    /// Returns 403 (Forbidden) if the user is not authorized.
     /// </returns>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

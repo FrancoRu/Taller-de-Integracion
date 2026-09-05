@@ -134,7 +134,13 @@ public class ClubService(IUnitOfWork unitOfWork) : IClubService
         return string.IsNullOrEmpty(slug) ? team.Id.ToString() : slug;
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Resolves a club by id or slug and assembles its cross-season team
+    /// history. Registrations and their tournaments are batch-loaded (one
+    /// query each across every team, not per-team) to avoid N+1, and each
+    /// team's seasons are ordered newest-first for a single-team consumer,
+    /// even though the history page re-sorts the flattened result itself.
+    /// </summary>
     public async Task<ClubHistoryResponse?> GetClubHistoryAsync(string idOrSlug)
     {
         Club? club = Guid.TryParse(idOrSlug, out Guid clubId)

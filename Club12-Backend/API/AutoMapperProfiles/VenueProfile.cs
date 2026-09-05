@@ -7,14 +7,8 @@ using Domain.Entities.Models;
 
 namespace API.AutoMapperProfiles;
 
-/// <summary>
-/// AutoMapper profile for venue mappings.
-/// </summary>
 public class VenueProfile : Profile
 {
-    /// <summary>
-    /// Initializes mapping configuration for venue entities.
-    /// </summary>
     public VenueProfile()
     {
         _ = CreateMap<Venue, VenueResponse>()

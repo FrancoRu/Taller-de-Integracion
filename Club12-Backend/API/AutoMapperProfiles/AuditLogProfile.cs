@@ -6,9 +6,6 @@ using Domain.Entities.Models;
 
 namespace API.AutoMapperProfiles;
 
-/// <summary>
-/// AutoMapper profile for audit-log mappings (HU-101).
-/// </summary>
 public class AuditLogProfile : Profile
 {
     public AuditLogProfile()

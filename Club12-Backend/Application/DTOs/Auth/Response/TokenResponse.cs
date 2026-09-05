@@ -12,9 +12,6 @@ public sealed class TokenResponse(string accessToken, TimeSpan expiresIn, string
     /// </summary>
     public string AccessToken { get; init; } = accessToken;
 
-    /// <summary>
-    /// The time span until the access token expires.
-    /// </summary>
     public TimeSpan ExpiresIn { get; init; } = expiresIn;
 
     /// <summary>

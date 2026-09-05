@@ -9,23 +9,17 @@ using System.Threading.Tasks;
 
 namespace Application.Interfaces.Services;
 
-/// <summary>
-/// Represents a service for managing player sanctions.
-/// </summary>
 public interface IPlayerSanctionService
 {
     /// <summary>
-    /// Creates a new player sanction asynchronously.
+    /// Creates a sanction and assigns it a unique slug derived from its
+    /// subject's resolved name and issue date, so a player, team, or staff
+    /// sanction all get a readable slug regardless of subject type.
     /// </summary>
     /// <param name="playerSanctionEntity">The player sanction entity to create.</param>
     /// <returns>The created player sanction.</returns>
     Task<PlayerSanction> CreatePlayerSanctionAsync(PlayerSanction playerSanctionEntity);
 
-    /// <summary>
-    /// Retrieves a player sanction by its ID asynchronously.
-    /// </summary>
-    /// <param name="playerSanctionId">The ID of the player sanction to retrieve.</param>
-    /// <returns>The player sanction with the specified ID, or null if not found.</returns>
     Task<PlayerSanction?> GetPlayerSanctionByIdAsync(Guid playerSanctionId);
 
     /// <summary>

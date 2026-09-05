@@ -33,7 +33,7 @@ namespace Infrastructure.Persistance;
 ///   feeding one Copa de Oro (all 7 teams, byes to the top seeds since 7 is
 ///   not a power of two); and</item>
 /// <item><b>Torneo Masculino</b>: 3 zones (Zona A/B, 10 teams each; Zona C, 13
-///   teams), each single round-robin, each with its own Copa Oro (top 4) and
+///   teams), each ida y vuelta, each with its own Copa Oro (top 4) and
 ///   Copa Plata (the rest) brackets — plus a 4th, parallel competition, Copa
 ///   Cruzada: 6 group-stage zones (5 of 4 teams + 1 of 3, ida y vuelta, drawn
 ///   from a 23-team subset of the zone rosters) feeding one combined 12-team

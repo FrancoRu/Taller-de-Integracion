@@ -6,15 +6,9 @@ namespace Application.DTOs.Auth.Request;
 /// </summary>
 public class LogInUserRequest
 {
-    /// <summary>
-    /// The email for login.
-    /// </summary>
     [Required(ErrorMessage = "The Email field is required.")]
     public required string Email { get; set; }
 
-    /// <summary>
-    /// The password for login.
-    /// </summary>
     [Required(ErrorMessage = "The Password field is required.")]
     public required string Password { get; set; }
 }

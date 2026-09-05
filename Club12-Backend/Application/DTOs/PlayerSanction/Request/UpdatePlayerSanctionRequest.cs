@@ -13,9 +13,6 @@ public class UpdatePlayerSanctionRequest
     /// </summary>
     public int? Duration { get; set; }
 
-    /// <summary>
-    /// A description of the sanction.
-    /// </summary>
     [MaxLength(SanctionFieldLengths.DescriptionMaxLength)]
     public string? Description { get; set; }
 }

@@ -9,14 +9,8 @@ using System;
 
 namespace API.AutoMapperProfiles;
 
-/// <summary>
-/// AutoMapper profile for player statistics.
-/// </summary>
 public class PlayerStatisticProfile : Profile
 {
-    /// <summary>
-    /// Initializes mapping configuration for player statistics.
-    /// </summary>
     public PlayerStatisticProfile()
     {
         _ = CreateMap<CreatePlayerStatisticRequest, PlayerStatistic>();

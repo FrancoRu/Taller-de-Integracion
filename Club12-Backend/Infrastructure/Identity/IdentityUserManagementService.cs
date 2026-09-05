@@ -31,6 +31,7 @@ public sealed class IdentityUserManagementService(
     IEmailService emailService,
     IConfiguration configuration) : IUserManagementService
 {
+    /// <inheritdoc/>
     public async Task<PaginatedResponse<UserResponse>> GetAllAsync(
         string callerRole, Guid callerId,
         UserFilteredRequest filter,
@@ -100,6 +101,7 @@ public sealed class IdentityUserManagementService(
         };
     }
 
+    /// <inheritdoc/>
     public async Task<UserResponse> GetByIdAsync(
         string callerRole, Guid callerId, Guid userId, CancellationToken ct = default)
     {
@@ -108,6 +110,7 @@ public sealed class IdentityUserManagementService(
         return await MapOneAsync(user);
     }
 
+    /// <inheritdoc/>
     public async Task<UserResponse> UpdateAsync(
         string callerRole, Guid callerId, Guid userId,
         UpdateUserRequest request, CancellationToken ct = default)
@@ -138,6 +141,7 @@ public sealed class IdentityUserManagementService(
         return await MapOneAsync(user);
     }
 
+    /// <inheritdoc/>
     public async Task ChangePasswordAsync(
         string callerRole, Guid callerId, Guid userId,
         ChangePasswordRequest request, CancellationToken ct = default)
@@ -198,6 +202,7 @@ public sealed class IdentityUserManagementService(
         return new ResetPasswordResponse(user.Id);
     }
 
+    /// <inheritdoc/>
     public async Task DeleteAsync(
         string callerRole, Guid callerId, Guid userId, CancellationToken ct = default)
     {
@@ -206,6 +211,7 @@ public sealed class IdentityUserManagementService(
         ThrowIfFailed(await userManager.DeleteAsync(user));
     }
 
+    /// <inheritdoc/>
     public async Task<UserResponse> SetActiveAsync(
         string callerRole, Guid callerId, Guid userId, bool isActive, CancellationToken ct = default)
     {

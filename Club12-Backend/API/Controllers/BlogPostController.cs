@@ -41,7 +41,9 @@ public class BlogPostController(
     ) : ControllerBase
 {
     /// <summary>
-    /// Creates a new blog post.
+    /// Creates a blog post from multipart form data. If a photo file is
+    /// included, it's validated as an image and uploaded to storage before
+    /// the post is persisted.
     /// </summary>
     /// <param name="blogPostRequest">The blog post creation request object containing the post details.</param>
     /// <returns>The created blog post response with details of the new blog post.</returns>
@@ -71,7 +73,10 @@ public class BlogPostController(
     }
 
     /// <summary>
-    /// Updates an existing blog post by its id.
+    /// Updates a blog post, resolved by id or by its slug — the same lookup
+    /// the GET endpoint uses, so an admin can save a post the same way it
+    /// was opened. Unpublished drafts are resolvable here too, so a draft
+    /// can be edited before it's published.
     /// </summary>
     /// <param name="idOrSlug">The id (GUID) or slug of the blog post to update.</param>
     /// <param name="blogPostRequest">The blog post request with updated content.</param>
@@ -99,7 +104,8 @@ public class BlogPostController(
     }
 
     /// <summary>
-    /// Updates the photo of a blog post.
+    /// Replaces a blog post's photo. The new file is validated as an image
+    /// and uploaded to storage before the post's PhotoUrl is updated.
     /// </summary>
     /// <param name="idOrSlug">The id (GUID) or slug of the blog post to update the photo.</param>
     /// <param name="photoRequest">The update blog post photo request.</param>
@@ -129,7 +135,10 @@ public class BlogPostController(
     }
 
     /// <summary>
-    /// Retrieves a blog post by its id or its public slug.
+    /// Retrieves a blog post by id or slug. Admin/Owner can also resolve
+    /// unpublished drafts (others get 404 for those). A public, non-draft
+    /// read increments the post's view counter; an Admin/Owner preview does
+    /// not.
     /// </summary>
     /// <param name="idOrSlug">Blog post identifier (GUID) or slug.</param>
     /// <returns>The blog post with the specified id or slug.</returns>
@@ -178,7 +187,8 @@ public class BlogPostController(
     }
 
     /// <summary>
-    /// Retrieves filtered blog posts with pagination.
+    /// Retrieves filtered, paginated blog posts. Public/anonymous callers
+    /// only see published posts; Admin/Owner also see drafts.
     /// </summary>
     /// <param name="filterRequest">The filtering and pagination parameters.</param>
     /// <returns>A paginated response containing the filtered blog posts.</returns>

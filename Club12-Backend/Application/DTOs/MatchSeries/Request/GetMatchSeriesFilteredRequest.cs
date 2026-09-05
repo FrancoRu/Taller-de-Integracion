@@ -9,8 +9,5 @@ namespace Application.DTOs.MatchSeries.Request;
 /// </summary>
 public class GetMatchSeriesFilteredRequest : PaginatedFilterRequest
 {
-    /// <summary>
-    /// The stage (round) to filter series by.
-    /// </summary>
     public Guid? StageId { get; set; }
 }

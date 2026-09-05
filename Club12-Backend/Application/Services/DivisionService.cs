@@ -23,9 +23,12 @@ using System.Threading.Tasks;
 namespace Application.Services;
 
 /// <summary>
-/// Service class responsible for managing Division entities.
-/// Provides methods for creating, updating, deleting, and retrieving divisions,
-/// as well as fetching paginated lists of divisions with filtering support.
+/// Manages divisions (zones/categories) within a tournament. Structural
+/// create/update is gated on the parent tournament's status and category
+/// (see <see cref="EnsureTournamentAllowsDivisionAsync"/>), and deletion is
+/// blocked once the division has competitive history or its tournament has
+/// started (see <see cref="DeleteDivisionAsync"/>) — a division's lifecycle
+/// is bound to its tournament's, never independent of it.
 /// </summary>
 public class DivisionService(
     IDivisionRepository divisionRepository,
@@ -38,7 +41,8 @@ public class DivisionService(
     IMatchRepository matchRepository) : IDivisionService
 {
     /// <summary>
-    /// Creates a new division entity asynchronously.
+    /// Creates a division after checking its tournament allows structural
+    /// edits and its category matches (see <see cref="EnsureTournamentAllowsDivisionAsync"/>).
     /// </summary>
     /// <param name="divisionEntity">The division entity to create.</param>
     /// <returns>The created Division entity.</returns>
@@ -102,7 +106,10 @@ public class DivisionService(
     }
 
     /// <summary>
-    /// Updates an existing division entity asynchronously.
+    /// Updates a division after re-checking its tournament still allows
+    /// structural edits and its category still matches (see
+    /// <see cref="EnsureTournamentAllowsDivisionAsync"/>) — the same gate
+    /// applies on edit as on create.
     /// </summary>
     /// <param name="divisionEntity">The division entity with updated values.</param>
     public async Task UpdateDivisionAsync(Division divisionEntity)
@@ -151,8 +158,10 @@ public class DivisionService(
     }
 
     /// <summary>
-    /// Retrieves a division entity by its unique identifier asynchronously.
-    /// Returns only the basic division data.
+    /// Loads a division with just its playoff mappings — the lightweight
+    /// counterpart to <see cref="GetFullDivisionByIdAsync"/>, for callers
+    /// that only need the division's own data (e.g. the public detail page)
+    /// without pulling in its tournament or stages.
     /// </summary>
     /// <param name="divisionId">The unique identifier of the division.</param>
     /// <returns>The Division entity if found; otherwise, null.</returns>
@@ -187,8 +196,10 @@ public class DivisionService(
     }
 
     /// <summary>
-    /// Retrieves a division entity by its unique identifier asynchronously,
-    /// including related tournament and stages data.
+    /// Loads a division with its tournament and stages — the heavier
+    /// counterpart to <see cref="GetSimpleDivisionByIdAsync"/>, for callers
+    /// that need to reason about the division in the context of its
+    /// tournament (e.g. structural-edit checks) or walk its stages.
     /// </summary>
     /// <param name="divisionId">The unique identifier of the division.</param>
     /// <returns>The Division entity with related data if found; otherwise, null.</returns>

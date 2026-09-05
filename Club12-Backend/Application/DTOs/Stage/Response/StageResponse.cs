@@ -11,19 +11,10 @@ namespace Application.DTOs.Stage.Response;
 /// </summary>
 public class StageResponse : BaseEntityResponse
 {
-    /// <summary>
-    /// The start date of the stage.
-    /// </summary>
     public required DateTime StartDate { get; set; }
 
-    /// <summary>
-    /// The end date of the stage.
-    /// </summary>
     public required DateTime EndDate { get; set; }
 
-    /// <summary>
-    /// The name of the stage.
-    /// </summary>
     public required string Name { get; set; }
 
     /// <summary>
@@ -31,15 +22,8 @@ public class StageResponse : BaseEntityResponse
     /// </summary>
     public required string Slug { get; set; }
 
-    /// <summary>
-    /// Optional description providing additional details about the stage.
-    /// </summary>
     public string? Description { get; set; }
 
-    /// <summary>
-    /// The type of the stage as a string (e.g., "Group", "QuarterFinal").
-    /// Corresponds to a stage type enum in the service layer.
-    /// </summary>
     public required StageType StageType { get; set; }
 
     /// <summary>
@@ -52,14 +36,8 @@ public class StageResponse : BaseEntityResponse
     /// </summary>
     public bool IsElimination { get; set; }
 
-    /// <summary>
-    /// The unique identifier of the division this stage belongs to.
-    /// </summary>
     public required Guid DivisionId { get; set; }
 
-    /// <summary>
-    /// The order of the current Stage
-    /// </summary>
     public int Order { get; set; }
 
     /// <summary>

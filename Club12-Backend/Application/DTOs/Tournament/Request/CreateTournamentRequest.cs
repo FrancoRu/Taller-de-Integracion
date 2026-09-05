@@ -14,9 +14,6 @@ public class CreateTournamentRequest
     /// </summary>
     public string Description { get; set; } = string.Empty;
 
-    /// <summary>
-    /// The name of the tournament.
-    /// </summary>
     [Required(ErrorMessage = "Name is required.")]
     public required string Name { get; set; }
 
@@ -27,9 +24,6 @@ public class CreateTournamentRequest
     [Required(ErrorMessage = "Team registration deadline is required.")]
     public required DateTime TeamRegistrationDeadline { get; set; }
 
-    /// <summary>
-    /// The start date of the tournament.
-    /// </summary>
     [Required(ErrorMessage = "Start date is required.")]
     public required DateTime StartDate { get; set; }
 

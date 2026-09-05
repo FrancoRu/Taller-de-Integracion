@@ -16,15 +16,9 @@ public class CreateMatchSeriesRequest
     [Required(ErrorMessage = "Stage ID field is required.")]
     public required Guid StageId { get; set; }
 
-    /// <summary>
-    /// The home team in the series.
-    /// </summary>
     [Required(ErrorMessage = "Home team ID field is required.")]
     public required Guid HomeTeamId { get; set; }
 
-    /// <summary>
-    /// The visitor team in the series.
-    /// </summary>
     [Required(ErrorMessage = "Visitor team ID field is required.")]
     public required Guid VisitorTeamId { get; set; }
 }

@@ -21,6 +21,12 @@ using System.Threading.Tasks;
 
 namespace Application.Services;
 
+/// <summary>
+/// Records player statistics, most notably match scoring sheets: a team's
+/// final score is always derived as the sum of the per-player points loaded
+/// here, never entered independently (see <see cref="LoadTeamMatchSheetAsync"/>
+/// and <see cref="LoadMatchResultFromSheetsAsync"/>).
+/// </summary>
 public class PlayerStatisticService(IUnitOfWork unitOfWork, IStageService stageService) : IPlayerStatisticService
 {
     private readonly IPlayerStatisticRepository _playerStatisticRepository = unitOfWork.PlayerStatisticRepository;

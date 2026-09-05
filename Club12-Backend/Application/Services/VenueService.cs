@@ -12,6 +12,10 @@ using System.Threading.Tasks;
 
 namespace Application.Services;
 
+/// <summary>
+/// Manages venues (canchas). Deletion is blocked while any match still
+/// references the venue, so a match is never left without one.
+/// </summary>
 public class VenueService(IVenueRepository venueRepository, IMatchRepository matchRepository) : IVenueService
 {
     public async Task<Venue> CreateVenueAsync(Venue venueEntity)
@@ -46,6 +50,13 @@ public class VenueService(IVenueRepository venueRepository, IMatchRepository mat
         return matches.FirstOrDefault();
     }
 
+    /// <summary>
+    /// Deletes a venue. Blocked while any match still references it.
+    /// </summary>
+    /// <param name="id">The unique identifier of the venue to delete.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown (mapped to 409) when the venue is referenced by one or more matches.
+    /// </exception>
     public async Task DeleteVenueAsync(Guid id)
     {
         // Integrity: a venue (cancha) referenced by one or more matches cannot

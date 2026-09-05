@@ -23,6 +23,16 @@ using System.Threading.Tasks;
 
 namespace Application.Services;
 
+/// <summary>
+/// Owns the tournament lifecycle: structural creation (divisions/stages, only
+/// while OpenForRegistration), status transitions guarded by
+/// <see cref="TournamentStatusTransitions"/>, and the cascades a status change
+/// triggers — fixture generation on the move to Ongoing (once, guarded by the
+/// HU-109 completability check), fixture teardown on reverting to
+/// RegistrationClosed, and cancellation of any still-pending match when the
+/// tournament is Canceled or force-closed as Finished. Deletion is blocked
+/// once the tournament has real history (started, or has a played match).
+/// </summary>
 public class TournamentService(
     ITournamentRepository tournamentRepository,
     IStageService stageService,
@@ -168,6 +178,12 @@ public class TournamentService(
             includes: [tournament => tournament.Divisions, tournament => tournament.Season!]);
     }
 
+    /// <summary>
+    /// Retrieves a tournament by its id or its slug. The value is treated as
+    /// an id when it parses as a GUID, otherwise it is looked up as a slug.
+    /// </summary>
+    /// <param name="idOrSlug">The tournament's GUID id or its slug.</param>
+    /// <returns>The matching tournament, or null if not found.</returns>
     public async Task<Tournament?> GetTournamentByIdOrSlugAsync(string idOrSlug)
     {
         if (Guid.TryParse(idOrSlug, out Guid tournamentId))
@@ -248,6 +264,22 @@ public class TournamentService(
         await tournamentRepository.UpdateAsync(tournamentEntity);
     }
 
+    /// <summary>
+    /// Drives the tournament status state machine. A no-op when the status is
+    /// unchanged; otherwise validates the transition, then applies whichever
+    /// cascade it implies — generating the fixture exactly once on the move to
+    /// Ongoing (after the HU-109 completability guard), tearing the fixture
+    /// back down on Ongoing → RegistrationClosed, or canceling every
+    /// still-pending match on a move to Canceled/Finished — before committing
+    /// the new status and recording it in the audit log (HU-101).
+    /// </summary>
+    /// <param name="tournamentId">The tournament to transition.</param>
+    /// <param name="newStatus">The status to transition to.</param>
+    /// <exception cref="KeyNotFoundException">Thrown when the tournament does not exist.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown (mapped to 409) when the transition is invalid, or when moving
+    /// to Ongoing while the tournament fails the completability check.
+    /// </exception>
     public async Task ChangeStatusAsync(Guid tournamentId, TournamentStatus newStatus)
     {
         Tournament tournament = await tournamentRepository.GetByIdAsync(

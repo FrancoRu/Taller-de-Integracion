@@ -5,9 +5,6 @@ namespace Application.Utils.Constants.Auth;
 /// </summary>
 public static class TokenLifetime
 {
-    /// <summary>
-    /// How long an issued JWT access token remains valid.
-    /// </summary>
     public const int AccessTokenExpiryHours = 24;
 
     /// <summary>

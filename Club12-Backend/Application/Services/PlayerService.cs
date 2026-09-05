@@ -20,6 +20,12 @@ using System.Threading.Tasks;
 
 namespace Application.Services;
 
+/// <summary>
+/// Manages players and keeps each one's current team pointer (<see cref="Player.TeamId"/>)
+/// in sync with their season-scoped <see cref="PlayerTeamRegistration"/> — the
+/// two must never disagree, since statistics, scorer records, and sanctions
+/// are all attributed via the player's current team.
+/// </summary>
 public class PlayerService(
     IUnitOfWork unitOfWork,
     IScorerRepository scorerRepository,

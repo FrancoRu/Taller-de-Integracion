@@ -8,16 +8,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 namespace Application.Interfaces.Services;
 
-/// <summary>
-/// Service for managing Stage entities.
-/// </summary>
 public interface IStageService
 {
-    /// <summary>
-    /// Retrieves a Stage by its identifier.
-    /// </summary>
-    /// <param name="stageId">Unique identifier of the Stage.</param>
-    /// <returns>The found Stage or null if it does not exist.</returns>
     Task<Stage?> GetStageByIdAsync(Guid stageId);
 
     /// <summary>
@@ -36,20 +28,39 @@ public interface IStageService
     /// <returns>A paginated response with the list of Stages.</returns>
     Task<PaginatedResponse<Stage>> GetAllStagesAsync(GetStagesFilteredRequest filter);
 
+    /// <summary>
+    /// Deletes a stage. A division's stages may only be added or removed
+    /// while its tournament has not started yet — once the fixture is
+    /// generated, removing a phase would corrupt the bracket/fixture.
+    /// </summary>
+    /// <param name="id">The unique identifier of the stage to delete.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the stage's tournament has already started or was canceled.
+    /// </exception>
     Task DeleteStageAsync(Guid id);
 
     /// <summary>
-    /// Updates an existing Stage.
+    /// Updates a stage. Blocked once its tournament has started, since
+    /// editing a stage's type/dates after the fixture is generated could
+    /// desync it from the matches already built off it.
     /// </summary>
     /// <param name="stageEntity">Stage entity with updated data.</param>
-    /// <returns>The updated Stage entity.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown (mapped to 409) when the tournament has already started or was canceled.
+    /// </exception>
     Task UpdateStageAsync(Stage stageEntity);
 
     /// <summary>
-    /// Creates a new Stage.
+    /// Creates a stage. Blocked once its tournament has started (same guard
+    /// as <see cref="UpdateStageAsync"/>).
     /// </summary>
     /// <param name="stageEntity">Stage entity to create.</param>
     /// <returns>The created Stage entity.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when a stage with the same name already exists in the division,
+    /// or when a non-cross-division-cup division already has a Group stage
+    /// and <paramref name="stageEntity"/> is also a Group stage.
+    /// </exception>
     Task<Stage> CreateStageAsync(Stage stageEntity);
 
     /// <summary>

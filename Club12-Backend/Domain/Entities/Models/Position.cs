@@ -10,43 +10,29 @@ namespace Domain.Entities.Models;
 /// </summary>
 public class Position
 {
-    /// <summary>
-    /// The unique identifier of the team.
-    /// </summary>
     public required Guid TeamId { get; set; }
 
-    /// <summary>
-    /// The name of the team.
-    /// </summary>
     public required string TeamName { get; set; }
 
-    /// <summary>
-    /// The URL of the team's logo.
-    /// </summary>
     public required string LogoUrl { get; set; }
 
-    /// <summary>
-    /// The total number of matches the team has played.
-    /// </summary>
     public required int MatchesPlayed { get; set; }
 
-    /// <summary>
-    /// The number of matches the team has won.
-    /// </summary>
     public required int Wins { get; set; }
 
-    /// <summary>
-    /// The number of matches the team has lost.
-    /// </summary>
     public required int Losses { get; set; }
 
     /// <summary>
-    /// The total points scored by the team across all matches.
+    /// Basketball score totaled across all matches — distinct from
+    /// <see cref="Points"/>, which is the standings/table score derived from
+    /// the division's points-per-win/loss configuration.
     /// </summary>
     public required int PointsFor { get; set; }
 
     /// <summary>
-    /// The total points scored against the team by opposing teams.
+    /// Basketball score conceded, totaled across all matches — the
+    /// counterpart to <see cref="PointsFor"/>. Not to be confused with the
+    /// table score in <see cref="Points"/>.
     /// </summary>
     public required int PointsAgainst { get; set; }
 

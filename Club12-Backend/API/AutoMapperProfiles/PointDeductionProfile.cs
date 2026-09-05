@@ -7,14 +7,8 @@ using Domain.Entities.Models;
 
 namespace API.AutoMapperProfiles;
 
-/// <summary>
-/// AutoMapper profile for disciplinary point deductions (deducción de puntos).
-/// </summary>
 public class PointDeductionProfile : Profile
 {
-    /// <summary>
-    /// Initializes mapping configuration for point-deduction entities.
-    /// </summary>
     public PointDeductionProfile()
     {
         _ = CreateMap<CreatePointDeductionRequest, TeamPointDeduction>();

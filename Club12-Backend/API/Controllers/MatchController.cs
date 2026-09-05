@@ -126,11 +126,14 @@ public class MatchController(
     }
 
     /// <summary>
-    /// Updates the date of a match.
+    /// Updates a match's scheduled date and/or venue. Rejects the change if the match
+    /// already started or finished, if its teams aren't assigned to the stage, or if the
+    /// new date/venue combination conflicts with another match (a court cannot host two
+    /// matches less than 2 hours apart).
     /// </summary>
     /// <param name="id">The id of the match to update.</param>
-    /// <param name="updateRequest">The request containing the new match date.</param>
-    /// <returns>Returns the result of the date update operation.</returns>
+    /// <param name="updateRequest">The request containing the new match date and/or venue.</param>
+    /// <returns>Returns 200 (OK) with the updated match, 400 (Bad Request) if the change is rejected, or 404 (Not Found) if no match matches the id.</returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedMatchResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -238,7 +241,7 @@ public class MatchController(
     /// Deletes a match by its id.
     /// </summary>
     /// <param name="id">The id of the match to delete.</param>
-    /// <returns>Returns the result of the delete operation.</returns>
+    /// <returns>Returns 204 (No Content) on success.</returns>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -268,11 +271,13 @@ public class MatchController(
     }
 
     /// <summary>
-    /// Updates the score of a match.
+    /// Records a match's final score. If the match belongs to a playoff series this may
+    /// decide the series; if it decides a bracket slot, the winner is automatically
+    /// advanced into the next round.
     /// </summary>
     /// <param name="id">The id of the match to update.</param>
     /// <param name="scoreRequest">The request with updated scores.</param>
-    /// <returns>Returns the result of the score update operation.</returns>
+    /// <returns>Returns 200 (OK) with the updated match, or 404 (Not Found) if no match matches the id.</returns>
     [HttpPut("{id:guid}/score")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedMatchResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -305,7 +310,8 @@ public class MatchController(
     /// coherent operation (HU-72): the final score is DERIVED as the sum of
     /// each team's listed player points, instead of being typed in separately
     /// and checked against a sheet afterward (the older <c>match-sheet</c>
-    /// flow, still available for corrections one team at a time).
+    /// flow, still available for corrections one team at a time). Like the score
+    /// endpoint, this may decide a playoff series and auto-advance a bracket winner.
     /// </summary>
     /// <param name="id">The id of the match to finish.</param>
     /// <param name="request">Both teams' per-player points.</param>
@@ -341,7 +347,8 @@ public class MatchController(
 
     /// <summary>
     /// Marks a match as a walkover (HU-73), awarding the regulation default
-    /// result to the present team.
+    /// result to the present team. Like the score endpoint, this may decide a
+    /// playoff series and auto-advance a bracket winner.
     /// </summary>
     /// <param name="id">The id of the match to mark as a walkover.</param>
     /// <param name="walkOverRequest">The request identifying the present team.</param>

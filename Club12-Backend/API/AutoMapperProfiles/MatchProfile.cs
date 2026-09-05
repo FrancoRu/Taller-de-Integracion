@@ -13,14 +13,8 @@ using System.Linq;
 
 namespace API.AutoMapperProfiles;
 
-/// <summary>
-/// AutoMapper profile for match mappings.
-/// </summary>
 public class MatchProfile : Profile
 {
-    /// <summary>
-    /// Initializes mapping configuration for match entities.
-    /// </summary>
     public MatchProfile()
     {
         _ = CreateMap<CreateMatchRequest, Match>();

@@ -6,14 +6,8 @@ namespace Application.DTOs.Scorer.Response;
 /// </summary>
 public class ScorerByPlayerResponse : ScorerBaseResponse
 {
-    /// <summary>
-    /// Unique identifier of the player.
-    /// </summary>
     public required Guid PlayerId { get; set; }
 
-    /// <summary>
-    /// Full name of the player, combining first and last names.
-    /// </summary>
     public required string FullName { get; set; }
 
     /// <summary>

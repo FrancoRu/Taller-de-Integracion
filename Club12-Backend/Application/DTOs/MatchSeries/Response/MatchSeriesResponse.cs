@@ -11,29 +11,14 @@ namespace Application.DTOs.MatchSeries.Response;
 /// </summary>
 public class MatchSeriesResponse : BaseEntityResponse
 {
-    /// <summary>
-    /// The stage (round) this series belongs to.
-    /// </summary>
     public required Guid StageId { get; set; }
 
-    /// <summary>
-    /// The id of the home team in the series.
-    /// </summary>
     public required Guid HomeTeamId { get; set; }
 
-    /// <summary>
-    /// The name of the home team in the series.
-    /// </summary>
     public required string HomeTeamName { get; set; }
 
-    /// <summary>
-    /// The id of the visitor team in the series.
-    /// </summary>
     public required Guid VisitorTeamId { get; set; }
 
-    /// <summary>
-    /// The name of the visitor team in the series.
-    /// </summary>
     public required string VisitorTeamName { get; set; }
 
     /// <summary>

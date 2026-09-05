@@ -1,4 +1,4 @@
-﻿using Domain.Entities.Models;
+using Domain.Entities.Models;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -11,74 +11,42 @@ namespace Infrastructure.Persistance;
 /// </summary>
 public interface IClub12DBContext
 {
-    /// <summary>
-    /// DbSet{BackupRecord} of catalogued database backups in the system.
-    /// </summary>
     DbSet<BackupRecord> BackupRecords { get; }
 
-    /// <summary>
-    /// DbSet{Team} of teams in the system.
-    /// </summary>
     DbSet<Team> Teams { get; }
 
-    /// <summary>
-    /// DbSet{Player} of players in the system.
-    /// </summary>
     DbSet<Player> Players { get; }
 
-    /// <summary>
-    /// DbSet{Tournament} of tournaments in the system.
-    /// </summary>
     DbSet<Tournament> Tournaments { get; }
 
-    /// <summary>
-    /// DbSet{Division} of divisions in the system.
-    /// </summary>
     DbSet<Division> Divisions { get; }
 
-    /// <summary>
-    /// DbSet{Match} of matches in the system.
-    /// </summary>
     DbSet<Match> Matches { get; }
 
     /// <summary>
-    /// DbSet{MatchSeries} of best-of-N playoff series in the system.
+    /// Best-of-N playoff series; each series groups the individual <see cref="Match"/>
+    /// rows played between the same two teams.
     /// </summary>
     DbSet<MatchSeries> MatchSeries { get; }
 
-    /// <summary>
-    /// DbSet{PlayerStatistic} of player statistics in the system.
-    /// </summary>
     DbSet<PlayerStatistic> PlayersStatistics { get; }
 
     /// <summary>
-    /// DbSet{PlayerSanction} of players involved in sanctions.
+    /// A sanction's subject may be a player, a team, or a staff member (see
+    /// <see cref="PlayerSanction.SubjectType"/>), despite the entity's name.
     /// </summary>
     DbSet<PlayerSanction> PlayerSanctions { get; }
 
-    /// <summary>
-    /// DbSet{Venue} of venues in the system.
-    /// </summary>
     DbSet<Venue> Venues { get; }
 
-    /// <summary>
-    /// DbSet{BlogPosts} of blog posts in the system.
-    /// </summary>
     DbSet<BlogPost> BlogPosts { get; }
 
-
     /// <summary>
-    /// DbSet{Season} of seasons ("Temporadas") that group tournaments.
+    /// Seasons ("Temporadas") group tournaments.
     /// </summary>
     DbSet<Season> Seasons { get; }
 
-    /// <summary>
-    /// DbSet{Stage} of Stages in the system.
-    /// </summary>
     DbSet<Stage> Stages { get; }
 
-    /// <summary>
-    /// DbSet{StageTeamMatch} of StageTeamMatches in the system.
-    /// </summary>
     DbSet<StageTeamMatch> StageTeamMatches { get; }
 }

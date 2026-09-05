@@ -9,11 +9,12 @@ using System.Threading.Tasks;
 
 namespace Application.Interfaces.Services;
 
-/// <summary>
-/// Represents a service for managing matches.
-/// </summary>
 public interface IMatchService
 {
+    /// <summary>
+    /// Creates a match and generates its unique slug from the home/visitor
+    /// team names and match date.
+    /// </summary>
     Task<Match> CreateMatchAsync(Match matchEntity);
 
     Task<Match?> GetMatchByIdAsync(Guid matchId);

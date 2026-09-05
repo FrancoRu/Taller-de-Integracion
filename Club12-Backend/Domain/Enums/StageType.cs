@@ -1,8 +1,5 @@
 ﻿namespace Domain.Enums;
 
-/// <summary>
-/// Represents the types of stages within a tournament.
-/// </summary>
 public enum StageType
 {
     /// <summary>
@@ -15,23 +12,8 @@ public enum StageType
     /// </summary>
     RoundOf16,
 
-    /// <summary>
-    /// Quarter-final stage.
-    /// </summary>
     QuarterFinal,
-
-    /// <summary>
-    /// Semi-final stage.
-    /// </summary>
     SemiFinal,
-
-    /// <summary>
-    /// Third place match stage.
-    /// </summary>
     ThirdPlace,
-
-    /// <summary>
-    /// Final match stage.
-    /// </summary>
     Final
 }

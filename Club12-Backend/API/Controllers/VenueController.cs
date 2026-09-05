@@ -94,8 +94,8 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
     /// <param name="id">The id of the venue to update.</param>
     /// <param name="venueRequest">The venue update request.</param>
     /// <returns>
-    /// Returns 200 (OK) with the updated Venue response if the update was successful.
-    /// Returns 400 (Bad Request) if the Venue with the provided id was not found.
+    /// Returns 200 (OK) if the update was successful.
+    /// Returns 404 (Not Found) if the Venue with the provided id was not found.
     /// Returns 403 (Forbidden) if the user is not authorized.
     /// </returns>
     [HttpPut("{id:guid}")]
@@ -154,8 +154,9 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
     /// </summary>
     /// <param name="id">The id of the Venue to delete.</param>
     /// <returns>
-    /// Returns 200 (OK) if the Venue was successfully deleted.
-    /// Returns 400 (Bad Request) if the Venue with the provided id was not found.
+    /// Returns 204 (No Content) if the Venue was successfully deleted.
+    /// Returns 404 (Not Found) if the Venue with the provided id was not found.
+    /// Returns 409 (Conflict) if the Venue is still referenced by one or more matches.
     /// Returns 403 (Forbidden) if the user is not authorized.
     /// </returns>
     [HttpDelete("{id:guid}")]

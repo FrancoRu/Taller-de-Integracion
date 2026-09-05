@@ -73,6 +73,7 @@ public sealed class DataMaintenanceService(
     private static readonly string[] ClausuraReservaColors =
         ["#0284C7", "#65A30D", "#C026D3", "#B45309"];
 
+    /// <inheritdoc/>
     public async Task<DataWipeResult> WipeSampleDataAsync(CancellationToken ct = default)
     {
         await using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction =
@@ -145,6 +146,7 @@ public sealed class DataMaintenanceService(
         }
     }
 
+    /// <inheritdoc/>
     public async Task<DataSeedResult> SeedSampleDataAsync(CancellationToken ct = default)
     {
         if (await db.Tournaments.AnyAsync(ct))

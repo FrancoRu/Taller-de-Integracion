@@ -4,7 +4,8 @@ public class ScorerBaseResponse
 {
 
     /// <summary>
-    /// Number of points scored by the team in the match.
+    /// Total points scored, aggregated over whatever this response is grouped
+    /// by — a player or a team — not just a single match.
     /// </summary>
     public required int Points { get; set; }
 }

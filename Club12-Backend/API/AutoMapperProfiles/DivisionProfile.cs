@@ -8,14 +8,8 @@ using Domain.Entities.Models;
 
 namespace API.AutoMapperProfiles;
 
-/// <summary>
-/// AutoMapper profile for division mappings.
-/// </summary>
 public class DivisionProfile : Profile
 {
-    /// <summary>
-    /// Initializes mapping configuration for division entities.
-    /// </summary>
     public DivisionProfile()
     {
         _ = CreateMap<Division, DivisionResponse>()

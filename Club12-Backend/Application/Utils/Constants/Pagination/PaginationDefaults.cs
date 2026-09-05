@@ -6,9 +6,6 @@ namespace Application.Utils.Constants.Pagination;
 /// </summary>
 public static class PaginationDefaults
 {
-    /// <summary>
-    /// Page size used when the caller does not specify one.
-    /// </summary>
     public const int DefaultPageSize = 100;
 
     /// <summary>

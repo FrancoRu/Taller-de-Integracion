@@ -28,6 +28,10 @@ public class UserController(
     IUserManagementService userManagementService,
     IAuditService auditService) : ControllerBase
 {
+    /// <summary>
+    /// Lists users, paginated and filtered by <paramref name="filter"/>. Admins see
+    /// every user; Owners see only their own subordinates; other roles receive 403.
+    /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedResponse<UserResponse>))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -38,6 +42,10 @@ public class UserController(
         return Ok(await userManagementService.GetAllAsync(role, id, filter, ct));
     }
 
+    /// <summary>
+    /// Retrieves a single user by id. Admins may view any user; Owners may view
+    /// themselves or their subordinates; other roles may only view themselves.
+    /// </summary>
     [HttpGet("{userId:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserResponse))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -48,6 +56,11 @@ public class UserController(
         return Ok(await userManagementService.GetByIdAsync(role, id, userId, ct));
     }
 
+    /// <summary>
+    /// Updates a user's profile fields (username, email, phone). If
+    /// <see cref="UpdateUserRequest.Role"/> is set, also reassigns the target's role —
+    /// only Admins and Owners may do this, and nobody may change their own role.
+    /// </summary>
     [HttpPut("{userId:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserResponse))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -59,6 +72,11 @@ public class UserController(
         return Ok(await userManagementService.UpdateAsync(role, id, userId, request, ct));
     }
 
+    /// <summary>
+    /// Changes a user's password. <see cref="ChangePasswordRequest.CurrentPassword"/>
+    /// is required for a self-service change and optional when an Admin or Owner
+    /// changes another user's password.
+    /// </summary>
     [HttpPut("{userId:guid}/password")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -72,6 +90,11 @@ public class UserController(
         return NoContent();
     }
 
+    /// <summary>
+    /// Forces a password reset, generating a new temporary password server-side and
+    /// recording an audit log entry. The response only carries the user's id — the
+    /// temporary password itself is not returned here.
+    /// </summary>
     [HttpPost("{userId:guid}/password/reset")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResetPasswordResponse))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -97,6 +120,9 @@ public class UserController(
         return Ok(response);
     }
 
+    /// <summary>
+    /// Deletes a user. Admins may delete any user; Owners only their own subordinates.
+    /// </summary>
     [HttpDelete("{userId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -108,6 +134,10 @@ public class UserController(
         return NoContent();
     }
 
+    /// <summary>
+    /// Activates or deactivates a user account via Identity lockout. A deactivated
+    /// account cannot log in until reactivated.
+    /// </summary>
     [HttpPut("{userId:guid}/active")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

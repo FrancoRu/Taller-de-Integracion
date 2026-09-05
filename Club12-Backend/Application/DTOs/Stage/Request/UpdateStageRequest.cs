@@ -7,9 +7,6 @@ namespace Application.DTOs.Stage.Request;
 /// </summary>
 public class UpdateStageRequest
 {
-    /// <summary>
-    /// Optional description providing additional details about the stage.
-    /// </summary>
     public string? Description { get; set; }
 
     /// <summary>

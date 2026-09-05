@@ -10,24 +10,12 @@ namespace Application.DTOs.Divisions.Response;
 /// </summary>
 public class DetailedDivisionResponse : BaseEntityResponse
 {
-    /// <summary>
-    /// The name of the division.
-    /// </summary>
     public required string Name { get; set; }
 
-    /// <summary>
-    /// If the division is finished.
-    /// </summary>
     public required bool IsFinished { get; set; }
 
-    /// <summary>
-    /// The positions of teams in the division.
-    /// </summary>
     public required IEnumerable<PositionResponse> Positions { get; set; }
 
-    /// <summary>
-    /// The Id of the tournament this division belongs to.
-    /// </summary>
     public required Guid TournamentId { get; set; }
 
     /// <summary>

@@ -9,14 +9,8 @@ using System.Linq;
 
 namespace API.AutoMapperProfiles;
 
-/// <summary>
-/// AutoMapper profile for best-of-N playoff series mappings.
-/// </summary>
 public class MatchSeriesProfile : Profile
 {
-    /// <summary>
-    /// Initializes mapping configuration for series entities.
-    /// </summary>
     public MatchSeriesProfile()
     {
         _ = CreateMap<MatchSeries, MatchSeriesResponse>()

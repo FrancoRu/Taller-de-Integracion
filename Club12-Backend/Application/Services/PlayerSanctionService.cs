@@ -18,6 +18,13 @@ using System.Threading.Tasks;
 
 namespace Application.Services;
 
+/// <summary>
+/// Manages sanctions issued to a player, team, or staff member (see
+/// <see cref="SanctionSubjectType"/>). A sanction's remaining time is tracked
+/// in FECHAS (match rounds actually played by the subject's team), never in
+/// calendar days, and an accepted appeal lifts it immediately without erasing
+/// its original duration from history (see <see cref="GetFechasRemainingAsync"/>).
+/// </summary>
 public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionService
 {
     private readonly IPlayerSanctionRepository _playerSanctionRepository = unitOfWork.PlayerSanctionRepository;
@@ -25,6 +32,12 @@ public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionServ
     private readonly IMatchRepository _matchRepository = unitOfWork.MatchRepository;
     private readonly ITeamRepository _teamRepository = unitOfWork.TeamRepository;
 
+    /// <summary>
+    /// Creates a sanction and assigns it a unique slug derived from its
+    /// subject's resolved name and issue date (see
+    /// <see cref="ResolveSubjectNameAsync"/>), so a player, team, or staff
+    /// sanction all get a readable slug regardless of subject type.
+    /// </summary>
     public async Task<PlayerSanction> CreatePlayerSanctionAsync(PlayerSanction playerSanctionEntity)
     {
         string subjectName = await ResolveSubjectNameAsync(playerSanctionEntity);
@@ -248,6 +261,13 @@ public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionServ
                 includes: [playerSanction => playerSanction.Player!]);
     }
 
+    /// <summary>
+    /// Retrieves a filtered, paginated list of sanctions. Free-text search
+    /// matches either the sanction description or the sanctioned player's
+    /// name; a team filter matches both a player-subject sanction on a
+    /// roster member and a team-subject sanction targeting the team directly
+    /// (HU-77).
+    /// </summary>
     public async Task<PaginatedResponse<PlayerSanction>> GetPlayerSanctionsAsync(GetPlayerSanctionsFilteredRequest filter)
     {
         // Description is suppressed from the auto-generated single-field

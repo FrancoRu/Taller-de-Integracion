@@ -1,8 +1,5 @@
 namespace Domain.Enums;
 
-/// <summary>
-/// Represents the appeal state of a player sanction.
-/// </summary>
 public enum SanctionAppealStatus
 {
     /// <summary>

@@ -24,13 +24,7 @@ public class GetBlogPostsFilteredRequest : PaginatedFilterRequest
         Order = SortOrder.Descending;
     }
 
-    /// <summary>
-    /// The author to filter blog posts by.
-    /// </summary>
     public string? Author { get; set; }
 
-    /// <summary>
-    /// The title to filter blog posts by.
-    /// </summary>
     public string? Title { get; set; }
 }

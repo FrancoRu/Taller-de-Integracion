@@ -7,9 +7,6 @@ namespace Application.DTOs.PlayerStatistic.Request;
 /// </summary>
 public class UpdatePlayerStatisticRequest
 {
-    /// <summary>
-    /// The new value of the statistic.
-    /// </summary>
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "Value must be a non-negative integer.")]
     public required int Value { get; set; }

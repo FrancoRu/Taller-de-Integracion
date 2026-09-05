@@ -17,11 +17,6 @@ public class GlobalExceptionHandler : IExceptionHandler
 {
     private readonly ILogger<GlobalExceptionHandler> _logger;
 
-    /// <summary>
-    /// Constructor.
-    /// </summary>
-    /// <param name="logger"></param>
-    /// <exception cref="ArgumentNullException"></exception>
     public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

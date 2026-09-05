@@ -7,14 +7,8 @@ using Domain.Entities.Models;
 
 namespace API.AutoMapperProfiles;
 
-/// <summary>
-/// AutoMapper profile for team mappings.
-/// </summary>
 public class TeamProfile : Profile
 {
-    /// <summary>
-    /// Initializes mapping configuration for team entities.
-    /// </summary>
     public TeamProfile()
     {
         _ = CreateMap<Team, TeamResponse>()

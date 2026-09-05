@@ -30,10 +30,6 @@ public class SupabaseHelper : ISupabaseRawStorage
     private readonly Client _client;
     private readonly string _bucketName;
 
-    /// <summary>
-    /// Initializes a new instance of the SupabaseHelper class using configuration values.
-    /// </summary>
-    /// <param name="configuration">The application configuration containing Supabase settings.</param>
     public SupabaseHelper(IConfiguration configuration)
     {
         IConfigurationSection section = configuration.GetSection(ConfigurationKeys.Supabase.Section);

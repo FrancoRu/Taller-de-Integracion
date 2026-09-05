@@ -55,6 +55,12 @@ public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
         };
     }
 
+    /// <summary>
+    /// Opens a best-of-N series between two teams already assigned to the
+    /// stage. At most one series may exist per team pair per stage — the
+    /// uniqueness check is order-independent, so a series can't be opened
+    /// twice just by swapping which team is home.
+    /// </summary>
     public async Task<MatchSeries> CreateSeriesAsync(Guid stageId, Guid homeTeamId, Guid visitorTeamId)
     {
         if (homeTeamId == visitorTeamId)
@@ -91,6 +97,11 @@ public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
         return seriesEntity;
     }
 
+    /// <summary>
+    /// Adds the next game to a series. Blocked once the series already has a
+    /// winner or has reached its <see cref="MatchSeries.BestOf"/> game count
+    /// — a decided or full series never grows another game.
+    /// </summary>
     public async Task<Match> AddGameToSeriesAsync(Guid seriesId, DateTime matchDate, Guid? venueId)
     {
         MatchSeries series = await _matchSeriesRepository.GetByIdAsync(seriesId, includes: [s => s.Matches])
@@ -132,6 +143,12 @@ public class MatchSeriesService(IUnitOfWork unitOfWork) : IMatchSeriesService
         return game;
     }
 
+    /// <summary>
+    /// Re-evaluates a series' winner from its games via
+    /// <see cref="SeriesDecisionCalculator"/>. A no-op once the series
+    /// already has a <see cref="MatchSeries.WinningTeamId"/> — a decided
+    /// series is never re-decided, even if a game result changes afterwards.
+    /// </summary>
     public async Task RecalculateSeriesWinnerAsync(Guid seriesId)
     {
         MatchSeries? series = await _matchSeriesRepository.GetByIdAsync(seriesId, includes: [s => s.Matches]);

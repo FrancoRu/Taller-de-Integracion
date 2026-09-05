@@ -28,8 +28,14 @@ using System.Threading.Tasks;
 namespace Application.Services;
 
 /// <summary>
-/// Service responsible for managing tournament stages, including creation, retrieval, updating, deletion,
-/// automated stage generation, and team assignments within stages.
+/// Manages a division's stages and their elimination bracket. Structural
+/// edits (create/update/delete a stage, assign/unassign teams) are blocked
+/// once the parent tournament's fixture is generated or it was canceled (see
+/// <see cref="EnsureDivisionStructureEditableAsync"/>); seeding, auto-seeding
+/// once a group phase finishes, and advancing winners/losers between rounds
+/// (including third-place and best-of-N series creation) all read the
+/// bracket purely from <see cref="Stage.BracketName"/> and elimination depth,
+/// since <see cref="Stage.Order"/> is never set on wizard-built stages.
 /// </summary>
 public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) : IStageService
 {

@@ -85,13 +85,20 @@ public interface IGenericRepository<TEntity> where TEntity : EntityBase
     Task<IEnumerable<TEntity>> AddRangeAsync(IEnumerable<TEntity> entities);
 
     /// <summary>
-    /// Removes a single entity from the repository.
+    /// Marks a single entity for deletion. Unlike the other write methods on this
+    /// interface, this does not call SaveChanges — the removal only persists once
+    /// something else (e.g. <see cref="IUnitOfWork.SaveChangesAsync"/>) saves the
+    /// context.
     /// </summary>
     /// <param name="entity">The entity to remove.</param>
     void Remove(TEntity entity);
 
     /// <summary>
-    /// Removes all entities matching the given expression asynchronously using ExecuteDeleteAsync.
+    /// Deletes all entities matching <paramref name="expression"/> directly via
+    /// EF Core's <c>ExecuteDeleteAsync</c> — a single DB-side statement that bypasses
+    /// the change tracker entirely. Any already-tracked instances of the deleted rows
+    /// are not marked as deleted or detached, so re-reading them from the context can
+    /// return stale data.
     /// </summary>
     /// <param name="expression">The filter expression to match entities for removal.</param>
     /// <returns>

@@ -10,23 +10,21 @@ using System.Threading.Tasks;
 
 namespace Application.Interfaces.Services;
 
-/// <summary>
-/// Represents a service for managing divisions.
-/// </summary>
 public interface IDivisionService
 {
     /// <summary>
-    /// Creates a new division asynchronously.
+    /// Creates a division and generates its unique slug from the name.
     /// </summary>
     /// <param name="divisionEntity">The division entity to create.</param>
     /// <returns>The created division.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the tournament is not <see cref="Domain.Enums.TournamentStatus.OpenForRegistration"/>
+    /// (HU-31, structure is frozen once registration closes), when the
+    /// division's <see cref="Division.Category"/> does not match its
+    /// tournament's category (HU-48), or when its playoff mappings are invalid.
+    /// </exception>
     Task<Division> CreateDivisionAsync(Division divisionEntity);
 
-    /// <summary>
-    /// Retrieves a division by its id asynchronously.
-    /// </summary>
-    /// <param name="divisionId">The id of the division to retrieve.</param>
-    /// <returns>The division with the specified id, or null if not found.</returns>
     Task<Division?> GetFullDivisionByIdAsync(Guid divisionId);
 
     Task<Division?> GetSimpleDivisionByIdAsync(Guid divisionId);
@@ -40,13 +38,27 @@ public interface IDivisionService
     /// <returns>The matching division, or null if not found.</returns>
     Task<Division?> GetSimpleDivisionByIdOrSlugAsync(string idOrSlug);
 
+    /// <summary>
+    /// Deletes a division. A division owns its stages, matches, statistics and
+    /// point deductions, all of which cascade at the database level, so this
+    /// is blocked whenever that history exists or would be destroyed silently.
+    /// </summary>
+    /// <param name="id">The unique identifier of the division to delete.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the division has any finished match or point deduction, or
+    /// its tournament has already started (Ongoing/Finished) or was Canceled.
+    /// </exception>
     Task DeleteDivisionAsync(Guid id);
 
     /// <summary>
-    /// Updates a division asynchronously.
+    /// Updates a division, re-validating it against the same tournament-status
+    /// and category rules enforced on create (see <see cref="CreateDivisionAsync"/>).
     /// </summary>
-    /// <param name="divisionEntity">The division to update.</param>
-    /// <returns>A boolean indicating whether the update was successful.</returns>
+    /// <param name="divisionEntity">The division entity with updated values.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the tournament no longer allows structural edits, the
+    /// category no longer matches, or the playoff mappings are invalid.
+    /// </exception>
     Task UpdateDivisionAsync(Division divisionEntity);
 
     /// <summary>

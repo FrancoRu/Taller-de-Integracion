@@ -9,9 +9,6 @@ namespace Application.DTOs.Venue.Request;
 /// </summary>
 public class UpdateVenuePhotoRequest
 {
-    /// <summary>
-    /// The unique identifier of the venue whose photo is being updated.
-    /// </summary>
     [Required(ErrorMessage = "The VenueId field is required.")]
     public required Guid VenueId { get; init; }
 

@@ -6,8 +6,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Infrastructure.Persistance.Configurations;
 
 /// <summary>
-/// PhotoUrl is intentionally not configured here: its [Url] attribute is a
-/// validation-only concern with no corresponding database constraint.
+/// PhotoUrl is intentionally not configured here: its format is enforced by
+/// <c>[ImageReference]</c> on the request DTO, a validation-only concern with
+/// no corresponding database constraint.
 /// </summary>
 public class VenueEntityConfiguration : BaseEntityConfiguration<Venue>
 {

@@ -10,14 +10,8 @@ namespace Application.DTOs.Divisions.Response;
 /// </summary>
 public class DivisionResponse
 {
-    /// <summary>
-    /// Gets or sets the unique identifier of the division.
-    /// </summary>
     public Guid Id { get; set; }
 
-    /// <summary>
-    /// Gets or sets the name of the division.
-    /// </summary>
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
@@ -25,16 +19,12 @@ public class DivisionResponse
     /// </summary>
     public string Slug { get; set; } = string.Empty;
 
-    /// <summary>
-    /// Gets or sets a value indicating whether the division has finished.
-    /// </summary>
     public bool IsFinished { get; set; }
 
     /// <summary>
-    /// Gets or sets the list of positions for teams in the division. For a
-    /// multi-group cross-division cup this is the pooled union across every
-    /// internal group (so the team counter reflects all groups' teams); use
-    /// <see cref="GroupStandings"/> to render one table per group.
+    /// For a multi-group cross-division cup this is the pooled union across
+    /// every internal group (so the team counter reflects all groups' teams);
+    /// use <see cref="GroupStandings"/> to render one table per group.
     /// </summary>
     public List<PositionResponse>? Positions { get; set; }
 
@@ -46,9 +36,6 @@ public class DivisionResponse
     /// </summary>
     public List<GroupStandingsResponse>? GroupStandings { get; set; }
 
-    /// <summary>
-    /// Gets or sets the ID of the tournament to which the division belongs.
-    /// </summary>
     public Guid TournamentId { get; set; }
 
     /// <summary>

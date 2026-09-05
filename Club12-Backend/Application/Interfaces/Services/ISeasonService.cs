@@ -34,16 +34,22 @@ public interface ISeasonService
     /// <returns>The matching season, or null if not found.</returns>
     Task<Season?> GetSeasonByIdOrSlugAsync(string idOrSlug);
 
-    /// <summary>
-    /// Updates a Season asynchronously.
-    /// </summary>
-    /// <param name="seasonEntity">The Season to update.</param>
     Task UpdateSeasonAsync(Season seasonEntity);
 
     /// <summary>
-    /// Deletes a Season by its id asynchronously.
+    /// Deletes a season AND every tournament it groups, routing each
+    /// tournament through <see cref="ITournamentService.DeleteTournamentAsync"/>
+    /// rather than a bare row delete — the DB-level Season→Tournament
+    /// relationship is SetNull, not Cascade, so a raw delete would only
+    /// detach tournaments and leave them orphaned. A no-op when the id does
+    /// not match a season.
     /// </summary>
     /// <param name="id">The id of the Season to delete.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Propagated from <see cref="ITournamentService.DeleteTournamentAsync"/>
+    /// when any grouped tournament has started or has played history and
+    /// cannot be deleted.
+    /// </exception>
     Task DeleteSeasonAsync(Guid id);
 
     /// <summary>

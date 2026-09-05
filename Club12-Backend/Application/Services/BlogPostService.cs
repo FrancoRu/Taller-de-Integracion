@@ -15,6 +15,12 @@ using System.Threading.Tasks;
 
 namespace Application.Services;
 
+/// <summary>
+/// Manages blog posts. Draft visibility is opt-in (HU-16): both lookup by
+/// id/slug and the paginated listing only resolve unpublished drafts when
+/// the caller explicitly passes <c>includeUnpublished: true</c>, so a public
+/// endpoint can never leak a draft — not even by guessing its id or slug.
+/// </summary>
 public class BlogPostService(IBlogPostRepository blogpostRepository) : IBlogPostService
 {
     public async Task<BlogPost> CreateBlogPostAsync(BlogPost blogPostEntity)

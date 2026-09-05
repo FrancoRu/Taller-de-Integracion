@@ -20,7 +20,6 @@ public class TeamStaffResponse
     /// <summary>The tournament (season) this staff membership belongs to.</summary>
     public Guid TournamentId { get; set; }
 
-    /// <summary>The staff member's full name.</summary>
     public string FullName { get; set; } = string.Empty;
 
     /// <summary>The role this person holds on the team's technical staff (e.g. "Coach").</summary>

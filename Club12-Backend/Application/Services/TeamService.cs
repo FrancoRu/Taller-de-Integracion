@@ -24,10 +24,12 @@ using System.Threading.Tasks;
 namespace Application.Services;
 
 /// <summary>
-/// Service class responsible for managing team-related operations within the application.
-/// Provides methods for creating, retrieving, updating, deleting, and bulk updating teams,
-/// as well as filtering teams and registering them to tournaments.
-/// Utilizes repositories for data access and supports asynchronous operations.
+/// Coordinates team lifecycle rules that don't belong to a single CRUD verb: a
+/// team's name/three-letter code is frozen while its current tournament is
+/// Ongoing, deletion is blocked whenever match/sanction/point-deduction/
+/// registration history would otherwise cascade away silently, and a team's
+/// roster (Players) is always scoped to one season rather than the raw,
+/// permanent Player.TeamId FK.
 /// </summary>
 public class TeamService(
     IUnitOfWork unitOfWork,
@@ -53,7 +55,9 @@ public class TeamService(
     private readonly ITeamPointDeductionRepository _pointDeductionRepository = pointDeductionRepository;
 
     /// <summary>
-    /// Creates a new team entity and persists it to the repository.
+    /// Creates a team, generating a unique slug from its name, and eagerly
+    /// links it into its club's history (see inline note) rather than waiting
+    /// on a backfill.
     /// </summary>
     /// <param name="teamEntity">The team entity to create.</param>
     /// <returns>The created team entity.</returns>
@@ -173,11 +177,6 @@ public class TeamService(
         await _teamRepository.RemoveAsync(team => team.Id == id);
     }
 
-    /// <summary>
-    /// Updates an existing team entity in the repository.
-    /// </summary>
-    /// <param name="teamEntity">The team entity with updated information.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
     public async Task UpdateTeamAsync(Team teamEntity)
     {
         await _teamRepository.UpdateAsync(teamEntity);
@@ -213,11 +212,6 @@ public class TeamService(
         }
     }
 
-    /// <summary>
-    /// Updates a collection of team entities in bulk.
-    /// </summary>
-    /// <param name="teams">The collection of team entities to update.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
     public async Task UpdateTeamsAsync(IEnumerable<Team> teams)
     {
         await _teamRepository.UpdateRangeAsync(teams);

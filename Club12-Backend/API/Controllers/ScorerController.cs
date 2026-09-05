@@ -27,6 +27,11 @@ namespace API.Controllers;
 public class ScorerController(IScorerService scorerService, IMatchService matchService, IScorerMapper mapper) : ControllerBase
 #pragma warning restore S6960
 {
+    /// <summary>
+    /// Ranks teams by goals scored across the filtered matches ("Goleadores" by team).
+    /// </summary>
+    /// <param name="filter">The match filtering and pagination parameters.</param>
+    /// <returns>A paginated team scorer ranking.</returns>
     [HttpGet("by-team")]
     public async Task<ActionResult> GetFilteredScorerByTeam([FromQuery] GetMatchesFilteredRequest filter)
     {
@@ -37,6 +42,11 @@ public class ScorerController(IScorerService scorerService, IMatchService matchS
         return Ok(response);
     }
 
+    /// <summary>
+    /// Ranks individual players by goals scored ("Goleadores" by player).
+    /// </summary>
+    /// <param name="filter">The scorer filtering and pagination parameters.</param>
+    /// <returns>A paginated player scorer ranking.</returns>
     [HttpGet("by-player")]
     public async Task<ActionResult> GetFilteredScorerByPlayer([FromQuery] GetScorerFilteredRequest filter)
     {

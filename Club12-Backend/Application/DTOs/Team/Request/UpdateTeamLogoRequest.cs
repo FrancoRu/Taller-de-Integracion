@@ -9,9 +9,6 @@ namespace Application.DTOs.Team.Request;
 /// </summary>
 public class UpdateTeamLogoRequest
 {
-    /// <summary>
-    /// The unique identifier of the team whose logo is being updated.
-    /// </summary>
     [Required(ErrorMessage = "The TeamId field is required.")]
     public required Guid TeamId { get; init; }
 

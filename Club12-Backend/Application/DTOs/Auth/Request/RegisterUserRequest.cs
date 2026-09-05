@@ -14,7 +14,7 @@ public sealed class RegisterUserRequest
     public required string Email { get; set; }
 
     /// <summary>
-    /// Unique display name for the user. Stored in AspNetUsers.UserName.
+    /// Display name for the user; must be unique across all accounts.
     /// </summary>
     [Required(ErrorMessage = "Username is required.")]
     [StringLength(UserFieldLengths.UsernameMaxLength, MinimumLength = UserFieldLengths.UsernameMinLength,

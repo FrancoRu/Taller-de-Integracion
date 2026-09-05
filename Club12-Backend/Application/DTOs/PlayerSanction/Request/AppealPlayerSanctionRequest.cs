@@ -8,9 +8,6 @@ namespace Application.DTOs.PlayerSanction.Request;
 /// </summary>
 public class AppealPlayerSanctionRequest
 {
-    /// <summary>
-    /// The reason the sanction is being appealed.
-    /// </summary>
     [Required]
     [StringLength(SanctionFieldLengths.LongTextMaxLength, MinimumLength = SanctionFieldLengths.LongTextMinLength)]
     public required string Reason { get; set; }

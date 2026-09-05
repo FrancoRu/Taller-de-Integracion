@@ -9,9 +9,6 @@ namespace Application.DTOs.BlogPosts.Request;
 /// </summary>
 public class UpdateBlogPostPhotoRequest
 {
-    /// <summary>
-    /// The file of the blog post photo to be updated.
-    /// </summary>
     [Required]
     public required IFormFile PhotoFile { get; set; }
 }

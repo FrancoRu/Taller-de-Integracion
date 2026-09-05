@@ -27,32 +27,18 @@ public class GetPlayerSanctionsFilteredRequest : PaginatedFilterRequest
         Order = SortOrder.Descending;
     }
 
-    /// <summary>
-    /// The unique identifier of the player to filter sanctions by.
-    /// </summary>
     public Guid? PlayerId { get; set; }
 
-    /// <summary>
-    /// The unique identifier of the match to filter sanctions by.
-    /// </summary>
     public Guid? MatchId { get; set; }
 
     public Guid? TournamentId { get; set; }
     public Guid? DivisionId { get; set; }
     public Guid? StageId { get; set; }
     public Guid? TeamId { get; set; }
-    /// <summary>
-    /// The description text to filter sanctions by.
-    /// </summary>
+
     public string? Description { get; set; }
 
-    /// <summary>
-    /// The date the sanction was issued, used to filter sanctions.
-    /// </summary>
     public DateTime? IssuedDate { get; set; }
 
-    /// <summary>
-    /// The duration of the sanction, used to filter sanctions.
-    /// </summary>
     public int? Duration { get; set; }
 }

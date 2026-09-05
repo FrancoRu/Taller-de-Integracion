@@ -30,14 +30,8 @@ public class PlayerSanctionResponse : BaseEntityResponse
     /// </summary>
     public bool IsActive { get; set; }
 
-    /// <summary>
-    /// Represents the date the sanction was issued.
-    /// </summary>
     public required DateTime IssuedDate { get; set; }
 
-    /// <summary>
-    /// A description of the sanction.
-    /// </summary>
     public required string Description { get; set; }
 
     /// <summary>
@@ -77,33 +71,15 @@ public class PlayerSanctionResponse : BaseEntityResponse
     /// </summary>
     public string? StaffName { get; set; }
 
-    /// <summary>
-    /// The unique identifier of the match associated with the sanction.
-    /// </summary>
     public required Guid MatchId { get; set; }
 
-    /// <summary>
-    /// The current appeal status of the sanction.
-    /// </summary>
     public SanctionAppealStatus AppealStatus { get; set; }
 
-    /// <summary>
-    /// The reason submitted when the sanction was appealed.
-    /// </summary>
     public string? AppealReason { get; set; }
 
-    /// <summary>
-    /// The date the appeal was submitted.
-    /// </summary>
     public DateTime? AppealDate { get; set; }
 
-    /// <summary>
-    /// The decision notes recorded when the appeal was resolved.
-    /// </summary>
     public string? AppealResolution { get; set; }
 
-    /// <summary>
-    /// The date the appeal was resolved.
-    /// </summary>
     public DateTime? AppealResolvedDate { get; set; }
 }

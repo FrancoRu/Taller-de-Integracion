@@ -31,6 +31,7 @@ public class StatisticsRepository(ApplicationDBContext context) : IStatisticsRep
 {
     private readonly ApplicationDBContext _context = context;
 
+    /// <inheritdoc/>
     public async Task<PlayerStatisticCardResponse?> GetPlayerCardAsync(Guid playerId)
     {
         Player? player = await _context.Set<Player>()
@@ -69,6 +70,7 @@ public class StatisticsRepository(ApplicationDBContext context) : IStatisticsRep
         };
     }
 
+    /// <inheritdoc/>
     public async Task<PlayerHistoryResponse?> GetPlayerHistoryAsync(Guid playerId)
     {
         Player? player = await _context.Set<Player>()

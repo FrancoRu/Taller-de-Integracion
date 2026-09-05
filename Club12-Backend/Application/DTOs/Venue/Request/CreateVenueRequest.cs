@@ -10,16 +10,10 @@ namespace Application.DTOs.Venue.Request;
 /// </summary>
 public class CreateVenueRequest
 {
-    /// <summary>
-    /// The name of the venue.
-    /// </summary>
     [Required(ErrorMessage = "The Name field is required.")]
     [MaxLength(VenueFieldLengths.NameMaxLength)]
     public required string Name { get; set; }
 
-    /// <summary>
-    /// The address of the venue.
-    /// </summary>
     [Required(ErrorMessage = "The Address field is required.")]
     [MaxLength(VenueFieldLengths.AddressMaxLength)]
     public required string Address { get; set; }

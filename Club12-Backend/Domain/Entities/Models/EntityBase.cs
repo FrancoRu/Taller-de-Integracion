@@ -4,22 +4,17 @@ using System;
 
 namespace Domain.Entities.Models;
 
-/// <summary>Base class for all domain entities.</summary>
+/// <summary>
+/// Base class for all domain entities. Centralizes the identifier and the
+/// created/updated audit fields shared by every entity.
+/// </summary>
 public abstract class EntityBase
 {
-    /// <summary>
-    /// The unique identifier of the entity.
-    /// </summary>
     public Guid Id { get; set; } = Guid.Empty;
 
-    /// <summary>
-    /// The date when the entity was created.
-    /// </summary>
     public DateTime DateCreated { get; set; } = DateTime.UtcNow;
 
-    /// <summary>
-    /// The date when the entity was last updated.
-    /// </summary>
+    /// <summary>Null until the entity is modified after creation.</summary>
     public DateTime? DateUpdated { get; set; }
 
     public required string CreatedBy { get; set; } = AuditConstants.SystemUser;

@@ -7,16 +7,10 @@ namespace Application.DTOs.Match.Request;
 /// </summary>
 public class UpdateMatchScoreRequest
 {
-    /// <summary>
-    /// Home team score
-    /// </summary>
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "The HomeScore must be a non-negative number.")]
     public required int HomeScore { get; set; }
 
-    /// <summary>
-    /// Visitor team score
-    /// </summary>
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "The VisitorScore must be a non-negative number.")]
     public required int VisitorScore { get; set; }

@@ -8,24 +8,21 @@ using System.Reflection;
 
 namespace Application.Utils.Extensions;
 
-/// <summary>
-/// Queryable extensions for filtering and sorting entities.
-/// </summary>
 public static class QueryableExtensions
 {
     /// <summary>
-    /// Constructs a filter expression based on the provided filter request.
+    /// Builds a combined-AND filter expression by reflecting over <typeparamref name="T"/>'s
+    /// properties that also exist on <typeparamref name="TEntity"/>: string properties become
+    /// case-insensitive <c>Contains</c>, everything else becomes equality. Pagination/order
+    /// properties are skipped automatically.
     /// </summary>
-    /// <typeparam name="TEntity">The type of the entity to filter.</typeparam>
-    /// <typeparam name="T">The type of the filter request.</typeparam>
-    /// <param name="filter">The filter request containing the filter criteria.</param>
+    /// <param name="filter">The filter DTO whose non-empty, non-skipped properties become predicates.</param>
     /// <param name="ignoredProperties">
     /// Names of filter properties whose auto-generated predicate must be
     /// suppressed, letting the caller special-case them (e.g. resolving a
     /// filter through a join instead of the entity's own FK-equality). Purely
     /// additive: callers that pass nothing get the original behavior.
     /// </param>
-    /// <returns>An expression that represents the filter criteria.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the 'Contains' method is not found.</exception>
     public static Expression<Func<TEntity, bool>> ConstructFilterExpression<TEntity, T>(T filter, params string[] ignoredProperties) where T : PaginatedFilterRequest
     {
@@ -125,17 +122,11 @@ public static class QueryableExtensions
         }
     }
 
-    /// <summary>
-    /// Paginates the given source sequence based on the specified page number and page size.
-    /// </summary>
     public static IQueryable<T> Paginate<T>(this IQueryable<T> source, int pageNumber, int pageSize)
     {
         return source.Skip((pageNumber - 1) * pageSize).Take(pageSize);
     }
 
-    /// <summary>
-    /// Sorts the source sequence by the specified property name in either ascending or descending order.
-    /// </summary>
     public static IQueryable<T> SortBy<T>(this IQueryable<T> source, IOrderRequest orderRequest)
     {
         if (string.IsNullOrEmpty(orderRequest.OrderBy))

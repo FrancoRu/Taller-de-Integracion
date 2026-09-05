@@ -26,6 +26,14 @@ using MatchType = Domain.Enums.MatchType;
 
 namespace Application.Services;
 
+/// <summary>
+/// Manages individual matches: CRUD, result/walkover/suspension transitions,
+/// and automated fixture generation per stage type. A stage's automated
+/// fixture can only be built once (<see cref="CreateAutomatedMatchesAsync"/>
+/// throws if it already has matches); loading a result or walkover always
+/// re-triggers <see cref="IStageService.TryAutoSeedPlayoffPhaseAsync"/> so a
+/// bracket's next round seeds itself the moment its inputs are decided.
+/// </summary>
 public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : IMatchService
 {
     private readonly IMatchRepository _matchRepository = unitOfWork.MatchRepository;
@@ -84,11 +92,13 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
         await _matchRepository.RemoveAsync(match => match.Id == id);
     }
 
+    /// <summary>
+    /// Two matches at the same venue must be at least 2 hours apart. Returns
+    /// true if any OTHER match is scheduled strictly within that ±2h window
+    /// of <paramref name="matchDate"/>; exactly 2 hours apart is allowed.
+    /// </summary>
     public async Task<bool> HasVenueScheduleConflictAsync(Guid venueId, DateTime matchDate, Guid excludeMatchId)
     {
-        // Two matches on the same court must be at least 2 hours apart, so a
-        // conflict is any OTHER match at this venue strictly within the ±2h
-        // window (exactly 2 hours apart is allowed).
         DateTime windowStart = matchDate.AddHours(-2);
         DateTime windowEnd = matchDate.AddHours(2);
 
@@ -266,6 +276,12 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
         };
     }
 
+    /// <summary>
+    /// Builds a stage's fixture from its type (group round-robin, or empty
+    /// bracket slots for a knockout/final stage). Blocked once the stage
+    /// already has matches — a fixture is generated exactly once per stage,
+    /// never regenerated on top of an existing one.
+    /// </summary>
     public async Task<List<Match>> CreateAutomatedMatchesAsync(Guid stageId)
     {
         Stage stage = await _stageRepository.GetByIdAsync(stageId, includes: [s => s.Matches, s => s.Division])

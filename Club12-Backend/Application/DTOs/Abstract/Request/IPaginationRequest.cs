@@ -11,7 +11,7 @@ public interface IPaginationRequest
     int PageNumber { get; set; }
 
     /// <summary>
-    /// The page size for pagination. Default is 10.
+    /// The page size for pagination. Defaults to 100.
     /// </summary>
     int PageSize { get; set; }
 }

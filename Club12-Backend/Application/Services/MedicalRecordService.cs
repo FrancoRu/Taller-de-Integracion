@@ -24,6 +24,15 @@ public class MedicalRecordService(IUnitOfWork unitOfWork) : IMedicalRecordServic
 {
     private readonly IPlayerTeamRegistrationRepository _registrationRepository = unitOfWork.PlayerTeamRegistrationRepository;
 
+    /// <summary>
+    /// Records a new ficha médica upload and resets it to <see
+    /// cref="MedicalRecordStatus.Pending"/> — an upload never self-habilitates,
+    /// it always requires a fresh review (HU-57). Blocked once the ficha is
+    /// already <see cref="MedicalRecordStatus.Approved"/> against a real
+    /// stored file, since that record is frozen; an Approved row pointing at
+    /// a legacy/unresolvable reference never actually habilitated the player
+    /// and stays re-uploadable so it isn't stuck with no path to fix it.
+    /// </summary>
     public async Task<MedicalRecordResponse> RecordUploadAsync(
         Guid playerId, Guid teamId, Guid tournamentId, string fileReference, string fileName, string actor)
     {
@@ -57,6 +66,12 @@ public class MedicalRecordService(IUnitOfWork unitOfWork) : IMedicalRecordServic
         return MedicalRecordResponse.FromRegistration(registration);
     }
 
+    /// <summary>
+    /// Approves or rejects a ficha médica. Approving is blocked unless the
+    /// ficha points at an actually-stored file — legacy references under the
+    /// old public-bucket prefix no longer resolve and don't count as stored.
+    /// Rejecting has no such requirement.
+    /// </summary>
     public async Task<MedicalRecordResponse> ReviewAsync(
         Guid playerId, Guid teamId, Guid tournamentId, bool approve, string? reason, string actor)
     {

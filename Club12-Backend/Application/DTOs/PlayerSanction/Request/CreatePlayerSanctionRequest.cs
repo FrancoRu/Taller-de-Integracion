@@ -19,15 +19,9 @@ public class CreatePlayerSanctionRequest : IValidatableObject
     [Required(ErrorMessage = "The Duration field is required.")]
     public required int Duration { get; set; }
 
-    /// <summary>
-    /// Represents the date the sanction was issued.
-    /// </summary>
     [Required(ErrorMessage = "The IssuedDate field is required.")]
     public required DateTime IssuedDate { get; set; }
 
-    /// <summary>
-    /// A description of the sanction.
-    /// </summary>
     [Required(ErrorMessage = "The Description field is required.")]
     [MaxLength(SanctionFieldLengths.DescriptionMaxLength)]
     public required string Description { get; set; }

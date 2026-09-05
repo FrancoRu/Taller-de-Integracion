@@ -10,13 +10,12 @@ using System.Threading.Tasks;
 
 namespace Application.Interfaces.Services;
 
-/// <summary>
-/// Represents a service for managing teams.
-/// </summary>
 public interface ITeamService
 {
     /// <summary>
-    /// Creates a new team.
+    /// Creates a team, generates its unique slug from the name, and links it
+    /// to its stable cross-season <see cref="Domain.Entities.Models.Club"/>
+    /// (HU-99), creating that club if this is the first team with that name.
     /// </summary>
     /// <param name="teamEntity">The team entity to create.</param>
     /// <returns>The created team.</returns>
@@ -49,11 +48,6 @@ public interface ITeamService
     /// <returns>The matching team, or null if not found.</returns>
     Task<Team?> GetTeamByIdOrSlugAsync(string idOrSlug, Guid? tournamentId = null);
 
-    /// <summary>
-    /// Updates a team asynchronously.
-    /// </summary>
-    /// <param name="teamEntity">The team entity to update.</param>
-    /// <returns>A boolean indicating whether the update was successful.</returns>
     Task UpdateTeamAsync(Team teamEntity);
 
     /// <summary>
@@ -74,13 +68,25 @@ public interface ITeamService
     /// <exception cref="System.InvalidOperationException">Thrown (mapped to 409) when an identity change is attempted while the team's current tournament is Ongoing.</exception>
     Task EnsureTeamIdentityEditableAsync(Team existingTeam, string? requestedName, string? requestedThreeLetterCode);
 
-    /// <summary>
-    /// Updates multiple teams asynchronously.
-    /// </summary>
-    /// <param name="teams">The list of team entities to update.</param>
-    /// <returns>A boolean indicating whether the update was successful.</returns>
     Task UpdateTeamsAsync(IEnumerable<Team> teams);
 
+    /// <summary>
+    /// Deletes a team, guarding its competitive history. A team's identity
+    /// persists across seasons (HU-99), so deletion is blocked whenever it
+    /// carries history removal would orphan or silently cascade away: any
+    /// match participation (home/visitor/winner), any sanction or point
+    /// deduction, any tournament registration, or any roster player with
+    /// their own statistics/scorer/sanction history (Team.Players cascades
+    /// at the DB level, which would otherwise wipe that history silently).
+    /// A team with none of these — e.g. freshly created or fully
+    /// unenrolled — is still deletable.
+    /// </summary>
+    /// <param name="id">The unique identifier of the team to delete.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown (mapped to 409) when the team has match history, sanctions,
+    /// point deductions, tournament registrations, or roster players with
+    /// their own history.
+    /// </exception>
     Task DeleteTeamAsync(Guid id);
 
     /// <summary>
