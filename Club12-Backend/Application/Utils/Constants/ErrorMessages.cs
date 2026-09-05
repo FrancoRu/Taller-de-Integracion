@@ -300,13 +300,12 @@ public static class ErrorMessages
         public const string EndDateBeforeStartDate = "La fecha de fin debe ser posterior a la fecha de inicio.";
         public const string StageTypeNotSupportedForAutomatedCreation = "Este tipo de fase no admite la generación automática de partidos.";
 
-        // HU-70: basketball has no draws — a played match must have a winner.
+        // Basketball has no draws — a played match must have a winner.
         public const string GroupStageTieNotAllowed =
             "Un partido de fase de grupos no puede terminar empatado; el básquet no tiene empates. Cargá un resultado con un ganador.";
         public const string PlayoffTieNotAllowed =
             "Un partido de playoff no puede terminar empatado; debe resolverse en un tiempo suplementario. Cargá el resultado final con un ganador.";
 
-        // HU-73: walkover.
         public const string WalkOverTeamNotInMatch =
             "El equipo presente tiene que ser el local o el visitante de este partido.";
 
@@ -318,7 +317,7 @@ public static class ErrorMessages
 
     public static class MatchSheet
     {
-        // HU-71: the sum of a team's players' points must equal the team's final score.
+        // The sum of a team's players' points must equal the team's final score.
         public static string ScoreMismatch(int teamScore, int playersSum)
         {
             int difference = teamScore - playersSum;

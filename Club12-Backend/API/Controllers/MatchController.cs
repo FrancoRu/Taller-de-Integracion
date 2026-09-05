@@ -281,10 +281,7 @@ public class MatchController(
             await matchSeriesService.RecalculateSeriesWinnerAsync(updatedMatch.SeriesId.Value);
         }
 
-        // Push a newly-decided bracket slot's winner into the next round of
-        // its cup — a no-op for group-stage matches, a mid-series game that
-        // did not decide the series, or the Final. Runs after the series
-        // recalculation above so it sees the up-to-date decision.
+        // Pushes a newly-decided bracket slot's winner into the next round, a no-op for group-stage matches, an undecided mid-series game, or the Final; runs after the series recalculation above so it sees the up-to-date decision.
         await stageService.TryAdvanceStageWinnerAsync(updatedMatch.StageId);
 
         DetailedMatchResponse detailedMatch = mapper.Map<DetailedMatchResponse>(updatedMatch);
@@ -316,10 +313,7 @@ public class MatchController(
             await matchSeriesService.RecalculateSeriesWinnerAsync(updatedMatch.SeriesId.Value);
         }
 
-        // Push a newly-decided bracket slot's winner into the next round of
-        // its cup — a no-op for group-stage matches, a mid-series game that
-        // did not decide the series, or the Final. Runs after the series
-        // recalculation above so it sees the up-to-date decision.
+        // Pushes a newly-decided bracket slot's winner into the next round, a no-op for group-stage matches, an undecided mid-series game, or the Final; runs after the series recalculation above so it sees the up-to-date decision.
         await stageService.TryAdvanceStageWinnerAsync(updatedMatch.StageId);
 
         DetailedMatchResponse detailedMatch = mapper.Map<DetailedMatchResponse>(updatedMatch);
@@ -350,10 +344,7 @@ public class MatchController(
             await matchSeriesService.RecalculateSeriesWinnerAsync(updatedMatch.SeriesId.Value);
         }
 
-        // Push a newly-decided bracket slot's winner into the next round of
-        // its cup — a no-op for group-stage matches, a mid-series game that
-        // did not decide the series, or the Final. Runs after the series
-        // recalculation above so it sees the up-to-date decision.
+        // Pushes a newly-decided bracket slot's winner into the next round, a no-op for group-stage matches, an undecided mid-series game, or the Final; runs after the series recalculation above so it sees the up-to-date decision.
         await stageService.TryAdvanceStageWinnerAsync(updatedMatch.StageId);
 
         DetailedMatchResponse detailedMatch = mapper.Map<DetailedMatchResponse>(updatedMatch);

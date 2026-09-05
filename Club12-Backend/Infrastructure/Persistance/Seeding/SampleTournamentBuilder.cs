@@ -24,19 +24,9 @@ public static class SampleTournamentBuilder
 {
     private const string CreatedBy = AuditConstants.SystemUser;
 
-    // Neither a fake file reference NOR a file NAME is assigned to Approved
-    // seeded registrations (medical-records-storage-eligibility, Part 3):
-    // DataSeeder.SeedMedicalRecordsAsync fills MedicalRecordFileUrl AND
-    // MedicalRecordFileName together with a REAL uploaded object after Build()
-    // runs. Leaving both null here means an Approved registration correctly
-    // reads as NOT habilitado (Part 2's file-backed rule) until the seed's
-    // backfill step gives it a real file, and never shows a file name that
-    // resolves to nothing.
-
     public const int DefaultPlayersPerTeam = 8;
 
-    // Offset mixed into each division's variety seed so two same-sized zones of
-    // one tournament don't replay the same season (see Build).
+    // Offset mixed into each division's variety seed so two same-sized zones of one tournament don't replay the same season.
     private const int DivisionVarietySalt = 7717;
     private static readonly DateTime SampleMedicalRecordReviewedAt =
         new(2026, 8, 1, 12, 0, 0, DateTimeKind.Utc);
@@ -48,8 +38,7 @@ public static class SampleTournamentBuilder
         "Joaquín", "Valentín", "Emiliano", "Thiago",
     ];
 
-    // Used instead of FirstNames when the team's tournament Category is
-    // Feminine (HU-48), so feminine divisions don't end up with male rosters.
+    // Used instead of FirstNames when the team's tournament Category is Feminine, so feminine divisions don't end up with male rosters.
     private static readonly string[] FeminineFirstNames =
     [
         "María", "Ana", "Lucía", "Sofía", "Camila", "Valentina", "Julieta", "Florencia",
@@ -57,11 +46,7 @@ public static class SampleTournamentBuilder
         "Martina", "Victoria", "Carla", "Daniela",
     ];
 
-    // Player.SocialSecurity is the "Obra social" field the player form shows: the
-    // NAME of a health-insurance provider, free text. Real Argentine ones, with
-    // the Entre Ríos provincial IOSPER first since the league is from Paraná.
-    // Eleven of them against 20 first names and 21 surnames (all co-prime), so a
-    // roster does not end up with one obra social per first name.
+    // Eleven health-insurance providers, led by the Entre Ríos provincial IOSPER since the league is from Paraná, kept co-prime with 20 first names and 21 surnames so a roster never ends up with one obra social per first name.
     private static readonly string[] HealthInsuranceProviders =
     [
         "IOSPER", "OSDE", "Swiss Medical", "Sancor Salud", "Galeno", "Medifé",
@@ -200,9 +185,7 @@ public static class SampleTournamentBuilder
             TeamRegistrationDeadline = definition.TeamRegistrationDeadline,
             StartDate = definition.StartDate,
             Status = definition.Status,
-            // Competitive category (HU-48): every division built below inherits
-            // it so the "one tournament, one category" invariant holds in the
-            // seeded graph.
+            // Every division built below inherits the tournament's category so the one tournament, one category invariant holds in the seeded graph.
             Category = definition.Category,
             Divisions = [],
             Teams = [],
@@ -215,11 +198,7 @@ public static class SampleTournamentBuilder
         {
             DivisionDefinition divisionDef = definition.Divisions[divisionIndex];
 
-            // Every result this zone produces (upset draws, margins, scores) is a
-            // pure function of the seed, so two same-sized zones of one
-            // tournament shared a seed and played out identically — Zona A and
-            // Zona B ended with the very same scorelines and the very same final
-            // table, team names aside. Salting per division separates them.
+            // Every result a zone produces is a pure function of the seed, so two same-sized zones sharing a seed played out identically, once leaving Zona A and Zona B with the same scorelines and final table; salting per division separates them.
             int divisionVarietySeed = definition.VarietySeed + (divisionIndex * DivisionVarietySalt);
 
             (Division division, List<Team> teams) = BuildDivisionWithTeams(
@@ -317,8 +296,7 @@ public static class SampleTournamentBuilder
 
         List<Team> teams = [];
 
-        // Feminine divisions draw first names from the feminine pool (HU-48's
-        // Category), so their rosters don't read as male.
+        // Feminine divisions draw first names from the feminine pool so their rosters don't read as male.
         string[] firstNames = tournament.Category == TournamentCategory.Feminine ? FeminineFirstNames : FirstNames;
 
         for (int i = 0; i < teamNames.Length; i++)
@@ -342,9 +320,7 @@ public static class SampleTournamentBuilder
                 Players = [],
             };
 
-            // Season-scoped participation source of truth, mirroring the
-            // PlayerTeamRegistration seeding below — the denormalized
-            // Team.TournamentId pointer alone is not authoritative.
+            // Season-scoped participation source of truth, mirroring the PlayerTeamRegistration seeding below, since the denormalized Team.TournamentId pointer alone is not authoritative.
             team.TeamTournamentRegistrations.Add(new TeamTournamentRegistration
             {
                 CreatedBy = CreatedBy,
@@ -380,14 +356,7 @@ public static class SampleTournamentBuilder
 
                 team.Players.Add(player);
 
-                // Most seeded players' ficha is Approved so the sample data
-                // showcases that status; the last player of each team stays
-                // Pending (no ficha) to keep the upload/review flow demonstrable.
-                // Approved rows are seeded WITHOUT a file reference
-                // (medical-records-storage-eligibility, Part 3): DataSeeder.SeedMedicalRecordsAsync
-                // fills MedicalRecordFileUrl with a REAL uploaded object after
-                // Build() runs, so between Build() and that step an Approved row
-                // correctly reads as NOT habilitado under Part 2's file-backed rule.
+                // Most seeded players' ficha is Approved and the last player of each team stays Pending to keep the upload/review flow demonstrable; Approved rows are seeded without a file reference since DataSeeder.SeedMedicalRecordsAsync fills MedicalRecordFileUrl with a real uploaded object after Build() runs, so until then an Approved row correctly reads as not habilitado.
                 bool isHabilitado = p < playersPerTeam - 1;
 
                 team.PlayerTeamRegistrations.Add(new PlayerTeamRegistration
@@ -424,8 +393,7 @@ public static class SampleTournamentBuilder
         string secondary = string.IsNullOrWhiteSpace(secondaryColor) ? "#FFFFFF" : secondaryColor;
         string ink = ContrastInk(primaryColor);
 
-        // Each band is drawn across the whole square and clipped to the badge, so
-        // a style only has to describe its own shape.
+        // Each band is drawn across the whole square and clipped to the badge, so a style only has to describe its own shape.
         string band = jerseyStyle switch
         {
             "stripes" => $"<path d='M34 0h20v128H34zM74 0h20v128H74z' fill='{secondary}'/>",
@@ -523,13 +491,7 @@ public static class SampleTournamentBuilder
             return;
         }
 
-        // An odd roster is padded with a bye slot so the circle method still
-        // produces a COMPLETE round-robin: N odd teams need N jornadas per leg
-        // with exactly one team idle ("libre") each jornada — the same shape
-        // RoundRobinScheduler builds for the real fixture generator. Running
-        // n-1 jornadas on an odd roster instead dropped pairings entirely,
-        // replayed others twice per leg, and left the team pinned to slot 0
-        // with one extra game (and, with PointsForLoss > 0, free table points).
+        // An odd roster gets a bye slot so the circle method still produces a complete round-robin, since running n-1 jornadas on an odd roster instead dropped pairings, replayed others twice per leg, and left one team pinned to extra games.
         const int ByeSlot = -1;
         int slotCount = n % 2 == 0 ? n : n + 1;
         int roundsPerLeg = slotCount - 1;
@@ -538,10 +500,7 @@ public static class SampleTournamentBuilder
 
         for (int leg = 0; leg < legs; leg++)
         {
-            // Circle method: index 0 stays fixed, the remaining slots rotate one
-            // position each round. `slots` holds the ORIGINAL team indices in
-            // seeding order, so a smaller index means a stronger team. It resets
-            // at the start of each leg so the return leg replays the same pairings.
+            // The circle method rotates slots 1..n-1 each round while keeping index 0 fixed, and resets at the start of each leg so the return leg replays the same pairings in seeding order, where a smaller index means a stronger team.
             int[] slots = slotCount == n
                 ? [.. Enumerable.Range(0, n)]
                 : [.. Enumerable.Range(0, n), ByeSlot];
@@ -564,13 +523,7 @@ public static class SampleTournamentBuilder
                         continue;
                     }
 
-                    // Alternate home/away by the jornada WITHIN the leg, then
-                    // invert it on the return leg so the rematch swaps venue.
-                    // A pairing that meets in round r of the first leg meets
-                    // again in round r of the second, so deriving this from the
-                    // GLOBAL jornada number cancelled the leg inversion whenever
-                    // roundsPerLeg was odd (every even-sized zone) and both legs
-                    // ended up being played at the same team's home.
+                    // Alternates home and away by the jornada within the leg, then inverts it on the return leg so the rematch swaps venue, since deriving this from the global jornada number instead cancelled the leg inversion whenever roundsPerLeg was odd and both legs were played at the same team's home.
                     bool homeIsFirst = r % 2 == 0;
                     if (leg % 2 == 1)
                     {
@@ -621,10 +574,7 @@ public static class SampleTournamentBuilder
             }
         }
 
-        // A stage can never end before its own last jornada. With many teams and
-        // two legs the fixture runs past the caller's nominal end date, and the
-        // playoff brackets anchor on Stage.EndDate — so a short end date dated
-        // cup games BEFORE the zone's final jornadas were even played.
+        // A stage can never end before its own last jornada, since playoff brackets anchor on Stage.EndDate and a short end date would date cup games before the zone's final jornadas were even played.
         if (lastMatchDate > stage.EndDate)
         {
             stage.EndDate = lastMatchDate;
@@ -855,12 +805,7 @@ public static class SampleTournamentBuilder
 
                     if (visitorId is null)
                     {
-                        // BYE: the top seed advances automatically. It still gets
-                        // a match row with no visitor and no score, exactly the
-                        // shape StageService.FillStageWithSeedsAsync writes for a
-                        // bye — otherwise the stage held more StageTeamMatch rows
-                        // than its matches had slots, and re-seeding it from the
-                        // admin panel threw SeedTeamCountOutOfRange.
+                        // The top seed advances automatically but still gets a match row with no visitor and no score, matching the shape StageService.FillStageWithSeedsAsync writes for a bye, since otherwise the stage held more StageTeamMatch rows than its matches had slots and re-seeding from the admin panel threw SeedTeamCountOutOfRange.
                         stage.Matches.Add(BuildByeMatch(stage, home, venues, roundStart.AddDays(i)));
                         winners.Add(home);
                         continue;
@@ -932,13 +877,7 @@ public static class SampleTournamentBuilder
         {
             StageId = Guid.Empty,
             Stage = stage,
-            // Unlike Stage.Id (EF-generated at save time, hence the
-            // Guid.Empty placeholder above), Team.Id is already assigned
-            // when teams are built (BuildDivisionWithTeams), so the real id
-            // is set here directly — matching BuildFinishedMatch's HomeTeamId
-            // convention. SeriesDecisionCalculator.DetermineWinner runs
-            // in-memory below, before any EF save/fixup, and compares game
-            // winners against these ids, so they must be the real values now.
+            // Team.Id is already assigned when teams are built, unlike Stage.Id which is EF-generated at save time, so the real id is set here directly since SeriesDecisionCalculator.DetermineWinner runs in-memory before any EF save and compares game winners against these ids.
             HomeTeamId = home.Id,
             HomeTeam = home,
             VisitorTeamId = visitor.Id,
@@ -954,9 +893,7 @@ public static class SampleTournamentBuilder
 
         for (int gameNumber = 1; gameNumber <= totalGames; gameNumber++)
         {
-            // The visitor takes the first `visitorWins` games of the series
-            // (a "comeback" shape); the home team wins every game after that,
-            // clinching on the last generated game.
+            // The visitor takes the first visitorWins games of the series in a comeback shape, then the home team wins every game after that, clinching on the last generated game.
             bool homeWinsThisGame = gameNumber > visitorWins;
             int margin = 4 + ((gameNumber + seriesSeed) % 9);
             int winnerScore = 68 + ((gameNumber * 5) % 22);
@@ -1027,8 +964,7 @@ public static class SampleTournamentBuilder
             Stages = [],
             IsCrossDivisionCup = true,
             QualifiersPerGroup = crossCup.QualifiersPerGroup,
-            // The cup lives inside its tournament, so it shares the tournament's
-            // category (HU-48) like every other division.
+            // The cup lives inside its tournament, so it shares the tournament's category like every other division.
             Category = tournament.Category,
         };
         tournament.Divisions.Add(cupDivision);
@@ -1038,8 +974,7 @@ public static class SampleTournamentBuilder
         List<List<Position>> groupStandings = [];
         Dictionary<Guid, Team> teamsById = allTeams.ToDictionary(t => t.Id);
 
-        // Distribute teams round-robin across the groups so each group mixes
-        // teams from both zones (index % groupCount), keeping groups balanced.
+        // Distributes teams round-robin across the groups using index % groupCount so each group mixes teams from both zones and stays balanced.
         for (int g = 0; g < groupCount; g++)
         {
             List<Team> groupTeams = [.. allTeams.Where((_, idx) => idx % groupCount == g)];
@@ -1075,10 +1010,7 @@ public static class SampleTournamentBuilder
             return;
         }
 
-        // The bracket starts after the LAST group jornada actually scheduled
-        // (SeedRoundRobinMatches pushes a group stage's EndDate out to its own
-        // last match), not after an estimate built from the average group size —
-        // which could date a knockout game before the groups had finished.
+        // The bracket starts after the last group jornada actually scheduled, since SeedRoundRobinMatches pushes a group stage's EndDate out to its own last match, rather than after an estimate built from the average group size which could date a knockout game before the groups had finished.
         DateTime bracketStart = cupDivision.Stages.Max(s => s.EndDate).AddDays(StageTemplate.StandardGapDays);
         int order = groupCount;
 
@@ -1330,9 +1262,7 @@ public static class SampleTournamentBuilder
             return;
         }
 
-        // Spread the team's points across a handful of players (deterministic, no
-        // RNG) so the goleadores read realistically instead of one player scoring
-        // the whole game. Weights taper off; the lead scorer takes the remainder.
+        // Spreads the team's points deterministically across a handful of players, with tapering weights and the lead scorer taking the remainder, so the goleadores read realistically instead of one player scoring the whole game.
         int[] weights = [5, 4, 3, 2, 1];
         int scorerCount = Math.Min(weights.Length, eligible.Count);
         int weightTotal = 0;
@@ -1402,11 +1332,7 @@ public static class SampleTournamentBuilder
     {
         List<PlayerSanction> sanctions = [];
 
-        // Only finished matches carry a real result/winner, so sanctions are
-        // tied to those (an in-progress tournament's group stage also holds
-        // still-to-play upcoming matches, which must never seed a sanction).
-        // Ordered by date because whether a sanction reads as already served or
-        // as still being served depends on where in the calendar it sits.
+        // Sanctions are tied only to finished matches, since an in-progress tournament's group stage also holds still-to-play upcoming matches which must never seed a sanction, and matches are ordered by date because whether a sanction reads as already served or still being served depends on where in the calendar it sits.
         List<Match> matches = [.. groupStages
             .SelectMany(s => s.Matches)
             .Where(m => m.IsFinished && m.VisitorTeam is not null)
@@ -1416,16 +1342,13 @@ public static class SampleTournamentBuilder
             return sanctions;
         }
 
-        // Every played game of the tournament, playoffs included: a suspension
-        // handed out in the last jornadas of a zone also rules the player out of
-        // his team's cup games.
+        // Every played game of the tournament, playoffs included, since a suspension handed out in the last jornadas of a zone also rules the player out of his team's cup games.
         List<Match> playedMatches = [.. tournament.Divisions
             .SelectMany(d => d.Stages)
             .SelectMany(s => s.Matches)
             .Where(m => m.IsFinished && m.VisitorTeam is not null)
             .OrderBy(m => m.MatchDate)];
 
-        // (description, duration, subjectType, appealStatus, active) tuples.
         (string Description, int Duration, SanctionSubjectType Subject, SanctionAppealStatus Appeal, bool Active)[] specs =
         [
             ("Falta descalificante por conducta antideportiva.", 2, SanctionSubjectType.Player, SanctionAppealStatus.None, true),
@@ -1440,11 +1363,7 @@ public static class SampleTournamentBuilder
         {
             (string description, int duration, SanctionSubjectType subject, SanctionAppealStatus appeal, bool active) = specs[i];
 
-            // A sanction is issued ON the game it came from — never before it.
-            // What separates a served sanction from one still being served is
-            // WHICH game: a served one is drawn from the opening third of the
-            // calendar (its fechas have long elapsed), an active one from the
-            // closing third, where the player is still sitting it out.
+            // A sanction is issued on the game it came from and never before it; a served sanction is drawn from the opening third of the calendar since its fechas have long elapsed, while an active one is drawn from the closing third where the player is still sitting it out.
             int window = Math.Max(1, matches.Count / 3);
             Match match = active
                 ? matches[matches.Count - 1 - ((i * 3) % window)]
@@ -1479,8 +1398,7 @@ public static class SampleTournamentBuilder
                 ApplySuspension(playedMatches, player, losingTeam, match, duration, active);
             }
 
-            // An appeal can only be filed after the ruling, and resolved after
-            // it is filed — both used to be back-dated before the match.
+            // An appeal can only be filed after the ruling and resolved after it is filed; both used to be back-dated before the match.
             if (appeal == SanctionAppealStatus.Pending)
             {
                 sanction.AppealReason = "El jugador sostiene que la falta no existió.";

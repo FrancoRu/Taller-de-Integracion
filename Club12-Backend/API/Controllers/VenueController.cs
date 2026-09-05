@@ -49,7 +49,6 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
     {
         Venue venue = mapper.Map<Venue>(venueRequest);
 
-        // A venue photo is optional: only upload and set it when one was sent.
         if (venueRequest.ImageFile is not null)
         {
             venue.PhotoUrl = await supabaseHelper.UploadImageAsync<Venue>(
@@ -172,9 +171,7 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
             return this.NotFoundProblem(nameof(Venue), id);
         }
 
-        // Run the integrity guard first (throws 409 when the venue is still
-        // referenced by matches) so the stored photo is only removed once the
-        // venue row is actually gone.
+        // Runs the integrity guard first, which throws 409 when the venue is still referenced by matches, so the stored photo is only removed once the venue row is actually gone.
         await venueService.DeleteVenueAsync(id);
 
         if (Uri.TryCreate(venue.PhotoUrl, UriKind.Absolute, out Uri? photoUri)

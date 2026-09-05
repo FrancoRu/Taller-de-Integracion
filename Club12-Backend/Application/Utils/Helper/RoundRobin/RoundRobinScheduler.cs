@@ -34,9 +34,7 @@ public static class RoundRobinScheduler
 
         random ??= new Random();
 
-        // Fresh random draw: shuffle the seating before applying the circle
-        // method, so each generation yields a different-but-valid fixture
-        // while preserving the round structure.
+        // Shuffle the seating before applying the circle method so each generation yields a different-but-valid fixture while preserving the round structure.
         List<Guid> rotation = [.. Shuffle([.. teamIds], random)];
         if (rotation.Count % 2 != 0)
         {
@@ -50,8 +48,7 @@ public static class RoundRobinScheduler
 
         for (int leg = 0; leg < legs; leg++)
         {
-            // Alternate home/away on odd legs so a double round-robin gives each
-            // pair one home and one away game.
+            // Alternate home/away on odd legs so a double round-robin gives each pair one home and one away game.
             bool swapHomeAway = leg % 2 == 1;
             List<Guid> current = [.. rotation];
 

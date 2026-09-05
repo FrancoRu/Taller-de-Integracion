@@ -47,9 +47,7 @@ public static class PositionCalculator
 
         Dictionary<Guid, Position> positionsByTeamId = [];
 
-        // Seed every team assigned to the zone so the table shows all of them
-        // (at 0-0) from the moment the tournament starts, before any match is
-        // played — instead of an empty standings table until the first result.
+        // Seed every team assigned to the zone at 0-0 so the table shows all of them before any match is played, instead of an empty standings table until the first result.
         if (rosterTeams is not null)
         {
             foreach (Team team in rosterTeams)
@@ -71,9 +69,7 @@ public static class PositionCalculator
             position.PointsDifference = position.PointsFor - position.PointsAgainst;
         }
 
-        // Subtract disciplinary deductions BEFORE ranking so the full HU-80
-        // tiebreaker chain (PTS/PG/DG/H2H) sees the penalised totals and the
-        // table re-orders correctly around a deducted team.
+        // Subtract disciplinary deductions before ranking so the tiebreaker chain sees the penalised totals and the table re-orders correctly around a deducted team.
         ApplyDeductions(positionsByTeamId.Values, deductions);
 
         return OrderWithTiebreakers(positionsByTeamId.Values, finishedMatches, pointsForWin, pointsForLoss);
@@ -204,8 +200,7 @@ public static class PositionCalculator
             h2hDifference[visitorId] -= margin;
         }
 
-        // "DG en H2H" only applies when the tied teams played each other more
-        // than once (HU-80, criterion 5).
+        // DG en H2H only applies when the tied teams played each other more than once.
         bool playedMoreThanOnce = h2hMatches.Count > 1;
 
         return [.. tiedGroup
@@ -237,9 +232,7 @@ public static class PositionCalculator
             }
             else
             {
-                // Tied on all whole-zone criteria: the head-to-head chain put
-                // them in this order. We cannot cheaply tell PG-in-H2H from
-                // DG-in-H2H apart here, so we report HeadToHead as the family.
+                // Tied on all whole-zone criteria: the head-to-head chain put them in this order, and PG-in-H2H cannot cheaply be told apart from DG-in-H2H here, so HeadToHead is reported as the family.
                 current.ResolvedBy = TiebreakerCriterion.HeadToHead;
             }
         }

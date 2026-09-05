@@ -125,9 +125,7 @@ public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionServ
         {
             int? remaining = await GetFechasRemainingAsync(sanction);
 
-            // A sanction whose fechas cannot be computed by rounds (e.g. the
-            // originating match has no round) still counts as active while its
-            // duration is positive; the day-based sweep cleans it up later.
+            // A sanction whose fechas cannot be computed by rounds still counts as active while its duration is positive; the day-based sweep cleans it up later.
             bool active = remaining.HasValue ? remaining.Value > 0 : sanction.Duration > 0;
             if (active)
             {
@@ -240,14 +238,7 @@ public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionServ
     /// </summary>
     public async Task<PaginatedResponse<PlayerSanction>> GetPlayerSanctionsAsync(GetPlayerSanctionsFilteredRequest filter)
     {
-        // Description is suppressed from the auto-generated single-field
-        // predicate so the free-text search box can match EITHER the sanction
-        // reason OR the sanctioned player's name (Names + LastName). All
-        // clauses are case-insensitive partial (Contains) matches, mirroring
-        // the auto-generator's own ToLower().Contains() string handling.
-        // Accent-insensitivity is intentionally NOT applied: it would require
-        // a Postgres extension (e.g. unaccent/citext) that is not enabled in
-        // this project, and the SQLite test provider could not translate it.
+        // Description is suppressed from the auto-generated filter so free-text search can also match the sanctioned player's name; accent-insensitivity is intentionally skipped since the required Postgres extension is not enabled and the SQLite test provider could not translate it.
         Expression<Func<PlayerSanction, bool>> expression = QueryableExtensions.ConstructFilterExpression<PlayerSanction, GetPlayerSanctionsFilteredRequest>(
             filter, nameof(GetPlayerSanctionsFilteredRequest.Description));
 
@@ -284,8 +275,7 @@ public class PlayerSanctionService(IUnitOfWork unitOfWork) : IPlayerSanctionServ
 
         if (filter.TeamId.HasValue)
         {
-            // Matches both a player sanction whose player belongs to the team
-            // and a team-subject sanction targeting the team directly.
+            // Matches both a player sanction whose player belongs to the team and a team-subject sanction targeting the team directly.
             expression = expression.And(playerSanction =>
                 (playerSanction.Player != null && playerSanction.Player.TeamId == filter.TeamId.Value)
                 || playerSanction.TeamId == filter.TeamId.Value);

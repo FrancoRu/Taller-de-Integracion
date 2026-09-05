@@ -36,8 +36,7 @@ public sealed class MedicalRecordSeedBackfiller(
     /// </summary>
     private const string PlaceholderMedicalRecordFileName = "ficha-medica-generica.pdf";
 
-    // Flushes progress every N uploaded rows so an interruption loses at most
-    // this many refs and the step stays resumable (medical-records-storage-eligibility, ADR #7).
+    // Flushes progress every N uploaded rows so an interruption loses at most this many refs and the step stays resumable.
     private const int MedicalRecordSaveBatchSize = 50;
 
     /// <summary>
@@ -55,9 +54,7 @@ public sealed class MedicalRecordSeedBackfiller(
             {
                 if (!File.Exists(medicalRecordPath))
                 {
-                    // An explicitly configured path that is not there is a
-                    // misconfiguration (a typo, a file that moved) — warn and
-                    // skip rather than papering over it with the generic one.
+                    // An explicitly configured path that is not there is a misconfiguration, so warn and skip rather than papering over it with the generic one.
                     logger.LogWarning(
                         "Seed medical-record file '{Path}' not found — skipping medical-record seeding.",
                         medicalRecordPath);
@@ -75,14 +72,7 @@ public sealed class MedicalRecordSeedBackfiller(
         }
         else
         {
-            // Nothing configured — the normal case, including on a deployed
-            // server. Falling back to the generic ficha médica embedded in
-            // the assembly keeps the seeded league coherent: without a REAL
-            // stored file every Approved registration reads as NOT
-            // habilitado, while the same players hold scorer/statistic rows
-            // for thousands of played matches — exactly the combination
-            // PlayerStatisticService rejects on a real match sheet
-            // (HU-57/HU-60).
+            // Falling back to the generic ficha médica keeps the seeded league coherent, since without a real stored file every Approved registration reads as not habilitado while the same players hold scorer and statistic rows for thousands of played matches, the exact combination PlayerStatisticService rejects on a real match sheet.
             pdf = LoadEmbeddedMedicalRecordPdf();
             fileName = PlaceholderMedicalRecordFileName;
             logger.LogInformation(
@@ -90,14 +80,9 @@ public sealed class MedicalRecordSeedBackfiller(
                 + "approved registrations end up habilitado.");
         }
 
-        // Superset filter, EF-translatable (StartsWith on a constant -> LIKE 'medical-records/%').
-        // The per-row IsStoredReference check below is the authoritative
-        // skip-vs-upload decision — the same predicate the read sites and the
-        // approve-time write guard use, so the three can never drift.
-        // The CreatedBy == SystemUser branch is what lets a seeder-created
-        // Pending/Rejected row self-heal too (Épica 24, ítem 10) — safe
-        // because that value is never written by a real admin action, only
-        // by the seeder itself.
+        // Superset filter kept EF-translatable, since StartsWith on a constant becomes LIKE 'medical-records/%'.
+        // The per-row IsStoredReference check below is the authoritative skip-vs-upload decision, the same predicate the read sites and the approve-time write guard use, so the three can never drift.
+        // The CreatedBy == SystemUser branch lets a seeder-created Pending or Rejected row self-heal too, safe because that value is never written by a real admin action, only by the seeder itself.
         List<PlayerTeamRegistration> candidates = await db.PlayerTeamRegistrations
             .Where(r => (r.MedicalRecordStatus == MedicalRecordStatus.Approved
                     || r.CreatedBy == AuditConstants.SystemUser)
@@ -206,8 +191,7 @@ public sealed class MedicalRecordSeedBackfiller(
 
         for (int i = 0; i < bodies.Length; i++)
         {
-            // Every character written here is ASCII, so the builder's length is
-            // also the byte offset the xref table has to point at.
+            // Every character written here is ASCII, so the builder's length is also the byte offset the xref table has to point at.
             offsets.Add(pdf.Length);
             pdf.Append(i + 1).Append(" 0 obj\n").Append(bodies[i]).Append("\nendobj\n");
         }

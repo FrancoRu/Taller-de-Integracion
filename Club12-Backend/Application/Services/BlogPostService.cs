@@ -59,8 +59,7 @@ public class BlogPostService(IBlogPostRepository blogpostRepository) : IBlogPost
             ? await GetBlogPostByIdAsync(blogPostId)
             : (await blogpostRepository.FindAsync(candidate => candidate.Slug == idOrSlug)).FirstOrDefault();
 
-        // Public callers must not resolve drafts: a draft is treated
-        // as not found so it never leaks through the public detail endpoint.
+        // Public callers must not resolve drafts: a draft is treated as not found so it never leaks through the public detail endpoint.
         if (post is not null && !includeUnpublished && !post.IsPublished)
         {
             return null;
@@ -73,8 +72,7 @@ public class BlogPostService(IBlogPostRepository blogpostRepository) : IBlogPost
     {
         Expression<Func<BlogPost, bool>> expression = QueryableExtensions.ConstructFilterExpression<BlogPost, GetBlogPostsFilteredRequest>(filter);
 
-        // Public listing only ever exposes published posts; Admin/Owner
-        // callers pass includeUnpublished: true to also see drafts.
+        // Public listing only ever exposes published posts; Admin/Owner callers pass includeUnpublished: true to also see drafts.
         if (!includeUnpublished)
         {
             Expression<Func<BlogPost, bool>> publishedOnly = post => post.IsPublished;

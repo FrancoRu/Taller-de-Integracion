@@ -18,8 +18,7 @@ public class BlogPostProfile : Profile
             .ReverseMap();
 
         _ = CreateMap<UpdateBlogPostRequest, BlogPost>()
-            // Null IsPublished on the request means "leave unchanged" (HU-16):
-            // only overwrite the entity's flag when the caller sent a value.
+            // Null IsPublished on the request means leave unchanged, so only overwrite the entity's flag when the caller sent a value.
             .ForMember(dest => dest.IsPublished, opt =>
             {
                 opt.PreCondition(src => src.IsPublished.HasValue);

@@ -31,9 +31,7 @@ internal static class SampleArtwork
     /// </summary>
     public static string VenuePhotoDataUri(string venueName)
     {
-        // Floor and key are read from different slices of the hash: taking the
-        // second from the same low bits as the first correlated them, and the
-        // 14 seeded gyms then landed on only 9 of the 20 possible combinations.
+        // Floor and key are read from different slices of the hash because taking the second from the same low bits as the first correlated them, causing the 14 seeded gyms to land on only 9 of the 20 possible combinations.
         int hash = StableHash(venueName);
         string floor = Floors[hash % Floors.Length];
         string key = Keys[(hash >> 8) % Keys.Length];

@@ -27,8 +27,7 @@ public static class TeamMatchMapper
         int? teamScore = isHome ? match.HomeScore : match.VisitorScore;
         int? opponentScore = isHome ? match.VisitorScore : match.HomeScore;
 
-        // Basketball has no draws: a finished match always has a winning team
-        // (a walkover sets it too), so "W" iff this team is the winner, else "L".
+        // Basketball has no draws, a finished match always has a winning team since a walkover sets one too, so the result is W when this team wins and L otherwise.
         string? result = null;
         if (match.IsFinished)
         {

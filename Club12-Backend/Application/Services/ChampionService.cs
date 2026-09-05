@@ -78,8 +78,7 @@ public class ChampionService(
         {
             foreach (Division division in tournament.Divisions)
             {
-                // One row PER sub-cup (Copa Oro, Copa Plata, …). A single-bracket
-                // or group-only division yields exactly one row with a null CupName.
+                // One row per sub-cup; a single-bracket or group-only division yields exactly one row with a null CupName.
                 List<(string? CupName, PodiumTeamResponse Champion)> champions =
                     await GetDivisionChampionsAsync(division.Id);
 
@@ -166,11 +165,7 @@ public class ChampionService(
             eliminationMatches,
             series);
 
-        // The top cup never had real bracket rounds to draw a third place from
-        // (just a Final bolted onto group standings, e.g. a top-2 "Copa de Oro"
-        // decider) — position 3 in the table is the implicit bronze there. A
-        // real bracket that opted out of a third-place match keeps podium.Third
-        // null instead (see ImplicitThirdFromStandings).
+        // The top cup never had real bracket rounds to draw a third place from, so position 3 in the standings is the implicit bronze there, while a real bracket that opted out of a third-place match keeps podium.Third null instead.
         PodiumTeamResponse? third = ToTeamResponse(podium.Third);
         if (third is null && podium.ImplicitThirdFromStandings)
         {

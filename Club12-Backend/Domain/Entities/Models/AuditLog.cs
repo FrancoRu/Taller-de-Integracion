@@ -37,5 +37,5 @@ public class AuditLog : EntityBase
     /// </summary>
     public string? Detail { get; set; }
 
-    // Timestamp is EntityBase.DateCreated (UTC).
+    // Timestamp is EntityBase.DateCreated in UTC.
 }

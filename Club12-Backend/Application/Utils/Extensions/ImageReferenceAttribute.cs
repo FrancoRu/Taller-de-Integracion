@@ -14,8 +14,7 @@ public sealed class ImageReferenceAttribute : ValidationAttribute
     /// <inheritdoc/>
     public override bool IsValid(object? value)
     {
-        // Null/empty means "no image", which is the property's own business
-        // (a [Required] alongside this one decides that).
+        // Null or empty means no image, which is the property's own business, decided by a Required attribute alongside this one.
         if (value is null)
         {
             return true;

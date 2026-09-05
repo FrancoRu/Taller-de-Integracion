@@ -27,14 +27,7 @@ public class MedicalRecordService(IUnitOfWork unitOfWork) : IMedicalRecordServic
     {
         PlayerTeamRegistration registration = await GetRegistrationAsync(playerId, teamId, tournamentId);
 
-        // Once the ficha is Approved AGAINST A REAL STORED FILE, the
-        // player is habilitado and the record is frozen — it can only be
-        // viewed/downloaded, never replaced by a new upload. An Approved row
-        // with a legacy/unresolvable reference (pre-existing data from before
-        // the private-bucket relocation) never actually habilitated the
-        // player (see PlayerTeamRegistration.IsHabilitado) and would
-        // otherwise be stuck forever with no path to fix it — so re-upload
-        // stays allowed for that shape.
+        // Once the ficha is Approved against a real stored file, the player is habilitado and the record is frozen so it can only be viewed or downloaded, never replaced by a new upload; an Approved row with a legacy or unresolvable reference from before the private-bucket relocation never actually habilitated the player and would otherwise have no path to fix it, so re-upload stays allowed for that shape.
         if (registration.MedicalRecordStatus == MedicalRecordStatus.Approved
             && PlayerTeamRegistration.IsStoredReference(registration.MedicalRecordFileUrl))
         {
@@ -43,8 +36,7 @@ public class MedicalRecordService(IUnitOfWork unitOfWork) : IMedicalRecordServic
 
         registration.MedicalRecordFileUrl = fileReference;
         registration.MedicalRecordFileName = fileName;
-        // Uploading a new file always requires a fresh review — it never
-        // habilitates on its own.
+        // Uploading a new file always requires a fresh review — it never habilitates on its own.
         registration.MedicalRecordStatus = MedicalRecordStatus.Pending;
         registration.MedicalRecordReviewReason = null;
         registration.MedicalRecordReviewedAt = null;
@@ -63,11 +55,7 @@ public class MedicalRecordService(IUnitOfWork unitOfWork) : IMedicalRecordServic
     {
         PlayerTeamRegistration registration = await GetRegistrationAsync(playerId, teamId, tournamentId);
 
-        // A ficha can only be approved against a file that is actually stored.
-        // Refs under the legacy medical-records/ prefix point into the old
-        // public bucket and no longer resolve, so they do not count as stored
-        // (medical-records-storage-eligibility). Rejecting with no file stays
-        // legal — only the approve transition is guarded.
+        // A ficha can only be approved against a file that is actually stored; refs under the legacy medical-records prefix point into the old public bucket and no longer resolve, so they do not count as stored, though rejecting with no file stays legal since only the approve transition is guarded.
         if (approve && !PlayerTeamRegistration.IsStoredReference(registration.MedicalRecordFileUrl))
         {
             throw new InvalidOperationException(ErrorMessages.MedicalRecord.NoStoredFile);

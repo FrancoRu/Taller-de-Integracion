@@ -61,10 +61,7 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
     /// <returns>The match entity if found; otherwise, null.</returns>
     public async Task<Match?> GetMatchByIdOrSlugAsync(string idOrSlug)
     {
-        // Loads the full public-detail graph (both teams, venue, and scorers with
-        // their players) so the match page can render the scoreboard AND the
-        // per-team goleadores — the generic include list can't express the nested
-        // Scorers.Player path scorer→team attribution needs.
+        // Loads the full public-detail graph including both teams, venue, and scorers with their players so the match page can render the scoreboard and the per-team goleadores, since the generic include list cannot express the nested Scorers.Player path scorer-to-team attribution needs.
         return await _matchRepository.GetDetailByIdOrSlugAsync(idOrSlug);
     }
 
@@ -205,9 +202,7 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
             match => match.StageId == stageId,
             includes: [match => match.HomeTeam!, match => match.VisitorTeam!, match => match.Venue!]);
 
-        // Round is the canonical grouping: order by matchday, then by
-        // date within the round for a stable "Partido 1, Partido 2, …" order.
-        // Matches without a round sort after the numbered ones.
+        // Round is the canonical grouping: order by matchday, then by date within the round for a stable "Partido 1, Partido 2, …" order; matches without a round sort after the numbered ones.
         return [.. matches
             .OrderBy(match => match.Round ?? int.MaxValue)
             .ThenBy(match => match.MatchDate)];
@@ -334,9 +329,7 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
         {
             string baseSlug = baseSlugByMatch[match];
 
-            // Fast, IO-free path: the prefetch already proved this exact
-            // base slug is free, and nothing earlier in this batch claimed
-            // it either.
+            // Fast, IO-free path: the prefetch already proved this exact base slug is free, and nothing earlier in this batch claimed it either.
             if (!existingSlugs.Contains(baseSlug) && !slugsAssignedInBatch.Contains(baseSlug))
             {
                 match.Slug = baseSlug;
@@ -457,10 +450,7 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
 
         bool seeded = teamIds.Count == totalTeams;
 
-        // When the roster is unknown we still need the round structure (how
-        // many matches, and each one's matchday), which depends only on the
-        // team count and legs — so schedule with throwaway placeholder ids and
-        // keep just the round numbers, leaving the teams unseeded.
+        // When the roster is unknown we still need the round structure, meaning how many matches and each one's matchday, which depends only on the team count and legs, so schedule with throwaway placeholder ids and keep just the round numbers, leaving the teams unseeded.
         IReadOnlyList<Guid> rosterForSchedule = seeded
             ? teamIds
             : [.. Enumerable.Range(0, totalTeams).Select(_ => Guid.NewGuid())];
@@ -468,13 +458,7 @@ public class MatchService(IUnitOfWork unitOfWork, IStageService stageService) : 
         List<(Guid HomeTeamId, Guid VisitorTeamId, int Round)> fixture =
             RoundRobinScheduler.GenerateRounds(rosterForSchedule, stage.RoundRobinLegs);
 
-        // Lay the jornadas out weekly, division-aware. Regular zones
-        // keep the Sunday baseline; a cross-division-cup stage is shifted to a
-        // different weekday so a team playing both its zone and the cup never
-        // has two jornadas on the same day. Coordinated here (not at the
-        // tournament level) so BOTH the manual single-stage generate endpoint
-        // and the tournament-start fixture trigger (GenerateFixtureAsync, which
-        // calls this same path) get the anti-collision schedule.
+        // Lay the jornadas out weekly, division-aware: regular zones keep the Sunday baseline, and a cross-division-cup stage shifts to a different weekday so a team playing both its zone and the cup never has two jornadas on the same day; this is coordinated here, not at the tournament level, so both the manual single-stage generate endpoint and the tournament-start fixture trigger get the same anti-collision schedule.
         bool isCrossDivisionCup = stage.Division?.IsCrossDivisionCup ?? false;
 
         foreach ((Guid homeTeamId, Guid visitorTeamId, int round) in fixture)

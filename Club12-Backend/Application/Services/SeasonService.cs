@@ -80,11 +80,7 @@ public class SeasonService(ISeasonRepository seasonRepository, ITournamentServic
             season => true,
             includes: [season => season.Tournaments]);
 
-        // Newest season first for /panel/temporadas and the public list, which
-        // both render this array as-is. Ordered in memory: the list is small
-        // and unpaginated, and passing a PaginatedFilterRequest to FindAsync
-        // (the only other SortBy hook) would also truncate it to the default
-        // page size. Null years sort last; Name is the deterministic tiebreak.
+        // Ordered in memory, newest season first with null years last and Name as a deterministic tiebreak, since the list is small and unpaginated and passing a SortBy through FindAsync would also truncate it to the default page size.
         return seasons
             .OrderByDescending(season => season.Year.HasValue)
             .ThenByDescending(season => season.Year)

@@ -66,10 +66,7 @@ public class ScorerRepository(ApplicationDBContext context)
                 _context.Set<StageTeamMatch>().Any(stm => stm.TeamId == p.TeamId && stm.StageId == stageId));
         }
 
-        // HU-72: the goleadores ranking aggregates from PlayerStatistic — the
-        // same table the per-match loading path (HU-71) writes to — so there is
-        // no orphan Scorer write-gap and the ranking reflects real loaded
-        // points. Only Points-type statistics count toward the scoring ranking.
+        // The goleadores ranking aggregates from PlayerStatistic, the same table the per-match loading path writes to, so there is no orphan Scorer write-gap and the ranking reflects real loaded points; only Points-type statistics count toward it.
         IQueryable<PlayerStatistic> scoreStatsQuery = _context.Set<PlayerStatistic>()
             .Where(s => s.Type == StatisticType.Points);
 
@@ -93,16 +90,7 @@ public class ScorerRepository(ApplicationDBContext context)
             scoreStatsQuery = scoreStatsQuery.Where(s => s.MatchId == filter.MatchId.Value);
         }
 
-        // HU-85 season / all-time scopes. A "season" is the calendar year of a
-        // tournament's StartDate (the simplest consistent value, no schema
-        // change). When a Season is given, restrict BOTH the ranked players and
-        // the summed points to tournaments that started that year; when neither
-        // TournamentId nor Season is given, nothing here narrows the sum, so the
-        // same player row aggregates every point across every season — the
-        // all-time ranking. Grouping is by PlayerId: because Player.DocumentNumber
-        // is uniquely indexed, one real person is exactly one Player row reused
-        // across seasons (season scoping lives in PlayerTeamRegistration, not in
-        // duplicate Player rows), so a PlayerId already IS the cross-season person.
+        // A season is the calendar year of a tournament's StartDate, and grouping is safe by PlayerId because Player.DocumentNumber is uniquely indexed, so one real person is exactly one Player row reused across seasons rather than duplicated per season.
         if (filter.Season.HasValue)
         {
             int season = filter.Season.Value;
@@ -130,12 +118,7 @@ public class ScorerRepository(ApplicationDBContext context)
             TeamJerseyStyle = player.Team.JerseyStyle,
             TeamShirtSecondaryColor = player.Team.ShirtSecondaryColor,
             TeamShirtTertiaryColor = player.Team.ShirtTertiaryColor,
-            // The dorsal is season-scoped (PlayerTeamRegistration), not a
-            // property of Player itself: when the ranking is scoped to one
-            // tournament, use that season's registration; otherwise (a
-            // season/all-time aggregate spanning several registrations) fall
-            // back to the player's most recent registration with their
-            // current team, since there is no single "the" dorsal to show.
+            // The dorsal is season-scoped through PlayerTeamRegistration rather than a property of Player itself, so a tournament-scoped ranking uses that season's registration while a season or all-time aggregate spanning several registrations falls back to the player's most recent registration with their current team, since there is no single dorsal to show.
             JerseyNumber = filter.TournamentId.HasValue
                 ? _context.Set<PlayerTeamRegistration>()
                     .Where(r => r.PlayerId == player.Id && r.TournamentId == filter.TournamentId.Value)

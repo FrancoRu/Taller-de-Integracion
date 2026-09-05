@@ -30,8 +30,7 @@ public class MatchRepository(ApplicationDBContext context)
                 .ThenInclude(team => team!.Players)
                     .ThenInclude(player => player.PlayerTeamRegistrations)
             .Include(match => match.Venue)
-            // Stage → Division gives the match's tournament, used to pick each
-            // scorer's jersey number from that tournament's roster registration.
+            // Stage → Division gives the match's tournament, used to pick each scorer's jersey number from that tournament's roster registration.
             .Include(match => match.Stage)
                 .ThenInclude(stage => stage.Division)
             .Include(match => match.Scorers)

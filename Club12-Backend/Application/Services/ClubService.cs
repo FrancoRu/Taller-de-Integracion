@@ -33,9 +33,7 @@ public class ClubService(IUnitOfWork unitOfWork) : IClubService
             return new ClubBackfillResult { ClubsCreated = 0, TeamsLinked = 0 };
         }
 
-        // Slug is the stable identity key: same-named teams generate the same
-        // slug and therefore collapse onto a single club. Existing clubs are
-        // reused so a partial/previous backfill is never duplicated.
+        // Slug is the stable identity key: same-named teams generate the same slug and therefore collapse onto a single club. Existing clubs are reused so a partial or previous backfill is never duplicated.
         Dictionary<string, Club> clubsBySlug = (await _clubRepository.GetAllAsync())
             .GroupBy(club => club.Slug)
             .ToDictionary(group => group.Key, group => group.First());
@@ -67,8 +65,7 @@ public class ClubService(IUnitOfWork unitOfWork) : IClubService
 
         if (clubsToCreate.Count > 0)
         {
-            // Persist first so EF assigns each new club an Id before it is
-            // referenced by a team's ClubId FK.
+            // Persist first so EF assigns each new club an Id before it is referenced by a team's ClubId FK.
             await _clubRepository.AddRangeAsync(clubsToCreate);
         }
 
@@ -124,8 +121,7 @@ public class ClubService(IUnitOfWork unitOfWork) : IClubService
         string key = !string.IsNullOrWhiteSpace(team.Name) ? team.Name.Trim() : team.ThreeLetterCode;
         string slug = SlugGenerator.GenerateSlug(key);
 
-        // No alphanumeric characters to slug — fall back to the team id so
-        // the club still gets a unique, non-null slug.
+        // No alphanumeric characters to slug — fall back to the team id so the club still gets a unique, non-null slug.
         return string.IsNullOrEmpty(slug) ? team.Id.ToString() : slug;
     }
 
@@ -146,8 +142,7 @@ public class ClubService(IUnitOfWork unitOfWork) : IClubService
         List<Team> teams = [.. await _teamRepository.FindAsync(team => team.ClubId == club.Id)];
         List<Guid> teamIds = [.. teams.Select(team => team.Id)];
 
-        // Batched season lookups (avoid N+1): all registrations for these teams,
-        // then the tournaments they point at, resolved to names in memory.
+        // Season lookups are batched to avoid N+1 queries: all registrations for these teams, then the tournaments they point at, resolved to names in memory.
         List<TeamTournamentRegistration> registrations = teamIds.Count == 0
             ? []
             : [.. await _tournamentRegistrationRepository.FindAsync(
@@ -185,9 +180,7 @@ public class ClubService(IUnitOfWork unitOfWork) : IClubService
                             StartDate = tournament?.StartDate ?? DateTime.MinValue,
                         };
                     })
-                    // Newest season first; the history page flattens these
-                    // across all teams and re-sorts, but ordering here keeps
-                    // any single-team consumer correct too.
+                    // Newest season first; the history page flattens these across all teams and re-sorts, but ordering here keeps any single-team consumer correct too.
                     .OrderByDescending(season => season.StartDate)],
             })],
         };

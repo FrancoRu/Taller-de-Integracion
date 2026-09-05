@@ -57,8 +57,7 @@ public class VenueService(IVenueRepository venueRepository, IMatchRepository mat
     /// </exception>
     public async Task DeleteVenueAsync(Guid id)
     {
-        // Integrity: a venue (cancha) referenced by one or more matches cannot
-        // be deleted — doing so would leave those matches without their venue.
+        // Integrity: a venue referenced by one or more matches cannot be deleted, since that would leave those matches without their venue.
         bool referencedByMatches = await matchRepository.ExistsAsync(match => match.VenueId == id);
 
         if (referencedByMatches)

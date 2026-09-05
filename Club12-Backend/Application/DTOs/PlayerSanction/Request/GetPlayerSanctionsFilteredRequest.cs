@@ -13,10 +13,7 @@ public class GetPlayerSanctionsFilteredRequest : PaginatedFilterRequest
     /// </summary>
     public GetPlayerSanctionsFilteredRequest()
     {
-        // String literal (not nameof) because the enclosing namespace
-        // "Application.DTOs.PlayerSanction" shadows the entity type, and
-        // QueryableExtensions.SortBy resolves this name against the entity by
-        // reflection anyway. Matches PlayerSanction.IssuedDate.
+        // String literal, not nameof, because the enclosing namespace Application.DTOs.PlayerSanction shadows the entity type; QueryableExtensions.SortBy resolves this name against the entity by reflection and matches PlayerSanction.IssuedDate.
         OrderBy = "IssuedDate";
         Order = SortOrder.Descending;
     }

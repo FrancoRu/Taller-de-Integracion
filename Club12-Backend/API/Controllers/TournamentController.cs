@@ -182,16 +182,12 @@ public class TournamentController(
             return this.NotFoundProblem(nameof(Tournament), id);
         }
 
-        // Status is intentionally excluded from this mapping (see
-        // TournamentProfile): descriptive fields update freely here, but a
-        // status change is a guarded state-machine transition handled below.
+        // Status is intentionally excluded from this mapping since descriptive fields update freely here, but a status change is a guarded state-machine transition handled below.
         mapper.Map(tournamentRequest, existingTournament);
 
         await tournamentService.UpdateTournamentAsync(existingTournament);
 
-        // Route any requested status change through the forward-only state
-        // machine. A no-op transition (same status) is ignored by the service,
-        // so re-sending the current status on a plain edit is harmless.
+        // Routes any requested status change through the forward-only state machine; a no-op transition where the status is unchanged is ignored by the service, so re-sending the current status on a plain edit is harmless.
         if (tournamentRequest.Status is TournamentStatus requestedStatus)
         {
             await tournamentService.ChangeStatusAsync(id, requestedStatus);

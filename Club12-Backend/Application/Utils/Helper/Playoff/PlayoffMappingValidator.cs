@@ -36,8 +36,7 @@ public static class PlayoffMappingValidator
 
         for (int i = 1; i < ordered.Count; i++)
         {
-            // Ordered by FromPosition, so an overlap exists iff the current
-            // range starts at or before the previous range's end.
+            // Ordered by FromPosition, so an overlap exists when the current range starts at or before the previous range's end.
             if (ordered[i].FromPosition <= ordered[i - 1].ToPosition)
             {
                 throw new InvalidOperationException(

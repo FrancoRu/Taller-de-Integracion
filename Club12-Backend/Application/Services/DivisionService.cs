@@ -132,8 +132,7 @@ public class DivisionService(
     /// <returns>The Division entity if found; otherwise, null.</returns>
     public async Task<Division?> GetSimpleDivisionByIdAsync(Guid divisionId)
     {
-        // Eager-load the playoff mappings so the public division detail can
-        // expose its qualification ranges without a second round-trip.
+        // Eager-load the playoff mappings so the public division detail can expose its qualification ranges without a second round-trip.
         return await divisionRepository.GetByIdAsync(
             divisionId,
             includes: [division => division.PlayoffMappings]);
@@ -222,9 +221,7 @@ public class DivisionService(
             PageSize = PaginationDefaults.MaxPageSize,
         });
 
-        // Seed the table with every team assigned to the zone so the standings
-        // list all of them (at 0-0) from the start, not only once they have a
-        // finished match.
+        // Seed the table with every team assigned to the zone so the standings list all of them at 0-0 from the start, not only once they have a finished match.
         List<Team> rosterTeams = await GetAssignedTeamsAsync(groupStage.Id);
 
         return PositionCalculator.CalculatePositions(matches.Items, pointsForWin, pointsForLoss, deductions, rosterTeams);

@@ -17,10 +17,7 @@ public static class TournamentStatusTransitions
             [TournamentStatus.Scheduled] = [TournamentStatus.OpenForRegistration, TournamentStatus.Canceled],
             [TournamentStatus.OpenForRegistration] = [TournamentStatus.RegistrationClosed, TournamentStatus.Canceled],
             [TournamentStatus.RegistrationClosed] = [TournamentStatus.Ongoing, TournamentStatus.Canceled],
-            // Ongoing may be reverted back to RegistrationClosed ("revertir a
-            // borrador"): this reopens division assignment so a mis-assignment
-            // can be fixed, and tears down the generated fixture so re-starting
-            // rebuilds it from the corrected assignment.
+            // Ongoing may revert to RegistrationClosed to fix a division mis-assignment, tearing down the generated fixture so restarting rebuilds it correctly.
             [TournamentStatus.Ongoing] = [TournamentStatus.Finished, TournamentStatus.RegistrationClosed, TournamentStatus.Canceled],
             [TournamentStatus.Finished] = [],
             [TournamentStatus.Canceled] = [],

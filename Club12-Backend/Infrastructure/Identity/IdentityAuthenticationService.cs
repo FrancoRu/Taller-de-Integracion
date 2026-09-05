@@ -111,9 +111,7 @@ public sealed class IdentityAuthenticationService(
             throw new InvalidOperationException(ErrorMessages.Auth.EmailAlreadyExists);
         }
 
-        // HU-09: create the account by email only. No password is set here —
-        // UserName mirrors the email (Identity requires a unique UserName) and
-        // MustChangePassword keeps the account gated until activation completes.
+        // No password is set for an invited account; UserName mirrors the email since Identity requires a unique UserName, and MustChangePassword keeps the account gated until activation completes.
         ApplicationUser user = new()
         {
             UserName = request.Email,
@@ -134,10 +132,7 @@ public sealed class IdentityAuthenticationService(
 
         await userManager.AddToRoleAsync(user, request.Role.ToUpperInvariant());
 
-        // The activation token is a standard Identity password-reset token: it
-        // works on a passwordless account (it is derived from the SecurityStamp,
-        // not from an existing password) and is later verified by
-        // ActivateAccountAsync's ResetPasswordAsync call.
+        // The activation token is a standard Identity password-reset token, which works on a passwordless account because it derives from the SecurityStamp rather than an existing password, and it is later verified by ActivateAccountAsync's ResetPasswordAsync call.
         string token = await userManager.GeneratePasswordResetTokenAsync(user);
         string activationLink = BuildTokenLink(user.Email!, token, activation: true);
 
@@ -153,9 +148,7 @@ public sealed class IdentityAuthenticationService(
         ApplicationUser user = await userManager.FindByEmailAsync(request.Email)
             ?? throw new UnauthorizedAccessException(ErrorMessages.Auth.InvalidPasswordResetRequest);
 
-        // ResetPasswordAsync sets the password hash whether or not one already
-        // existed, so it doubles as "set the first password" for an invited,
-        // passwordless account (HU-09).
+        // ResetPasswordAsync sets the password hash whether or not one already existed, so it doubles as the first password set for an invited, passwordless account.
         IdentityResult result = await userManager.ResetPasswordAsync(
             user, request.Token, request.NewPassword);
 
@@ -178,8 +171,7 @@ public sealed class IdentityAuthenticationService(
     {
         ApplicationUser? user = await userManager.FindByEmailAsync(request.Email);
 
-        // Silently no-op for an unknown email so the endpoint never reveals
-        // which addresses have accounts (HU-10).
+        // Silently no-op for an unknown email so the endpoint never reveals which addresses have accounts.
         if (user is null)
         {
             return;
@@ -207,9 +199,7 @@ public sealed class IdentityAuthenticationService(
             throw new UnauthorizedAccessException(ErrorMessages.Auth.AccountDeactivated);
         }
 
-        // HU-05: the role model is now just the two operator accounts
-        // (Owner, Admin), both password-based. The former TeamManager-only
-        // magic-link gate was removed with that role.
+        // The role model is now just the two password-based operator accounts; the former TeamManager-only magic-link gate was removed along with that role.
         IList<string> roles = await userManager.GetRolesAsync(user);
         return await BuildTokenResponseAsync(user, roles, ct);
     }
@@ -221,10 +211,7 @@ public sealed class IdentityAuthenticationService(
         ApplicationUser user = await userManager.FindByEmailAsync(request.Email)
             ?? throw new KeyNotFoundException(ErrorMessages.Auth.NoAccountForEmail);
 
-        // HU-05 / D6: magic-link was the TeamManager-only auth path. That role
-        // no longer exists and the magic-link flow is deferred to Phase 2, so
-        // the former role gate was dropped; the token flow itself is left in
-        // place unchanged for that future use.
+        // Magic-link was the TeamManager-only auth path; that role no longer exists and the flow is deferred, so the role gate was dropped but the token flow itself is left in place for future use.
         string token = await userManager.GenerateUserTokenAsync(
             user, TokenOptions.DefaultEmailProvider, MagicLinkPurpose);
 

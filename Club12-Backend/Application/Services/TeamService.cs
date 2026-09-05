@@ -62,9 +62,7 @@ public class TeamService(
 
         await _teamRepository.AddAsync(teamEntity);
 
-        // So "Importar plantel de una temporada anterior" has a
-        // club history to search from day one, instead of only working after
-        // someone remembers to run the bulk backfill.
+        // Ensures the "Importar plantel de una temporada anterior" flow has a club history to search from day one, instead of only working after someone remembers to run the bulk backfill.
         await _clubService.EnsureTeamLinkedToClubAsync(teamEntity);
 
         return teamEntity;
@@ -138,14 +136,7 @@ public class TeamService(
         bool hasTournamentRegistrations = await _tournamentRegistrationRepository.ExistsAsync(
             registration => registration.TeamId == id);
 
-        // Team.Players is a DB-level cascade delete: removing the team also
-        // removes every player currently on its roster (Player.TeamId == id).
-        // `hasSanctions` above only covers TEAM-subject sanctions
-        // (PlayerSanction.TeamId), so a player with their OWN statistics,
-        // scorer records or player-subject sanctions would otherwise be
-        // silently wiped out along with their team, bypassing the exact
-        // history guard PlayerService.DeletePlayerAsync enforces when a
-        // player is deleted directly.
+        // Team.Players cascades on delete, so hasSanctions alone would let a player's own statistics, scorer records, or sanctions be silently wiped out without triggering PlayerService.DeletePlayerAsync's history guard.
         bool hasPlayersWithHistory =
             await _statisticRepository.ExistsAsync(statistic => statistic.Player!.TeamId == id)
             || await _scorerRepository.ExistsAsync(scorer => scorer.Player!.TeamId == id)
@@ -167,9 +158,7 @@ public class TeamService(
     /// <inheritdoc />
     public async Task EnsureTeamIdentityEditableAsync(Team existingTeam, string? requestedName, string? requestedThreeLetterCode)
     {
-        // Only a supplied (non-null) request field can change identity; the
-        // three-letter code is normalized to upper-case on the way in, so
-        // compare it case-insensitively.
+        // Only a supplied request field can change identity, and the three-letter code is normalized to upper-case on the way in, so it is compared case-insensitively.
         bool nameChanged = requestedName is not null
             && !string.Equals(requestedName, existingTeam.Name, StringComparison.Ordinal);
         bool codeChanged = requestedThreeLetterCode is not null
@@ -180,8 +169,7 @@ public class TeamService(
             return;
         }
 
-        // Identity is only frozen while the team is actually in an Ongoing
-        // tournament (via its denormalized current-season pointer).
+        // Identity is only frozen while the team is actually in an Ongoing tournament, via its denormalized current-season pointer.
         if (existingTeam.TournamentId is not Guid tournamentId)
         {
             return;
@@ -206,11 +194,7 @@ public class TeamService(
     /// <returns>A paginated response containing the filtered teams.</returns>
     public async Task<PaginatedResponse<Team>> GetAllTeamsAsync(GetTeamsFilteredRequest filter)
     {
-        // TournamentId is suppressed from the auto-generated FK-equality: a
-        // team's participation in a tournament is the TeamTournamentRegistration
-        // join, not the denormalized Team.TournamentId "current-season" pointer,
-        // so a team appears for every season it is registered in (including past
-        // ones whose pointer has since moved elsewhere).
+        // TournamentId is suppressed from the auto-generated filter because a team's participation in a tournament is the TeamTournamentRegistration join, not the denormalized current-season pointer, so a team appears for every season it is registered in.
         Expression<Func<Team, bool>> expression = QueryableExtensions.ConstructFilterExpression<Team, GetTeamsFilteredRequest>(
             filter, nameof(GetTeamsFilteredRequest.TournamentId));
 
@@ -283,15 +267,11 @@ public class TeamService(
                     .Where(r => r.TournamentId == season.Value)
                     .Select(r =>
                     {
-                        // Surface the season-scoped eligibility onto the roster
-                        // player (transient, not persisted) so responses expose
-                        // habilitado/not-habilitado per player.
+                        // Surface the season-scoped eligibility onto the roster player so responses expose habilitado or not-habilitado per player, without persisting it back.
                         r.Player!.MedicalRecordStatus = r.MedicalRecordStatus;
-                        // File-backed habilitación (medical-records-storage-eligibility):
-                        // a bool only, never the storage path — see Player.HasMedicalRecordFile.
+                        // The medical-record eligibility flag is a bool only, never the storage path; see Player.HasMedicalRecordFile.
                         r.Player!.HasMedicalRecordFile = PlayerTeamRegistration.IsStoredReference(r.MedicalRecordFileUrl);
-                        // Surface the season-scoped dorsal onto the
-                        // roster player (transient, not persisted).
+                        // Surface the season-scoped dorsal onto the roster player without persisting it back.
                         r.Player!.JerseyNumber = r.JerseyNumber;
                         return r.Player!;
                     })];
@@ -306,9 +286,7 @@ public class TeamService(
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task RegisterTeamsToTournamentAsync(Tournament tournament, List<Guid> teamIds)
     {
-        // Structural guard: team registrations may only be added or
-        // removed while the tournament is OpenForRegistration. Once
-        // registration closes the roster is frozen.
+        // Structural guard: team registrations may only be added or removed while the tournament is OpenForRegistration, since once registration closes the roster is frozen.
         if (tournament.Status != TournamentStatus.OpenForRegistration)
         {
             throw new InvalidOperationException(
@@ -321,8 +299,7 @@ public class TeamService(
             [.. await _tournamentRegistrationRepository.FindAsync(
                 registration => registration.TournamentId == tournament.Id)];
 
-        // Remove ONLY this tournament's registrations for teams no longer in
-        // the list — scoped by registration Id so no other season is affected.
+        // Remove only this tournament's registrations for teams no longer in the list, scoped by registration Id so no other season is affected.
         List<Guid> registrationIdsToRemove = [.. existingRegistrations
             .Where(registration => !targetTeamIds.Contains(registration.TeamId))
             .Select(registration => registration.Id)];
@@ -333,8 +310,7 @@ public class TeamService(
                 registration => registrationIdsToRemove.Contains(registration.Id));
         }
 
-        // Add a registration for every listed team that does not already have
-        // one for this tournament (upsert; existing rows are kept untouched).
+        // Add a registration for every listed team that does not already have one for this tournament, an upsert that leaves existing rows untouched.
         HashSet<Guid> alreadyRegisteredTeamIds = [.. existingRegistrations.Select(registration => registration.TeamId)];
 
         List<TeamTournamentRegistration> registrationsToAdd = [.. targetTeamIds
@@ -353,9 +329,7 @@ public class TeamService(
             await _tournamentRegistrationRepository.AddRangeAsync(registrationsToAdd);
         }
 
-        // Keep the denormalized current-season pointer in sync: listed teams
-        // point at this tournament, dropped teams currently pointing here are
-        // cleared. Teams pointing at a different tournament are left alone.
+        // Keep the denormalized current-season pointer in sync: listed teams point at this tournament, dropped teams pointing here are cleared, and teams pointing elsewhere are left alone.
         List<Team> affectedTeams = [.. await _teamRepository.FindAsync(team => teamIds.Contains(team.Id)
             || team.TournamentId == tournament.Id)];
 
@@ -377,8 +351,7 @@ public class TeamService(
         string? newTeamName,
         Guid? copyRosterFromTournamentId)
     {
-        // Fail fast with the same rejection RegisterTeamsToTournamentAsync uses,
-        // mapped to 409, before doing any work.
+        // Fail fast with the same rejection RegisterTeamsToTournamentAsync uses, mapped to 409, before doing any work.
         if (tournament.Status != TournamentStatus.OpenForRegistration)
         {
             throw new InvalidOperationException(
@@ -394,11 +367,7 @@ public class TeamService(
                 _ = await _teamRepository.GetByIdAsync(existing)
                     ?? throw new KeyNotFoundException(ErrorMessages.Team.NotFound(existing));
 
-                // A team can be enrolled only once per tournament. The unique
-                // (TeamId, TournamentId) index enforces it at the DB level, but
-                // RegisterTeamsToTournamentAsync is an idempotent upsert that
-                // would silently no-op instead of reporting the duplicate — so
-                // surface a clean conflict here (mapped to 409).
+                // A team can be enrolled only once per tournament, and since RegisterTeamsToTournamentAsync is an idempotent upsert that would silently no-op on a duplicate, surface a clean conflict here instead, mapped to 409.
                 bool alreadyEnrolled = await _tournamentRegistrationRepository.ExistsAsync(
                     registration => registration.TeamId == existing
                         && registration.TournamentId == tournament.Id);
@@ -417,10 +386,7 @@ public class TeamService(
                 enrolledTeamId = created.Id;
             }
 
-            // Additive enroll: keep every team already registered to this
-            // tournament and add the enrolled one. Passing only the new id would
-            // make RegisterTeamsToTournamentAsync reconcile the whole tournament
-            // and unregister the rest of the roster.
+            // Additive enroll: keep every team already registered to this tournament and add the new one, since passing only the new id would make RegisterTeamsToTournamentAsync unregister the rest of the roster.
             List<Guid> targetTeamIds =
             [
                 .. (await _tournamentRegistrationRepository.FindAsync(
@@ -431,8 +397,7 @@ public class TeamService(
 
             await RegisterTeamsToTournamentAsync(tournament, targetTeamIds);
 
-            // Copy roster is only meaningful for an existing team; the caller
-            // guarantees copyRosterFromTournamentId is only set with existingTeamId.
+            // Copy roster is only meaningful for an existing team; the caller guarantees copyRosterFromTournamentId is only set together with existingTeamId.
             if (existingTeamId is Guid teamToCopyInto && copyRosterFromTournamentId is Guid sourceTournamentId)
             {
                 await _rosterCopyService.CopyRosterAsync(
@@ -447,9 +412,7 @@ public class TeamService(
     /// <inheritdoc />
     public async Task UnenrollTeamAsync(Tournament tournament, Guid teamId)
     {
-        // Roster-editing window guard: teams may only be removed before the
-        // tournament starts (OpenForRegistration or RegistrationClosed). Mapped
-        // to 409 by the global handler.
+        // Roster-editing window guard: teams may only be removed before the tournament starts, while OpenForRegistration or RegistrationClosed, mapped to 409 by the global handler.
         if (tournament.Status is not (TournamentStatus.OpenForRegistration or TournamentStatus.RegistrationClosed))
         {
             throw new InvalidOperationException(
@@ -464,8 +427,7 @@ public class TeamService(
             throw new KeyNotFoundException(ErrorMessages.Team.NotEnrolled(teamId, tournament.Id));
         }
 
-        // Stage ids that belong to this tournament (via its divisions), so only
-        // THIS tournament's assignments for the team are removed.
+        // Stage ids belonging to this tournament via its divisions, so only this tournament's assignments for the team are removed.
         List<Guid> divisionIds = [.. (await _unitOfWork.DivisionRepository.FindAsync(
             division => division.TournamentId == tournament.Id)).Select(division => division.Id)];
 
@@ -476,23 +438,19 @@ public class TeamService(
 
         await _unitOfWork.ExecuteInTransactionAsync(async () =>
         {
-            // This tournament's season registration for the team.
             await _tournamentRegistrationRepository.RemoveAsync(
                 registration => registration.TeamId == teamId && registration.TournamentId == tournament.Id);
 
-            // This tournament's roster registrations for the team.
             await _registrationRepository.RemoveAsync(
                 registration => registration.TeamId == teamId && registration.TournamentId == tournament.Id);
 
-            // This tournament's stage assignments for the team.
             if (stageIds.Count > 0)
             {
                 await _unitOfWork.StageTeamMatchRepository.RemoveAsync(
                     match => match.TeamId == teamId && stageIds.Contains(match.StageId));
             }
 
-            // Clear the denormalized current-season pointer only when it points
-            // at this tournament; a team pointing at another season is untouched.
+            // Clear the denormalized current-season pointer only when it points at this tournament; a team pointing at another season is untouched.
             Team? team = await _teamRepository.GetByIdAsync(teamId);
             if (team is not null && team.TournamentId == tournament.Id)
             {
@@ -528,28 +486,20 @@ public class TeamService(
     /// <inheritdoc />
     public async Task<TeamSummaryResponse?> GetTeamSummaryAsync(Guid teamId, Guid? tournamentId)
     {
-        // No season context (team has no current tournament and none was
-        // requested) means there is no standing to report.
+        // No season context means there is no standing to report, since the team has no current tournament and none was requested.
         if (tournamentId is null)
         {
             return null;
         }
 
-        // Prefer the team's real competitive division (its zone) over a
-        // cross-division cup like "Copa Club 12": a team can belong to BOTH, and
-        // the division is what matters for its standing — the cup is secondary.
-        // Ordering cups last means the first group table that contains the team
-        // is its zone whenever it has one.
+        // Preferring the team's real division over a cross-division cup, and ordering cups last, ensures the first group table containing the team is its own zone whenever it has one.
         List<Division> divisions = [.. (await _divisionRepository.FindAsync(
             division => division.TournamentId == tournamentId.Value))
             .OrderBy(division => division.IsCrossDivisionCup)];
 
         foreach (Division division in divisions)
         {
-            // Reuse the canonical standings computation (per group) instead of
-            // recomputing it here — a regular zone yields one group, a
-            // cross-division cup one per internal group, and the team's rank is
-            // always within its own group's table.
+            // Reuse the canonical per-group standings computation instead of recomputing it here, since a regular zone yields one group and a cross-division cup yields one per internal group.
             List<GroupStandings> groups = await _divisionService.GetGroupStandingsByDivisionIdAsync(division.Id);
 
             var located = groups
@@ -581,8 +531,7 @@ public class TeamService(
             }
         }
 
-        // The team plays in no group-stage table for this tournament
-        // (playoff-only, unassigned, or no finished matches yet).
+        // The team plays in no group-stage table for this tournament, whether playoff-only, unassigned, or with no finished matches yet.
         return null;
     }
 
@@ -594,10 +543,7 @@ public class TeamService(
             return [];
         }
 
-        // Read the team's matches (either side) scoped to the tournament via its
-        // stage → division → tournament chain. Queried directly rather than
-        // through the paginated match filter, which has no "by team" predicate
-        // and would cap a tournament-wide read at one page.
+        // Queried directly rather than through the paginated match filter, which has no by-team predicate and would cap a tournament-wide read at one page.
         List<Match> matches = [.. await _matchRepository.FindAsync(
             match => (match.HomeTeamId == teamId || match.VisitorTeamId == teamId)
                 && match.Stage.Division.TournamentId == tournamentId.Value,
@@ -637,8 +583,7 @@ public class TeamService(
                 Year = tournament.Season?.Year,
                 IsCurrent = currentTournamentId.HasValue && tournament.Id == currentTournamentId.Value,
             })
-            // Newest first: known years descending, participations without a
-            // season year last, ties broken by tournament name.
+            // Newest first: known years descending, participations without a season year last, ties broken by tournament name.
             .OrderByDescending(participation => participation.Year.HasValue)
             .ThenByDescending(participation => participation.Year)
             .ThenBy(participation => participation.TournamentName, StringComparer.OrdinalIgnoreCase)];

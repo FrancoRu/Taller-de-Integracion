@@ -37,10 +37,7 @@ public sealed class PsqlDatabaseRestoreService(
             "-p", builder.Port.ToString(),
             "-U", builder.Username ?? string.Empty,
             "-d", builder.Database ?? string.Empty,
-            // ON_ERROR_STOP=1 turns the first SQL error inside the dump into
-            // a non-zero psql exit code instead of silently continuing past
-            // it, so a partial/failed restore is detected rather than
-            // reported as success.
+            // ON_ERROR_STOP=1 turns the first SQL error in the dump into a non-zero exit code instead of continuing silently, so a partial or failed restore is detected instead of reported as success.
             "-v", "ON_ERROR_STOP=1",
             "-f", dumpFilePath,
         ];

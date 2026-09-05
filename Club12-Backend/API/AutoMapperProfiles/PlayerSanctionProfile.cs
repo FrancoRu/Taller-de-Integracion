@@ -17,8 +17,7 @@ public class PlayerSanctionProfile : Profile
                 opt => opt.MapFrom(src => src.Player != null ? src.Player.FullName : null))
             .ForMember(dest => dest.TeamName,
                 opt => opt.MapFrom(src => src.Team != null ? src.Team.Name : null))
-            // FechasRemaining / IsActive are computed against finished rounds
-            // (HU-75/HU-76) and populated by the controller, not mapped here.
+            // FechasRemaining and IsActive are computed against finished rounds and populated by the controller, not mapped here.
             .ForMember(dest => dest.FechasRemaining, opt => opt.Ignore())
             .ForMember(dest => dest.IsActive, opt => opt.Ignore())
             .ReverseMap()

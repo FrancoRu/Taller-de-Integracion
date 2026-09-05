@@ -1,6 +1,6 @@
 # Club12 Backend — XML Documentation Standard
 
-> **Scope:** This document covers **XML doc comments** (`/// <summary>` and friends) and **one rule of file organization** (one type per file — see FILE-001) across `Domain`, `Application`, `Infrastructure`, and `API`. It intentionally does not cover naming, code style, nullable reference types, async conventions, or testing — those aren't in scope for this pass. `API.Tests` is excluded (test methods are self-documenting via their names; see the project's existing `MethodName_Scenario_ExpectedResult` convention).
+> **Scope:** This document covers **XML doc comments** (`/// <summary>` and friends), **inline `//` comments** (see INLINE-001), and **one rule of file organization** (one type per file — see FILE-001) across `Domain`, `Application`, `Infrastructure`, and `API`. It intentionally does not cover naming, code style, nullable reference types, async conventions, or testing — those aren't in scope for this pass. `API.Tests` is excluded (test methods are self-documenting via their names; see the project's existing `MethodName_Scenario_ExpectedResult` convention).
 >
 > **Stack facts this document is grounded in (verified 2026-09-05):** .NET 8, xUnit 2.9.3. No `.editorconfig` exists. `Directory.Build.props` sets `<NoWarn>$(NoWarn);CS1591</NoWarn>` — missing-XML-doc warnings are suppressed, so nothing here is compiler-enforced; it's a review convention. `GenerateDocumentationFile=true` is set on all four non-test projects, but **Swagger (`AddCustomSwagger` in `API/Utils/StartupExtensions.cs`) only calls `IncludeXmlComments` for the API project's own generated XML file** — Domain/Application/Infrastructure XML comments never reach Swagger UI, they're IDE-only (IntelliSense). Rule XML-005 below addresses this gap directly.
 
@@ -123,6 +123,29 @@ The structural, block-level tags — `<param>`, `<returns>`, `<exception>`, `<ty
 /// <summary>
 /// Short-circuits remaining fechas to 0 when the appeal is accepted, leaving Duration untouched.
 /// </summary>
+```
+
+---
+
+## Rule INLINE-001 — Inline `//` comments follow the same discipline as XML docs
+
+**Added 2026-09-05.** Inline `//` comments were out of scope for the first pass, but the same principles apply once they're in scope:
+
+1. **WHY, not WHAT** (same as XML-002). A `//` comment narrating what the next line does is noise — the code already says that. Keep only comments that state a business rule, an invariant, a workaround, or a reason a check exists.
+2. **No parentheses.** Same as XML-006 — fold the aside into the sentence or cut it.
+3. **No user-story/ticket references** (`HU-99` and the like) — describe the actual rule, don't point at a ticket number.
+4. **No example call-outs** — no "e.g.", "for example", "such as", "like X".
+5. **One line.** A `//` comment is one short sentence. If it needs more than that, it's saying too much — cut it down to the one fact that earns it.
+6. **Delete comments that just restate the line below them.** If removing the comment wouldn't confuse a future reader, don't write it.
+
+```csharp
+// ❌ VIOLATION — restates the code, has a ticket ref and a parenthetical
+// Loop through the pending matches (HU-101) and cancel them one by one.
+foreach (Match match in pendingMatches)
+
+// ✅ CORRECT — states the invariant the code doesn't say on its own
+// A canceled match must never read as played, so IsFinished stays untouched here.
+match.Status = MatchStatus.Canceled;
 ```
 
 ---

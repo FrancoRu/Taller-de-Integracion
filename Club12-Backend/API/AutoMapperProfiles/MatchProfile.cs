@@ -26,17 +26,10 @@ public class MatchProfile : Profile
             .ForMember(dest => dest.VisitorTeam, opt => opt.MapFrom(src => src.VisitorTeam))
             .ForMember(dest => dest.WinningTeamName, opt => opt.MapFrom(src => src.WinningTeam != null ? src.WinningTeam.Name : null))
             .ForMember(dest => dest.WinningTeamId, opt => opt.MapFrom(src => src.WinningTeam != null ? src.WinningTeam.Id : (Guid?) null))
-            // Score/Scorers are set here rather than via ForPath — a ForPath
-            // targeting dest.HomeTeam!.Score forces AutoMapper to instantiate
-            // HomeTeam even when src.HomeTeam is null (a not-yet-seeded bracket
-            // slot), producing a fake team (Guid.Empty id, null name) instead of
-            // a genuinely empty slot the frontend can render as "A definir".
-            // Attribute each of the match's scorers to its team via the player's
-            // TeamId (Scorer has no TeamId) and aggregate per player, so the match
-            // page can list "goleadores del partido" per side. Requires the match
-            // to be loaded with Scorers.Player (see IMatchRepository).
+            // Score and Scorers are set here instead of via ForPath, since ForPath would force AutoMapper to instantiate HomeTeam even when src.HomeTeam is null, producing a fake team instead of an empty bracket slot.
             .AfterMap((src, dest) =>
             {
+                // Each match's scorers are attributed to a team via the player's TeamId since Scorer itself has no TeamId, which requires the match to be loaded with Scorers.Player.
                 Guid? tournamentId = src.Stage?.Division?.TournamentId;
 
                 if (dest.HomeTeam is not null)

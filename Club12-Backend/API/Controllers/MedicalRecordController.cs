@@ -48,8 +48,7 @@ public class MedicalRecordController(
             return BadRequest(ErrorMessages.MedicalRecord.InvalidPdfFile);
         }
 
-        // HU-57: reject the upload up front — before touching storage — when the
-        // ficha is already Approved. An habilitado record is view/download only.
+        // Rejects the upload before touching storage when the ficha is already Approved, since an approved record is view or download only.
         MedicalRecordResponse? current = await medicalRecordService.GetAsync(
             request.PlayerId, request.TeamId, request.TournamentId);
 

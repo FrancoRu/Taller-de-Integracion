@@ -188,8 +188,7 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork, IStageService stageS
         int homeScore = request.HomeScores.Sum(entry => entry.Points);
         int visitorScore = request.VisitorScores.Sum(entry => entry.Points);
 
-        // Validated above and the tie-check below both throw before this line
-        // touches the database — nothing is written on a rejected sheet.
+        // Validated above and the tie-check below both throw before this line touches the database, so nothing is written on a rejected sheet.
         MatchResultFinalizer.ApplyResult(match, homeScore, visitorScore);
         match.WentToOvertime = request.WentToOvertime;
         await _matchRepository.UpdateAsync(match);
@@ -289,12 +288,7 @@ public class PlayerStatisticService(IUnitOfWork unitOfWork, IStageService stageS
                 continue;
             }
 
-            // Eligible only when NOT sanctioned AND habilitado for this
-            // team+tournament: the medical record must be Approved
-            // AND carry a real stored file (medical-records-storage-eligibility)
-            // — Approved alone is not enough. A Pending or Rejected registration
-            // — including a brand-new season's, which never inherits a prior
-            // approval — is not habilitado either.
+            // Eligible only when not sanctioned and habilitado for this team and tournament: the medical record must be Approved and carry a real stored file, and a Pending or Rejected registration, including a brand-new season's which never inherits a prior approval, is not habilitado either.
             bool sanctioned = !playersById.TryGetValue(playerId, out Player? player) || player.IsSanctioned;
             if (sanctioned || !registration.IsHabilitado)
             {

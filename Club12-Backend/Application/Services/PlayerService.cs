@@ -88,10 +88,7 @@ public class PlayerService(
 
     public async Task DeletePlayerAsync(Guid id)
     {
-        // Integrity: a player who already has match statistics, scorer records
-        // or sanctions is part of the tournament history — deleting them would
-        // orphan those records, so the deletion is blocked. Otherwise the
-        // player's season registrations are cleaned up and the player removed.
+        // A player who already has match statistics, scorer records, or sanctions is part of the tournament history, so deleting them would orphan those records and is blocked; otherwise their season registrations are cleaned up and the player is removed.
         bool hasStatistics = await _statisticRepository.ExistsAsync(statistic => statistic.PlayerId == id);
         bool hasScorers = await _scorerRepository.ExistsAsync(scorer => scorer.PlayerId == id);
         bool hasSanctions = await _sanctionRepository.ExistsAsync(sanction => sanction.PlayerId == id);
@@ -120,8 +117,7 @@ public class PlayerService(
                 ErrorMessages.Roster.PlayerAlreadyInAnotherTeam(playerId, tournamentId));
         }
 
-        // Dorsal must be unique within the same team + tournament
-        // (ignoring this same player's own current registration).
+        // Dorsal must be unique within the same team and tournament, ignoring this player's own current registration.
         if (jerseyNumber is not null)
         {
             bool dorsalTaken = await _registrationRepository.ExistsAsync(candidate =>
@@ -139,9 +135,7 @@ public class PlayerService(
 
         if (registration is null)
         {
-            // Enforce the configurable roster-size cap when adding a
-            // brand-new member (re-registering an existing member does not grow
-            // the roster, so it skips this check).
+            // Enforces the configurable roster-size cap only when adding a brand-new member, since re-registering an existing member does not grow the roster.
             int currentRosterSize = await _registrationRepository.CountAsync(
                 candidate => candidate.TeamId == teamId && candidate.TournamentId == tournamentId);
 
@@ -166,7 +160,7 @@ public class PlayerService(
             return created;
         }
 
-        // Same player, same team: keep the dorsal in sync (idempotent add/edit).
+        // Same player, same team: keeps the dorsal in sync as an idempotent add or edit.
         registration.JerseyNumber = jerseyNumber;
         registration.DateUpdated = DateTime.UtcNow;
         await _registrationRepository.UpdateAsync(registration);
@@ -175,13 +169,7 @@ public class PlayerService(
 
     public async Task UpdatePlayerAsync(Player playerEntity, Guid tournamentId)
     {
-        // Validate the roster move BEFORE persisting the Player row: this
-        // repository commits immediately (no shared transaction), so if the
-        // Player.TeamId write landed first and the registration move then
-        // threw (e.g. destination roster full), Player.TeamId would point at
-        // a team the player was never actually validly registered to for
-        // this season — a silent inconsistency between the "current team"
-        // pointer and the season-scoped source of truth.
+        // Validates the roster move before persisting the Player row since this repository commits immediately with no shared transaction, so persisting first and then failing the move would leave Player.TeamId pointing at a team the player was never validly registered to for this season.
         await EnsureDocumentNumberIsUniqueAsync(playerEntity.DocumentNumber, excludingPlayerId: playerEntity.Id);
         await ValidateRegistrationMoveAsync(playerEntity, tournamentId);
         await _playerRepository.UpdateAsync(playerEntity);
@@ -265,15 +253,10 @@ public class PlayerService(
 
         if (registration.TeamId != playerEntity.TeamId)
         {
-            // Capacity was already validated by ValidateRegistrationMoveAsync
-            // before the Player row was persisted.
+            // Capacity was already validated by ValidateRegistrationMoveAsync before the Player row was persisted.
             registration.TeamId = playerEntity.TeamId;
 
-            // The dorsal is unique within (TeamId, TournamentId, JerseyNumber) —
-            // carrying it over to the new team could collide with a player
-            // already wearing it there and throw a raw DB constraint violation
-            // instead of a friendly error. Reset it; the admin re-assigns a
-            // dorsal on the new team explicitly after the move.
+            // The dorsal is unique per team, tournament, and jersey number, so carrying it over could collide with another player on the new team; it is reset instead, and the admin re-assigns one explicitly after the move.
             registration.JerseyNumber = null;
 
             registration.DateUpdated = DateTime.UtcNow;

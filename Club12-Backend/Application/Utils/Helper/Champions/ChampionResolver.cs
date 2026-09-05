@@ -109,8 +109,7 @@ public static class ChampionResolver
         bool singleBracket = bracketNames.Count <= 1;
         Dictionary<Guid, TeamRef> teamsById = BuildTeamLookup(eliminationMatches, series);
 
-        // Seed order per bracket: the cup receiving the lowest FromPosition is the
-        // top tier. Brackets not named by any mapping sort after, by name.
+        // The cup receiving the lowest FromPosition is the top seed tier; brackets unnamed by any mapping sort after, by name.
         Dictionary<string, int> seedByBracket = mappings
             .GroupBy(mapping => mapping.Destination)
             .ToDictionary(group => group.Key, group => group.Min(m => m.FromPosition));

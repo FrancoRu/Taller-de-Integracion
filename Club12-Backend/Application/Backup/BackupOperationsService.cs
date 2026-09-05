@@ -71,9 +71,7 @@ public sealed class BackupOperationsService(
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                // spec backup-catalog#Delete-Removes-Both-Stored-File-and-Catalog-Record:
-                // an already-missing file (deleted out-of-band) must not block removing the
-                // catalog row — log and continue.
+                // An already-missing file deleted out-of-band must not block removing the catalog row, so log and continue.
                 logger.LogWarning(
                     ex,
                     "Backup file could not be deleted from storage; removing catalog record anyway. StoragePath: {StoragePath}",
@@ -127,9 +125,7 @@ public sealed class BackupOperationsService(
 
                 await restoreService.RestoreAsync(tempFilePath, ct);
 
-                // Record the restore for traceability — non-throwing by
-                // contract via IAuditService.LogAsync, so a logging hiccup never
-                // turns a successful restore into a reported failure.
+                // Logging the restore is non-throwing by contract via IAuditService.LogAsync, so a logging hiccup never turns a successful restore into a reported failure.
                 await auditService.LogAsync(
                     AuditAction.BackupRestore,
                     targetType: nameof(BackupRecord),

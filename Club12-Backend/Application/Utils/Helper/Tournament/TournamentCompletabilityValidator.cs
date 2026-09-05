@@ -60,11 +60,9 @@ public static class TournamentCompletabilityValidator
 
         Dictionary<Guid, string> teamNames = BuildTeamNames(tournament, enrolledRegistrations);
 
-        // Distinct teams assigned to each regular zone (across its Group stages).
         Dictionary<Guid, HashSet<Guid>> assignedTeamsByDivision = regularDivisions
             .ToDictionary(division => division.Id, division => GroupStageTeamIds(division));
 
-        // Reverse map: which regular zones each team is assigned to.
         Dictionary<Guid, HashSet<Guid>> zonesByTeam = [];
         foreach ((Guid divisionId, HashSet<Guid> teamIds) in assignedTeamsByDivision)
         {
@@ -79,7 +77,6 @@ public static class TournamentCompletabilityValidator
             }
         }
 
-        // Rule 1 — ZoneTooFewTeams: every regular zone needs >= MinTeamsPerZone.
         foreach (Division division in regularDivisions)
         {
             int assigned = assignedTeamsByDivision[division.Id].Count;
@@ -94,8 +91,7 @@ public static class TournamentCompletabilityValidator
             }
         }
 
-        // Rule 2 — TeamNotAssigned: every enrolled team must sit in some zone.
-        // Being only in the cross cup does NOT satisfy this.
+        // A team assigned only to the cross cup does not satisfy zone assignment.
         HashSet<Guid> enrolledTeamIds = [.. enrolledRegistrations.Select(registration => registration.TeamId)];
         foreach (Guid teamId in enrolledTeamIds.OrderBy(id => ResolveTeamName(teamNames, id)))
         {
@@ -109,7 +105,6 @@ public static class TournamentCompletabilityValidator
             }
         }
 
-        // Rule 3 — TeamInMultipleZones: a team assigned to more than one zone.
         foreach ((Guid teamId, HashSet<Guid> zones) in zonesByTeam
             .Where(entry => entry.Value.Count > 1)
             .OrderBy(entry => ResolveTeamName(teamNames, entry.Key)))
@@ -121,9 +116,7 @@ public static class TournamentCompletabilityValidator
             });
         }
 
-        // Rule 4 — PlayoffRangeExceedsTeams: a mapping whose FromPosition is
-        // beyond the zone's assigned team count seeds a cup from positions that
-        // will never exist.
+        // A mapping whose FromPosition exceeds the zone's assigned team count seeds a cup from positions that will never exist.
         foreach (Division division in regularDivisions)
         {
             int assigned = assignedTeamsByDivision[division.Id].Count;
@@ -141,8 +134,6 @@ public static class TournamentCompletabilityValidator
             }
         }
 
-        // Rule 5 — CrossCupGroupTooFewTeams: each cross-cup Group stage needs
-        // >= MinTeamsPerZone assigned teams.
         foreach (Division crossCup in crossCupDivisions)
         {
             foreach (Stage groupStage in crossCup.Stages.Where(stage => stage.StageType == StageType.Group))
@@ -160,10 +151,7 @@ public static class TournamentCompletabilityValidator
             }
         }
 
-        // Rule 6 — TeamTooFewPlayers: every enrolled team needs >= MinPlayersPerTeam
-        // HABILITADO players — basketball's minimum to avoid a walkover — to
-        // ever field a legal lineup. Skipped when the caller didn't load
-        // player-count data.
+        // Every enrolled team needs at least MinPlayersPerTeam HABILITADO players, basketball's minimum to field a legal lineup without a walkover, skipped when the caller did not load player-count data.
         if (playerCountsByTeam is not null)
         {
             foreach (Guid teamId in enrolledTeamIds.OrderBy(id => ResolveTeamName(teamNames, id)))

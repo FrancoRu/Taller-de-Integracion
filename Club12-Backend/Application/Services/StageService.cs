@@ -220,11 +220,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
             bool hasGroupStage = await _stageRepository.ExistsAsync(
                 s => s.DivisionId == stageEntity.DivisionId && s.StageType == StageType.Group);
 
-            // A multi-group cross-division cup, "Copa Club12", is
-            // seeded by pooling the top teams of SEVERAL internal group
-            // stages, so it may legitimately hold more than one Group stage.
-            // Every regular division keeps the original one-Group-per-division
-            // rule (a second one would be an orphaned, ambiguous fixture).
+            // A multi-group cross-division cup is seeded by pooling the top teams of several internal group stages, so it may legitimately hold more than one Group stage, while every regular division keeps the one-Group-per-division rule since a second one would be an orphaned, ambiguous fixture.
             bool isCrossDivisionCup = await _divisionRepository.ExistsAsync(
                 d => d.Id == stageEntity.DivisionId && d.IsCrossDivisionCup);
 
@@ -390,14 +386,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
 
         IEnumerable<StageTeamMatch> existingMatches = await _stageTeamMatchRepository.FindAsync(stageTeamMatch => stageTeamMatch.StageId == stage.Id);
 
-        // MaxTeams.GROUP (4) is the auto-bracket-generator's fixed group
-        // SIZE (see CreateAutomatedStagesAsync below), not a general cap on
-        // how many teams a Group-type stage may ever hold. A single Group
-        // stage manually built by the tournament wizard represents a whole
-        // zone's round-robin phase and can legitimately need far more than
-        // 4 teams (e.g. a 9- or 14-team zone), so it's capped at the same
-        // ceiling the tournament itself enforces instead of the
-        // auto-generator's per-group size.
+        // MaxTeams.GROUP is only the auto-bracket-generator's fixed group size, not a general cap on how many teams a Group-type stage may hold, since a manually built Group stage represents a whole zone's round-robin phase and can need far more, so it is capped at the same ceiling the tournament itself enforces instead of the auto-generator's per-group size.
         int maxTeams = stage.StageType == StageType.Group
             ? MaxTeams.GROUP_STAGE_CAP
             : StageHelper.GetMaxTeamsForStage(stage.StageType);
@@ -551,12 +540,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
             throw new InvalidOperationException(ErrorMessages.Stage.AlreadySeeded);
         }
 
-        // A cross-division cup with more than one internal group is
-        // seeded by pooling the top QualifiersPerGroup teams of every group
-        // and ordering them by group-stage strength, rather than from the
-        // teams pre-assigned to this stage. A cross cup with a single group,
-        // and every regular division, falls through to the unchanged
-        // single-standings path below.
+        // A cross-division cup with more than one internal group is seeded by pooling the top QualifiersPerGroup teams of every group and ordering them by group-stage strength rather than the teams pre-assigned to this stage; a cross cup with a single group, and every regular division, falls through to the single-standings path below.
         if (stage.Division.IsCrossDivisionCup)
         {
             List<Stage> groupStages = [.. await _stageRepository.FindAsync(
@@ -672,12 +656,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
                 continue;
             }
 
-            // A cup with more than one round (e.g. Semifinal + Final) has EVERY
-            // round unseeded at this point — Stage.Order is never actually set
-            // for wizard-built stages (CreateDivisionWithStagesAsync never
-            // assigns it), so it cannot disambiguate which round is "first".
-            // Bracket depth (EliminationProgression) can: the group-stage
-            // standings always seed the EARLIEST round of the cup.
+            // A cup with more than one round has every round unseeded at this point, and Stage.Order is never actually set for wizard-built stages, so it cannot disambiguate which round is first; bracket depth via EliminationProgression can, since the group-stage standings always seed the earliest round of the cup.
             Stage cupStage = eliminationStages
                 .Where(s => s.BracketName == destination
                     && s.Matches.Count > 0
@@ -690,9 +669,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
             await _matchRepository.UpdateRangeAsync(seeded);
             seededByCup[destination] = seeded;
 
-            // A bye is already decided the moment it is seeded (no match needs
-            // to be played) — push it into the next round right away instead of
-            // waiting for a result-loading call that will never come for it.
+            // A bye is already decided the moment it is seeded since no match needs to be played, so it is pushed into the next round right away instead of waiting for a result-loading call that will never come.
             await TryAdvanceStageWinnerAsync(cupStage.Id);
         }
 
@@ -739,10 +716,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
             bool anyEliminationStageSeeded = eliminationStages
                 .Exists(s => s.Matches.Any(m => m.HomeTeamId.HasValue || m.VisitorTeamId.HasValue));
 
-            // Nothing to seed, or an admin already seeded a cup by hand — auto-seed
-            // only ever fires from a fully-unseeded state, so it never fights a
-            // partial manual seed (SeedPlayoffCupsAsync would throw for whichever
-            // cup is already done).
+            // Nothing to seed, or an admin already seeded a cup by hand: auto-seed only ever fires from a fully-unseeded state, so it never fights a partial manual seed since SeedPlayoffCupsAsync would throw for whichever cup is already done.
             if (eliminationStages.Count == 0 || anyEliminationStageSeeded)
             {
                 return;
@@ -824,21 +798,14 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
                 return;
             }
 
-            // One entry per bracket slot: once a series' 2nd/3rd game gets
-            // added (AddGameToSeriesAsync), it lands in this SAME stage's
-            // Matches too — only that slot's game 1 (or its lone match, for a
-            // BestOf=1/bye slot, which never gets a GameNumber) represents the
-            // slot itself, so later games must be filtered out here.
+            // One entry per bracket slot: once a series' second or third game gets added, it lands in this same stage's Matches too, so only that slot's game 1, or its lone match for a bye slot which never gets a GameNumber, represents the slot itself and later games must be filtered out here.
             List<Match> orderedMatches = [.. stage.Matches
                 .Where(m => m.GameNumber is null or 1)
                 .OrderBy(m => m.MatchDate).ThenBy(m => m.Id)];
 
             await AdvanceWinnersToNextRoundAsync(stage, orderedMatches);
 
-            // The third-place decider is a side slot, not part of the main
-            // advancement line (EliminationProgression skips it) — it is
-            // populated separately, from the semifinal's LOSERS, once both
-            // semifinal slots are decided.
+            // The third-place decider is a side slot, not part of the main advancement line since EliminationProgression skips it; it is populated separately, from the semifinal's losers, once both semifinal slots are decided.
             if (stage.StageType == StageType.SemiFinal)
             {
                 await AdvanceLosersToThirdPlaceAsync(stage, orderedMatches);
@@ -918,10 +885,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
             return;
         }
 
-        // A target slot that just got its second team AND belongs to a
-        // series-based round becomes game 1 of a new series — the exact
-        // same treatment a freshly-seeded first round gets
-        // (FillStageWithSeedsAsync).
+        // A target slot that just got its second team and belongs to a series-based round becomes game 1 of a new series, the same treatment a freshly-seeded first round gets.
         if (nextStage.BestOf > 1)
         {
             foreach (Match target in touched)

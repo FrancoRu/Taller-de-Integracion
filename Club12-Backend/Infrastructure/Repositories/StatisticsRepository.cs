@@ -73,9 +73,7 @@ public class StatisticsRepository(ApplicationDBContext context) : IStatisticsRep
             return null;
         }
 
-        // Season/team come from the season-scoped registrations (HU-88 / D2):
-        // the source of truth for "which team, which season", untouched by a
-        // team being reassigned to a later tournament.
+        // Season and team come from the season-scoped registrations, the source of truth for which team and which season, untouched by a team being reassigned to a later tournament.
         List<RegistrationRow> registrations = await _context.Set<PlayerTeamRegistration>()
             .Where(r => r.PlayerId == playerId)
             .Select(r => new RegistrationRow(

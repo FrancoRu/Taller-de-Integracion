@@ -49,7 +49,6 @@ public sealed class DataSeeder(
 
     private const int UpsetPercent = 26;
 
-    // --- Torneo Femenino — Zona Única (7 real Paraná/Entre Ríos clubs).
     private static readonly string[] FemeninoNames =
     [
         "Patronato", "Peñarol de Paraná", "Bancario", "Sportivo Urquiza",
@@ -64,7 +63,6 @@ public sealed class DataSeeder(
     private static readonly string[] FemeninoSecondaryColors =
         ["#FFFFFF", "#FDE047", "#FFFFFF", "#1E293B", "#FFFFFF", "#1E293B", "#FFFFFF"];
 
-    // --- Torneo Masculino — Zona A (10 real Paraná/Entre Ríos clubs).
     private static readonly string[] ZonaANames =
     [
         "Echagüe", "Estudiantes de Paraná", "Paraná Rowing Club", "Sionista",
@@ -89,7 +87,6 @@ public sealed class DataSeeder(
         "#FDE047", "#1E293B", "#FFFFFF", "#FDE047", "#FFFFFF",
     ];
 
-    // --- Torneo Masculino — Zona B (10 real Paraná/Entre Ríos clubs).
     private static readonly string[] ZonaBNames =
     [
         "Regatas Uruguay", "Estudiantes de Concordia", "Social y Deportivo Colón", "Neptunia",
@@ -114,7 +111,6 @@ public sealed class DataSeeder(
         "#FDE047", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#1E293B",
     ];
 
-    // --- Torneo Masculino — Zona C (13 real/plausible Paraná/Entre Ríos clubs).
     private static readonly string[] ZonaCNames =
     [
         "Atlético Gualeguay", "Capuchinos", "Ministerio de Villa Elisa", "Litoral de Colón",
@@ -156,16 +152,7 @@ public sealed class DataSeeder(
         .. Zip(ZonaCNames, ZonaCCodes, ZonaCColors, ZonaCStyles, ZonaCSecondaryColors),
     ];
 
-    // Femenino: a single Copa de Oro spans the whole standings (all 7 teams
-    // qualify — there is no Copa Plata for this tournament). Masculino: each
-    // zone earns its own Copa Oro (top 4) + Copa Plata (the rest of the
-    // standings; positions past ToPosition are out of both cups) from its
-    // final group standings (HU-45), via SeedCupPlayoffs/SeedEliminationBracket
-    // — each registers a DivisionPlayoffMapping the standings colouring reads
-    // to tint the qualifying positions, and byes pad brackets that aren't a
-    // power of two (e.g. Zona C's 9-team Copa Plata) to the best seeds. BestOf
-    // 3 applies to every cup's SemiFinal + Final only; any earlier round
-    // always plays Bo1.
+    // BestOf 3 applies to each cup's SemiFinal and Final only; every earlier round always plays best-of-1.
     private static readonly SampleTournamentBuilder.PlayoffCupDefinition[] FemeninoCups =
     [
         new("Copa de Oro", FromPosition: 1, ToPosition: 7, BestOf: 3),
@@ -181,15 +168,7 @@ public sealed class DataSeeder(
         new("Copa Plata", FromPosition: 5, ToPosition: 13, BestOf: 3),
     ];
 
-    // Copa Cruzada: a 4th masculine competition, structurally its own
-    // division (parallel to, not nested inside, Zonas A/B/C) built via the
-    // tournament's CrossCup wiring restricted to a 23-team pool (TeamPoolSize)
-    // — the first 23 of the 33 Zona A/B/C teams in build order (Zona A + Zona
-    // B in full, Zona C's first 3), reusing real rosters instead of inventing
-    // a disjoint set of teams, mirroring how real leagues have overlapping
-    // club rosters across parallel competitions. 23 teams / 6 groups splits
-    // into 5 zones of 4 + 1 of 3; the top 2 of each (12 teams, byes to the
-    // best seeds since 12 isn't a power of two) feed the combined playoff.
+    // TeamPoolSize reuses real rosters from the Zona A, B, and C teams in build order instead of inventing a disjoint set of teams, mirroring how real leagues share club rosters across parallel competitions.
     private static readonly SampleTournamentBuilder.CrossCupDefinition CopaCruzada = new(
         "Copa Cruzada",
         GroupCount: 6,
@@ -212,12 +191,7 @@ public sealed class DataSeeder(
         }
         else if (await db.Teams.AnyAsync())
         {
-            // The medical-records backfill (medical-records-storage-eligibility,
-            // Part 3) always runs here: it is idempotent and a no-op once every
-            // Approved registration already has a real stored file (ADR #8), so
-            // a database seeded before this feature existed self-heals into
-            // habilitado players on the very next startup, with no config flag
-            // to remember to flip.
+            // The medical-records backfill always runs here because it is idempotent and a no-op once every Approved registration already has a real stored file, so a database seeded before this feature existed self-heals into habilitado players on the next startup with no config flag to flip.
             logger.LogInformation("Sample data already present — running the medical-records backfill and skipping the rest.");
             await medicalRecordSeedBackfiller.BackfillMedicalRecordsAsync(medicalRecordPath);
             return;
@@ -286,9 +260,7 @@ public sealed class DataSeeder(
         db.ChangeTracker.AutoDetectChangesEnabled = autoDetect;
         await db.SaveChangesAsync();
 
-        // Runs AFTER SaveChangesAsync: TeamId/PlayerId are store-generated
-        // (EntityBase.Id defaults to Guid.Empty), so there is no real object
-        // key to build from before this point (medical-records-storage-eligibility, ADR #6).
+        // Runs after SaveChangesAsync because TeamId and PlayerId are store-generated, since EntityBase.Id defaults to Guid.Empty, so there is no real object key to build from before this point.
         await medicalRecordSeedBackfiller.BackfillMedicalRecordsAsync(medicalRecordPath);
 
         logger.LogInformation(
@@ -515,14 +487,7 @@ public sealed class DataSeeder(
             (1, "Presentación tardía de la planilla."),
         ];
 
-        // Ongoing tournaments first, newest season first. A penalty is only
-        // worth demonstrating where the table is still live — the previous
-        // order put every deduction on the OLDEST season's zones, so the season
-        // actually on screen never showed one. Preferring an ongoing zone also
-        // avoids a second-order mismatch: a finished zone's bracket was seeded
-        // (exactly like StageService.SeedPlayoffCupsAsync does) from standings
-        // WITHOUT deductions, so a penalty there can rank the visible table
-        // differently from the cup it fed.
+        // Prefers ongoing tournaments and the newest season first so a penalty lands where the standings table is actually visible, and avoids ranking a finished zone's bracket differently from the cup it fed since that bracket was seeded from standings without deductions.
         List<(Division Division, List<Team> Teams)> candidates =
         [
             .. results
@@ -667,9 +632,7 @@ public sealed class DataSeeder(
         }
     }
 
-    // Cuerpo técnico (HU-cuerpo-tecnico): 8 plausible Argentine coach/assistant
-    // name pairs, cycled by team index so every seeded team gets one DT and
-    // one Asistente for its current tournament.
+    // 8 plausible Argentine coach and assistant name pairs, cycled by team index so every seeded team gets one DT and one Asistente for its current tournament.
     private static readonly string[] CoachFirstNames =
         ["Carlos", "Fernando", "Miguel", "Diego", "Sergio", "Pablo", "Martín", "Gustavo"];
     private static readonly string[] CoachLastNames =
@@ -722,8 +685,7 @@ public sealed class DataSeeder(
 
     private static List<Venue> BuildVenues()
     {
-        // Real basketball club gyms from Paraná, Entre Ríos, with approximate
-        // coordinates around the city (~-31.73, -60.52).
+        // Real basketball club gyms from Paraná, Entre Ríos, with approximate coordinates around the city near -31.73, -60.52.
         (string Name, string Address, double Latitude, double Longitude)[] specs =
         [
             ("Estadio Ángel Malvicino (Echagüe)", "Av. Almafuerte, Paraná", -31.7398, -60.5060),

@@ -39,8 +39,7 @@ public class AuditService(IAuditLogRepository auditLogRepository, ICurrentUserAc
             TargetName = targetName,
             Detail = detail,
             DateCreated = DateTime.UtcNow,
-            // EntityBase.CreatedBy is required; mirror the actor so the base
-            // audit columns and the semantic Actor field agree.
+            // EntityBase.CreatedBy is required; mirror the actor so the base audit columns and the semantic Actor field agree.
             CreatedBy = actor,
         });
     }

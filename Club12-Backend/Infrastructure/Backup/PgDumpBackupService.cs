@@ -50,31 +50,10 @@ public sealed class PgDumpBackupService(
             "-p", builder.Port.ToString(),
             "-U", builder.Username ?? string.Empty,
             "-d", builder.Database ?? string.Empty,
-            // Restore uses psql -f against a plain-SQL dump (design.md's
-            // "Keep plain-SQL dumps; restore with psql" decision); these
-            // flags move the ownership/role safety onto the dump side so
-            // restoring into a Supabase-managed database (different
-            // owners/roles) does not fail on CREATE/ALTER OWNER statements.
+            // These flags shift ownership and role safety to the dump so restoring into a Supabase-managed database with different owners does not fail on CREATE or ALTER OWNER statements.
             "--clean", "--if-exists", "--no-owner", "--no-privileges",
-            // Restrict the dump to schemas the app actually owns: "public"
-            // (ASP.NET Core Identity's default, unconfigured schema) and
-            // "Club12" (every domain entity — EntityConstants.Schema).
-            // Without this, pg_dump captures the WHOLE database, including
-            // Supabase-platform-owned tables/views/functions the app's
-            // connection role never owns — --clean's DROP for those fails on
-            // restore with "must be owner of ...". Event triggers are
-            // database-wide, not schema-scoped, so this does NOT exclude
-            // them; see EventTriggerStatementPattern below for that.
-            //
-            // "Club12" MUST be double-quoted here: pg_dump's -n pattern
-            // matching folds an unquoted pattern to lowercase before
-            // comparing against the catalog, and this schema's real name is
-            // mixed-case, so a bare "Club12" argument silently matches
-            // nothing and pg_dump dumps zero tables from it — confirmed by
-            // inspecting a real production dump taken with the unquoted
-            // form, which contained only "public" content. No shell is
-            // involved (args go straight into the process argument vector),
-            // so this is a literal-quote data value, not shell quoting.
+            // Restricting to public and Club12 schemas keeps pg_dump from capturing Supabase-platform-owned objects the app's role doesn't own, which would make --clean's DROP fail on restore.
+            // Club12 must be double-quoted because pg_dump's -n pattern matching lowercases an unquoted argument before comparing it against the catalog, and the schema's real name is mixed-case, so an unquoted argument silently matches nothing.
             "-n", "public", "-n", $"\"{EntityConstants.Schema}\"",
         ];
 
@@ -108,9 +87,7 @@ public sealed class PgDumpBackupService(
             return string.Empty;
         });
 
-        // False positive: Regex.Replace(string, MatchEvaluator) runs the evaluator
-        // synchronously per match before returning, so strippedCount is fully
-        // updated here — Sonar's dataflow analysis doesn't model that.
+        // False positive: Regex.Replace runs the MatchEvaluator synchronously per match before returning, so strippedCount is fully updated here even though Sonar's dataflow analysis doesn't model that.
 #pragma warning disable S2583
         if (strippedCount > 0)
         {

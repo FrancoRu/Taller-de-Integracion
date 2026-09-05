@@ -32,10 +32,7 @@ public class RosterCopyService(IUnitOfWork unitOfWork) : IRosterCopyService
             return new RosterCopyResult { CopiedCount = 0, SkippedCount = 0 };
         }
 
-        // A player may hold at most one registration per tournament (unique
-        // PlayerId+TournamentId index). Any source player already registered to
-        // the target season is skipped, which is what makes the copy idempotent
-        // and prevents a two-teams-in-one-season violation.
+        // A player may hold at most one registration per tournament, enforced by a unique PlayerId and TournamentId index, so any source player already registered to the target season is skipped, which keeps the copy idempotent and prevents a two-teams-in-one-season violation.
         HashSet<Guid> alreadyInTargetSeason = [.. (await _registrationRepository.FindAsync(
                 registration => registration.TournamentId == targetTournamentId))
             .Select(registration => registration.PlayerId)];
@@ -48,9 +45,7 @@ public class RosterCopyService(IUnitOfWork unitOfWork) : IRosterCopyService
                 PlayerId = source.PlayerId,
                 TeamId = targetTeamId,
                 TournamentId = targetTournamentId,
-                // JerseyNumber, MedicalRecordStatus (defaults Pending) and all
-                // medical fields are intentionally NOT copied — each season
-                // starts with a fresh, un-habilitado registration.
+                // JerseyNumber, MedicalRecordStatus, and all medical fields are intentionally not copied, so each season starts with a fresh, un-habilitado registration.
                 DateCreated = DateTime.UtcNow,
                 CreatedBy = AuditConstants.SystemUser,
             })];

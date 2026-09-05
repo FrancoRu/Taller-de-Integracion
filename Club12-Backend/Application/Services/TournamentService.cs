@@ -47,11 +47,7 @@ public class TournamentService(
     /// <inheritdoc/>
     public async Task<Tournament> CreateFullTournamentAsync(CreateFullTournamentRequest request)
     {
-        // Created OpenForRegistration: divisions/stages can only be built while
-        // the tournament is in that status, per the structural-edit guard, and
-        // structural creation is part of creation. Teams register, registration
-        // closes, and the fixture is generated later when the tournament starts,
-        // the canonical transition to Ongoing.
+        // Created OpenForRegistration, since divisions and stages can only be built while the tournament is in that status per the structural-edit guard, and structural creation is part of creation.
         Tournament tournament = new()
         {
             Name = request.Name,
@@ -85,12 +81,7 @@ public class TournamentService(
     {
         Division division = null!;
 
-        // Same guard the granular create already enforces, via
-        // DivisionService.CreateDivisionAsync: only while OpenForRegistration.
-        // Wrapped in its own transaction so a division added to an EXISTING
-        // tournament gets the exact same all-or-nothing guarantee a
-        // wizard-created one gets — never a bare division with no stages/cups
-        // left behind by a failure partway through.
+        // Wrapped in its own transaction, mirroring the OpenForRegistration guard DivisionService.CreateDivisionAsync already enforces, so a division added to an existing tournament gets the same all-or-nothing guarantee a wizard-created one gets.
         await unitOfWork.ExecuteInTransactionAsync(async () =>
         {
             division = await CreateDivisionWithStagesAsync(tournament, divisionRequest);
@@ -195,7 +186,7 @@ public class TournamentService(
     {
         Tournament? tournament = await tournamentRepository.GetByIdAsync(id);
 
-        // Nothing to delete: keep the historical no-op behavior (idempotent).
+        // Nothing to delete, so keep the historical idempotent no-op behavior.
         if (tournament is null)
         {
             return;
@@ -212,11 +203,7 @@ public class TournamentService(
 
         await unitOfWork.ExecuteInTransactionAsync(async () =>
         {
-            // Clear the denormalized current-season pointer of any team pointing
-            // at this tournament before the cascade delete: Team -> Tournament is
-            // NoAction, so a still-set pointer would abort the delete with an
-            // opaque FK error. The team's TeamTournamentRegistration for this
-            // season cascades away; the team identity survives.
+            // Clear the denormalized current-season pointer of any team pointing at this tournament before the cascade delete, since Team to Tournament is NoAction and a still-set pointer would abort the delete with an opaque FK error.
             List<Team> pointingTeams = [.. await unitOfWork.TeamRepository.FindAsync(
                 team => team.TournamentId == id)];
 
@@ -266,21 +253,10 @@ public class TournamentService(
                 ErrorMessages.Tournament.InvalidStatusTransition(tournament.Status, newStatus));
         }
 
-        // Starting the tournament is the canonical fixture trigger.
-        // After registration closes teams are assigned to divisions; only when
-        // the tournament moves to Ongoing do we generate the matches for every
-        // division's stages exactly once (see GenerateFixtureAsync for the
-        // idempotency guard). Done BEFORE the status is committed so a
-        // generation failure leaves the tournament in its prior (still
-        // RegistrationClosed, editable) status instead of stranding it in
-        // Ongoing with a half-built fixture.
+        // Fixture generation runs before the status is committed, so a generation failure leaves the tournament in its prior editable status instead of stranding it in Ongoing with a half-built fixture.
         if (newStatus == TournamentStatus.Ongoing)
         {
-            // A tournament that cannot be completed must never be
-            // started. Run the completability guard on the loaded graph BEFORE
-            // generating any fixture; a violation aborts the transition (mapped
-            // to 409 by the global handler) so no half-built fixture is left and
-            // the tournament stays in its prior, editable status.
+            // The completability guard runs on the loaded graph before generating any fixture, so a violation aborts the transition, mapped to 409, before any half-built fixture is left.
             IReadOnlyList<CompletabilityIssue> issues = await EvaluateCompletabilityAsync(tournamentId);
             if (issues.Count > 0)
             {
@@ -288,32 +264,18 @@ public class TournamentService(
                     ErrorMessages.Tournament.NotCompletable(SummarizeIssues(issues)));
             }
 
-            // Wrapped so a failure partway through one division's stages (each
-            // CreateAutomatedMatchesAsync call self-commits) rolls back every
-            // match already generated in THIS attempt too — otherwise the
-            // tournament would correctly stay RegistrationClosed, but with a
-            // genuinely half-built fixture (some stages seeded, some not)
-            // instead of a clean slate to retry from.
+            // Wrapped in a transaction so a failure partway through one division's stages rolls back every match already generated in this attempt too, leaving a clean slate to retry from.
             await unitOfWork.ExecuteInTransactionAsync(() => GenerateFixtureAsync(tournament));
         }
 
-        // "Revertir a borrador": moving Ongoing → RegistrationClosed reopens the
-        // assignment phase, so the fixture generated at start is now stale and is
-        // torn down. Team-to-zone assignments are KEPT, so the organizer only
-        // adjusts what is wrong and re-starts, which rebuilds the fixture.
+        // Moving Ongoing to RegistrationClosed reopens the assignment phase, so the fixture generated at start is torn down while team-to-zone assignments are kept, letting the organizer re-start to rebuild the fixture.
         if (tournament.Status == TournamentStatus.Ongoing
             && newStatus == TournamentStatus.RegistrationClosed)
         {
             await TeardownFixtureAsync(tournament);
         }
 
-        // Canceling a tournament, or force-closing it as Finished while matches
-        // are still pending, must not leave "still to be played" fixtures
-        // dangling forever under a dead tournament — every stage/division edit
-        // guard already freezes the STRUCTURE once the tournament reaches one of
-        // these statuses (EnsureDivisionStructureEditableAsync), so the leftover
-        // matches need their own terminal state too. Already-finished matches
-        // (real recorded results) are never touched.
+        // Canceling a tournament, or force-closing it as Finished while matches are still pending, must not leave still-to-be-played fixtures dangling under a dead tournament, so the leftover matches need their own terminal state too.
         if (newStatus is TournamentStatus.Canceled or TournamentStatus.Finished)
         {
             await CancelPendingMatchesAsync(tournamentId);
@@ -386,8 +348,7 @@ public class TournamentService(
             return;
         }
 
-        // Reverting is only safe while nothing has been played: a finished match
-        // carries results (and scorers) that tearing down the fixture would lose.
+        // Reverting is only safe while nothing has been played, since a finished match carries results and scorers that tearing down the fixture would lose.
         int playedMatches = await unitOfWork.MatchRepository.CountAsync(
             match => stageIds.Contains(match.StageId) && match.IsFinished);
 
@@ -396,7 +357,7 @@ public class TournamentService(
             throw new InvalidOperationException(ErrorMessages.Tournament.CannotRevertWithPlayedMatches);
         }
 
-        // Matches first (they may reference a series), then the series.
+        // Matches are removed first, since they may reference a series, then the series.
         await unitOfWork.MatchRepository.RemoveAsync(match => stageIds.Contains(match.StageId));
         await unitOfWork.MatchSeriesRepository.RemoveAsync(series => stageIds.Contains(series.StageId));
     }
@@ -471,10 +432,7 @@ public class TournamentService(
                 registration => registration.TournamentId == tournamentId,
                 includes: [registration => registration.Team!])];
 
-        // Only HABILITADO players count toward the minimum, per the owner's
-        // "no se puede arrancar torneos sin al menos 4 habilitados" rule — a
-        // registration that is merely on the roster but Pending/Rejected, or
-        // Approved with no real stored file, could never legally play.
+        // Only HABILITADO players count toward the minimum, per the owner's "no se puede arrancar torneos sin al menos 4 habilitados" rule, since a registration that is merely on the roster but Pending, Rejected, or Approved with no real stored file could never legally play.
         Dictionary<Guid, int> habilitadoPlayerCountsByTeam = (await unitOfWork.PlayerTeamRegistrationRepository.FindAsync(
                 registration => registration.TournamentId == tournamentId))
             .Where(registration => registration.IsHabilitado)

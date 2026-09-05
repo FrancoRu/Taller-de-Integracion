@@ -34,7 +34,7 @@ builder.Services
     .AddExceptionHandler<GlobalExceptionHandler>()
     .AddProblemDetails();
 
-// HU-54: configurable roster limits. Absent section falls back to defaults.
+// Configurable roster limits; an absent section falls back to defaults.
 builder.Services.Configure<RosterOptions>(
     builder.Configuration.GetSection(RosterOptions.SectionName));
 
@@ -77,10 +77,7 @@ finally
     await Log.CloseAndFlushAsync();
 }
 
-// The docker-compose healthcheck polls /health/ready every 30s; logging
-// every successful poll at Information drowns out real request logs.
-// Failures still surface at Error regardless of path, so a flapping health
-// check remains visible.
+// The docker-compose healthcheck polls /health/ready every 30s, so logging every successful poll at Information would drown out real request logs; failures still surface at Error regardless of path, so a flapping health check remains visible.
 static LogEventLevel GetRequestLoggingLevel(HttpContext httpContext, double elapsedMs, Exception? ex)
 {
     if (ex is not null || httpContext.Response.StatusCode > 499)

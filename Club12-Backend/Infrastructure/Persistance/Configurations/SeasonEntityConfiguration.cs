@@ -18,10 +18,7 @@ public class SeasonEntityConfiguration : BaseEntityConfiguration<Season>
 
         builder.HasIndex(s => s.Slug).IsUnique();
 
-        // Season 1..* Tournament, with the tournament side optional: a
-        // tournament may belong to at most one season, and deleting a season
-        // detaches (SetNull) its tournaments instead of cascading — the season
-        // is a purely additive grouping and must never delete a tournament.
+        // Deleting a season detaches its tournaments via SetNull instead of cascading, since a season is a purely additive grouping and must never delete a tournament.
         builder.HasMany(s => s.Tournaments)
             .WithOne(t => t.Season)
             .HasForeignKey(t => t.SeasonId)

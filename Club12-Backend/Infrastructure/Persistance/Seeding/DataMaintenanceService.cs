@@ -22,7 +22,6 @@ public sealed class DataMaintenanceService(
     IAuditService auditService)
     : IDataMaintenanceService
 {
-    // Main tournament — Primera División (8 teams).
     private static readonly string[] PrimeraNames =
     [
         "Atlético Central", "Deportivo Norte", "Club Belgrano", "Unión del Sur",
@@ -37,7 +36,6 @@ public sealed class DataMaintenanceService(
     private static readonly string[] PrimeraSecondaryColors =
         ["#FFFFFF", "#FFFFFF", "#FFFFFF", "#1E293B", "#FFFFFF", "#FDE047", "#1E293B", "#FFFFFF"];
 
-    // Main tournament — Segunda División (8 teams).
     private static readonly string[] SegundaNames =
     [
         "Juventud Unida", "Sportivo Oeste", "Estrella Azul", "Náutico River",
@@ -52,15 +50,14 @@ public sealed class DataMaintenanceService(
     private static readonly string[] SegundaSecondaryColors =
         ["#FDE047", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#1E293B", "#FFFFFF", "#FDE047"];
 
-    // Playoff cups shared by both main divisions: Copa Oro (positions 1-4),
-    // Copa Plata (positions 5-8), each a best-of-3 SemiFinal + Final bracket.
+    // Playoff cups shared by both main divisions: Copa Oro takes positions 1 to 4 and Copa Plata takes positions 5 to 8, each a best-of-3 SemiFinal and Final bracket.
     private static readonly SampleTournamentBuilder.PlayoffCupDefinition[] MainCups =
     [
         new("Copa Oro", 1, 4, 3),
         new("Copa Plata", 5, 8, 3),
     ];
 
-    // Historical Clausura — two small 4-team divisions (single-bracket playoffs).
+    // Historical Clausura — two small 4-team divisions with single-bracket playoffs.
     private static readonly string[] ClausuraPrimeraNames =
         ["Independiente Rural", "Ferroviario Central", "Atlético Cordillera", "Deportivo Litoral"];
     private static readonly string[] ClausuraPrimeraCodes = ["IRU", "FCE", "ACO", "DLI"];
@@ -93,9 +90,7 @@ public sealed class DataMaintenanceService(
             int teams = await db.Teams.ExecuteDeleteAsync(ct);
             int divisions = await db.Divisions.ExecuteDeleteAsync(ct);
             int tournaments = await db.Tournaments.ExecuteDeleteAsync(ct);
-            // Seasons are deleted after their tournaments so re-seeding never
-            // collides on the season's unique slug. Not surfaced in the
-            // DataWipeResult counters (kept stable for the admin UI summary).
+            // Seasons are deleted after their tournaments so re-seeding never collides on the season's unique slug; the season count is not surfaced in DataWipeResult since the counters are kept stable for the admin UI summary.
             await db.Seasons.ExecuteDeleteAsync(ct);
             int venues = await db.Venues.ExecuteDeleteAsync(ct);
             int blogPosts = await db.BlogPosts.ExecuteDeleteAsync(ct);
@@ -113,9 +108,7 @@ public sealed class DataMaintenanceService(
                 playerSanctions, playerStatistics, scorers, stageTeamMatches,
                 playerTeamRegistrations, stages, venues, blogPosts);
 
-            // HU-101: record the destructive wipe for traceability. Written
-            // after commit so it survives the wipe (the audit table is not part
-            // of the tournament-domain data being deleted).
+            // Records the destructive wipe for traceability, written after commit so it survives the wipe since the audit table is not part of the tournament-domain data being deleted.
             await auditService.LogAsync(
                 AuditAction.DataWipe,
                 detail:
@@ -189,19 +182,14 @@ public sealed class DataMaintenanceService(
             Status: TournamentStatus.Finished);
 
         int playerCounter = 0;
-        // Both tournaments are saved in the same transaction, so their division
-        // and stage slugs must be unique across the whole batch (each has a DB
-        // unique index). A shared registry disambiguates repeated base slugs
-        // with numeric suffixes instead of the GUIDs the builder used to append.
+        // Both tournaments share one transaction, so their division and stage slugs must be unique across the batch; a shared registry disambiguates repeated base slugs with numeric suffixes instead of appending GUIDs.
         SampleTournamentBuilder.SlugRegistry slugRegistry = new();
         SampleTournamentBuilder.BuildResult result1 =
             SampleTournamentBuilder.Build(tournament1, venues, ref playerCounter, includePlayoffs: true, slugRegistry);
         SampleTournamentBuilder.BuildResult result2 =
             SampleTournamentBuilder.Build(tournament2, venues, ref playerCounter, includePlayoffs: true, slugRegistry);
 
-        // Group both 2026 tournaments under one season ("Temporada"), so the
-        // additive Season grouping is visible in seeded data. Each tournament
-        // keeps its own category (HU-48) — the season only groups them.
+        // Groups both 2026 tournaments under one season so the additive Season grouping is visible in seeded data; each tournament keeps its own category, since the season only groups them.
         Season season2026 = new()
         {
             CreatedBy = Domain.Constants.AuditConstants.SystemUser,
@@ -223,18 +211,7 @@ public sealed class DataMaintenanceService(
 
         await db.SaveChangesAsync(ct);
 
-        // NOTE: unlike DataSeeder.SeedAsync, this admin-triggered reset does
-        // NOT run the medical-records backfill (medical-records-storage-eligibility,
-        // Part 3) — SampleTournamentBuilder seeds most registrations Approved
-        // but WITHOUT a real stored file, so every one of them reads as
-        // not-habilitado until reviewed for real. Deliberately left out: doing
-        // so would make DataMaintenanceService depend on IMedicalRecordStorage
-        // (-> the live-Supabase-constructor testability gap also documented on
-        // MedicalRecordSeedBackfiller), which this class's ~20 DI-resolved
-        // tests across DataMaintenanceServiceTests/AuditTrailTests/
-        // DataMaintenanceAuthorizationTests have no override for. This endpoint
-        // is unused by the UI today (the "Cargar Datos de prueba" trigger was
-        // removed) — kept only for future admin tooling per that commit.
+        // Unlike DataSeeder.SeedAsync, this reset skips the medical-records backfill because that would require this class to depend on IMedicalRecordStorage, which its DI-resolved tests have no override for; seeded registrations read as not-habilitado until reviewed for real.
         int teamCount = result1.Tournament.Teams.Count + result2.Tournament.Teams.Count;
         int playerCount = result1.Tournament.Teams.Sum(t => t.Players.Count)
             + result2.Tournament.Teams.Sum(t => t.Players.Count);
@@ -260,8 +237,7 @@ public sealed class DataMaintenanceService(
 
     private static List<Venue> BuildVenues()
     {
-        // Real basketball club gyms from Paraná, Entre Ríos, with approximate
-        // coordinates around the city (~-31.73, -60.52).
+        // Real basketball club gyms from Paraná, Entre Ríos, with approximate coordinates around the city near -31.73, -60.52.
         (string Name, string Address, double Latitude, double Longitude)[] specs =
         [
             ("Estadio Ángel Malvicino (Echagüe)", "Av. Almafuerte, Paraná", -31.7398, -60.5060),

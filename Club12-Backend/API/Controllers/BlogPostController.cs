@@ -79,9 +79,8 @@ public class BlogPostController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> UpdateBlogPost(string idOrSlug, [FromForm] UpdateBlogPostRequest blogPostRequest)
     {
-        // Resolve by id OR slug (like the GET) so the admin can save a post the
-        // same way it was opened — by its slug — instead of forcing a GUID URL.
-        // includeUnpublished: true so a draft can still be edited (HU-16).
+        // Resolves by id or slug like the GET so the admin can save a post the same way it was opened, instead of forcing a GUID URL.
+        // includeUnpublished is true so a draft can still be edited.
         BlogPost? existingPost = await blogPostService.GetBlogPostByIdOrSlugAsync(idOrSlug, includeUnpublished: true);
 
         if (existingPost is null)
@@ -137,8 +136,7 @@ public class BlogPostController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<BlogPostResponse>> GetBlogPostById(string idOrSlug)
     {
-        // Only Admin/Owner may resolve drafts (HU-16); anonymous/public
-        // callers get 404 for an unpublished post.
+        // Only Admin/Owner may resolve drafts; anonymous or public callers get 404 for an unpublished post.
         bool includeUnpublished = User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Owner);
         BlogPost? blogPost = await blogPostService.GetBlogPostByIdOrSlugAsync(idOrSlug, includeUnpublished);
 
@@ -147,10 +145,7 @@ public class BlogPostController(
             return this.NotFoundProblem(nameof(BlogPost), idOrSlug);
         }
 
-        // The view counter reflects genuine public reads only (HU): an
-        // Admin/Owner opening the post to preview or edit it must not inflate
-        // the count. Public callers (the same ones that cannot see drafts)
-        // increment it exactly once per read.
+        // The view counter reflects genuine public reads only, since an Admin/Owner opening the post to preview or edit it must not inflate the count.
         if (!includeUnpublished)
         {
             blogPost.Views++;
@@ -186,7 +181,7 @@ public class BlogPostController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PaginatedResponse<BlogPostResponse>>> GetFilteredBlogPosts([FromQuery] GetBlogPostsFilteredRequest filterRequest)
     {
-        // Public listing shows only published posts; Admin/Owner see drafts too (HU-16).
+        // Admin/Owner also see drafts in this listing; public callers only see published posts.
         bool includeUnpublished = User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Owner);
         PaginatedResponse<BlogPost> paginatedPosts = await blogPostService.GetAllBlogPostsAsync(filterRequest, includeUnpublished);
         PaginatedResponse<BlogPostResponse> response = mapper.Map<PaginatedResponse<BlogPostResponse>>(paginatedPosts);

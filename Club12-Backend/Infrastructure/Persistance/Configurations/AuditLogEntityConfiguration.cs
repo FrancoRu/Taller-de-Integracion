@@ -14,8 +14,7 @@ public class AuditLogEntityConfiguration : BaseEntityConfiguration<AuditLog>
     {
         builder.ToTable(EntityConstants.Tables.AuditLog, EntityConstants.Schema);
 
-        // Action persisted as the enum name (string), mirroring the other enum
-        // columns in this DB (Match.Status, PlayerTeamRegistration.MedicalRecordStatus).
+        // Action is persisted as the enum name string, mirroring other enum columns in this DB, including Match.Status and PlayerTeamRegistration.MedicalRecordStatus.
         builder.Property(a => a.Action).IsRequired().HasConversion<string>();
         builder.Property(a => a.Actor).IsRequired().HasMaxLength(256);
         builder.Property(a => a.TargetType).HasMaxLength(128);

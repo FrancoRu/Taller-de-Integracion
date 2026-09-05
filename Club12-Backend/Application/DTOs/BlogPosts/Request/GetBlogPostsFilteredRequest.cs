@@ -12,8 +12,7 @@ public class GetBlogPostsFilteredRequest : PaginatedFilterRequest
     /// </summary>
     public GetBlogPostsFilteredRequest()
     {
-        // String literal matches EntityBase.DateCreated; QueryableExtensions
-        // .SortBy resolves this name against the entity by reflection.
+        // String literal matches EntityBase.DateCreated; QueryableExtensions.SortBy resolves this name against the entity by reflection.
         OrderBy = "DateCreated";
         Order = SortOrder.Descending;
     }
