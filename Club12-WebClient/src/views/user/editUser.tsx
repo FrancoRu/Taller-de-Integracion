@@ -23,6 +23,7 @@ import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import {
   isValidEmail,
   isValidPhone,
+  isValidUsername,
   VALIDATION_MESSAGES,
 } from '@/modules/core/utils/validators';
 
@@ -136,8 +137,11 @@ const EditUser: React.FC = () => {
 
   const emailValue = form.email ?? '';
   const phoneValue = form.phone ?? '';
+  const usernameValue = form.username ?? '';
   const emailError = emailValue.length > 0 && !isValidEmail(emailValue);
   const phoneError = phoneValue.length > 0 && !isValidPhone(phoneValue);
+  const usernameError =
+    usernameValue.length > 0 && !isValidUsername(usernameValue);
 
   const handleSubmit = async () => {
     if (!targetUserId) return;
@@ -147,6 +151,8 @@ const EditUser: React.FC = () => {
       messages.push(VALIDATION_MESSAGES.email + '.');
     if (phoneValue.trim() && !isValidPhone(phoneValue))
       messages.push(VALIDATION_MESSAGES.phone + '.');
+    if (usernameValue.trim() && !isValidUsername(usernameValue))
+      messages.push(VALIDATION_MESSAGES.username + '.');
 
     if (messages.length > 0) {
       setMessage(HttpStatus.BadRequest, messages);
@@ -238,6 +244,8 @@ const EditUser: React.FC = () => {
             name="username"
             value={form.username ?? ''}
             onChange={handleChange}
+            error={usernameError}
+            helperText={usernameError ? VALIDATION_MESSAGES.username : undefined}
             slotProps={{
               htmlInput: {
                 minLength: USERNAME_LENGTH.Min,
@@ -308,7 +316,7 @@ const EditUser: React.FC = () => {
             <Button
               variant="contained"
               onClick={handleSubmit}
-              disabled={submitting || emailError || phoneError}
+              disabled={submitting || emailError || phoneError || usernameError}
             >
               {submitting ? 'Guardando...' : 'Guardar cambios'}
             </Button>

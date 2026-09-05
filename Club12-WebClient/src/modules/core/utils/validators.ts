@@ -17,6 +17,17 @@ const PHONE_ALLOWED_CHARS_REGEX = /^[+\d\s()-]+$/;
 /** A player's DNI/document number: digits only, 6 to 15 of them. */
 const DOCUMENT_NUMBER_REGEX = /^\d{6,15}$/;
 
+/**
+ * ASP.NET Core Identity's default `IdentityOptions.User.AllowedUserNameCharacters`
+ * (letters, digits, and `-._@+`) — mirrored here so an invalid username (most
+ * commonly one with spaces, since the field's Spanish label "Nombre de
+ * usuario" reads like it could take a full name) is caught client-side with a
+ * Spanish message, instead of round-tripping to the backend and surfacing its
+ * raw English Identity error ("Username '...' is invalid, can only contain
+ * letters or digits.") straight to the admin.
+ */
+const USERNAME_REGEX = /^[a-zA-Z0-9\-._@+]+$/;
+
 /** Minimum age (years) a player must be, mirroring the backend's [MinimumAge(15)]. */
 const PLAYER_MINIMUM_AGE = 15;
 
@@ -47,6 +58,14 @@ export function isValidPhone(value: string): boolean {
 /** True when `value` is a plausible DNI/document number: 6 to 15 digits only. */
 export function isValidDocumentNumber(value: string): boolean {
   return DOCUMENT_NUMBER_REGEX.test(value.trim());
+}
+
+/**
+ * True when `value` is a valid username: letters, digits, and `-._@+` only
+ * (no spaces), matching the backend's actual accepted character set.
+ */
+export function isValidUsername(value: string): boolean {
+  return USERNAME_REGEX.test(value.trim());
 }
 
 /**
@@ -120,4 +139,5 @@ export const VALIDATION_MESSAGES = {
   phone: 'Ingresá un teléfono válido',
   documentNumber: 'El documento debe tener solo números',
   minimumPlayerAge: `El jugador debe tener al menos ${PLAYER_MINIMUM_AGE} años`,
+  username: 'El nombre de usuario no puede contener espacios ni símbolos (solo letras, números y - . _ @ +)',
 } as const;

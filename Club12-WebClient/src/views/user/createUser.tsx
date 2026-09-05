@@ -17,6 +17,7 @@ import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import {
   isValidEmail,
   isValidPhone,
+  isValidUsername,
   VALIDATION_MESSAGES,
 } from '@/modules/core/utils/validators';
 
@@ -67,6 +68,8 @@ const CreateUser: React.FC = () => {
   const phone = form.phone ?? '';
   const emailError = form.email.length > 0 && !isValidEmail(form.email);
   const phoneError = phone.length > 0 && !isValidPhone(phone);
+  const usernameError =
+    form.username.length > 0 && !isValidUsername(form.username);
 
   const handleSubmit = async () => {
     const messages: string[] = [];
@@ -81,6 +84,8 @@ const CreateUser: React.FC = () => {
       (form.username.length < 3 || form.username.length > 50)
     )
       messages.push('El nombre de usuario debe tener entre 3 y 50 caracteres.');
+    else if (form.username.trim() && !isValidUsername(form.username))
+      messages.push(VALIDATION_MESSAGES.username + '.');
     if (phone.trim() && !isValidPhone(phone))
       messages.push(VALIDATION_MESSAGES.phone + '.');
     if (!form.role) messages.push('El rol es requerido.');
@@ -144,6 +149,8 @@ const CreateUser: React.FC = () => {
             name="username"
             value={form.username}
             onChange={handleChange}
+            error={usernameError}
+            helperText={usernameError ? VALIDATION_MESSAGES.username : undefined}
             slotProps={{
               htmlInput: {
                 minLength: USERNAME_LENGTH.Min,
@@ -200,7 +207,7 @@ const CreateUser: React.FC = () => {
             <Button
               variant="contained"
               onClick={handleSubmit}
-              disabled={submitting || emailError || phoneError}
+              disabled={submitting || emailError || phoneError || usernameError}
             >
               {submitting ? 'Guardando...' : 'Crear usuario'}
             </Button>
