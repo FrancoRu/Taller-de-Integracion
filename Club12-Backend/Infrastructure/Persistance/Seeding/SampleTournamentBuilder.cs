@@ -683,7 +683,7 @@ public static class SampleTournamentBuilder
                     if (isUpcoming)
                     {
                         stage.Matches.Add(BuildUpcomingMatch(
-                            stage, home, visitor, Domain.Enums.MatchType.Regular, venues, roundDate, matchIndex, round));
+                            stage, home, visitor, Domain.Enums.MatchType.Regular, venues, roundDate, round));
                     }
                     else
                     {
@@ -1407,7 +1407,6 @@ public static class SampleTournamentBuilder
         MatchType type,
         List<Venue> venues,
         DateTime matchDate,
-        int venueIndex,
         int? round)
     {
         Venue venue = VenueForHome(home, venues);
@@ -1497,7 +1496,7 @@ public static class SampleTournamentBuilder
 
         HashSet<Player> alreadyScoring = [.. match.Scorers.Select(scorer => scorer.Player).OfType<Player>()];
         Player? substitute = EligibleScorers(team)
-            .FirstOrDefault(candidate => candidate != player && !alreadyScoring.Contains(candidate));
+            .Find(candidate => candidate != player && !alreadyScoring.Contains(candidate));
 
         if (substitute is null)
         {
