@@ -79,7 +79,7 @@ public class BlogPostController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> UpdateBlogPost(string idOrSlug, [FromForm] UpdateBlogPostRequest blogPostRequest)
     {
-        // Resolves by id or slug like the GET so the admin can save a post the same way it was opened, instead of forcing a GUID URL.
+        // Resolves by id or slug, matching the GET, so the admin can save a post the same way it was opened instead of forcing a GUID URL.
         // includeUnpublished is true so a draft can still be edited.
         BlogPost? existingPost = await blogPostService.GetBlogPostByIdOrSlugAsync(idOrSlug, includeUnpublished: true);
 

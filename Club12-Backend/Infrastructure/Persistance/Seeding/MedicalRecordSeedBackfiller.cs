@@ -80,7 +80,7 @@ public sealed class MedicalRecordSeedBackfiller(
                 + "approved registrations end up habilitado.");
         }
 
-        // Superset filter kept EF-translatable, since StartsWith on a constant becomes LIKE 'medical-records/%'.
+        // Superset filter kept EF-translatable: StartsWith on a constant translates to a SQL LIKE clause.
         // The per-row IsStoredReference check below is the authoritative skip-vs-upload decision, the same predicate the read sites and the approve-time write guard use, so the three can never drift.
         // The CreatedBy == SystemUser branch lets a seeder-created Pending or Rejected row self-heal too, safe because that value is never written by a real admin action, only by the seeder itself.
         List<PlayerTeamRegistration> candidates = await db.PlayerTeamRegistrations

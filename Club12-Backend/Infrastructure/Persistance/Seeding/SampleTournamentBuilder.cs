@@ -356,7 +356,7 @@ public static class SampleTournamentBuilder
 
                 team.Players.Add(player);
 
-                // Most seeded players' ficha is Approved and the last player of each team stays Pending to keep the upload/review flow demonstrable; Approved rows are seeded without a file reference since DataSeeder.SeedMedicalRecordsAsync fills MedicalRecordFileUrl with a real uploaded object after Build() runs, so until then an Approved row correctly reads as not habilitado.
+                // Most seeded players' ficha is Approved and the last player of each team stays Pending to keep the upload/review flow demonstrable; Approved rows are seeded without a file reference since DataSeeder.SeedMedicalRecordsAsync fills MedicalRecordFileUrl with a real uploaded object after Build runs, so until then an Approved row correctly reads as not habilitado.
                 bool isHabilitado = p < playersPerTeam - 1;
 
                 team.PlayerTeamRegistrations.Add(new PlayerTeamRegistration
@@ -964,7 +964,7 @@ public static class SampleTournamentBuilder
             Stages = [],
             IsCrossDivisionCup = true,
             QualifiersPerGroup = crossCup.QualifiersPerGroup,
-            // The cup lives inside its tournament, so it shares the tournament's category like every other division.
+            // The cup lives inside its tournament, so its category always matches the tournament's, the same as every other division.
             Category = tournament.Category,
         };
         tournament.Divisions.Add(cupDivision);
