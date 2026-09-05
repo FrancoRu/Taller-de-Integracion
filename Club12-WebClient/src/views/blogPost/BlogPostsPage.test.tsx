@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import BlogPostsPage from '@/views/blogPost/BlogPostsPage';
 import { useBlogPost } from '@/modules/blogPost/hook/blogPost.hook';
@@ -31,7 +31,7 @@ const buildPost = (overrides: Partial<BlogPostResponse> = {}): BlogPostResponse 
 });
 
 describe('BlogPostsPage — list actions', () => {
-  it('does not offer an Editar row action — editing lives inside the post detail page', async () => {
+  it('offers an Editar row action that navigates to the post edit page', async () => {
     mockedUseBlogPost.mockReturnValue({
       getBlogPostsByFilters: vi.fn().mockResolvedValue({
         items: [buildPost()],
@@ -41,14 +41,20 @@ describe('BlogPostsPage — list actions', () => {
     } as unknown as ReturnType<typeof useBlogPost>);
 
     render(
-      <MemoryRouter>
-        <BlogPostsPage />
+      <MemoryRouter initialEntries={['/panel/blog']}>
+        <Routes>
+          <Route path="/panel/blog" element={<BlogPostsPage />} />
+          <Route path="/panel/blog/:blogPostId/editar" element={<div>Editar publicación</div>} />
+        </Routes>
       </MemoryRouter>
     );
 
     await screen.findByText('Titulo');
-    expect(screen.queryByTestId('EditIcon')).not.toBeInTheDocument();
-    expect(screen.getByTestId('VisibilityIcon')).toBeInTheDocument();
+
+    const editIcon = await screen.findByTestId('EditIcon');
+    (editIcon.closest('button') as HTMLButtonElement).click();
+
+    expect(await screen.findByText('Editar publicación')).toBeInTheDocument();
   });
 });
 
