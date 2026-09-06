@@ -135,6 +135,35 @@ public class TournamentController(
     }
 
     /// <summary>
+    /// Retrieves a source tournament's full cloneable structure tree — every
+    /// division's scoring/cup configuration, Stages, and PlayoffMappings — for
+    /// the tournament-cloning wizard-prefill flow. Carries no instance data
+    /// (teams, matches, rosters); additive, never replaces TournamentResponse
+    /// or DivisionResponse.
+    /// </summary>
+    /// <param name="idOrSlug">Tournament's GUID identifier or slug.</param>
+    /// <returns>
+    /// Returns 200 OK with the tournament's structure tree if found.
+    /// Returns 404 Not Found if not found.
+    /// </returns>
+    [AllowAnonymous]
+    [HttpGet("{idOrSlug}/structure")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TournamentStructureResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TournamentStructureResponse>> GetTournamentStructure(string idOrSlug)
+    {
+        Tournament? tournament = await tournamentService.GetTournamentByIdOrSlugAsync(idOrSlug);
+        if (tournament is null)
+        {
+            return this.NotFoundProblem(nameof(Tournament), idOrSlug);
+        }
+
+        Tournament? structure = await tournamentService.GetTournamentStructureAsync(tournament.Id);
+        TournamentStructureResponse response = mapper.Map<TournamentStructureResponse>(structure);
+        return Ok(response);
+    }
+
+    /// <summary>
     /// Retrieves each division's podium: champion, runner-up, and third place, decided by playoff or group standings, with undecided places left null.
     /// </summary>
     /// <param name="idOrSlug">Tournament's GUID identifier or slug.</param>

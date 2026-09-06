@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { useLocation, MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import TournamentPage from '@/views/tournament/TournamentPage';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
@@ -8,8 +8,14 @@ import { useAuth } from '@/modules/auth/hook/auth.hook';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
 import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
-import type { ITournamentContextProps, ITournamentResponse } from '@/modules/tournament/type/tournament.d';
+import type {
+  ITournamentContextProps,
+  ITournamentResponse,
+  ITournamentStructureResponse,
+} from '@/modules/tournament/type/tournament.d';
 import type { GUID } from '@/modules/core/types/types';
+import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
+import type { WizardState } from '@/views/tournament/wizard/types';
 
 vi.mock('@/modules/tournament/hook/tournament.hook');
 vi.mock('@/modules/auth/hook/auth.hook');
@@ -51,7 +57,10 @@ const buildTournament = (
   seasonName: null,
 });
 
-const setup = (status: TournamentStatus) => {
+const setup = (
+  status: TournamentStatus,
+  overrides: Partial<ITournamentContextProps> = {}
+) => {
   mockedUseTournament.mockReturnValue({
     tournament: buildTournament(status),
     tournaments: null,
@@ -65,11 +74,26 @@ const setup = (status: TournamentStatus) => {
     enrollTeam: vi.fn(),
     unenrollTeam: vi.fn(),
     getCompletability: vi.fn(),
+    getStructure: vi.fn(),
+    ...overrides,
   } as ITournamentContextProps);
 
   mockedUseAuth.mockReturnValue({
     role: UserRolesType.Admin,
   } as ReturnType<typeof useAuth>);
+};
+
+/** Renders the wizard route's received `location.state` so a real navigation can be asserted on. */
+const WizardLocationProbe = () => {
+  const { state } = useLocation() as { state: { clonePrefill?: WizardState; cloneReview?: string[] } | null };
+  return (
+    <div>
+      wizard-page
+      <div data-testid="clone-name">{state?.clonePrefill?.tournament.name}</div>
+      <div data-testid="clone-category">{state?.clonePrefill?.tournament.category}</div>
+      <div data-testid="clone-review-count">{state?.cloneReview?.length ?? 0}</div>
+    </div>
+  );
 };
 
 const renderPage = () =>
@@ -88,6 +112,7 @@ const renderPage = () =>
         />
         <Route path="/panel/torneos" element={<div>listado-torneos</div>} />
         <Route path="/panel/temporadas" element={<div>listado-temporadas</div>} />
+        <Route path={APP_ROUTES.panelTournamentWizard} element={<WizardLocationProbe />} />
       </Routes>
     </MemoryRouter>
   );
@@ -150,6 +175,69 @@ describe('TournamentPage — read-only detail (QA wave 1)', () => {
     await userEvent.click(volver);
 
     expect(screen.getByText('listado-temporadas')).toBeInTheDocument();
+  });
+});
+
+describe('TournamentPage — "Clonar torneo" (HU-cloning)', () => {
+  const buildStructure = (): ITournamentStructureResponse => ({
+    name: 'Apertura',
+    category: TournamentCategory.Masculine,
+    divisions: [
+      {
+        name: 'Zona A',
+        isCrossDivisionCup: false,
+        pointsForWin: 2,
+        pointsForLoss: 1,
+        qualifiersPerGroup: 1,
+        playoffMappings: [],
+        stages: [
+          {
+            name: 'Fase de Grupos',
+            bracketName: null,
+            stageType: 'Group' as ITournamentStructureResponse['divisions'][number]['stages'][number]['stageType'],
+            isElimination: false,
+            order: 0,
+            bestOf: 1,
+            roundRobinLegs: 1,
+          },
+        ],
+      },
+    ],
+  });
+
+  it('is hidden when canEditTournament is false', async () => {
+    setup(TournamentStatus.OpenForRegistration);
+    mockedUseAuth.mockReturnValue({ role: UserRolesType.Guest } as ReturnType<typeof useAuth>);
+    renderPage();
+
+    await screen.findByRole('tab', { name: 'Detalle' });
+    expect(screen.queryByRole('button', { name: 'Clonar torneo' })).not.toBeInTheDocument();
+  });
+
+  it('opens the category-choice dialog, defaulting to the source category', async () => {
+    setup(TournamentStatus.OpenForRegistration);
+    renderPage();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Clonar torneo' }));
+
+    expect(await screen.findByRole('heading', { name: 'Clonar torneo' })).toBeInTheDocument();
+    // Defaults to the source's category as a convenience, shown via its combobox display value.
+    expect(screen.getByRole('combobox', { name: 'Categoría' })).toHaveTextContent('Masculino');
+  });
+
+  it('fetches the structure and navigates to the wizard pre-filled with the chosen category on confirm', async () => {
+    const getStructure = vi.fn().mockResolvedValue(buildStructure());
+    setup(TournamentStatus.OpenForRegistration, { getStructure });
+    renderPage();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Clonar torneo' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Continuar' }));
+
+    expect(await screen.findByText('wizard-page')).toBeInTheDocument();
+    expect(getStructure).toHaveBeenCalledWith('apertura');
+    expect(screen.getByTestId('clone-name')).toHaveTextContent('Apertura (copia)');
+    expect(screen.getByTestId('clone-category')).toHaveTextContent(TournamentCategory.Masculine);
+    expect(screen.getByTestId('clone-review-count')).toHaveTextContent('0');
   });
 });
 

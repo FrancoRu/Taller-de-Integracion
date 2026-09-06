@@ -92,6 +92,7 @@ const setup = (options: {
     enrollTeam,
     unenrollTeam,
     getCompletability: vi.fn(),
+    getStructure: vi.fn(),
   } as ITournamentContextProps);
 };
 

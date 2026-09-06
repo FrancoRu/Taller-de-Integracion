@@ -1,13 +1,14 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Box, Button, Step, StepLabel, Stepper } from '@mui/material';
+import { Alert, Box, Button, Step, StepLabel, Stepper } from '@mui/material';
 import PageShell from '@/views/core/components/PageShell';
 import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
-import { createInitialWizardState } from './types';
+import { WizardState, createInitialWizardState } from './types';
 import {
   buildWizardTree,
+  getZonesStepWarnings,
   validateCrossCupStep,
   validateTournamentStep,
   validateZonesStep,
@@ -32,12 +33,23 @@ export default function TournamentWizardPage() {
   // The wizard is normally launched pre-scoped to a season (from the admin
   // season hub) via router state, which locks the season in the first step. A
   // standalone launch has no state and must pick a season before continuing —
-  // a tournament always belongs to a season.
-  const seededSeasonId =
-    (location.state as { seasonId?: string } | null)?.seasonId ?? '';
+  // a tournament always belongs to a season. HU-cloning widens this state
+  // (backward-compatibly, both new keys optional) to also carry a full
+  // pre-filled WizardState from the "Clonar torneo" action, plus any
+  // review notices its reverse-mapper flagged.
+  const routerState = location.state as
+    | { seasonId?: string; clonePrefill?: WizardState; cloneReview?: string[] }
+    | null;
+  const seededSeasonId = routerState?.seasonId ?? '';
+  const clonePrefill = routerState?.clonePrefill;
+  const cloneReview = routerState?.cloneReview ?? [];
 
   const [activeStep, setActiveStep] = useState(0);
   const [state, setState] = useState(() => {
+    if (clonePrefill) {
+      return clonePrefill;
+    }
+
     const initial = createInitialWizardState();
     if (!seededSeasonId) {
       return initial;
@@ -50,6 +62,7 @@ export default function TournamentWizardPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const treeNodes = useMemo(() => buildWizardTree(state), [state]);
+  const zoneWarnings = useMemo(() => getZonesStepWarnings(state), [state]);
 
   const stepErrors = useMemo(
     () => [
@@ -118,6 +131,17 @@ export default function TournamentWizardPage() {
 
   return (
     <PageShell title="Asistente de creación de torneo">
+      {cloneReview.length > 0 && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Esta estructura se clonó con algunas zonas o copas que necesitan revisión:
+          <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2 }}>
+            {cloneReview.map(notice => (
+              <li key={notice}>{notice}</li>
+            ))}
+          </Box>
+        </Alert>
+      )}
+
       <Box
         sx={{
           overflowX: 'auto',
@@ -159,7 +183,9 @@ export default function TournamentWizardPage() {
               onChange={crossCup => setState(prev => ({ ...prev, crossCup }))}
             />
           )}
-          {activeStep === 3 && <RevisionStep nodes={treeNodes} />}
+          {activeStep === 3 && (
+            <RevisionStep nodes={treeNodes} warnings={zoneWarnings} />
+          )}
         </Box>
 
         <Box

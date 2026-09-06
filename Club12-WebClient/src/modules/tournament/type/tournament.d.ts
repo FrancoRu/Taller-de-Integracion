@@ -14,6 +14,7 @@ import {
   ICreateFullDivisionRequest,
   ICreateFullTournamentRequest,
 } from '@/modules/tournament/type/createFullTournament.d';
+import { StageType } from '@/modules/stage/type/stage';
 
 /**
  * Context properties and methods for managing tournaments.
@@ -134,6 +135,65 @@ export interface ITournamentContextProps {
    * @returns A promise resolving to the completability report, or void on failure.
    */
   getCompletability(id: GUID): Promise<ITournamentCompletability | void>;
+
+  /**
+   * HU-cloning: fetches a source tournament's full cloneable structure tree
+   * from `GET /api/tournaments/{idOrSlug}/structure`, for pre-filling the
+   * creation wizard. Carries no instance data (teams, matches, rosters).
+   * @param idOrSlug The source tournament's ID or public slug.
+   * @returns A promise resolving to the structure tree, or void on failure.
+   */
+  getStructure(idOrSlug: string): Promise<ITournamentStructureResponse | void>;
+}
+
+/**
+ * One stage within a division's cloneable structure tree (HU-cloning).
+ * Mirrors the backend `StageStructureResponse` DTO. Carries no dates, no
+ * DrawnAt, and no match data.
+ * @interface IStageStructureResponse
+ */
+export interface IStageStructureResponse {
+  name: string;
+  bracketName?: string | null;
+  stageType: StageType;
+  isElimination: boolean;
+  order: number;
+  bestOf: number;
+  roundRobinLegs: number;
+}
+
+/**
+ * One division within a tournament's cloneable structure tree (HU-cloning).
+ * Mirrors the backend `DivisionStructureResponse` DTO.
+ * @interface IDivisionStructureResponse
+ */
+export interface IDivisionStructureResponse {
+  name: string;
+  isCrossDivisionCup: boolean;
+  pointsForWin: number;
+  pointsForLoss: number;
+  qualifiersPerGroup: number;
+  playoffMappings: {
+    id: GUID;
+    fromPosition: number;
+    toPosition: number;
+    destination: string;
+  }[];
+  stages: IStageStructureResponse[];
+}
+
+/**
+ * A source tournament's full cloneable structure tree (HU-cloning), returned
+ * by `GET /api/tournaments/{idOrSlug}/structure`. Mirrors the backend
+ * `TournamentStructureResponse` DTO. Carries STRUCTURE ONLY.
+ * @interface ITournamentStructureResponse
+ */
+export interface ITournamentStructureResponse {
+  name: string;
+  description?: string | null;
+  /** Shown for reference only — the clone action requires an explicit organizer choice, never inherited silently. */
+  category: TournamentCategory;
+  divisions: IDivisionStructureResponse[];
 }
 
 /**
@@ -147,7 +207,7 @@ export interface ICompletabilityIssue {
   /**
    * Stable issue code (e.g. `ZoneTooFewTeams`, `TeamNotAssigned`,
    * `TeamInMultipleZones`, `PlayoffRangeExceedsTeams`,
-   * `CrossCupGroupTooFewTeams`, `TeamTooFewPlayers`).
+   * `CrossCupGroupTooFewTeams`, `TeamTooFewPlayers`, `SubGroupTooFewTeams`).
    * @type {string}
    */
   code: string;

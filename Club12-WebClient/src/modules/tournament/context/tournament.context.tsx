@@ -22,6 +22,7 @@ import {
   IPutTournamentRequest,
   ITournamentFiltered,
   ITournamentResponse,
+  ITournamentStructureResponse,
 } from '@/modules/tournament/type/tournament';
 import {
   ICreateFullDivisionRequest,
@@ -309,6 +310,24 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
     [setError]
   );
 
+  const getStructure = useCallback(
+    async (idOrSlug: string): Promise<ITournamentStructureResponse | void> => {
+      try {
+        const res: AxiosResponse<ITournamentStructureResponse> =
+          await tournamentService.getStructure(idOrSlug);
+
+        return res.data;
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+          setError(error);
+        } else {
+          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+        }
+      }
+    },
+    [setError]
+  );
+
   const container: ITournamentContextProps = useMemo(
     () => ({
       tournament,
@@ -323,6 +342,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       enrollTeam,
       unenrollTeam,
       getCompletability,
+      getStructure,
     }),
     [
       tournament,
@@ -337,6 +357,7 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
       enrollTeam,
       unenrollTeam,
       getCompletability,
+      getStructure,
     ]
   );
 

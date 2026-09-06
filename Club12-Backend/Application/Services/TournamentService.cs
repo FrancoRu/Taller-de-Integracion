@@ -175,6 +175,29 @@ public class TournamentService(
         return matches.FirstOrDefault();
     }
 
+    /// <inheritdoc/>
+    public async Task<Tournament?> GetTournamentStructureAsync(Guid tournamentId)
+    {
+        Tournament? tournament = await tournamentRepository.GetByIdAsync(tournamentId);
+        if (tournament is null)
+        {
+            return null;
+        }
+
+        // IGenericRepository's includes only support a single level of
+        // .Include(), so Tournament.Divisions.Stages cannot be expressed
+        // directly — reuses the same two-step load EvaluateCompletabilityAsync
+        // already relies on for the same reason.
+        List<Division> divisions = [.. await unitOfWork.DivisionRepository.FindAsync(
+            division => division.TournamentId == tournamentId,
+            includes: [division => division.Stages, division => division.PlayoffMappings],
+            asSplitQuery: true)];
+
+        tournament.Divisions = divisions;
+
+        return tournament;
+    }
+
     /// <summary>
     /// Deletes a tournament, blocking the delete once it has real history.
     /// </summary>

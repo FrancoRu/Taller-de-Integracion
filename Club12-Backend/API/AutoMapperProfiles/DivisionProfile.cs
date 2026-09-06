@@ -1,5 +1,6 @@
 using Application.DTOs.Divisions.Request;
 using Application.DTOs.Divisions.Response;
+using Application.DTOs.Tournament.Response;
 using Application.Utils.Helper.Playoff;
 
 using AutoMapper;
@@ -28,6 +29,10 @@ public class DivisionProfile : Profile
 
         _ = CreateMap<PlayoffMappingRequest, DivisionPlayoffMapping>();
         _ = CreateMap<DivisionPlayoffMapping, PlayoffMappingResponse>();
+
+        // Tournament cloning (HU-cloning): Stages resolves to StageStructureResponse
+        // once StageProfile registers that map.
+        _ = CreateMap<Division, DivisionStructureResponse>();
 
         _ = CreateMap<CreateDivisionRequest, Division>();
 

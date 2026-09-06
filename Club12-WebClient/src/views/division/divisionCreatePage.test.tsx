@@ -58,6 +58,7 @@ describe('DivisionCreatePage — tournament picker only offers open-registration
       enrollTeam: vi.fn(),
       unenrollTeam: vi.fn(),
       getCompletability: vi.fn(),
+      getStructure: vi.fn(),
     } as ITournamentContextProps);
 
     renderPage();
@@ -100,6 +101,7 @@ describe('DivisionCreatePage — frozen tournament never traps the admin', () =>
       enrollTeam: vi.fn(),
       unenrollTeam: vi.fn(),
       getCompletability: vi.fn(),
+      getStructure: vi.fn(),
     } as ITournamentContextProps);
 
     renderPage('/panel/divisiones/crear?tournamentId=t-ongoing');

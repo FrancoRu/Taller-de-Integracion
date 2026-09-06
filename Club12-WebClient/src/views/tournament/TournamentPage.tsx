@@ -1,19 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Button, Chip, Grid, Stack, Tab, Tabs, Typography } from '@mui/material';
+import {
+  Button,
+  Chip,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  MenuItem,
+  Stack,
+  Tab,
+  Tabs,
+  TextField,
+  Typography,
+} from '@mui/material';
 import PageShell from '@/views/core/components/PageShell';
 import CategoryChip from '@/views/core/components/CategoryChip';
 import { DetailSkeleton } from '@/views/core/components/skeletons';
 import { GUID } from '@/modules/core/types/types';
 import { useTournament } from '@/modules/tournament/hook/tournament.hook';
 import { TournamentStatus } from '@/modules/core/enum/tournament/tournamentStatus';
-import { TOURNAMENT_CATEGORY_LABELS } from '@/modules/core/enum/tournament/tournamentCategory';
+import {
+  TOURNAMENT_CATEGORY_LABELS,
+  TournamentCategory,
+} from '@/modules/core/enum/tournament/tournamentCategory';
 import { UserRolesType } from '@/modules/core/enum/user/userRolesType';
 import { useAuth } from '@/modules/auth/hook/auth.hook';
 import DivisionsPage from '@/views/division/divisionsPage';
 import TeamsPage from '@/views/team/TeamsPage';
 import TournamentEnrolledTeams from '@/views/tournament/TournamentEnrolledTeams';
 import TournamentDivisionAssignment from '@/views/tournament/TournamentDivisionAssignment';
+import { structureToWizardState } from '@/views/tournament/wizard/cloneWizard';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
 import { confirmAction, notifyError } from '@/modules/core/utils/confirmDialog';
 import {
@@ -28,9 +45,15 @@ const TournamentPage: React.FC = () => {
   const { tournamentId } = useParams<{ tournamentId: GUID }>();
   const navigate = useNavigate();
   const { role } = useAuth();
-  const { tournament, getTournamentById, putTournamentById } = useTournament();
+  const { tournament, getTournamentById, putTournamentById, getStructure } =
+    useTournament();
   const [loading, setLoading] = useState(false);
   const [reverting, setReverting] = useState(false);
+  const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
+  const [cloneCategory, setCloneCategory] = useState<TournamentCategory>(
+    TournamentCategory.Masculine
+  );
+  const [cloning, setCloning] = useState(false);
   type TournamentTab = 'detalle' | 'divisiones' | 'equipos' | 'asignacion';
   const TAB_QUERY_PARAM = 'tab';
   // Kept in the URL (not local state) so leaving to a division/team's detail
@@ -167,6 +190,46 @@ const TournamentPage: React.FC = () => {
     navigate(`${APP_ROUTES.panelDivisionCreate}?tournamentId=${tournament.id}`);
   };
 
+  // HU-cloning: opens the category-choice dialog, defaulting to the source's
+  // category as a convenience — never silently inherited, always editable
+  // before confirming.
+  const handleOpenCloneDialog = () => {
+    setCloneCategory(tournament.category);
+    setCloneDialogOpen(true);
+  };
+
+  const handleCloseCloneDialog = () => {
+    if (!cloning) {
+      setCloneDialogOpen(false);
+    }
+  };
+
+  const handleConfirmClone = async () => {
+    setCloning(true);
+    try {
+      const structure = await getStructure(tournament.slug || tournament.id);
+      if (!structure) {
+        await notifyError({
+          title: 'No se pudo cargar la estructura del torneo',
+          text: 'Volvé a intentar en unos segundos.',
+        });
+        return;
+      }
+
+      const { state: clonePrefill, review: cloneReview } = structureToWizardState(
+        structure,
+        cloneCategory
+      );
+
+      setCloneDialogOpen(false);
+      navigate(APP_ROUTES.panelTournamentWizard, {
+        state: { clonePrefill, cloneReview },
+      });
+    } finally {
+      setCloning(false);
+    }
+  };
+
   return (
     <PageShell
       title={tournament.name}
@@ -190,6 +253,11 @@ const TournamentPage: React.FC = () => {
               }
             >
               Editar torneo
+            </Button>
+          )}
+          {canEditTournament && (
+            <Button variant="outlined" onClick={handleOpenCloneDialog}>
+              Clonar torneo
             </Button>
           )}
           <Button
@@ -333,6 +401,41 @@ const TournamentPage: React.FC = () => {
         {tab === 'asignacion' && canAssign && (
           <TournamentDivisionAssignment tournament={tournament} />
         )}
+
+      <Dialog open={cloneDialogOpen} onClose={handleCloseCloneDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>Clonar torneo</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+            Se creará un torneo nuevo con la misma estructura de zonas, copas y
+            puntajes que "{tournament.name}". Nombre, fechas y temporada se
+            completan en blanco (o editables) para revisar antes de crear —
+            ningún equipo, partido ni resultado se copia.
+          </Typography>
+
+          <TextField
+            select
+            label="Categoría"
+            value={cloneCategory}
+            onChange={e => setCloneCategory(e.target.value as TournamentCategory)}
+            fullWidth
+          >
+            {Object.values(TournamentCategory).map(category => (
+              <MenuItem key={category} value={category}>
+                {TOURNAMENT_CATEGORY_LABELS[category]}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', mt: 2 }}>
+            <Button color="inherit" onClick={handleCloseCloneDialog} disabled={cloning}>
+              Cancelar
+            </Button>
+            <Button variant="contained" onClick={() => void handleConfirmClone()} disabled={cloning}>
+              {cloning ? 'Cargando...' : 'Continuar'}
+            </Button>
+          </Stack>
+        </DialogContent>
+      </Dialog>
     </PageShell>
   );
 };

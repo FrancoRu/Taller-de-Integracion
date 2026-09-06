@@ -18,6 +18,11 @@ public class TournamentProfile : Profile
             .ForMember(dest => dest.SeasonSlug, opt => opt.MapFrom(src => src.Season != null ? src.Season.Slug : null))
             .ReverseMap();
 
+        // Tournament cloning (HU-cloning): the structure-tree read is additive and
+        // maps by name convention only — Divisions resolves to DivisionStructureResponse
+        // once DivisionProfile registers that map, carrying no instance data.
+        _ = CreateMap<Tournament, TournamentStructureResponse>();
+
         _ = CreateMap<CreateTournamentRequest, Tournament>();
 
         _ = CreateMap<UpdateTournamentRequest, Tournament>()

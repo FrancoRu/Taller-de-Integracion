@@ -15,6 +15,7 @@ import {
   ITournamentCompletability,
   ITournamentFiltered,
   ITournamentResponse,
+  ITournamentStructureResponse,
 } from '@/modules/tournament/type/tournament.d';
 import {
   ICreateFullDivisionRequest,
@@ -156,4 +157,16 @@ export const tournamentService = {
     id: GUID
   ): Promise<AxiosResponse<ITournamentCompletability>> =>
     await sendGet(`${routes.tournaments}/${id}/completability`),
+
+  /**
+   * HU-cloning: fetches a source tournament's full cloneable structure tree
+   * from `GET /api/tournaments/{idOrSlug}/structure`, for pre-filling the
+   * creation wizard. Carries no instance data (teams, matches, rosters).
+   * @param {string} idOrSlug - The source tournament's ID or public slug.
+   * @returns {Promise<AxiosResponse<ITournamentStructureResponse>>} The server response.
+   */
+  getStructure: async (
+    idOrSlug: string
+  ): Promise<AxiosResponse<ITournamentStructureResponse>> =>
+    await sendGet(`${routes.tournaments}/${idOrSlug}/structure`),
 };

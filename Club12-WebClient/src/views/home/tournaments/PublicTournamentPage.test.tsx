@@ -71,6 +71,12 @@ const mockDivisionsAndTeams = () => {
       .fn()
       .mockResolvedValue({ items: [], page: 1, pageSize: 20, totalCount: 0 }),
     deleteDivisionsById: vi.fn(),
+    getRoster: vi.fn(),
+    enrollTeams: vi.fn(),
+    unenrollTeams: vi.fn(),
+    autoDistribute: vi.fn(),
+    rebuildSubGroups: vi.fn(),
+    reassignTeamToSubGroup: vi.fn(),
   } as IDivisionContextProps);
 
   mockedUseTeam.mockReturnValue({
@@ -102,6 +108,7 @@ describe('PublicTournamentPage — loading gate', () => {
       enrollTeam: vi.fn(),
       unenrollTeam: vi.fn(),
       getCompletability: vi.fn(),
+      getStructure: vi.fn(),
     } as ITournamentContextProps);
 
     mockedUseDivision.mockReturnValue({
@@ -115,6 +122,12 @@ describe('PublicTournamentPage — loading gate', () => {
         .fn()
         .mockResolvedValue({ items: [], page: 1, pageSize: 20, totalCount: 0 }),
       deleteDivisionsById: vi.fn(),
+      getRoster: vi.fn(),
+      enrollTeams: vi.fn(),
+      unenrollTeams: vi.fn(),
+      autoDistribute: vi.fn(),
+      rebuildSubGroups: vi.fn(),
+      reassignTeamToSubGroup: vi.fn(),
     } as IDivisionContextProps);
 
     let resolveTeams: (value: unknown) => void = () => {};
@@ -167,6 +180,7 @@ describe('PublicTournamentPage — "Volver" target', () => {
       enrollTeam: vi.fn(),
       unenrollTeam: vi.fn(),
       getCompletability: vi.fn(),
+      getStructure: vi.fn(),
     } as ITournamentContextProps);
     mockDivisionsAndTeams();
 
@@ -200,6 +214,7 @@ describe('PublicTournamentPage — "Volver" target', () => {
       enrollTeam: vi.fn(),
       unenrollTeam: vi.fn(),
       getCompletability: vi.fn(),
+      getStructure: vi.fn(),
     } as ITournamentContextProps);
     mockDivisionsAndTeams();
 

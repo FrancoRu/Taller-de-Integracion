@@ -37,6 +37,15 @@ public interface ITournamentService
     Task<Tournament?> GetTournamentByIdAsync(Guid tournamentId);
 
     /// <summary>
+    /// Loads a tournament's full cloneable structure — every division with its
+    /// Stages and PlayoffMappings — for the tournament-cloning wizard-prefill
+    /// flow (HU-cloning). Carries no instance data (teams, matches, rosters).
+    /// </summary>
+    /// <param name="tournamentId">The source tournament's GUID id.</param>
+    /// <returns>The tournament with its Divisions graph loaded, or null if not found.</returns>
+    Task<Tournament?> GetTournamentStructureAsync(Guid tournamentId);
+
+    /// <summary>
     /// Retrieves a Tournament by its id or its slug asynchronously, treating the value as an id when it parses as a GUID and otherwise looking it up as a slug.
     /// </summary>
     /// <param name="idOrSlug">The Tournament's GUID id or its slug.</param>
