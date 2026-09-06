@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Checkbox,
   Dialog,
@@ -28,13 +28,40 @@ interface EnrollTeamDialogProps {
   open: boolean;
   submitting: boolean;
   /**
-   * Existing teams (clubs) that can be enrolled. The caller is expected to
-   * exclude teams already enrolled in this tournament.
+   * Teams that can be enrolled, one physical `Team` row per past-or-current
+   * season. The caller is expected to exclude teams already enrolled in this
+   * tournament. A club is the stable identity here, not a season — see
+   * {@link dedupeByClub}, which collapses these down to one pickable entry
+   * per club before they ever reach the picker.
    */
   availableTeams: ITeamResponse[];
   onClose: () => void;
   onConfirm: (request: IEnrollTeamRequest) => void;
 }
+
+/**
+ * Collapses one Team row per club (identified by `clubId` when linked, or by
+ * normalized name otherwise — the same identity key `ClubService` itself
+ * slugs a club from) down to a single representative: an organizer picks a
+ * CLUB here, never a specific past season's Team row. Within a club, prefers
+ * a row that still has a `tournamentId` (so "copiar plantel de su temporada
+ * anterior" has a real season to read from) over one that doesn't; ties keep
+ * list order.
+ */
+const dedupeByClub = (teams: ITeamResponse[]): ITeamResponse[] => {
+  const byClub = new Map<string, ITeamResponse>();
+
+  for (const team of teams) {
+    const clubKey = team.clubId ?? `name:${team.name.trim().toLowerCase()}`;
+    const current = byClub.get(clubKey);
+
+    if (!current || (!current.tournamentId && team.tournamentId)) {
+      byClub.set(clubKey, team);
+    }
+  }
+
+  return [...byClub.values()];
+};
 
 const INITIAL_MODE: EnrollMode = 'new';
 
@@ -94,7 +121,8 @@ const EnrollTeamDialog: React.FC<EnrollTeamDialogProps> = ({
     setTeamForm(prev => ({ ...prev, [field]: value }));
   };
 
-  const selectedTeam = availableTeams.find(team => team.id === existingTeamId);
+  const clubEntries = useMemo(() => dedupeByClub(availableTeams), [availableTeams]);
+  const selectedTeam = clubEntries.find(team => team.id === existingTeamId);
 
   const handleConfirm = async () => {
     if (mode === 'new') {
@@ -199,14 +227,14 @@ const EnrollTeamDialog: React.FC<EnrollTeamDialogProps> = ({
                 }
                 fullWidth
                 helperText={
-                  availableTeams.length === 0
+                  clubEntries.length === 0
                     ? 'No hay equipos disponibles para inscribir.'
                     : undefined
                 }
               >
-                {availableTeams.map(team => (
+                {clubEntries.map(team => (
                   <MenuItem key={team.id} value={team.id}>
-                    {team.tournamentName ? `${team.name} — ${team.tournamentName}` : team.name}
+                    {team.name}
                   </MenuItem>
                 ))}
               </TextField>

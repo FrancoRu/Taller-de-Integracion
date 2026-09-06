@@ -229,20 +229,23 @@ describe('TournamentEnrolledTeams — enroll existing team', () => {
     expect(screen.queryByRole('option', { name: 'River' })).not.toBeInTheDocument();
   });
 
-  it('disambiguates same-named teams from different seasons in the existing-team picker', async () => {
-    const echagueLastSeason = buildTeam({
-      name: 'Echagüe',
-      slug: 'echague-1',
-      tournamentId: 'tournament-old' as unknown as GUID,
-      tournamentName: 'Torneo Apertura Masculino 2025',
-    });
+  it('collapses same-named teams from different seasons into a single club entry', async () => {
+    // A club is not "teams from tournaments" — every historical Team row for
+    // the same club name must present as ONE pickable entry, never one per
+    // past season/tournament.
     const echagueOlder = buildTeam({
       name: 'Echagüe',
       slug: 'echague-2',
       tournamentId: 'tournament-older' as unknown as GUID,
       tournamentName: 'Torneo Clausura Masculino 2024',
     });
-    setup({ enrolled: [], all: [echagueLastSeason, echagueOlder] });
+    const echagueLastSeason = buildTeam({
+      name: 'Echagüe',
+      slug: 'echague-1',
+      tournamentId: 'tournament-old' as unknown as GUID,
+      tournamentName: 'Torneo Apertura Masculino 2025',
+    });
+    setup({ enrolled: [], all: [echagueOlder, echagueLastSeason] });
     const user = userEvent.setup();
 
     renderComponent();
@@ -250,12 +253,45 @@ describe('TournamentEnrolledTeams — enroll existing team', () => {
     await user.click(within(dialog).getByRole('radio', { name: /equipo existente/i }));
     await user.click(within(dialog).getByRole('combobox'));
 
+    expect(screen.getAllByRole('option', { name: 'Echagüe' })).toHaveLength(1);
     expect(
-      screen.getByRole('option', { name: 'Echagüe — Torneo Apertura Masculino 2025' })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('option', { name: 'Echagüe — Torneo Clausura Masculino 2024' })
-    ).toBeInTheDocument();
+      screen.queryByRole('option', { name: /Echagüe —/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it('picks the most recently-seasoned instance of a club as the one it enrolls', async () => {
+    const echagueOlder = buildTeam({
+      name: 'Echagüe',
+      slug: 'echague-2',
+      tournamentId: null,
+      tournamentName: null,
+    });
+    const echagueLastSeason = buildTeam({
+      name: 'Echagüe',
+      slug: 'echague-1',
+      tournamentId: 'tournament-old' as unknown as GUID,
+      tournamentName: 'Torneo Apertura Masculino 2025',
+    });
+    setup({ enrolled: [], all: [echagueOlder, echagueLastSeason] });
+    const user = userEvent.setup();
+
+    renderComponent();
+    const dialog = await openDialog(user);
+    await user.click(within(dialog).getByRole('radio', { name: /equipo existente/i }));
+    await user.click(within(dialog).getByRole('combobox'));
+    await user.click(screen.getByRole('option', { name: 'Echagüe' }));
+    await user.click(
+      within(dialog).getByRole('checkbox', {
+        name: /copiar plantel de su temporada anterior/i,
+      })
+    );
+    await user.click(within(dialog).getByRole('button', { name: /inscribir/i }));
+
+    await waitFor(() => expect(enrollTeam).toHaveBeenCalledTimes(1));
+    expect(enrollTeam).toHaveBeenCalledWith(TOURNAMENT_ID, {
+      existingTeamId: echagueLastSeason.id,
+      copyRosterFromTournamentId: 'tournament-old',
+    });
   });
 
   it('enrolls an existing team copying the roster from its previous season', async () => {
