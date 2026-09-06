@@ -17,6 +17,7 @@ import { getTheme } from '@/theme';
 const theme = getTheme('dark');
 const DIALOG_BACKGROUND = theme.palette.background.paper;
 const DIALOG_TEXT_COLOR = theme.palette.text.primary;
+const CONFIRM_BUTTON_COLOR = theme.palette.primary.main;
 
 export const ErrorContext = createContext<IErrorContextProp | undefined>(
   undefined
@@ -38,7 +39,8 @@ export const ErrorProvider: React.FC<ProviderProps> = ({ children }) => {
   });
 
   const setMessage = useCallback((status: number, message: string[]) => {
-    const stat = status < 400 ? 'success' : 'error';
+    const isError = status >= 400;
+    const stat = isError ? 'error' : 'success';
     const messages = message.join(', ');
 
     const now = Date.now();
@@ -50,12 +52,21 @@ export const ErrorProvider: React.FC<ProviderProps> = ({ children }) => {
     }
     lastToastRef.current = { message: messages, at: now };
 
+    // A success toast is a quick "yep, saved" the user already expects, so it
+    // auto-dismisses fast. An error is often a full backend validation
+    // sentence (e.g. a roster/eligibility rule) the user has to actually
+    // read and act on — the same 1500ms timer made it vanish long before
+    // anyone could read it, which looked indistinguishable from no feedback
+    // at all. Errors instead stay up until the user dismisses them, the same
+    // "must be acknowledged" convention confirmDialog.ts's notifyError/
+    // confirmAction already use for messages that require reading.
     void Swal.fire({
       position: 'center',
       icon: stat,
       title: messages,
-      showConfirmButton: false,
-      timer: 1500,
+      showConfirmButton: isError,
+      confirmButtonColor: CONFIRM_BUTTON_COLOR,
+      timer: isError ? undefined : 1500,
       background: DIALOG_BACKGROUND,
       color: DIALOG_TEXT_COLOR,
       // Keep toasts above MUI's modal layer so one fired while a Dialog is open
