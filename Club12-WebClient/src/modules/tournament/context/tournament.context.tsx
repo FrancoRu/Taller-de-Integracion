@@ -92,10 +92,16 @@ export const TournamentProvider: React.FC<ProviderProps> = ({ children }) => {
         }
         return res.data;
       } catch (error: unknown) {
+        // Re-thrown (unlike this file's other catch blocks) so submitWizard.ts can
+        // show the real backend rejection reason in its own persistent dialog,
+        // instead of only the global toast this setError call already fires.
         if (error instanceof AxiosError) {
           setError(error);
+          throw error;
         } else {
-          setError(new AxiosError(ERROR_MESSAGES.GENERIC_ERROR));
+          const wrapped = new AxiosError(ERROR_MESSAGES.GENERIC_ERROR);
+          setError(wrapped);
+          throw wrapped;
         }
       }
     },

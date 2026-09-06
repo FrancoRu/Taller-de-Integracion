@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { AxiosError } from 'axios';
 import { GUID } from '@/modules/core/types/types';
 import { StageType } from '@/modules/stage/type/stage';
 import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
@@ -272,6 +273,34 @@ describe('submitWizard', () => {
     expect(result.success).toBe(false);
     expect(result.error).toBeDefined();
     expect(result.tournamentId).toBeUndefined();
+  });
+
+  it('surfaces the backend\'s actual rejection reason instead of a generic message', async () => {
+    // createFullTournament (tournament.context.tsx) re-throws after its own
+    // global-toast setError call, specifically so this message is available
+    // here — the wizard's own persistent dialog must show it, not a
+    // hardcoded fallback, since the global toast auto-dismisses in 1.5s.
+    const services = makeServices({
+      createFullTournament: vi.fn(async () => {
+        throw new AxiosError('Request failed with status code 409', '409', undefined, undefined, {
+          status: 409,
+          statusText: 'Conflict',
+          headers: {},
+          config: {} as never,
+          data: {
+            title: 'Conflict: The operation is invalid in the current state.',
+            detail:
+              'No se pueden combinar sub-grupos con una copa configurada por rango de posiciones.',
+          },
+        });
+      }),
+    });
+    const result = await submitWizard(makeState(), services);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(
+      'No se pueden combinar sub-grupos con una copa configurada por rango de posiciones.'
+    );
   });
 
   it('nests a cross-division cup division with isCrossDivisionCup true when enabled', async () => {

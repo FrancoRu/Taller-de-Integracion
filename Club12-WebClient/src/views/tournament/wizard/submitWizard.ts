@@ -1,4 +1,5 @@
 import { GUID } from '@/modules/core/types/types';
+import { extractErrorMessage } from '@/modules/error/utils/extractErrorMessage';
 import { ITournamentResponse } from '@/modules/tournament/type/tournament.d';
 import {
   ICreateFullDivisionRequest,
@@ -315,7 +316,12 @@ export const submitWizard = async (
     divisions,
   };
 
-  const tournament = await services.createFullTournament(payload);
+  let tournament: ITournamentResponse | void;
+  try {
+    tournament = await services.createFullTournament(payload);
+  } catch (error: unknown) {
+    return { success: false, error: extractErrorMessage(error) };
+  }
 
   if (!tournament) {
     return { success: false, error: 'No se pudo crear el torneo.' };
