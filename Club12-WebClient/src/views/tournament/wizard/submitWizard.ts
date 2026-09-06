@@ -61,6 +61,9 @@ const addDays = (date: Date, days: number): Date => {
 
 const roundLabel = (stageType: StageType): string => STAGE_TYPE_LABELS[stageType];
 
+/** The letter for the Nth sub-group (1 -> A, 2 -> B, …), mirroring `RebuildSubGroupsAsync`'s "Grupo A".."Grupo {G}" backend naming. */
+const subGroupLetter = (index: number): string => String.fromCharCode('A'.charCodeAt(0) + index);
+
 /**
  * HU-112: derives a zone's standings→cup position ranges (HU-45) from its
  * cups' ORDER and qualifier counts, instead of a manual range editor. Cups
@@ -144,20 +147,44 @@ export const buildZoneDivision = (
 
   if (zone.hasGroupStage) {
     const groupEndDate = addDays(startDate, GROUP_STAGE_DURATION_DAYS);
+    const subGroupCount =
+      Number.isInteger(zone.subGroupCount) && zone.subGroupCount >= 1
+        ? zone.subGroupCount
+        : 1;
 
     // HU-106: the group stage is created as STRUCTURE ONLY. Teams are not
     // registered or assigned here, and no fixture is generated. The backend
     // generates the group-stage fixture later, when the tournament's
     // registration is closed (HU-38 / HU-107 / HU-108), from the teams that
     // registered during the registration phase.
-    stages.push({
-      name: 'Fase de Grupos',
-      stageType: StageType.Group,
-      isElimination: false,
-      startDate,
-      endDate: groupEndDate,
-      roundRobinLegs: zone.roundRobinLegs,
-    });
+    //
+    // HU-121: subGroupCount === 1 (the default) behaves EXACTLY like today —
+    // one "Fase de Grupos" stage. subGroupCount > 1 emits G Group-type stages
+    // named "Grupo A".."Grupo G" instead, mirroring the cross-cup precedent
+    // (`buildCrossCupDivision`'s "Grupo 1".."Grupo N") and the backend's own
+    // `RebuildSubGroupsAsync` naming. D2 removed the backend invariant that
+    // would otherwise reject a division's 2nd Group stage.
+    if (subGroupCount <= 1) {
+      stages.push({
+        name: 'Fase de Grupos',
+        stageType: StageType.Group,
+        isElimination: false,
+        startDate,
+        endDate: groupEndDate,
+        roundRobinLegs: zone.roundRobinLegs,
+      });
+    } else {
+      for (let i = 0; i < subGroupCount; i += 1) {
+        stages.push({
+          name: `Grupo ${subGroupLetter(i)}`,
+          stageType: StageType.Group,
+          isElimination: false,
+          startDate,
+          endDate: groupEndDate,
+          roundRobinLegs: zone.roundRobinLegs,
+        });
+      }
+    }
 
     nextStartDate = groupEndDate;
   }

@@ -21,15 +21,14 @@ using System.Threading.Tasks;
 namespace API.Controllers;
 
 /// <summary>
-/// Manages Stage entities: creation, retrieval, update, deletion, automated generation, and team assignment. Reads are public; writes require Owner or Admin.
+/// Manages Stage entities: creation, retrieval, update, deletion, and team assignment. Reads are public; writes require Owner or Admin.
 /// </summary>
 /// <param name="stageService">Service for Stage business logic and persistence operations.</param>
-/// <param name="matchService">Service for Match business logic and automated match generation.</param>
 /// <param name="mapper">AutoMapper instance for mapping between entities and DTOs.</param>
 [Route("api/stages/")]
 [ApiController]
 [Authorize(Roles = Roles.AdminOrOwner)]
-public class StageController(IStageService stageService, IMatchService matchService, IMapper mapper) : ControllerBase
+public class StageController(IStageService stageService, IMapper mapper) : ControllerBase
 {
     /// <summary>
     /// Creates a new Stage.
@@ -46,25 +45,6 @@ public class StageController(IStageService stageService, IMatchService matchServ
         Stage createdStage = await stageService.CreateStageAsync(mappedStage);
         StageResponse stageResponse = mapper.Map<StageResponse>(createdStage);
         return CreatedAtAction(nameof(GetStageById), new { idOrSlug = createdStage.Id }, stageResponse);
-    }
-
-    /// <summary>
-    /// Generates all stages and matches for the specified division and returns the resulting stage information.
-    /// </summary>
-    /// <param name="id">The unique identifier of the division for which stages and matches are to be generated.</param>
-    /// <returns>An HTTP 200 OK response containing a list of stage details if the operation succeeds.</returns>
-    [HttpPost("generate/{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<StageResponse>))]
-    public async Task<ActionResult> GenerateStagesAndMatches(Guid id)
-    {
-        List<Stage> response = await stageService.CreateAutomatedStagesAsync(divisionId: id);
-
-        foreach (Stage stage in response)
-        {
-            stage.Matches = await matchService.CreateAutomatedMatchesAsync(stageId: stage.Id);
-        }
-
-        return Ok(mapper.Map<List<StageResponse>>(response));
     }
 
     /// <summary>
@@ -215,6 +195,48 @@ public class StageController(IStageService stageService, IMatchService matchServ
 
         List<Match> seededMatches = await stageService.SeedKnockoutStageAsync(id);
 
+        return Ok(mapper.Map<List<DetailedMatchResponse>>(seededMatches));
+    }
+
+    /// <summary>
+    /// Computes a first-round pairing for a groupless bracket without persisting it, returning a signed token that a later commit can replay exactly.
+    /// </summary>
+    [HttpPost("{id:guid}/preview-draw")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DrawPreviewResult))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<DrawPreviewResult>> PreviewDraw(Guid id, DrawRequest request)
+    {
+        Stage? stage = await stageService.GetStageByIdAsync(id);
+
+        if (stage == null)
+        {
+            return NotFound(ErrorMessages.Stage.NotFoundById(id));
+        }
+
+        DrawPreviewResult preview = await stageService.PreviewDrawAsync(id, request.Mode, request.ManualOrder);
+        return Ok(preview);
+    }
+
+    /// <summary>
+    /// Seeds a groupless bracket from a previewed token or a manual order, stamping DrawnAt and auditing the draw.
+    /// </summary>
+    [HttpPost("{id:guid}/draw")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<DetailedMatchResponse>))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<List<DetailedMatchResponse>>> CommitDraw(Guid id, DrawRequest request)
+    {
+        Stage? stage = await stageService.GetStageByIdAsync(id);
+
+        if (stage == null)
+        {
+            return NotFound(ErrorMessages.Stage.NotFoundById(id));
+        }
+
+        List<Match> seededMatches = await stageService.CommitDrawAsync(id, request.Mode, request.DrawToken, request.ManualOrder);
         return Ok(mapper.Map<List<DetailedMatchResponse>>(seededMatches));
     }
 }

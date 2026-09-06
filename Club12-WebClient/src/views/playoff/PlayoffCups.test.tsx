@@ -54,12 +54,18 @@ const stage = (id: string, bracketName: string | null): IStageResponse => ({
   roundRobinLegs: 1,
 });
 
-const bracketGroup = (bracketName: string | null, stageId: string, m: IMatchResponse[]): BracketGroup => ({
+const bracketGroup = (
+  bracketName: string | null,
+  stageId: string,
+  m: IMatchResponse[],
+  drawnAt: string | null = null
+): BracketGroup => ({
   bracketName,
   model: {
     rounds: [{ stageId: guid(stageId), stageType: StageType.SemiFinal, matches: m }],
     edges: [],
   },
+  drawnAt,
 });
 
 const fixtureSection = (bracketName: string | null, stageId: string, m: IMatchResponse[]): DivisionFixtureSection => ({
@@ -116,5 +122,34 @@ describe('PlayoffCups', () => {
 
     // One export button per cup — not one per round within a cup.
     expect(screen.getAllByText('Exportar CSV')).toHaveLength(2);
+  });
+
+  // Playoff draw & seeding: the public "Sorteo realizado" transparency label.
+  it('shows "Sorteo realizado el [fecha]" when the bracket has a drawnAt', () => {
+    const m = [match('semi', 'A', 'B')];
+    const groups = [bracketGroup(null, 'semi', m, '2026-05-01T12:00:00Z')];
+    const sections = [fixtureSection(null, 'semi', m)];
+
+    render(
+      <MemoryRouter>
+        <PlayoffCups bracketGroups={groups} matchSections={sections} />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText(/Sorteo realizado el/i)).toBeInTheDocument();
+  });
+
+  it('shows no draw-date label when drawnAt is null', () => {
+    const m = [match('semi', 'A', 'B')];
+    const groups = [bracketGroup(null, 'semi', m, null)];
+    const sections = [fixtureSection(null, 'semi', m)];
+
+    render(
+      <MemoryRouter>
+        <PlayoffCups bracketGroups={groups} matchSections={sections} />
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByText(/Sorteo realizado el/i)).not.toBeInTheDocument();
   });
 });

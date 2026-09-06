@@ -132,6 +132,11 @@ public static class ErrorMessages
         /// </summary>
         public const string StructureLockedTournamentStarted =
             "No se puede eliminar la división: el torneo ya arrancó o fue cancelado.";
+
+        public static string ConflictingRosterEnrollment(string teamIds)
+        {
+            return $"No se puede inscribir el/los equipo(s) {teamIds} en esta división: ya está(n) inscripto(s) en otra división del mismo torneo.";
+        }
     }
 
     public static class Team
@@ -229,7 +234,6 @@ public static class ErrorMessages
         public const string AlreadySeeded = "Esta fase ya fue sembrada.";
         public const string InvalidStageType = "Tipo de fase inválido.";
         public const string SeedMissingStandings = "No se puede sembrar: todavía no todos los equipos asignados a esta fase tienen una posición de la fase de grupos finalizada.";
-        public const string GroupStageAlreadyExistsInDivision = "Esta división ya tiene una fase de grupos. Una división solo puede tener una fase de grupos.";
 
         /// <summary>
         /// User-facing Spanish message blocking adding or removing a stage once the division's tournament has already started.
@@ -277,10 +281,73 @@ public static class ErrorMessages
             return $"No se puede asignar el/los equipo(s) {teamIds} a esta división: ya está(n) asignado(s) a otra división del mismo torneo.";
         }
 
+        public static string TeamNotEnrolledInDivision(string teamIds)
+        {
+            return $"No se puede asignar el/los equipo(s) {teamIds} a esta fase: no está(n) inscripto(s) en el roster de la división.";
+        }
+
         public static string SeedTeamCountOutOfRange(int assignedCount, int slotCapacity)
         {
             return $"No se puede sembrar: hay {assignedCount} equipo(s) asignado(s) a esta fase, se esperaba entre 2 y {slotCapacity}. " +
             "Una cantidad de equipos menor al cuadro completo está bien (los mejores seeds pasan con bye), pero no puede superar los lugares generados.";
+        }
+
+        /// <summary>
+        /// User-facing Spanish message blocking a playoffs-only draw preview or commit on a division that still has a group phase.
+        /// </summary>
+        public const string DrawRequiresGrouplessDivision =
+            "El sorteo de llave es solo para divisiones sin fase de grupos; esta división ya tiene una fase de grupos.";
+
+        /// <summary>
+        /// User-facing Spanish message rejecting a draw commit whose token is missing, tampered, expired, or does not match the stage or roster.
+        /// </summary>
+        public const string InvalidDrawToken =
+            "El token del sorteo no es válido o no corresponde a esta fase. Volvé a previsualizar el sorteo.";
+
+        /// <summary>
+        /// User-facing Spanish message rejecting a manual seeding order that is not exactly a permutation of the division's enrolled roster.
+        /// </summary>
+        public const string ManualOrderNotRosterPermutation =
+            "El orden manual debe incluir exactamente a los equipos inscriptos en el roster de la división, sin repetir ni omitir ninguno.";
+
+        /// <summary>
+        /// User-facing Spanish message blocking a bracket draw or re-draw once a real match of that bracket has already been played.
+        /// </summary>
+        public const string BracketAlreadyPlayed =
+            "No se puede sortear ni resortear esta llave: ya hay al menos un partido jugado en este cuadro.";
+
+        /// <summary>
+        /// User-facing Spanish message rejecting a sub-group count below 1.
+        /// </summary>
+        public const string SubGroupCountMustBePositive =
+            "La cantidad de sub-grupos debe ser mayor o igual a 1.";
+
+        /// <summary>
+        /// User-facing Spanish message rejecting a manual reassignment for a team not currently placed in the source sub-group.
+        /// </summary>
+        public const string TeamNotPlacedInSubGroup =
+            "El equipo no está ubicado en el sub-grupo de origen indicado.";
+
+        /// <summary>
+        /// User-facing Spanish message rejecting a manual reassignment across two sub-groups of different divisions.
+        /// </summary>
+        public const string ReassignmentAcrossDivisionsNotAllowed =
+            "No se puede reasignar un equipo entre sub-grupos de distintas divisiones.";
+
+        /// <summary>
+        /// User-facing Spanish message blocking sub-groups from combining with a position-range playoff cup, since a cup's position range has no defined meaning across multiple independent sub-group tables.
+        /// </summary>
+        public const string SubGroupsIncompatibleWithPositionRangeCups =
+            "No se pueden combinar sub-grupos con una copa configurada por rango de posiciones: la tabla de posiciones combinada no está definida para varios sub-grupos independientes. Usá un solo sub-grupo o quitá el mapeo de playoff antes de continuar.";
+
+        public static string SubGroupTooFewTeams(int teamCount, int subGroupCount)
+        {
+            return $"No se pueden crear {subGroupCount} sub-grupos con {teamCount} equipo(s) inscripto(s): cada sub-grupo necesita como mínimo 4 equipos. Elegí una cantidad de sub-grupos menor.";
+        }
+
+        public static string SubGroupReassignmentBelowMinimum(int remainingTeams)
+        {
+            return $"No se puede mover el equipo: el sub-grupo de origen quedaría con {remainingTeams} equipo(s), por debajo del mínimo de 4.";
         }
     }
 

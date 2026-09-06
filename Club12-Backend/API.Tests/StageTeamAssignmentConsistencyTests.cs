@@ -39,6 +39,8 @@ public class StageTeamAssignmentConsistencyTests : IClassFixture<CustomWebApplic
         Division zoneB = await SeedDivisionAsync(db, tournament, isCrossDivisionCup: false);
         Stage zoneAStage = await SeedStageAsync(db, zoneA, tournament);
         Stage zoneBStage = await SeedStageAsync(db, zoneB, tournament);
+        await SeedRegistrationAsync(db, zoneA, teams[0]);
+        await SeedRegistrationAsync(db, zoneB, teams[0]);
 
         await stageService.AssignTeamsToStageAsync(zoneAStage, [teams[0].Id], auto: false);
 
@@ -62,6 +64,8 @@ public class StageTeamAssignmentConsistencyTests : IClassFixture<CustomWebApplic
         Division copaClub12 = await SeedDivisionAsync(db, tournament, isCrossDivisionCup: true);
         Stage zoneAStage = await SeedStageAsync(db, zoneA, tournament);
         Stage copaStage = await SeedStageAsync(db, copaClub12, tournament);
+        await SeedRegistrationAsync(db, zoneA, teams[0]);
+        await SeedRegistrationAsync(db, copaClub12, teams[0]);
 
         await stageService.AssignTeamsToStageAsync(zoneAStage, [teams[0].Id], auto: false);
         await stageService.AssignTeamsToStageAsync(copaStage, [teams[0].Id], auto: false);
@@ -84,6 +88,8 @@ public class StageTeamAssignmentConsistencyTests : IClassFixture<CustomWebApplic
         Division divisionInTournamentTwo = await SeedDivisionAsync(db, tournamentTwo, isCrossDivisionCup: false);
         Stage stageInTournamentOne = await SeedStageAsync(db, divisionInTournamentOne, tournamentOne);
         Stage stageInTournamentTwo = await SeedStageAsync(db, divisionInTournamentTwo, tournamentTwo);
+        await SeedRegistrationAsync(db, divisionInTournamentOne, teamsInTournamentOne[0]);
+        await SeedRegistrationAsync(db, divisionInTournamentTwo, teamsInTournamentOne[0]);
 
         await stageService.AssignTeamsToStageAsync(stageInTournamentOne, [teamsInTournamentOne[0].Id], auto: false);
 
@@ -159,6 +165,18 @@ public class StageTeamAssignmentConsistencyTests : IClassFixture<CustomWebApplic
         await db.SaveChangesAsync();
 
         return division;
+    }
+
+    private static async Task SeedRegistrationAsync(ApplicationDBContext db, Division division, Team team)
+    {
+        db.DivisionTeamRegistrations.Add(new DivisionTeamRegistration
+        {
+            TeamId = team.Id,
+            DivisionId = division.Id,
+            CreatedBy = "test",
+        });
+
+        await db.SaveChangesAsync();
     }
 
     private static async Task<Stage> SeedStageAsync(ApplicationDBContext db, Division division, Tournament tournament)

@@ -2,6 +2,8 @@ import { GUID, GenericResponsePagination } from '@/modules/core/types/types';
 import { withTablePageSize } from '@/modules/core/constants/pagination';
 import {
   IAddStageRequest,
+  IDrawPreviewResult,
+  IDrawRequest,
   IPutStageRequest,
   IStageResponse,
   StageFiltered,
@@ -14,6 +16,7 @@ import {
 } from '@/modules/core/utils/axiosUtils';
 import routes from '@/modules/core/constants/routes';
 import { AxiosResponse } from 'axios';
+import { IMatchResponse } from '@/modules/match/type/match.d';
 
 export const stageService = {
   /**
@@ -68,14 +71,6 @@ export const stageService = {
     sendDelete(`${routes.stages}/${id}`),
 
   /**
-   * Generates stages automatically based on the provided ID.
-   * @param {GUID} id - The unique identifier for which to generate stages.
-   * @returns {Promise<AxiosResponse<IStageResponse[]>>} The response containing the generated stages.
-   */
-  generateStages: async (id: GUID): Promise<AxiosResponse<IStageResponse[]>> =>
-    sendPost(`${routes.stages}/generate/${id}`),
-
-  /**
    * Assigns one or more teams to a stage.
    * @param {GUID} id - The unique identifier of the stage.
    * @param {GUID[]} teamIds - The teams to assign (ignored when auto is true).
@@ -110,4 +105,32 @@ export const stageService = {
    */
   seedKnockoutStage: async (id: GUID): Promise<AxiosResponse<void>> =>
     sendPost(`${routes.stages}/${id}/seed`),
+
+  /**
+   * Previews a groupless bracket's first-round draw without persisting it.
+   * @param {GUID} id - The first-round bracket stage to preview a draw for.
+   * @param {IDrawRequest} body - The draw mode and, for manual seeding, the explicit order.
+   * @returns {Promise<AxiosResponse<IDrawPreviewResult>>} The previewed pairing and draw token.
+   */
+  previewDraw: async (
+    id: GUID,
+    body: IDrawRequest
+  ): Promise<AxiosResponse<IDrawPreviewResult>> =>
+    sendPost(`${routes.stages}/${id}/preview-draw`, body),
+
+  /**
+   * Commits a groupless bracket's first-round draw from a previewed token
+   * (random) or an explicit order (manual). The response's seeded matches
+   * (200) do NOT carry hydrated `homeTeam`/`visitorTeam` objects (same as the
+   * pre-existing `/seed` endpoint) — callers must refetch the stage/bracket
+   * for display names rather than reading them off this response.
+   * @param {GUID} id - The first-round bracket stage to draw.
+   * @param {IDrawRequest} body - The draw mode, draw token (random) or manual order.
+   * @returns {Promise<AxiosResponse<IMatchResponse[]>>} The seeded matches.
+   */
+  commitDraw: async (
+    id: GUID,
+    body: IDrawRequest
+  ): Promise<AxiosResponse<IMatchResponse[]>> =>
+    sendPost(`${routes.stages}/${id}/draw`, body),
 };

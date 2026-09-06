@@ -30,7 +30,8 @@ public class UnitOfWork(
     IStageRepository stageRepository,
     IStageTeamMatchRepository stageTeamMatchRepository,
     IPlayerTeamRegistrationRepository playerTeamRegistrationRepository,
-    ITeamTournamentRegistrationRepository teamTournamentRegistrationRepository
+    ITeamTournamentRegistrationRepository teamTournamentRegistrationRepository,
+    IDivisionTeamRegistrationRepository divisionTeamRegistrationRepository
     ) : IUnitOfWork
 {
     /// <summary>
@@ -108,6 +109,11 @@ public class UnitOfWork(
     /// Gets the repository for team-tournament registration entities.
     /// </summary>
     public ITeamTournamentRegistrationRepository TeamTournamentRegistrationRepository { get; } = teamTournamentRegistrationRepository;
+
+    /// <summary>
+    /// Gets the repository for division-team registration entities.
+    /// </summary>
+    public IDivisionTeamRegistrationRepository DivisionTeamRegistrationRepository { get; } = divisionTeamRegistrationRepository;
 
     /// <summary>
     /// Commits all tracked changes to the database asynchronously.

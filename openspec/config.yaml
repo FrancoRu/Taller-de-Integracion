@@ -11,9 +11,11 @@ context: |
   Testing: xUnit + WebApplicationFactory on the backend (Club12-Backend/API.Tests),
     Vitest + Testing Library on the frontend (Club12-WebClient) — both set up in
     the codebase-clean-architecture-audit change (2026-08-15).
-  Style: backend uses PascalCase C# conventions, uppercase-underscore constants
-    (per Solution/.github/copilot-instructions.md); frontend uses ESLint
-    (standard config) + Prettier.
+  Style: backend uses PascalCase C# conventions throughout, including
+    `public const` fields (see Club12-Backend/DOTNET_STANDARDS.md and
+    Club12-Backend/.editorconfig, both added 2026-09-05 — supersede the older
+    Solution/.github/copilot-instructions.md on this point); frontend uses
+    ESLint (standard config) + Prettier.
 
 strict_tdd: true
 

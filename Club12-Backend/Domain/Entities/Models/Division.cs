@@ -51,4 +51,6 @@ public class Division : EntityBase
     /// Maps this division's final standings position ranges to playoff destinations.
     /// </summary>
     public virtual ICollection<DivisionPlayoffMapping> PlayoffMappings { get; set; } = [];
+
+    public virtual ICollection<DivisionTeamRegistration> DivisionTeamRegistrations { get; set; } = [];
 }

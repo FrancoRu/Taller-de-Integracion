@@ -24,6 +24,8 @@ export const completabilityIssueMessage = (
       return `En ${issue.divisionName}, un rango de playoff arranca en la posición ${issue.fromPosition} pero solo hay ${issue.assignedTeams} equipos.`;
     case 'CrossCupGroupTooFewTeams':
       return `Un grupo de la copa cruzada tiene ${issue.assignedTeams} equipos (mínimo 2).`;
+    case 'SubGroupTooFewTeams':
+      return `En ${issue.divisionName}, un sub-grupo tiene ${issue.assignedTeams} equipos (mínimo 4) o el reparto quedó desbalanceado.`;
     case 'TeamTooFewPlayers':
       return `${issue.teamName} tiene ${issue.playerCount} jugador(es) habilitado(s) (mínimo 4).`;
     default:

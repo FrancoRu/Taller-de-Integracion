@@ -142,6 +142,16 @@ export interface ZoneConfig {
   name: string;
   hasGroupStage: boolean;
   roundRobinLegs: number;
+  /**
+   * HU-121: how many sub-groups ("Grupo A".."Grupo G") the zone's group
+   * phase is split into, organizer-chosen instead of a fixed group size.
+   * `1` behaves exactly like today (a single Group stage) and is the
+   * default. Only meaningful when `hasGroupStage` is true; real team-count
+   * balance (floor/ceil, min 4 per sub-group) cannot be checked yet at
+   * wizard time — that runs later against the actual roster
+   * (`TournamentCompletabilityValidator`).
+   */
+  subGroupCount: number;
   cups: CupConfig[];
   pointsForWin: number;
   pointsForLoss: number;
@@ -221,6 +231,7 @@ export const createEmptyZone = (): ZoneConfig => ({
   name: '',
   hasGroupStage: true,
   roundRobinLegs: 1,
+  subGroupCount: 1,
   cups: [],
   pointsForWin: DEFAULT_POINTS_FOR_WIN,
   pointsForLoss: DEFAULT_POINTS_FOR_LOSS,

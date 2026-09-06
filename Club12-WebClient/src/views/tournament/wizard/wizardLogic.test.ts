@@ -9,6 +9,7 @@ import {
 } from './types';
 import {
   buildWizardTree,
+  getZonesStepWarnings,
   isWizardReadyToSubmit,
   validateCrossCupStep,
   validateTournamentStep,
@@ -31,6 +32,7 @@ const makeValidState = (): WizardState => {
       name: 'Zona A',
       hasGroupStage: true,
       roundRobinLegs: 1,
+      subGroupCount: 1,
       cups: [],
       pointsForWin: 2,
       pointsForLoss: 1,
@@ -40,6 +42,7 @@ const makeValidState = (): WizardState => {
       name: 'Zona B',
       hasGroupStage: true,
       roundRobinLegs: 1,
+      subGroupCount: 1,
       cups: [],
       pointsForWin: 2,
       pointsForLoss: 1,
@@ -107,6 +110,42 @@ describe('validateZonesStep', () => {
     const cup: CupConfig = { id: 'cup-1', name: 'Copa de Oro', qualifiers: 1, bestOfByStage: {}, hasThirdPlace: true };
     state.zones[0].cups.push(cup);
     expect(validateZonesStep(state).some(e => e.includes('clasificados'))).toBe(true);
+  });
+
+  // HU-121: a zone's sub-group count is organizer-chosen; wizard time has no
+  // real team count to check the floor/ceil/min-4 balance rule against, so an
+  // invalid count (< 1) is surfaced as a WARNING (see getZonesStepWarnings),
+  // never as a blocking error here.
+  it('does not block on an invalid subGroupCount — that is a non-blocking warning', () => {
+    const state = makeValidState();
+    state.zones[0].subGroupCount = 0;
+    expect(validateZonesStep(state)).toEqual([]);
+  });
+
+  it('accepts subGroupCount >= 1 with no real team-count check at wizard time', () => {
+    const state = makeValidState();
+    state.zones[0].subGroupCount = 5;
+    expect(validateZonesStep(state)).toEqual([]);
+  });
+});
+
+describe('getZonesStepWarnings', () => {
+  it('is empty for a valid single-sub-group zone (default)', () => {
+    expect(getZonesStepWarnings(makeValidState())).toEqual([]);
+  });
+
+  it('warns (non-blocking) when a zone has an invalid sub-group count', () => {
+    const state = makeValidState();
+    state.zones[0].subGroupCount = 0;
+    const warnings = getZonesStepWarnings(state);
+    expect(warnings.length).toBeGreaterThan(0);
+    expect(warnings[0]).toContain('Zona A');
+  });
+
+  it('does not warn for any subGroupCount >= 1', () => {
+    const state = makeValidState();
+    state.zones[0].subGroupCount = 6;
+    expect(getZonesStepWarnings(state)).toEqual([]);
   });
 });
 
@@ -219,6 +258,23 @@ describe('buildWizardTree', () => {
           'Copa de Oro — 4 clasifican (Semifinal al mejor de 3 → Tercer Puesto a partido único → Final al mejor de 3)'
       )
     ).toBe(true);
+  });
+
+  // HU-121: a zone with subGroupCount > 1 lists one "Fase de grupos" line per
+  // sub-group ("Grupo A".."Grupo G") instead of a single group-stage line.
+  it('lists one sub-group line per configured zone sub-group count', () => {
+    const state = makeValidState();
+    state.zones[0].subGroupCount = 3;
+
+    const nodes = buildWizardTree(state);
+    const subGroupLabels = nodes
+      .filter(n => n.id.startsWith('zone-1-group'))
+      .map(n => n.label);
+
+    expect(subGroupLabels).toHaveLength(3);
+    expect(subGroupLabels[0]).toContain('Grupo A');
+    expect(subGroupLabels[1]).toContain('Grupo B');
+    expect(subGroupLabels[2]).toContain('Grupo C');
   });
 
   it('includes the cross-division cup as a tagged node when enabled', () => {

@@ -237,6 +237,18 @@ public class CrossCupMultiGroupBracketGenerationTests : IClassFixture<CustomWebA
     {
         List<Team> teams = await SeedTeamsAsync(db, tournament, size);
 
+        foreach (Team team in teams)
+        {
+            db.DivisionTeamRegistrations.Add(new DivisionTeamRegistration
+            {
+                TeamId = team.Id,
+                DivisionId = division.Id,
+                CreatedBy = "test",
+            });
+        }
+
+        await db.SaveChangesAsync();
+
         Stage groupStage = await stageService.CreateStageAsync(new Stage
         {
             Slug = string.Empty,

@@ -181,6 +181,31 @@ describe('buildBrackets — multi-bracket + series grouping', () => {
     expect(groups[0].bracketName).toBeNull();
   });
 
+  // Playoff draw & seeding: the public bracket view reads the draw date from
+  // the FIRST-ROUND stage's drawnAt, surfaced on the group so the view never
+  // needs to read the admin-only audit trail.
+  it('exposes the first-round stage drawnAt on the group', () => {
+    const sfStage = makeStage({
+      id: guid('sf'),
+      stageType: StageType.SemiFinal,
+      order: 1,
+      drawnAt: '2026-05-01T12:00:00Z',
+    });
+    const finalStage = makeStage({ id: guid('final'), stageType: StageType.Final, order: 2 });
+
+    const groups = buildBrackets([sfStage, finalStage], []);
+
+    expect(groups[0].drawnAt).toBe('2026-05-01T12:00:00Z');
+  });
+
+  it('is null when the first-round stage has not been drawn', () => {
+    const finalStage = makeStage({ id: guid('final'), stageType: StageType.Final });
+
+    const groups = buildBrackets([finalStage], []);
+
+    expect(groups[0].drawnAt).toBeNull();
+  });
+
   it('renders a BestOf>1 round as one node per series instead of one per game', () => {
     const sfStage = makeStage({ id: guid('sf'), stageType: StageType.SemiFinal, bestOf: 3 });
     const series = makeSeries({

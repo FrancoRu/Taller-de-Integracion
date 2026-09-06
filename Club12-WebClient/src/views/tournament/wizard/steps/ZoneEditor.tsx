@@ -3,6 +3,7 @@ import {
   Divider,
   FormControlLabel,
   IconButton,
+  InputAdornment,
   MenuItem,
   Stack,
   Switch,
@@ -10,6 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import { DeleteIcon } from '@/views/core/MUI/icons/icons';
+import FieldInfoTooltip from '@/views/core/components/FieldInfoTooltip';
 import { CupConfig, ROUND_ROBIN_LEGS_OPTIONS, ZoneConfig } from '../types';
 import CupsEditor from './CupsEditor';
 
@@ -83,6 +85,26 @@ export default function ZoneEditor({ zone, onChange, onRemove }: ZoneEditorProps
               </MenuItem>
             ))}
           </TextField>
+        )}
+        {zone.hasGroupStage && (
+          <TextField
+            type="number"
+            size="small"
+            label="Cantidad de sub-grupos"
+            value={zone.subGroupCount}
+            onChange={e => onChange({ subGroupCount: Number(e.target.value) })}
+            slotProps={{
+              htmlInput: { min: 1 },
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <FieldInfoTooltip title="El sistema reparte los equipos inscriptos lo más parejo posible entre esta cantidad de sub-grupos (nunca una diferencia de 2 o más equipos entre el más chico y el más grande, mínimo 4 equipos por sub-grupo). Dejalo en 1 para una única fase de grupos, como hoy." />
+                  </InputAdornment>
+                ),
+              },
+            }}
+            sx={{ width: { xs: '100%', sm: 200 } }}
+          />
         )}
       </Stack>
 

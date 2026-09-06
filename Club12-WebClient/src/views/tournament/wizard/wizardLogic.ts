@@ -127,6 +127,33 @@ export const validateZonesStep = (state: WizardState): ValidationResult => {
   return errors;
 };
 
+/**
+ * HU-121: a zone's sub-group count is organizer-chosen. At wizard time there
+ * is no real enrolled-team count to check the floor/ceil/min-4 balance rule
+ * against — that runs later, blocking, in `TournamentCompletabilityValidator`
+ * once teams are actually enrolled. The only thing checkable here is that the
+ * count itself is a valid positive integer, and even that is surfaced as a
+ * non-blocking, advisory warning (shown on the review step) rather than a
+ * step-blocking error, since the wizard's own numeric input already floors
+ * at 1 in normal use.
+ */
+export const getZonesStepWarnings = (state: WizardState): ValidationResult => {
+  const warnings: string[] = [];
+
+  state.zones.forEach(zone => {
+    if (!zone.hasGroupStage) {
+      return;
+    }
+    if (!Number.isInteger(zone.subGroupCount) || zone.subGroupCount < 1) {
+      warnings.push(
+        `La zona "${zone.name || '(sin nombre)'}" tiene una cantidad de sub-grupos inválida — se ajustará a 1 sub-grupo si no la corregís.`
+      );
+    }
+  });
+
+  return warnings;
+};
+
 export const validateCrossCupStep = (state: WizardState): ValidationResult => {
   const { crossCup } = state;
   const errors: string[] = [];
@@ -192,23 +219,38 @@ const describeCup = (cup: CupConfig, qualifiers = cup.qualifiers): string => {
   return `${cup.name || '(sin nombre)'} — ${qualifiers} clasifican (${phases})`;
 };
 
+/** The letter for the Nth sub-group (1 -> A, 2 -> B, …), matching `submitWizard`'s "Grupo A".."Grupo G" naming. */
+const subGroupLetter = (index: number): string => String.fromCharCode('A'.charCodeAt(0) + index);
+
 const buildGroupAndCupNodes = (
   parentId: string,
   hasGroupStage: boolean,
   roundRobinLegs: number,
+  subGroupCount: number,
   cups: CupConfig[]
 ): WizardTreeNode[] => {
   const nodes: WizardTreeNode[] = [];
 
   if (hasGroupStage) {
-    nodes.push({
-      id: `${parentId}-group`,
-      depth: 3,
-      label:
-        roundRobinLegs > 1
-          ? `Fase de grupos (todos contra todos, ${roundRobinLegs} veces)`
-          : 'Fase de grupos (todos contra todos)',
-    });
+    const legsSuffix = roundRobinLegs > 1 ? `, todos contra todos ${roundRobinLegs} veces` : ', todos contra todos';
+    const count = Number.isInteger(subGroupCount) && subGroupCount >= 1 ? subGroupCount : 1;
+
+    if (count <= 1) {
+      nodes.push({
+        id: `${parentId}-group`,
+        depth: 3,
+        label: `Fase de grupos (todos contra todos${roundRobinLegs > 1 ? `, ${roundRobinLegs} veces` : ''})`,
+      });
+    } else {
+      // HU-121: list each organizer-chosen sub-group under "Fase de grupos".
+      for (let i = 0; i < count; i += 1) {
+        nodes.push({
+          id: `${parentId}-group-${subGroupLetter(i)}`,
+          depth: 3,
+          label: `Fase de grupos — Grupo ${subGroupLetter(i)}${legsSuffix}`,
+        });
+      }
+    }
   }
 
   cups.forEach(cup => {
@@ -239,7 +281,15 @@ export const buildWizardTree = (state: WizardState): WizardTreeNode[] => {
       depth: 2,
       label: zone.name || '(sin nombre)',
     });
-    nodes.push(...buildGroupAndCupNodes(zone.id, zone.hasGroupStage, zone.roundRobinLegs, zone.cups));
+    nodes.push(
+      ...buildGroupAndCupNodes(
+        zone.id,
+        zone.hasGroupStage,
+        zone.roundRobinLegs,
+        zone.subGroupCount,
+        zone.cups
+      )
+    );
   });
 
   if (state.crossCup.enabled) {

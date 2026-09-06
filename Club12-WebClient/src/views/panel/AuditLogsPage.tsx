@@ -36,6 +36,7 @@ const ACTION_LABELS: Record<AuditAction, string> = {
   BackupRestore: 'Restauración de respaldo',
   TournamentStatusChange: 'Cambio de estado de torneo',
   PasswordReset: 'Blanqueo de contraseña',
+  PlayoffDraw: 'Sorteo de llave',
 };
 
 const ACTION_OPTIONS = Object.keys(ACTION_LABELS) as AuditAction[];

@@ -54,4 +54,9 @@ public class StageResponse : BaseEntityResponse
     /// How many times each pair of teams plays within this group stage.
     /// </summary>
     public int RoundRobinLegs { get; set; }
+
+    /// <summary>
+    /// When this bracket's seeding draw was committed, null until a draw runs.
+    /// </summary>
+    public DateTime? DrawnAt { get; set; }
 }

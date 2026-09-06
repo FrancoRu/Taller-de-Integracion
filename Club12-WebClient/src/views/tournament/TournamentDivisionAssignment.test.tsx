@@ -28,7 +28,7 @@ vi.mock('@/modules/stage/hook/stage.hook');
 vi.mock('@/modules/division/hook/division.hook');
 vi.mock('@/modules/tournament/hook/tournament.hook');
 vi.mock('sweetalert2', () => ({
-  default: { fire: vi.fn() },
+  default: { fire: vi.fn(), getContainer: vi.fn().mockReturnValue(null) },
 }));
 
 import Swal from 'sweetalert2';
@@ -88,6 +88,28 @@ const buildGroupStage = (
   roundRobinLegs: 1,
 });
 
+const buildEliminationStage = (
+  id: string,
+  divisionId: string,
+  name = 'Final',
+  order = 1,
+  drawnAt: string | null = null
+): IStageResponse => ({
+  id: gid(id),
+  name,
+  slug: `final-${id}`,
+  stageType: StageType.Final,
+  isActive: true,
+  isElimination: true,
+  startDate: '2026-02-01',
+  endDate: '2026-03-01',
+  divisionId: gid(divisionId),
+  order,
+  bestOf: 1,
+  roundRobinLegs: 1,
+  drawnAt,
+});
+
 const buildTournament = (
   status: TournamentStatus
 ): ITournamentResponse => ({
@@ -109,6 +131,12 @@ let getDivisionsByFilters: Mock<IDivisionContextProps['getDivisionsByFilters']>;
 let getStagesByFilters: Mock<IStageContextProps['getStagesByFilters']>;
 let assignTeamsToStage: Mock<IStageContextProps['assignTeamsToStage']>;
 let unassignTeamsFromStage: Mock<IStageContextProps['unassignTeamsFromStage']>;
+let getRoster: Mock<IDivisionContextProps['getRoster']>;
+let enrollTeams: Mock<IDivisionContextProps['enrollTeams']>;
+let unenrollTeams: Mock<IDivisionContextProps['unenrollTeams']>;
+let autoDistribute: Mock<IDivisionContextProps['autoDistribute']>;
+let rebuildSubGroups: Mock<IDivisionContextProps['rebuildSubGroups']>;
+let reassignTeamToSubGroup: Mock<IDivisionContextProps['reassignTeamToSubGroup']>;
 let getCompletability: Mock<ITournamentContextProps['getCompletability']>;
 let putTournamentById: Mock<ITournamentContextProps['putTournamentById']>;
 
@@ -122,16 +150,23 @@ const page = <T,>(totalCount: number, items: T[]) => ({
 const setup = (options: {
   status?: TournamentStatus;
   divisions?: IDivisionResponse[];
-  groupStageByDivision?: Record<string, IStageResponse>;
+  /** divisionId -> that division's roster (DivisionTeamRegistration teams). */
+  rosterByDivision?: Record<string, ITeamResponse[]>;
+  /** divisionId -> its Group-type stages (sub-groups). */
   groupStagesByDivision?: Record<string, IStageResponse[]>;
+  /** divisionId -> its elimination stages (bracket). */
+  eliminationStagesByDivision?: Record<string, IStageResponse[]>;
+  /** whole-tournament enrolled teams (the pool a division can enrol from). */
   enrolled?: ITeamResponse[];
+  /** stageId -> teams already placed in that stage (group or bracket). */
   assignedByStage?: Record<string, ITeamResponse[]>;
   completability?: ITournamentCompletability;
 }) => {
   const status = options.status ?? TournamentStatus.RegistrationClosed;
   const divisions = options.divisions ?? [];
-  const groupStageByDivision = options.groupStageByDivision ?? {};
+  const rosterByDivision = options.rosterByDivision ?? {};
   const groupStagesByDivision = options.groupStagesByDivision ?? {};
+  const eliminationStagesByDivision = options.eliminationStagesByDivision ?? {};
   const enrolled = options.enrolled ?? [];
   const assignedByStage = options.assignedByStage ?? {};
   const completability =
@@ -152,9 +187,9 @@ const setup = (options: {
   getStagesByFilters = vi.fn<IStageContextProps['getStagesByFilters']>();
   getStagesByFilters.mockImplementation(async filter => {
     const divisionId = filter?.divisionId as string;
-    const single = groupStageByDivision[divisionId];
-    const stages =
-      groupStagesByDivision[divisionId] ?? (single ? [single] : []);
+    const groups = groupStagesByDivision[divisionId] ?? [];
+    const eliminations = eliminationStagesByDivision[divisionId] ?? [];
+    const stages = [...groups, ...eliminations];
     return page(stages.length, stages);
   });
 
@@ -163,6 +198,26 @@ const setup = (options: {
 
   unassignTeamsFromStage = vi.fn<IStageContextProps['unassignTeamsFromStage']>();
   unassignTeamsFromStage.mockResolvedValue(true);
+
+  getRoster = vi.fn<IDivisionContextProps['getRoster']>();
+  getRoster.mockImplementation(async divisionId =>
+    rosterByDivision[divisionId as string] ?? []
+  );
+
+  enrollTeams = vi.fn<IDivisionContextProps['enrollTeams']>();
+  enrollTeams.mockResolvedValue(true);
+
+  unenrollTeams = vi.fn<IDivisionContextProps['unenrollTeams']>();
+  unenrollTeams.mockResolvedValue(true);
+
+  autoDistribute = vi.fn<IDivisionContextProps['autoDistribute']>();
+  autoDistribute.mockResolvedValue(true);
+
+  rebuildSubGroups = vi.fn<IDivisionContextProps['rebuildSubGroups']>();
+  rebuildSubGroups.mockResolvedValue(true);
+
+  reassignTeamToSubGroup = vi.fn<IDivisionContextProps['reassignTeamToSubGroup']>();
+  reassignTeamToSubGroup.mockResolvedValue(true);
 
   getCompletability = vi.fn<ITournamentContextProps['getCompletability']>();
   getCompletability.mockResolvedValue(completability);
@@ -189,10 +244,11 @@ const setup = (options: {
     getStagesByFilters,
     getStageById: vi.fn(),
     deleteStagesById: vi.fn(),
-    generateStagesAutomatically: vi.fn(),
     assignTeamsToStage,
     unassignTeamsFromStage,
     seedKnockoutStage: vi.fn(),
+    previewDraw: vi.fn(),
+    commitDraw: vi.fn(),
   } as IStageContextProps);
 
   mockedUseDivision.mockReturnValue({
@@ -204,6 +260,12 @@ const setup = (options: {
     getDivisionsByFilters,
     getDivisionsById: vi.fn(),
     deleteDivisionsById: vi.fn(),
+    getRoster,
+    enrollTeams,
+    unenrollTeams,
+    autoDistribute,
+    rebuildSubGroups,
+    reassignTeamToSubGroup,
   } as IDivisionContextProps);
 
   mockedUseTournament.mockReturnValue({
@@ -219,6 +281,7 @@ const setup = (options: {
     enrollTeam: vi.fn(),
     unenrollTeam: vi.fn(),
     getCompletability,
+    getStructure: vi.fn(),
   } as ITournamentContextProps);
 
   return { tournament: buildTournament(status) };
@@ -227,8 +290,19 @@ const setup = (options: {
 const renderComponent = (tournament: ITournamentResponse) =>
   render(<TournamentDivisionAssignment tournament={tournament} />);
 
-/** Opens the "Agregar equipos" picker for a zone region and returns the dialog. */
-const openPicker = async (
+/** Opens the roster "Inscribir equipos" picker for a division region and returns the dialog. */
+const openRosterPicker = async (
+  user: ReturnType<typeof userEvent.setup>,
+  region: HTMLElement
+) => {
+  await user.click(
+    within(region).getByRole('button', { name: /inscribir equipos/i })
+  );
+  return screen.findByRole('dialog');
+};
+
+/** Opens the "Agregar equipos" sub-group picker for a stage region and returns the dialog. */
+const openStagePicker = async (
   user: ReturnType<typeof userEvent.setup>,
   region: HTMLElement
 ) => {
@@ -255,16 +329,15 @@ describe('TournamentDivisionAssignment — draft availability', () => {
     const { tournament } = setup({
       status: TournamentStatus.OpenForRegistration,
       divisions: [buildDivision('div-a', 'Zona A')],
-      groupStageByDivision: { 'div-a': buildGroupStage('gs-a', 'div-a') },
+      groupStagesByDivision: { 'div-a': [buildGroupStage('gs-a', 'div-a')] },
       enrolled: [buildTeam('river-id', 'River')],
-      assignedByStage: { 'gs-a': [] },
       completability: { canStart: false, issues: [] },
     });
 
     renderComponent(tournament);
 
     expect(
-      await screen.findByText(/asignando los equipos a sus zonas como borrador/i)
+      await screen.findByText(/inscribiendo equipos en cada división como borrador/i)
     ).toBeInTheDocument();
     expect(getDivisionsByFilters).toHaveBeenCalled();
   });
@@ -281,18 +354,62 @@ describe('TournamentDivisionAssignment — draft availability', () => {
   });
 });
 
-describe('TournamentDivisionAssignment — assigning teams', () => {
-  it('assigns a picked team to its zone group stage', async () => {
+describe('TournamentDivisionAssignment — playoffs-only division bug fix (D8)', () => {
+  it('renders an enrol widget for a division with NO group stage, instead of nothing', async () => {
+    const zoneA = buildDivision('div-a', 'Zona A');
+    const { tournament } = setup({
+      divisions: [zoneA],
+      // No entry in groupStagesByDivision or eliminationStagesByDivision:
+      // a genuinely groupless, bracket-less division (e.g. right after
+      // enabling it via the wizard with hasGroupStage unchecked).
+      enrolled: [buildTeam('river-id', 'River')],
+      completability: { canStart: false, issues: [] },
+    });
+
+    renderComponent(tournament);
+
+    const region = await screen.findByRole('region', { name: /Zona A/i });
+    // The bug: the old dead fallback rendered NOTHING assignable here. Now an
+    // enrol widget is always present.
+    expect(
+      within(region).getByRole('button', { name: /inscribir equipos/i })
+    ).toBeInTheDocument();
+    expect(
+      within(region).getByText(/todavía no tiene una llave de playoffs configurada/i)
+    ).toBeInTheDocument();
+  });
+
+  it('shows a "Sortear llave" trigger for a playoffs-only division once it has a bracket stage', async () => {
+    const zoneA = buildDivision('div-a', 'Zona A');
     const river = buildTeam('river-id', 'River');
     const boca = buildTeam('boca-id', 'Boca');
-    const zoneA = buildDivision('div-a', 'Zona A');
-    const groupA = buildGroupStage('gs-a', 'div-a');
+    const finalStage = buildEliminationStage('final-a', 'div-a');
 
     const { tournament } = setup({
       divisions: [zoneA],
-      groupStageByDivision: { 'div-a': groupA },
+      eliminationStagesByDivision: { 'div-a': [finalStage] },
+      rosterByDivision: { 'div-a': [river, boca] },
       enrolled: [river, boca],
-      assignedByStage: { 'gs-a': [] },
+      completability: { canStart: false, issues: [] },
+    });
+
+    renderComponent(tournament);
+
+    const region = await screen.findByRole('region', { name: /Zona A/i });
+    expect(
+      await within(region).findByRole('button', { name: /sortear llave/i })
+    ).toBeEnabled();
+  });
+});
+
+describe('TournamentDivisionAssignment — roster enrollment (HU-107/108)', () => {
+  it('enrolling a team calls the roster endpoint, not a stage assignment', async () => {
+    const river = buildTeam('river-id', 'River');
+    const zoneA = buildDivision('div-a', 'Zona A');
+
+    const { tournament } = setup({
+      divisions: [zoneA],
+      enrolled: [river],
       completability: { canStart: false, issues: [] },
     });
 
@@ -300,7 +417,150 @@ describe('TournamentDivisionAssignment — assigning teams', () => {
     renderComponent(tournament);
 
     const region = await screen.findByRole('region', { name: /Zona A/i });
-    const dialog = await openPicker(user, region);
+    const dialog = await openRosterPicker(user, region);
+
+    await user.click(within(dialog).getByText('River'));
+    await user.click(within(dialog).getByRole('button', { name: /agregar \(1\)/i }));
+
+    await waitFor(() => expect(enrollTeams).toHaveBeenCalledTimes(1));
+    expect(enrollTeams).toHaveBeenCalledWith(zoneA.id, [river.id]);
+    expect(assignTeamsToStage).not.toHaveBeenCalled();
+  });
+
+  it('unenrolling an UNPLACED team removes it immediately, no confirmation dialog', async () => {
+    const river = buildTeam('river-id', 'River');
+    const zoneA = buildDivision('div-a', 'Zona A');
+
+    const { tournament } = setup({
+      divisions: [zoneA],
+      rosterByDivision: { 'div-a': [river] },
+      enrolled: [river],
+      completability: { canStart: false, issues: [] },
+    });
+
+    const user = userEvent.setup();
+    renderComponent(tournament);
+
+    const region = await screen.findByRole('region', { name: /Zona A/i });
+    await user.click(
+      within(region).getByRole('button', { name: /quitar river de la división/i })
+    );
+
+    await waitFor(() => expect(unenrollTeams).toHaveBeenCalledTimes(1));
+    expect(unenrollTeams).toHaveBeenCalledWith(zoneA.id, [river.id]);
+    expect(mockedSwalFire).not.toHaveBeenCalled();
+  });
+
+  it('unenrolling a PLACED team shows a cascade-confirmation dialog before removing it', async () => {
+    const river = buildTeam('river-id', 'River');
+    const zoneA = buildDivision('div-a', 'Zona A');
+    const groupA = buildGroupStage('gs-a', 'div-a');
+
+    const { tournament } = setup({
+      divisions: [zoneA],
+      rosterByDivision: { 'div-a': [river] },
+      groupStagesByDivision: { 'div-a': [groupA] },
+      assignedByStage: { 'gs-a': [river] },
+      enrolled: [river],
+      completability: { canStart: false, issues: [] },
+    });
+
+    const user = userEvent.setup();
+    renderComponent(tournament);
+
+    const region = await screen.findByRole('region', { name: /Zona A/i });
+    await user.click(
+      within(region).getByRole('button', { name: /quitar river de la división/i })
+    );
+
+    await waitFor(() => expect(mockedSwalFire).toHaveBeenCalledTimes(1));
+    expect(mockedSwalFire.mock.calls[0][0]).toMatchObject({
+      title: 'Quitar equipo de la división',
+    });
+    await waitFor(() => expect(unenrollTeams).toHaveBeenCalledWith(zoneA.id, [river.id]));
+  });
+
+  it('does not unenroll when the cascade confirmation is dismissed', async () => {
+    const river = buildTeam('river-id', 'River');
+    const zoneA = buildDivision('div-a', 'Zona A');
+    const groupA = buildGroupStage('gs-a', 'div-a');
+
+    mockedSwalFire.mockResolvedValueOnce({
+      isConfirmed: false,
+      isDenied: false,
+      isDismissed: true,
+    } as Awaited<ReturnType<typeof Swal.fire>>);
+
+    const { tournament } = setup({
+      divisions: [zoneA],
+      rosterByDivision: { 'div-a': [river] },
+      groupStagesByDivision: { 'div-a': [groupA] },
+      assignedByStage: { 'gs-a': [river] },
+      enrolled: [river],
+      completability: { canStart: false, issues: [] },
+    });
+
+    const user = userEvent.setup();
+    renderComponent(tournament);
+
+    const region = await screen.findByRole('region', { name: /Zona A/i });
+    await user.click(
+      within(region).getByRole('button', { name: /quitar river de la división/i })
+    );
+
+    await waitFor(() => expect(mockedSwalFire).toHaveBeenCalledTimes(1));
+    expect(unenrollTeams).not.toHaveBeenCalled();
+  });
+});
+
+describe('TournamentDivisionAssignment — sub-group placement (HU-121/122)', () => {
+  it('the sub-group picker eligible pool is the roster minus already-placed, not enrolled-tournament-teams-minus-other-zones', async () => {
+    const river = buildTeam('river-id', 'River');
+    const boca = buildTeam('boca-id', 'Boca');
+    const zoneA = buildDivision('div-a', 'Zona A');
+    const groupA = buildGroupStage('gs-a', 'div-a');
+
+    const { tournament } = setup({
+      divisions: [zoneA],
+      // Boca is tournament-enrolled but NOT on Zona A's roster — must not be
+      // offered here, even though the old "enrolled tournament teams" pool
+      // would have included it.
+      rosterByDivision: { 'div-a': [river] },
+      groupStagesByDivision: { 'div-a': [groupA] },
+      assignedByStage: { 'gs-a': [] },
+      enrolled: [river, boca],
+      completability: { canStart: false, issues: [] },
+    });
+
+    const user = userEvent.setup();
+    renderComponent(tournament);
+
+    const region = await screen.findByRole('region', { name: /Zona A/i });
+    const dialog = await openStagePicker(user, region);
+
+    expect(within(dialog).getByText('River')).toBeInTheDocument();
+    expect(within(dialog).queryByText('Boca')).not.toBeInTheDocument();
+  });
+
+  it('assigns a roster team to its sub-group stage', async () => {
+    const river = buildTeam('river-id', 'River');
+    const zoneA = buildDivision('div-a', 'Zona A');
+    const groupA = buildGroupStage('gs-a', 'div-a');
+
+    const { tournament } = setup({
+      divisions: [zoneA],
+      rosterByDivision: { 'div-a': [river] },
+      groupStagesByDivision: { 'div-a': [groupA] },
+      assignedByStage: { 'gs-a': [] },
+      enrolled: [river],
+      completability: { canStart: false, issues: [] },
+    });
+
+    const user = userEvent.setup();
+    renderComponent(tournament);
+
+    const region = await screen.findByRole('region', { name: /Zona A/i });
+    const dialog = await openStagePicker(user, region);
 
     await user.click(within(dialog).getByText('River'));
     await user.click(within(dialog).getByRole('button', { name: /agregar \(1\)/i }));
@@ -309,16 +569,17 @@ describe('TournamentDivisionAssignment — assigning teams', () => {
     expect(assignTeamsToStage).toHaveBeenCalledWith(groupA.id, [river.id]);
   });
 
-  it('removes (unassigns) a team from its zone', async () => {
+  it('removes (unassigns) a team from its sub-group without touching the roster', async () => {
     const river = buildTeam('river-id', 'River');
     const zoneA = buildDivision('div-a', 'Zona A');
     const groupA = buildGroupStage('gs-a', 'div-a');
 
     const { tournament } = setup({
       divisions: [zoneA],
-      groupStageByDivision: { 'div-a': groupA },
-      enrolled: [river],
+      rosterByDivision: { 'div-a': [river] },
+      groupStagesByDivision: { 'div-a': [groupA] },
       assignedByStage: { 'gs-a': [river] },
+      enrolled: [river],
       completability: { canStart: false, issues: [] },
     });
 
@@ -326,45 +587,115 @@ describe('TournamentDivisionAssignment — assigning teams', () => {
     renderComponent(tournament);
 
     const region = await screen.findByRole('region', { name: /Zona A/i });
-    await user.click(within(region).getByRole('button', { name: /quitar River/i }));
+    await user.click(within(region).getByRole('button', { name: /^quitar river$/i }));
 
     await waitFor(() => expect(unassignTeamsFromStage).toHaveBeenCalledTimes(1));
     expect(unassignTeamsFromStage).toHaveBeenCalledWith(groupA.id, [river.id]);
+    expect(unenrollTeams).not.toHaveBeenCalled();
+
+    // The roster panel still lists River — unassigning from a sub-group is
+    // NOT the same as unenrolling from the division.
+    expect(
+      within(region).getByRole('button', { name: /quitar river de la división/i })
+    ).toBeInTheDocument();
   });
 
-  it('excludes a team already in a regular zone from another zone but not from the cross cup', async () => {
+  it('manually moves a team from one sub-group to another via the reassign action', async () => {
     const river = buildTeam('river-id', 'River');
-    const boca = buildTeam('boca-id', 'Boca');
     const zoneA = buildDivision('div-a', 'Zona A');
-    const zoneB = buildDivision('div-b', 'Zona B');
-    const crossCup = buildDivision('div-c', 'Copa Club12', true);
+    const groupA = buildGroupStage('gs-a', 'div-a', 'Grupo A', 1);
+    const groupB = buildGroupStage('gs-b', 'div-a', 'Grupo B', 2);
 
     const { tournament } = setup({
-      divisions: [zoneA, zoneB, crossCup],
-      groupStageByDivision: {
-        'div-a': buildGroupStage('gs-a', 'div-a'),
-        'div-b': buildGroupStage('gs-b', 'div-b'),
-        'div-c': buildGroupStage('gs-c', 'div-c'),
-      },
-      enrolled: [river, boca],
-      assignedByStage: { 'gs-a': [river], 'gs-b': [], 'gs-c': [] },
+      divisions: [zoneA],
+      rosterByDivision: { 'div-a': [river] },
+      groupStagesByDivision: { 'div-a': [groupA, groupB] },
+      assignedByStage: { 'gs-a': [river], 'gs-b': [] },
+      enrolled: [river],
       completability: { canStart: false, issues: [] },
     });
 
     const user = userEvent.setup();
     renderComponent(tournament);
 
-    // River is in Zona A → not offered in Zona B's picker; Boca is.
-    const zoneBRegion = await screen.findByRole('region', { name: /Zona B/i });
-    const zoneBDialog = await openPicker(user, zoneBRegion);
-    expect(within(zoneBDialog).queryByText('River')).not.toBeInTheDocument();
-    expect(within(zoneBDialog).getByText('Boca')).toBeInTheDocument();
-    await user.click(within(zoneBDialog).getByRole('button', { name: /cancelar/i }));
+    const grupoARegion = await screen.findByRole('region', { name: /^Grupo A$/i });
+    await user.click(
+      within(grupoARegion).getByRole('button', {
+        name: /mover river a otro sub-grupo/i,
+      })
+    );
 
-    // The cross cup is a parallel membership → River is still offered there.
-    const crossRegion = await screen.findByRole('region', { name: /Copa Club12/i });
-    const crossDialog = await openPicker(user, crossRegion);
-    expect(within(crossDialog).getByText('River')).toBeInTheDocument();
+    const menu = await screen.findByRole('menu');
+    await user.click(within(menu).getByRole('menuitem', { name: /grupo b/i }));
+
+    await waitFor(() => expect(reassignTeamToSubGroup).toHaveBeenCalledTimes(1));
+    expect(reassignTeamToSubGroup).toHaveBeenCalledWith(
+      zoneA.id,
+      river.id,
+      groupA.id,
+      groupB.id
+    );
+  });
+
+  it('"Auto-repartir" calls autoDistribute and refetches the division', async () => {
+    const river = buildTeam('river-id', 'River');
+    const zoneA = buildDivision('div-a', 'Zona A');
+    const groupA = buildGroupStage('gs-a', 'div-a');
+
+    const { tournament } = setup({
+      divisions: [zoneA],
+      rosterByDivision: { 'div-a': [river] },
+      groupStagesByDivision: { 'div-a': [groupA] },
+      assignedByStage: { 'gs-a': [] },
+      enrolled: [river],
+      completability: { canStart: false, issues: [] },
+    });
+
+    const user = userEvent.setup();
+    renderComponent(tournament);
+
+    const region = await screen.findByRole('region', { name: /Zona A/i });
+    await user.click(within(region).getByRole('button', { name: /auto-repartir/i }));
+
+    await waitFor(() => expect(autoDistribute).toHaveBeenCalledTimes(1));
+    expect(autoDistribute).toHaveBeenCalledWith(zoneA.id);
+    // Refetches: getRoster/getStagesByFilters run again for this division.
+    await waitFor(() => expect(getRoster).toHaveBeenCalledTimes(2));
+  });
+});
+
+describe('TournamentDivisionAssignment — HU-123 edit sub-group count', () => {
+  it('confirming the rebuild dialog calls rebuildSubGroups with the new count and refetches', async () => {
+    const river = buildTeam('river-id', 'River');
+    const zoneA = buildDivision('div-a', 'Zona A');
+    const groupA = buildGroupStage('gs-a', 'div-a');
+
+    const { tournament } = setup({
+      divisions: [zoneA],
+      rosterByDivision: { 'div-a': [river] },
+      groupStagesByDivision: { 'div-a': [groupA] },
+      assignedByStage: { 'gs-a': [river] },
+      enrolled: [river],
+      completability: { canStart: false, issues: [] },
+    });
+
+    const user = userEvent.setup();
+    renderComponent(tournament);
+
+    const region = await screen.findByRole('region', { name: /Zona A/i });
+    await user.click(
+      within(region).getByRole('button', { name: /editar cantidad de sub-grupos/i })
+    );
+
+    const dialog = await screen.findByRole('dialog');
+    const input = within(dialog).getByLabelText(/cantidad de sub-grupos/i);
+    await user.clear(input);
+    await user.type(input, '3');
+    await user.click(within(dialog).getByRole('button', { name: /confirmar/i }));
+
+    await waitFor(() => expect(rebuildSubGroups).toHaveBeenCalledTimes(1));
+    expect(rebuildSubGroups).toHaveBeenCalledWith(zoneA.id, 3);
+    await waitFor(() => expect(getRoster).toHaveBeenCalledTimes(2));
   });
 });
 
@@ -378,9 +709,10 @@ describe('TournamentDivisionAssignment — multi-group cross cup (HU-110)', () =
 
     const { tournament } = setup({
       divisions: [crossCup],
+      rosterByDivision: { 'div-c': [river, boca] },
       groupStagesByDivision: { 'div-c': [grupo1, grupo2] },
-      enrolled: [river, boca],
       assignedByStage: { 'gs-c1': [], 'gs-c2': [] },
+      enrolled: [river, boca],
       completability: { canStart: false, issues: [] },
     });
 
@@ -388,12 +720,38 @@ describe('TournamentDivisionAssignment — multi-group cross cup (HU-110)', () =
     renderComponent(tournament);
 
     const grupo2Region = await screen.findByRole('region', { name: /^Grupo 2$/i });
-    const dialog = await openPicker(user, grupo2Region);
+    const dialog = await openStagePicker(user, grupo2Region);
     await user.click(within(dialog).getByText('River'));
     await user.click(within(dialog).getByRole('button', { name: /agregar \(1\)/i }));
 
     await waitFor(() => expect(assignTeamsToStage).toHaveBeenCalledTimes(1));
     expect(assignTeamsToStage).toHaveBeenCalledWith(grupo2.id, [river.id]);
+  });
+
+  it('excludes a team already placed in Grupo 1 from Grupo 2\'s eligible pool', async () => {
+    const river = buildTeam('river-id', 'River');
+    const boca = buildTeam('boca-id', 'Boca');
+    const crossCup = buildDivision('div-c', 'Copa Club12', true);
+    const grupo1 = buildGroupStage('gs-c1', 'div-c', 'Grupo 1', 1);
+    const grupo2 = buildGroupStage('gs-c2', 'div-c', 'Grupo 2', 2);
+
+    const { tournament } = setup({
+      divisions: [crossCup],
+      rosterByDivision: { 'div-c': [river, boca] },
+      groupStagesByDivision: { 'div-c': [grupo1, grupo2] },
+      assignedByStage: { 'gs-c1': [river], 'gs-c2': [] },
+      enrolled: [river, boca],
+      completability: { canStart: false, issues: [] },
+    });
+
+    const user = userEvent.setup();
+    renderComponent(tournament);
+
+    const grupo2Region = await screen.findByRole('region', { name: /^Grupo 2$/i });
+    const dialog = await openStagePicker(user, grupo2Region);
+
+    expect(within(dialog).queryByText('River')).not.toBeInTheDocument();
+    expect(within(dialog).getByText('Boca')).toBeInTheDocument();
   });
 });
 
@@ -510,5 +868,25 @@ describe('TournamentDivisionAssignment — start button', () => {
       TOURNAMENT_ID,
       expect.objectContaining({ status: TournamentStatus.Ongoing })
     );
+  });
+
+  it('a team not enrolled in ANY division roster counts as unassigned and blocks start', async () => {
+    const river = buildTeam('river-id', 'River');
+    const zoneA = buildDivision('div-a', 'Zona A');
+
+    const { tournament } = setup({
+      divisions: [zoneA],
+      rosterByDivision: {},
+      enrolled: [river],
+      completability: { canStart: true, issues: [] },
+    });
+
+    renderComponent(tournament);
+
+    expect(
+      await screen.findByText(/hay 1 equipo\(s\) sin ninguna división asignada/i)
+    ).toBeInTheDocument();
+    const startButton = screen.getByRole('button', { name: /iniciar torneo/i });
+    expect(startButton).toBeDisabled();
   });
 });

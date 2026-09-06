@@ -53,14 +53,6 @@ export interface IStageContextProps {
   deleteStagesById(id: GUID): Promise<void>;
 
   /**
-   * Generates division stages automatically based on the provided division ID and number of teams.
-   *
-   * @param {GUID} id - The unique identifier of the division.
-   * @returns {Promise<IStageResponse[] | void>} A promise that resolves to true if the stages are successfully generated, otherwise false.
-   */
-  generateStagesAutomatically(id: GUID): Promise<IStageResponse[] | void>;
-
-  /**
    * Assigns one or more teams to a stage, either manually by team id or
    * automatically based on available slots.
    * @param {GUID} id - The unique identifier of the stage.
@@ -90,6 +82,61 @@ export interface IStageContextProps {
    * @returns {Promise<boolean | void>} A promise resolving to true if seeding succeeded, or void on failure.
    */
   seedKnockoutStage(id: GUID): Promise<boolean | void>;
+
+  /**
+   * Computes a first-round pairing for a groupless bracket without
+   * persisting it, returning a signed token that replays the exact same
+   * order on commit (preview == commit guarantee).
+   * @param {GUID} id - The first-round bracket stage to preview a draw for.
+   * @param {IDrawRequest} body - The draw mode and, for manual seeding, the explicit order.
+   * @returns {Promise<IDrawPreviewResult | void>} The previewed pairing and draw token, or void on failure.
+   */
+  previewDraw(id: GUID, body: IDrawRequest): Promise<IDrawPreviewResult | void>;
+
+  /**
+   * Commits a bracket draw from a previewed token (random) or an explicit
+   * order (manual), stamping `drawnAt` and writing a `PlayoffDraw` audit entry.
+   * @param {GUID} id - The first-round bracket stage to draw.
+   * @param {IDrawRequest} body - The draw mode, draw token (random) or manual order.
+   * @returns {Promise<boolean | void>} A promise resolving to true on success, or void on failure.
+   */
+  commitDraw(id: GUID, body: IDrawRequest): Promise<boolean | void>;
+}
+
+/** Random shuffles the roster; Manual seeds the admin-specified order. */
+export const DrawMode = {
+  Random: 'Random',
+  Manual: 'Manual',
+} as const;
+
+export type DrawMode = (typeof DrawMode)[keyof typeof DrawMode];
+
+/**
+ * The request body for both the preview and the commit draw endpoints.
+ * @interface IDrawRequest
+ */
+export interface IDrawRequest {
+  mode: DrawMode;
+  /** Required for `Manual` commit; a `Random` preview never sends one. */
+  manualOrder?: GUID[];
+  /** Required for a `Random` commit — the token returned by the preceding preview. */
+  drawToken?: string;
+}
+
+/** One previewed bracket pairing; `visitorTeamId` is null when the slot is a bye. */
+export interface IDrawPairPreview {
+  homeTeamId: GUID;
+  visitorTeamId?: GUID | null;
+}
+
+/**
+ * The response of a preview-draw call: the candidate pairing plus the token
+ * that replays the exact same order when submitted to the commit endpoint.
+ * @interface IDrawPreviewResult
+ */
+export interface IDrawPreviewResult {
+  pairs: IDrawPairPreview[];
+  drawToken: string;
 }
 
 /**
@@ -185,6 +232,15 @@ export interface IStageResponse {
    * @type {number}
    */
   roundRobinLegs: number;
+
+  /**
+   * When this bracket's seeding draw was committed (initial or re-draw), or
+   * null when it has not been drawn yet. Set only on the bracket's
+   * first-round stage. Public — safe to show on the unauthenticated bracket
+   * view as "Sorteo realizado el [fecha]".
+   * @type {string | null}
+   */
+  drawnAt?: string | null;
 }
 
 /**

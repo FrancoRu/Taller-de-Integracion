@@ -23,6 +23,7 @@ public interface IUnitOfWork
     IStageTeamMatchRepository StageTeamMatchRepository { get; }
     IPlayerTeamRegistrationRepository PlayerTeamRegistrationRepository { get; }
     ITeamTournamentRegistrationRepository TeamTournamentRegistrationRepository { get; }
+    IDivisionTeamRegistrationRepository DivisionTeamRegistrationRepository { get; }
     Task<int> SaveChangesAsync();
 
     /// <summary>

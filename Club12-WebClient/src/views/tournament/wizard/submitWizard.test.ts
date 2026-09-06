@@ -24,6 +24,7 @@ const makeState = (): WizardState => {
       name: 'Zona A',
       hasGroupStage: true,
       roundRobinLegs: 2,
+      subGroupCount: 1,
       cups: [
         {
           id: 'cup-1',
@@ -177,6 +178,44 @@ describe('submitWizard', () => {
       isElimination: false,
       roundRobinLegs: 2,
     });
+  });
+
+  // HU-121: subGroupCount === 1 (the default) must behave EXACTLY like today
+  // — a single Group stage named "Fase de Grupos", not "Grupo A".
+  it('subGroupCount 1 keeps emitting a single "Fase de Grupos" stage (regression guard)', async () => {
+    const services = makeServices();
+    const state = makeState();
+    state.zones[0].subGroupCount = 1;
+
+    await submitWizard(state, services);
+
+    const groupStages = payloadOf(services).divisions[0].stages.filter(
+      s => s.stageType === StageType.Group
+    );
+    expect(groupStages).toHaveLength(1);
+    expect(groupStages[0].name).toBe('Fase de Grupos');
+  });
+
+  // HU-121: subGroupCount > 1 emits G Group-type stages named "Grupo A".."Grupo G".
+  it('subGroupCount > 1 emits G Group stages named "Grupo A".."Grupo G"', async () => {
+    const services = makeServices();
+    const state = makeState();
+    state.zones[0].subGroupCount = 3;
+
+    await submitWizard(state, services);
+
+    const groupStages = payloadOf(services).divisions[0].stages.filter(
+      s => s.stageType === StageType.Group
+    );
+    expect(groupStages).toHaveLength(3);
+    expect(groupStages.map(s => s.name)).toEqual(['Grupo A', 'Grupo B', 'Grupo C']);
+    for (const stage of groupStages) {
+      expect(stage).toMatchObject({
+        stageType: StageType.Group,
+        isElimination: false,
+        roundRobinLegs: 2,
+      });
+    }
   });
 
   it('HU-112: derives the cup rounds from the qualifier count (4 -> Semis + 3rd place + Final)', async () => {

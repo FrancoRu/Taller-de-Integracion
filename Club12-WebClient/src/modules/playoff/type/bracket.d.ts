@@ -55,4 +55,11 @@ export interface BracketModel {
 export interface BracketGroup {
   bracketName: string | null;
   model: BracketModel;
+  /**
+   * When this bracket's seeding draw was committed, read from the
+   * first-round (min-depth) main stage's `drawnAt`, or null when it has not
+   * been drawn yet (or was seeded from group standings, which does not set
+   * it). Drives the public "Sorteo realizado el [fecha]" caption.
+   */
+  drawnAt: string | null;
 }

@@ -54,4 +54,6 @@ public class Team : EntityBase
     /// Every tournament this team has ever been registered to, across every season, independent of the current TournamentId pointer.
     /// </summary>
     public virtual ICollection<TeamTournamentRegistration> TeamTournamentRegistrations { get; set; } = [];
+
+    public virtual ICollection<DivisionTeamRegistration> DivisionTeamRegistrations { get; set; } = [];
 }

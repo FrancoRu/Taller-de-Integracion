@@ -331,6 +331,44 @@ namespace Persistance.Migrations
                     b.ToTable("DivisionPlayoffMappings", "Club12");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Models.DivisionTeamRegistration", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("DateUpdated")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("DivisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DateCreated")
+                        .HasDatabaseName("IX_DivisionTeamRegistration_CreatedAt");
+
+                    b.HasIndex("DivisionId");
+
+                    b.HasIndex("TeamId", "DivisionId")
+                        .IsUnique();
+
+                    b.ToTable("DivisionTeamRegistrations", "Club12");
+                });
+
             modelBuilder.Entity("Domain.Entities.Models.Match", b =>
                 {
                     b.Property<Guid>("Id")
@@ -860,6 +898,9 @@ namespace Persistance.Migrations
                     b.Property<Guid>("DivisionId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime?>("DrawnAt")
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("timestamp without time zone");
 
@@ -1298,6 +1339,25 @@ namespace Persistance.Migrations
                     b.Navigation("Division");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Models.DivisionTeamRegistration", b =>
+                {
+                    b.HasOne("Domain.Entities.Models.Division", "Division")
+                        .WithMany("DivisionTeamRegistrations")
+                        .HasForeignKey("DivisionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Models.Team", "Team")
+                        .WithMany("DivisionTeamRegistrations")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Division");
+
+                    b.Navigation("Team");
+                });
+
             modelBuilder.Entity("Domain.Entities.Models.Match", b =>
                 {
                     b.HasOne("Domain.Entities.Models.Team", "HomeTeam")
@@ -1594,6 +1654,8 @@ namespace Persistance.Migrations
 
             modelBuilder.Entity("Domain.Entities.Models.Division", b =>
                 {
+                    b.Navigation("DivisionTeamRegistrations");
+
                     b.Navigation("PlayoffMappings");
 
                     b.Navigation("Stages");
@@ -1634,6 +1696,8 @@ namespace Persistance.Migrations
 
             modelBuilder.Entity("Domain.Entities.Models.Team", b =>
                 {
+                    b.Navigation("DivisionTeamRegistrations");
+
                     b.Navigation("PlayerTeamRegistrations");
 
                     b.Navigation("Players");

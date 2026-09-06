@@ -16,6 +16,7 @@ import {
 } from '@/modules/match/utils/divisionFixtureSections';
 import { FIXTURE_CSV_HEADERS, buildFixtureCsvRows } from '@/modules/match/utils/matchFixtureCsv';
 import { downloadCsv } from '@/modules/core/utils/csv';
+import { formatDateAr } from '@/modules/core/utils/formatDate';
 import ExportCsvButton from '@/views/core/components/ExportCsvButton';
 import MatchFixtureList from '@/views/home/matches/MatchFixtureList';
 import PlayoffBracket from '@/views/playoff/PlayoffBracket';
@@ -78,6 +79,11 @@ export default function PlayoffCups({
 
     return (
       <Stack spacing={3}>
+        {group.drawnAt && (
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Sorteo realizado el {formatDateAr(group.drawnAt)}
+          </Typography>
+        )}
         <PlayoffBracket model={group.model} seriesById={seriesById} onMatchClick={onMatchClick} />
 
         {sections.length > 0 && (

@@ -24,4 +24,9 @@ public enum AuditAction
     /// An admin-triggered password reset, from user management.
     /// </summary>
     PasswordReset,
+
+    /// <summary>
+    /// A bracket seeding draw, initial or re-draw, recorded for transparency.
+    /// </summary>
+    PlayoffDraw,
 }

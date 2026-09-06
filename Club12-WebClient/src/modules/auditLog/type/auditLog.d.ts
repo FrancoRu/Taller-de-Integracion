@@ -12,7 +12,8 @@ export type AuditAction =
   | 'DataWipe'
   | 'BackupRestore'
   | 'TournamentStatusChange'
-  | 'PasswordReset';
+  | 'PasswordReset'
+  | 'PlayoffDraw';
 
 /**
  * A single audit-trail entry as returned by `GET /api/audit-logs` (HU-101).

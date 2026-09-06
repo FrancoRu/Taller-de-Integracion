@@ -56,5 +56,6 @@ public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options
     public virtual required DbSet<Scorer> Scorers { get; set; }
     public virtual required DbSet<PlayerTeamRegistration> PlayerTeamRegistrations { get; set; }
     public virtual required DbSet<TeamTournamentRegistration> TeamTournamentRegistrations { get; set; }
+    public virtual required DbSet<DivisionTeamRegistration> DivisionTeamRegistrations { get; set; }
     public virtual required DbSet<AuditLog> AuditLogs { get; set; }
 }

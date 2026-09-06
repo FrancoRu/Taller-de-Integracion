@@ -24,6 +24,15 @@
 > mecanismo legado (`CreateAutomatedStagesAsync`) contradictorio con el modelo actual del wizard. Ver
 > el bloque "Auditoría 2026-09-05" antes de la Épica 23 para el detalle verificado contra código.
 >
+> **Actualización 2026-09-06**: HU-120 a HU-124 quedaron implementados (roster por división
+> `DivisionTeamRegistration`, sub-grupos con cantidad elegida por el organizador y reparto balanceado,
+> reasignación manual, edición posterior de la cantidad de sub-grupos, y el mecanismo legado
+> `CreateAutomatedStagesAsync` borrado por completo) — sus textos se reescribieron para describir el
+> comportamiento final entregado, no el plan. HU-125 quedó explícitamente fuera de alcance, ahora
+> rechazada en el backend en vez de dejarse como un cálculo silenciosamente incorrecto. Se agregó
+> HU-128 (sorteo de llave para divisiones sin fase de grupos, con vista previa, sorteo manual, traba
+> de re-sorteo y auditoría).
+>
 > Convenciones: `[BUG]` corrige algo existente · `[NUEVA]` propuesta alineada · `[F2]` Fase 2.
 > Prioridad (MoSCoW): **M** Must · **S** Should · **C** Could.
 > `✅` = verificada vigente tal cual · `🔄` = vigente pero cambió su implementación (ver nota) ·
@@ -735,95 +744,86 @@ antes de un cruce de playoffs, en vez de un único todos-contra-todos gigante.
   que ya significa "división" en este código) para no perpetuar la ambigüedad que originó esta
   auditoría.
 
-### HU-121 · [NUEVO] La cantidad de sub-grupos la define el organizador; el tamaño se reparte balanceado — `M`
+### HU-121 · [IMPLEMENTADO] La cantidad de sub-grupos la define el organizador; el tamaño se reparte balanceado — `M`
 **Como** owner/admin **quiero** elegir CUÁNTOS sub-grupos quiero (no un tamaño fijo por grupo) y que
 el sistema reparta los equipos lo más parejo posible **para** no terminar con grupos desbalanceados
 (ej. "2 grupos de 5 y uno de 6" cuando "4 grupos de 4" sería mejor) ni tener que armarlo a mano.
-- Manda la cantidad de GRUPOS elegida, no un tamaño fijo — a diferencia del mecanismo legado
-  `StageService.CreateAutomatedStagesAsync` (ver HU-124), que fuerza siempre grupos de exactamente
-  `MaxTeams.GROUP = 4` equipos.
-- Reparto balanceado: con `G` grupos elegidos y `T` equipos inscriptos, cada grupo debe tener
-  `floor(T/G)` o `ceil(T/G)` equipos — nunca una diferencia de 2 o más entre el grupo más chico y el
-  más grande. El ejemplo del pedido (16 equipos, 3 grupos elegidos) da 5+5+6; conviene mostrar ese
-  reparto resultante en la UI antes de confirmar, para que el organizador pueda ajustar la cantidad
-  de grupos si no le convence (ej. pasar a 4 grupos de 4).
-- Umbral mínimo: un sub-grupo necesita **al menos 4 equipos** para que el todos-contra-todos tenga
-  sentido competitivo (mismo criterio de "mínimo viable" que ya usan HU-118/119 para jugadores
-  habilitados por equipo). Si `T / G < 4`, el sistema debe rechazar esa cantidad de grupos con un
-  mensaje claro, en vez de permitir "grupos de 1, 2 o 3 equipos" como señala el pedido.
-- Se valida en dos momentos: (a) en el wizard, como advertencia no bloqueante (todavía no hay equipos
-  inscriptos, solo una estimación); (b) de forma definitiva en la guarda de completitud (extensión de
-  HU-109/`TournamentCompletabilityValidator`) al cerrar inscripción/iniciar el torneo, cuando la
-  cantidad real de inscriptos ya se conoce.
-- **Aclaración del owner (2026-09-05)**: la cantidad de grupos elegida al armar la estructura es un
-  punto de partida, no una decisión final — el organizador necesita poder editar tanto la cantidad de
-  grupos como la distribución de equipos entre ellos después, siempre que sea antes de que arranque el
-  torneo. Esto es exactamente el alcance de HU-122 (reasignación manual) + HU-123 (cambiar cantidad de
-  grupos) — las tres historias (121/122/123) se implementan juntas, no HU-121 sola con las otras dos
-  como "nice to have" separado.
+- El wizard (`ZoneEditor`) pide la cantidad de sub-grupos (`ZoneConfig.subGroupCount`, default `1` =
+  el comportamiento de siempre, una sola fase de grupos) en vez de un tamaño fijo — a diferencia del
+  mecanismo legado `CreateAutomatedStagesAsync` (ver HU-124), que forzaba siempre grupos de
+  exactamente 4 equipos.
+- Reparto balanceado real: con `G` sub-grupos y `T` equipos inscriptos en el roster de la división
+  (`DivisionTeamRegistration`), cada sub-grupo recibe `floor(T/G)` o `ceil(T/G)` equipos — nunca una
+  diferencia de 2 o más entre el más chico y el más grande. 16 equipos en 3 sub-grupos da 5+5+6.
+- Umbral mínimo de 4 equipos por sub-grupo, aplicado en el backend: pedir una cantidad de sub-grupos
+  que dejaría alguno por debajo de ese piso se rechaza con un mensaje que nombra la cantidad de
+  equipos y de sub-grupos pedidos (`ErrorMessages.Stage.SubGroupTooFewTeams`), sin crear ni cambiar
+  ninguna estructura.
+- Validado en dos momentos, como estaba previsto: (a) en el wizard, advertencia no bloqueante (todavía
+  no hay inscriptos reales, solo una estimación); (b) de forma bloqueante en
+  `TournamentCompletabilityValidator` (extensión de HU-109) al cerrar inscripción/iniciar el torneo,
+  contra la cantidad real de inscriptos — cubre tanto "muy pocos equipos" como un reparto desbalanceado
+  a mano (diferencia ≥ 2 entre sub-grupos).
+- La cantidad elegida al armar la estructura es un punto de partida, no una decisión final: HU-122
+  (reparto automático + movimiento manual) y HU-123 (cambiar la cantidad después) cubren la edición
+  posterior, siempre antes de que el torneo arranque.
 
-### HU-122 · [NUEVO] Asignar equipos a sub-grupos: automático por defecto, manual siempre disponible — `S`
+### HU-122 · [IMPLEMENTADO] Asignar equipos a sub-grupos: automático por defecto, manual siempre disponible — `S`
 **Como** owner/admin **quiero** que el sistema reparta los equipos inscriptos entre los sub-grupos
 automáticamente, pero pudiendo mover equipos a mano **para** ajustar por criterios que el sistema no
 conoce (cercanía geográfica, nivel competitivo, evitar que dos clásicos rivales queden en la misma
 zona, etc.).
-- Extiende `TournamentDivisionAssignment.tsx`: hoy ya soporta asignar equipos a un `Stage` puntual vía
-  `TeamPickerDialog` — el gap es que hoy solo hay un stage/grupo por división para elegir. Con
-  sub-grupos habilitados, el mismo flujo de asignación manual sirve sin cambios grandes; falta un
-  botón "repartir automático" que aplique el balance de HU-121 de un clic, dejando la edición manual
-  como ajuste posterior, no como único camino.
-- Auto-reparto sugerido: aleatorio balanceado por defecto (no hay ranking/seed histórico confiable
-  entre equipos de una liga amateur) — decisión de producto a confirmar, no una dificultad técnica.
+- "Auto-repartir" (`TournamentDivisionAssignment.tsx` → `AutoDistributeRosterAsync`) vacía los
+  sub-grupos actuales y vuelve a correr el reparto balanceado sobre TODO el roster de la división —
+  nunca solo rellena los huecos vacíos, así el resultado queda siempre balanceado aunque el estado
+  previo no lo estuviera.
+- El movimiento manual de un equipo entre dos sub-grupos de la misma división está siempre disponible
+  (acción "Mover a otro sub-grupo" por equipo, `ReassignTeamToSubGroupAsync`), sin re-disparar el
+  reparto del resto de los equipos. La única restricción real es no dejar el sub-grupo de origen por
+  debajo del piso de 4 equipos; por lo demás el movimiento no tiene ninguna restricción extra
+  inventada del lado del cliente — incluso un movimiento que desbalancea a propósito los sub-grupos se
+  permite, quedando a criterio del organizador.
+- Un equipo puede estar inscripto en el roster de la división sin todavía estar ubicado en ningún
+  sub-grupo — es un estado válido, no un error, hasta que se corra el auto-reparto o se lo ubique a
+  mano.
 
-### HU-123 · [NUEVO] Editar la cantidad de sub-grupos de una división antes de que arranque el torneo — `S`
+### HU-123 · [IMPLEMENTADO] Editar la cantidad de sub-grupos de una división antes de que arranque el torneo — `S`
 **Como** owner/admin **quiero** poder cambiar la cantidad de sub-grupos de una división después de
 creada la estructura pero antes de iniciar el torneo **para** ajustar el armado a la cantidad real de
 equipos que se terminaron inscribiendo, que casi nunca coincide con la estimación inicial del wizard.
-- Hoy no existe ninguna acción de "cambiar cantidad de grupos" — la única forma de tocar la estructura
-  ya creada es `StageService.UpdateStageAsync` (editar un stage existente) o borrar/crear stages
-  sueltos a mano, lo que no re-balancea equipos ni los reasigna.
-- Debe quedar disponible mientras la división sea editable, es decir, mientras el torneo no esté
-  `Ongoing`/`Finished` — mismo criterio que ya usan las guardas estructurales agregadas en la
-  auditoría de "torneo en curso" de esta sesión (commit `0218a43`,
-  `EnsureDivisionStructureEditableAsync`). Cambiar la cantidad de grupos con equipos ya asignados debe
-  re-disparar el reparto balanceado (HU-121/122), no dejar equipos huérfanos sin grupo.
+- "Editar cantidad de sub-grupos" (`RebuildSubGroupsAsync`) reconstruye SOLO la capa de
+  `Stage`/`StageTeamMatch` de sub-grupos — los borra y crea de nuevo con la nueva cantidad — y vuelve a
+  repartir balanceado. El roster (`DivisionTeamRegistration`) nunca se toca: los mismos equipos
+  inscriptos siguen inscriptos, ninguno queda sin registro aunque cambie de sub-grupo.
+- Disponible mientras la división sea editable, es decir, mientras el torneo no esté
+  `Ongoing`/`Finished`/`Canceled` — la misma guarda `EnsureDivisionStructureEditableAsync` que ya usan
+  la creación/edición de stages y la asignación de equipos.
 
-### HU-124 · [DEUDA TÉCNICA] Dos mecanismos distintos y contradictorios para armar la fase de grupos — `M`
+### HU-124 · [RESUELTO] Dos mecanismos distintos y contradictorios para armar la fase de grupos — `M`
 **Como** desarrollador **quiero** una sola fuente de verdad para "cómo se arma la estructura de
 grupos de una división" **para** no tener dos caminos que puedan dejar el torneo en un estado
 inconsistente según cuál se use.
-- `StageService.CreateAutomatedStagesAsync` (expuesto en `POST /api/stages/generate/{id}`,
-  `StageController.GenerateStagesAndMatches`) es un mecanismo completamente distinto y más rígido que
-  el del wizard actual: exige EXACTAMENTE 8/16/32/64 equipos inscriptos (`IsValidTournamentSize`),
-  arma siempre grupos de 4 equipos parejos (`MaxTeams.GROUP`, sin elegir cantidad de grupos) y agrega
-  un bracket fijo (Cuartos si corresponde + Semis + Tercer puesto + Final) sin copas configurables ni
-  "cuántos clasifican" por copa, a diferencia del sistema de HU-112.
-- **No tiene ningún llamador en la UI actual**: `generateStages` (lado frontend,
-  `stage.service.ts`/`stage.context.tsx`) no está conectado a ningún botón de pantalla real — el
-  endpoint está vivo y expuesto por API pero huérfano de interfaz. Un admin que lo invoque directo
-  (Swagger, un futuro botón mal conectado) obtendría una estructura rígida e incompatible con el
-  modelo de copas flexible que usa el resto de la app, sin ningún aviso.
-- Riesgo concreto al implementar HU-120/121: si se reusa el nombre "grupos" sin desambiguar, es fácil
-  que un desarrollador nuevo termine llamando por error al mecanismo viejo (`CreateAutomatedStagesAsync`)
-  en vez del nuevo, porque el nombre y el endpoint ya existen y "suenan" a lo que se pide.
-- Recomendación: decidir explícitamente si se elimina (deuda muerta) o se le retira la exclusividad de
-  "grupos fijos de 4" para reusar la lógica de reparto balanceado de HU-121 — no dejarlo como está,
-  vivo y sin dueño.
+- Resuelto por eliminación completa, no por retiro parcial: `StageService.CreateAutomatedStagesAsync`,
+  su endpoint (`POST /api/stages/generate/{id}`, `StageController.GenerateStagesAndMatches`) y todos
+  sus llamadores — backend y frontend (`generateStages`/`generateStagesAutomatically`), más la
+  constante `TournamentBracketSize` — fueron borrados por completo. No tenía ningún llamador real en
+  la UI, así que no hay reemplazo que mantener compatible. La única fuente de verdad para armar la
+  fase de grupos de una división es ahora el mecanismo de sub-grupos de HU-120/121/122/123.
 
-### HU-125 · [NUEVO] El reparto en sub-grupos rompe el cálculo actual de posiciones→copa (HU-112) — `M`
+### HU-125 · [FUERA DE ALCANCE] El reparto en sub-grupos rompe el cálculo actual de posiciones→copa (HU-112) — `M`
 **Como** owner/admin **quiero** que, con sub-grupos, las copas de playoff clasifiquen por posición
 DENTRO de cada sub-grupo (ej. "1° y 2° de cada zona") en vez de por una tabla combinada **para** que
 el cruce a playoffs tenga sentido cuando hay más de una zona.
-- El sistema de copas actual (`cupPositionRange`, HU-112) asume UNA sola tabla de posiciones por
-  división (1 `Group` stage → 1 tabla de standings). Con sub-grupos, cada uno tiene su propia tabla —
-  clasificar "posiciones #1 a #4" deja de tener sentido sin aclarar de qué zona.
-- La Copa Cruzada (HU-110) ya resuelve un problema equivalente (pool del top N de cada grupo hacia un
-  bracket combinado, `groupCount * qualifiersPerGroup`) — la solución más consistente es reusar ese
-  mismo patrón para sub-grupos dentro de una división normal, en vez de inventar un tercer esquema.
-- Nota de diseño (no bloqueante): en el pool combinado hacia el bracket, suele convenir evitar que dos
-  equipos de la MISMA zona se enfrenten en la primera ronda de playoffs cuando es posible (práctica
-  estándar en torneos de grupos + llave) — a confirmar si vale la pena para una liga amateur o si un
-  sorteo simple alcanza.
+- Confirmado explícitamente fuera de alcance de esta implementación — queda para un cambio posterior,
+  con su propio diseño de qué tabla combinada tiene sentido entre sub-grupos.
+- En vez de dejar que un cálculo combinado sin sentido se compute en silencio, el sistema RECHAZA la
+  combinación directamente, en cualquier orden de configuración: activar 2 o más sub-grupos en una
+  división que ya tiene una copa por rango de posiciones (`cupPositionRange`), o configurar una copa
+  por rango de posiciones en una división que ya tiene 2 o más sub-grupos, devuelven el mismo error
+  explicando la incompatibilidad y ofreciendo las dos salidas ("usá un solo sub-grupo o quitá el mapeo
+  de playoff", `ErrorMessages.Stage.SubGroupsIncompatibleWithPositionRangeCups`). Con un solo sub-grupo
+  (el comportamiento de siempre) las copas por rango de posiciones siguen funcionando exactamente
+  igual que hoy.
 
 ## Auditoría 2026-09-05 (continuación) — flujos completos con datos reales, pensando como organizador
 
@@ -873,6 +873,36 @@ vez.
 - No es necesariamente un bloqueo duro: alcanza con una advertencia clara antes de confirmar
   ("Esta cancha ya tiene un partido a esa hora" / "Este equipo ya juega otro partido ese día") que el
   admin pueda decidir ignorar conscientemente — pero hoy no hay ningún aviso, ni siquiera informativo.
+
+### HU-128 · [IMPLEMENTADO] Sorteo de llave para divisiones sin fase de grupos — `M`
+**Como** owner/admin **quiero** sortear (o armar a mano) el emparejamiento inicial de una llave de
+playoffs cuando la división no tiene fase de grupos previa **para** poder organizar un torneo formato
+solo-eliminación sin depender de una tabla de posiciones que no existe.
+- La inscripción funciona igual que en cualquier división, vía el roster (`DivisionTeamRegistration`)
+  de HU-120 — no hace falta ningún `Stage` de grupos para inscribir equipos ni para que la pantalla de
+  asignación muestre un panel donde hacerlo.
+- Sorteo aleatorio con vista previa: "Sortear llave" le pide al servidor una vista previa que no
+  persiste nada, y el organizador puede volver a sortear las veces que quiera antes de confirmar. Al
+  confirmar, la llave queda IDÉNTICA a la última vista previa mostrada — un token firmado del lado del
+  servidor (no un sorteo del lado del cliente) garantiza que lo confirmado sea exactamente lo
+  previsualizado.
+- Sorteo manual: el organizador ordena los equipos a mano, sin ningún sorteo aleatorio, y confirma esa
+  lista exacta.
+- Los byes de una cantidad de equipos que no es potencia de 2 se resuelven con el mecanismo existente
+  (`PlayoffSeeder.SeedPairs` + `TryAdvanceStageWinnerAsync`) — nada nuevo ahí, reusado tal cual.
+- Traba de re-sorteo por llave (`Stage` + nombre de bracket, así que llaves paralelas como "Copa de
+  Oro"/"Copa de Plata" se traban cada una por separado, independientemente del estado del torneo): se
+  puede volver a sortear libremente mientras NINGÚN partido real se haya jugado; apenas se juega el
+  primero, un nuevo sorteo de esa llave se rechaza. Un bye nunca cuenta como "jugado" a este efecto —
+  una llave recién sorteada con byes sigue siendo re-sorteable.
+- Cada sorteo, inicial o re-sorteo, queda auditado (`AuditAction.PlayoffDraw`, visible en el panel de
+  auditoría admin) con el modo (aleatorio/manual) y la cantidad de equipos — una falla al auditar
+  nunca bloquea el sorteo en sí.
+- La vista pública de la llave muestra "Sorteo realizado el [fecha]" a partir de `Stage.DrawnAt`, sin
+  necesitar estar logueado ni acceder a la auditoría (que es solo para Admin/Owner); no muestra nada
+  mientras la división no fue sorteada.
+- Explícitamente no incluye HU-125 (clasificación por sub-grupo hacia una copa) — una división con
+  sub-grupos y una copa por rango de posiciones sigue rechazada, como describe HU-125.
 
 ---
 

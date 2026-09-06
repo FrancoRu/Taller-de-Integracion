@@ -23,6 +23,7 @@ import {
   IDivisionContextProps,
   IPutDivisionRequest,
 } from '@/modules/division/type/division';
+import { ITeamResponse } from '@/modules/team/type/team.d';
 import { upsertListById } from '@/modules/core/utils/synchronizeStates';
 import { divisionKeys } from '@/modules/division/queryKeys';
 import { HttpStatus } from '@/modules/core/constants/httpStatus';
@@ -62,6 +63,60 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
 
   const deleteDivisionMutation = useMutation({
     mutationFn: divisionService.deleteDivisionsById,
+  });
+
+  const enrollTeamsMutation = useMutation({
+    mutationFn: ({
+      divisionId,
+      teamIds,
+    }: {
+      divisionId: GUID;
+      teamIds: GUID[];
+    }) => divisionService.enrollTeams(divisionId, teamIds),
+  });
+
+  const unenrollTeamsMutation = useMutation({
+    mutationFn: ({
+      divisionId,
+      teamIds,
+    }: {
+      divisionId: GUID;
+      teamIds: GUID[];
+    }) => divisionService.unenrollTeams(divisionId, teamIds),
+  });
+
+  const autoDistributeMutation = useMutation({
+    mutationFn: divisionService.autoDistribute,
+  });
+
+  const rebuildSubGroupsMutation = useMutation({
+    mutationFn: ({
+      divisionId,
+      subGroupCount,
+    }: {
+      divisionId: GUID;
+      subGroupCount: number;
+    }) => divisionService.rebuildSubGroups(divisionId, subGroupCount),
+  });
+
+  const reassignTeamToSubGroupMutation = useMutation({
+    mutationFn: ({
+      divisionId,
+      teamId,
+      fromStageId,
+      toStageId,
+    }: {
+      divisionId: GUID;
+      teamId: GUID;
+      fromStageId: GUID;
+      toStageId: GUID;
+    }) =>
+      divisionService.reassignTeamToSubGroup(
+        divisionId,
+        teamId,
+        fromStageId,
+        toStageId
+      ),
   });
 
   useEffect(() => {
@@ -212,6 +267,106 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
     [deleteDivisionMutation, queryClient, handleUnknownError]
   );
 
+  const getRoster = useCallback(
+    async (divisionId: GUID): Promise<ITeamResponse[] | void> => {
+      try {
+        const res = await queryClient.fetchQuery({
+          queryKey: divisionKeys.roster(divisionId),
+          queryFn: async () => await divisionService.getRoster(divisionId),
+        });
+
+        if (res?.data) {
+          return res.data;
+        }
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [queryClient, handleUnknownError]
+  );
+
+  const enrollTeams = useCallback(
+    async (divisionId: GUID, teamIds: GUID[]): Promise<boolean | void> => {
+      try {
+        await enrollTeamsMutation.mutateAsync({ divisionId, teamIds });
+        await queryClient.invalidateQueries({
+          queryKey: divisionKeys.roster(divisionId),
+        });
+        return true;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [enrollTeamsMutation, queryClient, handleUnknownError]
+  );
+
+  const unenrollTeams = useCallback(
+    async (divisionId: GUID, teamIds: GUID[]): Promise<boolean | void> => {
+      try {
+        await unenrollTeamsMutation.mutateAsync({ divisionId, teamIds });
+        await queryClient.invalidateQueries({
+          queryKey: divisionKeys.roster(divisionId),
+        });
+        return true;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [unenrollTeamsMutation, queryClient, handleUnknownError]
+  );
+
+  const autoDistribute = useCallback(
+    async (divisionId: GUID): Promise<boolean | void> => {
+      try {
+        await autoDistributeMutation.mutateAsync(divisionId);
+        return true;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [autoDistributeMutation, handleUnknownError]
+  );
+
+  const rebuildSubGroups = useCallback(
+    async (divisionId: GUID, subGroupCount: number): Promise<boolean | void> => {
+      try {
+        await rebuildSubGroupsMutation.mutateAsync({ divisionId, subGroupCount });
+        await queryClient.invalidateQueries({
+          queryKey: divisionKeys.roster(divisionId),
+        });
+        return true;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [rebuildSubGroupsMutation, queryClient, handleUnknownError]
+  );
+
+  const reassignTeamToSubGroup = useCallback(
+    async (
+      divisionId: GUID,
+      teamId: GUID,
+      fromStageId: GUID,
+      toStageId: GUID
+    ): Promise<boolean | void> => {
+      try {
+        await reassignTeamToSubGroupMutation.mutateAsync({
+          divisionId,
+          teamId,
+          fromStageId,
+          toStageId,
+        });
+        await queryClient.invalidateQueries({
+          queryKey: divisionKeys.roster(divisionId),
+        });
+        return true;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [reassignTeamToSubGroupMutation, queryClient, handleUnknownError]
+  );
+
   const container: IDivisionContextProps = useMemo(
     () => ({
       division,
@@ -222,6 +377,12 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
       getDivisionsByFilters,
       getDivisionsById,
       deleteDivisionsById,
+      getRoster,
+      enrollTeams,
+      unenrollTeams,
+      autoDistribute,
+      rebuildSubGroups,
+      reassignTeamToSubGroup,
     }),
     [
       division,
@@ -232,6 +393,12 @@ export const DivisionProvider: React.FC<{ children: ReactNode }> = ({
       getDivisionsByFilters,
       getDivisionsById,
       deleteDivisionsById,
+      getRoster,
+      enrollTeams,
+      unenrollTeams,
+      autoDistribute,
+      rebuildSubGroups,
+      reassignTeamToSubGroup,
     ]
   );
 

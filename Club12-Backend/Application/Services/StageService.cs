@@ -1,9 +1,11 @@
 ﻿using Application.DTOs.Abstract.Request;
 using Application.DTOs.Abstract.Response;
 using Application.DTOs.Stage.Request;
+using Application.DTOs.Stage.Response;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Utils.Constants;
+using Application.Utils.Constants.Configuration;
 using Application.Utils.Constants.Stage;
 using Application.Utils.Extensions;
 using Application.Utils.Helper.Playoff;
@@ -17,27 +19,44 @@ using Domain.Enums;
 
 using LinqKit;
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
+
+using SubGroupDistributionHelper = Application.Utils.Helper.SubGroupDistribution.SubGroupDistribution;
 
 namespace Application.Services;
 
 /// <summary>
 /// Manages a division's stages and their elimination bracket.
 /// </summary>
-public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) : IStageService
+public class StageService(
+    IUnitOfWork unitOfWork,
+    ILogger<StageService> logger,
+    IConfiguration configuration,
+    IAuditService auditService) : IStageService
 {
     private readonly IStageRepository _stageRepository = unitOfWork.StageRepository;
     private readonly IDivisionRepository _divisionRepository = unitOfWork.DivisionRepository;
     private readonly IStageTeamMatchRepository _stageTeamMatchRepository = unitOfWork.StageTeamMatchRepository;
     private readonly ITeamRepository _teamRepository = unitOfWork.TeamRepository;
+    private readonly IDivisionTeamRegistrationRepository _divisionTeamRegistrationRepository = unitOfWork.DivisionTeamRegistrationRepository;
     private readonly IMatchRepository _matchRepository = unitOfWork.MatchRepository;
     private readonly IMatchSeriesRepository _matchSeriesRepository = unitOfWork.MatchSeriesRepository;
+
+    /// <summary>
+    /// Signing secret for the draw-preview token, reusing the app's existing JWT secret rather than a new configuration key.
+    /// </summary>
+    private readonly string _drawTokenSecret = configuration.GetSection(ConfigurationKeys.Jwt.Key).Value
+        ?? throw new ArgumentNullException(nameof(configuration), ErrorMessages.Configuration.JwtMissing);
 
     /// <summary>
     /// The elimination rounds a wizard-built cup can be made of, in bracket order.
@@ -197,11 +216,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
     /// <param name="stageEntity">The stage entity to create.</param>
     /// <returns>The created stage entity.</returns>
     /// <exception cref="InvalidOperationException">
-    /// Thrown if a stage with the same name already exists in the division, or if a
-    /// non-cross-division-cup division already has a Group stage and stageEntity is also a Group
-    /// stage. A regular division's round-robin phase is a single stage, so a second one would be an
-    /// orphaned, ambiguous fixture. A cross-division cup is exempt: it may hold several Group stages
-    /// whose top teams are pooled to seed one bracket.
+    /// Thrown if a stage with the same name already exists in the division.
     /// </exception>
     public async Task<Stage> CreateStageAsync(Stage stageEntity)
     {
@@ -217,17 +232,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
 
         if (stageEntity.StageType == StageType.Group)
         {
-            bool hasGroupStage = await _stageRepository.ExistsAsync(
-                s => s.DivisionId == stageEntity.DivisionId && s.StageType == StageType.Group);
-
-            // A multi-group cross-division cup is seeded by pooling the top teams of several internal group stages, so it may legitimately hold more than one Group stage, while every regular division keeps the one-Group-per-division rule since a second one would be an orphaned, ambiguous fixture.
-            bool isCrossDivisionCup = await _divisionRepository.ExistsAsync(
-                d => d.Id == stageEntity.DivisionId && d.IsCrossDivisionCup);
-
-            if (hasGroupStage && !isCrossDivisionCup)
-            {
-                throw new InvalidOperationException(ErrorMessages.Stage.GroupStageAlreadyExistsInDivision);
-            }
+            await EnsureSubGroupCupCompatibilityAsync(stageEntity.DivisionId);
         }
 
         stageEntity.Slug = await SlugGenerator.GenerateUniqueSlugAsync(
@@ -236,6 +241,28 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
 
         await _stageRepository.AddAsync(stageEntity);
         return stageEntity;
+    }
+
+    /// <summary>
+    /// Rejects a second sub-group in a regular division that already carries a position-range playoff cup, since that cup's range has no defined meaning across independent sub-group tables.
+    /// </summary>
+    private async Task EnsureSubGroupCupCompatibilityAsync(Guid divisionId)
+    {
+        Division? division = await _divisionRepository.GetByIdAsync(
+            divisionId, includes: [d => d.PlayoffMappings]);
+
+        if (division is null || division.IsCrossDivisionCup || division.PlayoffMappings.Count == 0)
+        {
+            return;
+        }
+
+        bool wouldHaveMultipleSubGroups = await _stageRepository.ExistsAsync(
+            s => s.DivisionId == divisionId && s.StageType == StageType.Group);
+
+        if (wouldHaveMultipleSubGroups)
+        {
+            throw new InvalidOperationException(ErrorMessages.Stage.SubGroupsIncompatibleWithPositionRangeCups);
+        }
     }
 
     /// <summary>
@@ -266,89 +293,6 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
             DateCreated = DateTime.UtcNow,
             CreatedBy = AuditConstants.SystemUser,
         };
-    }
-
-    /// <summary>
-    /// Automatically generates and creates all stages for a division based on tournament size and structure.
-    /// </summary>
-    /// <param name="divisionId">The unique identifier of the division.</param>
-    /// <returns>A list of created stage entities.</returns>
-    /// <exception cref="InvalidOperationException">Thrown if the division is not found, already has stages, or has an invalid tournament size.</exception>
-    public async Task<List<Stage>> CreateAutomatedStagesAsync(Guid divisionId)
-    {
-        Division division = await _divisionRepository.GetByIdAsync(divisionId, includes: [division => division.Stages, division => division.Tournament])
-            ?? throw new InvalidOperationException(ErrorMessages.Stage.DivisionNotFound);
-
-        if (division.Stages.Count > 0)
-        {
-            throw new InvalidOperationException(ErrorMessages.Stage.DivisionAlreadyHasStages);
-        }
-
-        int registeredTeams = await _teamRepository.CountAsync(team => team.TournamentId == division.TournamentId);
-
-        if (!IsValidTournamentSize(registeredTeams))
-        {
-            throw new InvalidOperationException(
-                ErrorMessages.Stage.InvalidTournamentSize(
-                    registeredTeams,
-                    $"{TournamentBracketSize.Eight}, {TournamentBracketSize.Sixteen}, {TournamentBracketSize.ThirtyTwo}, or {TournamentBracketSize.SixtyFour}"));
-        }
-
-        if (registeredTeams % MaxTeams.Group != 0)
-        {
-            throw new InvalidOperationException(
-                ErrorMessages.Stage.TeamsNotDivisibleForGroups(registeredTeams, MaxTeams.Group));
-        }
-
-        List<Stage> stages = [];
-
-        DateTime startDate = division.Tournament.StartDate;
-
-        int totalGroups = registeredTeams / MaxTeams.Group;
-
-        int order = 0;
-
-        for (int i = 1; i <= totalGroups; i++)
-        {
-            Stage groupStage = BuildStage(StageType.Group, StageTemplate.Group, startDate, division, daysMultiplier: 2);
-
-            char groupLetter = (char) (i + 64);
-
-            groupStage.Name = $"{StageTemplate.Group.Name} - Grupo {groupLetter}";
-            groupStage.Order = order++;
-            stages.Add(groupStage);
-        }
-
-        startDate = stages[0].EndDate.AddDays(StageTemplate.StandardGapDays);
-
-        if (registeredTeams >= TournamentBracketSize.Sixteen)
-        {
-            Stage quarterFinalStage = BuildStage(StageType.QuarterFinal, StageTemplate.QuarterFinal, startDate, division);
-            stages.Add(quarterFinalStage);
-            quarterFinalStage.Order = order++;
-            startDate = quarterFinalStage.EndDate.AddDays(StageTemplate.StandardGapDays);
-        }
-
-        Stage semiFinalStage = BuildStage(StageType.SemiFinal, StageTemplate.SemiFinal, startDate, division);
-        stages.Add(semiFinalStage);
-        semiFinalStage.Order = order++;
-        startDate = semiFinalStage.EndDate.AddDays(StageTemplate.ThirdPlaceGapDays);
-
-        Stage thirdPlaceStage = BuildStage(StageType.ThirdPlace, StageTemplate.ThirdPlace, startDate, division);
-        stages.Add(thirdPlaceStage);
-        thirdPlaceStage.Order = order++;
-        startDate = thirdPlaceStage.EndDate.AddDays(StageTemplate.StandardGapDays);
-
-        Stage finalStage = BuildStage(StageType.Final, StageTemplate.Final, startDate, division);
-        stages.Add(finalStage);
-
-        finalStage.Order = order;
-
-        await AssignStageSlugsAsync(stages);
-
-        await _stageRepository.AddRangeAsync(stages);
-
-        return stages;
     }
 
     /// <summary>
@@ -386,6 +330,22 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
 
         IEnumerable<StageTeamMatch> existingMatches = await _stageTeamMatchRepository.FindAsync(stageTeamMatch => stageTeamMatch.StageId == stage.Id);
 
+        List<Guid> filteredIds = [];
+
+        if (!auto)
+        {
+            if (teamIds == null || teamIds.Count == 0)
+            {
+                return;
+            }
+
+            filteredIds = [.. teamIds
+                .Distinct()
+                .Where(id => !existingMatches.Any(stm => stm.TeamId == id))];
+
+            await EnsureTeamsEnrolledInDivisionAsync(stage.DivisionId, filteredIds);
+        }
+
         // MaxTeams.Group is only the auto-bracket-generator's fixed group size, not a general cap on how many teams a Group-type stage may hold, since a manually built Group stage represents a whole zone's round-robin phase and can need far more, so it is capped at the same ceiling the tournament itself enforces instead of the auto-generator's per-group size.
         int maxTeams = stage.StageType == StageType.Group
             ? MaxTeams.GroupStageCap
@@ -401,15 +361,6 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
 
         if (!auto)
         {
-            if (teamIds == null || teamIds.Count == 0)
-            {
-                return;
-            }
-
-            List<Guid> filteredIds = [.. teamIds
-                .Distinct()
-                .Where(id => !existingMatches.Any(stm => stm.TeamId == id))];
-
             if (filteredIds.Count > availableSlots)
             {
                 throw new InvalidOperationException(ErrorMessages.Stage.NotEnoughSlots(filteredIds.Count, availableSlots));
@@ -433,7 +384,7 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
                 PageSize = availableSlots,
             };
             List<Team> teams = [.. await _teamRepository.FindAsync(
-                team => team.TournamentId == stage.Division.TournamentId
+                team => team.DivisionTeamRegistrations.Any(r => r.DivisionId == stage.DivisionId)
                     && !team.StageTeamMatches.Any(stm => stm.TeamId == team.Id && stm.StageId == stage.Id), filter: filter)];
 
             if (!stage.Division.IsCrossDivisionCup)
@@ -455,6 +406,29 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
         if (newItems.Count != 0)
         {
             await _stageTeamMatchRepository.AddRangeAsync(newItems);
+        }
+    }
+
+    /// <summary>
+    /// Throws when any of the given teams has no DivisionTeamRegistration for the division, since a stage placement is a subset of division enrollment, never the reverse.
+    /// </summary>
+    private async Task EnsureTeamsEnrolledInDivisionAsync(Guid divisionId, List<Guid> teamIds)
+    {
+        if (teamIds.Count == 0)
+        {
+            return;
+        }
+
+        List<Guid> registeredIds = [.. (await _divisionTeamRegistrationRepository.FindAsync(
+            r => r.DivisionId == divisionId && teamIds.Contains(r.TeamId)))
+            .Select(r => r.TeamId)];
+
+        List<Guid> missingIds = [.. teamIds.Except(registeredIds)];
+
+        if (missingIds.Count > 0)
+        {
+            throw new InvalidOperationException(
+                ErrorMessages.Stage.TeamNotEnrolledInDivision(string.Join(", ", missingIds)));
         }
     }
 
@@ -1009,16 +983,449 @@ public class StageService(IUnitOfWork unitOfWork, ILogger<StageService> logger) 
         return winnerId == slotFirstMatch.HomeTeamId ? slotFirstMatch.VisitorTeamId : slotFirstMatch.HomeTeamId;
     }
 
-    /// <summary>
-    /// Validates if the tournament size is a valid power of 2 and within acceptable range.
-    /// </summary>
-    /// <param name="teamCount">The number of teams.</param>
-    /// <returns>True if valid tournament size, false otherwise.</returns>
-    private static bool IsValidTournamentSize(int teamCount)
+    /// <inheritdoc/>
+    public async Task<DrawPreviewResult> PreviewDrawAsync(Guid stageId, DrawMode mode, List<Guid>? manualOrder = null)
     {
-        return teamCount is TournamentBracketSize.Eight
-            or TournamentBracketSize.Sixteen
-            or TournamentBracketSize.ThirtyTwo
-            or TournamentBracketSize.SixtyFour;
+        Stage stage = await _stageRepository.GetByIdAsync(stageId, includes: [s => s.Division])
+            ?? throw new InvalidOperationException(ErrorMessages.Stage.NotFoundGeneric);
+
+        await EnsureGrouplessDivisionAsync(stage.DivisionId);
+
+        List<Guid> rosterTeamIds = await GetRosterTeamIdsAsync(stage.DivisionId);
+        List<Guid> orderedTeamIds = ResolveOrderedTeamIds(mode, rosterTeamIds, manualOrder);
+
+        List<(Guid HomeTeamId, Guid? VisitorTeamId)> pairs = PlayoffSeeder.SeedPairs(orderedTeamIds);
+
+        return new DrawPreviewResult
+        {
+            Pairs = [.. pairs.Select(p => new DrawPairPreview { HomeTeamId = p.HomeTeamId, VisitorTeamId = p.VisitorTeamId })],
+            DrawToken = SignDrawToken(stageId, orderedTeamIds),
+        };
+    }
+
+    /// <inheritdoc/>
+    public async Task<List<Match>> CommitDrawAsync(Guid stageId, DrawMode mode, string? drawToken = null, List<Guid>? manualOrder = null)
+    {
+        Stage firstRoundStage = await _stageRepository.GetByIdAsync(stageId, includes: [s => s.Matches, s => s.Division])
+            ?? throw new InvalidOperationException(ErrorMessages.Stage.NotFoundGeneric);
+
+        await EnsureGrouplessDivisionAsync(firstRoundStage.DivisionId);
+
+        List<Guid> rosterTeamIds = await GetRosterTeamIdsAsync(firstRoundStage.DivisionId);
+
+        List<Guid> orderedTeamIds = mode == DrawMode.Random
+            ? VerifyDrawToken(drawToken, stageId, rosterTeamIds)
+            : ResolveOrderedTeamIds(DrawMode.Manual, rosterTeamIds, manualOrder);
+
+        await EnsureBracketDrawableAsync(firstRoundStage);
+
+        List<Stage> bracketStages = [.. await _stageRepository.FindAsync(
+            s => s.DivisionId == firstRoundStage.DivisionId && s.BracketName == firstRoundStage.BracketName,
+            includes: [s => s.Matches])];
+
+        await ResetBracketSeedingAsync(bracketStages);
+
+        List<Match> orderedMatches = await FillStageWithSeedsAsync(firstRoundStage, orderedTeamIds);
+        await _matchRepository.UpdateRangeAsync(orderedMatches);
+
+        firstRoundStage.DrawnAt = DateTime.UtcNow;
+        await _stageRepository.UpdateAsync(firstRoundStage);
+
+        await TryAdvanceStageWinnerAsync(firstRoundStage.Id);
+
+        await LogPlayoffDrawAsync(firstRoundStage, mode, orderedTeamIds.Count);
+
+        return orderedMatches;
+    }
+
+    /// <summary>
+    /// Returns every team id currently enrolled in the division's roster.
+    /// </summary>
+    private async Task<List<Guid>> GetRosterTeamIdsAsync(Guid divisionId)
+    {
+        return [.. (await _divisionTeamRegistrationRepository.FindAsync(r => r.DivisionId == divisionId))
+            .Select(r => r.TeamId)];
+    }
+
+    /// <summary>
+    /// Rejects a playoffs-only draw against a division that still has a group phase, since group-standings brackets are seeded by SeedKnockoutStageAsync instead.
+    /// </summary>
+    private async Task EnsureGrouplessDivisionAsync(Guid divisionId)
+    {
+        bool hasGroupStage = await _stageRepository.ExistsAsync(
+            s => s.DivisionId == divisionId && s.StageType == StageType.Group);
+
+        if (hasGroupStage)
+        {
+            throw new InvalidOperationException(ErrorMessages.Stage.DrawRequiresGrouplessDivision);
+        }
+    }
+
+    /// <summary>
+    /// Resolves the ordered team list a draw seeds from, shuffling for a random draw or validating a manual order against the roster set.
+    /// </summary>
+    private static List<Guid> ResolveOrderedTeamIds(DrawMode mode, List<Guid> rosterTeamIds, List<Guid>? manualOrder)
+    {
+        if (mode == DrawMode.Manual)
+        {
+            if (manualOrder is null || !IsRosterPermutation(manualOrder, rosterTeamIds))
+            {
+                throw new InvalidOperationException(ErrorMessages.Stage.ManualOrderNotRosterPermutation);
+            }
+
+            return manualOrder;
+        }
+
+        List<Guid> shuffled = [.. rosterTeamIds];
+        for (int i = shuffled.Count - 1; i > 0; i--)
+        {
+            int swapIndex = Random.Shared.Next(i + 1);
+            (shuffled[swapIndex], shuffled[i]) = (shuffled[i], shuffled[swapIndex]);
+        }
+
+        return shuffled;
+    }
+
+    /// <summary>
+    /// Whether candidate is exactly a reordering of roster, with no team missing, repeated, or foreign to the division.
+    /// </summary>
+    private static bool IsRosterPermutation(List<Guid> candidate, List<Guid> roster)
+    {
+        if (candidate.Count != roster.Count)
+        {
+            return false;
+        }
+
+        HashSet<Guid> candidateSet = [.. candidate];
+        return candidateSet.Count == candidate.Count && candidateSet.SetEquals(roster);
+    }
+
+    /// <summary>
+    /// Blocks a bracket draw once any real match in that division and bracket name has been played, excluding byes and still-empty slots so a freshly drawn bracket stays re-drawable.
+    /// </summary>
+    private async Task EnsureBracketDrawableAsync(Stage firstRoundStage)
+    {
+        bool anyPlayed = await _matchRepository.ExistsAsync(m =>
+            m.Stage.DivisionId == firstRoundStage.DivisionId
+            && m.Stage.BracketName == firstRoundStage.BracketName
+            && m.HomeTeamId.HasValue && m.VisitorTeamId.HasValue
+            && (m.IsFinished || m.HomeScore.HasValue || m.VisitorScore.HasValue || m.Status == MatchStatus.Played));
+
+        if (anyPlayed)
+        {
+            throw new InvalidOperationException(ErrorMessages.Stage.BracketAlreadyPlayed);
+        }
+    }
+
+    /// <summary>
+    /// Clears every match of the bracket's stages back to unseeded and removes their series, a no-op the first time a bracket is drawn.
+    /// </summary>
+    private async Task ResetBracketSeedingAsync(List<Stage> bracketStages)
+    {
+        List<Match> matchesToReset = [.. bracketStages.SelectMany(s => s.Matches)];
+
+        if (matchesToReset.Count == 0)
+        {
+            return;
+        }
+
+        foreach (Match match in matchesToReset)
+        {
+            match.HomeTeamId = null;
+            match.VisitorTeamId = null;
+            match.WinningTeamId = null;
+            match.HomeScore = null;
+            match.VisitorScore = null;
+            match.IsFinished = false;
+            match.Status = MatchStatus.Scheduled;
+            match.SeriesId = null;
+            match.GameNumber = null;
+        }
+
+        await _matchRepository.UpdateRangeAsync(matchesToReset);
+
+        List<Guid> stageIds = [.. bracketStages.Select(s => s.Id)];
+        await _matchSeriesRepository.RemoveAsync(series => stageIds.Contains(series.StageId));
+    }
+
+    /// <summary>
+    /// Writes the PlayoffDraw audit entry for a committed draw, logging any failure instead of raising it so an audit outage never blocks the draw itself.
+    /// </summary>
+    private async Task LogPlayoffDrawAsync(Stage firstRoundStage, DrawMode mode, int teamCount)
+    {
+        try
+        {
+            string detail = mode == DrawMode.Random
+                ? $"Sorteo aleatorio - {teamCount} equipos"
+                : $"Sorteo manual - {teamCount} equipos";
+
+            await auditService.LogAsync(
+                AuditAction.PlayoffDraw,
+                targetType: "Stage",
+                targetId: firstRoundStage.Id.ToString(),
+                targetName: firstRoundStage.Name,
+                detail: detail);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex,
+                "Could not write the PlayoffDraw audit entry for stage {StageId}. The draw itself still succeeded.",
+                firstRoundStage.Id);
+        }
+    }
+
+    /// <summary>
+    /// Signs a base64url draw-preview token binding the stage id and exact seeded order, so a later commit call can replay the identical pairing.
+    /// </summary>
+    private string SignDrawToken(Guid stageId, List<Guid> orderedTeamIds)
+    {
+        DrawTokenPayload payload = new()
+        {
+            StageId = stageId,
+            OrderedTeamIds = orderedTeamIds,
+            IssuedAtUtc = DateTime.UtcNow,
+            Nonce = Guid.NewGuid(),
+        };
+
+        string payloadPart = Base64UrlEncode(JsonSerializer.SerializeToUtf8Bytes(payload));
+        string signaturePart = Base64UrlEncode(ComputeSignature(payloadPart));
+
+        return $"{payloadPart}.{signaturePart}";
+    }
+
+    /// <summary>
+    /// Verifies a draw token's signature, stage match, and exact roster-set match, throwing for anything tampered, expired, or mismatched.
+    /// </summary>
+    private List<Guid> VerifyDrawToken(string? token, Guid expectedStageId, List<Guid> expectedRosterTeamIds)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            throw new InvalidOperationException(ErrorMessages.Stage.InvalidDrawToken);
+        }
+
+        string[] parts = token.Split('.');
+        if (parts.Length != 2)
+        {
+            throw new InvalidOperationException(ErrorMessages.Stage.InvalidDrawToken);
+        }
+
+        DrawTokenPayload payload;
+        try
+        {
+            byte[] providedSignature = Base64UrlDecode(parts[1]);
+            byte[] expectedSignature = ComputeSignature(parts[0]);
+
+            if (!CryptographicOperations.FixedTimeEquals(providedSignature, expectedSignature))
+            {
+                throw new InvalidOperationException(ErrorMessages.Stage.InvalidDrawToken);
+            }
+
+            payload = JsonSerializer.Deserialize<DrawTokenPayload>(Base64UrlDecode(parts[0]))
+                ?? throw new InvalidOperationException(ErrorMessages.Stage.InvalidDrawToken);
+        }
+        catch (Exception ex) when (ex is FormatException or JsonException)
+        {
+            throw new InvalidOperationException(ErrorMessages.Stage.InvalidDrawToken);
+        }
+
+        if (payload.StageId != expectedStageId || !IsRosterPermutation(payload.OrderedTeamIds, expectedRosterTeamIds))
+        {
+            throw new InvalidOperationException(ErrorMessages.Stage.InvalidDrawToken);
+        }
+
+        return payload.OrderedTeamIds;
+    }
+
+    /// <summary>
+    /// The HMAC-SHA256 signature of value using the app's JWT signing secret.
+    /// </summary>
+    private byte[] ComputeSignature(string value)
+    {
+        using HMACSHA256 hmac = new(Encoding.UTF8.GetBytes(_drawTokenSecret));
+        return hmac.ComputeHash(Encoding.UTF8.GetBytes(value));
+    }
+
+    private static string Base64UrlEncode(byte[] bytes)
+    {
+        return Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+    }
+
+    private static byte[] Base64UrlDecode(string value)
+    {
+        string padded = value.Replace('-', '+').Replace('_', '/');
+        int remainder = padded.Length % 4;
+        if (remainder > 0)
+        {
+            padded += new string('=', 4 - remainder);
+        }
+
+        return Convert.FromBase64String(padded);
+    }
+
+    /// <inheritdoc/>
+    public async Task<List<Stage>> RebuildSubGroupsAsync(Guid divisionId, int subGroupCount)
+    {
+        if (subGroupCount < 1)
+        {
+            throw new InvalidOperationException(ErrorMessages.Stage.SubGroupCountMustBePositive);
+        }
+
+        await EnsureDivisionStructureEditableAsync(divisionId);
+
+        Division division = await _divisionRepository.GetByIdAsync(
+            divisionId, includes: [d => d.PlayoffMappings, d => d.Tournament])
+            ?? throw new InvalidOperationException(ErrorMessages.Stage.DivisionNotFound);
+
+        if (subGroupCount >= 2 && !division.IsCrossDivisionCup && division.PlayoffMappings.Count > 0)
+        {
+            throw new InvalidOperationException(ErrorMessages.Stage.SubGroupsIncompatibleWithPositionRangeCups);
+        }
+
+        List<Guid> rosterTeamIds = await GetRosterTeamIdsAsync(divisionId);
+
+        if (rosterTeamIds.Count > 0 && !SubGroupDistributionHelper.MeetsMinimumSize(rosterTeamIds.Count, subGroupCount))
+        {
+            throw new InvalidOperationException(
+                ErrorMessages.Stage.SubGroupTooFewTeams(rosterTeamIds.Count, subGroupCount));
+        }
+
+        List<Guid> existingGroupStageIds = [.. (await _stageRepository.FindAsync(
+            s => s.DivisionId == divisionId && s.StageType == StageType.Group))
+            .Select(s => s.Id)];
+
+        if (existingGroupStageIds.Count > 0)
+        {
+            await _stageRepository.RemoveAsync(s => existingGroupStageIds.Contains(s.Id));
+        }
+
+        List<Stage> newGroupStages = BuildSubGroupStages(division, subGroupCount);
+        await AssignStageSlugsAsync(newGroupStages);
+        await _stageRepository.AddRangeAsync(newGroupStages);
+
+        if (rosterTeamIds.Count > 0)
+        {
+            await PlaceRosterIntoSubGroupsAsync(rosterTeamIds, newGroupStages);
+        }
+
+        return newGroupStages;
+    }
+
+    /// <inheritdoc/>
+    public async Task AutoDistributeRosterAsync(Guid divisionId)
+    {
+        await EnsureDivisionStructureEditableAsync(divisionId);
+
+        List<Guid> rosterTeamIds = await GetRosterTeamIdsAsync(divisionId);
+
+        List<Stage> groupStages = [.. await _stageRepository.FindAsync(
+            s => s.DivisionId == divisionId && s.StageType == StageType.Group)];
+
+        if (groupStages.Count == 0)
+        {
+            return;
+        }
+
+        List<Guid> groupStageIds = [.. groupStages.Select(s => s.Id)];
+        await _stageTeamMatchRepository.RemoveAsync(stm => groupStageIds.Contains(stm.StageId));
+
+        if (rosterTeamIds.Count > 0)
+        {
+            await PlaceRosterIntoSubGroupsAsync(rosterTeamIds, groupStages);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task ReassignTeamToSubGroupAsync(Guid teamId, Guid fromStageId, Guid toStageId)
+    {
+        if (fromStageId == toStageId)
+        {
+            return;
+        }
+
+        Stage fromStage = await _stageRepository.GetByIdAsync(fromStageId)
+            ?? throw new InvalidOperationException(ErrorMessages.Stage.NotFoundGeneric);
+        Stage toStage = await _stageRepository.GetByIdAsync(toStageId)
+            ?? throw new InvalidOperationException(ErrorMessages.Stage.NotFoundGeneric);
+
+        if (fromStage.DivisionId != toStage.DivisionId)
+        {
+            throw new InvalidOperationException(ErrorMessages.Stage.ReassignmentAcrossDivisionsNotAllowed);
+        }
+
+        await EnsureDivisionStructureEditableAsync(fromStage.DivisionId);
+
+        StageTeamMatch placement = (await _stageTeamMatchRepository.FindAsync(
+            stm => stm.StageId == fromStageId && stm.TeamId == teamId)).FirstOrDefault()
+            ?? throw new InvalidOperationException(ErrorMessages.Stage.TeamNotPlacedInSubGroup);
+
+        // The minimum sub-group size is the only hard constraint on a manual move: the organizer
+        // may otherwise move a team for any reason, geography, avoiding rivals, or anything else,
+        // without the system second-guessing the destination's resulting balance.
+        int remainingInSource = await _stageTeamMatchRepository.CountAsync(
+            stm => stm.StageId == fromStageId) - 1;
+
+        if (remainingInSource < SubGroupDistributionHelper.MinTeamsPerSubGroup)
+        {
+            throw new InvalidOperationException(
+                ErrorMessages.Stage.SubGroupReassignmentBelowMinimum(remainingInSource));
+        }
+
+        placement.StageId = toStageId;
+        await _stageTeamMatchRepository.UpdateAsync(placement);
+    }
+
+    /// <summary>
+    /// Builds subGroupCount fresh Group stages named "Grupo A" onward, ordered, for a division rebuild.
+    /// </summary>
+    private static List<Stage> BuildSubGroupStages(Division division, int subGroupCount)
+    {
+        List<Stage> stages = [];
+        DateTime startDate = division.Tournament.StartDate;
+
+        for (int i = 0; i < subGroupCount; i++)
+        {
+            Stage groupStage = BuildStage(StageType.Group, StageTemplate.Group, startDate, division, daysMultiplier: 2);
+            groupStage.Name = $"Grupo {(char) ('A' + i)}";
+            groupStage.Order = i;
+            stages.Add(groupStage);
+        }
+
+        return stages;
+    }
+
+    /// <summary>
+    /// Deals the roster across the given sub-group stages using the balanced distribution rule and persists the resulting placements.
+    /// </summary>
+    private async Task PlaceRosterIntoSubGroupsAsync(List<Guid> rosterTeamIds, List<Stage> groupStages)
+    {
+        List<List<Guid>> distribution = SubGroupDistributionHelper.Distribute(rosterTeamIds, groupStages.Count);
+
+        List<StageTeamMatch> newMatches = [];
+        for (int i = 0; i < groupStages.Count; i++)
+        {
+            newMatches.AddRange(distribution[i].Select(teamId => new StageTeamMatch
+            {
+                StageId = groupStages[i].Id,
+                TeamId = teamId,
+                CreatedBy = AuditConstants.SystemUser,
+                DateCreated = DateTime.UtcNow,
+            }));
+        }
+
+        if (newMatches.Count > 0)
+        {
+            await _stageTeamMatchRepository.AddRangeAsync(newMatches);
+        }
+    }
+
+    /// <summary>
+    /// The signed payload carried by a draw-preview token, replayed verbatim by a matching commit call.
+    /// </summary>
+    private sealed class DrawTokenPayload
+    {
+        public Guid StageId { get; set; }
+        public List<Guid> OrderedTeamIds { get; set; } = [];
+        public DateTime IssuedAtUtc { get; set; }
+        public Guid Nonce { get; set; }
     }
 }

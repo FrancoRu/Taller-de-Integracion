@@ -5,6 +5,7 @@ import {
   GUID,
 } from '@/modules/core/types/types';
 import { TournamentCategory } from '@/modules/core/enum/tournament/tournamentCategory';
+import { ITeamResponse } from '@/modules/team/type/team.d';
 
 /**
  * Context properties and methods for managing divisions in a React application.
@@ -64,6 +65,73 @@ export interface IDivisionContextProps {
    * either way).
    */
   deleteDivisionsById(id: GUID): Promise<boolean>;
+
+  /**
+   * Fetches every team currently enrolled in a division's roster
+   * (`DivisionTeamRegistration`), independent of any stage placement. The
+   * authoritative source of "who is in this division" — including a
+   * playoffs-only division with no group stage.
+   * @param divisionId The division whose roster to fetch.
+   * @returns A promise resolving to the enrolled teams, or void on failure.
+   */
+  getRoster(divisionId: GUID): Promise<ITeamResponse[] | void>;
+
+  /**
+   * Enrols one or more teams in a division's roster. Rejected (409) when a
+   * team already holds a registration in another regular division of the
+   * same tournament, or the tournament structure is locked.
+   * @param divisionId The division to enrol the teams into.
+   * @param teamIds The teams to enrol.
+   * @returns A promise resolving to true on success, or void on failure.
+   */
+  enrollTeams(divisionId: GUID, teamIds: GUID[]): Promise<boolean | void>;
+
+  /**
+   * Removes one or more teams from a division's roster. Cascades: any
+   * `StageTeamMatch` the team still holds within the division's stages is
+   * removed in the same operation.
+   * @param divisionId The division to unenrol the teams from.
+   * @param teamIds The teams to unenrol.
+   * @returns A promise resolving to true on success, or void on failure.
+   */
+  unenrollTeams(divisionId: GUID, teamIds: GUID[]): Promise<boolean | void>;
+
+  /**
+   * Clears the division's current sub-group placements and re-runs a
+   * balanced random distribution over its whole roster (HU-122). Always
+   * balanced, not fill-only-empties.
+   * @param divisionId The division whose sub-groups to auto-distribute.
+   * @returns A promise resolving to true on success, or void on failure.
+   */
+  autoDistribute(divisionId: GUID): Promise<boolean | void>;
+
+  /**
+   * Rebuilds a division's sub-group stage layer to a new count, keeping the
+   * roster untouched, and re-runs the balanced distribution over it (HU-123).
+   * @param divisionId The division whose sub-group count to change.
+   * @param subGroupCount The new sub-group count.
+   * @returns A promise resolving to true on success, or void on failure.
+   */
+  rebuildSubGroups(divisionId: GUID, subGroupCount: number): Promise<boolean | void>;
+
+  /**
+   * Manually moves one enrolled team from one sub-group to another within the
+   * same division (HU-122), without touching any other team's placement.
+   * Rejected (409) when the move would drop the source sub-group below the
+   * minimum size, the team is not currently placed in `fromStageId`, or the
+   * two stages belong to different divisions.
+   * @param divisionId The division the two sub-groups belong to.
+   * @param teamId The team to move.
+   * @param fromStageId The sub-group stage the team currently belongs to.
+   * @param toStageId The sub-group stage to move the team into.
+   * @returns A promise resolving to true on success, or void on failure.
+   */
+  reassignTeamToSubGroup(
+    divisionId: GUID,
+    teamId: GUID,
+    fromStageId: GUID,
+    toStageId: GUID
+  ): Promise<boolean | void>;
 }
 
 /**
@@ -413,6 +481,41 @@ export interface IPutDivisionRequest {
 
 export interface IDivisionPropsView {
   name: string;
+}
+
+/**
+ * The request body to enrol teams in a division's roster.
+ * @interface EnrollTeamsRequest
+ */
+export interface EnrollTeamsRequest {
+  teamIds: GUID[];
+}
+
+/**
+ * The request body to remove teams from a division's roster.
+ * @interface UnenrollTeamsRequest
+ */
+export interface UnenrollTeamsRequest {
+  teamIds: GUID[];
+}
+
+/**
+ * The request body to change a division's sub-group count (HU-123).
+ * @interface RebuildSubGroupsRequest
+ */
+export interface RebuildSubGroupsRequest {
+  subGroupCount: number;
+}
+
+/**
+ * The request body to manually move one team from one sub-group to another
+ * within the same division (HU-122).
+ * @interface ReassignTeamToSubGroupRequest
+ */
+export interface ReassignTeamToSubGroupRequest {
+  teamId: GUID;
+  fromStageId: GUID;
+  toStageId: GUID;
 }
 
 /**

@@ -202,6 +202,51 @@ public class TournamentCompletabilityValidatorTests
         Assert.Empty(issues);
     }
 
+    [Fact]
+    public void Validate_SubGroupBelowMinimum_ReportsSubGroupTooFewTeams()
+    {
+        Tournament tournament = NewTournament();
+        List<Team> groupA = [.. Enumerable.Range(0, 4).Select(i => MakeTeam($"A{i}"))];
+        List<Team> groupB = [.. Enumerable.Range(0, 3).Select(i => MakeTeam($"B{i}"))];
+        AddZoneWithSubGroups(tournament, "Zone A", [groupA, groupB]);
+
+        IReadOnlyList<CompletabilityIssue> issues = CompletabilityValidator.Validate(
+            tournament, [.. groupA.Concat(groupB).Select(team => Reg(tournament, team))]);
+
+        CompletabilityIssue issue = Assert.Single(issues, i => i.Code == CompletabilityIssueCodes.SubGroupTooFewTeams);
+        Assert.Equal("Zone A", issue.DivisionName);
+        Assert.Equal(3, issue.AssignedTeams);
+    }
+
+    [Fact]
+    public void Validate_SubGroupsBalancedAndAboveMinimum_NoIssue()
+    {
+        Tournament tournament = NewTournament();
+        List<Team> groupA = [.. Enumerable.Range(0, 4).Select(i => MakeTeam($"A{i}"))];
+        List<Team> groupB = [.. Enumerable.Range(0, 4).Select(i => MakeTeam($"B{i}"))];
+        AddZoneWithSubGroups(tournament, "Zone A", [groupA, groupB]);
+
+        IReadOnlyList<CompletabilityIssue> issues = CompletabilityValidator.Validate(
+            tournament, [.. groupA.Concat(groupB).Select(team => Reg(tournament, team))]);
+
+        Assert.DoesNotContain(issues, i => i.Code == CompletabilityIssueCodes.SubGroupTooFewTeams);
+    }
+
+    [Fact]
+    public void Validate_HandEditedImbalanceAcrossSubGroups_ReportsIssue()
+    {
+        Tournament tournament = NewTournament();
+        List<Team> groupA = [.. Enumerable.Range(0, 4).Select(i => MakeTeam($"A{i}"))];
+        List<Team> groupB = [.. Enumerable.Range(0, 6).Select(i => MakeTeam($"B{i}"))];
+        AddZoneWithSubGroups(tournament, "Zone A", [groupA, groupB]);
+
+        IReadOnlyList<CompletabilityIssue> issues = CompletabilityValidator.Validate(
+            tournament, [.. groupA.Concat(groupB).Select(team => Reg(tournament, team))]);
+
+        CompletabilityIssue issue = Assert.Single(issues, i => i.Code == CompletabilityIssueCodes.SubGroupTooFewTeams);
+        Assert.Equal("Zone A", issue.DivisionName);
+    }
+
     // ---- in-memory graph builders ----
 
     private static Tournament NewTournament()
@@ -247,6 +292,60 @@ public class TournamentCompletabilityValidatorTests
     private static void AddCrossCup(Tournament tournament, string name, IReadOnlyList<Team> groupTeams)
     {
         AddDivision(tournament, name, groupTeams, crossCup: true, []);
+    }
+
+    /// <summary>
+    /// Builds a regular division with one Group stage per sub-group, each seeded with its own teams.
+    /// </summary>
+    private static void AddZoneWithSubGroups(
+        Tournament tournament, string name, List<List<Team>> subGroupTeams)
+    {
+        Division division = new()
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            Slug = name.ToLowerInvariant(),
+            Tournament = tournament,
+            TournamentId = tournament.Id,
+            IsCrossDivisionCup = false,
+            Stages = [],
+            CreatedBy = "test",
+            PlayoffMappings = [],
+        };
+
+        for (int i = 0; i < subGroupTeams.Count; i++)
+        {
+            Stage group = new()
+            {
+                Id = Guid.NewGuid(),
+                Name = $"Grupo {(char) ('A' + i)}",
+                Slug = $"grupo-{name.ToLowerInvariant()}-{i}",
+                StageType = StageType.Group,
+                IsActive = true,
+                StartDate = default,
+                EndDate = default,
+                DivisionId = division.Id,
+                Division = division,
+                Matches = [],
+                StageTeamMatches = [],
+                CreatedBy = "test",
+            };
+
+            foreach (Team team in subGroupTeams[i])
+            {
+                group.StageTeamMatches.Add(new StageTeamMatch
+                {
+                    StageId = group.Id,
+                    TeamId = team.Id,
+                    Team = team,
+                    CreatedBy = "test",
+                });
+            }
+
+            division.Stages.Add(group);
+        }
+
+        tournament.Divisions.Add(division);
     }
 
     private static void AddDivision(

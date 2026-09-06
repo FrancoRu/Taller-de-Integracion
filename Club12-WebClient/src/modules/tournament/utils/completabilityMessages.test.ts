@@ -61,6 +61,18 @@ describe('completabilityIssueMessage', () => {
     );
   });
 
+  it('describes a sub-group with too few teams or an unbalanced split (HU-121, task 8.6)', () => {
+    const issue: ICompletabilityIssue = {
+      code: 'SubGroupTooFewTeams',
+      divisionName: 'Zona C',
+      assignedTeams: 3,
+    };
+
+    expect(completabilityIssueMessage(issue)).toBe(
+      'En Zona C, un sub-grupo tiene 3 equipos (mínimo 4) o el reparto quedó desbalanceado.'
+    );
+  });
+
   it('describes a team with too few habilitado players', () => {
     const issue: ICompletabilityIssue = {
       code: 'TeamTooFewPlayers',

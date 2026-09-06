@@ -9,6 +9,8 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   IAddStageRequest,
+  IDrawPreviewResult,
+  IDrawRequest,
   IPutStageRequest,
   IStageContextProps,
   IStageResponse,
@@ -56,10 +58,6 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
     mutationFn: stageService.deleteStagesById,
   });
 
-  const generateStagesMutation = useMutation({
-    mutationFn: stageService.generateStages,
-  });
-
   const assignTeamsMutation = useMutation({
     mutationFn: ({
       id,
@@ -79,6 +77,16 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
 
   const seedKnockoutStageMutation = useMutation({
     mutationFn: stageService.seedKnockoutStage,
+  });
+
+  const previewDrawMutation = useMutation({
+    mutationFn: ({ id, body }: { id: GUID; body: IDrawRequest }) =>
+      stageService.previewDraw(id, body),
+  });
+
+  const commitDrawMutation = useMutation({
+    mutationFn: ({ id, body }: { id: GUID; body: IDrawRequest }) =>
+      stageService.commitDraw(id, body),
   });
 
   useEffect(() => {
@@ -192,24 +200,6 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
     [deleteStageMutation, queryClient, setMessage, handleUnknownError]
   );
 
-  const generateStagesAutomatically = useCallback(
-    async (id: GUID): Promise<IStageResponse[] | void> => {
-      try {
-        const res: AxiosResponse<IStageResponse[]> =
-          await generateStagesMutation.mutateAsync(id);
-
-        if (res && res.data) {
-          setStages(res.data);
-          await queryClient.invalidateQueries({ queryKey: stageKeys.list() });
-          return res.data;
-        }
-      } catch (error: unknown) {
-        handleUnknownError(error);
-      }
-    },
-    [generateStagesMutation, queryClient, handleUnknownError]
-  );
-
   const assignTeamsToStage = useCallback(
     async (id: GUID, teamIds: GUID[], auto = false): Promise<boolean | void> => {
       try {
@@ -255,6 +245,35 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
     [seedKnockoutStageMutation, queryClient, handleUnknownError]
   );
 
+  const previewDraw = useCallback(
+    async (id: GUID, body: IDrawRequest): Promise<IDrawPreviewResult | void> => {
+      try {
+        const res = await previewDrawMutation.mutateAsync({ id, body });
+        if (res && res.data) {
+          return res.data;
+        }
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [previewDrawMutation, handleUnknownError]
+  );
+
+  const commitDraw = useCallback(
+    async (id: GUID, body: IDrawRequest): Promise<boolean | void> => {
+      try {
+        const res = await commitDrawMutation.mutateAsync({ id, body });
+        if (res) {
+          await queryClient.invalidateQueries({ queryKey: stageKeys.list() });
+          return true;
+        }
+      } catch (error: unknown) {
+        handleUnknownError(error);
+      }
+    },
+    [commitDrawMutation, queryClient, handleUnknownError]
+  );
+
   const container: IStageContextProps = useMemo(
     () => ({
       stage,
@@ -264,10 +283,11 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
       getStagesByFilters,
       getStageById,
       deleteStagesById,
-      generateStagesAutomatically,
       assignTeamsToStage,
       unassignTeamsFromStage,
       seedKnockoutStage,
+      previewDraw,
+      commitDraw,
     }),
     [
       stage,
@@ -277,10 +297,11 @@ export const StageProvider: React.FC<{ children: ReactNode }> = ({
       getStagesByFilters,
       getStageById,
       deleteStagesById,
-      generateStagesAutomatically,
       assignTeamsToStage,
       unassignTeamsFromStage,
       seedKnockoutStage,
+      previewDraw,
+      commitDraw,
     ]
   );
 

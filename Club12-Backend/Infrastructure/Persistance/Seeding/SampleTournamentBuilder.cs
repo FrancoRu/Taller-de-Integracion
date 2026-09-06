@@ -219,6 +219,16 @@ public static class SampleTournamentBuilder
             {
                 tournament.Teams.Add(team);
                 allTeams.Add(team);
+
+                // Roster source of truth for the division, mirroring the TeamTournamentRegistration seed step above, since a seeded division's teams must satisfy the "every StageTeamMatch has a matching DivisionTeamRegistration" invariant.
+                team.DivisionTeamRegistrations.Add(new DivisionTeamRegistration
+                {
+                    CreatedBy = CreatedBy,
+                    TeamId = Guid.Empty,
+                    Team = team,
+                    DivisionId = Guid.Empty,
+                    Division = division,
+                });
             }
 
             Stage stage = new()
@@ -968,6 +978,19 @@ public static class SampleTournamentBuilder
             Category = tournament.Category,
         };
         tournament.Divisions.Add(cupDivision);
+
+        // Cross-division cup teams already hold a regular-division registration; this adds their second, cup-scoped one, matching the roster invariant of at most one regular plus one cross-cup registration per team.
+        foreach (Team team in allTeams)
+        {
+            team.DivisionTeamRegistrations.Add(new DivisionTeamRegistration
+            {
+                CreatedBy = CreatedBy,
+                TeamId = Guid.Empty,
+                Team = team,
+                DivisionId = Guid.Empty,
+                Division = cupDivision,
+            });
+        }
 
         int groupCount = crossCup.GroupCount;
 

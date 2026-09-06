@@ -7,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using SubGroupDistributionHelper = Application.Utils.Helper.SubGroupDistribution.SubGroupDistribution;
+
 namespace Application.Utils.Helper.Tournament;
 
 /// <summary>
@@ -130,6 +132,32 @@ public static class TournamentCompletabilityValidator
                     DivisionName = division.Name,
                     FromPosition = mapping.FromPosition,
                     AssignedTeams = assigned,
+                });
+            }
+        }
+
+        // A rebuild always deals a balanced split, so this mainly catches a hand-edited imbalance or a group left below the minimum after a manual move.
+        foreach (Division division in regularDivisions)
+        {
+            List<Stage> subGroupStages = [.. division.Stages.Where(stage => stage.StageType == StageType.Group)];
+            if (subGroupStages.Count <= 1)
+            {
+                continue;
+            }
+
+            List<int> subGroupSizes = [.. subGroupStages
+                .Select(stage => stage.StageTeamMatches.Select(match => match.TeamId).Distinct().Count())];
+
+            int smallestSubGroup = subGroupSizes.Min();
+            int largestSubGroup = subGroupSizes.Max();
+
+            if (smallestSubGroup < SubGroupDistributionHelper.MinTeamsPerSubGroup || largestSubGroup - smallestSubGroup >= 2)
+            {
+                issues.Add(new CompletabilityIssue
+                {
+                    Code = CompletabilityIssueCodes.SubGroupTooFewTeams,
+                    DivisionName = division.Name,
+                    AssignedTeams = smallestSubGroup,
                 });
             }
         }

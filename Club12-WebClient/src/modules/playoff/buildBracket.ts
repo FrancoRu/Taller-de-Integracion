@@ -28,6 +28,10 @@ const sortMainStages = (stages: IStageResponse[]): IStageResponse[] =>
     return a.order - b.order;
   });
 
+/** The first-round (min-depth) main stage's drawnAt, or null when undrawn/absent. */
+const firstRoundDrawnAt = (stages: IStageResponse[]): string | null =>
+  sortMainStages(stages.filter(isMainRoundStage))[0]?.drawnAt ?? null;
+
 /**
  * Groups a stage's raw matches by the (unordered) pair of team ids
  * involved, so that legs of the same tie played by the same two teams —
@@ -306,6 +310,7 @@ export function buildBrackets(
     return {
       bracketName: key === DEFAULT_BRACKET_KEY ? null : key,
       model: buildBracket(groupStages, effectiveMatches),
+      drawnAt: firstRoundDrawnAt(groupStages),
     };
   });
 }

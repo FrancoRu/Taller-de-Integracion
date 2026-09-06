@@ -34,4 +34,9 @@ public static class CompletabilityIssueCodes
     /// An enrolled team has fewer than the required registered players.
     /// </summary>
     public const string TeamTooFewPlayers = nameof(TeamTooFewPlayers);
+
+    /// <summary>
+    /// A regular division's sub-groups have a group below the minimum size or an imbalance across groups.
+    /// </summary>
+    public const string SubGroupTooFewTeams = nameof(SubGroupTooFewTeams);
 }
