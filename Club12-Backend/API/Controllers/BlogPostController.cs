@@ -50,7 +50,7 @@ public class BlogPostController(
     {
         if (blogPostRequest.PhotoFile is not null && !blogPostRequest.PhotoFile.IsValidImageFile())
         {
-            return BadRequest(ErrorMessages.Media.InvalidImageFile);
+            return this.BadRequestProblem(ErrorMessages.Media.InvalidImageFile);
         }
 
         string? photoUrl = blogPostRequest.PhotoFile is null
@@ -108,7 +108,7 @@ public class BlogPostController(
     {
         if (!photoRequest.PhotoFile.IsValidImageFile())
         {
-            return BadRequest(ErrorMessages.Media.InvalidImageFile);
+            return this.BadRequestProblem(ErrorMessages.Media.InvalidImageFile);
         }
 
         BlogPost? blogPost = await blogPostService.GetBlogPostByIdOrSlugAsync(idOrSlug, includeUnpublished: true);

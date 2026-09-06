@@ -130,7 +130,7 @@ public class VenueController(IVenueService venueService, SupabaseHelper supabase
     {
         if (!photoRequest.ImageFile.IsValidImageFile())
         {
-            return BadRequest(ErrorMessages.Media.InvalidImageFile);
+            return this.BadRequestProblem(ErrorMessages.Media.InvalidImageFile);
         }
 
         Venue? venue = await venueService.GetVenueByIdAsync(id);

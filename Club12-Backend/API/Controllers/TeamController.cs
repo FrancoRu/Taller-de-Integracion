@@ -50,7 +50,7 @@ public class TeamController(
     {
         if (!teamRequest.LogoFile.IsValidImageFile())
         {
-            return BadRequest(ErrorMessages.Media.InvalidImageFile);
+            return this.BadRequestProblem(ErrorMessages.Media.InvalidImageFile);
         }
 
         string logoUrl = await supabaseHelper.UploadImageAsync<Team>(teamRequest.LogoFile.OpenReadStream(), teamRequest.LogoFile.FileName);
@@ -110,7 +110,7 @@ public class TeamController(
     {
         if (!logoRequest.LogoFile.IsValidImageFile())
         {
-            return BadRequest(ErrorMessages.Media.InvalidImageFile);
+            return this.BadRequestProblem(ErrorMessages.Media.InvalidImageFile);
         }
 
         Team? team = await teamService.GetTeamByIdAsync(id);

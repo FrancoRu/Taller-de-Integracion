@@ -148,7 +148,7 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
 
         if (existingSanction.AppealStatus == SanctionAppealStatus.Pending)
         {
-            return BadRequest(ErrorMessages.PlayerSanction.AppealAlreadyPending);
+            return this.BadRequestProblem(ErrorMessages.PlayerSanction.AppealAlreadyPending);
         }
 
         existingSanction.AppealStatus = SanctionAppealStatus.Pending;
@@ -183,7 +183,7 @@ public class PlayerSanctionController(IPlayerSanctionService playerSanctionServi
 
         if (existingSanction.AppealStatus != SanctionAppealStatus.Pending)
         {
-            return BadRequest(ErrorMessages.PlayerSanction.NoPendingAppealToResolve);
+            return this.BadRequestProblem(ErrorMessages.PlayerSanction.NoPendingAppealToResolve);
         }
 
         existingSanction.AppealStatus = resolveRequest.Accepted

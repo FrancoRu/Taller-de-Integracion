@@ -45,7 +45,7 @@ public class MedicalRecordController(
     {
         if (!request.File.IsValidPdfFile())
         {
-            return BadRequest(ErrorMessages.MedicalRecord.InvalidPdfFile);
+            return this.BadRequestProblem(ErrorMessages.MedicalRecord.InvalidPdfFile);
         }
 
         // Rejects the upload before touching storage when the ficha is already Approved, since an approved record is view or download only.

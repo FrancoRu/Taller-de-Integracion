@@ -55,12 +55,12 @@ public class PlayerController(
 
         if (existingTeam is null)
         {
-            return BadRequest(ErrorMessages.Team.NotFound(teamId));
+            return this.BadRequestProblem(ErrorMessages.Team.NotFound(teamId));
         }
 
         if (existingTeam.TournamentId is null)
         {
-            return BadRequest(ErrorMessages.Team.NotInTournament(teamId));
+            return this.BadRequestProblem(ErrorMessages.Team.NotInTournament(teamId));
         }
 
         Player mappedPlayer = mapper.Map<Player>(playerRequest);
@@ -174,12 +174,12 @@ public class PlayerController(
 
         if (currentTeam is null)
         {
-            return BadRequest(ErrorMessages.Team.NotFound(existingPlayer.TeamId));
+            return this.BadRequestProblem(ErrorMessages.Team.NotFound(existingPlayer.TeamId));
         }
 
         if (currentTeam.TournamentId is null)
         {
-            return BadRequest(ErrorMessages.Team.NotInTournament(existingPlayer.TeamId));
+            return this.BadRequestProblem(ErrorMessages.Team.NotInTournament(existingPlayer.TeamId));
         }
 
         await playerService.UpdatePlayerAsync(existingPlayer, currentTeam.TournamentId.Value);
