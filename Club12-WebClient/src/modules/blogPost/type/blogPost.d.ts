@@ -34,7 +34,7 @@ export interface IBlogPostContextProps {
    * @param photo The new photo file to upload.
    * @returns A promise that resolves when the photo is successfully updated.
    */
-  putPhotoBlogPostById(id: GUID, photo: File): Promise<void>;
+  putPhotoBlogPostById(id: GUID, photo: File): Promise<BlogPostResponse | void>;
 
   /**
    * Fetches a blog post by its ID or its public slug.

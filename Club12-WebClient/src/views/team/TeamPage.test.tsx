@@ -144,4 +144,54 @@ describe('TeamPage — edit trigger', () => {
     await waitFor(() => expect(getTeamById).toHaveBeenCalledTimes(1));
     expect(putTeamLogoById).not.toHaveBeenCalled();
   });
+
+  it('uploads a picked logo as part of the save and closes the dialog on success', async () => {
+    putTeamLogoById.mockResolvedValue(buildTeam({ logoUrl: 'https://cdn.example.com/new.png' }));
+    const user = userEvent.setup();
+    renderTeamPage();
+
+    await user.click(await screen.findByRole('button', { name: 'Editar equipo' }));
+    const dialog = screen.getByRole('dialog');
+
+    const file = new File(['logo'], 'logo.png', { type: 'image/png' });
+    const fileInput = dialog.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(fileInput, file);
+
+    await user.click(within(dialog).getByRole('button', { name: /guardar/i }));
+
+    await waitFor(() => expect(putTeamLogoById).toHaveBeenCalledWith(TEAM_ID, file));
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    );
+  });
+
+  it('keeps the edit dialog open and does not refresh when the logo upload fails', async () => {
+    // putTeamLogoById (team.context.tsx) resolves to undefined on a rejected
+    // upload (its own catch calls handleUnknownError and returns nothing) —
+    // the page must treat that as a real failure, not close the dialog as if
+    // the whole save succeeded.
+    putTeamLogoById.mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    renderTeamPage();
+
+    await user.click(await screen.findByRole('button', { name: 'Editar equipo' }));
+    const dialog = screen.getByRole('dialog');
+
+    const file = new File(['logo'], 'logo.png', { type: 'image/png' });
+    const fileInput = dialog.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(fileInput, file);
+
+    getTeamById.mockClear();
+    const saveButton = within(dialog).getByRole('button', { name: /guardar/i });
+    await user.click(saveButton);
+
+    // Wait for the button to re-enable (setEditSubmitting(false), the last
+    // thing the early-return failure path does) rather than just "the mock
+    // was called" — that fires a tick before the rest of the same async
+    // function has actually run its early-return check.
+    await waitFor(() => expect(saveButton).toBeEnabled());
+    expect(putTeamLogoById).toHaveBeenCalledWith(TEAM_ID, file);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(getTeamById).not.toHaveBeenCalled();
+  });
 });

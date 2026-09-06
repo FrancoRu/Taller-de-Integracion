@@ -108,9 +108,11 @@ const VenuePage: React.FC = () => {
     let refreshed: IVenueResponse = updated;
     if (venueForm.photo) {
       const withPhoto = await putVenuePhotoById(venue.id, venueForm.photo);
-      if (withPhoto) {
-        refreshed = withPhoto;
+      if (!withPhoto) {
+        setEditSubmitting(false);
+        return;
       }
+      refreshed = withPhoto;
     }
     setEditSubmitting(false);
 

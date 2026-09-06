@@ -37,7 +37,7 @@ export interface ITeamContextProps {
    * @param logo The new logo file.
    * @returns A promise that resolves when the logo is successfully updated.
    */
-  putTeamLogoById(id: GUID, logo: File): Promise<void>;
+  putTeamLogoById(id: GUID, logo: File): Promise<ITeamResponse | void>;
 
   /**
    * Fetches teams based on filters.

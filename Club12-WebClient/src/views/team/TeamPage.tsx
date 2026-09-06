@@ -244,7 +244,11 @@ const TeamPage: React.FC<TeamPageProps> = ({
     // The team fields and its logo are two separate endpoints; upload the new
     // logo (if the admin picked one) as part of the same save.
     if (teamForm.logo) {
-      await putTeamLogoById(team.id, teamForm.logo);
+      const withLogo = await putTeamLogoById(team.id, teamForm.logo);
+      if (!withLogo) {
+        setEditSubmitting(false);
+        return;
+      }
     }
     setEditSubmitting(false);
 

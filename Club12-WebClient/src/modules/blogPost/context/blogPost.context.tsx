@@ -109,13 +109,17 @@ export const BlogPostProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const putPhotoBlogPostById = useCallback(
-    async (id: GUID, photo: File): Promise<void> => {
+    async (id: GUID, photo: File): Promise<BlogPostResponse | void> => {
       try {
         await putPhotoBlogPostMutation.mutateAsync({ id, photo });
-        await queryClient.invalidateQueries({
-          queryKey: blogPostKeys.byId(id),
-        });
+        // The photo endpoint returns no body and each upload lands at a new
+        // unique URL, so the fresh photoUrl is only knowable via a real GET —
+        // mirrors venue.context.tsx's putVenuePhotoById fix for the same gap.
+        const res: AxiosResponse<BlogPostResponse> =
+          await blogPostService.getBlogPostsById(id);
+        queryClient.setQueryData(blogPostKeys.byId(id), res);
         await queryClient.invalidateQueries({ queryKey: blogPostKeys.list() });
+        return res.data;
       } catch (error: unknown) {
         handleUnknownError(error);
       }

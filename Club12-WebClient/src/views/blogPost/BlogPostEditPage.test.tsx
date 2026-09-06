@@ -114,7 +114,7 @@ describe('BlogPostEditPage', () => {
 
   it('uploads the new photo when saving after picking a file', async () => {
     const putBlogPostById = vi.fn().mockResolvedValue(buildPost());
-    const putPhotoBlogPostById = vi.fn().mockResolvedValue(undefined);
+    const putPhotoBlogPostById = vi.fn().mockResolvedValue(buildPost());
     mockedUseBlogPost.mockReturnValue({
       getBlogPostsById: vi.fn().mockResolvedValue(buildPost()),
       putBlogPostById,
@@ -138,6 +138,51 @@ describe('BlogPostEditPage', () => {
       expect(putPhotoBlogPostById).toHaveBeenCalledWith(POST_ID, file)
     );
     expect(mockNavigate).toHaveBeenCalledWith('/panel/blog');
+  });
+
+  it('does not navigate away or show success when the photo upload fails', async () => {
+    // putPhotoBlogPostById (blogPost.context.tsx) resolves to undefined on a
+    // rejected upload (its own catch calls handleUnknownError and returns
+    // nothing) — the page must treat that as a real failure, not silently
+    // proceed as if the whole save succeeded.
+    const putBlogPostById = vi.fn().mockResolvedValue(buildPost());
+    const putPhotoBlogPostById = vi.fn().mockResolvedValue(undefined);
+    mockedUseBlogPost.mockReturnValue({
+      getBlogPostsById: vi.fn().mockResolvedValue(buildPost()),
+      putBlogPostById,
+      putPhotoBlogPostById,
+    } as unknown as ReturnType<typeof useBlogPost>);
+    // vi.spyOn on an already-spied module method returns the SAME mock and
+    // keeps its prior call history — this file has no clearMocks/beforeEach
+    // reset, so an earlier test's successful notifySuccess call would
+    // otherwise still be sitting in this spy's call log.
+    const notifySuccessSpy = vi
+      .spyOn(confirmDialog, 'notifySuccess')
+      .mockResolvedValue(undefined);
+    notifySuccessSpy.mockClear();
+
+    renderPage();
+
+    await screen.findByRole('button', { name: 'Seleccionar imagen' });
+
+    const file = new File(['content'], 'foto.png', { type: 'image/png' });
+    const input = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
+    fireEvent.change(input, { target: { files: [file] } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    // Wait for the button to re-enable (setSubmitting(false), the last thing
+    // the early-return failure path does) rather than just "the mock was
+    // called" — that fires a tick before the rest of the same async
+    // function (the `if (!withPhoto) return;` check) has actually run.
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Guardar' })).toBeEnabled()
+    );
+    expect(putPhotoBlogPostById).toHaveBeenCalledWith(POST_ID, file);
+    expect(notifySuccessSpy).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalledWith('/panel/blog');
   });
 
   it('does not upload a photo when saving without picking a new file', async () => {

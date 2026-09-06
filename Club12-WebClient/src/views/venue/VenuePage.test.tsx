@@ -162,4 +162,38 @@ describe('VenuePage — edit trigger', () => {
     const image = await screen.findByRole('img', { name: /Cancha Central/ });
     expect(image).toHaveAttribute('src', 'https://cdn.test/venue/new.jpg');
   });
+
+  it('keeps the edit dialog open and does not show a false success when the photo upload fails', async () => {
+    // putVenuePhotoById (venue.context.tsx) resolves to undefined on a
+    // rejected upload (its own catch calls handleUnknownError and returns
+    // nothing) — the page must treat that as a real failure, not close the
+    // dialog and report success as if the whole save had gone through.
+    const getVenueById = vi.fn().mockResolvedValue(buildVenue());
+    const putVenueById = vi.fn().mockResolvedValue(buildVenue());
+    const putVenuePhotoById = vi.fn().mockResolvedValue(undefined);
+    mockedUseVenue.mockReturnValue({
+      getVenueById,
+      putVenueById,
+      putVenuePhotoById,
+    } as unknown as ReturnType<typeof useVenue>);
+
+    const user = userEvent.setup();
+    renderAt('/panel/canchas/cancha-central');
+
+    await user.click(await screen.findByRole('button', { name: 'Editar cancha' }));
+    const dialog = screen.getByRole('dialog');
+    const fileInput = dialog.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(fileInput, new File(['x'], 'court.jpg', { type: 'image/jpeg' }));
+
+    const saveButton = within(dialog).getByRole('button', { name: /guardar/i });
+    await user.click(saveButton);
+
+    // Wait for the button to re-enable (setEditSubmitting(false), the last
+    // thing the early-return failure path does) rather than just "the mock
+    // was called" — that fires a tick before the rest of the same async
+    // function has actually run its early-return check.
+    await waitFor(() => expect(saveButton).toBeEnabled());
+    expect(putVenuePhotoById).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
 });

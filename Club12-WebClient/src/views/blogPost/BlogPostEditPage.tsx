@@ -140,7 +140,11 @@ const BlogPostEditPage: React.FC = () => {
     }
 
     if (photoFile) {
-      await putPhotoBlogPostById(resolvedId, photoFile);
+      const withPhoto = await putPhotoBlogPostById(resolvedId, photoFile);
+      if (!withPhoto) {
+        setSubmitting(false);
+        return;
+      }
     }
     setSubmitting(false);
 

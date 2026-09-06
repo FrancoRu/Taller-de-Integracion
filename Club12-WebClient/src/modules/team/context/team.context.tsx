@@ -114,11 +114,17 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const putTeamLogoById = useCallback(
-    async (id: GUID, logo: File): Promise<void> => {
+    async (id: GUID, logo: File): Promise<ITeamResponse | void> => {
       try {
         await putTeamLogoMutation.mutateAsync({ id, logo });
-        await queryClient.invalidateQueries({ queryKey: teamKeys.byId(id) });
+        // The logo endpoint returns no body and each upload lands at a new
+        // unique URL, so the fresh logoUrl is only knowable via a real GET —
+        // mirrors venue.context.tsx's putVenuePhotoById fix for the same gap.
+        const res: AxiosResponse<ITeamResponse> =
+          await teamService.getTeamById(id);
+        queryClient.setQueryData(teamKeys.byId(id), res);
         await queryClient.invalidateQueries({ queryKey: teamKeys.list() });
+        return res.data;
       } catch (error: unknown) {
         handleUnknownError(error);
       }
