@@ -234,6 +234,57 @@ public class MatchControllerVenueConflictTests : IClassFixture<CustomWebApplicat
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
+    /// <summary>
+    /// UpdateMatchDate's two other rejection guards (CannotUpdateStartedOrFinished,
+    /// TeamsNotAssignedToStage) had the exact same bare-string BadRequest anti-pattern
+    /// as the venue-conflict guard — fixed alongside it for consistency, since a live
+    /// QA pass hit the TeamsNotAssignedToStage one specifically and got a generic
+    /// frontend error instead of this message.
+    /// </summary>
+    [Fact]
+    public async Task UpdateMatchDate_TeamsNotAssignedToStage_ReturnsProblemDetailsShapeWithDetailField()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        (Stage stage, Venue venue, Team teamA, Team teamB, _, _) = await SeedFixtureAsync(db);
+        DateTime matchDate = new(2026, 9, 6, 15, 0, 0, DateTimeKind.Utc);
+        // Deliberately no StageTeamMatch rows seeded for teamA/teamB, so neither is assigned to the stage.
+        Match match = await SeedMatchAsync(db, stage, venue.Id, matchDate, teamA.Id, teamB.Id);
+
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Admin);
+        UpdateMatchRequest request = new() { MatchDate = matchDate.AddHours(1) };
+
+        HttpResponseMessage response = await client.PutAsJsonAsync($"api/matches/{match.Id}", request);
+        ProblemDetailsBody? problem = await response.Content.ReadFromJsonAsync<ProblemDetailsBody>();
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.NotNull(problem);
+        Assert.Equal(ErrorMessages.Match.TeamsNotAssignedToStage, problem!.Detail);
+    }
+
+    [Fact]
+    public async Task UpdateMatchDate_MatchAlreadyFinished_ReturnsProblemDetailsShapeWithDetailField()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        (Stage stage, Venue venue, Team teamA, Team teamB, _, _) = await SeedFixtureAsync(db);
+        DateTime matchDate = new(2026, 9, 6, 15, 0, 0, DateTimeKind.Utc);
+        Match match = await SeedMatchAsync(db, stage, venue.Id, matchDate, teamA.Id, teamB.Id);
+        match.IsFinished = true;
+        db.Matches.Update(match);
+        await db.SaveChangesAsync();
+
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Admin);
+        UpdateMatchRequest request = new() { MatchDate = matchDate.AddHours(1) };
+
+        HttpResponseMessage response = await client.PutAsJsonAsync($"api/matches/{match.Id}", request);
+        ProblemDetailsBody? problem = await response.Content.ReadFromJsonAsync<ProblemDetailsBody>();
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.NotNull(problem);
+        Assert.Equal(ErrorMessages.Match.CannotUpdateStartedOrFinished, problem!.Detail);
+    }
+
     private static async Task<Venue> SeedVenueAsync(ApplicationDBContext db)
     {
         Venue venue = new()

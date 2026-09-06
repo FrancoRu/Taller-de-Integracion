@@ -150,7 +150,7 @@ public class MatchController(
 
         if (existingMatch.IsFinished || existingMatch.MatchDate <= DateTime.Now)
         {
-            return BadRequest(ErrorMessages.Match.CannotUpdateStartedOrFinished);
+            return this.BadRequestProblem(ErrorMessages.Match.CannotUpdateStartedOrFinished);
         }
 
 
@@ -170,7 +170,7 @@ public class MatchController(
 
         if (!canUpdate)
         {
-            return BadRequest(ErrorMessages.Match.TeamsNotAssignedToStage);
+            return this.BadRequestProblem(ErrorMessages.Match.TeamsNotAssignedToStage);
         }
 
         mapper.Map(updateRequest, existingMatch);
