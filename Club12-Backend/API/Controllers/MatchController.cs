@@ -55,6 +55,15 @@ public class MatchController(
     public async Task<ActionResult<MinimalMatchResponse>> CreateMatch(CreateMatchRequest matchRequest)
     {
         Match mappedMatch = mapper.Map<Match>(matchRequest);
+
+        // A court cannot host two matches less than 2 hours apart.
+        if (mappedMatch.VenueId.HasValue
+            && await matchService.HasVenueScheduleConflictAsync(
+                mappedMatch.VenueId.Value, mappedMatch.MatchDate, Guid.Empty))
+        {
+            return BadRequest(ErrorMessages.Match.VenueScheduleConflict);
+        }
+
         Match createdMatch = await matchService.CreateMatchAsync(mappedMatch);
         MinimalMatchResponse matchResponse = mapper.Map<MinimalMatchResponse>(createdMatch);
 
@@ -211,9 +220,27 @@ public class MatchController(
     /// <returns>The updated match response.</returns>
     [HttpPut("{id:guid}/suspend")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DetailedMatchResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> SuspendMatch(Guid id, SuspendMatchRequest suspendRequest)
     {
+        Match? existingMatch = await matchService.GetMatchByIdAsync(id);
+
+        if (existingMatch is null)
+        {
+            return this.NotFoundProblem(nameof(Match), id);
+        }
+
+        DateTime effectiveDate = suspendRequest.MatchDate ?? existingMatch.MatchDate;
+
+        // A court cannot host two matches less than 2 hours apart.
+        if (existingMatch.VenueId.HasValue
+            && await matchService.HasVenueScheduleConflictAsync(
+                existingMatch.VenueId.Value, effectiveDate, existingMatch.Id))
+        {
+            return BadRequest(ErrorMessages.Match.VenueScheduleConflict);
+        }
+
         Match? updatedMatch = await matchService.SuspendMatchAsync(id, suspendRequest.MatchDate);
 
         if (updatedMatch is null)
