@@ -59,6 +59,41 @@ public class MatchControllerVenueConflictTests : IClassFixture<CustomWebApplicat
         Assert.Contains(ErrorMessages.Match.VenueScheduleConflict, body);
     }
 
+    /// <summary>
+    /// A bare-string BadRequest body serializes as a raw JSON string, which the
+    /// frontend's error handler cannot parse into a display message (it only reads a
+    /// `detail`/`title` field off a JSON object) — silently falling back to a generic
+    /// error instead of showing the real conflict reason. This proves the fix: the
+    /// response is a proper ProblemDetails object with the message under `detail`.
+    /// </summary>
+    [Fact]
+    public async Task CreateMatch_CollidingVenueAndTime_ReturnsProblemDetailsShapeWithDetailField()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        (Stage stage, Venue venue, Team teamA, Team teamB, Team teamC, Team teamD) = await SeedFixtureAsync(db);
+        DateTime existingDate = new(2026, 9, 6, 15, 0, 0, DateTimeKind.Utc);
+        await SeedMatchAsync(db, stage, venue.Id, existingDate, teamA.Id, teamB.Id);
+
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Admin);
+        CreateMatchRequest request = new()
+        {
+            MatchDate = existingDate.AddHours(1),
+            HomeTeamId = teamC.Id,
+            VisitorTeamId = teamD.Id,
+            StageId = stage.Id,
+            VenueId = venue.Id,
+        };
+
+        HttpResponseMessage response = await client.PostAsJsonAsync("api/matches", request);
+        ProblemDetailsBody? problem = await response.Content.ReadFromJsonAsync<ProblemDetailsBody>();
+
+        Assert.NotNull(problem);
+        Assert.Equal(ErrorMessages.Match.VenueScheduleConflict, problem!.Detail);
+    }
+
+    private sealed record ProblemDetailsBody(string? Title, string? Detail, int? Status);
+
     [Fact]
     public async Task CreateMatch_NullVenue_SameCollidingDate_Succeeds()
     {

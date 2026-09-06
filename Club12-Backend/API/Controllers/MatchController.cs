@@ -61,7 +61,7 @@ public class MatchController(
             && await matchService.HasVenueScheduleConflictAsync(
                 mappedMatch.VenueId.Value, mappedMatch.MatchDate, Guid.Empty))
         {
-            return BadRequest(ErrorMessages.Match.VenueScheduleConflict);
+            return this.BadRequestProblem(ErrorMessages.Match.VenueScheduleConflict);
         }
 
         Match createdMatch = await matchService.CreateMatchAsync(mappedMatch);
@@ -180,7 +180,7 @@ public class MatchController(
             && await matchService.HasVenueScheduleConflictAsync(
                 existingMatch.VenueId.Value, existingMatch.MatchDate, existingMatch.Id))
         {
-            return BadRequest(ErrorMessages.Match.VenueScheduleConflict);
+            return this.BadRequestProblem(ErrorMessages.Match.VenueScheduleConflict);
         }
 
         await matchService.UpdateMatchAsync(existingMatch);
@@ -238,7 +238,7 @@ public class MatchController(
             && await matchService.HasVenueScheduleConflictAsync(
                 existingMatch.VenueId.Value, effectiveDate, existingMatch.Id))
         {
-            return BadRequest(ErrorMessages.Match.VenueScheduleConflict);
+            return this.BadRequestProblem(ErrorMessages.Match.VenueScheduleConflict);
         }
 
         Match? updatedMatch = await matchService.SuspendMatchAsync(id, suspendRequest.MatchDate);

@@ -22,4 +22,18 @@ public static class ControllerBaseExtensions
             statusCode: StatusCodes.Status404NotFound,
             title: "Not Found: The specified resource could not be found.");
     }
+
+    /// <summary>
+    /// Builds a 400 response whose ProblemDetails body matches the shape emitted by GlobalExceptionHandler for unhandled exceptions, so the frontend's error handler (which reads the detail field) surfaces this message instead of a generic fallback.
+    /// </summary>
+    /// <param name="controller">The controller issuing the response.</param>
+    /// <param name="detail">The specific, user-facing reason the request was rejected.</param>
+    /// <returns>An ObjectResult with a 400 status and ProblemDetails body.</returns>
+    public static ObjectResult BadRequestProblem(this ControllerBase controller, string detail)
+    {
+        return controller.Problem(
+            detail: detail,
+            statusCode: StatusCodes.Status400BadRequest,
+            title: "Bad Request: The request could not be completed.");
+    }
 }
