@@ -104,6 +104,67 @@ public class StageControllerDrawTests : IClassFixture<CustomWebApplicationFactor
     }
 
     [Fact]
+    public async Task PreviewThenCommitDraw_BestOfGreaterThanOne_SeedsMatchesThroughFullHttpPipeline()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        Stage stage = await SeedSemiFinalStageAsync(db, bestOf: 3);
+
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Admin);
+
+        HttpResponseMessage previewResponse = await client.PostAsJsonAsync(
+            $"api/stages/{stage.Id}/preview-draw", new DrawRequest { Mode = DrawMode.Random });
+        Assert.Equal(HttpStatusCode.OK, previewResponse.StatusCode);
+
+        DrawPreviewBody? preview = await previewResponse.Content.ReadFromJsonAsync<DrawPreviewBody>();
+        Assert.NotNull(preview);
+
+        HttpResponseMessage commitResponse = await client.PostAsJsonAsync(
+            $"api/stages/{stage.Id}/draw",
+            new DrawRequest { Mode = DrawMode.Random, DrawToken = preview!.DrawToken });
+
+        string body = await commitResponse.Content.ReadAsStringAsync();
+        Assert.True(
+            commitResponse.StatusCode == HttpStatusCode.OK,
+            $"Expected 200 but got {commitResponse.StatusCode}: {body}");
+    }
+
+    [Fact]
+    public async Task PreviewThenCommitDraw_StageHasNoPreGeneratedMatches_SucceedsThroughFullHttpPipeline()
+    {
+        // Matches placeholders normally come from GenerateFixtureAsync when the tournament
+        // starts (TournamentService.ChangeStatusAsync), but a playoffs-only division's bracket
+        // has no group phase to trigger that, and the draw UI is reachable before then — so a
+        // real first-ever draw hits a stage with zero matches. This is the exact shape a live
+        // QA pass hit as a 500 on /api/stages/{id}/draw.
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        Stage stage = await SeedSemiFinalStageAsync(db, seedMatches: false);
+
+        HttpClient client = _factory.CreateAuthenticatedClient(Roles.Admin);
+
+        HttpResponseMessage previewResponse = await client.PostAsJsonAsync(
+            $"api/stages/{stage.Id}/preview-draw", new DrawRequest { Mode = DrawMode.Random });
+        Assert.Equal(HttpStatusCode.OK, previewResponse.StatusCode);
+
+        DrawPreviewBody? preview = await previewResponse.Content.ReadFromJsonAsync<DrawPreviewBody>();
+        Assert.NotNull(preview);
+
+        HttpResponseMessage commitResponse = await client.PostAsJsonAsync(
+            $"api/stages/{stage.Id}/draw",
+            new DrawRequest { Mode = DrawMode.Random, DrawToken = preview!.DrawToken });
+
+        string body = await commitResponse.Content.ReadAsStringAsync();
+        Assert.True(
+            commitResponse.StatusCode == HttpStatusCode.OK,
+            $"Expected 200 but got {commitResponse.StatusCode}: {body}");
+
+        List<MatchBody>? matches = await commitResponse.Content.ReadFromJsonAsync<List<MatchBody>>();
+        Assert.NotNull(matches);
+        Assert.Equal(2, matches!.Count);
+    }
+
+    [Fact]
     public async Task CommitDraw_StaleTokenAfterAnotherDraw_ReturnsConflict()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
@@ -118,7 +179,7 @@ public class StageControllerDrawTests : IClassFixture<CustomWebApplicationFactor
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
 
-    private static async Task<Stage> SeedSemiFinalStageAsync(ApplicationDBContext db)
+    private static async Task<Stage> SeedSemiFinalStageAsync(ApplicationDBContext db, int bestOf = 1, bool seedMatches = true)
     {
         DateTime startDate = DateTime.UtcNow.Date.AddDays(30);
 
@@ -186,27 +247,30 @@ public class StageControllerDrawTests : IClassFixture<CustomWebApplicationFactor
             DivisionId = division.Id,
             Division = division,
             BracketName = "Copa Única",
-            BestOf = 1,
+            BestOf = bestOf,
             Matches = [],
             CreatedBy = "test",
         };
         db.Stages.Add(stage);
         await db.SaveChangesAsync();
 
-        for (int i = 0; i < 2; i++)
+        if (seedMatches)
         {
-            db.Matches.Add(new Match
+            for (int i = 0; i < 2; i++)
             {
-                StageId = stage.Id,
-                Type = MatchType.Playoff,
-                Slug = $"match-{Guid.NewGuid()}",
-                MatchDate = stage.StartDate.AddMinutes(i),
-                IsFinished = false,
-                CreatedBy = "test",
-            });
-        }
+                db.Matches.Add(new Match
+                {
+                    StageId = stage.Id,
+                    Type = MatchType.Playoff,
+                    Slug = $"match-{Guid.NewGuid()}",
+                    MatchDate = stage.StartDate.AddMinutes(i),
+                    IsFinished = false,
+                    CreatedBy = "test",
+                });
+            }
 
-        await db.SaveChangesAsync();
+            await db.SaveChangesAsync();
+        }
 
         return stage;
     }

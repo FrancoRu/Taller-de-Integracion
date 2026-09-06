@@ -708,6 +708,49 @@ public class StageService(
     }
 
     /// <summary>
+    /// Creates whatever empty Match placeholders a groupless bracket's first draw is still missing. Every other
+    /// stage type gets its placeholders from GenerateFixtureAsync when the tournament starts, but a playoffs-only
+    /// division has no group phase to trigger that, and the draw UI is reachable before the tournament is Ongoing —
+    /// so a first-ever draw can hit a stage with zero matches. A re-draw already has exactly neededSlotCount from
+    /// its first draw, so this is a no-op then.
+    /// </summary>
+    private async Task EnsureBracketSlotsExistAsync(Stage stage, int neededSlotCount)
+    {
+        int missing = neededSlotCount - stage.Matches.Count;
+        if (missing <= 0)
+        {
+            return;
+        }
+
+        List<Match> newMatches = [];
+        HashSet<string> slugsAssignedInBatch = [];
+
+        for (int i = 0; i < missing; i++)
+        {
+            string slug = await SlugGenerator.GenerateUniqueSlugAsync(
+                $"{stage.Name}-{i + 1}",
+                async candidate => slugsAssignedInBatch.Contains(candidate)
+                    || await _matchRepository.ExistsAsync(m => m.Slug == candidate));
+            slugsAssignedInBatch.Add(slug);
+
+            newMatches.Add(new Match
+            {
+                StageId = stage.Id,
+                Type = MatchType.Playoff,
+                Slug = slug,
+                IsFinished = false,
+                MatchDate = stage.StartDate.AddMinutes(i),
+                CreatedBy = AuditConstants.SystemUser,
+            });
+        }
+
+        // EF's change tracker fixes up the already-loaded `stage.Matches` navigation automatically once these
+        // become tracked (their StageId matches the loaded parent), so no manual Add to the collection is needed
+        // here — doing so would double the entries.
+        await _matchRepository.AddRangeAsync(newMatches);
+    }
+
+    /// <summary>
     /// Pairs an ordered, best-seed-first list of team ids into a stage's empty matches in classic bracket seed order.
     /// </summary>
     private async Task<List<Match>> FillStageWithSeedsAsync(Stage stage, IReadOnlyList<Guid> orderedTeamIds)
@@ -1016,6 +1059,8 @@ public class StageService(
         List<Guid> orderedTeamIds = mode == DrawMode.Random
             ? VerifyDrawToken(drawToken, stageId, rosterTeamIds)
             : ResolveOrderedTeamIds(DrawMode.Manual, rosterTeamIds, manualOrder);
+
+        await EnsureBracketSlotsExistAsync(firstRoundStage, PlayoffSeeder.SeedPairs(orderedTeamIds).Count);
 
         await EnsureBracketDrawableAsync(firstRoundStage);
 

@@ -133,6 +133,59 @@ public class PlayoffDrawTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task CommitDrawAsync_BestOfGreaterThanOne_CreatesSeriesAndSeedsFirstGame()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
+
+        Tournament tournament = await SeedTournamentAsync(db);
+        Division division = await SeedDivisionAsync(db, tournament);
+        await SeedTeamsAndRegisterAsync(db, tournament, division, 4);
+        Stage semiFinalStage = await SeedStageAsync(db, division, tournament, StageType.SemiFinal, bracketName: "Copa Única", bestOf: 3);
+        await SeedEmptyMatchAsync(db, semiFinalStage);
+        await SeedEmptyMatchAsync(db, semiFinalStage);
+
+        DrawPreviewResult preview = await stageService.PreviewDrawAsync(semiFinalStage.Id, DrawMode.Random);
+        List<Match> committed = await stageService.CommitDrawAsync(semiFinalStage.Id, DrawMode.Random, drawToken: preview.DrawToken);
+
+        Assert.Equal(2, committed.Count);
+        Assert.All(committed, m => Assert.NotNull(m.SeriesId));
+        Assert.All(committed, m => Assert.Equal(1, m.GameNumber));
+
+        List<MatchSeries> series = await db.MatchSeries.Where(s => s.StageId == semiFinalStage.Id).ToListAsync();
+        Assert.Equal(2, series.Count);
+        Assert.All(series, s => Assert.Equal(3, s.BestOf));
+    }
+
+    [Fact]
+    public async Task CommitDrawAsync_StageHasNoPreGeneratedMatches_CreatesThemInsteadOfCrashing()
+    {
+        // GenerateFixtureAsync (TournamentService) only creates a stage's empty
+        // Match placeholders when the tournament transitions to Ongoing. A
+        // playoffs-only division's bracket has no group phase to generate a
+        // fixture from first, and the draw UI is reachable while the
+        // tournament is still OpenForRegistration — so a real first-ever draw
+        // hits a stage with ZERO existing matches, unlike every other test in
+        // this file, which pre-seeds them via SeedEmptyMatchAsync.
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
+
+        Tournament tournament = await SeedTournamentAsync(db);
+        Division division = await SeedDivisionAsync(db, tournament);
+        await SeedTeamsAndRegisterAsync(db, tournament, division, 4);
+        Stage semiFinalStage = await SeedStageAsync(db, division, tournament, StageType.SemiFinal, bracketName: "Copa Única", bestOf: 1);
+        // Deliberately no SeedEmptyMatchAsync calls here.
+
+        DrawPreviewResult preview = await stageService.PreviewDrawAsync(semiFinalStage.Id, DrawMode.Random);
+        List<Match> committed = await stageService.CommitDrawAsync(semiFinalStage.Id, DrawMode.Random, drawToken: preview.DrawToken);
+
+        Assert.Equal(2, committed.Count);
+        Assert.All(committed, m => Assert.True(m.HomeTeamId.HasValue));
+    }
+
+    [Fact]
     public async Task CommitDrawAsync_InvalidOrMismatchedToken_Rejected()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
