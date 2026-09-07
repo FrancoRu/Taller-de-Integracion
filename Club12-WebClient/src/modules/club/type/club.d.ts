@@ -35,6 +35,18 @@ export interface IClubTeamSeasonResponse {
 }
 
 /**
+ * A minimal club identity, used for pickers and for referencing a related
+ * club (parent institution / child squad) without its full season history.
+ * @interface IClubSummaryResponse
+ */
+export interface IClubSummaryResponse {
+  id: GUID;
+  name: string;
+  slug: string;
+  logoUrl: string | null;
+}
+
+/**
  * A club and its trajectory across seasons (HU-99): the stable club identity
  * plus every per-season team that belongs to it.
  * @interface IClubHistoryResponse
@@ -50,6 +62,13 @@ export interface IClubHistoryResponse {
   logoUrl: string | null;
   /** The per-season teams that make up this club's history. */
   teams: IClubTeamSeasonResponse[];
+  /**
+   * The parent institution this club is a squad of, or null when this club
+   * has no parent linked.
+   */
+  parentClub: IClubSummaryResponse | null;
+  /** Other squads linked to this club as their parent institution. */
+  childClubs: IClubSummaryResponse[];
 }
 
 /**
@@ -104,4 +123,34 @@ export interface IClubContextProps {
     targetTeamId: GUID,
     request: IRosterCopyRequest
   ): Promise<IRosterCopyResult | void>;
+
+  /** Every club's stable identity summary, for the "link to parent club" picker. */
+  allClubs: IClubSummaryResponse[];
+
+  /** Fetches every club's stable identity summary. */
+  getAllClubs(): Promise<IClubSummaryResponse[] | void>;
+
+  /**
+   * Links a club as a squad of a parent institution club.
+   * @param childClubId The squad club to link.
+   * @param parentClubId The institution club it becomes a squad of.
+   */
+  linkClubParent(
+    childClubId: GUID,
+    parentClubId: GUID
+  ): Promise<IClubHistoryResponse | void>;
+
+  /**
+   * Clears a club's parent institution link, if any.
+   * @param childClubId The club to unlink.
+   */
+  unlinkClubParent(childClubId: GUID): Promise<IClubHistoryResponse | void>;
+
+  /**
+   * Renames a club. The club's slug never changes, so its public URL stays
+   * stable.
+   * @param clubId The club to rename.
+   * @param name The new display name.
+   */
+  renameClub(clubId: GUID, name: string): Promise<IClubHistoryResponse | void>;
 }

@@ -1,9 +1,10 @@
 import { AxiosResponse } from 'axios';
 import routes from '@/modules/core/constants/routes';
 import { GUID } from '@/modules/core/types/types';
-import { sendGet, sendPost } from '@/modules/core/utils/axiosUtils';
+import { sendDelete, sendGet, sendPost, sendPut } from '@/modules/core/utils/axiosUtils';
 import {
   IClubHistoryResponse,
+  IClubSummaryResponse,
   IRosterCopyRequest,
   IRosterCopyResult,
 } from '@/modules/club/type/club.d';
@@ -34,4 +35,45 @@ export const clubService = {
     request: IRosterCopyRequest
   ): Promise<AxiosResponse<IRosterCopyResult>> =>
     await sendPost(`${routes.teams}/${targetTeamId}/roster/copy`, request),
+
+  /**
+   * Retrieves every club's stable identity summary.
+   * @returns {Promise<AxiosResponse<IClubSummaryResponse[]>>} The server response.
+   */
+  getAllClubs: async (): Promise<AxiosResponse<IClubSummaryResponse[]>> =>
+    await sendGet(routes.clubs),
+
+  /**
+   * Links a club as a squad of a parent institution club.
+   * @param {GUID} childClubId - The squad club to link.
+   * @param {GUID} parentClubId - The institution club it becomes a squad of.
+   * @returns {Promise<AxiosResponse<IClubHistoryResponse>>} The server response.
+   */
+  linkClubParent: async (
+    childClubId: GUID,
+    parentClubId: GUID
+  ): Promise<AxiosResponse<IClubHistoryResponse>> =>
+    await sendPut(`${routes.clubs}/${childClubId}/parent`, { parentClubId }),
+
+  /**
+   * Clears a club's parent institution link, if any.
+   * @param {GUID} childClubId - The club to unlink.
+   * @returns {Promise<AxiosResponse<IClubHistoryResponse>>} The server response.
+   */
+  unlinkClubParent: async (
+    childClubId: GUID
+  ): Promise<AxiosResponse<IClubHistoryResponse>> =>
+    await sendDelete(`${routes.clubs}/${childClubId}/parent`),
+
+  /**
+   * Renames a club.
+   * @param {GUID} clubId - The club to rename.
+   * @param {string} name - The new display name.
+   * @returns {Promise<AxiosResponse<IClubHistoryResponse>>} The server response.
+   */
+  renameClub: async (
+    clubId: GUID,
+    name: string
+  ): Promise<AxiosResponse<IClubHistoryResponse>> =>
+    await sendPut(`${routes.clubs}/${clubId}`, { name }),
 };
