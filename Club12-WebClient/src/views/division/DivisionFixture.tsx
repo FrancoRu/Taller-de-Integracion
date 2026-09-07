@@ -138,10 +138,20 @@ export default function DivisionFixture({
 
   if (loading) return <ListSkeleton items={6} />;
 
+  // A groupless (playoffs-only) division has no round-robin stage at all, so
+  // this tab is empty by design — its matches live in the Playoff tab's
+  // bracket instead. Without this distinction the empty state reads as "no
+  // matches exist anywhere", which isn't true and sent an admin looking for
+  // a fixture that was never going to be here.
+  const emptyStateMessage =
+    stages.length === 0
+      ? 'Esta división no tiene fase de grupos — sus partidos están en la pestaña Playoff.'
+      : 'No hay partidos registrados en esta división.';
+
   if (sections.length === 0) {
     return (
       <Typography sx={{ color: 'text.secondary' }}>
-        No hay partidos registrados en esta división.
+        {emptyStateMessage}
       </Typography>
     );
   }
@@ -150,7 +160,7 @@ export default function DivisionFixture({
     if (slides.length === 0) {
       return (
         <Typography sx={{ color: 'text.secondary' }}>
-          No hay partidos registrados en esta división.
+          {emptyStateMessage}
         </Typography>
       );
     }

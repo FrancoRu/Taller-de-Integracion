@@ -247,6 +247,40 @@ describe('PublicDivisionPanel — Partidos vs Playoff split', () => {
     // fixture row, not just inside the collapsed bracket card.
     expect(screen.getAllByText('Rival de la final').length).toBeGreaterThan(0);
   });
+
+  it('explains where the matches are, instead of a generic empty state, when the division is groupless', async () => {
+    // A playoffs-only division has no Group-type stage at all — "Partidos"
+    // is empty by design, not because nothing was ever scheduled. The
+    // generic "no hay partidos" message reads as "nothing exists anywhere",
+    // which sent an admin looking for a fixture that was never going to be
+    // here (its matches are on the Playoff tab).
+    getStagesByFilters.mockResolvedValue({ data: { items: [koStage] } });
+    getMatchByFilter.mockImplementation((filter: { type?: MatchType }) => {
+      if (filter.type === MatchType.Playoff) {
+        return Promise.resolve({
+          data: { items: [buildMatch('match-final', koStage.id, 'Rival de la final')] },
+        });
+      }
+      return Promise.resolve({ data: { items: [] } });
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/?view=partidos']}>
+        <PublicDivisionPanel division={division({ name: 'Zona A' })} teams={[]} />
+      </MemoryRouter>
+    );
+
+    // The clarifying message only appears once the lazy structure fetch
+    // (gated on the eager stages fetch resolving first) has actually run —
+    // wait for that explicitly rather than relying on findByText's own
+    // polling to catch a multi-effect async chain in one pass.
+    await waitFor(() => expect(getMatchByFilter).toHaveBeenCalled());
+
+    expect(
+      await screen.findByText(/sus partidos están en la pestaña Playoff/i)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/^No hay partidos registrados/)).not.toBeInTheDocument();
+  });
 });
 
 describe('PublicDivisionPanel — division with no playoff phase', () => {

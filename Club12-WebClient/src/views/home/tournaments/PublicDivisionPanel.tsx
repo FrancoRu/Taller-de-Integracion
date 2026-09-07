@@ -307,7 +307,9 @@ export default function PublicDivisionPanel({ division, teams, podium }: PublicD
           <ListSkeleton items={6} />
         ) : matchSections.length === 0 ? (
           <Typography sx={{ color: 'text.secondary' }}>
-            No hay partidos registrados en esta división.
+            {groupStages.length === 0
+              ? 'Esta división no tiene fase de grupos — sus partidos están en la pestaña Playoff.'
+              : 'No hay partidos registrados en esta división.'}
           </Typography>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
