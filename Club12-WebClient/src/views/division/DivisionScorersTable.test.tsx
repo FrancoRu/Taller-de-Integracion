@@ -51,4 +51,34 @@ describe('DivisionScorersTable', () => {
       expect.objectContaining({ pageSize: 10 })
     );
   });
+
+  it('shows the empty state, not a wall of zeroes, when nobody has actually scored', async () => {
+    // The backend intentionally lists every registered player defaulting to
+    // 0 (other consumers rely on that) — the UI must not mistake that for a
+    // real ranking.
+    getScorersByPlayerFiltered.mockResolvedValue({
+      data: { items: [scorer('Ana', 0), scorer('Beto', 0), scorer('Caro', 0)] },
+    });
+
+    render(<DivisionScorersTable divisionId={guid('division-1')} />);
+
+    expect(
+      await screen.findByText('Todavía no hay goleadores registrados en esta división.')
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Ana')).not.toBeInTheDocument();
+  });
+
+  it('shows the ranking table when at least one real scorer is present, even mixed with zeroes', async () => {
+    getScorersByPlayerFiltered.mockResolvedValue({
+      data: { items: [scorer('Ana', 3), scorer('Beto', 0), scorer('Caro', 0)] },
+    });
+
+    render(<DivisionScorersTable divisionId={guid('division-1')} />);
+
+    expect(await screen.findByText('Ana')).toBeInTheDocument();
+    expect(screen.getByText('Beto')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Todavía no hay goleadores registrados en esta división.')
+    ).not.toBeInTheDocument();
+  });
 });

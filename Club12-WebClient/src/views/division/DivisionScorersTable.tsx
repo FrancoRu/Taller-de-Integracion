@@ -124,6 +124,14 @@ export default function DivisionScorersTable({
     return <TableSkeleton rows={6} columns={5} />;
   }
 
+  // A division with no real scoring events yet still returns its full roster
+  // at 0 points each (the query intentionally lists every player, not just
+  // scorers, since other views — a match boxscore, a single player's lookup —
+  // rely on that). Sorted descending, any REAL scorer would surface first, so
+  // every visible row reading 0 means nobody has actually scored: read that
+  // the same as an empty ranking rather than a wall of zeroes.
+  const hasRealScorers = scorers.some(row => row.points > 0);
+
   return (
     <Box>
       <GlobalStyles styles={printMediaStyles} />
@@ -137,15 +145,15 @@ export default function DivisionScorersTable({
           size="small"
           startIcon={<PrintIcon />}
           onClick={() => setIsPrintTarget(true)}
-          disabled={scorers.length === 0}
+          disabled={!hasRealScorers}
           sx={{ height: 32, minHeight: 32 }}
         >
           Imprimir
         </Button>
-        <ExportCsvButton onExport={handleExportCsv} disabled={scorers.length === 0} />
+        <ExportCsvButton onExport={handleExportCsv} disabled={!hasRealScorers} />
       </Box>
 
-      {scorers.length === 0 ? (
+      {!hasRealScorers ? (
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
           Todavía no hay goleadores registrados en esta división.
         </Typography>
