@@ -5,11 +5,7 @@ import { translateStageType } from '@/modules/core/utils/translateStageType';
 
 const STAGE_NAME_DIVISION_SEPARATOR = ' - ';
 
-/**
- * Canonical chronological order of stage types, used ahead of a stage's own `order` field —
- * ThirdPlace and Final in particular are both leaf rounds with no reliable relative `order`
- * between them, so the phase itself is the only signal that sorts them correctly.
- */
+/** Canonical chronological order of stage types, checked ahead of a stage's own `order` field. */
 const STAGE_TYPE_ORDER: Partial<Record<StageType, number>> = {
   [StageType.Group]: 0,
   [StageType.RoundOf16]: 1,
@@ -39,10 +35,8 @@ export interface DivisionFixtureSection {
 }
 
 /**
- * Groups a division's matches into ordered, labelled fixture sections — one per stage that has
- * at least one match. Stages are ordered by their phase (Group -> ... -> SemiFinal -> ThirdPlace
- * -> Final), ties broken by their own `order` and then a natural-numeric name compare, and empty
- * sections are dropped.
+ * Groups a division's matches into ordered, labelled fixture sections, one per stage that has at
+ * least one match, empty sections dropped.
  *
  * A multi-group cross-division cup has several parallel Group stages
  * ("Grupo 1".."Grupo N"). stageSectionLabel would collapse them all to the

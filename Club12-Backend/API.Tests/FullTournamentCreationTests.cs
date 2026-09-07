@@ -116,9 +116,7 @@ public class FullTournamentCreationTests : IClassFixture<CustomWebApplicationFac
     }
 
     /// <summary>
-    /// A division name past DivisionFieldLengths.NameMaxLength must fail model validation with a
-    /// clean 400 instead of ever reaching the database, where Postgres enforces the column's max
-    /// length strictly — unlike the SQLite connection the rest of this file's tests run against.
+    /// A division name past DivisionFieldLengths.NameMaxLength must fail model validation.
     /// </summary>
     [Fact]
     public void CreateFullDivisionRequest_NameOverMaxLength_FailsValidation()
@@ -141,10 +139,7 @@ public class FullTournamentCreationTests : IClassFixture<CustomWebApplicationFac
     }
 
     /// <summary>
-    /// Stage.Order is assigned from each stage's position in the request's own Stages list, so a
-    /// fixture/bracket display sorting by Order (with stage type as a tiebreak) shows Semifinal,
-    /// ThirdPlace, and Final in the order the organizer actually built them in, not creation-time
-    /// insertion order or alphabetical stage name.
+    /// Stage.Order is assigned from each stage's position in the request's own Stages list.
     /// </summary>
     [Fact]
     public async Task CreateFullTournamentAsync_AssignsStageOrderFromRequestSequence()

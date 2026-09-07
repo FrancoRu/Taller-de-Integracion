@@ -28,15 +28,7 @@ interface PlayoffBracketProps {
   onMatchClick?: (matchId: GUID) => void;
 }
 
-/**
- * Renders one division's elimination bracket using
- * `@g-loot/react-tournament-brackets` for round layout and connector
- * lines (Cuartos -> Semifinal -> Final), with the ThirdPlace match shown
- * below the Final, left-aligned under it rather than chained into the
- * main path. `BracketMatchLibraryAdapter` swaps in this app's own
- * `BracketMatchNode` card (team logos, best-of-N series breakdown, dark
- * theme) in place of the library's default look.
- */
+/** Renders one division's elimination bracket, with the ThirdPlace match shown left-aligned below the Final. */
 export default function PlayoffBracket({
   model,
   seriesById,
@@ -47,14 +39,7 @@ export default function PlayoffBracket({
   const bracketRef = useRef<HTMLDivElement>(null);
   const [thirdPlaceOffsetPx, setThirdPlaceOffsetPx] = useState(0);
 
-  /**
-   * Left-aligns the ThirdPlace block under the Final column instead of a fixed offset — the
-   * library lays out round columns at widths that vary with the bracket's depth, so the Final's
-   * actual x-position can only be known by measuring its rendered card. The library injects its
-   * SVG cards into the DOM after its own first paint, so a one-shot measurement here can race it
-   * and find nothing yet; a MutationObserver re-measures whenever the library's own markup
-   * actually appears, and a ResizeObserver keeps it correct afterward too, on a real resize.
-   */
+  /** Left-aligns the ThirdPlace block under the Final column, re-measuring as the bracket renders. */
   useLayoutEffect(() => {
     const container = bracketRef.current;
     const finalMatchId = model.rounds[model.rounds.length - 1]?.matches[0]?.id;

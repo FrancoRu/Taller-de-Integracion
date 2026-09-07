@@ -1,9 +1,6 @@
 import '@testing-library/jest-dom';
 
-/**
- * jsdom has no ResizeObserver. Stubbed globally, guarded so a test file's own
- * more specific stub (if any) always wins.
- */
+/** jsdom has no ResizeObserver; guarded so a test file's own more specific stub still wins. */
 class ResizeObserverStub {
   observe() {}
   unobserve() {}

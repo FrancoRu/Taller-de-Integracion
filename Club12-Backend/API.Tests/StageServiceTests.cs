@@ -29,9 +29,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     /// <summary>
-    /// A regular division can hold multiple sub-group Group stages as long as
-    /// each has a distinct name and the division has a cup to determine a
-    /// champion between the sub-groups.
+    /// A regular division can hold multiple sub-group Group stages when it also has a cup.
     /// </summary>
     [Fact]
     public async Task CreateStageAsync_RegularDivision_AllowsSecondGroupStageWithDistinctName()
@@ -74,9 +72,7 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     /// <summary>
-    /// With no combined table and no bracket, a regular division split into 2+ groups with no cup
-    /// has no way to determine an overall champion between them, so adding the second group stage
-    /// is rejected instead of leaving the division in that state.
+    /// A regular division split into 2+ groups with no cup has no way to crown a champion.
     /// </summary>
     [Fact]
     public async Task CreateStageAsync_RegularDivision_RejectsSecondGroupStageWithoutCup()

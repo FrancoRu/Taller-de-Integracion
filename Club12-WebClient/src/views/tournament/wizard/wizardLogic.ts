@@ -91,15 +91,7 @@ const validateCups = (
   return errors;
 };
 
-/**
- * Validates the zones step's structure only: every zone has a unique name,
- * every configured cup is well-formed, and a zone split into 2+ sub-groups
- * has at least one cup, since with no combined table and no bracket there is
- * otherwise no way to determine an overall champion between the sub-groups.
- * The standings→cup position ranges are derived from the cups, so there is
- * no manual range editor to validate; the "ranges fit the teams" check runs
- * later, at assignment/start, as a completability rule.
- */
+/** Validates the zones step's structure: unique zone names, well-formed cups, and a cup on any zone with 2+ sub-groups. */
 export const validateZonesStep = (state: WizardState): ValidationResult => {
   const errors: string[] = [];
 

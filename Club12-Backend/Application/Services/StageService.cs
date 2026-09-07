@@ -280,11 +280,7 @@ public class StageService(
     }
 
     /// <summary>
-    /// Throws when a regular (non-cross-cup) division split into 2+ groups has no PlayoffMapping —
-    /// with no combined table or bracket, nothing determines an overall champion between the groups.
-    /// A cross-division cup's own Final/Semifinal stages are its champion path instead of a
-    /// PlayoffMapping, and its cup is already mandatory by the time it reaches this check, so it is
-    /// exempt from this rule.
+    /// Throws when a regular division split into 2+ groups has no cup to crown a champion.
     /// </summary>
     private async Task EnsureDivisionHasCupForMultipleGroupsAsync(Guid divisionId)
     {
@@ -352,9 +348,7 @@ public class StageService(
     }
 
     /// <summary>
-    /// Assigns teams to a stage, either manually by team IDs or automatically based on available
-    /// slots, capping a Group-type stage at the tournament's own team ceiling rather than the
-    /// auto-bracket-generator's smaller fixed group size.
+    /// Assigns teams to a stage, either manually by team IDs or automatically based on available slots.
     /// </summary>
     /// <param name="stage">The stage to assign teams to.</param>
     /// <param name="teamIds">Optional list of team IDs to assign.</param>
@@ -621,9 +615,7 @@ public class StageService(
     }
 
     /// <summary>
-    /// Seeds every playoff cup of a division from its final group-stage standings. A division
-    /// split into more than one Group stage is seeded from the pooled top QualifiersPerGroup
-    /// teams of every group instead of a single combined table.
+    /// Seeds every playoff cup of a division from its final group-stage standings.
     /// </summary>
     /// <param name="divisionId">The division whose group stage has finished.</param>
     /// <returns>The seeded matches per destination cup, keyed by BracketName.</returns>
@@ -751,9 +743,7 @@ public class StageService(
     }
 
     /// <summary>
-    /// Creates whatever empty Match placeholders a groupless bracket's first draw is still missing, since a
-    /// playoffs-only division has no group phase to generate them at tournament start. A no-op on a re-draw,
-    /// which already has exactly neededSlotCount matches from its first draw.
+    /// Creates whatever empty Match placeholders a groupless bracket's first draw is still missing.
     /// </summary>
     private async Task EnsureBracketSlotsExistAsync(Stage stage, int neededSlotCount)
     {
@@ -874,8 +864,7 @@ public class StageService(
     }
 
     /// <summary>
-    /// Pushes each decided slot's winner into its next-round match, starting a new series for any
-    /// newly-complete pairing in a best-of-N round.
+    /// Pushes each decided slot's winner into its next-round match.
     /// </summary>
     private async Task AdvanceWinnersToNextRoundAsync(Stage stage, List<Match> orderedMatches)
     {
