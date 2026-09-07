@@ -193,6 +193,9 @@ public static class ErrorMessages
 
         public const string NameRequired =
             "El nombre del club es obligatorio.";
+
+        public const string HasTeamsOrSquadsCannotDelete =
+            "No se puede eliminar un club con equipos o escuadras vinculadas.";
     }
 
     public static class Roster

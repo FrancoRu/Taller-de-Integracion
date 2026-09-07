@@ -61,6 +61,10 @@ export const ClubProvider: React.FC<{ children: ReactNode }> = ({
       clubService.renameClub(clubId, name),
   });
 
+  const deleteClubMutation = useMutation({
+    mutationFn: (clubId: GUID) => clubService.deleteClub(clubId),
+  });
+
   const getClubHistory = useCallback(
     async (idOrSlug: string): Promise<IClubHistoryResponse | void> => {
       try {
@@ -170,6 +174,20 @@ export const ClubProvider: React.FC<{ children: ReactNode }> = ({
     [renameClubMutation, handleUnknownError]
   );
 
+  const deleteClub = useCallback(
+    async (clubId: GUID): Promise<boolean> => {
+      try {
+        await deleteClubMutation.mutateAsync(clubId);
+        setAllClubs(prev => prev.filter(candidate => candidate.id !== clubId));
+        return true;
+      } catch (error: unknown) {
+        handleUnknownError(error);
+        return false;
+      }
+    },
+    [deleteClubMutation, handleUnknownError]
+  );
+
   const container: IClubContextProps = useMemo(
     () => ({
       club,
@@ -180,6 +198,7 @@ export const ClubProvider: React.FC<{ children: ReactNode }> = ({
       linkClubParent,
       unlinkClubParent,
       renameClub,
+      deleteClub,
     }),
     [
       club,
@@ -190,6 +209,7 @@ export const ClubProvider: React.FC<{ children: ReactNode }> = ({
       linkClubParent,
       unlinkClubParent,
       renameClub,
+      deleteClub,
     ]
   );
 

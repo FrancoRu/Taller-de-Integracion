@@ -18,6 +18,11 @@ vi.mock('react-router-dom', async () => {
 
 vi.mock('@/modules/club/hook/club.hook');
 vi.mock('@/modules/team/hook/team.hook');
+vi.mock('@/modules/core/utils/confirmDialog', () => ({
+  confirmDelete: vi.fn(() => Promise.resolve(true)),
+  notifySuccess: vi.fn(() => Promise.resolve()),
+  notifyWarning: vi.fn(() => Promise.resolve()),
+}));
 
 const mockedUseClub = vi.mocked(useClub);
 const mockedUseTeam = vi.mocked(useTeam);
@@ -34,11 +39,14 @@ const buildClub = (overrides: Partial<IClubSummaryResponse> = {}): IClubSummaryR
 });
 
 let getAllClubs: Mock<IClubContextProps['getAllClubs']>;
+let deleteClub: Mock<IClubContextProps['deleteClub']>;
 let addTeam: Mock<ITeamContextProps['addTeam']>;
 
 const setupHook = (clubs: IClubSummaryResponse[] = [buildClub()]) => {
   getAllClubs = vi.fn<IClubContextProps['getAllClubs']>();
   getAllClubs.mockResolvedValue(clubs);
+  deleteClub = vi.fn<IClubContextProps['deleteClub']>();
+  deleteClub.mockResolvedValue(true);
   addTeam = vi.fn<ITeamContextProps['addTeam']>();
   addTeam.mockResolvedValue({} as ITeamResponse);
 
@@ -51,6 +59,7 @@ const setupHook = (clubs: IClubSummaryResponse[] = [buildClub()]) => {
     linkClubParent: vi.fn(),
     unlinkClubParent: vi.fn(),
     renameClub: vi.fn(),
+    deleteClub,
   } satisfies IClubContextProps);
 
   mockedUseTeam.mockReturnValue({
@@ -110,5 +119,17 @@ describe('ClubsPage', () => {
     await user.click(await screen.findByText('River'));
 
     expect(mockedNavigate).toHaveBeenCalledWith('/panel/clubes/river');
+  });
+
+  it('deletes a club after confirming', async () => {
+    const club = buildClub({ name: 'River' });
+    setupHook([club]);
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText('River');
+    await user.click(screen.getByRole('button', { name: 'Eliminar' }));
+
+    await waitFor(() => expect(deleteClub).toHaveBeenCalledWith(club.id));
   });
 });

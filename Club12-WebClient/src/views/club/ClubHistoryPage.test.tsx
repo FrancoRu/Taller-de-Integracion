@@ -122,6 +122,7 @@ const setupHook = (
     linkClubParent,
     unlinkClubParent,
     renameClub,
+    deleteClub: vi.fn(),
   } satisfies IClubContextProps);
 
   mockedUseTeam.mockReturnValue({
@@ -209,6 +210,7 @@ describe('ClubHistoryPage', () => {
     expect(screen.getByText('Apertura 2027')).toBeInTheDocument();
   });
 
+  /** Rows sort newest-season-first, so the first row's delete button targets the 2027 team. */
   it('deletes a team from its row and refreshes the club history', async () => {
     const user = userEvent.setup();
     renderPage();
@@ -216,7 +218,6 @@ describe('ClubHistoryPage', () => {
     const deleteButtons = await screen.findAllByRole('button', { name: 'Eliminar equipo' });
     await user.click(deleteButtons[0]);
 
-    // Rows sort newest-season-first, so the first row is the 2027 team.
     await waitFor(() =>
       expect(deleteTeamById).toHaveBeenCalledWith(CLUB.teams[1].teamId)
     );

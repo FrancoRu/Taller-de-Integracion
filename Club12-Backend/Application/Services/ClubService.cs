@@ -273,6 +273,23 @@ public class ClubService(IUnitOfWork unitOfWork) : IClubService
             ?? throw new KeyNotFoundException(ErrorMessages.Club.NotFound(clubId));
     }
 
+    /// <inheritdoc />
+    public async Task DeleteClubAsync(Guid clubId)
+    {
+        _ = await _clubRepository.GetByIdAsync(clubId)
+            ?? throw new KeyNotFoundException(ErrorMessages.Club.NotFound(clubId));
+
+        bool hasTeams = await _teamRepository.ExistsAsync(team => team.ClubId == clubId);
+        bool hasChildClubs = await _clubRepository.ExistsAsync(candidate => candidate.ParentClubId == clubId);
+
+        if (hasTeams || hasChildClubs)
+        {
+            throw new InvalidOperationException(ErrorMessages.Club.HasTeamsOrSquadsCannotDelete);
+        }
+
+        await _clubRepository.RemoveAsync(candidate => candidate.Id == clubId);
+    }
+
     private static ClubSummaryResponse? ToSummary(Club? club) => club is null
         ? null
         : new ClubSummaryResponse

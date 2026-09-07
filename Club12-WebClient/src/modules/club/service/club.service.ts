@@ -76,4 +76,12 @@ export const clubService = {
     name: string
   ): Promise<AxiosResponse<IClubHistoryResponse>> =>
     await sendPut(`${routes.clubs}/${clubId}`, { name }),
+
+  /**
+   * Deletes a club.
+   * @param {GUID} clubId - The club to delete.
+   * @returns {Promise<AxiosResponse<void>>} The server response.
+   */
+  deleteClub: async (clubId: GUID): Promise<AxiosResponse<void>> =>
+    await sendDelete(`${routes.clubs}/${clubId}`),
 };

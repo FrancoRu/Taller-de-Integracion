@@ -132,4 +132,23 @@ public class ClubController(IClubService clubService) : ControllerBase
         ClubHistoryResponse history = await clubService.UnlinkClubParentAsync(id);
         return Ok(history);
     }
+
+    /// <summary>
+    /// Deletes a club, blocking the delete while it still has teams or squad clubs linked to it.
+    /// </summary>
+    /// <param name="id">The club to delete.</param>
+    /// <returns>
+    /// <para>Returns 204 No Content when deleted.</para>
+    /// <para>Returns 404 Not Found when the club doesn't exist.</para>
+    /// <para>Returns 409 Conflict when it still has teams or squad clubs linked to it.</para>
+    /// </returns>
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult> DeleteClub(Guid id)
+    {
+        await clubService.DeleteClubAsync(id);
+        return NoContent();
+    }
 }

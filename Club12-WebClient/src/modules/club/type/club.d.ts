@@ -153,4 +153,10 @@ export interface IClubContextProps {
    * @param name The new display name.
    */
   renameClub(clubId: GUID, name: string): Promise<IClubHistoryResponse | void>;
+
+  /**
+   * Deletes a club, rejected while it still has teams or squad clubs linked to it.
+   * @param clubId The club to delete.
+   */
+  deleteClub(clubId: GUID): Promise<boolean>;
 }

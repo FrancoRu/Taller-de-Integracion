@@ -50,6 +50,7 @@ const TableRowActions = <Row,>({
                 color={action.color ?? 'primary'}
                 disabled={disabled}
                 onClick={() => action.onClick(row)}
+                aria-label={action.label}
               >
                 {action.icon}
               </IconButton>

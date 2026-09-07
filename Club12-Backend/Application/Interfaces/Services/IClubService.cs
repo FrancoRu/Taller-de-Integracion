@@ -56,4 +56,10 @@ public interface IClubService
     /// <param name="clubId">The club to rename.</param>
     /// <param name="name">The new display name.</param>
     Task<ClubHistoryResponse> RenameClubAsync(Guid clubId, string name);
+
+    /// <summary>
+    /// Deletes a club, blocking the delete while it still has teams or squad clubs linked to it.
+    /// </summary>
+    /// <param name="clubId">The club to delete.</param>
+    Task DeleteClubAsync(Guid clubId);
 }

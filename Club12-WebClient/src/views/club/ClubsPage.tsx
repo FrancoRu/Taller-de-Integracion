@@ -8,11 +8,13 @@ import PageShell from '@/views/core/components/PageShell';
 import TableScrollBox from '@/views/core/components/TableScrollBox';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import NewEntityButton from '@/views/core/components/NewEntityButton';
-import { SearchIcon } from '@/views/core/MUI/icons/icons';
+import { buildActionsColumn } from '@/views/core/components/buildActionsColumn';
+import { TableRowAction } from '@/views/core/components/TableRowActions';
+import { DeleteIcon, SearchIcon, VisibilityIcon } from '@/views/core/MUI/icons/icons';
 import { dataGridLocaleText } from '@/modules/core/constants/dataGridLocale';
 import { TABLE_PAGE_SIZE_OPTIONS, TABLE_ROWS_PER_PAGE } from '@/modules/core/constants/pagination';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
-import { notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
+import { confirmDelete, notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
 import { useClub } from '@/modules/club/hook/club.hook';
 import { useTeam } from '@/modules/team/hook/team.hook';
 import { IClubSummaryResponse } from '@/modules/club/type/club.d';
@@ -34,7 +36,7 @@ const INITIAL_TEAM_FORM: TeamFormState = {
 /** The admin's club roster (the "Equipos" tab): one row per stable club, not per per-season team. */
 const ClubsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { allClubs, getAllClubs } = useClub();
+  const { allClubs, getAllClubs, deleteClub } = useClub();
   const { addTeam } = useTeam();
   const [loading, setLoading] = useState(false);
   const [nameFilter, setNameFilter] = useState('');
@@ -72,6 +74,47 @@ const ClubsPage: React.FC = () => {
     [navigate]
   );
 
+  const handleDelete = useCallback(
+    async (row: IClubSummaryResponse) => {
+      const confirmed = await confirmDelete({
+        title: '¿Está usted seguro de querer eliminar este club?',
+        text: '¡Usted no podrá revertir este cambio!',
+      });
+      if (!confirmed) {
+        return;
+      }
+
+      const deleted = await deleteClub(row.id);
+      if (!deleted) {
+        return;
+      }
+
+      await notifySuccess({
+        title: '¡Eliminado!',
+        text: 'El club ha sido eliminado.',
+      });
+    },
+    [deleteClub]
+  );
+
+  const rowActions = useMemo<TableRowAction<IClubSummaryResponse>[]>(
+    () => [
+      {
+        label: 'Ver',
+        color: 'info',
+        icon: <VisibilityIcon fontSize="small" />,
+        onClick: handleView,
+      },
+      {
+        label: 'Eliminar',
+        color: 'error',
+        icon: <DeleteIcon fontSize="small" />,
+        onClick: handleDelete,
+      },
+    ],
+    [handleView, handleDelete]
+  );
+
   const columns: GridColDef<IClubSummaryResponse>[] = useMemo(
     () => [
       {
@@ -91,8 +134,9 @@ const ClubsPage: React.FC = () => {
           </Stack>
         ),
       },
+      buildActionsColumn(rowActions, { align: 'center', headerAlign: 'center' }),
     ],
-    [handleView]
+    [handleView, rowActions]
   );
 
   const resetTeamForm = useCallback(() => {
@@ -211,7 +255,6 @@ const ClubsPage: React.FC = () => {
           pageSizeOptions={[...TABLE_PAGE_SIZE_OPTIONS]}
           paginationModel={paginationModel}
           onPaginationModelChange={setPaginationModel}
-          onRowClick={params => handleView(params.row)}
         />
       </TableScrollBox>
 

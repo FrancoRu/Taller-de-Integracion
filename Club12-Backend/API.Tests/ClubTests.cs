@@ -327,6 +327,45 @@ public class ClubTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task DeleteClub_RemovesAClubWithNoTeamsOrSquads()
+    {
+        Club club = await SeedClubAsync($"Empty {Guid.NewGuid()}");
+
+        await DeleteClubAsync(club.Id);
+
+        Assert.Null(await GetHistoryAsync(club.Id.ToString()));
+    }
+
+    /// <summary>
+    /// Deleting a club with per-season teams would orphan their history, so it is rejected.
+    /// </summary>
+    [Fact]
+    public async Task DeleteClub_RejectsWhenItHasTeams()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        Team team = await SeedTeamAsync(db, name: $"Has Team {Guid.NewGuid()}");
+        await BackfillAsync();
+        Team linked = await ReadTeamAsync(team.Id);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => DeleteClubAsync(linked.ClubId!.Value));
+    }
+
+    /// <summary>
+    /// Deleting a club with linked squad clubs would orphan them, so it is rejected.
+    /// </summary>
+    [Fact]
+    public async Task DeleteClub_RejectsWhenItHasChildClubs()
+    {
+        Club parent = await SeedClubAsync($"Parent {Guid.NewGuid()}");
+        Club child = await SeedClubAsync($"Child {Guid.NewGuid()}");
+        await LinkParentAsync(child.Id, parent.Id);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => DeleteClubAsync(parent.Id));
+    }
+
+    [Fact]
     public async Task GetAllClubs_ReturnsEveryClubOrderedByName()
     {
         string suffix = Guid.NewGuid().ToString();
@@ -379,6 +418,13 @@ public class ClubTests : IClassFixture<CustomWebApplicationFactory>
         using IServiceScope scope = _factory.Services.CreateScope();
         IClubService clubService = scope.ServiceProvider.GetRequiredService<IClubService>();
         return await clubService.RenameClubAsync(clubId, name);
+    }
+
+    private async Task DeleteClubAsync(Guid clubId)
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        IClubService clubService = scope.ServiceProvider.GetRequiredService<IClubService>();
+        await clubService.DeleteClubAsync(clubId);
     }
 
     private async Task<IReadOnlyList<ClubSummaryResponse>> GetAllClubsAsync()
