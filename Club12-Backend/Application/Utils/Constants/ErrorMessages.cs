@@ -175,6 +175,26 @@ public static class ErrorMessages
         }
     }
 
+    public static class Club
+    {
+        public static string NotFound(System.Guid clubId)
+        {
+            return $"No existe un club con id: {clubId}.";
+        }
+
+        public const string CannotLinkToItself =
+            "Un club no puede vincularse a sí mismo como club matriz.";
+
+        public const string ParentAlreadyHasParent =
+            "El club matriz elegido ya es una escuadra de otro club; solo se admite un nivel de vinculación.";
+
+        public const string CannotBecomeChildWithExistingSquads =
+            "Este club ya tiene escuadras vinculadas, así que no puede pasar a ser una escuadra de otro club.";
+
+        public const string NameRequired =
+            "El nombre del club es obligatorio.";
+    }
+
     public static class Roster
     {
         public static string PlayerAlreadyInAnotherTeam(System.Guid playerId, System.Guid tournamentId)

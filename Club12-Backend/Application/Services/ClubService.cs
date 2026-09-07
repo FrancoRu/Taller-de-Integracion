@@ -1,6 +1,7 @@
 using Application.DTOs.Club.Response;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Utils.Constants;
 using Application.Utils.Helper.Slug;
 
 using Domain.Constants;
@@ -157,12 +158,21 @@ public class ClubService(IUnitOfWork unitOfWork) : IClubService
 
         ILookup<Guid, TeamTournamentRegistration> registrationsByTeam = registrations.ToLookup(r => r.TeamId);
 
+        ClubSummaryResponse? parentClub = club.ParentClubId is null
+            ? null
+            : ToSummary(await _clubRepository.GetByIdAsync(club.ParentClubId.Value));
+
+        List<ClubSummaryResponse> childClubs = [.. (await _clubRepository.FindAsync(candidate => candidate.ParentClubId == club.Id))
+            .Select(candidate => ToSummary(candidate)!)];
+
         return new ClubHistoryResponse
         {
             Id = club.Id,
             Name = club.Name,
             Slug = club.Slug,
             LogoUrl = club.LogoUrl,
+            ParentClub = parentClub,
+            ChildClubs = childClubs,
             Teams = [.. teams.Select(team => new ClubTeamSeasonResponse
             {
                 TeamId = team.Id,
@@ -185,4 +195,91 @@ public class ClubService(IUnitOfWork unitOfWork) : IClubService
             })],
         };
     }
+
+    /// <inheritdoc />
+    public async Task<IEnumerable<ClubSummaryResponse>> GetAllClubsAsync()
+    {
+        IEnumerable<Club> clubs = await _clubRepository.GetAllAsync();
+
+        return [.. clubs
+            .OrderBy(club => club.Name)
+            .Select(club => ToSummary(club)!)];
+    }
+
+    /// <inheritdoc />
+    public async Task<ClubHistoryResponse> LinkClubToParentAsync(Guid childClubId, Guid parentClubId)
+    {
+        if (childClubId == parentClubId)
+        {
+            throw new InvalidOperationException(ErrorMessages.Club.CannotLinkToItself);
+        }
+
+        Club child = await _clubRepository.GetByIdAsync(childClubId)
+            ?? throw new KeyNotFoundException(ErrorMessages.Club.NotFound(childClubId));
+
+        Club parent = await _clubRepository.GetByIdAsync(parentClubId)
+            ?? throw new KeyNotFoundException(ErrorMessages.Club.NotFound(parentClubId));
+
+        // Flat, one level deep: the parent can't itself be someone else's squad,
+        // and the child can't already have squads of its own — either would
+        // create a chain longer than institution -> squads.
+        if (parent.ParentClubId is not null)
+        {
+            throw new InvalidOperationException(ErrorMessages.Club.ParentAlreadyHasParent);
+        }
+
+        bool childAlreadyHasSquads = await _clubRepository.ExistsAsync(candidate => candidate.ParentClubId == childClubId);
+        if (childAlreadyHasSquads)
+        {
+            throw new InvalidOperationException(ErrorMessages.Club.CannotBecomeChildWithExistingSquads);
+        }
+
+        child.ParentClubId = parentClubId;
+        await _clubRepository.UpdateAsync(child);
+
+        return await GetClubHistoryAsync(childClubId.ToString())
+            ?? throw new KeyNotFoundException(ErrorMessages.Club.NotFound(childClubId));
+    }
+
+    /// <inheritdoc />
+    public async Task<ClubHistoryResponse> UnlinkClubParentAsync(Guid childClubId)
+    {
+        Club child = await _clubRepository.GetByIdAsync(childClubId)
+            ?? throw new KeyNotFoundException(ErrorMessages.Club.NotFound(childClubId));
+
+        child.ParentClubId = null;
+        await _clubRepository.UpdateAsync(child);
+
+        return await GetClubHistoryAsync(childClubId.ToString())
+            ?? throw new KeyNotFoundException(ErrorMessages.Club.NotFound(childClubId));
+    }
+
+    /// <inheritdoc />
+    public async Task<ClubHistoryResponse> RenameClubAsync(Guid clubId, string name)
+    {
+        string trimmedName = name?.Trim() ?? string.Empty;
+        if (trimmedName.Length == 0)
+        {
+            throw new InvalidOperationException(ErrorMessages.Club.NameRequired);
+        }
+
+        Club club = await _clubRepository.GetByIdAsync(clubId)
+            ?? throw new KeyNotFoundException(ErrorMessages.Club.NotFound(clubId));
+
+        club.Name = trimmedName;
+        await _clubRepository.UpdateAsync(club);
+
+        return await GetClubHistoryAsync(clubId.ToString())
+            ?? throw new KeyNotFoundException(ErrorMessages.Club.NotFound(clubId));
+    }
+
+    private static ClubSummaryResponse? ToSummary(Club? club) => club is null
+        ? null
+        : new ClubSummaryResponse
+        {
+            Id = club.Id,
+            Name = club.Name,
+            Slug = club.Slug,
+            LogoUrl = club.LogoUrl,
+        };
 }

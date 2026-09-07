@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Domain.Entities.Models;
@@ -26,4 +27,15 @@ public class Club : EntityBase
     /// Every per-season Team that belongs to this club, across every tournament.
     /// </summary>
     public virtual ICollection<Team> Teams { get; set; } = [];
+
+    /// <summary>
+    /// Optional link to the parent institution this club is a squad of, independent of tournament category. Flat, one level deep — a club with its own ChildClubs cannot itself have a ParentClubId.
+    /// </summary>
+    public Guid? ParentClubId { get; set; }
+    public Club? ParentClub { get; set; }
+
+    /// <summary>
+    /// Other clubs (squads) that link to this club as their parent institution.
+    /// </summary>
+    public virtual ICollection<Club> ChildClubs { get; set; } = [];
 }
