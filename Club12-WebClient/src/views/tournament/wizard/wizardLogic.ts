@@ -1,5 +1,6 @@
 import { TOURNAMENT_CATEGORY_LABELS } from '@/modules/core/enum/tournament/tournamentCategory';
 import {
+  CrossCupConfig,
   CupConfig,
   MAX_CUP_QUALIFIERS,
   MIN_CUP_QUALIFIERS,
@@ -233,9 +234,9 @@ const describeCup = (cup: CupConfig, qualifiers = cup.qualifiers): string => {
 };
 
 /** The letter for the Nth sub-group (1 -> A, 2 -> B, …), matching `submitWizard`'s "Grupo A".."Grupo G" naming. */
-const subGroupLetter = (index: number): string => String.fromCharCode('A'.charCodeAt(0) + index);
+export const subGroupLetter = (index: number): string => String.fromCharCode('A'.charCodeAt(0) + index);
 
-const buildGroupAndCupNodes = (
+export const buildGroupAndCupNodes = (
   parentId: string,
   hasGroupStage: boolean,
   roundRobinLegs: number,
@@ -274,6 +275,44 @@ const buildGroupAndCupNodes = (
 };
 
 /**
+ * Builds the cross-division cup's tree nodes (HU-110): one line per pooled
+ * group, a line stating how many advance from each, then one line per cup
+ * derived from the pooled qualifier total — shared by the wizard's review
+ * step and any other read-only structure preview of a cross cup.
+ */
+export const buildCrossCupNodes = (crossCup: CrossCupConfig): WizardTreeNode[] => {
+  const nodes: WizardTreeNode[] = [];
+  const { groupCount, qualifiersPerGroup, roundRobinLegs, cups } = crossCup;
+  const pooledQualifiers = groupCount * qualifiersPerGroup;
+
+  for (let groupNumber = 1; groupNumber <= groupCount; groupNumber += 1) {
+    nodes.push({
+      id: `cross-cup-group-${groupNumber}`,
+      depth: 3,
+      label:
+        roundRobinLegs > 1
+          ? `Grupo ${groupNumber} (todos contra todos, ${roundRobinLegs} veces)`
+          : `Grupo ${groupNumber} (todos contra todos)`,
+    });
+  }
+
+  nodes.push({
+    id: 'cross-cup-qualifiers',
+    depth: 3,
+    label:
+      qualifiersPerGroup === 1
+        ? 'Clasifica 1 equipo por grupo'
+        : `Clasifican ${qualifiersPerGroup} equipos por grupo`,
+  });
+
+  cups.forEach(cup => {
+    nodes.push({ id: cup.id, depth: 3, label: describeCup(cup, pooledQualifiers) });
+  });
+
+  return nodes;
+};
+
+/**
  * Builds the flat tree preview shown in the review step — one line per
  * tournament / zone / (group stage or cup), mirroring the wireframe.
  */
@@ -306,40 +345,13 @@ export const buildWizardTree = (state: WizardState): WizardTreeNode[] => {
   });
 
   if (state.crossCup.enabled) {
-    const { groupCount, qualifiersPerGroup, roundRobinLegs, cups } = state.crossCup;
-    const pooledQualifiers = groupCount * qualifiersPerGroup;
-
     nodes.push({
       id: 'cross-cup',
       depth: 2,
       label: state.crossCup.name || '(sin nombre)',
       tag: 'división cruzada',
     });
-
-    // HU-110: one line per group, then a line stating how many advance.
-    for (let groupNumber = 1; groupNumber <= groupCount; groupNumber += 1) {
-      nodes.push({
-        id: `cross-cup-group-${groupNumber}`,
-        depth: 3,
-        label:
-          roundRobinLegs > 1
-            ? `Grupo ${groupNumber} (todos contra todos, ${roundRobinLegs} veces)`
-            : `Grupo ${groupNumber} (todos contra todos)`,
-      });
-    }
-
-    nodes.push({
-      id: 'cross-cup-qualifiers',
-      depth: 3,
-      label:
-        qualifiersPerGroup === 1
-          ? 'Clasifica 1 equipo por grupo'
-          : `Clasifican ${qualifiersPerGroup} equipos por grupo`,
-    });
-
-    cups.forEach(cup => {
-      nodes.push({ id: cup.id, depth: 3, label: describeCup(cup, pooledQualifiers) });
-    });
+    nodes.push(...buildCrossCupNodes(state.crossCup));
   }
 
   return nodes;

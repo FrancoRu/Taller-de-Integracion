@@ -1,5 +1,6 @@
-import { Alert, Chip, List, ListItem, ListItemText, Stack, Typography } from '@mui/material';
+import { Alert, List, ListItem, ListItemText, Stack, Typography } from '@mui/material';
 import { WizardTreeNode } from '../wizardLogic';
+import TreeNodeList from '../TreeNodeList';
 
 interface RevisionStepProps {
   nodes: WizardTreeNode[];
@@ -11,12 +12,6 @@ interface RevisionStepProps {
    */
   warnings?: string[];
 }
-
-const INDENT_BY_DEPTH: Record<WizardTreeNode['depth'], number> = {
-  1: 0,
-  2: 2,
-  3: 4,
-};
 
 /**
  * Read-only tree preview of everything the wizard is about to create.
@@ -44,27 +39,7 @@ export default function RevisionStep({ nodes, warnings = [] }: RevisionStepProps
           </List>
         </Alert>
       )}
-      {nodes.map(node => (
-        <Stack
-          key={node.id}
-          direction="row"
-          spacing={1}
-          sx={{
-            alignItems: "center",
-            pl: INDENT_BY_DEPTH[node.depth]
-          }}>
-          <Typography
-            variant={node.depth === 1 ? 'subtitle1' : 'body2'}
-            color={node.depth === 3 ? 'text.secondary' : 'text.primary'}
-            sx={{
-              fontWeight: node.depth === 1 ? 700 : node.depth === 2 ? 600 : 400
-            }}
-          >
-            {node.label}
-          </Typography>
-          {node.tag && <Chip size="small" label={node.tag} />}
-        </Stack>
-      ))}
+      <TreeNodeList nodes={nodes} />
     </Stack>
   );
 }
