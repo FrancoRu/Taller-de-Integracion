@@ -230,39 +230,12 @@ public class StageService(
             throw new InvalidOperationException(ErrorMessages.Stage.AlreadyExistsInDivision(stageEntity.Name));
         }
 
-        if (stageEntity.StageType == StageType.Group)
-        {
-            await EnsureSubGroupCupCompatibilityAsync(stageEntity.DivisionId);
-        }
-
         stageEntity.Slug = await SlugGenerator.GenerateUniqueSlugAsync(
             stageEntity.Name,
             candidate => _stageRepository.ExistsAsync(stage => stage.Slug == candidate));
 
         await _stageRepository.AddAsync(stageEntity);
         return stageEntity;
-    }
-
-    /// <summary>
-    /// Rejects a second sub-group in a regular division that already carries a position-range playoff cup, since that cup's range has no defined meaning across independent sub-group tables.
-    /// </summary>
-    private async Task EnsureSubGroupCupCompatibilityAsync(Guid divisionId)
-    {
-        Division? division = await _divisionRepository.GetByIdAsync(
-            divisionId, includes: [d => d.PlayoffMappings]);
-
-        if (division is null || division.IsCrossDivisionCup || division.PlayoffMappings.Count == 0)
-        {
-            return;
-        }
-
-        bool wouldHaveMultipleSubGroups = await _stageRepository.ExistsAsync(
-            s => s.DivisionId == divisionId && s.StageType == StageType.Group);
-
-        if (wouldHaveMultipleSubGroups)
-        {
-            throw new InvalidOperationException(ErrorMessages.Stage.SubGroupsIncompatibleWithPositionRangeCups);
-        }
     }
 
     /// <summary>
@@ -496,7 +469,7 @@ public class StageService(
     }
 
     /// <summary>
-    /// Seeds an elimination stage's empty matches from group-stage standings in classic bracket order.
+    /// Seeds an elimination stage's empty matches from group-stage standings in classic bracket order. A division split into more than one Group stage is seeded from the pooled top QualifiersPerGroup teams of every group instead of a single combined table.
     /// </summary>
     public async Task<List<Match>> SeedKnockoutStageAsync(Guid stageId)
     {
@@ -514,16 +487,12 @@ public class StageService(
             throw new InvalidOperationException(ErrorMessages.Stage.AlreadySeeded);
         }
 
-        // A cross-division cup with more than one internal group is seeded by pooling the top QualifiersPerGroup teams of every group and ordering them by group-stage strength rather than the teams pre-assigned to this stage; a cross cup with a single group, and every regular division, falls through to the single-standings path below.
-        if (stage.Division.IsCrossDivisionCup)
-        {
-            List<Stage> groupStages = [.. await _stageRepository.FindAsync(
-                s => s.DivisionId == stage.DivisionId && s.StageType == StageType.Group)];
+        List<Stage> groupStages = [.. await _stageRepository.FindAsync(
+            s => s.DivisionId == stage.DivisionId && s.StageType == StageType.Group)];
 
-            if (groupStages.Count > 1)
-            {
-                return await SeedMultiGroupCrossCupStageAsync(stage, groupStages);
-            }
+        if (groupStages.Count > 1)
+        {
+            return await SeedMultiGroupStageAsync(stage, groupStages);
         }
 
         List<Guid> assignedTeamIds = [.. stage.StageTeamMatches.Select(stm => stm.TeamId)];
@@ -560,9 +529,9 @@ public class StageService(
     }
 
     /// <summary>
-    /// Seeds a multi-group cross-division cup's first elimination stage.
+    /// Seeds a multi-group division's first elimination stage — a cross-division cup's pooled groups, or a regular zone's own sub-groups.
     /// </summary>
-    private async Task<List<Match>> SeedMultiGroupCrossCupStageAsync(Stage stage, List<Stage> groupStages)
+    private async Task<List<Match>> SeedMultiGroupStageAsync(Stage stage, List<Stage> groupStages)
     {
         List<Match> groupMatches = [.. await _matchRepository.FindAsync(m =>
             m.Stage.DivisionId == stage.DivisionId && m.Stage.StageType == StageType.Group,
@@ -586,7 +555,7 @@ public class StageService(
     }
 
     /// <summary>
-    /// Seeds every playoff cup of a division from its final group-stage standings.
+    /// Seeds every playoff cup of a division from its final group-stage standings. A division split into more than one Group stage is seeded from the pooled top QualifiersPerGroup teams of every group instead of a single combined table.
     /// </summary>
     /// <param name="divisionId">The division whose group stage has finished.</param>
     /// <returns>The seeded matches per destination cup, keyed by BracketName.</returns>
@@ -601,12 +570,21 @@ public class StageService(
             throw new InvalidOperationException(ErrorMessages.Playoff.NoMappingsConfigured);
         }
 
+        List<Stage> groupStages = [.. await _stageRepository.FindAsync(
+            s => s.DivisionId == divisionId && s.StageType == StageType.Group)];
+
         List<Match> groupMatches = [.. await _matchRepository.FindAsync(m =>
             m.Stage.DivisionId == divisionId && m.Stage.StageType == StageType.Group,
             includes: [m => m.HomeTeam!, m => m.VisitorTeam!, m => m.WinningTeam!])];
 
-        List<Position> standings = PositionCalculator.CalculatePositions(
-            groupMatches, division.PointsForWin, division.PointsForLoss);
+        List<Position> standings = groupStages.Count > 1
+            ? CrossCupGroupSeeder.PoolAndOrder(
+                [.. groupStages.Select(groupStage => (IReadOnlyList<Position>) PositionCalculator.CalculatePositions(
+                    [.. groupMatches.Where(m => m.StageId == groupStage.Id)],
+                    division.PointsForWin,
+                    division.PointsForLoss))],
+                division.QualifiersPerGroup)
+            : PositionCalculator.CalculatePositions(groupMatches, division.PointsForWin, division.PointsForLoss);
 
         Dictionary<string, List<Guid>> qualifiersByCup = PlayoffQualificationResolver.Resolve(
         [
@@ -1320,11 +1298,6 @@ public class StageService(
         Division division = await _divisionRepository.GetByIdAsync(
             divisionId, includes: [d => d.PlayoffMappings, d => d.Tournament])
             ?? throw new InvalidOperationException(ErrorMessages.Stage.DivisionNotFound);
-
-        if (subGroupCount >= 2 && !division.IsCrossDivisionCup && division.PlayoffMappings.Count > 0)
-        {
-            throw new InvalidOperationException(ErrorMessages.Stage.SubGroupsIncompatibleWithPositionRangeCups);
-        }
 
         List<Guid> rosterTeamIds = await GetRosterTeamIdsAsync(divisionId);
 

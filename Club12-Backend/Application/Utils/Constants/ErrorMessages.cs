@@ -354,12 +354,6 @@ public static class ErrorMessages
         public const string ReassignmentAcrossDivisionsNotAllowed =
             "No se puede reasignar un equipo entre sub-grupos de distintas divisiones.";
 
-        /// <summary>
-        /// User-facing Spanish message blocking sub-groups from combining with a position-range playoff cup, since a cup's position range has no defined meaning across multiple independent sub-group tables.
-        /// </summary>
-        public const string SubGroupsIncompatibleWithPositionRangeCups =
-            "No se pueden combinar sub-grupos con una copa configurada por rango de posiciones: la tabla de posiciones combinada no está definida para varios sub-grupos independientes. Usá un solo sub-grupo o quitá el mapeo de playoff antes de continuar.";
-
         public static string SubGroupTooFewTeams(int teamCount, int subGroupCount)
         {
             return $"No se pueden crear {subGroupCount} sub-grupos con {teamCount} equipo(s) inscripto(s): cada sub-grupo necesita como mínimo 4 equipos. Elegí una cantidad de sub-grupos menor.";

@@ -133,7 +133,7 @@ public class SubGroupRebuildTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task RebuildSubGroupsAsync_MultipleSubGroups_RejectedWhenDivisionHasPositionRangeCup()
+    public async Task RebuildSubGroupsAsync_MultipleSubGroups_AllowedWhenDivisionHasPositionRangeCup()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
         ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
@@ -153,10 +153,10 @@ public class SubGroupRebuildTests : IClassFixture<CustomWebApplicationFactory>
         });
         await db.SaveChangesAsync();
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => stageService.RebuildSubGroupsAsync(division.Id, 2));
+        List<Stage> stages = await stageService.RebuildSubGroupsAsync(division.Id, 2);
 
-        Assert.Equal(0, await db.Stages.CountAsync(s => s.DivisionId == division.Id));
+        Assert.Equal(2, stages.Count);
+        Assert.Equal(2, await db.Stages.CountAsync(s => s.DivisionId == division.Id && s.StageType == StageType.Group));
     }
 
     [Fact]

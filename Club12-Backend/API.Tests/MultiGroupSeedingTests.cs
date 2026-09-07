@@ -12,18 +12,18 @@ using MatchType = Domain.Enums.MatchType;
 namespace API.Tests;
 
 /// <summary>
-/// Covers HU-110: a cross-division cup division with MORE THAN ONE internal
-/// StageType.Group stage is seeded by pooling the top-QualifiersPerGroup teams
-/// of each group and ordering them by group-stage strength before seeding the
-/// bracket via the shared classic-seed/BYE path. A cross cup with exactly ONE
-/// group (and every regular division) keeps behaving as before — see
-/// <see cref="StageSeedingTests"/>.
+/// A division with MORE THAN ONE internal StageType.Group stage — whether a
+/// cross-division cup's pooled groups or a regular zone's own sub-groups —
+/// is seeded by pooling the top-QualifiersPerGroup teams of each group and
+/// ordering them by group-stage strength before seeding the bracket via the
+/// shared classic-seed/BYE path. A division with exactly ONE group keeps
+/// behaving as before — see <see cref="StageSeedingTests"/>.
 /// </summary>
-public class CrossCupMultiGroupSeedingTests : IClassFixture<CustomWebApplicationFactory>
+public class MultiGroupSeedingTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly CustomWebApplicationFactory _factory;
 
-    public CrossCupMultiGroupSeedingTests(CustomWebApplicationFactory factory)
+    public MultiGroupSeedingTests(CustomWebApplicationFactory factory)
     {
         _factory = factory;
     }
@@ -178,6 +178,73 @@ public class CrossCupMultiGroupSeedingTests : IClassFixture<CustomWebApplication
             () => stageService.SeedKnockoutStageAsync(bracket.Id));
     }
 
+    /// <summary>
+    /// A regular (non-cross-cup) division split into two sub-groups pools each
+    /// group's own winner into the bracket, the same mechanism a cross-division
+    /// cup's pooled groups already use — the group with the bigger margin seeds
+    /// higher.
+    /// </summary>
+    [Fact]
+    public async Task SeedKnockoutStageAsync_MultiGroupRegularDivision_PoolsTopOnePerGroup()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
+
+        Tournament tournament = await SeedTournamentAsync(db);
+        Division division = await SeedDivisionAsync(db, tournament, isCrossDivisionCup: false, qualifiersPerGroup: 1);
+
+        List<Team> groupA = await SeedRoundRobinGroupAsync(db, division, tournament, size: 2, homeScore: 100, visitorScore: 70);
+        List<Team> groupB = await SeedRoundRobinGroupAsync(db, division, tournament, size: 2, homeScore: 90, visitorScore: 80);
+
+        Stage bracket = await SeedStageAsync(db, division, tournament, StageType.Final);
+        await SeedEmptyMatchAsync(db, bracket);
+
+        List<Match> seeded = await stageService.SeedKnockoutStageAsync(bracket.Id);
+
+        Assert.Equal(groupA[0].Id, seeded[0].HomeTeamId);
+        Assert.Equal(groupB[0].Id, seeded[0].VisitorTeamId);
+    }
+
+    /// <summary>
+    /// The same regular multi-group pooling applies to the automatic,
+    /// standings-driven cup-seeding path, not just the manual "sembrar bracket"
+    /// action — a position-range mapping over the pooled order still resolves
+    /// each sub-group's winner into the cup.
+    /// </summary>
+    [Fact]
+    public async Task SeedPlayoffCupsAsync_MultiGroupRegularDivision_PoolsTopOnePerGroup()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
+
+        Tournament tournament = await SeedTournamentAsync(db);
+        Division division = await SeedDivisionAsync(db, tournament, isCrossDivisionCup: false, qualifiersPerGroup: 1);
+
+        List<Team> groupA = await SeedRoundRobinGroupAsync(db, division, tournament, size: 2, homeScore: 100, visitorScore: 70);
+        List<Team> groupB = await SeedRoundRobinGroupAsync(db, division, tournament, size: 2, homeScore: 90, visitorScore: 80);
+
+        db.DivisionPlayoffMappings.Add(new DivisionPlayoffMapping
+        {
+            DivisionId = division.Id,
+            FromPosition = 1,
+            ToPosition = 2,
+            Destination = "Final Interzonal",
+            CreatedBy = "test",
+        });
+        await db.SaveChangesAsync();
+
+        Stage bracket = await SeedStageAsync(db, division, tournament, StageType.Final, bracketName: "Final Interzonal");
+        await SeedEmptyMatchAsync(db, bracket);
+
+        Dictionary<string, List<Match>> seededByCup = await stageService.SeedPlayoffCupsAsync(division.Id);
+
+        List<Match> seeded = seededByCup["Final Interzonal"];
+        Assert.Equal(groupA[0].Id, seeded[0].HomeTeamId);
+        Assert.Equal(groupB[0].Id, seeded[0].VisitorTeamId);
+    }
+
     private static async Task<Tournament> SeedTournamentAsync(ApplicationDBContext db)
     {
         DateTime startDate = DateTime.UtcNow.Date.AddDays(30);
@@ -271,12 +338,14 @@ public class CrossCupMultiGroupSeedingTests : IClassFixture<CustomWebApplication
         return teams;
     }
 
-    private static async Task<Stage> SeedStageAsync(ApplicationDBContext db, Division division, Tournament tournament, StageType stageType)
+    private static async Task<Stage> SeedStageAsync(
+        ApplicationDBContext db, Division division, Tournament tournament, StageType stageType, string? bracketName = null)
     {
         Stage stage = new()
         {
             Slug = $"stage-{Guid.NewGuid()}",
             Name = $"Stage-{Guid.NewGuid()}",
+            BracketName = bracketName,
             StageType = stageType,
             IsActive = true,
             StartDate = tournament.StartDate,

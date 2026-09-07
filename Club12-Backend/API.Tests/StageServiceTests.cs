@@ -64,13 +64,14 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     /// <summary>
-    /// HU-125 scope fence: a position-range cup reads a single combined
-    /// standings table, which has no defined meaning across independent
-    /// sub-groups, so a second sub-group is rejected outright rather than
-    /// letting the cup silently compute qualifiers from the wrong table.
+    /// A position-range cup on a sub-grouped regular division reads the
+    /// pooled top-QualifiersPerGroup-of-each-group order (the same mechanism
+    /// a cross-division cup's own pooled groups already use), not a single
+    /// combined standings table — so a second sub-group no longer needs to
+    /// be rejected just because a cup is already configured.
     /// </summary>
     [Fact]
-    public async Task CreateStageAsync_SecondGroupStage_RejectedWhenDivisionHasPositionRangeCup()
+    public async Task CreateStageAsync_SecondGroupStage_AllowedWhenDivisionHasPositionRangeCup()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
         ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
@@ -103,10 +104,10 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
             CreatedBy = "test",
         };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => stageService.CreateStageAsync(secondGroupStage));
+        Stage created = await stageService.CreateStageAsync(secondGroupStage);
 
-        Assert.Equal(1, await db.Stages.CountAsync(s => s.DivisionId == division.Id && s.StageType == StageType.Group));
+        Assert.Equal(StageType.Group, created.StageType);
+        Assert.Equal(2, await db.Stages.CountAsync(s => s.DivisionId == division.Id && s.StageType == StageType.Group));
     }
 
     /// <summary>
