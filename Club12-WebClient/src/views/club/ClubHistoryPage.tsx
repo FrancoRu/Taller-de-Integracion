@@ -16,13 +16,14 @@ import {
   Typography,
 } from '@mui/material';
 import { useClub } from '@/modules/club/hook/club.hook';
+import { useTeam } from '@/modules/team/hook/team.hook';
 import { GUID } from '@/modules/core/types/types';
 import PageShell from '@/views/core/components/PageShell';
 import { TableSkeleton } from '@/views/core/components/skeletons';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import { APP_ROUTES } from '@/modules/core/constants/appRoutes';
-import { confirmAction, notifyWarning } from '@/modules/core/utils/confirmDialog';
-import { EditIcon } from '@/views/core/MUI/icons/icons';
+import { confirmAction, confirmDelete, notifySuccess, notifyWarning } from '@/modules/core/utils/confirmDialog';
+import { DeleteIcon, EditIcon } from '@/views/core/MUI/icons/icons';
 
 interface ClubSeasonRow {
   key: string;
@@ -51,6 +52,7 @@ const ClubHistoryPage: React.FC = () => {
     unlinkClubParent,
     renameClub,
   } = useClub();
+  const { deleteTeamById } = useTeam();
   const [loading, setLoading] = useState(false);
   const [linking, setLinking] = useState(false);
   const [selectedParentId, setSelectedParentId] = useState<GUID | ''>('');
@@ -114,6 +116,27 @@ const ClubHistoryPage: React.FC = () => {
     setLinking(true);
     await unlinkClubParent(club.id);
     setLinking(false);
+  };
+
+  const handleDeleteTeam = async (row: ClubSeasonRow) => {
+    const confirmed = await confirmDelete({
+      title: '¿Está usted seguro de querer eliminar este equipo?',
+      text: '¡Usted no podrá revertir este cambio!',
+    });
+    if (!confirmed) {
+      return;
+    }
+
+    const deleted = await deleteTeamById(row.teamId);
+    if (!deleted || !idOrSlug) {
+      return;
+    }
+
+    await getClubHistory(idOrSlug);
+    await notifySuccess({
+      title: '¡Eliminado!',
+      text: 'El equipo ha sido eliminado.',
+    });
   };
 
   const startEditingName = () => {
@@ -352,6 +375,7 @@ const ClubHistoryPage: React.FC = () => {
                   <TableCell>Equipo</TableCell>
                   <TableCell>Código</TableCell>
                   <TableCell>Temporada</TableCell>
+                  <TableCell align="right">Acciones</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -380,6 +404,16 @@ const ClubHistoryPage: React.FC = () => {
                     </TableCell>
                     <TableCell>{row.threeLetterCode}</TableCell>
                     <TableCell>{row.tournamentName}</TableCell>
+                    <TableCell align="right">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        aria-label="Eliminar equipo"
+                        onClick={() => void handleDeleteTeam(row)}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

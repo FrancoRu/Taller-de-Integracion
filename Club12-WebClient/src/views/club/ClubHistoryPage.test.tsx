@@ -10,19 +10,26 @@ import type { Mock } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import ClubHistoryPage from '@/views/club/ClubHistoryPage';
 import { useClub } from '@/modules/club/hook/club.hook';
+import { useTeam } from '@/modules/team/hook/team.hook';
 import type {
   IClubContextProps,
   IClubHistoryResponse,
   IClubSummaryResponse,
 } from '@/modules/club/type/club.d';
+import type { ITeamContextProps } from '@/modules/team/type/team.d';
 import type { GUID } from '@/modules/core/types/types';
 
 vi.mock('@/modules/club/hook/club.hook');
+vi.mock('@/modules/team/hook/team.hook');
 vi.mock('@/modules/core/utils/confirmDialog', () => ({
   confirmAction: vi.fn(() => Promise.resolve(true)),
+  confirmDelete: vi.fn(() => Promise.resolve(true)),
+  notifySuccess: vi.fn(() => Promise.resolve()),
+  notifyWarning: vi.fn(() => Promise.resolve()),
 }));
 
 const mockedUseClub = vi.mocked(useClub);
+const mockedUseTeam = vi.mocked(useTeam);
 
 const CLUB_ID = '11111111-1111-1111-1111-111111111111' as GUID;
 
@@ -87,6 +94,7 @@ let getAllClubs: Mock<IClubContextProps['getAllClubs']>;
 let linkClubParent: Mock<IClubContextProps['linkClubParent']>;
 let unlinkClubParent: Mock<IClubContextProps['unlinkClubParent']>;
 let renameClub: Mock<IClubContextProps['renameClub']>;
+let deleteTeamById: Mock<ITeamContextProps['deleteTeamById']>;
 
 const setupHook = (
   club: IClubHistoryResponse | null = CLUB,
@@ -102,6 +110,8 @@ const setupHook = (
   unlinkClubParent.mockResolvedValue(club ?? undefined);
   renameClub = vi.fn<IClubContextProps['renameClub']>();
   renameClub.mockResolvedValue(club ?? undefined);
+  deleteTeamById = vi.fn<ITeamContextProps['deleteTeamById']>();
+  deleteTeamById.mockResolvedValue(true);
 
   mockedUseClub.mockReturnValue({
     club,
@@ -113,6 +123,17 @@ const setupHook = (
     unlinkClubParent,
     renameClub,
   } satisfies IClubContextProps);
+
+  mockedUseTeam.mockReturnValue({
+    team: null,
+    teams: null,
+    addTeam: vi.fn(),
+    putTeamById: vi.fn(),
+    putTeamLogoById: vi.fn(),
+    getTeamsByFiltered: vi.fn(),
+    getTeamById: vi.fn(),
+    deleteTeamById,
+  } satisfies ITeamContextProps);
 };
 
 const renderPage = (entry = '/panel/clubes/colon') =>
@@ -186,6 +207,20 @@ describe('ClubHistoryPage', () => {
     expect(screen.getByText('Apertura 2026')).toBeInTheDocument();
     expect(screen.getByText('Colón 2027')).toBeInTheDocument();
     expect(screen.getByText('Apertura 2027')).toBeInTheDocument();
+  });
+
+  it('deletes a team from its row and refreshes the club history', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    const deleteButtons = await screen.findAllByRole('button', { name: 'Eliminar equipo' });
+    await user.click(deleteButtons[0]);
+
+    // Rows sort newest-season-first, so the first row is the 2027 team.
+    await waitFor(() =>
+      expect(deleteTeamById).toHaveBeenCalledWith(CLUB.teams[1].teamId)
+    );
+    await waitFor(() => expect(getClubHistory).toHaveBeenCalledTimes(2));
   });
 
   it('orders the rows by season start date, newest first', async () => {

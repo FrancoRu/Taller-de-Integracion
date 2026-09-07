@@ -68,7 +68,7 @@ const DataAdministrationPage = lazy(() => import('./views/panel/DataAdministrati
 const PasswordReset = lazy(() => import('./views/auth/passwordReset'));
 const ForgotPassword = lazy(() => import('./views/auth/forgotPassword'));
 const ActivateAccount = lazy(() => import('./views/auth/activateAccount'));
-const TeamsPage = lazy(() => import('./views/team/TeamsPage'));
+const ClubsPage = lazy(() => import('./views/club/ClubsPage'));
 const ClubHistoryPage = lazy(() => import('./views/club/ClubHistoryPage'));
 const PlayerSanctionsPage = lazy(() => import('./views/playerSanction/PlayerSanctionsPage'));
 const PlayerSanctionPage = lazy(() => import('./views/playerSanction/PlayerSanctionPage'));
@@ -119,7 +119,7 @@ const ADMIN_ROUTES: AdminRouteConfig[] = [
   {
     path: APP_ROUTES.panelTeams,
     allowedRoles: [UserRolesType.Admin, UserRolesType.Owner],
-    element: <TeamsPage title="Equipos" wrapInCard />,
+    element: <ClubsPage />,
   },
   {
     path: APP_ROUTES.panelClub.pattern,
