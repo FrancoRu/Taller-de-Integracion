@@ -21,6 +21,7 @@ import DivisionStandings from '@/views/division/divisionStandings';
 import DivisionScorersTable from '@/views/division/DivisionScorersTable';
 import { buildCrossCupGroupQualificationRange } from '@/modules/division/utils/qualificationRange';
 import DivisionFixture from '@/views/division/DivisionFixture';
+import DivisionFormatSection from '@/views/division/DivisionFormatSection';
 import TeamLogo from '@/views/core/components/TeamLogo';
 import PointDeductionManager from '@/views/division/PointDeductionManager';
 import PlayoffCups from '@/views/playoff/PlayoffCups';
@@ -356,6 +357,15 @@ const DivisionPage: React.FC = () => {
               <Typography>{division.positions?.length ?? 0}</Typography>
             </Grid>
           </Grid>
+        )}
+
+        {tab === 'detalle' && division.tournamentId && (
+          <Box sx={{ mt: 4 }}>
+            <DivisionFormatSection
+              tournamentIdOrSlug={division.tournamentId}
+              divisionName={division.name}
+            />
+          </Box>
         )}
 
         {tab === 'equipos' && (

@@ -113,6 +113,7 @@ const setup = () => {
   mockedUseTournament.mockReturnValue({
     tournament: null,
     getTournamentById: vi.fn(),
+    getStructure: vi.fn().mockResolvedValue(undefined),
   } as unknown as ReturnType<typeof useTournament>);
 
   mockedUseStage.mockReturnValue({
