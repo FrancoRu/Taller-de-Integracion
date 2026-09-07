@@ -86,6 +86,19 @@ describe('buildDivisionFixtureSections', () => {
     expect(sections.map(s => s.label)).toEqual(['Grupo 1', 'Grupo 2']);
   });
 
+  it('orders Semifinal, ThirdPlace, then Final by phase even when every stage ties on order — alphabetically "Final" would sort before "Semifinal" and "Tercer Puesto"', () => {
+    const stages = [
+      stage({ id: 'final', name: 'Copa B - Final', stageType: StageType.Final, order: 0 }),
+      stage({ id: 'semi', name: 'Copa B - Semifinal', stageType: StageType.SemiFinal, order: 0 }),
+      stage({ id: 'third', name: 'Copa B - Tercer Puesto', stageType: StageType.ThirdPlace, order: 0 }),
+    ];
+    const matches = [match('final'), match('semi'), match('third')];
+
+    const sections = buildDivisionFixtureSections(stages, matches, 'Copa B');
+
+    expect(sections.map(s => s.stage.id)).toEqual(['semi', 'third', 'final']);
+  });
+
   it('drops stages that have no matches (empty-section filtering)', () => {
     const stages = [
       stage({ id: 'played', name: 'Copa Club12 - ZONA 1', stageType: StageType.Group, order: 1 }),

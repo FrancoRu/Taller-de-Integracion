@@ -122,8 +122,9 @@ public class TournamentService(
 
         await divisionService.CreateDivisionAsync(division);
 
-        foreach (CreateFullStageRequest stageRequest in divisionRequest.Stages)
+        for (int i = 0; i < divisionRequest.Stages.Count; i++)
         {
+            CreateFullStageRequest stageRequest = divisionRequest.Stages[i];
             Stage stage = new()
             {
                 Name = stageRequest.Name,
@@ -139,6 +140,7 @@ public class TournamentService(
                 BracketName = stageRequest.BracketName,
                 BestOf = stageRequest.BestOf,
                 RoundRobinLegs = stageRequest.RoundRobinLegs,
+                Order = i,
                 Matches = [],
                 CreatedBy = AuditConstants.SystemUser,
             };

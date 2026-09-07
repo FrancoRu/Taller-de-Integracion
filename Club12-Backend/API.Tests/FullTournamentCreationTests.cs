@@ -140,6 +140,63 @@ public class FullTournamentCreationTests : IClassFixture<CustomWebApplicationFac
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(CreateFullDivisionRequest.Name)));
     }
 
+    /// <summary>
+    /// Stage.Order is assigned from each stage's position in the request's own Stages list, so a
+    /// fixture/bracket display sorting by Order (with stage type as a tiebreak) shows Semifinal,
+    /// ThirdPlace, and Final in the order the organizer actually built them in, not creation-time
+    /// insertion order or alphabetical stage name.
+    /// </summary>
+    [Fact]
+    public async Task CreateFullTournamentAsync_AssignsStageOrderFromRequestSequence()
+    {
+        string name = $"Full-Order-{Guid.NewGuid():N}";
+        DateTime start = DateTime.UtcNow.Date.AddDays(30);
+
+        CreateFullTournamentRequest request = new()
+        {
+            Name = name,
+            Description = "order check",
+            StartDate = start,
+            TeamRegistrationDeadline = start.AddDays(-1),
+            Category = TournamentCategory.Masculine,
+            Divisions =
+            [
+                new CreateFullDivisionRequest
+                {
+                    Name = $"{name} - Zona",
+                    Category = TournamentCategory.Masculine,
+                    PointsForWin = 2,
+                    PointsForLoss = 1,
+                    PlayoffMappings =
+                    [
+                        new PlayoffMappingRequest { FromPosition = 1, ToPosition = 4, Destination = "Final Zona" },
+                    ],
+                    Stages =
+                    [
+                        GroupStage(),
+                        new CreateFullStageRequest { Name = "Final Zona - Semifinal", StageType = StageType.SemiFinal, IsElimination = true, StartDate = start.AddDays(21), EndDate = start.AddDays(28), BracketName = "Final Zona", BestOf = 1 },
+                        new CreateFullStageRequest { Name = "Final Zona - Tercer Puesto", StageType = StageType.ThirdPlace, IsElimination = true, StartDate = start.AddDays(28), EndDate = start.AddDays(35), BracketName = "Final Zona", BestOf = 1 },
+                        new CreateFullStageRequest { Name = "Final Zona - Final", StageType = StageType.Final, IsElimination = true, StartDate = start.AddDays(28), EndDate = start.AddDays(35), BracketName = "Final Zona", BestOf = 1 },
+                    ],
+                },
+            ],
+        };
+
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ITournamentService tournamentService = scope.ServiceProvider.GetRequiredService<ITournamentService>();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
+        await tournamentService.CreateFullTournamentAsync(request);
+
+        Division division = await db.Divisions.SingleAsync(d => d.Name == $"{name} - Zona");
+        List<Stage> stages = [.. (await db.Stages.Where(s => s.DivisionId == division.Id).ToListAsync())
+            .OrderBy(s => s.Order)];
+
+        Assert.Equal(
+            ["Fase de Grupos", "Final Zona - Semifinal", "Final Zona - Tercer Puesto", "Final Zona - Final"],
+            [.. stages.Select(s => s.Name)]);
+    }
+
     [Fact]
     public async Task CreateFullTournamentAsync_RollsBackFully_WhenADivisionIsInvalid()
     {

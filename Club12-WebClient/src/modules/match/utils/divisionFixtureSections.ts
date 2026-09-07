@@ -6,6 +6,20 @@ import { translateStageType } from '@/modules/core/utils/translateStageType';
 const STAGE_NAME_DIVISION_SEPARATOR = ' - ';
 
 /**
+ * Canonical chronological order of stage types, used ahead of a stage's own `order` field —
+ * ThirdPlace and Final in particular are both leaf rounds with no reliable relative `order`
+ * between them, so the phase itself is the only signal that sorts them correctly.
+ */
+const STAGE_TYPE_ORDER: Partial<Record<StageType, number>> = {
+  [StageType.Group]: 0,
+  [StageType.RoundOf16]: 1,
+  [StageType.QuarterFinal]: 2,
+  [StageType.SemiFinal]: 3,
+  [StageType.ThirdPlace]: 4,
+  [StageType.Final]: 5,
+};
+
+/**
  * Stage names follow a "{Division} - {Specific}" convention (e.g.
  * "Copa Club12 - ZONA 3"). We're already inside that division's tab, so
  * strip the redundant prefix and show the specific part — this is what
@@ -25,9 +39,10 @@ export interface DivisionFixtureSection {
 }
 
 /**
- * Groups a division's matches into ordered, labelled fixture sections — one per
- * stage that has at least one match. Stages are ordered by their `order` (ties
- * broken by natural-numeric name compare), and empty sections are dropped.
+ * Groups a division's matches into ordered, labelled fixture sections — one per stage that has
+ * at least one match. Stages are ordered by their phase (Group -> ... -> SemiFinal -> ThirdPlace
+ * -> Final), ties broken by their own `order` and then a natural-numeric name compare, and empty
+ * sections are dropped.
  *
  * A multi-group cross-division cup has several parallel Group stages
  * ("Grupo 1".."Grupo N"). stageSectionLabel would collapse them all to the
@@ -39,9 +54,15 @@ export const buildDivisionFixtureSections = (
   matches: IMatchResponse[],
   divisionName: string
 ): DivisionFixtureSection[] => {
-  const stagesInOrder = [...stages].sort(
-    (a, b) => a.order - b.order || a.name.localeCompare(b.name, 'es', { numeric: true })
-  );
+  const stagesInOrder = [...stages].sort((a, b) => {
+    const typeOrderA = STAGE_TYPE_ORDER[a.stageType] ?? Number.MAX_SAFE_INTEGER;
+    const typeOrderB = STAGE_TYPE_ORDER[b.stageType] ?? Number.MAX_SAFE_INTEGER;
+    return (
+      typeOrderA - typeOrderB ||
+      a.order - b.order ||
+      a.name.localeCompare(b.name, 'es', { numeric: true })
+    );
+  });
   const groupStageCount = stages.filter(stage => stage.stageType === StageType.Group).length;
   return stagesInOrder
     .map(stage => {
