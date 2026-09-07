@@ -115,6 +115,31 @@ public class FullTournamentCreationTests : IClassFixture<CustomWebApplicationFac
         }
     }
 
+    /// <summary>
+    /// A division name past DivisionFieldLengths.NameMaxLength must fail model validation with a
+    /// clean 400 instead of ever reaching the database, where Postgres enforces the column's max
+    /// length strictly — unlike the SQLite connection the rest of this file's tests run against.
+    /// </summary>
+    [Fact]
+    public void CreateFullDivisionRequest_NameOverMaxLength_FailsValidation()
+    {
+        CreateFullDivisionRequest divisionRequest = new()
+        {
+            Name = new string('a', Application.Utils.Constants.Validation.DivisionFieldLengths.NameMaxLength + 1),
+            Stages = [],
+        };
+
+        List<System.ComponentModel.DataAnnotations.ValidationResult> results = [];
+        bool isValid = System.ComponentModel.DataAnnotations.Validator.TryValidateObject(
+            divisionRequest,
+            new System.ComponentModel.DataAnnotations.ValidationContext(divisionRequest),
+            results,
+            validateAllProperties: true);
+
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(CreateFullDivisionRequest.Name)));
+    }
+
     [Fact]
     public async Task CreateFullTournamentAsync_RollsBackFully_WhenADivisionIsInvalid()
     {

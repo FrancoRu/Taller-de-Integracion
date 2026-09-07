@@ -1,4 +1,6 @@
-﻿using Domain.Enums;
+﻿using Application.Utils.Constants.Validation;
+
+using Domain.Enums;
 
 using System;
 using System.Collections.Generic;
@@ -11,6 +13,7 @@ namespace Application.DTOs.Divisions.Request;
 public class CreateDivisionRequest
 {
     [Required(ErrorMessage = "The Name field is required.")]
+    [MaxLength(DivisionFieldLengths.NameMaxLength)]
     public required string Name { get; set; }
 
     [Required(ErrorMessage = "The TournamentId field is required.")]

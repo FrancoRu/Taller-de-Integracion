@@ -1,4 +1,6 @@
-﻿using Domain.Entities.Models;
+﻿using Application.Utils.Constants.Validation;
+
+using Domain.Entities.Models;
 using Domain.Enums;
 
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +14,7 @@ public class DivisionEntityConfiguration : BaseEntityConfiguration<Division>
     {
         builder.ToTable(EntityConstants.Tables.Division, EntityConstants.Schema);
 
-        builder.Property(d => d.Name).IsRequired().HasMaxLength(30);
+        builder.Property(d => d.Name).IsRequired().HasMaxLength(DivisionFieldLengths.NameMaxLength);
         builder.Property(d => d.Slug).IsRequired().HasMaxLength(220);
 
         builder.HasIndex(d => d.Slug).IsUnique();

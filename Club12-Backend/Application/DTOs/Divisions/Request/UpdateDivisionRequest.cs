@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Application.Utils.Constants.Validation;
+
+using System;
 using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.Divisions.Request;
 
@@ -8,6 +10,7 @@ namespace Application.DTOs.Divisions.Request;
 public class UpdateDivisionRequest
 {
     [Required(ErrorMessage = "The Name field is required.")]
+    [MaxLength(DivisionFieldLengths.NameMaxLength)]
     public required string Name { get; set; }
 
     public required bool IsFinished { get; set; }

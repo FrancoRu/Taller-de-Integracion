@@ -49,7 +49,7 @@ public class GlobalExceptionHandler : IExceptionHandler
                 title: title,
                 detail: exposeMessage
                     ? exceptionDetails.Message
-                    : "An unexpected error occurred. Please contact support with the trace ID below.",
+                    : "Ocurrió un error inesperado. Contactá a soporte con el ID de rastreo a continuación.",
                 statusCode: statusCode,
                 extensions: new Dictionary<string, object?> { ["traceId"] = traceId }
             );
