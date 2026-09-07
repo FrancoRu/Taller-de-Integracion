@@ -64,6 +64,13 @@ iniciar el torneo es una operación limpia (no hay fixture que regenerar).
   configurable) y luego **playoffs por sub-copa** (Oro, Plata, Bronce…),
   sembrados por rango de posición final de la fase de grupos
   (`DivisionPlayoffMapping`, ej. 1-4 → Oro, 5-8 → Plata).
+- Una zona con **2 o más sub-grupos** necesita al menos una copa configurada
+  (`DivisionPlayoffMapping`); sin ella no hay forma de determinar un campeón
+  entre los sub-grupos. La regla se aplica al crear el segundo sub-grupo, al
+  reconstruir sub-grupos (`RebuildSubGroupsAsync`) y al borrar la última
+  etapa de eliminación de una división multi-grupo (no puede quedar "varada"
+  sin copa). No aplica a divisiones que son ellas mismas una copa
+  cruzada (`IsCrossDivisionCup`).
 - Las standings siembran a TODOS los equipos asignados en 0-0 desde que el
   torneo arranca, no solo a los que ya jugaron.
 - La tabla colorea las filas que clasifican a cada copa (público y panel).
@@ -105,11 +112,23 @@ iniciar el torneo es una operación limpia (no hay fixture que regenerar).
 - Ficha médica: no se puede volver a subir una vez habilitada (`Approved` →
   409). `IsHabilitado = (MedicalRecordStatus == Approved)`.
 
-### 1.6 Equipos vs Equipos inscriptos
+### 1.6 Clubes vs Equipos
 
-Conviven "Equipos" (`Team.TournamentId`) y "Equipos inscriptos" (registro de
-inscripción a un torneo). Los tabs admin que antes duplicaban esta vista ya
-se unificaron; si aparece de nuevo una duplicación, es la misma causa raíz.
+`Club` es la identidad estable de una institución a través de las
+temporadas (ej. "Ciudad de Paraná"); `Team` es su registro de inscripción
+por temporada/torneo (`Team.ClubId`), vinculado automáticamente por nombre
+al crearse (`ClubService.EnsureTeamLinkedToClubAsync`/`BackfillClubsAsync`,
+clave de identidad por slug). Squads de una misma institución (ej. "Echagüe
+A"/"Echagüe B") tienen cada uno su propio Club, vinculable manualmente como
+"escuadra" de un club matriz vía `ParentClubId` (plano, un solo nivel).
+
+El panel administrativo (tab "Equipos", ruta `/panel/equipos`) lista
+**clubes**, no equipos por temporada — una fila por institución, sin
+duplicados. La vista embebida dentro de un torneo (`TournamentPage`, roster
+de un torneo puntual) sigue mostrando `Team`, que es lo correcto ahí. Si
+vuelve a aparecer una institución duplicada en el listado admin, sospechar
+primero de un club sin vincular (nombre distinto al del `Team`) antes que de
+un bug de agregación.
 
 ### 1.7 Reglas transversales
 
@@ -220,6 +239,20 @@ antemano para no perder tiempo redescubriéndolo.
   español, sin importar la forma del cuerpo de la respuesta (una página de
   error de Cloudflare puede tener un campo `title` que imita accidentalmente
   la forma de un `ProblemDetails` de la API).
+- **`Stage.Order` hay que setearlo explícitamente**: `CreateDivisionWithStagesAsync`
+  no lo hacía (quedaba siempre en `0`), así que cualquier sort que use
+  `stage.order` como clave primaria degradaba en silencio a orden alfabético
+  — que en español pone "Final" antes que "Semifinal" antes que "Tercer
+  Puesto". Si una lista de partidos/etapas aparece en un orden raro,
+  sospechar primero de un `Order` sin poblar antes que de un bug en el sort
+  en sí.
+- **SQLite (tests) no valida `HasMaxLength`, Postgres (prod) sí**: el harness
+  de tests corre sobre SQLite in-memory, que ignora silenciosamente los
+  límites de longitud de columna de EF Core. Un `[MaxLength]`/`HasMaxLength`
+  demasiado corto puede pasar 100% de los tests y romper recién en
+  producción contra Postgres real (error 500 al insertar). No asumir que
+  "los tests pasan" cubre longitudes de campo — revisar el valor contra
+  casos reales de uso.
 
 ---
 
@@ -267,8 +300,14 @@ Lo que sigue abierto, hasta donde se sabe a la fecha de este documento:
   aplicación.
 - **Consolidar documentación de deliverables formales**: `historias-de-usuario.md`
   fue reescrito de punta a punta el 2026-09-02 contra el código real (ver su
-  propio changelog). `README.md` y `MANUAL_USUARIO.md` siguen pendientes de
-  la misma pasada — todavía describen pantallas/rutas que cambiaron (ej.
-  rutas de Fases ya no existen, "Torneos" ya no es un ítem top-level del
-  nav).
-  contra el estado real de la app.
+  propio changelog).
+
+> **Actualización (2026-09-07)**: `README.md` y `MANUAL_USUARIO.md` recibieron
+> la misma pasada de auditoría contra el código real. `README.md`: tabla de
+> funcionalidades reescrita (Clubes vs Equipos, regla de sub-grupos+copa),
+> conteo de tests y fecha actualizados. `MANUAL_USUARIO.md`: sección 4.2
+> reescrita en torno a Club (no Equipo por temporada), nueva subsección
+> "Escuadras (club matriz)", 3 filas nuevas en la tabla de troubleshooting.
+> Ninguno de los dos describía ya la ruta de Fases (no existe) ni el nav
+> plano de "Torneos" — ambos puntos, verificados, ya estaban corregidos de
+> antes; el resto del contenido sí estaba desactualizado y quedó al día.

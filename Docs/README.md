@@ -15,8 +15,8 @@ Liga Club12 reemplaza la gestión manual del torneo (antes llevada en planillas)
 
 | Módulo | Qué permite |
 |---|---|
-| **Temporadas, torneos y divisiones** | Una temporada agrupa uno o más torneos; cada torneo se divide en divisiones. Generación automática de la fase de grupos y, al cerrarse, de las llaves de eliminación directa para la cantidad de equipos que clasificaron — potencia de 2 o no (bye a los mejores sembrados cuando no lo es). Un torneo puede definir más de una copa por división (ej. Copa Oro / Copa Plata), sembrada por rango de posiciones de la fase de grupos. El pase a "En curso" está bloqueado si alguna zona tiene menos de 2 equipos o algún equipo no llega al mínimo de jugadores habilitados. |
-| **Equipos y jugadores** | Alta/baja/modificación con filtros de búsqueda, registro de equipos a un torneo, validación de DNI único por jugador, cuerpo técnico por equipo/temporada, descuentos de puntos (sanciones administrativas a la tabla). |
+| **Temporadas, torneos y divisiones** | Una temporada agrupa uno o más torneos; cada torneo se divide en divisiones. Generación automática de la fase de grupos y, al cerrarse, de las llaves de eliminación directa para la cantidad de equipos que clasificaron — potencia de 2 o no (bye a los mejores sembrados cuando no lo es). Un torneo puede definir más de una copa por división (ej. Copa Oro / Copa Plata), sembrada por rango de posiciones de la fase de grupos. Una zona puede dividirse en varios sub-grupos, en cuyo caso necesita al menos una copa configurada (sin ella no hay forma de determinar un campeón entre los sub-grupos). El pase a "En curso" está bloqueado si alguna zona tiene menos de 2 equipos o algún equipo no llega al mínimo de jugadores habilitados. |
+| **Clubes, equipos y jugadores** | `Club` es la identidad estable de una institución a través de las temporadas; `Team` es su registro por temporada/torneo. El panel administrativo lista clubes (no equipos duplicados por temporada), con alta/baja de equipos, filtros de búsqueda, validación de DNI único por jugador, cuerpo técnico por equipo/temporada, descuentos de puntos (sanciones administrativas a la tabla), y vinculación de un club como escuadra de otro (club matriz) para agrupar squads de una misma institución. |
 | **Fichas médicas / habilitación** | Carga y revisión (aprobar/rechazar) de la ficha médica de cada jugador por equipo y temporada. Solo un registro Aprobado con un archivo realmente almacenado habilita a un jugador; la habilitación no se hereda entre temporadas. |
 | **Partidos** | Generación automática de partidos de fase de grupos (round-robin) y de eliminación directa, carga de resultados por planilla (el resultado final se deriva de la suma de puntos por jugador, no se tipea aparte), tabla de posiciones. Un resultado normal exige que los jugadores cargados estén habilitados y sin sanción activa, y que cada equipo tenga al menos 4 jugadores habilitados — por debajo de ese mínimo el partido se carga como walkover. |
 | **Llaves (bracket)** | Visualización pública de la fase eliminatoria como un árbol de llaves — por copa, si el torneo tiene varias — con conectores entre rondas inferidos a partir del equipo ganador; si la inferencia es ambigua (partido sin jugar, datos incompletos, o un cruce ya decidido por bye), se oculta ese conector o se degrada a una vista en columnas en vez de mostrar una conexión incorrecta. |
@@ -137,8 +137,8 @@ cd Club12-WebClient && pnpm run test
 
 ## Estado del proyecto
 
-- **Backend**: build sin errores ni advertencias (`dotnet build`), 826 tests automatizados en verde (al 2026-09-03; correr `dotnet test Club12-Backend/Solution/Club12.sln` para el número actual).
-- **Frontend**: sin errores de lint, 725 tests automatizados en verde (al 2026-09-03; correr `npx vitest run` para el número actual).
+- **Backend**: build sin errores ni advertencias (`dotnet build`), 955 tests automatizados en verde (al 2026-09-07; correr `dotnet test Club12-Backend/Solution/Club12.sln` para el número actual).
+- **Frontend**: sin errores de lint, 825 tests automatizados en verde (al 2026-09-07; correr `npx vitest run` para el número actual).
 - Reglas de negocio, cobertura funcional detallada y contexto operativo (gotchas de desarrollo): ver [Docs/ESTADO-Y-REGLAS.md](./Docs/ESTADO-Y-REGLAS.md).
 
 ## ¿Se cubren todos los requisitos?
@@ -159,7 +159,7 @@ Comparando el sistema contra los dos informes de requerimientos del proyecto (Ta
 
 - Diseño adaptativo (responsive) — ✅ implementado en todas las vistas.
 - Seguridad (roles, prevención de inyección SQL vía EF Core, JWT) — ✅ implementado.
-- Testing (pruebas unitarias e integración, comprometido para el Sprint 7) — ✅ cumplido (163 tests entre ambos proyectos).
+- Testing (pruebas unitarias e integración, comprometido para el Sprint 7) — ✅ cumplido (más de 1700 tests entre ambos proyectos, ver "Estado del proyecto" arriba para el detalle por proyecto).
 - Documentación técnica — ✅ Swagger para la API, este README para arquitectura y uso.
 - Documentación de manual de usuario — ✅ ver [MANUAL_USUARIO.md](./MANUAL_USUARIO.md).
 - Rendimiento y escalabilidad — no verificado formalmente (requeriría pruebas de carga, fuera del alcance actual).

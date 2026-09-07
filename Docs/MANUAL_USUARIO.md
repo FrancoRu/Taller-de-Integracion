@@ -73,14 +73,27 @@ Los torneos, divisiones, fases y partidos no tienen un ítem propio en el menú:
 3. **Crear divisiones** dentro del torneo (por ejemplo, categorías por edad, nivel o género).
 4. **Inscribir equipos** a cada división.
 5. **Generar la etapa** del torneo: el sistema arma automáticamente la fase de grupos y, una vez que termina, las llaves de eliminación directa según la cantidad de equipos clasificados (con "bye" a los mejores puestos si esa cantidad no es potencia de 2). Si el torneo define más de una copa (por ejemplo Copa Oro para los primeros puestos y Copa Plata para el resto), el sistema arma cada bracket por separado, tomando la posición de arranque de cada copa como el "1er sembrado" de su propio cuadro.
-6. El torneo no puede pasar a **"En curso"** si alguna zona tiene menos de 2 equipos o si algún equipo inscripto tiene menos de 4 jugadores habilitados (ver 4.3) — el sistema avisa qué falta corregir antes de poder arrancar.
+6. Una zona puede dividirse en **varios sub-grupos** (por ejemplo "Grupo A" y "Grupo B" dentro de la misma zona) para repartir muchos equipos en fases de grupos más chicas. Una zona con 2 o más sub-grupos siempre necesita al menos una copa configurada: sin ella no habría manera de determinar un campeón entre los sub-grupos, así que el sistema rechaza guardar esa combinación.
+7. El torneo no puede pasar a **"En curso"** si alguna zona tiene menos de 2 equipos o si algún equipo inscripto tiene menos de 4 jugadores habilitados (ver 4.3) — el sistema avisa qué falta corregir antes de poder arrancar.
 
 ### 4.2 Equipos
 
-- Alta de un equipo nuevo: nombre, código de tres letras, color de camiseta, escudo.
-- Edición o baja de equipos existentes.
-- Búsqueda y filtrado por nombre.
-- Cuerpo técnico: cargar el director técnico y demás staff de cada equipo para la temporada.
+Esta pestaña lista **clubes**: la identidad estable de una institución (por ejemplo "Central Entrerriano"), que se mantiene igual de una temporada a la otra. Un club agrupa todos sus equipos por temporada — así un club que jugó varios años aparece **una sola vez** en la lista, en vez de una fila repetida por cada temporada en la que participó.
+
+- **Alta de un equipo nuevo**: nombre, código de tres letras, color de camiseta, escudo. Si ya existe un club con ese nombre, el equipo nuevo queda vinculado a él automáticamente; si el nombre no existe todavía, el sistema crea el club correspondiente.
+- Búsqueda y filtrado por nombre de club.
+- **Ver** un club abre su historial: la lista de sus equipos, uno por cada temporada/torneo en el que se inscribió, con el código de tres letras y el torneo correspondiente de cada uno.
+- **Eliminar** un club solo está permitido si no tiene ningún equipo ni escuadra vinculada; si todavía tiene historial, el sistema rechaza el borrado.
+- Desde el historial del club se puede eliminar un equipo puntual (una temporada específica) sin afectar el resto del historial del club.
+- Cuerpo técnico: cargar el director técnico y demás staff se hace desde el equipo de esa temporada (dentro del historial del club), no desde la lista de clubes.
+
+**Escuadras (club matriz)**: cuando una institución tiene más de un equipo dentro de la misma temporada (por ejemplo "Echagüe A" y "Echagüe B"), cada uno se da de alta como su propio club. Para agruparlos bajo la institución:
+
+1. Entrar al historial de la escuadra (por ejemplo "Echagüe B").
+2. Elegir el club matriz en **"Vincular con club matriz"** y confirmar con **"Vincular"**.
+3. El historial de la institución matriz pasa a listar cada escuadra vinculada, y el de la escuadra muestra un enlace a su institución.
+
+La vinculación es de un solo nivel: una institución no puede a su vez ser escuadra de otro club, y un club que ya tiene sus propias escuadras no puede pasar a ser escuadra de otro. Un club vinculado puede **desvincularse** en cualquier momento desde su propio historial.
 
 ### 4.3 Jugadores
 
@@ -157,6 +170,9 @@ El sistema incluye un mecanismo de respaldo automático programado de la base de
 | Cargué un resultado y la tabla de posiciones no cambió | Revisar que el resultado se haya guardado correctamente (no quedó en estado pendiente); recargar la página. |
 | No puedo cargar el resultado de un partido | Revisar que todos los jugadores cargados estén habilitados (ficha médica aprobada con archivo) y sin sanción activa; si el equipo tiene menos de 4 jugadores habilitados, hay que cargar el partido como walkover en lugar de una planilla común. |
 | No puedo iniciar el torneo | Revisar que cada zona tenga al menos 2 equipos y que cada equipo inscripto tenga al menos 4 jugadores habilitados; el sistema indica qué falta corregir. |
+| No encuentro el equipo de una temporada anterior en la pestaña Equipos | Esa pestaña lista clubes, no equipos por temporada — buscar el club (la institución) y entrar a **Ver** para encontrar el equipo de la temporada buscada en su historial. |
+| No puedo eliminar un club | El club todavía tiene equipos o escuadras vinculadas; eliminar primero esos equipos desde el historial del club, o desvincular las escuadras, antes de poder eliminar el club. |
+| No puedo guardar una zona con varios sub-grupos | Una zona con 2 o más sub-grupos necesita al menos una copa configurada, para poder determinar un campeón entre los sub-grupos; agregar una copa o reducir la zona a un solo grupo. |
 
 ## 7. Soporte técnico
 
