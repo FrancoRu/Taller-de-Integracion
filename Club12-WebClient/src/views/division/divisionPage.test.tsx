@@ -155,6 +155,38 @@ describe('DivisionPage — Playoff tab shows a real match list alongside the bra
   });
 });
 
+describe('DivisionPage — Playoff tab visibility', () => {
+  it('shows the Playoff tab once an elimination stage is confirmed to exist', async () => {
+    setup();
+    renderPage('detalle');
+
+    expect(
+      await screen.findByRole('tab', { name: 'Playoff' })
+    ).toBeInTheDocument();
+  });
+
+  it('never shows the Playoff tab once stages are confirmed to have no elimination stage', async () => {
+    setup();
+    getStagesByFilters.mockResolvedValue({ data: { items: [] } });
+
+    renderPage('detalle');
+
+    await waitFor(() => expect(getStagesByFilters).toHaveBeenCalled());
+    expect(screen.queryByRole('tab', { name: 'Playoff' })).not.toBeInTheDocument();
+  });
+
+  it('falls back to the default tab when a groupless division loses the Playoff tab out from under it', async () => {
+    setup();
+    getStagesByFilters.mockResolvedValue({ data: { items: [] } });
+
+    renderPage('playoff');
+
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Detalle', selected: true })).toBeInTheDocument()
+    );
+  });
+});
+
 describe('DivisionPage — Goleadores tab', () => {
   it('renders the division scorers ranking fetched by divisionId', async () => {
     setup();

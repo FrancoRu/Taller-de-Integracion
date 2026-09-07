@@ -80,6 +80,8 @@ const DivisionPage: React.FC = () => {
   // collapsed bracket card.
   const [playoffStages, setPlayoffStages] = useState<IStageResponse[]>([]);
   const [playoffMatches, setPlayoffMatches] = useState<IMatchResponse[]>([]);
+  const [allStages, setAllStages] = useState<IStageResponse[]>([]);
+  const [allStagesLoaded, setAllStagesLoaded] = useState(false);
 
   const targetDivisionId = useMemo(
     () => divisionId ?? division?.id,
@@ -111,6 +113,46 @@ const DivisionPage: React.FC = () => {
 
     void getTournamentById(division.tournamentId);
   }, [division?.tournamentId, tournament?.id, getTournamentById]);
+
+  // Fetched eagerly (not gated behind the "Playoff" tab being clicked) purely
+  // to answer one question before the admin ever clicks anything: does this
+  // division have an elimination stage at all? Mirrors PublicDivisionPanel's
+  // same eager fetch — a lazy check would mean showing (then yanking) the tab.
+  useEffect(() => {
+    if (!division?.id) {
+      return;
+    }
+
+    let cancelled = false;
+    setAllStagesLoaded(false);
+
+    stageService
+      .getStagesByFilters({ divisionId: division.id, pageSize: BRACKET_FETCH_PAGE_SIZE })
+      .then(response => {
+        if (cancelled) return;
+        setAllStages(response.data?.items ?? []);
+        setAllStagesLoaded(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [division?.id]);
+
+  const hasPlayoff = useMemo(
+    () => allStages.some(stage => stage.isElimination),
+    [allStages]
+  );
+
+  // An in-flight 'playoff' tab for a division that turns out to have none
+  // falls back to the default tab instead of rendering behind a tab that no
+  // longer exists in the bar above it.
+  useEffect(() => {
+    if (allStagesLoaded && !hasPlayoff && tab === 'playoff') {
+      setTab(DEFAULT_TAB);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allStagesLoaded, hasPlayoff, tab]);
 
   const fetchBrackets = useCallback(async (resolvedDivisionId: GUID) => {
     setBracketsLoading(true);
@@ -313,7 +355,7 @@ const DivisionPage: React.FC = () => {
           <Tab label="Posiciones" value="posiciones" />
           <Tab label="Goleadores" value="goleadores" />
           <Tab label="Partidos" value="partidos" />
-          <Tab label="Playoff" value="playoff" />
+          {allStagesLoaded && hasPlayoff && <Tab label="Playoff" value="playoff" />}
         </Tabs>
 
         {tab === 'detalle' && (
