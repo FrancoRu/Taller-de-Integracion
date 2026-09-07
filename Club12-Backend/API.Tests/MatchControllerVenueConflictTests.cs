@@ -247,7 +247,7 @@ public class MatchControllerVenueConflictTests : IClassFixture<CustomWebApplicat
         using IServiceScope scope = _factory.Services.CreateScope();
         ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
         (Stage stage, Venue venue, Team teamA, Team teamB, _, _) = await SeedFixtureAsync(db);
-        DateTime matchDate = new(2026, 9, 6, 15, 0, 0, DateTimeKind.Utc);
+        DateTime matchDate = DateTime.UtcNow.Date.AddDays(30);
         // Deliberately no StageTeamMatch rows seeded for teamA/teamB, so neither is assigned to the stage.
         Match match = await SeedMatchAsync(db, stage, venue.Id, matchDate, teamA.Id, teamB.Id);
 
