@@ -74,13 +74,15 @@ public interface IStageService
     Task<Dictionary<string, List<Match>>> SeedPlayoffCupsAsync(Guid divisionId);
 
     /// <summary>
-    /// Automatically seeds a division's playoff cups after a match finishes, once every match of every group stage in the division is complete.
+    /// Automatically seeds a division's playoff cups once every group-stage match is finished,
+    /// as a no-op if there is nothing left to seed.
     /// </summary>
     /// <param name="finishedMatchStageId">The stage of the match that just finished.</param>
     Task TryAutoSeedPlayoffPhaseAsync(Guid finishedMatchStageId);
 
     /// <summary>
-    /// Pushes each newly-decided bracket slot's winner into its immediate next round within the same cup after a match or series is decided.
+    /// Pushes each newly-decided bracket slot's winner into its immediate next round, and a
+    /// Semifinal's losers into the third-place decider, within the same cup.
     /// </summary>
     /// <param name="decidedStageId">The stage whose slots just got decided.</param>
     Task TryAdvanceStageWinnerAsync(Guid decidedStageId);

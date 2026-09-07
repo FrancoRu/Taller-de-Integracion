@@ -352,7 +352,9 @@ public class StageService(
     }
 
     /// <summary>
-    /// Assigns teams to a stage, either manually by team IDs or automatically based on available slots.
+    /// Assigns teams to a stage, either manually by team IDs or automatically based on available
+    /// slots, capping a Group-type stage at the tournament's own team ceiling rather than the
+    /// auto-bracket-generator's smaller fixed group size.
     /// </summary>
     /// <param name="stage">The stage to assign teams to.</param>
     /// <param name="teamIds">Optional list of team IDs to assign.</param>
@@ -384,7 +386,6 @@ public class StageService(
             await EnsureTeamsEnrolledInDivisionAsync(stage.DivisionId, filteredIds);
         }
 
-        // MaxTeams.Group is only the auto-bracket-generator's fixed group size, not a general cap on how many teams a Group-type stage may hold, since a manually built Group stage represents a whole zone's round-robin phase and can need far more, so it is capped at the same ceiling the tournament itself enforces instead of the auto-generator's per-group size.
         int maxTeams = stage.StageType == StageType.Group
             ? MaxTeams.GroupStageCap
             : StageHelper.GetMaxTeamsForStage(stage.StageType);
@@ -620,7 +621,9 @@ public class StageService(
     }
 
     /// <summary>
-    /// Seeds every playoff cup of a division from its final group-stage standings. A division split into more than one Group stage is seeded from the pooled top QualifiersPerGroup teams of every group instead of a single combined table.
+    /// Seeds every playoff cup of a division from its final group-stage standings. A division
+    /// split into more than one Group stage is seeded from the pooled top QualifiersPerGroup
+    /// teams of every group instead of a single combined table.
     /// </summary>
     /// <param name="divisionId">The division whose group stage has finished.</param>
     /// <returns>The seeded matches per destination cup, keyed by BracketName.</returns>
@@ -673,7 +676,6 @@ public class StageService(
                 continue;
             }
 
-            // A cup with more than one round has every round unseeded at this point, and Stage.Order is never actually set for wizard-built stages, so it cannot disambiguate which round is first; bracket depth via EliminationProgression can, since the group-stage standings always seed the earliest round of the cup.
             Stage cupStage = eliminationStages
                 .Where(s => s.BracketName == destination
                     && s.Matches.Count > 0
@@ -686,7 +688,6 @@ public class StageService(
             await _matchRepository.UpdateRangeAsync(seeded);
             seededByCup[destination] = seeded;
 
-            // A bye is already decided the moment it is seeded since no match needs to be played, so it is pushed into the next round right away instead of waiting for a result-loading call that will never come.
             await TryAdvanceStageWinnerAsync(cupStage.Id);
         }
 
@@ -733,7 +734,6 @@ public class StageService(
             bool anyEliminationStageSeeded = eliminationStages
                 .Exists(s => s.Matches.Any(m => m.HomeTeamId.HasValue || m.VisitorTeamId.HasValue));
 
-            // Nothing to seed, or an admin already seeded a cup by hand: auto-seed only ever fires from a fully-unseeded state, so it never fights a partial manual seed since SeedPlayoffCupsAsync would throw for whichever cup is already done.
             if (eliminationStages.Count == 0 || anyEliminationStageSeeded)
             {
                 return;
@@ -751,11 +751,9 @@ public class StageService(
     }
 
     /// <summary>
-    /// Creates whatever empty Match placeholders a groupless bracket's first draw is still missing. Every other
-    /// stage type gets its placeholders from GenerateFixtureAsync when the tournament starts, but a playoffs-only
-    /// division has no group phase to trigger that, and the draw UI is reachable before the tournament is Ongoing —
-    /// so a first-ever draw can hit a stage with zero matches. A re-draw already has exactly neededSlotCount from
-    /// its first draw, so this is a no-op then.
+    /// Creates whatever empty Match placeholders a groupless bracket's first draw is still missing, since a
+    /// playoffs-only division has no group phase to generate them at tournament start. A no-op on a re-draw,
+    /// which already has exactly neededSlotCount matches from its first draw.
     /// </summary>
     private async Task EnsureBracketSlotsExistAsync(Stage stage, int neededSlotCount)
     {
@@ -787,9 +785,6 @@ public class StageService(
             });
         }
 
-        // EF's change tracker fixes up the already-loaded `stage.Matches` navigation automatically once these
-        // become tracked (their StageId matches the loaded parent), so no manual Add to the collection is needed
-        // here — doing so would double the entries.
         await _matchRepository.AddRangeAsync(newMatches);
     }
 
@@ -858,14 +853,12 @@ public class StageService(
                 return;
             }
 
-            // One entry per bracket slot: once a series' second or third game gets added, it lands in this same stage's Matches too, so only that slot's game 1, or its lone match for a bye slot which never gets a GameNumber, represents the slot itself and later games must be filtered out here.
             List<Match> orderedMatches = [.. stage.Matches
                 .Where(m => m.GameNumber is null or 1)
                 .OrderBy(m => m.MatchDate).ThenBy(m => m.Id)];
 
             await AdvanceWinnersToNextRoundAsync(stage, orderedMatches);
 
-            // The third-place decider is a side slot, not part of the main advancement line since EliminationProgression skips it; it is populated separately, from the semifinal's losers, once both semifinal slots are decided.
             if (stage.StageType == StageType.SemiFinal)
             {
                 await AdvanceLosersToThirdPlaceAsync(stage, orderedMatches);
@@ -880,6 +873,10 @@ public class StageService(
         }
     }
 
+    /// <summary>
+    /// Pushes each decided slot's winner into its next-round match, starting a new series for any
+    /// newly-complete pairing in a best-of-N round.
+    /// </summary>
     private async Task AdvanceWinnersToNextRoundAsync(Stage stage, List<Match> orderedMatches)
     {
         StageType? nextType = NextStageType(stage.StageType);
@@ -945,7 +942,6 @@ public class StageService(
             return;
         }
 
-        // A target slot that just got its second team and belongs to a series-based round becomes game 1 of a new series, the same treatment a freshly-seeded first round gets.
         if (nextStage.BestOf > 1)
         {
             foreach (Match target in touched)
@@ -1446,9 +1442,6 @@ public class StageService(
             stm => stm.StageId == fromStageId && stm.TeamId == teamId)).FirstOrDefault()
             ?? throw new InvalidOperationException(ErrorMessages.Stage.TeamNotPlacedInSubGroup);
 
-        // The minimum sub-group size is the only hard constraint on a manual move: the organizer
-        // may otherwise move a team for any reason, geography, avoiding rivals, or anything else,
-        // without the system second-guessing the destination's resulting balance.
         int remainingInSource = await _stageTeamMatchRepository.CountAsync(
             stm => stm.StageId == fromStageId) - 1;
 

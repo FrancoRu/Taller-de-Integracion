@@ -47,7 +47,6 @@ public class TournamentService(
     /// <inheritdoc/>
     public async Task<Tournament> CreateFullTournamentAsync(CreateFullTournamentRequest request)
     {
-        // Created OpenForRegistration, since divisions and stages can only be built while the tournament is in that status per the structural-edit guard, and structural creation is part of creation.
         Tournament tournament = new()
         {
             Name = request.Name,
@@ -81,7 +80,6 @@ public class TournamentService(
     {
         Division division = null!;
 
-        // Wrapped in its own transaction, mirroring the OpenForRegistration guard DivisionService.CreateDivisionAsync already enforces, so a division added to an existing tournament gets the same all-or-nothing guarantee a wizard-created one gets.
         await unitOfWork.ExecuteInTransactionAsync(async () =>
         {
             division = await CreateDivisionWithStagesAsync(tournament, divisionRequest);
