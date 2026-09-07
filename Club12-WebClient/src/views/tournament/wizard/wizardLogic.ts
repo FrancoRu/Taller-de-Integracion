@@ -122,6 +122,19 @@ export const validateZonesStep = (state: WizardState): ValidationResult => {
 
   state.zones.forEach(zone => {
     errors.push(...validateCups(zone.cups, `la zona "${zone.name || '(sin nombre)'}"`));
+
+    // HU-125: a zone split into multiple independent sub-groups has no single
+    // combined standings table, so a cup configured by qualifier position
+    // range (any cup at all, here — that's how a zone cup is represented)
+    // has nothing to range over. The backend rejects this combination
+    // outright (EnsureSubGroupCupCompatibilityAsync) — catching it here
+    // means the organizer doesn't fill out the whole cup config only to hit
+    // the same rejection at final submit.
+    if (zone.subGroupCount > 1 && zone.cups.length > 0) {
+      errors.push(
+        `La zona "${zone.name || '(sin nombre)'}" no puede tener sub-grupos y una copa al mismo tiempo — la tabla de posiciones combinada no existe con varios sub-grupos independientes. Usá un solo sub-grupo o quitá la copa de esta zona.`
+      );
+    }
   });
 
   return errors;

@@ -112,6 +112,32 @@ describe('validateZonesStep', () => {
     expect(validateZonesStep(state).some(e => e.includes('clasificados'))).toBe(true);
   });
 
+  // HU-125: the backend hard-rejects a zone with multiple sub-groups AND a
+  // cup at final submit (no combined standings table to rank across
+  // independent sub-groups) — catch it at the zones step instead, so the
+  // organizer doesn't fill out the whole cup config just to hit the same
+  // rejection later.
+  it('HU-125: rejects a zone with multiple sub-groups and a cup', () => {
+    const state = makeValidState();
+    state.zones[0].subGroupCount = 2;
+    const cup: CupConfig = { id: 'cup-1', name: 'Copa de Oro', qualifiers: 4, bestOfByStage: {}, hasThirdPlace: true };
+    state.zones[0].cups.push(cup);
+    expect(
+      validateZonesStep(state).some(e => e.includes('sub-grupos y una copa'))
+    ).toBe(true);
+  });
+
+  it('HU-125: allows multiple sub-groups without a cup, and a cup without multiple sub-groups', () => {
+    const state = makeValidState();
+    state.zones[0].subGroupCount = 3;
+    expect(validateZonesStep(state)).toEqual([]);
+
+    const withCupState = makeValidState();
+    const cup: CupConfig = { id: 'cup-1', name: 'Copa de Oro', qualifiers: 4, bestOfByStage: {}, hasThirdPlace: true };
+    withCupState.zones[0].cups.push(cup);
+    expect(validateZonesStep(withCupState)).toEqual([]);
+  });
+
   // HU-121: a zone's sub-group count is organizer-chosen; wizard time has no
   // real team count to check the floor/ceil/min-4 balance rule against, so an
   // invalid count (< 1) is surfaced as a WARNING (see getZonesStepWarnings),
