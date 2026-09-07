@@ -50,10 +50,10 @@ export default function PlayoffBracket({
   /**
    * Left-aligns the ThirdPlace block under the Final column instead of a fixed offset — the
    * library lays out round columns at widths that vary with the bracket's depth, so the Final's
-   * actual x-position can only be known by measuring its rendered card. The library computes its
-   * own SVG dimensions in a pass after its first paint, so a one-shot measurement here can race
-   * it and read a stale (pre-layout) position; a ResizeObserver on the bracket container
-   * re-measures whenever the library's own layout settles, converging on the real offset.
+   * actual x-position can only be known by measuring its rendered card. The library injects its
+   * SVG cards into the DOM after its own first paint, so a one-shot measurement here can race it
+   * and find nothing yet; a MutationObserver re-measures whenever the library's own markup
+   * actually appears, and a ResizeObserver keeps it correct afterward too, on a real resize.
    */
   useLayoutEffect(() => {
     const container = bracketRef.current;
@@ -74,9 +74,14 @@ export default function PlayoffBracket({
     };
 
     measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(container);
-    return () => observer.disconnect();
+    const mutationObserver = new MutationObserver(measure);
+    mutationObserver.observe(container, { childList: true, subtree: true });
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(container);
+    return () => {
+      mutationObserver.disconnect();
+      resizeObserver.disconnect();
+    };
   }, [matches, model.rounds]);
 
   // The library draws every match's incoming top/bottom connector purely
