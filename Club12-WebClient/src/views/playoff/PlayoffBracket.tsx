@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Box, Stack, Typography } from '@mui/material';
 import { SingleEliminationBracket } from '@g-loot/react-tournament-brackets';
 import type { LibraryMatchComponentProps } from '@/modules/playoff/type/gLootBracketTypes.d';
@@ -32,9 +32,10 @@ interface PlayoffBracketProps {
  * Renders one division's elimination bracket using
  * `@g-loot/react-tournament-brackets` for round layout and connector
  * lines (Cuartos -> Semifinal -> Final), with the ThirdPlace match shown
- * as an unconnected side slot beside the Final. `BracketMatchLibraryAdapter`
- * swaps in this app's own `BracketMatchNode` card (team logos, best-of-N
- * series breakdown, dark theme) in place of the library's default look.
+ * below the Final, left-aligned under it rather than chained into the
+ * main path. `BracketMatchLibraryAdapter` swaps in this app's own
+ * `BracketMatchNode` card (team logos, best-of-N series breakdown, dark
+ * theme) in place of the library's default look.
  */
 export default function PlayoffBracket({
   model,
@@ -44,6 +45,31 @@ export default function PlayoffBracket({
   const matches = useMemo(() => toLibraryMatches(model), [model]);
   const roundLabels = useMemo(() => libraryRoundLabels(model), [model]);
   const bracketRef = useRef<HTMLDivElement>(null);
+  const [thirdPlaceOffsetPx, setThirdPlaceOffsetPx] = useState(0);
+
+  // Left-aligns the ThirdPlace block under the Final column instead of a
+  // fixed offset — the library lays out round columns at widths that vary
+  // with the bracket's depth, so the Final's actual x-position can only be
+  // known by measuring its rendered card, the same DOM-reading approach the
+  // connector-hiding effect below already relies on for this same reason.
+  useLayoutEffect(() => {
+    const container = bracketRef.current;
+    const finalMatchId = model.rounds[model.rounds.length - 1]?.matches[0]?.id;
+    if (!container || !finalMatchId) {
+      setThirdPlaceOffsetPx(0);
+      return;
+    }
+
+    const finalCard = container.querySelector(`[data-match-id="${finalMatchId}"]`);
+    if (!finalCard) {
+      setThirdPlaceOffsetPx(0);
+      return;
+    }
+
+    const containerRect = container.getBoundingClientRect();
+    const finalRect = finalCard.getBoundingClientRect();
+    setThirdPlaceOffsetPx(Math.max(0, finalRect.left - containerRect.left));
+  }, [matches, model.rounds]);
 
   // The library draws every match's incoming top/bottom connector purely
   // from row position — it has no idea one side's card is hidden because
@@ -119,7 +145,7 @@ export default function PlayoffBracket({
         },
       }}
     >
-      <Stack direction="row" spacing={5} sx={{ alignItems: 'flex-start' }}>
+      <Stack direction="column" spacing={2} sx={{ alignItems: 'flex-start' }}>
         {matches.length > 0 && (
           <Box ref={bracketRef}>
             <SingleEliminationBracket
@@ -143,7 +169,10 @@ export default function PlayoffBracket({
         )}
 
         {hasThirdPlace && model.thirdPlace && (
-          <Stack spacing={3} sx={{ minWidth: 220, alignSelf: 'flex-end' }}>
+          <Stack
+            spacing={1.5}
+            sx={{ minWidth: 220, ml: matches.length > 0 ? `${thirdPlaceOffsetPx}px` : 0 }}
+          >
             <Typography
               variant="subtitle2"
               component="h3"
