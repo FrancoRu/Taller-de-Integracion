@@ -363,6 +363,12 @@ public static class ErrorMessages
         {
             return $"No se puede mover el equipo: el sub-grupo de origen quedaría con {remainingTeams} equipo(s), por debajo del mínimo de 4.";
         }
+
+        /// <summary>
+        /// User-facing Spanish message rejecting a division split into 2+ groups that has no cup to determine an overall champion between them.
+        /// </summary>
+        public const string SubGroupsRequireCupToDetermineChampion =
+            "Una división con 2 o más grupos necesita al menos una copa: sin ella no hay forma de determinar un campeón entre los grupos.";
     }
 
     public static class Match

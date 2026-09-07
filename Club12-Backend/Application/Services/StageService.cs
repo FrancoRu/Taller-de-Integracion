@@ -154,8 +154,9 @@ public class StageService(
     /// </summary>
     /// <param name="id">The unique identifier of the stage to delete.</param>
     /// <exception cref="InvalidOperationException">
-    /// Thrown when the stage's tournament has already started and its fixture is generated;
-    /// removing a phase then would corrupt the bracket or fixture.
+    /// Thrown when the stage's tournament has already started and its fixture is generated —
+    /// removing a phase then would corrupt the bracket or fixture — or when deleting this stage
+    /// would strand a 2+-group division without any elimination stage left to crown a champion.
     /// </exception>
     public async Task DeleteStageAsync(Guid id)
     {
@@ -164,9 +165,37 @@ public class StageService(
         if (stage is not null)
         {
             await EnsureDivisionStructureEditableAsync(stage.DivisionId);
+
+            if (stage.IsElimination)
+            {
+                await EnsureLastEliminationStageNotStrandingMultiGroupDivisionAsync(stage);
+            }
         }
 
         await _stageRepository.RemoveAsync(stage => stage.Id == id);
+    }
+
+    /// <summary>
+    /// Throws when deleting this elimination stage would leave a division split into 2+ groups
+    /// with no elimination stage left at all — orphaning its only path to an overall champion.
+    /// </summary>
+    private async Task EnsureLastEliminationStageNotStrandingMultiGroupDivisionAsync(Stage stage)
+    {
+        int groupStageCount = await _stageRepository.CountAsync(
+            s => s.DivisionId == stage.DivisionId && s.StageType == StageType.Group);
+
+        if (groupStageCount < 2)
+        {
+            return;
+        }
+
+        int remainingEliminationStages = await _stageRepository.CountAsync(
+            s => s.DivisionId == stage.DivisionId && s.IsElimination && s.Id != stage.Id);
+
+        if (remainingEliminationStages == 0)
+        {
+            throw new InvalidOperationException(ErrorMessages.Stage.SubGroupsRequireCupToDetermineChampion);
+        }
     }
 
     /// <summary>
@@ -216,7 +245,8 @@ public class StageService(
     /// <param name="stageEntity">The stage entity to create.</param>
     /// <returns>The created stage entity.</returns>
     /// <exception cref="InvalidOperationException">
-    /// Thrown if a stage with the same name already exists in the division.
+    /// Thrown if a stage with the same name already exists in the division, or if this Group stage
+    /// would bring the division to 2+ groups while it has no cup to determine a champion between them.
     /// </exception>
     public async Task<Stage> CreateStageAsync(Stage stageEntity)
     {
@@ -230,12 +260,47 @@ public class StageService(
             throw new InvalidOperationException(ErrorMessages.Stage.AlreadyExistsInDivision(stageEntity.Name));
         }
 
+        if (stageEntity.StageType == StageType.Group)
+        {
+            int existingGroupStageCount = await _stageRepository.CountAsync(
+                s => s.DivisionId == stageEntity.DivisionId && s.StageType == StageType.Group);
+
+            if (existingGroupStageCount + 1 >= 2)
+            {
+                await EnsureDivisionHasCupForMultipleGroupsAsync(stageEntity.DivisionId);
+            }
+        }
+
         stageEntity.Slug = await SlugGenerator.GenerateUniqueSlugAsync(
             stageEntity.Name,
             candidate => _stageRepository.ExistsAsync(stage => stage.Slug == candidate));
 
         await _stageRepository.AddAsync(stageEntity);
         return stageEntity;
+    }
+
+    /// <summary>
+    /// Throws when a regular (non-cross-cup) division split into 2+ groups has no PlayoffMapping —
+    /// with no combined table or bracket, nothing determines an overall champion between the groups.
+    /// A cross-division cup's own Final/Semifinal stages are its champion path instead of a
+    /// PlayoffMapping, and its cup is already mandatory by the time it reaches this check, so it is
+    /// exempt from this rule.
+    /// </summary>
+    private async Task EnsureDivisionHasCupForMultipleGroupsAsync(Guid divisionId)
+    {
+        Division division = await _divisionRepository.GetByIdAsync(
+            divisionId, includes: [d => d.PlayoffMappings])
+            ?? throw new InvalidOperationException(ErrorMessages.Stage.DivisionNotFound);
+
+        if (division.IsCrossDivisionCup)
+        {
+            return;
+        }
+
+        if (division.PlayoffMappings.Count == 0)
+        {
+            throw new InvalidOperationException(ErrorMessages.Stage.SubGroupsRequireCupToDetermineChampion);
+        }
     }
 
     /// <summary>
@@ -1298,6 +1363,11 @@ public class StageService(
         Division division = await _divisionRepository.GetByIdAsync(
             divisionId, includes: [d => d.PlayoffMappings, d => d.Tournament])
             ?? throw new InvalidOperationException(ErrorMessages.Stage.DivisionNotFound);
+
+        if (subGroupCount >= 2 && !division.IsCrossDivisionCup && division.PlayoffMappings.Count == 0)
+        {
+            throw new InvalidOperationException(ErrorMessages.Stage.SubGroupsRequireCupToDetermineChampion);
+        }
 
         List<Guid> rosterTeamIds = await GetRosterTeamIdsAsync(divisionId);
 

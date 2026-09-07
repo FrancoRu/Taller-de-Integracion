@@ -47,11 +47,12 @@ export default function PlayoffBracket({
   const bracketRef = useRef<HTMLDivElement>(null);
   const [thirdPlaceOffsetPx, setThirdPlaceOffsetPx] = useState(0);
 
-  // Left-aligns the ThirdPlace block under the Final column instead of a
-  // fixed offset — the library lays out round columns at widths that vary
-  // with the bracket's depth, so the Final's actual x-position can only be
-  // known by measuring its rendered card, the same DOM-reading approach the
-  // connector-hiding effect below already relies on for this same reason.
+  /**
+   * Left-aligns the ThirdPlace block under the Final column instead of a fixed offset — the
+   * library lays out round columns at widths that vary with the bracket's depth, so the Final's
+   * actual x-position can only be known by measuring its rendered card, the same DOM-reading
+   * approach the connector-hiding effect below already relies on for this same reason.
+   */
   useLayoutEffect(() => {
     const container = bracketRef.current;
     const finalMatchId = model.rounds[model.rounds.length - 1]?.matches[0]?.id;

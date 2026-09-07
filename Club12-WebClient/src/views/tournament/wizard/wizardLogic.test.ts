@@ -133,7 +133,15 @@ describe('validateZonesStep', () => {
   it('accepts subGroupCount >= 1 with no real team-count check at wizard time', () => {
     const state = makeValidState();
     state.zones[0].subGroupCount = 5;
+    const cup: CupConfig = { id: 'cup-1', name: 'Copa de Oro', qualifiers: 4, bestOfByStage: {}, hasThirdPlace: true };
+    state.zones[0].cups.push(cup);
     expect(validateZonesStep(state)).toEqual([]);
+  });
+
+  it('rejects a zone with 2+ sub-groups and no cup — nothing determines a champion between the groups', () => {
+    const state = makeValidState();
+    state.zones[0].subGroupCount = 2;
+    expect(validateZonesStep(state).some(e => e.includes('ninguna copa'))).toBe(true);
   });
 });
 

@@ -29,12 +29,57 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     /// <summary>
-    /// D2 relaxes the old one-Group-stage-per-division invariant so a regular
-    /// division can hold multiple sub-group Group stages, as long as each has
-    /// a distinct name — sub-groups need this to legally coexist.
+    /// A regular division can hold multiple sub-group Group stages as long as
+    /// each has a distinct name and the division has a cup to determine a
+    /// champion between the sub-groups.
     /// </summary>
     [Fact]
     public async Task CreateStageAsync_RegularDivision_AllowsSecondGroupStageWithDistinctName()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+        IStageService stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
+
+        Tournament tournament = await SeedTournamentAsync(db);
+        Division division = await SeedDivisionAsync(db, tournament, withStages: true);
+
+        db.DivisionPlayoffMappings.Add(new DivisionPlayoffMapping
+        {
+            DivisionId = division.Id,
+            FromPosition = 1,
+            ToPosition = 2,
+            Destination = "Final",
+            CreatedBy = "test",
+        });
+        await db.SaveChangesAsync();
+
+        Stage secondGroupStage = new()
+        {
+            Slug = $"stage-{Guid.NewGuid()}",
+            Name = $"Grupo B-{Guid.NewGuid()}",
+            StageType = StageType.Group,
+            IsActive = true,
+            StartDate = tournament.StartDate,
+            EndDate = tournament.StartDate.AddDays(StageTemplate.DurationDays),
+            DivisionId = division.Id,
+            Division = division,
+            Matches = [],
+            CreatedBy = "test",
+        };
+
+        Stage created = await stageService.CreateStageAsync(secondGroupStage);
+
+        Assert.Equal(StageType.Group, created.StageType);
+        Assert.Equal(2, await db.Stages.CountAsync(s => s.DivisionId == division.Id && s.StageType == StageType.Group));
+    }
+
+    /// <summary>
+    /// With no combined table and no bracket, a regular division split into 2+ groups with no cup
+    /// has no way to determine an overall champion between them, so adding the second group stage
+    /// is rejected instead of leaving the division in that state.
+    /// </summary>
+    [Fact]
+    public async Task CreateStageAsync_RegularDivision_RejectsSecondGroupStageWithoutCup()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
         ApplicationDBContext db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
@@ -57,10 +102,10 @@ public class StageServiceTests : IClassFixture<CustomWebApplicationFactory>
             CreatedBy = "test",
         };
 
-        Stage created = await stageService.CreateStageAsync(secondGroupStage);
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => stageService.CreateStageAsync(secondGroupStage));
 
-        Assert.Equal(StageType.Group, created.StageType);
-        Assert.Equal(2, await db.Stages.CountAsync(s => s.DivisionId == division.Id && s.StageType == StageType.Group));
+        Assert.Equal(1, await db.Stages.CountAsync(s => s.DivisionId == division.Id && s.StageType == StageType.Group));
     }
 
     /// <summary>

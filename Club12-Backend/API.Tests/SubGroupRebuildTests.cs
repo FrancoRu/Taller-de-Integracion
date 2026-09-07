@@ -324,6 +324,16 @@ public class SubGroupRebuildTests : IClassFixture<CustomWebApplicationFactory>
             Tournament = tournament,
             TournamentId = tournament.Id,
             Stages = [],
+            PlayoffMappings =
+            [
+                new DivisionPlayoffMapping
+                {
+                    FromPosition = 1,
+                    ToPosition = 2,
+                    Destination = "Final",
+                    CreatedBy = "test",
+                },
+            ],
             CreatedBy = "test",
         };
 
